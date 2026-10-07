@@ -100,6 +100,12 @@ export function ModelLibraryCore() {
   const [busy, setBusy] = useState(false);
   const [hosted, setHosted] = useState({ label: "", model: "", family: "openrouter" as "openrouter" | "anthropic" });
   const anthropicPicked = hosted.family === "anthropic";
+  /** PHILO-15 05: the Anthropic row's second route that runs. */
+  const OPENAI_COMPATIBLE = "openai_compatible" as const;
+  const chooseOpenAICompatible = () => {
+    setEndpoint((current) => ({ ...current, family: OPENAI_COMPATIBLE }));
+    setFace("endpoint");
+  };
   const [endpoint, setEndpoint] = useState({
     label: "",
     model: "",
@@ -391,7 +397,7 @@ export function ModelLibraryCore() {
           <span className="model-library-not-supported" data-testid="model-library-anthropic-not-supported">
             <span className="surface-token" data-tone="warn">{NOT_SUPPORTED_YET}</span>
             <Button dense variant="ghost" onClick={() => setHosted((current) => ({ ...current, family: "openrouter" }))}>Use OpenRouter</Button>
-            <Button dense variant="ghost" onClick={() => { setEndpoint((current) => ({ ...current, family: "openai_compatible" })); setFace("endpoint"); }}>Use OpenAI-compatible</Button>
+            <Button dense variant="ghost" onClick={chooseOpenAICompatible}>Use OpenAI-compatible</Button>
           </span>
         ) : null}
         <input ref={secretRef} type="password" autoComplete="new-password" aria-label="Provider key" disabled={anthropicPicked} />
