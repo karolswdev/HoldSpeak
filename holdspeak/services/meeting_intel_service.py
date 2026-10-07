@@ -150,9 +150,12 @@ class MeetingIntelService:
         if route_is_off(route):
             # PHILO-15 01 ruling: OFF is the owner's choice, never a failure.
             # Refuse honestly and write nothing: no refusal job, no error.
-            raise self._conflict(
+            refusal = self._conflict(
                 meeting_id, "Summaries are off.", code="summaries_off", planned_route=route,
             )
+            # The observer records this as the owner's setting, not an error.
+            refusal.observed_outcome = "refused_by_setting"
+            raise refusal
         try:
             require_expected_selection(route, expected_selection_hash)
         except ConflictError as exc:

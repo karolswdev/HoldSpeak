@@ -175,3 +175,101 @@ def test_a_meeting_off_skipped_is_summarised_once_off_clears(tmp_path, monkeypat
     assert db.meetings.get_meeting("m-off-later").intel_status in ("ready", "partial")
     # Nothing left to run: a second drain queues nothing.
     assert drain_backlog(db, auto_mode="every")["queued"] == []
+
+
+def _planned_hash(db, meeting_id: str) -> str:
+    from holdspeak.services.meeting_route_projection import project_route
+
+    route = project_route(db, invocation_id=f"meeting:{meeting_id}")
+    assert route["status"] == "ready", route
+    return str(route["selection_hash"])
+
+
+def _brief(db):
+    from holdspeak.services.monday_brief_service import MondayBriefService
+
+    return MondayBriefService(db).generate(OWNER)
+
+
+def test_a_run_verb_job_that_meets_off_is_skipped_and_rejoins(tmp_path, monkeypatch):
+    """Astra r2 finding 1: the Run verb stores its route, and the claim's
+    drift fence ran first. OFF now wins over a stale route."""
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.services.meeting_backlog_service import drain_backlog
+
+    db, _broker, engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
+    _queued_meeting(db, "m-run-off")
+    for job in db.intel.list_intel_jobs(status="all"):
+        db.intel.skip_remaining_intel(job.meeting_id)
+    # The real Run verb: it stores the disclosed route on the job.
+    queued = _service(db).run_intelligence(OWNER, "m-run-off", expected_selection_hash=_planned_hash(db, "m-run-off"))
+    assert queued["state"] == "queued" and queued["planned_route"]["status"] == "ready"
+    _off(db)
+
+    process_next_intel_job()
+
+    assert not engine.analyzed and not requests
+    statuses = [j["status"] for j in _rows(db, "intel_jobs")]
+    assert "failed" not in statuses, statuses
+    assert db.meetings.get_meeting("m-run-off").intel_status == "skipped"
+    assert db.meetings.get_meeting("m-run-off").intel_status_detail == "Summaries off."
+    assert "m-run-off" not in _needs_you_meetings(db)
+    brief = _brief(db)
+    every = [item.text for items in brief.sections.values() for item in items]
+    assert not [t for t in every if "Summary failed" in t or "did not start" in t], every
+    assert brief.sections["broke"] == [], brief.sections["broke"]
+
+    # OFF clears: the meeting rejoins and the next drain runs it once.
+    service = InferenceAssignmentService(db)
+    current = service.get_assignment(OWNER, {"kind": "capability", "capability_id": SUMMARY})
+    service.set_assignment(OWNER, {
+        "command_id": "philo15-run-on",
+        "expected_revision": int(current["revision"]),
+        "scope": {"kind": "capability", "capability_id": SUMMARY},
+        "entries": [{"profile_id": "deferred-queue-model", "profile_revision": 1}],
+    })
+    assert drain_backlog(db, auto_mode="every")["queued"] == ["m-run-off"]
+    assert process_next_intel_job() is True
+    assert len(engine.analyzed) == 1, engine.analyzed
+    assert _rows(db, "intel_snapshots")
+
+
+def test_an_observed_live_request_under_off_is_not_breakage(tmp_path, monkeypatch):
+    """Astra r2 finding 2: the observed service recorded the refusal as an
+    error and the Brief said "1 thing broke". OFF is a setting, not a fault."""
+    from holdspeak.services.meeting_intel_service import MeetingIntelService
+    from holdspeak.services.sqlite_observer import SQLiteObserver
+
+    db, _broker, engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
+    _queued_meeting(db, "m-live-observed")
+    for job in db.intel.list_intel_jobs(status="all"):
+        db.intel.skip_remaining_intel(job.meeting_id)
+    _off(db)
+    observed = MeetingIntelService(db, None, observer=SQLiteObserver(db._connection))
+
+    with pytest.raises(ConflictError) as refused:
+        observed.run_intelligence(OWNER, "m-live-observed", expected_selection_hash="any")
+    assert refused.value.code == "summaries_off"
+
+    events = [r for r in _rows(db, "pipeline_events") if r["method"] == "run_intelligence"]
+    assert len(events) == 1, events
+    assert events[0]["error"] is None and events[0]["error_code"] is None, events[0]
+    assert "refused_by_setting" in str(events[0]["result_summary"]), events[0]
+    brief = _brief(db)
+    assert brief.sections["broke"] == [], [i.text for i in brief.sections["broke"]]
+    assert not engine.analyzed and not requests
+
+
+def test_a_genuine_observed_refusal_is_still_recorded_as_an_error(tmp_path, monkeypatch):
+    from holdspeak.services.meeting_intel_service import MeetingIntelService
+    from holdspeak.services.sqlite_observer import SQLiteObserver
+
+    db, *_ = _queue_rig(tmp_path, monkeypatch)
+    _queued_meeting(db, "m-live-drift")
+    for job in db.intel.list_intel_jobs(status="all"):
+        db.intel.skip_remaining_intel(job.meeting_id)
+    observed = MeetingIntelService(db, None, observer=SQLiteObserver(db._connection))
+    with pytest.raises(ConflictError):
+        observed.run_intelligence(OWNER, "m-live-drift", expected_selection_hash="sha256:stale")
+    events = [r for r in _rows(db, "pipeline_events") if r["method"] == "run_intelligence"]
+    assert events and events[0]["error_code"] == "selection_drift", events

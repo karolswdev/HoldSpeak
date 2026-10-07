@@ -131,11 +131,22 @@ class MeetingDeferredQueueBinder:
             # Claim-time drift fence: the route disclosed by the HTTP gesture
             # must still be the route the SERVICE resolver would bind.  This is
             # before parent admission and therefore before any provider call.
-            from .meeting_route_projection import project_route
+            from .meeting_route_projection import project_route, route_is_off
             current_route = project_route(
                 self._broker.database,
                 invocation_id=f"meeting:{job.meeting_id}",
             )
+            if route_is_off(current_route):
+                # PHILO-15 01 ruling: OFF wins over a stale route. The same
+                # refusal the route planner raises under OFF, so the queue
+                # settles the job as skipped, never as a failure or a drift.
+                from .errors import ValidationError
+
+                raise ValidationError(
+                    "The owner turned this off.",
+                    code="no_assignment",
+                    context={"capability_id": "meeting.deferred_analysis", "off": True},
+                )
             if (
                 current_route.get("status") != "ready"
                 or current_route.get("selection_hash")
