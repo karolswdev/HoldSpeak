@@ -448,6 +448,10 @@ class OnboardingService:
                 f"HoldSpeak cannot read {path}. Fix the JSON and try again.", code="agent_settings_unreadable",
             ) from exc
         log.info("agent hooks installed for %s at %s (%s)", agent, path, ", ".join(result["installed_events"]))
+        if agent == "codex":
+            result = {**result, "trust": trust_codex_hooks(
+                executable=str(self._which("codex")), env={**os.environ, **self._env()}, home=self._home(),
+            )}
         return {**self.agents_detect(principal), "used": {"agent": agent, **result}}
 
 
@@ -458,6 +462,47 @@ TMUX_INSTALL_HINT = {
     "darwin": "brew install tmux",
     "linux": "sudo apt-get install tmux",
 }
+
+
+def codex_trust_stamp_path(home: Path) -> Path:
+    return home / ".holdspeak" / "codex_hook_trust.json"
+
+
+def trust_codex_hooks(*, executable: str, env: dict[str, str], home: Path) -> dict[str, Any]:
+    """Codex runs a hook only when its user config trusts the hook's hash
+    (``agent_context.codex_trust``). Inside ``agent_hooks.install`` only:
+    trust HoldSpeak's installed rider hooks and the hooks every Codex launch
+    passes, through Codex's own config writer. A failure is named in the
+    receipt; the hooks file stays written."""
+    from .. import coder_gate
+    from ..agent_context import codex_trust
+
+    flags = coder_gate.codex_hook_flags(coder_gate.spawn_prefix())
+    try:
+        summary = codex_trust.trust_holdspeak_hooks(
+            flags, cwd=str(home) if home.is_dir() else "/", executable=executable,
+            env={**env, "HOME": str(home)},
+        )
+    except codex_trust.CodexTrustError as exc:
+        log.warning("codex hook trust failed: %s", exc)
+        return {"state": "failed", "reason": exc.reason}
+    if summary["untrusted"]:
+        return {"state": "failed", "reason": "codex_hooks_untrusted", **summary}
+    codex_trust.write_trust_stamp(flags, codex_trust_stamp_path(home))
+    return {"state": "trusted", **summary}
+
+
+def _codex_launch_hooks_stamped(home: Path) -> bool:
+    """The install operation trusted the hooks a Codex launch passes now (no process)."""
+    from .. import coder_gate
+    from ..agent_context import codex_trust
+
+    try:
+        return codex_trust.trust_stamp_matches(
+            coder_gate.codex_hook_flags(coder_gate.spawn_prefix()), codex_trust_stamp_path(home),
+        )
+    except Exception:
+        return False
 
 
 def agent_hook_template(agent: str) -> dict[str, Any]:
@@ -566,6 +611,9 @@ def detect_agents(
         settings_path = agent_settings_path(agent, home=root, env=env)
         events = list(agent_hook_template(agent)["hooks"])
         hooks = _hooks_state(settings_path, events, which)
+        if agent == "codex" and hooks == "installed" and not _codex_launch_hooks_stamped(root):
+            # Codex runs no hook its config does not trust: the press trusts them.
+            hooks = "untrusted"
         signed_in, signed_in_from = (_claude_signed_in if agent == "claude" else _codex_signed_in)(root, env)
         rows.append({
             "id": agent,

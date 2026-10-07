@@ -290,7 +290,8 @@ class AgentHandService:
             "story_ref": story_ref,
             "origin_ref": {"kind": kind, "id": item_id},
         }
-        if agent.get("executable") == "claude":
+        if agent.get("executable") in ("claude", "codex"):
+            # Conductor R3: Codex is gated like Claude Code (its -c hooks).
             result = self._launch_gated(launcher, request, brief["text"], principal, worktree_path, spec["name"])
         else:
             result = self._launch_ungated(launcher, request, brief["text"], principal)
@@ -346,7 +347,7 @@ class AgentHandService:
             instruction=instruction, profile=profile, project_id=project_id,
         )
 
-    # ── Claude: process.spawn, the gate armed for this worktree ──────
+    # ── Claude Code and Codex: process.spawn, the gate armed for this worktree ──
 
     def _launch_gated(
         self, launcher: Any, request: dict[str, Any], text: str, principal: Any,
@@ -425,7 +426,8 @@ class AgentHandService:
     def _launch_ungated(
         self, launcher: Any, request: dict[str, Any], text: str, principal: Any,
     ) -> dict[str, Any]:
-        """Codex: the ungated launch. The brief is held and typed only when
+        """An agent with no gate hook (none since Conductor R3, which gates
+        Codex): the ungated launch. The brief is held and typed only when
         Codex's rider hooks register the session (its readiness); with no
         hooks installed it stays held as ``hooks_missing`` (K1's one-press
         install, then resume on the same launch)."""

@@ -229,6 +229,13 @@ BLOCKING_NOTIFICATIONS = frozenset({"permission_prompt", "idle_prompt", "elicita
 
 #: The Notification subtype of a permission prompt.
 PERMISSION_NOTIFICATION = "permission_prompt"
+#: The Notification subtype of "the agent waits for your input".
+IDLE_NOTIFICATION = "idle_prompt"
+
+#: The hook events that carry a prompt subtype: Claude Code's
+#: ``Notification`` and Codex's ``PermissionRequest`` (its approval prompt;
+#: Codex has no Notification event).
+PROMPT_EVENTS = frozenset({"Notification", "PermissionRequest"})
 
 
 def _field(session: Any, name: str) -> Any:
@@ -258,7 +265,7 @@ def is_blocked(session: Any) -> bool:
         return False
     if not str(_field(session, "question") or "").strip():
         return False
-    if str(_field(session, "hook_event_name") or "") == "Notification":
+    if str(_field(session, "hook_event_name") or "") in PROMPT_EVENTS:
         return is_blocking_notification(_field(session, "notification_type"))
     return bool(_field(session, "awaiting_response"))
 
@@ -266,7 +273,7 @@ def is_blocked(session: Any) -> bool:
 def wait_kind(session: Any) -> str:
     """``approve`` for a permission prompt, else ``answer``."""
     if (
-        str(_field(session, "hook_event_name") or "") == "Notification"
+        str(_field(session, "hook_event_name") or "") in PROMPT_EVENTS
         and str(_field(session, "notification_type") or "") == PERMISSION_NOTIFICATION
     ):
         return "approve"

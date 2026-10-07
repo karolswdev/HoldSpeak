@@ -1129,10 +1129,15 @@ def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:
     for agent in installed:
         if agent["hooks"] == "broken":
             parts.append(f"{agent['label']} hooks cannot run (their holdspeak command is missing)")
+        elif agent["hooks"] == "untrusted":
+            parts.append(f"{agent['label']} does not trust the HoldSpeak hooks yet (it does not run them)")
         else:
             parts.append(f"{agent['label']} hooks {agent['hooks']}")
     detail = "; ".join(parts)
     fixes: list[str] = []
+    if any(a["hooks"] == "untrusted" for a in unhooked):
+        fixes.append("Press Use it for Codex on the Agents card: it trusts the hooks in Codex")
+        unhooked = [a for a in unhooked if a["hooks"] != "untrusted"]
     if unhooked:
         names = " ".join(a["id"] for a in unhooked)
         agent_flag = f" --agent {unhooked[0]['id']}" if len(unhooked) == 1 else ""

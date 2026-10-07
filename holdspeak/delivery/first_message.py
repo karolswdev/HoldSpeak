@@ -54,6 +54,20 @@ TRUST_YES = "Yes, I trust this folder"
 TRUST_FOOTER = "Enter to confirm"
 _CURSOR = "❯"  # the ❯ that marks the selected choice
 
+#: Codex CLI 0.159's start screens and its composer, observed in a tmux pane
+#: (Conductor R3). The folder-trust screen is answered once for exactly the
+#: launch's worktree; "Hooks need review" is never answered (trusting hooks
+#: is the owner's press on the Agents card, and the launch checks it first).
+CODEX_TRUST_HEADER = "Folder access"
+CODEX_TRUST_QUESTION = "Trust this folder?"
+CODEX_TRUST_YES = "1. Trust and continue"
+#: The footer reads "esc quit" in its own process (``--no-daemon``, the
+#: launch) and "esc back" under the shared daemon.
+CODEX_TRUST_FOOTERS = ("enter continue · esc quit", "enter continue · esc back")
+CODEX_HOOKS_REVIEW = "Hooks need review"
+CODEX_COMPOSER_FOOTER = "? for shortcuts"
+_CODEX_CURSOR = "›"  # the › that marks the selected choice and the composer
+
 #: The states after which nothing is typed again.
 DELIVERED = "sent"
 UNDELIVERED_END = "ended_undelivered"
@@ -103,17 +117,82 @@ def parse_trust_prompt(lines: list[str]) -> Optional[dict[str, Any]]:
     return {"paths": paths, "cursor": cursor}
 
 
-def trust_prompt_for(lines: list[str], worktree_path: str) -> Optional[dict[str, Any]]:
-    """The live trust prompt when it names EXACTLY ``worktree_path``."""
-    prompt = parse_trust_prompt(lines)
-    if prompt is None:
-        return None
+def _expected_paths(worktree_path: str) -> set[str]:
     path = str(worktree_path)
     expected = {path}
     home = str(Path.home())
     if path.startswith(home + "/"):
         expected.add("~" + path[len(home):])
-    return prompt if prompt["paths"] & expected else None
+    return expected
+
+
+def trust_prompt_for(lines: list[str], worktree_path: str) -> Optional[dict[str, Any]]:
+    """The live trust prompt when it names EXACTLY ``worktree_path``."""
+    prompt = parse_trust_prompt(lines)
+    if prompt is None:
+        return None
+    return prompt if prompt["paths"] & _expected_paths(worktree_path) else None
+
+
+def _live_rows(lines: list[str]) -> list[str]:
+    rows = [str(line).rstrip() for line in lines]
+    while rows and not rows[-1].strip():
+        rows.pop()
+    return rows
+
+
+def parse_codex_trust_prompt(lines: list[str]) -> Optional[dict[str, Any]]:
+    """Codex's LIVE folder-trust screen, or ``None``.
+
+    Live: its footer (``enter continue · esc quit``) is the last non-blank
+    line. Returns ``{paths, cursor}``: the readings of the path block between
+    the header and the question, and ``"yes"`` when the › marks
+    ``1. Trust and continue``, ``"other"`` when it marks another choice."""
+    rows = _live_rows(lines)
+    if not rows or rows[-1].strip() not in CODEX_TRUST_FOOTERS:
+        return None
+    header = max((i for i, row in enumerate(rows) if row.strip() == CODEX_TRUST_HEADER), default=None)
+    if header is None:
+        return None
+    region = rows[header + 1:]
+    question = next((i for i, row in enumerate(region) if row.strip().startswith(CODEX_TRUST_QUESTION)), None)
+    if question is None:
+        return None
+    path_rows = [row for row in region[:question] if row.strip()]
+    if not path_rows:
+        return None
+    pad = min(len(row) - len(row.lstrip(" ")) for row in path_rows)
+    parts = [row[pad:] for row in path_rows]
+    yes_row = next((row for row in region[question:] if row.strip().endswith(CODEX_TRUST_YES)), None)
+    if yes_row is None:
+        return None
+    marked = [row for row in region[question:] if row.lstrip().startswith(_CODEX_CURSOR)]
+    cursor = "yes" if yes_row.lstrip().startswith(_CODEX_CURSOR) else ("other" if marked else None)
+    return {"paths": {"".join(parts), " ".join(parts)}, "cursor": cursor}
+
+
+def codex_trust_prompt_for(lines: list[str], worktree_path: str) -> Optional[dict[str, Any]]:
+    """Codex's live folder-trust screen when it names EXACTLY ``worktree_path``."""
+    prompt = parse_codex_trust_prompt(lines)
+    if prompt is None:
+        return None
+    return prompt if prompt["paths"] & _expected_paths(worktree_path) else None
+
+
+def codex_hooks_review(lines: list[str]) -> bool:
+    """Codex's "Hooks need review" start screen is on the pane."""
+    return any(row.strip() == CODEX_HOOKS_REVIEW for row in _live_rows(lines))
+
+
+def codex_ready(lines: list[str]) -> bool:
+    """Codex shows its composer: the last line is the footer that names
+    ``? for shortcuts`` and a › composer line is just above. No start screen."""
+    rows = [row for row in _live_rows(lines) if row.strip()]
+    if not rows or CODEX_COMPOSER_FOOTER not in rows[-1]:
+        return False
+    if codex_hooks_review(lines) or parse_codex_trust_prompt(lines) is not None:
+        return False
+    return any(row.lstrip().startswith(_CODEX_CURSOR) for row in rows[-6:-1])
 
 
 # ── the delivery ─────────────────────────────────────────────────────
@@ -153,7 +232,7 @@ class FirstMessage:
     def hold(
         self, launch_id: str, text: str, principal: Any, *,
         operation_id: str = "", agent: str = "agent", trust: bool = False,
-        state: str = "pending",
+        state: str = "pending", codex: bool = False,
     ) -> dict[str, Any]:
         """Store the brief as this launch's pending first message."""
         return self._svc._ledger.update(
@@ -168,6 +247,9 @@ class FirstMessage:
                 "operation_id": operation_id,
                 "agent": agent,
                 "trust": bool(trust),
+                # Codex: no hook fires before its first prompt, so its
+                # composer on the pane says it is ready (R3).
+                "codex": bool(codex),
             },
         ) or {}
 
@@ -349,7 +431,9 @@ class FirstMessage:
         attempt_id = str(record.get("attempt_id") or "")
         session = str(record.get("session") or "")
         trust = _Trust(self, record, principal, held) if held.get("trust") else None
+        codex = _CodexStart(self, record, principal, held) if held.get("codex") else None
         deadline = time.monotonic() + REGISTRATION_WAIT_SECONDS
+        registered = False
         while True:
             if self._stop.is_set():
                 return  # this service is shutting down; the launch stays pending
@@ -361,15 +445,17 @@ class FirstMessage:
                 return
             if trust is not None:
                 trust.look()
-            try:
-                svc.bind_rider_claims()
-            except Exception:
-                pass  # a claims read failure is retried on the next poll
-            attempt = svc._attempts.get(attempt_id) if attempt_id else None
-            if attempt is not None and attempt.session_id:
+            if codex is not None:
+                codex.look()
+            if self._registered(attempt_id):
+                registered = True
                 if trust is not None:
                     trust.registered()
+                if codex is not None:
+                    codex.registered()
                 break
+            if codex is not None and codex.ready:
+                break  # Codex fires its first hook only on the first prompt
             if time.monotonic() >= deadline:
                 svc._ledger.update(launch_id, instruction_state="expired")
                 return
@@ -399,12 +485,32 @@ class FirstMessage:
             svc._ledger.update(
                 launch_id, commands=commands, instruction_state=DELIVERED, pending_brief=None,
             )
+            if not registered:
+                self._await_registration(attempt_id, session, deadline)
         else:
             # The receipt decides: a refused or failed send keeps the brief
             # held, so the owner can resume it on this launch.
             svc._ledger.update(
                 launch_id, commands=commands, instruction_state=outcome or "not_delivered",
             )
+
+    def _registered(self, attempt_id: str) -> bool:
+        """Bind the rider claims, then: the launch attempt has its session."""
+        svc = self._svc
+        try:
+            svc.bind_rider_claims()
+        except Exception:
+            pass  # a claims read failure is retried on the next poll
+        attempt = svc._attempts.get(attempt_id) if attempt_id else None
+        return attempt is not None and bool(attempt.session_id)
+
+    def _await_registration(self, attempt_id: str, session: str, deadline: float) -> None:
+        """After a brief typed on readiness (Codex), bind the session its
+        first hooks register, so the launch knows its session."""
+        while not self._stop.is_set() and time.monotonic() < deadline:
+            if self._registered(attempt_id) or not self._svc._session_alive(session):
+                return
+            time.sleep(LAUNCH_POLL_SECONDS)
 
     def send_keys(
         self, record: Mapping[str, Any], keys: list[str], principal: Any, held: Mapping[str, Any],
@@ -506,6 +612,56 @@ class _Trust:
         return True
 
 
+class _CodexStart(_Trust):
+    """Codex's start (Conductor R3): answer its folder-trust screen for
+    exactly this launch's worktree (move to Trust at most once, confirm at
+    most once, receipted like Claude Code's), never its "Hooks need review"
+    screen, and see when its composer is ready for the brief. Codex fires no
+    hook before its first prompt, so readiness is read from the pane."""
+
+    def __init__(self, delivery: FirstMessage, record: Mapping[str, Any], principal: Any,
+                 held: Mapping[str, Any]) -> None:
+        super().__init__(delivery, record, principal, held)
+        self.ready = False
+        self._deadline = time.monotonic() + REGISTRATION_WAIT_SECONDS
+
+    def look(self) -> None:
+        if self.ready:
+            return
+        record = self._delivery.retarget(self._launch_id)
+        if record is None:
+            return
+        self._record = record
+        pane = str((record.get("target") or {}).get("pane_id") or "")
+        peek = coder_steering.peek_pane(pane, lines=60, runner=self._svc._runner)
+        if peek.get("status") != "live":
+            return
+        lines = list(peek.get("lines") or [])
+        if codex_ready(lines):
+            self.ready = True
+            if self.state is None:
+                self._set("answered" if self._confirmed else "not_seen")
+            return
+        if codex_hooks_review(lines):
+            if self.state != "hooks_review":
+                self._set("hooks_review")  # the owner's press, never ours
+            return
+        prompt = codex_trust_prompt_for(lines, self._path)
+        if prompt is None:
+            return
+        self._seen = True
+        if self._confirmed:
+            return  # one delivered Enter, ever
+        if prompt["cursor"] == "yes":
+            if self._press(["Enter"]):
+                self._confirmed = True
+                self._svc._ledger.update(self._launch_id, trust_confirmed=True)
+        elif prompt["cursor"] == "other" and not self._moved:
+            self._moved = True
+            self._svc._ledger.update(self._launch_id, trust_moved=True)
+            self._press(["Up"])
+
+
 _CLAIM_LOCKS: dict[str, threading.Lock] = {}
 _CLAIM_GUARD = threading.Lock()
 
@@ -523,6 +679,9 @@ def _iso_now() -> str:
 
 __all__ = [
     "FirstMessage",
+    "codex_ready",
+    "codex_trust_prompt_for",
+    "parse_codex_trust_prompt",
     "LAUNCH_POLL_SECONDS",
     "REGISTRATION_WAIT_SECONDS",
     "TRUST_WAIT_SECONDS",

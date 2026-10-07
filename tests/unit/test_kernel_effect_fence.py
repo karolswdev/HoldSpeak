@@ -353,6 +353,17 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         "urlopen",
         1,
     ): "loopback gate protocol transport outside census egress scope",
+    (
+        "holdspeak/agent_context/codex_trust.py",
+        "_AppServer.__init__",
+        "Popen",
+        1,
+    ): (
+        "Conductor R3: a short local `codex app-server` (JSON-RPC on stdio, no "
+        "network call) that lists Codex's hooks; its one write (the hook trust in "
+        "Codex's config) runs only inside the owner-only admitted "
+        "`agent_hooks.install` operation, whose receipt covers it"
+    ),
     # HS-171-02/05: local desktop notification dispatch (osascript).
     # Not an effect — a local-only notification, never egress.
     (

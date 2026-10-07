@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Optional
 
 from ._common import _optional_str
 
@@ -222,42 +222,49 @@ def claude_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
     }
 
 
-def codex_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
+#: Codex CLI's hook events (0.159, observed): Codex has no ``Notification``
+#: event. Its approval prompt fires ``PermissionRequest``; the end of a turn
+#: (the agent waits for input) fires ``Stop`` with ``last_assistant_message``.
+#: SessionEnd timeouts are clamped to 3 s by Codex.
+CODEX_SESSION_END_TIMEOUT_SECONDS = 3
+
+
+def codex_hook_template(
+    *, capture_messages: bool = False, gate_command: Optional[str] = None,
+) -> dict[str, Any]:
+    """Codex's hooks: the rider events, and the tool gate when ``gate_command`` is given.
+
+    ``gate_command`` (``holdspeak gate hook --agent codex``) puts the gate on
+    ``PreToolUse`` for ``Bash`` with Claude Code's hold timeout (300 s), so a
+    call can wait for the owner; the same command reports the receipt
+    (``PostToolUse``) and revokes the session credential (``SessionEnd``).
+    A Codex launch passes this template per session (``-c hooks.*``,
+    ``coder_gate.codex_spawn_args``); ``agent-hook install`` writes the rider
+    template without the gate."""
+    from ..coder_gate import HOOK_TIMEOUT_SECONDS
+
     command = _agent_hook_command("codex", capture_messages=capture_messages)
-    return {
-        "hooks": {
-            "SessionStart": [
-                {
-                    "matcher": "startup|resume|clear",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
-                }
-            ],
-            "UserPromptSubmit": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
-            ],
-            "PreToolUse": [
-                {
-                    "matcher": "Bash|apply_patch|Edit|Write",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
-                }
-            ],
-            "PostToolUse": [
-                {
-                    "matcher": "Bash|apply_patch|Edit|Write",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
-                }
-            ],
-            "Notification": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
-            ],
-            "Stop": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
-            ],
-            "SessionEnd": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
-            ],
-        }
+
+    def rider(timeout: int = 5) -> dict[str, Any]:
+        return {"type": "command", "command": command, "timeout": timeout}
+
+    hooks: dict[str, list[dict[str, Any]]] = {
+        "SessionStart": [{"matcher": "startup|resume|clear", "hooks": [rider()]}],
+        "UserPromptSubmit": [{"hooks": [rider()]}],
+        "PreToolUse": [{"matcher": "Bash|apply_patch|Edit|Write", "hooks": [rider()]}],
+        "PermissionRequest": [{"hooks": [rider()]}],
+        "PostToolUse": [{"matcher": "Bash|apply_patch|Edit|Write", "hooks": [rider()]}],
+        "Stop": [{"hooks": [rider()]}],
+        "SessionEnd": [{"hooks": [rider(CODEX_SESSION_END_TIMEOUT_SECONDS)]}],
     }
+    if gate_command:
+        def gate(timeout: int) -> dict[str, Any]:
+            return {"type": "command", "command": gate_command, "timeout": timeout}
+
+        hooks["PreToolUse"].insert(0, {"matcher": "^Bash$", "hooks": [gate(HOOK_TIMEOUT_SECONDS)]})
+        hooks["PostToolUse"].insert(0, {"matcher": "^Bash$", "hooks": [gate(15)]})
+        hooks["SessionEnd"].insert(0, {"hooks": [gate(CODEX_SESSION_END_TIMEOUT_SECONDS)]})
+    return {"hooks": hooks}
 
 
 #: Substring identifying OUR hook entries inside a user's settings, so the
