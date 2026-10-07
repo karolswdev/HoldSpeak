@@ -267,7 +267,7 @@ describe("the agent's window", () => {
     expect(posts("/steer")).toEqual([]);
     fireEvent.change(field, { target: { value: "Jordan owns it." } });
     fireEvent.keyDown(field, { key: "Enter" });
-    await waitFor(() => expect(posts(STEER)).toEqual([{ text: "Jordan owns it.", submit: true, wait_id: "w-1" }]));
+    await waitFor(() => expect(posts(STEER)).toEqual([{ text: "Jordan owns it.", submit: true, kind: "answer", wait_id: "w-1" }]));
     await waitFor(() => expect(field.value).toBe(""));
     expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^SENT · \d\d:\d\d · Jordan owns it\.$/);
   });
@@ -308,7 +308,7 @@ describe("the agent's window", () => {
   it("Stop: Normal unarmed never arms by itself; YOLO arms per press, then kills", async () => {
     await openLane(fixture({ control: { mode: "neutral", armed: false, direct: false } }));
     fireEvent.click(screen.getByTestId("lane-stop"));
-    expect(screen.getByTestId("lane-stop-confirm").textContent).toBe("Stop · sure? (kills the pane)");
+    expect(screen.getByTestId("lane-stop-confirm").textContent).toBe("Stop · sure? (ends the agent's session)");
     fireEvent.click(screen.getByTestId("lane-stop-confirm"));
     await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toContain("ARM FIRST"));
     expect(posts("/arm")).toEqual([]);

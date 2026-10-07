@@ -286,8 +286,13 @@ def _session_view(session: Optional[Mapping[str, Any]]) -> Optional[dict[str, An
 
 
 def _not_read(name: str, exc: BaseException) -> dict[str, str]:
-    log.warning(f"launch lane: {name} unread: {exc}")
-    return {"not_read": f"{name}: {type(exc).__name__}: {str(exc)[:200]}"}
+    # The reason is redacted WHOLE before it is cut (a cut secret head would
+    # pass the redactor) and before it is logged.
+    from ..memory.defense import redact
+
+    reason = redact(str(exc))
+    log.warning(f"launch lane: {name} unread: {reason}")
+    return {"not_read": f"{name}: {type(exc).__name__}: {reason[:200]}"}
 
 
 def _part(name: str, read: Callable[[], Any]) -> Any:
@@ -326,6 +331,7 @@ def launch_lane(
     limit: int = 200,
     runner: Optional[Runner] = None,
     spool_dir: Optional[Path] = None,
+    control: Optional[Callable[[str], Any]] = None,
 ) -> Optional[dict[str, Any]]:
     """One launch's lane, or ``None`` for an unknown launch.
 
@@ -441,6 +447,9 @@ def launch_lane(
         "worktree": worktree_facts(launch_id, path, runner=runner),
         "usage": _part("usage", lambda: db.gate.usage_for(key)) if key else None,
     }
+    if control is not None:
+        # PHILO-14 C2: how the lane may act now; scrubbed with the rest.
+        lane["control"] = _part("control", lambda: control(key))
     return _scrub(lane)
 
 

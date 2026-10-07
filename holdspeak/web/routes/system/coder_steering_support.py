@@ -258,11 +258,12 @@ __all__ = [
 
 
 def wait_not_current(session: Any, body: Mapping[str, Any]) -> Optional[JSONResponse]:
-    """PHILO-14 C2: an answer names the wait it answers (``wait_id``). A wait
-    that was answered or replaced since the face read it is not answered
-    again: 409 ``wait_not_current``. A steer without ``wait_id`` (a re-brief,
-    the session window's composer) is not a wait's answer and passes."""
-    if "wait_id" not in body:
+    """PHILO-14 C2: an ANSWER (``kind: "answer"``, or a body that names a
+    ``wait_id``) must name the current wait. Absent, or a wait that was
+    answered or replaced since the face read it: 409 ``wait_not_current``.
+    A plain steer (no ``kind``, no ``wait_id``: a re-brief, the session
+    window's composer) answers no wait and passes."""
+    if str(body.get("kind") or "") != "answer" and "wait_id" not in body:
         return None
     from ....agent_context.models import is_blocked
 

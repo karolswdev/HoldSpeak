@@ -197,7 +197,11 @@ export const useLane = create<LaneState>((set, get) => ({
     set({ sending: true });
     try {
       const body: Record<string, unknown> = { text: clean, submit: true };
-      if (opts && "waitId" in opts) body.wait_id = opts.waitId ?? "";
+      // An answer says so and names its wait (the hub refuses a stale one).
+      if (opts && "waitId" in opts) {
+        body.kind = "answer";
+        body.wait_id = opts.waitId ?? "";
+      }
       const res = await post(`/api/coders/${encodeURIComponent(key)}/steer`, body);
       if (res.ok && res.body.status === "delivered") {
         sfx("land");

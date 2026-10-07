@@ -30,7 +30,7 @@ log = get_logger("web.routes.agent_hand")
 _NOT_FOUND = frozenset({"item_unknown"})
 
 
-def _lane_control(key: str) -> dict[str, Any]:
+def lane_control(key: str) -> dict[str, Any]:
     """PHILO-14 C2: how the lane may act on its own session now: the Control
     mode, the session's pane grant, and whether the steer policy lets the
     owner type without one (a registered pane in YOLO: ``direct``). The same
@@ -191,6 +191,7 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return launch_lane(
                 launch_id, db=get_database(), reads=reads,
                 after=max(0, int(after)), limit=max(1, min(int(limit), 1000)),
+                control=lane_control,
             )
 
         try:
@@ -200,11 +201,6 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "launch_lane_failed"}, status_code=500)
         if lane is None:
             return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
-        key = str((lane.get("launch") or {}).get("session_key") or "")
-        try:
-            lane["control"] = await asyncio.to_thread(_lane_control, key)
-        except Exception as exc:
-            lane["control"] = {"not_read": f"control: {type(exc).__name__}: {str(exc)[:200]}"}
         return JSONResponse(lane)
 
     @router.post("/api/agent/launches/{launch_id}/deliver")

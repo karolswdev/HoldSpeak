@@ -588,7 +588,7 @@ function StopVerb() {
         Back
       </Button>
       <Button dense variant="danger" data-testid="lane-stop-confirm" disabled={busy} onClick={() => void stop()}>
-        Stop · sure? (kills the pane)
+        Stop · sure? (ends the agent's session)
       </Button>
     </>
   );

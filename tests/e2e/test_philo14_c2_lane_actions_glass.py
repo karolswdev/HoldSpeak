@@ -153,7 +153,13 @@ def test_stale_wait_is_not_answerable(lane) -> None:
     status, body = _api_allow_error(page, "POST", f"/api/coders/{KEY}/steer",
                                     {"text": "A second answer.", "submit": True, "wait_id": before["wait_id"]}, token=TOKEN)
     assert status == 409 and body["status"] == "wait_not_current", body
+    # An answer that names no wait at all is refused the same way.
+    status, body = _api_allow_error(page, "POST", f"/api/coders/{KEY}/steer",
+                                    {"text": "A third answer.", "submit": True, "kind": "answer"}, token=TOKEN)
+    assert status == 409 and body["status"] == "wait_not_current", body
+    time.sleep(0.5)
     assert "A second answer" not in _pane_text(name)
+    assert "A third answer" not in _pane_text(name)
     # The face drops the field on its next read.
     page.locator("[data-testid='lane-ask']").wait_for(state="detached", timeout=15000)
 
@@ -179,9 +185,12 @@ def test_normal_answer_shows_arm_then_completes_on_lane(lane) -> None:
 @pytest.mark.timeout(240)
 def test_stop_records_a_stopped_launch(lane) -> None:
     page, _hook, _url, _seed_, name = lane
+    # The agent's session has a second pane: Stop ends the whole session.
+    _tmux("split-window", "-d", "-t", name, "cat")
+    assert len(_tmux("list-panes", "-t", name, "-F", "#{pane_id}").split()) == 2
     page.locator("[data-testid='lane-stop']").click()
     confirm = page.locator("[data-testid='lane-stop-confirm']")
-    assert confirm.inner_text() == "Stop · sure? (kills the pane)"
+    assert confirm.inner_text() == "Stop · sure? (ends the agent's session)"
     calls: list[str] = []
     page.on("request", lambda r: calls.append(r.url) if r.method == "POST" and "/api/coders/" in r.url else None)
     confirm.click()
@@ -235,19 +244,34 @@ def test_lane_words_are_12px_at_393(lane) -> None:
 @pytest.mark.timeout(240)
 def test_unread_collections_remain_visible(lane, monkeypatch) -> None:
     page = lane[0]
+    import holdspeak.agent_context as agent_context_pkg
+    import holdspeak.web.routes.agent_hand as agent_hand
     from holdspeak.db import get_database
+    from holdspeak.services import launch_lane as lane_mod
 
     db = get_database()
+    secret = "ghp_" + "A1b2C3d4E5f6G7h8I9j0K1l2"
 
     def unread(*_a: Any, **_k: Any) -> Any:
-        raise RuntimeError("collection read failed")
+        raise RuntimeError(f"collection read failed token={secret}")
 
     monkeypatch.setattr(db.steering, "list", unread)
     monkeypatch.setattr(db.work_attempts, "events", unread)
     monkeypatch.setattr(db.gate, "usage_for", unread)
-    for part in ("answers", "attempt", "usage"):
+    # The session and control reads fail too, each naming a secret.
+    monkeypatch.setattr(lane_mod, "_session_view", unread)
+    monkeypatch.setattr(agent_hand, "lane_control", unread)
+    wire = _api(page, "GET", LANE, token=TOKEN)
+    for part in ("answers", "attempt_events", "usage", "session", "control"):
+        assert "not_read" in wire[part], (part, wire[part])
+    import json as _json
+
+    assert secret not in _json.dumps(wire) and secret[:12] not in _json.dumps(wire)
+    for part in ("answers", "attempt", "usage", "session", "control"):
         page.locator(f"[data-testid='lane-not-read-{part}']").wait_for(timeout=15000)
-    assert "NOT READ" in page.locator("[data-testid='lane-not-read-answers']").inner_text()
+    face = page.locator(".is-lane").inner_text()
+    assert "NOT READ" in page.locator("[data-testid='lane-not-read-control']").inner_text()
+    assert secret not in face and secret[:12] not in face
 
 
 @pytest.mark.timeout(240)
