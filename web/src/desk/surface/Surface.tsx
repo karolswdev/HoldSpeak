@@ -803,6 +803,7 @@ export function SurfaceLedgerRow({
   onLineContextMenu,
   lineLabel,
   expands = true,
+  selected = false,
   children,
   "data-testid": dataTestId,
 }: {
@@ -833,13 +834,23 @@ export function SurfaceLedgerRow({
   lineLabel?: string;
   /** false = the row is a plain verb line (no aria-expanded claim). */
   expands?: boolean;
+  /** PHILO-14 A2b — the row a request selected (the Room's proposal):
+   *  marked, brought into view and focused. */
+  selected?: boolean;
   /** The in-place expansion rendered while open. */
   children?: ReactNode;
   "data-testid"?: string;
 }) {
   const inert = !onToggle && !onLineKeyDown && !onLineContextMenu;
+  const lineRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!selected) return;
+    lineRef.current?.scrollIntoView?.({ block: "nearest" });
+    lineRef.current?.focus({ preventScroll: true });
+  }, [selected]);
   return (
-    <li className="surface-ledger-row" data-open={open || undefined} data-wrap={wrap || undefined}>
+    <li className="surface-ledger-row" data-open={open || undefined} data-wrap={wrap || undefined}
+      data-selected={selected || undefined}>
       {/* HS-200-42 (counsel F3 — a SPECIES fix, not a face fix): the line
        *  was a <button> and `trailing` rendered INSIDE it, so every row
        *  with a verb shipped a button nested in a button (invalid HTML)
@@ -854,8 +865,10 @@ export function SurfaceLedgerRow({
        *  draws no open (A.11): no button role, no tab stop, no pointer, no
        *  hover band (`data-inert`, surface.css). Its trailing verbs stay. */}
       <div
+        ref={lineRef}
         role={inert ? undefined : "button"}
-        tabIndex={inert ? undefined : 0}
+        tabIndex={inert ? (selected ? -1 : undefined) : 0}
+        aria-current={selected || undefined}
         className="surface-ledger-line"
         data-testid={dataTestId}
         data-inert={inert || undefined}

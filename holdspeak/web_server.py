@@ -197,6 +197,30 @@ def _coder_awaiting_edge(keys: list[str]) -> Optional[dict]:
         return None
 
 
+def _agent_spool_timer(web_ctx: Any = None, *, spool_dir: Optional[Path] = None) -> Any:
+    """The hub's spool timer (PHILO-14 C0b), built on the launch reads the
+    routes use (``web_ctx.agent_hand_reads``, else ``LaunchReads()``)."""
+    from .agent_context import event_log
+    from .db import get_database
+
+    def reads() -> Any:
+        from .services.agent_hand_preview import LaunchReads
+
+        return getattr(web_ctx, "agent_hand_reads", None) or LaunchReads()
+
+    def live() -> Optional[bool]:
+        from .services.agent_hand_service import launch_liveness
+
+        return launch_liveness(reads().launcher())
+
+    return event_log.SpoolTimer(
+        lambda: get_database()._connection(),
+        live=live,
+        ledger_path=lambda: Path(reads().ledger_path),
+        spool_dir=spool_dir,
+    )
+
+
 def _coder_answer_triage(keys: list[str]) -> list[str]:
     """Conductor K5: the waits that began, split by Control mode. Returns
     the keys to notify now; a HoldSpeak-launched agent's wait in YOLO is
@@ -510,6 +534,7 @@ class MeetingWebServer:
         self._coder_frames_task: Optional[asyncio.Task[None]] = None
         self._rails_observer_task: Optional[asyncio.Task[None]] = None
         self._kernel_liveness_task: Optional[asyncio.Task[None]] = None
+        self._agent_spool_task: Optional[asyncio.Task[None]] = None
 
         self.app = self._create_app()
 
@@ -1576,6 +1601,9 @@ class MeetingWebServer:
             self._duration_task = asyncio.create_task(self._duration_loop())
             self._coder_frames_task = asyncio.create_task(self._coder_frames_loop())
             self._rails_observer_task = asyncio.create_task(self._rails_observer_loop())
+            # PHILO-14 C0b: the agent-event spool drains on the hub's own timer
+            # while a launch is live, not only when a lane or the coder set is read.
+            self._agent_spool_task = asyncio.create_task(self._agent_spool_loop(web_ctx))
             await asyncio.to_thread(_kernel_service().reap_and_recover_projections)
             try:
                 await refinement_coordinator.start()
@@ -1749,6 +1777,7 @@ class MeetingWebServer:
                 self._coder_frames_task,
                 self._rails_observer_task,
                 self._kernel_liveness_task,
+                self._agent_spool_task,
             ):
                 if task is None:
                     continue
@@ -1874,6 +1903,21 @@ class MeetingWebServer:
             except Exception as e:
                 log.debug(f"coder frames loop error: {e}")
             await asyncio.sleep(2.0)
+
+    async def _agent_spool_loop(self, web_ctx: Any = None) -> None:
+        """PHILO-14 C0b: drain the agent hook's event spool every 2 s while a
+        launch is live (``event_log.SpoolTimer``). With no live launch a tick
+        is one stat of the launch ledger. The drain shares the reads' lock,
+        order and per-pass bound; a failure is logged once per minute and
+        never stops the loop. A drained question or held call needs no notify
+        here: the coder watcher reads questions from the session registry and
+        the gate notifies a held call at once (``on_launch_hold``)."""
+        from .agent_context import event_log
+
+        timer = _agent_spool_timer(web_ctx)
+        while True:
+            await asyncio.to_thread(timer.tick)
+            await asyncio.sleep(event_log.SpoolTimer.INTERVAL)
 
     async def _rails_observer_loop(self) -> None:
         """The ambient dw observer (HS-88-03) — OFF BY DEFAULT. When

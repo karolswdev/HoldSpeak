@@ -8,6 +8,7 @@ import { apiFetch } from "../../../lib/api";
 import { EMPTY_ITEMS } from "../../api";
 import { useAgentFlights, fromWireSessionRow } from "../../agentFlights";
 import { useChairWindows } from "../../chair/chairWindows";
+import { useDrawers } from "../../drawer/store";
 import { useDesk } from "../../store";
 import { composeScreen, layoutScreen, shortItemName, normalizeRef, type ScreenInputs } from "..";
 import { Screen } from "../Screen";
@@ -128,6 +129,7 @@ const keys = () => [...document.querySelectorAll<HTMLElement>(".desk-screen [dat
 
 beforeEach(() => {
   resetScreenMembers();
+  useDrawers.setState({ drawers: [] });
   setCompact(false);
   localStorage.clear();
   vi.mocked(apiFetch).mockReset();
@@ -231,11 +233,13 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     fireEvent.pointerUp(grid, { pointerId: 1 });
   });
 
-  it("Enter or a double press opens: the Room, Needs you, the Conductor, People, Parked, the object, the agent", async () => {
+  it("Enter or a double press opens: the drawer, Needs you, the Conductor, People, Parked, the object, the agent", async () => {
     render(<Screen />);
     await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
     fireEvent.keyDown(icon(/^Payments ledger cutover/), { key: "Enter" });
-    expect(shell.openProjectRoom).toHaveBeenCalledWith("p-ledger");
+    // PHILO-14 A2b: a Project opens as its drawer, never the Room.
+    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toContain("p-ledger");
+    expect(shell.openProjectRoom).not.toHaveBeenCalled();
     fireEvent.doubleClick(icon(/^Needs you/));
     expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
     fireEvent.keyDown(icon(/^Conductor/), { key: "Enter" });

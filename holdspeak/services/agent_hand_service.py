@@ -545,6 +545,18 @@ def live_launches(launcher: Any) -> list[dict[str, Any]]:
     return rows
 
 
+def launch_liveness(launcher: Any) -> Optional[bool]:
+    """Whether a HoldSpeak launch runs now: ``True``, ``False``, or ``None``
+    when it is not known (a tmux probe failed or timed out and no other
+    launch is alive). The spool timer (PHILO-14 C0b) drains on ``None`` and
+    asks again, and never takes a failed probe for "none live"."""
+    if live_launches(launcher):
+        return True
+    if getattr(launcher, "_probe_failed", None):
+        return None
+    return False
+
+
 def codex_hooks_installed(path: Optional[Path] = None) -> bool:
     """Whether Codex's hook file carries HoldSpeak's rider hooks.
 
@@ -584,6 +596,7 @@ __all__ = [
     "AgentHandService",
     "DEFAULT_PROFILE_ID",
     "MAX_LIVE_LAUNCHES",
+    "launch_liveness",
     "live_launches",
     "default_agent_hand_service",
     "resolve_project_repository",

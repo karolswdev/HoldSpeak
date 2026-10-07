@@ -1436,8 +1436,11 @@ def _without_chair_doors(steps: list) -> list:
     """PHILO-13-11 (slice two, R2): the 393-only steps that open a Chair window
     through its real door (Go ▸ Chair, the Dock's Speak) are the face's
     navigation, not the chain under test; the chain's own steps keep their order."""
-    return [s for s in steps if not (isinstance(s, dict) and s.get("at_width") == 393
-                                     and str(s.get("why", "")).startswith("PHILO-13-11 (slice two, R2)"))]
+    # PHILO-14 A1 (#939): the Chair's windows start closed at both widths; the
+    # steps that open one (Window ▸ Chair ▸ <name>, Go ▸ <name>) are the same door.
+    return [s for s in steps if not (isinstance(s, dict) and (
+        (s.get("at_width") == 393 and str(s.get("why", "")).startswith("PHILO-13-11 (slice two, R2)"))
+        or str(s.get("why", "")).startswith("PHILO-14 A1 (#939)")))]
 
 
 def test_same_day_generate_again_binds_returned_displayed_and_retained(atlas: dict) -> None:

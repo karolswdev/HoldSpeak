@@ -3,7 +3,9 @@
  *  No new hub route; no second copy of the Room's reads.
  *
  *  A read that fails is never an empty drawer: each failed read is named
- *  (`ROOM`, `PEOPLE`, `RESOURCES` · NOT READ) and Retry re-runs only those. */
+ *  (`ROOM`, `DECISIONS`, `PEOPLE`, `RESOURCES` · NOT READ) and Retry re-runs
+ *  only those. PHILO-14 A2b: a Room section the hub answered `degraded` is a
+ *  failed read too (the Room's decisions name the drawer's decisions). */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useAgentFlights, useAgentFlightsLive } from "../agentFlights";
@@ -17,7 +19,7 @@ import { useDrawers } from "./store";
 type Resource = DrawerReads["resources"][number];
 
 /** The reads a drawer makes; the head names each one that failed. */
-export type DrawerRead = "ROOM" | "PEOPLE" | "RESOURCES";
+export type DrawerRead = "ROOM" | "DECISIONS" | "PEOPLE" | "RESOURCES";
 
 export function useDrawerData(projectId: string) {
   const ctrl = useProjectRoomController(`project:${projectId}`, undefined);
@@ -80,17 +82,19 @@ export function useDrawerData(projectId: string) {
     [projectId, ctrl.projectName, ctrl.room, ctrl.meetings, ctrl.decisions, ctrl.artifacts, people, resources, flights, sessions, items],
   );
   const head = useMemo(() => drawerHead(ctrl.room), [ctrl.room]);
+  const decisionsFailed = !ctrl.error && ctrl.room?.decisions.state === "degraded";
   const failed = useMemo<DrawerRead[]>(
     () => [
       ...(ctrl.error ? (["ROOM"] as const) : []),
+      ...(decisionsFailed ? (["DECISIONS"] as const) : []),
       ...(peopleFailed ? (["PEOPLE"] as const) : []),
       ...(resourcesFailed ? (["RESOURCES"] as const) : []),
     ],
-    [ctrl.error, peopleFailed, resourcesFailed],
+    [ctrl.error, decisionsFailed, peopleFailed, resourcesFailed],
   );
-  /** Retry re-runs exactly the reads that failed. */
+  /** Retry re-runs exactly the reads that failed (a Room section: the Room). */
   const retry = () => {
-    if (ctrl.error) void ctrl.load();
+    if (ctrl.error || decisionsFailed) void ctrl.load();
     if (peopleFailed) void readPeople();
     if (resourcesFailed) void readResources();
   };

@@ -44,7 +44,7 @@ import {
   StringGadget,
 } from "../surface";
 import { openIntelligence } from "../intelligenceNavigation";
-import { calendarOpener, refOpener, resolveOwner, type Opener } from "../openObject";
+import { calendarOpener, openProjectProposal, refOpener, resolveOwner, type Opener } from "../openObject";
 import { readCoverage, type CoverageRecord } from "../coverage";
 import {
   ATTENTION_CAP,
@@ -767,8 +767,10 @@ function Arrival() {
     ? checkedAge === "JUST NOW" ? "CHECKED JUST NOW" : `CHECKED ${checkedAge} AGO`
     : "";
 
+  // PHILO-14 A2b: a generic open of a Project opens its drawer; only an
+  // explicit Room verb opens the Room.
   const openProject = useCallback((projectId: string) => {
-    openProjectRoom(projectId);
+    openDrawer(projectId);
   }, []);
 
   // The owning verb of a coverage gap: `Retry` re-reads the aggregate
@@ -781,6 +783,7 @@ function Arrival() {
       openSurfaceOr("configure-settings", "/settings", "connections");
       return;
     }
+    // The repair lives in the Room's Sources (as the shade's repair): Room.
     openProjectRoom(gap.project_id);
   }, [readNeedsYou]);
 
@@ -1801,7 +1804,13 @@ function useNeedsYouOpener(item: NeedsYouItem, card?: DoorCard): Opener | null {
   // Conductor R1: a held tool call of a launch opens the system shade, where
   // the held call is listed with Approve and Deny.
   if (item.source === "gate") return refOpener(item.openRef);
-  return item.projectId ? () => openProjectRoom(item.projectId) : null;
+  // PHILO-14 A2b (Astra r1): a proposal is an object; its row opens the
+  // Room with that proposal selected (the drawer does not hold proposals).
+  const projectId = item.projectId;
+  const proposalId = item.proposalId;
+  if (proposalId && projectId) return () => openProjectProposal(projectId, proposalId);
+  // A row that names only its Project opens the drawer.
+  return projectId ? () => openDrawer(projectId) : null;
 }
 
 /** The one verb of a constituent projection inside the `N SOURCES`
@@ -1830,16 +1839,18 @@ function SourceVerb({
       </Button>
     );
   }
-  if (proposalId) {
+  // A proposal lives in the Room (the drawer lists no proposals): the
+  // explicit Room verb, with the proposal selected.
+  if (proposalId && projectId) {
     return (
       <Button
         variant="ghost"
         dense
-        onClick={() => openProjectRoom(projectId)}
-        aria-label={`Open: ${title}`}
+        onClick={() => openProjectProposal(projectId, proposalId)}
+        aria-label={`Room: ${title}`}
         data-testid="arrival-source-open"
       >
-        Open
+        Room
       </Button>
     );
   }
@@ -2030,14 +2041,16 @@ function NeedsYouRowVerbs({
           {busy ? "..." : "Confirm"}
         </Button>
         <Disclosure label="MORE" ariaLabel={`More: ${item.title}`}>
+          {/* The proposal lives in the Room (the drawer lists no proposals):
+              the explicit Room verb, with the proposal selected. */}
           <Button
             variant="ghost"
             dense
-            onClick={() => openProjectRoom(item.projectId)}
-            aria-label={`Open: ${item.title}`}
+            onClick={() => openProjectProposal(item.projectId, item.proposalId ?? "")}
+            aria-label={`Room: ${item.title}`}
             data-testid="arrival-proposal-open"
           >
-            Open
+            Room
           </Button>
         </Disclosure>
       </>

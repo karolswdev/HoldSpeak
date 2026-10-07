@@ -41,8 +41,9 @@ from .glass_infra import _boot, _ensure_build, _normal_chair, _settle
 from .test_philo13_11_chair_glass import _seed as _canvas_seed
 from tests._evidence import evidence_dir
 
-# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
-pytestmark = pytest.mark.chair_windows_open
+# PHILO-14 A1: the Chair is the screen of objects. J1 reads its windows as the
+# desk remembers them open (`chair_windows_open`, tests/conftest.py); J3 starts
+# FRESH (no remembered windows) and opens The week by the owner's gestures.
 
 pytest.importorskip("playwright.sync_api", reason="the open-grammar glass needs Playwright")
 
@@ -125,7 +126,7 @@ class TestOneOpenGrammar:
         finally:
             server.stop()
 
-    def _page(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
+    def _page(self, pw: Any, width: int, fresh: bool = False) -> tuple[Any, Any, list[str]]:
         browser = pw.chromium.launch(headless=True)
         ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
                                   device_scale_factor=1, has_touch=width < 720, is_mobile=False)
@@ -135,7 +136,11 @@ class TestOneOpenGrammar:
         page.on("pageerror", lambda e: errors.append(str(e)[:200]))
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _normal_chair(page)
-        page.locator(".desk-window-shell[aria-label='Needs you']").wait_for(timeout=15_000)
+        if fresh:
+            # PHILO-14 A1 (#939): a fresh desk is the screen; no Chair window is open.
+            page.locator("[data-testid=desk-screen]").wait_for(timeout=15_000)
+        else:
+            page.locator(".desk-window-shell[aria-label='Needs you']").wait_for(timeout=15_000)
         page.wait_for_timeout(1500)
         _settle(page)
         return browser, page, errors
@@ -155,7 +160,7 @@ class TestOneOpenGrammar:
         shell = page.locator(f".desk-window-shell[aria-label='{name}']")
         if shell.count() and shell.first.is_visible() and shell.first.evaluate("e => e.classList.contains('is-front')"):
             return
-        if width > 720:
+        if width > 720 and shell.count():
             # PHILO-14 A1 (#939): the Chair windows float and stack like every
             # desk window; a press on any part of a window that shows brings it
             # to the front (one frame tap), as on Workbench.
@@ -216,8 +221,9 @@ class TestOneOpenGrammar:
         return page.evaluate("""() => { const t = document.querySelector('.people-lenses [role=tab][aria-selected=true]');
             return t ? t.textContent.trim() : null; }""")
 
+    @pytest.mark.chair_windows_open
     @pytest.mark.parametrize("width", [1440, 393])
-    def test_j1_and_j3_open_in_their_own_windows(self, width: int) -> None:
+    def test_j1_opens_in_their_own_windows(self, width: int) -> None:
         from playwright.sync_api import sync_playwright
 
         walk: dict[str, Any] = {"width": width, "touch": width < 720, "row_taps": 0, "frame_taps": 0,
@@ -274,21 +280,6 @@ class TestOneOpenGrammar:
                                   "calendar row -> its Room", walk)
                 walk["room_step"] = room
                 page.screenshot(path=str(SHOTS / f"B1-04-calendar-room-{width}.png"))
-
-                # J3 prep: a fresh browser (no remembered windows), the 1:1 row alone
-                fresh_browser, fresh, fresh_errors = self._page(pw, width)
-                try:
-                    j3: dict[str, Any] = {"row_taps": 0, "frame_taps": 0, "dead": 0, "steps": [],
-                                          "windows_before": [w["title"] for w in fresh.evaluate(WINDOWS_JS)]}
-                    self._chair_window(fresh, width, "The week", j3)
-                    one = fresh.locator("[data-testid='arrival-meeting-row']", has_text=ONE_ON_ONE).first
-                    self._open(fresh, width, one, "People", "Priya Nair", "J3: 1:1 row -> Priya on Prep", j3)
-                    j3["lens"] = self._lens(fresh)
-                    walk["j3"] = j3
-                    fresh.screenshot(path=str(SHOTS / f"B1-05-j3-prep-{width}.png"))
-                    errors.extend(fresh_errors)
-                finally:
-                    fresh_browser.close()
 
                 # Intelligence BRIEF: the row opens; Open person opens People on Priya
                 page.reload(wait_until="load")
@@ -356,11 +347,35 @@ class TestOneOpenGrammar:
         reopen = walk.get("reopen_prep") or {}
         if reopen.get("lens_after_now") != "Now" or reopen.get("dead") or reopen.get("lens") != "Prep":
             fails["Prep -> Now -> reopen lands on Prep"] = reopen
-        j3 = walk.get("j3") or {}
-        if j3.get("dead") or j3.get("row_taps") != 1 or j3.get("lens") != "Prep":
-            fails["J3 prep 1 gesture"] = j3
         if (walk.get("brief_people") or {}).get("dead", 1):
             fails["Brief -> Open person opens People on that relationship"] = walk.get("brief_people")
         if (walk.get("intelligence") or {}).get("dead", 1):
             fails["Intelligence BRIEF row opens"] = walk.get("intelligence")
         assert not fails, json.dumps(fails, indent=1)
+
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_j3_prep_from_a_fresh_chair(self, width: int) -> None:
+        """J3 prep: a fresh browser (no remembered windows; NOT marked
+        `chair_windows_open`). The screen shows; The week opens by the owner's
+        gesture (Window > Chair > The week at 1440, Go > The week at 393, the
+        frame taps counted apart); then the 1:1 row alone -> Priya on Prep."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, fresh, errors = self._page(pw, width, fresh=True)
+            j3: dict[str, Any] = {"width": width, "row_taps": 0, "frame_taps": 0, "dead": 0, "steps": []}
+            try:
+                j3["windows_before"] = [w["title"] for w in fresh.evaluate(WINDOWS_JS)]
+                assert fresh.locator(".desk-window-shell.chair-window").count() == 0, j3["windows_before"]
+                self._chair_window(fresh, width, "The week", j3)
+                one = fresh.locator("[data-testid='arrival-meeting-row']", has_text=ONE_ON_ONE).first
+                self._open(fresh, width, one, "People", "Priya Nair", "J3: 1:1 row -> Priya on Prep", j3)
+                j3["lens"] = self._lens(fresh)
+                fresh.screenshot(path=str(SHOTS / f"B1-05-j3-prep-{width}.png"))
+            finally:
+                (SHOTS / f"B1-walk-j3-{width}.json").write_text(json.dumps({**j3, "errors": errors}, indent=1))
+                browser.close()
+        print(json.dumps(j3, indent=1))
+        assert not j3["dead"] and j3["row_taps"] == 1 and j3["lens"] == "Prep", j3
+        # the window menu's taps: Window > Chair > The week (1440), Go > The week (393)
+        assert j3["frame_taps"] == (3 if width > 720 else 2), j3

@@ -34,6 +34,7 @@ Every wire projection here is path-free (§13).
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -846,8 +847,16 @@ class LaunchService:
                     "session_label_invalid", f"invalid session label: {label!r}"
                 )
             return label
-        derived = "hs-" + re.sub(r"[^A-Za-z0-9_.-]", "-", story_id.lower())
-        return f"{derived}-{uuid.uuid4().hex[:6]}"
+        # PHILO-14 A2b (Astra r1 on #945): tmux names hold 64 characters
+        # (coder_factory.NAME_RE). A long story id (`decision_record-record-
+        # <32 hex>`) is cut to a bounded prefix plus a digest of the WHOLE
+        # id, so two ids that share the prefix never share a name; the full
+        # id stays on the launch record (story_ref). 3+40+1+8+1+6 = 59.
+        slug = re.sub(r"[^A-Za-z0-9_.-]", "-", story_id.lower())
+        if len(slug) > 40:
+            digest = hashlib.sha1(story_id.encode("utf-8")).hexdigest()[:8]
+            slug = f"{slug[:40].rstrip('-.')}-{digest}"
+        return f"hs-{slug}-{uuid.uuid4().hex[:6]}"
 
     def _worktree_dirty(self, path: str) -> bool:
         try:
