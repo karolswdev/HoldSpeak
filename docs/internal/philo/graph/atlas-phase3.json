@@ -1445,17 +1445,19 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 1
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
         },
         {
           "kind": "ui",
@@ -7366,17 +7368,19 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 1
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
         },
         {
           "kind": "ui",

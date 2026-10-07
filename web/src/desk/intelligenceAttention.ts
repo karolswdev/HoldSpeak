@@ -120,3 +120,34 @@ export function useAftercare(): AftercareSignal | null {
     aftercareSnapshot,
   );
 }
+
+/* PHILO-14 A1c (Astra r1, #954): where the card is rendered, published by
+ * AmbientLayer from its own render state (never read back from the DOM).
+ * The Chair grows Capture only while Capture's slot holds the card. */
+export type AftercareHost = "capture" | "window" | "floor" | "fixed" | null;
+
+let aftercareHost: AftercareHost = null;
+const aftercareHostListeners = new Set<() => void>();
+
+export function publishAftercareHost(next: AftercareHost): void {
+  if (aftercareHost === next) return;
+  aftercareHost = next;
+  for (const listener of aftercareHostListeners) listener();
+}
+
+function aftercareHostSnapshot(): AftercareHost {
+  return aftercareHost;
+}
+
+function subscribeAftercareHost(listener: () => void): () => void {
+  aftercareHostListeners.add(listener);
+  return () => aftercareHostListeners.delete(listener);
+}
+
+export function useAftercareHost(): AftercareHost {
+  return useSyncExternalStore(
+    subscribeAftercareHost,
+    aftercareHostSnapshot,
+    aftercareHostSnapshot,
+  );
+}

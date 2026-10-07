@@ -4,9 +4,10 @@ Muad'Dib's ruling 2026-10-07: a card that lands opens a closed Capture and
 sits in Capture's slot; nothing floats over another window. Astra r1 (#954)
 asked for rendered geometry, not presence:
 
-  default   Capture closed -> the card opens it; the eyebrow, the title and
-            Dismiss are whole in Capture's body; Capture does not cover
-            Needs you; Dismiss -> Capture returns to its seat.
+  default   Capture's seat is measured (open from the menu, close), then the
+            card opens the closed Capture; it grows up from the seat's foot;
+            the eyebrow, the title and Dismiss are whole in its body; it does
+            not cover Needs you; Dismiss -> the exact seat rect.
   moved     Capture moved by its title bar (arranged) -> its rect does not
             change through card -> Dismiss; the eyebrow is whole at
             scrollTop 0; the title and Dismiss are whole once scrolled to.
@@ -214,6 +215,13 @@ class TestTheCardInCapture1440:
             browser, page, errors = self._page(pw)
             try:
                 self._open_chair(page, "Needs you")
+                # Capture's seat (C1-1): opened once from Window > Chair with
+                # no card, measured, then closed with its own close gadget.
+                self._open_chair(page, "Capture")
+                seat = page.evaluate(GEOMETRY)["capture"]
+                facts["seat"] = seat
+                page.get_by_role("button", name="Close Capture", exact=True).click()
+                page.wait_for_timeout(400)
                 if page.locator(f".desk-window-shell{CAPTURE}").count():
                     fails.append("Capture is open before the card")
                 self._send_card(page)
@@ -234,10 +242,13 @@ class TestTheCardInCapture1440:
                 self._dismiss(page)
                 after = page.evaluate(GEOMETRY)
                 facts["after"] = after
-                if not after["capture"] or after["capture"]["h"] >= cap["h"] - 50:
-                    fails.append(f"default: Capture did not return to its seat {cap} -> {after['capture']}")
-                if after["capture"] and abs(after["capture"]["y"] + after["capture"]["h"] - cap["y"] - cap["h"]) > 2:
-                    fails.append(f"default: Capture's foot moved {cap} -> {after['capture']}")
+                # Astra r2: Dismiss returns Capture to the EXACT seat rect.
+                if not _same(seat, after["capture"]):
+                    fails.append(f"default: Capture did not return to its seat {seat} -> {after['capture']}")
+                if cap and seat and abs(cap["y"] + cap["h"] - seat["y"] - seat["h"]) > 1:
+                    fails.append(f"default: the grown Capture's foot left the seat's {seat} -> {cap}")
+                if cap and seat and cap["h"] <= seat["h"]:
+                    fails.append(f"default: Capture did not grow for the card {seat} -> {cap}")
                 real = [e for e in errors if "ResizeObserver" not in e]
                 if real:
                     fails.append(f"page errors {real}")

@@ -58,6 +58,9 @@ interface ChairWindowsState {
   /** PHILO-13-17 (C7, Q4b): 393: Capture joins the phone's window ring when
    * it opens there and stays in it until it is closed. */
   captureInRing: boolean;
+  /** PHILO-14 A1c: the Chair is mounted as the screen of objects (A1), not
+   * the parked tiles. Set by ChairDesk; read by the aftercare card. */
+  screenMounted: boolean;
 }
 
 // PHILO-13-07 (B2): the closed Chair windows and the phone's window come
@@ -79,6 +82,7 @@ export const useChairWindows = create<ChairWindowsState>(() => ({
       ? storedChair.phone
       : "",
   captureInRing: storedChair?.phone === "chair:capture",
+  screenMounted: false,
 }));
 
 // PHILO-13-07 (B2): a closed Chair window stays closed after a reload.
