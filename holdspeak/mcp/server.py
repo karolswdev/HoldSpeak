@@ -282,7 +282,9 @@ def handle_message(request: dict[str, Any]) -> dict[str, Any] | None:
     if method == "ping":
         return _response(request_id, {})
     if method == "tools/list":
-        return _response(request_id, {"tools": TOOLS})
+        from holdspeak.mcp.families.people import discoverable_tools
+
+        return _response(request_id, {"tools": discoverable_tools(TOOLS)})
     if method == "resources/list":
         return _response(request_id, list_resources(resolve_auth().principal))
     if method == "resources/read":
@@ -355,7 +357,7 @@ def handle_message_for_principal(
     *palette* is non-None, tools outside it are refused with MCP-005.
     ``call_gate(name, arguments)`` refuses one call of a palette tool on its
     arguments, the same way; ``resource_gate(uri)`` hides and refuses
-    resources (Conductor K6: the CONDUCTOR palette's People cut).
+    resources (Conductor K6; since R7 People resources pass while People access is on).
     """
     request_id = request.get("id")
     method = request.get("method")
@@ -380,8 +382,10 @@ def handle_message_for_principal(
     if method == "ping":
         return _response(request_id, {})
     if method == "tools/list":
+        from holdspeak.mcp.families.people import discoverable_tools
+
         available_tools = tools_for_palette(palette) if palette else TOOLS
-        return _response(request_id, {"tools": available_tools})
+        return _response(request_id, {"tools": discoverable_tools(available_tools)})
     if method == "resources/list":
         listed = list_resources(principal)
         if resource_gate is not None:
@@ -402,9 +406,7 @@ def handle_message_for_principal(
                 data={"code": "MCP-005", "resource": uri},
             )
         try:
-            from holdspeak.services.conductor_launch import cut_for
-
-            return _response(request_id, cut_for(principal, read_resource(uri, principal)))
+            return _response(request_id, read_resource(uri, principal))
         except ServiceError as exc:
             return _error(
                 request_id, -32002, exc.detail,

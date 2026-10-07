@@ -424,6 +424,10 @@ def list_resources(principal: Principal | None = None) -> dict[str, list[dict[st
         ]
     else:
         templates = _RESOURCE_TEMPLATES
+    if not people_family.people_discoverable():
+        # Conductor R7: People leaves discovery while its access is off.
+        resources = [row for row in resources if not row["uri"].startswith("holdspeak://people/")]
+        templates = [row for row in templates if not row["uriTemplate"].startswith("holdspeak://people/")]
     return {"resources": resources, "resourceTemplates": templates}
 
 

@@ -911,8 +911,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         conductor_launch.after_call(name, arguments, result, principal)
         if wrote() and not is_read_tool(name):
             announce(*operations.changed_for(name, arguments, result))
-    # ... and reads every answer through the People cut.
-    return conductor_launch.cut_for(principal, result)
+    return result
 
 
 #: The last name segment of a tool that only reads. A read may still write a

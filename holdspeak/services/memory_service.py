@@ -16,16 +16,6 @@ def _may_read(principal: Principal) -> bool:
     return principal.permits(PrincipalRight.READ) or launch_reader(principal)
 
 
-def _people_cut(db: Any, principal: Principal, method: str, result: Any) -> Any:
-    """A launch reader reads memory with the brief's People cut; the owner
-    reads it whole."""
-    if principal.permits(PrincipalRight.READ):
-        return result
-    from .conductor_launch import cut_memory
-
-    return cut_memory(db, method, result)
-
-
 @observe_service
 class MemoryService:
     def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
@@ -60,7 +50,7 @@ class MemoryService:
             # The question's embedding call, when there is one, is admitted
             # for THIS principal: the receipt names who searched.
             with memory_caller(principal):
-                return _people_cut(self._db, principal, "search", self._db.memory.search(
+                return (self._db.memory.search(
                     query,
                     kinds=kind,
                     project_id=project_id,
@@ -117,7 +107,7 @@ class MemoryService:
             states=states,
             limit=max(1, min(bounded, 200)),
         )
-        return _people_cut(self._db, principal, "observations", {"observations": rows, "count": len(rows)})
+        return ({"observations": rows, "count": len(rows)})
 
     def page(
         self,
@@ -155,7 +145,7 @@ class MemoryService:
             spec_for(chosen, str(slug or "").strip())
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
-        return _people_cut(self._db, principal, "page", {"page": read(self._db, chosen, project, str(slug).strip())})
+        return ({"page": read(self._db, chosen, project, str(slug).strip())})
 
     def standing_pages(
         self,
@@ -187,4 +177,4 @@ class MemoryService:
             raise ValidationError("scope project needs a project_id")
         if chosen == "desk" and project:
             raise ValidationError("scope desk takes no project_id")
-        return _people_cut(self._db, principal, "standing_pages", {"pages": standing_pages(self._db, chosen, project)})
+        return ({"pages": standing_pages(self._db, chosen, project)})

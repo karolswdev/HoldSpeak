@@ -34,6 +34,43 @@ Source: `docs/internal/CONDUCTOR.md` (the loop, "F faces", "The Control-mode map
 | K5c enter-sends | Q5 | Enter sends; the composer empties; `sent` |
 | K6 follow-through-receipt | Q6 | On merge the runbook leaves OPEN HERE (`2 open here`); the Room receipt line: `DONE · Write the rollback runbook · PR #413 MERGED · <time>`; its session leaves AGENTS |
 
+## K7a: People MCP access (Conductor R7). **RATIFIED by the owner 2026-10-07. Built.**
+
+The answers to the two questions below:
+1. "Yes": the new Settings › People panel, as drawn.
+2. "Of course it should, buddy!": when `HOLDSPEAK_MCP_PEOPLE_ACCESS` overrides the setting, the strip is disabled. The hub also refuses the PUT by name (`people_access_env_override`).
+
+**Built face beside the board** (`harness/shoot_built_k7.py`, the product as built on a real hub; facts in `shots/K7-built-facts.json`). Result: `ALL FENCES HELD` at 1440 and 393.
+
+| State | 1440 | 393 |
+|---|---|---|
+| The setting (`SOURCE · SETTING`, `AGENTS · READ`) | `shots/K7a-built-setting-1440.png` | `shots/K7a-built-setting-393.png` |
+| After a press on OFF (`AGENTS · OFF`, receipt `SUCCEEDED · ACCESS · OFF · BY OWNER`) | `shots/K7a-built-off-1440.png` | `shots/K7a-built-off-393.png` |
+| The variable set (`HOLDSPEAK_MCP_PEOPLE_ACCESS=off`): the strip disabled, `SOURCE · HOLDSPEAK_MCP_PEOPLE_ACCESS` | `shots/K7a-built-env-1440.png` | `shots/K7a-built-env-393.png` |
+| The read fails (Astra on #919): `READ FAILED · UNAVAILABLE` and **Retry**; no strip, no stale value. Stand-in: the browser answers the one GET with 503. Retry after the route is lifted brings the strip back | `shots/K7a-built-read-failed-1440.png` | `shots/K7a-built-read-failed-393.png` |
+
+One change from the board: the source token reads `SOURCE · …` as ruled, and a long one wraps inside its row at 393 (the new library chip modifier `data-wrap`).
+
+The board as it was presented:
+
+The owner, 2026-10-06: "the default should be on, for HOLDSPEAK_MCP_PEOPLE_ACCESS, and I guess there's an affordance to set it somewhere, right?"
+
+| Board | Proposes |
+|---|---|
+| K7a people-access | Settings › **People** (a new module: main has no People module; stand-in S8). Group `MCP ACCESS`. Row **Access**: one `FilterTokens` strip `OFF` / `READ` / `WRITE`, with the current mode pressed (default `WRITE`). Row **Agents**: `AGENTS · READ` (`AGENTS · NONE` when off) and the source token: `DEFAULT`, `SETTING` or `ENV`. The Settings hub gets a **People** row with `MCP · WRITE` and `AGENTS · READ`. The strip reads and presses the REAL route `GET` and `PUT /api/settings/people-access` (an admitted owner-only kernel operation with a receipt). |
+
+- **Shots:** `shots/K7a-people-access-1440.png` and `shots/K7a-people-access-393.png`.
+- **Facts:** `shots/K7-facts.json`.
+- **Fences:** `ALL FENCES HELD` at both widths.
+  - The front window is `Settings · People`, with one blue title bar.
+  - Contrast, clipping and text size: 0 findings.
+  - This board's own controls: 0 targets under 44 px at 393.
+  - At 393, main's Dock chip under `More` is recorded as main's, not as a failure.
+- **Run:** `PLAYWRIGHT_BROWSERS_PATH=$HOME/Library/Caches/ms-playwright .venv/bin/python docs/internal/conductor-canvas/harness/shoot_k7.py`. It seats only the Q7 anchors (`seats.mjs` `K7`, `CANVAS_SEATS=k7`). The K boards' seats were drawn on `8f958800e`, and their faces are built since then.
+- **Owner questions:**
+  1. Is a new **People** module in Settings correct, or should the control live in the People window?
+  2. When the env var overrides the setting, should the strip be disabled under the `ENV` token? (This state is not drawn.)
+
 ## Fence results (`shots/facts.json`, run of 2026-10-06 on `8f958800e`: `ALL FENCES HELD`, exit 0)
 
 | Measure | Value |

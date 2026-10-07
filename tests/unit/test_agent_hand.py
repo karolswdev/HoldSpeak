@@ -160,12 +160,12 @@ def test_brief_reads_hs_facts_of_the_target_repo(db, tmp_path) -> None:
     assert "Run make test before a PR." in brief["text"]
 
 
-def test_brief_cuts_people(db) -> None:
+def test_brief_keeps_people(db) -> None:
+    """Conductor R7 (owner ruling 2026-10-06): People data travels with the brief."""
     brief = compose_agent_brief(db, "note:n1", control_mode="yolo")
     assert "Timeout is 5 s." in brief["text"]
-    assert "Alice" not in brief["text"]
-    assert "1:1 Thursday" not in brief["text"]
-    assert brief["people_cut"] >= 1
+    assert "Alice" in brief["text"]
+    assert brief["people_cut"] == 0
 
 
 def test_brief_refuses_over_cap_by_name(db) -> None:

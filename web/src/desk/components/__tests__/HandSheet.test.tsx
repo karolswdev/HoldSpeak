@@ -22,7 +22,9 @@ function preview(patch: Partial<HandPreview> = {}): HandPreview {
     text: "HoldSpeak hands you one item: action:ai_1 \"Write the rollback runbook\".",
     refs: ["action:ai_1", "meeting:m1"],
     bytes: 4300,
-    people_cut: 3,
+    // Conductor R7 (owner ruling 2026-10-06): the brief cuts no People, so
+    // the hub always sends 0 and the sheet shows no PEOPLE CUT token.
+    people_cut: 0,
     sources: [
       { kind: "action", ref: "ai_1", title: "Write the rollback runbook", lines: null },
       { kind: "meeting", ref: "m1", title: "Ledger cutover sync", lines: null },
@@ -100,7 +102,8 @@ describe("the launch sheet", () => {
     const first = calls.find((c) => c.url.endsWith("/api/agent/hand/preview"))!;
     expect(first.body).toMatchObject({ kind: "action", id: "ai_1", profile: "claude-default", project_id: "p-ledger" });
     expect(screen.getByText("BRIEF · 4 SOURCES · 4.2 KB")).toBeTruthy();
-    expect(within(sheet).getByTestId("hand-brief-tokens").textContent).toBe("PEOPLE CUT · 3 PARTSACCEPTANCE · 6 CHECKS");
+    expect(within(sheet).getByTestId("hand-brief-tokens").textContent).toBe("ACCEPTANCE · 6 CHECKS");
+    expect(within(sheet).queryByText(/PEOPLE CUT/)).toBeNull();
     expect(within(sheet).getByText("3 OPEN")).toBeTruthy();
     const where = within(sheet).getByTestId("hand-where").textContent ?? "";
     expect(where).toContain("~/dev/payments-ledger");

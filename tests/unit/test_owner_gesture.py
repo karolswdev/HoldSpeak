@@ -516,6 +516,9 @@ class TestMCPCatalogue:
             "people.owner_alias.link",
             "people.owner_alias.unlink",
             "people.resolve",
+            # Conductor R7: the owner's People MCP access, classed CONFIG
+            # (mcp/tool_authority.py): his press only, never an agent's or a thread's.
+            "people.access.set",
         }
         assert not any(
             fragment in name

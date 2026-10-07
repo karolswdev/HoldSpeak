@@ -669,8 +669,8 @@ agent_credentials = AgentCredentialStore()
 
 def launch_reader(principal: Any) -> bool:
     """Conductor K6: an AGENT whose launch-bound credential is live reads
-    memory for the life of its launch (the People cut applies to what it
-    reads). Revoked with the credential."""
+    memory for the life of its launch (People content included since R7).
+    Revoked with the credential."""
     if getattr(principal, "kind", None) is not PrincipalKind.AGENT:
         return False
     return agent_credentials.launch_credential(principal.identity) is not None

@@ -897,6 +897,8 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "memory.page.read": {"kind": "tool", "name": "memory.page"},
     # Conductor K2: Hand to agent.
     "agent.hand": {"kind": "tool", "name": "agent.hand"},
+    # Conductor R7: the owner's People MCP access (config).
+    "people_access.set": {"kind": "tool", "name": "people.access.set"},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.

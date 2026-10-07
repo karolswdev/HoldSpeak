@@ -73,6 +73,7 @@ export function StripMenuButton({
   onDoor,
   variant,
   className,
+  disabled,
 }: {
   /** The strip's accessible name ("Window faces", "Ranking"). */
   label: string;
@@ -84,6 +85,8 @@ export function StripMenuButton({
   onDoor?: () => void;
   variant: "chrome" | "secondary";
   className?: string;
+  /** The library Button's disabled state (FilterTokens' `disabled`). */
+  disabled?: boolean;
 }) {
   const [at, setAt] = useState<{ x: number; y: number; keys: boolean } | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -119,6 +122,7 @@ export function StripMenuButton({
         aria-expanded={Boolean(at)}
         aria-label={`${label}: ${shown}`}
         data-testid="surface-strip-menu"
+        disabled={disabled}
         onClick={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
           // A keyboard press (Enter/Space: a click with no pointer) puts focus

@@ -825,26 +825,6 @@ class MeetingWebServer:
         app.state.agent_credentials = agent_credentials
         app.state.owner_token = self.auth_token
 
-        async def _launch_cut_response(response: Any) -> Any:
-            import json as _json
-
-            from starlette.responses import Response as _Response
-
-            from .services.conductor_launch import cut_value
-
-            body = b"".join([chunk async for chunk in response.body_iterator])
-            headers = {k: v for k, v in response.headers.items() if k.lower() != "content-length"}
-            media = str(response.headers.get("content-type") or "")
-            if body and "json" in media:
-                try:
-                    body = _json.dumps(cut_value(_json.loads(body)), default=str).encode()
-                except ValueError:
-                    body = str(cut_value(body.decode("utf-8", "replace")) or "").encode()
-            elif body and media.startswith("text/"):
-                body = str(cut_value(body.decode("utf-8", "replace")) or "").encode()
-            return _Response(content=body, status_code=response.status_code, headers=headers,
-                             media_type=response.media_type)
-
         @app.middleware("http")
         async def _web_auth_gate(request: Request, call_next: Any) -> Any:
             token = web_auth.extract_request_token(
@@ -875,14 +855,7 @@ class MeetingWebServer:
             if right is not None and not principal.permits(right):
                 status = 401 if principal.kind is PrincipalKind.NONE else 403
                 return JSONResponse(refusal(principal, right), status_code=status)
-            response = await call_next(request)
-            from .services.conductor_launch import launch_id_of
-
-            if launch_id_of(principal) is None:
-                return response
-            # Conductor K6 (Astra round 2 on #903): EVERY HTTP answer a
-            # launched agent receives passes the People cut, in one place.
-            return await _launch_cut_response(response)
+            return await call_next(request)
 
         # Every HTTP write sends one desk_changed frame (the root for routes
         # that do not go through OperationRegistry.invoke).

@@ -6,7 +6,8 @@ import { MODULE_ALIASES, PREF_MODULES } from "../settingsPrefs";
 
 describe("Settings face roster", () => {
   it("has the Models and Assignments peer destinations", () => {
-    expect(PREF_MODULES).toHaveLength(9);
+    // Conductor R7 (canvas K7a, ratified 2026-10-07): + People.
+    expect(PREF_MODULES).toHaveLength(10);
   });
 
   it("names every tile by what the owner does, not by subsystem", () => {
@@ -21,6 +22,7 @@ describe("Settings face roster", () => {
       "assignments",
       "integrations",
       "system",
+      "people",
     ]);
   });
 

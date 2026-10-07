@@ -83,7 +83,7 @@ class PeopleService:
         self._setup_runner = setup_runner
 
     def readiness(self, principal: Any) -> dict[str, str]:
-        self._require_owner(principal)
+        self._require_reader(principal)
         try:
             state = self._store.readiness()
         except Exception as exc:  # Store errors intentionally contain no content.
@@ -104,7 +104,7 @@ class PeopleService:
         return self._readiness_view(state)
 
     def list_relationships(self, principal: Any, *, include_archived: bool = False) -> list[dict[str, Any]]:
-        self._require_ready_owner(principal)
+        self._require_ready_owner(principal, read=True)
         return [self._relationship_view(item) for item in self._list("relationship", active_only=not include_archived)]
 
     def create_relationship(self, principal: Any, payload: dict[str, Any]) -> dict[str, Any]:
@@ -125,7 +125,7 @@ class PeopleService:
     def get_relationship(
         self, principal: Any, relationship_id: str, *, db: Any = None,
     ) -> dict[str, Any]:
-        self._require_ready_owner(principal)
+        self._require_ready_owner(principal, read=True)
         record = self._get(relationship_id, "relationship")
         if record is None or str(record.get("state") or "") == "archived":
             raise PeopleServiceError("people_relationship_not_found")
@@ -174,7 +174,7 @@ class PeopleService:
         return self._relationship_view(self._replace(relationship_id, value))
 
     def list_one_on_ones(self, principal: Any, relationship_id: str) -> list[dict[str, Any]]:
-        self._require_relationship(principal, relationship_id)
+        self._require_relationship(principal, relationship_id, read=True)
         sessions = [self._entry_view(item) for item in self._list("one_on_one", relationship_id=relationship_id)]
         for session in sessions:
             session["agenda"] = [self._agenda_view(item) for item in self._list("agenda_item", relationship_id=relationship_id) if item.get("session_id") == session["id"]]
@@ -390,7 +390,7 @@ class PeopleService:
         ``db`` is the main HoldSpeak database; when ``None`` the plaintext
         sections degrade gracefully to empty lists.
         """
-        relationship = self._require_relationship(principal, relationship_id)
+        relationship = self._require_relationship(principal, relationship_id, read=True)
 
         # Encrypted: open commitments for this relationship.
         open_commitments = [
@@ -1368,7 +1368,9 @@ class PeopleService:
     # -- Follow-through projection -------------------------------------------------
 
     def list_cards(self, principal: Any, *, owner: str | None = None) -> list[FollowThroughCard]:
-        self._require_ready_owner(principal)
+        # Conductor R7: a read (a launched agent's board and Door show People
+        # commitments); ``transition`` stays owner only.
+        self._require_ready_owner(principal, read=True)
         if owner not in (None, "", "you", "manager"):
             return []
         cards: list[FollowThroughCard] = []
@@ -1439,8 +1441,21 @@ class PeopleService:
         if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
             raise PeopleServiceError("people_owner_required")
 
-    def _require_ready_owner(self, principal: Any) -> None:
-        self._require_owner(principal)
+    def _require_reader(self, principal: Any) -> None:
+        """The owner, or (a READ only) an agent HoldSpeak launched whose
+        credential is live: Conductor R7, owner ruling 2026-10-06 ("agents
+        should totally be able to look it up"). Agents never write People."""
+        from ..principals import launch_reader
+
+        if getattr(principal, "kind", None) is PrincipalKind.OWNER or launch_reader(principal):
+            return
+        raise PeopleServiceError("people_owner_required")
+
+    def _require_ready_owner(self, principal: Any, *, read: bool = False) -> None:
+        if read:
+            self._require_reader(principal)
+        else:
+            self._require_owner(principal)
         try:
             state = self._store.readiness()
             ready = str(getattr(state, "value", state)) == "ready"
@@ -1449,8 +1464,8 @@ class PeopleService:
         if not ready:
             raise PeopleUnavailable("people_store_unavailable")
 
-    def _require_relationship(self, principal: Any, relationship_id: str) -> dict[str, Any]:
-        self._require_ready_owner(principal)
+    def _require_relationship(self, principal: Any, relationship_id: str, *, read: bool = False) -> dict[str, Any]:
+        self._require_ready_owner(principal, read=read)
         relationship = self._get(relationship_id, "relationship")
         if relationship is None or str(relationship.get("state") or "") == "archived":
             raise PeopleServiceError("people_relationship_not_found")

@@ -10,6 +10,8 @@ POST /api/onboarding/calendar/use             -- {id, label?}: add the calendar 
 GET  /api/onboarding/connections              -- signed-in gh / acli accounts (files only)
 POST /api/onboarding/connections/use          -- {id}: add the connector + its status probe
 GET  /api/onboarding/agents                   -- claude / codex / tmux readiness (files and PATH only)
+GET  /api/settings/people-access              -- Conductor R7: {mode, effective, source, agents}
+PUT  /api/settings/people-access              -- {mode}: people_access.set (admitted config; receipt)
 POST /api/onboarding/agents/use               -- {agent}: agent_hooks.install (admitted; answers
                                                  with its operation_id and terminal receipt)
 """
@@ -151,6 +153,36 @@ def build_onboarding_router(ctx: WebContext) -> APIRouter:
                 log.exception("Onboarding agents use failed")
                 return JSONResponse({"success": False, "code": "failed", "error_code": "failed",
                                      "message": "The hook install failed.", **refusal_fields(exc)}, status_code=500)
+
+        return await run_in_threadpool(run)
+
+    # ── Conductor R7: People MCP access (config, owner only) ─────────
+
+    @router.get("/api/settings/people-access")
+    async def people_access(request: Request) -> Any:
+        return await _call(request, "people_access")
+
+    @router.put("/api/settings/people-access")
+    async def people_access_set(request: Request) -> Any:
+        # The owner's press: one admitted kernel operation, one receipt.
+        name = "people_access.set"
+        registry = operations.for_context(ctx)
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        data, refused = await body_or_refusal(request, registry, principal, name)
+        if refused is not None:
+            return refused
+
+        def run() -> JSONResponse:
+            try:
+                result, kernel = registry.invoke_receipted(principal, name, dict(data))
+                return JSONResponse({**result, **kernel_fields(kernel)})
+            except OperationRefused as exc:
+                return JSONResponse({"success": False, "code": exc.code, "error_code": exc.code,
+                                     "message": exc.detail, **refusal_fields(exc)}, status_code=400)
+            except ServiceError as exc:
+                if (refused := kernel_refusal(exc)) is not None:
+                    return refused
+                return service_refusal(exc)
 
         return await run_in_threadpool(run)
 

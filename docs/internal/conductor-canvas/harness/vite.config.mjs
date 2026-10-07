@@ -10,7 +10,7 @@
 import { fileURLToPath, URL } from "node:url";
 import { createRequire } from "node:module";
 import { existsSync } from "node:fs";
-import K from "./seats.mjs";
+import K0, { K7 } from "./seats.mjs";
 
 const harness = fileURLToPath(new URL(".", import.meta.url));
 const web = fileURLToPath(new URL("../../../../web/", import.meta.url));
@@ -19,6 +19,8 @@ const react = require("@vitejs/plugin-react").default;
 const hub = process.env.HUB || "http://127.0.0.1:48902";
 const proposal = (process.env.CANVAS_MODE || "proposal") === "proposal";
 const SHIM = `${harness}conductor.tsx`;
+// CANVAS_SEATS=k7: the R7 People-access leg seats only its own anchors (seats.mjs K7).
+const K = process.env.CANVAS_SEATS === "k7" ? K7 : K0;
 const SEATS = proposal ? K.map((x) => [`k:${x[0]}`, ...x.slice(1)]) : [];
 
 const met = new Set();

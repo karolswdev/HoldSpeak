@@ -272,6 +272,7 @@ def test_people_mcp_catalogue_is_closed_and_does_not_offer_forbidden_operations(
         "people.owner_alias.link",
         "people.owner_alias.unlink",
         "people.resolve",
+        "people.access.set",  # Conductor R7: the owner's config press
     }
     assert not any(
         fragment in name

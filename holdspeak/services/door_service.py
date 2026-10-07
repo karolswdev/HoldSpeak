@@ -18,8 +18,10 @@ if TYPE_CHECKING:
 
 
 
+
+
 def _launch_reader(principal: Any) -> bool:
-    """A launched agent (Conductor K6): People projections are not resolved for it."""
+    """A launched agent (Conductor R5): the Door omits the owner's Thought lane."""
     from .conductor_launch import launch_id_of
 
     return launch_id_of(principal) is not None
@@ -127,10 +129,10 @@ class DoorService:
         projected_board: dict[str, Any] = dict(self.asking_board(principal))
         # Conductor R5: Thoughts are the owner's custody (the Thought service
         # refuses every other principal), so a launched agent's Door has no
-        # Thought lane. The People cut already applies to the rest.
+        # Thought lane. People are visible to it (Conductor R7).
         if not launch:
             projected_board["active"] = self._active_thoughts(principal)
-        upcoming = self._upcoming(now_utc, people=not launch)
+        upcoming = self._upcoming(now_utc)
         has_calendar = self._calendar_configured()
         counts: dict[str, int] = {
             "overdue": len(projected_board["overdue"]),
@@ -164,8 +166,7 @@ class DoorService:
         """
         board = self._follow_through_service.board(principal)
         # HS-150-02: resolve mapped owner strings to person labels.
-        # Conductor K6: a launched agent's read resolves no person.
-        owner_person_index = {} if _launch_reader(principal) else self._build_owner_person_index(board)
+        owner_person_index = self._build_owner_person_index(board)
 
         def cards(lane: list[Any]) -> list[dict[str, Any]]:
             return [self._follow_through_card(card, owner_person_index=owner_person_index) for card in lane]
@@ -310,7 +311,7 @@ class DoorService:
             ],
         }
 
-    def _upcoming(self, now: datetime, *, people: bool = True) -> list[dict[str, Any]]:
+    def _upcoming(self, now: datetime) -> list[dict[str, Any]]:
         upcoming: list[dict[str, Any]] = []
         enabled_recordings = self._scheduled_recordings.list_enabled()
         now_iso = self._utc_iso(now)
@@ -395,8 +396,7 @@ class DoorService:
         # HS-149-03: build a person label index for linked calendar series.
         # Memoize one resolve per distinct (uid, source_id) in the aggregate
         # build — CHEAP, never cached across requests.
-        # Conductor K6: no People resolution for a launched agent's read.
-        person_index = self._build_person_index(events) if people else {}
+        person_index = self._build_person_index(events)
         # HS-175-02: build event-to-Room project index for Room tokens.
         project_index = self._build_event_project_index()
         upcoming.extend(
