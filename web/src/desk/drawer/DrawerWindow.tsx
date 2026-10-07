@@ -70,7 +70,8 @@ function HeadFacts({ head, count, failed }: { head: DrawerHead; count: number; f
           {head.targetPassed ? "OVERDUE" : "TARGET"} <b>{head.target}</b>
         </span>
       ) : null}
-      {head.status ? (
+      {/* An unread section is never spoken as ON TRACK. */}
+      {head.status && !(failed.length && head.statusTone === "ok") ? (
         <span className="drawer-fact" data-tone={head.statusTone}>
           STATUS <b>{head.status}</b>
         </span>

@@ -237,6 +237,48 @@ describe("PHILO-14 A2 the drawer", () => {
     expect(screen.queryByTestId("drawer-partial")).toBeNull();
   });
 
+  it("A2b: a degraded decisions section is a failed read: NOT READ, PARTIAL, Retry, no second copy", async () => {
+    let degraded = true;
+    const recordFlight = { origin_ref: "decision_record:record-1", kind: "decision_record", id: "record-1", title: "Freeze the old ledger (Nov 5)",
+      project_id: "p-ledger", project_name: "Payments ledger cutover", agent: "claude", state: "working", session_key: null, pr: null };
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        return Promise.resolve(degraded ? { ...ROOM, decisions: { state: "degraded", error_code: "read_failed" } } : ROOM);
+      }
+      if (url.startsWith("/api/coders/sessions")) return Promise.resolve({ sessions: [], flights: [recordFlight] });
+      return Promise.resolve(route(url));
+    });
+    await renderDrawer();
+    await screen.findByText(/DECISIONS ·/);
+    expect(screen.getByTestId("drawer-facts")).toHaveTextContent("DECISIONS · NOT READ");
+    expect(screen.getByTestId("drawer-partial")).toHaveTextContent("PARTIAL");
+    expect(screen.getByTestId("drawer-facts")).not.toHaveTextContent("ON TRACK");
+    // One decision (the lifecycle read), never a second copy from the flight.
+    const refs = () => [...document.querySelectorAll(".drawer-window [data-object-id], [data-object-id]")]
+      .map((e) => (e as HTMLElement).dataset.objectId ?? "");
+    expect(refs().filter((r) => r.startsWith("decision"))).toEqual(["decision:dec-1"]);
+    const rooms = () => apiFetch.mock.calls.filter(([u]) => String(u).includes("/room")).length;
+    const before = rooms();
+    degraded = false;
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }), { detail: 1 });
+    await waitFor(() => expect(screen.queryByTestId("drawer-partial")).toBeNull());
+    expect(rooms()).toBeGreaterThan(before);
+    expect(screen.getByTestId("drawer-facts")).toHaveTextContent("ON TRACK");
+    expect(refs().filter((r) => r.startsWith("decision"))).toEqual(["decision:dec-1"]);
+  });
+
+  it("A2b: a decision record the Room did not list opens through its own route", async () => {
+    const member: DrawerMember = { id: "decision_record:record-9", ref: "decision_record:record-9", kind: "decision", name: "X", facts: {} } as never;
+    expect(memberOpens(member)).toBe(true);
+    apiFetch.mockImplementation((url: string) =>
+      Promise.resolve(url === "/api/decision-records/record-9" ? { id: "record-9", source_type: "meeting", source_id: "dec-1" } : route(url)));
+    openMember(member);
+    // The record's source is the `decisions` row: its opener reads that row
+    // (never `/api/decisions/record-9`).
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/decisions/dec-1"));
+    expect(apiFetch.mock.calls.some(([u]) => String(u) === "/api/decisions/record-9")).toBe(false);
+  });
+
   it("a Room commitment opens its action item's card; a decision-kind one stays a decision", () => {
     const members = drawerMembers({
       projectId: "p", projectName: "P", meetings: [], decisions: [], artifacts: [], people: [], resources: [],

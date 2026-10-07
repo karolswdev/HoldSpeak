@@ -141,11 +141,15 @@ describe("Arrival attention (HS-200-15)", () => {
     const entries = within(list).getAllByTestId("arrival-source");
     expect(entries).toHaveLength(2);
     expect(list.textContent).toContain("PROPOSED · STANDUP");
-    // Each projection: emblem, its own title, its why, its own Open (A.11).
+    // Each projection: emblem, its own title, its why, its own verb (A.11).
+    // PHILO-14 A2b: a proposal's verb is the explicit Room path (Astra r1).
     for (const entry of entries) {
       expect(entry.querySelector(".arrival-source-emblem")?.textContent).not.toBe("");
       expect(entry.querySelector(".arrival-source-title")?.textContent).toBe("Priya confirms the freeze window");
-      expect(within(entry).getByRole("button", { name: "Open: Priya confirms the freeze window" })).toBeTruthy();
+      const proposal = entry.textContent?.includes("PROPOSED");
+      expect(within(entry).getByRole("button", {
+        name: `${proposal ? "Room" : "Open"}: Priya confirms the freeze window`,
+      })).toBeTruthy();
     }
   });
 

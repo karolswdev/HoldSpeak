@@ -12,7 +12,7 @@ import { ApiError, apiFetch } from "../../lib/api";
 import { openPrimitive, openProjectRoom, openSurfaceOr } from "../shell";
 import { ChairHome } from "../chair/ChairHome";
 import { BriefView } from "../pullouts/views/BriefView";
-import { __resetOwnerCache } from "../openObject";
+import { __resetOwnerCache, takeRoomProposalRequest } from "../openObject";
 import { useDrawers } from "../drawer/store";
 import { asHub } from "../../test/hubNeedsYou";
 import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
@@ -231,6 +231,29 @@ describe("PHILO-14 A2b: every generic open of a Project opens its drawer", () =>
     fireEvent.click(button);
     expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["proj-ledger"]);
     expect(openProjectRoom).not.toHaveBeenCalled();
+  });
+
+  it("a proposal row opens the Room with that proposal selected; its verb says Room", async () => {
+    chairNeeds = {
+      ...twoProjects,
+      items: [...twoProjects.items, { id: "pr1", projectId: "proj-ledger", projectName: "Payments ledger cutover",
+        ref: "Run the dry run", title: "Run the dry run", why: "PROPOSED", ageToken: "", source: "proposal",
+        verbHref: "/api/proposals/prop-7/confirm", severity: "info", proposalId: "prop-7", proposalKind: "action" }],
+    };
+    useDrawers.setState({ drawers: [], infos: [] });
+    render(<ChairHome />);
+    const row = (await screen.findByText("Run the dry run")).closest(".surface-ledger-line") as HTMLElement;
+    await waitFor(() => expect(row.getAttribute("role")).toBe("button"));
+    fireEvent.click(row);
+    expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
+    expect(takeRoomProposalRequest("proj-ledger")).toBe("prop-7");
+    expect(useDrawers.getState().drawers).toEqual([]);
+    // The shortcut inside MORE is the explicit Room path, with the proposal.
+    vi.mocked(openProjectRoom).mockClear();
+    fireEvent.click(within(row.closest("li") as HTMLElement).getByRole("button", { name: "More: Run the dry run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Room: Run the dry run" }));
+    expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
+    expect(takeRoomProposalRequest("proj-ledger")).toBe("prop-7");
   });
 
   it("a row that names only its Project opens the drawer, never the Room", async () => {

@@ -33,6 +33,7 @@ from holdspeak.kernel.broker import Broker
 from holdspeak.kernel.journal import JournalStore
 from holdspeak.kernel.model import OperationSpec
 from holdspeak.kernel.process_input import ProcessInputCodec
+from holdspeak import coder_factory
 from holdspeak.kernel.process_spawn import ProcessSpawnCodec
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.agent_brief import (
@@ -357,6 +358,36 @@ def test_hand_launches_claude_in_a_new_worktree_with_origin(tmp_path, db, monkey
     attempt = db.work_attempts.get(result["attempt_id"])
     assert attempt.session_id == "claude:smoke-session"
     rig.tmux.ended = True
+
+
+def test_hand_launches_a_minted_decision_record_with_a_bounded_session_name(tmp_path, db, monkeypatch) -> None:
+    """PHILO-14 A2b (Astra r1 on #945, P1): a record id as the record service
+    mints it (`record-<32 hex>`) made a 65-character tmux name and the spawn
+    refused it (`bad_name`). Two records that share the cut prefix get two
+    names; the full id stays on the launch record."""
+    base = "record-7b0742ee1cc24168854617d98a9699c"
+    names = []
+    for i, rid in enumerate((base + "e", base + "f")):
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT INTO decision_records (id, decision_text, rationale, source_type, source_id, created_at, updated_at) "
+                "VALUES (?, 'Freeze the old ledger', 'Agreed', 'decision', 'd1', '2026-10-01', '2026-10-01')", (rid,))
+            conn.execute(
+                "INSERT INTO decision_record_sources (id, record_id, source_type, source_ref, created_at) "
+                "VALUES (?, ?, 'meeting', 'm1', '2026-10-01')", (f"drs-{i}", rid))
+        root = tmp_path / f"r{i}"
+        root.mkdir()
+        rig = _rig(root, db, monkeypatch, item=("decision_record", rid))
+        result = rig.hand.hand(OWNER, "decision_record", rid)
+        assert result["status"] == "launched", result
+        assert result["story_ref"]["story_id"] == f"decision_record-{rid}"  # the full id is kept
+        spawn = next(c for c in rig.tmux.calls if c[1] == "new-session")
+        name = spawn[spawn.index("-s") + 1]
+        assert len(name) <= 64 and coder_factory.valid_name(name), name
+        names.append(name)
+        rig.tmux.ended = True
+    assert names[0] != names[1], names
+    assert names[0][:-7] != names[1][:-7], names  # distinct without the random suffix
 
 
 def _wait_for(read, key, value, timeout=30.0):

@@ -1342,6 +1342,10 @@ button.surface-edit-in-place:hover {
   outline: none;
   box-shadow: inset 0 0 0 1px var(--accent);
 }
+/* PHILO-14 A2b: the row a request selected (the Room's proposal). */
+.surface-ledger-row[data-selected] > .surface-ledger-line {
+  background: var(--accent-tint);
+}
 .surface-ledger-row[data-open] > .surface-ledger-line {
   background: var(--desk-window-well);
   box-shadow: var(--desk-window-etch);

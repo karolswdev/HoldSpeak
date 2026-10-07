@@ -390,10 +390,18 @@ class TestRoomFaceGlass:
                 self._two_late_rooms(page)
                 page.reload(wait_until="load")
                 _normal_chair(page)
+                # PHILO-14 A1: the Needs you window opens from its drawer on the screen.
+                needs = page.locator(".desk-screen [data-object-id='drawer:needs']")
+                needs.wait_for(timeout=T)
+                needs.focus()
+                page.keyboard.press("Enter")
                 button = page.get_by_role("button", name=f"Open the Project: {NAME}").first
                 button.wait_for(state="attached", timeout=T)
                 button.scroll_into_view_if_needed()
                 button.click()
+                # PHILO-14 A2b: the Project button is a generic open: the
+                # drawer; the Room is its Room verb, one press away.
+                _room_through_drawer(page)
                 self._room_opened_for(page, width, NAME, "f1-chair-opens-room")
                 assert not errors, errors
             finally:

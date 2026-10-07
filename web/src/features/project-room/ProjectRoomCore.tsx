@@ -53,7 +53,7 @@ import { StandingPagesSection, useStandingPages } from "../../desk/standingPages
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
-import { ROOM_UPDATES_EVENT, refOpener, takeRoomUpdatesRequest } from "../../desk/openObject";
+import { ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, refOpener, takeRoomProposalRequest, takeRoomUpdatesRequest } from "../../desk/openObject";
 import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type {
@@ -662,11 +662,13 @@ function ProposalRow({
   proposal,
   ctrl,
   isNewest,
+  selected = false,
 }: {
   item: RoomNeedsYouItem;
   proposal: RoomProposalItem | undefined;
   ctrl: ReturnType<typeof useProjectRoomController>;
   isNewest: boolean;
+  selected?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
@@ -760,6 +762,7 @@ function ProposalRow({
   return (
     <SurfaceLedgerRow
       data-testid="proposal-row"
+      selected={selected}
       lead="MTG"
       primary={
         <span className="surface-primary room-proposal-text" data-testid="proposal-primary">
@@ -807,11 +810,13 @@ function NeedsYouSection({
   ctrl,
   reviewCtrl,
   pendingCount,
+  selectedProposalId = "",
 }: {
   room: RoomSnapshot;
   ctrl: ReturnType<typeof useProjectRoomController>;
   reviewCtrl: ReturnType<typeof useReviewController>;
   pendingCount: number;
+  selectedProposalId?: string;
 }) {
   if (room.needsYou.state !== "ok") return null;
   const { items, count } = room.needsYou;
@@ -891,6 +896,7 @@ function NeedsYouSection({
                   proposal={proposalMap.get(item.proposalId)}
                   ctrl={ctrl}
                   isNewest={item.proposalId === newestProposalId}
+                  selected={item.proposalId === selectedProposalId}
                 />
               );
             }
@@ -2224,6 +2230,20 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     window.addEventListener(ROOM_UPDATES_EVENT, take);
     return () => window.removeEventListener(ROOM_UPDATES_EVENT, take);
   }, [ctrl.projectId, enterUpdates]);
+  // PHILO-14 A2b: a proposal row elsewhere (Needs you) opens this Room with
+  // that proposal selected in OPEN HERE.
+  const [selectedProposalId, setSelectedProposalId] = useState("");
+  useEffect(() => {
+    const projectId = ctrl.projectId;
+    if (!projectId) return;
+    const take = () => {
+      const proposal = takeRoomProposalRequest(projectId);
+      if (proposal) setSelectedProposalId(proposal);
+    };
+    take();
+    window.addEventListener(ROOM_PROPOSAL_EVENT, take);
+    return () => window.removeEventListener(ROOM_PROPOSAL_EVENT, take);
+  }, [ctrl.projectId]);
   const sendFailure = sendFailed && ctrl.projectId ? (
     <div data-send="well" data-testid="send-well" data-doc={`project:${ctrl.projectId}`} role="group"
       aria-label="Send the latest update">
@@ -2384,7 +2404,13 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
                 <HealthSection room={ctrl.room} onRetry={handleRefresh} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "40ms" }}>
-                <NeedsYouSection room={ctrl.room} ctrl={ctrl} reviewCtrl={reviewCtrl} pendingCount={pendingCount} />
+                <NeedsYouSection
+                  room={ctrl.room}
+                  ctrl={ctrl}
+                  reviewCtrl={reviewCtrl}
+                  selectedProposalId={selectedProposalId}
+                  pendingCount={pendingCount}
+                />
               </div>
               {/* PHILO-9-03 (the Q3 ruling, the ratified items canvas): ITEMS sits
                   right after NEEDS YOU -- the plan he reads after what needs him. */}

@@ -11,6 +11,7 @@ import type { AgentFlight, CoderSessionRow } from "../agentFlights";
 import { agentWord } from "../agentFlights";
 import type { Items } from "../api";
 import { objectByRef } from "../world";
+import { decisionRecordSourceRef } from "../openObject";
 import { wireDate } from "../surface/format";
 import type { RoomSnapshot } from "../../features/project-room/model";
 
@@ -87,11 +88,7 @@ const text = (value: unknown): string => (typeof value === "string" ? value.repl
  *  a `decisions` row (`decision:<id>` reads `/api/decisions/<id>`); a desk
  *  record's is a desk decision (`desk_decision:<id>`, its own window). */
 export function recordRef(sourceType: string | undefined, sourceId: string | undefined): string | null {
-  const id = text(sourceId);
-  if (!id) return null;
-  if (sourceType === "desk") return `desk_decision:${id}`;
-  if (sourceType === "meeting") return `decision:${id}`;
-  return null;
+  return decisionRecordSourceRef(sourceType, sourceId);
 }
 
 /** The producer's kind, in the object vocabulary (kinds.ts). */
@@ -311,8 +308,15 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
       action(ref, memberKind(c.kind, "action"), c.text, { due: c.dueAt, owner: c.owner });
     }
   }
+  const decisionsRead = reads.room?.decisions.state === "ok";
   for (const f of flights) {
-    if (f.originRef.includes(":") && f.id) action(flightRef(f.originRef, records), memberKind(f.kind, "action"), f.title, {}, f.originRef);
+    if (!f.originRef.includes(":") || !f.id) continue;
+    const ref = flightRef(f.originRef, records);
+    // A record the Room's decisions did not read cannot be named by its
+    // source; it would be a second copy of its decision (the head says
+    // DECISIONS · NOT READ).
+    if (ref.startsWith("decision_record:") && reads.room && !decisionsRead) continue;
+    action(ref, memberKind(f.kind, "action"), f.title, {}, f.originRef);
   }
 
   for (const a of reads.artifacts) {
