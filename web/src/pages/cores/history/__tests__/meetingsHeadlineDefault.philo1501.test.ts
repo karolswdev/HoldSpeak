@@ -8,11 +8,16 @@
 // gives the all-clear.
 import { describe, expect, it } from "vitest";
 import { meetingsHeadline } from "../helpers";
-import { readPlannedRoute, routeReady } from "../../../../meetings/summaryRoute";
+import { readPlannedRoute, routeOff, routeReady } from "../../../../meetings/summaryRoute";
 
 function headline(rows: Record<string, unknown>[]) {
   const faceRoute = readPlannedRoute(rows.find((row) => readPlannedRoute(row)));
-  return meetingsHeadline(rows, false, Boolean(faceRoute) && !routeReady(faceRoute));
+  // The same derivation as HistoryCore's headline.
+  return meetingsHeadline(
+    rows, false,
+    Boolean(faceRoute) && !routeReady(faceRoute) && !routeOff(faceRoute),
+    routeOff(faceRoute),
+  );
 }
 
 const SUMMARISED = { id: "m1", title: "Standup", has_summary: true, intel_status: "complete" };
@@ -37,5 +42,14 @@ describe("PHILO-15 01 — the Meetings headline on a default-only desk", () => {
       planned_route: { status: "unavailable", reason_code: "no assignment", selection_hash: null, legs: [] },
     };
     expect(headline([row]).text).toBe("No engine for summaries");
+  });
+
+  it("reads OFF, not 'No engine', when the owner turned summaries off", () => {
+    // meeting_route_projection.project_route: unavailable("summaries_off").
+    const row = {
+      ...SUMMARISED,
+      planned_route: { status: "unavailable", reason_code: "summaries off", selection_hash: null, legs: [] },
+    };
+    expect(headline([row])).toEqual({ text: "Summaries off", accent: false });
   });
 });

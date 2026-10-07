@@ -156,6 +156,25 @@ describe("HS-201-01 the Chair names the one thing", () => {
     expect(meetingPathBlockers(summary([GLOBAL_ONLY, SPEECH_ASSIGNED]) as never)).toEqual([]);
   });
 
+  it("draws no row when the owner turned summaries OFF over a default", async () => {
+    const OFF = {
+      ...GLOBAL_ONLY,
+      queue: { policy_id: "meeting-intel-queue@2", status: "off", inherited_from: null },
+    };
+    expect(meetingPathBlockers(summary([OFF, SPEECH_ASSIGNED]) as never)).toEqual([]);
+    // OFF is not a missing engine: with no speech either, only speech asks.
+    expect(meetingPathBlockers(summary([OFF, NO_SPEECH]) as never)).toEqual([
+      { key: "speech", label: "No engine for speech", verb: "Choose an engine" },
+    ]);
+    wire([OFF, SPEECH_ASSIGNED]);
+    render(<ChairHome />);
+    await waitFor(() =>
+      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+    );
+    expect(setupRow()).toBeNull();
+    expect(screen.queryByText("No engine for summaries")).toBeNull();
+  });
+
   it("asks the queue's answer, not the owner chain", () => {
     expect(meetingPathBlockers(summary([QUEUE_REFUSES, SPEECH_ASSIGNED]) as never)).toEqual([
       { key: "summary", label: "No engine for summaries", verb: "Choose an engine" },

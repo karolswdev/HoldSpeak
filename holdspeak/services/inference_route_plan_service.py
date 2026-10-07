@@ -385,6 +385,16 @@ class InferenceRoutePlanService:
             keys.append((f"subject:{subject_kind}:{_safe_id(subject_id, field='subject_id')}:capability:{capability.id}", "subject"))
         keys.extend(((f"capability:{capability.id}", "capability"), (f"group:{capability.group_id}", "group"), ("global", "global")))
         permitted = None if assignment_sources is None else set(assignment_sources)
+        if permitted is not None and self._assignments.capability_off(conn, capability.id):
+            # PHILO-15 01 ruling: the owner's OFF holds. A service route stops
+            # here, before any group or global head. The code stays
+            # ``no_assignment`` so every queue path defers exactly as with no
+            # engine; ``off`` lets a face say OFF instead of "no engine".
+            raise ValidationError(
+                "The owner turned this off.",
+                code="no_assignment",
+                context={"capability_id": capability.id, "off": True},
+            )
         for key, inherited in keys:
             if permitted is not None and inherited not in permitted:
                 continue

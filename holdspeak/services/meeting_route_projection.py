@@ -114,6 +114,9 @@ def project_route(db: Any, *, invocation_id: str | None = "preview") -> dict[str
             invocation_id=invocation_id,
         )
     except Exception as exc:
+        if (getattr(exc, "context", None) or {}).get("off"):
+            # PHILO-15 01: the owner turned summaries OFF; not "no engine".
+            return unavailable("summaries_off")
         reason = getattr(exc, "code", None) or str(exc) or "route unavailable"
         return unavailable(reason)
 

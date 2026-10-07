@@ -54,7 +54,8 @@ export type MeetingPathBlocker = {
  *  - `summary` -- nothing writes the summary. The row asks the
  *    meeting-intel queue's route policy through `queue.status`: a
  *    capability, group or global head the queue may read clears it
- *    (`meeting-intel-queue@2`).
+ *    (`meeting-intel-queue@2`), and so does the owner's own OFF
+ *    (`queue.status: "off"`): no summary runs, and nothing asks for one.
  *
  *  A capability the roster does not carry is left alone: absence of a
  *  row is not evidence of an absent engine. */
@@ -74,9 +75,12 @@ export function meetingPathBlockers(
   const speechMissing = Boolean(speech) && speech!.effective?.status !== "assigned";
   const analysis = row(SUMMARY_CAPABILITY);
   // The queue's own answer; a roster without it falls back to the owner chain.
+  // `off` is the owner's own choice (PHILO-15 01 ruling): no row asks.
+  const summaryStatus = analysis
+    ? (analysis.queue ? analysis.queue.status : analysis.effective?.status)
+    : undefined;
   const summaryMissing =
-    Boolean(analysis) &&
-    (analysis!.queue ? analysis!.queue.status : analysis!.effective?.status) !== "assigned";
+    Boolean(analysis) && summaryStatus !== "assigned" && summaryStatus !== "off";
 
   if (speechMissing && summaryMissing) {
     return [{ key: "engines", label: "No engine yet", verb }];

@@ -311,6 +311,30 @@ class InferenceAssignmentService:
         with self._db._connection() as conn:
             return self._queue_resolution(conn, definition)
 
+    def set_capability_off(self, principal: Principal, *, capability_id: str) -> None:
+        """The owner turns one capability OFF (PHILO-15 01 ruling).
+
+        OFF holds: the meeting-intel queue resolves it before the group and
+        global heads, so the Default for AI work does not run it.  An exact
+        assignment of the capability (``set_assignment``) turns it on again.
+        """
+        self._require_owner(principal)
+        definition = self._require_assignable(capability_id)
+        with self._db._connection() as conn:
+            conn.execute(
+                "INSERT INTO inference_capability_off(capability_id,set_at) VALUES (?,?) "
+                "ON CONFLICT(capability_id) DO NOTHING",
+                (definition.id, _now()),
+            )
+
+    @staticmethod
+    def capability_off(conn: Any, capability_id: str) -> bool:
+        """True when the owner turned this capability OFF."""
+        return conn.execute(
+            "SELECT 1 FROM inference_capability_off WHERE capability_id=?",
+            (capability_id,),
+        ).fetchone() is not None
+
     def _queue_resolution(
         self, conn: Any, capability: InferenceCapabilityDefinition,
     ) -> dict[str, Any] | None:
@@ -334,6 +358,16 @@ class InferenceAssignmentService:
         if found is None:
             return None
         policy_id, sources = found
+        if self.capability_off(conn, capability.id):
+            # The owner's OFF short-circuits before the group and global heads.
+            return {
+                "policy_id": policy_id,
+                "status": "off",
+                "capability_id": capability.id,
+                "inherited_from": None,
+                "assignment": None,
+                "repair": None,
+            }
         return {"policy_id": policy_id, **self._resolve(conn, capability, sources=sources)}
 
     def assignment_editor_projection(
@@ -540,6 +574,12 @@ class InferenceAssignmentService:
                         made_by,
                     ),
                 )
+                if request["scope"].get("kind") == "capability":
+                    # An exact engine for the capability turns OFF back on.
+                    conn.execute(
+                        "DELETE FROM inference_capability_off WHERE capability_id=?",
+                        (request["scope"].get("capability_id", ""),),
+                    )
                 conn.execute(
                     """INSERT INTO inference_assignment_heads(assignment_key,assignment_id,revision,cleared,updated_at)
                        VALUES (?,?,?,?,?) ON CONFLICT(assignment_key) DO UPDATE SET

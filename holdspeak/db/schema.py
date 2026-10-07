@@ -2882,6 +2882,15 @@ CREATE TABLE IF NOT EXISTS inference_assignment_heads (
     FOREIGN KEY (assignment_id, revision)
       REFERENCES inference_assignment_revisions(assignment_id, revision)
 );
+-- The owner turned one capability OFF (PHILO-15 01 ruling: "off" must
+-- hold).  A service route that reads this capability (the meeting-intel
+-- queue) resolves OFF before any group or global head, so no summary runs on
+-- the Default for AI work.  An exact assignment of the capability removes the
+-- row (services/inference_assignment_service.py).
+CREATE TABLE IF NOT EXISTS inference_capability_off (
+    capability_id TEXT PRIMARY KEY,
+    set_at TEXT NOT NULL
+);
 -- A network or cloud engine HoldSpeak found while no "Default for AI work"
 -- exists.  It is never assigned by itself: the owner's "Use it" press assigns
 -- it (services/inference_default_service.py; owner ruling 2026-10-05).

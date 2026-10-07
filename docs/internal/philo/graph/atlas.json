@@ -15163,7 +15163,7 @@
       "sources": [
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
-          "symbol": "(analysis!.queue ? analysis!.queue.status : analysis!.effective?.status) !== \"assigned\";",
+          "symbol": "Boolean(analysis) && summaryStatus !== \"assigned\" && summaryStatus !== \"off\";",
           "claim": "the meeting-intel queue's own answer (task_overrides[].queue, resolved through meeting-intel-queue@2: capability, group or global head) clears the summary row when assigned (PHILO-15 01)"
         },
         {

@@ -1328,17 +1328,23 @@ def summary_assignment_projection(
 
     if not isinstance(assignment, dict):
         cleared_revision = _summary_assignment_tombstone(db)
-        if not cleared_revision:
-            # PHILO-15 01: no exact head, but the meeting-intel queue also
-            # reads the group and global heads (meeting-intel-queue@2). Ask
-            # the queue's own resolution: a Default for AI work runs summaries.
-            inherited = _summary_queue_assignment(assignment_service, principal)
+        queue = _summary_queue_resolution(assignment_service, principal)
+        if queue is not None:
+            # PHILO-15 01: the meeting-intel queue's own answer decides. The
+            # owner's OFF holds before any default; with no exact head the
+            # queue also reads the group and global heads
+            # (meeting-intel-queue@2), so a Default for AI work runs summaries.
+            off = queue.get("status") == "off"
+            inherited = None if off else _summary_queue_projection(queue, cleared_revision)
             if inherited is not None:
                 return inherited
+        else:
+            # A service without the queue's answer: the tombstone is the OFF.
+            off = bool(cleared_revision)
         return {
             "schema": SUMMARY_ASSIGNMENT_PROJECTION_SCHEMA,
             "capabilityId": SUMMARY_CAPABILITY_ID,
-            "status": "off" if cleared_revision else "unassigned",
+            "status": "off" if off else "unassigned",
             "assignmentRevision": cleared_revision,
             "profileId": None,
             "profileRevision": None,
@@ -1373,12 +1379,11 @@ def summary_assignment_projection(
     }
 
 
-def _summary_queue_assignment(assignment_service: Any, principal: Any) -> dict[str, Any] | None:
-    """The inherited head the queue would use, as the summary projection.
+def _summary_queue_resolution(assignment_service: Any, principal: Any) -> dict[str, Any] | None:
+    """The meeting-intel queue's own resolution of the summary capability.
 
-    ``assignmentRevision`` stays 0: it is the exact head's revision, which is
-    what a write to the summary scope expects. ``inheritedFrom`` names the
-    head the queue reads (``group`` or ``global``).
+    ``None`` when the service cannot answer (a test double without
+    ``resolve_for_queue``) or the read fails.
     """
     resolve = getattr(assignment_service, "resolve_for_queue", None)
     if resolve is None:
@@ -1388,7 +1393,17 @@ def _summary_queue_assignment(assignment_service: Any, principal: Any) -> dict[s
     except Exception as exc:  # pragma: no cover - a read never blocks the face
         log.warning(f"concierge: queue summary resolution unavailable ({exc})")
         return None
-    if not isinstance(resolved, dict) or resolved.get("inherited_from") in (None, "capability"):
+    return resolved if isinstance(resolved, dict) else None
+
+
+def _summary_queue_projection(resolved: dict[str, Any], revision: int) -> dict[str, Any] | None:
+    """The inherited head the queue would use, as the summary projection.
+
+    ``assignmentRevision`` is the exact head's revision (its tombstone's, or
+    0): that is what a write to the summary scope expects. ``inheritedFrom``
+    names the head the queue reads (``group`` or ``global``).
+    """
+    if resolved.get("inherited_from") in (None, "capability"):
         return None
     assignment = resolved.get("assignment") if isinstance(resolved.get("assignment"), dict) else {}
     entries = [e for e in (assignment.get("entries") or []) if isinstance(e, dict)]
@@ -1398,7 +1413,7 @@ def _summary_queue_assignment(assignment_service: Any, principal: Any) -> dict[s
         "schema": SUMMARY_ASSIGNMENT_PROJECTION_SCHEMA,
         "capabilityId": SUMMARY_CAPABILITY_ID,
         "status": "attention" if resolved.get("status") == "no_compatible_assignment" else "assigned",
-        "assignmentRevision": 0,
+        "assignmentRevision": int(revision or 0),
         "inheritedFrom": str(resolved.get("inherited_from")),
         **_summary_entry_projection(entries[0]),
     }
@@ -1624,6 +1639,20 @@ def apply(
             # next import ran on the LAN again.  The capability assignment is
             # cleared through the existing CAS seam, never by deleting rows.
             if group_id == "meetings":
+                # PHILO-15 01 ruling: OFF holds. The explicit OFF record stops
+                # the queue before the Default for AI work.
+                set_off = getattr(assignment_service, "set_capability_off", None)
+                if set_off is not None:
+                    try:
+                        set_off(principal, capability_id=SUMMARY_CAPABILITY_ID)
+                    except Exception as exc:
+                        results.append({
+                            "group": group_id,
+                            "capabilityId": SUMMARY_CAPABILITY_ID,
+                            "state": "FAILED",
+                            "plainReason": str(exc),
+                        })
+                        continue
                 current = _summary_assignment_revision(assignment_service, principal)
                 if current >= 1:
                     try:

@@ -168,3 +168,73 @@ def test_meetings_route_is_ready_on_the_default_alone(db: Database) -> None:
     route = project_route(db)
     assert route["status"] == "ready", route
     assert route["legs"] and route["legs"][0]["profile_id"] == "lan-model"
+
+
+# ── the ruling: OFF holds before the default ──
+
+
+def test_off_holds_before_the_default_and_no_summary_runs(db: Database) -> None:
+    from holdspeak.services.concierge_service import summary_assignment_projection
+    from holdspeak.services.meeting_route_projection import project_route
+
+    service = InferenceAssignmentService(db)
+    _set(service, "set-default", {"kind": "global"})
+    service.set_capability_off(OWNER, capability_id=SUMMARY)
+
+    roster = service.assignment_summary(OWNER)
+    row = _summary_row(roster)
+    assert row["queue"]["status"] == "off", row
+    assert row["effective"]["status"] == "assigned"  # the owner chain still sees the default
+    assert "summary" not in _keys(roster) and "engines" not in _keys(roster)
+
+    # No summary runs: the queue's real route refuses before the default.
+    route = project_route(db)
+    assert route["status"] == "unavailable"
+    assert route["reason_code"] == "summaries off"
+    assert route["legs"] == []
+
+    projection = summary_assignment_projection(assignment_service=service, principal=OWNER, db=db)
+    assert projection["status"] == "off"
+
+
+def test_default_with_no_off_record_is_assigned(db: Database) -> None:
+    from holdspeak.services.meeting_route_projection import project_route
+
+    service = InferenceAssignmentService(db)
+    _set(service, "set-default", {"kind": "global"})
+    assert _summary_row(service.assignment_summary(OWNER))["queue"]["status"] == "assigned"
+    assert project_route(db)["status"] == "ready"
+
+
+def test_an_exact_engine_turns_off_back_on(db: Database) -> None:
+    from holdspeak.services.meeting_route_projection import project_route
+
+    service = InferenceAssignmentService(db)
+    _set(service, "set-default", {"kind": "global"})
+    service.set_capability_off(OWNER, capability_id=SUMMARY)
+    _set(service, "set-exact", {"kind": "capability", "capability_id": SUMMARY})
+    row = _summary_row(service.assignment_summary(OWNER))
+    assert row["queue"]["status"] == "assigned"
+    assert row["queue"]["inherited_from"] == "capability"
+    assert project_route(db)["status"] == "ready"
+
+
+def test_concierge_off_press_holds_over_a_default(db: Database) -> None:
+    """The Concierge's OFF on the Meetings group writes the OFF record even
+    when no exact head ever existed, so the default does not summarise."""
+    from holdspeak.services.concierge_service import summary_assignment_projection
+
+    service = InferenceAssignmentService(db)
+    _set(service, "set-default", {"kind": "global"})
+    assert summary_assignment_projection(
+        assignment_service=service, principal=OWNER, db=db)["status"] == "assigned"
+    from holdspeak.services.concierge_service import apply
+
+    result = apply(
+        rows=[{"group": "meetings", "engineId": "OFF", "state": "OFF"}],
+        engines=[], assignment_service=service, principal=OWNER, db=db,
+    )
+    assert [r["state"] for r in result["results"]] == ["OFF"], result
+    assert summary_assignment_projection(
+        assignment_service=service, principal=OWNER, db=db)["status"] == "off"
+    assert _summary_row(service.assignment_summary(OWNER))["queue"]["status"] == "off"

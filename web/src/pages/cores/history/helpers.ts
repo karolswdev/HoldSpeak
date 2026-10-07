@@ -255,6 +255,8 @@ export function meetingsHeadline(
    *  queue's route policy, so a Default for AI work makes it ready
    *  (PHILO-15 01). */
   routeMissing = false,
+  /** The owner turned summaries OFF (PHILO-15 01 ruling): OFF, not "no engine". */
+  routeOff = false,
 ): { text: string; accent: boolean } {
   if (loading) return { text: "", accent: false };
   if (meetingRows.length === 0) return { text: "No meetings yet", accent: false };
@@ -280,6 +282,7 @@ export function meetingsHeadline(
   // Inventory 2026-10-03 (UX-CANON A.10): the all-clear stood over the
   // footer's "NO SUMMARY ROUTE". With no engine the next meeting gets no
   // summary; the headline says so in the Chair's words, not "all done".
+  if (routeOff) return { text: "Summaries off", accent: false };
   if (routeMissing) return { text: "No engine for summaries", accent: true };
   return { text: "All summaries done", accent: false };
 }
