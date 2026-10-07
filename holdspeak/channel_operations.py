@@ -61,7 +61,7 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
     description="Save a destination you send to: a folder (an absolute path; HoldSpeak writes a new file there per "
                 "send), a GitHub issue or pull request (a comment per send; the gh login is saved with it), one "
                 "Jira work item (a comment per send), a Confluence space (a blog post per send), or email through "
-                "a provider (SendGrid or Resend): your verified sender, the name of the saved key, and the To and Cc "
+                "a provider (Resend by default, or SendGrid): your verified sender, the name of the saved key, and the To and Cc "
                 "addresses. Mark a folder synced if a cloud client syncs it. Give replaces to edit one: the old "
                 "destination is parked and this one is new.",
     args_schema={
@@ -83,7 +83,7 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
             "key": {"type": ["string", "null"], "description": "jira: ONE work item key, like ABC-123."},
             "space_id": {"type": ["string", "null"], "description": "confluence: the space id (digits)."},
             "provider": {"type": ["string", "null"],
-                         "description": "email: the provider, sendgrid or resend (sendgrid if not given)."},
+                         "description": "email: the provider, resend or sendgrid (resend if not given)."},
             "channel_label": {"type": ["string", "null"], "maxLength": 120,
                               "description": "slack: your label for the incoming-webhook channel, for example #leads."},
             "from_email": {"type": ["string", "null"],
@@ -322,14 +322,14 @@ CHANNEL_SENDS = OperationDescriptor(
 CHANNEL_SAVE_EMAIL_KEY = OperationDescriptor(
     name="channel.save_email_key",
     version=1,
-    description="Save your email provider's key (a SendGrid or Resend API key) in the OS keychain under a name and "
+    description="Save your email provider's key (a Resend or SendGrid API key) in the OS keychain under a name and "
                 "the provider; an email destination names that key. The key is sent in the request body, is never an argument, and is "
                 "never shown again.",
     args_schema={
         "type": "object",
         "properties": {
             "key_ref": {"type": "string", "description": "The key's name (from the path)."},
-            "provider": {"type": ["string", "null"], "description": "Optional: the provider, sendgrid or resend (sendgrid if not given)."},
+            "provider": {"type": ["string", "null"], "description": "Optional: the provider, resend or sendgrid (resend if not given)."},
             "command_id": _COMMAND_ID,
         },
         "required": ["key_ref"],

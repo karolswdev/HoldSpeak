@@ -211,6 +211,19 @@ class OnboardingService:
         result["macos"]["requested"] = state
         return result
 
+    def calendar_open_settings(self, principal: Principal) -> dict[str, Any]:
+        """``calendar.open_settings`` (PHILO-15 04): the owner's press opens System
+        Settings at Privacy & Security > Calendars, the one way forward when the
+        Calendars permission is denied (admitted kernel operation, one receipt)."""
+        from . import project_kernel
+
+        if project_kernel.current() is None:
+            raise RuntimeError("calendar.open_settings runs only as an admitted kernel operation")
+        _require_owner(principal)
+        if not self._macos.open_privacy_settings():
+            raise ConflictError("System Settings did not open.", code="system_settings_not_opened")
+        return {"opened": True, "pane": "privacy_calendars"}
+
     def calendar_check(self, principal: Principal, url: Any) -> dict[str, Any]:
         """Validate one ICS URL and read it once (egress to its host on this press)."""
         from ..calendar_ingest import HORIZON_DAYS, parse_calendar_bytes

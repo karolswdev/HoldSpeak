@@ -29,6 +29,10 @@ interface DrawerState {
   /** PHILO-13-02 on the surviving face: a drawer shows the park receipt
    *  (`PARKED · <name>`, Restore) of the object parked from its Info window. */
   receipts: Record<string, ParkOutcome>;
+  /** PHILO-15 04: the Parked drawer (one per desk), open or not. */
+  parked: { origin: { x: number; y: number } | null } | null;
+  openParked(origin?: { x: number; y: number } | null): void;
+  closeParked(): void;
   setReceipt(projectId: string, outcome: ParkOutcome | null): void;
   openDrawer(projectId: string, origin?: { x: number; y: number } | null): void;
   closeDrawer(projectId: string): void;
@@ -38,6 +42,16 @@ interface DrawerState {
 }
 
 export const drawerWindowId = (projectId: string) => `drawer:project:${projectId}`;
+/** PHILO-15 04: the Parked drawer's window id. */
+export const PARKED_WINDOW_ID = "drawer:parked";
+
+function bringForward(windowId: string): void {
+  void import("../store").then((m) => {
+    const desk = m.useDesk.getState();
+    if (desk.panelMin.includes(windowId)) desk.restorePanel(windowId);
+    desk.focusPanel(windowId);
+  });
+}
 // The workspace keeps a window's place under an id of [A-Za-z0-9:_-] only.
 export const infoWindowId = (ref: string) => `drawer-info:${ref.replace(/[^A-Za-z0-9:_-]/g, "_")}`;
 
@@ -46,6 +60,17 @@ export const useDrawers = create<DrawerState>((set, get) => ({
   infos: [],
   revision: 0,
   receipts: {},
+  parked: null,
+  openParked(origin = null) {
+    if (get().parked) {
+      bringForward(PARKED_WINDOW_ID);
+      return;
+    }
+    set({ parked: { origin } });
+  },
+  closeParked() {
+    set({ parked: null });
+  },
   setReceipt(projectId, outcome) {
     const next = { ...get().receipts };
     if (outcome) next[projectId] = outcome;
@@ -57,11 +82,7 @@ export const useDrawers = create<DrawerState>((set, get) => ({
     if (!id) return;
     if (get().drawers.some((d) => d.projectId === id)) {
       // Already open: the frame brings it forward on its own registry.
-      void import("../store").then((m) => {
-        const desk = m.useDesk.getState();
-        if (desk.panelMin.includes(drawerWindowId(id))) desk.restorePanel(drawerWindowId(id));
-        desk.focusPanel(drawerWindowId(id));
-      });
+      bringForward(drawerWindowId(id));
       return;
     }
     set({ drawers: [...get().drawers, { projectId: id, origin }] });
@@ -87,4 +108,9 @@ export const useDrawers = create<DrawerState>((set, get) => ({
 /** Open a Project as its drawer (the screen, the Dock, a `project:` ref). */
 export function openDrawer(projectId: string | null | undefined, origin?: { x: number; y: number } | null): void {
   useDrawers.getState().openDrawer(String(projectId ?? ""), origin ?? null);
+}
+
+/** PHILO-15 04: open the Parked drawer (the screen's Parked icon). */
+export function openParkedDrawer(origin?: { x: number; y: number } | null): void {
+  useDrawers.getState().openParked(origin ?? null);
 }

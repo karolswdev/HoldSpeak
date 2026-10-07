@@ -14,6 +14,8 @@ import { ApiError, apiFetch, readableError } from "../../lib/api";
 
 export const CALENDAR_PATH = "/api/onboarding/calendar";
 export const CALENDAR_ACCESS_PATH = "/api/onboarding/calendar/macos/access";
+/** PHILO-15 04 (gap 12): System Settings > Privacy & Security > Calendars. */
+export const CALENDAR_SETTINGS_PATH = "/api/onboarding/calendar/macos/settings";
 export const CALENDAR_CHECK_PATH = "/api/onboarding/calendar/check";
 export const CALENDAR_USE_PATH = "/api/onboarding/calendar/use";
 export const DOOR_PATH = "/api/door";
@@ -130,7 +132,7 @@ export function nextMeeting(door: DoorRead | null, now: Date = new Date()): Upco
   );
 }
 
-type Busy = null | "access" | "add" | string;
+type Busy = null | "access" | "add" | "settings" | "check" | string;
 export type CalendarFailure =
   | { kind: "cant_read"; reason: string; host: string }
   | { kind: "not_allowed" }
@@ -179,6 +181,8 @@ export function useCalendarStep() {
   const [sources, setSources] = useState<ConfiguredSource[]>([]);
   const [door, setDoor] = useState<DoorRead | null>(null);
   const [following, setFollowing] = useState(false);
+  /** The Calendars pane did not open (the hub's refusal, by name). */
+  const [settingsFailed, setSettingsFailed] = useState(false);
   const pending = useRef<Set<string>>(new Set());
   const timer = useRef<number | null>(null);
 
@@ -255,6 +259,31 @@ export function useCalendarStep() {
     }
   }, []);
 
+  /** PHILO-15 04: access was denied. His press opens the Calendars privacy
+   *  pane in System Settings (an owner-only system open with a receipt). */
+  const openSettings = useCallback(async () => {
+    setBusy("settings");
+    setSettingsFailed(false);
+    try {
+      await apiFetch(CALENDAR_SETTINGS_PATH, { method: "POST", json: {} });
+    } catch {
+      setSettingsFailed(true);
+    } finally {
+      setBusy(null);
+    }
+  }, []);
+
+  /** Check again: read the access state after he changed it in Settings. */
+  const checkAgain = useCallback(async () => {
+    setBusy("check");
+    setFailure(null);
+    try {
+      await read();
+    } finally {
+      setBusy(null);
+    }
+  }, [read]);
+
   const use = useCallback(
     async (candidate: CalendarCandidate) => {
       setBusy(candidate.id);
@@ -330,6 +359,7 @@ export function useCalendarStep() {
     inUse,
     following,
     notAllowed: Boolean(deniedState) || failure?.kind === "not_allowed",
+    settingsFailed,
     busy,
     failure,
     door,
@@ -338,6 +368,8 @@ export function useCalendarStep() {
     read,
     readDoor,
     requestAccess,
+    openSettings,
+    checkAgain,
     use,
     addUrl,
   };
