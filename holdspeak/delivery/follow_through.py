@@ -244,12 +244,17 @@ class FollowThroughObserver:
         a Room (``repository:<source_id>``, by the clone's GitHub origin)."""
         import json
 
+        from ..services.project_service import _PROVIDER_TO_CONNECTOR
+
         repos: dict[str, set[str]] = {}
         with self._db._connection() as conn:
+            # The GitHub connector id, named once (project_service): the gh
+            # call itself runs in GitHubWatchSource, not in this package.
             watches = conn.execute(
                 "SELECT w.project_id, w.query_json FROM connector_watches w "
                 "JOIN projects p ON p.id = w.project_id "
-                "WHERE w.connector_id IN ('gh','github') AND w.project_id IS NOT NULL",
+                "WHERE w.connector_id IN (?, 'github') AND w.project_id IS NOT NULL",
+                (_PROVIDER_TO_CONNECTOR["github"],),
             ).fetchall()
             filed = conn.execute(
                 "SELECT r.project_id, r.resource_ref FROM project_resources r "
@@ -289,6 +294,11 @@ class FollowThroughObserver:
                 })
             except ServiceError as exc:
                 receipt["repositories"].append({"repository": repo, "state": exc.code})
+                continue
+            except Exception as exc:  # a refused or failed CLI never stops the sweep
+                receipt["repositories"].append(
+                    {"repository": repo, "state": str(getattr(exc, "code", "") or "gh_failed")}
+                )
                 continue
             recorded = sum(
                 1 for row in rows for project_id in sorted(projects)

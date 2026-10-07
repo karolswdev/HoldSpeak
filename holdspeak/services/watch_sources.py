@@ -52,6 +52,9 @@ def _reviewer_names(value: Any) -> list[str]:
     return sorted(set(names))
 
 
+#: Conductor R4: a GitHub issues Watch reads these (no assignee, no author).
+GH_ISSUE_FIELDS = "number,title,url,state,labels,updatedAt,createdAt"
+
 GH_BRANCH_CI_FIELDS = "conclusion,status,name,url,updatedAt,headBranch"
 
 
@@ -63,8 +66,10 @@ class GitHubWatchSource:
                  query: dict[str, Any]) -> list[dict[str, Any]]:
         if query_kind == "branch_ci":
             return self._snapshot_branch_ci(principal, query)
+        if query_kind == "issues":
+            return self._snapshot_issues(principal, query)
         if query_kind != "pull_requests":
-            raise ValidationError("GitHub Watches support pull_requests and branch_ci")
+            raise ValidationError("GitHub Watches support pull_requests, issues and branch_ci")
         repository = str(query.get("repository") or "").strip()
         if "/" not in repository or repository.startswith("/") or repository.endswith("/"):
             raise ValidationError("GitHub Watch requires repository as owner/name")
@@ -114,6 +119,51 @@ class GitHubWatchSource:
                 "mergedAt": row.get("mergedAt"),
             })
         return entities
+
+    # ── issues kind (Conductor R4) ──────────────────────────────────
+    def _snapshot_issues(
+        self, principal: Principal, query: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """A repository's issues: `gh issue list --state open` (read-only).
+        No assignee or author is read (People data stays out)."""
+        repository = str(query.get("repository") or "").strip()
+        if "/" not in repository or repository.startswith("/") or repository.endswith("/"):
+            raise ValidationError("GitHub issues Watch requires repository as owner/name")
+        limit = max(1, min(int(query.get("limit", 50)), 100))
+        state = str(query.get("state") or "open").lower()
+        if state not in {"open", "closed", "all"}:
+            raise ValidationError("GitHub issues Watch state must be open, closed, or all")
+        command = [
+            "gh", "issue", "list", "--repo", repository, "--state", state,
+            "--limit", str(limit), "--json", GH_ISSUE_FIELDS,
+        ]
+        if not github_cli.is_command_allowed(command):
+            raise ServiceError("connector_command_refused", "GitHub Watch command is not allowlisted")
+        if self._runner is None and shutil.which("gh") is None:
+            raise ServiceError("connector_unavailable", "GitHub CLI is not installed")
+        completed = PermissionGate(github_cli.MANIFEST).run_read_subprocess(
+            command, principal=principal, runner=self._runner,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            errors="replace", timeout=github_cli.DEFAULT_TIMEOUT_SECONDS,
+        )
+        if completed.returncode != 0:
+            detail = str(completed.stderr or "GitHub CLI query failed").strip()[:500]
+            raise ServiceError("connector_refresh_failed", detail)
+        try:
+            rows = json.loads(completed.stdout or "[]")
+        except json.JSONDecodeError as exc:
+            raise ServiceError("connector_invalid_output", "GitHub CLI returned invalid JSON") from exc
+        if not isinstance(rows, list):
+            raise ServiceError("connector_invalid_output", "GitHub CLI returned a non-array snapshot")
+        return [{
+            "number": row.get("number"), "title": row.get("title"), "url": row.get("url"),
+            "state": row.get("state"),
+            "labels": sorted({
+                str(label.get("name") if isinstance(label, dict) else label)
+                for label in (row.get("labels") or []) if label
+            }),
+            "updatedAt": row.get("updatedAt"), "createdAt": row.get("createdAt"),
+        } for row in rows if isinstance(row, dict)]
 
     # ── branch_ci kind (HS-169-04, counsel M1) ──────────────────────
     def _snapshot_branch_ci(

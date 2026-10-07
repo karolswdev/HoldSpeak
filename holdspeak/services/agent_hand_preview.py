@@ -46,6 +46,7 @@ from .agent_hand_service import (
     item_exists,
     live_launches,
     resolve_project_repository,
+    free_worktree_spec,
     worktree_spec,
 )
 from .errors import ServiceError
@@ -207,7 +208,10 @@ def preview_hand(
     project_id = project_id or project_for_item(db, kind, item_id)
     source = resolve_project_repository(db, project_id, reads.registry(), project_map=service._project_map)
     repo = str(source.primary_path) if source is not None else None
-    spec = worktree_spec(kind, item_id)
+    spec = (
+        free_worktree_spec(reads.registry(), repo, kind, item_id) if repo is not None
+        else worktree_spec(kind, item_id)
+    )
     launcher = reads.launcher()
     resume: Optional[dict[str, Any]] = None
     actual = requested

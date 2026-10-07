@@ -134,6 +134,10 @@ _GITHUB_TRANSITION_KINDS: tuple[str, ...] = (
     "github.pr.review_decision_changed",
     "github.pr.checks_changed",
     "github.pr.head_changed",
+    # Conductor R4: a GitHub issues Watch
+    "github.issue.opened",
+    "github.issue.closed",
+    "github.issue.reopened",
 )
 
 # HS-166-03: Jira transition kinds (diff_snapshots vocabulary for jira)
@@ -811,7 +815,9 @@ class WatchService:
 
         # 4. Diff against the stored baseline.
         baseline = watch.get("snapshot") or {}
-        transitions = diff_snapshots(connector_id, baseline, snapshot)
+        transitions = diff_snapshots(
+            connector_id, baseline, snapshot, query_kind=str(watch.get("query_kind") or ""),
+        )
 
         # 5. Persist: evaluation + observations + baseline in one txn.
         evaluation_id = f"weval_{uuid.uuid4().hex[:12]}"

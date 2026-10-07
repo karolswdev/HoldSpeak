@@ -521,3 +521,214 @@ def test_agent_pr_merge_is_one_line_with_k4s_closure(tmp_path, db, monkeypatch) 
     body = updates.draft_update(OWNER, PROJECT)["body_md"]
     assert "Closed: Fix the login timeout (PR #7) -- merged" in _progress(body)
     assert body.count("PR #7") == 1, body
+
+
+# ── R4 round 2: GitHub issue rows (a read-only GitHub issues Watch) ──
+
+GH_WATCH = "watch-r4-gh-issues"
+GH_ISSUE_ID = f"{GH_WATCH}.418"
+GH_BODY = "Month-end reconciliation scans every row twice."
+
+
+class FakeGhIssues:
+    """``gh`` at its process boundary: `gh issue list` and `gh issue view`."""
+
+    def __init__(self) -> None:
+        self.calls: list[list[str]] = []
+        self.issues = [{
+            "number": 418, "title": "Reconciliation job slow on month-end data",
+            "url": "https://github.com/acme/railsproj/issues/418", "state": "OPEN",
+            "labels": [{"name": "ledger"}, {"name": "performance"}],
+            "createdAt": (datetime.now(timezone.utc) - timedelta(days=2)).isoformat(),
+            "updatedAt": datetime.now(timezone.utc).isoformat(),
+        }]
+
+    def __call__(self, argv, **_kw):
+        self.calls.append(list(argv))
+        if argv[1:3] == ["issue", "list"]:
+            return SimpleNamespace(returncode=0, stdout=json.dumps(self.issues), stderr="")
+        if argv[1:3] == ["issue", "view"]:
+            return SimpleNamespace(returncode=0, stdout=json.dumps({"body": GH_BODY}), stderr="")
+        return SimpleNamespace(returncode=1, stdout="", stderr=f"unexpected {argv}")
+
+
+def _gh_issue_watch(db) -> tuple[FakeGhIssues, Any]:
+    """A real Room GitHub issues Watch, baselined by WatchService through the
+    real GitHubWatchSource (gh faked at its process boundary)."""
+    from holdspeak.services.reaction_service import ReactionService
+    from holdspeak.services.watch_service import WatchService
+    from holdspeak.services.watch_sources import fetch_watch_snapshot
+
+    gh = FakeGhIssues()
+    ReactionService(db).create_watch(
+        OWNER, connector_id="gh", query_kind="issues", name="Open issues",
+        query={"repository": "acme/railsproj", "state": "open"}, watch_id=GH_WATCH,
+    )
+    db.automations.update_watch_spec(GH_WATCH, project_id=PROJECT, revision=1)
+    watches = WatchService(
+        db, snapshot_fetcher=lambda principal, **kw: fetch_watch_snapshot(principal, github_runner=gh, **kw),
+    )
+    watches.baseline_watch(OWNER, GH_WATCH)
+    return gh, watches
+
+
+def test_github_issues_watch_reads_gh_issue_list_and_makes_room_issue_rows(db) -> None:
+    from holdspeak.services.project_service import ProjectService
+
+    gh, _watches = _gh_issue_watch(db)
+    assert gh.calls[0][:3] == ["gh", "issue", "list"]
+    assert gh.calls[0][gh.calls[0].index("--state") + 1] == "open"
+    assert "assignees" not in gh.calls[0][gh.calls[0].index("--json") + 1], "no People data is read"
+    rows = [r for r in ProjectService(db)._read_room_needs_you(PROJECT)["items"] if r.get("kind") == "issue"]
+    assert len(rows) == 1, rows
+    row = rows[0]
+    assert (row["source"], row["title"], row["why"]) == (
+        "github", "#418 Reconciliation job slow on month-end data", "ISSUE · OPEN 2 D",
+    )
+    assert (row["watchId"], row["entity_id"]) == (GH_WATCH, "418")
+    assert parse_item_ref({"kind": "issue", "id": f"{row['watchId']}.{row['entity_id']}"}) == ("issue", GH_ISSUE_ID)
+
+
+def test_github_issue_rows_stay_out_of_the_desk_needs_you_count(db) -> None:
+    from holdspeak.services.needs_you_aggregate import LastKnownStore, build_aggregate
+    from holdspeak.services.project_service import ProjectService
+
+    _gh_issue_watch(db)
+    service = ProjectService(db)
+    aggregate = build_aggregate(
+        list_projects=service.list_projects, room=service.room, principal=OWNER, last_known=LastKnownStore(),
+    )
+    assert not any(str(i.get("title", "")).startswith("#418") for i in aggregate.get("items", []))
+
+
+def test_a_new_github_issue_is_an_issue_transition_not_a_pr(db) -> None:
+    gh, watches = _gh_issue_watch(db)
+    gh.issues.append(dict(gh.issues[0], number=421, title="Add the ledger freeze flag",
+                          url="https://github.com/acme/railsproj/issues/421"))
+    evaluated = watches.evaluate_once(OWNER, GH_WATCH)
+    assert evaluated["state"] == "completed"
+    facts = [json.loads(o["fact_json"]) for o in _observations(db, "watch.transition")]
+    assert [f["event_type"] for f in facts] == ["github.issue.opened"]
+
+
+def test_github_issue_brief_reads_its_body_with_gh_issue_view(db) -> None:
+    gh, _watches = _gh_issue_watch(db)
+    brief = compose_agent_brief(
+        db, {"kind": "issue", "id": GH_ISSUE_ID}, control_mode="yolo",
+        principal=OWNER, issue_reads={"gh_runner": gh},
+    )
+    assert 'issue:watch-r4-gh-issues.418 "#418 Reconciliation job slow on month-end data"' in brief["text"]
+    assert GH_BODY in brief["text"] and "Labels: ledger, performance" in brief["text"]
+    assert "URL: https://github.com/acme/railsproj/issues/418" in brief["text"]
+    assert brief["project_id"] == PROJECT
+    assert ["gh", "issue", "view", "418", "--repo", "acme/railsproj", "--json", "body,labels,title,url"] in gh.calls
+
+
+def test_hand_a_github_issue_then_link_its_merged_pr(tmp_path, db, monkeypatch) -> None:
+    gh_issues, _watches = _gh_issue_watch(db)
+    rig = _rig(tmp_path, db, monkeypatch, item=("issue", GH_ISSUE_ID))
+    rig.hand.issue_reads = {"gh_runner": gh_issues}
+    _git(rig.repo, "remote", "add", "origin", "https://github.com/acme/railsproj.git")
+    result = rig.hand.hand(OWNER, "issue", GH_ISSUE_ID)
+    assert result["status"] == "launched", result
+    assert result["origin_ref"] == {"kind": "issue", "id": GH_ISSUE_ID}
+    _wait_for(lambda: rig.launches.get(result["launch_id"]), "instruction_state", "sent")
+    assert GH_BODY in "\n".join(text for _pane, text in rig.typed)
+    (rig.worktree / "fix.txt").write_text("batch = 500\n", encoding="utf-8")
+    _git(rig.worktree, "add", "-A")
+    _git(rig.worktree, "commit", "-m", "Batch the reads")
+    rig.gh = FakeGh()
+    rig.observer = _observer(rig, rig.gh)
+    rig.gh.prs = [_pr(result["worktree"]["branch"], _git(rig.worktree, "rev-parse", "HEAD"))]
+    issue_calls = len(gh_issues.calls)
+
+    _sweep(rig)
+
+    assert rig.launches.get(result["launch_id"])["follow_through"]["close"] == "linked"
+    assert _links(db) == [(f"issue:{GH_ISSUE_ID}", PR_URL, "merged_pr")]
+    assert len(gh_issues.calls) == issue_calls, "nothing is asked of, or written to, the issue"
+    assert all(c[:3] == ["gh", "pr", "list"] for c in rig.gh.calls), rig.gh.calls
+
+
+def test_the_door_arms_the_open_issues_watch_with_the_pr_queue(db) -> None:
+    from holdspeak.services.project_door_service import ProjectDoorService
+    from holdspeak.services.project_service import ProjectService
+
+    created = ProjectDoorService(project_service=ProjectService(db)).create(
+        OWNER, "Ship the ledger", [{"provider": "github", "scope": "acme/ledger", "watches": ["open_prs"]}],
+    )
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT connector_id, query_kind, query_json FROM connector_watches WHERE project_id=? ORDER BY query_kind",
+            (created["projectId"],),
+        ).fetchall()
+    kinds = [(r[0], r[1]) for r in rows]
+    assert kinds == [("gh", "issues"), ("gh", "pull_requests")], kinds
+    issues_query = json.loads(rows[0][2])
+    assert issues_query["repository"] == "acme/ledger" and issues_query["state"] == "open"
+
+
+# ── R4 round 2: no test reaches the real gh/acli ────────────────────
+
+
+def test_the_default_runner_refuses_a_real_gh_in_tests(tmp_path, monkeypatch) -> None:
+    from holdspeak.cli_guard import RealCliRefusedInTests, refuse_real_cli_in_tests
+
+    assert __import__("os").environ.get("HOLDSPEAK_TEST_NO_REAL_CLI") == "1", "tests/conftest.py sets it"
+    monkeypatch.setattr("shutil.which", lambda name: f"/opt/owner/bin/{name}")
+    with pytest.raises(RealCliRefusedInTests, match="real_cli_refused_in_tests"):
+        refuse_real_cli_in_tests(["gh", "pr", "list"])
+    with pytest.raises(RealCliRefusedInTests):
+        refuse_real_cli_in_tests(["acli", "jira", "auth", "status"])
+    refuse_real_cli_in_tests(["git", "status"])  # other programs are not guarded
+    stub = tmp_path / "gh"
+    stub.write_text("#!/bin/sh\nexit 0\n")
+    refuse_real_cli_in_tests([str(stub), "pr", "list"])  # a test's own stub runs
+    monkeypatch.setenv("HOLDSPEAK_TEST_NO_REAL_CLI", "0")
+    refuse_real_cli_in_tests(["gh", "pr", "list"])  # production: no guard
+
+
+def test_the_merged_read_without_a_runner_never_runs_the_real_gh(tmp_path, db, monkeypatch) -> None:
+    from holdspeak.delivery.factory_launch import LaunchLedger
+
+    _room_pr_watch(db)
+    monkeypatch.setattr("shutil.which", lambda name: f"/opt/owner/bin/{name}")
+    ran: list = []
+    monkeypatch.setattr("subprocess.run", lambda *a, **k: ran.append(a) or SimpleNamespace(returncode=0, stdout="[]", stderr=""))
+    registry = DeliveryRegistry(tmp_path / "sources.json", map_path=tmp_path / "absent.json")
+    observer = FollowThroughObserver(
+        db, ledger=LaunchLedger(tmp_path / "launches.json"), registry=registry,
+        receipts=PrReceiptsService(registry, gh_available=lambda: True),
+        attempts=WorkAttemptService(db.work_attempts), clock=lambda: NOON,
+    )
+    receipt = observer.sweep_merged(SWEEPER)
+    assert receipt["repositories"] == [{"repository": "acme/railsproj", "state": "real_cli_refused_in_tests"}]
+    assert ran == []
+
+
+# ── R1's real walk: hand -> merge -> cleanup -> hand again ──────────
+
+
+def test_the_same_item_can_be_handed_again_after_cleanup(tmp_path, db, monkeypatch) -> None:
+    rig = _launch(tmp_path, db, monkeypatch, ("action", "ai_1"))
+    rig.gh.prs = [_pr(rig.branch, rig.head)]
+    _sweep(rig)
+    first = rig.launches.get(rig.result["launch_id"])["follow_through"]
+    assert first["done"] is True and first["cleanup"]["worktree"] == "worktree_removed"
+    assert first["cleanup"]["registry"] == "unregistered"
+    assert not rig.worktree.exists()
+    # The item is open again (the owner reopened it, or more work came).
+    with db._connection() as conn:
+        conn.execute("UPDATE action_items SET status='open' WHERE id='ai_1'")
+
+    again = rig.hand.hand(OWNER, "action", "ai_1")
+
+    assert again["status"] == "launched", again
+    assert again["launch_id"] != rig.result["launch_id"]
+    assert again["origin_ref"] == {"kind": "action", "id": "ai_1"}
+    name, branch = again["worktree"]["name"], again["worktree"]["branch"]
+    # K4 kept the merged branch hs/action-ai_1: the second hand-off takes round 2.
+    assert (name, branch) == ("hs-action-ai_1-2", "hs/action-ai_1-2")
+    assert (rig.repo.parent / name / ".git").exists(), "a real new worktree"
+    assert _git(rig.repo.parent / name, "rev-parse", "--abbrev-ref", "HEAD") == branch
+    rig.tmux.ended = True

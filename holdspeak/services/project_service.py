@@ -1024,6 +1024,35 @@ class ProjectService:
                             "severity": "danger",
                         })
 
+            elif connector_id == "gh" and query_kind == "issues":
+                # Conductor R4: a GitHub issues Watch's open issues, the
+                # same row shape as a Jira issue row (the canvas K2e rows:
+                # `#418 Title`, `ISSUE · OPEN 2 D`), so Hand to agent takes them.
+                for entity in entities:
+                    if str(entity.get("state") or "").lower() not in ("", "open"):
+                        continue
+                    number = str(entity.get("number") or entity.get("id") or "")
+                    if not number:
+                        continue
+                    opened = str(entity.get("created_at") or entity.get("createdAt") or "")
+                    days = None
+                    try:
+                        opened_dt = datetime.fromisoformat(opened.replace("Z", "+00:00"))
+                        days = max(0, (now.replace(tzinfo=None) - opened_dt.astimezone().replace(tzinfo=None)).days)
+                    except (ValueError, TypeError):
+                        pass
+                    needs.append({
+                        "source": "github",
+                        "kind": "issue",
+                        "entity_id": str(entity.get("id") or number),
+                        "title": f"#{number} {entity.get('title') or ''}".strip(),
+                        "why": f"ISSUE · OPEN {days} D" if days is not None else "ISSUE · OPEN",
+                        "since": opened,
+                        "url": entity.get("url"),
+                        "verb": "open",
+                        "severity": "info",
+                    })
+
             elif connector_id == "jira" and query_kind == "issues":
                 # Jira entities from an OVERDUE-kind watch
                 query = watch.get("query") or {}

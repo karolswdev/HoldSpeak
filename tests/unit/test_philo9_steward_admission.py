@@ -54,7 +54,8 @@ class Runner(_B1Runner):
     """The b1 runner, plus the GitHub list reads a Door count and a watch make."""
 
     def __call__(self, argv: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        if argv[:3] in (["gh", "pr", "list"], ["gh", "run", "list"]):
+        # Conductor R4: the Door's open-issues watch reads `gh issue list`.
+        if argv[:3] in (["gh", "pr", "list"], ["gh", "run", "list"], ["gh", "issue", "list"]):
             self.calls.append(list(argv))
             return subprocess.CompletedProcess(argv, 0, stdout="[]", stderr="")
         return super().__call__(argv, **kwargs)
@@ -178,7 +179,10 @@ def _door_project(hub: Hub) -> tuple[str, str]:
                                                   "watches": ["open_prs"]}]})
     assert made.status_code == 200, made.text
     pid = made.json()["projectId"]
-    watch = hub.db.automations.list_project_watches(pid)[0]["id"]
+    # Conductor R4: the Door also arms the open issues; the PR queue is the
+    # watch these probes read.
+    watch = next(w["id"] for w in hub.db.automations.list_project_watches(pid)
+                 if w["query_kind"] == "pull_requests")
     return pid, watch
 
 
