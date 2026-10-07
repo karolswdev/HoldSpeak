@@ -40,6 +40,7 @@ from .glass_infra import (
     _settle,
 )
 from tests._evidence import evidence_dir
+from .chair_windows import open_chair_window
 
 pytest.importorskip("playwright.sync_api", reason="HS-201-09 glass needs Playwright")
 
@@ -200,16 +201,18 @@ def _arrive(page: Any, base: str) -> None:
     _api(page, "POST", "/api/desk/seed", token=TOKEN)
     _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
     _normal_chair(page)
+    # PHILO-14 A1 (#939): the Chair's windows start closed; the owner opens
+    # Needs you (Window > Chair at 1440, Go at 393).
+    open_chair_window(page, "Needs you")
     page.locator("[data-testid='arrival-display']").wait_for(timeout=15_000)
     _settle(page)
 
 
 # The SETUP row names whichever half of the meeting path is missing
-# (meetingPathBlocker.ts:91-96), so the rig reads the verb by either key.
-BLOCKER_VERB = (
-    "[data-testid='arrival-blocker-verb-engines'],"
-    "[data-testid='arrival-blocker-verb-summary']"
-)
+# (meetingPathBlocker.ts:91-96). PHILO-14 A5 (#935): the row is a drawer row
+# and its verb is the drawer's SETUP verb.
+BLOCKER_VERB = "[data-testid='needs-row-verb'][data-verb='setup']"
+BLOCKER_ROW = "[data-testid='needs-row']:has([data-verb='setup'])"
 
 
 def _open_models_from_the_blocker(page: Any) -> None:
@@ -407,9 +410,7 @@ class TestConnectAnEngineFromTheFace:
             )
             page.wait_for_function(
                 """() => !document.querySelector(
-                     "[data-testid='arrival-blocker-verb-engines']") &&
-                   !document.querySelector(
-                     "[data-testid='arrival-blocker-verb-summary']")""",
+                     "[data-testid='needs-row-verb'][data-verb='setup']")""",
                 timeout=60_000,
             )
             assigned = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
@@ -421,7 +422,7 @@ class TestConnectAnEngineFromTheFace:
             print(f"SUMMARY ASSIGNED {assigned} (one gesture, no Use these)")
             _settle(page)
             # The desk behind must no longer ask for an engine.
-            desk_said = page.locator("[data-testid='arrival-blocker']")
+            desk_said = page.locator(BLOCKER_ROW)
             assert desk_said.count() == 0, desk_said.first.text_content()
             _open_models_from_the_blocker_or_go(page)
             assert "Choose an engine" not in (page.content() or "")
