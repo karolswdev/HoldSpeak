@@ -167,9 +167,13 @@
 }
 .desk-next .desk-panepicker-list {
   position: absolute;
-  left: 0;
+  /* Conductor R6: centred on the anchor (the shelf's middle), as HS-97-07
+     says; from `left: 0` the list ran past the right edge at 393. */
+  left: 50%;
+  transform: translateX(-50%);
   bottom: calc(100% + 8px);
   min-width: 260px;
+  max-width: calc(100vw - 32px);
   max-height: 320px;
   overflow-y: auto;
   display: flex;
@@ -183,7 +187,8 @@
 }
 .desk-next .desk-panepicker-item {
   display: flex;
-  align-items: baseline;
+  /* Conductor R6: centre, so a 44 px row at 393 holds its text mid-row. */
+  align-items: center;
   gap: 8px;
   padding: 7px 9px;
   border: none;
@@ -206,7 +211,9 @@
 .desk-next .desk-panepicker-id {
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--accent);
+  /* Conductor R6: ember TEXT is --accent-text; --accent read 3.92:1 on
+     the attached row's well. */
+  color: var(--accent-text);
   min-width: 34px;
 }
 .desk-next .desk-panepicker-meta {

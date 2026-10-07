@@ -100,6 +100,37 @@ def boards(r: board.Runner) -> None:
         settle(600)
         r.close_all()
 
+    # ── The pane picker (Astra's R6 condition): open from its dock launcher, measure every row,
+    # then pick a real pane (the runbook launch's `cat` pane on this run's tmux server). ──
+    # No sheet in front: at the phone the picker sits under any open sheet (session-pullout.css, the
+    # dock rule), so the Chair windows close first and the picker is the face.
+    ev("() => import('/src/desk/chair/chairWindows.ts').then((m) => m.CHAIR_WINDOW_IDS.forEach((id) => m.closeChairWindow(id)))")
+    settle(800)
+    ev("() => import('/src/desk/components/window/launcherRegistry.ts').then((m) => m.activateLauncher('panes'))")
+    rows = page.locator(".desk-panepicker-item")
+    rows.first.wait_for(timeout=20_000)
+    settle(800)
+    heights = ev("""() => [...document.querySelectorAll('.desk-panepicker-item')].map((b) => ({
+      label: b.innerText.replace(/\\s+/g, ' ').trim(), h: Math.round(b.getBoundingClientRect().height),
+      cls: b.className }))""")
+    tall = all(x["h"] >= 44 for x in heights) if r.phone else True
+    r.shoot_bare("R6-picker-open", None, inherit_clip=inherit_clip,
+            checks={"393: every pane picker row is at least 44 px high (UX-CANON C, chrome strip)": tall,
+                    "the rows are the library Button, chrome variant": all("btn--chrome" in x["cls"] and "btn " not in x["cls"] + " " for x in heights)},
+            extra={"picker_rows": heights})
+    pick = rows.filter(has_text="hs-runbook").first
+    if not pick.count():
+        pick = rows.first
+    picked_label = pick.inner_text().replace("\n", " ")
+    r.tap(pick, 3000)
+    state = ev("() => import('/src/desk/steering.ts').then((m) => { const s = m.useSteering.getState(); return {openKey: s.openKey, attached: s.attachedSession, pane: s.paneId, status: s.paneStatus}; })")
+    r.shoot("R6-picker-picked", None, inherit_clip=inherit_clip,
+            checks={"picking a row opens that pane's session window": str(state.get("openKey") or "").startswith("pane:")
+                    and state.get("openKey") == "pane:" + picked_label.split()[0]},
+            extra={"picked": picked_label, "steering": state})
+    ev("() => import('/src/desk/steering.ts').then((m) => m.useSteering.getState().closeSession())")
+    settle(600)
+
 
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
