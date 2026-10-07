@@ -52,6 +52,7 @@ vi.mock("../desk/projections", () => {
 const aftercare = {
   meeting_id: "meeting-42",
   title: "Launch review",
+  proposal_total: 4,
   open_total: 3,
   decided_total: 1,
   top_items: [],
@@ -86,23 +87,24 @@ describe("aftercare without the mascot", () => {
 
     expect(screen.getByLabelText("Meeting aftercare")).toBeInTheDocument();
     expect(screen.getByText("Launch review")).toBeInTheDocument();
-    expect(screen.getByText("3 open · 1 decided")).toBeInTheDocument();
+    expect(screen.getByText("4 to review · 3 open · 1 decided")).toBeInTheDocument();
   });
 
-  it("reaches the meeting's proposals in one click", () => {
+  it("reaches the meeting's proposals in one click (its Review wing)", () => {
     render(<AmbientLayer />);
     broadcastAftercare();
 
     fireEvent.click(screen.getByRole("button", { name: "Open proposals" }));
 
+    // PHILO-15 08 (B13): the verb lands where the proposals are.
     expect(mocks.openSurfaceWhenReady).toHaveBeenCalledWith(
       "review-meetings",
-      "meeting:meeting-42",
+      "meeting:meeting-42?view=review",
     );
     expect(screen.queryByLabelText("Meeting aftercare")).toBeNull();
   });
 
-  it("omits the opener for 0/0, keeps dismissal, and restores it on a nonzero transition", () => {
+  it("omits the opener with no proposal to review, keeps dismissal, and restores it when proposals arrive", () => {
     render(<AmbientLayer />);
     broadcastAftercare({
       meeting_id: "meeting-empty",
@@ -122,6 +124,7 @@ describe("aftercare without the mascot", () => {
     broadcastAftercare({
       meeting_id: "meeting-decided",
       title: "Decided proposals",
+      proposal_total: 2,
       open_total: 0,
       decided_total: 2,
     });
@@ -130,14 +133,14 @@ describe("aftercare without the mascot", () => {
     expect(
       within(transitioned).getByRole("button", { name: "Open proposals" }),
     ).toBeInTheDocument();
-    expect(within(transitioned).getByText("2 decided")).toBeInTheDocument();
+    expect(within(transitioned).getByText("2 to review · 2 decided")).toBeInTheDocument();
 
     fireEvent.click(
       within(transitioned).getByRole("button", { name: "Open proposals" }),
     );
     expect(mocks.openSurfaceWhenReady).toHaveBeenCalledWith(
       "review-meetings",
-      "meeting:meeting-decided",
+      "meeting:meeting-decided?view=review",
     );
     expect(screen.queryByLabelText("Meeting aftercare")).toBeNull();
 

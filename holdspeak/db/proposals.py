@@ -54,6 +54,10 @@ class Proposal:
     edited_at: Optional[str] = None
     # HS-200-13: the extractor's rationale, carried through confirm (AC1).
     rationale: Optional[str] = None
+    # PHILO-15 08: the summary's action_items row this proposal stands for,
+    # and the stamp Defer hides the row from Needs until.
+    action_item_id: Optional[str] = None
+    deferred_until: Optional[str] = None
 
     @property
     def owner(self) -> Optional[str]:
@@ -104,6 +108,7 @@ class ProposalRepository(BaseRepository):
         support: str = "unknown",
         support_record: Optional[dict[str, Any]] = None,
         rationale: Optional[str] = None,
+        action_item_id: Optional[str] = None,
     ) -> Optional[Proposal]:
         """Insert a proposal; returns None when its identity already exists.
 
@@ -140,9 +145,9 @@ class ProposalRepository(BaseRepository):
                     fingerprint, state, original_text, created_at,
                     retry_key, extraction_revision, job_id, job_attempt,
                     extraction_model, span_start, span_end, segment_index,
-                    support, support_record_json, rationale)
+                    support, support_record_json, rationale, action_item_id)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'proposed', ?, ?,
-                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     proposal_id, meeting_id, project_id, kind, text,
                     owner_hint, due_hint, source_artifact_id, source_plugin,
@@ -152,6 +157,7 @@ class ProposalRepository(BaseRepository):
                     extraction_model, span_start, span_end, segment_index,
                     support, json.dumps(support_record) if support_record else None,
                     (str(rationale).strip() or None) if rationale else None,
+                    action_item_id or None,
                 ),
             )
         return Proposal(
@@ -185,7 +191,27 @@ class ProposalRepository(BaseRepository):
             support=support,
             support_record=dict(support_record) if support_record else None,
             rationale=(str(rationale).strip() or None) if rationale else None,
+            action_item_id=action_item_id or None,
         )
+
+    def defer_proposal(self, proposal_id: str, until: str) -> Optional[Proposal]:
+        """PHILO-15 08: hide a PROPOSED row from Needs until ``until``.
+
+        The row stays proposed (the meeting's Review still lists it). None
+        when the row is not proposed.
+        """
+        with self._connection() as conn:
+            flipped = conn.execute(
+                "UPDATE follow_through_proposals SET deferred_until = ? "
+                "WHERE id = ? AND state = 'proposed'",
+                (until, proposal_id),
+            ).rowcount
+            if not flipped:
+                return None
+            row = conn.execute(
+                "SELECT * FROM follow_through_proposals WHERE id = ?", (proposal_id,),
+            ).fetchone()
+        return self._to_proposal(row) if row else None
 
     def edit_proposal(
         self,
@@ -423,6 +449,8 @@ class ProposalRepository(BaseRepository):
             due_supplied=_opt_str(row, "due_supplied"),
             edited_at=_opt_str(row, "edited_at"),
             rationale=_opt_str(row, "rationale"),
+            action_item_id=_opt_str(row, "action_item_id"),
+            deferred_until=_opt_str(row, "deferred_until"),
         )
 
 

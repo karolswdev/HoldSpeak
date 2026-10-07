@@ -149,6 +149,22 @@ def _classify_read_failure(exc: BaseException) -> tuple[str, str]:
     return "failed", (str(exc).split("\n")[0][:200] or type(exc).__name__)
 
 
+def _proposal_fields(row: dict[str, Any], item: dict[str, Any]) -> None:
+    """Copy a proposal's verb facts onto its attention row (Room or unfiled)."""
+    if not item.get("proposal_id"):
+        return
+    row["proposalId"] = item["proposal_id"]
+    row["proposalKind"] = item.get("proposal_kind", "action")
+    row["proposalHost"] = item.get("host")
+    row["proposalDue"] = item.get("due_hint")
+    row["meetingTitle"] = item.get("meeting_title")
+    # PHILO-15 08: the meeting the row opens, and the summary's own action
+    # row it stands for (that Follow-through card is this row, not a second).
+    row["meetingId"] = item.get("meeting_id")
+    if item.get("action_item_id"):
+        row["proposalActionItemId"] = item["action_item_id"]
+
+
 def _item_id(project_id: str, item: dict[str, Any]) -> str:
     """A stable id for one attention row, for dedup and reconciliation.
 
@@ -381,6 +397,7 @@ def build_aggregate(
     now: datetime | None = None,
     last_known: LastKnownStore | None = None,
     source_stale_after_s: float = DEFAULT_SOURCE_STALE_AFTER_S,
+    unfiled_proposals: Callable[[], list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     """Build the full needs-you payload.
 
@@ -496,12 +513,7 @@ def build_aggregate(
                 row["unknowns"] = list(item.get("unknowns") or [])
                 row["nextAction"] = item.get("next_action")
                 row["decisionRecordId"] = item.get("decision_record_id")
-            if item.get("proposal_id"):
-                row["proposalId"] = item["proposal_id"]
-                row["proposalKind"] = item.get("proposal_kind", "action")
-                row["proposalHost"] = item.get("host")
-                row["proposalDue"] = item.get("due_hint")
-                row["meetingTitle"] = item.get("meeting_title")
+            _proposal_fields(row, item)
             row["id"] = _item_id(pid, row)
             fresh.append(row)
             project_ids.add(pid)
@@ -517,6 +529,27 @@ def build_aggregate(
         coverage.extend(room_coverage(
             rm, pid, pname, now=clock_now, stale_after_s=source_stale_after_s,
         ))
+
+    # PHILO-15 08 (B03): a proposal from a meeting in NO Project is the
+    # owner's too. It has no Room to carry it, so it is read here, with the
+    # same row shape a Room proposal has.
+    if unfiled_proposals is not None:
+        try:
+            for item in unfiled_proposals() or []:
+                row = {
+                    "projectId": "", "projectName": "",
+                    "ref": item.get("title", ""), "title": item.get("title", ""),
+                    "why": item.get("why", ""), "ageToken": item.get("since", ""),
+                    "since": item.get("since", ""), "dueAt": None,
+                    "kind": item.get("kind"), "source": item.get("source", ""),
+                    "verbHref": item.get("verbHref"),
+                    "severity": item.get("severity", "info"),
+                }
+                _proposal_fields(row, item)
+                row["id"] = _item_id("", row)
+                items.append(row)
+        except Exception as exc:
+            log.warning("needs-you: unfiled proposal read failed: %s", exc)
 
     if not project_list_failed:
         # The project list is the expected-source set: a source it no longer

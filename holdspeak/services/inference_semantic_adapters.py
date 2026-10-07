@@ -139,20 +139,32 @@ def _nullable_text(value: Any) -> str | None:
     return value
 
 
+_ANALYSIS_FIELDS = frozenset({"summary", "topics", "action_items"})
+
+
 def normalize_meeting_analysis(raw: Any) -> Mapping[str, Any]:
     if isinstance(raw, Mapping):
-        source = _exact_mapping(raw, frozenset({"summary", "topics", "action_items"}))
+        # PHILO-15 08: ``decisions`` is the summary's fourth field; a result
+        # written before it existed has three and reads as no decisions.
+        if set(raw) == _ANALYSIS_FIELDS:
+            source = raw
+        else:
+            source = _exact_mapping(raw, _ANALYSIS_FIELDS | {"decisions"})
         summary, topics, action_items = (
             source["summary"],
             source["topics"],
             source["action_items"],
         )
+        # PHILO-15 08: a reply without the field is NOT EXTRACTED (None),
+        # never an empty list.
+        decisions = source.get("decisions")
     else:
         if str(getattr(raw, "error", "") or ""):
             raise ValueError("provider result error")
         summary = getattr(raw, "summary")
         topics = getattr(raw, "topics")
         action_items = getattr(raw, "action_items")
+        decisions = getattr(raw, "decisions", None)
     if not isinstance(summary, str) or not isinstance(topics, list) or not isinstance(action_items, list):
         raise ValueError("meeting analysis fields")
     normalized_items: list[dict[str, Any]] = []
@@ -173,7 +185,29 @@ def normalize_meeting_analysis(raw: Any) -> Mapping[str, Any]:
         )
     if any(not isinstance(topic, str) for topic in topics):
         raise ValueError("topic")
-    return {"summary": summary, "topics": list(topics), "action_items": normalized_items}
+    if decisions is not None and not isinstance(decisions, list):
+        raise ValueError("meeting analysis decisions")
+    normalized_decisions: list[dict[str, Any]] | None = None if decisions is None else []
+    for item in decisions or []:
+        value = _exact_mapping(item, frozenset({"decision", "rationale"}))
+        if not isinstance(value["decision"], str):
+            raise ValueError("decision text")
+        normalized_decisions.append(  # type: ignore[union-attr]
+            {"decision": value["decision"], "rationale": _nullable_text(value["rationale"])}
+        )
+    return {
+        "summary": summary,
+        "topics": list(topics),
+        "action_items": normalized_items,
+        "decisions": normalized_decisions,
+    }
+
+
+def normalize_meeting_live_analysis(raw: Any) -> Mapping[str, Any]:
+    """The live window's three fields (PHILO-15 08: decisions are deferred-only)."""
+    result = dict(normalize_meeting_analysis(raw))
+    result.pop("decisions", None)
+    return result
 
 
 def normalize_bookmark_label(raw: Any) -> Mapping[str, Any]:
@@ -231,8 +265,10 @@ def adapter_for(
     registry: InferenceCapabilityRegistry | None = None,
 ) -> ClosedSemanticAdapter:
     selected = registry or process_inference_capability_registry()
-    if capability_id in {"meeting.live_analysis", "meeting.deferred_analysis"}:
+    if capability_id == "meeting.deferred_analysis":
         normalize = normalize_meeting_analysis
+    elif capability_id == "meeting.live_analysis":
+        normalize = normalize_meeting_live_analysis
     elif capability_id == "meeting.bookmark_label":
         normalize = normalize_bookmark_label
     elif capability_id == "meeting.auto_title":
@@ -319,6 +355,7 @@ __all__ = [
     "normalize_bookmark_label",
     "normalize_lifecycle",
     "normalize_meeting_analysis",
+    "normalize_meeting_live_analysis",
     "normalize_meeting_title",
     "normalize_plugin_result",
     "normalize_transcript",

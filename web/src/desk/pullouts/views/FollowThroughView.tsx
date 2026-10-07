@@ -4,6 +4,7 @@ import { apiFetch, readableError } from "../../../lib/api";
 import { refreshIntelligenceAttention } from "../../intelligenceAttention";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { openSurfaceOr } from "../../shell";
+import { openSourceRef } from "../../surface/citations";
 import {
   SurfaceLedger,
   SurfaceLedgerRow,
@@ -282,11 +283,12 @@ export function FollowThroughView({
                     >
                       <div className="follow-through-expanded">
                         <div className="follow-through-verbs" aria-label={`Verbs for ${card.text}`}>
-                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "done")} aria-label="Mark done"><span aria-hidden="true">{String.fromCodePoint(0x2713)}</span></Button>
-                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "dismiss")} aria-label="Dismiss">↷</Button>
-                          {!peopleCommitment ? <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "snooze", { until: tomorrow() })} aria-label="Snooze until tomorrow">◷</Button> : null}
-                          {!peopleCommitment ? <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => setDelegatingCardId(delegatingCardId === card.id ? null : card.id)} aria-label="Delegate">⇢</Button> : null}
-                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "reopen")} aria-label="Reopen">↺</Button>
+                          {/* PHILO-15 08 (B03): every verb says its word (UX-CANON: no glyph-only controls). */}
+                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "done")} aria-label="Mark done">Done</Button>
+                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "dismiss")} aria-label="Dismiss">Dismiss</Button>
+                          {!peopleCommitment ? <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "snooze", { until: tomorrow() })} aria-label="Snooze until tomorrow">Snooze</Button> : null}
+                          {!peopleCommitment ? <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => setDelegatingCardId(delegatingCardId === card.id ? null : card.id)} aria-label="Delegate">Delegate</Button> : null}
+                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "reopen")} aria-label="Reopen">Reopen</Button>
                         </div>
                         {delegatingCardId === card.id ? (
                           <div className="follow-through-delegate">
@@ -303,7 +305,15 @@ export function FollowThroughView({
                             <span>{segText ?? "Source moment unavailable"}</span>
                           </blockquote>
                           );
-                        })() : (
+                        })() : card.provenance?.meeting_id ? (
+                          // PHILO-15 08: the meeting is there, only the moment
+                          // is not pinned: its transcript is one press away.
+                          <div className="follow-through-provenance">
+                            <Button dense variant="ghost" aria-label={`Open transcript: ${card.text}`}
+                              data-testid="follow-through-open-transcript"
+                              onClick={() => openSourceRef(`meeting:${card.provenance?.meeting_id}`)}>Open transcript</Button>
+                          </div>
+                        ) : (
                           <div className="follow-through-provenance is-unavailable">SOURCE MOMENT UNAVAILABLE</div>
                         )}
                       </div>
