@@ -540,7 +540,7 @@ function NudgeCard({
     return (
       <SurfaceLedgerRow
         data-testid="nudge-receipt-row"
-        lead={<StateChip state="success" label="" icon={"●"} />}
+        lead={<StateChip state="success" label="" icon={"●"} wordless />}
         primary={<span className="surface-primary">SENT</span>}
         wrap
         cells={
@@ -566,7 +566,7 @@ function NudgeCard({
     return (
       <SurfaceLedgerRow
         data-testid="nudge-unknown-row"
-        lead={<StateChip state="warning" label="" icon={"●"} />}
+        lead={<StateChip state="warning" label="" icon={"●"} wordless />}
         primary={<span className="surface-primary">RESULT UNKNOWN</span>}
         wrap
         cells={
@@ -1100,13 +1100,13 @@ function ItemCells({ item }: { item: ItemRow }) {
 }
 
 function itemLead(item: ItemRow) {
-  if (daysLate(item) > 0) return <StateChip state="failure" label="" icon="●" />;
+  if (daysLate(item) > 0) return <StateChip state="failure" label="" icon="●" wordless />;
   // Missed is a failure, dropped is idle; only a reached or resolved item
   // earns the success check (Codex Astra canvases r1 F7).
-  if (item.lifecycle === "missed") return <StateChip state="failure" label="" icon="✗" />;
+  if (item.lifecycle === "missed") return <StateChip state="failure" label="" icon="✗" wordless />;
   if (item.lifecycle === "dropped") return <StateChip state="idle" label="" icon="—" />;
-  if (CLOSED.has(item.lifecycle)) return <StateChip state="success" label="" icon="✓" />;
-  if (item.item_type === "risk") return <StateChip state="warning" label="" icon="⚠" />;
+  if (CLOSED.has(item.lifecycle)) return <StateChip state="success" label="" icon="✓" wordless />;
+  if (item.item_type === "risk") return <StateChip state="warning" label="" icon="⚠" wordless />;
   return <StateChip state="idle" label="" icon="○" />;
 }
 
@@ -1412,7 +1412,7 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
             return (
               <SurfaceLedgerRow
                 key={item.id}
-                lead={<StateChip state={face.state} label="" icon={face.icon} />}
+                lead={<StateChip state={face.state} label="" icon={face.icon} wordless={Boolean(face.word)} />}
                 primary={
                   <span className="surface-primary" data-outcome={item.outcome || "ok"} data-code={item.reason ?? undefined}>
                     {label}
