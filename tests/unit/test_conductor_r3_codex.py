@@ -39,6 +39,7 @@ from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.gate_service import GateService
 from holdspeak.services.needs_you_membership import TO_ANSWER, TO_APPROVE, coder_items
+from tests.unit._spawn_env import command_of, token_of
 from tests.unit.test_agent_hand import OWNER, _rig, _wait_for, db  # noqa: F401  (db is a fixture)
 
 PREFIX = "uv run --project /opt/hs holdspeak"
@@ -255,7 +256,7 @@ def test_a_codex_launch_is_armed_and_carries_its_hooks(codex_launched) -> None:
     gate = json.loads(rig.gate_path.read_text(encoding="utf-8"))
     assert gate["repos"] == {str(rig.worktree): ["Bash"]} and gate["armed_paths"] == [str(rig.worktree)]
     spawn = next(c for c in rig.tmux.calls if c[1] == "new-session")
-    command = spawn[spawn.index("-s") + 2]
+    command = command_of(spawn)  # Conductor R2: behind the /bin/sh bootstrap
     assert " exec codex --no-daemon -c " in command
     assert "gate hook --agent codex" in command and "--settings" not in command
     assert rig.launches.get(rig.launch_id)["session_key"] == "codex:smoke-session"
@@ -662,7 +663,7 @@ def _codex_argv(tmp_path, db, monkeypatch, mode: str) -> tuple[Any, list[str]]:
     result = rig.hand.hand(OWNER, "action", "ai_1", profile="codex-default")
     assert result["status"] == "launched", result
     spawn = next(c for c in rig.tmux.calls if c[1] == "new-session")
-    command = spawn[spawn.index("-s") + 2]
+    command = command_of(spawn)  # Conductor R2: behind the /bin/sh bootstrap
     rig.tmux.ended = True
     return rig, shlex.split(command.split(" exec ", 1)[1])
 
@@ -785,7 +786,8 @@ def _launch_principal(rig: Any) -> Principal:
     from holdspeak.principals import agent_credentials
 
     spawn = next(c for c in rig.tmux.calls if c[1] == "new-session")
-    token = next(a for a in spawn if a.startswith("HOLDSPEAK_AGENT_CREDENTIAL=")).split("=", 1)[1]
+    token = token_of(spawn)  # Conductor R2: the 0600 file the bootstrap reads, never argv
+    assert not any(token in arg for arg in spawn)
     credential = agent_credentials.derive_credential(token)
     assert credential is not None and credential.launch_id == rig.launch_id
     return credential.principal
