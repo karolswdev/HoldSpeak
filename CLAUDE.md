@@ -150,6 +150,15 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   `tests/web-inherited-baseline.txt` (BASELINE-MATCHED / BRANCH-NEW /
   HEALED; exit 0 only with zero branch-new). See `tests/WEB_BASELINE.md`.
 
+- **ONE TEST RUN AT A TIME ON THE MACHINE (owner catch 2026-10-07: "a ton of
+  your workers are just running tests at the same time and keep breaking each
+  other").** Every pytest, vitest, glass_for and graph-walk run, in every lane
+  and the orchestrator's FAST alike, goes through the lock:
+  `uv run python scripts/test_lock.py -- <command>`. It waits for the previous
+  run to finish, then runs yours. Under the lock use `-n 4`, not `-n auto`.
+  A worker never runs FAST; a worker waits for the lock rather than running
+  a smaller suite in parallel. Load above 60 means someone skipped the lock.
+
 Run the relevant tests with these commands and read the output before
 you open the PR. Type-check is not validation.
 
