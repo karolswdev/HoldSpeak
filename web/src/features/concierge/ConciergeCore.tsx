@@ -85,6 +85,7 @@ function FoundEngineRow({
   const isNotSet = engine.state === "NOT_SET";
   const isUnreachable = engine.state === "UNREACHABLE";
   const isWaiting = engine.state === "WAITING";
+  const isNotSupported = engine.state === "NOT_SUPPORTED";
   const isCloud = engine.kind === "cloud";
   const isPreset = engine.kind === "preset" && !isReady;
 
@@ -106,7 +107,7 @@ function FoundEngineRow({
             <span className="concierge-key-chip" data-set data-testid="key-chip-set">KEY SET</span>
           ) : null}
           {/* KEY NOT SET shown only via the state chip — no duplicate */}
-          {isCloud && engine.keySet ? (
+          {isCloud && engine.keySet && !isNotSupported ? (
             <span className="concierge-cloud-actions">
               <Button dense variant="ghost" onClick={(e: React.MouseEvent) => { e.stopPropagation(); ctrl.checkCloud(engine.id); }} data-testid={`concierge-check-${engine.id}`}>Check</Button>
               <span className="concierge-cost-chip">1 TOKEN · $</span>
@@ -128,6 +129,7 @@ function FoundEngineRow({
             : isNotSet ? <StateChip state="warning" label="NOT SET" />
             : isUnreachable ? <StateChip state="failure" label="UNREACHABLE" />
             : isWaiting ? <StateChip state="idle" label="WAITING" icon="○" />
+            : isNotSupported ? <StateChip state="warning" label="NOT SUPPORTED YET" />
             : null}
           </span>
           {/* Line 2: host chip */}

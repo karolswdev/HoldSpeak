@@ -24,6 +24,7 @@ from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_decisions_router, build_primitives_router
 from holdspeak.web.routes import monday_brief as brief_routes
+from tests.unit.brief_rule_stub import quiet_needs_you  # noqa: F401  (a fixture)
 
 TITLE = "Adopt the one desk bus"
 ITEM = f"Review decision: {TITLE}"
@@ -48,7 +49,7 @@ def _texts(brief) -> list[str]:
     return [item.text for items in brief.sections.values() for item in items]
 
 
-def test_the_producer_clock_moves_the_brief_day_and_keeps_the_same_day_id(tmp_path):
+def test_the_producer_clock_moves_the_brief_day_and_keeps_the_same_day_id(tmp_path, quiet_needs_you):
     db = Database(tmp_path / "brief.db")
     clock = MovableClock(DAY_ONE)
     service = MondayBriefService(db, clock=clock)

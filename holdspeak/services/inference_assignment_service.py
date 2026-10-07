@@ -130,6 +130,17 @@ class InferenceAssignmentService:
         self._tool_capability_foundation = foundation
 
     @staticmethod
+    def _require_reader(principal: Principal | None) -> None:
+        from ..principals import PrincipalRight
+
+        if principal is None or not principal.permits(PrincipalRight.READ):
+            raise ServiceError(
+                "inference_assignment_owner_required",
+                "Owner access is required",
+                context={"status": 403},
+            )
+
+    @staticmethod
     def _require_owner(principal: Principal | None) -> None:
         if principal is None or principal.kind is not PrincipalKind.OWNER:
             raise ServiceError(
@@ -153,8 +164,12 @@ class InferenceAssignmentService:
         return {"schema": "InferenceAssignmentList@1", "assignments": assignments}
 
     def assignment_summary(self, principal: Principal) -> dict[str, Any]:
-        """Return the bounded seven-row owner roster, derived only by the server."""
-        self._require_owner(principal)
+        """Return the bounded seven-row owner roster, derived only by the server.
+
+        A read: it needs the READ right (PHILO-15 05 r2), which the owner and
+        the scheduled Brief (``brief-conductor``) hold.  Every write here
+        still requires the OWNER kind (``_require_owner``)."""
+        self._require_reader(principal)
         with self._db._connection() as conn:
             global_row = self._head(conn, "global")
             default_projection = (

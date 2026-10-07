@@ -29,6 +29,11 @@ class PrincipalKind(str, Enum):
     SCHEDULER = "scheduler"
     # Narrow runtime identity for an explicitly-issued ambient service.
     SERVICE = "service"
+    # PHILO-15 05 (Astra r2): the scheduled morning Brief.  It READS what the
+    # owner's Generate reads and writes one brief row (MondayBriefService
+    # writes it directly; no right gates it).  It cannot decide, delegate,
+    # change posture, submit agent work, link a node or create a profile.
+    BRIEF_CONDUCTOR = "brief-conductor"
     NONE = "none"
 
 
@@ -58,6 +63,7 @@ _RIGHTS: dict[PrincipalKind, frozenset[PrincipalRight]] = {
     PrincipalKind.NODE: frozenset({PrincipalRight.NODE_LINK}),
     PrincipalKind.SCHEDULER: frozenset(),
     PrincipalKind.SERVICE: frozenset(),
+    PrincipalKind.BRIEF_CONDUCTOR: frozenset({PrincipalRight.READ}),
     PrincipalKind.NONE: frozenset(),
 }
 

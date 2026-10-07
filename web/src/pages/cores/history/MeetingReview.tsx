@@ -69,6 +69,7 @@ export function MeetingReview({
   onOpenTranscript,
   onRunIntelligence,
   onChanged,
+  runReceipt,
 }: {
   meetingId: string;
   /** Lands on the transcript well scrolled to the span's segment. */
@@ -78,8 +79,13 @@ export function MeetingReview({
   onRunIntelligence?: () => void;
   /** A durable write happened; the host may refresh what it lists. */
   onChanged?: () => void;
+  /** PHILO-15-07 (B15): the host's receipt for THIS meeting's summary run.
+   *  Review owns its footer, so the run's QUEUED → RAN shows here too. */
+  runReceipt?: { text: string; tone?: "danger" } | null;
 }) {
   const [model, setModel] = useState<MeetingReviewModel | null>(null);
+  // B15: when this meeting's run reaches its final state, read the review again.
+  const runText = runReceipt?.text ?? "";
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -103,6 +109,10 @@ export function MeetingReview({
       setError(readableError(reason));
     }
   }, [meetingId]);
+
+  useEffect(() => {
+    if (runText && !runText.startsWith("QUEUED")) void load();
+  }, [runText, load]);
 
   useEffect(() => {
     setModel(null);
@@ -772,12 +782,14 @@ export function MeetingReview({
         receipt={
           <span
             className="surface-footer-receipt-line"
-            data-tone={receipt?.tone}
+            data-tone={receipt?.tone ?? runReceipt?.tone}
             role="status"
             data-testid="review-receipt"
           >
             {receipt
               ? receipt.text
+              : runReceipt
+                ? runReceipt.text
               : processing && model.job
                 ? `ATTEMPT ${model.job.attempt}`
                 : ""}

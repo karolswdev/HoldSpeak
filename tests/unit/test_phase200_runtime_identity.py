@@ -359,7 +359,7 @@ class _SweepProbe:
         self.cadence_thread = None
         self.heartbeat_started = False
 
-    _cadence_enabled = staticmethod(lambda: True)
+    _cadence_jobs_enabled = staticmethod(lambda: True)
     _cadence_loop = staticmethod(lambda: None)
 
     def _start_heartbeat_thread(self) -> None:

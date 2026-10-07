@@ -182,6 +182,10 @@ export function CadenceCore({ hero }: CoreProps) {
 
   // ── Existing cadence loop + nudge resources (kept for the NOW N section) ──
   const cadenceStatus = useResource<Record<string, unknown>>("/api/cadence/status", {});
+  const briefJobRaw = cadenceStatus.data?.brief_job as { enabled?: unknown; hour?: unknown } | undefined;
+  const briefJob = briefJobRaw && typeof briefJobRaw.hour === "number"
+    ? { enabled: briefJobRaw.enabled === true, hour: briefJobRaw.hour }
+    : null;
   const loopsResource = useResource<CadenceLoopsResponse>("/api/cadence/loops", {});
   const history = useResource<CadenceHistoryResponse>("/api/cadence/history?limit=20", {});
   const loops = asRows(loopsResource.data, ["loops"]);
@@ -465,12 +469,16 @@ export function CadenceCore({ hero }: CoreProps) {
           cells={
             <>
               {/* HS-175 counsel C9(a) / H4-0: the brief regenerates once a
-                  DAY after quiet hours close (runtime/cadence.py
-                  _maybe_regenerate_brief); no weekly cadence exists, so the
-                  token says DAILY on both rows.  The row's name stays
-                  "Weekly brief" -- it is the week-window brief. */}
+                  DAY (runtime/cadence.py _maybe_regenerate_brief); no weekly
+                  cadence exists, so the token says DAILY on both rows.  The
+                  row's name stays "Weekly brief" -- it is the week-window
+                  brief.  PHILO-15 05: the hour is the Brief job's own
+                  (cadence.brief_hour, 06:00 by default), OFF when the job is
+                  off; an older hub without it keeps the quiet-hours end. */}
               <span className="surface-token" data-chip data-muted data-testid="rhythm-brief-cadence">
-                {`DAILY ${fmtHour(settings.quiet_hours.end)}`}
+                {briefJob
+                  ? briefJob.enabled ? `DAILY ${fmtHour(briefJob.hour)}` : "OFF"
+                  : `DAILY ${fmtHour(settings.quiet_hours.end)}`}
               </span>
               <span data-testid="rhythm-brief-last">
                 {briefDate ? (
