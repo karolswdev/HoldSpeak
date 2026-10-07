@@ -31,16 +31,18 @@ const ITEMS: ParkedItem[] = [
 
 let parked: ParkedItem[] = [];
 let notRead: string[] = [];
+let partial: string[] = [];
 const posts: string[] = [];
 
 beforeEach(() => {
   parked = [...ITEMS];
   notRead = [];
+  partial = [];
   posts.length = 0;
   shell.opened.length = 0;
   apiFetch.mockReset();
   apiFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
-    if (path === "/api/desk/parked") return { items: parked, not_read: notRead };
+    if (path === "/api/desk/parked") return { items: parked, not_read: notRead, partial };
     if (init?.method === "POST") {
       posts.push(path);
       parked = parked.filter((i) => !path.includes(encodeURIComponent(i.id)));
@@ -129,6 +131,14 @@ describe("the Parked drawer", () => {
     expect(await screen.findByText("Nothing parked")).toBeTruthy();
     // no counter of zero
     expect(screen.queryByText(/0 OBJECTS/)).toBeNull();
+  });
+
+  it("a kind read part way shows its rows and says NOT READ · PARTIAL", async () => {
+    notRead = ["meeting"];
+    partial = ["meeting"];
+    render(<ParkedDrawer origin={null} />);
+    expect((await screen.findByTestId("parked-not-read")).textContent).toBe("MEETINGS · NOT READ · PARTIAL");
+    expect(rowOf(/^Vendor call, MEETING/)).toBeTruthy();
   });
 
   it("a workbench item row wears its own kind word and the workbench sprite", () => {

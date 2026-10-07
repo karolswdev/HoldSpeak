@@ -1400,3 +1400,15 @@ def test_r4_a_slow_keychain_read_in_the_destination_check_never_blocks_the_hub(t
         assert read < 0.5, f"{transport}: the read waited {read:.3f} s during the keychain check"
     finally:
         hub.kill()
+
+
+def test_philo15_the_operation_schemas_name_the_default_provider() -> None:
+    """Astra r1 on #974: the descriptions an agent reads agree with the hub's default."""
+    from holdspeak import operations
+    from holdspeak.services.channel_email import DEFAULT_EMAIL_PROVIDER
+
+    by_name = {d.name: d for d in operations.DESCRIPTORS}
+    for name in ("channel.save_destination", "channel.save_email_key"):
+        text = by_name[name].args_schema["properties"]["provider"]["description"]
+        assert f"({DEFAULT_EMAIL_PROVIDER} if not given)" in text, (name, text)
+        assert "sendgrid" in text  # SendGrid stays selectable by name

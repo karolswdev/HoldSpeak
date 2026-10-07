@@ -30,21 +30,48 @@ def _iso(value: Any) -> str:
     return str(iso() if callable(iso) else value)
 
 
+#: One meeting page, and the most pages one read follows (100,000 meetings).
+MEETING_PAGE = 500
+MAX_MEETING_PAGES = 200
+
+
+class PartialRead(Exception):
+    """A kind read stopped part way: the rows read so far, and why it stopped."""
+
+    def __init__(self, rows: list[dict[str, Any]], cause: str) -> None:
+        super().__init__(cause)
+        self.rows = rows
+
+
+def _meeting_row(m: Any) -> dict[str, Any]:
+    row = m if isinstance(m, dict) else m.to_dict()
+    return {
+        "ref": f"meeting:{row['id']}",
+        "kind": "meeting",
+        "id": str(row["id"]),
+        "name": str(row.get("title") or "Meeting"),
+        "when": _iso(row.get("started_at")),
+        "home": {},
+    }
+
+
 def _meetings(meeting_service: Any, principal: Any) -> list[dict[str, Any]]:
-    answer = meeting_service.list_meetings(principal, parked=True, limit=500)
-    rows = answer.get("meetings", []) if isinstance(answer, dict) else answer
-    out = []
-    for m in rows:
-        row = m if isinstance(m, dict) else m.to_dict()
-        out.append({
-            "ref": f"meeting:{row['id']}",
-            "kind": "meeting",
-            "id": str(row["id"]),
-            "name": str(row.get("title") or "Meeting"),
-            "when": _iso(row.get("started_at")),
-            "home": {},
-        })
-    return out
+    """Every parked meeting: each page, by ``next_cursor``, up to the bound."""
+    out: list[dict[str, Any]] = []
+    cursor: Any = None
+    for _page in range(MAX_MEETING_PAGES):
+        try:
+            answer = meeting_service.list_meetings(principal, parked=True, limit=MEETING_PAGE, cursor=cursor)
+        except Exception as exc:
+            if out:
+                raise PartialRead(out, f"page read failed: {exc}") from exc
+            raise
+        rows = answer.get("meetings", []) if isinstance(answer, dict) else answer
+        out.extend(_meeting_row(m) for m in rows)
+        cursor = answer.get("next_cursor") if isinstance(answer, dict) else None
+        if not cursor:
+            return out
+    raise PartialRead(out, "more pages than the bound")
 
 
 def _workbench_items(workbench_service: Any, principal: Any) -> list[dict[str, Any]]:
@@ -86,7 +113,10 @@ def parked_collection(
     workbench_service: Any,
     project_service: Any,
 ) -> dict[str, Any]:
-    """``{items: [{ref, kind, id, name, when, home}], not_read: [kind]}``, newest first."""
+    """``{items: [{ref, kind, id, name, when, home}], not_read: [kind], partial: [kind]}``, newest first.
+
+    A kind in ``partial`` is also in ``not_read``: some of its rows are here,
+    the rest could not be read (never a silently short list)."""
     reads: dict[str, Callable[[], list[dict[str, Any]]]] = {
         "meeting": lambda: _meetings(meeting_service, principal),
         "workbench_item": lambda: _workbench_items(workbench_service, principal),
@@ -94,11 +124,17 @@ def parked_collection(
     }
     items: list[dict[str, Any]] = []
     not_read: list[str] = []
+    partial: list[str] = []
     for kind in PARKED_KINDS:
         try:
             items.extend(reads[kind]())
+        except PartialRead as exc:
+            log.warning("Parked read for %s is partial: %s", kind, exc)
+            items.extend(exc.rows)
+            not_read.append(kind)
+            partial.append(kind)
         except Exception as exc:  # one kind's failure never hides the others
             log.warning("Parked read failed for %s: %s", kind, exc)
             not_read.append(kind)
     items.sort(key=lambda row: row["when"], reverse=True)
-    return {"items": items, "not_read": not_read}
+    return {"items": items, "not_read": not_read, "partial": partial}

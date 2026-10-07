@@ -97,3 +97,67 @@ def test_restore_from_the_drawer_takes_the_object_out_of_parked(tmp_path: Path) 
     services["meeting_service"].restore_meeting(OWNER, "m-park")
     refs = {row["ref"] for row in parked_collection(OWNER, **services)["items"]}
     assert "meeting:m-park" not in refs and "project:p-old" in refs
+
+
+# ── Astra r1 on #974: every page, a partial read named, the real auth ──
+
+
+def _park_many(db: Database, n: int) -> None:
+    for i in range(n):
+        db.meetings.save_meeting(MeetingState(id=f"m-{i:04d}", started_at=datetime(2026, 9, 1, 9), title=f"Old {i}"))
+    with db._connection() as conn:
+        conn.execute("UPDATE meetings SET parked = 1 WHERE id LIKE 'm-0%'")
+
+
+def test_501_parked_meetings_are_all_read_through_the_hub(tmp_path: Path, monkeypatch) -> None:
+    """One page is 500: the 501st parked meeting is in the drawer, nothing NOT READ."""
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from test_philo5_the_loop import _boot
+
+    hub = _boot(tmp_path, monkeypatch)
+    _park_many(hub.db, 501)
+    body = hub.client.get("/api/desk/parked").json()
+    meetings = [row for row in body["items"] if row["kind"] == "meeting"]
+    assert len(meetings) == 501 and len({row["id"] for row in meetings}) == 501
+    assert body["not_read"] == [] and body["partial"] == []
+
+
+def test_a_page_that_fails_mid_way_is_partial_never_silently_short(tmp_path: Path) -> None:
+    db = Database(tmp_path / "h.db")
+    _park_many(db, 501)
+    services = _services(db)
+    real = services["meeting_service"].list_meetings
+    calls: list[Any] = []
+
+    def second_page_fails(principal: Any, **kw: Any) -> Any:
+        calls.append(kw.get("cursor"))
+        if len(calls) == 2:
+            raise RuntimeError("database is locked")
+        return real(principal, **kw)
+
+    services["meeting_service"].list_meetings = second_page_fails
+    answer = parked_collection(OWNER, **services)
+    assert answer["not_read"] == ["meeting"] and answer["partial"] == ["meeting"]
+    assert len([r for r in answer["items"] if r["kind"] == "meeting"]) == 500
+    assert calls == [None, "500"]
+
+
+def test_the_real_edge_refuses_anonymous_and_an_agent(tmp_path: Path, monkeypatch) -> None:
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from test_conductor_k6_agent_mcp import _client, _launch_credential
+    from test_philo5_the_loop import _boot
+
+    hub = _boot(tmp_path, monkeypatch)
+    assert hub.client.get("/api/desk/parked").status_code == 200
+    assert _client(hub, None).get("/api/desk/parked").status_code == 401
+    from holdspeak.principals import agent_credentials
+
+    cred = _launch_credential("launch_p15parked01")
+    try:
+        assert _client(hub, cred.token).get("/api/desk/parked").status_code == 403
+    finally:
+        agent_credentials.revoke(cred.principal.identity)

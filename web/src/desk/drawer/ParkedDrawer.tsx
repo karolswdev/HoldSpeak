@@ -51,6 +51,8 @@ export interface ParkedItem {
 export interface ParkedRead {
   items: ParkedItem[];
   not_read: ParkedKind[];
+  /** Kinds read part way: some rows are here, the rest NOT READ. */
+  partial?: ParkedKind[];
 }
 
 /** The NOT READ word of a kind the hub could not read. */
@@ -103,7 +105,7 @@ function useParked() {
     apiFetch<ParkedRead>("/api/desk/parked").then(
       (body) => {
         if (!live) return;
-        setRead({ items: Array.isArray(body?.items) ? body.items : [], not_read: body?.not_read ?? [] });
+        setRead({ items: Array.isArray(body?.items) ? body.items : [], not_read: body?.not_read ?? [], partial: body?.partial ?? [] });
         setFailed(false);
       },
       () => live && setFailed(true), // the last read stays on the glass
@@ -129,6 +131,7 @@ export function ParkedDrawer({ origin }: { origin: { x: number; y: number } | nu
   }, [selectedId, selected]);
 
   const notRead = failed ? (["meeting", "workbench_item", "project"] as ParkedKind[]) : read?.not_read ?? [];
+  const partial = failed ? [] : read?.partial ?? [];
   const byRef = (ref: string) => items.find((i) => i.ref === ref);
   const restore = async (refs: string[]) => {
     const targets = refs.map(byRef).filter((i): i is ParkedItem => Boolean(i));
@@ -175,6 +178,7 @@ export function ParkedDrawer({ origin }: { origin: { x: number; y: number } | nu
                 {notRead.map((kind) => (
                   <span key={kind} className="drawer-fact" data-tone="fail" data-testid="parked-not-read">
                     {PARKED_KIND_WORD[kind]} · <b>NOT READ</b>
+                    {partial.includes(kind) ? <> · <b>PARTIAL</b></> : null}
                   </span>
                 ))}
               </div>
