@@ -21,6 +21,7 @@ import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, applicationForAction } from "../../applications";
+import { drawerWindowId, openDrawer } from "../../drawer/store";
 import { RoomActions } from "./RoomActions";
 import {
   dockStateLabel,
@@ -467,8 +468,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       .filter((project) => windowsById["surface-project-memory"]?.scope === `project:${project.id}`)
       .map((project) => `project:${project.id}`),
   );
+  // PHILO-14 A2: an open drawer is its Project's launcher running (no second chip).
+  const activeDrawerIds = new Set(activeProjects.map((project) => drawerWindowId(project.id)));
   const visibleWindowChips = windows.filter((window) =>
     !DOCK_APP_IDS.has(window.id) &&
+      !activeDrawerIds.has(window.id) &&
       !hiddenProjectWindowIds.has(windowsById[window.id]?.scope || ""),
   );
   return (
@@ -586,8 +590,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       })}
       {activeProjects.map((project) => {
         const projectWindow = windows.find(
-          (window) => window.id === "surface-project-memory" &&
-            windowsById["surface-project-memory"]?.scope === `project:${project.id}`,
+          (window) => window.id === drawerWindowId(project.id) || (window.id === "surface-project-memory" &&
+            windowsById["surface-project-memory"]?.scope === `project:${project.id}`),
         );
         const count = !offline ? projectCounts[project.id] || 0 : 0;
         return (
@@ -597,16 +601,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             data-app="project"
             className={`desk-dock-launch desk-dock-project${projectWindow ? " is-run" : ""}`}
             aria-label={count > 0 ? `${project.name}, ${count} open here` : project.name}
-            onClick={() => {
-              void import("../../shell").then((m) =>
-                m.openSurfaceOr(
-                  "open-project-memory",
-                  "/project-memory",
-                  `project:${project.id}`,
-                  { origin: "dock" },
-                ),
-              );
-            }}
+            // PHILO-14 A2: the Dock opens a Project as its drawer.
+            onClick={() => openDrawer(project.id)}
           >
             {/* C1: a project is a drawer (the Workbench silhouette rule). */}
             <img src={spriteUrl("directory", project.id)} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />

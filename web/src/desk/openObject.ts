@@ -5,8 +5,10 @@
  * answer is a function, or null when the row names nothing that opens; a
  * null row draws no open (UX-CANON A.11: a verb that does nothing is a lie).
  * The opens go through the existing dispatch only: the citation species
- * (`openSourceRef`), `openProjectRoom`, the People surface, Intelligence. */
+ * (`openSourceRef`), a Project's drawer (`drawer/`), the People surface,
+ * Intelligence. */
 import { apiFetch } from "../lib/api";
+import { openDrawer } from "./drawer/store";
 import { openIntelligence } from "./intelligenceNavigation";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "./shell";
 import { openSourceRef } from "./surface";
@@ -83,9 +85,11 @@ export function refOpener(ref: string | null | undefined): Opener | null {
     if (!id || id.startsWith("project:")) return null;
     return () => openPerson(id);
   }
+  // PHILO-14 A2: a Project opens as its drawer (the Room is one press away,
+  // in the drawer's head).
   if (clean.startsWith("project:")) {
     const id = clean.slice("project:".length);
-    return id ? () => openProjectRoom(id) : null;
+    return id ? () => openDrawer(id) : null;
   }
   // Conductor F2: a Needs you coder row (R5) is `coder:<agent>:<session_id>`;
   // it opens the agent's session window.
@@ -146,7 +150,7 @@ export function calendarOpener(event: {
   const person = (event.person_relationship_id ?? "").trim();
   if (person) return () => openPerson(person, "prep");
   const project = (event.project_id ?? "").trim();
-  if (project) return () => openProjectRoom(project);
+  if (project) return () => openDrawer(project);
   return null;
 }
 

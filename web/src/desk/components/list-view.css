@@ -431,3 +431,7 @@
 .desk-next .desk-listmode > .desk-world-foot .write-receipt {
   background: var(--surface-2);
 }
+
+/* PHILO-14 A2 + PHILO-8-01: the zone being named holds its field in its
+   own Name cell; the row's name verb steps aside while it does. */
+.desk-next .desk-list-objects .object-list-name:has(.desk-zone-rename-row) .object-list-open { display: none; }

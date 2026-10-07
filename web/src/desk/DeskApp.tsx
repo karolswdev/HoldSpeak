@@ -44,6 +44,7 @@ import { DeskDeleteHost } from "./deleteReceipt";
 import { qualifiedRef } from "./api";
 import { noteFaceChange } from "./zoneName";
 import { reportWriteFailure } from "./hooks/useWriteReceipt";
+import { DrawerWindows } from "./drawer";
 import "./desk.css";
 
 // The Chair is HOME. Floor/GL and object-specific heavyweight windows cross
@@ -302,6 +303,8 @@ function DeskFaces() {
       {!arrivalRequired && <ScheduleCreateWindow />}
       {!arrivalRequired && <PanePicker />}
       {!arrivalRequired && <SessionPullout />}
+      {/* PHILO-14 A2: a Project opens as a drawer; Get Info is its own window. */}
+      {!arrivalRequired && <DrawerWindows />}
       {!arrivalRequired && <AttentionDrawer />}
       {/* Recovery remains direct and in-place: FirstWords opens Setup through
           this existing surface registry without restoring the whole Desk. */}

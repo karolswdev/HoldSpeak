@@ -13,6 +13,7 @@ import { openPrimitive, openProjectRoom, openSurfaceOr } from "../shell";
 import { ChairHome } from "../chair/ChairHome";
 import { BriefView } from "../pullouts/views/BriefView";
 import { __resetOwnerCache } from "../openObject";
+import { useDrawers } from "../drawer/store";
 import { asHub } from "../../test/hubNeedsYou";
 
 vi.mock("../../lib/api", async (original) => ({
@@ -162,7 +163,8 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
     expect(openPrimitive).not.toHaveBeenCalled();
   });
 
-  it("a calendar row opens its person at Prep, else its Room, else nothing", async () => {
+  it("a calendar row opens its person at Prep, else its Project's drawer, else nothing", async () => {
+    useDrawers.setState({ drawers: [], infos: [] });
     render(<ChairHome />);
     const rows = await screen.findAllByTestId("arrival-meeting-row");
     const oneOnOne = rows.find((r) => r.textContent?.includes("1:1 Priya"))!;
@@ -171,12 +173,13 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
 
     const sync = rows.find((r) => r.textContent?.includes("Ledger cutover sync"))!;
     fireEvent.click(sync);
-    expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
+    // PHILO-14 A2: a Project opens as its drawer.
+    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["proj-ledger"]);
 
     // Unlink beside the ROOM token is its own verb, never the row's open.
-    vi.mocked(openProjectRoom).mockReset();
+    useDrawers.setState({ drawers: [] });
     fireEvent.click(within(sync).getByTestId("arrival-unlink-room"));
-    expect(openProjectRoom).not.toHaveBeenCalled();
+    expect(useDrawers.getState().drawers).toEqual([]);
 
     const arch = rows.find((r) => r.textContent?.includes("Architecture review"))!;
     expect(arch.hasAttribute("data-inert")).toBe(true);

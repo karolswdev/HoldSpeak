@@ -1,8 +1,9 @@
 // HS-93-08 — the semantic list mode is the SAME Desk: identical records,
 // identical actions (open, select, dive) through the one store, paged
 // honestly, and legible to a screen reader.
-// HS-111-07 — re-locked to the SurfaceLedger face: 26px mono rows under
-// kind bands, Space = Ask-context, ContextMenu = the object WorkMenu.
+// PHILO-14 A2 — re-anchored to the ObjectList species: a press or Space =
+// Ask context (the selected row, never a `[x]` mark), Enter or a double
+// press = open, ContextMenu = the object WorkMenu.
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -82,45 +83,44 @@ function renderList() {
   );
 }
 
-describe("HS-111-07 the ledger face: same records", () => {
-  it("renders one ledger row per world object with kind band, fact, STATE", () => {
+/** A list row's one verb: its name Button (`<name>, <KIND>[, <when>][, <state>]`). */
+function row(name: string) {
+  const escape = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return screen.getByRole("button", { name: new RegExp(`^${escape}, `) });
+}
+
+describe("PHILO-14 A2 the list is a list: same records", () => {
+  it("renders one ObjectList row per world object: Name, Kind, When, State", () => {
     useProjections.setState({
       subject_counts: { "note:n1": { needs_attention: 2, receipts: 0 } },
     });
-    renderList();
+    const { container } = renderList();
 
     // Every record the world knows appears — including the filed note the
     // spatial root stage hides behind its zone (no stranded object).
-    for (const o of allObjects(items)) {
-      expect(
-        screen.getByRole("button", { name: o.title }),
-      ).toBeInTheDocument();
-    }
+    for (const o of allObjects(items)) expect(row(o.title)).toBeInTheDocument();
 
-    // Kind bands replace the zone chip strip.
-    expect(screen.getByText("MEETINGS")).toBeInTheDocument();
-    expect(screen.getByText("NOTES")).toBeInTheDocument();
-    expect(screen.getByText("AGENTS")).toBeInTheDocument();
+    // The species' four sort headers, Name sorted ascending.
+    const heads = within(screen.getByRole("grid", { name: "Desk items" })).getAllByRole("columnheader");
+    expect(heads.map((h) => h.textContent?.replace(/[▲▼]/g, ""))).toEqual(["Name", "Kind", "When", "State"]);
+    expect(heads[0]).toHaveAttribute("aria-sort", "ascending");
 
     // The head is a mono fact line, not prose.
-    expect(
-      screen.getByText("4 ITEMS · 1 ZONE · 2 ATTNS"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("4 ITEMS · 1 ZONE · 2 ATTNS")).toBeInTheDocument();
 
-    // The attention count rides the row as a STATE token.
-    expect(
-      screen.getByRole("button", { name: "Release checklist" }),
-    ).toHaveTextContent("ATTN 2");
+    // The attention count rides the row's State (one lamp + its word).
+    expect(row("Release checklist")).toHaveAccessibleName("Release checklist, NOTE, ATTN 2");
 
-    // Zone membership is the row's fact token.
-    expect(
-      screen.getByRole("button", { name: "Rollout risks" }),
-    ).toHaveTextContent("LAUNCH");
+    // A zone is a row of its own: a press dives.
+    expect(row("Launch")).toHaveAccessibleName("Launch, ZONE, 1 ITEM");
+
+    // The text-mode list is gone: no `[ ]` / `[x]` anywhere.
+    expect(container.textContent).not.toMatch(/\[ \]|\[x\]/);
   });
 
-  it("opens the SAME pull-out record a floater click opens", () => {
+  it("Enter opens the SAME pull-out record a floater click opens", () => {
     const { container } = renderList();
-    fireEvent.click(screen.getByRole("button", { name: "Release checklist" }));
+    fireEvent.keyDown(row("Release checklist"), { key: "Enter" });
     const pulloutId = useDesk.getState().pullouts.at(-1)?.id;
     expect(pulloutId).toBe(qualifiedRef("note", "n1"));
     const viaList = objectByRef(items, pulloutId!);
@@ -128,29 +128,42 @@ describe("HS-111-07 the ledger face: same records", () => {
     expect(container.querySelector(".desk-pullout")).not.toBeNull();
   });
 
-  it("Space ropes the SAME ref into the Ask context ([x] token, no checkbox)", () => {
+  it("a double press opens the row", () => {
     renderList();
-    const row = screen.getByRole("button", { name: "Release checklist" });
-    fireEvent.keyDown(row, { key: " " });
-    expect(useDesk.getState().selectedIds).toEqual([
-      qualifiedRef("note", "n1"),
-    ]);
+    fireEvent.doubleClick(row("Q3 kickoff"));
+    expect(useDesk.getState().pullouts.at(-1)?.id).toBe(qualifiedRef("meeting", "m1"));
+  });
+
+  it("Space ropes the SAME ref into the Ask context: the selected row, no mark", () => {
+    const { container } = renderList();
+    fireEvent.keyDown(row("Release checklist"), { key: " " });
+    expect(useDesk.getState().selectedIds).toEqual([qualifiedRef("note", "n1")]);
     expect(screen.getByText("1 selected")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Release checklist, in Ask context" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Select Release checklist" })).toHaveTextContent("[x]");
-    fireEvent.keyDown(
-      screen.getByRole("button", { name: "Release checklist, in Ask context" }),
-      { key: " " },
-    );
+    // The mark is the row's selected state plus words for a screen reader.
+    expect(screen.getByRole("button", { name: "Release checklist, NOTE, in Ask context" })).toBeInTheDocument();
+    const selectedRow = container.querySelector(`.object-list-row[data-object-id="note:n1"]`)!;
+    expect(selectedRow).toHaveAttribute("aria-selected", "true");
+    expect(selectedRow).toHaveAttribute("data-selected", "true");
+    expect(container.textContent).not.toMatch(/\[ \]|\[x\]/);
+    fireEvent.keyDown(screen.getByRole("button", { name: "Release checklist, NOTE, in Ask context" }), { key: " " });
     expect(useDesk.getState().selectedIds).toEqual([]);
+    expect(selectedRow).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("two refs in the Ask context are two selected rows", () => {
+    const { container } = renderList();
+    fireEvent.keyDown(row("Release checklist"), { key: " " });
+    fireEvent.keyDown(row("Q3 kickoff"), { key: " " });
+    const on = [...container.querySelectorAll(`.object-list-row[aria-selected="true"]`)].map((r) => r.getAttribute("data-object-id"));
+    expect(on.sort()).toEqual(["meeting:m1", "note:n1"]);
+    expect(screen.getByRole("button", { name: "Q3 kickoff, MEETING, in Ask context" })).toBeInTheDocument();
   });
 
   // Inventory 2026-10-03: a pointer could not select a list row (a press
-  // opens it), so the Object menu stayed all ghost; and Get Info opened
-  // nothing, because only the spatial Floor mounted the Info windows.
-  it("a press on the mark selects the row and does not open it", () => {
+  // opened it), so the Object menu stayed all ghost. A press selects now.
+  it("a press selects the row and does not open it", () => {
     const { container } = renderList();
-    fireEvent.click(screen.getByRole("button", { name: "Select Release checklist" }));
+    fireEvent.click(row("Release checklist"), { detail: 1 });
     expect(useDesk.getState().selectedIds).toEqual([qualifiedRef("note", "n1")]);
     expect(useDesk.getState().pullouts).toEqual([]);
     expect(container.querySelector(".desk-pullout")).toBeNull();
@@ -159,15 +172,14 @@ describe("HS-111-07 the ledger face: same records", () => {
     expect(ctx.selectedRef).toBe(qualifiedRef("note", "n1"));
     expect(verbById("object.info")!.ghost(ctx)).toBeNull();
     expect(verbById("object.open")!.ghost(ctx)).toBeNull();
-    expect(screen.getByRole("button", { name: "Select Release checklist" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Select Release checklist" }));
+    fireEvent.click(row("Release checklist"), { detail: 1 });
     expect(useDesk.getState().selectedIds).toEqual([]);
     expect(verbById("object.info")!.ghost(keyContext())).toBe("Select an object");
   });
 
   it("Get Info on a selected row opens its Info window in list mode", () => {
     const { container } = renderList();
-    fireEvent.click(screen.getByRole("button", { name: "Select Release checklist" }));
+    fireEvent.click(row("Release checklist"), { detail: 1 });
     act(() => verbById("object.info")!.run(keyContext()));
     const info = container.querySelector(".desk-info-window");
     expect(info).not.toBeNull();
@@ -184,13 +196,13 @@ describe("HS-111-07 the ledger face: same records", () => {
     });
     const { container } = renderList();
     for (const [name, word] of [["Freeze the old ledger", "Decision"], ["Cutover bench", "Workbench"]]) {
-      fireEvent.contextMenu(screen.getByRole("button", { name }));
+      fireEvent.contextMenu(row(name));
       fireEvent.click(screen.getByRole("menuitem", { name: "Get Info" }));
       const info = [...container.querySelectorAll(".desk-info-window")].at(-1)!;
       expect(info.querySelector(".info-kind")?.textContent).toBe(word);
     }
     expect(container.querySelectorAll(".desk-info-window")).toHaveLength(2);
-  });
+  }, 15000);
 
   // Astra on #794: a Filed zone link opened a zone window the list does not
   // mount. In list mode it dives into that zone.
@@ -236,15 +248,14 @@ describe("HS-111-07 the ledger face: same records", () => {
 
   it("Get Info from the row's own menu opens the Info window", () => {
     const { container } = renderList();
-    fireEvent.contextMenu(screen.getByRole("button", { name: "Q3 kickoff" }));
+    fireEvent.contextMenu(row("Q3 kickoff"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Get Info" }));
     expect(container.querySelector(".desk-info-window")).not.toBeNull();
   });
 
   it("the ContextMenu key opens the object WorkMenu on the row", () => {
     renderList();
-    const row = screen.getByRole("button", { name: "Release checklist" });
-    fireEvent.keyDown(row, { key: "ContextMenu" });
+    fireEvent.keyDown(row("Release checklist"), { key: "ContextMenu" });
     const menu = screen.getByRole("menu", {
       name: "Release checklist menu",
     });
@@ -255,25 +266,19 @@ describe("HS-111-07 the ledger face: same records", () => {
 
   it("right-click opens the same object menu", () => {
     renderList();
-    fireEvent.contextMenu(
-      screen.getByRole("button", { name: "Q3 kickoff" }),
-    );
+    fireEvent.contextMenu(row("Q3 kickoff"));
     expect(
       screen.getByRole("menu", { name: "Q3 kickoff menu" }),
     ).toBeInTheDocument();
   });
 
-  it("dives into a zone from the ZONES band and surfaces back", () => {
+  it("dives into a zone from its row and surfaces back", () => {
     renderList();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Launch zone, 1 item" }),
-    );
+    fireEvent.click(row("Launch"), { detail: 1 });
     expect(useDesk.getState().divedZone).toBe("z1");
-    expect(
-      screen.getByRole("button", { name: "Rollout risks" }),
-    ).toBeInTheDocument();
-    // The dived band head is the zone (the fact token repeats it).
-    expect(screen.getAllByText("LAUNCH").length).toBeGreaterThan(0);
+    expect(row("Rollout risks")).toBeInTheDocument();
+    // The dived census names the zone.
+    expect(screen.getByText(/LAUNCH ·/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "ALL" }));
     expect(useDesk.getState().divedZone).toBeNull();
   });
@@ -307,7 +312,7 @@ describe("HS-111-07 the ledger face: same records", () => {
 
     renderList();
 
-    expect(screen.queryByRole("button", { name: "HoldSpeak — Roadmap" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^HoldSpeak — Roadmap/ })).toBeNull();
     expect(screen.getByText("4 ITEMS · 1 ZONE")).toBeInTheDocument();
   });
 });
