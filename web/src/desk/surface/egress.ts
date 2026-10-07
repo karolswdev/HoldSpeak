@@ -83,6 +83,12 @@ export function receiptLabel(event: {
     return raw.toUpperCase();
   }
 
+  // PHILO-15 lane 12 (B25): the Door's create verb reads Create, never
+  // the method name (`CREATE FROM SETUP`).
+  if (op === "create_from_setup") {
+    return "CREATE";
+  }
+
   // Sweep
   if (op === "run_sweep") {
     return "SWEEP";

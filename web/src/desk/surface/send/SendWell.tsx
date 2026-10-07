@@ -41,7 +41,7 @@ import { fetchConnections, type ConnectionsResponse, type ConnectionState } from
 import { chipLabel } from "../../../pages/cores/connections/ConnectionsPane";
 import {
   CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide, previewOf,
-  refusalSize, refusedWord, requestDestinationsFocus, sentWord, stamp, targetToken, unknownWord, wire, Refusal,
+  refusalSize, refusedWord, requestDestinationsFocus, sentWord, stamp, targetName, targetToken, unknownWord, wire, Refusal,
   type Channel, type Destination, type Preview, type Send, type WirePreview,
 } from "../../../features/channels/channels";
 import "../../../features/channels/channels.css";
@@ -615,7 +615,7 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                     primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
                     cells={<span className="send-cells">
                       <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
-                      <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetToken(d.channel, d.target)}</span>
+                      <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</span>
                       {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
                       {open ? <LastChip s={last} /> : <ClosedReceipt o={o} last={last} />}
                       <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />

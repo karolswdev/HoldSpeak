@@ -12,6 +12,11 @@ export const SYSTEM = {
   dockAgents: `${BASE}dock-agents.png`,
   dockSettings: `${BASE}dock-settings.png`,
   dockPeople: `${BASE}dock-people.png`,
+  /** PHILO-15 lane 12 (B19): the four Dock items that wore a text glyph. */
+  dockIntelligence: `${BASE}dock-intelligence.png`,
+  dockDeskMemory: `${BASE}dock-desk-memory.png`,
+  dockDelivery: `${BASE}dock-delivery.png`,
+  dockPanes: `${BASE}dock-panes.png`,
   // HS-111-09 — the gadget sprites and backdrop tile are RETIRED: the
   // SVG VerbGlyph gadgets and the CSS crosshatch won on the desk (see
   // ICON-DISCIPLINE §HS-110-02, amended). Registered sprites RENDER —
@@ -32,7 +37,10 @@ export const SYSTEM = {
   emptyNudges: `${BASE}empty-nudges.png`,
 } as const;
 
+/** Every Dock item wears a sprite: the applications (by window id) and the
+ * launchers (by launcher id). A text glyph on the Dock is a bounce (B19). */
 export const DOCK_SPRITES: Record<string, string> = {
+  "intelligence:desk": SYSTEM.dockIntelligence,
   "surface-dictation": SYSTEM.dockSpeak,
   "surface-meetings": SYSTEM.dockMeetings,
   "surface-companion": SYSTEM.dockAgents,
@@ -40,4 +48,8 @@ export const DOCK_SPRITES: Record<string, string> = {
   conductor: SYSTEM.dockAgents,
   "surface-settings": SYSTEM.dockSettings,
   "surface-people": SYSTEM.dockPeople,
+  // The launchers (launcherRegistry.ts): Desk memory, Delivery, Panes.
+  attention: SYSTEM.dockDeskMemory,
+  "delivery-board": SYSTEM.dockDelivery,
+  panes: SYSTEM.dockPanes,
 };
