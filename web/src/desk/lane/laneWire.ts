@@ -27,6 +27,8 @@ export interface LaneLaunch {
   brief_text?: string | null;
   session_key?: string | null;
   tmux_session?: string | null;
+  /** The owner stopped the agent (kill route): when, and the audit row. */
+  stopped?: { by?: string; at?: string; audit_id?: number | null; scope?: string } | null;
 }
 
 export interface LaneCheck {
@@ -63,7 +65,27 @@ export interface LaneWait {
   question?: string | null;
   kind: "TO ANSWER" | "TO APPROVE" | "DECIDING" | string;
   started?: string | number | null;
+  /** The hub's id of this wait: an answer names it (the steer route refuses
+   * an answer to a wait that is not the current one). */
+  wait_id?: string | null;
   draft?: LaneDraft | null;
+}
+
+/** How the lane may act on its session now (the route's `control`). */
+export interface LaneControl {
+  mode: string;
+  armed: boolean;
+  /** The steer policy lets the owner type without a grant (YOLO, registered pane). */
+  direct: boolean;
+  expires_in_seconds?: number | null;
+  pane?: boolean;
+}
+
+export interface LaneAnswer {
+  id: number;
+  ts?: string | number | null;
+  outcome?: string | null;
+  text_head?: string | null;
 }
 
 export interface LaneEvent {
@@ -114,10 +136,24 @@ export interface LaneWire {
   events: LaneEvent[] | NotRead;
   events_next_after: number | null;
   gated: LaneGated[] | NotRead;
-  answers?: unknown;
-  attempt_events?: unknown;
+  answers?: LaneAnswer[] | NotRead;
+  attempt_events?: unknown[] | NotRead;
   worktree: LaneWorktree | NotRead;
   usage?: unknown;
+  control?: LaneControl | NotRead;
+}
+
+/** Each collection of the lane that could not be read, as `[PART, reason]`
+ * (one honest line each on the face; never dropped). */
+export function unreadParts(lane: LaneWire): Array<[string, string]> {
+  const parts: Array<[string, unknown]> = [
+    ["SESSION", lane.session],
+    ["ANSWERS", lane.answers],
+    ["ATTEMPT", lane.attempt_events],
+    ["USAGE", lane.usage],
+    ["CONTROL", lane.control],
+  ];
+  return parts.filter(([, v]) => isNotRead(v)).map(([k, v]) => [k, (v as NotRead).not_read]);
 }
 
 /* ── words ───────────────────────────────────────────────────────── */

@@ -53,7 +53,8 @@
 .lw-ev-line { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; min-width: 0; }
 .lw-ev-text { font: 13px/18px var(--font-sans); color: var(--text); min-width: 0; overflow-wrap: anywhere; }
 .lw-ev-code { font: 12px/18px var(--font-mono); color: var(--text); overflow-wrap: anywhere; min-width: 0; }
-.lw-ev-quote { display: block; font: 13px/1.45 var(--font-sans); color: var(--text); border-left: 2px solid var(--wb-steel); padding-left: 8px; quotes: none; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 9.5em; overflow-y: auto; }
+/* SAYS: the agent's own words, flat in an aerogel inset (no rail). */
+.lw-ev-quote { display: block; font: 13px/1.45 var(--font-sans); color: var(--text); background: var(--desk-aerogel-fill); border: 1px solid var(--desk-aerogel-edge); padding: 6px 8px; quotes: none; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 9.5em; overflow-y: auto; }
 .lw-ev[data-pending="true"] .lw-word, .lw-ev[data-pending="true"] .lw-ev-text { color: var(--text-muted); }
 .lw-ev[data-word="SAYS"] .lw-ev-line { min-height: 18px; }
 .lw-more { align-self: flex-start; }
@@ -104,7 +105,12 @@
   .lw-cols { grid-template-columns: 1fr; }
   .lw-station-sub { display: none; }
   .lw-station { padding: 0; }
-  .lw-word { font-size: 11px; letter-spacing: 0.03em; }
+  .lw-word { font-size: var(--font-size-xs); letter-spacing: 0.03em; }
   .lw-ask-row { flex-wrap: wrap; }
   .lw-ask-row > .gadget-string { flex-basis: 60%; }
 }
+
+/* receipts and ARM, kept on the face */
+.lw-receipt { margin: 0; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.04em; color: var(--text-muted); overflow-wrap: anywhere; }
+.lw-receipt[data-tone="fail"] { color: var(--danger); }
+.lw-arm { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }

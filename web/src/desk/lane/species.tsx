@@ -6,12 +6,13 @@
  * branch, 2026-10-07), drawn from the canvas rules (`p14.css`) on the
  * Workbench tokens, so the swap to the library species is one import line
  * per part. One addition, named: AskWell's `listenSignal` (the Speak answer
- * press of Conductor F2 starts its mic) and `inputRef`.
+ * press of Conductor F2 starts its mic, through StringGadget's own mic) and
+ * `inputRef`.
  */
 import { useRef, type ReactNode, type Ref } from "react";
 import { Button } from "../../components/signal/Signal";
-import { MicButton } from "../components/MicButton";
 import { EgressChip, LampGadget, StringGadget, SurfaceSection } from "../surface";
+import { countLabel } from "../surface/count";
 import { spriteUrl } from "../sprites";
 import "./lane.css";
 
@@ -150,7 +151,9 @@ export function AskWell({
           value={value}
           onChange={onChange}
           placeholder="Say or type the answer"
-          mic={false}
+          micLabel="Speak the answer"
+          micStartSignal={listenSignal}
+          micDraftScope={draftScope}
           inputRef={(el) => {
             field.current = el;
             if (typeof inputRef === "function") inputRef(el);
@@ -162,12 +165,6 @@ export function AskWell({
               send();
             }
           }}
-        />
-        <MicButton
-          label="Speak the answer"
-          startSignal={listenSignal}
-          draftScope={draftScope}
-          onText={(text) => onChange(value ? `${value} ${text}` : text)}
         />
         <Button variant="primary" onClick={send} disabled={busy} data-testid="lane-answer">
           Answer
@@ -238,7 +235,7 @@ export interface ChangedFile {
 export function FilesChanged({ files, label = "Files changed" }: { files: ChangedFile[]; label?: string }) {
   if (!files.length) return null;
   return (
-    <SurfaceSection label={`${label} · ${files.length}`}>
+    <SurfaceSection label={countLabel(`${label} ·`, files.length)}>
       <ul className="lw-files" data-testid="lane-files">
         {files.map((file) => {
           const counts = [file.added ? `+${file.added}` : "", file.removed ? `−${file.removed}` : ""].filter(Boolean);

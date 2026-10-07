@@ -21,13 +21,14 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { useAgentFlights } from "../agentFlights";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ArmStrip, KeyPalette, PANE_STATE_LABEL } from "../components/SessionPullout";
-import { MicButton } from "../components/MicButton";
 import { useFrontWindowId } from "../components/window/windowRegistry";
 import { useGate } from "../gate";
 import { spriteUrl } from "../sprites";
 import { useSteering } from "../steering";
 import { useDesk } from "../store";
-import { EgressChip, PaneWell, StringGadget, SurfaceFooter } from "../surface";
+import { EgressChip, PaneWell, StringGadget, SurfaceFooter, TransportKey } from "../surface";
+import { wireClock, wireDate } from "../surface/format";
+import { controlModeLabel } from "../../lib/productLanguage";
 import { egressFor } from "../surface/egress";
 import { useCompactViewport } from "../useCompactViewport";
 import { useOnCoderFrame } from "../useDeskChangedRefresh";
@@ -42,6 +43,7 @@ import {
   laneStations,
   laneTitle,
   reviewWord,
+  unreadParts,
   waitAge,
   type LaneEntry,
   type LaneEvent,
@@ -49,7 +51,7 @@ import {
   type LaneWait,
   type LaneWire,
 } from "./laneWire";
-import { launchForSession, useLane, useLaneLaunchId } from "./laneStore";
+import { laneSessionKey, launchForSession, useLane, useLaneLaunchId } from "./laneStore";
 import { AskWell, FilesChanged, PRCard, StationTrack, TimelineRail, type TimelineEntry } from "./species";
 import "./lane.css";
 
@@ -82,10 +84,11 @@ export function LaneWindow() {
   );
 
   // A session window opened on a launch's session (Watch live, a restored
-  // window): the lane takes it over by id, so Stop does not close the lane.
+  // window): that launch's lane takes it over by id.
+  const fromKey = useAgentFlights((s) => s.flights.find((f) => openKey && f.sessionKey === openKey && f.launchId)?.launchId ?? null);
   useEffect(() => {
-    if (launchId && !explicit) useLane.getState().open(launchId, { sessionKey: openKey });
-  }, [launchId, explicit, openKey]);
+    if (fromKey && fromKey !== explicit) useLane.getState().open(fromKey, { sessionKey: openKey });
+  }, [fromKey, explicit, openKey]);
 
   // The flights tell which session is a launch's: read once if no face has.
   useEffect(() => {
@@ -195,7 +198,7 @@ function LaneBody({
   if (!lane) {
     return (
       <div className="desk-pullout-body lw-body" data-testid="lane-body">
-        <p className="lw-notread">{error ? `LANE · NOT READ · ${error}` : "LANE · READING"}</p>
+        {error ? <NotReadLine part="LANE" reason={error} /> : <p className="lw-notread">LANE · READING</p>}
       </div>
     );
   }
@@ -216,14 +219,14 @@ function LaneBody({
     />
   ) : null;
   const files = isNotRead(worktree) ? (
-    <p className="lw-notread" data-testid="lane-files-not-read">{`FILES · NOT READ · ${worktree.not_read}`}</p>
+    <NotReadLine part="FILES" reason={worktree.not_read} testId="lane-files-not-read" />
   ) : (
     <FilesChanged files={worktree.files.map((f) => ({ path: f.path }))} />
   );
   const rail = (
     <div className="lw-col">
-      {eventsNotRead ? <p className="lw-notread" data-testid="lane-events-not-read">{`TIMELINE · NOT READ · ${eventsNotRead}`}</p> : null}
-      {isNotRead(lane.gated) ? <p className="lw-notread">{`HELD · NOT READ · ${lane.gated.not_read}`}</p> : null}
+      {eventsNotRead ? <NotReadLine part="TIMELINE" reason={eventsNotRead} testId="lane-events-not-read" /> : null}
+      {isNotRead(lane.gated) ? <NotReadLine part="HELD" reason={lane.gated.not_read} /> : null}
       <TimelineRail label="Lane" entries={railEntries(lane, events, briefOpen, () => setBriefOpen((v) => !v))} />
       {briefOpen && lane.launch.brief_text ? (
         <pre className="lw-brief" data-testid="lane-brief-text">{lane.launch.brief_text}</pre>
@@ -239,7 +242,11 @@ function LaneBody({
   return (
     <div className="desk-pullout-body lw-body" data-testid="lane-body" ref={bodyRef} onScroll={onScroll}>
       <StationTrack label="Lane stations" stations={stations} />
-      {rebrief ? <RebriefWell /> : <WaitWell lane={lane} agent={agent} />}
+      <LaneReceipts lane={lane} />
+      {unreadParts(lane).map(([part, reason]) => (
+        <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
+      ))}
+      {lane.launch.stopped ? null : rebrief ? <RebriefWell lane={lane} /> : <WaitWell lane={lane} agent={agent} />}
       {compact ? (
         <div className="lw-col">
           {prCard}
@@ -304,13 +311,23 @@ function DecideVerbs({ call }: { call: LaneGated }) {
   );
 }
 
+/** A part of the lane that could not be read: `PART · NOT READ · <reason>`
+ * (UX-CANON A.10), never an empty list. */
+function NotReadLine({ part, reason, testId }: { part: string; reason: string; testId?: string }) {
+  return (
+    <p className="lw-notread" role="status" data-testid={testId}>
+      {part} · NOT READ · {reason}
+    </p>
+  );
+}
+
 /* ── the wait ─────────────────────────────────────────────────────── */
 
 function WaitWell({ lane, agent }: { lane: LaneWire; agent: string }) {
   const wait = lane.wait;
-  if (isNotRead(wait)) return <p className="lw-notread">{`ASKS · NOT READ · ${wait.not_read}`}</p>;
+  if (isNotRead(wait)) return <NotReadLine part="ASKS" reason={wait.not_read} />;
   if (!wait || !wait.question) return null;
-  if (wait.kind === "TO ANSWER") return <AnswerWell wait={wait} agent={agent} />;
+  if (wait.kind === "TO ANSWER") return <AnswerWell lane={lane} wait={wait} agent={agent} />;
   if (wait.kind === "TO APPROVE") return <ApproveWell wait={wait} agent={agent} gated={lane.gated} />;
   if (wait.kind === "DECIDING") {
     return (
@@ -323,24 +340,20 @@ function WaitWell({ lane, agent }: { lane: LaneWire; agent: string }) {
   return null;
 }
 
-/** TO ANSWER: the ask well. The answer is a steer to the launch's session;
- * the field is the steer composer's draft (one draft per session). */
-function AnswerWell({ wait, agent }: { wait: LaneWait; agent: string }) {
-  const openKey = useSteering((s) => s.openKey);
-  const steerState = useSteering((s) => s.steerState);
-  const steerDetail = useSteering((s) => s.steerDetail);
-  const answerSeq = useSteering((s) => s.answerSeq);
-  const scope = `steer:${openKey || "unattached"}`;
+/** TO ANSWER: the ask well. The answer goes to the lane's own session (its
+ * launch's registered key) and names the wait it answers; the field is that
+ * session's steer draft. */
+function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; agent: string }) {
+  const key = laneSessionKey(lane);
+  const sending = useLane((s) => s.sending);
+  const answerSeq = useLane((s) => s.answerSeq);
+  const scope = `steer:${key || "unattached"}`;
   const { value, setDraft } = useDurableDraft(scope);
   const draft = wait.draft?.text?.trim() || undefined;
   const draftEgress = useDraftEgress(Boolean(draft));
   const inputRef = useRef<HTMLInputElement | null>(null);
   const answer = async (text: string) => {
-    const sent = await useSteering.getState().steer(text, true);
-    if (sent) {
-      setDraft("");
-      void useLane.getState().load();
-    }
+    if (await useLane.getState().send(text, { waitId: wait.wait_id ?? null })) setDraft("");
   };
   return (
     <>
@@ -357,36 +370,66 @@ function AnswerWell({ wait, agent }: { wait: LaneWait; agent: string }) {
           inputRef.current?.focus();
         }}
         draftEgress={draft ? draftEgress : undefined}
-        busy={steerState === "sending" || !openKey}
+        busy={sending || !key}
         listenSignal={answerSeq}
         draftScope={scope}
         inputRef={inputRef}
       />
-      <SteerFate state={steerState} detail={steerDetail} />
+      <ArmLine lane={lane} />
     </>
   );
 }
 
-function SteerFate({ state, detail }: { state: string; detail: string }) {
-  if (state === "refused") {
-    return (
-      <span className="lw-fate" data-tone="fail" data-testid="lane-steer-fate">
-        <span aria-hidden="true">{GLYPH_CLOSE}</span> {`NOT SENT · ${detail}`}
-      </span>
-    );
-  }
-  if (state === "sent") return <span className="lw-fate" data-testid="lane-steer-fate">SENT</span>;
-  return null;
+/** Secure and Normal: the lane's ARM, where the action is, with the mode.
+ * Absent when the session is armed or the policy lets the owner type (YOLO). */
+function ArmLine({ lane, compact = false }: { lane: LaneWire; compact?: boolean }) {
+  const control = lane.control;
+  if (!control || isNotRead(control) || control.direct || control.armed || !laneSessionKey(lane)) return null;
+  return (
+    <span className="lw-arm" data-testid={compact ? "lane-arm-footer" : "lane-arm"}>
+      <span className="lw-fact">{`${controlModeLabel(control.mode).toUpperCase()} · ARM FIRST`}</span>
+      <TransportKey compact label="ARM" glyph="⏻" title="Arm this pane" onClick={() => void useLane.getState().arm()} />
+    </span>
+  );
+}
+
+/** The lane's receipts, kept when the well that made them closes or the
+ * wait clears: the stop (from the launch), the last send or refusal. */
+function LaneReceipts({ lane }: { lane: LaneWire }) {
+  const receipt = useLane((s) => s.receipt);
+  const stopped = lane.launch.stopped;
+  const answers = Array.isArray(lane.answers) ? lane.answers : [];
+  const last = [...answers].reverse().find((a) => a.outcome === "delivered" && a.text_head);
+  const lastAt = last ? wireDate(last.ts)?.getTime() : undefined;
+  const shown = receipt ?? (last ? { word: "SENT", at: lastAt, text: String(last.text_head), tone: "ok" as const } : null);
+  return (
+    <>
+      {stopped ? <ReceiptTokens testId="lane-stopped" tokens={["STOPPED", wireClock(stopped.at), "BY YOU"]} /> : null}
+      {shown && !(stopped && shown.word === "STOPPED") ? (
+        <ReceiptTokens testId="lane-receipt" tone={shown.tone} tokens={[shown.word, shown.at ? wireClock(shown.at) : "", shown.text]} />
+      ) : null}
+    </>
+  );
+}
+
+/** One receipt: tokens joined by ` · ` (the word, the time, what was sent). */
+function ReceiptTokens({ tokens, tone, testId }: { tokens: string[]; tone?: string; testId: string }) {
+  const shown = tokens.filter(Boolean);
+  return (
+    <p className="lw-receipt" data-tone={tone} data-testid={testId}>
+      {shown.join(" · ")}
+    </p>
+  );
 }
 
 /** TO APPROVE: the held call with Deny / Approve (the gate proposal). A
  * permission prompt the gate does not hold is answered in the pane: Raw. */
 function ApproveWell({ wait, agent, gated }: { wait: LaneWait; agent: string; gated: LaneWire["gated"] }) {
   const held = Array.isArray(gated) ? [...gated].reverse().find((g) => g.state === "held" || g.state === "pending") : undefined;
-  const age = waitAge(wait.started);
+  const caption = [`${agent.toUpperCase()} ASKS`, waitAge(wait.started).toUpperCase()].filter(Boolean).join(" · ");
   return (
     <section className="lw-ask" aria-label={`${agent} asks`} data-testid="lane-approve-well">
-      <p className="lw-caption">{[`${agent.toUpperCase()} ASKS`, age.toUpperCase()].filter(Boolean).join(" · ")}</p>
+      <p className="lw-caption">{caption}</p>
       <p className="lw-ask-q">{String(wait.question)}</p>
       {held ? (
         <div className="lw-ask-row">
@@ -406,18 +449,14 @@ function ApproveWell({ wait, agent, gated }: { wait: LaneWait; agent: string; ga
   );
 }
 
-/** Re-brief: a steer, prefilled `Re-brief: `. */
-function RebriefWell() {
-  const steerState = useSteering((s) => s.steerState);
-  const steerDetail = useSteering((s) => s.steerDetail);
+/** Re-brief: a steer to the lane's own session, prefilled `Re-brief: `. */
+function RebriefWell({ lane }: { lane: LaneWire }) {
+  const sending = useLane((s) => s.sending);
   const [text, setText] = useState(REBRIEF_PREFIX);
   const ready = text.trim().length > REBRIEF_PREFIX.trim().length;
   const send = async () => {
     if (!ready) return;
-    if (await useSteering.getState().steer(text.trim(), true)) {
-      useLane.getState().setRebrief(false);
-      void useLane.getState().load();
-    }
+    if (await useLane.getState().send(text.trim())) useLane.getState().setRebrief(false);
   };
   return (
     <section className="lw-ask" aria-label="Re-brief" data-testid="lane-rebrief-well">
@@ -426,8 +465,8 @@ function RebriefWell() {
         <StringGadget
           label="Re-brief"
           value={text}
-          onChange={setText}
-          mic={false}
+          onChange={(next) => setText(next.startsWith(REBRIEF_PREFIX.trim()) ? next : `${REBRIEF_PREFIX}${next}`)}
+          micLabel="Speak the re-brief"
           autoFocus
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.nativeEvent.isComposing) {
@@ -436,15 +475,14 @@ function RebriefWell() {
             }
           }}
         />
-        <MicButton label="Speak the re-brief" onText={(t) => setText((prev) => (prev.trim() ? `${prev.trimEnd()} ${t}` : t))} />
-        <Button variant="primary" disabled={!ready || steerState === "sending"} onClick={() => void send()}>
+        <Button variant="primary" disabled={!ready || sending} onClick={() => void send()}>
           Send
         </Button>
         <Button variant="ghost" onClick={() => useLane.getState().setRebrief(false)}>
           Back
         </Button>
       </div>
-      <SteerFate state={steerState} detail={steerDetail} />
+      <ArmLine lane={lane} />
     </section>
   );
 }
@@ -484,7 +522,7 @@ function RawPane() {
 function LaneFooter({ lane, compact }: { lane: LaneWire; compact: boolean }) {
   const pr = lane.follow_through?.pr;
   const prUrl = pr?.number != null && pr.url ? pr.url : null;
-  const sessionKey = lane.launch.session_key;
+  const sessionKey = lane.launch.stopped ? null : lane.launch.session_key;
   const branch = lane.launch.branch ?? (isNotRead(lane.worktree) ? null : lane.worktree.branch);
   const rebrief = useLane((s) => s.rebrief);
   return (
@@ -505,6 +543,7 @@ function LaneFooter({ lane, compact }: { lane: LaneWire; compact: boolean }) {
               Re-brief
             </Button>
           ) : null}
+          {sessionKey ? <ArmLine lane={lane} compact /> : null}
           {sessionKey ? <StopVerb /> : null}
           {prUrl ? (
             <Button
@@ -522,21 +561,20 @@ function LaneFooter({ lane, compact }: { lane: LaneWire; compact: boolean }) {
   );
 }
 
-/** Stop: the kill route, two presses (as the session window's KILL). The
- * kill needs the session-control grant: the confirming press arms it first. */
+/** Stop: the kill route on the lane's own session, two presses. Secure and
+ * Normal need the owner's ARM first (the ARM by it); YOLO arms per press
+ * (R6). The second press says what it does. */
 function StopVerb() {
   const [confirm, setConfirm] = useState(false);
-  const factoryState = useSteering((s) => s.factoryState);
-  const factoryDetail = useSteering((s) => s.factoryDetail);
-  const armError = useSteering((s) => s.armError);
+  const [busy, setBusy] = useState(false);
   const stop = async () => {
-    const steering = useSteering.getState();
-    if (!steering.armed) await steering.arm();
-    if (!useSteering.getState().armed) return;
-    if (await useSteering.getState().killOpen("session")) setConfirm(false);
-    void useLane.getState().load();
+    setBusy(true);
+    try {
+      if (await useLane.getState().stop()) setConfirm(false);
+    } finally {
+      setBusy(false);
+    }
   };
-  const refusal = armError || (factoryState === "failed" ? factoryDetail : "");
   if (!confirm) {
     return (
       <Button dense variant="danger" data-testid="lane-stop" onClick={() => setConfirm(true)}>
@@ -546,18 +584,11 @@ function StopVerb() {
   }
   return (
     <>
-      {refusal ? <span className="lw-fate" data-tone="fail">{refusal}</span> : null}
       <Button dense variant="ghost" onClick={() => setConfirm(false)}>
         Back
       </Button>
-      <Button
-        dense
-        variant="danger"
-        data-testid="lane-stop-confirm"
-        disabled={factoryState === "working"}
-        onClick={() => void stop()}
-      >
-        Stop · sure?
+      <Button dense variant="danger" data-testid="lane-stop-confirm" disabled={busy} onClick={() => void stop()}>
+        Stop · sure? (kills the pane)
       </Button>
     </>
   );

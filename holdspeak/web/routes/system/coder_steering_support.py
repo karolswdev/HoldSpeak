@@ -255,3 +255,41 @@ __all__ = [
     "steering_commitment",
     "steering_policy",
 ]
+
+
+def wait_not_current(session: Any, body: Mapping[str, Any]) -> Optional[JSONResponse]:
+    """PHILO-14 C2: an answer names the wait it answers (``wait_id``). A wait
+    that was answered or replaced since the face read it is not answered
+    again: 409 ``wait_not_current``. A steer without ``wait_id`` (a re-brief,
+    the session window's composer) is not a wait's answer and passes."""
+    if "wait_id" not in body:
+        return None
+    from ....agent_context.models import is_blocked
+
+    wanted = str(body.get("wait_id") or "")
+    current = str(getattr(session, "wait_id", "") or "") if is_blocked(session) else ""
+    if wanted and wanted == current:
+        return None
+    return JSONResponse(
+        {"status": "wait_not_current", "detail": "the question was answered or changed", "wait_id": current or None},
+        status_code=409,
+    )
+
+
+async def record_kill(key: str, session: Any, result: dict[str, Any], scope: str) -> None:
+    """PHILO-14 C2: the owner killed an agent's pane. Its launch reads
+    ``stopped_by_owner`` with the audit row, and its session ends
+    (``services.launch_lane.record_owner_stop``). A failure is logged; the
+    kill already happened and stays reported."""
+    from ....logging_config import get_logger
+    from ....services.launch_lane import record_owner_stop
+
+    try:
+        stopped = await asyncio.to_thread(
+            record_owner_stop, key, session, audit_id=result.get("audit_id"), scope=scope,
+        )
+    except Exception as exc:
+        get_logger("web.routes.system.steering").warning(f"coder kill: stop not recorded for {key}: {exc}")
+        return
+    if stopped:
+        result["launch_id"] = stopped

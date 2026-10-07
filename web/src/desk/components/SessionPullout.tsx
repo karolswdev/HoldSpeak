@@ -44,7 +44,7 @@ import {
   retractLauncher,
 } from "./DeskWindow";
 import { spriteUrl } from "../sprites";
-import { useLaneLaunchId } from "../lane/laneStore";
+import { useLaneOwnsSteering } from "../lane/laneStore";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
 // at 4 chars/token); the gauge refuses past it before any send.
@@ -681,8 +681,9 @@ export function SessionPullout() {
   const { closeSession } = useSteering.getState();
   const controlsRef = useRef<HTMLDivElement>(null);
   // PHILO-14 C2: a session that belongs to a launch has the agent's lane
-  // window as its face (lane/LaneWindow.tsx); this window is for a plain one.
-  const laneLaunchId = useLaneLaunchId();
+  // window as its face (lane/LaneWindow.tsx); this window is for a plain one
+  // (a pane opened from Panes keeps it while a lane is open).
+  const laneLaunchId = useLaneOwnsSteering();
 
   useEffect(() => {
     if (!openKey || laneLaunchId) return;

@@ -117,12 +117,6 @@ def _seed(home: Path) -> dict[str, Any]:
         "wait_id": session.wait_id, "state": "drafted", "verdict": "real",
         "reason": "it names a person", "draft": "Jordan owns it. Avery reviews.", "at": 0,
     })
-    # A held call outside the worktree.
-    db.gate.propose(
-        proposal_id="toolu_psql", session_key=KEY, agent="claude", tool="Bash", args_sha256="0" * 64,
-        args_head=json.dumps({"command": "psql -h staging-ledger -c 'select count(*) from entries'"}),
-        cwd=str(worktree), ttl_seconds=3600,
-    )
     attempt = db.work_attempts.create(
         source_id=source.source_id, worktree_id=wt.worktree_id, project="payments-ledger", story_id=f"action-{item}",
         node_id="this-node", session_id=KEY, target_id="tgt_runbook", kind="launch", exact=True,
@@ -146,6 +140,44 @@ def _seed(home: Path) -> dict[str, Any]:
         },
     })
     return {"item": item, "worktree": str(worktree)}
+
+
+PSQL = "psql -h staging-ledger -c 'select count(*) from entries'"
+
+
+def _http(url: str, method: str, path: str, token: str, body: Any = None) -> tuple[int, Any]:
+    import urllib.error
+    import urllib.request
+
+    request = urllib.request.Request(
+        f"{url}{path}", method=method,
+        data=json.dumps(body).encode() if body is not None else None,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return response.status, json.loads(response.read() or b"null")
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read().decode()[:400]
+
+
+def mint_held_call(url: str, worktree: str, command: str = PSQL, proposal_id: str = "toolu_psql") -> dict:
+    """A held call through the real gate route, with the agent's own
+    credential (kernel-admitted, as the gate hook sends it)."""
+    import hashlib
+
+    status, issued = _http(url, "POST", "/api/principals/agents", TOKEN, {"identity": KEY})
+    assert status == 201, issued
+    args = json.dumps({"command": command}, separators=(",", ":"), sort_keys=True)
+    digest = hashlib.sha256(args.encode()).hexdigest()
+    status, body = _http(url, "POST", "/api/gate/proposals", issued["credential"], {
+        "id": proposal_id, "tool": "Bash", "args_sha256": digest, "args_head": args[:120],
+        "cwd": worktree, "ttl_seconds": 3600,
+        "classification": {"scope": "outside", "rule": "path_outside_worktree", "read_rule": "",
+                           "push_branch": "", "root": worktree, "proposal_id": proposal_id, "args_sha256": digest},
+    })
+    assert status == 200 and body["state"] == "held", body
+    return body
 
 
 def _open_lane(page: Any) -> Any:
@@ -177,7 +209,8 @@ def test_the_agents_lane_window_at_1440_and_393(tmp_path: Path, monkeypatch) -> 
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
     try:
-        _seed(tmp_path / "home")
+        seed = _seed(tmp_path / "home")
+        mint_held_call(url, seed["worktree"])
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -227,6 +260,15 @@ def test_the_agents_lane_window_at_1440_and_393(tmp_path: Path, monkeypatch) -> 
                     page.screenshot(path=str(SHOTS / f"C2-lane-raw-{width}.png"))
                 page.locator("[data-testid='lane-raw']").click()
                 page.locator("[data-testid='lane-rail']").wait_for(timeout=5000)
+                if width == 393:
+                    # Approve the held call from the rail: the real gate route decides it.
+                    held = page.locator(".lw-ev").filter(has_text="psql -h staging-ledger")
+                    with page.expect_response(lambda r: "/toolu_psql/decide" in r.url) as got:
+                        held.locator("[data-testid='lane-approve']").click()
+                    assert got.value.status == 200, got.value.text()
+                    status, stored = _http(url, "GET", "/api/gate/proposals/toolu_psql", TOKEN)
+                    assert stored["state"] == "approved", stored
+                    held.locator("[data-testid='lane-approve']").wait_for(state="detached", timeout=10000)
                 _assert_clean(page, errors)
                 page.close()
             browser.close()

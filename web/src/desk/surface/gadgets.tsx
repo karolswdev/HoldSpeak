@@ -247,12 +247,18 @@ export function StringGadget({
   onKeyDown,
   inputRef,
   inputProps,
+  micStartSignal,
+  micDraftScope,
 }: {
   label: string;
   value: string;
   onChange(next: string): void;
   placeholder?: string;
   type?: string;
+  /** PHILO-14 C2: each new value starts the mic (a Speak answer press). */
+  micStartSignal?: number;
+  /** PHILO-14 C2: the mic's draft scope (a recovered capture lands here). */
+  micDraftScope?: string;
   /** Every text well carries the speak-to-fill mic unless secret. */
   mic?: boolean;
   /** HS-200-13: the mic's own accessible name when the face names it
@@ -300,7 +306,12 @@ export function StringGadget({
         onKeyDown={onKeyDown}
       />
       {mic && type !== "password" ? (
-        <MicButton label={micLabel ?? `Speak ${label}`} onText={(text) => onChange(text)} />
+        <MicButton
+          label={micLabel ?? `Speak ${label}`}
+          onText={(text) => onChange(text)}
+          startSignal={micStartSignal}
+          draftScope={micDraftScope}
+        />
       ) : null}
     </span>
   );

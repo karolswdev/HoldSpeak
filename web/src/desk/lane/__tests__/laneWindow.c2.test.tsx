@@ -6,10 +6,11 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const api = vi.hoisted(() => ({ fetch: vi.fn() }));
+const api = vi.hoisted(() => ({ fetch: vi.fn(), request: vi.fn() }));
 vi.mock("../../../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/api")>()),
   apiFetch: api.fetch,
+  apiRequest: api.request,
 }));
 vi.mock("../../components/MicButton", () => ({
   MicButton: (props: { label?: string; startSignal?: number }) => (
@@ -48,7 +49,8 @@ function fixture(over: Partial<LaneWire> = {}): LaneWire {
       },
       merged: null, done: false,
     },
-    wait: { question: QUESTION, kind: "TO ANSWER", started: new Date(Date.now() - 6 * 60_000).toISOString(),
+    control: { mode: "yolo", armed: false, direct: true },
+    wait: { question: QUESTION, kind: "TO ANSWER", wait_id: "w-1", started: new Date(Date.now() - 6 * 60_000).toISOString(),
       draft: { verdict: "real", reason: "a person", text: "Jordan owns it. Avery reviews." } },
     events: [
       { id: 1, ts: T("09:42"), event: "SessionStart", detail: { source: "startup" } },
@@ -88,31 +90,49 @@ function serve(lane: LaneWire) {
   });
 }
 
-function steering(over: Record<string, unknown> = {}) {
-  const steer = vi.fn(async () => true);
-  act(() => {
-    useSteering.setState({
-      openKey: KEY, session: null, paneStatus: "no_pane", armed: false, postureAuthorized: false,
-      steerState: "idle", steerDetail: "", answerSeq: 0, answerOpen: false,
-      openSession: vi.fn(), closeSession: vi.fn(), steer, ...over,
-    } as never);
+/** The hub's answers to the lane's own POSTs, by path suffix. */
+function answer(map: Record<string, [number, Record<string, unknown>]>) {
+  api.request.mockImplementation(async (url: string) => {
+    const hit = Object.entries(map).find(([suffix]) => String(url).endsWith(suffix));
+    const [status, body] = hit ? hit[1] : [200, { status: "delivered" }];
+    return { ok: status < 300, status, json: async () => body } as unknown as Response;
   });
-  return steer;
 }
 
-async function openLane(lane: LaneWire, over: Record<string, unknown> = {}) {
+function posts(suffix: string): Array<Record<string, unknown>> {
+  return api.request.mock.calls
+    .filter(([url]) => String(url).endsWith(suffix))
+    .map(([, init]) => JSON.parse(String((init as RequestInit).body)));
+}
+
+function steering(over: Record<string, unknown> = {}) {
+  act(() => {
+    useSteering.setState({
+      openKey: null, session: null, paneStatus: "no_pane", armed: false, postureAuthorized: false,
+      steerState: "idle", steerDetail: "", answerSeq: 0, answerOpen: false,
+      openSession: vi.fn(), closeSession: vi.fn(), ...over,
+    } as never);
+  });
+}
+
+async function openLane(lane: LaneWire, over: Record<string, unknown> = {}, opts: { answer?: boolean } = {}) {
   serve(lane);
-  const steer = steering(over);
+  answer({});
+  steering(over);
   render(<LaneWindow />);
   await act(async () => {
-    await useLane.getState().open("launch_f2_runbook", { sessionKey: KEY });
+    await useLane.getState().open("launch_f2_runbook", { sessionKey: KEY, answer: opts.answer });
   });
   await screen.findByTestId("lane-track");
-  return steer;
 }
+
+const STEER = `/api/coders/${encodeURIComponent(KEY)}/steer`;
+const ARM = `/api/coders/${encodeURIComponent(KEY)}/arm`;
+const KILL = `/api/coders/${encodeURIComponent(KEY)}/kill`;
 
 beforeEach(() => {
   api.fetch.mockReset();
+  api.request.mockReset();
   localStorage.clear();
   __resetLane();
   __resetDraftEgress();
@@ -239,20 +259,92 @@ describe("the agent's window", () => {
     expect(screen.queryByTestId("lane-files")).toBeNull();
   });
 
-  it("TO ANSWER: Use draft fills the field and does not send; Enter sends through the steer route", async () => {
-    const steer = await openLane(fixture());
+  it("TO ANSWER: Use draft fills the field and does not send; Enter sends to the lane's session with the wait id", async () => {
+    await openLane(fixture());
     const field = screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement;
     fireEvent.click(screen.getByTestId("lane-use-draft"));
     expect(field.value).toBe("Jordan owns it. Avery reviews.");
-    expect(steer).not.toHaveBeenCalled();
+    expect(posts("/steer")).toEqual([]);
     fireEvent.change(field, { target: { value: "Jordan owns it." } });
     fireEvent.keyDown(field, { key: "Enter" });
-    await waitFor(() => expect(steer).toHaveBeenCalledWith("Jordan owns it.", true));
+    await waitFor(() => expect(posts(STEER)).toEqual([{ text: "Jordan owns it.", submit: true, wait_id: "w-1" }]));
     await waitFor(() => expect(field.value).toBe(""));
+    expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^SENT · \d\d:\d\d · Jordan owns it\.$/);
+  });
+
+  it("the lane's actions go to its own session, not to the pane Panes picked", async () => {
+    await openLane(fixture(), { openKey: "pane:%9" });
+    const field = screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement;
+    fireEvent.change(field, { target: { value: "For launch A only." } });
+    fireEvent.keyDown(field, { key: "Enter" });
+    await waitFor(() => expect(posts(STEER)).toHaveLength(1));
+    expect(api.request.mock.calls.every(([url]) => !String(url).includes("pane%3A"))).toBe(true);
+  });
+
+  it("an answer to a wait the hub no longer holds is refused and said", async () => {
+    await openLane(fixture());
+    answer({ "/steer": [409, { status: "wait_not_current", detail: "the question was answered or changed" }] });
+    const field = screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement;
+    fireEvent.change(field, { target: { value: "Late." } });
+    fireEvent.keyDown(field, { key: "Enter" });
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/NOT SENT · \d\d:\d\d · QUESTION ANSWERED OR CHANGED/));
+    expect(field.value).toBe("Late.");
+  });
+
+  it("Normal, unarmed: the ARM is on the lane with the mode; Answer says ARM FIRST and sends nothing; ARM arms the lane's session", async () => {
+    await openLane(fixture({ control: { mode: "neutral", armed: false, direct: false } }));
+    const arm = screen.getByTestId("lane-arm");
+    expect(arm.textContent).toContain("ARM FIRST");
+    const field = screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement;
+    fireEvent.change(field, { target: { value: "Jordan." } });
+    fireEvent.keyDown(field, { key: "Enter" });
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toContain("ARM FIRST"));
+    expect(posts("/steer")).toEqual([]);
+    answer({ "/arm": [200, { status: "armed", pane_id: "%0" }] });
+    fireEvent.click(within(arm).getByRole("button", { name: /ARM/ }));
+    await waitFor(() => expect(posts(ARM)).toHaveLength(1));
+  });
+
+  it("Stop: Normal unarmed never arms by itself; YOLO arms per press, then kills", async () => {
+    await openLane(fixture({ control: { mode: "neutral", armed: false, direct: false } }));
+    fireEvent.click(screen.getByTestId("lane-stop"));
+    expect(screen.getByTestId("lane-stop-confirm").textContent).toBe("Stop · sure? (kills the pane)");
+    fireEvent.click(screen.getByTestId("lane-stop-confirm"));
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toContain("ARM FIRST"));
+    expect(posts("/arm")).toEqual([]);
+    expect(posts("/kill")).toEqual([]);
+  });
+
+  it("Stop in YOLO: the second press arms, then kills the lane's session", async () => {
+    await openLane(fixture({ control: { mode: "yolo", armed: false, direct: true } }));
+    answer({ "/arm": [200, { status: "armed", pane_id: "%0" }], "/kill": [200, { status: "killed" }] });
+    fireEvent.click(screen.getByTestId("lane-stop"));
+    fireEvent.click(screen.getByTestId("lane-stop-confirm"));
+    await waitFor(() => expect(posts(KILL)).toEqual([{ scope: "session" }]));
+    expect(posts(ARM)).toHaveLength(1);
+  });
+
+  it("a stopped launch shows its receipt and withdraws Answer, Re-brief and Stop", async () => {
+    await openLane(fixture({ wait: null, launch: { ...fixture().launch, state: "stopped_by_owner", stopped: { by: "owner", at: T("10:01"), audit_id: 1 } } }));
+    expect(screen.getByTestId("lane-stopped").textContent).toMatch(/^STOPPED · \d\d:\d\d · BY YOU$/);
+    expect(screen.queryByTestId("lane-ask")).toBeNull();
+    expect(screen.queryByTestId("lane-stop")).toBeNull();
+    expect(screen.queryByTestId("lane-rebrief")).toBeNull();
+  });
+
+  it("each unread collection is one line (answers, attempt, usage, session, control)", async () => {
+    await openLane(fixture({
+      answers: { not_read: "answers: RuntimeError" },
+      attempt_events: { not_read: "attempt events: RuntimeError" },
+      usage: { not_read: "usage: RuntimeError" },
+    }));
+    expect(screen.getByTestId("lane-not-read-answers").textContent).toBe("ANSWERS · NOT READ · answers: RuntimeError");
+    expect(screen.getByTestId("lane-not-read-attempt").textContent).toBe("ATTEMPT · NOT READ · attempt events: RuntimeError");
+    expect(screen.getByTestId("lane-not-read-usage").textContent).toBe("USAGE · NOT READ · usage: RuntimeError");
   });
 
   it("TO ANSWER: Speak answer starts the well's mic", async () => {
-    await openLane(fixture(), { answerSeq: 3, answerOpen: true });
+    await openLane(fixture(), {}, { answer: true });
     const mic = within(screen.getByTestId("lane-ask")).getByTestId("mic");
     expect(mic.getAttribute("data-auto")).toBe("true");
   });
@@ -308,16 +400,17 @@ describe("the agent's window", () => {
     expect(screen.getByTestId("lane-rail")).toBeTruthy();
   });
 
-  it("Re-brief opens the steer well prefilled; Stop asks twice", async () => {
-    const steer = await openLane(fixture({ wait: null }));
+  it("Re-brief opens the steer well prefilled; its receipt stays after the well closes", async () => {
+    await openLane(fixture({ wait: null }));
     fireEvent.click(screen.getByTestId("lane-rebrief"));
     const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Re-brief" }) as HTMLInputElement;
     expect(field.value).toBe("Re-brief: ");
     fireEvent.change(field, { target: { value: "Re-brief: name Jordan as the owner." } });
     fireEvent.keyDown(field, { key: "Enter" });
-    await waitFor(() => expect(steer).toHaveBeenCalledWith("Re-brief: name Jordan as the owner.", true));
-    fireEvent.click(screen.getByTestId("lane-stop"));
-    expect(screen.getByTestId("lane-stop-confirm").textContent).toBe("Stop · sure?");
+    await waitFor(() => expect(posts(STEER)).toEqual([{ text: "Re-brief: name Jordan as the owner.", submit: true }]));
+    await waitFor(() => expect(screen.queryByTestId("lane-rebrief-well")).toBeNull());
+    expect(screen.getByTestId("lane-receipt").textContent).toContain("SENT");
+    expect(screen.getByTestId("lane-receipt").textContent).toContain("Re-brief: name Jordan as the owner.");
   });
 
   it("pages the events: the next read asks after the last event and appends", async () => {
@@ -337,7 +430,7 @@ describe("the agent's window", () => {
 describe("which window a session opens", () => {
   it("a plain session keeps the session window; a launch's session opens the lane", async () => {
     serve(fixture());
-    steering();
+    steering({ openKey: KEY });
     const { unmount } = render(<><SessionPullout /><LaneWindow /></>);
     expect(document.querySelector(".is-session")).toBeTruthy();
     expect(document.querySelector(".is-lane")).toBeNull();

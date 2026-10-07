@@ -117,6 +117,7 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/desk/ask.ts": ("inference-route", "143-07"),
     "web/src/desk/components/DeliveryBoard.tsx": ("unrelated", "143-01"),
     "web/src/desk/components/Pullout.tsx": ("display-transport", "143-11"),
+    "web/src/desk/lane/LaneWindow.tsx": ("display-transport", "143-11"),
     "web/src/desk/deliveryFactory.ts": ("unrelated", "143-01"),
     "web/src/desk/detail-types.ts": ("display-transport", "143-11"),
     "web/src/desk/infoContract.ts": ("display-transport", "143-10"),

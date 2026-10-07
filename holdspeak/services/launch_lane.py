@@ -29,6 +29,7 @@ from __future__ import annotations
 import subprocess
 import threading
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
@@ -408,6 +409,7 @@ def launch_lane(
             "gate": record.get("gate"),
             "instruction_state": record.get("instruction_state"),
             "brief_text": record.get("brief_text"),
+            "stopped": record.get("stopped") or None,
             "failure": record.get("failure"),
             "session_key": key or None,
             "tmux_session": record.get("session"),
@@ -442,4 +444,59 @@ def launch_lane(
     return _scrub(lane)
 
 
-__all__ = ["DECIDING_KIND", "FACTS_TTL_SECONDS", "clear_facts_cache", "launch_lane", "worktree_facts"]
+def _launch_for_session(ledger: Any, db: Any, key: str) -> Optional[dict[str, Any]]:
+    """The newest launch bound to session ``key`` (its record names the key,
+    or its Work attempt does)."""
+    for record in reversed(ledger.list()):
+        if str(record.get("session_key") or "") == key:
+            return record
+        attempt_id = str(record.get("attempt_id") or "")
+        if not attempt_id:
+            continue
+        try:
+            attempt = db.work_attempts.get(attempt_id)
+        except Exception:
+            attempt = None
+        if str(getattr(attempt, "session_id", "") or "") == key:
+            return record
+    return None
+
+
+def record_owner_stop(
+    key: str, session: Any, *, audit_id: Any = None, scope: str = "pane",
+    db: Any = None, ledger: Any = None, now: Optional[datetime] = None,
+) -> Optional[str]:
+    """PHILO-14 C2: the owner killed an agent's pane. Its launch says so
+    (``state = stopped_by_owner``, ``stopped = {by, at, audit_id, scope}``)
+    and its session ends through the hook ingest (``SessionEnd``, reason
+    ``stopped_by_owner``), so no wait stays open on a dead pane.
+
+    Returns the launch id, or ``None`` for a session no launch is bound to
+    (the session still ends)."""
+    from ..agent_context import ingest_agent_hook_event
+
+    if db is None:
+        from ..db import get_database
+
+        db = get_database()
+    if ledger is None:
+        from ..delivery.factory_launch import LaunchLedger
+
+        ledger = LaunchLedger()
+    stamp = (now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    record = _launch_for_session(ledger, db, key)
+    if record is not None:
+        ledger.update(
+            str(record.get("launch_id")), state="stopped_by_owner",
+            stopped={"by": "owner", "at": stamp, "audit_id": audit_id, "scope": scope},
+        )
+    agent, _, session_id = key.partition(":")
+    if agent and session_id and not agent.startswith("pane"):
+        ingest_agent_hook_event(agent=agent, payload={
+            "session_id": session_id, "cwd": str(getattr(session, "cwd", "") or ""),
+            "hook_event_name": "SessionEnd", "reason": "stopped_by_owner",
+        })
+    return str(record.get("launch_id")) if record is not None else None
+
+
+__all__ = ["DECIDING_KIND", "record_owner_stop", "FACTS_TTL_SECONDS", "clear_facts_cache", "launch_lane", "worktree_facts"]

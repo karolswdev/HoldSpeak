@@ -30,6 +30,40 @@ log = get_logger("web.routes.agent_hand")
 _NOT_FOUND = frozenset({"item_unknown"})
 
 
+def _lane_control(key: str) -> dict[str, Any]:
+    """PHILO-14 C2: how the lane may act on its own session now: the Control
+    mode, the session's pane grant, and whether the steer policy lets the
+    owner type without one (a registered pane in YOLO: ``direct``). The same
+    resolver the steer route uses (``steering_policy``)."""
+    from ...config import Config
+
+    mode = Config.load().control_mode
+    if not key:
+        return {"mode": mode, "armed": False, "direct": False, "expires_in_seconds": None}
+    from ... import coder_steering
+    from ...agent_context import list_agent_sessions
+    from .system.coder_steering_support import active_policy_grant, canonical_pane_id, steering_policy
+
+    session = next(
+        (s for s in list_agent_sessions() if f"{s.agent}:{s.session_id}" == key), None
+    )
+    grant = active_policy_grant(key)
+    target = coder_steering.resolve_pane_target(session) if session is not None else None
+    pane_id = canonical_pane_id(target) or (canonical_pane_id(grant.get("pane_id")) if grant else None)
+    _operation, policy = steering_policy(
+        key, pane_id, operation_kind="type_text", data_classes=("typed_text",),
+        registered=pane_id is not None, grant=grant,
+    )
+    direct = policy.get("outcome") == "allowed" and policy.get("authority_basis") == "control_posture"
+    return {
+        "mode": mode,
+        "armed": grant is not None,
+        "direct": bool(direct),
+        "expires_in_seconds": grant.get("expires_in_seconds") if grant else None,
+        "pane": bool(target),
+    }
+
+
 def build_agent_hand_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -166,6 +200,11 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "launch_lane_failed"}, status_code=500)
         if lane is None:
             return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
+        key = str((lane.get("launch") or {}).get("session_key") or "")
+        try:
+            lane["control"] = await asyncio.to_thread(_lane_control, key)
+        except Exception as exc:
+            lane["control"] = {"not_read": f"control: {type(exc).__name__}: {str(exc)[:200]}"}
         return JSONResponse(lane)
 
     @router.post("/api/agent/launches/{launch_id}/deliver")
