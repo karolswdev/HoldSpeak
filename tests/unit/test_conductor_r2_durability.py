@@ -380,6 +380,76 @@ def test_a_revoke_that_is_not_written_is_not_acknowledged(tmp_path: Path) -> Non
     assert _store(database).derive(cred.token) is None, "the revoke came back after a restart"
 
 
+def test_two_failed_rotations_never_issue_beside_the_old_credential(tmp_path: Path) -> None:
+    from holdspeak.principals import CredentialPersistError
+
+    database = Database(tmp_path / "c.db")
+    store = _store(database)
+    old = store.issue("claude:r2-rot2")
+    _refuse(database, "agent_credentials", "UPDATE")
+    for _attempt in range(2):
+        with pytest.raises(CredentialPersistError):
+            store.issue("claude:r2-rot2")
+    assert store.list_credentials() == []
+    _allow(database, "agent_credentials", "UPDATE")
+    new = store.issue("claude:r2-rot2")  # the old revoke is written first
+    fresh = _store(database)
+    assert fresh.derive(old.token) is None, "the old credential came back after a reload"
+    assert fresh.derive(new.token) is not None
+
+
+def _pending_revoke(database: Database, store: AgentCredentialStore, identity: str) -> Any:
+    cred = store.issue(identity)
+    _refuse(database, "agent_credentials", "UPDATE")
+    assert store.revoke(identity) is False
+    _allow(database, "agent_credentials", "UPDATE")
+    return cred
+
+
+def test_an_ownership_write_retries_a_queued_revoke(tmp_path: Path) -> None:
+    database = Database(tmp_path / "c.db")
+    store = _store(database)
+    store.issue("agent:launch:l7", launch_id="l7")
+    gone = _pending_revoke(database, store, "claude:r2-q1")
+    store.scope_add("l7", "note:n7")
+    assert _store(database).derive(gone.token) is None
+
+
+def test_a_target_bind_retries_a_queued_revoke(tmp_path: Path) -> None:
+    database = Database(tmp_path / "c.db")
+    store = _store(database)
+    store.issue("agent:tmux:t1")
+    gone = _pending_revoke(database, store, "claude:r2-q2")
+    store.bind_target("agent:tmux:t1", "%5")
+    assert _store(database).derive(gone.token) is None
+
+
+def test_a_repeated_revoke_retries(tmp_path: Path) -> None:
+    database = Database(tmp_path / "c.db")
+    store = _store(database)
+    gone = _pending_revoke(database, store, "claude:r2-q3")
+    assert store.revoke("claude:r2-q3") is True
+    assert _store(database).derive(gone.token) is None
+
+
+def test_the_settings_revoke_says_not_persisted_and_succeeds_on_retry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, hub: Hub,
+) -> None:
+    status = hub.client.put("/api/settings/remote", json={"enabled": True}).status_code
+    assert status == 200
+    issued = hub.client.post("/api/settings/remote/credentials",
+                             json={"identity": "agent:r2-settings", "palette": "DESK"}).json()
+    _refuse(hub.db, "agent_credentials", "UPDATE")
+    first = hub.client.delete(f"/api/settings/remote/credentials/{issued['id']}")
+    assert first.status_code == 503 and first.json()["error"] == "credential_revoke_not_persisted", first.text
+    assert agent_credentials.derive(issued["token"]) is None, "refused at once"
+    _allow(hub.db, "agent_credentials", "UPDATE")
+    again = hub.client.delete(f"/api/settings/remote/credentials/{issued['id']}")
+    assert again.status_code == 200 and again.json()["revoked"] == issued["id"], again.text
+    _restart(tmp_path, monkeypatch)
+    assert agent_credentials.derive(issued["token"]) is None
+
+
 def test_a_rotation_whose_revoke_is_not_written_issues_nothing(tmp_path: Path) -> None:
     from holdspeak.principals import CredentialPersistError
 
@@ -593,11 +663,14 @@ def test_a_traced_shell_never_prints_the_token_on_real_tmux(tmp_path: Path, monk
         coder_factory.revoke_launch("launch_r2trace001")
 
 
-def test_an_rc_file_that_exits_leaves_no_plaintext_on_real_tmux(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_an_rc_file_that_exits_is_no_launch_on_real_tmux(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(coder_factory, "credential_env_dir", lambda: tmp_path / "agent-env")
     _tmux_env(tmp_path, monkeypatch, "exit 3\n")
     try:
-        coder_factory.spawn("r2exit", command="sleep 30", launch_id="launch_r2exit0001", audit=lambda **_: 1)
+        result = coder_factory.spawn("r2exit", command="sleep 30", launch_id="launch_r2exit0001",
+                                     audit=lambda **_: 1)
+        assert result["status"] == "error", result
+        assert agent_credentials.launch_credential("agent:launch:launch_r2exit0001") is None
         assert list(coder_factory.credential_env_dir().glob("*")) == [], "the plaintext file stayed"
     finally:
         _kill_tmux()

@@ -143,9 +143,11 @@ def reconcile_launch_grants(database: Any = None) -> list[str]:
         return []
     with database._connection() as conn:
         identities = {
-            str(row[0])
-            for table in ("kernel_desk_delegations", "kernel_project_delegations")
-            for row in conn.execute(f"SELECT agent_identity FROM {table} WHERE state = 'LIVE'")
+            str(row[0]) for row in conn.execute(
+                "SELECT agent_identity FROM kernel_desk_delegations WHERE state = 'LIVE'")
+        } | {
+            str(row[0]) for row in conn.execute(
+                "SELECT agent_identity FROM kernel_project_delegations WHERE state = 'LIVE'")
         }
     ended = []
     for identity in sorted(i for i in identities if i.startswith(LAUNCH_IDENTITY_PREFIX)):

@@ -170,9 +170,10 @@ class AgentCredentialStore:
         #: composition (none while it is bare), never to a database a
         #: previous hub in this process left behind.
         self._follow_hub = False
-        # credential id -> reason: revokes refused in memory whose durable
-        # write failed; retried on every write.
-        self._pending_db_revokes: dict[str, str] = {}
+        # credential id -> (identity, reason): revokes refused in memory
+        # whose durable write failed; retried before every write and on an
+        # explicit retry. An identity with one here gets no replacement.
+        self._pending_db_revokes: dict[str, tuple[str, str]] = {}
         # Keyed by sha256(token) -- the plaintext is never stored.
         self._by_hash: dict[str, AgentCredential] = {}
         self._by_identity: dict[str, str] = {}  # identity -> hash
@@ -232,7 +233,7 @@ class AgentCredentialStore:
             self._db = database
             self._follow_hub = bool(follow_hub)
             try:
-                self._retry_pending_locked()
+                self._write_queued_revokes_locked()
                 with database._connection() as conn:
                     rows = conn.execute(
                         "SELECT id, token_sha256, identity, palette_json, palette_name, launch_id, "
@@ -291,7 +292,7 @@ class AgentCredentialStore:
                     self._tx([("UPDATE agent_credentials SET revoked_at = ?, revocation_reason = 'expired' "
                                "WHERE id = ? AND revoked_at IS NULL", (now_wall, cred_id))])
                 except CredentialPersistError:
-                    self._pending_db_revokes[cred_id] = "expired"
+                    self._pending_db_revokes[cred_id] = (identity, "expired")
                 if launch_id:
                     self._pending_launch_revokes.append((str(launch_id), identity))
         self._flush_launch_revokes()
@@ -332,19 +333,29 @@ class AgentCredentialStore:
             _log.warning("agent credential write failed: %s", type(exc).__name__)
             raise CredentialPersistError(str(exc)) from exc
 
-    def _retry_pending_locked(self) -> None:
+    def _write_queued_revokes_locked(self) -> None:
         """Write the revokes whose durable write failed earlier (they are
-        already refused in memory)."""
+        already refused in memory). Never raises; never recurses (it calls
+        ``_tx`` only)."""
         if self._database() is None or not self._pending_db_revokes:
             return
         now_wall = float(self._wall())
-        for cred_id, reason in list(self._pending_db_revokes.items()):
+        for cred_id, (_identity, reason) in list(self._pending_db_revokes.items()):
             try:
                 self._tx([("UPDATE agent_credentials SET revoked_at = ?, revocation_reason = ? "
                            "WHERE id = ? AND revoked_at IS NULL", (now_wall, reason, cred_id))])
             except CredentialPersistError:
                 return
             self._pending_db_revokes.pop(cred_id, None)
+
+    def _pending_identity(self, identity: str) -> bool:
+        return any(who == identity for who, _reason in self._pending_db_revokes.values())
+
+    def _write_locked(self, statements: list[tuple[str, tuple[Any, ...]]]) -> None:
+        """Every mutating write: the queued revokes first, then *statements*
+        in one transaction (raises ``CredentialPersistError``)."""
+        self._write_queued_revokes_locked()
+        self._tx(statements)
 
     def _targets_sql(self, identities: Iterable[str]) -> list[tuple[str, tuple[Any, ...]]]:
         out = []
@@ -379,7 +390,10 @@ class AgentCredentialStore:
         if not clean:
             raise ValueError("agent identity is required")
         with self._lock:
-            if self._revoke_locked(clean, "reissued") == "pending":
+            self._revoke_locked(clean, "reissued")
+            self._write_queued_revokes_locked()
+            if self._pending_identity(clean):
+                # Every replacement waits until the previous revoke is durable.
                 raise CredentialPersistError("the old credential's revoke was not written")
         self._flush_launch_revokes()
         with self._lock:
@@ -415,8 +429,7 @@ class AgentCredentialStore:
                 "INSERT INTO agent_launch_ownership (credential_id, ref, created, recorded_at) "
                 "VALUES (?, ?, 0, ?)", (cred_id, ref, now_wall),
             ) for ref in sorted(scope)]
-            self._retry_pending_locked()
-            self._tx(statements)
+            self._write_locked(statements)
             self._by_hash[token_hash] = credential
             self._by_identity[clean] = token_hash
             self._by_id[cred_id] = token_hash
@@ -491,7 +504,7 @@ class AgentCredentialStore:
                 return
             cred = next((c for c in self._by_hash.values() if c.launch_id == str(launch_id)), None)
             if cred is not None:
-                self._tx([(
+                self._write_locked([(
                     "INSERT INTO agent_launch_ownership (credential_id, ref, created, recorded_at) "
                     "VALUES (?, ?, 1, ?) ON CONFLICT(credential_id, ref) DO UPDATE SET created = 1",
                     (cred.id, clean, float(self._wall())),
@@ -537,19 +550,28 @@ class AgentCredentialStore:
                         touched.add(previous)
                     self._target_to_identity[clean] = clean_identity
             try:
-                self._tx(self._targets_sql(sorted(touched)))
+                self._write_locked(self._targets_sql(sorted(touched)))
             except CredentialPersistError:
                 self._target_to_identity = before
                 raise
 
     def revoke(self, identity: str, reason: str = "revoked") -> bool:
         """Revoke *identity*. True only when the revoke is durable; a revoke
-        whose write failed is refused in memory at once, retried on the next
-        write, and answers False."""
+        whose write failed is refused in memory at once, retried before every
+        later write, and answers False. Called again, it retries."""
+        return self.revoke_status(identity, reason) == "revoked"
+
+    def revoke_status(self, identity: str, reason: str = "revoked") -> str:
+        """``revoked`` (durable), ``pending`` (refused in memory; the durable
+        write failed and is queued) or ``none`` (nothing to revoke)."""
+        clean = str(identity or "").strip()
         with self._lock:
-            outcome = self._revoke_locked(identity, reason)
+            outcome = self._revoke_locked(clean, reason)
+            if outcome == "none" and self._pending_identity(clean):
+                self._write_queued_revokes_locked()
+                outcome = "pending" if self._pending_identity(clean) else "revoked"
         self._flush_launch_revokes()
-        return outcome == "revoked"
+        return outcome
 
     def _revoke_locked(self, identity: str, reason: str = "revoked") -> str:
         """``none`` (nothing live), ``revoked`` (durable) or ``pending``
@@ -563,8 +585,8 @@ class AgentCredentialStore:
             cred = self._by_hash.pop(token_hash, None)
             if cred:
                 if self._database() is not None:
-                    self._pending_db_revokes[cred.id] = str(reason)
-                    self._retry_pending_locked()
+                    self._pending_db_revokes[cred.id] = (clean, str(reason))
+                    self._write_queued_revokes_locked()
                     if cred.id in self._pending_db_revokes:
                         outcome = "pending"
                 self._by_id.pop(cred.id, None)
@@ -579,12 +601,25 @@ class AgentCredentialStore:
 
     def revoke_by_id(self, credential_id: str) -> bool:
         """Revoke a credential by its id (for the settings face)."""
+        return self.revoke_by_id_status(credential_id) == "revoked"
+
+    def revoke_by_id_status(self, credential_id: str) -> str:
+        """As ``revoke_status``, by credential id; a credential whose revoke
+        is still queued is retried."""
         clean = str(credential_id or "").strip()
         with self._lock:
             token_hash = self._by_id.get(clean)
             cred = self._by_hash.get(token_hash) if token_hash is not None else None
             identity = cred.principal.identity if cred else None
-        return self.revoke(identity) if identity else False
+            if identity is None and clean in self._pending_db_revokes:
+                self._write_queued_revokes_locked()
+                return "pending" if clean in self._pending_db_revokes else "revoked"
+        return self.revoke_status(identity) if identity else "none"
+
+    def revoke_pending(self, credential_id: str) -> bool:
+        """Whether the credential is refused but its revoke is not written."""
+        with self._lock:
+            return str(credential_id or "").strip() in self._pending_db_revokes
 
     def identity_for_id(self, credential_id: str) -> Optional[str]:
         """The principal identity of a credential id, removing nothing (PHILO-7-02).
@@ -597,6 +632,8 @@ class AgentCredentialStore:
         with self._lock:
             token_hash = self._by_id.get(clean)
             cred = self._by_hash.get(token_hash) if token_hash is not None else None
+            if cred is None and clean in self._pending_db_revokes:
+                return self._pending_db_revokes[clean][0]  # refused; its revoke is not durable yet
             return cred.principal.identity if cred is not None else None
 
     def list_credentials(self) -> list[AgentCredential]:

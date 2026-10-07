@@ -142,11 +142,19 @@ def spawn(
     # not start (or exited first) is not reported spawned.
     if not _consumed(env_file, START_TIMEOUT_SECONDS):
         return _fail("error", "the session did not start: it did not read its credential", env_file)
+    # The session must still be there, with a live pane: a shell that exited
+    # after the bootstrap read the file is not a launch (a short settle lets
+    # an rc file that exits at once be seen).
+    if START_SETTLE_SECONDS > 0:
+        time.sleep(START_SETTLE_SECONDS)
     try:
-        panes = _run(runner, ["tmux", "list-panes", "-t", name, "-F", "#{pane_id}"])
-        pane_id = (panes.stdout or "").strip().splitlines()[0] if panes.stdout else None
-    except (OSError, subprocess.TimeoutExpired, IndexError):
-        pane_id = None
+        panes = _run(runner, ["tmux", "list-panes", "-t", name, "-F", "#{pane_id} #{pane_dead}"])
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return _fail("error", f"the session is gone: {exc}")
+    first = (panes.stdout or "").strip().splitlines()[0].split() if (panes.stdout or "").strip() else []
+    if panes.returncode != 0 or not first or not first[0].startswith("%") or first[1:2] == ["1"]:
+        return _fail("error", "the session ended before the agent started")
+    pane_id = first[0]
     try:
         agent_credentials.bind_target(identity, name, pane_id)
     except CredentialPersistError as exc:
@@ -159,6 +167,9 @@ CREDENTIAL_ENV = "HOLDSPEAK_AGENT_CREDENTIAL"
 
 #: How long a new session has to read its credential file.
 START_TIMEOUT_SECONDS = 15.0
+
+#: After the read, how long the session's shell has to prove it stays up.
+START_SETTLE_SECONDS = 0.3
 
 #: The session's first process: run by tmux directly, never by the user's
 #: shell. ``$1`` is the credential file, ``$2`` the command ("" = a login
