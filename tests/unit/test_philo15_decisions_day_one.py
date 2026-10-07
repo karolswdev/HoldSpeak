@@ -142,12 +142,13 @@ def test_the_parser_yields_the_decisions() -> None:
     assert [a.task for a in result.action_items][2] == "Add the named failure fence before ship"
 
 
-def test_a_reply_without_decisions_reads_as_none() -> None:
+def test_a_reply_without_decisions_reads_as_not_extracted() -> None:
     from holdspeak.services.inference_semantic_adapters import normalize_meeting_analysis
 
+    # Astra #983 r2: missing is NOT EXTRACTED (None), never an empty list.
     old = {"summary": "s", "topics": [], "action_items": []}
-    assert normalize_meeting_analysis(old)["decisions"] == []
-    assert _parse(json.dumps(old)).decisions == []
+    assert normalize_meeting_analysis(old)["decisions"] is None
+    assert _parse(json.dumps(old)).decisions is None
 
 
 # ── the summary run, end to end ──────────────────────────────────────
@@ -369,3 +370,145 @@ def test_an_engine_added_before_the_summary_had_decisions_still_serves_summaries
     assert set(meeting_analysis_claims()) == {
         earlier, f"result_schema:{registry.require('meeting.deferred_analysis').output_schema_sha256}",
     }
+
+
+# ── Astra round 2 (#983): no false merge, the record's kind, missing ≠ empty ──
+
+
+def test_two_similar_obligations_are_never_merged(tmp_path, monkeypatch) -> None:
+    """Astra's pair: staging vs production share 3 of 4 content words. The
+    plugin's production action must NOT take over the summary's staging row;
+    Confirm keeps both obligations."""
+    import tests.unit.test_phase200_meeting_outcomes as rig
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    staging = "Rotate the staging database credentials"
+    production = "Rotate the production database credentials"
+    monkeypatch.setattr(rig, "SEGMENTS", (
+        (0.0, 10.0, "Maya", "Maya will rotate the staging database credentials by Friday."),
+        (10.0, 20.0, "Leo", "Leo will rotate the production database credentials by Tuesday."),
+    ))
+    monkeypatch.setattr(rig, "ACTIONS_JSON", json.dumps({"action_items": [
+        {"task": production, "owner": "Leo", "due": "Tuesday"},
+    ]}))
+    monkeypatch.setattr(rig, "DECISIONS_JSON", json.dumps({"decisions": [], "open_questions": []}))
+    db, engine = rig._rig(tmp_path, monkeypatch)
+    engine.result = _parse(json.dumps({
+        "topics": ["Credentials"], "summary": "Two separate rotations.", "decisions": [],
+        "action_items": [{"task": staging, "owner": "Maya", "due": "Friday"}],
+    }))
+    rig._meeting(db, "m-distinct", project_id=None)
+    rig._drain()
+    prop = next(p for p in _proposals(db, "m-distinct") if p["kind"] == "action")
+    assert prop["action_item_id"] is None, prop
+    ProposalBridgeService(db).confirm_proposal(OWNER, prop["id"])
+    with db._connection() as conn:
+        rows = {r["task"]: (r["owner"], r["due"]) for r in conn.execute(
+            "SELECT task, owner, due FROM action_items WHERE meeting_id='m-distinct'")}
+    assert rows == {staging: ("Maya", "Friday"), production: ("Leo", "Tuesday")}, rows
+
+
+def test_a_confirmed_action_reads_as_an_action_on_every_reader(tmp_path, monkeypatch) -> None:
+    from holdspeak.services.decision_record_service import DecisionRecordService
+    from holdspeak.services.monday_brief_service import MondayBriefService
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    db = _run(tmp_path, monkeypatch)
+    rows = _proposals(db, "m-day-one")
+    action = next(p for p in rows if p["kind"] == "action")
+    decision = next(p for p in rows if p["kind"] == "decision")
+    kept = ProposalBridgeService(db).confirm_proposal(OWNER, action["id"])
+    decided = ProposalBridgeService(db).confirm_proposal(OWNER, decision["id"])
+    records = DecisionRecordService(db)
+    assert records.get(OWNER, kept["decision_record_id"])["kind"] == "action"
+    assert records.get(OWNER, decided["decision_record_id"])["kind"] == "decision"
+    with db._connection() as conn:
+        source_id = conn.execute(
+            "SELECT source_id FROM decision_records WHERE id=?", (kept["decision_record_id"],)
+        ).fetchone()[0]
+    assert records.records_for_source(OWNER, "meeting", source_id) == []
+
+    from holdspeak.mcp.tools import dispatch
+
+    monkeypatch.setattr("holdspeak.mcp.tools.get_database", lambda: db, raising=False)
+    try:
+        mcp = dispatch("decision_record.get", {"record_id": kept["decision_record_id"]}, OWNER)
+    except Exception:  # the MCP read may need a hub; the service read above is its source
+        mcp = None
+    if isinstance(mcp, dict) and mcp:
+        assert mcp.get("kind") == "action", mcp
+
+    brief = MondayBriefService(db)._collect_meeting_watch(
+        "2000-01-01T00:00:00+00:00", "2099-01-01T00:00:00+00:00", None,
+    )
+    assert [i.text for i in brief if "new decision" in i.text] == ["1 new decision from meetings"]
+
+
+def test_preparation_carries_an_action_once_and_never_as_a_decision(tmp_path, monkeypatch) -> None:
+    import tests.unit.test_phase200_meeting_outcomes as rig
+    from holdspeak.services.preparation_brief_service import build_manifest, draft_deterministic
+    from holdspeak.services.project_service import ProjectService
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    db, engine = rig._rig(tmp_path, monkeypatch)
+    engine.result = _parse(json.dumps({"summary": "One action.", "topics": [], "action_items": [], "decisions": []}))
+    rig._meeting(db, "m-prep")
+    rig._drain()
+    prop = next(p for p in _proposals(db, "m-prep") if p["kind"] == "action")
+    ProposalBridgeService(db).confirm_proposal(OWNER, prop["id"])
+    room = ProjectService(db).room(OWNER, "prj-cutover")
+    manifest = build_manifest(room, "Prepare", now=datetime.now().astimezone())
+    assert prop["text"] not in [d["text"] for d in manifest["decisions"]], manifest["decisions"]
+    assert [c["text"] for c in manifest["commitments"]].count(prop["text"]) == 1
+    claims = [c.to_dict() for c in draft_deterministic(room, manifest).claims]
+    assert not any(c.get("kind") == "decision" and c.get("text") == prop["text"] for c in claims), claims
+    room_rows = [d for d in room["decisions"]["items"] if d["text"] == prop["text"]]
+    assert room_rows and all(d["kind"] == "action" for d in room_rows)
+
+
+def test_a_reply_without_decisions_is_not_extracted_and_an_empty_list_is_none(tmp_path, monkeypatch) -> None:
+    from holdspeak.services.inference_semantic_adapters import normalize_meeting_analysis
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    old = {"summary": "We decided to use SQLite.", "topics": [], "action_items": []}
+    assert _parse(json.dumps(old)).decisions is None
+    assert normalize_meeting_analysis(old)["decisions"] is None
+    assert _parse(json.dumps({**old, "decisions": []})).decisions == []
+    assert normalize_meeting_analysis({**old, "decisions": []})["decisions"] == []
+
+    for name, reply, expect in (
+        ("m-missing", old, "not_extracted"),
+        ("m-empty", {**old, "decisions": []}, None),
+    ):
+        db, _broker, _engine, _host, _requests = _queue_rig(tmp_path / name, monkeypatch)
+        engine = ParsedIntel(json.dumps(reply))
+        monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
+        monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+        _meeting(db, name)
+        from holdspeak.intel_queue import process_next_intel_job
+
+        for _ in range(6):
+            if not process_next_intel_job():
+                break
+        review = ProposalBridgeService(db).meeting_review(name)
+        states = {x["id"]: x["state"] for x in review["extractors"]}
+        assert states.get("meeting_summary") == "ran", review["extractors"]
+        assert states.get("summary_decisions") == expect, review["extractors"]
+        assert [p for p in review["proposals"] if p["kind"] == "decision"] == []
+
+
+def test_an_engine_on_the_earlier_summary_result_says_its_decisions_are_not_proven(tmp_path) -> None:
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import _profile
+    from tests.unit.test_phase200_readiness import _assign
+
+    db = Database(tmp_path / "notice.db")
+    registry = process_inference_capability_registry()
+    earlier = f"result_schema:{registry.require('meeting.live_analysis').output_schema_sha256}"
+    _profile(db, "lan-engine-before", claims=("language", earlier))
+    _assign(db, "meeting.deferred_analysis", ["lan-engine-before"])
+    summary = InferenceAssignmentService(db).assignment_summary(OWNER)
+    task = next(t for t in summary["task_overrides"] if t["id"] == "meeting.deferred_analysis")
+    assert task["effective"]["status"] == "assigned", task
+    assert [i["code"] for i in task["issues"] if i["severity"] == "notice"] == ["result_schema_earlier"]

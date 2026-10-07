@@ -398,7 +398,7 @@ export function MeetingReview({
             data-testid="review-extractor"
             data-extractor={x.id}
             data-state={x.state}
-            data-tone={x.state === "failed" ? "warn" : undefined}
+            data-tone={x.state === "failed" || x.state === "not_extracted" ? "warn" : undefined}
           >
             {extractorToken(x)}
           </span>,

@@ -931,7 +931,7 @@ class MeetingIntel:
             ),
             summary=str(data.get("summary", "")).strip(),
             raw_response=raw_text,
-            decisions=_coerce_decisions(data.get("decisions", [])),
+            decisions=_coerce_decisions(data["decisions"]) if "decisions" in data else None,
         )
 
     def analyze(
@@ -1020,7 +1020,7 @@ class MeetingIntel:
             action_items=_coerce_action_items(data.get("action_items", [])),
             summary=str(data.get("summary", "")).strip(),
             raw_response=raw_text,
-            decisions=_coerce_decisions(data.get("decisions", [])),
+            decisions=_coerce_decisions(data["decisions"]) if "decisions" in data else None,
         )
 
     def generate_title(self, transcript: str, max_words: int = 8) -> Optional[str]:

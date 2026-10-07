@@ -1477,6 +1477,10 @@ class MondayBriefService:
                    WHERE s.source_type = 'meeting'
                      AND julianday(r.created_at) >= julianday(?) AND julianday(r.created_at) < julianday(?)
                      AND r.deleted = 0
+                     -- PHILO-15 08: an action's record is not a new decision.
+                     AND COALESCE(r.kind, 'decision') != 'action'
+                     AND NOT EXISTS (SELECT 1 FROM follow_through_proposals fp
+                                     WHERE fp.decision_record_id = r.id AND fp.kind = 'action')
                    ORDER BY julianday(r.created_at) DESC""",
                 (sql_instant(since), sql_instant(week_end)),
             ).fetchall()

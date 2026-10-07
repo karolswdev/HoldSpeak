@@ -270,7 +270,9 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
             assert (ran.text_content() or "").strip().startswith("SUMMARY · RAN"), ran.text_content()
             assert page.get_by_test_id("review-not-run").count() == 0
             review_words = (page.locator(".desk-surface-window").first.text_content() or "")
-            assert "EXTRACTED" not in review_words.upper(), review_words
+            # The summary's own stamp never reads as `EXTRACTED hh:mm`. PHILO-15 08:
+            # a reply without decisions says `DECISIONS · NOT EXTRACTED · <engine>`.
+            assert not __import__("re").search(r"(?<!NOT )EXTRACTED \d", review_words.upper()), review_words
             assert "Not run" not in review_words, review_words
             print(f"REVIEW {ran.text_content()!r}")
             _shot(page, "review-summary-ran")

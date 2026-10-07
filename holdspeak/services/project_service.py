@@ -2177,6 +2177,7 @@ class ProjectService:
             placeholders = ",".join("?" * len(meeting_ids))
             decision_rows = conn.execute(
                 f"""SELECT DISTINCT r.id, r.decision_text, r.created_at, r.lifecycle,
+                           r.kind AS record_kind,
                            r.source_type AS record_source_type, r.source_id AS record_source_id,
                            p.id AS proposal_id,
                            p.meeting_id AS proposal_meeting_id,
@@ -2242,7 +2243,8 @@ class ProjectService:
                 # an action out of its CURRENT cards
                 # (recall_service.py:193-196); a consumer that cannot drop the
                 # row must at least tell the truth about what it is.
-                "kind": str(row["proposal_kind"] or "") or "decision",
+                # PHILO-15 08: the record carries its own kind now.
+                "kind": str(row["proposal_kind"] or "") or str(row["record_kind"] or "") or "decision",
                 # PHILO-14 A2: the record's source identity (a meeting record's
                 # source is the `decisions` row its opener reads), so a face
                 # opens and dedupes by identity, never by the text.

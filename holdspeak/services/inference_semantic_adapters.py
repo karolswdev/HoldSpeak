@@ -155,14 +155,16 @@ def normalize_meeting_analysis(raw: Any) -> Mapping[str, Any]:
             source["topics"],
             source["action_items"],
         )
-        decisions = source.get("decisions", [])
+        # PHILO-15 08: a reply without the field is NOT EXTRACTED (None),
+        # never an empty list.
+        decisions = source.get("decisions")
     else:
         if str(getattr(raw, "error", "") or ""):
             raise ValueError("provider result error")
         summary = getattr(raw, "summary")
         topics = getattr(raw, "topics")
         action_items = getattr(raw, "action_items")
-        decisions = getattr(raw, "decisions", None) or []
+        decisions = getattr(raw, "decisions", None)
     if not isinstance(summary, str) or not isinstance(topics, list) or not isinstance(action_items, list):
         raise ValueError("meeting analysis fields")
     normalized_items: list[dict[str, Any]] = []
@@ -183,14 +185,14 @@ def normalize_meeting_analysis(raw: Any) -> Mapping[str, Any]:
         )
     if any(not isinstance(topic, str) for topic in topics):
         raise ValueError("topic")
-    if not isinstance(decisions, list):
+    if decisions is not None and not isinstance(decisions, list):
         raise ValueError("meeting analysis decisions")
-    normalized_decisions: list[dict[str, Any]] = []
-    for item in decisions:
+    normalized_decisions: list[dict[str, Any]] | None = None if decisions is None else []
+    for item in decisions or []:
         value = _exact_mapping(item, frozenset({"decision", "rationale"}))
         if not isinstance(value["decision"], str):
             raise ValueError("decision text")
-        normalized_decisions.append(
+        normalized_decisions.append(  # type: ignore[union-attr]
             {"decision": value["decision"], "rationale": _nullable_text(value["rationale"])}
         )
     return {

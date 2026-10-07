@@ -185,28 +185,36 @@ def locate_evidence(
     return Evidence(start, end, index, SUPPORT_SOURCE_LINKED, None)
 
 
-#: A plugin action stands for a summary action row when this share of its
-#: content words is in the row's task (a fixed mapping, not a score).
-_SAME_ACTION_OVERLAP = 0.6
+def _same_value(a: Any, b: Any) -> bool:
+    """Owner/due agreement: both absent, or equal after normalisation."""
+    left, right = _norm(str(a or "")), _norm(str(b or ""))
+    return left == right
 
 
-def _match_action_row(text: str, open_rows: dict[str, str]) -> Optional[str]:
-    """The summary action row this action restates, claimed once; or None."""
+def _match_action_row(
+    text: str, owner: Any, due: Any, open_rows: dict[str, dict[str, Any]],
+) -> Optional[str]:
+    """The summary action row this plugin action IS, claimed once; or None.
+
+    PHILO-15 08 (Astra #983 r2 RULING): two obligations are never merged by
+    similarity. A link needs the SAME task (equal content words: only stop
+    words and punctuation may differ) AND the same owner AND the same due
+    (or both absent). "Rotate the staging database credentials" is not
+    "Rotate the production database credentials": both stand, since a
+    duplicate row is cheaper than a lost one.
+    """
     words = _content_words(text)
     if not words:
         return None
-    best, best_ratio = None, 0.0
-    for row_id, task in open_rows.items():
-        task_words = _content_words(task)
-        if not task_words:
-            continue
-        ratio = len(words & task_words) / max(len(words), len(task_words))
-        if ratio > best_ratio:
-            best, best_ratio = row_id, ratio
-    if best is None or best_ratio < _SAME_ACTION_OVERLAP:
-        return None
-    open_rows.pop(best)
-    return best
+    for row_id, row in open_rows.items():
+        if (
+            _content_words(str(row.get("task") or "")) == words
+            and _same_value(owner, row.get("owner"))
+            and _same_value(due, row.get("due"))
+        ):
+            open_rows.pop(row_id)
+            return row_id
+    return None
 
 
 def retry_key(
@@ -550,7 +558,7 @@ class ProposalBridgeService:
             text = str(item.get("task") or item.get("text") or "").strip()
             if not text:
                 continue
-            action_item_id = _match_action_row(text, open_rows)
+            action_item_id = _match_action_row(text, item.get("owner"), item.get("due"), open_rows)
             prop = self._mint(
                 meeting_id=meeting_id, project_id=project_id, kind="action",
                 text=text, artifact=artifact, plugin=_ACTION_PLUGIN,
@@ -564,12 +572,12 @@ class ProposalBridgeService:
                 created.append(prop)
         return created
 
-    def _unlinked_summary_actions(self, meeting_id: str) -> dict[str, str]:
+    def _unlinked_summary_actions(self, meeting_id: str) -> dict[str, dict[str, Any]]:
         """The meeting's unreviewed action rows no proposal stands for yet."""
         try:
             with self._db._connection() as conn:
                 rows = conn.execute(
-                    """SELECT id, task FROM action_items
+                    """SELECT id, task, owner, due FROM action_items
                        WHERE meeting_id = ? AND review_state = 'pending'
                          AND status NOT IN ('done', 'dismissed')
                          AND id NOT IN (SELECT action_item_id FROM follow_through_proposals
@@ -579,7 +587,10 @@ class ProposalBridgeService:
                 ).fetchall()
         except Exception:
             return {}
-        return {str(row["id"]): str(row["task"] or "") for row in rows}
+        return {
+            str(row["id"]): {"task": row["task"], "owner": row["owner"], "due": row["due"]}
+            for row in rows
+        }
 
     def _extraction_model(self, job: Any, capability: str) -> Optional[str]:
         """The model the bound job's FROZEN route ran this extractor on.
@@ -874,10 +885,11 @@ class ProposalBridgeService:
                 """INSERT INTO decision_records
                    (id, decision_text, rationale, alternatives, owner,
                     review_date, lifecycle, source_type, source_id,
-                    created_at, updated_at)
+                    created_at, updated_at, kind)
                    VALUES (?, ?, ?, '', ?, '', 'active', 'meeting', ?,
-                           ?, ?)""",
-                (record_id, final_text, proposal.rationale or "", final_owner, decision_id, now, now),
+                           ?, ?, ?)""",
+                (record_id, final_text, proposal.rationale or "", final_owner, decision_id, now, now,
+                 "action" if is_action else "decision"),
             )
 
             # 3. decision_record_sources: the meeting (what every Room read
@@ -1315,6 +1327,21 @@ class ProposalBridgeService:
             "proposals": proposals,
         }
 
+    def _summary_decisions_missing(self, meeting_id: str) -> bool:
+        """True when the summary's reply carried no ``decisions`` field and no
+        plugin wrote decisions for this meeting."""
+        try:
+            artifacts = self._db.plugins.list_artifacts(meeting_id, limit=2000)
+        except Exception:
+            return False
+        if any(a.plugin_id == _DECISION_PLUGIN for a in artifacts):
+            return False
+        for art in artifacts:
+            if art.plugin_id == _SUMMARY_PLUGIN:
+                structured = self._parse_structured(art)
+                return "decisions" in structured and structured["decisions"] is None
+        return False
+
     _SUCCESS = frozenset({"success", "succeeded", "ok", "completed", "proposed", "deduped"})
     _SKIP = frozenset({"skipped", "disabled", "blocked"})
 
@@ -1354,6 +1381,17 @@ class ProposalBridgeService:
         if status == "succeeded" or intel_state in {"complete", "ready"}:
             rows.append({"id": _SUMMARY_PLUGIN, "label": "Summary", "state": "ran",
                          "count": produced(_SUMMARY_PLUGIN), "reason": None})
+            # PHILO-15 08 (Astra #983 r2): a reply that did not carry the
+            # decisions field did NOT extract decisions -- said so, with the
+            # engine, never an empty list.
+            if self._summary_decisions_missing(meeting_id):
+                engine = (
+                    self._extraction_model(job, _SUMMARY_CAPABILITY)
+                    or str(getattr(job, "model_host", "") or "")
+                    or "this engine"
+                )
+                rows.append({"id": "summary_decisions", "label": "Decisions",
+                             "state": "not_extracted", "count": None, "reason": engine})
         seen: set[str] = set()
         try:
             runs = self._db.plugins.list_plugin_runs(meeting_id, limit=200)

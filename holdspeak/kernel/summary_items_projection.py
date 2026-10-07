@@ -45,10 +45,14 @@ def write_summary_items(
         for ordinal, item in enumerate(action_items, 1)
         if isinstance(item, dict) and str(item.get("task") or "").strip()
     ]
+    # None: the reply did not carry the field -- the summary did NOT extract
+    # decisions (PHILO-15 08, Astra #983 r2); [] means it found none.
+    raw_decisions = projection.get("decisions")
+    extracted = raw_decisions is not None
     decisions = [
         {"decision": str(item.get("decision") or "").strip(),
          "rationale": item.get("rationale")}
-        for item in list(projection.get("decisions") or [])
+        for item in list(raw_decisions or [])
         if isinstance(item, dict) and str(item.get("decision") or "").strip()
     ]
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -67,7 +71,7 @@ def write_summary_items(
            structured_json=excluded.structured_json,updated_at=excluded.updated_at""",
         (f"summary-items-{meeting_id}", meeting_id, SUMMARY_ITEMS_TYPE,
          title[:200], "\n".join(lines),
-         json.dumps({"decisions": decisions, "action_items": actions,
+         json.dumps({"decisions": decisions if extracted else None, "action_items": actions,
                      "job_id": str(projection.get("job_id") or "")},
                     separators=(",", ":"), sort_keys=True),
          SUMMARY_ITEMS_PLUGIN, now, now),

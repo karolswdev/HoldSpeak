@@ -39,6 +39,8 @@ _EDITABLE_FIELDS = frozenset(
 #: Room's join anchor for its commitment (proposal_bridge_service.py, step 2).
 #: That row is an action, not a decision: no decision list shows it.
 _NOT_AN_ACTION = (
+    "COALESCE(r.kind, 'decision') != 'action' AND "
+    # A record written before the kind column read its kind from its proposal.
     "NOT EXISTS (SELECT 1 FROM follow_through_proposals AS fp "
     "WHERE fp.decision_record_id = r.id AND fp.kind = 'action')"
 )
@@ -266,9 +268,9 @@ class DecisionRecordService:
         """List records that govern one typed work item."""
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT r.* FROM decision_records AS r
+                f"""SELECT r.* FROM decision_records AS r
                    JOIN decision_record_work AS w ON w.record_id = r.id
-                   WHERE w.work_type = ? AND w.work_ref = ?
+                   WHERE w.work_type = ? AND w.work_ref = ? AND {_NOT_AN_ACTION}
                    ORDER BY r.created_at DESC, r.id DESC""",
                 (self._required("work_type", work_type), self._required("work_ref", work_ref)),
             ).fetchall()
@@ -281,9 +283,10 @@ class DecisionRecordService:
         del principal
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT * FROM decision_records
-                   WHERE source_type = ? AND source_id = ? AND deleted = 0
-                   ORDER BY created_at DESC, id DESC""",
+                f"""SELECT r.* FROM decision_records AS r
+                   WHERE r.source_type = ? AND r.source_id = ? AND r.deleted = 0
+                     AND {_NOT_AN_ACTION}
+                   ORDER BY r.created_at DESC, r.id DESC""",
                 (self._required("source_type", source_type), self._required("source_id", source_id)),
             ).fetchall()
         return [self._record_dict(row) for row in rows]

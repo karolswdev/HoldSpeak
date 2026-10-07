@@ -922,7 +922,9 @@ def _result_schema(operation: str, kind: str, contract: str) -> dict[str, Any]:
                 "summary": scalar,
                 "action_items": {"type": "array", "items": action_item},
                 # PHILO-15 08 (B02): the summary carries its decisions.
-                "decisions": {"type": "array", "items": _closed_object_schema(
+                # PHILO-15 08 (Astra #983 r2): null = the reply did not carry
+                # the field (NOT EXTRACTED); [] = honestly none.
+                "decisions": {"type": "array", "nullable": True, "items": _closed_object_schema(
                     properties={
                         "decision": scalar,
                         "rationale": {"type": "string", "nullable": True},

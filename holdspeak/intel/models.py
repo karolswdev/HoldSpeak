@@ -100,7 +100,8 @@ class IntelResult:
     raw_response: str
     error: Optional[str] = None
     # PHILO-15 08: the decisions the meeting made, ``{decision, rationale}``.
-    decisions: list[dict] = field(default_factory=list)
+    # None = the reply did not carry the field (not extracted); [] = none.
+    decisions: Optional[list[dict]] = None
 
 
 SELF_HOSTED_CLOUD_API_KEY_PLACEHOLDER = "sk-no-key-required"

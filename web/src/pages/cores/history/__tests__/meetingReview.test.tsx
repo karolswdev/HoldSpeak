@@ -394,4 +394,16 @@ describe("MeetingReview (HS-200-12)", () => {
     expect(screen.queryByTestId("review-not-run")).toBeNull();
     expect(screen.queryByText("Not run")).toBeNull();
   });
+  it("says DECISIONS · NOT EXTRACTED when the reply carried no decisions (PHILO-15 08)", async () => {
+    mount(review({
+      proposals: [],
+      extractors: [
+        { id: "meeting_summary", label: "Summary", state: "ran", count: 0, reason: null },
+        { id: "summary_decisions", label: "Decisions", state: "not_extracted", count: null, reason: "qwen3.8-27b" },
+      ],
+    }));
+    await screen.findByText("Nothing to review");
+    const tokens = screen.getAllByTestId("review-extractor").map((t) => t.textContent);
+    expect(tokens).toEqual(["SUMMARY · RAN · NONE", "DECISIONS · NOT EXTRACTED · QWEN3.8-27B"]);
+  });
 });

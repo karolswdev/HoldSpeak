@@ -55,7 +55,8 @@ export interface ReviewProposal {
 export interface ReviewExtractor {
   id: string;
   label: string;
-  state: "ran" | "skipped" | "failed";
+  /** `not_extracted` (PHILO-15 08): the reply did not carry the field. */
+  state: "ran" | "skipped" | "failed" | "not_extracted";
   count: number | null;
   reason: string | null;
 }
@@ -155,7 +156,7 @@ function decodeExtractor(raw: Record<string, unknown>): ReviewExtractor {
   return {
     id: String(raw.id ?? ""),
     label: String(raw.label ?? raw.id ?? ""),
-    state: state === "ran" || state === "skipped" ? state : "failed",
+    state: state === "ran" || state === "skipped" || state === "not_extracted" ? state : "failed",
     count: num(raw.count),
     reason: str(raw.reason),
   };
@@ -326,7 +327,8 @@ export function extractorToken(x: ReviewExtractor): string {
     return `${name} · RAN · ${x.count && x.count > 0 ? x.count : "NONE"}`;
   }
   const why = (x.reason ?? "").trim().toUpperCase();
-  return `${name} · ${x.state === "skipped" ? "SKIPPED" : "FAILED"}${why ? ` · ${why}` : ""}`;
+  const word = x.state === "skipped" ? "SKIPPED" : x.state === "not_extracted" ? "NOT EXTRACTED" : "FAILED";
+  return `${name} · ${word}${why ? ` · ${why}` : ""}`;
 }
 
 /** True while a proposed row's Defer stamp is in the future. */

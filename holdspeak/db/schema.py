@@ -1150,7 +1150,11 @@ CREATE TABLE IF NOT EXISTS decision_records (
     source_id TEXT NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
-    deleted INTEGER NOT NULL DEFAULT 0
+    deleted INTEGER NOT NULL DEFAULT 0,
+    -- PHILO-15 08: what the record IS. A confirmed action writes a record
+    -- as the Room's join anchor for its commitment; every reader asks this
+    -- field before it calls a record a decision.
+    kind TEXT NOT NULL DEFAULT 'decision'
 );
 
 CREATE TABLE IF NOT EXISTS decision_record_sources (

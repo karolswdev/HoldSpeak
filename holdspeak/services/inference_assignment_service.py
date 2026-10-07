@@ -244,8 +244,10 @@ class InferenceAssignmentService:
                             )
                             else "assigned"
                         ),
+                        # A notice (PHILO-15 08) is said, not repaired.
                         "repair": "Fix"
-                        if projection is not None and projection["issues"]
+                        if projection is not None
+                        and any(i.get("severity") != "notice" for i in projection["issues"])
                         else None,
                     }
                 )
@@ -1951,6 +1953,19 @@ class InferenceAssignmentService:
                     issues.append(
                         {
                             **self._issue(reason, entry, "blocking"),
+                            "capability_id": capability.id,
+                        }
+                    )
+                elif (
+                    capability.requires.structured_output
+                    and f"result_schema:{capability.output_schema_sha256}" not in claims
+                ):
+                    # PHILO-15 08 (Astra #983 r2): served on the earlier
+                    # summary result (no `decisions` field). It still runs;
+                    # the row says its decisions are not proven.
+                    issues.append(
+                        {
+                            **self._issue("result_schema_earlier", entry, "notice"),
                             "capability_id": capability.id,
                         }
                     )

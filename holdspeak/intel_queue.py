@@ -540,7 +540,10 @@ def _process_bound_intel_job(
                 "summary": str(result["summary"]),
                 "topics": list(result["topics"]),
                 "action_items": list(result["action_items"]),
-                "decisions": list(result.get("decisions") or []),
+                # None = the reply did not carry the field (PHILO-15 08).
+                "decisions": (
+                    None if result.get("decisions") is None else list(result["decisions"])
+                ),
             },
             executor_held=lease.held,
             memory=memory,

@@ -91,7 +91,7 @@ export function CapabilityAssignmentsCore() {
         <details className="assignment-overrides" open={showOverrides} onToggle={(event) => setShowOverrides((event.currentTarget as HTMLDetailsElement).open)}>
           <summary>Show task overrides</summary>
           <div className="assignment-override-filter"><Button dense variant={!allTasks ? "primary" : "ghost"} aria-pressed={!allTasks} onClick={() => setAllTasks(false)}>Overrides & issues</Button><Button dense variant={allTasks ? "primary" : "ghost"} aria-pressed={allTasks} onClick={() => setAllTasks(true)}>All tasks</Button></div>
-          {taskRows.length ? <div className="assignment-task-rows">{taskRows.map((task: AssignmentTaskOverride) => <article key={task.id}><span>{task.group.label}</span><strong>{task.label}</strong><span className="surface-token">{task.effective.assignment ? chain(task.effective.assignment.entries) : "No default model"}</span></article>)}</div> : <SurfaceState empty emptyContent={<span>No task overrides</span>} />}
+          {taskRows.length ? <div className="assignment-task-rows">{taskRows.map((task: AssignmentTaskOverride) => <article key={task.id}><span>{task.group.label}</span><strong>{task.label}</strong><span className="surface-token">{task.effective.assignment ? chain(task.effective.assignment.entries) : "No default model"}</span>{task.issues.some((issue) => issue.code === "result_schema_earlier") ? <span className="surface-token" data-tone="warn" data-testid="assignment-decisions-unproven">DECISIONS NOT PROVEN</span> : null}</article>)}</div> : <SurfaceState empty emptyContent={<span>No task overrides</span>} />}
         </details>
       </div>
       {selected && editor ? <AssignmentEditor

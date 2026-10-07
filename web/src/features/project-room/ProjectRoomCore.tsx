@@ -1502,9 +1502,18 @@ function SinceYouLookedSection({ room }: { room: RoomSnapshot }) {
  *  PREPARED ×K when a send waits. Its `Open` opened nothing for a record
  *  (G1, ledgered), so it is withheld; a row with a real URL keeps its Open. */
 function RoomDecisionRow({ dec, cells, ...rest }: React.ComponentProps<typeof SurfaceLedgerRow> & {
-  dec: { id: string; text: string };
+  dec: { id: string; text: string; kind?: string };
 }) {
   const [open, setOpen] = useState(false);
+  // PHILO-15 08 (Astra #983 r2): a confirmed ACTION's record is the anchor
+  // of its commitment, not a decision: it reads "Action:", says ACTION, and
+  // carries no decision Send well.
+  if (dec.kind === "action") {
+    return (
+      <SurfaceLedgerRow {...rest} lineLabel={`Action: ${dec.text}`}
+        cells={<><span className="surface-token" data-testid="room-row-kind">ACTION</span>{cells}</>} />
+    );
+  }
   return (
     <SurfaceLedgerRow {...rest} open={open} onToggle={() => setOpen((o) => !o)}
       lineLabel={`Decision: ${dec.text}`}
