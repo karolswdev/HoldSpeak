@@ -22,7 +22,8 @@ export type ModelLibraryRow = {
   selected_action: ModelLibraryAction | string;
 };
 
-export type ModelLibrarySummaryState = "empty" | "ready" | "attention";
+/** `none_ready` (PHILO-15 05): rows, none ready, nothing to repair. */
+export type ModelLibrarySummaryState = "empty" | "ready" | "attention" | "none_ready";
 
 export type ModelLibraryProjection = {
   schema: "ModelLibraryProjection@1";
@@ -31,7 +32,7 @@ export type ModelLibraryProjection = {
   /** Closed server-owned header truth; never inferred from browser rows. */
   summary: {
     state: ModelLibrarySummaryState;
-    label: "Add model" | "Ready" | "Needs attention";
+    label: "Add model" | "Ready" | "Needs attention" | "NOT SUPPORTED YET";
     ready_count: number;
     attention_count: number;
   };

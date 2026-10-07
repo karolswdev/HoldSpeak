@@ -43,7 +43,7 @@ import { wireClock, wireDate } from "../surface/format";
 import { controlModeLabel } from "../../lib/productLanguage";
 import { egressFor } from "../surface/egress";
 import { useCompactViewport } from "../useCompactViewport";
-import { useOnCoderFrame } from "../useDeskChangedRefresh";
+import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { answerCoderOpenFirst } from "./coderOpen";
 import {
   agentName,
@@ -624,48 +624,48 @@ function StopVerb() {
 /* ── the drafting model's host ────────────────────────────────────── */
 
 type AssignmentEntry = { profile_id?: string; label?: string; boundary?: string };
-let draftEntry: Promise<AssignmentEntry | null> | null = null;
+type AssignmentRoster = { task_overrides?: Array<{ id?: string; effective?: { assignment?: { entries?: AssignmentEntry[] } | null } }> };
 
+/** The drafting model's entry, read now. `effective` is the whole chain
+ * (exact, group, global): with only the Default for AI work, drafts inherit
+ * it (PHILO-15 05). No cache: a changed default shows at once (Astra r1). */
 function readDraftEntry(): Promise<AssignmentEntry | null> {
-  if (!draftEntry) {
-    draftEntry = apiFetch<{ task_overrides?: Array<{ id?: string; effective?: { assignment?: { entries?: AssignmentEntry[] } | null } }> }>(
-      "/api/inference/assignments",
-    )
-      .then((body) => {
-        // `effective` is the whole chain (exact, group, global): with only the
-        // Default for AI work, drafts inherit it (PHILO-15 05).
-        const row = (body?.task_overrides ?? []).find((r) => r?.id === DRAFT_CAPABILITY);
-        const entry = row?.effective?.assignment?.entries?.[0] ?? null;
-        // PHILO-15 05: never keep an empty answer. A default set after this
-        // read (Set up local AI) must show at the next open, not NOT SET.
-        if (!entry) draftEntry = null;
-        return entry;
-      })
-      .catch(() => {
-        draftEntry = null;
-        return null;
-      });
-  }
-  return draftEntry;
+  return apiFetch<AssignmentRoster>("/api/inference/assignments").then((body) => {
+    const row = (body?.task_overrides ?? []).find((r) => r?.id === DRAFT_CAPABILITY);
+    return row?.effective?.assignment?.entries?.[0] ?? null;
+  });
 }
 
 /** The EgressChip of the model that drafts answers: its endpoint's host
  * (`API.ANTHROPIC.COM`, `192.168.1.43 · LAN`, `THIS DEVICE`), else the
  * model's name; `NOT SET` when no model is assigned to drafts and no Default
- * for AI work exists (drafts inherit the default, PHILO-15 05). */
+ * for AI work exists (drafts inherit the default, PHILO-15 05). Read on every
+ * open and again after any desk write (`desk_changed`: the Settings and the
+ * Concierge assign through mutating `/api` requests, which announce it). */
 export function useDraftEgress(enabled: boolean): { label: string; scope?: "local" | "mixed" | "cloud" | "remote" } {
   const targets = useDesk((s) => s.inferenceTargets);
   const [entry, setEntry] = useState<AssignmentEntry | null | undefined>(undefined);
+  const seq = useRef(0);
+  const read = useCallback(() => {
+    const mine = ++seq.current;
+    void readDraftEntry()
+      .then((e) => {
+        if (seq.current === mine) setEntry(e);
+      })
+      .catch(() => {
+        // The last read stays on the glass when a re-read fails.
+      });
+  }, []);
   useEffect(() => {
     if (!enabled) return;
-    let live = true;
-    void readDraftEntry().then((e) => {
-      if (live) setEntry(e);
-    });
+    read();
     return () => {
-      live = false;
+      seq.current += 1; // an answer after close is dropped
     };
-  }, [enabled]);
+  }, [enabled, read]);
+  useOnDeskChanged(() => {
+    if (enabled) read();
+  });
   return useMemo(() => {
     if (!entry) return { label: "NOT SET" };
     const target = targets.find((t) => t.profile_id === entry.profile_id || t.id === entry.profile_id);
@@ -689,7 +689,5 @@ export function useDraftEgress(enabled: boolean): { label: string; scope?: "loca
   }, [entry, targets]);
 }
 
-/** Test seam. */
-export function __resetDraftEgress(): void {
-  draftEntry = null;
-}
+/** Test seam (the chip keeps no cache since PHILO-15 05 r1). */
+export function __resetDraftEgress(): void {}

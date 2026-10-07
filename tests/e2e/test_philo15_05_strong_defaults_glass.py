@@ -146,6 +146,12 @@ def test_the_brief_generated_itself(tmp_path: Path, monkeypatch: pytest.MonkeyPa
                 page = _page(pw, url, width, errors)
                 brief = _api(page, "GET", "/api/brief/latest", token=TOKEN)
                 assert brief and brief.get("generated_at"), brief
+                # Astra r1 P1: the scheduled Brief holds the work the owner's
+                # Generate would (the fresh hub's engine blocker), never a
+                # silent "No changes".
+                waiting = [i["text"] for i in (brief.get("sections") or {}).get("waiting") or []]
+                assert brief["headline"] != "No changes" and any(t.startswith("No engine") for t in waiting), brief
+                assert not any(t.startswith("NOT READ") for t in waiting), waiting
                 if width == 393:
                     page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
                     page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')").click()
@@ -205,3 +211,81 @@ def test_the_concierge_anthropic_row_reads_not_supported_yet(tmp_path: Path, mon
                 page.context.browser.close()
     finally:
         server.stop()
+
+
+@pytest.mark.e2e
+@pytest.mark.chair_windows_open
+@pytest.mark.timeout(240)
+def test_a_brief_with_an_unread_source_says_partial(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Astra r1 P1: a source the producer could not read is a NOT READ row,
+    and the receipt reads GENERATED · PARTIAL."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+    try:
+        from holdspeak.db import get_database
+        from holdspeak.principals import Principal, PrincipalKind
+        from holdspeak.services.monday_brief_service import MondayBriefService
+
+        # A principal the needs-you rule cannot read for: the r1 defect's shape.
+        MondayBriefService(get_database()).generate(Principal(PrincipalKind.SERVICE, "heartbeat"))
+        from playwright.sync_api import sync_playwright
+
+        SHOTS.mkdir(parents=True, exist_ok=True)
+        with sync_playwright() as pw:
+            for width in (1440, 393):
+                page = _page(pw, url, width, errors)
+                if width == 393:
+                    page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                    page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')").click()
+                date = page.locator("[data-testid='arrival-brief-date']").first
+                date.wait_for(timeout=15_000)
+                said = date.text_content() or ""
+                assert "GENERATED" in said and said.endswith("PARTIAL"), said
+                body = page.locator("[data-testid='arrival-brief']").first.text_content() or ""
+                assert "NOT READ · AI models" in body and "NOT READ · Decisions" in body, body
+                date.scroll_into_view_if_needed()
+                _settle(page)
+                page.screenshot(path=str(SHOTS / f"brief-partial-{width}.png"))
+                _assert_clean(page, errors)
+                page.context.browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(240)
+@pytest.mark.xfail(
+    reason="lane 09 (philo-15/09-morning-truth, B04): Generate returns today's stored "
+    "Brief (monday_brief_service.py, the same-day return); lane 09 makes Generate regenerate.",
+    strict=False,
+)
+def test_pressing_generate_regenerates_the_scheduled_brief(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Astra r1 MISSED: the 06:00 Brief must be refreshable. Pressing Generate
+    makes a new Brief (a new generated_at), not the stored 06:00 one."""
+    _ensure_build()
+    from holdspeak.config import Config
+    from holdspeak.runtime.cadence import CadenceMixin
+
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        class _Runtime(CadenceMixin):
+            def __init__(self) -> None:
+                self.config = Config()
+
+        six = datetime.now().astimezone().replace(hour=6, minute=0, second=0, microsecond=0)
+        with patch("holdspeak.runtime.cadence.local_now", return_value=six):
+            _Runtime()._cadence_tick_body()
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            before = _api(page, "GET", "/api/brief/latest", token=TOKEN)
+            after = _api(page, "POST", "/api/brief/generate", {}, token=TOKEN)
+            assert after["generated_at"] != before["generated_at"], (before["generated_at"], after["generated_at"])
+            browser.close()
+    finally:
+        server.stop()
+

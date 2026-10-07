@@ -308,6 +308,37 @@ class _NeedsYouRows(list):
         self.counted_decisions = counted_decisions
 
 
+class _NeedsYouUnread(list):
+    """The needs-you rule could not be read at all: its NOT READ row.
+
+    The caller keeps the row and falls back to the brief's own collector.
+    """
+
+
+#: PHILO-15 05: the words for a source the needs-you rule could not read.
+_UNREAD_SOURCE_WORDS = {
+    "assignments": "AI models",
+    "decisions": "Decisions",
+    "door": "Follow-through",
+    "needs_you": "Needs you",
+}
+#: The source_ref prefix of a NOT READ row; any such row makes a brief PARTIAL.
+NOT_READ_REF = "not_read:"
+
+
+def _not_read_item(source: str, reason: Any) -> "BriefItem":
+    """PHILO-15 05 (Astra r1 P1): an unread source is never silent."""
+    word = _UNREAD_SOURCE_WORDS.get(source) or source.replace("_", " ").capitalize()
+    return BriefItem(
+        id=f"brief-item-{uuid.uuid4().hex}", section="waiting",
+        text=f"NOT READ · {word}",
+        detail=str(reason or "").split("\n")[0][:120] or None,
+        source_ref=f"{NOT_READ_REF}{source}",
+        # Above every other WAITING row: it limits what the brief can claim.
+        priority=330,
+    )
+
+
 @dataclass
 class BriefItem:
     id: str
@@ -432,10 +463,14 @@ class MondayBriefService:
         # section's own count leaves it out (it is said once). What he waits
         # on someone else for is not counted and is not a WAITING row.
         member_items = self._collect_needs_you(principal)
+        unread_rule: list[BriefItem] = []
+        if isinstance(member_items, _NeedsYouUnread):
+            # PHILO-15 05: the rule was not read; its NOT READ row stays.
+            unread_rule, member_items = list(member_items), None
         needs_you_count = None if member_items is None else int(
             getattr(member_items, "needs_you_count", len(member_items)))
         counted_decisions = set(getattr(member_items, "counted_decisions", ()))
-        waiting_items = self._collect_coverage_gaps(principal) + (
+        waiting_items = unread_rule + self._collect_coverage_gaps(principal) + (
             self._collect_waiting(principal) if member_items is None else member_items
         )
 
@@ -590,14 +625,18 @@ class MondayBriefService:
 
             # The operation's answer already withholds People content.
             answer = ProjectService(self._db).needs_you(principal)
-        except Exception as exc:  # pragma: no cover - defensive
+        except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
             log.warning("brief: the needs-you rule is unavailable: %s", exc)
-            return None
+            return _NeedsYouUnread([_not_read_item("needs_you", exc)])
 
-        if (answer.get("sourceErrors") or {}).get("door"):
+        source_errors = dict(answer.get("sourceErrors") or {})
+        if source_errors.get("door"):
             # The Door could not be read: the rule has no follow-through
             # cards to give, so the brief keeps its own collector.
             return None
+        # PHILO-15 05: every other source the rule could not read is a NOT
+        # READ row (the brief is then PARTIAL), never a silent zero.
+        unread = [_not_read_item(str(key), why) for key, why in sorted(source_errors.items()) if why]
 
         def item(text: str, detail: str | None, source_ref: str, priority: int) -> BriefItem:
             return BriefItem(
@@ -605,7 +644,7 @@ class MondayBriefService:
                 detail=detail, source_ref=source_ref, priority=priority,
             )
 
-        rows: list[BriefItem] = []
+        rows: list[BriefItem] = list(unread)
         # Rank order is kept: a higher priority sorts first in the section.
         priority = 300
         counted_decisions: set[str] = set()
@@ -662,8 +701,15 @@ class MondayBriefService:
             for section in _SECTIONS
         }
         counts = {section: len(items) for section, items in finalized_sections.items()}
-        total_items = sum(counts.values())
+        # PHILO-15 05: NOT READ rows are said as such, never as things waiting.
+        unread = sum(
+            1 for item in finalized_sections["waiting"]
+            if str(item.source_ref or "").startswith(NOT_READ_REF)
+        )
+        counts["waiting"] -= unread
+        total_items = sum(counts.values()) + unread
         if waiting_count is not None:
+            total_items -= counts["waiting"]
             counts["waiting"] = waiting_count
             total_items += waiting_count
             said = counted_decisions or set()
@@ -680,6 +726,8 @@ class MondayBriefService:
             return f"{count} {singular if count == 1 else plural}"
 
         headline_parts = []
+        if unread:
+            headline_parts.append(phrase(unread, "source not read", "sources not read"))
         if counts["this_week"]:
             # C11: calendar items are counted as what they are -- meetings,
             # armed recordings, commitments due, new decisions -- never as

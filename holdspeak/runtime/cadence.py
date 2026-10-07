@@ -20,6 +20,9 @@ from ..logging_config import get_logger
 
 log = get_logger("runtime.cadence")
 
+#: The OWNER identity the scheduled morning Brief generates under.
+BRIEF_PRINCIPAL_IDENTITY = "brief-conductor"
+
 
 class CadenceMixin:
     def _cadence_enabled(self) -> bool:
@@ -141,8 +144,13 @@ class CadenceMixin:
             from ..services.monday_brief_service import MondayBriefService
 
             brief_svc = MondayBriefService(db)
-            system_principal = Principal(PrincipalKind.SERVICE, "heartbeat")
-            brief = brief_svc.generate(system_principal, now=now)
+            # PHILO-15 05 (Astra r1 P1): the owner's own reads.  A SERVICE
+            # principal is refused the assignment and decision reads, so the
+            # scheduled Brief said "No changes" while the owner's Generate
+            # said "1 thing waiting".  The Brief is deterministic and sends
+            # nothing (the heartbeat precedent: runtime/heartbeat.py).
+            brief_principal = Principal(PrincipalKind.OWNER, BRIEF_PRINCIPAL_IDENTITY)
+            brief = brief_svc.generate(brief_principal, now=now)
 
             db.cadence.upsert_policy(CadencePolicy(
                 name="brief_regeneration",

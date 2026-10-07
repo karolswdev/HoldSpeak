@@ -70,12 +70,21 @@ describe("the Anthropic provider row", () => {
     expect((screen.getByLabelText("Endpoint provider") as HTMLSelectElement).value).toBe("openai_compatible");
   });
 
-  it("a stored Anthropic row shows the state, never a verb", async () => {
-    vi.mocked(getModelLibrary).mockResolvedValue(projection([{
-      id: "profile:anthropic-main", source: "provider", label: "Claude", status: "not_supported",
-      detail: { provider_family: "anthropic" }, repair: null, selected_action: "NOT SUPPORTED YET",
-    }]));
+  it("a stored Anthropic row shows the state, never a verb; the header does not say Ready", async () => {
+    vi.mocked(getModelLibrary).mockResolvedValue({
+      ...projection([{
+        id: "profile:anthropic-main", source: "provider", label: "Claude", status: "not_supported",
+        detail: { provider_family: "anthropic" }, repair: null, selected_action: "NOT SUPPORTED YET",
+      }]),
+      // The server's summary for nothing ready (Astra r1 P2).
+      summary: { state: "none_ready", label: "NOT SUPPORTED YET", ready_count: 0, attention_count: 0 },
+    });
     render(<ModelLibraryCore />);
+    await screen.findByRole("radio");
+    const header = document.querySelector(".model-library-summary") as HTMLElement;
+    expect(header.textContent).toBe("NOT SUPPORTED YET");
+    expect(header.dataset.state).toBe("none_ready");
+    expect(screen.queryByText("Ready")).toBeNull();
     const radio = await screen.findByRole("radio");
     fireEvent.click(radio);
     expect(screen.queryByRole("button", { name: "NOT SUPPORTED YET" })).toBeNull();

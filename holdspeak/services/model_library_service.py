@@ -37,7 +37,7 @@ _ACTIONS = frozenset({
 })
 # The aggregate owns the header truth too: the browser must not infer that an
 # empty library is ready merely because there are no repairs to count.
-_SUMMARY_STATES = frozenset({"empty", "ready", "attention"})
+_SUMMARY_STATES = frozenset({"empty", "ready", "attention", "none_ready"})
 _PROVIDER_FAMILIES = frozenset({
     "openrouter", "anthropic", "openai_compatible", "private_endpoint", "paired_device", "future_backend",
 })
@@ -183,6 +183,17 @@ class ModelLibraryApplicationService:
         """Add an existing paired/mesh destination without creating a target."""
         return self._connect_provider(principal, draft, None, hosted=False, paired=True)
 
+    @staticmethod
+    def _refuse_unsupported(draft: dict[str, Any]) -> None:
+        """PHILO-15 05 (Astra r1): a provider with no execution adapter is
+        refused before anything is reserved or stored; no key is written and
+        no receipt says it was added.  HTTP and MCP get this same answer."""
+        if draft.get("provider_family") == "anthropic":
+            raise ServiceError(
+                NOT_SUPPORTED, "Anthropic is not supported yet. Use OpenRouter or an OpenAI-compatible endpoint.",
+                context={"status": 422, "provider_family": "anthropic"},
+            )
+
     def _connect_provider(
         self,
         principal: Principal,
@@ -194,6 +205,7 @@ class ModelLibraryApplicationService:
     ) -> dict[str, Any]:
         self.require_owner(principal)
         draft = self._provider_draft(raw_draft, hosted=hosted, paired=paired)
+        self._refuse_unsupported(draft)
         # Validate the write-only body before reserving a command.  This retains
         # the value only on the stack, never in a ServiceError/context/receipt.
         key_value = self._secret_value(secret, required=draft["requires_key"])
@@ -799,8 +811,13 @@ class ModelLibraryApplicationService:
             state, label = "empty", "Add model"
         elif attention_count:
             state, label = "attention", "Needs attention"
-        else:
+        elif ready_count:
             state, label = "ready", "Ready"
+        else:
+            # PHILO-15 05 (Astra r1 P2): rows, none ready, nothing to repair
+            # is not Ready.  A provider with no adapter names itself.
+            state = "none_ready"
+            label = NOT_SUPPORTED_LABEL if any(row["status"] == NOT_SUPPORTED for row in rows) else "Add model"
         if state not in _SUMMARY_STATES:
             raise AssertionError("model library summary is not closed")
         return {

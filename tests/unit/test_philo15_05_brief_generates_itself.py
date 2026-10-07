@@ -105,3 +105,89 @@ def test_the_cadence_status_names_the_brief_job(tmp_path: Path) -> None:
     status = CadenceService(db, Config().cadence).status(owner)
     assert status["enabled"] is False
     assert status["brief_job"] == {"enabled": True, "hour": 6}
+
+
+# ── Astra r1 (#975) P1: the scheduled Brief never hides work ──────────────
+
+
+def _seed(db: Database) -> None:
+    """A desk with work waiting: a meeting with an unowned action item (and,
+    on a fresh desk, the no-engine blocker the needs-you rule raises)."""
+    from datetime import timedelta
+
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    start = datetime(2026, 10, 7, 15, 0)
+    db.meetings.save_meeting(MeetingState(
+        id="m-ledger", started_at=start, ended_at=start + timedelta(minutes=30), title="Ledger sync",
+        segments=[TranscriptSegment(text="Someone writes the runbook.", speaker="Me", start_time=1.0, end_time=3.0)],
+        intel=IntelSnapshot(timestamp=1.0, topics=["ledger"], summary="Runbook needed.", action_items=[{
+            "id": "m-ledger-a1", "task": "Write the rollback runbook", "owner": None, "due": None,
+            "status": "pending", "review_state": "accepted", "source_timestamp": None,
+            "created_at": start.isoformat()}]),
+        intel_status="completed"))
+
+
+def _items(brief) -> dict[str, list[str]]:
+    return {section: sorted(item.text for item in items) for section, items in brief.sections.items() if items}
+
+
+def test_the_scheduled_brief_holds_the_same_items_as_the_owners_generate(tmp_path: Path) -> None:
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.monday_brief_service import MondayBriefService
+
+    six = datetime(2026, 10, 8, 6, 0).astimezone()
+    scheduled_db = Database(tmp_path / "scheduled.db")
+    owner_db = Database(tmp_path / "owner.db")
+    _seed(scheduled_db)
+    _seed(owner_db)
+
+    runtime = _Runtime()
+    with patch("holdspeak.db.get_database", return_value=scheduled_db), patch(
+        "holdspeak.runtime.cadence.local_now", return_value=six
+    ):
+        runtime._cadence_tick_body()
+    scheduled = MondayBriefService(scheduled_db).get_latest(Principal(PrincipalKind.OWNER, "owner-session"))
+    owners = MondayBriefService(owner_db).generate(Principal(PrincipalKind.OWNER, "owner-session"), now=six)
+
+    assert scheduled is not None
+    assert _items(scheduled) == _items(owners), (scheduled.headline, owners.headline)
+    # The work the r1 scheduled Brief hid: the blocker and the unowned item.
+    assert _items(scheduled)["waiting"] == ["No engine yet", "Unassigned: Write the rollback runbook"]
+    assert scheduled.headline == owners.headline
+    assert scheduled.headline != "No changes"
+    assert not any(text.startswith("NOT READ") for texts in _items(scheduled).values() for text in texts)
+
+
+def test_an_unread_source_is_a_not_read_row_never_a_silent_zero(tmp_path: Path, monkeypatch) -> None:
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.monday_brief_service import NOT_READ_REF, MondayBriefService
+
+    db = Database(tmp_path / "partial.db")
+    # A principal the needs-you rule cannot read for (the r1 defect's shape).
+    brief = MondayBriefService(db).generate(
+        Principal(PrincipalKind.SERVICE, "heartbeat"), now=datetime(2026, 10, 8, 6, 0).astimezone(),
+    )
+    waiting = brief.sections.get("waiting") or []
+    unread = sorted(item.text for item in waiting if str(item.source_ref).startswith(NOT_READ_REF))
+    assert unread == ["NOT READ · AI models", "NOT READ · Decisions"], [i.text for i in waiting]
+    assert brief.headline != "No changes"
+    assert brief.headline.startswith("2 sources not read")
+
+
+def test_a_rule_that_cannot_be_read_at_all_is_a_not_read_row(tmp_path: Path, monkeypatch) -> None:
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services import project_service
+    from holdspeak.services.monday_brief_service import MondayBriefService
+
+    def broken(self, principal):
+        raise RuntimeError("needs-you store is locked")
+
+    monkeypatch.setattr(project_service.ProjectService, "needs_you", broken)
+    db = Database(tmp_path / "broken.db")
+    brief = MondayBriefService(db).generate(
+        Principal(PrincipalKind.OWNER, "owner-session"), now=datetime(2026, 10, 8, 6, 0).astimezone(),
+    )
+    texts = [item.text for item in brief.sections.get("waiting") or []]
+    assert "NOT READ · Needs you" in texts, texts
+    assert brief.headline != "No changes"
