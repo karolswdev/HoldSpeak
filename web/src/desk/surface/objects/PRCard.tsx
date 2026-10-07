@@ -24,6 +24,8 @@ export interface PRCardProps {
   branch?: string;
   base?: string;
   sprite?: string;
+  /** Pass-through data-testid for the root `article`. */
+  "data-testid"?: string;
 }
 
 /** The checks as lamps, never a counter of zero (UX-CANON A.8):
@@ -49,10 +51,19 @@ function checkLamps(checks: NonNullable<PRCardProps["checks"]>) {
   return lamps;
 }
 
-export function PRCard({ number, title, checks, review, branch, base, sprite }: PRCardProps) {
+export function PRCard({
+  number,
+  title,
+  checks,
+  review,
+  branch,
+  base,
+  sprite,
+  "data-testid": testId,
+}: PRCardProps) {
   const lamps = checks ? checkLamps(checks) : [];
   return (
-    <article className="pr-card" aria-label={`Pull request #${number}: ${title}`}>
+    <article className="pr-card" aria-label={`Pull request #${number}: ${title}`} data-testid={testId}>
       <div className="pr-card-line">
         <img src={sprite ?? objectSprite("pr", `pr-${number}`)} alt="" draggable={false} />
         <span className="pr-card-title">
@@ -89,12 +100,21 @@ export interface ChangedFile {
   removed?: number;
 }
 
-export function FilesChanged({ files, label = "Files changed" }: { files: ChangedFile[]; label?: string }) {
+export function FilesChanged({
+  files,
+  label = "Files changed",
+  "data-testid": testId,
+}: {
+  files: ChangedFile[];
+  label?: string;
+  /** Pass-through data-testid for the file list (`ul`). */
+  "data-testid"?: string;
+}) {
   const shown = files.length;
   if (shown === 0) return null;
   return (
     <SurfaceSection label={`${label} · ${shown}`}>
-      <ul className="files-changed">
+      <ul className="files-changed" data-testid={testId}>
         {files.map((file) => {
           const counts = [
             file.added ? `+${file.added}` : "",

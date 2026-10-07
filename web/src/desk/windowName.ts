@@ -23,6 +23,8 @@ export type WindowSubject =
   | { kind: "knowledge"; name?: string | null }
   | { kind: "project"; name?: string | null }
   | { kind: "session"; project?: string | null; task?: string | null; agent?: string | null }
+  /** PHILO-14 C2: a launched agent's lane, `<Agent>: <item>`. */
+  | { kind: "lane"; agent?: string | null; item?: string | null }
   | { kind: "settings"; section?: string | null }
   | { kind: "calendar"; name?: string | null }
   | { kind: "dossier"; title?: string | null }
@@ -83,6 +85,11 @@ export function windowName(subject: WindowSubject, id?: string | null): string {
       return named(subject.name) || "Project";
     case "session":
       return named(subject.task) || named(subject.project) || named(subject.agent) || "Agent session";
+    case "lane": {
+      const agent = named(subject.agent) || "Agent";
+      const item = named(subject.item);
+      return item ? `${agent}: ${item}` : agent;
+    }
     case "settings":
       return named(subject.section) ? `Settings · ${named(subject.section)}` : "Settings";
     case "calendar":

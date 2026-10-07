@@ -1,5 +1,6 @@
 /** Compositor slice (HS-117-02): panel geometry, stacking order,
  * minimize/maximize, and all six window arrays. */
+import { coderOpenFirst } from "../lane/coderOpen";
 import { assertNever } from "../assertNever";
 import type { DeskState, PanelRect, SliceCreator } from "./types";
 import { SURFACE_APPLICATIONS } from "../applications";
@@ -205,6 +206,11 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     if (!resolved) {
       console.warn(`openPullout: unknown id "${id}"`);
       return;
+    }
+    // PHILO-14 C2: a coder session of a launch opens the agent's lane.
+    if (resolved.kind === "coder") {
+      const coder = (get().items.coder ?? []).find((c) => c.id === resolved.resolvedId);
+      if (coder && coderOpenFirst(coder)) return;
     }
     const desc = PRIMITIVES[resolved.kind];
     switch (desc.surface.type) {

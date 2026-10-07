@@ -19,6 +19,8 @@ from .coders import _coder_frame, _session_age_seconds
 from .coder_factory_routes import register_factory_routes
 from .coder_steering_support import (
     active_policy_grant,
+    record_kill,
+    wait_not_current,
     canonical_pane_id,
     compose_from_body,
     deliver_process_input,
@@ -382,6 +384,9 @@ def build_coder_steering_router(
         if isinstance(session, JSONResponse):
             return session
         body = payload if isinstance(payload, dict) else {}
+        stale_wait = wait_not_current(session, body)  # PHILO-14 C2
+        if stale_wait is not None:
+            return stale_wait
         composed = compose_from_body(
             body, principal=request.state.principal, service=service
         )
@@ -514,6 +519,9 @@ def build_coder_steering_router(
             agent=session.agent,
         )
         if result.get("revoked"):
+            _coder_frame(ctx, key)
+        if result["status"] == "killed":  # PHILO-14 C2: the launch says so
+            await record_kill(key, session, result, str(body.get("scope", "pane")))
             _coder_frame(ctx, key)
         return JSONResponse(
             result, status_code=200 if result["status"] == "killed" else 409

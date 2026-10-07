@@ -762,6 +762,18 @@ never sent, the press focuses the field), then the DRAFT line: the draft,
   `onUseDraft?(draft)`, `draftEgress?: { label, scope? }` (where the DRAFT
   was made, on the draft line), `egress?: { label, scope? }` (where the
   ANSWER goes, beside Answer, drawn with or without a draft), `busy?`
+  (sending: Answer spins and cannot be pressed; the field stays editable,
+  so a stalled send never locks the draft)
+- `disabled?` (the answer cannot be sent now, as with no session: Answer
+  is disabled without the spinner, the field stays open),
+  `listenSignal?` (each new value starts the field's mic: a Speak answer
+  press), `draftScope?` (the mic's draft scope), `inputRef?` (the field,
+  for a caller that focuses it, as after Use draft).
+- `arm?` (the hand's gate beside Answer, after the egress chip: in Secure
+  or Normal, `MODE · ARM FIRST` and the ARM key; the answer row wraps).
+
+TimelineRail, StationTrack, AskWell, PRCard and FilesChanged take a
+pass-through `data-testid` (FilesChanged puts it on its file list).
 
 ### PRCard / FilesChanged
 
