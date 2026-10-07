@@ -88,12 +88,14 @@ class TestCaptureFromAnywhere:
         return page.locator(THOUGHT).count()
 
     def _open_from_menu(self, page: Any, width: int) -> Any:
-        # 1440: the Desk menu; 393: the one phone door, Go ▸ Desk (PHILO-13-17 groups Go).
+        # 1440: the Desk menu; 393: the one phone door, Go ▸ New ▸ Thought
+        # (PHILO-15 11, B21, owner ruling 2026-10-07).
         menu = "desk" if width >= 720 else "go"
         self._press(page, page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button"), width)
-        if width < 720:  # PHILO-13-17 (C7, Q3): Go ▸ Desk ▸ at 393
-            go_group(page, "Desk", lambda loc: self._press(page, loc, width))
-        item = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')")
+        if width < 720:
+            go_group(page, "New", lambda loc: self._press(page, loc, width))
+        label = "Write a thought" if width >= 720 else "Thought"
+        item = page.locator(f".desk-verbbar-menu [role='menuitem']:has-text('{label}')")
         item.wait_for()
         return item
 
@@ -103,7 +105,8 @@ class TestCaptureFromAnywhere:
         item.scroll_into_view_if_needed()
         row = "".join(item.inner_text().split())
         proof[f"menu_row_{width}"] = row
-        assert row.endswith("Writeathought⌃T"), row
+        # PHILO-15 11 (B21): a phone has no ⌘/⌃ key, so the 393 row is `Thought`, no keycap.
+        assert row.endswith("Writeathought⌃T") if width >= 720 else row.endswith("Thought"), row
         page.screenshot(path=str(SHOTS / f"menu-write-a-thought-{width}.png"))
 
     def _type_and_keep(self, page: Any, width: int, body: str, title: str) -> None:

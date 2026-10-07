@@ -295,6 +295,31 @@ export const VERBS: Verb[] = [
     ghost: never,
     run: () => openSurfaceOr("project-setup", "/"),
   },
+  // PHILO-15 11 (B21, owner ruling 2026-10-07): at 393 Go ▸ New is Thought /
+  // Meeting / Project / Person. Meeting and Person have no create verb of
+  // their own, so these two open the window where each one starts (the
+  // Live meeting room; People, whose roster adds a person). No menu bar
+  // face and no ⌘K row: 1440 stays as it is.
+  {
+    id: "desk.new-meeting",
+    label: "New Meeting",
+    scope: "floor",
+    group: "phone-new",
+    glyph: "●",
+    palette: false,
+    ghost: never,
+    run: () => openSurfaceOr("record-live", "/live"),
+  },
+  {
+    id: "desk.new-person",
+    label: "New Person",
+    scope: "floor",
+    group: "phone-new",
+    glyph: "⊕",
+    palette: false,
+    ghost: never,
+    run: () => openSurfaceOr("open-people", "/", undefined),
+  },
   // ── Desk: the floor verbs ───────────────────────────────────────────
   {
     id: "desk.settle",

@@ -62,14 +62,26 @@ def test_missing_model_guidance_has_copyable_command_bundle(tmp_path: Path) -> N
     assert guidance["links"][0]["target"] == "/docs/dictation-runtime#llama-cpp"
 
 
-def test_doctor_model_fix_reuses_download_command(tmp_path: Path) -> None:
+def test_doctor_model_fix_names_the_missing_file(tmp_path: Path) -> None:
+    """PHILO-15 11 (B08): the hint named another file from another repository."""
     target = tmp_path / "models" / "qwen.gguf"
 
     fix = doctor_model_fix("llama_cpp", target)
 
-    assert "huggingface-cli download" in fix
+    assert "qwen.gguf" in fix
     assert str(target.parent) in fix
-    assert "Qwen3.5-4B-Instruct-Q4_K_M.gguf" in fix
+    assert "Qwen3.5-4B-Instruct-Q4_K_M.gguf" not in fix
+    assert "huggingface-cli" not in fix
+
+
+def test_doctor_model_fix_for_the_products_model_points_at_set_up_local_ai(tmp_path: Path) -> None:
+    target = tmp_path / "models" / "artifacts" / "artifact_8eee" / "Qwen3.5-4B-Q4_K_M.gguf"
+
+    fix = doctor_model_fix("llama_cpp", target)
+
+    assert "Set up local AI" in fix
+    assert fix.endswith("It downloads Qwen3.5-4B-Q4_K_M.gguf.")
+    assert "Instruct" not in fix and "huggingface-cli" not in fix
 
 
 def test_doctor_install_fix_reuses_runtime_guidance() -> None:

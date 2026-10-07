@@ -226,10 +226,12 @@ def test_dictation_runtime_check_warn_when_model_missing(monkeypatch, tmp_path) 
     )
     result = doctor._check_dictation_runtime(cfg)
     assert result.status == "WARN"
-    assert "model missing" in result.detail
-    assert result.fix and "huggingface-cli download" in result.fix
+    assert "missing.gguf is not on this device" in result.detail
+    # PHILO-15 11 (B08): the hint names the file that is missing, not another one.
+    assert result.fix and "missing.gguf" in result.fix
     assert str(tmp_path) in result.fix
-    assert "Qwen3.5-4B-Instruct-Q4_K_M.gguf" in result.fix
+    assert "Qwen3.5-4B-Instruct-Q4_K_M.gguf" not in result.fix
+    assert "huggingface-cli" not in result.fix
 
 
 def test_dictation_runtime_check_pass_when_model_available(monkeypatch, tmp_path) -> None:
@@ -242,7 +244,7 @@ def test_dictation_runtime_check_pass_when_model_available(monkeypatch, tmp_path
     )
     result = doctor._check_dictation_runtime(cfg)
     assert result.status == "PASS"
-    assert "model available" in result.detail
+    assert "model.gguf is on this device" in result.detail
     assert "llama_cpp" in result.detail
 
 
@@ -283,7 +285,7 @@ def test_project_context_check_pass_when_project_detected(monkeypatch, tmp_path:
     result = doctor._check_dictation_project_context(cfg)
     assert result.status == "PASS"
     assert "proj" in result.detail
-    assert "anchor=holdspeak" in result.detail
+    assert "marker: holdspeak" in result.detail
 
 
 def test_project_context_check_warn_when_no_project_detected(
@@ -304,7 +306,8 @@ def test_project_context_check_warn_when_no_project_detected(
 
 
 def test_runtime_counters_check_pass_when_pipeline_disabled() -> None:
-    cfg = Config()  # dictation pipeline disabled by default
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = False  # explicitly disabled (HS-139-02 flipped default to True)
     result = doctor._check_dictation_runtime_counters(cfg)
     assert result.status == "PASS"
     assert "disabled" in result.detail
@@ -326,10 +329,10 @@ def test_runtime_counters_check_reports_snapshot_when_enabled(monkeypatch) -> No
         runtime_counters.reset_counters()
 
     assert result.status == "PASS"
-    assert "classify_calls=3" in result.detail
-    assert "model_loads=1" in result.detail
-    assert "classify_failures=0" in result.detail
-    assert "constrained_retries=0" in result.detail
+    assert "3 calls" in result.detail
+    assert "1 model loads" in result.detail
+    assert "0 failures" in result.detail
+    assert "0 retries" in result.detail
 
 
 def test_dictation_compile_check_pass_when_pipeline_disabled() -> None:
@@ -352,7 +355,7 @@ def test_dictation_compile_check_pass_when_no_blocks_file(monkeypatch, tmp_path)
     )
     result = doctor._check_dictation_constraint_compile(cfg)
     assert result.status == "PASS"
-    assert "nothing to compile" in result.detail
+    assert "nothing to check" in result.detail
 
 
 def test_dictation_compile_check_pass_for_valid_blocks(monkeypatch, tmp_path) -> None:
@@ -369,7 +372,7 @@ def test_dictation_compile_check_pass_for_valid_blocks(monkeypatch, tmp_path) ->
     )
     result = doctor._check_dictation_constraint_compile(cfg)
     assert result.status == "PASS"
-    assert "1 block(s) compiled cleanly" in result.detail
+    assert "1 block(s) are correct" in result.detail
 
 
 def test_dictation_compile_check_warn_when_compiler_raises(monkeypatch, tmp_path) -> None:
@@ -407,7 +410,7 @@ def test_mir_routing_check_pass_when_router_disabled() -> None:
     config = Config()  # MeetingConfig.intent_router_enabled defaults to False
     result = doctor._check_mir_routing(config)
     assert result.status == "PASS"
-    assert "disabled" in result.detail.lower()
+    assert "off" in result.detail.lower()
 
 
 def test_mir_routing_check_pass_when_enabled_with_valid_profile() -> None:
@@ -443,12 +446,10 @@ def test_mir_routing_check_never_returns_fail() -> None:
 def test_mir_telemetry_check_smoke_passes() -> None:
     result = doctor._check_mir_telemetry()
     assert result.status == "PASS"
-    # Smoke detail contains both telemetry surfaces.
-    assert "router_counters=" in result.detail
-    assert "host_metrics=" in result.detail
-    # The router counter API exposes routed/dropped windows.
-    assert "routed_windows" in result.detail
-    assert "dropped_windows" in result.detail
+    # PHILO-15 11 (B08): counts in words, not the counter keys.
+    assert "routing counters" in result.detail
+    assert "plugin counters" in result.detail
+    assert "routed_windows" not in result.detail
 
 
 # ─────────────── HS-13-04 connector packs check ───────────────

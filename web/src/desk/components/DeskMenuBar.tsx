@@ -15,12 +15,15 @@ import { useDesk } from "../store";
 import { useSettleState } from "../settleState";
 import { useChairState } from "../chairState";
 import {
+  VERBS,
   menuVerbs,
   offeredHere,
   verbLabel,
   type MenuId,
   type VerbContext,
 } from "../verbRegistry";
+import { openProjectRoom } from "../shell";
+import { KIND_GLYPH } from "../tools";
 import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { useCompactViewport } from "../useCompactViewport";
 import { CHAIR_WINDOW_IDS } from "../chair/chairWindows";
@@ -40,34 +43,60 @@ const MENUS: { id: MenuId; label: string }[] = [
   { id: "window", label: "Window" },
 ];
 
-/** PHILO-13-17 (C7, Q3; ratified 2026-10-03) — Go at 393: the Chair's
- * windows as first rows (PHILO-14 A1; was `Chair ▸`, lifted out of
- * Window), `Desk ▸`, `Object ▸`, `Window ▸`, then Go's own rows. The Desk, Object and Window menus stay menus, one tap each. Pure:
- * `group(id)` is the menu bar's own builder over the one verb registry. */
-export function groupGoForPhone(
-  goRows: WorkMenuEntry[],
-  group: (id: MenuId) => WorkMenuEntry[],
+/** PHILO-15 11 (B21, owner ruling 2026-10-07) — Go at 393. Rehearsal 1A
+ * counted 22 rows with ⌘ keycaps on a phone and nine New kinds. Go is now
+ * the Chair's four windows, then the Dock's places, then the projects, then
+ * New ▸ with four kinds. Desk ▸, Object ▸ and Window ▸ are not on the phone:
+ * the rest is in each window's own menu. 1440 keeps its four menus.
+ * (Supersedes PHILO-13-17 C7 Q3, `Desk ▸ Object ▸ Window ▸`.) */
+export const PHONE_GO_CHAIR = [
+  "chair.window.needs",
+  "chair.window.brief",
+  "chair.window.week",
+  "chair.window.capture",
+] as const;
+export const PHONE_GO_PLACES: readonly (readonly [string, string])[] = [
+  ["go.review-meetings", "Meetings"],
+  ["desk.open-people", "People"],
+  ["go.open-conductor", "Conductor"],
+  ["go.configure-settings", "Settings"],
+];
+export const PHONE_NEW: readonly (readonly [string, string])[] = [
+  ["desk.new-thought", "Thought"],
+  ["desk.new-meeting", "Meeting"],
+  ["desk.new-project", "Project"],
+  ["desk.new-person", "Person"],
+];
+
+/** Pure: `row(id, label?)` is one registry verb as a menu row (null when the
+ * registry has no such verb); `projects` are the desk's projects. No row
+ * carries a keycap: a phone has no ⌘ key. */
+export function phoneGo(
+  row: (verbId: string, label?: string) => WorkMenuEntry | null,
+  projects: readonly { id: string; name: string }[],
+  openProject: (id: string) => void,
 ): WorkMenuEntry[] {
-  const win = group("window");
-  const chairAt = win.findIndex((e) => e.type === "sub" && e.label === "Chair");
-  const chair = chairAt >= 0 ? win.splice(chairAt, 1)[0] : null;
-  const trim = (rows: WorkMenuEntry[]) => {
-    while (rows.length && rows[0].type === "sep") rows.shift();
-    while (rows.length && rows[rows.length - 1].type === "sep") rows.pop();
-    return rows;
-  };
-  // PHILO-14 A1 (Astra's P3 on #939, ruling): the Chair is the screen of
-  // objects now, so its windows are Go's first rows at 393 (Needs you,
-  // Brief, The week: two taps), no longer a `Chair ▸` group.
-  const chairRows = chair && chair.type === "sub" ? chair.entries : [];
-  const heads: WorkMenuEntry[] = [
-    ...chairRows,
-    ...(chairRows.length ? [{ type: "sep", id: "go-chair-sep" } as WorkMenuEntry] : []),
-    { type: "sub", id: "go-desk", label: "Desk", entries: trim(group("desk")) },
-    { type: "sub", id: "go-object", label: "Object", entries: trim(group("object")) },
-    { type: "sub", id: "go-window", label: "Window", entries: trim(win) },
+  const rows = (ids: readonly (readonly [string, string?])[]) =>
+    ids.map(([id, label]) => row(id, label)).filter((e): e is WorkMenuEntry => e !== null);
+  const out: WorkMenuEntry[] = [
+    ...rows(PHONE_GO_CHAIR.map((id) => [id] as const)),
+    { type: "sep", id: "go-places-sep" },
+    ...rows(PHONE_GO_PLACES),
   ];
-  return goRows.length ? [...heads, { type: "sep", id: "go-sep" }, ...goRows] : heads;
+  if (projects.length) {
+    out.push({ type: "sep", id: "go-projects-sep" });
+    for (const p of projects)
+      out.push({
+        type: "item",
+        id: `go-project-${p.id}`,
+        label: p.name,
+        glyph: KIND_GLYPH.project,
+        onSelect: () => openProject(p.id),
+      });
+  }
+  out.push({ type: "sep", id: "go-new-sep" });
+  out.push({ type: "sub", id: "go-new", label: "New", entries: rows(PHONE_NEW) });
+  return out;
 }
 
 /** The Window menu ends with the open windows, a check on the front one;
@@ -111,6 +140,8 @@ export function DeskMenuBar() {
   const barRef = useRef<HTMLElement | null>(null);
   const [at, setAt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const selectedIds = useDesk((s) => s.selectedIds);
+  // PHILO-15 11: the phone Go lists the projects.
+  const projects = useDesk((s) => s.items.project);
   // PHILO-8-01 — re-render on a face change: the Chair withholds zone verbs.
   useChairState((s) => s.surface);
   // The Window menu lists the open windows: re-render on a registry change
@@ -204,16 +235,27 @@ export function DeskMenuBar() {
       );
   };
 
+  /** One registry verb as a phone row: its label (or the phone's word for
+   * it), glyph, ghost and check; never a keycap. */
+  const phoneRow = (verbId: string, label?: string): WorkMenuEntry | null => {
+    const v = VERBS.find((x) => x.id === verbId);
+    if (!v) return null;
+    return {
+      type: "item",
+      id: v.id,
+      label: label ?? verbLabel(v, ctx),
+      glyph: v.glyph,
+      ghost: v.ghost(ctx),
+      ...(v.checked ? { checked: v.checked(ctx) } : {}),
+      onSelect: () => v.run(ctx),
+    };
+  };
+
   const entries = (id: MenuId): WorkMenuEntry[] => {
     const out: WorkMenuEntry[] = [];
     menuEntries(id, out);
-    // The one phone door carries every menu, grouped (PHILO-13-17, C7 Q3):
-    // Chair ▸ Desk ▸ Object ▸ Window ▸ first, then Go's own rows.
-    if (compact && id === "go") return groupGoForPhone(out, (m) => {
-      const e: WorkMenuEntry[] = [];
-      menuEntries(m, e);
-      return e;
-    });
+    // PHILO-15 11 (B21): the phone door is the owner's short Go.
+    if (compact && id === "go") return phoneGo(phoneRow, projects ?? [], openProjectRoom);
     return out;
   };
 

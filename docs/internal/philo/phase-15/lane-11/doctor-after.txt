@@ -1,0 +1,46 @@
+HoldSpeak Doctor
+===============
+[PASS] Runtime: HoldSpeak 0.4.0 on Darwin 25.2.0 (arm64), Python 3.13.14
+[PASS] Config: Loaded /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.hyYj3Sf30p/.config/holdspeak/config.json (config version 1)
+[PASS] Database: No database yet at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.hyYj3Sf30p/.local/share/holdspeak/holdspeak.db; it is created on first use.
+[PASS] Microphone: Default input: MacBook Pro Microphone (index 2)
+[PASS] Transcription backend: `auto` resolves to `mlx`
+[PASS] Web runtime: fastapi, uvicorn, and websockets are importable
+[PASS] Web runtime auth: Web runtime binds loopback (open to this machine). Auth token is not set — required automatically if a non-loopback bind is ever configured.
+[PASS] Meeting intelligence runtime: Live analysis is off for Record.
+[PASS] Meeting intelligence egress: Live analysis is off for Record.
+[PASS] Endpoint health: no endpoint calls recorded yet
+[PASS] Trust destinations: No listed destination is enabled.
+[PASS] Runtime profiles: Meeting summary: unavailable (no assignment); Live analysis is off for Record.; dictation: hub default (no profile assigned)
+[WARN] Where AI runs: This device · not set up yet
+[PASS] Other devices: no other device runs AI for this desk (to add one: `holdspeak mesh serve` on that device)
+[PASS] Cloud intel preflight: Live analysis is off for Record.
+[PASS] Project context: found holdspeak at /Users/karol/dev/tools/HoldSpeak/wt-p15-11 (marker: holdspeak) with a knowledge base
+[WARN] Dictation AI model: the model file Qwen3.5-4B-Q4_K_M.gguf is not on this device yet (llama_cpp; auto: fallback to llama_cpp)
+[PASS] Dictation blocks: no dictation blocks yet; nothing to check
+[PASS] Dictation AI use: 0 model loads, 0 calls, 0 failures, 0 retries
+[PASS] Meeting plugins: off (optional; meeting.intent_router_enabled turns it on)
+[PASS] Meeting plugin counters: ready (2 routing counters, 8 plugin counters)
+[PASS] Global hotkey: Hotkey listener initialized for `alt_r`
+[PASS] Text injection: Keyboard injection backend initialized
+[PASS] Clipboard backend: Platform default clipboard backend
+[PASS] ffmpeg: Detected in PATH
+[PASS] pactl: Not required on this platform
+[PASS] System audio capture: Detected: BlackHole 2ch
+[PASS] Connector packs: first-party: acli_confluence, acli_jira, calendar_activity, firefox_ext, gh, jira, meeting_context
+[PASS] People keystore: native (macOS Keychain / Secret Service)
+[PASS] Agent capabilities: 5 adapters declared, 4 consumers, all backed by the ledger
+[PASS] Tool-call gate: off (default); `holdspeak gate install` + arm + allow to hold agent calls
+[WARN] Coding agents: Claude Code hooks missing; Codex hooks missing
+[INFO] People MCP access: write (from people.mcp_access); agents: read
+
+Summary: 29 passed, 3 warnings, 0 failed
+
+Suggested fixes:
+- Where AI runs: Start HoldSpeak (`holdspeak`) and push Set up local AI on the Local AI card.
+- Dictation AI model: Start HoldSpeak (`holdspeak`) and push Set up local AI on the Local AI card. It downloads Qwen3.5-4B-Q4_K_M.gguf.
+- Coding agents: Install the hooks for Claude Code and Codex: `holdspeak agent-hook install`
+
+Running hub
+===========
+HUB · NOT RUNNING · start it with `holdspeak`
