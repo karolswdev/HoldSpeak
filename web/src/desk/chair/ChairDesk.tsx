@@ -14,7 +14,7 @@
 // Window ▸ Chair, and float like every desk window; a closed one leaves the
 // screen, not a reopen Button. The tiles above are PARKED behind
 // `data-layout="tiles"` (no `screen` prop; ChairHome always passes one).
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useAftercare } from "../intelligenceAttention";
 import { frontWindowAftercareSlot } from "../../components/AmbientLayer";
 import { Button } from "../../components/signal/Signal";
@@ -107,6 +107,31 @@ function raiseNeedsAmongChair() {
   if (next.join("|") !== order.join("|")) useDesk.setState({ panelOrder: next });
 }
 
+const CARD_IN_CAPTURE = ".chair-window--capture [data-aftercare-slot] .ambient-aftercare";
+
+/** PHILO-14 A1c: true while the aftercare card is rendered in Capture's own
+ * slot (AmbientLayer portals it there, or into the front window's slot). */
+function useCardInCaptureSlot(
+  rootRef: { current: HTMLElement | null },
+  active: boolean,
+): boolean {
+  const [held, setHeld] = useState(false);
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!active || !root) {
+      setHeld(false);
+      return;
+    }
+    const update = () => setHeld(root.querySelector(CARD_IN_CAPTURE) !== null);
+    update();
+    if (typeof MutationObserver === "undefined") return;
+    const observer = new MutationObserver(update);
+    observer.observe(root, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [active, rootRef]);
+  return held;
+}
+
 export function ChairDesk(props: ChairDeskProps) {
   const compact = useCompactViewport();
   const closed = useChairWindows((s) => s.closed);
@@ -135,6 +160,7 @@ export function ChairDesk(props: ChairDeskProps) {
   // Chair's windows start closed since A1, so a card with no Capture floated
   // over The week. Now a closed Capture opens for it; an open one holds it.
   const aftercare = useAftercare();
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const seenCard = useRef<string | null | undefined>(undefined);
   useEffect(() => {
     const key = aftercare ? `${aftercare.meetingId}:${aftercare.title}` : null;
@@ -152,7 +178,12 @@ export function ChairDesk(props: ChairDeskProps) {
   // moved or sized keeps his geometry.
   const captureRect = useDesk((s) => s.panelRects["chair:capture"]);
   const captureArranged = useDesk((s) => s.panelSaved.includes("chair:capture"));
-  const cardInCapture = !compact && Boolean(aftercare) && !closed["chair:capture"];
+  // Astra r1 (#954): grow only while CAPTURE's own slot holds the card (a
+  // card in the front Meetings window must not move Capture).
+  const cardInCapture = useCardInCaptureSlot(
+    rootRef,
+    !compact && Boolean(aftercare) && !closed["chair:capture"],
+  );
   const captureSeat = useRef<PanelRect | null>(null);
   useEffect(() => {
     if (compact || captureArranged) {
@@ -182,6 +213,7 @@ export function ChairDesk(props: ChairDeskProps) {
 
   return (
     <div
+      ref={rootRef}
       className="chair-desk"
       data-testid="chair-desk"
       data-layout={tiles ? "tiles" : "screen"}
