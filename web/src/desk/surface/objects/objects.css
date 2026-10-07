@@ -282,11 +282,12 @@
   margin-inline-end: 6px;
 }
 @container surface (max-width: 520px) {
+  /* The fold is VISUAL only: all four headers stay, and the Kind and When
+     cells stay in their columns for assistive tech (clipped off the glass,
+     never display:none); the fold line repeats them for the eye and is
+     aria-hidden. Headers and cells name the same four columns at 393. */
   .object-list-head {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .object-list-th[data-col="state"] {
-    display: none;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .object-list-th[data-col="name"] .object-list-sort {
     padding-left: 10px;
@@ -298,7 +299,14 @@
     grid-template-columns: minmax(0, 1fr) auto;
   }
   .object-list-cell {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .object-list-fold {
     display: flex;
@@ -466,13 +474,12 @@
   color: var(--text);
   overflow-wrap: anywhere;
 }
+/* The agent's own words: flat text in its curly quotes (the q element's
+   own marks), no rail and no plate: a fact you read is flat. */
 .lane-rail-quote {
-  quotes: none;
-  font: var(--font-size-sm) / 1.45 var(--font-sans);
+  quotes: "\201C" "\201D";
+  font: italic var(--font-size-sm) / 1.45 var(--font-sans);
   color: var(--text);
-  /* The quote bar: a steel inset, not an accent rail (UX-CANON DS6). */
-  box-shadow: inset 2px 0 0 var(--wb-steel);
-  padding-left: 10px;
 }
 .lane-rail-entry[data-pending="true"] .lane-rail-text,
 .lane-rail-entry[data-pending="true"] .lane-rail-code {
@@ -565,11 +572,12 @@
 }
 .ask-well-answer {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
 .ask-well-answer > .gadget-string {
-  flex: 1 1 auto;
+  flex: 1 1 200px;
   min-width: 0;
 }
 .ask-well-draft {
@@ -584,6 +592,8 @@
 }
 
 /* ── PRCard (raised plate) and FilesChanged ── */
+/* Read-only facts: FLAT (the bevel grammar). The verb that opens the PR is
+   the face's own Button. */
 .pr-card {
   display: flex;
   flex-direction: column;
@@ -591,7 +601,7 @@
   padding: 10px 12px;
   border: 1px solid var(--wb-ink);
   background: var(--surface-1);
-  box-shadow: var(--bevel-raised);
+  box-shadow: none;
 }
 .pr-card-line {
   display: flex;
@@ -774,4 +784,7 @@
   opacity: 0.8;
   z-index: var(--desk-z-popover);
   filter: var(--desk-ghost-shadow);
+}
+.pr-card + .pr-card {
+  margin-top: 8px;
 }

@@ -2,7 +2,7 @@
 // Render, keyboard, aria, no text-mode marks, and the 393 fold (jsdom has
 // no container queries, so the fold is proven by its rule in objects.css
 // plus the fold line in the DOM; the browser contact sheet shows it drawn).
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { readFileSync } from "node:fs";
@@ -113,13 +113,36 @@ describe("DeskIcon + IconLamp", () => {
     expect(onOpen).toHaveBeenCalledTimes(2);
   });
 
+  it("non-pointer activation selects: element.click() (assistive press) fires onSelect once", () => {
+    const onSelect = vi.fn();
+    const onOpen = vi.fn();
+    render(<DeskIcon id="a" kind="agent" name="Claude Code" onSelect={onSelect} onOpen={onOpen} />);
+    const icon = screen.getByRole("button", { name: /Claude Code/ });
+    icon.click();
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    fireEvent.click(icon, { detail: 0 });
+    expect(onSelect).toHaveBeenCalledTimes(2);
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it("keyboard fires exactly once: Space = one select, Enter = one open and no select", async () => {
+    const onSelect = vi.fn();
+    const onOpen = vi.fn();
+    render(<DeskIcon id="a" kind="agent" name="Claude Code" onSelect={onSelect} onOpen={onOpen} />);
+    screen.getByRole("button", { name: /Claude Code/ }).focus();
+    await userEvent.keyboard(" ");
+    expect([onSelect.mock.calls.length, onOpen.mock.calls.length]).toEqual([1, 0]);
+    await userEvent.keyboard("{Enter}");
+    expect([onSelect.mock.calls.length, onOpen.mock.calls.length]).toEqual([1, 1]);
+  });
+
   it("the name wraps to two lines then ellipsizes", () => {
     expect(CSS).toMatch(/\.desk-icon-name \{[^}]*-webkit-line-clamp: 2;[^}]*text-overflow: ellipsis;/);
   });
 });
 
 describe("IconGrid", () => {
-  it("is a named group; arrows walk the icons; a press on the glass clears", () => {
+  it("is a named group; one Tab stop; a press on the glass clears", () => {
     const onClear = vi.fn();
     render(
       <IconGrid label="Payments ledger cutover" onClear={onClear}>
@@ -131,9 +154,6 @@ describe("IconGrid", () => {
     const [first, second] = within(grid).getAllByRole("button");
     expect(first.tabIndex).toBe(0);
     expect(second.tabIndex).toBe(-1);
-    first.focus();
-    fireEvent.keyDown(first, { key: "ArrowDown" });
-    expect(document.activeElement).toBe(second);
     fireEvent.pointerDown(grid, { button: 0, clientX: 5, clientY: 5, pointerId: 1 });
     expect(onClear).toHaveBeenCalledTimes(1);
   });
@@ -163,6 +183,45 @@ describe("IconGrid", () => {
     expect(grid.querySelector(".desk-icon-marquee")).not.toBeNull();
     fireEvent.pointerUp(grid, { pointerId: 1 });
     expect(seen.at(-1)).toBeNull();
+  });
+
+  it("2-D navigation by the RENDERED columns: Left/Right in the row, Up/Down by the column count, Home/End", () => {
+    render(
+      <IconGrid label="Drawer">
+        {["a", "b", "c", "d", "e", "f", "g"].map((id) => (
+          <DeskIcon key={id} id={id} kind="note" name={id.toUpperCase()} />
+        ))}
+      </IconGrid>,
+    );
+    const icons = within(screen.getByRole("group", { name: "Drawer" })).getAllByRole("button");
+    // A fixed-width grid of three columns: the rows sit at top 0, 100, 200.
+    icons.forEach((icon, i) => {
+      icon.getBoundingClientRect = () =>
+        ({ top: Math.floor(i / 3) * 100, left: (i % 3) * 112, width: 112, height: 96, right: (i % 3) * 112 + 112, bottom: Math.floor(i / 3) * 100 + 96, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+    });
+    const at = () => icons.indexOf(document.activeElement as HTMLElement);
+    const press = (key: string) => fireEvent.keyDown(document.activeElement as HTMLElement, { key });
+    icons[0].focus();
+    press("ArrowRight");
+    expect(at()).toBe(1);
+    press("ArrowRight");
+    expect(at()).toBe(2);
+    press("ArrowRight"); // the row's end: no wrap
+    expect(at()).toBe(2);
+    press("ArrowDown");
+    expect(at()).toBe(5);
+    press("ArrowDown"); // 8 does not exist
+    expect(at()).toBe(5);
+    press("ArrowLeft");
+    expect(at()).toBe(4);
+    press("ArrowUp");
+    expect(at()).toBe(1);
+    press("End");
+    expect(at()).toBe(6);
+    press("Home");
+    expect(at()).toBe(0);
+    expect(icons[0].tabIndex).toBe(0);
+    expect(icons.filter((i) => i.tabIndex === 0)).toHaveLength(1);
   });
 
   it("four columns at 393", () => foldsAt393(".desk-icon-grid {\n    grid-template-columns: repeat(4"));
@@ -218,6 +277,27 @@ describe("ObjectList", () => {
     expect(order()).toEqual(["r1", "r2", "r3"]);
   });
 
+  it("non-pointer activation: element.click() on a row selects it", () => {
+    render(<ListHost />);
+    const grid = screen.getByRole("grid");
+    const row = grid.querySelector('[role="row"][data-object-id="r2"]')!;
+    act(() => (row.querySelector("button") as HTMLButtonElement).click());
+    expect(row).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("keyboard fires exactly once: Space selects once, Enter opens once and does not select", async () => {
+    const onSelect = vi.fn();
+    const onOpen = vi.fn();
+    render(
+      <ObjectList label="L" rows={ROWS} sort={{ key: "name", dir: "asc" }} onSelect={onSelect} onOpen={onOpen} />,
+    );
+    (screen.getByRole("grid").querySelector('[data-object-id="r1"] button') as HTMLButtonElement).focus();
+    await userEvent.keyboard(" ");
+    expect([onSelect.mock.calls.length, onOpen.mock.calls.length]).toEqual([1, 0]);
+    await userEvent.keyboard("{Enter}");
+    expect([onSelect.mock.calls.length, onOpen.mock.calls.length]).toEqual([1, 1]);
+  });
+
   it("the selection is the row: a press selects, Space selects, Enter opens, arrows walk", async () => {
     const onOpen = vi.fn();
     render(<ListHost onOpen={onOpen} />);
@@ -242,11 +322,33 @@ describe("ObjectList", () => {
     expect(lamp?.textContent).toBe("CLAUDE CODE ASKS");
   });
 
-  it("393: Kind and When fold under the name; rows keep 44 px; sort gadgets 44 px", () => {
+  it("one object, one colour: the row's lamp carries the icon's tone (ask, info), not a lossy map", () => {
     render(<ListHost />);
-    const fold = screen.getByRole("grid").querySelector('[data-object-id="r3"] .object-list-fold');
+    const grid = screen.getByRole("grid");
+    expect(grid.querySelector('[data-object-id="r1"] .gadget-lamp')).toHaveAttribute("data-tone", "ask");
+    expect(grid.querySelector('[data-object-id="r2"] .gadget-lamp')).toHaveAttribute("data-tone", "info");
+    render(<DeskIcon id="r2" kind="agent" name="Codex" lamp={{ tone: "info" }} />);
+    expect(document.querySelector(".desk-icon-lamp")).toHaveAttribute("data-tone", "info");
+    // The two tones are drawn by the lamp tokens, the same ones the icon wears.
+    const GADGETS = readFileSync(join(__dirname, "../gadgets.css"), "utf8");
+    expect(GADGETS).toMatch(/\.gadget-lamp\[data-on="true"\]\[data-tone="info"\] \.gadget-lamp-dot \{\s*background: var\(--lamp-info\);/);
+    expect(GADGETS).toMatch(/\.gadget-lamp\[data-on="true"\]\[data-tone="ask"\] \.gadget-lamp-dot \{\s*background: var\(--lamp-ask\);/);
+    expect(CSS).toMatch(/\.desk-icon-lamp\[data-tone="info"\] \{ background: var\(--lamp-info\); \}/);
+  });
+
+  it("393: the fold is visual; headers and cells name the same four columns", () => {
+    render(<ListHost />);
+    const grid = screen.getByRole("grid");
+    const fold = grid.querySelector('[data-object-id="r3"] .object-list-fold');
     expect(fold?.textContent).toBe("NOTEOCT 5");
-    foldsAt393(".object-list-cell {\n    display: none;");
+    expect(fold).toHaveAttribute("aria-hidden", "true");
+    const headers = within(grid).getAllByRole("columnheader").map((h) => h.getAttribute("data-col"));
+    for (const row of within(grid).getAllByRole("row").slice(1))
+      expect(within(row).getAllByRole("gridcell").map((c) => c.getAttribute("data-col"))).toEqual(headers);
+    // The narrow rules never take a header or a cell out of the tree.
+    const narrow = CSS.split("@container surface (max-width: 520px)").slice(1).join("\n");
+    expect(narrow).not.toMatch(/\.object-list-(cell|th)[^{]*\{[^}]*display: none/);
+    foldsAt393(".object-list-cell {\n    position: absolute;");
     foldsAt393(".object-list-fold {\n    display: flex;");
     foldsAt393(".object-list-sort {\n    min-height: 44px;");
     expect(CSS).toMatch(/\.object-list-row \{[^}]*min-height: 44px;/);
@@ -359,6 +461,7 @@ describe("AskWell", () => {
     expect(document.activeElement).toBe(field);
     await userEvent.type(field, "Jordan{Enter}");
     expect(onAnswer).toHaveBeenCalledWith("Jordan");
+    expect(container.querySelectorAll(".ask-well-answer .gadget-chip-egress")).toHaveLength(0);
     await userEvent.click(screen.getByRole("button", { name: "Use draft" }));
     expect(onUseDraft).toHaveBeenCalledWith("Jordan owns it. Avery reviews.");
     await userEvent.click(screen.getByRole("button", { name: "Answer" }));
@@ -369,6 +472,21 @@ describe("AskWell", () => {
 });
 
 describe("PRCard + FilesChanged", () => {
+  it("all pending: CHECKS · 7 RUNNING, never CHECKS 0 OF 7; never 0 FAILED", () => {
+    const { container, rerender } = render(<PRCard number={9} title="t" checks={{ passed: 0, total: 7, running: 7 }} />);
+    expect(container.textContent).toContain("CHECKS · 7 RUNNING");
+    expect(container.textContent).not.toMatch(/\b0 OF\b|\b0 FAILED\b|\b0 RUNNING\b/);
+    rerender(<PRCard number={9} title="t" checks={{ passed: 0, total: 7, failed: 2, running: 5 }} />);
+    expect(container.textContent).toContain("CHECKS · 2 FAILED");
+    expect(container.textContent).toContain("5 RUNNING");
+    expect(container.textContent).not.toMatch(/\b0 OF\b/);
+    rerender(<PRCard number={9} title="t" checks={{ passed: 7, total: 7, failed: 0, running: 0 }} />);
+    expect(container.textContent).toContain("CHECKS 7 OF 7");
+    expect(container.textContent).not.toMatch(/\b0 (FAILED|RUNNING)\b/);
+    rerender(<PRCard number={9} title="t" checks={{ passed: 0, total: 3 }} />);
+    expect(container.textContent).toContain("CHECKS · 3 PENDING");
+  });
+
   it("checks as a lamp, running only when running, review, branch → base", () => {
     render(
       <PRCard
@@ -481,13 +599,39 @@ describe("the bevel grammar", () => {
     expect(SURFACE_CSS).toMatch(/\.bevel-raised \{\s*box-shadow: var\(--bevel-raised\);/);
     expect(SURFACE_CSS).toMatch(/\.bevel-sunken \{\s*box-shadow: var\(--bevel-sunken\);/);
     expect(SURFACE_CSS).toMatch(/\.bevel-flat \{\s*box-shadow: none;/);
-    // The species wear it: the ask well and PR card raised, the confirm well sunken.
+    // The species wear it: the ask well raised, the read-only PR card flat,
+    // the confirm well sunken.
     expect(CSS).toMatch(/\.ask-well \{[^}]*box-shadow: var\(--bevel-raised\);/);
-    expect(CSS).toMatch(/\.pr-card \{[^}]*box-shadow: var\(--bevel-raised\);/);
+    expect(CSS).toMatch(/\.pr-card \{[^}]*box-shadow: none;/);
     expect(CSS).toMatch(/\.confirm-line \{[^}]*box-shadow: var\(--bevel-sunken\);/);
+  });
+
+  it("the SAYS quote has no rail of any kind (no border, no shadow): flat text in its quotes", () => {
+    const rule = CSS.match(/\.lane-rail-quote \{([^}]*)\}/)?.[1] ?? "";
+    expect(rule).not.toMatch(/border|box-shadow|outline|background/);
+    render(<TimelineRail label="L" entries={[{ word: "SAYS", quote: "Hello" }]} />);
+    expect(document.querySelector("q.lane-rail-quote")?.textContent).toBe("Hello");
   });
 
   it("no raw colours in the object species", () => {
     expect(CSS).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
+  });
+});
+
+describe("AskWell egress", () => {
+  it("names the Answer's egress beside Answer, with no draft at all", () => {
+    const { container } = render(
+      <AskWell
+        agent="Codex"
+        question="Run the migration?"
+        value=""
+        onChange={() => undefined}
+        onAnswer={() => undefined}
+        egress={{ label: "API.OPENAI.COM", scope: "cloud" }}
+      />,
+    );
+    expect(container.querySelector(".ask-well-draft")).toBeNull();
+    const chip = container.querySelector(".ask-well-answer .gadget-chip-egress");
+    expect(chip?.textContent).toBe("API.OPENAI.COM");
   });
 });
