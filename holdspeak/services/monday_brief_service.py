@@ -302,10 +302,16 @@ class _NeedsYouRows(list):
     decisions that number counts; their rows are in DECISIONS.
     """
 
-    def __init__(self, rows: Any = (), *, needs_you_count: int, counted_decisions: set[str]) -> None:
+    def __init__(
+        self, rows: Any = (), *, needs_you_count: int | None, counted_decisions: set[str],
+        door_unread: bool = False,
+    ) -> None:
         super().__init__(rows)
         self.needs_you_count = needs_you_count
         self.counted_decisions = counted_decisions
+        # PHILO-15 05 r2: the Door was not read; the brief adds its own
+        # follow-through collector and gives no rule number.
+        self.door_unread = door_unread
 
 
 class _NeedsYouUnread(list):
@@ -319,7 +325,8 @@ class _NeedsYouUnread(list):
 _UNREAD_SOURCE_WORDS = {
     "assignments": "AI models",
     "decisions": "Decisions",
-    "door": "Follow-through",
+    "door": "Door",
+    "follow_through": "Follow-through",
     "needs_you": "Needs you",
 }
 #: The source_ref prefix of a NOT READ row; any such row makes a brief PARTIAL.
@@ -467,12 +474,18 @@ class MondayBriefService:
         if isinstance(member_items, _NeedsYouUnread):
             # PHILO-15 05: the rule was not read; its NOT READ row stays.
             unread_rule, member_items = list(member_items), None
-        needs_you_count = None if member_items is None else int(
-            getattr(member_items, "needs_you_count", len(member_items)))
+        rule_count = getattr(member_items, "needs_you_count", None)
+        needs_you_count = None if member_items is None or rule_count is None else int(rule_count)
         counted_decisions = set(getattr(member_items, "counted_decisions", ()))
-        waiting_items = unread_rule + self._collect_coverage_gaps(principal) + (
-            self._collect_waiting(principal) if member_items is None else member_items
-        )
+        if member_items is None:
+            rule_rows: list[BriefItem] = self._collect_waiting_or_unread(principal)
+        elif getattr(member_items, "door_unread", False):
+            # The Door was not read: the rule's own rows (its NOT READ ·
+            # Door row, blockers, failed meetings) plus the brief's collector.
+            rule_rows = list(member_items) + self._collect_waiting_or_unread(principal)
+        else:
+            rule_rows = list(member_items)
+        waiting_items = unread_rule + self._collect_coverage_gaps(principal) + rule_rows
 
         with self._db._connection() as conn:
             row = conn.execute(
@@ -630,12 +643,12 @@ class MondayBriefService:
             return _NeedsYouUnread([_not_read_item("needs_you", exc)])
 
         source_errors = dict(answer.get("sourceErrors") or {})
-        if source_errors.get("door"):
-            # The Door could not be read: the rule has no follow-through
-            # cards to give, so the brief keeps its own collector.
-            return None
-        # PHILO-15 05: every other source the rule could not read is a NOT
-        # READ row (the brief is then PARTIAL), never a silent zero.
+        # PHILO-15 05: every source the rule could not read is a NOT READ row
+        # (the brief is then PARTIAL), never a silent zero.  The Door too
+        # (Astra r2): its failure used to return early and drop the errors
+        # and the rule's blockers with it.  The rule's other rows stay; the
+        # caller adds the brief's own follow-through collector.
+        door_unread = bool(source_errors.get("door"))
         unread = [_not_read_item(str(key), why) for key, why in sorted(source_errors.items()) if why]
 
         def item(text: str, detail: str | None, source_ref: str, priority: int) -> BriefItem:
@@ -681,8 +694,10 @@ class MondayBriefService:
             rows.append(item(f"Summary failed: {meeting.get('title') or 'Meeting with no title'}",
                              None, f"meeting:{meeting.get('id')}", 110))
         return _NeedsYouRows(
-            rows, needs_you_count=int(answer.get("count", len(rows) + len(counted_decisions))),
+            rows,
+            needs_you_count=None if door_unread else int(answer.get("count", len(rows) + len(counted_decisions))),
             counted_decisions=counted_decisions,
+            door_unread=door_unread,
         )
 
     def _compose(
@@ -1167,6 +1182,15 @@ class MondayBriefService:
                 )
             )
         return items
+
+    def _collect_waiting_or_unread(self, principal: Any) -> list[BriefItem]:
+        """The brief's own follow-through collector; a NOT READ row when it
+        cannot be read (PHILO-15 05 r2: never a silent zero)."""
+        try:
+            return self._collect_waiting(principal)
+        except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
+            log.warning("brief: the follow-through board is unavailable: %s", exc)
+            return [_not_read_item("follow_through", exc)]
 
     def _collect_waiting(self, principal: Any) -> list[BriefItem]:
         """Gather pending work: overdue follow-through, high-priority loops, pending proposals."""

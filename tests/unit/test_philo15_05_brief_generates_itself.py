@@ -16,6 +16,8 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from holdspeak.config import Config
 from holdspeak.db import Database
 from holdspeak.runtime.cadence import CadenceMixin
@@ -191,3 +193,93 @@ def test_a_rule_that_cannot_be_read_at_all_is_a_not_read_row(tmp_path: Path, mon
     texts = [item.text for item in brief.sections.get("waiting") or []]
     assert "NOT READ · Needs you" in texts, texts
     assert brief.headline != "No changes"
+
+
+def test_a_failed_door_read_is_a_not_read_row_and_keeps_the_rest(tmp_path: Path, monkeypatch) -> None:
+    """Astra r2 (#975): with DoorService.asking_board failing, the Brief said
+    "1 thing waiting." with no NOT READ row, no PARTIAL, and lost the blocker."""
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services import door_service
+    from holdspeak.services.monday_brief_service import NOT_READ_REF, MondayBriefService
+
+    def broken(self, principal):
+        raise RuntimeError("door store is locked")
+
+    monkeypatch.setattr(door_service.DoorService, "asking_board", broken)
+    db = Database(tmp_path / "door.db")
+    _seed(db)
+    brief = MondayBriefService(db).generate(
+        Principal(PrincipalKind.OWNER, "owner-session"), now=datetime(2026, 10, 8, 6, 0).astimezone(),
+    )
+    waiting = brief.sections.get("waiting") or []
+    texts = [item.text for item in waiting]
+    assert "NOT READ · Door" in texts, texts
+    # PARTIAL: the face reads any not_read row (BriefView.briefIsPartial).
+    assert any(str(item.source_ref).startswith(NOT_READ_REF) for item in waiting)
+    # The rule's other rows stay: the engine blocker is not lost.
+    assert "No engine yet" in texts, texts
+    assert "source not read" in brief.headline and brief.headline != "No changes", brief.headline
+
+
+# ── Astra r2 (#975): the scheduled Brief's authority is READ, nothing more ─
+
+
+def test_the_brief_principal_holds_read_only_and_cannot_write_elsewhere(tmp_path: Path, monkeypatch) -> None:
+    import holdspeak.db.core as db_core
+    from holdspeak import operations
+    from holdspeak.db import get_database, reset_database
+    from holdspeak.principals import Principal, PrincipalKind, PrincipalRight
+    from holdspeak.runtime.cadence import BRIEF_PRINCIPAL_IDENTITY
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.services.model_profile_service import ModelProfileService
+    from holdspeak.services.primitive_service import PrimitiveService
+    from holdspeak.services.profile_service import ProfileService
+
+    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "authority.db")
+    reset_database()
+    db = get_database()
+    brief = Principal(PrincipalKind.BRIEF_CONDUCTOR, BRIEF_PRINCIPAL_IDENTITY)
+    assert brief.rights == frozenset({PrincipalRight.READ})
+
+    # The reads the Brief makes (needs-you: the model roster, decisions).
+    InferenceAssignmentService(db).assignment_summary(brief)
+
+    # Astra's write: a destination profile. Refused, and nothing stored.
+    with pytest.raises(Exception, match="Owner access is required"):
+        ProfileService(db).create_profile(brief, {
+            "id": "authority-probe", "name": "Review", "kind": "openAICompatible",
+            "base_url": "http://127.0.0.1:9/v1", "model": "review",
+        })
+    assert db.profiles.get("authority-probe") is None
+    with pytest.raises(Exception, match="Owner access is required"):
+        ModelProfileService(db).create_profile(brief, {"profile_id": "authority-probe"})
+    with pytest.raises(Exception, match="Owner access is required"):
+        InferenceAssignmentService(db).set_assignment(brief, {
+            "command_id": "authority-probe", "expected_revision": 0, "scope": {"kind": "global"}, "entries": [],
+        })
+    # Any decision, through the one operation path every transport uses.
+    registry = operations.bind_available({"primitive_service": PrimitiveService(db)})
+    with pytest.raises(Exception, match="refused decision.create"):
+        registry.invoke(brief, "decision.create", {"title": "authority probe"})
+    assert db.desk_decisions.list(limit=10) == []
+    reset_database()
+
+
+def test_the_scheduled_job_runs_as_the_brief_principal(tmp_path: Path) -> None:
+    from holdspeak.principals import PrincipalKind
+    from holdspeak.services.monday_brief_service import MondayBriefService
+
+    db = Database(tmp_path / "who.db")
+    seen: list = []
+    original = MondayBriefService.generate
+
+    def spy(self, principal, **kw):
+        seen.append(principal)
+        return original(self, principal, **kw)
+
+    runtime = _Runtime()
+    with patch("holdspeak.db.get_database", return_value=db), patch(
+        "holdspeak.runtime.cadence.local_now", return_value=datetime(2026, 10, 8, 6, 0)
+    ), patch.object(MondayBriefService, "generate", spy):
+        runtime._cadence_tick_body()
+    assert [p.kind for p in seen] == [PrincipalKind.BRIEF_CONDUCTOR]

@@ -254,6 +254,7 @@ def test_a_brief_with_an_unread_source_says_partial(tmp_path: Path, monkeypatch:
 
 
 @pytest.mark.e2e
+@pytest.mark.chair_windows_open
 @pytest.mark.timeout(240)
 @pytest.mark.xfail(
     reason="lane 09 (philo-15/09-morning-truth, B04): Generate returns today's stored "
@@ -261,8 +262,10 @@ def test_a_brief_with_an_unread_source_says_partial(tmp_path: Path, monkeypatch:
     strict=False,
 )
 def test_pressing_generate_regenerates_the_scheduled_brief(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Astra r1 MISSED: the 06:00 Brief must be refreshable. Pressing Generate
-    makes a new Brief (a new generated_at), not the stored 06:00 one."""
+    """Astra r1 MISSED: the 06:00 Brief must be refreshable. Pressing the
+    Generate Button makes a new Brief (a new generated_at and a new receipt
+    time on the face), not the stored 06:00 one. Un-xfail when lane 09 (#980)
+    lands."""
     _ensure_build()
     from holdspeak.config import Config
     from holdspeak.runtime.cadence import CadenceMixin
@@ -278,14 +281,26 @@ def test_pressing_generate_regenerates_the_scheduled_brief(tmp_path: Path, monke
             _Runtime()._cadence_tick_body()
         from playwright.sync_api import sync_playwright
 
+        errors: list[str] = []
         with sync_playwright() as pw:
-            browser = pw.chromium.launch()
-            page = browser.new_page(viewport={"width": 1440, "height": 900})
-            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            page = _page(pw, url, 1440, errors)
             before = _api(page, "GET", "/api/brief/latest", token=TOKEN)
-            after = _api(page, "POST", "/api/brief/generate", {}, token=TOKEN)
+            date = page.locator("[data-testid='arrival-brief-date']").first
+            date.wait_for(timeout=15_000)
+            shown_before = date.text_content() or ""
+            assert "06:00" in shown_before, shown_before
+            # The owner's press: the library Button in the Brief's head.
+            with page.expect_response(lambda r: r.url.endswith("/api/brief/generate")) as answered:
+                page.locator("[data-testid='arrival-brief-generate']").first.click()
+            assert answered.value.status == 200, answered.value.text()
+            after = _api(page, "GET", "/api/brief/latest", token=TOKEN)
             assert after["generated_at"] != before["generated_at"], (before["generated_at"], after["generated_at"])
-            browser.close()
+            page.wait_for_function(
+                "(old) => (document.querySelector(\"[data-testid='arrival-brief-date']\")?.textContent || '') !== old",
+                arg=shown_before, timeout=15_000,
+            )
+            _assert_clean(page, errors)
+            page.context.browser.close()
     finally:
         server.stop()
 

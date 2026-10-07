@@ -107,3 +107,39 @@ def test_a_library_with_nothing_ready_does_not_say_ready(
     ])
     assert service.get_library(OWNER)["summary"]["state"] == "none_ready"
     assert service.get_library(OWNER)["summary"]["label"] == "Add model"
+
+
+def test_http_and_mcp_both_refuse_anthropic_with_422_not_supported(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Astra r2 (#975): the HTTP mapper kept 400; the transport says 422."""
+    import json
+
+    from holdspeak.mcp.families import model_library
+    from tests.unit.test_phase143_transport_parity import OWNER as T_OWNER, _side
+
+    draft = {
+        "request_id": "anthropic-http", "profile_id": "anthropic-http", "expected_profile_revision": 0,
+        "label": "Claude", "provider_family": "anthropic", "model": "claude-x", "requires_key": True,
+    }
+    http = _side(tmp_path / "http", http=True)
+    response = http.client.post(
+        "/api/inference/model-library/connect-hosted-model",
+        json={"draft": draft, "secret": {"value": "anthropic-http-sentinel"}},
+        headers={"x-principal": "owner"},
+    )
+    assert response.status_code == 422, response.text
+    assert response.json()["code"] == "not_supported"
+    assert "anthropic-http-sentinel" not in response.text
+    assert not [r for r in http.library.get_library(T_OWNER)["rows"] if r["id"] == "profile:anthropic-http"]
+
+    mcp = _side(tmp_path / "mcp", http=False)
+    monkeypatch.setattr(model_library, "get_database", lambda: mcp.db)
+    with pytest.raises(ServiceError) as refused:
+        model_library.dispatch(
+            "model_library.connect_hosted_model",
+            {"draft": {**draft, "request_id": "anthropic-mcp"}, "secret": {"value": "anthropic-http-sentinel"}},
+            T_OWNER,
+        )
+    assert refused.value.code == "not_supported" and refused.value.context["status"] == 422
+    assert "anthropic-http-sentinel" not in json.dumps(refused.value.context)

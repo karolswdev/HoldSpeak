@@ -144,12 +144,13 @@ class CadenceMixin:
             from ..services.monday_brief_service import MondayBriefService
 
             brief_svc = MondayBriefService(db)
-            # PHILO-15 05 (Astra r1 P1): the owner's own reads.  A SERVICE
-            # principal is refused the assignment and decision reads, so the
-            # scheduled Brief said "No changes" while the owner's Generate
-            # said "1 thing waiting".  The Brief is deterministic and sends
-            # nothing (the heartbeat precedent: runtime/heartbeat.py).
-            brief_principal = Principal(PrincipalKind.OWNER, BRIEF_PRINCIPAL_IDENTITY)
+            # PHILO-15 05: the reads the owner's Generate makes, and nothing
+            # else.  A SERVICE principal is refused the assignment and
+            # decision reads (r1: "No changes" over work that waited); an
+            # OWNER principal also holds decide/delegate/posture (r2).  The
+            # brief-conductor kind holds READ only; the brief row is the one
+            # write, made by MondayBriefService itself.
+            brief_principal = Principal(PrincipalKind.BRIEF_CONDUCTOR, BRIEF_PRINCIPAL_IDENTITY)
             brief = brief_svc.generate(brief_principal, now=now)
 
             db.cadence.upsert_policy(CadencePolicy(
