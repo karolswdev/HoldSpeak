@@ -1,5 +1,8 @@
 # PHILO Phase 14, lane A0: the icon mold
 
+> **RULED 2026-10-07 by Muad'Dib (owner: "you make ALL the calls, including the icon selection"): D1 Workbench+, all 17 kinds.** In situ it is the only direction that belongs to the steel desk: bevelled grey-blue objects with the ember as the one warm note; the drawer family matches; the reel-to-reel reads as a recording without repeating the Dock's mic; the two agents stay distinct at 32 px. D2 reads as Mac System 7 in our colors; D3 is wood and brass against steel. Notes for the install (lane A0b): memory stays the chip for now and is redrawn later on the same stem; the four paper kinds (ticket, pinned note, plain, sealed) keep their silhouettes through the state variants; the 32 px set is to be redrawn at 32, not scaled, when the list view lands.
+
+
 **Status: a canvas. The owner picks.** The owner, on the icons: "the existing icons are pretty cringe and deserve a freaking overhaul ... we still have PixelLab MCP which is insane". This folder holds three directions for the 17 kinds of Movement A. Nothing in `web/public/desk/sprites` or `web/src/desk/sprites.ts` changed.
 
 The page: `sheet.html` (open it from this folder). One row per kind: the current sprite, D1, D2, D3, each at 64 px on the desk (`--wb-backdrop` #3c4454 with the `--wb-dither` checker) and at 32 px on the steel screen (`--wb-steel` #9ea4b0). Under them: board A-1 with each direction pasted in. At the top: "Your call".
