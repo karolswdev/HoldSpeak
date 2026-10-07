@@ -184,6 +184,9 @@ def test_an_inert_codex_call_gets_no_output(tmp_path, monkeypatch) -> None:
 
 def test_a_codex_session_credential_names_codex(monkeypatch, tmp_path) -> None:
     monkeypatch.delenv("HOLDSPEAK_AGENT_CREDENTIAL", raising=False)
+    # The credential cache lives under ~/.holdspeak (coder_gate._credential_path):
+    # a HOME of its own, so a cache another run left behind is never read.
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setattr(coder_gate, "_owner_token", lambda: "owner")
     sent: list[dict] = []
 
@@ -565,6 +568,35 @@ def test_trust_writes_only_holdspeak_hooks(fake_codex, tmp_path) -> None:
     assert codex_trust.untrusted_launch_hooks(flags, cwd=str(tmp_path), executable=fake_codex.exe) == []
     again = codex_trust.trust_holdspeak_hooks(flags, cwd=str(tmp_path), executable=fake_codex.exe, hooks_json=hooks)
     assert again["trusted"] == [] and again["enabled"] == [] and again["untrusted"] == []
+
+
+def test_trust_works_when_the_process_holds_over_1024_descriptors(fake_codex, tmp_path) -> None:
+    """Lane 13 (philo-15): select() refuses a descriptor at or above
+    FD_SETSIZE (1024). A long-running hub, or a late test in an xdist worker,
+    holds that many; the app-server pipe then landed above 1024 and the
+    install answered 500 ("filedescriptor out of range in select()")."""
+    import resource
+
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    want = 1200
+    if soft < want + 64:
+        resource.setrlimit(resource.RLIMIT_NOFILE, (min(want + 256, hard), hard))
+    held: list[int] = []
+    try:
+        while True:
+            fd = os.dup(0)
+            held.append(fd)
+            if fd >= want:
+                break
+        hooks = _install_with_foreigners(fake_codex.home)
+        flags = coder_gate.codex_hook_flags(PREFIX)
+        summary = codex_trust.trust_holdspeak_hooks(
+            flags, cwd=str(tmp_path), executable=fake_codex.exe, hooks_json=hooks)
+        assert summary["untrusted"] == []
+    finally:
+        for fd in held:
+            os.close(fd)
+        resource.setrlimit(resource.RLIMIT_NOFILE, (soft, hard))
 
 
 def test_a_changed_launch_hook_is_untrusted_again(fake_codex, tmp_path) -> None:

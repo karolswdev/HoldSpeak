@@ -28,7 +28,7 @@ import hashlib
 import json
 import os
 import re
-import select
+import selectors
 import subprocess
 import time
 import tomllib
@@ -155,6 +155,11 @@ class _AppServer:
             )
         except OSError as exc:
             raise CodexTrustError("codex_unavailable", str(exc)) from exc
+        # A selector, not select.select: select() refuses a descriptor at or
+        # above FD_SETSIZE (1024), which a long-running hub reaches.
+        self._ready = selectors.DefaultSelector()
+        assert self._proc.stdout is not None
+        self._ready.register(self._proc.stdout, selectors.EVENT_READ)
         self.call("initialize", {"clientInfo": {"name": "holdspeak", "version": "1"}})
         self._send({"jsonrpc": "2.0", "method": "initialized"})
 
@@ -165,6 +170,7 @@ class _AppServer:
         self.close()
 
     def close(self) -> None:
+        self._ready.close()
         proc = self._proc
         try:
             if proc.stdin:
@@ -196,8 +202,7 @@ class _AppServer:
             left = deadline - time.monotonic()
             if left <= 0:
                 raise CodexTrustError("codex_app_server_timeout", f"{method} did not answer")
-            ready, _, _ = select.select([stdout], [], [], left)
-            if not ready:
+            if not self._ready.select(left):
                 continue
             line = stdout.readline()
             if not line:
