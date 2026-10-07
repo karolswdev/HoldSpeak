@@ -28,6 +28,7 @@ import { ScheduleCreateWindow } from "./components/ScheduleCreateWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { AskPanel } from "./components/AskPanel";
 import { HandSheet } from "./components/HandSheet";
+import { DragLayer } from "./hand";
 import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
 import { Dock, Expose, SnapGhost, Switcher } from "./components/DeskWindow";
@@ -261,6 +262,8 @@ function DeskFaces() {
       {!arrivalRequired && !showFloor && askOpen && <AskPanel />}
       {/* Hand to agent (Conductor K3): the launch sheet, the Ask AI posture, on every face. */}
       {!arrivalRequired && <HandSheet />}
+      {/* PHILO-14 C3: the drag's ghost and dotted path, over every window. */}
+      {!arrivalRequired && <DragLayer />}
       {/* HS-135-13 fix: the InlineEditor must render on the Chair too,
           not only the Floor (DeskListView/WorldStage own their own copy).
           Without this, "New Agent" from a Workbench on the Chair sets

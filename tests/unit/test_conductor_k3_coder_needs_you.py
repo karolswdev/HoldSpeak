@@ -452,3 +452,19 @@ def test_the_hub_edge_helper_never_raises(monkeypatch: pytest.MonkeyPatch) -> No
 
     monkeypatch.setattr("holdspeak.db.get_database", broken)
     assert web_server._coder_awaiting_edge(["claude:s1"]) is None
+
+
+def test_a_session_that_registers_is_a_frame_and_never_a_wait(hooks: Hooks) -> None:
+    """PHILO-14 C3 (Astra P1 on #946): a launched agent coming up WORKING
+    frames the faces (they re-read the flights and draw the agent), and no
+    notify decision runs for it."""
+    from holdspeak.web_server import _coder_watch_step
+
+    snapshot, _, _ = _coder_watch_step(None, hooks.registry)
+    hooks.event("SessionStart", T0, session="s2", source="startup")
+    hooks.event("UserPromptSubmit", T0 + timedelta(seconds=1), session="s2", prompt="Write the cutover comms.")
+    snapshot, transitions, entered = _coder_watch_step(snapshot, hooks.registry)
+    assert transitions == ["claude:s2"] and entered == []
+    # The next read of the same registry is quiet.
+    _, transitions, entered = _coder_watch_step(snapshot, hooks.registry)
+    assert (transitions, entered) == ([], [])

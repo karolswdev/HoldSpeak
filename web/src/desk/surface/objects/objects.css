@@ -791,3 +791,33 @@
 .pr-card + .pr-card {
   margin-top: 8px;
 }
+
+/* PHILO-14 C3: the drag's dotted path (board A-3) and the confirm line's
+   token line (a refusal, the tracker read, the receipt). */
+.drag-path {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  overflow: visible;
+  z-index: var(--desk-z-popover);
+}
+.drag-path line {
+  stroke: var(--wb-paper);
+  stroke-width: 2;
+  stroke-dasharray: 2 6;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+.confirm-line-status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.confirm-line-egress {
+  display: inline-flex;
+  flex: none;
+}

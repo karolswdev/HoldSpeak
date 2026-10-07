@@ -145,7 +145,9 @@ def _coder_watch_step(
 ) -> tuple[dict[str, str], list[str], list[str]]:
     """One read of the coder watcher (Conductor K3).
 
-    Returns ``(snapshot, transitions, entered)``. The snapshot maps each
+    Returns ``(snapshot, transitions, entered)``: ``transitions`` are the keys
+    to frame (a wait moved, or a session registered), ``entered`` the waits
+    that began. The snapshot maps each
     session to its wait episode (``coder_steering.wait_snapshot``), so a new
     wait after an answer is a transition even when both reads saw it
     blocked. ``snapshot=None`` is the first read: no frames, and every open
@@ -159,7 +161,14 @@ def _coder_watch_step(
     if snapshot is None:
         return current, [], [key for key, wait in current.items() if wait]
     transitions = coder_steering.awaiting_transitions(snapshot, current)
-    return current, transitions, [key for key in transitions if current.get(key)]
+    entered = [key for key in transitions if current.get(key)]
+    # PHILO-14 C3: a session that registers (a launched agent coming up) is a
+    # frame too, so every face re-reads the flights and draws the new agent.
+    # It is never `entered` (no wait began).
+    for key in coder_steering.registration_edges(snapshot, current):
+        if key not in transitions:
+            transitions.append(key)
+    return current, transitions, entered
 
 
 def _coder_awaiting_edge(keys: list[str]) -> Optional[dict]:

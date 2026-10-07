@@ -678,6 +678,9 @@ The library `Button` (`variant="chrome"`).
   `ghost?` (dimmed: the object being dragged, or parked)
 - `onSelect?` (a press, Space), `onOpen?` (Enter, a double press),
   `ariaExtra?`, `draggable?`, `onDragStart?`, `className?`, `style?`
+- PHILO-14 C3, the drag: `onDragEnd?` (the source's cleanup), and as a
+  drop target `onDragOver?` (call `preventDefault()` to accept),
+  `onDragLeave?`, `onDrop?`. HTML drag and drop; the lane owns the logic.
 - The name wraps to two lines, then ellipsizes.
 
 ### IconGrid
@@ -799,7 +802,11 @@ The YOLO hand in one line (A-3), a sunken well: from-sprite → to-sprite,
 the title (primary step), the fact line (`CLAUDE CODE · YOLO · hs/...`),
 **Brief ▸** (ghost, `aria-expanded`), **Cancel** (ghost), **Hand**
 (primary). Props: `from, to: { kind, id, sprite? }, title, fact, onBrief?,
-briefOpen?, onCancel, onHand, handLabel?, busy?`.
+briefOpen?, onCancel, onHand, handLabel?, busy?`. PHILO-14 C3: `disabled?`
+(Hand cannot be pressed: the preview refused or is out), `egress?` (the
+hand's EgressChip, on the Hand side), `status?` (a token line under the
+fact: a refusal, the tracker read, the receipt), `verbs?` (the verbs after
+the press, Close / Send again; they replace the three).
 
 ### NeedsRow / NeedsList / DropTarget / DragGhost
 
@@ -812,8 +819,10 @@ the named `ul` (`label`, `children`).
 DropTarget (`lit`, `children`, `className?`) lights any target with the
 dashed paper ring. DragGhost (`kind, id, sprite?, x, y`) is the dragged
 sprite at viewport `x, y`: fixed, `aria-hidden`, no pointer events, the
-hard `--desk-ghost-shadow`. Both are presentation only; the drag logic is
-lane C3's.
+hard `--desk-ghost-shadow`. With `from?: {x, y}` (PHILO-14 C3) it also
+draws the dotted path (`.drag-path`, A-3) from where the drag began to the
+ghost's centre. Both are presentation only; the drag logic is lane C3's
+(`desk/hand/`).
 
 ## The bevel grammar (PHILO-14 B1)
 
