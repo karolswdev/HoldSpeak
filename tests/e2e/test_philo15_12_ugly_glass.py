@@ -4,9 +4,9 @@ through the real hub on an isolated HOME at 1440x900 and 393x852.
 The bounces (docs/internal/philo/phase-15/rehearsal-1a/BOUNCES.md):
 
 - B22: the meeting record uses the window's width; no empty column.
-- B23: the SEND well waits until he presses a destination; a folder reads
-  by its name (HoldSpeak/Sent), never a raw path; a filename is never
-  italics.
+- B23: a folder in the SEND well reads by its name (HoldSpeak/Sent), never
+  a raw path; a filename is never italics. (The well still opens itself
+  when the built-in folder is the only destination: owner ruling 2026-10-05.)
 - B27: the Concierge footer receipt never runs into Cancel.
 - B28: The week's topic chips and Open fit the width at 393.
 
@@ -157,7 +157,7 @@ class TestPhilo15Lane12Ugly:
     # ── B23 + B28: The week and the Brief ────────────────────────────────
 
     @pytest.mark.parametrize("width", WIDTHS)
-    def test_the_week_fits_and_the_send_well_waits(self, width: int) -> None:
+    def test_the_week_fits_and_the_send_well_reads_names(self, width: int) -> None:
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -200,17 +200,15 @@ class TestPhilo15Lane12Ugly:
                     assert b["r"] <= win_box["r"] + 1 and b["r"] <= width + 1, (b, win_box)
                 self._shot(page, "B28-the-week", width, week)
 
-                # B23: the meeting's well waits: no preview, no Send, no raw path.
+                # B23: on a desk whose only destination is the built-in folder, the
+                # well opens itself (owner ruling 2026-10-05, batteries included).
+                # The folder reads by its name, never a raw path; the filename is
+                # not italics.
                 row = seat.locator("[data-testid=destination-row]").filter(has=page.locator("[data-destination='HoldSpeak folder']")).first
                 line = " ".join(row.inner_text().split())
                 self.facts["B23_week_row"] = line
-                assert seat.locator("[data-testid=send-open]").count() == 0
-                assert seat.locator("[data-testid=send-preview]").count() == 0
                 assert "HoldSpeak/Sent" in line and "/private" not in line and "/var/" not in line, line
                 assert "~/" not in line, line
-                self._shot(page, "B23-week-well-closed", width, seat)
-                # The press opens it: the Folder field is the name, the filename is not italics.
-                row.locator("[data-destination='HoldSpeak folder']").first.click()
                 preview = seat.locator("[data-testid=send-preview]").first
                 preview.wait_for(timeout=T)
                 fields = {f.locator("dt").inner_text().strip().upper(): f.locator("dd").inner_text().strip()
@@ -223,9 +221,9 @@ class TestPhilo15Lane12Ugly:
                 assert TITLE in body_text, body_text[:200]
                 assert not self._overflow(page, preview), self._overflow(page, preview)
                 preview.scroll_into_view_if_needed()
-                self._shot(page, "B23-week-well-pressed", width, seat)
+                self._shot(page, "B23-week-well", width, seat)
 
-                # The Brief: its well waits too.
+                # The Brief: the same well, the same name.
                 _api(page, "POST", "/api/brief/generate", {}, token=TOKEN)
                 page.reload(wait_until="load")
                 _normal_chair(page)
@@ -235,9 +233,14 @@ class TestPhilo15Lane12Ugly:
                 page.wait_for_timeout(600)
                 bline = " ".join(bseat.locator("[data-testid=destination-row]").first.inner_text().split())
                 self.facts["B23_brief_row"] = bline
-                assert bseat.locator("[data-testid=send-open]").count() == 0
                 assert "HoldSpeak/Sent" in bline and "/private" not in bline and "/var/" not in bline, bline
-                self._shot(page, "B23-brief-well-closed", width, brief)
+                bprev = bseat.locator("[data-testid=send-preview]").first
+                bprev.wait_for(timeout=T)
+                bfields = {f.locator("dt").inner_text().strip().upper(): f.locator("dd").inner_text().strip()
+                           for f in bprev.locator("[data-testid=send-preview-field]").all()}
+                self.facts["B23_brief_preview"] = bfields
+                assert bfields.get("FOLDER") == "HoldSpeak/Sent", bfields
+                self._shot(page, "B23-brief-well", width, brief)
                 self._write("week-and-brief", width)
                 assert not errors, errors
             finally:
