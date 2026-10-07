@@ -41,6 +41,8 @@ log = get_logger("meeting.backlog")
 
 BACKLOG_PRINCIPAL = Principal(PrincipalKind.OWNER, "auto-intel")
 BACKLOG_REASON = "auto-intel: saved before an engine could summarise it"
+#: The receipt on a meeting OFF skipped, queued again once summaries are on.
+SUMMARIES_ON_REASON = "SUMMARIES ON · queued"
 MARK_REASON = "summary_deferred_no_engine"
 #: Jobs queued per tick.  The drainer runs them one at a time anyway.
 BACKLOG_LIMIT = 10
@@ -78,6 +80,19 @@ def mark_if_no_engine(db: Any, meeting_id: str, *, route_for: Optional[RouteFor]
     return True
 
 
+def _reason_for(db: Any, meeting_id: str) -> str:
+    """A meeting OFF skipped carries the SUMMARIES ON receipt; others the backlog's."""
+    from ..db.intel import SUMMARIES_OFF_DETAIL
+
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT intel_status, intel_status_detail FROM meetings WHERE id=?", (str(meeting_id),)
+        ).fetchone()
+    if row is not None and row["intel_status"] == "skipped" and row["intel_status_detail"] == SUMMARIES_OFF_DETAIL:
+        return SUMMARIES_ON_REASON
+    return BACKLOG_REASON
+
+
 def _is_off(db: Any, route: Optional[dict[str, Any]]) -> bool:
     from .meeting_route_projection import route_is_off, summaries_off
 
@@ -98,7 +113,8 @@ def marked_meeting_ids(db: Any, *, auto_mode: str, limit: int) -> list[str]:
         rows = conn.execute(
             """SELECT b.meeting_id FROM meeting_summary_backlog b
                  JOIN meetings m ON m.id=b.meeting_id
-                WHERE NOT EXISTS (SELECT 1 FROM intel_jobs j WHERE j.meeting_id=b.meeting_id)
+                WHERE NOT EXISTS (SELECT 1 FROM intel_jobs j WHERE j.meeting_id=b.meeting_id
+                                    AND j.status NOT IN ('skipped','superseded'))
                   AND LOWER(COALESCE(m.intel_status,'')) NOT IN ('ready','partial','queued','running')
                   AND (? = 0 OR EXISTS (SELECT 1 FROM meeting_projects mp WHERE mp.meeting_id=b.meeting_id))
                 ORDER BY COALESCE(m.ended_at, m.started_at) DESC, b.meeting_id
@@ -167,7 +183,7 @@ def drain_backlog(
             # Detection and routing are the same call: not ready means wait.
             return {"status": "waiting_route", "queued": queued}
         outcome = db.intel.request_intel_retry(
-            meeting_id, reason=BACKLOG_REASON, planned_route=route,
+            meeting_id, reason=_reason_for(db, meeting_id), planned_route=route,
         )
         if outcome == "queued":
             clear_mark(db, meeting_id)

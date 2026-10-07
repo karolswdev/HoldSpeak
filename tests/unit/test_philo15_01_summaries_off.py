@@ -134,3 +134,44 @@ def test_the_backlog_queues_nothing_under_off_and_drains_when_off_clears(tmp_pat
     })
     drained = drain_backlog(db, auto_mode="every")
     assert drained["status"] == "queued" and drained["queued"] == ["m-before-off"], drained
+
+
+def test_a_meeting_off_skipped_is_summarised_once_off_clears(tmp_path, monkeypatch):
+    """OFF → a saved meeting → drain (skipped) → OFF clears → drain → the
+    provider runs once and the summary lands, with the SUMMARIES ON receipt."""
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.services.meeting_backlog_service import drain_backlog
+
+    db, _broker, engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
+    _off(db)
+    _queued_meeting(db, "m-off-later")
+    process_next_intel_job()
+    assert db.meetings.get_meeting("m-off-later").intel_status == "skipped"
+    assert not engine.analyzed and not requests
+    assert drain_backlog(db, auto_mode="every")["status"] == "summaries_off"
+
+    # OFF clears the way the Concierge's Meetings choice does: an exact engine.
+    service = InferenceAssignmentService(db)
+    current = service.get_assignment(OWNER, {"kind": "capability", "capability_id": SUMMARY})
+    service.set_assignment(OWNER, {
+        "command_id": "philo15-summaries-on",
+        "expected_revision": int(current["revision"]),
+        "scope": {"kind": "capability", "capability_id": SUMMARY},
+        "entries": [{"profile_id": "deferred-queue-model", "profile_revision": 1}],
+    })
+    marks = [r["meeting_id"] for r in _rows(db, "meeting_summary_backlog")]
+    assert marks == ["m-off-later"], marks
+
+    drained = drain_backlog(db, auto_mode="every")
+    assert drained == {"status": "queued", "queued": ["m-off-later"]}, drained
+    meeting = db.meetings.get_meeting("m-off-later")
+    assert meeting.intel_status == "queued"
+    assert meeting.intel_status_detail == "SUMMARIES ON · queued"
+    assert _rows(db, "meeting_summary_backlog") == []
+
+    assert process_next_intel_job() is True
+    assert len(engine.analyzed) == 1, engine.analyzed
+    assert _rows(db, "intel_snapshots"), "the summary did not land"
+    assert db.meetings.get_meeting("m-off-later").intel_status in ("ready", "partial")
+    # Nothing left to run: a second drain queues nothing.
+    assert drain_backlog(db, auto_mode="every")["queued"] == []

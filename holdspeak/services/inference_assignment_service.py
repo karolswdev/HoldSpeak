@@ -328,6 +328,26 @@ class InferenceAssignmentService:
             )
 
     @staticmethod
+    def _rejoin_summaries_off(conn: Any) -> None:
+        """OFF cleared: the meetings OFF skipped rejoin the summary backlog.
+
+        Every meeting whose summary ended ``skipped`` with the OFF receipt and
+        that has no summary is marked like a meeting saved with no engine, so
+        the next backlog drain runs it (services/meeting_backlog_service.py).
+        Same transaction as the assignment that turned summaries on.
+        """
+        from ..db.intel import SUMMARIES_OFF_DETAIL
+        from .meeting_backlog_service import MARK_REASON
+
+        conn.execute(
+            """INSERT OR IGNORE INTO meeting_summary_backlog (meeting_id, reason, marked_at)
+               SELECT m.id, ?, ? FROM meetings m
+                WHERE m.intel_status='skipped' AND m.intel_status_detail=?
+                  AND NOT EXISTS (SELECT 1 FROM intel_snapshots s WHERE s.meeting_id=m.id)""",
+            (MARK_REASON, _now(), SUMMARIES_OFF_DETAIL),
+        )
+
+    @staticmethod
     def capability_off(conn: Any, capability_id: str) -> bool:
         """True when the owner turned this capability OFF."""
         return conn.execute(
@@ -576,10 +596,12 @@ class InferenceAssignmentService:
                 )
                 if request["scope"].get("kind") == "capability":
                     # An exact engine for the capability turns OFF back on.
-                    conn.execute(
+                    turned_on = conn.execute(
                         "DELETE FROM inference_capability_off WHERE capability_id=?",
                         (request["scope"].get("capability_id", ""),),
-                    )
+                    ).rowcount
+                    if turned_on and request["scope"].get("capability_id") == "meeting.deferred_analysis":
+                        self._rejoin_summaries_off(conn)
                 conn.execute(
                     """INSERT INTO inference_assignment_heads(assignment_key,assignment_id,revision,cleared,updated_at)
                        VALUES (?,?,?,?,?) ON CONFLICT(assignment_key) DO UPDATE SET
