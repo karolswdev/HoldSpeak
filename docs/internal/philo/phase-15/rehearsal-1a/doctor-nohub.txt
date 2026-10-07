@@ -1,0 +1,59 @@
+HoldSpeak Doctor
+===============
+[PASS] Runtime: HoldSpeak 0.4.0 on Darwin 25.2.0 (arm64), Python 3.14.2
+[PASS] Config: Loaded /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-day1-a.jnvmypiGIh/.config/holdspeak/config.json (config version 1)
+[PASS] Database: No database yet at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-day1-a.jnvmypiGIh/.local/share/holdspeak/holdspeak.db; it is created on first use.
+[PASS] Microphone: Default input: MacBook Pro Microphone (index 2)
+[PASS] Transcription backend: `auto` resolves to `mlx`
+[PASS] Web runtime: fastapi, uvicorn, and websockets are importable
+[PASS] Web runtime auth: Web runtime binds loopback (open to this machine). Auth token is not set — required automatically if a non-loopback bind is ever configured.
+[PASS] Meeting intelligence runtime: Live analysis is off for Record.
+[PASS] Meeting intelligence egress: Live analysis is off for Record.
+[PASS] Endpoint health: no endpoint calls recorded yet
+[PASS] Trust destinations: No listed destination is enabled.
+[PASS] Runtime profiles: Meeting summary: unavailable (no assignment); Live analysis is off for Record.; dictation: hub default (no profile assigned)
+[WARN] Runs on destinations: This device: this device · unavailable (not set up: Set up local AI downloads this model)
+[PASS] Mesh edges: no node has ever served this mesh (start one: holdspeak mesh serve)
+[PASS] Cloud intel preflight: Live analysis is off for Record.
+[PASS] Project context: detected holdspeak (anchor=holdspeak) at /Users/karol/dev/tools/HoldSpeak/wt-p15-rehearsal + KB
+[WARN] LLM runtime: resolved=llama_cpp (auto: fallback to llama_cpp); model missing at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-day1-a.jnvmypiGIh/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf
+[PASS] Structured-output compilation: no blocks loaded; nothing to compile
+[PASS] LLM runtime counters: model_loads=0 classify_calls=0 classify_failures=0 constrained_retries=0 llm_disabled_for_session=False
+[PASS] MIR routing: MIR-01 routing pipeline disabled (opt-in)
+[PASS] MIR telemetry: router_counters=[dropped_windows, routed_windows]; host_metrics=[blocked, deduped, error, proposed, queued, runs_total, success, timeout]
+[PASS] Global hotkey: Hotkey listener initialized for `alt_r`
+[PASS] Text injection: Keyboard injection backend initialized
+[PASS] Clipboard backend: Platform default clipboard backend
+[PASS] ffmpeg: Detected in PATH
+[PASS] pactl: Not required on this platform
+[PASS] System audio capture: Detected: BlackHole 2ch
+[PASS] Connector packs: first-party: acli_confluence, acli_jira, calendar_activity, firefox_ext, gh, jira, meeting_context
+[WARN] People keystore: DEV FILE keystore at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-day1-a.jnvmypiGIh/people.key -- not for real use
+[PASS] Agent capabilities: 5 adapters declared, 4 consumers, all backed by the ledger
+[PASS] Tool-call gate: off (default); `holdspeak gate install` + arm + allow to hold agent calls
+[WARN] Coding agents: Claude Code hooks missing; Codex hooks missing
+[INFO] People MCP access: write (from people.mcp_access); agents: read
+
+Summary: 28 passed, 4 warnings, 0 failed
+
+Suggested fixes:
+- Runs on destinations: Choose another Runs on destination, or repair the named key, node, endpoint, or manifest.
+- LLM runtime: Create the model directory and download a model (e.g. Qwen3.5-4B-Instruct-Q4_K_M.gguf): mkdir -p /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-day1-a.jnvmypiGIh/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-day1-a.jnvmypiGIh/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False
+- People keystore: Unset HOLDSPEAK_PEOPLE_KEYSTORE_FILE for production use. The file keystore is for development and testing only.
+- Coding agents: Install the hooks for claude codex: `holdspeak agent-hook install`
+
+Running hub
+===========
+FAIL  hub-health        [Errno 61] Connection refused
+FAIL  runtime-status    [Errno 61] Connection refused
+FAIL  runtime-preflight [Errno 61] Connection refused
+SKIP  websocket         no token configured
+FAIL  desk-bootstrap    [Errno 61] Connection refused
+SKIP  auth              no token configured
+PASS  mcp-server        initialization received
+SKIP  inference         no token configured
+PASS  database          primitives readable
+PASS  observer          healthy: 24h events: 0
+
+3 PASS · 3 SKIP · 4 FAIL
+HOME=$HA uv run holdspeak doctor  3.64s user 0.71s system 40% cpu 10.676 total
