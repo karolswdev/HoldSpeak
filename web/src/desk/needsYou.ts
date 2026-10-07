@@ -542,18 +542,28 @@ export function computeNeedsYou(
     { ...row, waiting: waitsOnOther(row, selfNames) }
   ));
   const ranked = rankAttention([...merged, ...singles], now) as NeedsYouRoomItem[];
+  // PHILO-14 A5 (the twin of `fold_asks` and its caller): every agent ask on
+  // an item it was handed is that item's, whatever the item's mute or wait;
+  // an item with an ask is shown and counted once.
+  foldAsks(ranked, input.flights ?? []);
+  const asked = new Set(ranked.filter((item) => item.foldedInto).map((item) => String(item.foldedInto)));
+  for (const item of ranked) {
+    if (item.source !== "coder" && item.source !== "gate" && asked.has(itemRef(item))) {
+      item.askOverrides = true;
+      item.waiting = false;
+    }
+  }
   const mutedProjects = mutedSet(input);
   const mutedItems: NeedsYouRoomItem[] = [];
   const unmutedItems: NeedsYouRoomItem[] = [];
   for (const item of ranked) {
-    if (Boolean(item.muted) || (item.projectId && mutedProjects.has(String(item.projectId))))
+    if (item.askOverrides) unmutedItems.push({ ...item, muted: false } as NeedsYouRoomItem);
+    else if (Boolean(item.muted) || (item.projectId && mutedProjects.has(String(item.projectId))))
       mutedItems.push(item);
     else unmutedItems.push(item);
   }
   // What the owner waits on someone else for is listed and is not counted.
   const waitingItems = unmutedItems.filter((item) => item.waiting);
-  // PHILO-14 A5: one object, one count (the twin of `fold_asks`).
-  foldAsks(unmutedItems.filter((item) => !item.waiting), input.flights ?? []);
   const countedItems = unmutedItems.filter((item) => !item.waiting && !item.foldedInto);
 
   const assignmentRead = input.assignmentRead ?? "pending";

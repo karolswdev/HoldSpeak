@@ -189,12 +189,13 @@ def gate_match_root(config: GateConfig, *, cwd: str, tool: str) -> Optional[str]
 class RedactedCall(NamedTuple):
     """One tool call as the hook may send it: the hash of the real call, the
     first :data:`ARGS_HEAD_CHARS` of its REDACTED canonical text, and the
-    length of that whole redacted text (PHILO-14 A5).
+    length of the text the approval surfaces DISPLAY: the redacted command
+    (the canonical text for a call with no command) (PHILO-14 A5).
 
     The length is the redacted text's, never the raw call's: the raw length
-    would be a side channel for the size of a redacted secret. The desk says
-    ``+N CHARS`` with ``N = length - len(head)`` and never offers Approve on
-    a call longer than its head."""
+    would be a side channel for the size of a redacted secret. Every surface
+    says ``+N CHARS`` with ``N = length - len(shown command)``
+    (``db.gate.command_view``) and never offers Approve on a cut call."""
 
     sha256: str
     head: str
@@ -214,7 +215,13 @@ def redact_call(tool_input: Mapping[str, Any] | None) -> RedactedCall:
     from .memory.defense import redact
 
     redacted = redact(canonical)
-    return RedactedCall(digest, redacted[:ARGS_HEAD_CHARS], len(redacted))
+    try:
+        parsed = json.loads(redacted)
+    except ValueError:
+        parsed = None
+    command = parsed.get("command") if isinstance(parsed, dict) else None
+    shown = command if isinstance(command, str) and command else redacted
+    return RedactedCall(digest, redacted[:ARGS_HEAD_CHARS], len(shown))
 
 
 def redact_args(tool_input: Mapping[str, Any] | None) -> tuple[str, str]:

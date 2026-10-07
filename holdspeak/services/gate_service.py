@@ -274,7 +274,12 @@ class GateService:
     def list_proposals(self, principal: Principal, filters: dict[str, Any] | None = None) -> dict[str, Any]:
         state = str((filters or {}).get("state") or HELD)
         self._db.gate.expire_due()
-        return {"proposals": [proposal.to_dict() for proposal in self._db.gate.list_state(state)], "state": state}
+        # PHILO-14 A5: the owner's list (the shade) carries what it shows of
+        # each call; Approve is withheld on a cut one.
+        return {
+            "proposals": [{**proposal.to_dict(), **proposal.shown()} for proposal in self._db.gate.list_state(state)],
+            "state": state,
+        }
 
     def decide(self, principal: Principal, proposal_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         from .. import kernel

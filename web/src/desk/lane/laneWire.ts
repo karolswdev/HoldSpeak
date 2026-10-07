@@ -102,6 +102,11 @@ export interface LaneGated {
   id: string;
   tool?: string | null;
   args_head?: string | null;
+  /** PHILO-14 A5 (`db.gate.command_view`): the shown command, whether the
+   * hub holds it whole, and how many of its characters are missing. */
+  args_shown?: string | null;
+  args_cut?: boolean | null;
+  args_hidden?: number | null;
   state: string;
   created_at?: number | string | null;
   decided_by?: string | null;
@@ -442,9 +447,17 @@ function decidedWord(call: LaneGated): string {
   return call.decided_by ? `${state} · ${call.decided_by}` : state;
 }
 
+/** `<command>… +N CHARS` when the hub cannot show the call whole. */
+export function cutMark(command: string, call: { args_cut?: boolean | null; args_hidden?: number | null }): string {
+  if (!call.args_cut) return command;
+  const hidden = Number(call.args_hidden ?? 0);
+  return `${command}… ${hidden > 0 ? `+${hidden} CHARS` : "CUT"}`;
+}
+
 /** A held call's command: the gate keeps the JSON head of the arguments
  * (`{"command":"ls /etc"}`); the face shows the command. */
 export function gatedHead(call: LaneGated): string {
+  if (call.args_shown) return cutMark(String(call.args_shown), call);
   const head = String(call.args_head ?? "").trim();
   const match = /"(?:command|cmd|file_path|path|url)"\s*:\s*"((?:[^"\\]|\\.)*)/.exec(head);
   if (match) {

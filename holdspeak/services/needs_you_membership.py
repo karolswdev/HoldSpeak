@@ -360,20 +360,19 @@ def gate_items(holds: Iterable[dict[str, Any]], now: datetime | None = None) -> 
     return rows
 
 
-def _args_cut(args_head: str, args_len: Any) -> dict[str, Any]:
-    """PHILO-14 A5: is the stored head the whole call? The hub keeps only the
-    first ``ARGS_HEAD_CHARS`` of the redacted call (a design limit: the hook
-    never sends it whole). ``args_cut`` when the call is longer than its head;
-    an older hook sends no length, and a head at the limit reads as cut."""
-    from holdspeak.db.gate import ARGS_HEAD_CHARS
+def _gate_view(args_head: str, args_len: Any) -> dict[str, Any]:
+    """The command, cut flag and hidden count every approval surface shows
+    (``db.gate.command_view``: one place, on the text the owner sees)."""
+    from holdspeak.db.gate import command_view
 
-    head = str(args_head or "")
-    try:
-        total = max(0, int(args_len or 0))
-    except (TypeError, ValueError):
-        total = 0
-    cut = total > len(head) if total else len(head) >= ARGS_HEAD_CHARS
-    return {"args_cut": cut, "args_hidden": max(0, total - len(head)) if cut else 0}
+    view = command_view(args_head, args_len)
+    return {"command": view["command"], "args_cut": view["args_cut"], "args_hidden": view["args_hidden"]}
+
+
+def _args_cut(args_head: str, args_len: Any) -> dict[str, Any]:
+    """The cut flag and hidden count alone (``_gate_view``)."""
+    view = _gate_view(args_head, args_len)
+    return {"args_cut": view["args_cut"], "args_hidden": view["args_hidden"]}
 
 
 def _gate_command(args_head: str) -> str:
@@ -435,8 +434,7 @@ def _read_gate_holds(db: Any, *, ledger: Any = None, now: float | None = None) -
                 "launch_id": str(launch.get("launch_id") or ""),
                 "session_key": str(launch.get("session_key") or ""),
                 "tool": proposal.tool,
-                "command": _gate_command(proposal.args_head),
-                **_args_cut(proposal.args_head, (proposal.operation or {}).get("args_len")),
+                **_gate_view(proposal.args_head, (proposal.operation or {}).get("args_len")),
                 "created_at": proposal.created_at,
                 "held": held,
                 "ended_at": None if held else float(ended),
@@ -802,12 +800,25 @@ def compute_needs_you(
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
+    # PHILO-14 A5, one object, one row, one count (owner ruling 2026-10-07):
+    # EVERY agent ask on an item it was handed is that item's (``foldedInto``),
+    # whatever the item's mute or wait. An item with an ask is shown and
+    # counted once: the ask overrides its mute and its wait.
+    fold_asks(ranked, flights)
+    asked = {str(item["foldedInto"]) for item in ranked if item.get("foldedInto")}
+    for item in ranked:
+        if item.get("source") not in (CODER_SOURCE, GATE_SOURCE) and _item_ref(item) in asked:
+            item["askOverrides"] = True
+            item["waiting"] = False
     muted_projects = {str(pid) for pid in muted_project_ids}
     unmuted_items: list[dict[str, Any]] = []
     muted_items: list[dict[str, Any]] = []
     for item in ranked:
         project_id = item.get("projectId")
-        if bool(item.get("muted")) or (project_id and str(project_id) in muted_projects):
+        if item.get("askOverrides"):
+            item["muted"] = False
+            unmuted_items.append(item)
+        elif bool(item.get("muted")) or (project_id and str(project_id) in muted_projects):
             item["muted"] = True
             muted_items.append(item)
         else:
@@ -816,11 +827,8 @@ def compute_needs_you(
     # What the owner waits on someone else for is listed and is not counted.
     waiting_items = [item for item in unmuted_items if item["waiting"]]
     counted_items = [item for item in unmuted_items if not item["waiting"]]
-    # PHILO-14 A5, one object, one count (UX-CANON D): an agent's ask (a
-    # question, a held call) on an item it was handed is part of that item.
-    # The ask stays listed (``foldedInto`` names the item; the desk draws it
-    # on the item's row) and is not a member of its own.
-    fold_asks(counted_items, flights)
+    # The asks folded above are listed (the desk draws each on its item's
+    # row) and are not members of their own.
     counted_items = [item for item in counted_items if not item.get("foldedInto")]
 
     blockers = meeting_path_blockers(
