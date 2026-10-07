@@ -4,6 +4,7 @@ Cadence reviews unresolved work and prepares next actions.
 It can use meeting action items, proposed actions, and Coder sessions that need a reply.
 
 The background Cadence loop is off by default.
+The morning Brief job is on by default. It makes the day's Brief at 06:00 local time.
 Manual commands can still inspect work or request an evaluation.
 Cadence is separate from the [Heartbeat](USER_GUIDE.md#rhythm) and from preferences saved in [Interview](INTERVIEW.md).
 
@@ -44,12 +45,14 @@ The optional model can draft wording. Execution still requires the applicable op
 ## Configure background Cadence
 
 The configuration uses the `cadence` object in `~/.config/holdspeak/config.json`.
-These values are the defaults. They keep background work and model drafts disabled:
+These values are the defaults. They keep the loop and model drafts disabled. They make the morning Brief:
 
 ```json
 {
   "cadence": {
     "enabled": false,
+    "brief_enabled": true,
+    "brief_hour": 6,
     "pressure": "normal",
     "use_llm": false,
     "quiet_hours_start": 22,
@@ -61,6 +64,9 @@ These values are the defaults. They keep background work and model drafts disabl
 ```
 
 Set `enabled` to `true` when you want the runtime loop.
+`brief_enabled` makes the Brief one time each local day, at or after `brief_hour` (0 to 23).
+The Brief uses no model and sends nothing, so quiet hours do not stop it.
+Set `brief_enabled` to `false` to make the Brief only when you select **Generate**.
 The runtime must be available for background evaluation.
 **Secure** Control mode permits explicit `run-now` but prevents the background loop.
 See [Control modes](AUTHORITY.md) for precedence and effects.

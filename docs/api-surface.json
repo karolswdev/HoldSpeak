@@ -5191,6 +5191,16 @@
       ]
     },
     {
+      "path": "/api/proposals/{proposal_id}/defer",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.proposals",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/proposals/{proposal_id}/dismiss",
       "methods": [
         "POST"

@@ -8,6 +8,7 @@ Routes:
   POST /api/proposals/{id}/edit           - HS-200-12: amend a proposed row in place
   POST /api/meetings/{id}/proposals/accept-reviewed - HS-200-12: confirm the eligible rows
   POST /api/proposals/{id}/dismiss        - dismiss a proposal (idempotent)
+  POST /api/proposals/{id}/defer          - PHILO-15 08: hide from Needs until tomorrow
 """
 from __future__ import annotations
 
@@ -149,5 +150,21 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": True, **result})
         except Exception as exc:
             return error_500(exc, log, "Failed to dismiss proposal")
+
+    @router.post("/api/proposals/{proposal_id}/defer")
+    async def api_defer_proposal(
+        proposal_id: str,
+        request: Request,
+        body: dict[str, Any] = Body(default={}),
+    ) -> Any:
+        try:
+            result = _service(ctx).defer_proposal(
+                _principal(request), proposal_id, until=body.get("until"),
+            )
+            if "error" in result:
+                return JSONResponse({"success": False, **result}, status_code=_status(result))
+            return JSONResponse({"success": True, **result})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to defer proposal")
 
     return router

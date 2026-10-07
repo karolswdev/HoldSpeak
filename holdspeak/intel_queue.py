@@ -540,6 +540,10 @@ def _process_bound_intel_job(
                 "summary": str(result["summary"]),
                 "topics": list(result["topics"]),
                 "action_items": list(result["action_items"]),
+                # None = the reply did not carry the field (PHILO-15 08).
+                "decisions": (
+                    None if result.get("decisions") is None else list(result["decisions"])
+                ),
             },
             executor_held=lease.held,
             memory=memory,
@@ -678,6 +682,10 @@ def _process_bound_intel_job(
             lease.mark_lost()
             return False
         outcome = "succeeded"
+        # HS-172-03: bridge artifacts to proposals + suggest sources.
+        # PHILO-15 08 (B13): BEFORE the ready frame, so the aftercare card
+        # counts the proposals it offers to open.
+        _on_intel_complete(db, job.meeting_id, job)
         # Durable-before-observable: the Dock's aftercare frame must have a
         # durable unseen row before the websocket callback can publish it.
         db.meetings.mark_ready_unseen(job.meeting_id)
@@ -686,8 +694,6 @@ def _process_bound_intel_job(
                 on_meeting_ready(job.meeting_id)
             except Exception as exc:
                 log.debug("on_meeting_ready observer failed: %s", type(exc).__name__)
-        # HS-172-03: bridge artifacts to proposals + suggest sources.
-        _on_intel_complete(db, job.meeting_id, job)
         return True
     except KernelRefused as exc:
         # The provider's typed refusal is terminal, not a fallback/retry signal.

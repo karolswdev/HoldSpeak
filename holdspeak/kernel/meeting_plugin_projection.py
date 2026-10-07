@@ -18,12 +18,12 @@ rows inside the permitted transaction, and nowhere else.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import time
 from typing import Any
 
 from .model import KernelRefused
+from .summary_items_projection import summary_action_id, write_summary_items
 from .projection_stager import _PublicationPermit, ProjectionDiscarded
 
 
@@ -288,9 +288,7 @@ def _write_bound_analysis(conn: Any, projection: dict[str, Any]) -> dict[str, An
     for ordinal, item in enumerate(action_items, 1):
         if not isinstance(item, dict):
             continue
-        item_id = str(item.get("id") or "").strip() or "action_" + hashlib.sha256(
-            f"{projection['job_id']}:{ordinal}".encode()
-        ).hexdigest()[:24]
+        item_id = summary_action_id(projection, ordinal, item)
         conn.execute(
             """INSERT INTO action_items (id,meeting_id,task,owner,due,status,review_state,created_at)
                VALUES (?,?,?,?,?,'pending','pending',?)
@@ -298,6 +296,7 @@ def _write_bound_analysis(conn: Any, projection: dict[str, Any]) -> dict[str, An
             (item_id, meeting_id, str(item.get("task") or ""), item.get("owner"),
              item.get("due"), time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())),
         )
+    write_summary_items(conn, projection, meeting_id, action_items)
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     conn.execute(
         """UPDATE meetings SET intel_status='running',

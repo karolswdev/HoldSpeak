@@ -241,11 +241,20 @@ class MeetingState:
                 sum(len(s.text.split()) for s in self.segments)
                 if self.segments else None
             ),
+            # PHILO-15-07: spans the transcriber could not decode honestly
+            # (``[unclear m:ss–m:ss]`` marks); the face lamps WARN on them.
+            "unclearSpans": _count_unclear(s.text for s in self.segments),
             "sync_modified_at": (
                 self.sync_modified_at.isoformat() if self.sync_modified_at else None
             ),
             "devices": [_device_descriptor_to_dict(d) for d in self.devices],
         }
+
+
+def _count_unclear(texts) -> int:
+    from ..transcript_guard import count_unclear
+
+    return count_unclear(texts)
 
 
 def _device_descriptor_to_dict(descriptor: object) -> dict:

@@ -103,7 +103,7 @@ def test_happy_path_windows_timestamps_and_persistence(tmp_path, db):
         (60.0, 75.0),
     ]
     assert all(s.speaker == DEFAULT_SPEAKER_LABEL for s in state.segments)
-    assert state.title == "standup recording"
+    assert state.title == "Standup recording"  # PHILO-15-07: humanised
     assert state.tags == ["imported", "q3"]
     # HS-201-10: started_at is the import moment, never the file's mtime;
     # the duration matches the audio.

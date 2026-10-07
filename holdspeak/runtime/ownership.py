@@ -137,8 +137,9 @@ class DatabaseOwnershipMixin:
     def _start_scheduled_work(self) -> None:
         """Start the sweeps -- in the database's owner process only (HS-200-02).
 
-        The Cadence Engine tick is OFF BY DEFAULT (CAD-1-04) and starts only
-        when the user has opted in; the heartbeat is always-on (HS-171-02).
+        The cadence thread starts when one of its jobs is on: the loop job is
+        OFF BY DEFAULT (CAD-1-04), the morning Brief job is ON BY DEFAULT
+        (PHILO-15 05); the heartbeat is always-on (HS-171-02).
         Both are now gated on ownership: C1 forbids two processes silently
         owning the same scheduled work, so a hub that lost the claim runs
         neither, and says so.
@@ -146,7 +147,7 @@ class DatabaseOwnershipMixin:
         if not self.owns_database:
             log.warning("Scheduled work is OFF: this hub does not own the database.")
             return
-        if self._cadence_enabled():
+        if self._cadence_jobs_enabled():
             self.cadence_thread = threading.Thread(
                 target=self._cadence_loop,
                 name="HoldSpeakCadenceEngine",

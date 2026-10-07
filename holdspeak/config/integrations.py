@@ -212,15 +212,22 @@ class ThoughtsConfig:
 
 @dataclass
 class CadenceConfig:
-    """The Cadence Engine (CAD-1) -- OFF BY DEFAULT.
+    """The Cadence Engine (CAD-1): one setting per job.
 
-    When `enabled` is False the runtime starts no cadence thread and behaves
-    identically to a build without cadence. `pressure` scales policy *timings*
-    only (never what is nudged or any safety gate). `tick_interval_seconds` is how
-    often the in-runtime loop projects + scores. Quiet hours are default-on.
+    `enabled` is the loop job (project, score, nudge): OFF BY DEFAULT.
+    `brief_enabled` is the morning Brief job: ON BY DEFAULT (PHILO-15 05,
+    owner law "strong defaults"). It makes the day's Brief once per local
+    day at `brief_hour`, so the Brief is there when the owner arrives. The
+    Brief is deterministic: no model, no egress, no cost. With both jobs off
+    the runtime starts no cadence thread. `pressure` scales policy *timings*
+    only (never what is nudged or any safety gate). `tick_interval_seconds` is
+    how often the in-runtime loop ticks. Quiet hours are default-on; they hold
+    nudges, not the Brief (the Brief sends nothing).
     """
 
     enabled: bool = False
+    brief_enabled: bool = True
+    brief_hour: int = 6  # local hour [0..23]: before the 08:00 end of quiet hours
     pressure: str = "normal"  # gentle | normal | aggressive (timing multiplier only)
     use_llm: bool = False     # CAD-7: LLM-DRAFT next actions (fail-closed to deterministic)
     tick_interval_seconds: int = 300
@@ -234,6 +241,8 @@ class CadenceConfig:
         self.tick_interval_seconds = max(30, int(self.tick_interval_seconds))
         self.quiet_hours_start = int(self.quiet_hours_start) % 24
         self.quiet_hours_end = int(self.quiet_hours_end) % 24
+        self.brief_enabled = bool(self.brief_enabled)
+        self.brief_hour = int(self.brief_hour) % 24
         self.max_nudges_per_day = max(0, int(self.max_nudges_per_day))
 
 

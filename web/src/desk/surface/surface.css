@@ -3227,8 +3227,17 @@ button.surface-edit-in-place:hover {
 }
 .model-library-form > .btn,
 .model-library-file,
-.model-library-secret {
+.model-library-secret,
+.model-library-not-supported {
   grid-column: 1 / -1;
+}
+/* PHILO-15 05: the Anthropic row: the state token, then the two routes that run. */
+.model-library-not-supported {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 .model-library-select,
 .model-library-secret,
