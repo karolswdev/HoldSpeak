@@ -97,10 +97,12 @@ class TestA2bPathsGlass:
                 needs_icon.focus()
                 page.keyboard.press("Enter")
                 needs = page.locator(".desk-window-shell.chair-window[aria-label='Needs you']")
-                row = needs.locator(".surface-ledger-line").filter(has_text=PROPOSAL).first
+                # PHILO-14 A5b: the Needs-you window is the smart drawer; the
+                # proposal is its object row and the row body is its open.
+                row = needs.locator("li.needs-row[data-opens=true]").filter(has_text=PROPOSAL).first
                 row.wait_for(timeout=T)
                 _settle(page)
-                self._press(page, row.locator("[data-testid=arrival-proposal-text]").first, width)
+                self._press(page, row.locator(".needs-row-name").first, width)
                 selected = page.locator(".surface-ledger-row[data-selected]:has([data-testid=proposal-row])")
                 selected.wait_for(timeout=T)
                 page.wait_for_timeout(500)

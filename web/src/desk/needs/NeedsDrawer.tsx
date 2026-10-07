@@ -22,7 +22,8 @@ import { commandForDoorVerb, labelFor, supportsDoorVerb, type DoorVerb } from ".
 import { useGate } from "../gate";
 import { clearWriteFailure, reportWriteFailure } from "../hooks/useWriteReceipt";
 import { refreshNeedsYou, useNeedsYou } from "../needsYou";
-import { refOpener } from "../openObject";
+import { openProjectProposal, refOpener, type Opener } from "../openObject";
+import { openDrawer } from "../drawer/store";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { EgressChip, StringGadget } from "../surface";
@@ -49,6 +50,15 @@ import "./needs.css";
  *  answer well (Conductor F2 K5b). */
 export function openAgentAnswer(sessionKey: string): void {
   openCoderSession(sessionKey, { answer: true });
+}
+
+/** What a press on the row body opens (A2b): a proposal opens the Room with
+ *  THAT proposal selected; every other row its ref in the one open grammar
+ *  (a Project's ref opens its drawer). Null: the body opens nothing. */
+export function faceOpener(face: NeedFace): Opener | null {
+  const proposal = face.proposal;
+  if (proposal) return () => openProjectProposal(proposal.projectId, proposal.proposalId);
+  return refOpener(face.openRef);
 }
 
 type Well = "owner" | "date";
@@ -164,10 +174,18 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       );
     case "confirm":
       return (
-        <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")} data-testid="needs-row-verb" data-verb="confirm"
-          onClick={() => void act("Confirm", () => apiFetch(
-            `/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST" },
-          ), `proposal:${v.proposalId}`)}>Confirm</Button>
+        <>
+          {/* A2b: the explicit Room path, with this proposal selected (the
+              row body opens the same; the verb carries the keyboard). */}
+          {v.projectId ? (
+            <Button dense variant="ghost" aria-label={named("Room")} data-testid="needs-row-verb" data-verb="room"
+              onClick={() => openProjectProposal(v.projectId, v.proposalId)}>Room</Button>
+          ) : null}
+          <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")} data-testid="needs-row-verb" data-verb="confirm"
+            onClick={() => void act("Confirm", () => apiFetch(
+              `/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST" },
+            ), `proposal:${v.proposalId}`)}>Confirm</Button>
+        </>
       );
     case "door": {
       const verb = (v.card.lawful_verbs ?? []).find((x) => supportsDoorVerb(x as DoorVerb)) as DoorVerb | undefined;
@@ -289,8 +307,9 @@ function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDo
   );
 }
 
-function NeedRow({ face, primary }: { face: NeedFace; primary: boolean }) {
+function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean; projects: boolean }) {
   const [well, setWell] = useState<Well | null>(null);
+  const project = projects && face.project ? face.project : null;
   return (
     <>
       <NeedsRow
@@ -300,6 +319,8 @@ function NeedRow({ face, primary }: { face: NeedFace; primary: boolean }) {
         fact={face.fact || undefined}
         lamp={face.lamp}
         sprite={face.agent ? spriteUrl("agent", face.id, "rest", face.agent) : undefined}
+        // A2b: the Project button is a generic open: the Project's drawer.
+        project={project ? { name: project.name, onOpen: () => openDrawer(project.id) } : undefined}
         verbs={(
           <>
             {face.moreAsks ? (
@@ -336,7 +357,7 @@ function useRowMarks(
       // A row the hub counts (one member): the head, the Dock and the notch
       // say the number of these rows.
       li.setAttribute("data-counted", members.has(face.memberRef ?? face.id) ? "true" : "false");
-      if (face.openRef && refOpener(face.openRef)) li.setAttribute("data-opens", "true");
+      if (faceOpener(face)) li.setAttribute("data-opens", "true");
       else li.removeAttribute("data-opens");
     }
   });
@@ -372,7 +393,10 @@ export function NeedsDrawer() {
   }, [computedAt, needs.count]);
 
   const now = new Date();
-  const ctx = { flights, sessions, now };
+  // The rows name their Project when two or more Projects need him (the
+  // Chair's rule, HS-200-15: one Project on every row says nothing).
+  const multipleProjects = (needs.room?.projects?.length ?? 0) > 1;
+  const ctx = { flights, sessions, now, multipleProjects };
   const coverage = readCoverage(
     needs.room?.coverage, needs.room?.complete ?? undefined, Boolean(needs.errors.room),
   );
@@ -426,7 +450,7 @@ export function NeedsDrawer() {
     if (target.closest("button, a, input, textarea, select, .needs-drawer-well")) return;
     const id = target.closest("li.needs-row")?.getAttribute("data-object-id");
     const face = all.find((f) => f.id === id);
-    if (face?.openRef) refOpener(face.openRef)?.();
+    if (face) faceOpener(face)?.();
   };
 
   return (
@@ -446,21 +470,21 @@ export function NeedsDrawer() {
         {faces.length > 0 ? (
           <NeedsList label="Needs you">
             {faces.map((face) => (
-              <NeedRow key={face.id} face={face} primary={face.id === primaryId} />
+              <NeedRow key={face.id} face={face} primary={face.id === primaryId} projects={multipleProjects} />
             ))}
           </NeedsList>
         ) : null}
         {showWaiting && waiting.length > 0 ? (
           <div className="needs-drawer-muted" data-testid="needs-waiting">
             <NeedsList label="Waiting">
-              {waiting.map((face) => <NeedRow key={face.id} face={face} primary={false} />)}
+              {waiting.map((face) => <NeedRow key={face.id} face={face} primary={false} projects={multipleProjects} />)}
             </NeedsList>
           </div>
         ) : null}
         {showMuted && muted.length > 0 ? (
           <div className="needs-drawer-muted" data-testid="needs-muted">
             <NeedsList label="Muted">
-              {muted.map((face) => <NeedRow key={face.id} face={face} primary={false} />)}
+              {muted.map((face) => <NeedRow key={face.id} face={face} primary={false} projects={multipleProjects} />)}
             </NeedsList>
           </div>
         ) : null}
