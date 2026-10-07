@@ -89,17 +89,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -107,15 +123,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -219,17 +234,40 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Capture')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": ".desk-dock [aria-label^='Speak']",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Capture the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Capture the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
         },
         {
           "kind": "ui",
@@ -483,10 +521,97 @@
         },
         {
           "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
+          "why": "PHILO-14 A1 (#939): the switcher reaches an OPEN window; Brief opens first, then Needs you takes the front, so the two taps bring Brief back to the front."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
-          "why": "the Chair screen is drawn: its Needs you window is open"
+          "why": "PHILO-14 A1 (#939): the switcher reaches an OPEN window; Brief opens first, then Needs you takes the front, so the two taps bring Brief back to the front."
         },
         {
           "kind": "ui",
@@ -599,10 +724,50 @@
         },
         {
           "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
-          "why": "the Chair screen is drawn: its Needs you window is open"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
           "kind": "ui",
@@ -2087,13 +2252,42 @@
         "then": [
           {
             "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-observation",
-            "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
-            "state": "visible",
-            "timeout_s": 10,
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Capture')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-dock [aria-label^='Speak']",
             "at_width": 393,
-            "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)"
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
           },
           {
             "kind": "ui",
@@ -2208,13 +2402,42 @@
         "then": [
           {
             "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-observation",
-            "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
-            "state": "visible",
-            "timeout_s": 10,
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Capture')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-dock [aria-label^='Speak']",
             "at_width": 393,
-            "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)"
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
           },
           {
             "kind": "ui",
@@ -2246,24 +2469,6 @@
             "state": "hidden",
             "timeout_s": 10,
             "why": "the window is gone"
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "adapter": "ui-by-viewport",
-            "selector": ".desk-dock [aria-label^='Speak']",
-            "at_width": 393,
-            "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)"
-          },
-          {
-            "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-observation",
-            "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
-            "state": "visible",
-            "timeout_s": 10,
-            "at_width": 393,
-            "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)"
           },
           {
             "kind": "ui",
@@ -3336,13 +3541,42 @@
         "then": [
           {
             "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-observation",
-            "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
-            "state": "visible",
-            "timeout_s": 10,
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Capture')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-dock [aria-label^='Speak']",
             "at_width": 393,
-            "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)"
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
           },
           {
             "kind": "ui",

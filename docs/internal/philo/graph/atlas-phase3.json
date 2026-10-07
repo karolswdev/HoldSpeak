@@ -522,17 +522,40 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Capture')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": ".desk-dock [aria-label^='Speak']",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Capture the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Capture the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Capture the way the owner does (Window > Chair > Capture at 1440, the Dock's Speak at 393)."
         },
         {
           "kind": "ui",
@@ -650,17 +673,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -668,15 +707,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -829,17 +867,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -847,15 +901,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -1021,17 +1074,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -1039,15 +1108,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "check",
@@ -1136,6 +1204,53 @@
           "name": "Continue later",
           "optional": true,
           "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
           "kind": "ui",
@@ -1283,6 +1398,53 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -1391,17 +1553,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -1409,15 +1587,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -1490,6 +1667,53 @@
         {
           "kind": "ui",
           "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
@@ -1598,34 +1822,49 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-by-viewport",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-by-viewport",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-by-viewport",
+          "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -1645,6 +1884,39 @@
           "action": "click",
           "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+          "at_width": 393,
+          "timeout_s": 300,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
         },
         {
           "kind": "ui",
@@ -1683,34 +1955,49 @@
           {
             "kind": "ui",
             "action": "click",
-            "adapter": "ui-by-viewport",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
             "selector": ".desk-verbbar-item[data-menu-id='go'] button",
             "at_width": 393,
-            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
           },
           {
             "kind": "ui",
             "action": "click",
-            "adapter": "ui-by-viewport",
-            "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
-            "at_width": 393,
-            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "adapter": "ui-by-viewport",
+            "adapter": "ui-pointer",
             "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
             "at_width": 393,
-            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
           },
           {
             "kind": "ui",
             "action": "wait_for",
             "adapter": "ui-pointer",
             "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-            "at_width": 393,
-            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
           }
         ]
       },
@@ -1766,6 +2053,53 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -1874,17 +2208,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -1892,15 +2242,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -1920,6 +2269,39 @@
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+          "at_width": 393,
+          "timeout_s": 300,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
         },
         {
           "kind": "ui",
@@ -1962,38 +2344,6 @@
         },
         {
           "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": "[data-testid=meeting-summary-text]",
@@ -2012,17 +2362,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -2030,15 +2396,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -2221,17 +2586,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -2239,15 +2620,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -2365,6 +2745,53 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -2473,17 +2900,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -2491,15 +2934,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -2519,6 +2961,39 @@
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+          "at_width": 393,
+          "timeout_s": 300,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
         },
         {
           "kind": "ui",
@@ -2561,38 +3036,6 @@
         },
         {
           "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": "[data-testid=meeting-summary-text]",
@@ -2611,17 +3054,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -2629,15 +3088,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -2858,6 +3316,53 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -2966,17 +3471,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -2984,15 +3505,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -3012,6 +3532,39 @@
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+          "at_width": 393,
+          "timeout_s": 300,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
         },
         {
           "kind": "ui",
@@ -3054,38 +3607,6 @@
         },
         {
           "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": "[data-testid=meeting-summary-text]",
@@ -3104,17 +3625,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -3122,15 +3659,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -3390,6 +3926,53 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -3498,17 +4081,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -3516,15 +4115,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -3544,6 +4142,39 @@
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+          "at_width": 393,
+          "timeout_s": 300,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
         },
         {
           "kind": "ui",
@@ -3586,38 +4217,6 @@
         },
         {
           "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": "[data-testid=meeting-summary-text]",
@@ -3636,17 +4235,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -3654,15 +4269,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -3929,6 +4543,53 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -4037,17 +4698,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -4055,15 +4732,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -4083,6 +4759,39 @@
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+          "at_width": 393,
+          "timeout_s": 300,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
         },
         {
           "kind": "ui",
@@ -4125,38 +4834,6 @@
         },
         {
           "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": "[data-testid=meeting-summary-text]",
@@ -4184,17 +4861,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -4202,15 +4895,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -6593,6 +7285,53 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -6701,17 +7440,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -6719,15 +7474,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -6808,6 +7562,53 @@
         {
           "kind": "ui",
           "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
@@ -6916,34 +7717,49 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-by-viewport",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-by-viewport",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-by-viewport",
+          "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -6963,6 +7779,39 @@
           "action": "click",
           "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+          "at_width": 393,
+          "timeout_s": 300,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
         },
         {
           "kind": "ui",
@@ -7009,34 +7858,49 @@
           {
             "kind": "ui",
             "action": "click",
-            "adapter": "ui-by-viewport",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
             "selector": ".desk-verbbar-item[data-menu-id='go'] button",
             "at_width": 393,
-            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
           },
           {
             "kind": "ui",
             "action": "click",
-            "adapter": "ui-by-viewport",
-            "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
-            "at_width": 393,
-            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "adapter": "ui-by-viewport",
+            "adapter": "ui-pointer",
             "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
             "at_width": 393,
-            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
           },
           {
             "kind": "ui",
             "action": "wait_for",
             "adapter": "ui-pointer",
             "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-            "at_width": 393,
-            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
           }
         ]
       },
@@ -7092,6 +7956,53 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -7200,17 +8111,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -7218,15 +8145,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -7246,6 +8172,39 @@
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+          "at_width": 393,
+          "timeout_s": 300,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q4): at 393 the meeting's aftercare card opens Capture when the summary lands; the owner goes back to The week (Go > The week) to read the summary."
         },
         {
           "kind": "ui",
@@ -7288,38 +8247,6 @@
         },
         {
           "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
-        },
-        {
-          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": "[data-testid=meeting-summary-text]",
@@ -7338,17 +8265,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -7356,15 +8299,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -7650,17 +8592,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -7668,15 +8626,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
         },
         {
           "kind": "ui",
@@ -7870,17 +8827,33 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
@@ -7888,15 +8861,14 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "at_width": 393,
-          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         },
         {
           "kind": "ui",
