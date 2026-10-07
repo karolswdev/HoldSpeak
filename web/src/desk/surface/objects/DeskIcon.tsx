@@ -7,7 +7,7 @@
  *
  *  Keyboard: a press or Space SELECTS; Enter or a double press OPENS.
  */
-import type { CSSProperties, DragEvent, KeyboardEvent, MouseEvent } from "react";
+import type { CSSProperties, DragEvent, KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { objectKindWord, objectSprite, type ObjectTone } from "./kinds";
 import "./objects.css";
@@ -93,23 +93,17 @@ export function DeskIcon({
   const label = [name, kindWord ?? objectKindWord(kind), lamp?.label, ariaExtra]
     .filter(Boolean)
     .join(", ");
+  // Enter OPENS: handled on keydown, whose default (the native click) is
+  // prevented, so it never also selects. Every other activation — a pointer
+  // press, Space (the native click on keyup), element.click(), an assistive
+  // "press" — arrives as ONE click and SELECTS.
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key === "Enter") {
       event.preventDefault();
       onOpen?.();
-    } else if (event.key === " ") {
-      event.preventDefault();
-      onSelect?.();
     }
   };
-  const onKeyUp = (event: KeyboardEvent<HTMLButtonElement>) => {
-    // A button activates on Space keyup; the select already ran on keydown.
-    if (event.key === " ") event.preventDefault();
-  };
-  const onClick = (event: MouseEvent<HTMLButtonElement>) => {
-    if (event.detail === 0) return; // keyboard activation is handled above
-    onSelect?.();
-  };
+  const onClick = () => onSelect?.();
   return (
     <Button
       variant="chrome"
@@ -125,7 +119,6 @@ export function DeskIcon({
       onClick={onClick}
       onDoubleClick={onOpen ? () => onOpen() : undefined}
       onKeyDown={onKeyDown}
-      onKeyUp={onKeyUp}
       draggable={draggable}
       onDragStart={onDragStart}
     >
