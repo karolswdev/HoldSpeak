@@ -10,7 +10,15 @@ token on argv; a hub-minted session credential ends with its session.
 2. No token on argv. The spawn's tmux argv carries no token; a 0600 file
    in a 0700 directory carries it, and the session's first shell reads it,
    deletes it and runs the agent. Not in any log either.
-3. A credential the hub minted for one Claude session (``claude:<id>``)
+   The bootstrap runs with no user shell and tracing off, so a traced rc
+   file never prints the token (real tmux). A session that does not read
+   its file is not reported spawned; nothing is left behind.
+4. Astra round 1 on #911: a revoke, rotation, issue or ownership write that
+   does not reach SQLite is never acknowledged; a slow reload or a wall
+   clock set back never extends a credential; a rebound target leaves its
+   old owner on disk too; a launch credential that expired (or was revoked)
+   while the hub was down ends its LIVE grants at start.
+5. A credential the hub minted for one Claude session (``claude:<id>``)
    ends on every SessionEnd, /clear and /resume included; the launch's own
    process credential still stays over /clear and /resume.
 
@@ -234,8 +242,8 @@ def test_the_spawn_puts_no_token_on_argv_and_the_session_reads_it(tmp_path: Path
             env_file = env_file_of(argv)
             modes.append(stat.S_IMODE(env_file.stat().st_mode))
             modes.append(stat.S_IMODE(env_file.parent.stat().st_mode))
-            # The session's first shell, for real.
-            done = subprocess.run(["/bin/sh", "-c", argv[-1]], capture_output=True, text=True, timeout=20)
+            # The session's first process, for real: tmux runs these words.
+            done = subprocess.run(argv[argv.index("-s") + 2:], capture_output=True, text=True, timeout=20)
             return type("Done", (), {"returncode": done.returncode, "stdout": "", "stderr": done.stderr})()
         if argv[1] == "list-panes":
             return type("Done", (), {"returncode": 0, "stdout": "%9\n", "stderr": ""})()
@@ -334,3 +342,263 @@ def test_the_new_tables_use_named_inserts() -> None:
     for table in ("agent_credentials", "agent_launch_ownership"):
         for chunk in source.split(f"INTO {table}")[1:]:
             assert chunk.lstrip().startswith("("), f"positional INSERT into {table}"
+
+
+# ── 4. Astra round 1 on #911 ─────────────────────────────────────────
+
+
+def _refuse(database: Database, table: str, event: str) -> None:
+    """A real SQLite refusal of every *event* on *table*."""
+    with database._connection() as conn:
+        conn.execute(f"CREATE TRIGGER r2_refuse_{table}_{event} BEFORE {event} ON {table} "
+                     "BEGIN SELECT RAISE(ABORT, 'disk refused'); END")
+
+
+def _allow(database: Database, table: str, event: str) -> None:
+    with database._connection() as conn:
+        conn.execute(f"DROP TRIGGER r2_refuse_{table}_{event}")
+
+
+def _store(database: Database, mono: list[float] | None = None, wall: list[float] | None = None,
+           boot: str = "boot-1") -> AgentCredentialStore:
+    mono = mono if mono is not None else [100.0]
+    wall = wall if wall is not None else [1_000_000.0]
+    store = AgentCredentialStore(clock=lambda: mono[0], wall_clock=lambda: wall[0], boot_id=lambda: boot)
+    store.attach(database)
+    return store
+
+
+def test_a_revoke_that_is_not_written_is_not_acknowledged(tmp_path: Path) -> None:
+    database = Database(tmp_path / "c.db")
+    store = _store(database)
+    cred = store.issue("claude:r2-rv")
+    _refuse(database, "agent_credentials", "UPDATE")
+    assert store.revoke("claude:r2-rv") is False, "a revoke SQLite refused was acknowledged"
+    assert store.derive(cred.token) is None, "refused in memory at once"
+    _allow(database, "agent_credentials", "UPDATE")
+    store.issue("claude:r2-other")  # the next write retries the queued revoke
+    assert _store(database).derive(cred.token) is None, "the revoke came back after a restart"
+
+
+def test_a_rotation_whose_revoke_is_not_written_issues_nothing(tmp_path: Path) -> None:
+    from holdspeak.principals import CredentialPersistError
+
+    database = Database(tmp_path / "c.db")
+    store = _store(database)
+    old = store.issue("claude:r2-rot")
+    _refuse(database, "agent_credentials", "UPDATE")
+    with pytest.raises(CredentialPersistError):
+        store.issue("claude:r2-rot")
+    assert store.derive(old.token) is None
+    assert [c.principal.identity for c in store.list_credentials()] == []
+
+
+def test_an_issue_and_its_scope_are_one_write(tmp_path: Path) -> None:
+    from holdspeak.principals import CredentialPersistError
+
+    database = Database(tmp_path / "c.db")
+    store = _store(database)
+    _refuse(database, "agent_launch_ownership", "INSERT")
+    with pytest.raises(CredentialPersistError):
+        store.issue("agent:launch:l9", launch_id="l9", scope_items=("action:a9",))
+    assert store.list_credentials() == [] and not store.in_scope("l9", "action:a9")
+    with database._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM agent_credentials").fetchone()[0] == 0
+
+
+def test_an_ownership_write_that_fails_owns_nothing(tmp_path: Path) -> None:
+    from holdspeak.principals import CredentialPersistError
+
+    database = Database(tmp_path / "c.db")
+    store = _store(database)
+    store.issue("agent:launch:l8", launch_id="l8")
+    _refuse(database, "agent_launch_ownership", "INSERT")
+    with pytest.raises(CredentialPersistError):
+        store.scope_add("l8", "note:n8")
+    assert not store.created_by("l8", "note:n8")
+
+
+def test_a_slow_reload_never_extends_a_credential(tmp_path: Path) -> None:
+    database = Database(tmp_path / "c.db")
+    mono, wall = [100.0], [1_000_000.0]
+    store = _store(database, mono, wall)
+    cred = store.issue("claude:r2-slow", ttl_seconds=1)
+    mono[0] += 0.5
+    wall[0] += 0.5
+
+    class Slow:  # a 1.6 s SQLite lock while the rows are read
+        def __init__(self, inner):
+            self.inner = inner
+
+        def _connection(self):
+            mono[0] += 1.6
+            wall[0] += 1.6
+            return self.inner._connection()
+
+    fresh = AgentCredentialStore(clock=lambda: mono[0], wall_clock=lambda: wall[0], boot_id=lambda: "boot-1")
+    assert fresh.attach(Slow(database)) == 0
+    assert fresh.derive(cred.token) is None
+
+
+def test_a_wall_clock_set_back_never_extends_a_credential(tmp_path: Path) -> None:
+    database = Database(tmp_path / "c.db")
+    mono, wall = [100.0], [1_000_000.0]
+    store = _store(database, mono, wall)
+    cred = store.issue("claude:r2-back", ttl_seconds=10)
+    mono[0] += 20.0          # the deadline passed ...
+    wall[0] -= 100.0         # ... and the wall clock was set back
+    fresh = _store(database, mono, wall)
+    assert fresh.derive(cred.token) is None
+
+
+def test_a_rebound_target_leaves_its_old_owner_on_disk(tmp_path: Path) -> None:
+    database = Database(tmp_path / "c.db")
+    store = _store(database)
+    a = store.issue("agent:tmux:a")
+    store.issue("agent:tmux:b")
+    store.bind_target("agent:tmux:a", "%3")
+    store.bind_target("agent:tmux:b", "%3")
+    assert store.revoke("agent:tmux:b") is True
+    assert store.revoke_targets(["%3"]) is False
+    fresh = _store(database)
+    assert fresh.revoke_targets(["%3"]) is False, "after a restart %3 was A's again"
+    assert fresh.derive(a.token) is not None
+
+
+def _grant_launch(identity: str, project_id: str) -> None:
+    from holdspeak.services.conductor_launch import grant_decision_proposals, grant_project_additions
+
+    assert grant_decision_proposals(OWNER, identity, ttl_seconds=3600) is not None
+    assert grant_project_additions(OWNER, identity, project_id, ttl_seconds=3600) is not None
+
+
+@pytest.mark.parametrize("downtime", ["expired", "revoked_before_grants"])
+def test_a_launch_ended_while_the_hub_was_down_ends_its_grants_at_start(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, hub: Hub, downtime: str,
+) -> None:
+    from holdspeak.services import desk_delegation, project_delegation
+
+    own = hub.client.post("/api/projects", json={"name": "Launch project"}).json()["project"]
+    launch_id = f"launch_r2down{downtime[:4]}"
+    identity = coder_factory.launch_identity(launch_id)
+    credential = _launch_credential(launch_id, project=own["id"])
+    _grant_launch(identity, own["id"])
+    assert desk_delegation.live_grant(identity)
+    with hub.db._connection() as conn:
+        if downtime == "expired":  # the deadline passed while the hub was down
+            conn.execute("UPDATE agent_credentials SET expires_at = 1.0, mono_expires_at = 1.0 WHERE id = ?",
+                         (credential.id,))
+        else:  # the hub stopped between the credential's revoke and its grants'
+            conn.execute("UPDATE agent_credentials SET revoked_at = 1.0, revocation_reason = 'revoked' "
+                         "WHERE id = ?", (credential.id,))
+
+    hub = _restart(tmp_path, monkeypatch)
+    assert agent_credentials.derive(credential.token) is None
+    assert not desk_delegation.live_grant(identity)
+    assert project_delegation.live_projects(identity) == []
+    with hub.db._connection() as conn:
+        row = conn.execute("SELECT revoked_at, revocation_reason FROM agent_credentials WHERE id = ?",
+                           (credential.id,)).fetchone()
+    assert row["revoked_at"] is not None
+
+
+def test_a_failed_credential_file_write_leaves_nothing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(coder_factory, "credential_env_dir", lambda: tmp_path / "agent-env")
+    def broken_write(_fd, _data):
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(coder_factory.os, "write", broken_write)
+    calls: list[list[str]] = []
+    result = coder_factory.spawn("r2-nofile", command="true", launch_id="launch_r2nofile01",
+                                 runner=lambda argv: calls.append(argv), audit=lambda **_: 1)
+    assert result["status"] == "error", result
+    assert calls == [], "tmux ran without a credential file"
+    assert agent_credentials.launch_credential("agent:launch:launch_r2nofile01") is None
+    assert list(coder_factory.credential_env_dir().glob("*")) == []
+
+
+def test_a_session_that_never_reads_its_file_is_not_spawned(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(coder_factory, "START_TIMEOUT_SECONDS", 0.3)
+    calls: list[list[str]] = []
+
+    def runner(argv: list[str]):  # tmux answers 0; the session died before its bootstrap
+        calls.append(list(argv))
+        return type("Done", (), {"returncode": 0, "stdout": "%4\n", "stderr": ""})()
+
+    result = coder_factory.spawn("r2-dead", command="true", launch_id="launch_r2dead0001",
+                                 runner=runner, audit=lambda **_: 1)
+    assert result["status"] == "error" and "did not start" in result["detail"], result
+    assert not env_file_of(calls[0]).exists()
+    assert agent_credentials.launch_credential("agent:launch:launch_r2dead0001") is None
+
+
+def _tmux_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, zshenv: str) -> None:
+    import shutil
+
+    if shutil.which("tmux") is None or not Path("/bin/zsh").exists():
+        pytest.skip("needs tmux and zsh")
+    home = tmp_path / "zhome"
+    home.mkdir()
+    (home / ".zshenv").write_text(zshenv, encoding="utf-8")
+    import tempfile
+
+    # A tmux socket path must stay short (sun_path): not under pytest's tmp.
+    sock = Path(tempfile.mkdtemp(prefix="hsr2-", dir="/tmp"))
+    monkeypatch.setattr(sys.modules[__name__], "_SOCKETS", [*_SOCKETS, sock])
+    monkeypatch.setenv("ZDOTDIR", str(home))
+    monkeypatch.setenv("SHELL", "/bin/zsh")
+    monkeypatch.setenv("TMUX_TMPDIR", str(sock))
+    monkeypatch.delenv("TMUX", raising=False)
+
+
+_SOCKETS: list[Path] = []
+
+
+def _kill_tmux() -> None:
+    import shutil
+
+    subprocess.run(["tmux", "kill-server"], capture_output=True, timeout=10)
+    for sock in _SOCKETS:
+        shutil.rmtree(sock, ignore_errors=True)
+
+
+def _pane(name: str) -> str:
+    done = subprocess.run(["tmux", "capture-pane", "-p", "-J", "-S", "-", "-t", name],
+                          capture_output=True, text=True, timeout=10)
+    return done.stdout
+
+
+def test_a_traced_shell_never_prints_the_token_on_real_tmux(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(coder_factory, "credential_env_dir", lambda: tmp_path / "agent-env")
+    import time
+
+    _tmux_env(tmp_path, monkeypatch, "set -x\nsetopt verbose\n")
+    seen = tmp_path / "seen"
+    try:
+        result = coder_factory.spawn(
+            "r2trace", command=f"printenv HOLDSPEAK_AGENT_CREDENTIAL > {seen}; echo r2-started; sleep 30",
+            launch_id="launch_r2trace001", audit=lambda **_: 1)
+        assert result["status"] == "spawned", result
+        deadline = time.monotonic() + 15
+        while "r2-started" not in _pane("r2trace") and time.monotonic() < deadline:
+            time.sleep(0.1)
+        pane = _pane("r2trace")
+        token = seen.read_text(encoding="utf-8").strip()
+        assert agent_credentials.derive(token) is not None
+        assert "r2-started" in pane and "+" in pane, "the rc file did not trace (the fence proves nothing)"
+        assert token not in pane, pane
+        assert list(coder_factory.credential_env_dir().glob("*")) == []
+    finally:
+        _kill_tmux()
+        coder_factory.revoke_launch("launch_r2trace001")
+
+
+def test_an_rc_file_that_exits_leaves_no_plaintext_on_real_tmux(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(coder_factory, "credential_env_dir", lambda: tmp_path / "agent-env")
+    _tmux_env(tmp_path, monkeypatch, "exit 3\n")
+    try:
+        coder_factory.spawn("r2exit", command="sleep 30", launch_id="launch_r2exit0001", audit=lambda **_: 1)
+        assert list(coder_factory.credential_env_dir().glob("*")) == [], "the plaintext file stayed"
+    finally:
+        _kill_tmux()
+        coder_factory.revoke_launch("launch_r2exit0001")

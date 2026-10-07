@@ -149,6 +149,10 @@ def test_spawn_kill_respawn_invalidates_old_credential(monkeypatch) -> None:
 
     def runner(argv: list[str]):
         calls.append(argv)
+        if argv[1] == "new-session":
+            from tests.unit._spawn_env import consume
+
+            consume(argv)  # the session's bootstrap reads its credential
         if argv[1] == "list-panes":
             return type("Done", (), {"returncode": 0, "stdout": "%principal", "stderr": ""})()
         return type("Done", (), {"returncode": 0, "stdout": "", "stderr": ""})()

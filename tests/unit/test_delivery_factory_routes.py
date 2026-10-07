@@ -103,11 +103,10 @@ class FakeTmuxServer:
             name = argv[argv.index("-s") + 1]
             if name in self.sessions:
                 return self._err(f"duplicate session: {name}")
-            command_index = argv.index("-s") + 2
-            command = argv[command_index] if len(argv) > command_index else ""
-            from tests.unit._spawn_env import strip_env
+            from tests.unit._spawn_env import command_of, consume
 
-            command = strip_env(command)
+            command = command_of(argv)
+            consume(argv)  # the session's bootstrap reads its credential
             path = shlex.split(command)[1] if command.startswith("cd ") else "/"
             pane = f"%{self._next}"
             self._next += 1

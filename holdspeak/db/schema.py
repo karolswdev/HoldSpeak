@@ -1884,7 +1884,8 @@ ON kernel_project_delegations(agent_identity, project_id) WHERE state='LIVE';
 CREATE INDEX IF NOT EXISTS idx_project_delegations_agent_project_state
 ON kernel_project_delegations(agent_identity, project_id, state);
 -- Conductor R2: the hub's agent credentials outlive a hub restart. The token
--- is stored only as its SHA-256; expires_at is wall-clock seconds. A revoked
+-- is stored only as its SHA-256; expires_at is wall-clock seconds and
+-- mono_expires_at the monotonic deadline of boot boot_id. A revoked
 -- row keeps revoked_at (never deleted). Device-local; never sync.
 CREATE TABLE IF NOT EXISTS agent_credentials (
     id TEXT PRIMARY KEY,
@@ -1896,6 +1897,8 @@ CREATE TABLE IF NOT EXISTS agent_credentials (
     project_id TEXT,
     targets_json TEXT NOT NULL DEFAULT '[]',
     expires_at REAL NOT NULL,
+    mono_expires_at REAL,
+    boot_id TEXT NOT NULL DEFAULT '',
     revoked_at REAL,
     revocation_reason TEXT NOT NULL DEFAULT '',
     created_at REAL NOT NULL

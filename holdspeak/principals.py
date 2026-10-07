@@ -116,6 +116,35 @@ def _hash_token(plaintext: str) -> str:
 _log = logging.getLogger(__name__)
 
 
+class CredentialPersistError(RuntimeError):
+    """Conductor R2: a credential write did not reach the database."""
+
+
+_BOOT_ID: Optional[str] = None
+
+
+def current_boot_id() -> str:
+    """This machine boot's id ("" when unknown): a monotonic deadline is
+    comparable only within one boot."""
+    global _BOOT_ID
+    if _BOOT_ID is None:
+        value = ""
+        try:
+            with open("/proc/sys/kernel/random/boot_id", encoding="utf-8") as handle:
+                value = handle.read().strip()
+        except OSError:
+            try:
+                import subprocess
+
+                done = subprocess.run(["sysctl", "-n", "kern.bootsessionuuid"],
+                                      capture_output=True, text=True, timeout=5)
+                value = (done.stdout or "").strip() if done.returncode == 0 else ""
+            except (OSError, subprocess.SubprocessError):
+                value = ""
+        _BOOT_ID = value
+    return _BOOT_ID
+
+
 class AgentCredentialStore:
     """Revocable credentials minted once per supervised process.
 
@@ -131,11 +160,19 @@ class AgentCredentialStore:
     are not loaded. A store with no database is memory only, as before.
     """
 
-    def __init__(self, *, clock=time.monotonic, wall_clock=time.time) -> None:
+    def __init__(self, *, clock=time.monotonic, wall_clock=time.time, boot_id=None) -> None:
         self._lock = threading.RLock()
         self._clock = clock
         self._wall = wall_clock
+        self._boot = boot_id or current_boot_id
         self._db: Any = None
+        #: The hub's store writes to the database of the installed hub
+        #: composition (none while it is bare), never to a database a
+        #: previous hub in this process left behind.
+        self._follow_hub = False
+        # credential id -> reason: revokes refused in memory whose durable
+        # write failed; retried on every write.
+        self._pending_db_revokes: dict[str, str] = {}
         # Keyed by sha256(token) -- the plaintext is never stored.
         self._by_hash: dict[str, AgentCredential] = {}
         self._by_identity: dict[str, str] = {}  # identity -> hash
@@ -169,55 +206,70 @@ class AgentCredentialStore:
 
     # -- Conductor R2: write-through persistence ------------------------
 
-    def attach(self, database: Any) -> int:
+    def _database(self) -> Any:
+        if not self._follow_hub:
+            return self._db
+        from .runtime import composition
+
+        root = composition.installed()
+        if root is None or getattr(root, "bare_root", True):
+            return None
+        return getattr(root, "db", None)
+
+    def attach(self, database: Any, *, follow_hub: bool = False) -> int:
         """Write through to *database* from now on, and load its live
         credentials (with their targets and launch ownership). Returns the
-        number loaded. Expired rows are marked revoked ``expired``; revoked
-        and expired rows are never loaded."""
+        number loaded.
+
+        The remaining life of a row is read from clocks sampled together,
+        AFTER the rows are read (a slow read never extends it): the wall
+        deadline, and, on the same boot, also the monotonic deadline (the
+        smaller wins, so a wall clock set back cannot extend a credential).
+        A row with no life left is marked ``expired``, and its launch grants
+        are queued for revocation (the hooks run after the lock); revoked
+        rows are never loaded."""
         with self._lock:
             self._db = database
-            now_wall = float(self._wall())
-            loaded = 0
+            self._follow_hub = bool(follow_hub)
             try:
+                self._retry_pending_locked()
                 with database._connection() as conn:
-                    conn.execute(
-                        "UPDATE agent_credentials SET revoked_at = ?, revocation_reason = 'expired' "
-                        "WHERE revoked_at IS NULL AND expires_at <= ?",
-                        (now_wall, now_wall),
-                    )
                     rows = conn.execute(
                         "SELECT id, token_sha256, identity, palette_json, palette_name, launch_id, "
-                        "project_id, targets_json, expires_at FROM agent_credentials "
-                        "WHERE revoked_at IS NULL AND expires_at > ? ORDER BY created_at",
-                        (now_wall,),
+                        "project_id, targets_json, expires_at, mono_expires_at, boot_id "
+                        "FROM agent_credentials WHERE revoked_at IS NULL ORDER BY created_at"
                     ).fetchall()
                     owned = conn.execute(
                         "SELECT o.credential_id, o.ref, o.created FROM agent_launch_ownership o "
-                        "JOIN agent_credentials c ON c.id = o.credential_id "
-                        "WHERE c.revoked_at IS NULL AND c.expires_at > ?",
-                        (now_wall,),
+                        "JOIN agent_credentials c ON c.id = o.credential_id WHERE c.revoked_at IS NULL"
                     ).fetchall()
             except Exception:
                 _log.warning("agent credential reload failed", exc_info=True)
                 return 0
+            now_mono, now_wall, boot = self._clock(), float(self._wall()), self._boot()
             by_cred: dict[str, list[tuple[str, bool]]] = {}
             for row in owned:
                 by_cred.setdefault(str(row["credential_id"]), []).append((str(row["ref"]), bool(row["created"])))
+            loaded = 0
+            expired: list[tuple[str, str, Optional[str]]] = []
             for row in rows:
                 token_hash = str(row["token_sha256"])
                 identity = str(row["identity"])
-                if token_hash in self._by_hash:
+                remaining = float(row["expires_at"]) - now_wall
+                if boot and row["boot_id"] == boot and row["mono_expires_at"] is not None:
+                    remaining = min(remaining, float(row["mono_expires_at"]) - now_mono)
+                if remaining <= 0:
+                    expired.append((str(row["id"]), identity, row["launch_id"]))
                     continue
-                stale = self._by_identity.get(identity)
-                if stale is not None:  # a newer in-memory issue wins
-                    continue
+                if token_hash in self._by_hash or identity in self._by_identity:
+                    continue  # already live in this process
                 palette = None
                 if row["palette_json"] is not None:
                     palette = frozenset(str(n) for n in json.loads(row["palette_json"]))
                 credential = AgentCredential(
                     token=token_hash,
                     principal=Principal(PrincipalKind.AGENT, identity),
-                    expires_at=self._clock() + (float(row["expires_at"]) - now_wall),
+                    expires_at=now_mono + remaining,
                     palette=palette,
                     id=str(row["id"]),
                     palette_name=row["palette_name"],
@@ -234,18 +286,29 @@ class AgentCredentialStore:
                     self._launch_scope[credential.launch_id] = {ref for ref, _c in refs}
                     self._launch_created[credential.launch_id] = {ref for ref, c in refs if c}
                 loaded += 1
-            return loaded
+            for cred_id, identity, launch_id in expired:
+                try:
+                    self._tx([("UPDATE agent_credentials SET revoked_at = ?, revocation_reason = 'expired' "
+                               "WHERE id = ? AND revoked_at IS NULL", (now_wall, cred_id))])
+                except CredentialPersistError:
+                    self._pending_db_revokes[cred_id] = "expired"
+                if launch_id:
+                    self._pending_launch_revokes.append((str(launch_id), identity))
+        self._flush_launch_revokes()
+        return loaded
 
     def detach(self) -> None:
         """Stop writing through (memory stays)."""
         with self._lock:
             self._db = None
+            self._follow_hub = False
 
     def _forget_memory(self) -> None:
         """Drop every in-memory credential WITHOUT revoking it: what a
         process exit does. Tests use it to stand in for a hub restart."""
         with self._lock:
             self._db = None
+            self._follow_hub = False
             self._by_hash.clear()
             self._by_identity.clear()
             self._by_id.clear()
@@ -253,51 +316,46 @@ class AgentCredentialStore:
             self._launch_scope.clear()
             self._launch_created.clear()
             self._pending_launch_revokes.clear()
+            self._pending_db_revokes.clear()
 
-    def _write(self, sql: str, params: tuple[Any, ...]) -> None:
-        database = self._db
-        if database is None:
+    def _tx(self, statements: list[tuple[str, tuple[Any, ...]]]) -> None:
+        """Run *statements* in ONE transaction, or raise
+        ``CredentialPersistError`` (nothing written). No database: no-op."""
+        database = self._database()
+        if database is None or not statements:
             return
         try:
             with database._connection() as conn:
-                conn.execute(sql, params)
-        except Exception:  # persistence never blocks an issue or a revoke
-            _log.warning("agent credential write failed", exc_info=True)
+                for sql, params in statements:
+                    conn.execute(sql, params)
+        except Exception as exc:
+            _log.warning("agent credential write failed: %s", type(exc).__name__)
+            raise CredentialPersistError(str(exc)) from exc
 
-    def _persist_issue(self, credential: AgentCredential, scope: Iterable[str]) -> None:
-        if self._db is None:
+    def _retry_pending_locked(self) -> None:
+        """Write the revokes whose durable write failed earlier (they are
+        already refused in memory)."""
+        if self._database() is None or not self._pending_db_revokes:
             return
         now_wall = float(self._wall())
-        wall_expires = now_wall + (credential.expires_at - self._clock())
-        palette_json = (
-            json.dumps(sorted(credential.palette)) if credential.palette is not None else None
-        )
-        self._write(
-            "INSERT INTO agent_credentials (id, token_sha256, identity, palette_json, palette_name, "
-            "launch_id, project_id, targets_json, expires_at, revoked_at, revocation_reason, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, '[]', ?, NULL, '', ?)",
-            (credential.id, credential.token, credential.principal.identity, palette_json,
-             credential.palette_name, credential.launch_id, credential.project_id,
-             wall_expires, now_wall),
-        )
-        for ref in sorted(scope):
-            self._write(
-                "INSERT OR IGNORE INTO agent_launch_ownership (credential_id, ref, created, recorded_at) "
-                "VALUES (?, ?, 0, ?)",
-                (credential.id, ref, now_wall),
-            )
+        for cred_id, reason in list(self._pending_db_revokes.items()):
+            try:
+                self._tx([("UPDATE agent_credentials SET revoked_at = ?, revocation_reason = ? "
+                           "WHERE id = ? AND revoked_at IS NULL", (now_wall, reason, cred_id))])
+            except CredentialPersistError:
+                return
+            self._pending_db_revokes.pop(cred_id, None)
 
-    def _persist_ownership(self, launch_id: str, ref: str, *, created: bool) -> None:
-        if self._db is None:
-            return
-        cred = next((c for c in self._by_hash.values() if c.launch_id == launch_id), None)
-        if cred is None:
-            return
-        self._write(
-            "INSERT INTO agent_launch_ownership (credential_id, ref, created, recorded_at) "
-            "VALUES (?, ?, ?, ?) ON CONFLICT(credential_id, ref) DO UPDATE SET created = MAX(created, excluded.created)",
-            (cred.id, ref, 1 if created else 0, float(self._wall())),
-        )
+    def _targets_sql(self, identities: Iterable[str]) -> list[tuple[str, tuple[Any, ...]]]:
+        out = []
+        for identity in identities:
+            token_hash = self._by_identity.get(identity)
+            cred = self._by_hash.get(token_hash) if token_hash else None
+            if cred is None:
+                continue
+            bound = sorted(t for t, owner in self._target_to_identity.items() if owner == identity)
+            out.append(("UPDATE agent_credentials SET targets_json = ? WHERE id = ?", (json.dumps(bound), cred.id)))
+        return out
 
     def issue(
         self,
@@ -311,20 +369,29 @@ class AgentCredentialStore:
         project_id: Optional[str] = None,
     ) -> AgentCredential:
         """Mint a new credential.  Returns the credential with the plaintext
-        token; the store keeps only the hash (C4)."""
+        token; the store keeps only the hash (C4).
+
+        Conductor R2: the row and its first scope are written in one
+        transaction BEFORE the credential is live; a write that fails raises
+        ``CredentialPersistError`` and nothing is issued. A rotation whose
+        revoke of the old credential is not durable raises too."""
         clean = str(identity or "").strip()
         if not clean:
             raise ValueError("agent identity is required")
-        self.revoke(clean)
+        with self._lock:
+            if self._revoke_locked(clean, "reissued") == "pending":
+                raise CredentialPersistError("the old credential's revoke was not written")
+        self._flush_launch_revokes()
         with self._lock:
             ttl = min(max(1.0, float(ttl_seconds)), _MAX_TTL_SECONDS)
             plaintext = secrets.token_urlsafe(32)
             token_hash = _hash_token(plaintext)
             cred_id = uuid.uuid4().hex[:16]
+            now_mono, now_wall = self._clock(), float(self._wall())
             credential = AgentCredential(
                 token=token_hash,  # stored form is the hash
                 principal=Principal(PrincipalKind.AGENT, clean),
-                expires_at=self._clock() + ttl,
+                expires_at=now_mono + ttl,
                 palette=palette,
                 id=cred_id,
                 last_used_at=None,
@@ -332,15 +399,30 @@ class AgentCredentialStore:
                 launch_id=(str(launch_id).strip() or None) if launch_id else None,
                 project_id=(str(project_id).strip() or None) if project_id and launch_id else None,
             )
+            scope = (
+                {str(item).strip() for item in scope_items if str(item or "").strip()}
+                if credential.launch_id else set()
+            )
+            palette_json = json.dumps(sorted(palette)) if palette is not None else None
+            statements: list[tuple[str, tuple[Any, ...]]] = [(
+                "INSERT INTO agent_credentials (id, token_sha256, identity, palette_json, palette_name, "
+                "launch_id, project_id, targets_json, expires_at, mono_expires_at, boot_id, revoked_at, "
+                "revocation_reason, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, NULL, '', ?)",
+                (cred_id, token_hash, clean, palette_json, palette_name, credential.launch_id,
+                 credential.project_id, now_wall + ttl, now_mono + ttl, self._boot(), now_wall),
+            )]
+            statements += [(
+                "INSERT INTO agent_launch_ownership (credential_id, ref, created, recorded_at) "
+                "VALUES (?, ?, 0, ?)", (cred_id, ref, now_wall),
+            ) for ref in sorted(scope)]
+            self._retry_pending_locked()
+            self._tx(statements)
             self._by_hash[token_hash] = credential
             self._by_identity[clean] = token_hash
             self._by_id[cred_id] = token_hash
             if credential.launch_id:
-                self._launch_scope[credential.launch_id] = {
-                    str(item).strip() for item in scope_items if str(item or "").strip()
-                }
+                self._launch_scope[credential.launch_id] = scope
                 self._launch_created[credential.launch_id] = set()
-            self._persist_issue(credential, self._launch_scope.get(credential.launch_id or "", set()))
             # Return a copy with the plaintext so the caller can show it once.
             return AgentCredential(
                 token=plaintext,
@@ -397,14 +479,25 @@ class AgentCredentialStore:
             return cred
 
     def scope_add(self, launch_id: str, item_id: str) -> None:
-        """An object the agent created: in its item scope, and its own."""
+        """An object the agent created: in its item scope, and its own.
+
+        Conductor R2: written first; a failed write raises and the object is
+        not the launch's (fail closed)."""
+        clean = str(item_id or "").strip()
         with self._lock:
             scope = self._launch_scope.get(str(launch_id))
             created = self._launch_created.get(str(launch_id))
-            if scope is not None and created is not None and str(item_id or "").strip():
-                scope.add(str(item_id).strip())
-                created.add(str(item_id).strip())
-                self._persist_ownership(str(launch_id), str(item_id).strip(), created=True)
+            if scope is None or created is None or not clean:
+                return
+            cred = next((c for c in self._by_hash.values() if c.launch_id == str(launch_id)), None)
+            if cred is not None:
+                self._tx([(
+                    "INSERT INTO agent_launch_ownership (credential_id, ref, created, recorded_at) "
+                    "VALUES (?, ?, 1, ?) ON CONFLICT(credential_id, ref) DO UPDATE SET created = 1",
+                    (cred.id, clean, float(self._wall())),
+                )])
+            scope.add(clean)
+            created.add(clean)
 
     def created_by(self, launch_id: str, object_id: str) -> bool:
         """Whether the launch's agent created *object_id* during the launch."""
@@ -429,37 +522,51 @@ class AgentCredentialStore:
                     logging.getLogger(__name__).warning("launch revoke hook failed", exc_info=True)
 
     def bind_target(self, identity: str, *targets: Optional[str]) -> None:
+        """Bind *targets* to *identity*. Conductor R2: a target taken from
+        another identity leaves that identity's stored set in the same
+        transaction; a failed write raises and nothing changes."""
+        clean_identity = str(identity or "").strip()
         with self._lock:
+            before = dict(self._target_to_identity)
+            touched = {clean_identity}
             for target in targets:
                 clean = str(target or "").strip()
                 if clean:
-                    self._target_to_identity[clean] = identity
-            token_hash = self._by_identity.get(str(identity or "").strip())
-            cred = self._by_hash.get(token_hash) if token_hash else None
-            if cred is not None:
-                bound = sorted(t for t, owner in self._target_to_identity.items() if owner == identity)
-                self._write("UPDATE agent_credentials SET targets_json = ? WHERE id = ?",
-                            (json.dumps(bound), cred.id))
+                    previous = self._target_to_identity.get(clean)
+                    if previous:
+                        touched.add(previous)
+                    self._target_to_identity[clean] = clean_identity
+            try:
+                self._tx(self._targets_sql(sorted(touched)))
+            except CredentialPersistError:
+                self._target_to_identity = before
+                raise
 
     def revoke(self, identity: str, reason: str = "revoked") -> bool:
+        """Revoke *identity*. True only when the revoke is durable; a revoke
+        whose write failed is refused in memory at once, retried on the next
+        write, and answers False."""
         with self._lock:
-            revoked = self._revoke_locked(identity, reason)
+            outcome = self._revoke_locked(identity, reason)
         self._flush_launch_revokes()
-        return revoked
+        return outcome == "revoked"
 
-    def _revoke_locked(self, identity: str, reason: str = "revoked") -> bool:
+    def _revoke_locked(self, identity: str, reason: str = "revoked") -> str:
+        """``none`` (nothing live), ``revoked`` (durable) or ``pending``
+        (refused in memory; the durable write is queued)."""
         clean = str(identity or "").strip()
         with self._lock:
             token_hash = self._by_identity.pop(clean, None)
             if token_hash is None:
-                return False
+                return "none"
+            outcome = "revoked"
             cred = self._by_hash.pop(token_hash, None)
             if cred:
-                self._write(
-                    "UPDATE agent_credentials SET revoked_at = ?, revocation_reason = ? "
-                    "WHERE id = ? AND revoked_at IS NULL",
-                    (float(self._wall()), str(reason), cred.id),
-                )
+                if self._database() is not None:
+                    self._pending_db_revokes[cred.id] = str(reason)
+                    self._retry_pending_locked()
+                    if cred.id in self._pending_db_revokes:
+                        outcome = "pending"
                 self._by_id.pop(cred.id, None)
                 if cred.launch_id:
                     self._launch_scope.pop(cred.launch_id, None)
@@ -468,7 +575,7 @@ class AgentCredentialStore:
             stale = [target for target, owner in self._target_to_identity.items() if owner == clean]
             for target in stale:
                 self._target_to_identity.pop(target, None)
-            return True
+            return outcome
 
     def revoke_by_id(self, credential_id: str) -> bool:
         """Revoke a credential by its id (for the settings face)."""
