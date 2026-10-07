@@ -16,6 +16,7 @@ import { DrawerWindow } from "../../drawer/DrawerWindow";
 import { useDrawers } from "../../drawer/store";
 import { Screen } from "../../screen/Screen";
 import { resetScreenMembers } from "../../screen/members";
+import { HandSheet } from "../../components/HandSheet";
 import { DragLayer, useDropHand, agentOfTarget, handOriginOfRef } from "..";
 
 const apiFetch = vi.fn();
@@ -88,7 +89,14 @@ const SESSIONS = [
   },
 ];
 
+const LAUNCHED_SESSION = {
+  session: { agent: "claude", session_id: "new1", project_name: "payments-ledger", state: "running" },
+  flight: { origin_ref: "action:a-comms", kind: "action", id: "a-comms", title: "Write the cutover comms", agent: "claude", state: "working", session_key: "claude:new1", launch_id: "launch-1" },
+};
+
 const world = {
+  sessionReads: 0,
+  launchedAfter: null as number | null,
   mode: "yolo",
   preview: { ...PREVIEW } as typeof PREVIEW,
   hand: null as null | (() => unknown),
@@ -97,12 +105,14 @@ const world = {
 
 function route(url: string, init?: { method?: string; json?: unknown }): unknown {
   world.calls.push({ url, init });
+  if (url.startsWith("/api/onboarding/agents")) return { agents: [] };
   if (url === "/api/authority/policy") return { control_mode: world.mode };
   if (url === "/api/agent/hand/preview") {
     const profile = String((init?.json as { profile?: string })?.profile ?? "claude-default");
     return { ...world.preview, control_mode: world.mode, profile };
   }
   if (url === "/api/agent/hand") {
+    world.launchedAfter = world.sessionReads;
     if (world.hand) return world.hand();
     return { status: "launched", launch_id: "launch-1", instruction_state: "sent", profile: (init?.json as { profile?: string })?.profile };
   }
@@ -110,7 +120,12 @@ function route(url: string, init?: { method?: string; json?: unknown }): unknown
   if (url.includes("/meetings")) return { meetings: [{ id: "m-sync", title: "Ledger cutover sync", started_at: today }] };
   if (url.includes("/resources")) return { resources: [] };
   if (url === "/api/people/readiness") return { state: "locked" };
-  if (url.startsWith("/api/coders/sessions")) return { sessions: SESSIONS, flights: [] };
+  if (url.startsWith("/api/coders/sessions")) {
+    world.sessionReads += 1;
+    // The launched agent registers a beat after Hand (its hook arrives late).
+    const launched = world.launchedAfter !== null && world.sessionReads > world.launchedAfter + 1;
+    return { sessions: launched ? [...SESSIONS, LAUNCHED_SESSION] : SESSIONS, flights: [] };
+  }
   return {};
 }
 
@@ -172,6 +187,8 @@ beforeEach(() => {
   world.preview = { ...PREVIEW, refused: [] };
   world.hand = null;
   world.calls = [];
+  world.sessionReads = 0;
+  world.launchedAfter = null;
   apiFetch.mockReset();
   apiFetch.mockImplementation((url: string, init?: { method?: string; json?: unknown }) => {
     try {
@@ -308,6 +325,62 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     expect(line.closest(".desk-screen-hand")).toBeTruthy();
     expect(line).toHaveAttribute("data-host", "screen");
     expect((posts("/api/agent/hand/preview")[0].init?.json as { kind: string }).kind).toBe("note");
+  });
+});
+
+describe("PHILO-14 C3 Astra r1 on #946", () => {
+  it("P1: after Hand the flights are re-read until the launched agent is drawn, with no other desk action", async () => {
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    await within(line).findByText("CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    expect(screen.queryByRole("button", { name: /^Claude Code: cutover comms, AGENT/ })).toBeNull();
+    fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
+    // The session registers on the second read after the launch: the poll waits for it.
+    expect(
+      await screen.findByRole("button", { name: /^Claude Code: cutover comms, AGENT/ }, { timeout: 6000 }),
+    ).toBeTruthy();
+    const reads = world.sessionReads;
+    await new Promise((r) => setTimeout(r, 2500));
+    expect(world.sessionReads).toBe(reads); // bounded: it stops once the agent is drawn
+  }, 15000);
+
+  it("P2: Secure, a second drop on Codex retargets the open sheet", async () => {
+    world.mode = "safe";
+    render(
+      <>
+        <Screen />
+        <DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />
+        <HandSheet />
+      </>,
+    );
+    await screen.findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
+    dragOnto(comms(), conductor());
+    await screen.findByTestId("hand-sheet");
+    expect(screen.getByRole("radio", { name: /Claude Code/ })).toBeChecked();
+    dragOnto(comms(), screen.getByRole("button", { name: /^Codex: reconciliation job, AGENT/ }));
+    await waitFor(() => expect(screen.getByRole("radio", { name: /Codex/ })).toBeChecked());
+  });
+
+  it("P2: Escape cancels the hand and the drawer stays open", async () => {
+    useDrawers.setState({ drawers: [{ projectId: "p-ledger", origin: null }] as never });
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    expect(document.activeElement).toBe(line);
+    fireEvent.keyDown(line, { key: "Escape" });
+    expect(screen.queryByTestId("hand-confirm")).toBeNull();
+    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["p-ledger"]);
+    expect(drawer()).toBeTruthy();
+  });
+
+  it("P3: at 393 the drawer's Icons view does not lift either", async () => {
+    setCompact(true);
+    useDesk.setState({ zoneViewPrefs: { "project:p-ledger": { view: "icons" } } as never });
+    render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
+    await screen.findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
+    expect(document.querySelectorAll(".drawer-window .desk-icon").length).toBeGreaterThan(0);
+    expect(document.querySelectorAll(".drawer-window .desk-icon[draggable='true']")).toHaveLength(0);
   });
 });
 

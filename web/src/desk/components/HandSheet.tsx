@@ -489,5 +489,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
 export function HandSheet() {
   const origin = useAgentHand((s) => s.origin);
   if (!origin) return null;
-  return <Sheet key={`${origin.kind}:${origin.id}`} origin={origin} />;
+  // PHILO-14 C3 (Astra P2 on #946): a drop on another agent retargets an
+  // open sheet: the key carries the agent the drop named.
+  return <Sheet key={`${origin.kind}:${origin.id}:${origin.agent ?? ""}`} origin={origin} />;
 }

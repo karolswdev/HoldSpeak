@@ -16,6 +16,7 @@ import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { ConfirmLine, EgressChip, StateChip, objectSprite } from "../surface";
 import { countToken } from "../surface/count";
 import { AGENT_PROFILE, HAND_PATH, HAND_PREVIEW_PATH } from "../agentHand";
+import { useAgentFlights } from "../agentFlights";
 import {
   HAND_DELIVER_PATH,
   HAND_LAUNCH_PATH,
@@ -33,6 +34,16 @@ import { useDropHand, type HandPending } from "./store";
 import "./hand.css";
 
 const DELIVERY_POLL_MS = 2000;
+/** Astra P1 on #946: after Hand, the flights are re-read until the launch's
+ *  session is in them (the agent object is drawn), at most this many times. */
+export const FLIGHTS_POLL_LIMIT = 30;
+
+/** True when the flights read holds the launch's session (its agent is drawn). */
+export function launchSessionDrawn(launchId: string): boolean {
+  const { sessions, flights } = useAgentFlights.getState();
+  const key = flights.find((f) => f.launchId === launchId)?.sessionKey ?? null;
+  return sessions.some((row) => row.flight?.launchId === launchId || (key !== null && row.key === key));
+}
 
 /** The agent's end of the line: the agent family's sprite. */
 export function agentSprite(agent: string): string {
@@ -90,6 +101,28 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
       window.clearTimeout(timer);
     };
   }, [launched]);
+
+  // The agent appears on the screen and in the drawer with no other desk
+  // action: the flights are re-read (bounded) until its session is in them.
+  const launchId = launched?.launch_id ? String(launched.launch_id) : null;
+  useEffect(() => {
+    if (!launchId) return;
+    let live = true;
+    let tries = 0;
+    let timer = 0;
+    const tick = async () => {
+      if (!live) return;
+      await useAgentFlights.getState().load();
+      tries += 1;
+      if (!live || launchSessionDrawn(launchId) || tries >= FLIGHTS_POLL_LIMIT) return;
+      timer = window.setTimeout(() => void tick(), DELIVERY_POLL_MS);
+    };
+    void tick();
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
+  }, [launchId]);
 
   const previewed = preview ? agentOfProfile(preview.profile, agent) : agent;
   const actual = launched ? agentOfProfile(launched.profile, previewed) : previewed;
@@ -168,7 +201,21 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
   const hasStatus = Boolean(tracker || previewError || (refused.length && !launched) || delivery || launchError);
 
   return (
-    <div className="hand-confirm" ref={ref} tabIndex={-1} data-testid="hand-confirm" data-host={pending.host}>
+    <div
+      className="hand-confirm"
+      ref={ref}
+      tabIndex={-1}
+      data-testid="hand-confirm"
+      data-host={pending.host}
+      onKeyDown={(event) => {
+        // Astra P2 on #946: Escape cancels the hand first; it never reaches
+        // the window's close (the drawer stays open).
+        if (event.key !== "Escape") return;
+        event.preventDefault();
+        event.stopPropagation();
+        cancel();
+      }}
+    >
       <ConfirmLine
         from={{ kind: source.kind, id: source.id, sprite: source.sprite }}
         to={{ kind: "agent", id: `${actual}:hand`, sprite: agentSprite(actual) }}

@@ -248,6 +248,19 @@ def awaiting_transitions(
     return changed
 
 
+def registration_edges(
+    previous: dict[str, Any], current: dict[str, Any]
+) -> list[str]:
+    """Keys that are new in the registry since the last read (PHILO-14 C3).
+
+    A session that registers (its SessionStart, a HoldSpeak launch's agent
+    coming up WORKING) is an edge the faces must see: the screen, the drawers
+    and the Conductor draw a new agent object only when they re-read the
+    flights. It is never a wait: the notify decision reads
+    ``awaiting_transitions`` only. A vanished key is a prune, not an edge."""
+    return [key for key in current if key not in previous]
+
+
 # --- The arming grant (HS-87-02): consent with a countdown ---------------
 #
 # Watching is free; Secure/Normal keystrokes require an active grant for that
@@ -895,6 +908,7 @@ __all__ = [
     "awaiting_snapshot",
     "wait_snapshot",
     "awaiting_transitions",
+    "registration_edges",
     "clamp_ttl",
     "clear_grants",
     "content_hash",

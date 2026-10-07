@@ -202,7 +202,9 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
           ) : view === "icons" ? (
             <IconGrid label={name} onClear={() => setSelectedId(null)}>
               {members.map((m) => {
-                const hand = handOf(m);
+                // No drag gesture at 393 in any view (Astra P3 on #946): the hand
+                // there is the footer's Hand to agent.
+                const hand = compact ? null : handOf(m);
                 return (
                   <DeskIcon
                     key={m.id}
