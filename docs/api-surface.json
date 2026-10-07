@@ -432,7 +432,9 @@
         "GET"
       ],
       "module": "web.routes.agent_hand",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/agents/capabilities",

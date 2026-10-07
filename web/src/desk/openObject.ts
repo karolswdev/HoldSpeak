@@ -8,7 +8,7 @@
  * (`openSourceRef`), `openProjectRoom`, the People surface, Intelligence. */
 import { apiFetch } from "../lib/api";
 import { openIntelligence } from "./intelligenceNavigation";
-import { openCoderSession, openProjectRoom, openSurfaceOr } from "./shell";
+import { openAgentLane, openCoderSession, openProjectRoom, openSurfaceOr } from "./shell";
 import { openSourceRef } from "./surface";
 
 export type Opener = () => void;
@@ -92,6 +92,11 @@ export function refOpener(ref: string | null | undefined): Opener | null {
   if (clean.startsWith("coder:")) {
     const key = clean.slice("coder:".length);
     return key.includes(":") ? () => openCoderSession(key) : null;
+  }
+  // PHILO-14 C2: a launched agent is `launch:<launch_id>`; it opens its lane.
+  if (clean.startsWith("launch:")) {
+    const id = clean.slice("launch:".length);
+    return id ? () => openAgentLane(id) : null;
   }
   // Conductor R1: a held tool call of a launched agent is `gate:<proposal_id>`;
   // it opens the system shade, where the held call is listed.

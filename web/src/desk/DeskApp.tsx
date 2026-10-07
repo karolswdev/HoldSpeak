@@ -19,6 +19,7 @@ import { RecordOrb } from "./components/RecordOrb";
 import { useChatImport } from "./hooks/useChatImport";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
 import { SessionPullout, PanePicker } from "./components/SessionPullout";
+import { LaneWindow } from "./lane/LaneWindow";
 import { DeliveryBoard } from "./components/DeliveryBoard";
 import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
 import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
@@ -302,6 +303,7 @@ function DeskFaces() {
       {!arrivalRequired && <ScheduleCreateWindow />}
       {!arrivalRequired && <PanePicker />}
       {!arrivalRequired && <SessionPullout />}
+      {!arrivalRequired && <LaneWindow />}
       {!arrivalRequired && <AttentionDrawer />}
       {/* Recovery remains direct and in-place: FirstWords opens Setup through
           this existing surface registry without restoring the whole Desk. */}

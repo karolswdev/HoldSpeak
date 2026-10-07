@@ -34,6 +34,8 @@ export interface AgentFlight {
    * for the owner (Secure) or cleanup is outstanding. */
   sessionCleanup: string | null;
   mergedAt: string | null;
+  /** PHILO-14 C2: the launch, the agent's lane window opens on it. */
+  launchId: string | null;
 }
 
 export interface CoderSessionRow {
@@ -74,6 +76,7 @@ export function fromWireFlight(body: any): AgentFlight {
     close: body?.close ? String(body.close) : null,
     sessionCleanup: body?.session_cleanup ? String(body.session_cleanup) : null,
     mergedAt: body?.merged_at ? String(body.merged_at) : null,
+    launchId: body?.launch_id ? String(body.launch_id) : null,
   };
 }
 
