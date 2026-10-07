@@ -3,6 +3,10 @@
 // another meeting's completion never touches it. B01: the record header's
 // unclear lamp reads ONE source, and a fresh detail's zero is authoritative.
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useState, type ReactNode } from "react";
+import summaryWire from "../../../../../../tests/fixtures/philo3_summary_wire.json";
+import { WingSlotContext } from "../../../../desk/surface/wings";
+import { deskQueryClient } from "../../../../lib/queryClient";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { MeetingHeader } from "../MeetingHeader";
 import { HistoryCore } from "../../HistoryCore";
@@ -90,3 +94,99 @@ it("a fresh detail's zero removes a stale list warning", () => {
   render(<MeetingHeader meeting={meeting} data={data as never} />);
   expect(screen.queryByTestId("unclear-lamp")).toBeNull();
 });
+
+// ── Astra iteration 2 ──────────────────────────────────────────────────
+
+function Shell() {
+  const [wings, setWings] = useState<ReactNode>(null);
+  return (
+    <WingSlotContext.Provider value={setWings}>
+      {wings}
+      <HistoryCore scope="meeting:a" />
+    </WingSlotContext.Provider>
+  );
+}
+
+it("the full parent → Review transition shows QUEUED then RAN in Review, and Review reads again", async () => {
+  const states: Record<string, string> = { a: "disabled" };
+  let reviewReads = 0;
+  vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    if (path.startsWith("/api/meetings?")) return { meetings: [row("a", states.a)] } as never;
+    if (path.endsWith("/intelligence/run")) {
+      states.a = "queued";
+      return { state: "queued", drainer: "running", jobId: "job-a" } as never;
+    }
+    if (path === "/api/meetings/a") {
+      return { ...row("a", states.a), segments: [{ text: "Priya owns the migration.", start_time: 0, end_time: 8 }] } as never;
+    }
+    if (path.endsWith("/outcome-review")) {
+      reviewReads += 1;
+      const done = states.a === "ready";
+      return {
+        meeting_id: "a", title: "Meeting a", started_at: "2026-10-07T10:00:00", project: null,
+        job: { job_id: "job-a", status: done ? "succeeded" : "failed", attempt: 1, same_job: false, last_error: null, model_host: "192.168.1.43", extraction_model: "test", updated_at: "2026-10-07T10:00:00" },
+        coverage: { turns: 1, read: done ? 1 : 0, state: done ? "available" : "failed" },
+        extracted_at: null, proposals: [],
+      } as never;
+    }
+    return {} as never;
+  });
+  render(<Shell />);
+  await screen.findByTestId("meeting-row-a");
+  fireEvent.click(screen.getByRole("tab", { name: /Review/i }));
+  fireEvent.click(await screen.findByRole("button", { name: "Re-read: Transcript" }));
+  await waitFor(() => expect(screen.getByTestId("review-receipt")).toHaveTextContent(/^QUEUED /));
+  const readsBefore = reviewReads;
+  states.a = "ready";
+  await waitFor(
+    () => expect(screen.getByTestId("review-receipt")).toHaveTextContent(/^RAN · \d/),
+    { timeout: 6000 },
+  );
+  await waitFor(() => expect(reviewReads).toBeGreaterThan(readsBefore));
+}, 12000);
+
+type WireCase = { state: string; list: Record<string, unknown>; detail: Record<string, unknown> };
+const wires = Object.fromEntries(
+  (summaryWire as { cases: WireCase[] }).cases.map((c) => [c.state, c]),
+) as Record<string, WireCase>;
+
+it("a reload during a run recovers its timed receipt from the real producer rows", async () => {
+  let phase = "imported_off";
+  const id = String(wires.success.detail.id);
+  vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    if (path.startsWith("/api/meetings?")) return { meetings: [wires[phase].list] } as never;
+    if (path.endsWith("/intelligence/run")) {
+      phase = "running";
+      return { state: "queued", drainer: "running", jobId: "job-x" } as never;
+    }
+    if (path === `/api/meetings/${id}`) return wires[phase].detail as never;
+    return {} as never;
+  });
+  const first = render(<HistoryCore />);
+  fireEvent.click(within(await screen.findByTestId(`meeting-row-${id}`)).getByRole("button", { name: /Run summary/i }));
+  await screen.findByText(/^QUEUED \d/);
+  first.unmount();
+  deskQueryClient.clear();
+  render(<HistoryCore />);
+  await screen.findByTestId(`meeting-row-${id}`);
+  // The remount adopts the active run from the durable row.
+  await screen.findByText(/^QUEUED \d/);
+  phase = "success";
+  await act(async () => {
+    window.dispatchEvent(new Event("focus"));
+  });
+  await screen.findByText(/^RAN · \d/, undefined, { timeout: 6000 });
+}, 12000);
+
+it("a reload after the run ended shows the durable receipt's time", async () => {
+  const id = String(wires.success.detail.id);
+  vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    if (path.startsWith("/api/meetings?")) return { meetings: [wires.success.list] } as never;
+    if (path === `/api/meetings/${id}`) return wires.success.detail as never;
+    return {} as never;
+  });
+  render(<HistoryCore />);
+  await screen.findByTestId(`meeting-row-${id}`);
+  await screen.findByText(/^RAN · \d/);
+});
+

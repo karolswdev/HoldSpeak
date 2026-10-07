@@ -187,8 +187,52 @@ export function download(blob: Blob, name: string) {
 export type RunIdentity = { meetingId: string; jobId: string };
 export type Receipt = { text: string; tone?: "danger"; run?: RunIdentity };
 
-export const ACTIVE_RUN_STATES = new Set(["queued", "pending", "running", "claimed", "reserved"]);
+export const ACTIVE_RUN_STATES = new Set(["queued", "pending", "running", "claimed", "reserved", "retrying"]);
 export const FINAL_RUN_STATES = new Set(["ready", "complete", "error", "failed"]);
+
+/** PHILO-15-07 (Astra iteration 2): the footer receipt a face adopts on its
+ *  first read of the rows, from durable state only. An active run (the row's
+ *  intel state, or its job's status) gives a bound `QUEUED hh:mm`; otherwise
+ *  the newest stored run receipt gives `RAN · hh:mm` / `FAILED · hh:mm` at the
+ *  time its job was last written. Null when no run is on record. */
+export function adoptDurableRunReceipt(
+  rows: Record<string, unknown>[],
+): { receipt: Receipt; active: boolean } | null {
+  const jobOf = (row: Record<string, unknown>) =>
+    (row.intel_job && typeof row.intel_job === "object" ? row.intel_job : {}) as Record<string, unknown>;
+  const active = rows.find((row) =>
+    ACTIVE_RUN_STATES.has(intelStateOf(row.intel_status)) ||
+    ACTIVE_RUN_STATES.has(String(jobOf(row).status ?? "")),
+  );
+  if (active) {
+    const job = jobOf(active);
+    const at = typeof job.requested_at === "string" ? job.requested_at : new Date().toISOString();
+    return {
+      active: true,
+      receipt: {
+        text: `QUEUED ${clockTime(at)}`,
+        run: { meetingId: String(active.id), jobId: `durable:${String(active.id)}` },
+      },
+    };
+  }
+  let newest: { row: Record<string, unknown>; at: string } | null = null;
+  for (const row of rows) {
+    const receipt = row.run_receipt as Record<string, unknown> | null | undefined;
+    const at = jobOf(row).updated_at;
+    if (!receipt || typeof receipt !== "object" || typeof at !== "string") continue;
+    if (!newest || at > newest.at) newest = { row, at };
+  }
+  if (!newest) return null;
+  const stored = newest.row.run_receipt as Record<string, unknown>;
+  const state = stored.outcome === "succeeded" ? "ready" : "failed";
+  return {
+    active: false,
+    receipt: {
+      ...finishedRunReceipt(state, newest.at),
+      run: { meetingId: String(newest.row.id), jobId: String(stored.job_id ?? newest.row.id) },
+    },
+  };
+}
 
 /** The intel state word from either wire shape (string or `{state}`). */
 export function intelStateOf(raw: unknown): string {

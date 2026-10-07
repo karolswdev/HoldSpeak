@@ -126,12 +126,13 @@ def test_a_finally_loop_is_degenerate_and_ordinary_speech_is_not():
     assert not is_degenerate("No, no, no. We ship on Friday.")
 
 
-def test_a_looping_span_becomes_an_honest_mark_and_keeps_its_real_words():
+def test_a_looping_span_keeps_every_word_and_gets_an_honest_mark():
+    """Ruling on Astra's iteration 2: a mark NEVER deletes recognised words."""
     loop = "Owner, Priya Shah. Action. " + " ".join(["finally"] * 250)
     assert loop_start(loop) == 4
     marked = mark_degenerate(loop, 28.24, 30.0)
-    assert marked == "Owner, Priya Shah. Action. [unclear 0:28–0:30]"
-    assert "finally" not in marked
+    assert marked == loop + " [unclear 0:28–0:30]"
+    assert marked.split()[:-2] == loop.split()
     assert count_unclear([marked, "clean text"]) == 1
     assert unclear_mark(61.0, 65.4) == "[unclear 1:01–1:05]"
 
@@ -181,8 +182,9 @@ def test_a_window_still_degenerate_after_the_retry_carries_a_mark_and_a_count(db
     result = import_meeting(timed_audio, db=db, transcriber=whisper, config=_config())
 
     text = _text(result.state)
-    assert "finally finally" not in text
-    assert "Priya Shah will [unclear 0:28–0:33]" in text, text
+    # The loop keeps its words and carries the mark; nothing is deleted.
+    assert text.count("finally") == 250, text
+    assert "finally [unclear 0:28–0:33]" in text, text
     # The degenerate window was decoded once more, warm, before the mark.
     assert any(call["temperature"] for call in whisper.calls)
     stored = db.meetings.get_meeting(result.state.id)
@@ -197,7 +199,9 @@ def test_a_text_only_transcriber_still_gets_the_honest_mark(db, timed_audio):
             return "Owner, Priya Shah. Action. " + " ".join(["finally"] * 250)
 
     result = import_meeting(timed_audio, db=db, transcriber=TextOnly(), config=_config())
-    assert result.state.segments[0].text == "Owner, Priya Shah. Action. [unclear 0:00–0:30]"
+    text = result.state.segments[0].text
+    assert text.startswith("Owner, Priya Shah. Action. finally")
+    assert text.endswith("finally [unclear 0:00–0:30]")
 
 
 # --------------------------------------------------------------- the title
@@ -275,7 +279,9 @@ def test_an_empty_retry_never_discards_good_words(db, tmp_path):
     stored = db.meetings.get_meeting(result.state.id)
     text = " ".join(s.text for s in stored.segments)
     assert "Priya owns the migration." in text
-    assert "[unclear 0:08–0:18]" in text
+    # The first decode's words stay (all of them) and the mark is added.
+    assert text.count("finally") == 250
+    assert "finally [unclear 0:08–0:18]" in text
     assert stored.to_dict()["unclearSpans"] == 1
 
 
@@ -292,7 +298,7 @@ def test_a_window_that_is_all_loop_and_an_empty_retry_is_an_unclear_span(db, tim
     result = import_meeting(timed_audio, db=db, transcriber=AllLoop(), config=_config())
     stored = db.meetings.get_meeting(result.state.id)
     assert stored.to_dict()["unclearSpans"] >= 1
-    assert "finally finally" not in " ".join(s.text for s in stored.segments)
+    assert "[unclear " in " ".join(s.text for s in stored.segments)
 
 
 @pytest.mark.parametrize(
@@ -338,4 +344,24 @@ def test_the_sent_summary_says_how_many_spans_are_unclear(db):
     assert "Transcript: 2 unclear spans" in body
     # The line comes from the marks, never the model, and never a zero.
     assert "unclear" not in render_document(db, "meeting_summary:clean").body_md
+
+
+def test_twelve_spoken_nexts_keep_all_twelve_words_and_carry_the_mark(db, timed_audio):
+    """Astra's iteration-2 probe: "next." twelve times in one decoded segment.
+    The guard may not tell it from a loop; it keeps every word and adds the mark."""
+
+    class Nexts:
+        supports_segments = True
+
+        def transcribe(self, audio, *, admission=None, segments=False, temperature=None):
+            length = len(audio) / TARGET_SAMPLE_RATE
+            if length < 20:
+                return []
+            return [{"start": 0.0, "end": 22.0, "text": " ".join(["next."] * 12)}]
+
+    result = import_meeting(timed_audio, db=db, transcriber=Nexts(), config=_config())
+    stored = db.meetings.get_meeting(result.state.id)
+    text = " ".join(s.text for s in stored.segments)
+    assert text == " ".join(["next."] * 12) + " [unclear 0:00–0:22]", text
+    assert stored.to_dict()["unclearSpans"] == 1
 

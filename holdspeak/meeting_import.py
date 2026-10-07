@@ -395,7 +395,7 @@ def _transcribe_import_windows(
     (``supports_segments``, the real :class:`~holdspeak.transcribe.Transcriber`)
     goes through :func:`_transcribe_segmented`, where no window cuts a
     sentence. A plain text transcriber keeps fixed windows. Both paths put an
-    honest mark on a degenerate span instead of the loop.
+    honest mark beside a degenerate span (its words are kept).
     """
     if getattr(transcriber, "supports_segments", False) is True:
         return _transcribe_segmented(
@@ -486,9 +486,10 @@ def _transcribe_segmented(
     2. A segment at the cut is dropped and decoded again at the start of the
        next window, so a sentence is never split across two windows.
     3. A window with a degenerate segment (a repeat loop) is decoded once
-       more with a warm temperature; the decode with fewer bad segments wins.
-    4. A segment that is still degenerate keeps its words before the loop and
-       carries ``[unclear m:ss–m:ss]`` for the rest.
+       more with a warm temperature; the retry wins only when it is cleaner
+       and carries at least as many real words.
+    4. A segment that is still degenerate keeps ALL its words and gets
+       ``[unclear m:ss–m:ss]`` appended (a mark never deletes words).
     """
     from .transcribe import WHISPER_RETRY_TEMPERATURES
 
@@ -525,7 +526,7 @@ def _transcribe_segmented(
             # Astra r1 on #982: the retry wins only when it is cleaner AND
             # carries at least as many real words. An empty or thinner retry
             # never discards good words; the first decode stays and its loop
-            # becomes an honest mark (so an empty retry on a window that held
+            # carries an honest mark (so an empty retry on a window that held
             # speech is an unclear span, never a clean `complete`).
             retry_words = _clean_words(retry)
             if retry_bad < bad and retry_words > 0 and retry_words >= _clean_words(kept):

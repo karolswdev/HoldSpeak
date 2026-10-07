@@ -43,7 +43,7 @@ import { renderHeroSlot } from "./core-layout";
 import {
   WINGS, clockTime, ledgerDate, download, needsIntelligence, summaryIsOff, meetingsHeadline,
   hasOpenMeetingActions, finishedRunReceipt, intelStateOf,
-  ACTIVE_RUN_STATES, FINAL_RUN_STATES, type RunIdentity,
+  ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt, type RunIdentity,
   type Receipt, type DetailView,
   MeetingDetail, ImportSection, CatalogRail, DoorSection,
 } from "./history";
@@ -180,16 +180,35 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // for that run: from the poll below, or when a refreshed list row shows
   // the meeting active and then final (a row read before the run started
   // still holds the PREVIOUS run's final state and never counts).
-  const settleRun = useCallback((run: RunIdentity, state: string) => {
+  // Astra iteration 2: the settled receipt KEEPS its run identity, so the
+  // Review wing (which shows only a receipt bound to its meeting) sees the
+  // completion too.
+  const settleRun = useCallback((run: RunIdentity, state: string, at?: string) => {
     setReceipt((current) =>
       current?.run &&
       current.run.meetingId === run.meetingId &&
       current.run.jobId === run.jobId
-        ? finishedRunReceipt(state, new Date().toISOString())
+        ? { ...finishedRunReceipt(state, at || new Date().toISOString()), run: current.run }
         : current,
     );
   }, []);
   const seenActive = useRef<string | null>(null);
+  // Astra iteration 2 (reload): the face's first read of the rows adopts the
+  // durable run state, so a reload never forgets the timed receipt. An active
+  // run becomes a bound `QUEUED hh:mm` (and settles below when it ends); with
+  // none active, the newest durable run receipt says `RAN · hh:mm` (or
+  // `FAILED · hh:mm`) at the time the hub recorded it.
+  const adoptedDurable = useRef(false);
+  useEffect(() => {
+    if (adoptedDurable.current || meetingRows.length === 0) return;
+    adoptedDurable.current = true;
+    const adopted = adoptDurableRunReceipt(meetingRows);
+    if (!adopted) return;
+    if (adopted.active && adopted.receipt.run) {
+      seenActive.current = `${adopted.receipt.run.meetingId}:${adopted.receipt.run.jobId}`;
+    }
+    setReceipt((current) => current ?? adopted.receipt);
+  }, [meetingRows]);
   useEffect(() => {
     const run = receipt?.run;
     if (!run) return;
@@ -203,7 +222,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     }
     if (FINAL_RUN_STATES.has(state) && seenActive.current === key) {
       seenActive.current = null;
-      settleRun(run, state);
+      const job = row.intel_job as Record<string, unknown> | null | undefined;
+      settleRun(run, state, typeof job?.updated_at === "string" ? job.updated_at : undefined);
     }
   }, [meetingRows, receipt, settleRun]);
   // A later receipt (export, queued run) takes the slot from the park outcome.

@@ -6,7 +6,7 @@ shape: the same short group repeated many times in a row, as words ("finally
 finally", "and multiply and multiply") or inside one long token
 ("Sukekekekeke..."). This module detects that shape, so the importer can
 decode the window again and, when the second decode is also bad, put an
-honest mark on the span instead of the loop: ``[unclear 0:28–0:30]``.
+honest mark beside the span (its words are kept): ``[unclear 0:28–0:30]``.
 
 Astra r1 on #982: the compression ratio alone is not the test. A count-up
 ("number 1 ... number 50") compresses at 4.08 and is speech; six "yes" and
@@ -104,15 +104,14 @@ def unclear_mark(start: float, end: float) -> str:
 
 
 def mark_degenerate(text: str, start: float, end: float) -> str:
-    """Keep the words before the loop; the loop itself becomes the mark.
+    """Keep every recognised word and append the honest mark.
 
-    When the loop starts at the first word, the whole text becomes the mark.
+    Owner-side ruling on Astra's iteration 2 (#982): a mark NEVER deletes
+    words. Real speech can look like a loop ("next." twelve times), so the
+    guard annotates and never replaces: a true Whisper loop reads as the
+    repeated word plus the mark (ugly but honest), and the WARN lamp counts it.
     """
-    words = text.split()
-    index = loop_start(text)
-    prefix = " ".join(words[:index]) if index else ""
-    mark = unclear_mark(start, end)
-    return f"{prefix} {mark}".strip()
+    return f"{text.strip()} {unclear_mark(start, end)}".strip()
 
 
 def count_unclear(texts) -> int:
