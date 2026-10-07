@@ -233,8 +233,8 @@ def test_the_agents_lane_window_at_1440_and_393(tmp_path: Path, monkeypatch) -> 
                 for word in ("BRIEF", "WORK", "COMMIT", "PR", "HELD", "ASKS", "MERGE"):
                     assert word in track_text, track_text
                 assert "#413" in track_text and "1 call" in track_text and "now" in track_text
-                assert page.locator("[data-testid='lane-question']").text_content() == QUESTION
-                assert "Jordan owns it. Avery reviews." in (page.locator("[data-testid='lane-draft']").text_content() or "")
+                assert page.locator("[data-testid='lane-ask'] .ask-well-question").text_content() == QUESTION
+                assert "Jordan owns it. Avery reviews." in (page.locator("[data-testid='lane-ask'] .ask-well-draft").text_content() or "")
                 rail = page.locator("[data-testid='lane-rail']").text_content() or ""
                 for word in ("BRIEF", "READ", "SAYS", "WRITE", "RUN", "COMMIT", "PR", "HELD", "ASKS", "MERGE"):
                     assert word in rail, rail
@@ -251,6 +251,23 @@ def test_the_agents_lane_window_at_1440_and_393(tmp_path: Path, monkeypatch) -> 
 
                 page.wait_for_timeout(400)
                 page.screenshot(path=str(SHOTS / f"C2-lane-{width}.png"))
+                if width == 393:
+                    # C2b: every footer verb is whole in the frame, 44 px tall,
+                    # and is the element at its own centre; no side scroll.
+                    verbs = page.locator(".is-lane .surface-footer-verbs button").evaluate_all(
+                        """(els) => els.map((el) => {
+                            const r = el.getBoundingClientRect();
+                            const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                            return {name: el.textContent.trim(), left: r.left, right: r.right, top: r.top,
+                                    bottom: r.bottom, height: r.height, hit: !!hit && el.contains(hit)};
+                        })""")
+                    names = [v["name"] for v in verbs]
+                    assert any("Stop" in n for n in names) and any("Open PR" in n for n in names), names
+                    for v in verbs:
+                        assert v["left"] >= 0 and v["right"] <= 393 and v["top"] >= 0 and v["bottom"] <= 852, v
+                        assert v["height"] >= 44, v
+                        assert v["hit"], v
+                    assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")
 
                 # Raw: the terminal pane in place of the lane, and back.
                 page.locator("[data-testid='lane-raw']").click()
@@ -262,7 +279,7 @@ def test_the_agents_lane_window_at_1440_and_393(tmp_path: Path, monkeypatch) -> 
                 page.locator("[data-testid='lane-rail']").wait_for(timeout=5000)
                 if width == 393:
                     # Approve the held call from the rail: the real gate route decides it.
-                    held = page.locator(".lw-ev").filter(has_text="psql -h staging-ledger")
+                    held = page.locator(".lane-rail-entry").filter(has_text="psql -h staging-ledger")
                     with page.expect_response(lambda r: "/toolu_psql/decide" in r.url) as got:
                         held.locator("[data-testid='lane-approve']").click()
                     assert got.value.status == 200, got.value.text()

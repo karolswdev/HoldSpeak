@@ -1,3 +1,7 @@
+/** PARKED 2026-10-07 (PHILO-14 C2b): the lane composes the library species
+ * (`web/src/desk/surface/objects/`) since C2b; these local copies are kept
+ * here, out of the build (tsconfig and vitest exclude `_parked`), per
+ * "never delete". Relative imports below are as they were in `lane/`. */
 /** PHILO-14 C2 — the lane's parts, LOCAL to the agent's window.
  *
  * Lane B1 ports the object species (TimelineRail, StationTrack, AskWell,

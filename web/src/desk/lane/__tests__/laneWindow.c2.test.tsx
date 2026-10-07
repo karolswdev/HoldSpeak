@@ -216,7 +216,7 @@ describe("the agent's window", () => {
     useAgentFlights.setState({ flights: [fromWireFlight({ origin_ref: "action:a1", title: "Write the rollback runbook", agent: "claude", state: "waiting", session_key: KEY, launch_id: "launch_f2_runbook" })] });
     await openLane(fixture());
     expect(screen.getAllByText("Claude Code: Write the rollback runbook").length).toBeGreaterThan(0);
-    expect(screen.getByTestId("lane-question").textContent).toBe(QUESTION);
+    expect(screen.getByTestId("lane-ask").querySelector(".ask-well-question")?.textContent).toBe(QUESTION);
     expect(screen.getByText("CLAUDE CODE ASKS · 6 MIN")).toBeTruthy();
     const rail = screen.getByTestId("lane-rail");
     expect(within(rail).getByText("COMMIT")).toBeTruthy();
@@ -235,7 +235,7 @@ describe("the agent's window", () => {
     expect(screen.getByTestId("lane-stop")).toBeTruthy();
     expect(screen.getByTestId("lane-open-pr")).toBeTruthy();
     // The draft's host is the drafting model's.
-    await waitFor(() => expect(within(screen.getByTestId("lane-draft")).getByText("API.ANTHROPIC.COM")).toBeTruthy());
+    await waitFor(() => expect(within(screen.getByTestId("lane-ask").querySelector(".ask-well-draft") as HTMLElement).getByText("API.ANTHROPIC.COM")).toBeTruthy());
   });
 
   it("the Brief verb unfolds the brief in a well", async () => {
@@ -262,7 +262,7 @@ describe("the agent's window", () => {
   it("TO ANSWER: Use draft fills the field and does not send; Enter sends to the lane's session with the wait id", async () => {
     await openLane(fixture());
     const field = screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement;
-    fireEvent.click(screen.getByTestId("lane-use-draft"));
+    fireEvent.click(within(screen.getByTestId("lane-ask")).getByRole("button", { name: "Use draft" }));
     expect(field.value).toBe("Jordan owns it. Avery reviews.");
     expect(posts("/steer")).toEqual([]);
     fireEvent.change(field, { target: { value: "Jordan owns it." } });
@@ -279,6 +279,59 @@ describe("the agent's window", () => {
     fireEvent.keyDown(field, { key: "Enter" });
     await waitFor(() => expect(posts(STEER)).toHaveLength(1));
     expect(api.request.mock.calls.every(([url]) => !String(url).includes("pane%3A"))).toBe(true);
+  });
+
+  it("a stalled send: the draft stays editable; after 20 s Answer returns and says NOT CONFIRMED; the next press is a new answer", async () => {
+    await openLane(fixture());
+    // The hub never answers the first send.
+    let late: ((r: Response) => void) | null = null;
+    api.request.mockImplementation((url: string) => {
+      if (String(url).endsWith("/steer")) return new Promise<Response>((resolve) => { late = resolve; });
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({}) } as unknown as Response);
+    });
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const field = screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement;
+      const button = within(screen.getByTestId("lane-ask")).getByRole("button", { name: "Answer" });
+      fireEvent.change(field, { target: { value: "Jordan owns it." } });
+      fireEvent.keyDown(field, { key: "Enter" });
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      expect(posts(STEER)).toHaveLength(1);
+      expect(button.getAttribute("aria-busy")).toBe("true");
+      // Pending: the draft is still the owner's to edit.
+      expect(field.disabled).toBe(false);
+      fireEvent.change(field, { target: { value: "Jordan owns it. Avery reviews." } });
+      expect(field.value).toBe("Jordan owns it. Avery reviews.");
+      await act(async () => { await vi.advanceTimersByTimeAsync(19_999); });
+      expect(button.getAttribute("aria-busy")).toBe("true");
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(button.getAttribute("aria-busy")).toBeNull();
+      expect(button).not.toBeDisabled();
+      const receipt = screen.getByTestId("lane-receipt");
+      expect(receipt.textContent).toMatch(/^NOT CONFIRMED · \d\d:\d\d · Jordan owns it\.$/);
+      expect(receipt.textContent).not.toContain("NOT SENT");
+      // Nothing is sent again by itself.
+      await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+      expect(posts(STEER)).toHaveLength(1);
+      // A late reply to the stalled send changes nothing.
+      await act(async () => {
+        late?.({ ok: true, status: 200, json: async () => ({ status: "delivered" }) } as unknown as Response);
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^NOT CONFIRMED/);
+      expect(field.value).toBe("Jordan owns it. Avery reviews.");
+      // The next press sends again: a new answer to the same wait.
+      answer({});
+      fireEvent.keyDown(field, { key: "Enter" });
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      expect(posts(STEER)).toEqual([
+        { text: "Jordan owns it.", submit: true, kind: "answer", wait_id: "w-1" },
+        { text: "Jordan owns it. Avery reviews.", submit: true, kind: "answer", wait_id: "w-1" },
+      ]);
+      expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^SENT · /);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("an answer to a wait the hub no longer holds is refused and said", async () => {

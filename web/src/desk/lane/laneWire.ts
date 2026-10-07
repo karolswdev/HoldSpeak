@@ -7,7 +7,7 @@
  * an empty list. */
 import { wireClock, wireDate } from "../surface/format";
 import { windowName } from "../windowName";
-import type { ObjectTone, Station, TimelineEntry } from "./species";
+import type { ObjectTone, Station, TimelineEntry } from "../surface";
 
 export type NotRead = { not_read: string };
 

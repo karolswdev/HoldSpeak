@@ -8,7 +8,7 @@
  *  and the EgressChip that names where the draft was made. `egress` names
  *  where the answer itself goes, beside Answer (egress where egress happens).
  */
-import { useRef } from "react";
+import { useRef, type ReactNode, type Ref } from "react";
 import { EgressChip, StringGadget } from "../gadgets";
 import { Button } from "../../../components/signal/Signal";
 import "./objects.css";
@@ -31,6 +31,20 @@ export interface AskWellProps {
    *  drawn beside Answer whether or not a draft exists. */
   egress?: { label: string; scope?: "local" | "mixed" | "cloud" | "remote" };
   busy?: boolean;
+  /** The answer cannot be sent now (no session to send it to): Answer is
+   *  disabled, without the busy spinner; the field stays open. */
+  disabled?: boolean;
+  /** Each new value starts the field's mic (a Speak answer press). */
+  listenSignal?: number;
+  /** The mic's draft scope: a recovered capture lands there. */
+  draftScope?: string;
+  /** The answer field, for a caller that focuses it. */
+  inputRef?: Ref<HTMLInputElement>;
+  /** The hand's gate beside Answer (Secure / Normal: `MODE · ARM FIRST`
+   *  and the ARM key), drawn after the egress chip; wraps at 393. */
+  arm?: ReactNode;
+  /** Pass-through data-testid for the root `section`. */
+  "data-testid"?: string;
 }
 
 export function AskWell({
@@ -45,16 +59,23 @@ export function AskWell({
   draftEgress,
   egress,
   busy,
+  disabled,
+  listenSignal,
+  draftScope,
+  inputRef,
+  arm,
+  "data-testid": testId,
 }: AskWellProps) {
   const caption = [`${agent.toUpperCase()} ASKS`, age?.toUpperCase()].filter(Boolean).join(" · ");
   const field = useRef<HTMLInputElement | null>(null);
   // An empty answer is never sent: the press takes you to the field.
   const send = () => {
+    if (busy || disabled) return;
     if (value.trim()) onAnswer(value.trim());
     else field.current?.focus();
   };
   return (
-    <section className="ask-well" aria-label={`${agent} asks`}>
+    <section className="ask-well" aria-label={`${agent} asks`} data-testid={testId}>
       <p className="ask-well-caption">{caption}</p>
       <p className="ask-well-question">{question}</p>
       <div className="ask-well-answer">
@@ -64,19 +85,25 @@ export function AskWell({
           onChange={onChange}
           placeholder="Say or type the answer"
           micLabel="Speak the answer"
-          disabled={busy}
-          inputRef={field}
+          micStartSignal={listenSignal}
+          micDraftScope={draftScope}
+          inputRef={(el) => {
+            field.current = el;
+            if (typeof inputRef === "function") inputRef(el);
+            else if (inputRef) (inputRef as { current: HTMLInputElement | null }).current = el;
+          }}
           onKeyDown={(event) => {
-            if (event.key === "Enter") {
+            if (event.key === "Enter" && !event.nativeEvent.isComposing) {
               event.preventDefault();
               send();
             }
           }}
         />
-        <Button variant="primary" onClick={send} loading={busy}>
+        <Button variant="primary" onClick={send} loading={busy} disabled={disabled}>
           Answer
         </Button>
         {egress ? <EgressChip label={egress.label} scope={egress.scope} /> : null}
+        {arm ?? null}
       </div>
       {draft ? (
         <div className="ask-well-draft">
