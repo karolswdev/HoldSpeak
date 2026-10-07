@@ -107,25 +107,33 @@ def _bind_host_sockets(host: str) -> list[socket.socket]:
         bound: list[socket.socket] = []
         port = 0
         retry = False
+        unusable: Optional[OSError] = None
         for family, sockaddr in addresses:
-            sock = socket.socket(family, socket.SOCK_STREAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            if family == socket.AF_INET6:
-                sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
             try:
+                sock = socket.socket(family, socket.SOCK_STREAM)
+            except OSError as exc:  # the family itself is missing here
+                unusable = exc
+                continue
+            try:
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                if family == socket.AF_INET6:
+                    sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
                 sock.bind((sockaddr[0], port, *sockaddr[2:]))
             except OSError as exc:
                 sock.close()
-                if not bound:
-                    raise
-                if exc.errno == errno.EADDRINUSE:
-                    retry = True
+                if bound and exc.errno == errno.EADDRINUSE:
+                    retry = True  # the port the first address took is busy here
                     break
-                continue  # this machine cannot bind the address (e.g. no ::1)
+                # This machine cannot bind the address (no ::1, an address it
+                # does not own): skip it wherever it sits in the order.
+                unusable = exc
+                continue
             sock.set_inheritable(True)
             bound.append(sock)
             port = int(sock.getsockname()[1])
         if not retry:
+            if not bound:
+                raise unusable or OSError(errno.EADDRNOTAVAIL, f"no usable address for {host!r}")
             return bound
         for sock in bound:
             sock.close()

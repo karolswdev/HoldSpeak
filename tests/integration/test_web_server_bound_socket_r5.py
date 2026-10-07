@@ -152,3 +152,59 @@ def test_localhost_listens_on_ipv4_and_ipv6_on_one_port(isolated_db) -> None:
     finally:
         server.stop()
     assert held and all(s.fileno() == -1 for s in held), "stop() left a held socket open"
+
+
+#: An IPv6 address this machine does not own (RFC 3849 documentation range):
+#: binding it fails with EADDRNOTAVAIL, as an unavailable ::1 would.
+_UNAVAILABLE_V6 = (socket.AF_INET6, socket.SOCK_STREAM, 6, "", ("2001:db8::1", 0, 0, 0))
+_LOOPBACK_V4 = (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", 0))
+
+
+def _fixture_resolver(monkeypatch, answers: list) -> None:
+    real = socket.getaddrinfo
+
+    def resolve(host, *args, **kwargs):
+        if host == "fixture-host":
+            return list(answers)
+        return real(host, *args, **kwargs)
+
+    monkeypatch.setattr(web_server_module.socket, "getaddrinfo", resolve)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("order", ["v6-first", "v4-first"])
+def test_an_unavailable_address_is_skipped_wherever_it_sits(monkeypatch, order) -> None:
+    """Astra round 2 on #915: an address the machine cannot bind is skipped
+    in any position; the usable one is held and serves."""
+    answers = [_UNAVAILABLE_V6, _LOOPBACK_V4] if order == "v6-first" else [_LOOPBACK_V4, _UNAVAILABLE_V6]
+    _fixture_resolver(monkeypatch, answers)
+    socks = web_server_module._bind_host_sockets("fixture-host")
+    try:
+        assert [(s.family, s.getsockname()[0]) for s in socks] == [(socket.AF_INET, "127.0.0.1")]
+        [listener] = socks
+        listener.listen(1)
+        with socket.create_connection(("127.0.0.1", listener.getsockname()[1]), timeout=10):
+            pass
+    finally:
+        for s in socks:
+            s.close()
+
+
+@pytest.mark.integration
+def test_no_usable_address_raises(monkeypatch) -> None:
+    _fixture_resolver(monkeypatch, [_UNAVAILABLE_V6])
+    with pytest.raises(OSError):
+        web_server_module._bind_host_sockets("fixture-host")
+
+
+@pytest.mark.integration
+def test_a_hub_serves_ipv4_when_the_first_address_is_unavailable(isolated_db, monkeypatch) -> None:
+    _fixture_resolver(monkeypatch, [_UNAVAILABLE_V6, _LOOPBACK_V4])
+    real_bind = web_server_module._bind_host_sockets
+    monkeypatch.setattr(web_server_module, "_bind_host_sockets", lambda host: real_bind("fixture-host"))
+    server = _localhost_server()
+    server.start()
+    try:
+        assert _health(f"http://127.0.0.1:{server.port}") == 200
+    finally:
+        server.stop()
