@@ -762,6 +762,8 @@ never sent, the press focuses the field), then the DRAFT line: the draft,
   `listenSignal?` (each new value starts the field's mic: a Speak answer
   press), `draftScope?` (the mic's draft scope), `inputRef?` (the field,
   for a caller that focuses it, as after Use draft).
+- `arm?` (the hand's gate beside Answer, after the egress chip: in Secure
+  or Normal, `MODE · ARM FIRST` and the ARM key; the answer row wraps).
 
 TimelineRail, StationTrack, AskWell, PRCard and FilesChanged take a
 pass-through `data-testid` (FilesChanged puts it on its file list).

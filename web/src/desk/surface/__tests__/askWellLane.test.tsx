@@ -45,6 +45,15 @@ describe("AskWell lane props", () => {
     expect(onAnswer).not.toHaveBeenCalled();
   });
 
+  it("arm: the hand's gate sits in the answer row, after Answer", () => {
+    const { container } = render(
+      <AskWell {...base} value="" onAnswer={() => undefined} arm={<span data-testid="arm">NORMAL · ARM FIRST</span>} />,
+    );
+    const row = container.querySelector(".ask-well-answer") as HTMLElement;
+    expect(within(row).getByTestId("arm").textContent).toBe("NORMAL · ARM FIRST");
+    expect(row.lastElementChild).toBe(screen.getByTestId("arm"));
+  });
+
   it("busy: Answer spins and the field waits", () => {
     render(<AskWell {...base} value="Jordan" onAnswer={() => undefined} busy />);
     expect(screen.getByRole("button", { name: "Answer" }).getAttribute("aria-busy")).toBe("true");

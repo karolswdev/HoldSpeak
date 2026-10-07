@@ -368,29 +368,27 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
     if (await useLane.getState().send(text, { waitId: wait.wait_id ?? null })) setDraft("");
   };
   return (
-    <>
-      <AskWell
-        data-testid="lane-ask"
-        agent={agent}
-        age={waitAge(wait.started)}
-        question={String(wait.question)}
-        value={value}
-        onChange={setDraft}
-        onAnswer={(text) => void answer(text)}
-        draft={draft}
-        onUseDraft={(text) => {
-          setDraft(text);
-          inputRef.current?.focus();
-        }}
-        draftEgress={draft ? draftEgress : undefined}
-        busy={sending}
-        disabled={!key}
-        listenSignal={answerSeq}
-        draftScope={scope}
-        inputRef={inputRef}
-      />
-      <ArmLine lane={lane} />
-    </>
+    <AskWell
+      data-testid="lane-ask"
+      agent={agent}
+      age={waitAge(wait.started)}
+      question={String(wait.question)}
+      value={value}
+      onChange={setDraft}
+      onAnswer={(text) => void answer(text)}
+      draft={draft}
+      onUseDraft={(text) => {
+        setDraft(text);
+        inputRef.current?.focus();
+      }}
+      draftEgress={draft ? draftEgress : undefined}
+      busy={sending}
+      disabled={!key}
+      listenSignal={answerSeq}
+      draftScope={scope}
+      inputRef={inputRef}
+      arm={<ArmLine lane={lane} />}
+    />
   );
 }
 

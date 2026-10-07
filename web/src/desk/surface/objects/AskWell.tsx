@@ -8,7 +8,7 @@
  *  and the EgressChip that names where the draft was made. `egress` names
  *  where the answer itself goes, beside Answer (egress where egress happens).
  */
-import { useRef, type Ref } from "react";
+import { useRef, type ReactNode, type Ref } from "react";
 import { EgressChip, StringGadget } from "../gadgets";
 import { Button } from "../../../components/signal/Signal";
 import "./objects.css";
@@ -40,6 +40,9 @@ export interface AskWellProps {
   draftScope?: string;
   /** The answer field, for a caller that focuses it. */
   inputRef?: Ref<HTMLInputElement>;
+  /** The hand's gate beside Answer (Secure / Normal: `MODE · ARM FIRST`
+   *  and the ARM key), drawn after the egress chip; wraps at 393. */
+  arm?: ReactNode;
   /** Pass-through data-testid for the root `section`. */
   "data-testid"?: string;
 }
@@ -60,6 +63,7 @@ export function AskWell({
   listenSignal,
   draftScope,
   inputRef,
+  arm,
   "data-testid": testId,
 }: AskWellProps) {
   const caption = [`${agent.toUpperCase()} ASKS`, age?.toUpperCase()].filter(Boolean).join(" · ");
@@ -100,6 +104,7 @@ export function AskWell({
           Answer
         </Button>
         {egress ? <EgressChip label={egress.label} scope={egress.scope} /> : null}
+        {arm ?? null}
       </div>
       {draft ? (
         <div className="ask-well-draft">

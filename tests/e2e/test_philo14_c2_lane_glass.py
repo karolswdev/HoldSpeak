@@ -251,6 +251,23 @@ def test_the_agents_lane_window_at_1440_and_393(tmp_path: Path, monkeypatch) -> 
 
                 page.wait_for_timeout(400)
                 page.screenshot(path=str(SHOTS / f"C2-lane-{width}.png"))
+                if width == 393:
+                    # C2b: every footer verb is whole in the frame, 44 px tall,
+                    # and is the element at its own centre; no side scroll.
+                    verbs = page.locator(".is-lane .surface-footer-verbs button").evaluate_all(
+                        """(els) => els.map((el) => {
+                            const r = el.getBoundingClientRect();
+                            const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                            return {name: el.textContent.trim(), left: r.left, right: r.right, top: r.top,
+                                    bottom: r.bottom, height: r.height, hit: !!hit && el.contains(hit)};
+                        })""")
+                    names = [v["name"] for v in verbs]
+                    assert any("Stop" in n for n in names) and any("Open PR" in n for n in names), names
+                    for v in verbs:
+                        assert v["left"] >= 0 and v["right"] <= 393 and v["top"] >= 0 and v["bottom"] <= 852, v
+                        assert v["height"] >= 44, v
+                        assert v["hit"], v
+                    assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")
 
                 # Raw: the terminal pane in place of the lane, and back.
                 page.locator("[data-testid='lane-raw']").click()
