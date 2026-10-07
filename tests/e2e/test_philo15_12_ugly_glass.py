@@ -19,6 +19,7 @@ are taken here too; their rules are fenced in vitest
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -38,6 +39,11 @@ SIZES = {1440: 900, 393: 852}
 WIDTHS = list(SIZES)
 T = 20_000
 TITLE = "philo3_architect_meeting"
+LONG_WORD = "Supercalifragilisticexpialidocious"
+V2 = "Payments ledger cutover v2"
+V3 = "Payments ledger cutover v3"
+# A brief item row in Intelligence ▸ BRIEF (BriefView.tsx).
+ITEM = "[data-testid=brief-sf-row], [data-testid=brief-tw-meetings], .intelligence-brief-rows li"
 TOPICS = ["Local meeting ledger", "Summary retrieval after hub restart",
           "Recorded provider reply for isolated rig tests", "Named failure offense before ship"]
 SUMMARY = ("Synthetic architect meeting covering three decisions: adopting SQLite for the local meeting "
@@ -343,6 +349,9 @@ class TestPhilo15Lane12Ugly:
             browser, page, errors = self._open(pw, width)
             try:
                 self._seed_meeting()
+                for outcome in (LONG_WORD, V2, V3):
+                    _api(page, "POST", "/api/projects/door", {"outcome": outcome}, token=TOKEN)
+                _api(page, "POST", "/api/brief/generate", {}, token=TOKEN)   # Intelligence opens with items
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 page.wait_for_timeout(1200)
@@ -362,29 +371,80 @@ class TestPhilo15Lane12Ugly:
                 self._shot(page, "B19-dock", width, dock)
                 self._shot(page, "B19-B30-desk", width)
 
-                # B30: the meeting's desk label breaks at its joins.
-                label = page.locator(".desk-icon-name", has_text="philo3_").first
-                if label.count():
-                    self.facts["B30"] = {"html": label.inner_html(), "title": label.get_attribute("title"),
-                                         "wrap": label.evaluate("(e) => getComputedStyle(e).overflowWrap")}
-                    assert "<wbr>" in self.facts["B30"]["html"], self.facts["B30"]
-                    assert self.facts["B30"]["wrap"] == "normal", self.facts["B30"]
+                # B30 (Astra r1): rendered labels on the desk. Each case is REQUIRED:
+                # a missing label fails. Lines come from the label's own text.
+                def label_lines(name: str) -> dict[str, Any]:
+                    el = page.locator(f".desk-icon-name[title='{name}']").first
+                    el.wait_for(timeout=T)
+                    return el.evaluate("""(e) => ({text: e.innerText, lines: e.innerText.split('\\n'),
+                        fitted: e.hasAttribute('data-fitted'), sh: e.scrollHeight, ch: e.clientHeight,
+                        sw: e.scrollWidth, cw: e.clientWidth})""")
 
-                # B24: the Intelligence window opens at a size that shows its first items.
+                b30: dict[str, Any] = {}
+                for name in (TITLE, LONG_WORD, V2, V3):
+                    got = label_lines(name)
+                    b30[name] = got
+                    assert got["fitted"], got
+                    assert len(got["lines"]) <= 2, got            # the clamp hides nothing
+                    assert got["sh"] <= got["ch"] + 1 and got["sw"] <= got["cw"] + 1, got
+                # An underscore join is where it breaks (and the end stays).
+                assert b30[TITLE]["lines"][0].endswith("_"), b30[TITLE]
+                assert b30[TITLE]["lines"][-1].endswith("meeting"), b30[TITLE]
+                # An unbroken overlong word: one line, cut with an ellipsis, never split.
+                assert len(b30[LONG_WORD]["lines"]) == 1 and "…" in b30[LONG_WORD]["text"], b30[LONG_WORD]
+                # Two names that differ only in their end: both ends visible.
+                assert b30[V2]["text"].rstrip().endswith("v2"), b30[V2]
+                assert b30[V3]["text"].rstrip().endswith("v3"), b30[V3]
+                assert b30[V2]["text"] != b30[V3]["text"]
+                self.facts["B30"] = b30
+                self._shot(page, "B30-labels", width)
+
+                # B24 (Astra r1): the Intelligence window opens AT its declared size
+                # (rendered, not only the rect), with its first items in view;
+                # a size he saved wins on the next open.
                 if width > 720:
                     dock.locator("[data-app='intelligence:desk']").click()
                     win = page.locator(".desk-pullout:has(.intelligence-pullout)").first
                     win.wait_for(timeout=T)
+                    first = win.locator(ITEM).first
+                    first.wait_for(timeout=T)
                     page.wait_for_timeout(900)
                     _settle(page)
                     box = win.evaluate(BOX_JS)
+                    item = first.evaluate(BOX_JS)
                     tops = win.locator(".intelligence-segment").evaluate_all(
                         "(es) => es.map((e) => Math.round(e.getBoundingClientRect().top))")
-                    self.facts["B24"] = {"window": box, "segment_tops": tops}
+                    self.facts["B24"] = {"window": box, "first_item": item, "segment_tops": tops,
+                                         "items": win.locator(ITEM).count()}
                     assert box["w"] >= 600, box
+                    assert box["h"] >= 600, box                    # the declared 620, rendered
                     assert len(set(tops)) <= 1, tops
+                    assert item["btm"] <= box["btm"] and item["y"] >= box["y"], (item, box)
                     self._shot(page, "B24-intelligence", width)
-                    win.locator(".desk-window-close, [aria-label^='Close']").first.click()
+                    # He sizes it smaller; the saved size wins on the next open.
+                    grip = win.locator(".desk-window-grip").first
+                    g = grip.evaluate(BOX_JS)
+                    page.mouse.move(g["x"] + g["w"] / 2, g["y"] + g["h"] / 2)
+                    page.mouse.down()
+                    page.mouse.move(g["x"] + g["w"] / 2 - 120, g["y"] + g["h"] / 2 - 160, steps=8)
+                    page.mouse.up()
+                    page.wait_for_timeout(500)
+                    saved = win.evaluate(BOX_JS)
+                    assert saved["w"] < box["w"] - 60 and saved["h"] < box["h"] - 60, (saved, box)
+                    win.get_by_role("button", name=re.compile(r"^Close ")).first.click()
+                    win.wait_for(state="detached", timeout=T)
+                    page.reload(wait_until="load")
+                    _normal_chair(page)
+                    page.locator(".desk-dock [data-app='intelligence:desk']").click()
+                    again = page.locator(".desk-pullout:has(.intelligence-pullout)").first
+                    again.wait_for(timeout=T)
+                    page.wait_for_timeout(900)
+                    reopened = again.evaluate(BOX_JS)
+                    self.facts["B24"]["saved"] = saved
+                    self.facts["B24"]["reopened"] = reopened
+                    assert abs(reopened["w"] - saved["w"]) <= 2 and abs(reopened["h"] - saved["h"]) <= 2, (reopened, saved)
+                    self._shot(page, "B24-intelligence-saved-size", width)
+                    again.get_by_role("button", name=re.compile(r"^Close ")).first.click()
 
                 # B25: an empty Project from the Door reads NEW, its receipt CREATE.
                 made = _api(page, "POST", "/api/projects/door", {"outcome": "Payments ledger cutover"}, token=TOKEN)

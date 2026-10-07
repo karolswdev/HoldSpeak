@@ -10,6 +10,7 @@ import { previewOf, targetName, targetToken } from "../../features/channels/chan
 import { roomHealthWord, roomIsEmpty, type RoomSnapshot } from "../../features/project-room/model";
 import { receiptLabel } from "../surface/egress";
 import { nameBreaks } from "../surface/objects/DeskIcon";
+import { fitName } from "../surface/objects/fitName";
 import { PULLOUT_SIZE } from "../pullouts/size";
 
 describe("B23: the Send well's folder and preview", () => {
@@ -100,17 +101,54 @@ describe("B24: the Intelligence window opens at a size that shows its first item
   });
 });
 
-describe("B30: a desk label breaks between words", () => {
-  it("puts a break point after each _ - . / join and nowhere else", () => {
-    const { container } = render(<span>{nameBreaks("philo3_architect_meeting")}</span>);
-    expect(container.querySelectorAll("wbr")).toHaveLength(2);
-    expect(container.textContent).toBe("philo3_architect_meeting");
-    const html = container.innerHTML;
-    expect(html).toBe("<span>philo3_<wbr>architect_<wbr>meeting</span>");
+describe("B30: a desk label breaks between words, and keeps its end", () => {
+  // The desk label at 393 holds about 11 monospaced characters a line, two lines.
+  it("breaks at spaces first; joins only inside a word that cannot fit", () => {
+    expect(fitName("Use SQLite for the meeting ledger", 11, 9)).toEqual(["Use SQLite", "for the", "meeting", "ledger"]);
+    // A space wins over the join inside a word that fits a line.
+    expect(fitName("ledger_v2 cutover", 11, 2)).toEqual(["ledger_v2", "cutover"]);
+    // A word wider than the line breaks after its joins, not inside letters.
+    expect(fitName("philo3_architect_meeting", 12, 3)).toEqual(["philo3_", "architect_", "meeting"]);
   });
 
-  it("leaves a plain name alone", () => {
-    expect(nameBreaks("Weekly update")).toBe("Weekly update");
-    expect(nameBreaks("Use SQLite for the meeting ledger")).toBe("Use SQLite for the meeting ledger");
+  it("an underscore join is where a two-line label breaks", () => {
+    const set = fitName("philo3_architect_meeting", 11, 2);
+    expect(set).toHaveLength(2);
+    expect(set[0]).toBe("philo3_");
+    expect(set[1].endsWith("meeting")).toBe(true);
+    expect(set.join("")).toContain("…");
+  });
+
+  it("names that differ only at the end stay different (a middle cut)", () => {
+    const v2 = fitName("Payments ledger cutover v2", 11, 2);
+    const v3 = fitName("Payments ledger cutover v3", 11, 2);
+    expect(v2.length).toBeLessThanOrEqual(2);
+    expect(v2.join(" ")).toMatch(/…\s*v2$/);
+    expect(v3.join(" ")).toMatch(/…\s*v3$/);
+    expect(v2[0]).toBe("Payments");
+    for (const line of [...v2, ...v3]) expect(line.length).toBeLessThanOrEqual(11);
+  });
+
+  it("an unbroken overlong word is cut with an ellipsis, never split", () => {
+    const set = fitName("Supercalifragilisticexpialidocious", 11, 2);
+    expect(set).toHaveLength(1);
+    expect(set[0]).toContain("…");
+    expect(set[0].length).toBeLessThanOrEqual(11);
+    expect(set[0].startsWith("Super")).toBe(true);
+    expect(set[0].endsWith("ous")).toBe(true);
+  });
+
+  it("a name that fits is untouched", () => {
+    expect(fitName("Weekly update", 11, 2)).toEqual(["Weekly", "update"]);
+    expect(fitName("1:1 prep", 11, 2)).toEqual(["1:1 prep"]);
+  });
+
+  it("the CSS form: one block per word, a <wbr> only after a join", () => {
+    const { container } = render(<span>{nameBreaks("philo3_architect_meeting v2")}</span>);
+    const words = container.querySelectorAll(".name-word");
+    expect(words).toHaveLength(2);
+    expect(words[0].querySelectorAll("wbr")).toHaveLength(2);
+    expect(words[1].querySelectorAll("wbr")).toHaveLength(0);
+    expect(container.textContent).toBe("philo3_architect_meeting v2");
   });
 });

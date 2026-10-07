@@ -75,7 +75,9 @@ function PulloutFrame({
       label={name}
       kindWord={kindWord(o.kind)}
       className="desk-pullout is-card"
-      fitContent
+      // B24 (Astra r1): a kind with a declared size opens AT that size; a
+      // content-fitted card would drop the height until it is arranged.
+      fitContent={!PULLOUT_SIZE[o.kind]}
       defaultW={PULLOUT_SIZE[o.kind]?.w}
       defaultH={PULLOUT_SIZE[o.kind]?.h}
       origin={origin}
