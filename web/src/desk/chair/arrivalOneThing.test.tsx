@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { ChairHome, headlineFor } from "./ChairHome";
 import { asHub } from "../../test/hubNeedsYou";
+import { meetingPathBlockers } from "./meetingPathBlocker";
 import { openChairWindows } from "./__tests__/fixtures/openChairWindows";
 
 // PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
@@ -74,8 +75,8 @@ const ASSIGNED = {
 // The other half of the meeting path: audio becomes text before anything
 // summarises it (`speech.transcribe`). An OWNER-started recording resolves
 // it through the ordinary inheritance chain, so ANY effective assignment
-// clears this row -- unlike the summary head, which the meeting-intel
-// queue may read only at `capability` scope.
+// clears this row. The summary row asks the meeting-intel queue's route
+// policy instead (`queue`, PHILO-15 01).
 const NO_SPEECH = {
   id: "speech.transcribe",
   label: "Speech transcription",
@@ -89,13 +90,20 @@ const SPEECH_ASSIGNED = {
   has_override: true,
   effective: { status: "assigned", inherited_from: "capability", assignment: null, repair: null },
 };
-// A `global` head does NOT clear the meeting path: the queue's service
-// route policy permits only the `capability` source
-// (inference_service_route_policy.py:43, :93).
+// PHILO-15 01: a `global` head clears the meeting path. The queue's route
+// policy (meeting-intel-queue@2) reads it, and the roster says so in
+// `queue`; the row asks `queue`, not `has_override`.
 const GLOBAL_ONLY = {
   ...NO_ENGINE,
   has_override: false,
   effective: { status: "assigned", inherited_from: "global", assignment: null, repair: null },
+  queue: { policy_id: "meeting-intel-queue@2", status: "assigned", inherited_from: "global" },
+};
+// The queue's answer outranks the owner chain: were the policy to read no
+// global head, the row stays although the owner chain resolves one.
+const QUEUE_REFUSES = {
+  ...GLOBAL_ONLY,
+  queue: { policy_id: "meeting-intel-queue@1", status: "no_assignment", inherited_from: null },
 };
 
 function wire(overrides: Record<string, unknown>[]) {
@@ -137,10 +145,25 @@ describe("HS-201-01 the Chair names the one thing", () => {
     expect(setupRow()).toBeNull();
   });
 
-  it("stays while only a global head exists (the queue cannot use it)", async () => {
+  it("clears when only the default (global) head exists: the queue runs on it", async () => {
     wire([GLOBAL_ONLY, SPEECH_ASSIGNED]);
     render(<ChairHome />);
-    expect(await screen.findByText("No engine for summaries")).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+    );
+    expect(setupRow()).toBeNull();
+    expect(screen.queryByText("No engine for summaries")).toBeNull();
+    expect(meetingPathBlockers(summary([GLOBAL_ONLY, SPEECH_ASSIGNED]) as never)).toEqual([]);
+  });
+
+  it("asks the queue's answer, not the owner chain", () => {
+    expect(meetingPathBlockers(summary([QUEUE_REFUSES, SPEECH_ASSIGNED]) as never)).toEqual([
+      { key: "summary", label: "No engine for summaries", verb: "Choose an engine" },
+    ]);
+    // Nothing assigned anywhere: one row for both halves.
+    expect(meetingPathBlockers(summary([NO_ENGINE, NO_SPEECH]) as never)).toEqual([
+      { key: "engines", label: "No engine yet", verb: "Choose an engine" },
+    ]);
   });
 
   // Counsel fix round, second pass (ruling 1): a read still in flight

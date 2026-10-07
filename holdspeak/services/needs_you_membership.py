@@ -596,8 +596,13 @@ def meeting_path_blockers(
     speech = row(SPEECH_CAPABILITY)
     speech_missing = speech is not None and status(speech) != "assigned"
     analysis = row(SUMMARY_CAPABILITY)
-    summary_missing = analysis is not None and not (
-        bool(analysis.get("has_override")) and status(analysis) == "assigned"
+    # PHILO-15 01: the row asks the queue's route policy, which the roster
+    # states as ``queue`` (meeting-intel-queue@2 also reads the group and
+    # global heads).  A roster without it falls back to the owner chain.
+    queue = analysis.get("queue") if analysis is not None else None
+    summary_missing = analysis is not None and (
+        (queue.get("status") if isinstance(queue, dict) else status(analysis))
+        != "assigned"
     )
     if speech_missing and summary_missing:
         return [{"key": "engines", "label": "No engine yet", "verb": verb}]

@@ -1,23 +1,16 @@
 // HS-201-01 — the ONE thing the meeting path needs.
 //
 // The product already knows it. A meeting summary runs under the
-// `meeting-intel-queue` SERVICE principal, whose route policy permits
-// exactly one assignment source -- `capability`
-// (`holdspeak/services/inference_service_route_policy.py:43`, refused at
-// `:93`; consumed at
-// `holdspeak/services/inference_route_plan_service.py:387-390`). So the
-// queue reads ONLY the `capability:meeting.deferred_analysis` head, and
-// with no head it refuses terminally with `no_assignment`
-// (`inference_route_plan_service.py:399-403` -- the very refusal the
-// charter walk found in the hub log with nothing on the glass).
+// `meeting-intel-queue` SERVICE principal. Its sealed route policy
+// (`meeting-intel-queue@2`, `builtin_service_route_policy_registry` in
+// `holdspeak/services/inference_service_route_policy.py`) reads the exact
+// `capability:meeting.deferred_analysis` head AND the owner's group and
+// global heads ("Default for AI work").
 //
-// `GET /api/inference/assignments` states that fact per capability in
-// `task_overrides[]`: `has_override` is literally "an exact
-// `capability:<id>` head exists"
-// (`holdspeak/services/inference_assignment_service.py:248`), and
-// `effective.status` says whether what is there can be used. A group or
-// global head does NOT clear the meeting path, so neither may clear the
-// row.
+// PHILO-15 01: the row does not copy that rule. `GET
+// /api/inference/assignments` states the policy's answer per capability in
+// `task_overrides[].queue` (`InferenceAssignmentService._queue_projection`):
+// `queue.status` is "assigned" when the queue would run a summary now.
 import type { AssignmentSummary } from "../../pages/cores/assignmentExperience";
 
 /** The capability that writes a meeting summary. */
@@ -58,13 +51,10 @@ export type MeetingPathBlocker = {
  *    `speech.transcribe` through the ordinary inheritance chain
  *    (`inference_service_route_policy.py:198-224` names the capability
  *    only for the SERVICE-fired wake and scheduled paths).
- *  - `summary` -- nothing writes the summary. Only an exact
- *    `capability:meeting.deferred_analysis` head clears it: the
- *    meeting-intel queue is a SERVICE principal, and its route policy
- *    permits exactly one assignment source -- `capability`
- *    (`inference_service_route_policy.py:43`, refused at `:93`). A group
- *    or global head does NOT clear the meeting path, so it may not clear
- *    the row.
+ *  - `summary` -- nothing writes the summary. The row asks the
+ *    meeting-intel queue's route policy through `queue.status`: a
+ *    capability, group or global head the queue may read clears it
+ *    (`meeting-intel-queue@2`).
  *
  *  A capability the roster does not carry is left alone: absence of a
  *  row is not evidence of an absent engine. */
@@ -83,9 +73,10 @@ export function meetingPathBlockers(
   const speech = row(SPEECH_CAPABILITY);
   const speechMissing = Boolean(speech) && speech!.effective?.status !== "assigned";
   const analysis = row(SUMMARY_CAPABILITY);
+  // The queue's own answer; a roster without it falls back to the owner chain.
   const summaryMissing =
     Boolean(analysis) &&
-    !(analysis!.has_override && analysis!.effective?.status === "assigned");
+    (analysis!.queue ? analysis!.queue.status : analysis!.effective?.status) !== "assigned";
 
   if (speechMissing && summaryMissing) {
     return [{ key: "engines", label: "No engine yet", verb }];

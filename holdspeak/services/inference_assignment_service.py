@@ -58,6 +58,8 @@ _CANONICAL_GROUPS = (
     ("agents_tools", "Agents & tools"),
     ("background", "Background"),
 )
+#: The SERVICE principal that writes meeting summaries.
+_MEETING_QUEUE = "meeting-intel-queue"
 _CANONICAL_GROUP_IDS = frozenset(group_id for group_id, _label in _CANONICAL_GROUPS)
 #: Who made an assignment revision (the ``made_by`` column).
 MADE_BY = frozenset({"owner", "holdspeak_default"})
@@ -106,6 +108,7 @@ class InferenceAssignmentService:
         # This is composition, not a caller flag: absent registration means a
         # qualified offline manifest remains non-executable by design.
         self._tool_capability_foundation = tool_capability_foundation
+        self._service_route_policies: Any = None
 
     def bind_tool_capability_foundation(
         self, foundation: ToolCapabilityFoundation
@@ -263,6 +266,7 @@ class InferenceAssignmentService:
                         "has_override": exact is not None,
                         "effective": effective,
                         "issues": issues,
+                        "queue": self._queue_projection(conn, capability),
                     }
                 )
         return {
@@ -270,6 +274,45 @@ class InferenceAssignmentService:
             "rows": rows,
             "task_overrides": task_overrides,
             "issue_count": sum(1 for row in rows if row["repair"] is not None),
+        }
+
+    def _queue_projection(
+        self, conn: Any, capability: InferenceCapabilityDefinition,
+    ) -> dict[str, Any] | None:
+        """Would the meeting-intel queue run this capability now?
+
+        The queue is a SERVICE principal: its sealed route policy names the
+        assignment sources it may read (``meeting-intel-queue@2`` reads the
+        exact capability, group and global heads).  The roster resolves
+        through those sources, so the Desk's "No engine for summaries" row
+        asks the same question the queue answers (PHILO-15 01).  ``None``
+        when the queue policy does not name the capability.
+        """
+        policies = self._service_route_policies
+        if policies is None:
+            from .inference_service_route_policy import (
+                builtin_service_route_policy_registry,
+            )
+
+            try:
+                policies = builtin_service_route_policy_registry(
+                    capability_registry=self._registry
+                )
+            except ValueError:
+                # A registry without the meeting capabilities has no queue.
+                policies = False
+            self._service_route_policies = policies
+        if policies is False:
+            return None
+        found = policies.assignment_sources(_MEETING_QUEUE, capability.id)
+        if found is None:
+            return None
+        policy_id, sources = found
+        resolved = self._resolve(conn, capability, sources=sources)
+        return {
+            "policy_id": policy_id,
+            "status": resolved["status"],
+            "inherited_from": resolved["inherited_from"],
         }
 
     def assignment_editor_projection(
@@ -1918,6 +1961,7 @@ class InferenceAssignmentService:
         subject_kind: Any = None,
         subject_id: Any = None,
         excluded_key: str | None = None,
+        sources: Iterable[str] | None = None,
     ) -> dict[str, Any]:
         keys: list[tuple[str, str]] = []
         if invocation_id:
@@ -1945,8 +1989,11 @@ class InferenceAssignmentService:
                 ("global", "global"),
             )
         )
+        permitted = None if sources is None else set(sources)
         for key, inherited_from in keys:
             if key == excluded_key:
+                continue
+            if permitted is not None and inherited_from not in permitted:
                 continue
             row = self._head(conn, key)
             if row is None:
