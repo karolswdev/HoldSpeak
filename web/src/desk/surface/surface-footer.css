@@ -57,6 +57,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* A face's receipt font often sets line-height 1; with the clip that cut
+     the glyphs' tops and feet (philo13_09: PREPARED 17:04). The line box
+     holds the whole glyph. */
+  line-height: 1.3;
 }
 .desk-next .surface-footer-verbs {
   grid-area: verbs;
