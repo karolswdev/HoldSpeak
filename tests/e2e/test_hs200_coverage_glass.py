@@ -30,6 +30,7 @@ from .glass_infra import (
     _ensure_build,
     _settle,    seed_meeting_engines,
 )
+from .chair_windows import open_chair_window
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Coverage glass needs Playwright")
@@ -38,6 +39,22 @@ SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-200-the-working-practice/assets
 SHOTS.mkdir(parents=True, exist_ok=True)
 
 TOKEN = "hs200-coverage"
+
+# PHILO-14 A5 (#935): the Needs-you window body is the smart drawer; an
+# unread source is a source row (the no-calendar offer is one too).
+SOURCES = "[data-testid='needs-source-row']"
+MEMBERS = "[data-testid='needs-list'] > ul > [data-testid='needs-row']"
+
+
+def _open_needs(page: Any) -> None:
+    """PHILO-14 A1 (#939): the Chair's windows start closed; the owner
+    opens Needs you (Window > Chair at 1440, Go at 393)."""
+    open_chair_window(page, "Needs you")
+    page.get_by_test_id("needs-drawer").wait_for(timeout=15000)
+
+
+def _gaps(page: Any) -> Any:
+    return page.locator(SOURCES).filter(has_not_text="No calendar")
 
 
 # ── Seed helpers (real rows; the failure is a real Watch error) ──────
@@ -196,6 +213,7 @@ def _run_complete_empty(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
             page.reload(wait_until="load")
             _normal_chair(page)
             _settle(page)
+            _open_needs(page)
             page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
             _settle(page)
 
@@ -205,8 +223,8 @@ def _run_complete_empty(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
 
             headline = page.get_by_test_id("arrival-display").text_content() or ""
             assert headline.strip() == "Nothing needs you", headline
-            assert page.get_by_test_id("arrival-coverage").count() == 0, \
-                "COVERAGE section is absent when coverage is complete (A.8)"
+            assert _gaps(page).count() == 0, \
+                "no source row when coverage is complete (A.8)"
 
             _shot(page, "build-arrival-complete-empty", width)
             _assert_clean(page, errors)
@@ -231,6 +249,7 @@ def _run_partial_empty(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: i
             page.reload(wait_until="load")
             _normal_chair(page)
             _settle(page)
+            _open_needs(page)
             page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
             _settle(page)
 
@@ -245,14 +264,15 @@ def _run_partial_empty(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: i
             assert "nothing needs you" not in headline.lower(), \
                 f"an empty PARTIAL result must not speak the all-clear: {headline}"
 
-            section = page.get_by_test_id("arrival-coverage")
-            assert section.count() == 1, "COVERAGE section present on a partial result"
-            section_text = section.text_content() or ""
-            assert "COVERAGE · 3 OF 4" in section_text, section_text
-            assert page.get_by_test_id("arrival-coverage-token").count() >= 1
-            observed = page.get_by_test_id("arrival-coverage-observed").first
+            # The failed source is one source row with its token, its
+            # observation and its owning verb. (`COVERAGE · 3 OF 4` was
+            # retired by the A5 board, #935.)
+            section = _gaps(page)
+            assert section.count() == 1, "one source row on a partial result"
+            assert (section.locator(".needs-row-lamp").first.text_content() or "").strip()
+            observed = section.locator(".needs-row-fact").first
             assert (observed.text_content() or "").strip(), "the row names its observation"
-            verb = page.get_by_test_id("arrival-coverage-verb").first
+            verb = section.locator("[data-verb='repair']").first
             assert (verb.text_content() or "").strip() == "Reconnect", verb.text_content()
             assert _no_raw_buttons(page) == 0, "every verb is the library Button"
 
@@ -281,6 +301,7 @@ def _run_one_failed_among_healthy(
             page.reload(wait_until="load")
             _normal_chair(page)
             _settle(page)
+            _open_needs(page)
             page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
             _settle(page)
 
@@ -293,8 +314,8 @@ def _run_one_failed_among_healthy(
 
             headline = page.get_by_test_id("arrival-display").text_content() or ""
             assert "need you" in headline.lower(), headline
-            assert page.get_by_test_id("arrival-needs-you").count() == 1
-            assert page.get_by_test_id("arrival-coverage").count() == 1, \
+            assert page.locator(MEMBERS).count() >= 1
+            assert _gaps(page).count() == 1, \
                 "a partial result names its gap even when items exist"
             assert _no_raw_buttons(page) == 0
 
