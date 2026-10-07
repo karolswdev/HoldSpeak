@@ -113,11 +113,11 @@ describe("Conductor F2: transitions land on a mounted Chair", () => {
         .find((r) => r.querySelector(".needs-row-name")?.textContent?.endsWith("Write the rollback runbook")
           && r.getAttribute("data-kind") !== "agent")
         ?.querySelector(".gadget-lamp")?.textContent;
-    await waitFor(() => expect(lamp()).toBe("CLAUDE CODE · WORKING"));
+    await waitFor(() => expect(lamp()).toBe("WORKING"));
 
     sessions = SESSIONS;   // the agent asked: waiting
     act(() => emit("intel_status", { state: "ready", scope: "coder" }));
-    await waitFor(() => expect(lamp()).toBe("CLAUDE CODE · WAITING"));
+    await waitFor(() => expect(lamp()).toBe("WAITING"));
 
     // The PR merged; the close waits for the owner (Secure): the session stays.
     const merged = { ...FLIGHT_RUNBOOK, state: "merged", close: "awaiting_confirm", pr: { number: 413, url: "u", state: "merged" } };

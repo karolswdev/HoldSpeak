@@ -114,7 +114,7 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
     installHub();
     render(<><ChairHome /><OtherReader /></>);
     await waitFor(
-      () => expect(screen.getByTestId("needs-drawer-head").textContent).toMatch(/^6 need you/),
+      () => expect(screen.getByTestId("arrival-display").textContent).toMatch(/^6 need you/),
       { timeout: 3000 },
     );
     expect(screen.getByTestId("other-reader").textContent).toBe("6");
@@ -129,7 +129,7 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
     const hub = installHub();
     render(<><ChairHome /><OtherReader /></>);
     await waitFor(
-      () => expect(screen.getByTestId("needs-drawer-head").textContent).toMatch(/^6 need you/),
+      () => expect(screen.getByTestId("arrival-display").textContent).toMatch(/^6 need you/),
       { timeout: 3000 },
     );
     const a1 = [...document.querySelectorAll<HTMLElement>(".needs-row")]
@@ -138,7 +138,7 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
     hub.paths.length = 0;
     fireEvent.click(within(a1!).getByRole("button", { name: /^Done: / }));
     await waitFor(
-      () => expect(screen.getByTestId("needs-drawer-head").textContent).toMatch(/^5 need you/),
+      () => expect(screen.getByTestId("arrival-display").textContent).toMatch(/^5 need you/),
       { timeout: 1000 },
     );
     expect(screen.getByTestId("other-reader").textContent).toBe("5");

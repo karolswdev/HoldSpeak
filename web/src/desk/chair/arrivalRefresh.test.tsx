@@ -95,7 +95,7 @@ describe("HS-201-01 the row clears on the OPEN desk", () => {
     act(() => { window.dispatchEvent(new Event("focus")); });
 
     await waitFor(() => expect(setupRow()).toBeNull());
-    expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you");
+    expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you");
   });
 
   // Counsel round 2 (condition 1): the product's own return signal, the
@@ -110,7 +110,7 @@ describe("HS-201-01 the row clears on the OPEN desk", () => {
     act(() => { window.dispatchEvent(new Event("holdspeak:settings-updated")); });
 
     await waitFor(() => expect(setupRow()).toBeNull());
-    expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you");
+    expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you");
   });
 
   it("re-reads the roster on the hub's desk_changed frame", async () => {

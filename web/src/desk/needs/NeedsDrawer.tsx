@@ -286,7 +286,11 @@ export function NeedsDrawer() {
     .find((f) => f.verbs.kind !== "setup" && f.verbs.kind !== "repair")?.id ?? null;
   return (
     <div className="needs-drawer" data-testid="needs-drawer">
-      <h2 className="surface-display needs-drawer-head" data-testid="needs-drawer-head">{head}</h2>
+      {/* The Chair's head keeps its testids (the Chair-ready signal of the
+          glass rigs): the drawer's head IS the Chair's display. */}
+      <div className="needs-drawer-headline" data-testid="arrival-headline">
+        <h2 className="surface-display needs-drawer-head" data-testid="arrival-display">{head}</h2>
+      </div>
       {faces.length > 0 ? (
         <NeedsList label="Needs you">
           {faces.map((face) => (

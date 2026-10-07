@@ -109,7 +109,7 @@ describe("Conductor F2 on the Chair", () => {
   it("K4a: the item an agent works names the agent: CLAUDE CODE · WAITING and Open", async () => {
     render(<ChairHome />);
     await waitFor(() => expect(needsRow("Write the rollback runbook")?.querySelector(".gadget-lamp")?.textContent)
-      .toBe("CLAUDE CODE · WAITING"));
+      .toBe("WAITING"));
     const row = needsRow("Write the rollback runbook")!;
     expect(row.querySelector(".needs-row-fact")?.textContent).toBe("Claude Code · Payments ledger cutover");
     expect(row.querySelector("[data-testid='flight-chip']")).toBeNull();
@@ -120,7 +120,7 @@ describe("Conductor F2 on the Chair", () => {
   it("F1 x F2: an in-flight row is the agent's: no Hand to agent, no owner to name", async () => {
     render(<ChairHome />);
     await waitFor(() => expect(needsRow("Write the rollback runbook")?.querySelector(".gadget-lamp")?.textContent)
-      .toBe("CLAUDE CODE · WAITING"));
+      .toBe("WAITING"));
     const row = needsRow("Write the rollback runbook")!;
     expect(within(row).queryByRole("button", { name: /^Hand to agent/ })).toBeNull();
     expect(within(row).queryByRole("button", { name: /^Name an owner/ })).toBeNull();
@@ -153,7 +153,7 @@ describe("Conductor F2 on the Chair", () => {
       "payments-ledger-runbook", "payments-ledger-recon", "scratch",
     ]);
     expect(within(rows[0]).getByTestId("arrival-agent-origin").textContent).toBe("↳ Write the rollback runbook");
-    expect(within(rows[0]).getByRole("status").textContent).toContain("CLAUDE CODE · WAITING");
+    expect(within(rows[0]).getByRole("status").textContent).toContain("WAITING");
     expect(within(rows[1]).getByTestId("arrival-agent-origin").textContent).toBe("↳ Shard the reconciliation job");
     expect(within(rows[1]).getByRole("status").textContent).toContain("CODEX · WORKING");
     // A session no one handed an item keeps its plain badge.

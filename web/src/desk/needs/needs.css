@@ -28,3 +28,6 @@
     min-height: 44px;
   }
 }
+.needs-drawer-headline {
+  display: contents;
+}

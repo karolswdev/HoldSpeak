@@ -9,7 +9,7 @@
  *  Movement C repairs (PROPOSAL §3): an item an agent works is that
  *  agent's, never UNASSIGNED; a question is the `ask` lamp, never ⚠.
  */
-import type { NeedsYouMember, NeedsYouRoomItem } from "../needsYou";
+import { SELF_OWNER_NAMES, type NeedsYouMember, type NeedsYouRoomItem } from "../needsYou";
 import type { AgentFlight, CoderSessionRow } from "../agentFlights";
 import { flightForItem, isInFlight } from "../agentFlights";
 import type { ObjectTone } from "../surface/objects";
@@ -214,13 +214,16 @@ function attentionFace(
       kind: item.source === "decision" ? "decision" : "action",
       name: title,
       fact: [who, flight.projectName || project].filter(Boolean).join(" · "),
-      lamp: { label: `${who.toUpperCase()} · ${state}`, tone: flight.state === "waiting" ? "ask" : "info" },
+      // The fact line names the agent; the lamp says what it does (one word).
+      lamp: { label: state, tone: flight.state === "waiting" ? "ask" : "info" },
       group: "agents",
       verbs: flight.sessionKey ? { kind: "session", sessionKey: flight.sessionKey } : { kind: "none" },
     };
   }
 
-  const owner = String(item.owner ?? "").trim();
+  const rawOwner = String(item.owner ?? "").trim();
+  // The owner himself is not named on his own row.
+  const owner = SELF_OWNER_NAMES.includes(rawOwner.toLowerCase()) ? "" : rawOwner;
   const fact = [owner, project, observedWord(item)].filter(Boolean).join(" · ");
   const lamp = { label: why || "NEEDS YOU", tone: toneOf(item.severity, why) };
 
@@ -255,7 +258,7 @@ function attentionFace(
     return { id, kind: "action", name: title, fact, lamp, group: "rest",
       verbs: ref ? { kind: "review", ref } : { kind: "none" } };
   }
-  if (ext._isUnassigned && !owner) {
+  if (ext._isUnassigned && !rawOwner) {
     return { id, kind: "action", name: title, fact: project, lamp, group: "rest",
       verbs: { kind: "name-owner", cardId: doorDelegateCardId(card), openRef: card?.open_ref ? String(card.open_ref) : null } };
   }

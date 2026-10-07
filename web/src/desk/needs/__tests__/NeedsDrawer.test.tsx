@@ -165,7 +165,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
   it("heads with the hub's number, once, and nothing else", async () => {
     await mount();
     const drawer = screen.getByTestId("needs-drawer");
-    expect(screen.getByTestId("needs-drawer-head").textContent).toBe("8 need you");
+    expect(screen.getByTestId("arrival-display").textContent).toBe("8 need you");
     expect(drawer.querySelectorAll("h1, h2").length).toBe(1);
     expect(drawer.textContent).not.toMatch(/AVAILABLE|RANKED|CHECKED/);
   });
@@ -210,7 +210,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
   it("an item an agent works names the agent and never reads UNASSIGNED", async () => {
     await mount();
     const worked = face(row("Write the rollback runbook"));
-    expect(worked.lamps).toEqual(["CLAUDE CODE · WORKING"]);
+    expect(worked.lamps).toEqual(["WORKING"]);
     expect(worked.fact).toBe("Claude Code · Payments ledger");
     expect(worked.verbs).toEqual(["Open"]);
     expect(row("Write the rollback runbook").textContent).not.toMatch(/UNASSIGNED|Name an owner/);

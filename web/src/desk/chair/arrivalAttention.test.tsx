@@ -101,7 +101,7 @@ describe("Arrival attention (HS-200-15)", () => {
     render(<ChairHome />);
     await waitFor(() => expect(needsRows().length).toBe(18), { timeout: 5000 });
 
-    expect(screen.getByTestId("needs-drawer-head").textContent).toBe("17 need you");
+    expect(screen.getByTestId("arrival-display").textContent).toBe("17 need you");
     // The unread source leads, then the members in rank order.
     const rows = needsRows();
     expect(rows[0].getAttribute("data-object-id")).toBe("coverage:watch:w-kan");
@@ -144,7 +144,7 @@ describe("Arrival attention (HS-200-15)", () => {
            coverage: [AVAILABLE("p1", "Q4 Platform"), FAILED_WATCH], complete: false });
     render(<ChairHome />);
     await waitFor(() => expect(needsRows().length).toBe(4), { timeout: 5000 });
-    expect(screen.getByTestId("needs-drawer-head").textContent).toBe("3 need you");
+    expect(screen.getByTestId("arrival-display").textContent).toBe("3 need you");
     const gap = needsRows()[0];
     expect(gap.querySelector(".needs-row-name")?.textContent).toBe("jira KAN");
     expect(factOf(gap)).toBe("Jira rejected the query");
@@ -158,7 +158,7 @@ describe("Arrival attention (HS-200-15)", () => {
     wire({ count: 0, projects: [], items: [], next: null,
            coverage: [AVAILABLE("p1", "Q4 Platform"), FAILED_WATCH], complete: false });
     render(<ChairHome />);
-    await waitFor(() => expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Coverage incomplete"), { timeout: 5000 });
+    await waitFor(() => expect(screen.getByTestId("arrival-display").textContent).toBe("Coverage incomplete"), { timeout: 5000 });
     expect(screen.queryByText("Nothing needs you")).toBeNull();
   });
 
@@ -178,7 +178,7 @@ describe("Arrival attention (HS-200-15)", () => {
     wire({ count: 0, projects: [], items: [], next: null, computedAt: new Date().toISOString(),
            coverage: [AVAILABLE("p1", "Q4 Platform"), AVAILABLE("p2", "Governance")], complete: true });
     render(<ChairHome />);
-    await waitFor(() => expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you"), { timeout: 5000 });
+    await waitFor(() => expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"), { timeout: 5000 });
     expect(screen.getAllByText("Nothing needs you")).toHaveLength(1);
     expect(screen.queryByTestId("arrival-coverage-complete")).toBeNull();
     expect(screen.queryByRole("group", { name: "Ranking" })).toBeNull();

@@ -102,7 +102,7 @@ describe("HS-201-11 the arrival head and its asking rows agree", () => {
     expect(screen.queryByTestId("arrival-connect-calendar")).toBeNull();
     // ...and the head still counts the SETUP row alone
     await waitFor(() =>
-      expect(screen.getByTestId("needs-drawer-head").textContent).toBe("1 need you"),
+      expect(screen.getByTestId("arrival-display").textContent).toBe("1 need you"),
     );
   });
 
@@ -110,7 +110,7 @@ describe("HS-201-11 the arrival head and its asking rows agree", () => {
     wire([ASSIGNED, SPEECH_ASSIGNED], false);
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you"),
+      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
     );
     expect(setupRow()).toBeNull();
     // an offer with no calendar is not an obligation (owner's ruling):
@@ -122,7 +122,7 @@ describe("HS-201-11 the arrival head and its asking rows agree", () => {
     wire([ASSIGNED, SPEECH_ASSIGNED], true);
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you"),
+      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
     );
     expect(screen.queryByTestId("arrival-connect-calendar")).toBeNull();
     expect(setupRow()).toBeNull();

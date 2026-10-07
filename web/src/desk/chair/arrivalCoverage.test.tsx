@@ -74,7 +74,7 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
            coverage: [HEALTHY_ROOM], complete: true });
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you"));
+      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"));
     expect(gapRows()).toHaveLength(0);
   });
 
@@ -84,7 +84,7 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     render(<ChairHome />);
 
     await waitFor(() => expect(gapRows()).toHaveLength(1));
-    expect(screen.getByTestId("needs-drawer-head").textContent)
+    expect(screen.getByTestId("arrival-display").textContent)
       .not.toBe("Nothing needs you");
     const row = gapRows()[0];
     expect(row.querySelector(".gadget-lamp")?.textContent).toContain("READ FAILED");
@@ -112,7 +112,7 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     render(<ChairHome />);
 
     await waitFor(() => expect(screen.getByText("CI red on main")).toBeTruthy());
-    expect(screen.getByTestId("needs-drawer-head").textContent).toContain("need you");
+    expect(screen.getByTestId("arrival-display").textContent).toContain("need you");
     expect(gapRows()).toHaveLength(1);
     const row = screen.getByText("CI red on main").closest(".needs-row")!;
     expect(row.querySelector(".needs-row-fact")?.textContent).toContain("observed 09:00");
@@ -123,7 +123,7 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     render(<ChairHome />);
 
     await waitFor(() => expect(gapRows()).toHaveLength(1));
-    expect(screen.getByTestId("needs-drawer-head").textContent)
+    expect(screen.getByTestId("arrival-display").textContent)
       .not.toBe("Nothing needs you");
   });
 
