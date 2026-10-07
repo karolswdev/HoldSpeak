@@ -1,0 +1,2998 @@
+{
+ "_seat_guard_1440": [
+  "P14 CANVAS SEAT GUARD (p14): 1 files, 1 seats, every anchor met"
+ ],
+ "control-1-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [],
+  "intended_front": null
+ },
+ "control-1b-1440": {
+  "small_text": [],
+  "raw_buttons": [
+   {
+    "text": "Decisions",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Inbox",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Meetings",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Personal",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Reference",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Work",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Ledger cutover sync",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Vendor call",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Architecture review: tracing",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "1:1 Avery",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Hiring debrief: staff engineer",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Weekly update",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "1:1 prep",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Effect guard",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Egress guard",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Ledger cutover risks",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Questions for Avery 1:1",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Architecture review notes",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Freeze the old ledger on Nov 5",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Adopt OpenTelemetry for all se",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Everyday context",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Payments ledger cutover",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Platform observability",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Staff hiring loop",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Chase",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Desk",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Draft",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Interview",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Plan",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Project",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Cutover requirements",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Ledger cutover sync: notes",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Meeting decisions",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Architecture review: tracing: ",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Meeting decisions",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "1:1 Avery: notes",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Hiring debrief: staff engineer",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Meeting decisions",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "payments-ledger",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Ledger cutover bench",
+    "cls": "",
+    "win": null
+   }
+  ],
+  "menus": [],
+  "screen_title": "Floor",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "control-2b-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Floor",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [],
+  "intended_front": null,
+  "bracket_marks": 40,
+  "windowless": true
+ },
+ "control-2-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "PEOPLE 3",
+    "b": "Ask this project",
+    "w": 50,
+    "h": 18,
+    "waiver": "sticky"
+   },
+   {
+    "a": "People: this Project's peopl",
+    "b": "Choose",
+    "w": 48,
+    "h": 18,
+    "waiver": "sticky"
+   }
+  ],
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "control-5-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [],
+  "intended_front": "Needs you",
+  "coder_row": "CC\nThe runbook needs a rollback owner. Jordan or Avery?\nCLAUDE CODE · WAITING · 2 MIN\nPAYMENTS LEDGER CUTOVER\nSpeak answer\nOpen"
+ },
+ "control-3-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Hand to agent",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Hand to agent"
+   ],
+   "front": "Hand to agent",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [],
+  "intended_front": null
+ },
+ "control-4-1440": {
+  "small_text": [],
+  "raw_buttons": [
+   {
+    "text": "⏻\nYOLO · DIRECT",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "^C\nINT",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⎋\nESC",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⇥\nTAB",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⏎\nENTER",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "↑\nUP",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "↓\nDOWN",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "←\nLEFT",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "→\nRIGHT",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⏎\nENTER",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "▸\nSEND",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   }
+  ],
+  "menus": [],
+  "screen_title": "claude",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "claude"
+   ],
+   "front": "claude",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [],
+  "intended_front": null,
+  "inherited_clip": {
+   "strips": [
+    {
+     "cls": "terminal-well-screen",
+     "scroll": 1160,
+     "client": 584,
+     "text": " "
+    }
+   ],
+   "clipped": []
+  }
+ },
+ "_browser_errors_1440": [],
+ "_seat_guard_393": [
+  "P14 CANVAS SEAT GUARD (p14): 1 files, 1 seats, every anchor met"
+ ],
+ "control-1-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": null,
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "control-1b-393": {
+  "small_text": [],
+  "raw_buttons": [
+   {
+    "text": "Decisions",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Inbox",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Meetings",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Personal",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Reference",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Work",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Ledger cutover sync",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Vendor call",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Architecture review: tracing",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "1:1 Avery",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Hiring debrief: staff engineer",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Weekly update",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "1:1 prep",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Effect guard",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Egress guard",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Ledger cutover risks",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Questions for Avery 1:1",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Architecture review notes",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Freeze the old ledger on Nov 5",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Adopt OpenTelemetry for all se",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Everyday context",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Payments ledger cutover",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Platform observability",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Staff hiring loop",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Chase",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Desk",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Draft",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Interview",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Plan",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Project",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Cutover requirements",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Ledger cutover sync: notes",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Meeting decisions",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Architecture review: tracing: ",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Meeting decisions",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "1:1 Avery: notes",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Hiring debrief: staff engineer",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Meeting decisions",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "payments-ledger",
+    "cls": "",
+    "win": null
+   },
+   {
+    "text": "Ledger cutover bench",
+    "cls": "",
+    "win": null
+   }
+  ],
+  "menus": [],
+  "screen_title": "Floor",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "Speak to the desk",
+    "w": 34,
+    "h": 34,
+    "own": 0,
+    "occ": 0
+   }
+  ],
+  "content_px": null,
+  "submenus": [],
+  "intended_front": null,
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ],
+  "windowless": true
+ },
+ "control-2b-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Floor",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": null,
+  "submenus": [],
+  "intended_front": null,
+  "bracket_marks": 40,
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ],
+  "windowless": true
+ },
+ "control-2-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Payments ledger cutover",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "control-5-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Needs you",
+  "coder_row": "CC\nThe runbook needs a rollback owner. Jordan or Avery?\nCLAUDE CODE · WAITING · 1 MIN\nPAYMENTS LEDGER CUTOVER\nSpeak answer\nOpen",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "control-3-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Hand to agent",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Hand to agent"
+   ],
+   "front": "Hand to agent",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "CLAUDE CODE",
+    "· YOLO"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "surface-choice-card-radio",
+    "w": 1,
+    "h": 36,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "surface-choice-card-radio",
+    "w": 1,
+    "h": 36,
+    "own": 0,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": null,
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "control-4-393": {
+  "small_text": [],
+  "raw_buttons": [
+   {
+    "text": "⏻\nYOLO · DIRECT",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "^C\nINT",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⎋\nESC",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⇥\nTAB",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⏎\nENTER",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "↑\nUP",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "↓\nDOWN",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "←\nLEFT",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "→\nRIGHT",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⏎\nENTER",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "▸\nSEND",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   }
+  ],
+  "menus": [],
+  "screen_title": "claude",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "claude"
+   ],
+   "front": "claude",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": null,
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ],
+  "inherited_clip": {
+   "strips": [
+    {
+     "cls": "terminal-well-screen",
+     "scroll": 1160,
+     "client": 334,
+     "text": " "
+    }
+   ],
+   "clipped": []
+  }
+ },
+ "_browser_errors_393": [],
+ "A-1-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Chair",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-icon-p-ledger], [data-testid=p14-shelf], [data-testid=p14-zone-p-ledger]": {
+    "found": true,
+    "whole": true,
+    "w": 112,
+    "h": 108,
+    "top": 40
+   }
+  },
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "A-2-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Info: Write the rollback runbook",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Info: Write the rollback runbook"
+   ],
+   "front": "Info: Write the rollback runbook",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Info: Write the rollback runbo"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-icon-m-standup-a1]": {
+    "found": true,
+    "whole": true,
+    "w": 112,
+    "h": 108,
+    "top": 132
+   },
+   "[data-testid=p14-info], [data-testid=p14-tray-info]": {
+    "found": true,
+    "whole": true,
+    "w": 336,
+    "h": 164,
+    "top": 246
+   }
+  },
+  "submenus": [],
+  "intended_front": "Info: Write the rollback runbook"
+ },
+ "A-2L-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-row-m-standup-a1]": {
+    "found": true,
+    "whole": true,
+    "w": 914,
+    "h": 44,
+    "top": 633
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "A-3-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-confirm]": {
+    "found": true,
+    "whole": true,
+    "w": 866,
+    "h": 54,
+    "top": 132
+   },
+   "[data-testid=p14-brief]": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 24,
+    "top": 147
+   },
+   "[data-testid=p14-hand]": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 147
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "A-4-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Claude Code: rollback runbook",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Claude Code: rollback runbook"
+   ],
+   "front": "Claude Code: rollback runbook",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-question]": {
+    "found": true,
+    "whole": true,
+    "w": 810,
+    "h": 18,
+    "top": 127
+   },
+   "[data-testid=p14-answer]": {
+    "found": true,
+    "whole": true,
+    "w": 69,
+    "h": 28,
+    "top": 152
+   },
+   "[data-testid=p14-ask] input": {
+    "found": true,
+    "whole": true,
+    "w": 710,
+    "h": 20,
+    "top": 156
+   }
+  },
+  "submenus": [],
+  "intended_front": "Claude Code: rollback runbook"
+ },
+ "A-5-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-needs-head]": {
+    "found": true,
+    "whole": true,
+    "w": 796,
+    "h": 30,
+    "top": 100
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you"
+ },
+ "B-1-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-icon-p-ledger], [data-testid=p14-shelf], [data-testid=p14-zone-p-ledger]": {
+    "found": true,
+    "whole": true,
+    "w": 232,
+    "h": 796,
+    "top": 28
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you"
+ },
+ "B-2-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-icon-m-standup-a1]": {
+    "found": true,
+    "whole": true,
+    "w": 112,
+    "h": 108,
+    "top": 377
+   },
+   "[data-testid=p14-info], [data-testid=p14-tray-info]": {
+    "found": true,
+    "whole": true,
+    "w": 320,
+    "h": 312,
+    "top": 90
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "B-3-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-confirm]": {
+    "found": true,
+    "whole": true,
+    "w": 1184,
+    "h": 54,
+    "top": 630
+   },
+   "[data-testid=p14-brief]": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 24,
+    "top": 645
+   },
+   "[data-testid=p14-hand]": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 645
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "B-4-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Claude Code: rollback runbook",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Claude Code: rollback runbook"
+   ],
+   "front": "Claude Code: rollback runbook",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-question]": {
+    "found": true,
+    "whole": true,
+    "w": 565,
+    "h": 18,
+    "top": 127
+   },
+   "[data-testid=p14-answer]": {
+    "found": true,
+    "whole": true,
+    "w": 69,
+    "h": 28,
+    "top": 152
+   },
+   "[data-testid=p14-ask] input": {
+    "found": true,
+    "whole": true,
+    "w": 464,
+    "h": 20,
+    "top": 156
+   }
+  },
+  "submenus": [],
+  "intended_front": "Claude Code: rollback runbook"
+ },
+ "B-5-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-needs-head]": {
+    "found": true,
+    "whole": true,
+    "w": 1116,
+    "h": 30,
+    "top": 90
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you"
+ },
+ "C-1-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Chair",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-icon-p-ledger], [data-testid=p14-shelf], [data-testid=p14-zone-p-ledger]": {
+    "found": true,
+    "whole": true,
+    "w": 820,
+    "h": 500,
+    "top": 40
+   }
+  },
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "C-2-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Info: Write the rollback runbook",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Info: Write the rollback runbook"
+   ],
+   "front": "Info: Write the rollback runbook",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Info: Write the rollback runbo"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-icon-m-standup-a1]": {
+    "found": true,
+    "whole": true,
+    "w": 112,
+    "h": 108,
+    "top": 111
+   },
+   "[data-testid=p14-info], [data-testid=p14-tray-info]": {
+    "found": true,
+    "whole": true,
+    "w": 356,
+    "h": 164,
+    "top": 256
+   }
+  },
+  "submenus": [],
+  "intended_front": "Info: Write the rollback runbook"
+ },
+ "C-3-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Chair",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-confirm]": {
+    "found": true,
+    "whole": true,
+    "w": 680,
+    "h": 54,
+    "top": 743
+   },
+   "[data-testid=p14-brief]": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 24,
+    "top": 758
+   },
+   "[data-testid=p14-hand]": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 758
+   }
+  },
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "C-4-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Claude Code: rollback runbook",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Claude Code: rollback runbook"
+   ],
+   "front": "Claude Code: rollback runbook",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-question]": {
+    "found": true,
+    "whole": true,
+    "w": 900,
+    "h": 18,
+    "top": 200
+   },
+   "[data-testid=p14-answer]": {
+    "found": true,
+    "whole": true,
+    "w": 69,
+    "h": 28,
+    "top": 226
+   },
+   "[data-testid=p14-ask] input": {
+    "found": true,
+    "whole": true,
+    "w": 800,
+    "h": 20,
+    "top": 230
+   }
+  },
+  "submenus": [],
+  "intended_front": "Claude Code: rollback runbook"
+ },
+ "C-5-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=p14-needs-head]": {
+    "found": true,
+    "whole": true,
+    "w": 816,
+    "h": 30,
+    "top": 94
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you"
+ },
+ "A-1-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Chair",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Questions for Avery 1:1",
+    "Idea: shard the reconciliation"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": null,
+  "submenus": [],
+  "intended_front": null,
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ],
+  "windowless": true
+ },
+ "A-2-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover",
+    "#412 Add the ledger freeze fla",
+    "Shard the reconciliation job",
+    "Write the rollback runbook"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=p14-row-m-standup-a1]": {
+    "found": true,
+    "whole": true,
+    "w": 335,
+    "h": 44,
+    "top": 639
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "A-3-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover",
+    "#412 Add the ledger freeze fla"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=p14-confirm]": {
+    "found": true,
+    "whole": true,
+    "w": 337,
+    "h": 153,
+    "top": 253
+   },
+   "[data-testid=p14-brief]": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 44,
+    "top": 339
+   },
+   "[data-testid=p14-hand]": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 44,
+    "top": 339
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "A-4-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Claude Code: rollback runbook",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Claude Code: rollback runbook"
+   ],
+   "front": "Claude Code: rollback runbook",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Claude Code: rollback runbook"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=p14-question]": {
+    "found": true,
+    "whole": true,
+    "w": 311,
+    "h": 35,
+    "top": 149
+   },
+   "[data-testid=p14-answer]": {
+    "found": true,
+    "whole": true,
+    "w": 60,
+    "h": 44,
+    "top": 204
+   },
+   "[data-testid=p14-ask] input": {
+    "found": true,
+    "whole": true,
+    "w": 197,
+    "h": 44,
+    "top": 204
+   }
+  },
+  "submenus": [],
+  "intended_front": "Claude Code: rollback runbook",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "A-5-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=p14-needs-head]": {
+    "found": true,
+    "whole": true,
+    "w": 337,
+    "h": 30,
+    "top": 112
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "B-1-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Chair",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover",
+    "Platform observability",
+    "Questions for Avery 1:1",
+    "Idea: shard the reconciliation"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": null,
+  "submenus": [],
+  "intended_front": null,
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ],
+  "windowless": true
+ },
+ "B-2-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover",
+    "#412 Add the ledger freeze fla",
+    "Shard the reconciliation job",
+    "Write the rollback runbook"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=p14-row-m-standup-a1]": {
+    "found": true,
+    "whole": true,
+    "w": 335,
+    "h": 44,
+    "top": 639
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "B-3-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover",
+    "#412 Add the ledger freeze fla"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=p14-confirm]": {
+    "found": true,
+    "whole": true,
+    "w": 337,
+    "h": 153,
+    "top": 112
+   },
+   "[data-testid=p14-brief]": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 44,
+    "top": 198
+   },
+   "[data-testid=p14-hand]": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 44,
+    "top": 198
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "B-4-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Claude Code: rollback runbook",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Claude Code: rollback runbook"
+   ],
+   "front": "Claude Code: rollback runbook",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Claude Code: rollback runbook"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=p14-question]": {
+    "found": true,
+    "whole": true,
+    "w": 311,
+    "h": 35,
+    "top": 149
+   },
+   "[data-testid=p14-answer]": {
+    "found": true,
+    "whole": true,
+    "w": 60,
+    "h": 44,
+    "top": 204
+   },
+   "[data-testid=p14-ask] input": {
+    "found": true,
+    "whole": true,
+    "w": 197,
+    "h": 44,
+    "top": 204
+   }
+  },
+  "submenus": [],
+  "intended_front": "Claude Code: rollback runbook",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "B-5-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=p14-needs-head]": {
+    "found": true,
+    "whole": true,
+    "w": 337,
+    "h": 30,
+    "top": 112
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "C-1-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Chair",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover",
+    "3 NEED YOU · NOV 5"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": null,
+  "submenus": [],
+  "intended_front": null,
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ],
+  "windowless": true
+ },
+ "C-2-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover",
+    "#412 Add the ledger freeze fla",
+    "Shard the reconciliation job",
+    "Write the rollback runbook"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=p14-row-m-standup-a1]": {
+    "found": true,
+    "whole": true,
+    "w": 335,
+    "h": 44,
+    "top": 639
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "C-3-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Chair",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": null,
+  "whole": {
+   "[data-testid=p14-confirm]": {
+    "found": true,
+    "whole": true,
+    "w": 359,
+    "h": 133,
+    "top": 644
+   },
+   "[data-testid=p14-brief]": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 24,
+    "top": 730
+   },
+   "[data-testid=p14-hand]": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 730
+   }
+  },
+  "submenus": [],
+  "intended_front": null,
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ],
+  "windowless": true
+ },
+ "C-4-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Claude Code: rollback runbook",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Claude Code: rollback runbook"
+   ],
+   "front": "Claude Code: rollback runbook",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Claude Code: rollback runbook"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=p14-question]": {
+    "found": true,
+    "whole": true,
+    "w": 311,
+    "h": 35,
+    "top": 202
+   },
+   "[data-testid=p14-answer]": {
+    "found": true,
+    "whole": true,
+    "w": 60,
+    "h": 44,
+    "top": 257
+   },
+   "[data-testid=p14-ask] input": {
+    "found": true,
+    "whole": true,
+    "w": 197,
+    "h": 44,
+    "top": 257
+   }
+  },
+  "submenus": [],
+  "intended_front": "Claude Code: rollback runbook",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "C-5-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=p14-needs-head]": {
+    "found": true,
+    "whole": true,
+    "w": 337,
+    "h": 30,
+    "top": 112
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "_fails": []
+}
