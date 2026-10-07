@@ -11,8 +11,11 @@ runs; nothing leaves the machine.
 
 The Dock's Conductor (1440) and the `/conductor` address (393) open the
 Conductor window; it lists the ready agents and the three launched agents
-with their lamps, its head says `2 AT WORK · 1 ASK · 3 OF 3`; Open on the
-asking agent opens its lane. Shots to `.tmp/evidence-shots/p14-c4/`.
+with their lamps, asking first; its head says `2 AT WORK · 1 ASK` (no
+`N OF M`: the hub counts no running tmux session here). At 393 every verb of
+the selected asking agent and of its Stop confirmation is whole in the
+window, 44 px, the element at its centre. Open on the asking agent opens its
+lane, read before its question is asserted. Shots to `.tmp/evidence-shots/p14-c4/`.
 """
 from __future__ import annotations
 
@@ -91,6 +94,30 @@ def _seed(home: Path) -> None:
         ledger.record(record)
 
 
+def _verbs_in_frame(page: Any, expected: set[str]) -> list[str]:
+    verbs = page.locator(".conductor-window .surface-footer-verbs button").evaluate_all(
+        """(els) => {
+            const frame = document.querySelector('.conductor-window').getBoundingClientRect();
+            return els.map((el) => {
+                const r = el.getBoundingClientRect();
+                const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                return {name: el.textContent.trim(), left: r.left, right: r.right, top: r.top, bottom: r.bottom,
+                        height: r.height, hit: !!hit && el.contains(hit),
+                        frame: {left: frame.left, right: frame.right, top: frame.top, bottom: frame.bottom}};
+            });
+        }""")
+    names = [v["name"] for v in verbs]
+    assert expected <= set(names), names
+    for v in verbs:
+        f = v["frame"]
+        assert v["left"] >= f["left"] and v["right"] <= f["right"], v
+        assert v["top"] >= f["top"] and v["bottom"] <= f["bottom"], v
+        assert v["right"] <= 393 and v["bottom"] <= 852, v
+        assert v["height"] >= 44, v
+        assert v["hit"], v
+    return names
+
+
 @pytest.mark.timeout(240)
 def test_the_conductor_drawer_at_1440_and_393(tmp_path: Path, monkeypatch) -> None:
     _ensure_build()
@@ -133,7 +160,7 @@ def test_the_conductor_drawer_at_1440_and_393(tmp_path: Path, monkeypatch) -> No
                     _settle(page)
                 window = page.locator(".conductor-window")
                 window.wait_for(timeout=T)
-                asking = window.locator("[data-object-id='coder:claude:c1a0de00-runbook']")
+                asking = window.locator("[data-object-id='launch:launch_c4_runbook']")
                 asking.wait_for(timeout=T)
                 for name in ("Claude Code: rollback runbook", "Codex: reconciliation job", "Claude Code: ledger freeze flag"):
                     assert window.get_by_text(name, exact=False).count() > 0, name
@@ -141,8 +168,8 @@ def test_the_conductor_drawer_at_1440_and_393(tmp_path: Path, monkeypatch) -> No
                 assert window.locator("[data-object-id='agent:claude']").count() == 1
                 assert window.locator("[data-object-id='agent:codex']").count() == 1
                 labels = {
-                    "coder:claude:c1a0de00-runbook": "ASKS",
-                    "coder:codex:c0dex000-recon": "WORKS",
+                    "launch:launch_c4_runbook": "ASKS",
+                    "launch:launch_c4_recon": "WORKS",
                     "launch:launch_c4_flag": "PR #412",
                 }
                 for object_id, lamp in labels.items():
@@ -150,18 +177,39 @@ def test_the_conductor_drawer_at_1440_and_393(tmp_path: Path, monkeypatch) -> No
                     text = (member.get_attribute("aria-label") or "") + (member.text_content() or "")
                     assert lamp in text, (object_id, text)
                 head = window.locator("[data-testid='conductor-head']").text_content() or ""
-                assert "2 AT WORK" in head and "1 ASK" in head and "3 OF 3" in head, head
+                assert "2 AT WORK" in head and "1 ASK" in head, head
+                # The cap is the hub's count (`live_launches`: no tmux session
+                # runs here), never the client's: no `N OF M`.
+                assert " OF " not in head, head
                 assert "NOT READ" not in head, head
+                # Asking first in every view.
+                first = window.locator("[data-object-id]").first.get_attribute("data-object-id")
+                assert first == "launch:launch_c4_runbook", first
                 page.wait_for_timeout(400)
                 page.screenshot(path=str(SHOTS / f"C4-conductor-{width}.png"))
                 if width == 393:
                     assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")
 
-                # Open on the asking agent: its lane window.
                 asking.click()
+                if width == 393:
+                    # Astra r1 P1: every verb of the selected asking agent, and of
+                    # its Stop confirmation, is whole inside the WINDOW's box, 44 px
+                    # tall, and the element at its own centre.
+                    _verbs_in_frame(page, {"Get Info", "Stop", "Answer", "Open"})
+                    page.screenshot(path=str(SHOTS / "C4-conductor-selected-393.png"))
+                    window.locator("[data-testid='conductor-stop']").click()
+                    window.locator("[data-testid='conductor-stop-confirm']").wait_for(timeout=T)
+                    names = _verbs_in_frame(page, {"Back", "Stop · sure? (ends the agent's session)"})
+                    assert "Answer" not in names and "Open" not in names, names
+                    page.screenshot(path=str(SHOTS / "C4-conductor-stop-confirm-393.png"))
+                    window.get_by_role("button", name="Back", exact=True).click()
+
+                # Open on the asking agent: its lane window, read before it is read.
                 window.get_by_role("button", name="Open", exact=True).click()
-                page.locator(".is-lane").wait_for(timeout=T)
-                assert QUESTION in (page.locator(".is-lane").text_content() or "")
+                lane = page.locator(".is-lane")
+                lane.wait_for(timeout=T)
+                lane.locator("[data-testid='lane-rail']").wait_for(timeout=T)
+                lane.get_by_text(QUESTION).first.wait_for(timeout=T)
                 if width == 1440:
                     page.wait_for_timeout(300)
                     page.screenshot(path=str(SHOTS / f"C4-conductor-lane-{width}.png"))

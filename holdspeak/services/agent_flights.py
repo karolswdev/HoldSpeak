@@ -31,7 +31,7 @@ nothing for ``ended`` / ``expired``. Nothing here writes.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable, Mapping, Optional
 
 from ..logging_config import get_logger
@@ -109,6 +109,104 @@ def _project_of(db: Any, kind: str, item_id: str) -> tuple[str, str]:
     return project_id, (str(project.name) if project is not None else "")
 
 
+def _stamp(value: Any) -> Optional[datetime]:
+    try:
+        moment = datetime.fromisoformat(str(value or "").replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return moment if moment.tzinfo is not None else moment.replace(tzinfo=timezone.utc)
+
+
+def _ended_at(record: Mapping[str, Any], state: str, session: Any, close: Any) -> Optional[str]:
+    """When the launch ended (PHILO-14 C4), or ``None`` while it is in flight:
+    the merge (``merged_at``) once its close is not awaiting the owner, the
+    owner's stop, else the bound session's last hook report (its SessionEnd,
+    or the last word before it went quiet)."""
+    stopped = record.get("stopped") or {}
+    if isinstance(stopped, Mapping) and stopped.get("at"):
+        return str(stopped["at"])
+    if state == "merged":
+        if close == "awaiting_confirm":
+            return None
+        evidence = (record.get("follow_through") or {}).get("evidence") or {}
+        return str(evidence.get("merged_at") or "") or None
+    if state in ("ended", "expired"):
+        stamp = _field(session, "updated_at") if session is not None else None
+        return str(stamp or record.get("launched_at") or "") or None
+    return None
+
+
+def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock: datetime) -> dict[str, Any]:
+    origin = record.get("origin_ref") or {}
+    kind, item_id = str(origin.get("kind") or ""), str(origin.get("id") or "")
+    ref = f"{kind}:{item_id}"
+    session_key = ""
+    attempt_id = str(record.get("attempt_id") or "")
+    if attempt_id:
+        try:
+            attempt = db.work_attempts.get(attempt_id)
+        except Exception:
+            attempt = None
+        session_key = str(getattr(attempt, "session_id", "") or "")
+    follow = record.get("follow_through") or {}
+    pr = follow.get("pr") or None
+    pr_state = str((pr or {}).get("state") or "")
+    session = by_key.get(session_key) if session_key else None
+    if pr and pr_state == "merged":
+        state = "merged"
+    elif pr and pr_state == "open":
+        state = "pr_open"
+    elif not session_key:
+        state = "starting"
+    else:
+        state = _session_state(session, clock)
+    project_id, project_name = _project_of(db, kind, item_id)
+    evidence = follow.get("evidence") or {}
+    return {
+        "origin_ref": ref,
+        "kind": kind,
+        "id": item_id,
+        "title": _title_of(db, ref),
+        "project_id": project_id,
+        "project_name": project_name,
+        "agent": _agent_of(record),
+        "state": state,
+        "session_key": session_key or None,
+        "pr": {
+            "number": pr.get("number"),
+            "url": pr.get("url"),
+            "state": pr_state,
+        } if pr else None,
+        "close": follow.get("close"),
+        # K4's cleanup of the agent's session (killed, session_gone,
+        # no_session): the evidence that it left; absent while the close
+        # waits for confirmation (Secure) or cleanup is outstanding.
+        "session_cleanup": (follow.get("cleanup") or {}).get("session"),
+        "merged_at": evidence.get("merged_at") or None,
+        "launch_id": record.get("launch_id"),
+        # PHILO-14 C4: the launch's clocks (the Conductor's stale window).
+        "launched_at": record.get("launched_at") or None,
+        "ended_at": _ended_at(record, state, session, follow.get("close")),
+    }
+
+
+def _registry(db: Any, sessions: Optional[Iterable[Any]], ledger: Any, now: Optional[datetime]):
+    if ledger is None:
+        from ..delivery.factory_launch import LaunchLedger
+
+        ledger = LaunchLedger()
+    if sessions is None:
+        from ..agent_context import list_agent_sessions
+
+        sessions = list_agent_sessions()
+    return ledger, _session_index(sessions), now or datetime.now(timezone.utc)
+
+
+def _launched(record: Mapping[str, Any]) -> bool:
+    origin = record.get("origin_ref") or {}
+    return bool(origin.get("kind") and origin.get("id")) and str(record.get("state") or "") not in _UNLAUNCHED
+
+
 def agent_flights(
     db: Any,
     sessions: Optional[Iterable[Any]] = None,
@@ -120,74 +218,49 @@ def agent_flights(
 
     ``sessions`` is the WHOLE agent registry (``AgentSession`` objects or
     their mappings); ``None`` reads it (``agent_context.list_agent_sessions``)."""
-    if ledger is None:
-        from ..delivery.factory_launch import LaunchLedger
-
-        ledger = LaunchLedger()
-    if sessions is None:
-        from ..agent_context import list_agent_sessions
-
-        sessions = list_agent_sessions()
-    clock = now or datetime.now(timezone.utc)
-    by_key = _session_index(sessions)
+    ledger, by_key, clock = _registry(db, sessions, ledger, now)
     newest: dict[str, Mapping[str, Any]] = {}
     for record in ledger.list():
-        origin = record.get("origin_ref") or {}
-        kind, item_id = str(origin.get("kind") or ""), str(origin.get("id") or "")
-        if not kind or not item_id or str(record.get("state") or "") in _UNLAUNCHED:
+        if not _launched(record):
             continue
-        newest[f"{kind}:{item_id}"] = record   # the ledger is oldest first
-    flights: list[dict[str, Any]] = []
-    for ref, record in newest.items():
-        kind, item_id = ref.split(":", 1)
-        session_key = ""
-        attempt_id = str(record.get("attempt_id") or "")
-        if attempt_id:
-            try:
-                attempt = db.work_attempts.get(attempt_id)
-            except Exception:
-                attempt = None
-            session_key = str(getattr(attempt, "session_id", "") or "")
-        follow = record.get("follow_through") or {}
-        pr = follow.get("pr") or None
-        pr_state = str((pr or {}).get("state") or "")
-        if pr and pr_state == "merged":
-            state = "merged"
-        elif pr and pr_state == "open":
-            state = "pr_open"
-        elif not session_key:
-            state = "starting"
-        else:
-            state = _session_state(by_key.get(session_key), clock)
-        project_id, project_name = _project_of(db, kind, item_id)
-        evidence = follow.get("evidence") or {}
-        flights.append({
-            "origin_ref": ref,
-            "kind": kind,
-            "id": item_id,
-            "title": _title_of(db, ref),
-            "project_id": project_id,
-            "project_name": project_name,
-            "agent": _agent_of(record),
-            "state": state,
-            "session_key": session_key or None,
-            "pr": {
-                "number": pr.get("number"),
-                "url": pr.get("url"),
-                "state": pr_state,
-            } if pr else None,
-            "close": follow.get("close"),
-            # K4's cleanup of the agent's session (killed, session_gone,
-            # no_session): the evidence that it left; absent while the close
-            # waits for confirmation (Secure) or cleanup is outstanding.
-            "session_cleanup": (follow.get("cleanup") or {}).get("session"),
-            "merged_at": evidence.get("merged_at") or None,
-            "launch_id": record.get("launch_id"),
-            # PHILO-14 C4: the Conductor drawer keeps an ended launch of the
-            # last 24 h as a stale object; this is its clock.
-            "launched_at": record.get("launched_at") or None,
-        })
-    return flights
+        origin = record.get("origin_ref") or {}
+        newest[f"{origin.get('kind')}:{origin.get('id')}"] = record   # the ledger is oldest first
+    return [_flight(db, record, by_key, clock) for record in newest.values()]
+
+
+#: The states whose agent still holds the item (the faces' ``isInFlight``).
+_IN_FLIGHT = frozenset({"starting", "working", "waiting", "pr_open"})
+
+#: An ended launch stays in the Conductor's history this long.
+HISTORY_WINDOW = timedelta(hours=24)
+
+
+def launch_history(
+    db: Any,
+    sessions: Optional[Iterable[Any]] = None,
+    *,
+    ledger: Any = None,
+    now: Optional[datetime] = None,
+    window: timedelta = HISTORY_WINDOW,
+) -> list[dict[str, Any]]:
+    """PHILO-14 C4: every launch that ENDED in the last ``window``, each
+    launch once (a relaunch of an item keeps the earlier launch's receipt),
+    newest end first, in the flight shape with ``ended_at``. A launch still
+    in flight is never here (``agent_flights`` carries it)."""
+    ledger, by_key, clock = _registry(db, sessions, ledger, now)
+    out: list[tuple[datetime, dict[str, Any]]] = []
+    for record in ledger.list():
+        if not _launched(record):
+            continue
+        flight = _flight(db, record, by_key, clock)
+        if flight["state"] in _IN_FLIGHT or (flight["state"] == "merged" and flight["close"] == "awaiting_confirm"):
+            continue
+        ended = _stamp(flight.get("ended_at"))
+        if ended is None or clock - ended > window:
+            continue
+        out.append((ended, flight))
+    out.sort(key=lambda pair: pair[0], reverse=True)
+    return [flight for _ended, flight in out]
 
 
 def annotate_sessions(items: list[dict[str, Any]], flights: list[dict[str, Any]]) -> None:

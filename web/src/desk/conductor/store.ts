@@ -14,7 +14,8 @@
  */
 import { create } from "zustand";
 import { ApiError, apiFetch } from "../../lib/api";
-import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../agentFlights";
+import { fromWireFlight, fromWireSessionRow, useAgentFlights, type AgentFlight } from "../agentFlights";
+import type { LaneReceipt } from "../lane/laneStore";
 import { AGENTS_PATH, AGENTS_USE_PATH, type AgentId, type AgentsDetect } from "../firstrun/agentsStep";
 import type { ConductorMember } from "./members";
 
@@ -37,10 +38,19 @@ interface ConductorState {
   detectFailure: string;
   flightsState: ReadState;
   launchedAt: Record<string, string>;
+  /** `ended_at` per launch id (history and flights). */
+  endedAt: Record<string, string>;
+  /** Every launch that ended in the last 24 h (the route's `history`). */
+  history: AgentFlight[];
+  /** The hub's own launch count against its cap; null = not served. */
+  launches: { live: number; cap: number } | null;
+  /** Per member ref: the last Stop's receipt (it lands where it was pressed). */
+  stops: Record<string, LaneReceipt>;
   /** The agent whose hooks are being installed. */
   installing: AgentId | null;
-  /** The last install that the hub refused, as a token. */
+  /** The last install that the hub refused, as a token, and its agent. */
   installFailure: string;
+  installFailedAgent: AgentId | null;
   openWindow(origin?: { x: number; y: number } | null): void;
   closeWindow(): void;
   openInfo(member: ConductorMember): void;
@@ -48,6 +58,7 @@ interface ConductorState {
   readDetect(): Promise<void>;
   readFlights(): Promise<void>;
   installHooks(agent: AgentId): Promise<boolean>;
+  setStop(ref: string, receipt: LaneReceipt | null): void;
 }
 
 const failureToken = (error: unknown) => (error instanceof ApiError ? `HTTP ${error.status}` : "HUB OFFLINE");
@@ -61,8 +72,19 @@ export const useConductor = create<ConductorState>((set, get) => ({
   detectFailure: "",
   flightsState: "idle",
   launchedAt: {},
+  endedAt: {},
+  history: [],
+  launches: null,
+  stops: {},
   installing: null,
   installFailure: "",
+  installFailedAgent: null,
+  setStop(ref, receipt) {
+    const next = { ...get().stops };
+    if (receipt) next[ref] = receipt;
+    else delete next[ref];
+    set({ stops: next });
+  },
   openWindow(origin = null) {
     if (get().open) {
       // Already open: bring it forward (and back from the Dock).
@@ -97,33 +119,48 @@ export const useConductor = create<ConductorState>((set, get) => ({
   async readFlights() {
     if (get().flightsState !== "ok") set({ flightsState: "loading" });
     try {
-      const body = await apiFetch<{ sessions?: unknown[]; flights?: unknown[] }>(FLIGHTS_PATH);
+      const body = await apiFetch<{
+        sessions?: unknown[];
+        flights?: unknown[];
+        history?: unknown[];
+        launches?: { live?: unknown; cap?: unknown };
+      }>(FLIGHTS_PATH);
       if (!body || typeof body !== "object" || !Array.isArray(body.sessions)) throw new Error("no sessions");
       const rawFlights = Array.isArray(body.flights) ? body.flights : [];
+      const rawHistory = Array.isArray(body.history) ? body.history : [];
       const launchedAt: Record<string, string> = {};
-      for (const raw of rawFlights as Array<Record<string, unknown>>) {
-        if (raw?.launch_id && raw.launched_at) launchedAt[String(raw.launch_id)] = String(raw.launched_at);
+      const endedAt: Record<string, string> = {};
+      for (const raw of [...rawFlights, ...rawHistory] as Array<Record<string, unknown>>) {
+        if (!raw?.launch_id) continue;
+        if (raw.launched_at) launchedAt[String(raw.launch_id)] = String(raw.launched_at);
+        if (raw.ended_at) endedAt[String(raw.launch_id)] = String(raw.ended_at);
       }
+      const live = Number(body.launches?.live);
+      const cap = Number(body.launches?.cap);
+      const launches = Number.isFinite(live) && Number.isFinite(cap) && cap > 0 ? { live, cap } : null;
       useAgentFlights.setState({
         sessions: body.sessions.map(fromWireSessionRow),
         flights: rawFlights.map(fromWireFlight),
         loaded: true,
       });
-      set({ flightsState: "ok", launchedAt });
+      set({ flightsState: "ok", launchedAt, endedAt, history: rawHistory.map(fromWireFlight), launches });
     } catch {
       set({ flightsState: "failed" });
     }
   },
   async installHooks(agent) {
     if (get().installing) return false;
-    set({ installing: agent, installFailure: "" });
+    set({ installing: agent, installFailure: "", installFailedAgent: null });
     try {
       await apiFetch(AGENTS_USE_PATH, { method: "POST", json: { agent } });
       await get().readDetect();
       return true;
     } catch (error) {
       const payload = error instanceof ApiError ? (error.payload as Record<string, unknown> | null) : null;
-      set({ installFailure: typeof payload?.code === "string" ? payload.code : failureToken(error) });
+      set({
+        installFailure: typeof payload?.code === "string" ? payload.code.replace(/_/g, " ").toUpperCase() : failureToken(error),
+        installFailedAgent: agent,
+      });
       return false;
     } finally {
       set({ installing: null });
@@ -140,6 +177,7 @@ export function openConductor(origin?: { x: number; y: number } | null): void {
 export function __resetConductor(): void {
   useConductor.setState({
     open: false, origin: null, infos: [], detect: null, detectState: "idle", detectFailure: "",
-    flightsState: "idle", launchedAt: {}, installing: null, installFailure: "",
+    flightsState: "idle", launchedAt: {}, endedAt: {}, history: [], launches: null, stops: {},
+    installing: null, installFailure: "", installFailedAgent: null,
   });
 }

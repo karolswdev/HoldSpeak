@@ -12,7 +12,7 @@ import { DeskWindowFrame } from "../components/DeskWindow";
 import { GetInfo, SurfaceFooter, type GetInfoFacts } from "../surface";
 import { windowName } from "../windowName";
 import { madeWord } from "../drawer/members";
-import { MemberVerbs } from "./ConductorWindow";
+import { MemberReceipt, MemberVerbs } from "./ConductorWindow";
 import { readyMember, type ConductorMember } from "./members";
 import { conductorInfoId, useConductor } from "./store";
 
@@ -93,14 +93,15 @@ export function ConductorInfoWindow({ member }: { member: ConductorMember }) {
         </div>
       </div>
       <SurfaceFooter
+        className="cw-footer"
         receipt={
           launchFailed ? (
             <span className="drawer-receipt" data-tone="fail" role="status">
               LAUNCH · NOT READ
             </span>
-          ) : member.receipt ? (
-            <span className="drawer-receipt">{member.receipt}</span>
-          ) : null
+          ) : (
+            <MemberReceipt member={current} />
+          )
         }
         verbs={<MemberVerbs member={current} />}
       />

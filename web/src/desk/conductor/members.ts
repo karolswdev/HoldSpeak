@@ -28,10 +28,8 @@ import { codeWords } from "../firstrun/AgentsCard";
 import { ageWord, madeWord } from "../drawer/members";
 import { wireDate } from "../surface/format";
 
-/** The hub's limit on launched agents that run at one time
- *  (`agent_hand_service.MAX_LIVE_LAUNCHES`). The head says `3 OF 3` at it. */
-export const LAUNCH_CAP = 3;
-/** An ended launch stays in the drawer this long (stale). */
+/** An ended launch stays in the drawer this long (stale); the hub cuts its
+ *  `history` the same way, on the END of the launch. */
 export const STALE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export type ConductorRole = "ready" | "live" | "stale";
@@ -64,10 +62,20 @@ export interface ConductorReads {
   flights: readonly AgentFlight[];
   /** `launched_at` per launch id (the flight wire's clock). */
   launchedAt: Readonly<Record<string, string>>;
+  /** The route's `history`: every launch that ended in the last 24 h. */
+  history?: readonly AgentFlight[];
+  /** `ended_at` per launch id. */
+  endedAt?: Readonly<Record<string, string>>;
   now?: Date;
 }
 
 const AGENT_IDS: readonly AgentId[] = ["claude", "codex"];
+
+/** The list's group (the Floor list's `group`): askers first in every view. */
+export const GROUP = { ask: 0, work: 1, ready: 2, stale: 3 } as const;
+function liveGroup(state: LiveState): number {
+  return state === "ask" || state === "held" ? GROUP.ask : GROUP.work;
+}
 
 /** `isInFlight` as a plain boolean (its type guard narrows the else to never). */
 const inFlight = (flight: AgentFlight): boolean => isInFlight(flight);
@@ -147,7 +155,7 @@ export function readyMember(row: AgentRow): ConductorMember {
     state,
     lamp: state,
     detect: row,
-    group: 0,
+    group: GROUP.ready,
     facts: {
       state,
       more: row.installed
@@ -194,8 +202,10 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
     const lamp = liveLamp(state, flight?.pr?.number);
     const raw = (row.raw?.session ?? row.raw ?? {}) as Record<string, unknown>;
     const at = raw.updated_at;
+    // A launched agent is its launch for the launch's whole life (Astra r1
+    // on #947, P2): the session key is a fact on it, never its identity.
     add({
-      id: `coder:${row.key}`,
+      id: launchId ? `launch:${launchId}` : `coder:${row.key}`,
       ref: launchId ? `launch:${launchId}` : `coder:${row.key}`,
       role: "live",
       live: state,
@@ -210,7 +220,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       lamp,
       sessionKey: row.key,
       launchId,
-      group: 1,
+      group: liveGroup(state),
       facts: {
         where: flight?.projectName || undefined,
         from: flight?.title || row.name,
@@ -245,7 +255,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       lamp,
       sessionKey: flight.sessionKey,
       launchId: flight.launchId,
-      group: 1,
+      group: liveGroup(state),
       facts: {
         where: flight.projectName || undefined,
         from: flight.title,
@@ -256,11 +266,12 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
     });
   }
 
-  // STALE: a launch that ended in the last 24 h, with its close receipt.
-  for (const flight of reads.flights) {
+  // STALE: a launch that ended in the last 24 h (the hub's history: each
+  // launch once, a relaunch keeps the earlier one), cut on its END.
+  const ended = reads.endedAt ?? {};
+  for (const flight of reads.history ?? []) {
     if (inFlight(flight) || !flight.launchId) continue;
-    if (flight.sessionKey && liveKeys.has(flight.sessionKey)) continue;
-    const at = flight.mergedAt || reads.launchedAt[flight.launchId];
+    const at = ended[flight.launchId] || flight.mergedAt;
     const when = wireDate(at);
     if (!when || now.getTime() - when.getTime() > STALE_WINDOW_MS) continue;
     const receipt = closeReceipt(flight);
@@ -280,7 +291,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       receipt,
       sessionKey: flight.sessionKey,
       launchId: flight.launchId,
-      group: 2,
+      group: GROUP.stale,
       facts: {
         where: flight.projectName || undefined,
         from: flight.title,
@@ -290,27 +301,37 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       },
     });
   }
-  return out;
+  // Asking first in every view (icons follow this order; the list sorts
+  // within `group`): asking/held, at work, ready, stale.
+  return out
+    .map((m, i) => [m, i] as const)
+    .sort((a, b) => (a[0].group ?? 0) - (b[0].group ?? 0) || a[1] - b[1])
+    .map(([m]) => m);
 }
 
 export interface ConductorHead {
   atWork: number;
   ask: number;
-  /** Launches that run now (in flight), against {@link LAUNCH_CAP}. */
-  launched: number;
+  /** The hub's own count of running launches and its cap (`live_launches`,
+   *  `MAX_LIVE_LAUNCHES`); null when the hub did not serve it. */
+  launches: { live: number; cap: number } | null;
 }
 
-export function conductorHead(members: readonly ConductorMember[], flights: readonly AgentFlight[]): ConductorHead {
+export function conductorHead(
+  members: readonly ConductorMember[],
+  launches: { live: number; cap: number } | null,
+): ConductorHead {
   const live = members.filter((m) => m.role === "live");
   const ask = live.filter((m) => m.live === "ask" || m.live === "held").length;
-  return { atWork: live.length - ask, ask, launched: flights.filter(inFlight).length };
+  return { atWork: live.length - ask, ask, launches };
 }
 
-/** `2 AT WORK · 1 ASK`, then `3 OF 3` at the cap; a zero is never said (A.8). */
+/** `2 AT WORK · 1 ASK`, then `3 OF 3` only at the hub's cap; a zero is never said (A.8). */
 export function headWords(head: ConductorHead): string[] {
+  const cap = head.launches;
   return [
     head.atWork > 0 ? `${head.atWork} AT WORK` : "",
     head.ask > 0 ? `${head.ask} ASK` : "",
-    head.launched >= LAUNCH_CAP ? `${head.launched} OF ${LAUNCH_CAP}` : "",
+    cap && cap.live >= cap.cap ? `${cap.live} OF ${cap.cap}` : "",
   ].filter(Boolean);
 }

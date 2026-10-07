@@ -14,11 +14,17 @@ import { ConductorWindow } from "../ConductorWindow";
 import { ConductorInfoWindow } from "../ConductorInfoWindow";
 import { closeReceipt, conductorHead, conductorMembers, headWords } from "../members";
 import { __resetConductor, useConductor } from "../store";
+import { laneSessionKey as laneSessionKeyOf } from "../../lane/laneStore";
 
 const apiFetch = vi.fn();
+const apiRequest = vi.fn();
 vi.mock("../../../lib/api", async () => {
   const actual = await vi.importActual<typeof import("../../../lib/api")>("../../../lib/api");
-  return { ...actual, apiFetch: (...args: unknown[]) => apiFetch(...args) };
+  return {
+    ...actual,
+    apiFetch: (...args: unknown[]) => apiFetch(...args),
+    apiRequest: (...args: unknown[]) => apiRequest(...args),
+  };
 });
 const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
 vi.mock("../../../runtime/RuntimeBus", () => {
@@ -67,10 +73,14 @@ const FLIGHT_DONE = {
   state: "merged", session_key: "claude:gone", launch_id: "l-done", close: "closed", session_cleanup: "killed",
   merged_at: ago(120), pr: { number: 413, url: "https://github.com/acme/payments-ledger/pull/413", state: "merged" },
 };
+const FLIGHT_DONE_ENDED = { ...FLIGHT_DONE, ended_at: FLIGHT_DONE.merged_at };
+// Started 30 h ago, ended 2 min ago: in the last 24 h (the cut is the END).
 const FLIGHT_OLD = {
   ...FLIGHT_RUNBOOK, origin_ref: "action:ai-old", id: "ai-old", title: "Write last week's note",
-  state: "ended", session_key: "claude:old", launch_id: "l-old", launched_at: ago(60 * 30),
+  state: "ended", session_key: "claude:old", launch_id: "l-old", launched_at: ago(60 * 30), ended_at: ago(2),
 };
+// Ended 25 h ago: gone.
+const FLIGHT_GONE = { ...FLIGHT_OLD, origin_ref: "action:ai-gone", id: "ai-gone", title: "Write the gone note", launch_id: "l-gone", ended_at: ago(60 * 25) };
 
 const SESSIONS = {
   sessions: [
@@ -79,7 +89,9 @@ const SESSIONS = {
     { session: { agent: "codex", session_id: "x1", state: "working", repo_root: "/h/dev/payments-ledger-recon", updated_at: ago(1) }, flight: FLIGHT_RECON },
     { session: { agent: "claude", session_id: "solo", state: "working", repo_root: "/h/dev/scratch", updated_at: ago(5) } },
   ],
-  flights: [FLIGHT_RUNBOOK, FLIGHT_RECON, FLIGHT_FLAG, FLIGHT_DONE, FLIGHT_OLD],
+  flights: [FLIGHT_RUNBOOK, FLIGHT_RECON, FLIGHT_FLAG, FLIGHT_DONE_ENDED, FLIGHT_OLD],
+  history: [FLIGHT_OLD, FLIGHT_DONE_ENDED, FLIGHT_GONE],
+  launches: { live: 3, cap: 3 },
 };
 
 const DETECT = {
@@ -110,6 +122,7 @@ beforeEach(() => {
   sessionsReply = () => SESSIONS;
   detectReply = () => DETECT;
   apiFetch.mockReset();
+  apiRequest.mockReset();
   apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
     const body = route(url, init);
     if (body instanceof Error) throw body;
@@ -126,6 +139,8 @@ function fixtureMembers() {
     sessions: SESSIONS.sessions.map(fromWireSessionRow),
     flights: SESSIONS.flights.map(fromWireFlight),
     launchedAt: Object.fromEntries(SESSIONS.flights.map((f) => [f.launch_id, f.launched_at])),
+    history: SESSIONS.history.map(fromWireFlight),
+    endedAt: Object.fromEntries(SESSIONS.history.map((f) => [f.launch_id, f.ended_at])),
     now: NOW,
   });
 }
@@ -133,24 +148,36 @@ function fixtureMembers() {
 const icon = (name: RegExp) => screen.getByRole("button", { name });
 
 describe("PHILO-14 C4 the Conductor members", () => {
-  it("ready, then live, then stale: once each, with the screen's names and lamps", () => {
+  it("asking first, then at work, ready, stale: once each, with the screen's names and lamps", () => {
     const members = fixtureMembers();
-    expect(members.map((m) => [m.role, m.name, m.lamp?.label ?? null, m.ref])).toEqual([
-      ["ready", "Claude Code", null, "agent:claude"],
-      ["ready", "Codex", "NOT INSTALLED", "agent:codex"],
-      ["live", "Claude Code: rollback runbook", "ASKS", "launch:l-runbook"],
-      ["live", "Codex: reconciliation job", "WORKS", "launch:l-recon"],
-      // A session no launch holds opens its session window.
-      ["live", "Claude Code: scratch", "WORKS", "coder:claude:solo"],
+    expect(members.map((m) => [m.role, m.name, m.lamp?.label ?? null, m.id, m.group])).toEqual([
+      ["live", "Claude Code: rollback runbook", "ASKS", "launch:l-runbook", 0],
+      ["live", "Codex: reconciliation job", "WORKS", "launch:l-recon", 1],
+      // A session no launch holds is its session.
+      ["live", "Claude Code: scratch", "WORKS", "coder:claude:solo", 1],
       // In flight with no live session: its PR is the fact.
-      ["live", "Claude Code: ledger freeze flag", "PR #412", "launch:l-flag"],
-      // Ended in the last 24 h: stale, its close receipt; the 30 h one is gone.
-      ["stale", "Claude Code: cutover checklist", null, "launch:l-done"],
+      ["live", "Claude Code: ledger freeze flag", "PR #412", "launch:l-flag", 1],
+      ["ready", "Claude Code", null, "agent:claude", 2],
+      ["ready", "Codex", "NOT INSTALLED", "agent:codex", 2],
+      // Ended in the last 24 h, newest end first, cut on the END (l-old
+      // started 30 h ago, ended 2 min ago); the one that ended 25 h ago is gone.
+      ["stale", "Claude Code: last week's note", null, "launch:l-old", 3],
+      ["stale", "Claude Code: cutover checklist", null, "launch:l-done", 3],
     ]);
-    const stale = members.find((m) => m.role === "stale")!;
+    const stale = members.find((m) => m.id === "launch:l-done")!;
     expect(stale.receipt).toBe("PR #413 MERGED · ITEM CLOSED · SESSION STOPPED");
     expect(stale.sprite).toMatch(/agent-claude-code_stale\.png$/);
     expect(members.find((m) => m.agent === "codex" && m.role === "live")!.sprite).toMatch(/agent-codex\.png$/);
+  });
+
+  it("a launched agent keeps its launch identity when its session binds (Astra r1 P2)", () => {
+    const starting = { ...FLIGHT_RECON, state: "starting", session_key: null };
+    const before = conductorMembers({ detect: null, sessions: [], flights: [fromWireFlight(starting)], launchedAt: {}, now: NOW });
+    const after = conductorMembers({
+      detect: null, sessions: [fromWireSessionRow(SESSIONS.sessions[1])], flights: [fromWireFlight(FLIGHT_RECON)], launchedAt: {}, now: NOW,
+    });
+    expect(before.map((m) => [m.id, m.lamp?.label])).toEqual([["launch:l-recon", "STARTS"]]);
+    expect(after.map((m) => [m.id, m.lamp?.label, m.sessionKey])).toEqual([["launch:l-recon", "WORKS", "codex:x1"]]);
   });
 
   it("a permission prompt is HELD; the ended receipt words", () => {
@@ -165,14 +192,16 @@ describe("PHILO-14 C4 the Conductor members", () => {
     expect(closeReceipt(fromWireFlight({ ...FLIGHT_OLD, state: "expired" }))).toBe("SESSION GONE");
   });
 
-  it("the head omits zeros and names the cap only at it", () => {
-    const flights = SESSIONS.flights.map(fromWireFlight);
-    const head = conductorHead(fixtureMembers(), flights);
-    // runbook asks; recon, scratch and the flag's PR are at work; 3 launches in flight.
-    expect(head).toEqual({ atWork: 3, ask: 1, launched: 3 });
+  it("the head omits zeros; N OF M is the hub's own count, only at its cap (Astra r1 P2)", () => {
+    const head = conductorHead(fixtureMembers(), { live: 3, cap: 3 });
+    expect(head.atWork).toBe(3);
+    expect(head.ask).toBe(1);
     expect(headWords(head)).toEqual(["3 AT WORK", "1 ASK", "3 OF 3"]);
-    expect(headWords({ atWork: 2, ask: 0, launched: 2 })).toEqual(["2 AT WORK"]);
-    expect(headWords({ atWork: 0, ask: 0, launched: 0 })).toEqual([]);
+    // Three PR flights whose agents left: the hub counts 0 running; no cap word.
+    expect(headWords(conductorHead(fixtureMembers(), { live: 0, cap: 3 }))).toEqual(["3 AT WORK", "1 ASK"]);
+    // Not served: never guessed.
+    expect(headWords(conductorHead(fixtureMembers(), null))).toEqual(["3 AT WORK", "1 ASK"]);
+    expect(headWords({ atWork: 0, ask: 0, launches: null })).toEqual([]);
   });
 });
 
@@ -211,6 +240,10 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
     fireEvent.click(screen.getByTestId("conductor-stop"));
     expect(screen.getByTestId("conductor-stop-confirm").textContent).toContain("ends the agent's session");
+    // The confirmation REPLACES the verb row: only Back and the confirm.
+    expect(screen.queryByRole("button", { name: "Answer" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Back" })).toBeTruthy();
     fireEvent.click(icon(/^Codex: reconciliation job/));
     expect(screen.queryByRole("button", { name: "Answer" })).toBeNull();
     expect(screen.getByTestId("conductor-stop")).toBeTruthy();
@@ -218,6 +251,73 @@ describe("PHILO-14 C4 the Conductor window", () => {
     fireEvent.click(icon(/^Claude Code: cutover checklist/));
     expect(screen.getByTestId("conductor-receipt").textContent).toBe("PR #413 MERGED · ITEM CLOSED · SESSION STOPPED");
     expect(screen.queryByTestId("conductor-stop")).toBeNull();
+  });
+
+  it("Stop is bound to the agent pressed: confirm Stop on A, open B before A's read resolves; the kill names A (Astra r1 P1)", async () => {
+    const { useLane, __resetLane } = await import("../../lane/laneStore");
+    __resetLane();
+    let releaseA: (body: unknown) => void = () => undefined;
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.startsWith("/api/agent/launches/l-runbook/lane")) return new Promise((resolve) => { releaseA = resolve; });
+      if (url.startsWith("/api/agent/launches/l-recon/lane"))
+        return { launch: { launch_id: "l-recon", session_key: "codex:x1" }, control: { mode: "yolo", armed: true, direct: true } };
+      return base(url, init);
+    });
+    apiRequest.mockImplementation(async () => ({ ok: true, status: 200, json: async () => ({ status: "killed" }) }));
+    render(<ConductorWindow />);
+    fireEvent.click(await screen.findByRole("button", { name: /^Claude Code: rollback runbook/ }));
+    fireEvent.click(screen.getByTestId("conductor-stop"));
+    fireEvent.click(screen.getByTestId("conductor-stop-confirm"));
+    // B opens (its lane is the open one) while A's read is out.
+    await act(async () => {
+      useLane.getState().open("l-recon");
+      await useLane.getState().load();
+    });
+    expect(laneSessionKeyOf(useLane.getState().lane)).toBe("codex:x1");
+    await act(async () => {
+      releaseA({ launch: { launch_id: "l-runbook", session_key: "claude:c1" }, control: { mode: "yolo", armed: true, direct: true } });
+    });
+    await waitFor(() => expect(apiRequest).toHaveBeenCalled());
+    const kills = apiRequest.mock.calls.map(([url]) => String(url)).filter((url) => url.endsWith("/kill"));
+    expect(kills).toEqual(["/api/coders/claude%3Ac1/kill"]);
+    // The receipt lands on A (pressed), never on B's lane.
+    await waitFor(() => expect(useConductor.getState().stops["launch:l-runbook"]?.word).toBe("STOPPED"));
+    expect(useLane.getState().receipt).toBeNull();
+  });
+
+  it("LIST keeps the asking agent first (the group sort), whatever the name sort", async () => {
+    useDesk.setState({ zoneViewPrefs: { conductor: { view: "list" } } as never });
+    render(<ConductorWindow />);
+    await screen.findByText("Claude Code: rollback runbook");
+    const names = [...document.querySelectorAll(".conductor-window [data-object-id]")].map((el) => el.getAttribute("data-object-id"));
+    expect(names[0]).toBe("launch:l-runbook");
+    expect(names.indexOf("agent:claude")).toBeGreaterThan(names.indexOf("launch:l-flag"));
+    expect(names.at(-1)).toBe("launch:l-old");
+  });
+
+  it("a hooks install the hub refuses is named in the Get Info that pressed it, with Retry (Astra r1 P2)", async () => {
+    const missing = { ...DETECT, agents: [{ ...DETECT.agents[0], hooks: "missing" }, DETECT.agents[1]] };
+    detectReply = () => missing;
+    await useConductor.getState().readDetect();
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url === "/api/onboarding/agents/use") throw new TypeError("Failed to fetch");
+      return base(url, init);
+    });
+    const [claude] = conductorMembers({ detect: missing.agents as never, sessions: [], flights: [], launchedAt: {}, now: NOW });
+    render(<ConductorInfoWindow member={claude} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Install hooks" }));
+    });
+    const failed = await screen.findByTestId("conductor-install-failed");
+    expect(failed.textContent).toContain("HOOKS NOT INSTALLED · HUB OFFLINE");
+    apiFetch.mockImplementation(base);
+    detectReply = () => DETECT;
+    await act(async () => {
+      fireEvent.click(within(failed).getByRole("button", { name: "Retry" }));
+    });
+    await waitFor(() => expect(screen.queryByTestId("conductor-install-failed")).toBeNull());
   });
 
   it("an agent not installed reads NOT INSTALLED with Copy install; missing hooks offer Install hooks", async () => {
@@ -265,7 +365,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
   });
 
   it("a ready agent's Get Info: version, hooks, sign-in", async () => {
-    const [claude] = fixtureMembers();
+    const claude = fixtureMembers().find((m) => m.id === "agent:claude")!;
     render(<ConductorInfoWindow member={claude} />);
     const info = await screen.findByTestId("conductor-info");
     expect(within(info).getByText("Version").nextSibling?.textContent).toBe("2.1.0");

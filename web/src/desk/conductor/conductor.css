@@ -1,0 +1,21 @@
+/* PHILO-14 C4 — the Conductor drawer (boards A-1, A-4), on the drawer's
+ * frame (drawer.css). The footer is its own `surface` container (as the
+ * lane's): at a narrow window the egress chip, the receipt and the verbs
+ * each take a row, and the verbs wrap inside the window, so no verb leaves
+ * the frame (Astra r1 on #947, P1: 393). */
+.desk-next .conductor-window .surface-footer,
+.desk-next .conductor-info-window .surface-footer { container: surface / inline-size; }
+@container surface (max-width: 520px) {
+  .desk-next .surface-footer-layout.cw-footer {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "egress" "receipt" "verbs";
+    row-gap: 4px;
+    padding: 4px 0;
+  }
+  .desk-next .cw-footer .surface-footer-receipt { justify-content: flex-start; min-height: 0; }
+  .desk-next .cw-footer .surface-footer-receipt:empty,
+  .desk-next .cw-footer .surface-footer-egress:empty { display: none; }
+  .desk-next .cw-footer .surface-footer-verbs { flex-wrap: wrap; justify-content: flex-end; row-gap: 4px; min-width: 0; }
+  .desk-next .cw-footer .surface-footer-verbs > .btn { max-width: 100%; white-space: normal; }
+}
+.desk-next .cw-receipt { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }

@@ -184,3 +184,91 @@ def test_sessions_route_resolves_before_the_presentation_filter(monkeypatch, tmp
     assert [r["session"]["session_id"] for r in body["sessions"]] == ["x1"]
     assert {f["origin_ref"]: f["state"] for f in body["flights"]} == {"action:ai_1": "ended", "decision:d1": "waiting"}
     assert body["sessions"][0]["flight"]["title"] == "Use Redis for sessions"
+
+
+# ── PHILO-14 C4 (Astra r1 on #947, finding 4): the Conductor's history ──
+
+
+def test_history_cuts_on_the_end_not_the_launch(db, tmp_path, registry):
+    """A launch started 30 h ago that ended 2 min ago is in the last 24 h;
+    one that ended 25 h ago is not. Through hook ingest and the ledger."""
+    from holdspeak.services.agent_flights import launch_history
+
+    now = datetime.now(timezone.utc)
+    hook(registry, "claude", "late", "SessionStart", now=now - timedelta(hours=30))
+    hook(registry, "claude", "late", "SessionEnd", now=now - timedelta(minutes=2))
+    hook(registry, "claude", "early", "SessionStart", now=now - timedelta(hours=30))
+    hook(registry, "claude", "early", "SessionEnd", now=now - timedelta(hours=25))
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    old = (now - timedelta(hours=30)).isoformat().replace("+00:00", "Z")
+    _launch(ledger, "l-late", ("action", "ai_1"), launched_at=old, attempt_id=_attempt(db, "claude:late", "action:ai_1"))
+    _launch(ledger, "l-early", ("decision", "d1"), launched_at=old, attempt_id=_attempt(db, "claude:early", "decision:d1"))
+    history = launch_history(db, ledger=ledger, now=now)
+    assert [(f["launch_id"], f["state"]) for f in history] == [("l-late", "ended")]
+    ended = datetime.fromisoformat(history[0]["ended_at"].replace("Z", "+00:00"))
+    assert abs((now - ended).total_seconds() - 120) < 5
+    [flight] = [f for f in agent_flights(db, ledger=ledger, now=now) if f["launch_id"] == "l-late"]
+    assert flight["ended_at"] == history[0]["ended_at"]
+
+
+def test_a_relaunch_keeps_the_earlier_receipt(db, tmp_path, registry):
+    """Relaunching an item: the flight is the new launch; the earlier launch,
+    merged and closed an hour ago, stays in the history with its close."""
+    from holdspeak.services.agent_flights import launch_history
+
+    now = datetime.now(timezone.utc)
+    hook(registry, "claude", "first", "SessionEnd", now=now - timedelta(hours=1))
+    hook(registry, "claude", "second", "PreToolUse", tool_name="Write")
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    merged_at = (now - timedelta(hours=1)).isoformat().replace("+00:00", "Z")
+    _launch(ledger, "first", ("action", "ai_1"), attempt_id=_attempt(db, "claude:first", "action:ai_1"),
+            follow_through={"pr": {"number": 412, "url": "u", "state": "merged"}, "close": "closed",
+                            "evidence": {"merged_at": merged_at}})
+    _launch(ledger, "second", ("action", "ai_1"), attempt_id=_attempt(db, "claude:second", "action:ai_1"))
+    assert [(f["launch_id"], f["state"], f["ended_at"]) for f in agent_flights(db, ledger=ledger, now=now)] == [
+        ("second", "working", None)]
+    history = launch_history(db, ledger=ledger, now=now)
+    assert [(f["launch_id"], f["state"], f["close"], f["ended_at"]) for f in history] == [
+        ("first", "merged", "closed", merged_at)]
+
+
+def test_sessions_route_serves_history_and_the_hub_launch_count(monkeypatch, tmp_path, registry):
+    """[finding 7] The cap is the hub's count (`live_launches`: launched,
+    follow-through not done, tmux session alive), never the client's: an
+    open PR whose agent left is not a running launch."""
+    from types import SimpleNamespace
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    import holdspeak.db as dbmod
+    from holdspeak.delivery import factory_launch
+    from holdspeak.web.routes.system.coders import build_coders_router
+
+    database = Database(tmp_path / "hub.db")
+    _seed(database)
+    hook(registry, "claude", "s1", "SessionEnd")
+    launches = tmp_path / "launches.json"
+    ledger = LaunchLedger(launches)
+    _launch(ledger, "l1", ("action", "ai_1"), attempt_id=_attempt(database, "claude:s1", "action:ai_1"),
+            follow_through={"pr": {"number": 7, "url": "u", "state": "open"}, "pr_state": "pr_open"})
+    monkeypatch.setattr(dbmod, "get_database", lambda: database)
+    monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", launches)
+    alive = {"hs-l1": False}
+
+    class Reads:
+        def launcher(self):
+            from holdspeak.services.agent_hand_preview import LaunchReads
+
+            launcher = LaunchReads(ledger_path=launches).launcher()
+            launcher._session_alive = lambda name: alive.get(name, False)
+            return launcher
+
+    app = FastAPI()
+    app.include_router(build_coders_router(SimpleNamespace(broadcast=None, agent_hand_reads=Reads())))
+    body = TestClient(app).get("/api/coders/sessions?include_ended=false").json()
+    assert body["launches"] == {"live": 0, "cap": 3}
+    assert body["history"] == []
+    assert [f["state"] for f in body["flights"]] == ["pr_open"]
+    alive["hs-l1"] = True
+    assert TestClient(app).get("/api/coders/sessions").json()["launches"] == {"live": 1, "cap": 3}

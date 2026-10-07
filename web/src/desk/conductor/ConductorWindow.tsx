@@ -36,6 +36,7 @@ import { conductorHead, conductorMembers, headWords, type ConductorMember } from
 import { answerMember, answers, openMember, stopMember, stops } from "./open";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
 import "../drawer/drawer.css";
+import "./conductor.css";
 
 export type ConductorView = "icons" | "list";
 const PREF_KEY = "conductor";
@@ -53,13 +54,73 @@ function useConductorReads() {
   return state;
 }
 
-/** The verbs of one selected member (every verb names what it does). */
+/** The receipt of a selected member: its Stop, its hooks install that the
+ *  hub refused (with Retry), or a stale launch's close. */
+export function MemberReceipt({ member }: { member: ConductorMember | null }) {
+  const stop = useConductor((s) => (member ? s.stops[member.ref] : undefined));
+  const failure = useConductor((s) => s.installFailure);
+  const failedFor = useConductor((s) => s.installFailedAgent);
+  const installing = useConductor((s) => s.installing);
+  if (member?.detect && failure && failedFor === member.detect.id) {
+    const agent = member.detect.id;
+    return (
+      <span className="drawer-receipt cw-receipt" data-tone="fail" role="status" data-testid="conductor-install-failed">
+        HOOKS NOT INSTALLED · {failure}
+        <Button dense variant="ghost" loading={installing === agent} onClick={() => void useConductor.getState().installHooks(agent)}>
+          Retry
+        </Button>
+      </span>
+    );
+  }
+  if (stop) {
+    return (
+      <span className="drawer-receipt cw-receipt" data-tone={stop.tone === "ok" ? undefined : "fail"} role="status" data-testid="conductor-stop-receipt">
+        {stop.word} · {stop.text}
+      </span>
+    );
+  }
+  if (member?.receipt) {
+    return <span className="drawer-receipt cw-receipt" data-testid="conductor-receipt">{member.receipt}</span>;
+  }
+  return null;
+}
+
+/** The verbs of one selected member (every verb names what it does). The
+ *  Stop confirmation REPLACES the verb row (it is the only question then),
+ *  and it is bound to the member pressed, whatever is selected after. */
 export function MemberVerbs({ member, onInfo }: { member: ConductorMember | null; onInfo?: () => void }) {
   const installing = useConductor((s) => s.installing);
   const { copy, receipt } = useCopyReceipt();
-  const [confirmStop, setConfirmStop] = useState(false);
+  const [confirmFor, setConfirmFor] = useState<ConductorMember | null>(null);
   const [stopping, setStopping] = useState(false);
-  useEffect(() => setConfirmStop(false), [member?.id]);
+  useEffect(() => {
+    if (!stopping) setConfirmFor((now) => (now && now.id !== member?.id ? null : now));
+  }, [member?.id, stopping]);
+  if (confirmFor) {
+    const pressed = confirmFor;
+    return (
+      <>
+        <Button dense variant="ghost" disabled={stopping} onClick={() => setConfirmFor(null)}>
+          Back
+        </Button>
+        <Button
+          dense
+          variant="danger"
+          loading={stopping}
+          data-testid="conductor-stop-confirm"
+          onClick={() => {
+            setStopping(true);
+            void stopMember(pressed).finally(() => {
+              setStopping(false);
+              setConfirmFor(null);
+            });
+          }}
+        >
+          Stop · sure? (ends the agent's session)
+        </Button>
+      </>
+    );
+  }
   const detect = member?.detect;
   return (
     <>
@@ -85,32 +146,9 @@ export function MemberVerbs({ member, onInfo }: { member: ConductorMember | null
         </Button>
       ) : null}
       {member && stops(member) ? (
-        confirmStop ? (
-          <>
-            <Button dense variant="ghost" onClick={() => setConfirmStop(false)}>
-              Back
-            </Button>
-            <Button
-              dense
-              variant="danger"
-              loading={stopping}
-              data-testid="conductor-stop-confirm"
-              onClick={() => {
-                setStopping(true);
-                void stopMember(member).finally(() => {
-                  setStopping(false);
-                  setConfirmStop(false);
-                });
-              }}
-            >
-              Stop · sure? (ends the agent's session)
-            </Button>
-          </>
-        ) : (
-          <Button dense variant="danger" data-testid="conductor-stop" onClick={() => setConfirmStop(true)}>
-            Stop
-          </Button>
-        )
+        <Button dense variant="danger" data-testid="conductor-stop" onClick={() => setConfirmFor(member)}>
+          Stop
+        </Button>
       ) : null}
       {member && answers(member) ? (
         <Button dense variant="primary" onClick={() => answerMember(member)}>
@@ -145,10 +183,12 @@ export function ConductorWindow() {
         sessions: flightsKnown ? sessions : [],
         flights: flightsKnown ? flights : [],
         launchedAt: reads.launchedAt,
+        history: flightsKnown ? reads.history : [],
+        endedAt: reads.endedAt,
       }),
-    [reads.detect, reads.launchedAt, sessions, flights, flightsKnown],
+    [reads.detect, reads.launchedAt, reads.history, reads.endedAt, sessions, flights, flightsKnown],
   );
-  const head = conductorHead(members, flightsKnown ? flights : []);
+  const head = conductorHead(members, flightsKnown ? reads.launches : null);
   const selected = useMemo(() => members.find((m) => m.id === selectedId) ?? null, [members, selectedId]);
   useEffect(() => {
     if (selectedId && !selected) setSelectedId(null);
@@ -268,15 +308,8 @@ export function ConductorWindow() {
       </div>
       <SurfaceFooter
         egress={selected?.role === "live" ? <EgressChip label={AGENT_HOST[selected.agent as AgentId] ?? AGENT_HOST.claude} scope="cloud" /> : null}
-        receipt={
-          reads.installFailure ? (
-            <span className="drawer-receipt" data-tone="fail" role="status">
-              HOOKS NOT INSTALLED · {reads.installFailure.replace(/_/g, " ").toUpperCase()}
-            </span>
-          ) : selected?.receipt ? (
-            <span className="drawer-receipt" data-testid="conductor-receipt">{selected.receipt}</span>
-          ) : null
-        }
+        className="cw-footer"
+        receipt={<MemberReceipt member={selected} />}
         verbs={<MemberVerbs member={selected} onInfo={() => info(selected)} />}
       />
     </DeskWindowFrame>
