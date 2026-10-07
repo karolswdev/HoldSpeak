@@ -42,7 +42,7 @@ import {
 import type { ConnectionsResponse } from "./api";
 import { accountChip, useConnections } from "../../../desk/surface/send";
 import {
-  CHANNEL_WORD, DEST_FOCUS, EMAIL_PROVIDERS, SEND_WORDS, egressOf, emailProvider, refusedWord, stamp,
+  CHANNEL_WORD, DEFAULT_EMAIL_PROVIDER, DEST_FOCUS, EMAIL_PROVIDERS, SEND_WORDS, egressOf, emailProvider, refusedWord, stamp,
   takeDestinationsFocus, targetToken, wire, Refusal, type Channel, type Destination, type EmailProvider,
   type SaveBody,
 } from "../../../features/channels/channels";
@@ -56,7 +56,7 @@ const CHANNELS: { value: Channel; label: string }[] = [
   { value: "email", label: "Email" },
   { value: "slack", label: "Slack" },
 ];
-/** Story 07: the email providers, from the one table (SendGrid first: the ratified canvas). */
+/** Story 07: the email providers, from the one table (PHILO-15 04: Resend first, the default). */
 const PROVIDERS = (Object.keys(EMAIL_PROVIDERS) as EmailProvider[]).map((p) => ({ value: p, label: EMAIL_PROVIDERS[p].label }));
 
 type Draft = {
@@ -71,7 +71,7 @@ type Draft = {
 };
 const EMPTY: Draft = {
   channel: "file", name: "", nameTouched: false, folder: "", synced: false, repo: "", kind: "issue", number: "",
-  jiraAccount: "", key: "", confAccount: "", space: "", provider: "sendgrid", fromEmail: "", fromName: "", to: "", cc: "",
+  jiraAccount: "", key: "", confAccount: "", space: "", provider: DEFAULT_EMAIL_PROVIDER, fromEmail: "", fromName: "", to: "", cc: "",
   slackLabel: "", slackRef: "",
 };
 
@@ -104,7 +104,7 @@ export function autoName(d: Pick<Draft, "channel" | "folder" | "repo" | "kind" |
   }
 }
 /** The keychain item's name for a sender, per provider (story 03's key_ref: letters, digits, `_ . @ -`). */
-export const keyRef = (fromEmail: string, provider: EmailProvider = "sendgrid") =>
+export const keyRef = (fromEmail: string, provider: EmailProvider = DEFAULT_EMAIL_PROVIDER) =>
   `${provider}-${fromEmail.trim().toLowerCase().replace(/[^a-z0-9_.@-]/g, "-")}`.slice(0, 100);
 const addresses = (text: string) => text.split(",").map((a) => a.trim()).filter(Boolean);
 

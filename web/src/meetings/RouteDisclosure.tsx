@@ -12,7 +12,7 @@ import { Fragment } from "react";
 import { EgressChip } from "../desk/surface/gadgets";
 import { egressFor } from "../desk/surface/egress";
 import type { PlannedRoute, RunReceipt, SummaryRefusal } from "./summaryRoute";
-import { refusalFact, routeReasonToken, routeReady } from "./summaryRoute";
+import { refusalFact, routeOff, routeReasonToken, routeReady } from "./summaryRoute";
 
 /** A refused run, said once and said short (UX-CANON A.3).
  *
@@ -65,7 +65,8 @@ export function RouteDisclosure({
         data-tone="warn"
         data-testid={`${testId}-unavailable`}
       >
-        {`NO SUMMARY ROUTE · ${routeReasonToken(route)}`}
+        {/* PHILO-15 01 ruling: OFF is the owner's choice, not a missing route. */}
+        {routeOff(route) ? "SUMMARIES OFF" : `NO SUMMARY ROUTE · ${routeReasonToken(route)}`}
       </span>
     );
   }

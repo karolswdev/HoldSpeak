@@ -5,6 +5,8 @@ Parse-and-serialize only; the behaviour and what each call touches live in
 
 GET  /api/onboarding/calendar                 -- macOS calendars (no prompt, no network)
 POST /api/onboarding/calendar/macos/access    -- the macOS Calendars prompt (explicit)
+POST /api/onboarding/calendar/macos/settings  -- calendar.open_settings: System Settings > Privacy >
+                                                 Calendars (admitted system open; receipt)
 POST /api/onboarding/calendar/check           -- {url}: validate + read one ICS URL once
 POST /api/onboarding/calendar/use             -- {id, label?}: add the calendar source
 GET  /api/onboarding/connections              -- signed-in gh / acli accounts (files only)
@@ -83,6 +85,31 @@ def build_onboarding_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/onboarding/calendar/macos/access")
     async def onboarding_calendar_access(request: Request) -> Any:
         return await _call(request, "calendar_request_access")
+
+    @router.post("/api/onboarding/calendar/macos/settings")
+    async def onboarding_calendar_settings(request: Request) -> Any:
+        # PHILO-15 04 (gap 12): the owner's press opens the Calendars privacy
+        # pane. One admitted kernel operation, one receipt.
+        name = "calendar.open_settings"
+        registry = operations.for_context(ctx)
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        data, refused = await body_or_refusal(request, registry, principal, name)
+        if refused is not None:
+            return refused
+
+        def run() -> JSONResponse:
+            try:
+                result, kernel = registry.invoke_receipted(principal, name, dict(data))
+                return JSONResponse({**result, **kernel_fields(kernel)})
+            except OperationRefused as exc:
+                return JSONResponse({"success": False, "code": exc.code, "error_code": exc.code,
+                                     "message": exc.detail, **refusal_fields(exc)}, status_code=400)
+            except ServiceError as exc:
+                if (refused := kernel_refusal(exc)) is not None:
+                    return refused
+                return service_refusal(exc)
+
+        return await run_in_threadpool(run)
 
     @router.post("/api/onboarding/calendar/check")
     async def onboarding_calendar_check(request: Request) -> Any:

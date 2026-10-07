@@ -113,7 +113,7 @@ Select **Send to** on a summary, an update, or an Artifact, and pick a saved des
 | A folder | Your file system, or a synced folder |
 | GitHub | Your local `gh` sign-in |
 | Jira and Confluence | Your local `acli` sign-in, across many accounts and sites |
-| Email | Your SendGrid or Resend sender |
+| Email | Your Resend sender (the default), or SendGrid |
 | Slack | A Slack incoming webhook |
 
 HoldSpeak shows the exact text before it sends, freezes the target, and keeps a receipt of every send.

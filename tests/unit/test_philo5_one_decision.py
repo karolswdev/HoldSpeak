@@ -259,6 +259,8 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "agent_hooks.install",
         # Conductor R7: the owner's People MCP access (config).
         "people_access.set",
+        # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
+        "calendar.open_settings",
         # Conductor K2: Hand to agent.
         "agent.hand",
     ]
