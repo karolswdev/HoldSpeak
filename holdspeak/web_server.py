@@ -513,7 +513,13 @@ class MeetingWebServer:
             self._listen_sockets = [listen]
             self.port = int(listen.getsockname()[1])
         else:
-            self.port = _find_free_port(self.host)
+            # Conductor R5: bind the free port now and serve on this socket.
+            # Picking a port, closing it and letting uvicorn bind it after
+            # lifespan startup left a window in which another process could
+            # take the port (a check-then-bind race).
+            listen = _bind_listen_socket(self.host, 0)
+            self._listen_sockets = [listen]
+            self.port = int(listen.getsockname()[1])
         from .principals import agent_credentials
 
         agent_credentials.set_hub_url(f"http://{self.host}:{self.port}")
@@ -610,6 +616,14 @@ class MeetingWebServer:
         if self._thread is not None:
             self._thread.join(timeout=10.0)
 
+        # The socket start() bound and handed to uvicorn (uvicorn closes its
+        # server; closing again is harmless and frees the fd if it did not).
+        for sock in self._listen_sockets or ():
+            try:
+                sock.close()
+            except OSError:
+                pass
+        self._listen_sockets = None
         self._server = None
         self._thread = None
         self._loop = None
