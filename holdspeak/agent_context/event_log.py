@@ -10,8 +10,9 @@ Two legs, so the hook never waits on the hub (Conductor R3):
    ``~/.holdspeak/agent-events/`` (folder 0700, file 0600), written to a
    hidden name and renamed into place. No lock, no database, O(1).
 2. The hub DRAINS the spool into ``agent_session_events`` (``db/schema.py``)
-   on each lane read and each ``/api/coders/sessions`` read
-   (:func:`drain_spool`). A drain is idempotent (``spool_id`` is unique), and
+   on each lane read, each ``/api/coders/sessions`` read
+   (:func:`drain_spool`), and on its own timer every 2 s while a launch is
+   live (:class:`SpoolTimer`, PHILO-14 C0b). A drain is idempotent (``spool_id`` is unique), and
    a file goes only after its row is committed. When the table does not
    exist yet, the files stay until the schema reconciles.
 
@@ -34,6 +35,7 @@ The newest :data:`EVENT_LOG_KEEP` rows per session are kept.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import time
@@ -53,6 +55,8 @@ TEXT_MAX_BYTES = 8 * 1024
 DRAIN_MAX_FILES = 5000
 _SPOOL_SUFFIX = ".json"
 _LOCK_NAME = ".drain.lock"
+
+log = logging.getLogger(__name__)
 
 _PATH_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit", "Read"}
 _COMMAND_TOOLS = {"Bash", "shell", "exec_command", "local_shell"}
@@ -246,6 +250,83 @@ def drain_spool(
         lock.close()
 
 
+class SpoolTimer:
+    """The hub's timer leg of the drain (PHILO-14 C0b).
+
+    The hub's ``_agent_spool_loop`` calls :meth:`tick` every
+    :data:`INTERVAL` seconds (off the event loop). A tick drains only while a
+    launch is live: ``live()`` (``agent_hand_service.live_launches``, a tmux
+    probe per launch) is read again when the launch ledger file changes, and
+    every :data:`LIVE_RECHECK` seconds while it says live (an agent whose
+    tmux died leaves its ledger row as it was). With no live launch a tick is
+    one ``stat`` of the ledger: no drain and no tmux probe.
+
+    The drain is :func:`drain_spool` as the reads call it: the same
+    ``flock``, so a drain in progress is never doubled (the second drainer
+    gets 0), the same order and the same :data:`DRAIN_MAX_FILES` bound per
+    pass. A failure is logged at most once per :data:`ERROR_LOG_EVERY`
+    seconds and never raised."""
+
+    INTERVAL = 2.0
+    LIVE_RECHECK = 30.0
+    ERROR_LOG_EVERY = 60.0
+
+    def __init__(
+        self,
+        connection: Callable[[], Any],
+        *,
+        live: Callable[[], bool],
+        ledger_path: Callable[[], Optional[Path]],
+        spool_dir: Optional[Path] = None,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self._connection = connection
+        self._live = live
+        self._ledger_path = ledger_path
+        self._spool_dir = spool_dir
+        self._clock = clock
+        self._mtime: Any = object()   # unseen: the first tick reads live()
+        self._is_live = False
+        self._checked = 0.0
+        self._logged_at: Optional[float] = None
+        self.failures = 0
+
+    @property
+    def is_live(self) -> bool:
+        return self._is_live
+
+    def _failed(self, what: str, exc: BaseException) -> None:
+        self.failures += 1
+        now = self._clock()
+        if self._logged_at is None or now - self._logged_at >= self.ERROR_LOG_EVERY:
+            self._logged_at = now
+            log.warning(f"agent event spool timer: {what}: {exc}")
+
+    def tick(self) -> int:
+        """One timer pass; returns the files drained (0 when idle)."""
+        now = self._clock()
+        try:
+            path = self._ledger_path()
+            mtime = path.stat().st_mtime_ns if path is not None and path.exists() else None
+        except Exception:
+            mtime = None
+        if mtime != self._mtime or (self._is_live and now - self._checked >= self.LIVE_RECHECK):
+            self._mtime = mtime
+            self._checked = now
+            try:
+                self._is_live = bool(self._live())
+            except Exception as exc:
+                self._failed("live launches not read", exc)
+                self._is_live = True   # an empty drain is cheap: fail toward draining
+        if not self._is_live:
+            return 0
+        try:
+            return drain_spool(self._connection, spool_dir=self._spool_dir)
+        except Exception as exc:
+            self._failed("spool not drained", exc)
+            return 0
+
+
 def list_events(
     conn: Any, session_key: str, *, after: int = 0, limit: int = 200,
 ) -> list[dict[str, Any]]:
@@ -272,6 +353,7 @@ def list_events(
 
 __all__ = [
     "EVENT_LOG_KEEP",
+    "SpoolTimer",
     "default_spool_dir",
     "drain_spool",
     "event_row",
