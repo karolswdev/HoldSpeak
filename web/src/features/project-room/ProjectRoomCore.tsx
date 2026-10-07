@@ -2256,16 +2256,18 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
 
   // PHILO-14 A5b (Astra r1 on #965): a proposal request REVEALS the
   // proposal, whatever the Room shows. Every posture (Review, Update,
-  // Steward, Prepare) closes the way its own Close does (an unsaved update
-  // draft is saved first; a kept Update place is not restored over it), the Room goes to its ROOM wing (not History),
+  // Steward, Prepare) closes the way its own Close does, except Update,
+  // which steps aside with no write (a kept Update place is not restored
+  // over the request), the Room goes to its ROOM wing (not History),
   // and the selected row scrolls into view.
-  const revealProposal = useRef<(id: string) => Promise<void>>(async () => undefined);
-  revealProposal.current = async (id: string) => {
+  const revealProposal = useRef<(id: string) => void>(() => undefined);
+  revealProposal.current = (id: string) => {
     if (reviewCtrl.posture !== "off") reviewCtrl.exitReview();
-    if (updateCtrl.posture !== "off" && updateCtrl.dirty) await updateCtrl.save();
-    // Always: it also forgets a kept Update place that a just-mounted Room
-    // is still restoring (393 opens a fresh Room window).
-    updateCtrl.exitUpdates();
+    // The Update posture steps aside and NEVER writes (Muad'Dib's ruling on
+    // Astra r2): its text, kept draft and failure stay; Draft update brings
+    // the editor back. Always: it also forgets a kept Update place that a
+    // just-mounted Room is still restoring (393 opens a fresh Room window).
+    updateCtrl.stepAside();
     if (stewardCtrl.posture !== "off") stewardCtrl.exitSteward();
     if (prepareCtrl.posture !== "off") prepareCtrl.exit();
     if (ctrl.view !== "room") ctrl.setView("room");
@@ -2276,7 +2278,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     if (!projectId) return;
     const take = () => {
       const proposal = takeRoomProposalRequest(projectId);
-      if (proposal) void revealProposal.current(proposal);
+      if (proposal) revealProposal.current(proposal);
     };
     take();
     window.addEventListener(ROOM_PROPOSAL_EVENT, take);
