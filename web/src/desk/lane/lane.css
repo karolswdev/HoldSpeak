@@ -68,14 +68,16 @@
 /* receipts and ARM, kept on the face */
 .lw-receipt { margin: 0; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.04em; color: var(--text-muted); overflow-wrap: anywhere; }
 .lw-receipt[data-tone="fail"] { color: var(--danger); }
+/* NOT CONFIRMED: the hub may have delivered; not a failure, not a send. */
+.lw-receipt[data-tone="warn"] { color: var(--warn); }
 .lw-arm { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
 /* The footer at 393: the egress chip and the branch on one row, the verbs
  * (Re-brief, the mode's ARM, Stop, Open PR) on their own row below, and they
- * wrap, so no verb leaves the frame. The footer is its own container (the
- * body's `surface` container does not hold it). */
-.desk-next .is-lane .surface-footer { container: lw-footer / inline-size; }
-@container lw-footer (max-width: 520px) {
+ * wrap, so no verb leaves the frame. The footer is its own `surface`
+ * container (UX-CANON D); the body's `surface` container does not hold it. */
+.desk-next .is-lane .surface-footer { container: surface / inline-size; }
+@container surface (max-width: 520px) {
   .desk-next .surface-footer-layout.lw-footer {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "egress" "verbs";

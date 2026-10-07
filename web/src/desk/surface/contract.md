@@ -756,7 +756,8 @@ never sent, the press focuses the field), then the DRAFT line: the draft,
   `onUseDraft?(draft)`, `draftEgress?: { label, scope? }` (where the DRAFT
   was made, on the draft line), `egress?: { label, scope? }` (where the
   ANSWER goes, beside Answer, drawn with or without a draft), `busy?`
-  (sending: the field is disabled, Answer spins)
+  (sending: Answer spins and cannot be pressed; the field stays editable,
+  so a stalled send never locks the draft)
 - `disabled?` (the answer cannot be sent now, as with no session: Answer
   is disabled without the spinner, the field stays open),
   `listenSignal?` (each new value starts the field's mic: a Speak answer

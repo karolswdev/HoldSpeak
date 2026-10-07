@@ -29,10 +29,10 @@ export const LANE_PAGE = 200;
 /** The last thing the owner did on this lane, kept on the face when the
  * well that made it closes or the wait it answered clears. */
 export interface LaneReceipt {
-  word: "SENT" | "NOT SENT" | "ARMED" | "STOPPED" | "NOT STOPPED" | "ARM FIRST";
+  word: "SENT" | "NOT SENT" | "NOT CONFIRMED" | "ARMED" | "STOPPED" | "NOT STOPPED" | "ARM FIRST";
   at: number;
   text: string;
-  tone: "ok" | "fail";
+  tone: "ok" | "fail" | "warn";
 }
 
 interface LaneState {
@@ -100,6 +100,14 @@ const REFUSAL_WORD: Record<string, string> = {
   no_pane: "NO PANE",
   stale_session: "SESSION STALE",
 };
+
+/** How long a send waits for the hub's answer before Answer returns. After
+ * it the receipt says NOT CONFIRMED (the hub may have delivered): the lane
+ * never says NOT SENT for it and never sends again by itself. */
+export const STEER_CONFIRM_MS = 20_000;
+
+/** Each send's number: a late reply to an older send changes nothing. */
+let sendSeq = 0;
 
 async function post(url: string, body: unknown): Promise<{ ok: boolean; status: number; body: Record<string, unknown> }> {
   const res = await apiRequest(url, {
@@ -194,7 +202,15 @@ export const useLane = create<LaneState>((set, get) => ({
       set({ receipt: { word: "ARM FIRST", at: Date.now(), text: firstWords(clean), tone: "fail" } });
       return false;
     }
+    const seq = ++sendSeq;
+    const current = () => seq === sendSeq;
     set({ sending: true });
+    const stall = window.setTimeout(() => {
+      if (!current() || !get().sending) return;
+      // A new press is a new send: drop this one's late reply.
+      sendSeq += 1;
+      set({ sending: false, receipt: { word: "NOT CONFIRMED", at: Date.now(), text: firstWords(clean), tone: "warn" } });
+    }, STEER_CONFIRM_MS);
     try {
       const body: Record<string, unknown> = { text: clean, submit: true };
       // An answer says so and names its wait (the hub refuses a stale one).
@@ -203,6 +219,7 @@ export const useLane = create<LaneState>((set, get) => ({
         body.wait_id = opts.waitId ?? "";
       }
       const res = await post(`/api/coders/${encodeURIComponent(key)}/steer`, body);
+      if (!current()) return false;
       if (res.ok && res.body.status === "delivered") {
         sfx("land");
         set({ receipt: { word: "SENT", at: Date.now(), text: firstWords(clean), tone: "ok" } });
@@ -220,10 +237,12 @@ export const useLane = create<LaneState>((set, get) => ({
       void get().load();
       return false;
     } catch {
+      if (!current()) return false;
       set({ receipt: { word: "NOT SENT", at: Date.now(), text: "HUB UNREACHABLE", tone: "fail" } });
       return false;
     } finally {
-      set({ sending: false });
+      window.clearTimeout(stall);
+      if (current()) set({ sending: false });
     }
   },
 

@@ -54,10 +54,19 @@ describe("AskWell lane props", () => {
     expect(row.lastElementChild).toBe(screen.getByTestId("arm"));
   });
 
-  it("busy: Answer spins and the field waits", () => {
-    render(<AskWell {...base} value="Jordan" onAnswer={() => undefined} busy />);
-    expect(screen.getByRole("button", { name: "Answer" }).getAttribute("aria-busy")).toBe("true");
-    expect(screen.getByRole("textbox", { name: "Answer" })).toBeDisabled();
+  it("busy: Answer spins and cannot be pressed; the draft stays editable; Enter sends nothing", () => {
+    const onAnswer = vi.fn();
+    const onChange = vi.fn();
+    render(<AskWell {...base} onChange={onChange} value="Jordan" onAnswer={onAnswer} busy />);
+    const button = screen.getByRole("button", { name: "Answer" });
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button).toBeDisabled();
+    const field = screen.getByRole("textbox", { name: "Answer" });
+    expect(field).not.toBeDisabled();
+    fireEvent.change(field, { target: { value: "Jordan owns it." } });
+    expect(onChange).toHaveBeenCalledWith("Jordan owns it.");
+    fireEvent.keyDown(field, { key: "Enter" });
+    expect(onAnswer).not.toHaveBeenCalled();
   });
 });
 

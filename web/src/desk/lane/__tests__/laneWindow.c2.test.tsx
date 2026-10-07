@@ -281,6 +281,59 @@ describe("the agent's window", () => {
     expect(api.request.mock.calls.every(([url]) => !String(url).includes("pane%3A"))).toBe(true);
   });
 
+  it("a stalled send: the draft stays editable; after 20 s Answer returns and says NOT CONFIRMED; the next press is a new answer", async () => {
+    await openLane(fixture());
+    // The hub never answers the first send.
+    let late: ((r: Response) => void) | null = null;
+    api.request.mockImplementation((url: string) => {
+      if (String(url).endsWith("/steer")) return new Promise<Response>((resolve) => { late = resolve; });
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({}) } as unknown as Response);
+    });
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const field = screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement;
+      const button = within(screen.getByTestId("lane-ask")).getByRole("button", { name: "Answer" });
+      fireEvent.change(field, { target: { value: "Jordan owns it." } });
+      fireEvent.keyDown(field, { key: "Enter" });
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      expect(posts(STEER)).toHaveLength(1);
+      expect(button.getAttribute("aria-busy")).toBe("true");
+      // Pending: the draft is still the owner's to edit.
+      expect(field.disabled).toBe(false);
+      fireEvent.change(field, { target: { value: "Jordan owns it. Avery reviews." } });
+      expect(field.value).toBe("Jordan owns it. Avery reviews.");
+      await act(async () => { await vi.advanceTimersByTimeAsync(19_999); });
+      expect(button.getAttribute("aria-busy")).toBe("true");
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(button.getAttribute("aria-busy")).toBeNull();
+      expect(button).not.toBeDisabled();
+      const receipt = screen.getByTestId("lane-receipt");
+      expect(receipt.textContent).toMatch(/^NOT CONFIRMED · \d\d:\d\d · Jordan owns it\.$/);
+      expect(receipt.textContent).not.toContain("NOT SENT");
+      // Nothing is sent again by itself.
+      await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+      expect(posts(STEER)).toHaveLength(1);
+      // A late reply to the stalled send changes nothing.
+      await act(async () => {
+        late?.({ ok: true, status: 200, json: async () => ({ status: "delivered" }) } as unknown as Response);
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^NOT CONFIRMED/);
+      expect(field.value).toBe("Jordan owns it. Avery reviews.");
+      // The next press sends again: a new answer to the same wait.
+      answer({});
+      fireEvent.keyDown(field, { key: "Enter" });
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      expect(posts(STEER)).toEqual([
+        { text: "Jordan owns it.", submit: true, kind: "answer", wait_id: "w-1" },
+        { text: "Jordan owns it. Avery reviews.", submit: true, kind: "answer", wait_id: "w-1" },
+      ]);
+      expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^SENT · /);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("an answer to a wait the hub no longer holds is refused and said", async () => {
     await openLane(fixture());
     answer({ "/steer": [409, { status: "wait_not_current", detail: "the question was answered or changed" }] });

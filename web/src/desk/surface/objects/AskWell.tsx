@@ -85,7 +85,6 @@ export function AskWell({
           onChange={onChange}
           placeholder="Say or type the answer"
           micLabel="Speak the answer"
-          disabled={busy}
           micStartSignal={listenSignal}
           micDraftScope={draftScope}
           inputRef={(el) => {
