@@ -63,3 +63,9 @@
 .chair-desk[data-phone-shown="true"] .desk-screen {
   visibility: hidden;
 }
+/* 393 (PHILO-3-01): a standing write receipt is a full-width row between the
+   bar and the work; the screen starts under it, as the Chair does
+   (write-receipt.css), so the row's verbs stay pressable. */
+.desk-next:has(> .desk-receipt-row) .desk-screen {
+  top: calc(var(--desk-work-top) + var(--desk-receipt-row-h, 0px) + var(--space-2));
+}

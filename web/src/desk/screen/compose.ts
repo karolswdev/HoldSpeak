@@ -123,7 +123,9 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
       name: project.name || "Project",
       ...sprites("project", project.id),
       lamp: n > 0 ? { tone: "ask", count: n } : undefined,
-      ariaExtra: n > 0 ? `${n} need you` : undefined,
+      // The Dock's words for a Project's share (Dock.tsx): "need you" is the
+      // desk's ONE number, on Needs you alone.
+      ariaExtra: n > 0 ? `${n} open here` : undefined,
       target: { type: "project", id: project.id },
     });
   }

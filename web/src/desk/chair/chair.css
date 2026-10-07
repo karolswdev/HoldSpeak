@@ -115,7 +115,7 @@
   /* The aftercare card lands in the Capture window's slot (design §5): while
      it stands, Capture grows to hold it whole and Needs you gives up the same
      height, so the card is read where it lands (no covered half). */
-  .desk-next .chair-desk[data-layout="tiles"]:has(.chair-window--capture [data-aftercare-slot]:not(:empty)) :is(.chair-window, .chair-window-closed) {
+  .desk-next .chair-desk:has(.chair-window--capture [data-aftercare-slot]:not(:empty)) :is(.chair-window, .chair-window-closed) {
     --chair-capture-h: 300px;
   }
   .desk-next .chair-desk[data-layout="tiles"] .chair-window--needs,
@@ -144,6 +144,34 @@
     left: calc(50% + 8px);
     right: 14px;
     bottom: var(--chair-bottom);
+    height: calc(var(--chair-band) * 0.36 - 8px);
+  }
+  /* PHILO-14 A1: the screen's Chair windows float. Each one's FIRST seat
+     (before he moves or sizes it; the desk then remembers his) is the
+     Phase-13 arrangement (board C1-1): Needs you left, Brief and The week
+     right, Capture under Needs you, so two open windows never pile up. */
+  .desk-next .chair-desk[data-layout="screen"] .chair-window--needs {
+    left: 14px;
+    top: var(--chair-top);
+    width: calc(50% - 22px);
+    height: calc(var(--chair-band) - var(--chair-capture-h) - 12px);
+  }
+  .desk-next .chair-desk[data-layout="screen"] .chair-window--capture {
+    left: 14px;
+    top: calc(var(--chair-top) + var(--chair-band) - var(--chair-capture-h));
+    width: calc(50% - 22px);
+    height: var(--chair-capture-h);
+  }
+  .desk-next .chair-desk[data-layout="screen"] .chair-window--brief {
+    left: calc(50% + 8px);
+    top: var(--chair-top);
+    width: calc(50% - 22px);
+    height: calc(var(--chair-band) * 0.64 - 8px);
+  }
+  .desk-next .chair-desk[data-layout="screen"] .chair-window--week {
+    left: calc(50% + 8px);
+    top: calc(var(--chair-top) + var(--chair-band) * 0.64 + 8px);
+    width: calc(50% - 22px);
     height: calc(var(--chair-band) * 0.36 - 8px);
   }
 }

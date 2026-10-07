@@ -43,14 +43,6 @@ export type ChairDeskProps = Record<ChairWindowKey, ReactNode> & {
   screen?: ReactNode;
 };
 
-/** PHILO-14 A1: the first seat of a Chair window opened from the screen. */
-const SCREEN_SEAT: Record<ChairWindowKey, { w: number; h: number }> = {
-  needs: { w: 620, h: 640 },
-  brief: { w: 640, h: 600 },
-  week: { w: 600, h: 460 },
-  capture: { w: 560, h: 140 },
-};
-
 function ChairWindow({
   spec,
   open,
@@ -71,8 +63,9 @@ function ChairWindow({
       open={open}
       onClose={() => closeChairWindow(spec.id)}
       tiled={tiled}
-      defaultW={tiled ? undefined : SCREEN_SEAT[spec.key].w}
-      defaultH={tiled ? undefined : SCREEN_SEAT[spec.key].h}
+      // PHILO-14 A1: a floating Chair window keeps its C1-1 seat's CSS height
+      // until he arranges it (no max-height seed inflation over its neighbour).
+      fitContent={!tiled}
       dockChip="iconified"
       escapeCloses={false}
       entrance={false}

@@ -40,6 +40,9 @@ from .glass_infra import _boot, _ensure_build, _normal_chair, _settle
 from .test_philo13_11_chair_glass import _seed as _canvas_seed
 from tests._evidence import evidence_dir
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 pytest.importorskip("playwright.sync_api", reason="the open-grammar glass needs Playwright")
 
 TOKEN = "philo13-06-open"
@@ -147,13 +150,26 @@ class TestOneOpenGrammar:
             loc.click(timeout=8_000)
 
     def _chair_window(self, page: Any, width: int, name: str, walk: dict[str, Any]) -> None:
-        """At 393, Go > Chair > <name> (three frame taps); at 1440 the window stands."""
+        """At 393, Go > Chair > <name> (three frame taps); at 1440 a press on its title bar."""
         shell = page.locator(f".desk-window-shell[aria-label='{name}']")
-        if width > 720 or (shell.count() and shell.first.is_visible() and
-                           shell.first.evaluate("e => e.classList.contains('is-front')")):
+        if shell.count() and shell.first.is_visible() and shell.first.evaluate("e => e.classList.contains('is-front')"):
             return
+        if width > 720:
+            # PHILO-14 A1: the Chair windows float and stack like every desk
+            # window; a press on the title bar brings one to the front, and a
+            # covered one comes from Window > Chair.
+            title = shell.first.locator(".desk-pullout-title")
+            on_top = title.evaluate("""(e) => { const r = e.getBoundingClientRect();
+                const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+                return Boolean(t) && e.closest('.desk-window-shell').contains(t); }""")
+            if on_top:
+                title.click()
+                walk["frame_taps"] += 1
+                _settle(page)
+                return
+        menu = "go" if width <= 720 else "window"
         for loc in (
-            page.locator(".desk-verbbar-item[data-menu-id='go'] button"),
+            page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button"),
             page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')"),
             page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"),
         ):

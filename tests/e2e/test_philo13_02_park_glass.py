@@ -34,6 +34,9 @@ import pytest
 from .glass_infra import _api, _assert_readable, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 pytest.importorskip("playwright.sync_api", reason="the park glass needs Playwright")
 
 TOKEN = "philo13-02-park"

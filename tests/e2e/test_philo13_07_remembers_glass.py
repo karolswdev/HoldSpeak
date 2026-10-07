@@ -33,6 +33,9 @@ from .glass_infra import _boot, _ensure_build, _normal_chair, _settle
 from .test_philo13_06_open_glass import COMMITMENT, _seed
 from tests._evidence import evidence_dir
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 pytest.importorskip("playwright.sync_api", reason="the remembers glass needs Playwright")
 
 TOKEN = "philo13-06-open"  # _seed's own _http speaks this token

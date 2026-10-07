@@ -53,7 +53,8 @@ from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the type-floor glass needs Playwright")
 
-pytestmark = [pytest.mark.e2e, pytest.mark.timeout(1500, method="thread")]
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = [pytest.mark.e2e, pytest.mark.timeout(1500, method="thread"), pytest.mark.chair_windows_open]
 
 TOKEN = "philo13-18-floor"
 SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-18-shots")

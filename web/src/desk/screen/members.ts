@@ -3,8 +3,9 @@
  *  A loose object is one no Project holds. The store's primitives carry no
  *  Project, so the screen reads each Project's resources
  *  (`GET /api/projects/{id}/resources`, kind:id refs) and its meetings
- *  (`GET /api/projects/{id}/meetings`), and the people
- *  (`GET /api/people/relationships`): a person no Project names is loose. A
+ *  (`GET /api/projects/{id}/meetings`), and the people (`GET
+ *  /api/people/relationships`, once `/api/people/readiness` says ready): a
+ *  person no Project names is loose. A
  *  read that fails holds nothing back: its Project files nothing. */
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
@@ -38,6 +39,10 @@ async function projectRefs(projectId: string): Promise<string[]> {
 }
 
 async function readPersons(): Promise<ScreenPerson[]> {
+  // The Dock's order (Dock.tsx readPeopleProjection): a People store that is
+  // not ready is never asked for its relationships.
+  const ready = await apiFetch<{ state?: string; readiness?: string } | null>("/api/people/readiness").catch(() => null);
+  if ((ready?.state ?? ready?.readiness) !== "ready") return [];
   const body = await apiFetch<{ relationships?: Array<{ id?: string; display_name?: string }> } | null>(
     "/api/people/relationships",
   ).catch(() => null);

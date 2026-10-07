@@ -18,6 +18,9 @@ import pytest
 from tests._evidence import evidence_dir
 from tests.e2e.chair_windows import open_chair_window
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
 

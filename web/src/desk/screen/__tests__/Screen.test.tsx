@@ -91,6 +91,7 @@ function wire() {
     if (res) return { resources: (RESOURCES[decodeURIComponent(res[1])] ?? []).map((resource_ref) => ({ resource_ref })) };
     const meet = /^\/api\/projects\/([^/]+)\/meetings$/.exec(p);
     if (meet) return { meetings: (MEETINGS[decodeURIComponent(meet[1])] ?? []).map((id) => ({ id })) };
+    if (p === "/api/people/readiness") return { state: "ready" };
     if (p === "/api/people/relationships") return { relationships: PEOPLE };
     if (p.startsWith("/api/desk/needs-you")) {
       return {
@@ -144,10 +145,10 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
     // the drawers: every Project with its count notch and lamp, People, the Conductor
     const ledger = icon(/^Payments ledger cutover, PROJECT/);
-    expect(ledger.getAttribute("aria-label")).toBe("Payments ledger cutover, PROJECT, 2 need you");
+    expect(ledger.getAttribute("aria-label")).toBe("Payments ledger cutover, PROJECT, 2 open here");
     expect(within(ledger).getByText("2", { selector: ".desk-icon-count" })).toBeTruthy();
     expect(ledger.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
-    expect(icon(/^Platform observability, PROJECT, 1 need you/)).toBeTruthy();
+    expect(icon(/^Platform observability, PROJECT, 1 open here/)).toBeTruthy();
     expect(icon(/^People, DRAWER$/).querySelector(".desk-icon-lamp")).toBeNull();
     const conductor = icon(/^Conductor, DRAWER/);
     expect(conductor.querySelector(".desk-icon-badge")).toBeTruthy();

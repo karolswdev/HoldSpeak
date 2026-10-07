@@ -377,6 +377,66 @@ _launch_chromium_on_the_gpu()
 
 
 # ============================================================
+# PHILO-14 A1: the Chair is the screen of objects
+# ============================================================
+#
+# Board A-1 (ratified 2026-10-07): a fresh desk opens with the four Chair
+# windows (Needs you, Brief, The week, Capture) closed; the owner opens them
+# from the screen, the Dock or Window > Chair. A browser spec that reads a
+# Chair window's body declares `pytest.mark.chair_windows_open`: every
+# context and page it makes then starts with the four windows open (a stored
+# Chair section, as the desk remembers it after he opens them). A Chair
+# section the page already stored is kept, so a reload keeps what he closed.
+
+CHAIR_WINDOWS_OPEN_JS = """(() => { try {
+  const key = "hs.desk.workspace.v1";
+  const raw = localStorage.getItem(key);
+  const doc = raw ? JSON.parse(raw) : null;
+  if (doc && doc.chair) return;
+  const next = doc && doc.version === 1 ? doc : { version: 1 };
+  next.chair = { closed: [], phone: "chair:needs" };
+  localStorage.setItem(key, JSON.stringify(next));
+} catch (e) {} })();"""
+
+_CHAIR_WINDOWS_OPEN = {"on": False}
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_setup(item):
+    # Before any fixture of the item (a class- or module-scoped context too).
+    _CHAIR_WINDOWS_OPEN["on"] = item.get_closest_marker("chair_windows_open") is not None
+    yield
+
+
+def _chair_windows_open_seam() -> None:
+    try:
+        from playwright.sync_api import Browser
+    except ImportError:  # the base test environment has no Playwright
+        return
+    if getattr(Browser.new_context, "_holdspeak_chair", False):
+        return
+    new_context, new_page = Browser.new_context, Browser.new_page
+
+    def context(self, *args, **kwargs):
+        ctx = new_context(self, *args, **kwargs)
+        if _CHAIR_WINDOWS_OPEN["on"]:
+            ctx.add_init_script(CHAIR_WINDOWS_OPEN_JS)
+        return ctx
+
+    def page(self, *args, **kwargs):
+        pg = new_page(self, *args, **kwargs)
+        if _CHAIR_WINDOWS_OPEN["on"]:
+            pg.add_init_script(CHAIR_WINDOWS_OPEN_JS)
+        return pg
+
+    context._holdspeak_chair = True
+    Browser.new_context, Browser.new_page = context, page
+
+
+_chair_windows_open_seam()
+
+
+# ============================================================
 # One pydantic adapter per route field shape (fast tests, 2026-10-03)
 # ============================================================
 #
@@ -577,6 +637,10 @@ def pytest_configure(config):
     # (its path constants freeze at import) and before the xdist rewrite below
     # turns HOME into a subdirectory of whatever it was.
     _enforce_isolated_home(config)
+    config.addinivalue_line(
+        "markers",
+        "chair_windows_open: the browser spec reads a Chair window; its pages start with the four open (PHILO-14 A1)",
+    )
 
     worker = os.environ.get("PYTEST_XDIST_WORKER")
     if worker:
