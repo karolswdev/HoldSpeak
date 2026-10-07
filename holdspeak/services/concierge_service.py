@@ -1328,6 +1328,13 @@ def summary_assignment_projection(
 
     if not isinstance(assignment, dict):
         cleared_revision = _summary_assignment_tombstone(db)
+        if not cleared_revision:
+            # PHILO-15 01: no exact head, but the meeting-intel queue also
+            # reads the group and global heads (meeting-intel-queue@2). Ask
+            # the queue's own resolution: a Default for AI work runs summaries.
+            inherited = _summary_queue_assignment(assignment_service, principal)
+            if inherited is not None:
+                return inherited
         return {
             "schema": SUMMARY_ASSIGNMENT_PROJECTION_SCHEMA,
             "capabilityId": SUMMARY_CAPABILITY_ID,
@@ -1363,6 +1370,37 @@ def summary_assignment_projection(
         "status": status,
         "assignmentRevision": int(assignment.get("revision") or 0),
         **projected,
+    }
+
+
+def _summary_queue_assignment(assignment_service: Any, principal: Any) -> dict[str, Any] | None:
+    """The inherited head the queue would use, as the summary projection.
+
+    ``assignmentRevision`` stays 0: it is the exact head's revision, which is
+    what a write to the summary scope expects. ``inheritedFrom`` names the
+    head the queue reads (``group`` or ``global``).
+    """
+    resolve = getattr(assignment_service, "resolve_for_queue", None)
+    if resolve is None:
+        return None
+    try:
+        resolved = resolve(principal, capability_id=SUMMARY_CAPABILITY_ID)
+    except Exception as exc:  # pragma: no cover - a read never blocks the face
+        log.warning(f"concierge: queue summary resolution unavailable ({exc})")
+        return None
+    if not isinstance(resolved, dict) or resolved.get("inherited_from") in (None, "capability"):
+        return None
+    assignment = resolved.get("assignment") if isinstance(resolved.get("assignment"), dict) else {}
+    entries = [e for e in (assignment.get("entries") or []) if isinstance(e, dict)]
+    if not entries:
+        return None
+    return {
+        "schema": SUMMARY_ASSIGNMENT_PROJECTION_SCHEMA,
+        "capabilityId": SUMMARY_CAPABILITY_ID,
+        "status": "attention" if resolved.get("status") == "no_compatible_assignment" else "assigned",
+        "assignmentRevision": 0,
+        "inheritedFrom": str(resolved.get("inherited_from")),
+        **_summary_entry_projection(entries[0]),
     }
 
 

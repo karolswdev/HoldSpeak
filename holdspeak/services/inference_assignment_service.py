@@ -288,6 +288,32 @@ class InferenceAssignmentService:
         asks the same question the queue answers (PHILO-15 01).  ``None``
         when the queue policy does not name the capability.
         """
+        resolved = self._queue_resolution(conn, capability)
+        if resolved is None:
+            return None
+        return {
+            "policy_id": resolved["policy_id"],
+            "status": resolved["status"],
+            "inherited_from": resolved["inherited_from"],
+        }
+
+    def resolve_for_queue(
+        self, principal: Principal, *, capability_id: str,
+    ) -> dict[str, Any] | None:
+        """The assignment the meeting-intel queue would use for one capability.
+
+        The full resolution (``status``, ``inherited_from``, ``assignment``)
+        through the queue policy's assignment sources, plus ``policy_id``.
+        ``None`` when the queue policy does not name the capability.
+        """
+        self._require_owner(principal)
+        definition = self._require_assignable(capability_id)
+        with self._db._connection() as conn:
+            return self._queue_resolution(conn, definition)
+
+    def _queue_resolution(
+        self, conn: Any, capability: InferenceCapabilityDefinition,
+    ) -> dict[str, Any] | None:
         policies = self._service_route_policies
         if policies is None:
             from .inference_service_route_policy import (
@@ -308,12 +334,7 @@ class InferenceAssignmentService:
         if found is None:
             return None
         policy_id, sources = found
-        resolved = self._resolve(conn, capability, sources=sources)
-        return {
-            "policy_id": policy_id,
-            "status": resolved["status"],
-            "inherited_from": resolved["inherited_from"],
-        }
+        return {"policy_id": policy_id, **self._resolve(conn, capability, sources=sources)}
 
     def assignment_editor_projection(
         self, principal: Principal, body: Mapping[str, Any]

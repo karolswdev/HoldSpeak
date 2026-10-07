@@ -125,3 +125,46 @@ def test_a_roster_without_queue_falls_back_to_the_owner_chain() -> None:
 
     assert _keys(roster("assigned")) == []
     assert _keys(roster("no_assignment")) == ["summary"]
+
+
+# ── the two twins: the Concierge's summary row and the Meetings route ──
+
+
+def test_concierge_summary_projection_names_the_default_engine(db: Database) -> None:
+    from holdspeak.services.concierge_service import summary_assignment_projection
+
+    service = InferenceAssignmentService(db)
+    empty = summary_assignment_projection(assignment_service=service, principal=OWNER, db=db)
+    assert empty["status"] == "unassigned"
+
+    _set(service, "set-default", {"kind": "global"})
+    projection = summary_assignment_projection(assignment_service=service, principal=OWNER, db=db)
+    assert projection["status"] == "assigned", projection
+    assert projection["profileId"] == "lan-model"
+    assert projection["inheritedFrom"] == "global"
+    # The exact head still has no revision: a write to it expects 0.
+    assert projection["assignmentRevision"] == 0
+
+
+def test_concierge_summary_projection_keeps_the_exact_head_first(db: Database) -> None:
+    from holdspeak.services.concierge_service import summary_assignment_projection
+
+    service = InferenceAssignmentService(db)
+    _set(service, "set-default", {"kind": "global"})
+    exact = _set(service, "set-exact", {"kind": "capability", "capability_id": SUMMARY})
+    projection = summary_assignment_projection(assignment_service=service, principal=OWNER, db=db)
+    assert projection["status"] == "assigned"
+    assert projection["assignmentRevision"] == exact["revision"]
+    assert "inheritedFrom" not in projection
+
+
+def test_meetings_route_is_ready_on_the_default_alone(db: Database) -> None:
+    """The Meetings headline reads ``planned_route``, which the hub resolves
+    through the queue's own principal and policy: a default alone is ready."""
+    from holdspeak.services.meeting_route_projection import project_route
+
+    assert project_route(db)["status"] == "unavailable"
+    _set(InferenceAssignmentService(db), "set-default", {"kind": "global"})
+    route = project_route(db)
+    assert route["status"] == "ready", route
+    assert route["legs"] and route["legs"][0]["profile_id"] == "lan-model"

@@ -250,7 +250,10 @@ function counted(n: number, one: string, many: string): string {
 export function meetingsHeadline(
   meetingRows: Record<string, unknown>[],
   loading: boolean,
-  /** The face read a summary route and it cannot run (no engine). */
+  /** The face read a summary route and it cannot run (no engine). The
+   *  route is the hub's `planned_route`, resolved through the meeting-intel
+   *  queue's route policy, so a Default for AI work makes it ready
+   *  (PHILO-15 01). */
   routeMissing = false,
 ): { text: string; accent: boolean } {
   if (loading) return { text: "", accent: false };
