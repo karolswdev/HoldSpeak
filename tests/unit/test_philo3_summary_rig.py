@@ -56,6 +56,29 @@ def test_import_completion_rejects_a_successful_but_malformed_payload(monkeypatc
     assert result["payload"]["segments"] == []
 
 
+def test_import_completion_stops_at_a_final_failed_transcription(monkeypatch):
+    """PHILO-15-03: a failed import is final; the rig stops, never waits 300 s."""
+    monkeypatch.setattr(rig.time, "sleep", lambda _seconds: None)
+    failed = {"id": "meeting-1", "transcription_status": "failed",
+              "intel_status": {"state": "import_failed", "detail": "UNEXPECTED ERROR"}}
+    hub = _Hub([(200, {"id": "meeting-1", "transcription_status": "active"}), (200, failed)])
+    result = rig.wait_for_fixture_completion(
+        hub,
+        {
+            "method": "GET",
+            "path": "/api/meetings/meeting-1",
+            "fields": {"/transcription_status": "complete"},
+            "timeout_s": 300,
+            "poll_s": 0,
+        },
+        {},
+    )
+    assert result["matched"] is False
+    assert result["terminal"] == {"/transcription_status": "failed"}
+    assert result["polls"] == 2
+    assert "import_failed" in rig._terminal_note(result)
+
+
 def test_import_completion_rejects_successful_nonobject_payloads(monkeypatch):
     """A 2xx list/string is not a completed meeting read."""
     monkeypatch.setattr(rig.time, "sleep", lambda _seconds: None)

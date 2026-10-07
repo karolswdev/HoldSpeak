@@ -11,6 +11,7 @@
  *  run receipt (Article III: the truth AFTER the run, never composed from
  *  configuration).
  */
+import type { ReactNode } from "react";
 import { SurfaceWell } from "../desk/surface/Surface";
 import { RunAttempts } from "./RouteDisclosure";
 import type { RunReceipt } from "./summaryRoute";
@@ -35,12 +36,17 @@ export function readMeetingIntel(source: unknown): MeetingIntel | null {
   };
 }
 
+/** PHILO-15-03: the slab is the one owner of the summary text. A face that
+ *  has more to say about the run (the Chair's RETRYING/FAILED facts) passes
+ *  it as `facts`, under the topics; it never draws the summary itself. */
 export function MeetingSummarySlab({
   intel,
   receipt,
+  facts,
 }: {
   intel: MeetingIntel | null;
   receipt: RunReceipt | null;
+  facts?: ReactNode;
 }) {
   const summary = String(intel?.summary ?? "").trim();
   if (!summary) return null;
@@ -66,6 +72,7 @@ export function MeetingSummarySlab({
           ))}
         </span>
       ) : null}
+      {facts ?? null}
     </SurfaceWell>
   );
 }

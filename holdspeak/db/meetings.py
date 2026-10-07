@@ -157,6 +157,16 @@ class MeetingRepository(BaseRepository):
             )
             return {"id": str(row["id"]), "title": row["title"], "ready_at": revision}
 
+    def list_interrupted_import_ids(self) -> list[str]:
+        """PHILO-15-03: rows an import worker left `importing / active`."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT id FROM meetings
+                   WHERE intel_status = 'importing' AND transcription_status = 'active'
+                   ORDER BY id"""
+            ).fetchall()
+        return [str(row["id"]) for row in rows]
+
     def list_unread_ready(self) -> list[dict[str, Any]]:
         """Return only producer-created readiness rows still unseen."""
         with self._connection() as conn:
