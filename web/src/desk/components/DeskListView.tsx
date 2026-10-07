@@ -2,21 +2,24 @@
 // keyboard and screen-reader use. It consumes the one store (items,
 // selection, pull-out, dive) and the same world.ts records the spatial
 // stage renders — zero new data paths, no second dashboard.
-// HS-113-03 — the floor and zone-window lists now share DeskSortableTable:
-// compact real table rows, sortable headers, sprites, and kind bands.
+// PHILO-14 A2 — the list is a list: the ObjectList species (Name, Kind,
+// When, State; sort by header). A press or Space ropes the row into the Ask
+// context (the selected row, never a `[ ]`/`[x]` mark); Enter or a double
+// press opens it.
 import "./list-view.css";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "../../components/signal/Signal";
 import { qualifiedRef } from "../api";
-import { countToken } from "../surface";
+import { ObjectList, countToken, type ObjectListRow, type ObjectSort, type ObjectSortKey } from "../surface";
+import { wireDate } from "../surface/format";
+import { whenWord } from "../drawer/members";
 import { useDesk } from "../store";
 import { useProjections } from "../projections";
 import { allObjects, objectByRef, worldObjects, worldZones, type WorldObject } from "../world";
 import { KIND_LABEL } from "../tools";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteUrl } from "../sprites";
-import { spriteVariantKey } from "../../lib/spriteVariants";
-import { spriteStateCssClass } from "../../lib/spriteStates";
+import { refAgent, spriteUrl } from "../sprites";
 import { objectMenuEntries } from "../floorMenu";
 import { WorkMenu } from "./DeskMenu";
 import { InlineEditor } from "./InlineEditor";
@@ -25,67 +28,56 @@ import { InfoWindow } from "./InfoWindow";
 import { AskBar, AskPanel } from "./AskPanel";
 import { DeliveryListSection } from "./DeliveryListSection";
 import { PrReceiptsSection } from "./PrReceiptsSection";
-import { DeskSortableTable, type Column } from "./DeskSortableTable";
 import { DeskDeleteSeat } from "../deleteReceipt";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { ZoneRenameRow } from "./ZoneRenameRow";
 
-/* PHILO-9-04 (the owner ratified the list canvas, 2026-09-27) — the second
- * line under the name in a `surface` of 720 px or less (hidden wider): the
- * row's Kind, Zone and Attention, the same words as the columns. The
- * separator dot is drawn by CSS, so no empty token is ever printed. */
-function FoldLine({ tokens, attention }: { tokens: string[]; attention?: number }) {
-  const shown = tokens.filter(Boolean);
-  if (!shown.length && !attention) return null;
-  return (
-    <span className="desk-list-fold" aria-hidden="true">
-      {shown.map((t) => <span key={t} className="desk-list-fold-token">{t}</span>)}
-      {attention ? <span className="desk-list-fold-token desk-list-attention">ATTN {attention}</span> : null}
-    </span>
-  );
-}
-
 /** Rows per page — a plain "show more" pagination, no virtualization dep. */
 export const LIST_PAGE = 100;
 
-/** Band heads per kind (the zone chip strip's replacement). */
-const BAND_LABEL: Record<string, string> = {
-  meeting: "MEETINGS",
-  note: "NOTES",
-  kb: "KNOWLEDGE",
-  recipe: "AGENTS",
-  workflow: "WORKFLOWS",
-  chain: "WORKFLOWS",
-  coder: "CODER SESSIONS",
-  artifact: "ARTIFACTS",
-  project: "PROJECTS",
-  thread: "THREADS",
+type ListRow = ObjectListRow & {
+  /** A zone row dives; an object row selects (Ask context) and opens. */
+  zoneId?: string;
+  zoneCount?: number;
+  object?: WorldObject;
 };
 
-type ListSortKey = "name" | "kind" | "zone" | "attention";
-type ListSort = { key: ListSortKey; dir: "asc" | "desc" };
-type DeskListRow =
-  | { type: "zone"; id: string; title: string; count: number }
-  | { type: "object"; object: WorldObject; zoneName: string; attention: number };
-
 const LIST_SORT_KEY = "hs.desk.list-sort";
-const DEFAULT_SORT: ListSort = { key: "name", dir: "asc" };
+const DEFAULT_SORT: ObjectSort = { key: "name", dir: "asc" };
+const SORT_KEYS: readonly ObjectSortKey[] = ["name", "kind", "when", "state"];
 
-function loadListSort(): ListSort {
+function loadListSort(): ObjectSort {
   try {
     const saved = JSON.parse(localStorage.getItem(LIST_SORT_KEY) || "null");
-    if (
-      saved &&
-      ["name", "kind", "zone", "attention"].includes(saved.key) &&
-      (saved.dir === "asc" || saved.dir === "desc")
-    ) {
-      return saved as ListSort;
+    if (saved && SORT_KEYS.includes(saved.key) && (saved.dir === "asc" || saved.dir === "desc")) {
+      return saved as ObjectSort;
     }
   } catch {
     // Storage is optional; the list remains useful with its default order.
   }
   return DEFAULT_SORT;
 }
+
+/** The order the species draws, applied before the page is cut (so "Show
+ * more" pages through the sorted list, not a sorted page). */
+function compareRows(sort: ObjectSort) {
+  const value = (row: ListRow): string | number => {
+    if (sort.key === "kind") return row.kindWord ?? row.kind;
+    if (sort.key === "when") return row.whenSort ?? row.when ?? "";
+    if (sort.key === "state") return row.state?.label ?? "";
+    return row.name;
+  };
+  const sign = sort.dir === "asc" ? 1 : -1;
+  return (a: ListRow, b: ListRow) => {
+    const grouped = (a.group ?? 0) - (b.group ?? 0);
+    if (grouped) return grouped;
+    const va = value(a);
+    const vb = value(b);
+    const order = typeof va === "number" && typeof vb === "number" ? va - vb : String(va).localeCompare(String(vb));
+    return order * sign || a.name.localeCompare(b.name);
+  };
+}
+
 
 /** PHILO-8-02 round three — the list's foot is held to the viewport, so the
  * list reserves the foot's measured reach at its end (the Chair's dock-lift
@@ -128,15 +120,15 @@ export function DeskListView() {
   const pullouts = useDesk((s) => s.pullouts);
   const editingId = useDesk((s) => s.editingId);
   const askOpen = useDesk((s) => s.askOpen);
-  // PHILO-8-01 — the zone being named draws its field in its own row.
+  // PHILO-8-01 — the zone being named draws its field over the list.
   const renamingZoneId = useDesk((s) => s.renamingZoneId);
   const subjectCounts = useProjections((s) => s.subject_counts);
   const { openPullout, toggleSelected, diveInto, surface } = useDesk.getState();
 
   const zones = worldZones(items, divedZone);
-  // The root list shows every owner object (filed ones carry their zone as
-  // the fact token), but repository roadmaps belong to explicit Delivery,
-  // not the ordinary Floor. A dived zone keeps its existing world projection.
+  // The root list shows every owner object (filed ones too), but repository
+  // roadmaps belong to explicit Delivery, not the ordinary Floor. A dived
+  // zone keeps its existing world projection.
   const objects = useMemo(
     () => (
       divedZone
@@ -145,6 +137,7 @@ export function DeskListView() {
     ),
     [items, divedZone],
   );
+
   const zoneNames = useMemo(() => {
     const map = new Map<string, string>();
     for (const d of items.directory || []) {
@@ -162,7 +155,7 @@ export function DeskListView() {
         : ref;
     return subjectCounts[subject]?.needs_attention || 0;
   };
-  const [sort, setSort] = useState<ListSort>(loadListSort);
+  const [sort, setSort] = useState<ObjectSort>(loadListSort);
   const [limit, setLimit] = useState(LIST_PAGE);
   const [rowMenu, setRowMenu] = useState<{
     id: string;
@@ -173,6 +166,7 @@ export function DeskListView() {
     y: number;
   } | null>(null);
   const statusRef = useRef<HTMLParagraphElement | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => setLimit(LIST_PAGE), [divedZone]);
   useEffect(() => {
@@ -183,18 +177,34 @@ export function DeskListView() {
     }
   }, [sort]);
 
-  const sortedObjects = useMemo(() => {
-    const direction = sort.dir === "asc" ? 1 : -1;
-    const compare = (a: WorldObject, b: WorldObject) => {
-      const zoneA = zoneNames.get(qualifiedRef(a.kind, a.id)) ?? zoneNames.get(a.id) ?? "";
-      const zoneB = zoneNames.get(qualifiedRef(b.kind, b.id)) ?? zoneNames.get(b.id) ?? "";
-      if (sort.key === "attention") return attentionOf(a) - attentionOf(b);
-      if (sort.key === "kind") return a.kind.localeCompare(b.kind) || a.title.localeCompare(b.title);
-      if (sort.key === "zone") return zoneA.localeCompare(zoneB) || a.title.localeCompare(b.title);
-      return a.title.localeCompare(b.title);
-    };
-    return [...objects].sort((a, b) => direction * compare(a, b));
-  }, [objects, sort, zoneNames, subjectCounts]);
+  const objectRows = useMemo<ListRow[]>(
+    () =>
+      objects.map((object) => {
+        const record = object.ref as unknown as Record<string, unknown>;
+        const at = record.lastModified ?? record.endedAt ?? record.startedAt ?? record.createdAt;
+        const attention = attentionOf(object);
+        const kind = (KIND_LABEL[object.kind] ?? object.kind).toUpperCase();
+        // The Floor spans zones: a filed object names its zone beside its kind
+        // (ObjectList has no Where column; inside a drawer every object shares
+        // one). A dived row keeps it too: the row names where it lives.
+        const zone = zoneNames.get(qualifiedRef(object.kind, object.id)) ?? zoneNames.get(object.id) ?? "";
+        return {
+          id: qualifiedRef(object.kind, object.id),
+          kind: object.kind === "coder" ? "agent" : object.kind,
+          name: object.title,
+          kindWord: zone ? `${kind} · ${zone.toUpperCase()}` : kind,
+          when: whenWord(at),
+          whenSort: wireDate(at)?.getTime(),
+          state: attention ? { label: `ATTN ${attention}`, tone: "warn" as const } : undefined,
+          sprite: spriteUrl(object.kind, object.id, "rest", refAgent(object.ref)),
+          group: 1,
+          object,
+        };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [objects, subjectCounts, zoneNames, divedZone],
+  );
+  const sortedObjects = useMemo(() => [...objectRows].sort(compareRows(sort)), [objectRows, sort]);
   const visible = sortedObjects.slice(0, limit);
   const remaining = objects.length - visible.length;
   const divedTitle = divedZone
@@ -202,142 +212,68 @@ export function DeskListView() {
     : null;
   const attnTotal = useMemo(
     () => objects.reduce((n, o) => n + attentionOf(o), 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [objects, subjectCounts],
   );
-  const rows = useMemo<DeskListRow[]>(
+  const rows = useMemo<ListRow[]>(
     () => [
       ...(!divedZone
         ? zones.map((zone) => ({
-            type: "zone" as const,
-            id: zone.id,
-            title: zone.title,
-            count: zone.count,
+            id: `zone:${zone.id}`,
+            kind: "directory",
+            name: zone.title,
+            kindWord: "ZONE",
+            group: 0, // zones (folders) above objects, as the Floor drew them
+            // HS-202-04 (UX-CANON A.8): an empty zone says EMPTY, never `0 ITEMS`.
+            when: countToken(zone.count, "ITEM") ?? "EMPTY",
+            zoneId: zone.id,
+            zoneCount: zone.count,
           }))
         : []),
-      ...visible.map((object) => {
-        const ref = qualifiedRef(object.kind, object.id);
-        return {
-          type: "object" as const,
-          object,
-          zoneName: zoneNames.get(ref) ?? zoneNames.get(object.id) ?? "",
-          attention: attentionOf(object),
-        };
-      }),
+      ...visible,
     ],
-    [divedZone, zones, visible, zoneNames, subjectCounts],
+    [divedZone, zones, visible],
   );
-  const selectedKey = rows.find(
-    (row) =>
-      row.type === "object" &&
-      (selectedIds.includes(qualifiedRef(row.object.kind, row.object.id)) ||
-        selectedIds.includes(row.object.id)),
-  );
+  const selectedSet = useMemo(() => {
+    const set = new Set<string>();
+    for (const row of rows) {
+      if (row.object && (selectedIds.includes(row.id) || selectedIds.includes(row.object.id))) set.add(row.id);
+    }
+    return set;
+  }, [rows, selectedIds]);
+  const selectedRows = useMemo(() => [...selectedSet], [selectedSet]);
+
   const openCards = pullouts
     .map((p) => ({ ...p, obj: objectByRef(items, p.id) }))
     .filter((p) => Boolean(p.obj));
   const editing = editingId ? objectByRef(items, editingId) : null;
-
-  const columns: Column<DeskListRow>[] = [
-    {
-      key: "icon",
-      label: "",
-      width: "40px",
-      render: (row) => {
-        const ss = row.type === "zone" ? null : row.object.ref.spriteState;
-        const state = typeof ss === "string" ? ss : null;
-        const cssHint = spriteStateCssClass(state);
-        const kind = row.type === "zone" ? "directory" : row.object.kind;
-        return (
-          <img
-            className={"desk-sortable-table-sprite" + (cssHint ? ` ${cssHint}` : "")}
-            src={spriteUrl(kind, row.type === "zone" ? row.id : row.object.id)}
-            alt=""
-            width={28}
-            height={28}
-            data-sprite-variant={spriteVariantKey(kind, state)}
-          />
-        );
-      },
-    },
-    {
-      key: "name",
-      label: "Name",
-      sortable: true,
-      render: (row) => {
-        if (row.type === "zone") {
-          // PHILO-8-01 (the owner's ratified canvas, 2026-09-26): the zone
-          // being named holds the one name field in its Name cell.
-          if (row.id === renamingZoneId)
-            return <ZoneRenameRow key={row.id} zoneId={row.id} title={row.title} placement="inrow" />;
-          return (
-            /* HS-202-04 (UX-CANON A.8) — an empty zone announced
-               "<name> zone, 0 items" to a screen reader and printed
-               `0 ITEMS` in its own cell. A counter of zero is a bounce in
-               text AND in an accessible name; `countToken` is the one way
-               a face says "N things" and it withholds the zero
-               (`desk/surface/count.ts:39`). */
-            <Button variant="ghost" dense className="desk-sortable-table-open" aria-label={[`${row.title} zone`, countToken(row.count, "item", "items")].filter(Boolean).join(", ")}>
-              {row.title}
-              <FoldLine tokens={["ZONE", countToken(row.count, "ITEM") ?? "EMPTY"]} />
-            </Button>
-          );
-        }
-        const ref = qualifiedRef(row.object.kind, row.object.id);
-        const selected = selectedIds.includes(ref) || selectedIds.includes(row.object.id);
-        return (
-          // The mark is the row's ONE selection control (the pointer's Space):
-          // its own target, 44 px wide. Everything else on the row opens it.
-          <span className="desk-list-name">
-            <Button
-              variant="ghost"
-              dense
-              className="desk-list-mark"
-              data-selected={selected || undefined}
-              data-testid="desk-list-mark"
-              aria-pressed={selected}
-              aria-label={`Select ${row.object.title}`}
-              tabIndex={-1}
-              onClick={(event) => {
-                event.stopPropagation();
-                toggleSelected(ref);
-              }}
-            >
-              {selected ? "[x]" : "[ ]"}
-            </Button>
-            <Button variant="ghost" dense className="desk-sortable-table-open desk-list-name-cell" aria-label={selected ? `${row.object.title}, in Ask context` : row.object.title}>
-              {row.object.title}
-              {row.zoneName ? <span className="sr-only"> {row.zoneName.toUpperCase()}</span> : null}
-              {row.attention ? <span className="sr-only"> ATTN {row.attention}</span> : null}
-              <FoldLine
-                tokens={[(KIND_LABEL[row.object.kind] ?? row.object.kind).toUpperCase(), row.zoneName.toUpperCase()]}
-                attention={row.attention}
-              />
-            </Button>
-          </span>
-        );
-      },
-    },
-    {
-      key: "kind",
-      label: "Kind",
-      sortable: true,
-      render: (row) => row.type === "zone" ? "ZONE" : (KIND_LABEL[row.object.kind] ?? row.object.kind).toUpperCase(),
-    },
-    {
-      key: "zone",
-      label: "Zone",
-      sortable: true,
-      // HS-202-04 (UX-CANON A.8): `0 ITEMS` is a counter of zero. The
-      // zone's own cell says the true thing instead.
-      render: (row) => row.type === "zone" ? (countToken(row.count, "ITEM") ?? "EMPTY") : row.zoneName.toUpperCase(),
-    },
-    {
-      key: "attention",
-      label: "Attention",
-      sortable: true,
-      render: (row) => row.type === "object" && row.attention ? <span className="desk-list-attention">ATTN {row.attention}</span> : "",
-    },
-  ];
+  const rowById = (id: string | undefined) => rows.find((row) => row.id === id);
+  const rowOf = (target: EventTarget | null) =>
+    rowById((target as HTMLElement | null)?.closest<HTMLElement>("[data-object-id]")?.dataset.objectId);
+  const renamingZone = renamingZoneId ? zones.find((zone) => zone.id === renamingZoneId) : null;
+  const [renameCell, setRenameCell] = useState<HTMLElement | null>(null);
+  // A renamed zone moves to its new place in the sort: keep it in view.
+  const lastRenamed = useRef<string | null>(null);
+  useEffect(() => {
+    if (renamingZoneId) {
+      lastRenamed.current = renamingZoneId;
+      return;
+    }
+    const id = lastRenamed.current;
+    lastRenamed.current = null;
+    if (!id) return;
+    const row = [...(listRef.current?.querySelectorAll<HTMLElement>(".object-list-row[data-object-id]") ?? [])]
+      .find((r) => r.dataset.objectId === `zone:${id}`);
+    row?.scrollIntoView?.({ block: "nearest" });
+  }, [renamingZoneId, rows]);
+  useLayoutEffect(() => {
+    const cell = renamingZone
+      ? [...(listRef.current?.querySelectorAll<HTMLElement>(".object-list-row[data-object-id]") ?? [])]
+          .find((row) => row.dataset.objectId === `zone:${renamingZone.id}`)
+          ?.querySelector<HTMLElement>(".object-list-name") ?? null
+      : null;
+    if (cell !== renameCell) setRenameCell(cell);
+  });
 
   const showMore = () => {
     const next = Math.min(objects.length, limit + LIST_PAGE);
@@ -364,53 +300,74 @@ export function DeskListView() {
         <div className="desk-list-census">
           <span>
             {divedZone ? <Button dense variant="ghost" className="desk-list-open desk-surface" onClick={surface}>ALL</Button> : null}
+            {divedTitle ? <span className="desk-list-zone">{divedTitle.toUpperCase()} · </span> : null}
             {[countToken(objects.length, "ITEM"), countToken(zones.length, "ZONE"), countToken(attnTotal, "ATTN")].filter(Boolean).join(" · ") || "EMPTY"}
           </span>
           <p className="desk-list-status" role="status" tabIndex={-1} ref={statusRef}>
             {countToken(visible.length, "SHOWN", "SHOWN") || "EMPTY"} OF {objects.length}
           </p>
         </div>
-        <DeskSortableTable
-          className="desk-list-sortable"
-          data={rows}
-          columns={columns}
-          sort={sort}
-          onSort={(key, dir) => setSort({ key: key as ListSortKey, dir })}
-          foldColumns={["kind", "zone", "attention"]}
-          rowKey={(row) => row.type === "zone" ? `zone:${row.id}` : qualifiedRef(row.object.kind, row.object.id)}
-          selectedKey={selectedKey && selectedKey.type === "object" ? qualifiedRef(selectedKey.object.kind, selectedKey.object.id) : null}
-          groupBy={(row) => row.type === "zone" ? "ZONES" : divedZone ? (divedTitle || "ZONE").toUpperCase() : BAND_LABEL[row.object.kind] ?? row.object.kind.toUpperCase()}
-          onRowClick={(row) => {
-            if (row.type === "zone") diveInto(row.id);
-            else openPullout(qualifiedRef(row.object.kind, row.object.id));
-          }}
-          onRowKeyDown={(event, row) => {
-            // PHILO-8-01 — F2 on a focused zone row opens its name field
-            // (zone rows are not selectable, so the registry's F2 never
-            // reaches them; "Keep F2 on zone rows", the owner, 2026-09-26).
-            if (row.type === "zone") {
+        <div
+          ref={listRef}
+          className="desk-list-objects"
+          onKeyDown={(event) => {
+            const row = rowOf(event.target);
+            if (!row) return;
+            // PHILO-8-01 — F2 on a focused zone row opens its name field.
+            if (row.zoneId) {
               if (event.key === "F2") {
                 event.preventDefault();
                 event.stopPropagation();
-                useDesk.getState().setRenamingZone(row.id);
+                useDesk.getState().setRenamingZone(row.zoneId);
               }
               return;
             }
-            if (event.key === " ") {
+            if (row.object && (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10"))) {
               event.preventDefault();
-              toggleSelected(qualifiedRef(row.object.kind, row.object.id));
-            } else if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
-              event.preventDefault();
-              const rect = event.currentTarget.getBoundingClientRect();
+              const rect = (event.target as HTMLElement).getBoundingClientRect();
               openMenu(row.object, rect.left + 24, rect.bottom);
             }
           }}
-          onRowContextMenu={(event, row) => {
-            if (row.type !== "object") return;
+          onContextMenu={(event) => {
+            const row = rowOf(event.target);
+            if (!row?.object) return;
             event.preventDefault();
             openMenu(row.object, event.clientX, event.clientY);
           }}
-        />
+        >
+          <ObjectList
+            className="desk-list-sortable"
+            label={divedTitle ? `${divedTitle} zone` : "Desk items"}
+            rows={rows}
+            sort={sort}
+            onSort={(key) =>
+              setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }))
+            }
+            // The Ask context is a set: every row in it is selected, and a
+            // screen reader hears it (never a `[x]` mark).
+            selectedIds={selectedRows}
+            selectedLabel="in Ask context"
+            onSelect={(id) => {
+              const row = rowById(id);
+              if (row?.zoneId) diveInto(row.zoneId);
+              // A press or Space ropes the ref into the Ask context.
+              else if (row) toggleSelected(row.id);
+            }}
+            onOpen={(id) => {
+              const row = rowById(id);
+              if (row?.zoneId) diveInto(row.zoneId);
+              else if (row) openPullout(row.id);
+            }}
+          />
+        </div>
+        {renamingZone && renameCell
+          ? createPortal(
+              // PHILO-8-01 (ratified): the zone being named holds the one name
+              // field in its own Name cell.
+              <ZoneRenameRow key={renamingZone.id} zoneId={renamingZone.id} title={renamingZone.title} placement="inrow" />,
+              renameCell,
+            )
+          : null}
         {remaining > 0 ? <Button dense variant="ghost" className="desk-list-more" onClick={showMore}>Show {Math.min(LIST_PAGE, remaining)} more</Button> : null}
       </section>
       {rowMenu ? (

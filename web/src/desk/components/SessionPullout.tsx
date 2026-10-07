@@ -44,6 +44,7 @@ import {
   retractLauncher,
 } from "./DeskWindow";
 import { spriteUrl } from "../sprites";
+import { useLaneOwnsSteering } from "../lane/laneStore";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
 // at 4 chars/token); the gauge refuses past it before any send.
@@ -54,7 +55,7 @@ const GLYPH_EDIT = String.fromCodePoint(0x270E);
 const GLYPH_CLOSE = String.fromCodePoint(0x2715);
 const GLYPH_CHECK = String.fromCodePoint(0x2713);
 
-const PANE_STATE_LABEL: Record<string, string> = {
+export const PANE_STATE_LABEL: Record<string, string> = {
   pane_gone: "pane gone",
   tmux_absent: "tmux absent",
   no_pane: "no pane on this session",
@@ -67,7 +68,7 @@ const PANE_STATE_LABEL: Record<string, string> = {
 /** The arming strip (HS-87-02 mechanics, HS-111-04 render): ARM is one
  * transport key — armed is INVERTED VIDEO, never a glow ring — and the
  * grant's remainder drains a `GRANT` LedMeter beside the mono clock. */
-function ArmStrip() {
+export function ArmStrip() {
   const armed = useSteering((s) => s.armed);
   const armedUntil = useSteering((s) => s.armedUntil);
   const armError = useSteering((s) => s.armError);
@@ -174,7 +175,7 @@ const KEY_BUTTONS: Array<{
   { word: "RIGHT", glyph: "→", key: "Right", title: "Right" },
 ];
 
-function KeyPalette() {
+export function KeyPalette() {
   const keyState = useSteering((s) => s.keyState);
   const keyDetail = useSteering((s) => s.keyDetail);
   const lastKey = useSteering((s) => s.lastKey);
@@ -679,9 +680,13 @@ export function SessionPullout() {
   const targetNode = useSteering((s) => s.targetNode);
   const { closeSession } = useSteering.getState();
   const controlsRef = useRef<HTMLDivElement>(null);
+  // PHILO-14 C2: a session that belongs to a launch has the agent's lane
+  // window as its face (lane/LaneWindow.tsx); this window is for a plain one
+  // (a pane opened from Panes keeps it while a lane is open).
+  const laneLaunchId = useLaneOwnsSteering();
 
   useEffect(() => {
-    if (!openKey) return;
+    if (!openKey || laneLaunchId) return;
     // A desk window closes deliberately (✕ or Escape) — never from a stray
     // click elsewhere on the desk; a live peek must survive arranging.
     const onKey = (e: KeyboardEvent) => {
@@ -699,9 +704,9 @@ export function SessionPullout() {
     return () => {
       document.removeEventListener("keydown", onKey);
     };
-  }, [openKey]);
+  }, [openKey, laneLaunchId]);
 
-  if (!openKey) return null;
+  if (!openKey || laneLaunchId) return null;
 
   const sessionId = openKey.split(":", 2)[1] || openKey;
   const live = paneStatus === "live";
@@ -724,7 +729,7 @@ export function SessionPullout() {
       className="desk-pullout is-session"
       icon={
         <img
-          src={spriteUrl("agent", sessionId)}
+          src={spriteUrl("agent", sessionId, "rest", session?.agent || coder?.agent || openKey.split(":", 2)[0])}
           alt=""
           width={16}
           height={16}

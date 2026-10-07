@@ -182,12 +182,14 @@ class TestCloseMeansGone:
                     page.locator(f".desk-gadget-close[aria-label='Close {NOTE}']").wait_for()
                     self._close_and_prove(page, width, NOTE, "floor-bare-note")
                 else:
-                    # 4. the list mount at 393: a row tap passes `note:<id>` (qualifiedRef).
-                    self._press(page, page.locator(f".desk-list-name-cell[aria-label='{NOTE}']"), width)
+                    # 4. the list mount at 393: a row's open passes `note:<id>` (qualifiedRef).
+                    # PHILO-14 A2: a tap selects the row; Enter (or a double press) opens it.
+                    page.locator(f".desk-listmode .object-list-open[aria-label^='{NOTE},']").focus()
+                    page.keyboard.press("Enter")
                     page.locator(f".desk-gadget-close[aria-label='Close {NOTE}']").wait_for()
                     self._close_and_prove(page, width, NOTE, "list-row-note")
                     # 5. a bare id at 393: the row's menu → Open (object.open → openPullout(o.id)).
-                    page.locator(f".desk-list-name-cell[aria-label='{DECISION}']").focus()
+                    page.locator(f".desk-listmode .object-list-open[aria-label^='{DECISION},']").focus()
                     page.keyboard.press("Shift+F10")
                     item = page.get_by_role("menuitem", name="Open", exact=True)
                     item.wait_for()

@@ -151,11 +151,24 @@ export function openPersona(personaId: string): void {
   void import("./newThread").then((m) => m.openNewThread({ recipe_id: personaId }));
 }
 
-/** Open a Coder session's window (the one session surface). */
+/** Open a Coder session's window. PHILO-14 C2: a session that belongs to a
+ * launch opens the agent's lane window (its face); a plain session keeps
+ * the session window. */
 export function openCoderSession(key: string, opts?: { answer?: boolean }): void {
   // Conductor F2 (K5b): `answer` opens the answer well in the window's body,
-  // the steer composer recording.
-  void import("./steering").then((m) =>
-    m.useSteering.getState().openSession(key, opts),
-  );
+  // the steer composer recording (in the lane: the ask well's mic).
+  void Promise.all([import("./steering"), import("./lane/laneStore")]).then(([steering, lane]) => {
+    const launchId = lane.launchForSession(key);
+    if (launchId) {
+      lane.useLane.getState().open(launchId, { sessionKey: key, answer: opts?.answer });
+      return;
+    }
+    if (lane.useLane.getState().launchId) lane.useLane.getState().close();
+    steering.useSteering.getState().openSession(key, opts);
+  });
+}
+
+/** PHILO-14 C2: open a launched agent's lane window by its launch id. */
+export function openAgentLane(launchId: string, opts?: { sessionKey?: string | null; answer?: boolean }): void {
+  void import("./lane/laneStore").then((m) => m.useLane.getState().open(launchId, opts));
 }

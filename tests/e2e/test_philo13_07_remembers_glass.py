@@ -29,7 +29,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _boot, _ensure_build, _normal_chair, _settle, _room_through_drawer
 from .test_philo13_06_open_glass import COMMITMENT, _seed
 from tests._evidence import evidence_dir
 
@@ -169,6 +169,7 @@ class TestTheDeskRemembers(_Rig):
 
                 # 2. the Room: Updates -> Draft -> typed words, not saved
                 self._palette(page, "Payments", "project.open.p-ledger", width)
+                _room_through_drawer(page, lambda loc: self._press(page, loc, width))
                 room = page.locator("#surface-project-memory")
                 self._press(page, room.get_by_test_id("updates-verb"), width)
                 self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)
@@ -417,6 +418,7 @@ class TestSliceTwoReturns(_Rig):
             page.on("request", lambda r: puts.append(r.method) if r.method == "PUT" and "/api/updates/" in r.url else None)
             try:
                 self._palette(page, "Payments", "project.open.p-ledger", width)
+                _room_through_drawer(page, lambda loc: self._press(page, loc, width))
                 room = page.locator("#surface-project-memory")
                 self._press(page, room.get_by_test_id("updates-verb"), width)
                 self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)
@@ -446,6 +448,7 @@ class TestSliceTwoReturns(_Rig):
                 self._press(page, page.locator("#surface-project-memory [aria-label^='Close']").first, width)
                 page.locator("#surface-project-memory").wait_for(state="detached")
                 self._palette(page, "Payments", "project.open.p-ledger", width)
+                _room_through_drawer(page, lambda loc: self._press(page, loc, width))
                 after_reopen = state()
                 page.screenshot(path=str(SHOTS / f"B2-09-empty-draft-after-reopen-{width}.png"))
                 self._press(page, page.locator("#surface-project-memory").get_by_role("button", name="Save", exact=True), width)

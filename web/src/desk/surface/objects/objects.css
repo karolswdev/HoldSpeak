@@ -194,6 +194,9 @@
 }
 .object-list-row {
   position: relative;
+  /* PHILO-14 A2: a row is never squeezed by its scrolling column (a flex
+     item shrinks below its content: the 393 fold line ran below the row). */
+  flex: none;
   min-height: 44px;
   border-top: 1px solid var(--border-subtle);
   color: var(--text);

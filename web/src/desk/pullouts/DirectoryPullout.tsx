@@ -1,7 +1,7 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Directory (Zone) pullout content (HS-117-15). */
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteUrl } from "../sprites";
+import { refAgent, spriteUrl } from "../sprites";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
@@ -45,7 +45,7 @@ export function DirectoryPullout({ object: o }: PulloutContentProps) {
                   key={ref}
                   glyph={
                     <img
-                      src={spriteUrl(member!.kind, member!.id)}
+                      src={spriteUrl(member!.kind, member!.id, "rest", refAgent(member!.ref))}
                       width={22}
                       height={22}
                       alt=""

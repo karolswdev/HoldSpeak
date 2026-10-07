@@ -1,0 +1,41 @@
+/* PHILO-14 A2 — the drawer window (boards A-2, A-2L, A-2 at 393). */
+.drawer-window .desk-pullout-body,
+.drawer-info-window .desk-pullout-body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.drawer-scroll {
+  container: surface / inline-size;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.drawer-winicon { width: 20px; height: 20px; image-rendering: pixelated; display: block; }
+
+/* The head: the Room's intelligence as one line of facts, then the view. */
+.drawer-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.drawer-facts { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; flex: 1 1 auto; min-width: 0; }
+.drawer-fact { font: 12px/1.3 var(--font-mono); color: var(--text-muted); letter-spacing: 0.04em; }
+.drawer-fact b { color: var(--text); font-weight: 600; }
+.drawer-fact[data-tone="fail"] b { color: var(--lamp-fail, var(--danger)); }
+.drawer-head-verbs { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.drawer-receipt { font: 12px/1.3 var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); }
+.drawer-receipt[data-tone="fail"] { color: var(--lamp-fail, var(--danger)); }
+
+.drawer-info-rename { display: flex; }
+
+/* In a drawer the grid's rows grow with their names: a name is never
+   clipped or ellipsized (UX-CANON: an ellipsis counts as clipped). */
+.drawer-window .desk-icon-name {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}

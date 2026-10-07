@@ -29,7 +29,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, _room_through_drawer
 from .chair_windows import open_chair_window
 from tests._evidence import evidence_dir
 
@@ -310,6 +310,7 @@ class TestFacesDoNotLie:
                 _normal_chair(page)
                 page.wait_for_timeout(1200)
                 self._palette(page, "Ledger", f"project.open.{pid}", width)
+                _room_through_drawer(page, lambda loc: self._press(page, loc, width))
                 room = page.locator("#surface-project-memory")
                 self._press(page, room.get_by_test_id("updates-verb"), width)
                 self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)

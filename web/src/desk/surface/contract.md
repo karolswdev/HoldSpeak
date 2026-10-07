@@ -701,7 +701,8 @@ The drawer's list view (A-2L): a `grid` with Name (sprite + name), Kind,
 When, State (one lamp + word).
 
 - `label`, `rows: ObjectListRow[]` (`id, kind, name, kindWord?, when?,
-  whenSort?, state?: { label, tone }, sprite?`)
+  whenSort?, state?: { label, tone }, sprite?, group?`); `group` (PHILO-14
+  A2) sorts first, lower above (the Floor's zones above its objects)
 - `sort: { key: "name"|"kind"|"when"|"state", dir }`, `onSort?(key)`: the
   header is a strip of chrome Buttons on the Steel plate (raised; the
   active one sunken, `aria-sort` on its `columnheader`); the species sorts
@@ -709,8 +710,13 @@ When, State (one lamp + word).
 - `selectedId?`, `onSelect?(id)`, `onOpen?(id)`: the selection IS the row
   (the blue plate). No `[ ]` / `[x]` mark, ever. The row's one verb is the
   name Button, stretched over the row.
+- `selectedIds?` (PHILO-14 A2): a set selection (the Floor's Ask context);
+  when given it wins over `selectedId`, and every row in it is a selected
+  row. `selectedLabel?` (`in Ask context`) joins a selected row's
+  accessible name.
 - One Tab stop; arrows walk rows; Space selects; Enter opens.
-- Rows are at least 44 px. In a `surface` of 520 px or less Kind and When
+- Rows are at least 44 px and never shrink below their content in a short
+  scrolling list (PHILO-14 A2: the 393 fold line ran below the row). In a `surface` of 520 px or less Kind and When
   fold under the name (`KIND · WHEN`, the FoldLine of DeskListView without
   its marks) and the sort gadgets grow to 44 px. The fold is VISUAL only:
   all four headers stay, the Kind and When cells stay in their columns for
@@ -756,6 +762,18 @@ never sent, the press focuses the field), then the DRAFT line: the draft,
   `onUseDraft?(draft)`, `draftEgress?: { label, scope? }` (where the DRAFT
   was made, on the draft line), `egress?: { label, scope? }` (where the
   ANSWER goes, beside Answer, drawn with or without a draft), `busy?`
+  (sending: Answer spins and cannot be pressed; the field stays editable,
+  so a stalled send never locks the draft)
+- `disabled?` (the answer cannot be sent now, as with no session: Answer
+  is disabled without the spinner, the field stays open),
+  `listenSignal?` (each new value starts the field's mic: a Speak answer
+  press), `draftScope?` (the mic's draft scope), `inputRef?` (the field,
+  for a caller that focuses it, as after Use draft).
+- `arm?` (the hand's gate beside Answer, after the egress chip: in Secure
+  or Normal, `MODE · ARM FIRST` and the ARM key; the answer row wraps).
+
+TimelineRail, StationTrack, AskWell, PRCard and FilesChanged take a
+pass-through `data-testid` (FilesChanged puts it on its file list).
 
 ### PRCard / FilesChanged
 

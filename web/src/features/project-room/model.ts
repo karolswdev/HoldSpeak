@@ -404,6 +404,11 @@ export type RoomDecisionItem = {
   text: string;
   at: string;
   url: string | null;
+  /** PHILO-14 A2: the record's kind (`decision`, or `action` for a confirmed action proposal). */
+  kind?: string;
+  /** PHILO-14 A2: `meeting` (source is a `decisions` row) or `desk` (a desk decision). */
+  sourceType?: string;
+  sourceId?: string;
   /** proposal provenance (absent on non-proposal decisions) */
   proposalId?: string;
   source?: string;
@@ -419,6 +424,10 @@ export type RoomCommitmentItem = {
   text: string;
   dueAt: string | null;
   owner: string | null;
+  /** PHILO-14 A2: `action`, or `decision` for a confirmed decision proposal. */
+  kind?: string;
+  /** PHILO-14 A2: the action item Follow-through keys its card by. */
+  actionItemId?: string;
 };
 
 /** Target section data. */
@@ -760,6 +769,10 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
               at: String(r.at ?? ""),
               url: r.url != null ? String(r.url) : null,
             };
+            // PHILO-14 A2: the record's kind and source identity, verbatim.
+            if (r.kind != null) item.kind = String(r.kind);
+            if (r.source_type != null) item.sourceType = String(r.source_type);
+            if (r.source_id != null) item.sourceId = String(r.source_id);
             // HS-172-03: proposal provenance
             if (r.proposal_id != null) item.proposalId = String(r.proposal_id);
             if (r.source != null) item.source = String(r.source);
@@ -784,6 +797,9 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             text: String(r.text ?? ""),
             dueAt: r.dueAt != null ? String(r.dueAt) : null,
             owner: r.owner != null ? String(r.owner) : null,
+            // PHILO-14 A2: the producer's kind and the action item it keys.
+            ...(r.kind != null ? { kind: String(r.kind) } : {}),
+            ...(r.action_item_id != null ? { actionItemId: String(r.action_item_id) } : {}),
           }))
         : [],
     })),

@@ -24,6 +24,7 @@ import {
   sourceLabel,
   type CoverageRecord,
 } from "../coverage";
+import { openDrawer } from "../drawer/store";
 
 type Correction = Record<string, unknown>;
 
@@ -617,7 +618,7 @@ function ShadeProjects({
                   variant="ghost"
                   onClick={() => {
                     onClose();
-                    openProjectRoom(room.projectId);
+                    openDrawer(room.projectId); // PHILO-14 A2: Open = the drawer
                   }}
                 >
                   Open

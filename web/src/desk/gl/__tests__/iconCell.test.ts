@@ -3,13 +3,14 @@
  * for EVERY pool sprite, badges only from named live fields, and no
  * fractional jitter. A regression here is unshippable. */
 import { describe, expect, it } from "vitest";
-import { existsSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, renameSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { LIFT, SPRITE, SPRITE_SMALL, buildScene, isFresh } from "../sceneModel";
 import { objMotion } from "../../world";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { VARIANTS } from "../../sprites";
+import { VARIANTS, allSpriteNames, agentSpriteName } from "../../sprites";
 import type { KB, Note, Coder } from "../../../lib/primitives";
 import { EMPTY_ITEMS, type Items } from "../../api";
 
@@ -17,6 +18,16 @@ const SPRITES_DIR = join(
   dirname(fileURLToPath(import.meta.url)),
   "../../../../public/desk/sprites",
 );
+
+function requiredFiles(): string[] {
+  return allSpriteNames().flatMap((name) =>
+    ["", "_sel", "_stale"].map((suffix) => `${name}${suffix}.png`),
+  );
+}
+
+function missingStateFiles(dir: string): string[] {
+  return requiredFiles().filter((file) => !existsSync(join(dir, file)));
+}
 
 describe("the cell contract (HS-105-01)", () => {
   it("renders pixel art integer-true in one uniform cell", () => {
@@ -32,23 +43,44 @@ describe("the cell contract (HS-105-01)", () => {
     expect(m.scale).toBe(1);
   });
 
-  it("has a real state-image set on disk for every pool sprite", () => {
-    const names = new Set<string>();
-    for (const pool of Object.values(VARIANTS) as string[][])
-      for (const name of pool) names.add(name);
-    expect(names.size).toBeGreaterThan(10);
-    for (const name of names) {
-      for (const suffix of ["", "_sel", "_stale"]) {
-        const file = join(SPRITES_DIR, `${name}${suffix}.png`);
-        expect(existsSync(file), `${name}${suffix}.png missing`).toBe(true);
+  it("has a real state-image set on disk for every sprite the picker can return", () => {
+    // PHILO-14 A0b round 2: the pools AND the helper-selected agent
+    // sprites (agent-codex is not in any pool).
+    const names = allSpriteNames();
+    expect(names).toContain(agentSpriteName("codex"));
+    expect(names).toContain(agentSpriteName("claude"));
+    expect(names.length).toBeGreaterThan(10);
+    expect(missingStateFiles(SPRITES_DIR)).toEqual([]);
+  });
+
+  it("the guard fails when any one required file is withheld", () => {
+    const required = requiredFiles();
+    expect(required).toContain("agent-codex_sel.png");
+    const dir = mkdtempSync(join(tmpdir(), "hs-sprite-guard-"));
+    try {
+      cpSync(SPRITES_DIR, dir, { recursive: true });
+      expect(missingStateFiles(dir)).toEqual([]);
+      for (const file of required) {
+        renameSync(join(dir, file), join(dir, `${file}.withheld`));
+        expect(missingStateFiles(dir), `withholding ${file}`).toEqual([file]);
+        renameSync(join(dir, `${file}.withheld`), join(dir, file));
       }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 
   it("a directory is a drawer, never paper", () => {
     expect((VARIANTS as Record<string, string[]>).directory).toEqual([
-      "drawer",
+      "project-drawer",
     ]);
+  });
+
+  it("one kind = one silhouette (PHILO-14 A0b, the D1 mold)", () => {
+    for (const [kind, pool] of Object.entries(
+      VARIANTS as Record<string, string[]>,
+    ))
+      expect(pool.length, `${kind} pool`).toBe(1);
   });
 });
 
@@ -92,6 +124,24 @@ describe("badges ride only named live fields (the source-map census)", () => {
     );
     expect(isFresh(undefined, now)).toBe(false);
     expect(isFresh("not-a-date", now)).toBe(false);
+  });
+
+  it("a Codex coder stays Codex at rest, lit and selected (PHILO-14 A0b r2)", () => {
+    const items: Items = {
+      ...EMPTY_ITEMS,
+      coder: [
+        { kind: "coder", id: "x1", agent: "codex", title: "codex one" } as Coder,
+        { kind: "coder", id: "x2", agent: "claude", title: "claude one" } as Coder,
+      ],
+    };
+    const rest = sceneFor(items).objects;
+    const sel = sceneFor(items, ["x1", "x2"]).objects;
+    const by = (list: typeof rest, id: string) => list.find((o) => o.id === id)!;
+    expect(by(rest, "x1").sprite).toMatch(/\/agent-codex\.png$/);
+    expect(by(rest, "x1").spriteSel).toMatch(/\/agent-codex_sel\.png$/);
+    expect(by(sel, "x1").sprite).toMatch(/\/agent-codex_sel\.png$/);
+    expect(by(rest, "x2").sprite).toMatch(/\/agent-claude-code\.png$/);
+    expect(by(rest, "x2").spriteSel).toMatch(/\/agent-claude-code_sel\.png$/);
   });
 
   it("state picks the real second image: sel > stale > rest", () => {

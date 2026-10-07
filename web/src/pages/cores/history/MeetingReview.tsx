@@ -22,7 +22,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
-import { openProjectRoom, openSurfaceOr } from "../../../desk/shell";
 import { useRuntimeBus } from "../../../runtime/RuntimeBus";
 import {
   ConfirmVerb,
@@ -54,6 +53,7 @@ import {
   type MeetingReviewModel,
   type ReviewProposal,
 } from "./reviewModel";
+import { openDrawer } from "../../../desk/drawer/store";
 
 type Receipt = { text: string; tone?: "warn" | "danger" | "success" };
 
@@ -270,7 +270,7 @@ export function MeetingReview({
 
   const openProject = () => {
     if (!model?.project) return;
-    openProjectRoom(model.project.id);
+    openDrawer(model.project.id); // PHILO-14 A2: a Project opens as its drawer
   };
 
   // ── derived ──
