@@ -212,7 +212,9 @@ def _arrive(page: Any, base: str) -> None:
 # (meetingPathBlocker.ts:91-96). PHILO-14 A5 (#935): the row is a drawer row
 # and its verb is the drawer's SETUP verb.
 BLOCKER_VERB = "[data-testid='needs-row-verb'][data-verb='setup']"
-BLOCKER_ROW = "[data-testid='needs-row']:has([data-verb='setup'])"
+# The blocker row by its own identity (needsYou.ts: `blocker:<key>`), not by
+# its verb: the row must go, not only its button.
+BLOCKER_ROW = "li.needs-row[data-object-id^='blocker:']"
 
 
 def _open_models_from_the_blocker(page: Any) -> None:
@@ -403,6 +405,9 @@ class TestConnectAnEngineFromTheFace:
             assert page.locator(BLOCKER_VERB).count() > 0, (
                 "the SETUP row was already gone before the gesture"
             )
+            assert page.locator(BLOCKER_ROW).count() > 0, (
+                "the blocker row was already gone before the gesture"
+            )
             submit.click()
             page.wait_for_function(
                 """() => !document.querySelector("[data-testid='concierge-root']")""",
@@ -410,7 +415,9 @@ class TestConnectAnEngineFromTheFace:
             )
             page.wait_for_function(
                 """() => !document.querySelector(
-                     "[data-testid='needs-row-verb'][data-verb='setup']")""",
+                     "[data-testid='needs-row-verb'][data-verb='setup']") &&
+                   !document.querySelector(
+                     "li.needs-row[data-object-id^='blocker:']")""",
                 timeout=60_000,
             )
             assigned = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
