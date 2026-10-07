@@ -828,9 +828,14 @@ def build_pipeline_router(
             # effect work: no awaiting agent means no delivery, named in one word.
             if require_agent and target_mode == "agent":
                 from ....agent_context import get_recent_awaiting_agent_session
+                from ....agent_context.models import DEFAULT_RECENT_MAX_AGE_SECONDS
 
                 try:
-                    awaiting = get_recent_awaiting_agent_session(max_age_seconds=120)
+                    # A waiting question stays answerable for the shared
+                    # reply window (30 min), the same window the device uses.
+                    awaiting = get_recent_awaiting_agent_session(
+                        max_age_seconds=DEFAULT_RECENT_MAX_AGE_SECONDS
+                    )
                 except Exception as exc:  # pragma: no cover - defensive probe
                     log.warning(f"Awaiting-agent probe failed: {exc}")
                     awaiting = None
