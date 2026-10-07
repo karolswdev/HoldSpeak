@@ -130,7 +130,7 @@ def test_lane_actions_keep_launch_target_after_pane_picker(lane) -> None:
         page.locator(".desk-panepicker-item").filter(has_text=other).click()
         # The plain pane gets its own window; lane A keeps its question.
         page.locator(".is-session").wait_for(timeout=10000)
-        assert page.locator("[data-testid='lane-question']").inner_text() == QUESTION
+        assert page.locator("[data-testid='lane-ask'] .ask-well-question").inner_text() == QUESTION
         sent = _answer(page, "Jordan owns it, for launch A only.")
         assert sent.status == 200, sent.text()
         assert f"/api/coders/{KEY.replace(':', '%3A')}/steer" in sent.url
@@ -236,7 +236,7 @@ def test_lane_words_are_12px_at_393(lane) -> None:
     page = lane[0]
     page.set_viewport_size({"width": 393, "height": 852})
     page.wait_for_timeout(400)
-    sizes = page.locator(".is-lane .lw-word").evaluate_all(
+    sizes = page.locator(".is-lane .lw-word, .is-lane .lane-word").evaluate_all(
         "(els) => [...new Set(els.map((e) => getComputedStyle(e).fontSize))]")
     assert sizes == ["12px"], sizes
 
@@ -278,7 +278,7 @@ def test_unread_collections_remain_visible(lane, monkeypatch) -> None:
 def test_gate_call_from_the_route_is_approved_from_the_lane(lane) -> None:
     page, _hook, url, seed, _name = lane
     mint_held_call(url, seed["worktree"], command="cat /etc/review-file", proposal_id="toolu_review")
-    row = page.locator(".lw-ev").filter(has_text="cat /etc/review-file")
+    row = page.locator(".lane-rail-entry").filter(has_text="cat /etc/review-file")
     row.wait_for(timeout=15000)
     with page.expect_response(lambda r: "/toolu_review/decide" in r.url) as got:
         row.locator("[data-testid='lane-approve']").click()

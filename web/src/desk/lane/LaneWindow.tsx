@@ -26,7 +26,19 @@ import { useGate } from "../gate";
 import { spriteUrl } from "../sprites";
 import { useSteering } from "../steering";
 import { useDesk } from "../store";
-import { EgressChip, PaneWell, StringGadget, SurfaceFooter, TransportKey } from "../surface";
+import {
+  AskWell,
+  EgressChip,
+  FilesChanged,
+  PaneWell,
+  PRCard,
+  StationTrack,
+  StringGadget,
+  SurfaceFooter,
+  TimelineRail,
+  TransportKey,
+  type TimelineEntry,
+} from "../surface";
 import { wireClock, wireDate } from "../surface/format";
 import { controlModeLabel } from "../../lib/productLanguage";
 import { egressFor } from "../surface/egress";
@@ -52,7 +64,6 @@ import {
   type LaneWire,
 } from "./laneWire";
 import { laneSessionKey, launchForSession, useLane, useLaneLaunchId } from "./laneStore";
-import { AskWell, FilesChanged, PRCard, StationTrack, TimelineRail, type TimelineEntry } from "./species";
 import "./lane.css";
 
 /** The lane refreshes this often while its window is in front. */
@@ -210,6 +221,7 @@ function LaneBody({
   const branch = lane.launch.branch ?? (isNotRead(worktree) ? null : worktree.branch) ?? undefined;
   const prCard = pr && pr.number != null ? (
     <PRCard
+      data-testid="lane-pr"
       number={pr.number}
       title={itemTitle}
       checks={checks}
@@ -221,13 +233,13 @@ function LaneBody({
   const files = isNotRead(worktree) ? (
     <NotReadLine part="FILES" reason={worktree.not_read} testId="lane-files-not-read" />
   ) : (
-    <FilesChanged files={worktree.files.map((f) => ({ path: f.path }))} />
+    <FilesChanged data-testid="lane-files" files={worktree.files.map((f) => ({ path: f.path }))} />
   );
   const rail = (
     <div className="lw-col">
       {eventsNotRead ? <NotReadLine part="TIMELINE" reason={eventsNotRead} testId="lane-events-not-read" /> : null}
       {isNotRead(lane.gated) ? <NotReadLine part="HELD" reason={lane.gated.not_read} /> : null}
-      <TimelineRail label="Lane" entries={railEntries(lane, events, briefOpen, () => setBriefOpen((v) => !v))} />
+      <TimelineRail data-testid="lane-rail" label="Lane" entries={railEntries(lane, events, briefOpen, () => setBriefOpen((v) => !v))} />
       {briefOpen && lane.launch.brief_text ? (
         <pre className="lw-brief" data-testid="lane-brief-text">{lane.launch.brief_text}</pre>
       ) : null}
@@ -241,7 +253,7 @@ function LaneBody({
 
   return (
     <div className="desk-pullout-body lw-body" data-testid="lane-body" ref={bodyRef} onScroll={onScroll}>
-      <StationTrack label="Lane stations" stations={stations} />
+      <StationTrack data-testid="lane-track" label="Lane stations" stations={stations} />
       <LaneReceipts lane={lane} />
       {unreadParts(lane).map(([part, reason]) => (
         <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
@@ -358,6 +370,7 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
   return (
     <>
       <AskWell
+        data-testid="lane-ask"
         agent={agent}
         age={waitAge(wait.started)}
         question={String(wait.question)}
@@ -370,7 +383,8 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
           inputRef.current?.focus();
         }}
         draftEgress={draft ? draftEgress : undefined}
-        busy={sending || !key}
+        busy={sending}
+        disabled={!key}
         listenSignal={answerSeq}
         draftScope={scope}
         inputRef={inputRef}

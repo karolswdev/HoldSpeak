@@ -216,7 +216,7 @@ describe("the agent's window", () => {
     useAgentFlights.setState({ flights: [fromWireFlight({ origin_ref: "action:a1", title: "Write the rollback runbook", agent: "claude", state: "waiting", session_key: KEY, launch_id: "launch_f2_runbook" })] });
     await openLane(fixture());
     expect(screen.getAllByText("Claude Code: Write the rollback runbook").length).toBeGreaterThan(0);
-    expect(screen.getByTestId("lane-question").textContent).toBe(QUESTION);
+    expect(screen.getByTestId("lane-ask").querySelector(".ask-well-question")?.textContent).toBe(QUESTION);
     expect(screen.getByText("CLAUDE CODE ASKS · 6 MIN")).toBeTruthy();
     const rail = screen.getByTestId("lane-rail");
     expect(within(rail).getByText("COMMIT")).toBeTruthy();
@@ -235,7 +235,7 @@ describe("the agent's window", () => {
     expect(screen.getByTestId("lane-stop")).toBeTruthy();
     expect(screen.getByTestId("lane-open-pr")).toBeTruthy();
     // The draft's host is the drafting model's.
-    await waitFor(() => expect(within(screen.getByTestId("lane-draft")).getByText("API.ANTHROPIC.COM")).toBeTruthy());
+    await waitFor(() => expect(within(screen.getByTestId("lane-ask").querySelector(".ask-well-draft") as HTMLElement).getByText("API.ANTHROPIC.COM")).toBeTruthy());
   });
 
   it("the Brief verb unfolds the brief in a well", async () => {
@@ -262,7 +262,7 @@ describe("the agent's window", () => {
   it("TO ANSWER: Use draft fills the field and does not send; Enter sends to the lane's session with the wait id", async () => {
     await openLane(fixture());
     const field = screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement;
-    fireEvent.click(screen.getByTestId("lane-use-draft"));
+    fireEvent.click(within(screen.getByTestId("lane-ask")).getByRole("button", { name: "Use draft" }));
     expect(field.value).toBe("Jordan owns it. Avery reviews.");
     expect(posts("/steer")).toEqual([]);
     fireEvent.change(field, { target: { value: "Jordan owns it." } });

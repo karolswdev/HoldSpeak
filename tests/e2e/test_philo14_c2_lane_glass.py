@@ -233,8 +233,8 @@ def test_the_agents_lane_window_at_1440_and_393(tmp_path: Path, monkeypatch) -> 
                 for word in ("BRIEF", "WORK", "COMMIT", "PR", "HELD", "ASKS", "MERGE"):
                     assert word in track_text, track_text
                 assert "#413" in track_text and "1 call" in track_text and "now" in track_text
-                assert page.locator("[data-testid='lane-question']").text_content() == QUESTION
-                assert "Jordan owns it. Avery reviews." in (page.locator("[data-testid='lane-draft']").text_content() or "")
+                assert page.locator("[data-testid='lane-ask'] .ask-well-question").text_content() == QUESTION
+                assert "Jordan owns it. Avery reviews." in (page.locator("[data-testid='lane-ask'] .ask-well-draft").text_content() or "")
                 rail = page.locator("[data-testid='lane-rail']").text_content() or ""
                 for word in ("BRIEF", "READ", "SAYS", "WRITE", "RUN", "COMMIT", "PR", "HELD", "ASKS", "MERGE"):
                     assert word in rail, rail
@@ -262,7 +262,7 @@ def test_the_agents_lane_window_at_1440_and_393(tmp_path: Path, monkeypatch) -> 
                 page.locator("[data-testid='lane-rail']").wait_for(timeout=5000)
                 if width == 393:
                     # Approve the held call from the rail: the real gate route decides it.
-                    held = page.locator(".lw-ev").filter(has_text="psql -h staging-ledger")
+                    held = page.locator(".lane-rail-entry").filter(has_text="psql -h staging-ledger")
                     with page.expect_response(lambda r: "/toolu_psql/decide" in r.url) as got:
                         held.locator("[data-testid='lane-approve']").click()
                     assert got.value.status == 200, got.value.text()

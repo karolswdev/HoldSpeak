@@ -1,15 +1,9 @@
-/* PHILO-14 C2 — the agent's lane window. The canvas rules (docs/internal/philo/
- * phase-14/canvas/harness/p14.css: TimelineRail, TimelineTrack, AskWell, PRCard,
- * the files) on the Workbench tokens. Local until lane B1's species land in
- * web/src/desk/surface/objects/; then this file parks with the local parts. */
-
-.is-lane {
-  --lw-ask: var(--accent-hover);
-  --lw-info: var(--accent-cool);
-  --lw-warn: var(--warn-signal);
-  --lw-ok: var(--ok);
-  --lw-fail: var(--danger);
-}
+/* PHILO-14 C2 — the agent's lane window: lane layout only. The parts
+ * (TimelineRail, StationTrack, AskWell, PRCard, FilesChanged) are the
+ * library species (web/src/desk/surface/objects/, objects.css) since C2b;
+ * their old local copies are parked in lane/_parked/species.tsx. What stays
+ * here: the body, the two columns, the lane's own wells (approve, re-brief,
+ * deciding), the brief, the receipts, the ARM, Raw and the footer branch. */
 
 .is-lane .desk-pullout-body.lw-body {
   container: surface / inline-size;
@@ -22,75 +16,38 @@
   gap: 12px;
 }
 
+/* The pullout chrome resets every `section` in its body (window-chrome.css:
+ * `.desk-next .desk-pullout-body section`); the AskWell plate is a section,
+ * so the lane gives it back its plate. */
+.desk-next .is-lane .desk-pullout-body section.ask-well {
+  display: flex;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--wb-ink);
+}
+
 .lw-caption { font: 600 12px/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin: 0; }
-.lw-mono { font: 12px/1.4 var(--font-mono); color: var(--text-muted); overflow-wrap: anywhere; }
 .lw-fact { font: 12px/1.3 var(--font-mono); color: var(--text-muted); letter-spacing: 0.04em; }
 .lw-fact b { color: var(--text); font-weight: 600; }
 .lw-verbs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 /* An honest line: a part that could not be read, said once. */
 .lw-notread { margin: 0; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
-.lw-fate { font: 12px/1.4 var(--font-mono); color: var(--text-muted); }
-.lw-fate[data-tone="fail"] { color: var(--danger); }
-
-/* the tone square: a 12 px LED with the raised bevel */
-.lw-square { position: relative; display: block; width: 12px; height: 12px; margin-top: 3px; background: var(--wb-steel); box-shadow: var(--wb-raised), 0 0 0 1px var(--wb-ink); }
-.lw-square[data-tone="ask"] { background: var(--lw-ask); }
-.lw-square[data-tone="warn"] { background: var(--lw-warn); }
-.lw-square[data-tone="ok"] { background: var(--lw-ok); }
-.lw-square[data-tone="info"] { background: var(--lw-info); }
-.lw-square[data-tone="fail"] { background: var(--lw-fail); }
-.lw-square[data-pending="true"] { background: var(--surface-1); box-shadow: 0 0 0 1px var(--wb-steel); }
 .lw-word { font: 700 12px/18px var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; flex: none; }
-
-/* TimelineRail */
-.lw-rail { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.lw-ev { display: grid; grid-template-columns: 46px 18px minmax(0, 1fr); column-gap: 8px; position: relative; padding: 0 0 10px; }
-.lw-ev-time { font: 12px/18px var(--font-mono); color: var(--text-muted); text-align: right; }
-.lw-ev-node { position: relative; display: flex; justify-content: center; }
-.lw-ev-node::before { content: ""; position: absolute; top: 0; bottom: -10px; width: 2px; background: var(--wb-steel); opacity: 0.45; }
-.lw-ev:last-child .lw-ev-node::before { display: none; }
-.lw-ev-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.lw-ev-line { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; min-width: 0; }
 .lw-ev-text { font: 13px/18px var(--font-sans); color: var(--text); min-width: 0; overflow-wrap: anywhere; }
 .lw-ev-code { font: 12px/18px var(--font-mono); color: var(--text); overflow-wrap: anywhere; min-width: 0; }
-/* SAYS: the agent's own words, flat in an aerogel inset (no rail). */
-.lw-ev-quote { display: block; font: 13px/1.45 var(--font-sans); color: var(--text); background: var(--desk-aerogel-fill); border: 1px solid var(--desk-aerogel-edge); padding: 6px 8px; quotes: none; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 9.5em; overflow-y: auto; }
-.lw-ev[data-pending="true"] .lw-word, .lw-ev[data-pending="true"] .lw-ev-text { color: var(--text-muted); }
-.lw-ev[data-word="SAYS"] .lw-ev-line { min-height: 18px; }
 .lw-more { align-self: flex-start; }
 
-/* StationTrack (C-4's borrow onto the A lane) */
-.lw-track { list-style: none; margin: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0; padding: 4px 0 0; }
-.lw-station { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 0 4px; }
-.lw-station::before { content: ""; position: absolute; top: 9px; left: 0; right: 0; height: 2px; background: var(--wb-steel); opacity: 0.45; }
-.lw-station:first-child::before { left: 50%; }
-.lw-station:last-child::before { right: 50%; }
-.lw-station[data-state="reached"] .lw-word, .lw-station[data-state="current"] .lw-word { color: var(--text); }
-.lw-station-sub { font: 12px/1.4 var(--font-mono); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-
-/* AskWell, the approve well, the re-brief well */
+/* the lane's own wells: approve, re-brief */
 .lw-ask,
 .desk-next .is-lane .desk-pullout-body section.lw-ask { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface-2); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised); }
 .lw-ask-q { font: 600 15px/1.35 var(--font-sans); color: var(--text); margin: 0; overflow-wrap: anywhere; }
 .lw-ask-row { display: flex; gap: 8px; align-items: center; }
 .lw-ask-row > .gadget-string { flex: 1 1 auto; min-width: 0; }
-.lw-draft { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.lw-draft-text { font: 13px/1.45 var(--font-sans); color: var(--text); }
 .lw-deciding { margin: 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .lw-deciding .lw-ev-text { font-size: 13px; }
 
 /* the brief, unfolded under its rail entry */
 .lw-brief { margin: 0; padding: 10px 12px; background: var(--surface-1); box-shadow: var(--wb-sunken); border: 1px solid var(--wb-ink); font: 12px/1.5 var(--font-mono); color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow-y: auto; }
-
-/* PRCard + FilesChanged */
-.lw-pr { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--wb-ink); background: var(--surface-1); box-shadow: var(--wb-raised); }
-.lw-pr-line { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; min-width: 0; }
-.lw-pr-icon { width: 20px; height: 20px; image-rendering: pixelated; display: block; flex: none; }
-.lw-pr-title { font: 600 15px/1.3 var(--font-sans); color: var(--text); min-width: 0; overflow-wrap: anywhere; }
-.lw-files { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.lw-file { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 4px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); }
-.lw-file code { font: 12px/1.4 var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
-.lw-file-counts { font: 12px/1.4 var(--font-mono); color: var(--ok); }
 
 /* the two columns (C-4): the rail, then the PR and its files */
 .lw-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
@@ -103,8 +60,6 @@
 
 @container surface (max-width: 520px) {
   .lw-cols { grid-template-columns: 1fr; }
-  .lw-station-sub { display: none; }
-  .lw-station { padding: 0; }
   .lw-word { font-size: var(--font-size-xs); letter-spacing: 0.03em; }
   .lw-ask-row { flex-wrap: wrap; }
   .lw-ask-row > .gadget-string { flex-basis: 60%; }
