@@ -78,7 +78,11 @@ def _readers(hub: Hub, *, brief: bool) -> dict[str, int]:
         "notifications": int(HeartbeatService(hub.db).notification_count(OWNER)),
     }
     if brief:
-        readers["brief"] = _phrase(_headline(hub), "thing")
+        # PHILO-15-09 (Astra r2): the Brief says an unread source once, as a
+        # source not read, never also as a thing waiting; its number is both.
+        headline = _headline(hub)
+        unread = re.search(r"(\d+) sources? not read", headline)
+        readers["brief"] = _phrase(headline, "thing") + (int(unread.group(1)) if unread else 0)
     return readers
 
 

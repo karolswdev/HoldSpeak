@@ -202,6 +202,23 @@ describe("H-C3 Dock rendering", () => {
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/people/relationships/r1/brief");
   });
 
+  // PHILO-15-09 (B11, Astra r2): the Dock badge reads the one snapshot the
+  // Needs drawer's head reads: the shared seed (an item with a folded
+  // question, an unread source, an arming recording) says the same number.
+  it("says the Needs drawer's number for the one-number seed", async () => {
+    const { ONE_NUMBER_SEED, ONE_NUMBER_ROWS } = await import("../../../test/oneNumberSeed");
+    const real = await vi.importActual<typeof import("../../needsYou")>("../../needsYou");
+    const snapshot = real.readNeedsYouAnswer(ONE_NUMBER_SEED as never);
+    expect(snapshot.count).toBe(ONE_NUMBER_ROWS);
+    mocks.useNeedsYou.mockImplementation((() => snapshot) as never);
+    try {
+      render(<Dock />);
+      expect(screen.getByRole("button", { name: `Intelligence, ${ONE_NUMBER_ROWS} need you` })).toBeTruthy();
+    } finally {
+      mocks.useNeedsYou.mockImplementation((() => ({ count: 1, unmutedItems: [{ projectId: "p1" }] })) as never);
+    }
+  });
+
   // PHILO-14 A2: the Dock opens a Project as its drawer.
   it("opens an active project as its drawer", async () => {
     useDrawers.setState({ drawers: [], infos: [] });

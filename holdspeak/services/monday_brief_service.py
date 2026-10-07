@@ -347,6 +347,10 @@ def brief_title(period_end: Any) -> str:
 PEOPLE_NOT_READ_TEXT = "NOT READ · People (locked) · Generate for the full brief"
 
 
+#: People store states in which nothing was skipped: read, or no store at all.
+_PEOPLE_READ_STATES = frozenset({"ready", "unconfigured"})
+
+
 class _NeedsYouRows(list):
     """The Brief's WAITING rows from the one ``needs you`` rule.
 
@@ -356,9 +360,12 @@ class _NeedsYouRows(list):
 
     def __init__(
         self, rows: Any = (), *, needs_you_count: int | None, counted_decisions: set[str],
-        door_unread: bool = False,
+        door_unread: bool = False, people_unread: bool = False,
     ) -> None:
         super().__init__(rows)
+        # PHILO-15-09 (Astra r2, P1): the People store exists and was not
+        # read (its key request was refused, it is locked or broken).
+        self.people_unread = people_unread
         self.needs_you_count = needs_you_count
         self.counted_decisions = counted_decisions
         # PHILO-15 05 r2: the Door was not read; the brief adds its own
@@ -578,6 +585,9 @@ class MondayBriefService:
         rule_count = getattr(member_items, "needs_you_count", None)
         needs_you_count = None if member_items is None or rule_count is None else int(rule_count)
         counted_decisions = set(getattr(member_items, "counted_decisions", ()))
+        # PHILO-15-09 (Astra r2, P1): the owner's Generate keeps the People
+        # NOT READ row when its own read of People failed.
+        people_skipped = people_skipped or bool(getattr(member_items, "people_unread", False))
         if member_items is None:
             rule_rows: list[BriefItem] = self._collect_waiting_or_unread(principal)
         elif getattr(member_items, "door_unread", False):
@@ -932,9 +942,17 @@ class MondayBriefService:
                              None, f"meeting:{meeting.get('id')}", 110))
         return _NeedsYouRows(
             rows,
-            needs_you_count=None if door_unread else int(answer.get("count", len(rows) + len(counted_decisions))),
+            # PHILO-15-09 (Astra r2, P2): the hub's one number also counts
+            # each unread source and each arming recording (the desk draws
+            # them as rows). The Brief says an unread source ONCE, as a
+            # source not read (its NOT READ / Not observed row), so its
+            # "things waiting" are the members alone.
+            needs_you_count=None if door_unread else (
+                len(answer["members"]) if isinstance(answer.get("members"), list)
+                else int(answer.get("count", len(rows) + len(counted_decisions)))),
             counted_decisions=counted_decisions,
             door_unread=door_unread,
+            people_unread=str(answer.get("peopleStoreState") or "ready") not in _PEOPLE_READ_STATES,
         )
 
     def _compose(
@@ -954,9 +972,12 @@ class MondayBriefService:
         }
         counts = {section: len(items) for section, items in finalized_sections.items()}
         # PHILO-15 05: NOT READ rows are said as such, never as things waiting.
+        # PHILO-15-09 (Astra r2, P2): a source the coverage could not observe
+        # ("Not observed: ...") is the same kind of row: said once, as a
+        # source not read.
         unread = sum(
             1 for item in finalized_sections["waiting"]
-            if str(item.source_ref or "").startswith(NOT_READ_REF)
+            if str(item.source_ref or "").startswith((NOT_READ_REF, "coverage:"))
         )
         counts["waiting"] -= unread
         total_items = sum(counts.values()) + unread

@@ -613,3 +613,16 @@ describe("NeedsDrawer every row counts (PHILO-15-09 B11, Astra r1)", () => {
     for (const row of rows) expect(row.getAttribute("data-counted")).toBe("true");
   });
 });
+
+// PHILO-15-09 (Astra r2): the one-number seed shared with Dock.test.tsx.
+describe("NeedsDrawer one-number seed (PHILO-15-09 r3)", () => {
+  it("draws the seed's rows under the head that says their number", async () => {
+    const { ONE_NUMBER_SEED, ONE_NUMBER_ROWS } = await import("../../../test/oneNumberSeed");
+    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+      (String(path).startsWith("/api/desk/needs-you") ? ONE_NUMBER_SEED : { upcoming: [], calendar_configured: true }) as never);
+    useAgentFlights.setState({ flights: [], sessions: [] } as never);
+    render(<NeedsDrawer />);
+    await screen.findByText(`${ONE_NUMBER_ROWS} need you`);
+    expect(document.querySelectorAll("[data-testid='needs-list'] li.needs-row")).toHaveLength(ONE_NUMBER_ROWS);
+  });
+});
