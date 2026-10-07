@@ -1,6 +1,8 @@
 /* ProjectButton (HS-200-15, species S6) — the way back, as a caption-step
    ghost Button. It reads like the project token it replaces and behaves
-   like the verb it is. */
+   like the verb it is. PHILO-14 B2 (the material pass): a token you press
+   is a RAISED token: the light bevel of the grammar (the FilterTokens
+   strength), sunken while pressed. */
 
 .surface-project-group {
   display: inline-flex;
@@ -13,7 +15,7 @@
   min-height: 20px;
   padding: 1px 6px;
   border-radius: 0;
-  box-shadow: none;
+  box-shadow: var(--bevel-raised-soft);
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   font-weight: 600;
@@ -31,4 +33,7 @@
 }
 .surface-project-button.btn:hover:not(:disabled) {
   color: var(--text);
+}
+.surface-project-button.btn:active:not(:disabled) {
+  box-shadow: var(--bevel-sunken-soft);
 }

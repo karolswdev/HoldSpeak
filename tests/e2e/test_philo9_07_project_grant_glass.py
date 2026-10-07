@@ -117,6 +117,17 @@ _WINDOW_FACTS = """() => {
   for (const root of scope) for (const el of root.querySelectorAll('.surface-state-chip, .surface-token, .gadget-fact, .surface-receipt, .surface-ledger-count, .surface-disclosure-label')) {
     const r = el.getBoundingClientRect();
     if (!r.width || !txt(el)) continue;
+    // PHILO-14 B2 (Astra r1): a StateChip whose only text is its undrawn
+    // lamp glyph draws no text, so it has no text contrast to read. It must
+    // still be named (aria-label). Nothing else is exempt.
+    if (el.matches('.surface-state-chip')) {
+      const glyph = el.querySelector('.surface-state-chip-icon')?.textContent || '';
+      const word = (el.textContent || '').slice(glyph.length).trim();
+      if (!word) {
+        if (!(el.getAttribute('aria-label') || '').trim()) low.push(['UNNAMED LAMP', 0]);
+        continue;
+      }
+    }
     let paint = el;
     const inner = [...el.querySelectorAll('*')].filter(c => [...c.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()));
     if (!([...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) && inner.length) paint = inner[inner.length - 1];

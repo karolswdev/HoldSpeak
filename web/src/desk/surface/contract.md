@@ -90,7 +90,7 @@ A ChoiceCard is an OBJECT, not a list. Beyond label/description/facts/cost:
 
 ## FilterTokens (HS-176-03)
 
-The flat one-tap filter strip: `role="group"` over library `Button` species,
+The one-tap filter strip (lightly raised tokens, PHILO-14 B2): `role="group"` over library `Button` species,
 one active at a time. Promoted from the composition ratified on the Project
 Room's history wing (`ProjectRoomCore.tsx:1550-1566`) per canon B — a
 recurring element the library lacked.
@@ -123,8 +123,9 @@ Presence rules (they are the species, not the caller's business):
   `null` below `SPARSE_THRESHOLD` (`LedgerFilter.tsx:104`, `sparse.ts:4`).
 - **It carries no count.** `matchCount/total` would be a second count on a
   face that says its one count elsewhere (UX-CANON A.7/A.8).
-- Not to be confused with `SurfaceWings`: filters are flat tokens, wings are
-  the beveled strip, and the two never look alike (canon D).
+- Not to be confused with `SurfaceWings`: filters are lightly raised tokens
+  (the soft bevel, no plate), wings keep the full Steel bevel, and the two
+  never look alike (canon D, PHILO-14 B2 #958).
 
 ### The strip menu form (PHILO-13-11, C1 §3a)
 
@@ -842,9 +843,35 @@ classes in `surface.css`, from the tokens `--bevel-raised` /
 On the Steel plate (the window frame, the ObjectList header) the same
 grammar rides `--wb-raised` / `--wb-sunken`.
 
-Not done in this lane (for the material pass, Movement B): the existing
-species still draw flat where the grammar says raised: the plated
-`Button` variants (`global.css .btn`), `StateChip`, `surface-token[data-chip]`
-(the six-chip rows the PROPOSAL names), `SurfaceLedgerRow`, the
-`SurfaceVerbs` strip and `FilterTokens`; and the window body
-(`desk-pullout-body`) has no well. Move each onto `.bevel-*` there.
+The material pass (PHILO-14 B2) moved the existing species onto the
+grammar, in the library:
+
+- **Button** (`global.css .btn`): every plated variant (secondary,
+  primary, ghost, danger) wears `--bevel-raised`; `:active` and
+  `aria-pressed="true"` sink it to `--bevel-sunken`. The glass top line
+  of the materials block is gone. Disabled stays flat. A Button on the
+  Steel plate (the title bar's Raw) keeps `--wb-raised`.
+- **StateChip** is a LAMP: no border, no well, no etch; the icon slot is a
+  10 px square with the raised bevel, lit in the state's tone (active =
+  ask, working = info, success = ok, warning = warn, failure = fail; idle
+  and unreachable unlit). The glyph stays in the DOM, aria-hidden, and is
+  not drawn; the word carries the meaning.
+- **`surface-token[data-chip]`** is a flat fact: no plate, no bevel (the
+  1 px border stays, transparent, so no row moves). A chip with
+  `data-tone` (`warn`, `danger`, `ok`) wears the lamp before its word.
+  No chip in the tree is pressable; a pressable token is a Button.
+- **FilterTokens** and **ProjectButton** are raised TOKENS: the light
+  bevel `--bevel-raised-soft` with no plate; the active filter (and a
+  pressed token) sits in `--bevel-sunken-soft` on its accent tint. A wing
+  is a Steel plate with the full bevel, so the two never look alike.
+- **SurfaceVerbs** is a raised strip (`--bevel-raised`).
+- **SurfaceLedgerRow** stays flat (a fact); its verbs are raised Buttons;
+  an open row keeps its etched well.
+- **The window body** (`.desk-pullout-body`, `.desk-surface-body`,
+  `.chair-window-body`) is the well: `--bevel-sunken`, one per window (a
+  body inside a body draws none).
+
+Not moved: `EgressChip` (the egress law's own chip), the `desk-chip`
+family of the older pullouts (outside the Chair, drawer, lane, Conductor
+and Needs you faces), and the row why-token of Needs you (a flat word;
+the row's lamp is its flight's StateChip).

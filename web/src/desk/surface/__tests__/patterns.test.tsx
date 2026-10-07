@@ -4,7 +4,7 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { useRef, useState } from "react";
-import { StateChip, type ChipState } from "../patterns/StateChip";
+import { LAMP_WORDS, StateChip, type ChipState } from "../patterns/StateChip";
 import { ActionNotice } from "../patterns/ActionNotice";
 import { Disclosure } from "../patterns/Disclosure";
 import { ProgressPlan, type PlanStep } from "../patterns/ProgressPlan";
@@ -21,6 +21,36 @@ describe("StateChip", () => {
   const ALL_STATES: ChipState[] = [
     "idle", "active", "working", "success", "warning", "failure", "unreachable",
   ];
+
+  // PHILO-14 B2 (Astra r1 on #958): a lamp is never colour alone. Every
+  // StateChip, labelled or not, wordless or not, exposes an accessible
+  // name; a LIT lamp with no label shows its state word, and a wordless
+  // lit lamp (the row says it) is still named by that word.
+  it("every lit StateChip exposes an accessible name", () => {
+    const LIT: ChipState[] = ["active", "working", "success", "warning", "failure"];
+    for (const state of LIT) {
+      for (const props of [{}, { label: "" }, { label: "", wordless: true }, { label: "SAVED" }]) {
+        const { unmount } = render(<StateChip state={state} {...props} />);
+        const chip = screen.getByRole("status");
+        const name = chip.getAttribute("aria-label") ?? "";
+        expect(name.trim(), `${state} ${JSON.stringify(props)}`).not.toBe("");
+        const glyph = chip.querySelector(".surface-state-chip-icon")?.textContent ?? "";
+        const word = (chip.textContent ?? "").slice(glyph.length).trim();
+        if ("label" in props && props.label === "") {
+          expect(name).toBe(LAMP_WORDS[state]);
+          expect(word).toBe("wordless" in props ? "" : LAMP_WORDS[state]);
+        } else {
+          expect(word).toBe(name);
+        }
+        unmount();
+      }
+    }
+  });
+
+  it("an unlit lamp with no label is named by its state", () => {
+    render(<StateChip state="idle" label="" />);
+    expect(screen.getByRole("status").getAttribute("aria-label")).toBe("Idle");
+  });
 
   it("renders all seven states with correct data-state attribute", () => {
     const { container } = render(

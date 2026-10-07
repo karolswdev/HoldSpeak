@@ -298,6 +298,17 @@ def test_hs145_scroll_hint_gradient_393_and_1440(
         reset_database()
 
 
+def _open_needs_drawer(page) -> None:
+    """PHILO-14 A5: Needs you is a drawer on the screen; open it from its icon."""
+    if page.locator(".needs-drawer").count():
+        return
+    icon = page.locator(".desk-screen [data-object-id='drawer:needs']")
+    icon.wait_for(timeout=10_000)
+    icon.focus()
+    page.keyboard.press("Enter")
+    page.locator(".needs-drawer").wait_for(timeout=10_000)
+
+
 # ---------------------------------------------------------------------------
 # LEG 3 + 4: Connect-calendar affordance and configured-but-quiet
 # ---------------------------------------------------------------------------
@@ -307,9 +318,10 @@ def test_hs145_scroll_hint_gradient_393_and_1440(
 def test_hs145_connect_calendar_affordance_and_quiet_state(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """HS-170-04 re-point: connect-calendar affordance on the arrival's NEXT slot.
+    """HS-170-04 re-point, re-anchored on the PHILO-14 A5 Needs-you drawer.
 
-    No calendar: the arrival shows NO CALENDAR token + Connect calendar ghost.
+    No calendar: the drawer shows the Calendar source row (NOT CONNECTED)
+    with its Connect calendar verb.
     Configured but quiet (past-only events): NO CALENDAR is absent, Connect
     calendar is absent, NEXT line is absent, headline reads Nothing needs you.
     """
@@ -336,18 +348,24 @@ def test_hs145_connect_calendar_affordance_and_quiet_state(
             assert door_data["calendar_configured"] is False
 
             # --- LEG 3: No calendar → connect affordance at 1440 ---
-            # HS-170-04: the arrival's NEXT slot shows NO CALENDAR + Connect calendar.
-            no_cal = page.get_by_test_id("arrival-no-calendar")
-            no_cal.wait_for(timeout=10_000)
-            assert "NO CALENDAR" in (no_cal.text_content() or "")
-            connect_btn = page.get_by_test_id("arrival-connect-calendar")
+            # PHILO-14 A5 (#935) moved the offer from the arrival's NEXT slot
+            # (`arrival-no-calendar`, gone) into the Needs-you drawer: one
+            # source row `Calendar · No calendar · NOT CONNECTED` with its
+            # Connect calendar verb. Re-anchored there (inherited A5 drift,
+            # recorded on #958).
+            _open_needs_drawer(page)
+            cal_row = page.locator(".needs-drawer [data-object-id='source:calendar']")
+            cal_row.wait_for(timeout=10_000)
+            assert "NOT CONNECTED" in (cal_row.text_content() or "")
+            connect_btn = cal_row.locator("[data-verb='connect-calendar']")
             assert connect_btn.is_visible()
             _assert_clean(page, errors)
             page.screenshot(path=str(SHOT_DIR / "rail-connect-1440.png"), full_page=False)
 
             # At 393
             page.set_viewport_size({"width": 393, "height": 900})
-            no_cal.wait_for()
+            cal_row.wait_for()
+            connect_btn.scroll_into_view_if_needed()
             assert connect_btn.is_visible()
             _assert_clean(page, errors)
             page.screenshot(path=str(SHOT_DIR / "rail-connect-393.png"), full_page=False)
@@ -404,16 +422,18 @@ def test_hs145_connect_calendar_affordance_and_quiet_state(
 
             page.reload(wait_until="load")
             _normal_chair(page)
-            # HS-170-04: quiet state = NO CALENDAR absent, Connect calendar absent,
-            # NEXT line absent, headline reads "Nothing needs you".
-            page.get_by_test_id("arrival-headline").wait_for(timeout=10_000)
+            # HS-170-04, on the A5 drawer: quiet state = no Calendar source row,
+            # no Connect calendar verb, no NEXT line, the head reads
+            # "Nothing needs you".
+            _open_needs_drawer(page)
+            page.locator(".needs-drawer [data-testid='arrival-display']").wait_for(timeout=10_000)
             page.wait_for_timeout(500)
-            headline = page.get_by_test_id("arrival-display").text_content() or ""
+            headline = page.locator(".needs-drawer [data-testid='arrival-display']").text_content() or ""
             assert "nothing needs you" in headline.lower(), \
                 f"Headline should read 'Nothing needs you' on quiet calendar: {headline}"
-            assert page.get_by_test_id("arrival-no-calendar").count() == 0
-            assert page.get_by_test_id("arrival-connect-calendar").count() == 0
-            assert page.get_by_test_id("arrival-next").count() == 0
+            assert page.locator("[data-object-id='source:calendar']").count() == 0
+            assert page.locator("[data-verb='connect-calendar']").count() == 0
+            assert page.locator(".needs-drawer [data-testid='needs-next']").count() == 0
             _assert_clean(page, errors)
             page.screenshot(path=str(SHOT_DIR / "rail-quiet-1440.png"), full_page=False)
 

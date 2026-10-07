@@ -687,7 +687,7 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
       expands={waiting}
       lineLabel={`${name}, ${waiting ? SEND_WORDS.prepared : s.state}`}
       onToggle={waiting ? onToggle : undefined}
-      lead={waiting ? <StateChip state="active" icon="◆" label="" /> : <span className="send-pick" aria-hidden="true">·</span>}
+      lead={waiting ? <StateChip state="active" icon="◆" label="" wordless /> : <span className="send-pick" aria-hidden="true">·</span>}
       primary={<span className="surface-primary" data-destination={name} data-state={s.state}>{name}</span>}
       cells={<span className="send-cells">
         {waiting
@@ -766,7 +766,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
                 const far = farSide(r.channel, r.target, r.account);
                 return (
                   <SurfaceLedgerRow key={r.id} data-testid="history-row" wrap expands={false}
-                    lead={<span data-outcome="unknown"><StateChip state="warning" label="" /></span>}
+                    lead={<span data-outcome="unknown"><StateChip state="warning" label="" wordless /></span>}
                     primary={<span className="surface-primary" data-to={name}>{`${SEND_WORDS.unknownChip} · CHECK ${name}`}</span>}
                     cells={<span className="send-cells">
                       {formChip}
@@ -779,7 +779,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
               }
               return (
                 <SurfaceLedgerRow key={r.id} data-testid="history-row" wrap expands={false}
-                  lead={<span data-outcome="sent"><StateChip state="success" label="" /></span>}
+                  lead={<span data-outcome="sent"><StateChip state="success" label="" wordless /></span>}
                   primary={<span className="surface-primary" data-to={name}>{name}</span>}
                   cells={<span className="send-cells">
                     {formChip}
