@@ -164,11 +164,12 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
         real_cwd = os.path.realpath(cwd or root)
         if not _inside(real_cwd, real_root):
             return BashCall(OUTSIDE, "cwd_outside_worktree")
-        reader = _Reader(real_root, real_cwd)
-        segments = _segments(_tokens(command, cat_is_system=reader.identity("cat") == SYSTEM))
-        activate = _venv_activate(segments, cwd=real_cwd, root=real_root)
+        # Read on the ORIGINAL command: no here-document replacement first.
+        activate = _venv_activate(command, cwd=real_cwd, root=real_root)
         if activate is not None:
             return activate
+        reader = _Reader(real_root, real_cwd)
+        segments = _segments(_tokens(command, cat_is_system=reader.identity("cat") == SYSTEM))
         return reader.read(segments)
     except _Unparsed as exc:
         return BashCall(UNPARSED, exc.rule)
@@ -178,23 +179,26 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
         return BashCall(UNPARSED, "unbalanced_quotes")
 
 
-def _venv_activate(
-    segments: list[tuple[str, list[str], list[tuple[str, str]]]], *, cwd: str, root: str,
-) -> Optional[BashCall]:
-    """Conductor R5: ``source <path>`` or ``. <path>`` alone, where <path>
-    resolves (symlinks followed) inside the worktree to a file named
+#: Conductor R5 (Astra round 1 on #915): the whole command is one plain
+#: ``source <path>`` or ``. <path>``. The target is plain characters only: no
+#: quote, ``$``, backquote, backslash, glob (``[ * ? {``), ``~`` or newline, so
+#: bash reads exactly the text checked here. It must hold a slash, or bash
+#: would look for it on the PATH first.
+_ACTIVATE = re.compile(r"\A[ \t]*(?:source|\.)[ \t]+(?P<target>[A-Za-z0-9._/+@,=-]+)[ \t]*;?[ \t]*\Z")
+
+
+def _venv_activate(command: str, *, cwd: str, root: str) -> Optional[BashCall]:
+    """``source <path>`` or ``. <path>`` alone, where the plain <path> holds a
+    slash and resolves (symlinks followed) inside the worktree to a file named
     ``activate`` in a ``bin/`` folder of a Python venv (``pyvenv.cfg`` two
     levels up). Such a call is ``inside`` with no read rule, so YOLO passes it
-    and Normal and Secure hold it. Anything else (a chain, a redirect, an
-    assignment, a second argument, another file) is left to the reader, which
+    and Normal and Secure hold it. Anything else is left to the reader, which
     keeps ``source`` and ``.`` unparsed."""
-    if len(segments) != 1:
+    match = _ACTIVATE.match(command)
+    if match is None:
         return None
-    _joined, words, redirects = segments[0]
-    if redirects or len(words) != 2 or words[0] not in ("source", "."):
-        return None
-    target = words[1]
-    if not target or target.startswith(("~", "-")):
+    target = match.group("target")
+    if "/" not in target or target.startswith("-"):
         return None
     real = os.path.realpath(os.path.join(cwd, target))
     if not _inside(real, root) or not os.path.isfile(real):
