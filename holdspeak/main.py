@@ -26,7 +26,6 @@ from .commands.dictation import (
     normalize_args as _normalize_dictation_args,
     run_dictation_command,
 )
-from .doctor import run_doctor
 from .commands.history import run_history_command
 from .commands.intel import run_intel_command
 from .logging_config import setup_logging, get_logger, LOG_FILE
@@ -35,10 +34,14 @@ log = get_logger("main")
 
 
 # Kept as a small command seam for callers that dispatch subcommands directly.
-# The desk doctor itself lives in ``holdspeak.doctor`` so it is also runnable
-# independently with ``python -m holdspeak.doctor``.
-def run_doctor_command(_args: object) -> int:
-    return run_doctor()
+# PHILO-15 02: the CLI runs the Setup status list (``collect_doctor_checks``,
+# with ``--strict`` and ``--connectors``) and then the running-hub checks in
+# ``holdspeak.doctor`` (still runnable alone with ``python -m holdspeak.doctor``).
+def run_doctor_command(args: object) -> int:
+    # Lazy: the local checks import audio and hotkey modules.
+    from .commands.doctor import run_cli_doctor
+
+    return run_cli_doctor(args)
 
 
 def main():

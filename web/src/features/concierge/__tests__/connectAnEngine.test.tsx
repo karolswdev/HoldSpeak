@@ -236,7 +236,7 @@ describe("Add an engine (defect 1)", () => {
     });
     await open();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
-    fireEvent.change(await screen.findByDisplayValue(""), {
+    fireEvent.change(await screen.findByLabelText("Server address"), {
       target: { value: LAN_URL },
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -257,7 +257,7 @@ describe("Add an engine (defect 1)", () => {
     });
     await open();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
-    fireEvent.change(await screen.findByDisplayValue(""), {
+    fireEvent.change(await screen.findByLabelText("Server address"), {
       target: { value: LAN_URL },
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -285,7 +285,7 @@ describe("Add an engine (defect 1)", () => {
     });
     await open();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
-    fireEvent.change(await screen.findByDisplayValue(""), {
+    fireEvent.change(await screen.findByLabelText("Server address"), {
       target: { value: LAN_URL },
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -331,7 +331,7 @@ describe("Add an engine (defect 1)", () => {
     });
     await open();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
-    fireEvent.change(await screen.findByDisplayValue(""), {
+    fireEvent.change(await screen.findByLabelText("Server address"), {
       target: { value: LAN_URL },
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -353,7 +353,7 @@ describe("Add an engine (defect 1)", () => {
       "btn--primary",
     );
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
-    fireEvent.change(await screen.findByDisplayValue(""), {
+    fireEvent.change(await screen.findByLabelText("Server address"), {
       target: { value: LAN_URL },
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -421,7 +421,7 @@ describe("the single gesture finishes setup (counsel 1)", () => {
     });
     await open();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
-    fireEvent.change(await screen.findByDisplayValue(""), {
+    fireEvent.change(await screen.findByLabelText("Server address"), {
       target: { value: LAN_URL },
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -458,7 +458,7 @@ describe("a changed address invalidates the check (counsel 3)", () => {
     });
     await open();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
-    fireEvent.change(await screen.findByDisplayValue(""), {
+    fireEvent.change(await screen.findByLabelText("Server address"), {
       target: { value: url },
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -486,7 +486,7 @@ describe("a changed address invalidates the check (counsel 3)", () => {
     );
     await open();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
-    fireEvent.change(await screen.findByDisplayValue(""), {
+    fireEvent.change(await screen.findByLabelText("Server address"), {
       target: { value: LAN_URL },
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -516,7 +516,7 @@ describe("a changed address invalidates the check (counsel 3)", () => {
     );
     await open();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
-    fireEvent.change(await screen.findByDisplayValue(""), {
+    fireEvent.change(await screen.findByLabelText("Server address"), {
       target: { value: LAN_URL },
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -567,7 +567,7 @@ describe("the address the Check will contact is named (counsel 4c)", () => {
   it("draws the egress chip for the typed address", async () => {
     await open();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
-    fireEvent.change(await screen.findByDisplayValue(""), {
+    fireEvent.change(await screen.findByLabelText("Server address"), {
       target: { value: LAN_URL },
     });
     const chip = await screen.findByTestId("concierge-add-egress");
@@ -663,7 +663,7 @@ describe("one filled primary, measured (counsel 4a)", () => {
     render(<ConciergeCore scope="" />);
     await screen.findByTestId("concierge-set-list");
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
-    fireEvent.change(await screen.findByDisplayValue(""), {
+    fireEvent.change(await screen.findByLabelText("Server address"), {
       target: { value: LAN_URL },
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -687,5 +687,94 @@ describe("one filled primary, measured (counsel 4a)", () => {
     render(<ConciergeCore scope="" />);
     await screen.findByTestId("concierge-set-list");
     expect(filled()).toEqual(["Download"]);
+  });
+});
+
+/* PHILO-15 02 — the owner's LAN model takes its key on this face. The box
+ * at 192.168.1.43:8080 (llama.cpp) answers with or without one, but any
+ * llama.cpp started with --api-key, vLLM or LM Studio refuses keyless. */
+describe("Add an engine: the optional Key", () => {
+  async function typeAndCheck(key: string) {
+    mocks.checkEndpoint.mockResolvedValue({
+      ok: true,
+      models: [LAN_MODEL],
+      detail: "Found 1 model.",
+    });
+    await open();
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.change(await screen.findByLabelText("Server address"), {
+      target: { value: LAN_URL },
+    });
+    if (key) {
+      fireEvent.change(screen.getByLabelText("Key"), { target: { value: key } });
+    }
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    await screen.findByTestId("concierge-add-model");
+  }
+
+  it("is a secret well with no mic", async () => {
+    await open();
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    const key = await screen.findByLabelText("Key");
+    expect(key).toHaveAttribute("type", "password");
+    expect(screen.queryByRole("button", { name: /Speak Key/ })).toBeNull();
+  });
+
+  it("goes with Check and is saved as the secret, with requires_key", async () => {
+    mocks.defineEndpoint.mockResolvedValue({
+      profileId: "engine-192-168-1-43-8080",
+      profileRevision: 1,
+    });
+    mocks.summarySelection.mockResolvedValue({
+      status: "succeeded",
+      state: "READY",
+      plainReason: "",
+      summaryAssignment: assigned(),
+    });
+    await typeAndCheck("local");
+    expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "local");
+    fireEvent.click(screen.getByTestId("concierge-add-submit"));
+    await waitFor(() => expect(mocks.summarySelection).toHaveBeenCalled());
+    const [draft, key] = mocks.defineEndpoint.mock.calls[0] as [
+      Record<string, unknown>,
+      string,
+    ];
+    expect(Object.keys(draft).sort()).toEqual([...ENDPOINT_DRAFT_KEYS].sort());
+    expect(draft.requires_key).toBe(true);
+    expect(key).toBe("local");
+    // The key never rides in the draft itself.
+    expect(JSON.stringify(draft)).not.toContain("local");
+  });
+
+  it("sends no key and requires_key false when the field is empty", async () => {
+    mocks.defineEndpoint.mockResolvedValue({
+      profileId: "engine-192-168-1-43-8080",
+      profileRevision: 1,
+    });
+    mocks.summarySelection.mockResolvedValue({
+      status: "succeeded",
+      state: "READY",
+      plainReason: "",
+      summaryAssignment: assigned(),
+    });
+    await typeAndCheck("");
+    expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "");
+    fireEvent.click(screen.getByTestId("concierge-add-submit"));
+    await waitFor(() => expect(mocks.summarySelection).toHaveBeenCalled());
+    const [draft, key] = mocks.defineEndpoint.mock.calls[0] as [
+      Record<string, unknown>,
+      string,
+    ];
+    expect(draft.requires_key).toBe(false);
+    expect(key).toBe("");
+  });
+
+  it("drops READY when the key changes after a check", async () => {
+    await typeAndCheck("wrong");
+    fireEvent.change(screen.getByLabelText("Key"), { target: { value: "local" } });
+    await waitFor(() =>
+      expect(screen.queryByTestId("concierge-add-model")).toBeNull(),
+    );
+    expect(screen.getByTestId("concierge-add-submit")).toBeDisabled();
   });
 });

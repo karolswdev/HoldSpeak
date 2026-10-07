@@ -110,7 +110,7 @@ def discover_endpoint_models(
         code, raw = getter(models_url, headers=headers, timeout=timeout_seconds)
     except HTTPError as exc:
         if exc.code in {401, 403}:
-            detail = "The server requires a key. Save the connection, set its hub key, then try again."
+            detail = "The server requires a key. Enter its key, then press Check again."
         elif exc.code == 404:
             detail = "The server has no /models route. Check whether the address should end in /v1."
         else:

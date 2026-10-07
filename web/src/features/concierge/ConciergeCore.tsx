@@ -528,6 +528,20 @@ export function ConciergeCore({ scope }: CoreProps) {
               placeholder="http://<host>:<port>/v1"
               autoFocus
             />
+            {/* PHILO-15 02: the optional key (llama.cpp --api-key, a vLLM
+                or LM Studio token). Secret: no mic, never echoed; Check
+                uses it, and Use this for summaries stores it in the
+                profile key store, never in the config file. */}
+            <span className="concierge-add-key" data-testid="concierge-add-key">
+              <StringGadget
+                label="Key"
+                type="password"
+                mic={false}
+                value={ctrl.addEngineKey}
+                onChange={ctrl.setAddEngineKey}
+                placeholder="optional"
+              />
+            </span>
             {/* Article III / UX-CANON A9: the host is named ON the row that
                 leaves the machine, BEFORE the verb that leaves it. */}
             {checkHost ? (

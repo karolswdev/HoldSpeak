@@ -1352,3 +1352,25 @@ def run_doctor_command(args) -> int:
     if strict and warned > 0:
         return 1
     return 0
+
+
+def run_cli_doctor(args) -> int:
+    """`holdspeak doctor`: the Setup list, then the running hub.
+
+    PHILO-15 02: the CLI ran only the hub checks (``holdspeak.doctor``) and
+    ignored ``--strict`` and ``--connectors``, while Setup status ran
+    ``collect_doctor_checks``. Now the CLI runs that SAME list (one source,
+    with the live cloud preflight that Setup skips), honours both flags,
+    then runs the hub checks in their own shape. A FAIL in either part
+    exits 1; ``--strict`` also exits 1 on a WARN in the Setup list.
+    """
+    rc = run_doctor_command(args)
+    if getattr(args, "connectors", False):
+        return rc
+    from .. import doctor as hub_doctor
+
+    print()
+    print("Running hub")
+    print("=" * 11)
+    hub_rc = hub_doctor.run_doctor()
+    return 1 if (rc or hub_rc) else 0
