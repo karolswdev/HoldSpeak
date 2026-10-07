@@ -5,7 +5,7 @@
 // data renders as absence. No kind hand-builds its Info.
 import { useState } from "react";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteUrl } from "../sprites";
+import { refAgent, spriteUrl } from "../sprites";
 import { spriteStateCssClass } from "../../lib/spriteStates";
 import { spriteVariantKey } from "../../lib/spriteVariants";
 import { useDesk } from "../store";
@@ -138,7 +138,7 @@ export function InfoWindow({
       icon={
         <img
           className={spriteStateCssClass(typeof o.ref.spriteState === "string" ? o.ref.spriteState as string : null)}
-          src={spriteUrl(o.kind, o.id)}
+          src={spriteUrl(o.kind, o.id, "rest", refAgent(o.ref))}
           alt=""
           width={26}
           height={26}

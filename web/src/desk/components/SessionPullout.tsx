@@ -724,7 +724,7 @@ export function SessionPullout() {
       className="desk-pullout is-session"
       icon={
         <img
-          src={spriteUrl("agent", sessionId)}
+          src={spriteUrl("agent", sessionId, "rest", session?.agent || coder?.agent || openKey.split(":", 2)[0])}
           alt=""
           width={16}
           height={16}

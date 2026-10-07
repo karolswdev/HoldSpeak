@@ -19,7 +19,7 @@ import { useProjections } from "../projections";
 import { allObjects, objectByRef, worldObjects, worldZones, type WorldObject } from "../world";
 import { KIND_LABEL } from "../tools";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteUrl } from "../sprites";
+import { refAgent, spriteUrl } from "../sprites";
 import { objectMenuEntries } from "../floorMenu";
 import { WorkMenu } from "./DeskMenu";
 import { InlineEditor } from "./InlineEditor";
@@ -210,7 +210,7 @@ export function DeskListView() {
           when: whenWord(at),
           whenSort: wireDate(at)?.getTime(),
           state: attention ? { label: `ATTN ${attention}`, tone: "warn" as const } : undefined,
-          sprite: spriteUrl(object.kind, object.id),
+          sprite: spriteUrl(object.kind, object.id, "rest", refAgent(object.ref)),
           object,
         };
       }),

@@ -373,7 +373,7 @@ describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
     const project = screen.getByRole("button", { name: "Alpha, 1 open here" });
     expect(project.textContent).not.toContain("▤");
     const sprite = project.querySelector("img.desk-dock-sprite");
-    expect(sprite?.getAttribute("src")).toMatch(/desk\/sprites\/drawer\.png$/);
+    expect(sprite?.getAttribute("src")).toMatch(/desk\/sprites\/project-drawer\.png$/);
     expect(project).toHaveAttribute("data-app", "project");
   });
 
