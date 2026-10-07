@@ -10,7 +10,7 @@ from ..intel_queue import build_runtime_queue_frame, drain_intel_queue
 from ..meeting_aftercare import build_aftercare_ready_event
 from ..principals import Principal
 from .errors import ConflictError, NotFound, ValidationError
-from .meeting_route_projection import project_route, require_expected_selection
+from .meeting_route_projection import project_route, require_expected_selection, route_is_off
 
 
 def _is_scheduled_retry(db: Database, job: Any) -> bool:
@@ -147,6 +147,15 @@ class MeetingIntelService:
         self._broadcast_queue(); return {"success": True, "processed": processed, "mode": mode}
     def _route_for_gesture(self, meeting_id: str, expected_selection_hash: str | None) -> dict[str, Any]:
         route = project_route(self._db, invocation_id=f"meeting:{meeting_id}")
+        if route_is_off(route):
+            # PHILO-15 01 ruling: OFF is the owner's choice, never a failure.
+            # Refuse honestly and write nothing: no refusal job, no error.
+            refusal = self._conflict(
+                meeting_id, "Summaries are off.", code="summaries_off", planned_route=route,
+            )
+            # The observer records this as the owner's setting, not an error.
+            refusal.observed_outcome = "refused_by_setting"
+            raise refusal
         try:
             require_expected_selection(route, expected_selection_hash)
         except ConflictError as exc:
@@ -293,7 +302,10 @@ class MeetingIntelService:
                     "run_receipt": latest_job.run_receipt,
                 }
             )
-        return {"meeting_id":meeting_id,"visible":visible,"state":state,"headline":headline,"completed":completed,"planned_route":project_route(self._db, invocation_id=f"meeting:{meeting_id}"),"run_receipt":self._db.intel.get_run_receipt(meeting_id),"last_refusal":self._db.intel.get_last_refusal(meeting_id),"remaining":{"label":"Routed meeting intelligence" if meeting.intel is not None and meeting_state in {"partial","skipped"} else "Remaining meeting intelligence" if meeting.intel is not None else "Summary, topics, action items, and routed artifacts","detail":str(detail)},"job":job_projection,"actions":{"retry":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and not retry_requested,"skip":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and meeting_state != "skipped"}}
+        planned_route = project_route(self._db, invocation_id=f"meeting:{meeting_id}")
+        # PHILO-15 01 ruling: under OFF nothing offers Retry; OFF is a choice.
+        off = route_is_off(planned_route)
+        return {"meeting_id":meeting_id,"visible":visible,"state":state,"headline":headline,"completed":completed,"planned_route":planned_route,"run_receipt":self._db.intel.get_run_receipt(meeting_id),"last_refusal":self._db.intel.get_last_refusal(meeting_id),"remaining":{"label":"Routed meeting intelligence" if meeting.intel is not None and meeting_state in {"partial","skipped"} else "Remaining meeting intelligence" if meeting.intel is not None else "Summary, topics, action items, and routed artifacts","detail":str(detail)},"job":job_projection,"actions":{"retry":not off and not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and not retry_requested,"skip":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and meeting_state != "skipped"}}
     def retry_recovery(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]: return self._retry(meeting_id, recovery=True, expected_selection_hash=(payload or {}).get("expected_selection_hash"))
     def skip_recovery(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         outcome = self._db.intel.skip_remaining_intel(meeting_id)

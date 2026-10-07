@@ -8007,7 +8007,8 @@
       "state_id": "state.desk_presentation.p11_face_transitions",
       "applicability": "applicable",
       "preconditions": [
-        "The last brief item is ready in the Chair and already has a sent Slack receipt; the owner presses Ack."
+        "The last brief item is ready in the Chair and already has a sent Slack receipt; the owner presses Ack.",
+        "PHILO-15 01: a default engine is assigned (global) by the setup steps, so the brief carries no true 'No engine for summaries' item"
       ],
       "setup": [
         {
@@ -8022,6 +8023,73 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded loopback provider for the default engine",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "PHILO-15 01 ruling: on a fresh HOME with no engine the Brief's 'No engine for summaries' row is TRUE and stays; this case claims an empty brief / ALL HANDLED, so it makes its own precondition: a default engine, as 'Set up local AI' leaves it"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-transition-brief_last_ack-default-model",
+              "profile_id": "philo15-default-engine",
+              "expected_profile_revision": 0,
+              "label": "Default engine",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "default_profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the default engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "p11-transition-brief_last_ack-default",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "global"
+            },
+            "entries": [
+              {
+                "profile_id": "{default_profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign it as the Default for AI work (global); the meeting-intel queue reads it (meeting-intel-queue@2). Optional: the loopback engine is local, so HoldSpeak's batteries-included default (services/inference_default_service.py) may assign it first and this press then answers 409; either way the global head holds this engine before the brief is generated",
           "optional": true
         },
         {
@@ -8335,7 +8403,8 @@
       "state_id": "state.desk_presentation.p11_face_transitions",
       "applicability": "applicable",
       "preconditions": [
-        "The last brief item is ready in the Chair and already has a sent Slack receipt; the owner presses Defer."
+        "The last brief item is ready in the Chair and already has a sent Slack receipt; the owner presses Defer.",
+        "PHILO-15 01: a default engine is assigned (global) by the setup steps, so the brief carries no true 'No engine for summaries' item"
       ],
       "setup": [
         {
@@ -8350,6 +8419,73 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded loopback provider for the default engine",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "PHILO-15 01 ruling: on a fresh HOME with no engine the Brief's 'No engine for summaries' row is TRUE and stays; this case claims an empty brief / ALL HANDLED, so it makes its own precondition: a default engine, as 'Set up local AI' leaves it"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-transition-brief_last_defer-default-model",
+              "profile_id": "philo15-default-engine",
+              "expected_profile_revision": 0,
+              "label": "Default engine",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "default_profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the default engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "p11-transition-brief_last_defer-default",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "global"
+            },
+            "entries": [
+              {
+                "profile_id": "{default_profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign it as the Default for AI work (global); the meeting-intel queue reads it (meeting-intel-queue@2). Optional: the loopback engine is local, so HoldSpeak's batteries-included default (services/inference_default_service.py) may assign it first and this press then answers 409; either way the global head holds this engine before the brief is generated",
           "optional": true
         },
         {

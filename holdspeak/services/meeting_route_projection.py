@@ -98,6 +98,26 @@ def selection_hash_for_route_plan(db_or_connection: Any, route: Mapping[str, Any
     return (_hash(_selection_material(route, legs)) if legs else None), legs
 
 
+#: The route reason when the owner turned summaries OFF (PHILO-15 01 ruling).
+SUMMARIES_OFF_REASON = "summaries off"
+
+
+def route_is_off(route: Mapping[str, Any] | None) -> bool:
+    """True when a projected route says the owner turned summaries OFF."""
+    return bool(route) and str(route.get("reason_code") or "") == SUMMARIES_OFF_REASON
+
+
+def summaries_off(db: Any) -> bool:
+    """True when the owner turned summaries OFF (the explicit OFF record)."""
+    from .inference_assignment_service import InferenceAssignmentService
+
+    try:
+        with db._connection() as conn:
+            return InferenceAssignmentService.capability_off(conn, "meeting.deferred_analysis")
+    except Exception:  # pragma: no cover - a read never blocks the caller
+        return False
+
+
 def unavailable(reason: str = "no assignment") -> dict[str, Any]:
     plain = " ".join(str(reason or "route unavailable").replace("_", " ").split())
     return {"status": "unavailable", "reason_code": plain, "selection_hash": None, "legs": []}
@@ -114,6 +134,9 @@ def project_route(db: Any, *, invocation_id: str | None = "preview") -> dict[str
             invocation_id=invocation_id,
         )
     except Exception as exc:
+        if (getattr(exc, "context", None) or {}).get("off"):
+            # PHILO-15 01: the owner turned summaries OFF; not "no engine".
+            return unavailable("summaries_off")
         reason = getattr(exc, "code", None) or str(exc) or "route unavailable"
         return unavailable(reason)
 
@@ -194,5 +217,6 @@ def require_expected_selection(route: Mapping[str, Any], expected: Any) -> None:
 
 __all__ = [
     "project_route", "summary_route_display", "route_from_job", "require_expected_selection",
-    "selection_hash_for_route_plan", "unavailable",
+    "selection_hash_for_route_plan", "unavailable", "SUMMARIES_OFF_REASON",
+    "route_is_off", "summaries_off",
 ]

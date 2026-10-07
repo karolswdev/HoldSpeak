@@ -108,6 +108,23 @@ class ServiceRoutePolicyRegistry:
             self._definitions[key] = definition
             _sha256(material)
 
+    def assignment_sources(
+        self, service_identity: str, capability_id: str,
+    ) -> tuple[str, tuple[str, ...]] | None:
+        """The policy id and assignment sources one service reads for a capability.
+
+        ``None`` when no policy of that service names the capability.  The
+        assignment roster states the answer, so a face asks this policy
+        instead of copying its rule (PHILO-15 01).
+        """
+        for definition in self._definitions.values():
+            if (
+                definition.service_identity == service_identity
+                and capability_id in definition.capability_ids
+            ):
+                return definition.id, tuple(definition.assignment_sources)
+        return None
+
     def authorize(
         self,
         principal: Principal,
