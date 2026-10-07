@@ -614,8 +614,10 @@
   min-width: 0;
 }
 .pr-card-line img {
-  width: 20px;
-  height: 20px;
+  /* PHILO-14 A0c: the 32 px set at 1:1 (20 px scaled the art). */
+  flex: none;
+  width: 32px;
+  height: 32px;
   image-rendering: pixelated;
 }
 .pr-card-title {
@@ -724,8 +726,11 @@
   border-top: 1px solid var(--border-subtle);
 }
 .needs-row > img {
-  width: 40px;
-  height: 40px;
+  /* PHILO-14 A0c: the 32 px set at 1:1 in the 40 px cell (no rescale). */
+  box-sizing: content-box;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
   image-rendering: pixelated;
 }
 .needs-row-what {

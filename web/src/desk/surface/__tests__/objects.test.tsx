@@ -392,6 +392,40 @@ describe("ObjectList", () => {
   });
 });
 
+describe("PHILO-14 A0c: the list species read the 32 px set", () => {
+  it("an ObjectList row, a Needs-you row and a confirm line show the drawn 32 px file", () => {
+    render(<ListHost />);
+    const srcs = within(screen.getByRole("grid", { name: "Payments ledger cutover" }))
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => row.querySelector("img")?.getAttribute("src"));
+    expect(srcs.length).toBeGreaterThan(0);
+    for (const src of srcs) expect(src).toMatch(/\/desk\/sprites\/32\/[a-z-]+\.png$/);
+    render(
+      <NeedsList label="Needs 32">
+        <NeedsRow id="pr:1" kind="pr" name="PR" lamp={{ label: "PR OPEN", tone: "ok" }} />
+      </NeedsList>,
+    );
+    const needs = within(screen.getByRole("list", { name: "Needs 32" })).getByRole("listitem");
+    expect(needs.querySelector("img")?.getAttribute("src")).toMatch(/\/desk\/sprites\/32\/pull-request\.png$/);
+  });
+
+  it("a row that brings its own 64 px sprite URL gets the 32 px sibling; the icon keeps the 64", () => {
+    const sprite = objectSprite("meeting", "m1");
+    render(
+      <ObjectList
+        label="Own sprite"
+        rows={[{ id: "m1", kind: "meeting", name: "Standup", sprite }]}
+        sort={{ key: "name", dir: "asc" }}
+      />,
+    );
+    const row = within(screen.getByRole("grid", { name: "Own sprite" })).getAllByRole("row")[1];
+    expect(row.querySelector("img")?.getAttribute("src")).toBe(sprite.replace("/sprites/", "/sprites/32/"));
+    const icon = render(<DeskIcon id="m1" kind="meeting" name="Standup" sprite={sprite} />);
+    expect(icon.container.querySelector(".desk-icon img")?.getAttribute("src")).toBe(sprite);
+  });
+});
+
 describe("GetInfo", () => {
   it("draws identity and only the facts it is given, verbs in the footer", async () => {
     const { container } = render(

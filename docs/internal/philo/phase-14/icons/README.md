@@ -82,3 +82,39 @@ Not rejects, not picked: the other memory ideas (tome, card index) and alternate
 - World sprites: the 17 D1 icons are in `web/public/desk/sprites/<kind>.png`; `VARIANTS` in `web/src/desk/sprites.ts` maps every kind to one file. The old mold is parked in `web/public/desk/sprites/_parked-2026-10-07/`.
 - States: `web/scripts/gen-sprite-states.py` now traces the `_sel` rim one pixel OUTSIDE the alpha edge and lifts brightness by 1.14 (was inside, 1.24). The inside rim erased the dark outline of the four paper kinds. `a0b-shots/states-paper-agents.png` shows rest, sel and stale on both grounds.
 - Dock and chrome: 16 glyphs drawn by PixelLab at 32 px in the D1 stem, one call (review object `cf4c9f3f-a901-44e0-9dc8-50e9d263c4af`, 20 generations). At size 32 the tool returns one 256 px sheet on a 10 x 10 grid, cut into 64 frames on a 32 px pitch; the frames do not hold whole objects. The objects were cut from the reassembled sheet on the 25.6 px pitch and centred in 32 x 32. Picks (sheet cell): dock-speak 8, dock-meetings 18, dock-agents 21, dock-settings 25, dock-people 40, floor-grid 45, menu-mark 50, menu-bell 65, menu-search 60, mic 73, mic-listening 74, mic-recording 76, record-orb 81, cadence-metronome 78, empty-loops 89, empty-nudges 90. The old set is parked in `web/public/desk/sprites/system/_parked-2026-10-07/`. `a0b-shots/dock-glyphs-old-vs-d1.png`: old (top two rows), D1 (bottom two rows).
+
+## A0c: the 32 px set, drawn at 32 (2026-10-07)
+
+**RULED by Muad'Dib (the owner's autonomy ruling): the picks in `32px/sheet.html`.** The list rows showed the 64 px D1 icons scaled to 32, so the art lost pixels. All 18 base sprites (the 17 kinds plus `cartridge`) are now drawn at 32.
+
+- Files: `web/public/desk/sprites/32/<name>.png` with `_sel`/`_stale` from `web/scripts/gen-sprite-states.py` (the script now walks the 64 set and `32/`; same rim 1 px outside, same lift 1.14; no change was needed for 32).
+- Code: `spriteUrl(kind, id, state, agent, size)` takes `size` 64 (default; every old call unchanged) or 32. `listSprite(url)` maps a 64 px world-sprite URL to its 32 px sibling and leaves any other URL alone. ObjectList, NeedsRow, ConfirmLine, PRCard and the DeskIcon badge read through it; the lane title icon asks for size 32. The icon view, Get Info and the drag ghost keep the 64.
+- `objectSprite(kind, id, state, size)`: every kind reads its own D1 file. Before, action items wore `note`, PRs wore `artifact` and a person wore the people ledger (the pre-A0b borrowing, left in `kinds.ts` after A0b drew those kinds). The screen's People drawer asks for `people` (the ledger) in `screen/compose.ts`; one loose person wears the badge.
+- The Needs you sprite is the 32 at 1:1 in the 40 px cell (4 px padding); the PR card's sprite goes from 20 px (scaled) to 32 px.
+
+### Method
+
+Seed: the 64 px icon, a 2x2 premultiplied box average, the alpha cut at 50% (`32px/tools/seed.py`). Then `edit_image_pro_flash` at 32x32 on the seed with a text description per kind ("redraw ... as clean crisp 32x32 pixel art: same object, same silhouette and placement, same palette, hard pixel clusters, no anti-aliasing, a clean 1 pixel dark outline, simplified detail, transparent background"). e1 = seed 1 for all 18; e2 = seed 2 with a firmer description, for the 11 kinds where e1 had a flaw or a close call. Every result: 32x32, no partial alpha. Job ids per candidate: `32px/tools/picks.json`; the page: `32px/tools/page.py` + `page.tpl`.
+
+### Picks (e1 / e2 as on the sheet)
+
+action-item e1, agent-claude-code e2, agent-codex e1, artifact e2, cartridge e2, conductor-drawer e1, decision e2, meeting e1, memory e1, note e1, parked-drawer e1, people-ledger e1, person e1, project-drawer e1, pull-request e2, repository e1, smart-drawer e2, thread e1. The reason for each pick is on the sheet. Rejects that matter: pull-request e1 (dropped the paper: a second silhouette), cartridge e1 (false letters on the label), agent-claude-code e1 (the antenna knob floats).
+
+### Generations used
+
+**150** (30 edit calls x 5; `get_balance` 140 used before, 290 after; credits $0.00 both times). Three calls failed on a malformed base64 seed (my paste) and were not charged; the seeds after them were sent as 32-colour PNGs (shorter).
+
+### Also from #934
+
+- The idle mic (`system/mic.png`) and the Speak glyph (`system/dock-speak.png`) are lifted: grey pixels move toward the steel highlight (l -> l + (0.84 - l) x 0.4), the dark outline and the ember accent unchanged (`32px/tools/lighten-dock.py`). The D1 originals are parked in `system/_parked-2026-10-07/a0c-dark/`.
+- Not changed: kb/roadmap wear `artifact`, story wears `note`, the capability kinds keep `cartridge` (no 32 px kind fell out for them).
+
+### Honest limits
+
+- The 32 px art keeps the 64's composition because it starts from the 64's seed. It is a redraw of the seed, not a new drawing from a blank canvas.
+- The cartridge's 32 has no DATA label text (letters do not survive 32 px).
+- `conductor-drawer` touches the bottom edge (as its 64 does), so `_sel` has no rim on that edge.
+- The window title icons (drawer, Conductor, Info, 20 px) still scale the 64; 32 to 20 is not an integer step either. Left for a chrome pass.
+- In the Components gallery the Codex Needs row shows the Claude Code robot: the gallery row passes `kind="agent"` with no agent name. A face passes the sprite (the Conductor does); lane A5 must do the same.
+- A0c r2 (Astra on #956): Codex keeps its face on every face. The screen (`screen/compose.ts` carries `row.agent`), the Project drawer's agent members (`drawer/members.ts`, rest and selected), the lane title (`laneTitleSprite`), the hand-off confirm line (`agentSprite` in `hand/HandConfirm.tsx`) and the Needs row (`needsRowSprite`) all pass the agent; `objectSprite` takes it. The Components gallery's Codex specimens wear Codex. `test_philo14_a0b_codex_sprite_glass.py` was red on main because the screen dropped `row.agent` (not the badge, as r1 of this lane said); it is green with no change to its assertion. Fence: `web/src/desk/__tests__/agentIdentity.test.ts` (both agents, every face, 64 and 32).
+- Shots: `32px/shots/` (before/after at 1440 and 393: a drawer's list, the Conductor's list, Needs you rows, the lane; the sheet). Checked in Chromium only.

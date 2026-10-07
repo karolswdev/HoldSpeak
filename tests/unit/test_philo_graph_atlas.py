@@ -1898,7 +1898,11 @@ def test_philo603_cases_use_the_real_summary_producer_and_surface_slots(atlas: d
         assert predicate["kind"] == "readable_text"
         assert predicate["value"] == "MEETING READY"
         assert predicate["slot_selector"] == slot
-        assert predicate["auto_scroll_calls_by_viewport"] == {"393": 1, "1440": 0}
+        # PHILO-14 A1c: the Arrival card sits in Capture's slot, in view
+        # when Capture opens at both widths, so it never scrolls; the
+        # off-Arrival slots scroll once at 393.
+        scrolls = {"393": 0, "1440": 0} if case_id == "case.philo603.toast.arrival" else {"393": 1, "1440": 0}
+        assert predicate["auto_scroll_calls_by_viewport"] == scrolls
         assert predicate["no_field_focus"] is True
         if case_id == "case.philo603.toast.arrival":
             assert expected["dismiss_selector"] == ".ambient-aftercare button:has-text('Dismiss')"

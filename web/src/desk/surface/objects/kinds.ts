@@ -6,7 +6,7 @@
  *  mold; the face reads the sprite through `objectSprite` (or passes its
  *  own `sprite` URL), so the redraw lands here once.
  */
-import { SPRITE_BASE, spriteUrl, type SpriteState } from "../../sprites";
+import { spriteUrl, type SpriteSize, type SpriteState } from "../../sprites";
 
 export type ObjectKind =
   | "project"
@@ -45,31 +45,21 @@ export function objectKindWord(kind: string): string {
   return OBJECT_KIND_WORD[kind as ObjectKind] ?? kind.toUpperCase();
 }
 
-/** The one sprite for an object of `kind` (the A boards' mapping; the mold
- *  has no action-item, PR, person, smart-drawer or Conductor sprite yet, so
- *  those borrow the nearest family — README S7). */
-export function objectSprite(kind: string, id: string, state: SpriteState = "rest"): string {
-  switch (kind) {
-    // PHILO-14 A2: the D1 mold (A0b) names its drawers per kind; sprites.ts
-    // holds the map, so a drawer reads through spriteUrl like every kind.
-    case "project":
-    case "repository":
-    case "conductor":
-    case "smart":
-      return spriteUrl(kind, id, state);
-    case "parked":
-      return `${SPRITE_BASE}parked-drawer${state === "rest" ? "" : `_${state}`}.png`;
-    case "action":
-      return spriteUrl("story", id, state);
-    case "pr":
-      return spriteUrl("artifact", id, state);
-    case "person":
-      return spriteUrl("people", id, state);
-    case "agent":
-      return spriteUrl("coder", id, state);
-    default:
-      return spriteUrl(kind, id, state);
-  }
+/** The one sprite for an object of `kind`, at the icon size (64) or the
+ *  list-row size (32, drawn at 32: PHILO-14 A0c). Every kind of the D1 mold
+ *  has its own file in `sprites.ts` (A0b drew action item, PR, person and
+ *  the drawers), so the kind reads through `spriteUrl` directly; only
+ *  `agent` reads through the coder pool, by its agent name when given. */
+export function objectSprite(
+  kind: string,
+  id: string,
+  state: SpriteState = "rest",
+  size: SpriteSize = 64,
+  /** The agent name of an agent object (`claude`, `codex`): it picks the
+   *  agent's own sprite (PHILO-14 A0c r2: Codex keeps its face everywhere). */
+  agent?: string | null,
+): string {
+  return spriteUrl(kind === "agent" ? "coder" : kind, id, state, agent, size);
 }
 
 /** The lamp tones an object wears. Never colour alone: every lamp sits

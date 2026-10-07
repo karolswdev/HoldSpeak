@@ -47,7 +47,7 @@ export function launchSessionDrawn(launchId: string): boolean {
 
 /** The agent's end of the line: the agent family's sprite. */
 export function agentSprite(agent: string): string {
-  return objectSprite("agent", `${agent}:hand`);
+  return objectSprite("agent", `${agent}:hand`, "rest", 64, agent);
 }
 
 export function HandConfirm({ pending }: { pending: HandPending }) {

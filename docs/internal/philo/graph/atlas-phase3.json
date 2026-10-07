@@ -1445,17 +1445,19 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 1
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
         },
         {
           "kind": "ui",
@@ -1614,7 +1616,41 @@
         "kind": "ui",
         "action": "click",
         "selector": "[data-testid=arrival-run-intel]",
-        "adapter": "ui-pointer"
+        "adapter": "ui-pointer",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture'] .ambient-aftercare",
+            "timeout_s": 300,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          }
+        ]
       },
       "expected": {
         "predicate": {
@@ -7332,17 +7368,19 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 1
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
         },
         {
           "kind": "ui",
@@ -7509,7 +7547,41 @@
         "kind": "ui",
         "action": "click",
         "selector": "[data-testid=arrival-run-intel]",
-        "adapter": "ui-pointer"
+        "adapter": "ui-pointer",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture'] .ambient-aftercare",
+            "timeout_s": 300,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          }
+        ]
       },
       "expected": {
         "predicate": {

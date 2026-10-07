@@ -12,6 +12,7 @@
  */
 import { SurfaceSection } from "../Surface";
 import { LampGadget } from "../gadgets";
+import { listSprite } from "../../sprites";
 import { objectSprite } from "./kinds";
 import "./objects.css";
 
@@ -65,7 +66,7 @@ export function PRCard({
   return (
     <article className="pr-card" aria-label={`Pull request #${number}: ${title}`} data-testid={testId}>
       <div className="pr-card-line">
-        <img src={sprite ?? objectSprite("pr", `pr-${number}`)} alt="" draggable={false} />
+        <img src={listSprite(sprite ?? objectSprite("pr", `pr-${number}`))} alt="" draggable={false} />
         <span className="pr-card-title">
           #{number} {title}
         </span>

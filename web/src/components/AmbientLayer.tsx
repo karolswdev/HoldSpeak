@@ -6,8 +6,11 @@ import { useProjections } from "../desk/projections";
 import {
   dismissAftercare,
   publishAftercare,
+  publishAftercareHost,
   useAftercare,
+  type AftercareHost,
 } from "../desk/intelligenceAttention";
+import { useChairWindows } from "../desk/chair/chairWindows";
 import { openSurfaceWhenReady } from "../desk/shell";
 import { humanizeWireValue } from "../lib/productLanguage";
 import { Button } from "./signal/Signal";
@@ -164,6 +167,23 @@ function AftercareNote() {
   const surface = useChairState((state) => state.surface);
   const compact = useCompactViewport();
   const aftercareSlot = useAftercareSlot(surface, Boolean(signal));
+  // PHILO-14 A1c: the Chair says itself that it is the screen of objects.
+  const chairScreen = useChairWindows((state) => state.screenMounted);
+  const host: AftercareHost = !signal
+    ? null
+    : aftercareSlot
+      ? aftercareSlot.dataset.aftercareSlot === "before-capture"
+        ? "capture"
+        : aftercareSlot.dataset.aftercareWindowSlot
+          ? "window"
+          : "floor"
+      : surface === "chair" && (compact || chairScreen)
+        ? null
+        : "fixed";
+  useLayoutEffect(() => {
+    publishAftercareHost(host);
+  }, [host]);
+  useEffect(() => () => publishAftercareHost(null), []);
   const scrolledSlot = useRef<{ signalKey: string; slot: HTMLElement } | null>(null);
   useEffect(
     () => subscribe("aftercare_ready", (frame) => void publishAftercare(frame.data)),
@@ -237,7 +257,10 @@ function AftercareNote() {
   if (aftercareSlot) return createPortal(card, aftercareSlot);
   // PHILO-13-17 (C7, Q4b): at 393 on the Chair a card with no slot waits for
   // its Capture window (in the ring until closed); it never floats over work.
-  if (surface === "chair" && compact) return null;
+  // PHILO-14 A1c (Muad'Dib's ruling): the same at 1440 on the Chair screen —
+  // Capture opens for the card (ChairDesk), and a card whose Capture he
+  // closed waits for it; it never floats over another window.
+  if (surface === "chair" && (compact || chairScreen)) return null;
   return card;
 }
 
