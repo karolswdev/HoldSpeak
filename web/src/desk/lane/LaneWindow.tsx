@@ -316,9 +316,17 @@ function DecideVerbs({ call }: { call: LaneGated }) {
       <Button dense variant="ghost" disabled={busy} onClick={() => void decide("denied")} data-testid="lane-deny">
         Deny
       </Button>
-      <Button dense variant="secondary" disabled={busy} onClick={() => void decide("approved")} data-testid="lane-approve">
-        Approve
-      </Button>
+      {/* PHILO-14 A5: a call the hub cannot show whole is never approved
+          here; Raw shows the live pane with the whole command. */}
+      {call.args_cut ? (
+        <Button dense variant="secondary" onClick={() => useLane.getState().setRaw(true)} data-testid="lane-raw-cut">
+          Raw
+        </Button>
+      ) : (
+        <Button dense variant="secondary" disabled={busy} onClick={() => void decide("approved")} data-testid="lane-approve">
+          Approve
+        </Button>
+      )}
     </>
   );
 }

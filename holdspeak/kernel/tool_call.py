@@ -14,6 +14,8 @@ from .model import Admission, KernelRefused, OperationRequest, forbidden_content
 _HASH = re.compile(r"^[0-9a-f]{64}$")
 _ALLOWED = frozenset({
     "proposal_id", "tool", "args_sha256", "args_head", "cwd", "ttl_seconds",
+    # PHILO-14 A5: the length of the whole redacted call (a number, no text).
+    "args_len",
     # Conductor K5: the hub-checked verdict on the call (GateService). It
     # names no argument text: launch id, scope, rule, read rule.
     "classification",
@@ -102,6 +104,14 @@ class ToolCallCodec:
         } if isinstance(raw, Mapping) else {}
         operation = descriptor.to_dict()
         operation["kernel_operation_id"] = operation_id
+        try:
+            args_len = max(0, int(args.get("args_len") or 0))
+        except (TypeError, ValueError):
+            args_len = 0
+        if args_len:
+            # PHILO-14 A5: the desk reads it to say how much of the command
+            # the 120-char head cannot show.
+            operation["args_len"] = args_len
         operation["admitted_envelope_sha256"] = admission.payload_hash
         if verdict:
             # The receipt names the rule the Control mode decided on.

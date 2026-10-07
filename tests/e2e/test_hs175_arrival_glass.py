@@ -489,12 +489,14 @@ class TestArrivalWeekStrip:
             headline.wait_for(timeout=10_000)
             _settle(page)
 
-            # ── NEXT line carries Room token ──
-            next_el = page.locator("[data-testid='arrival-next']")
+            # ── NEXT: the drawer's quiet footer line names the next event
+            #    (PHILO-14 A5: `NEXT · 10:00 · Standup`; the Room token is on
+            #    the week's own row, asserted below) ──
+            next_el = page.locator("[data-testid='needs-next']")
             if next_el.count() >= 1:
                 next_text = next_el.first.text_content() or ""
-                assert "Q4 PLATFORM" in next_text.upper(), (
-                    f"NEXT line missing Room token at {width}: {next_text}"
+                assert next_text.startswith("NEXT · ") and "STANDUP" in next_text.upper(), (
+                    f"NEXT line at {width}: {next_text}"
                 )
 
             # ── WEEK strip present ──
@@ -799,18 +801,16 @@ class TestArrivalWeekStrip:
                 f"WEEK strip should be absent without calendar, count={strip.count()}"
             )
 
-            # NO CALENDAR state
-            no_cal = page.locator("[data-testid='arrival-no-calendar']")
-            assert no_cal.count() >= 1, (
-                "NO CALENDAR state missing"
-            )
+            # NO CALENDAR: one source row of the Needs-you drawer (PHILO-14 A5)
+            no_cal = page.locator("[data-testid='needs-source-row'][data-object-id='source:calendar']")
+            no_cal.first.wait_for(timeout=10_000)
             no_cal_text = no_cal.first.text_content() or ""
-            assert "NO CALENDAR" in no_cal_text, (
+            assert "NO CALENDAR" in no_cal_text.upper(), (
                 f"NO CALENDAR text missing: {no_cal_text}"
             )
 
             # Connect calendar verb
-            connect_btn = page.locator("[data-testid='arrival-connect-calendar']")
+            connect_btn = no_cal.locator("[data-verb='connect-calendar']")
             assert connect_btn.count() >= 1, (
                 "Connect calendar button missing"
             )
@@ -1017,11 +1017,11 @@ class TestArrivalWeekStrip:
             # The row and its ARMS stay: unlink is not cancel.
             row_text = row.first.text_content() or ""
             assert "ARMS" in row_text and "ROOM" not in row_text, row_text
-            # The NEXT line drops the Room token too (same door read).
+            # The drawer's NEXT line never carries the Room token (PHILO-14 A5).
             # PHILO-13-11 (slice two, R2): at 393 it is in Needs you.
             if width <= 720:
                 open_chair_window(page, "Needs you")
-            next_text = page.locator("[data-testid='arrival-next']").first.text_content() or ""
+            next_text = page.locator("[data-testid='needs-next']").first.text_content() or ""
             assert "Q4 PLATFORM" not in next_text.upper(), next_text
 
             with get_database()._connection() as conn:

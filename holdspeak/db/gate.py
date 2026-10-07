@@ -25,6 +25,76 @@ from .base import BaseRepository
 
 ARGS_HEAD_CHARS = 120
 
+_COMMAND_PREFIX = '{"command":"'
+_ESCAPES = {'"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t"}
+
+
+def _json_string_prefix(fragment: str) -> tuple[str, bool]:
+    """Decode a JSON string body that may be cut: (the decoded text, whether
+    its closing quote was reached). A cut escape at the end is dropped."""
+    out: list[str] = []
+    i = 0
+    while i < len(fragment):
+        ch = fragment[i]
+        if ch == '"':
+            return "".join(out), True
+        if ch == "\\":
+            if i + 1 >= len(fragment):
+                break
+            code = fragment[i + 1]
+            if code == "u":
+                if i + 6 > len(fragment):
+                    break
+                try:
+                    out.append(chr(int(fragment[i + 2:i + 6], 16)))
+                except ValueError:
+                    break
+                i += 6
+                continue
+            out.append(_ESCAPES.get(code, code))
+            i += 2
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out), False
+
+
+def command_view(args_head: str, args_len: Any = 0) -> dict[str, Any]:
+    """PHILO-14 A5: what every approval surface shows of a held call.
+
+    The hub keeps only the first :data:`ARGS_HEAD_CHARS` of the call's
+    redacted canonical JSON (a design limit: the hook never sends the whole
+    command) and ``args_len``, the length of the redacted COMMAND text the
+    surfaces display (the canonical text for a call with no command). One
+    place computes, from the same text the owner sees:
+
+    - ``command``: the shown text (the command, never the JSON around it);
+    - ``args_cut``: the head is not the whole call (Approve is withheld);
+    - ``args_hidden``: how many characters of the shown command are missing.
+
+    An older hook sends no length: a head at the limit reads as cut."""
+    import json
+
+    head = str(args_head or "")
+    try:
+        total = max(0, int(args_len or 0))
+    except (TypeError, ValueError):
+        total = 0
+    try:
+        parsed = json.loads(head)
+    except ValueError:
+        parsed = None
+    if isinstance(parsed, dict) or parsed is not None:
+        command = parsed.get("command") if isinstance(parsed, dict) else None
+        shown = command if isinstance(command, str) and command else head
+        return {"command": shown, "args_cut": False, "args_hidden": 0}
+    if head.startswith(_COMMAND_PREFIX):
+        shown, _closed = _json_string_prefix(head[len(_COMMAND_PREFIX):])
+    else:
+        shown = head
+    cut = bool(total) or len(head) >= ARGS_HEAD_CHARS
+    return {"command": shown, "args_cut": cut, "args_hidden": max(0, total - len(shown)) if total else 0}
+
 HELD = "held"
 APPROVED = "approved"
 DENIED = "denied"
@@ -97,6 +167,13 @@ class GateProposal:
             "decided_at": self.decided_at,
             "reason": self.reason,
         }
+
+    def shown(self) -> dict[str, Any]:
+        """PHILO-14 A5: what an approval surface shows of this call
+        (``args_shown`` / ``args_cut`` / ``args_hidden``; ``command_view``).
+        The owner's reads add it; the agent-facing wire contract stays as is."""
+        view = command_view(self.args_head, (self.operation or {}).get("args_len"))
+        return {"args_shown": view["command"], "args_cut": view["args_cut"], "args_hidden": view["args_hidden"]}
 
 
 class GateProposalRepository(BaseRepository):

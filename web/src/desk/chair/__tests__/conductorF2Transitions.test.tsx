@@ -91,7 +91,10 @@ function wire() {
       return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: [], issue_count: 0 };
     if (url.startsWith("/api/coders/sessions")) return sessions;
     if (url.startsWith("/api/desk/needs-you"))
-      return { count: 2, projects: ["p-ledger"], items: [CODER_ROW, RUNBOOK_ROW], next: null, coverage: [], complete: true };
+      // The hub lists the agent's question only while it asks.
+      return sessions === SESSIONS
+        ? { count: 2, projects: ["p-ledger"], items: [CODER_ROW, RUNBOOK_ROW], next: null, coverage: [], complete: true }
+        : { count: 1, projects: ["p-ledger"], items: [RUNBOOK_ROW], next: null, coverage: [], complete: true };
     if (url.startsWith("/api/door")) return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
     return null;
   }));
@@ -113,18 +116,24 @@ describe("Conductor F2: transitions land on a mounted Chair", () => {
     sessions = { sessions: [working(runbook), recon, solo], flights: [{ ...FLIGHT_RUNBOOK, state: "working" }, FLIGHT_RECON] };
     wire();
     render(<ChairHome />);
-    const door = () => screen.getAllByTestId("arrival-needs-you-row").find((r) => r.textContent?.includes("Write the rollback runbook"))!;
-    await waitFor(() => expect(within(door()).getByTestId("flight-chip").textContent).toContain("CLAUDE CODE · WORKING"));
+    // PHILO-14 A5: the Needs-you drawer row names the agent in its ONE lamp.
+    const lamp = () =>
+      [...document.querySelectorAll<HTMLElement>(".needs-row")]
+        .find((r) => r.querySelector(".needs-row-name")?.textContent?.endsWith("Write the rollback runbook")
+          && r.getAttribute("data-kind") !== "agent")
+        ?.querySelector(".gadget-lamp")?.textContent;
+    await waitFor(() => expect(lamp()).toBe("WORKING"));
 
     sessions = SESSIONS;   // the agent asked: waiting
     act(() => emit("intel_status", { state: "ready", scope: "coder" }));
-    await waitFor(() => expect(within(door()).getByTestId("flight-chip").textContent).toContain("CLAUDE CODE · WAITING"));
+    // One object, one row: the item carries its agent's question.
+    await waitFor(() => expect(lamp()).toBe("ASKS · 2 MIN"));
 
     // The PR merged; the close waits for the owner (Secure): the session stays.
     const merged = { ...FLIGHT_RUNBOOK, state: "merged", close: "awaiting_confirm", pr: { number: 413, url: "u", state: "merged" } };
     sessions = { sessions: [{ ...runbook, flight: merged }, recon, solo], flights: [merged, FLIGHT_RECON] };
     act(() => emit("desk_changed"));
-    await waitFor(() => expect(within(door()).getByTestId("flight-chip").textContent).toContain("PR #413 · MERGED"));
+    await waitFor(() => expect(lamp()).toBe("MERGED · TO SECURE"));
     expect(liveAgentSessions(useAgentFlights.getState().sessions)).toHaveLength(3);
 
     // Confirmed, closed and cleaned up: the session leaves AGENTS.
