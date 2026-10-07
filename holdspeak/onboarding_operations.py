@@ -65,5 +65,26 @@ PEOPLE_ACCESS_SET = OperationDescriptor(
     admission=Admission("admitted", "Config (Conductor R7): the owner's press sets who reads People over MCP."),
 )
 
-#: The Conductor K1's rows (and R7's People access), in export order.
-ONBOARDING_OPERATIONS: tuple[OperationDescriptor, ...] = (AGENT_HOOKS_INSTALL, PEOPLE_ACCESS_SET)
+CALENDAR_OPEN_SETTINGS = OperationDescriptor(
+    name="calendar.open_settings",
+    version=1,
+    description="Open System Settings at Privacy & Security > Calendars on this Mac, so the owner can allow "
+                "calendar access after he denied it. It changes no setting.",
+    args_schema={"type": "object", "properties": {}, "additionalProperties": False},
+    principal="derived by the transport (the HTTP auth middleware); owner only",
+    effect="write",
+    result="{opened, pane} and the receipt",
+    refusals=_CONTRACT_REFUSALS + ("owner_required", "system_settings_not_opened"),
+    completion="synchronous; GET /api/onboarding/calendar shows the access state after he changes it",
+    exposure=("http:POST /api/onboarding/calendar/macos/settings",),
+    service="onboarding_service",
+    method="calendar_open_settings",
+    owner_only=True,
+    owner_press=True,
+    admission=Admission("admitted", "A system open (PHILO-15 04): the owner's press opens the macOS Calendars "
+                                    "privacy pane on this device (HTTP only, in no palette)."),
+)
+
+#: The Conductor K1's rows (and R7's People access, PHILO-15 04's system open), in export order.
+ONBOARDING_OPERATIONS: tuple[OperationDescriptor, ...] = (AGENT_HOOKS_INSTALL, PEOPLE_ACCESS_SET,
+                                                          CALENDAR_OPEN_SETTINGS)

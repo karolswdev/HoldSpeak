@@ -10627,6 +10627,24 @@
         "summary": "Api Desk Needs You"
       }
     },
+    "/api/desk/parked": {
+      "get": {
+        "operationId": "api_desk_parked_api_desk_parked_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Desk Parked Api Desk Parked Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Desk Parked"
+      }
+    },
     "/api/desk/projections": {
       "get": {
         "operationId": "api_list_projections_api_desk_projections_get",
@@ -18322,6 +18340,27 @@
           }
         },
         "summary": "Onboarding Calendar Access",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/onboarding/calendar/macos/settings": {
+      "post": {
+        "operationId": "onboarding_calendar_settings_api_onboarding_calendar_macos_settings_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Calendar Settings Api Onboarding Calendar Macos Settings Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Calendar Settings",
         "tags": [
           "onboarding"
         ]

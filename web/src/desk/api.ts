@@ -949,6 +949,14 @@ export async function restoreMeeting(id: string): Promise<Meeting | null> {
   return fromWireMeeting(wireRaw(data, "meeting"));
 }
 
+/** PHILO-15 04 — restore a parked (archived) Project from the Parked drawer. */
+export async function restoreProject(id: string): Promise<void> {
+  await apiFetch<Record<string, unknown>>(
+    `/api/projects/${encodeURIComponent(id)}/restore`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) },
+  );
+}
+
 /* ── Workbench detail endpoints (HS-117-13) ──────────────────────────── */
 
 import type {
