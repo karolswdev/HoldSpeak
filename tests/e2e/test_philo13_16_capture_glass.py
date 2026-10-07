@@ -197,8 +197,9 @@ class TestCaptureFromAnywhere:
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 page.wait_for_timeout(1200)
-                if width < 720:
-                    open_chair_window(page, "The week")
+                # PHILO-14 A1 (#939): the Chair's windows start closed at both
+                # widths; he opens The week (Window > Chair at 1440, Go at 393).
+                open_chair_window(page, "The week")
                 rows = page.locator("[data-testid=arrival-thought-row]")
                 rows.first.wait_for()
                 rows.first.scroll_into_view_if_needed()

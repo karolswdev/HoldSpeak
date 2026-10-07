@@ -20,7 +20,9 @@ def open_chair_window(page: Any, name: str) -> Any:
     win = chair_window(page, name)
     if win.count() and win.first.is_visible():
         return win.first
-    if name == "Capture":
+    if name == "Capture" and page.viewport_size["width"] <= 720:
+        # 393: Capture is not in Go; it opens on demand from Speak (R2). At
+        # 1440 it is a Window > Chair row like the other three (PHILO-14 A1).
         page.locator(".desk-dock [aria-label^='Speak']").first.click()
     else:
         menu = "window" if page.viewport_size["width"] > 720 else "go"
