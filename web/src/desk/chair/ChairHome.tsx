@@ -15,7 +15,7 @@ import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
 import { BriefEgress, briefReceipt } from "./briefEgress";
 import { BriefHeadVerbs, BriefSendWells } from "../documentSendsLazy";
-import { generatedLabelLocal } from "../pullouts/views/BriefView";
+import { briefIsPartial, generatedLabelLocal } from "../pullouts/views/BriefView";
 import { openSurface, openSurfaceOr, openCoderSession, openProjectRoom } from "../shell";
 import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
@@ -191,6 +191,8 @@ function BriefDate({ brief }: { brief: MondayBrief }) {
   const parts = [
     brief.period_label,
     generatedLabelLocal(brief.generated_at) ?? brief.generated_label,
+    // PHILO-15 05: a source was not read; the receipt says so.
+    briefIsPartial(brief.sections) ? "PARTIAL" : null,
   ].filter(Boolean);
   if (parts.length === 0) return null;
   return (

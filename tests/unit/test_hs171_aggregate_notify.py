@@ -11,6 +11,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+from tests.unit.brief_rule_stub import quiet_needs_you  # noqa: F401  (a fixture)
 
 # ── HS-171-03: needs-you aggregate cache ────────────────────────────
 
@@ -311,7 +312,7 @@ class TestBriefHumanVsLedger:
                  correlation_id, error),
             )
 
-    def test_brief_1839_kernel_ops_2_human_items(self, tmp_path):
+    def test_brief_1839_kernel_ops_2_human_items(self, tmp_path, quiet_needs_you):
         import datetime as _dt
         service = self._service(tmp_path)
 
@@ -363,7 +364,7 @@ class TestBriefHumanVsLedger:
         assert total_items == 2, f"Expected 2 human items, got {total_items}"
         assert brief.ledger.operations == 1839
 
-    def test_ledger_only_brief_is_empty(self, tmp_path):
+    def test_ledger_only_brief_is_empty(self, tmp_path, quiet_needs_you):
         """A brief with only kernel ops (no human items) is empty."""
         import datetime as _dt
         service = self._service(tmp_path)
@@ -789,12 +790,14 @@ class TestBriefRegenerationReceipt:
             config={"last_regen_date": yesterday},
         ))
 
-        # Build a mock mixin with quiet_hours_end=0 so the earliest_hour
+        # Build a mock mixin with brief_hour=0 so the earliest_hour
         # check always passes (current hour >= 0 is always True).
         mixin = MagicMock()
         mixin.config = MagicMock()
         mixin.config.cadence = MagicMock()
         mixin.config.cadence.quiet_hours_end = 0
+        # PHILO-15 05: the Brief job reads its own hour, not quiet hours.
+        mixin.config.cadence.brief_hour = 0
 
         generate_calls = []
 
