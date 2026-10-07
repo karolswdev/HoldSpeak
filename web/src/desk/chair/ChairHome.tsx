@@ -2295,6 +2295,19 @@ function ArrivalMeetingWells({
     cause ? `LAST ERROR · ${cause}` : "",
   ].filter(Boolean);
   const hasStatusFacts = statusFacts.length > 0;
+  const factsLine = (
+    <div className="arrival-meeting-status-facts" data-testid="arrival-summary-status">
+      {statusFacts.map((fact, index) => (
+        <span
+          key={`${fact}-${index}`}
+          className="arrival-meeting-status-fact"
+          data-tone={fact === "FAILED" || fact.startsWith("LAST ERROR") ? "danger" : undefined}
+        >
+          {fact}
+        </span>
+      ))}
+    </div>
+  );
   const segments = (meeting.segments ?? []).map((segment) => ({
     speaker: segment.speaker,
     text: segment.text,
@@ -2302,57 +2315,17 @@ function ArrivalMeetingWells({
   }));
   return (
     <>
-      {summary && !hasStatusFacts ? (
+      {summary ? (
+        // PHILO-15-03: the slab owns the summary; the Chair composes it once
+        // and hands it the run's facts, never a second copy of the text.
         <MeetingSummarySlab
           intel={{ summary, topics: meeting.intelTopics ?? [] }}
           receipt={receipt}
+          facts={hasStatusFacts ? factsLine : null}
         />
-      ) : summary && hasStatusFacts ? (
-        <SurfaceWell
-          head={
-            <span className="summary-well-head">
-              <span>SUMMARY</span>
-              <RunAttempts receipt={receipt} testId="summary-record-attempts" />
-            </span>
-          }
-        >
-          <p className="summary-text" data-testid="meeting-summary-text">
-            {summary}
-          </p>
-          {meeting.intelTopics && meeting.intelTopics.length > 0 ? (
-            <span className="summary-topics" data-testid="meeting-summary-topics">
-              {meeting.intelTopics.map((topic) => (
-                <span key={topic} className="surface-token" data-chip>
-                  {topic.toUpperCase()}
-                </span>
-              ))}
-            </span>
-          ) : null}
-          <div className="arrival-meeting-status-facts" data-testid="arrival-summary-status">
-            {statusFacts.map((fact, index) => (
-              <span
-                key={`${fact}-${index}`}
-                className="arrival-meeting-status-fact"
-                data-tone={fact === "FAILED" || fact.startsWith("LAST ERROR") ? "danger" : undefined}
-              >
-                {fact}
-              </span>
-            ))}
-          </div>
-        </SurfaceWell>
       ) : hasStatusFacts ? (
         <SurfaceWell head={<span data-testid="arrival-status-well-head">{wellHead}</span>}>
-          <div className="arrival-meeting-status-facts" data-testid="arrival-summary-status">
-            {statusFacts.map((fact, index) => (
-              <span
-                key={`${fact}-${index}`}
-                className="arrival-meeting-status-fact"
-                data-tone={fact === "FAILED" || fact.startsWith("LAST ERROR") ? "danger" : undefined}
-              >
-                {fact}
-              </span>
-            ))}
-          </div>
+          {factsLine}
         </SurfaceWell>
       ) : null}
       {/* PHILO-11-05 (canvas C6b): the meeting's SEND well under its summary,

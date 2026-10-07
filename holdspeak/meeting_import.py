@@ -67,6 +67,9 @@ DEFAULT_TRANSCRIPT_SPEAKER_LABEL = "Transcript"
 # while audio still arrives and `record_only` when the route refused it; an
 # import's transcript is finished the moment it is saved, so it says so.
 TRANSCRIPTION_COMPLETE = "complete"
+# PHILO-15-03: the other terminal state, written when the import worker fails
+# (meeting_service._fail_import); never `active` after the worker returns.
+TRANSCRIPTION_FAILED = "failed"
 
 ProgressCallback = Callable[[int, int], None]
 

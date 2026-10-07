@@ -22,6 +22,7 @@ from ..meeting_import import (
     DEFAULT_SPEAKER_LABEL,
     DEFAULT_TRANSCRIPT_SPEAKER_LABEL,
     MeetingImportError,
+    TRANSCRIPTION_FAILED,
     import_meeting as run_meeting_import,
     import_transcript,
     is_transcript_filename,
@@ -324,10 +325,10 @@ class MeetingService:
         # or a sentence. The actionable message goes to the log.
         except MeetingImportError as exc:
             _LOG.warning("meeting import %s failed: %s", meeting_id, exc)
-            self._set_import_status(meeting_id, "import_failed", exc.cause)
+            self._fail_import(meeting_id, exc.cause)
         except Exception as exc:  # noqa: BLE001 — preserve the durable failure state.
             _LOG.warning("meeting import %s failed", meeting_id, exc_info=True)
-            self._set_import_status(meeting_id, "import_failed", "UNEXPECTED ERROR")
+            self._fail_import(meeting_id, "UNEXPECTED ERROR")
         finally:
             tmp_path.unlink(missing_ok=True)
             # HS-202-02 (coordinator item 9): the import worker finished in
@@ -338,6 +339,25 @@ class MeetingService:
             # already subscribes to. Success and failure both change the
             # row the owner is looking at.
             notify_desk_changed("meeting", meeting_id, "update")
+
+    def _fail_import(self, meeting_id: str, cause: str) -> None:
+        """PHILO-15-03: a failed import reaches a FINAL status on both faces.
+
+        The placeholder row is born with the model's default
+        ``transcription_status = "active"``; only the success tail
+        (meeting_import.py, ``TRANSCRIPTION_COMPLETE``) ever moved it. A
+        failure wrote ``intel_status = import_failed`` alone, so the row said
+        ``active`` forever and every reader that waits on the transcription
+        (the J4/J5 atlas cases) waited out its whole bound.
+        """
+        state = self._db.meetings.get_meeting(meeting_id)
+        if state is None:
+            return
+        state.intel_status = "import_failed"
+        state.intel_status_detail = cause
+        state.transcription_status = TRANSCRIPTION_FAILED
+        state.transcription_status_detail = {"reason_code": "import_failed", "cause": cause}
+        self._db.meetings.save_meeting(state)
 
     def _set_import_status(self, meeting_id: str, status: str, detail: str) -> None:
         state = self._db.meetings.get_meeting(meeting_id)

@@ -37,13 +37,9 @@ NOTE_TITLE = "Fence architecture note"
 NOTE_BODY = "Review the service boundary with the team on Tuesday."
 MEETING_TITLE = "Fence fixture meeting"
 SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence")
-KNOWN = {
-    1440: {"thought-door", "save-confirmation", "import-refresh", "record-refresh", "notes-query"},
-    393: {
-        "dock-memory", "menu-Desk", "menu-Object", "menu-Window",
-        "thought-door", "save-confirmation", "import-refresh", "record-refresh", "notes-query",
-    },
-}
+# PHILO-15-03: every step passes at both widths once the gestures follow
+# the A-1 screen (#939) and the A5 drawer (#935); nothing is expected red.
+KNOWN = {1440: set(), 393: set()}
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(180, method="thread")]
 
 
@@ -73,16 +69,26 @@ def _desk(page, base, *, capture=False):
     page.evaluate("localStorage.removeItem('hs.desk.workspace.v1')")
     page.goto(base + "/?token=" + TOKEN)
     _normal_chair(page)
-    _loaded(page.get_by_test_id("arrival-display"))
-    # PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time,
-    # Needs you first; the capture bar is the Capture window, on demand from
-    # the Speak AppIcon (a job that uses a capture verb asks for it).
-    if page.viewport_size["width"] <= 720:
-        if capture:
-            open_chair_window(page, "Capture")
-        else:
-            return
-    _loaded(page.get_by_test_id("arrival-capture-bar"))
+    # PHILO-14 A1 (#939): the Chair is the screen; its windows open on
+    # demand: Window > Chair > Capture at 1440, the Dock's Speak at 393.
+    _loaded(page.get_by_test_id("desk-screen"))
+    if capture:
+        if page.viewport_size["width"] > 720:
+            page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
+            page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')").click()
+            page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Capture')").click()
+        open_chair_window(page, "Capture")
+        _loaded(page.get_by_test_id("arrival-capture-bar"))
+
+
+def _needs(page):
+    """PHILO-14 A5 (#935): Needs you is a drawer on the screen."""
+    if not page.locator(".needs-drawer").count():
+        icon = page.locator(".desk-screen [data-object-id='drawer:needs']")
+        icon.wait_for()
+        icon.focus()
+        page.keyboard.press("Enter")
+    return _loaded(page.locator(".needs-drawer [data-testid='arrival-display']"))
 
 
 def _meetings(page, *, recovery=False):
@@ -264,7 +270,9 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
 
             # Job 5: one real UI setup gesture, with a deterministic localhost endpoint.
             _desk(page, base)
-            choose = page.get_by_role("button", name="Choose an engine", exact=True)
+            _needs(page)
+            # The A5 row verb's accessible name carries its row; read its word.
+            choose = page.locator(".needs-drawer [data-verb='setup']").filter(has_text="Choose an engine")
             _loaded(choose)
             assert _hit(choose)
             choose.click()
@@ -285,8 +293,8 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             provider = defined.value.json()["provider"]
             assert provider["profile_id"] and provider["profile_revision"] > 0
             page.get_by_test_id("concierge-root").wait_for(state="detached")
-            page.get_by_role("button", name="Choose an engine", exact=True).wait_for(state="detached")
-            _loaded(page.get_by_test_id("arrival-display"))
+            choose.wait_for(state="detached")
+            _needs(page)
             print("PASS: engine setup completed visibly without a reload")
             shot("engine-set")
 
@@ -584,7 +592,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             page.emulate_media(reduced_motion="reduce")
             page.goto(base + "/?token=" + TOKEN)
             _normal_chair(page)
-            _loaded(page.get_by_test_id("arrival-display"))
+            _loaded(page.get_by_test_id("desk-screen"))
             _refind_note(page, note_id)
             shot("note-after-restart")
             _desk(page, base)
