@@ -42,7 +42,8 @@ import { onReturnToTask } from "../../desk/returnToTask";
 import { renderHeroSlot } from "./core-layout";
 import {
   WINGS, clockTime, ledgerDate, download, needsIntelligence, summaryIsOff, meetingsHeadline,
-  hasOpenMeetingActions, finishedRunReceipt,
+  hasOpenMeetingActions, finishedRunReceipt, intelStateOf,
+  ACTIVE_RUN_STATES, FINAL_RUN_STATES, type RunIdentity,
   type Receipt, type DetailView,
   MeetingDetail, ImportSection, CatalogRail, DoorSection,
 } from "./history";
@@ -174,27 +175,37 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   useEffect(() => {
     if (!parked.length) setParkedOn(false);
   }, [parked.length]);
-  // PHILO-15-07 (B15): the meeting a `QUEUED hh:mm` receipt speaks for. When
-  // its row reaches a final state (the poll, a refresh, a bus frame), the
-  // receipt says so: `RAN · hh:mm`, never `QUEUED` over a stored summary.
-  const queuedRunId = useRef<string | null>(null);
-  useEffect(() => {
-    const id = queuedRunId.current;
-    if (!id) return;
-    const row = meetingRows.find((item) => String(item.id) === id);
-    if (!row) return;
-    const raw = row.intel_status;
-    const state = typeof raw === "object" && raw !== null
-      ? String((raw as Record<string, unknown>).state ?? "")
-      : String(raw ?? "");
-    if (!["ready", "complete", "error", "failed"].includes(state)) return;
-    queuedRunId.current = null;
+  // PHILO-15-07 (B15): a `QUEUED hh:mm` receipt is bound to its run
+  // (meeting id + job id, Astra r1 on #982). It turns into `RAN · hh:mm` only
+  // for that run: from the poll below, or when a refreshed list row shows
+  // the meeting active and then final (a row read before the run started
+  // still holds the PREVIOUS run's final state and never counts).
+  const settleRun = useCallback((run: RunIdentity, state: string) => {
     setReceipt((current) =>
-      current && current.text.startsWith("QUEUED")
+      current?.run &&
+      current.run.meetingId === run.meetingId &&
+      current.run.jobId === run.jobId
         ? finishedRunReceipt(state, new Date().toISOString())
         : current,
     );
-  }, [meetingRows]);
+  }, []);
+  const seenActive = useRef<string | null>(null);
+  useEffect(() => {
+    const run = receipt?.run;
+    if (!run) return;
+    const row = meetingRows.find((item) => String(item.id) === run.meetingId);
+    if (!row) return;
+    const state = intelStateOf(row.intel_status);
+    const key = `${run.meetingId}:${run.jobId}`;
+    if (ACTIVE_RUN_STATES.has(state)) {
+      seenActive.current = key;
+      return;
+    }
+    if (FINAL_RUN_STATES.has(state) && seenActive.current === key) {
+      seenActive.current = null;
+      settleRun(run, state);
+    }
+  }, [meetingRows, receipt, settleRun]);
   // A later receipt (export, queued run) takes the slot from the park outcome.
   useEffect(() => {
     if (receipt) setParkOutcome(null);
@@ -404,8 +415,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         return;
       }
       const result = outcome.result;
-      queuedRunId.current = meetingId;
-      setReceipt({ text: `QUEUED ${clockTime(new Date().toISOString())}` });
+      const run: RunIdentity = { meetingId, jobId: String(result.jobId ?? meetingId) };
+      setReceipt({ text: `QUEUED ${clockTime(new Date().toISOString())}`, run });
       // HS-200-42: when the route says no drainer exists, polling every 3s for
       // 120s is a lie told forty times — nothing in the hub will move this job.
       // Stop the poll and refresh the row once.
@@ -433,13 +444,10 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           if (state !== "queued" && state !== "running" && state !== "pending") {
             clearInterval(poll);
             setRunningId(null);
-            // PHILO-15-07 (B15): the footer receipt follows the run to its
-            // final state. It said `QUEUED 10:59` after the summary RAN.
-            setReceipt((current) =>
-              current && current.text.startsWith("QUEUED")
-                ? finishedRunReceipt(state, new Date().toISOString())
-                : current,
-            );
+            // PHILO-15-07 (B15): this run's receipt (and only this run's)
+            // follows it to the final state. It said `QUEUED 10:59` after
+            // the summary RAN.
+            settleRun(run, state);
             void refreshFace();
           }
         } catch {
@@ -463,7 +471,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       const msg = readableError(reason);
       setReceipt({ text: `REFUSED · ${msg}`, tone: "danger" });
     }
-  }, [meetings, meetingRows]);
+  }, [meetings, meetingRows, settleRun]);
 
   // HS-201-04 (UX-CANON A.9, audit "where the host is shown"): the footer
   // chip was a prop-less constant that always read "This device". It reads
@@ -614,6 +622,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       onClose={() => setSelected(null)}
       onDeleted={() => void meetings.reload()}
       onReceipt={setReceipt}
+      footerRunReceipt={
+        receipt?.run && selected && receipt.run.meetingId === String(selected.id)
+          ? receipt
+          : null
+      }
       runRefusal={
         runRefusal && selected && runRefusal.meetingId === String(selected.id)
           ? runRefusal.refusal

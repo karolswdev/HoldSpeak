@@ -725,8 +725,8 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # _attempt_stream (1); line shifts do not change count.
     # HS-151-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback
     # Memory slice 1: +3 leaf sites inside the memory.embed adapter's dispatch.
-    # PHILO-15-07: +1 admitted import caller (_transcribe_segmented._decode).
-    assert len(sites) == 113
+    # PHILO-15-07 (Astra r1 on #982, CLAUDE.md "no count fences"): the literal
+    # site count is gone; every site is still classified in exactly one bucket.
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0

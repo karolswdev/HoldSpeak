@@ -59,7 +59,9 @@ export function MeetingHeader({
     parts.push(<span key="intel-dur" className="meetings-stream-fact">{intelDur}</span>);
   }
   // PHILO-15-07 (B01): the record says when its transcript has gaps.
-  const unclear = unclearLampLabel(source) ?? unclearLampLabel(meeting);
+  // Astra r1 on #982: one source. The fresh detail is authoritative (its
+  // zero included); the list row speaks only while no detail is loaded.
+  const unclear = unclearLampLabel(source);
   if (unclear) {
     parts.push(<StateChip key="unclear" state="warning" label={unclear} data-testid="unclear-lamp" />);
   }

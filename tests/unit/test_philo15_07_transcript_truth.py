@@ -13,6 +13,7 @@ cutting a sentence when the window ends inside it.
 
 from __future__ import annotations
 
+from datetime import datetime
 from types import SimpleNamespace
 
 import numpy as np
@@ -118,7 +119,7 @@ def _text(state) -> str:
 def test_a_finally_loop_is_degenerate_and_ordinary_speech_is_not():
     loop = "Owner, Priya Shah. Action. " + " ".join(["finally"] * 250)
     assert is_degenerate(loop)
-    assert is_degenerate("Sukekekekeke" + "ke" * 200)  # one long token: the ratio
+    assert is_degenerate("Sukekekekeke" + "ke" * 200)  # a loop inside one token
     assert is_degenerate("and multiply " * 12)  # a two-word group
     assert not is_degenerate(PRIYA)
     assert not is_degenerate(" ".join(text for _s, _e, text in TIMELINE))
@@ -223,3 +224,118 @@ def test_the_import_titles_the_meeting_without_the_file_name(db, timed_audio):
         timed_audio, db=db, transcriber=TimelineWhisper(), config=_config(), title="Arch sync"
     )
     assert stated.state.title == "Arch sync"
+
+
+# ------------------------------------------- Astra r1 on #982: her probes
+
+
+@pytest.mark.parametrize(
+    "speech",
+    [
+        "yes yes yes",
+        "yes yes yes yes yes yes",
+        "Go team! " * 6,
+        " ".join(f"number {n}" for n in range(1, 51)),  # ratio 4.08, no repeat group
+    ],
+)
+def test_legitimate_repetition_is_speech_never_unclear(speech):
+    assert not is_degenerate(speech)
+
+
+def test_an_empty_retry_never_discards_good_words(db, tmp_path):
+    """Her probe: the first decode holds a good line and a loop; the retry is
+    empty. The good line stays and the loop is an honest, counted mark."""
+    path = tmp_path / "meeting.wav"
+    import wave
+
+    with wave.open(str(path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(16000)
+        handle.writeframes(np.zeros(65 * 16000, dtype=np.int16).tobytes())
+
+    class Backend:
+        supports_segments = True
+
+        def __init__(self):
+            self.calls = 0
+
+        def transcribe(self, audio, *, admission=None, segments=False, temperature=None):
+            self.calls += 1
+            if temperature is not None:
+                return []
+            if self.calls == 1:
+                return [
+                    {"start": 0, "end": 8, "text": "Priya owns the migration."},
+                    {"start": 8, "end": 18, "text": "finally " * 250},
+                ]
+            return [{"start": 0, "end": min(10, len(audio) / 16000), "text": "Leo tests restart."}]
+
+    result = import_meeting(path, db=db, transcriber=Backend(), config=_config())
+    stored = db.meetings.get_meeting(result.state.id)
+    text = " ".join(s.text for s in stored.segments)
+    assert "Priya owns the migration." in text
+    assert "[unclear 0:08–0:18]" in text
+    assert stored.to_dict()["unclearSpans"] == 1
+
+
+def test_a_window_that_is_all_loop_and_an_empty_retry_is_an_unclear_span(db, timed_audio):
+    class AllLoop:
+        supports_segments = True
+
+        def transcribe(self, audio, *, admission=None, segments=False, temperature=None):
+            if temperature is not None:
+                return []
+            length = len(audio) / TARGET_SAMPLE_RATE
+            return [{"start": 0.0, "end": length, "text": "finally " * 250}]
+
+    result = import_meeting(timed_audio, db=db, transcriber=AllLoop(), config=_config())
+    stored = db.meetings.get_meeting(result.state.id)
+    assert stored.to_dict()["unclearSpans"] >= 1
+    assert "finally finally" not in " ".join(s.text for s in stored.segments)
+
+
+@pytest.mark.parametrize(
+    "text, marks",
+    [
+        ("A " + unclear_mark(1, 2) + " B " + unclear_mark(3, 4), 2),
+        ("The notation [unclear explanation] is discussed.", 0),
+    ],
+)
+def test_list_and_detail_count_marks_by_one_definition(db, tmp_path, text, marks):
+    from holdspeak.meeting_import import import_transcript
+
+    path = tmp_path / "notes.srt"
+    path.write_text("1\n00:00:00,000 --> 00:00:05,000\n" + text + "\n")
+    result = import_transcript(path, db=db, config=_config())
+    stored = db.meetings.get_meeting(result.state.id)
+    row = next(r for r in db.meetings.list_meetings() if r.id == stored.id)
+    assert stored.to_dict()["unclearSpans"] == marks
+    assert row.unclear_spans == marks
+
+
+def test_the_sent_summary_says_how_many_spans_are_unclear(db):
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+    from holdspeak.services.document_sources import render_document
+
+    def save(meeting_id, texts):
+        db.meetings.save_meeting(
+            MeetingState(
+                id=meeting_id,
+                started_at=datetime(2026, 10, 7, 10, 0, 0),
+                title="Arch sync",
+                segments=[
+                    TranscriptSegment(text=t, speaker="Recording", start_time=i, end_time=i + 1)
+                    for i, t in enumerate(texts)
+                ],
+                intel=IntelSnapshot(timestamp=1.0, topics=[], summary="Three decisions.", action_items=[]),
+            )
+        )
+
+    save("gappy", ["Owner, Priya Shah. " + unclear_mark(28, 30), "Then " + unclear_mark(40, 41)])
+    save("clean", ["Owner, Priya Shah."])
+    body = render_document(db, "meeting_summary:gappy").body_md
+    assert "Transcript: 2 unclear spans" in body
+    # The line comes from the marks, never the model, and never a zero.
+    assert "unclear" not in render_document(db, "meeting_summary:clean").body_md
+

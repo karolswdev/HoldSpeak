@@ -2444,7 +2444,7 @@ function MeetingsSection({
                   {/* PHILO-15-07 (B01): never a bare word count over a
                       transcript with honest gaps. */}
                   {(() => {
-                    const unclear = countToken(rowMeeting.unclearSpans ?? m.unclearSpans ?? 0, "UNCLEAR SPAN");
+                    const unclear = countToken(rowMeeting.unclearSpans ?? 0, "UNCLEAR SPAN");
                     return unclear ? (
                       <StateChip state="warning" label={`WARN · ${unclear}`} data-testid="unclear-lamp" />
                     ) : null;

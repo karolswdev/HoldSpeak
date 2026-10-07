@@ -45,7 +45,7 @@ import numpy as np
 from .errors import HoldSpeakError
 from .audio import _linear_resample_mono
 from .meeting_session import MeetingState, TranscriptSegment
-from .transcript_guard import is_degenerate, mark_degenerate
+from .transcript_guard import is_degenerate, loop_start, mark_degenerate
 from .transcript_parse import (
     TRANSCRIPT_SUFFIXES,
     TranscriptParseError,
@@ -63,7 +63,10 @@ TARGET_SAMPLE_RATE = 16000
 # PHILO-15-07 (B01): with the real Transcriber the window is no longer a hard
 # cut. The import reads Whisper's own segment timestamps; a segment that runs
 # into the window's end is dropped and the next window starts at that
-# segment's start, so a sentence is decoded whole in one window.
+# segment's start, so a sentence is decoded whole in one window. The one
+# exception (Astra r1 on #982): a segment that starts in the first half of the
+# window and runs into the cut is kept, and the next window starts at the hard
+# cut, so the import always moves forward.
 DEFAULT_WINDOW_SECONDS = 30.0
 # A segment that ends this close to a window's cut ran into it.
 BOUNDARY_GUARD_SECONDS = 1.0
@@ -451,6 +454,20 @@ def _boundary_split(
     return kept[:index], resume
 
 
+def _clean_words(decoded: Sequence[dict]) -> int:
+    """The real words a decode carries: all of a clean segment, and the words
+    before the loop in a degenerate one."""
+    total = 0
+    for seg in decoded:
+        text = str(seg.get("text") or "").strip()
+        if not text:
+            continue
+        words = text.split()
+        index = loop_start(text)
+        total += len(words) if index is None else index
+    return total
+
+
 def _transcribe_segmented(
     transcriber: Any,
     audio: Any,
@@ -505,7 +522,13 @@ def _transcribe_segmented(
             )
             retry, retry_resume = _decode(WHISPER_RETRY_TEMPERATURES)
             retry_bad = sum(1 for seg in retry if is_degenerate(str(seg["text"])))
-            if retry_bad < bad:
+            # Astra r1 on #982: the retry wins only when it is cleaner AND
+            # carries at least as many real words. An empty or thinner retry
+            # never discards good words; the first decode stays and its loop
+            # becomes an honest mark (so an empty retry on a window that held
+            # speech is an unclear span, never a clean `complete`).
+            retry_words = _clean_words(retry)
+            if retry_bad < bad and retry_words > 0 and retry_words >= _clean_words(kept):
                 kept, resume = retry, retry_resume
 
         window_had_text = False

@@ -39,6 +39,7 @@ export function MeetingDetail({
   onReview,
   onOpenEvidence,
   runRefusal,
+  footerRunReceipt,
 }: {
   meeting: Record<string, unknown> | null;
   /** "outcomes" (the face), "review" (HS-200-12, posture 4) or "artifacts". */
@@ -58,6 +59,9 @@ export function MeetingDetail({
   onOpenEvidence?: (segmentIndex: number | null) => void;
   /** HS-201-04 — the hub's 409 on this record's last run gesture. */
   runRefusal?: SummaryRefusal | null;
+  /** PHILO-15-07 (B15): this meeting's summary-run receipt (QUEUED → RAN);
+   *  the Review wing draws its own footer, so it shows it there. */
+  footerRunReceipt?: Receipt | null;
 }) {
   const id = String(meeting?.id ?? "");
   const data = useMeetingData(meeting, onReceipt);
@@ -126,6 +130,7 @@ export function MeetingDetail({
             onRunIntelligence ? () => onRunIntelligence(displayedRoute) : undefined
           }
           onChanged={onDeleted}
+          runReceipt={footerRunReceipt ?? null}
         />
       ) : (
         <>

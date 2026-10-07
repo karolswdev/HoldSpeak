@@ -183,7 +183,19 @@ export function download(blob: Blob, name: string) {
 }
 
 /** The one receipt channel: what the machine just did, on the footer. */
-export type Receipt = { text: string; tone?: "danger" };
+/** PHILO-15-07 (B15): the summary run a receipt speaks for. */
+export type RunIdentity = { meetingId: string; jobId: string };
+export type Receipt = { text: string; tone?: "danger"; run?: RunIdentity };
+
+export const ACTIVE_RUN_STATES = new Set(["queued", "pending", "running", "claimed", "reserved"]);
+export const FINAL_RUN_STATES = new Set(["ready", "complete", "error", "failed"]);
+
+/** The intel state word from either wire shape (string or `{state}`). */
+export function intelStateOf(raw: unknown): string {
+  return typeof raw === "object" && raw !== null
+    ? String((raw as Record<string, unknown>).state ?? "")
+    : String(raw ?? "");
+}
 
 /** PHILO-15-07 (B15) — the footer receipt once a queued summary run ends:
  *  `RAN · 11:02` or `FAILED · 11:02`; another final state says its own word. */

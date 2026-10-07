@@ -729,7 +729,8 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
     # HS-151-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback, +1 line shift
     # Memory slice 1: +3, the memory.embed adapter's local load, its endpoint
     # client and the engine's egress-warranted remote call.
-    assert len(live) == 113  # PHILO-15-07: +1 admitted import caller
+    # PHILO-15-07 (Astra r1 on #982, CLAUDE.md "no count fences"): no literal
+    # site count; the fixture equality above is the fence.
 
 
 def test_phase143_every_product_runner_entrance_has_one_owner() -> None:

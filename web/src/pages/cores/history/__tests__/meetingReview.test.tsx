@@ -366,3 +366,21 @@ describe("MeetingReview (HS-200-12)", () => {
     expect(screen.queryByTestId("review-not-run")).toBeNull();
   });
 });
+
+describe("MeetingReview run receipt (PHILO-15-07 B15)", () => {
+  it("shows this meeting's summary run going QUEUED → RAN in its own footer, and reads again", async () => {
+    apiFetch.mockImplementation(async (path: string) => {
+      if (path.endsWith("/outcome-review")) return review();
+      throw new Error(`unexpected ${path}`);
+    });
+    const props = { meetingId: "m1", onOpenEvidence: vi.fn(), onOpenTranscript: vi.fn() };
+    const { rerender } = render(<MeetingReview {...props} runReceipt={{ text: "QUEUED 11:00" }} />);
+    await screen.findByText("5 to review");
+    expect(screen.getByTestId("review-receipt").textContent).toBe("QUEUED 11:00");
+    const reads = apiFetch.mock.calls.length;
+    rerender(<MeetingReview {...props} runReceipt={{ text: "RAN · 11:02" }} />);
+    expect(screen.getByTestId("review-receipt").textContent).toBe("RAN · 11:02");
+    await waitFor(() => expect(apiFetch.mock.calls.length).toBeGreaterThan(reads));
+  });
+});
+
