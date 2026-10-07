@@ -4,7 +4,7 @@ Owner direction, 2026-10-05: "I wanted it to work with agents. In a semi-autonom
 
 ## The loop
 
-1. **Ready.** First run finds `claude`, `codex` and `tmux`, and installs the agent hooks with one press. `holdspeak doctor` checks the same.
+1. **Ready.** First run finds `claude`, `codex` and `tmux`, and installs the agent hooks with one press. `holdspeak doctor` checks the same (its **Coding agents** row, from the list that Setup status uses).
 2. **Hand to agent.** One verb on an action item, a decision, a Room issue, a Note, or a dictated sentence (Thread `/agent`, MCP `agent.hand`).
 3. **Brief.** HoldSpeak writes a grounded brief: the item, its meeting quote, the Project's decisions and open commitments, memory pages, `.hs/` facts, the Control mode, acceptance. People data travels with it (owner ruling 2026-10-06, R7); secrets are redacted.
 4. **Launch.** Claude Code or Codex starts in its own git worktree, with the brief as its first message, under HoldSpeak's spawn settings (rider hooks and the tool gate).

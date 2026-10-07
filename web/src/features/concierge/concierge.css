@@ -413,6 +413,14 @@
     var(--ease-quart, cubic-bezier(0.25, 1, 0.5, 1)) both;
 }
 
+/* PHILO-15 02: the optional Key field takes its own line under the
+   address, the same width, so the Check row below reads as one gesture. */
+.concierge-add-key {
+  display: flex;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
 /* The check's answer sits beside its verb, never below the fold. */
 .concierge-add-engine-answer {
   display: flex;

@@ -155,6 +155,14 @@ name the screen reader says. HS-201-12 gave `PadGadget` the same prop with
 the same default, so both text species answer to one rule (the Thought
 window's answer pad names its mic `Speak your answer`).
 
+## StringGadget.caption (PHILO-15 02)
+
+`caption` shows the well's `label` as a visible caption above it (caption
+step: 12 px mono uppercase). Use it where no GadgetRow label column names
+the well, so a sighted owner reads what the field is (the Concierge's
+`Server address` and `Key`). The caption is `aria-hidden`; the input keeps
+its `aria-label`, so a screen reader says the name once. Off by default.
+
 ## EditInPlace (HS-101 rule 1, documented HS-200-41)
 
 The presented text IS the editor — data is the material, so there is no

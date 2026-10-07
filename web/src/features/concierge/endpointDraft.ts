@@ -72,6 +72,8 @@ export function endpointDraft(args: {
   model: string;
   requestId: string;
   expectedProfileRevision?: number;
+  /** PHILO-15 02: true when the owner typed a key in the Key field. */
+  requiresKey?: boolean;
 }): EndpointDraft {
   return {
     request_id: args.requestId,
@@ -81,7 +83,7 @@ export function endpointDraft(args: {
     provider_family: "openai_compatible",
     model: args.model.trim(),
     endpoint: args.url.trim(),
-    requires_key: false,
+    requires_key: args.requiresKey ?? false,
   };
 }
 

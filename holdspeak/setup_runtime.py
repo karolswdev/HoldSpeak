@@ -78,6 +78,20 @@ def unreachable_reason(exc: BaseException) -> str:
     return "Could not reach the server at this address."
 
 
+KEY_NOT_HEADER_SAFE = "Key has characters a header cannot carry."
+
+
+def key_is_header_safe(key: str) -> bool:
+    """A key that can ride in ``Authorization: Bearer <key>`` as one token.
+
+    PHILO-15 02 (Astra r1): a key with a newline or a control character made
+    the HTTP library raise ``Invalid header value b'Bearer <key>'`` and that
+    text reached the hub log. Visible ASCII only, no spaces: checked BEFORE
+    any header is built.
+    """
+    return bool(key) and all(0x21 <= ord(ch) <= 0x7E for ch in key)
+
+
 def discover_endpoint_models(
     base_url: str,
     *,
@@ -103,21 +117,30 @@ def discover_endpoint_models(
 
     models_url = f"{base}/models"
     headers = {"Accept": "application/json"}
-    if str(api_key or "").strip():
-        headers["Authorization"] = f"Bearer {str(api_key).strip()}"
+    key = str(api_key or "").strip()
+    if key:
+        if not key_is_header_safe(key):
+            return {"ok": False, "models": [], "detail": KEY_NOT_HEADER_SAFE, "reason": "key_invalid"}
+        headers["Authorization"] = f"Bearer {key}"
     getter = http_get or _default_http_json
     try:
         code, raw = getter(models_url, headers=headers, timeout=timeout_seconds)
     except HTTPError as exc:
         if exc.code in {401, 403}:
-            detail = "The server requires a key. Save the connection, set its hub key, then try again."
+            detail = "Key required"
         elif exc.code == 404:
             detail = "The server has no /models route. Check whether the address should end in /v1."
         else:
             detail = f"The server returned HTTP {exc.code} for /models."
-        return {"ok": False, "models": [], "detail": detail, "status": exc.code}
+        result = {"ok": False, "models": [], "detail": detail, "status": exc.code}
+        if exc.code in {401, 403}:
+            result["reason"] = "key_required"
+        return result
     except (URLError, OSError, TimeoutError, ValueError) as exc:
-        log.info(f"endpoint discovery failed for {models_url}: {exc}")
+        # With a key in the request, the exception text can carry the header
+        # (Astra r1): log only its class. Without one, keep the socket's words.
+        said = type(exc).__name__ if key else str(exc)
+        log.info(f"endpoint discovery failed for {models_url}: {said}")
         return {"ok": False, "models": [], "detail": unreachable_reason(exc)}
     if not 200 <= int(code) < 300:
         return {
