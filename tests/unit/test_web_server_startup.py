@@ -104,8 +104,9 @@ def test_start_raises_when_uvicorn_exits_during_startup(tmp_path, monkeypatch) -
             self.should_exit = False
             owner["uvicorn"] = self
 
-        def run(self) -> None:
-            # This models Uvicorn completing lifespan and then aborting before
+        def run(self, sockets: Any = None) -> None:
+            # uvicorn.Server.run's signature: start() hands it the socket it
+            # bound (Conductor R5). This models Uvicorn completing lifespan and then aborting before
             # it can create a listener. A real started server would remain
             # alive until should_exit; this one never reaches started=True.
             owner["meeting"]._started.set()

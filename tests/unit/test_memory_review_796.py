@@ -36,9 +36,14 @@ class SlowFixtureModel(FixtureModel):
         super().__init__()
         self.delay = 0.0
         self.entered = threading.Event()
+        #: When set, an embed holds until the test opens the gate (R5: the
+        #: slow engine is driven by the test, not by a wall-clock delay).
+        self.gate: threading.Event | None = None
 
     def embed(self, texts, normalize=False, truncate=True):
         self.entered.set()
+        if self.gate is not None:
+            assert self.gate.wait(60), "the test never opened the engine gate"
         if self.delay:
             time.sleep(self.delay)
         try:
@@ -77,9 +82,21 @@ def _operations(db: Database) -> list[dict[str, Any]]:
 
 
 def test_a_slow_engine_does_not_block_the_event_loop_or_the_search(desk, monkeypatch) -> None:
+    """The engine is held on a gate the test opens, so nothing here reads a
+    wall clock (R5: the old 0.3 s loop-gap and 0.9 s search bounds tripped
+    under FAST load).
+
+    1. The search answers by keyword while the engine is STILL held: it did
+       not wait for the engine (the 0.5 s budget ran out instead).
+    2. With the budget raised far past the test, a held engine keeps one
+       search in flight, and the event loop still runs other work: the test's
+       own coroutine sees the engine entered while that search is pending.
+    3. Once the engine answers, the same question is fused from the cache.
+    """
     import httpx
 
     import holdspeak.db as hsdb
+    import holdspeak.memory.engine as engine_module
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
     memory_conductor.tick(desk.db, desk.broker)
@@ -88,49 +105,71 @@ def test_a_slow_engine_does_not_block_the_event_loop_or_the_search(desk, monkeyp
         WebRuntimeCallbacks(on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={"id": "m"})),
         host="127.0.0.1", auth_token="owner-secret",
     )
-    desk.model.delay = 1.0  # the engine now takes one second for a question
 
-    async def run() -> tuple[float, float, dict[str, Any]]:
-        gaps: list[float] = []
-        stop = asyncio.Event()
-
-        async def heartbeat() -> None:
-            last = time.perf_counter()
-            while not stop.is_set():
-                await asyncio.sleep(0.05)
-                now = time.perf_counter()
-                gaps.append(now - last)
-                last = now
-
-        beat = asyncio.create_task(heartbeat())
-        await asyncio.sleep(0.1)
-        async with httpx.AsyncClient(
+    def client() -> httpx.AsyncClient:
+        return httpx.AsyncClient(
             transport=httpx.ASGITransport(app=server.app), base_url="http://hub",
-            headers={"X-HoldSpeak-Token": "owner-secret"},
-        ) as client:
-            started = time.perf_counter()
-            response = await client.get("/api/memory/search", params={"query": "offsite in Lisbon"})
-            elapsed = time.perf_counter() - started
-        stop.set()
-        await beat
-        assert response.status_code == 200, response.text
-        return max(gaps), elapsed, response.json()
+            headers={"X-HoldSpeak-Token": "owner-secret"}, timeout=120,
+        )
 
-    worst_gap, elapsed, body = asyncio.run(run())
-    assert worst_gap < 0.3, f"the event loop stalled for {worst_gap:.3f}s"
-    assert elapsed < 0.9, f"the search waited {elapsed:.3f}s for the engine"
+    async def until(flag: threading.Event) -> None:
+        for _ in range(6000):  # bounded at 60 s; returns as soon as it is set
+            if flag.is_set():
+                return
+            await asyncio.sleep(0.01)
+        raise AssertionError("the engine was never entered")
+
+    # 1: the search does not wait for a held engine.
+    held = desk.model.gate = threading.Event()
+
+    async def keyword_answer() -> tuple[dict[str, Any], bool]:
+        async with client() as c:
+            response = await c.get("/api/memory/search", params={"query": "offsite in Lisbon"})
+        assert response.status_code == 200, response.text
+        return response.json(), held.is_set()
+
+    try:
+        body, engine_released = asyncio.run(keyword_answer())
+    finally:
+        held.set()
+    assert engine_released is False, "the search returned only after the engine answered"
     # The answer for THIS query is the keyword answer, and it says why.
     assert body["hits"] and body["hits"][0]["source_ref"] == desk.refs["n-offsite"]
     assert "fusion" not in body["ranking"]
     assert body["ranking"]["engine"]["outcome"] == "timeout"
-    # The slow call still finishes; the same question is then fused from the cache.
-    for _ in range(60):
-        again = desk.db.memory.search("offsite in Lisbon")
-        if again.fusion is not None:
-            break
+    # 3: the held call finishes once released; the same question is fused.
+    deadline = time.monotonic() + 30
+    again = desk.db.memory.search("offsite in Lisbon")
+    while again.fusion is None and time.monotonic() < deadline:
         time.sleep(0.05)
+        again = desk.db.memory.search("offsite in Lisbon")
     assert again.fusion is not None
 
+    # 2: a search in flight on a held engine leaves the event loop free.
+    monkeypatch.setattr(engine_module, "QUERY_TIMEOUT_SECONDS", 120.0)
+    desk.model.entered = threading.Event()
+    gate = desk.model.gate = threading.Event()
+
+    async def loop_stays_free() -> tuple[bool, int, dict[str, Any]]:
+        async with client() as c:
+            search = asyncio.create_task(
+                c.get("/api/memory/search", params={"query": "a question for the loop probe"})
+            )
+            try:
+                await until(desk.model.entered)  # this coroutine ran: the loop is free
+                pending = not search.done()
+            finally:
+                gate.set()
+            response = await search
+        return pending, response.status_code, response.json()
+
+    pending, status, probe = asyncio.run(loop_stays_free())
+    assert pending, "the search finished before the held engine was released"
+    assert status == 200, probe
+    # The engine answered inside the search: the test's coroutine opened the
+    # gate while the search waited. A blocked loop could not have, and the
+    # search would have ended on its budget ("timeout").
+    assert probe["ranking"]["engine"]["outcome"] in {"fused", "no_match"}, probe["ranking"]
 
 # ── 2: background embedding never refuses a foreground local call ─────────
 
@@ -259,7 +298,13 @@ def test_an_endpoint_search_keeps_caller_egress_and_boundary(desk, monkeypatch) 
 # ── 4: a cleared assignment stops engine calls at once ────────────────────
 
 
-def test_the_search_after_a_clear_makes_no_engine_call(desk) -> None:
+def test_the_search_after_a_clear_makes_no_engine_call(desk, monkeypatch) -> None:
+    # This test is about the clear, not the search budget (the slow-engine
+    # test above owns that). Under FAST load a first-time question took more
+    # than the 0.5 s budget, so the search ended "timeout" (R5); give it room.
+    import holdspeak.memory.engine as engine_module
+
+    monkeypatch.setattr(engine_module, "QUERY_TIMEOUT_SECONDS", 60.0)
     memory_conductor.tick(desk.db, desk.broker)
     assert desk.db.memory.search("where is the company retreat").fusion is not None
     calls = len(desk.model.batches)
