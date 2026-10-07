@@ -338,6 +338,28 @@ class DeliveryRegistry:
             self._save()
         return source, worktree
 
+    def unregister_worktree(self, source_id: str, worktree_id: str) -> str:
+        """Forget one worktree of a source (Conductor R4: K4 removed it).
+
+        Reads the file again first (another instance may have registered
+        since). The source's own checkout (its first worktree) is never
+        forgotten. Returns ``unregistered``, ``not_registered`` or
+        ``primary_kept``."""
+        self.reload()
+        source = self.get(source_id)
+        if source is None:
+            return "not_registered"
+        index = next(
+            (i for i, wt in enumerate(source.worktrees) if wt.worktree_id == worktree_id), None
+        )
+        if index is None:
+            return "not_registered"
+        if index == 0:
+            return "primary_kept"
+        del source.worktrees[index]
+        self._save()
+        return "unregistered"
+
     def to_wire(self) -> dict[str, Any]:
         """The registry view a client may see: labels + opaque IDs,
         no filesystem paths (§13)."""

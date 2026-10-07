@@ -445,6 +445,13 @@ CHANGE_CLASS_CLOSED = "closed"
 #: The source-manifest key that freezes what a draft reported as closed.
 CLOSURE_KEYS = "closure_keys"
 
+#: Conductor R4: a merged agent PR linked to its origin in the Room
+#: (``delivery.follow_through.LINK_OBSERVATION``).
+LINK_OBSERVATION_KIND = "conductor.pr_linked"
+#: Conductor R4: one merged PR of a Room repository, read by the Heartbeat
+#: (``delivery.merged_prs``).
+MERGED_OBSERVATION_KIND = "conductor.pr_merged"
+
 
 def period_closures(
     observations: list[dict[str, Any]],
@@ -460,7 +467,11 @@ def period_closures(
     - a Watch's closing transition (``github.pr.merged``,
       ``jira.issue.resolved``);
     - a ``commitment.completed`` receipt of one of the Project's action items
-      that carries PR evidence (Conductor K4: the agent launch's merged PR).
+      that carries PR evidence (Conductor K4: the agent launch's merged PR);
+    - a merged agent PR linked to its origin in the Room (R4,
+      ``conductor.pr_linked``);
+    - any merged PR of a Room repository the Heartbeat read (R4,
+      ``conductor.pr_merged``).
 
     Each closure has a key (the PR URL, else the watch entity and event).
     ``reported`` holds the keys every published update froze into its source
@@ -488,6 +499,39 @@ def period_closures(
             "ref": format_ref("action_item", action_id),
             "fields": ["status", "evidence.pr_url", "evidence.merged_at"],
         })
+
+    def r4_lines(wanted: str) -> None:
+        # Conductor R4: a merged agent PR linked to its origin in the Room (a
+        # note, a meeting, an issue...), and every merge a Room repository
+        # reports (the Heartbeat's merged-only read). One line per PR URL.
+        for obs in observations:
+            if obs.get("observation_kind") != wanted:
+                continue
+            try:
+                fact = json.loads(obs.get("fact_json") or "{}")
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(fact, dict):
+                continue
+            url = str(fact.get("pr_url") or "")
+            if not url or url in seen or url in reported:
+                continue
+            seen.add(url)
+            number = str(fact.get("pr_number") or url.rstrip("/").rsplit("/", 1)[-1])
+            title = " ".join(str(fact.get("title") or "").split()) or "Untitled"
+            text = (
+                f"Merged: PR #{number} for {title}" if wanted == LINK_OBSERVATION_KIND
+                else f"Merged: {title} (PR #{number})"
+            )
+            out.append({
+                "key": url,
+                "order": (str(fact.get("merged_at") or obs.get("observed_at") or ""), url),
+                "text": text,
+                "ref": f"pobs:{obs.get('id', '')}",
+                "fields": ["observation_kind", "fact_json"],
+            })
+
+    r4_lines(LINK_OBSERVATION_KIND)
     for obs in observations:
         if obs.get("observation_kind") != "watch.transition":
             continue
@@ -515,6 +559,8 @@ def period_closures(
             "ref": f"pobs:{obs.get('id', '')}",
             "fields": ["observation_kind", "fact_json"],
         })
+    # A Watch's own merge line wins over the Heartbeat's merged-only read.
+    r4_lines(MERGED_OBSERVATION_KIND)
     return sorted(out, key=lambda c: c["order"])
 
 

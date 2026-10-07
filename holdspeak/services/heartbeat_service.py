@@ -171,6 +171,9 @@ class HeartbeatService:
             "runs_on": str(config.get("runs_on", "local")),
             "remote_hosts": self._compute_remote_hosts(),
             "last_remote_run_at": self._last_remote_run_at(),
+            # Conductor R4: read every Room repository's merged PRs, so the
+            # weekly update reports merges no agent made. ON by default.
+            "report_merged_prs": bool(config.get("report_merged_prs", True)),
         }
 
     def update_settings(self, patch: dict[str, Any]) -> dict[str, Any]:
@@ -205,6 +208,8 @@ class HeartbeatService:
         if "runs_on" in patch:
             val = str(patch["runs_on"]).strip()
             current["runs_on"] = val if val else "local"
+        if "report_merged_prs" in patch:
+            current["report_merged_prs"] = bool(patch["report_merged_prs"])
         self._persist(current)
         return current
 
@@ -224,6 +229,7 @@ class HeartbeatService:
             "runs_on": "local",
             "remote_hosts": self._compute_remote_hosts(),
             "last_remote_run_at": self._last_remote_run_at(),
+            "report_merged_prs": True,
         }
 
     def _persist(self, settings: dict[str, Any]) -> None:
@@ -242,6 +248,8 @@ class HeartbeatService:
             "last_notify_outcome": str(settings.get("last_notify_outcome") or ""),
             # HS-174-08
             "runs_on": settings.get("runs_on", "local"),
+            # Conductor R4
+            "report_merged_prs": bool(settings.get("report_merged_prs", True)),
         }
         self._db.cadence.upsert_policy(CadencePolicy(
             id=_HEARTBEAT_POLICY_ID,
@@ -549,6 +557,20 @@ class HeartbeatService:
                 log.error("heartbeat follow-through failed: %s", exc)
                 follow_through_receipt = {"kind": "follow_through", "error": str(exc)}
 
+        # Conductor R4: every merge of a Room repository, for the weekly
+        # update (a setting, ON by default). Own failure boundary.
+        merged_receipt: dict[str, Any] | None = None
+        if (
+            not held and self._follow_through is not None
+            and settings.get("report_merged_prs", True)
+            and callable(getattr(self._follow_through, "sweep_merged", None))
+        ):
+            try:
+                merged_receipt = self._follow_through.sweep_merged(principal)
+            except Exception as exc:
+                log.error("heartbeat merged-PR read failed: %s", exc)
+                merged_receipt = {"kind": "merged_prs", "error": str(exc)}
+
         # M3: Refresh the aggregate cache via the canonical builder
         self.refresh_aggregate(principal, sweep_id=sweep_id)
 
@@ -585,6 +607,8 @@ class HeartbeatService:
             receipt["meeting_watch_backfill"] = meeting_watch_backfill
         if follow_through_receipt is not None:
             receipt["follow_through"] = follow_through_receipt
+        if merged_receipt is not None:
+            receipt["merged_prs"] = merged_receipt
 
         # Write kernel receipt (Article XI.2)
         self._write_receipt(receipt)

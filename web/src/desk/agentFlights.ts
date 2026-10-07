@@ -112,17 +112,29 @@ export function flightTone(state: FlightState): "working" | "warning" | "active"
   return state === "waiting" ? "warning" : state === "pr_open" ? "active" : state === "merged" ? "success" : "working";
 }
 
+/** A Room issue row's item id, `<watch_id>.<entity_id>` (agent_issue.py), or null. */
+export function issueOriginId(item: { kind?: string | null; watchId?: string | null; entityId?: string | null }): string | null {
+  if (item.kind !== "issue" || !item.watchId || !item.entityId) return null;
+  return `${item.watchId}.${item.entityId}`;
+}
+
 /** The desk refs a Needs you / OPEN HERE row is known by, in the launch's
- * `origin_ref` grammar (`action:<id>`, `decision:<id>`, `decision_record:<id>`). */
+ * `origin_ref` grammar (`action:<id>`, `decision:<id>`, `decision_record:<id>`, `issue:<watch>.<entity>`). */
 export function itemOriginRefs(item: {
   actionItemId?: string | null;
   ref?: string | null;
   openRef?: string | null;
   id?: string | null;
   _doorCard?: { target_ref?: string | null; open_ref?: string | null } | null;
+  /** A Room issue row (Conductor R4): its Watch and its entity. */
+  kind?: string | null;
+  watchId?: string | null;
+  entityId?: string | null;
 }): string[] {
   const refs = new Set<string>();
   if (item.actionItemId) refs.add(`action:${item.actionItemId}`);
+  const issue = issueOriginId(item);
+  if (issue) refs.add(`issue:${issue}`);
   for (const raw of [item._doorCard?.target_ref, item._doorCard?.open_ref, item.ref, item.openRef, item.id]) {
     const ref = String(raw ?? "").trim();
     if (!ref.includes(":")) continue;

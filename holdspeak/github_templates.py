@@ -181,6 +181,27 @@ GITHUB_TEMPLATES: tuple[GitHubTemplate, ...] = (
         }],
         query_defaults={"base": "main"},
     ),
+    # Conductor R4: the repository's open issues, for the Room's OPEN HERE
+    # rows (Hand to agent takes them). Armed with the PR review queue.
+    GitHubTemplate(
+        template_id="watch.github.open_issues",
+        name="Open issues",
+        intent="Surface the repository's open issues",
+        cadence_preset="normal",
+        rules=[{
+            "condition": {
+                "schema": CONDITION_SCHEMA,
+                "operator": "any",
+                "clauses": [
+                    {"field": "state", "comparison": "changed"},
+                ],
+            },
+            "actions": [
+                {"schema": ACTION_SCHEMA, "kind": "project.observe"},
+            ],
+        }],
+        query_defaults={"state": "open"},
+    ),
 )
 
 _TEMPLATE_BY_ID: dict[str, GitHubTemplate] = {
@@ -256,7 +277,11 @@ def compile(
         query["state"] = opts["state"]
 
     # HS-169-04: branch_ci uses a different subject kind
-    subject_kind = "branch_ci" if template_id == "watch.github.branch_ci" else "pull_request"
+    subject_kind = (
+        "branch_ci" if template_id == "watch.github.branch_ci"
+        else "issue" if template_id == "watch.github.open_issues"
+        else "pull_request"
+    )
 
     spec: dict[str, Any] = {
         "schema": "WatchSpec@1",

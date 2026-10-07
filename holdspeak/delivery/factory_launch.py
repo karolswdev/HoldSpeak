@@ -93,6 +93,7 @@ ORIGIN_KINDS = (
     "note",
     "meeting",
     "artifact",
+    "issue",  # Conductor R4: a Room issue, ``<watch_id>.<entity_id>``
 )
 _ORIGIN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 

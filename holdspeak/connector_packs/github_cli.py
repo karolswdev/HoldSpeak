@@ -35,6 +35,7 @@ ALLOWED_SUBCOMMANDS: frozenset[tuple[str, str]] = frozenset(
         ("pr", "view"),
         ("pr", "list"),
         ("issue", "view"),
+        ("issue", "list"),  # Conductor R4: a Room's open issues (read-only)
         ("run", "list"),  # HS-169-04: branch_ci kind
     }
 )
@@ -99,7 +100,7 @@ MANIFEST: ConnectorManifest = validate_manifest(
         "kind": "cli_enrichment",
         "capabilities": ["annotations", "commands"],
         "description": (
-            "Read-only `gh pr view`, `gh pr list`, and `gh issue view` calls for "
+            "Read-only `gh pr view`, `gh pr list`, `gh issue view` and `gh issue list` calls for "
             "imported PR/issue activity and typed Watch snapshots. Disabled by default. "
             "No writes; no token management; no hidden network "
             "execution."

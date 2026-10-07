@@ -5685,9 +5685,10 @@
               "project_item",
               "note",
               "meeting",
-              "artifact"
+              "artifact",
+              "issue"
             ],
-            "description": "The item kind."
+            "description": "The item kind. An issue is a Room issue: id <watch_id>.<entity_id>."
           },
           "id": {
             "type": "string",
