@@ -457,7 +457,9 @@ def test_keep_mints_artifact(service: ThreadService, db) -> None:
     if not any(p.text for p in parts):
         db.threads.append_part(result["assistant_message_id"], kind="text", text="Keepable content")
 
-    keep_result = service.keep(OWNER, t["id"], result["assistant_message_id"])
+    keep_result = service.keep(
+        OWNER, t["id"], result["assistant_message_id"], as_kind="artifact"
+    )
     assert "artifact_id" in keep_result
 
     # Check the artifact exists and has the thread provenance.
@@ -879,3 +881,51 @@ def test_m5_local_egress_preserves_sensitive_verbatim(tmp_path: Path) -> None:
         import os
         os.environ["HOME"] = old_home
         reset_database()
+
+
+# ---------------------------------------------------------------------------
+# Keep as note — Conductor R5: ``/keep`` asks for a Note and gets one
+# ---------------------------------------------------------------------------
+
+
+def _assistant_with_text(service: ThreadService, db, text: str) -> tuple[str, str]:
+    t = service.create(title="Keep as note")
+    result = asyncio.run(service.start_turn(OWNER, t["id"], "Keep this"))
+    mid = result["assistant_message_id"]
+    if not any(p.text for p in db.threads.get_parts(mid)):
+        db.threads.append_part(mid, kind="text", text=text)
+    return t["id"], mid
+
+
+def test_keep_defaults_to_a_note(service: ThreadService, db) -> None:
+    tid, mid = _assistant_with_text(service, db, "Note-worthy reply")
+    def _artifact_count() -> int:
+        with db._connection() as conn:
+            return int(conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0])
+
+    before = _artifact_count()
+
+    kept = service.keep(OWNER, tid, mid)
+
+    assert kept["kind"] == "note"
+    note = db.notes.get(kept["note_id"])
+    assert note is not None
+    assert note.title == "Keep as note"
+    body = "\n".join(p.text for p in db.threads.get_parts(mid) if p.kind == "text" and p.text)
+    assert note.body_markdown == body
+    assert _artifact_count() == before
+
+
+def test_keep_as_note_is_honored_and_artifact_is_not_minted(service: ThreadService, db) -> None:
+    tid, mid = _assistant_with_text(service, db, "Another reply")
+    kept = service.keep(OWNER, tid, mid, as_kind="note")
+    assert kept["kind"] == "note"
+    assert "artifact_id" not in kept
+    assert db.plugins.get_artifact(kept["id"]) is None
+    assert db.notes.get(kept["id"]) is not None
+
+
+def test_keep_refuses_an_unknown_kind(service: ThreadService, db) -> None:
+    tid, mid = _assistant_with_text(service, db, "x")
+    with pytest.raises(ValidationError):
+        service.keep(OWNER, tid, mid, as_kind="poem")
