@@ -99,6 +99,32 @@ _GIT_REMOTE_READ = frozenset({"", "-v", "--verbose", "show", "get-url"})
 _GIT_CONFIG_READ = frozenset({"--get", "--get-all", "--get-regexp", "--list", "-l"})
 _GIT_PUSH_FLAGS = frozenset({"-u", "--set-upstream", "-q", "--quiet", "-v", "--verbose", "--porcelain", "--no-verify"})
 
+#: git verbs this reading knows (Astra round 1 on #914). Any other verb may
+#: be an alias (``git -c alias.x=push x``, or one in a config file), so it
+#: is held as unparsed. Git never lets an alias shadow a built-in verb.
+_GIT_KNOWN_VERBS = frozenset({
+    "add", "am", "apply", "archive", "bisect", "blame", "branch", "cat-file", "checkout",
+    "cherry-pick", "clean", "clone", "commit", "config", "describe", "diff", "fetch",
+    "for-each-ref", "format-patch", "gc", "grep", "help", "init", "log", "ls-files",
+    "ls-remote", "ls-tree", "merge", "merge-base", "mv", "name-rev", "notes", "prune",
+    "pull", "push", "range-diff", "rebase", "reflog", "remote", "replace", "reset",
+    "restore", "rev-list", "rev-parse", "revert", "rm", "shortlog", "show", "show-ref",
+    "stash", "status", "submodule", "switch", "tag", "update-ref", "version", "worktree",
+    "filter-branch",
+})
+#: git options before the verb that change nothing this reading relies on.
+_GIT_PLAIN_GLOBALS = frozenset({"--no-pager", "-P", "--no-optional-locks"})
+#: Programs whose arguments are network destinations (a schemeless
+#: ``example.test`` or ``host:22`` too): a call to one is outside.
+_NETWORK_CLIENTS = frozenset({
+    "curl", "wget", "nc", "ncat", "netcat", "socat", "telnet", "ftp", "sftp", "scp",
+    "rsync", "http", "https", "httpie", "xh", "aria2c", "lynx", "links", "w3m", "ssh",
+    "mosh", "openssl",
+})
+#: ``python -m <module>`` forms that open network connections.
+_NETWORK_MODULES = ("http", "urllib", "ftplib", "smtplib", "xmlrpc", "socketserver", "telnetlib", "pip")
+_HOST_PORT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.-]*:[0-9]+(/.*)?$")
+
 _ENV_ASSIGN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 _URL = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://")
 _REMOTE = re.compile(r"^[^/\s]+@[^/\s]+:")
@@ -165,7 +191,9 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
         if not _inside(real_cwd, real_root):
             return BashCall(OUTSIDE, "cwd_outside_worktree")
         reader = _Reader(real_root, real_cwd)
-        segments = _segments(_tokens(command, cat_is_system=reader.identity("cat") == SYSTEM))
+        segments = _segments(_tokens(
+            command, cat_is_system=reader.identity("cat") == SYSTEM, bodies=reader.heredocs,
+        ))
         return reader.read(segments)
     except _Unparsed as exc:
         return BashCall(UNPARSED, exc.rule)
@@ -178,11 +206,11 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
 # ── lexing ─────────────────────────────────────────────────────────────
 
 
-def _prepare(command: str, *, cat_is_system: bool = True) -> str:
+def _prepare(command: str, *, cat_is_system: bool = True, bodies: Optional[list[str]] = None) -> str:
     """Replace quoted here-document bodies with plain text, refuse every
     construct that expands at run time, and turn unquoted newlines into
     ``;`` (each line is its own command)."""
-    text = _quoted_heredocs(command, cat_is_system=cat_is_system)
+    text = _quoted_heredocs(command, cat_is_system=cat_is_system, bodies=bodies)
     out: list[str] = []
     quote = ""
     index = 0
@@ -226,7 +254,7 @@ def _prepare(command: str, *, cat_is_system: bool = True) -> str:
     return "".join(out)
 
 
-def _quoted_heredocs(command: str, *, cat_is_system: bool = True) -> str:
+def _quoted_heredocs(command: str, *, cat_is_system: bool = True, bodies: Optional[list[str]] = None) -> str:
     """Replace each ``$(cat <<'TAG' ... TAG)`` with plain text. The body
     ends at the FIRST line that is exactly ``TAG`` (as bash reads it), and
     the substitution must close right there: anything between that line and
@@ -256,13 +284,23 @@ def _quoted_heredocs(command: str, *, cat_is_system: bool = True) -> str:
         if closed is None:
             raise _Unparsed("here_document")
         out.append(command[pos:opened.start()])
-        out.append("HEREDOC_TEXT")
+        # The body is plain text; its placeholder keeps it for the readers
+        # that look at a message (a closing keyword, R3).
+        if bodies is not None:
+            bodies.append(command[opened.end():end])
+            out.append(f"HEREDOC_TEXT_{len(bodies) - 1}")
+        else:
+            out.append("HEREDOC_TEXT")
         pos = closed.end()
 
 
-def _tokens(command: str, *, cat_is_system: bool = True) -> list[tuple[str, bool]]:
+def _tokens(
+    command: str, *, cat_is_system: bool = True, bodies: Optional[list[str]] = None,
+) -> list[tuple[str, bool]]:
     """``(token, is_operator)`` pairs. Quoted text is never an operator."""
-    lexer = shlex.shlex(_prepare(command, cat_is_system=cat_is_system), posix=True, punctuation_chars=";&|<>")
+    lexer = shlex.shlex(
+        _prepare(command, cat_is_system=cat_is_system, bodies=bodies), posix=True, punctuation_chars=";&|<>",
+    )
     lexer.whitespace_split = True
     lexer.commenters = ""
     result: list[tuple[str, bool]] = []
@@ -330,6 +368,7 @@ class _Reader:
         self.all_read = True
         self.push_branch = ""
         self.rules: list[str] = []
+        self.heredocs: list[str] = []
 
     def read(self, segments: list[tuple[str, list[str], list[tuple[str, str]]]]) -> BashCall:
         for joined, words, redirects in segments:
@@ -352,6 +391,8 @@ class _Reader:
             assignment = words.pop(0)
             if assignment.split("=", 1)[0] == "PATH":
                 raise _Unparsed("path_change")  # the program would resolve elsewhere
+            if assignment.split("=", 1)[0].startswith("GIT_"):
+                raise _Unparsed("git_env")  # GIT_CONFIG_*, GIT_DIR ... change what git runs
             value = assignment.split("=", 1)[1]
             if _looks_like_path(value):
                 self._path(value, cwd=self.cwd, rule="env_path_outside_worktree")
@@ -366,6 +407,14 @@ class _Reader:
             raise _Unparsed("pipe_to_shell")
         if base in _SHELLS and any(w == "-c" or (w.startswith("-") and not w.startswith("--") and "c" in w[1:]) for w in words[1:]):
             raise _Unparsed("shell_c")
+        if base == "gh" and words[1:2] == ["pr"] and words[2:3] in (["create"], ["edit"]):
+            self._close_check(words[3:], _GH_MESSAGE_FLAGS, _GH_MESSAGE_FILE_FLAGS, cwd=self.cwd)
+        if base in _NETWORK_CLIENTS:
+            raise _Outside("network_client")
+        if base.startswith("python") and len(words) > 2 and words[1] == "-m" and (
+            words[2].split(".")[0] in _NETWORK_MODULES
+        ):
+            raise _Outside("network_client")
         if base in _INDIRECT:
             raise _Unparsed(f"indirect_{base}")
         if base in _INLINE_CODE and any(w in _INLINE_CODE[base] for w in words[1:]):
@@ -441,21 +490,20 @@ class _Reader:
                 cwd = os.path.realpath(os.path.join(cwd, target))
                 index += 2
                 continue
-            if option == "-c":
-                setting = args[index + 1] if index + 1 < len(args) else ""
-                value = setting.split("=", 1)[1] if "=" in setting else ""
-                if _looks_like_path(value):
-                    self._path(value, cwd=cwd, rule="git_outside_worktree")
-                index += 2
-                self.all_read = False
+            if option in _GIT_PLAIN_GLOBALS:
+                index += 1
                 continue
-            if "=" in option:
-                self._path(option.split("=", 1)[1], cwd=cwd, rule="git_outside_worktree")
-            index += 1
+            # -c, --config-env, --git-dir, --exec-path ...: a config override
+            # can define an alias or a command; it is held, never read.
+            raise _Unparsed("git_global_option")
         if index >= len(args):
             self.read_rules.append("git")
             return
         verb, rest = args[index], args[index + 1:]
+        if verb not in _GIT_KNOWN_VERBS:
+            raise _Unparsed("git_unknown_verb")
+        if verb == "commit":
+            self._close_check(rest, _GIT_MESSAGE_FLAGS, _GIT_MESSAGE_FILE_FLAGS, cwd=cwd)
         if verb == "push":
             self._push(rest)
             self.all_read = False
@@ -478,6 +526,37 @@ class _Reader:
             self.read_rules.append("git-branch")
         else:
             self.all_read = False
+
+    def _close_check(
+        self, args: list[str], text_flags: frozenset[str], file_flags: frozenset[str], *, cwd: str,
+    ) -> None:
+        """Hold a message that would close a GitHub issue (a closing keyword
+        and an issue reference): GitHub closes it on merge, an external
+        effect the owner decides. A message file in the worktree is read; one
+        that cannot be read holds."""
+        for flag, value in _flag_values(args, text_flags | file_flags):
+            if flag in file_flags:
+                value = self._message_file(value, cwd=cwd)
+            if _closes_issue(self._expand(value)):
+                raise _Unparsed("pr_close_keyword")
+
+    def _expand(self, text: str) -> str:
+        return _HEREDOC_REF.sub(
+            lambda m: self.heredocs[int(m.group(1))] if int(m.group(1)) < len(self.heredocs) else m.group(0),
+            text,
+        )
+
+    def _message_file(self, value: str, *, cwd: str) -> str:
+        if not value or value == "-":
+            raise _Unparsed("message_file_unread")
+        real = os.path.realpath(os.path.join(cwd, value))
+        if not _inside(real, self.root):
+            raise _Unparsed("message_file_unread")
+        try:
+            with open(real, encoding="utf-8", errors="replace") as handle:
+                return handle.read(1_000_000)
+        except OSError as exc:
+            raise _Unparsed("message_file_unread") from exc
 
     def _push(self, args: list[str]) -> None:
         positional = []
@@ -520,7 +599,7 @@ class _Reader:
     def _path(self, word: str, *, cwd: str, rule: str) -> None:
         if not word or word == "-":
             return
-        if _URL.match(word) or _REMOTE.match(word):
+        if _URL.match(word) or _REMOTE.match(word) or _HOST_PORT.match(word):
             raise _Outside("network_target")
         if word.startswith("~"):
             raise _Outside(rule)
@@ -529,6 +608,54 @@ class _Reader:
             return
         if not _inside(real, self.root):
             raise _Outside(rule)
+
+
+#: GitHub's closing keywords followed by an issue reference (``#12``,
+#: ``owner/repo#12``, an issue URL). Case does not matter; a colon may follow.
+_CLOSE_KEYWORD = re.compile(
+    r"(?i)\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\b\s*:?\s*"
+    r"(?:#\d+|[\w.-]+/[\w.-]+#\d+|https?://\S+/issues/\d+)"
+)
+_HEREDOC_REF = re.compile(r"HEREDOC_TEXT_(\d+)")
+_GH_MESSAGE_FLAGS = frozenset({"--body", "-b", "--title", "-t"})
+_GH_MESSAGE_FILE_FLAGS = frozenset({"--body-file", "-F"})
+_GIT_MESSAGE_FLAGS = frozenset({"--message", "-m"})
+_GIT_MESSAGE_FILE_FLAGS = frozenset({"--file", "-F"})
+
+
+def _closes_issue(text: str) -> bool:
+    return bool(_CLOSE_KEYWORD.search(text or ""))
+
+
+def _flag_values(args: list[str], flags: frozenset[str]) -> list[tuple[str, str]]:
+    """``(flag, value)`` for each of ``flags`` in ``args``: ``--x v``,
+    ``--x=v``, ``-x v``, ``-xv`` and a short cluster (``-am v``)."""
+    shorts = {f[1] for f in flags if len(f) == 2}
+    found: list[tuple[str, str]] = []
+    index = 0
+    while index < len(args):
+        arg = args[index]
+        nxt = args[index + 1] if index + 1 < len(args) else ""
+        if arg.startswith("--"):
+            name, eq, value = arg.partition("=")
+            if name in flags:
+                if eq:
+                    found.append((name, value))
+                else:
+                    found.append((name, nxt))
+                    index += 1
+        elif arg.startswith("-") and len(arg) > 1:
+            for pos, char in enumerate(arg[1:], start=1):
+                if char in shorts:
+                    tail = arg[pos + 1:]
+                    if tail:
+                        found.append((f"-{char}", tail))
+                    else:
+                        found.append((f"-{char}", nxt))
+                        index += 1
+                    break
+        index += 1
+    return found
 
 
 def _looks_like_path(value: str) -> bool:

@@ -747,9 +747,10 @@ def test_tool_gate_policy_matrix(mode, verdict, outcome, reason) -> None:
     ("echo x >> ../log", "outside", "redirect_outside_worktree"),
     ("python3 -c 'import os'", "unparsed", "inline_code"),
     ("git -C /tmp status", "outside", "git_outside_worktree"),
-    ("git -c core.hooksPath=/tmp/h commit -m x", "outside", "git_outside_worktree"),
-    ("curl https://example.com", "outside", "network_target"),
-    ("scp f user@host:/x", "outside", "network_target"),
+    # R3 (Astra round 1 on #914): a git config override is held, never read.
+    ("git -c core.hooksPath=/tmp/h commit -m x", "unparsed", "git_global_option"),
+    ("curl https://example.com", "outside", "network_client"),
+    ("scp f user@host:/x", "outside", "network_client"),
     ("ls\nrm -rf /", "outside", "path_outside_worktree"),
     ("ls 'unclosed", "unparsed", "unbalanced_quotes"),
     ("(cd /; ls)", "unparsed", "subshell_or_group"),

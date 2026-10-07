@@ -15,8 +15,11 @@ Codex CLI 0.159 (observed under an isolated ``CODEX_HOME``):
   config with Codex's own writer (``config/batchWrite``); this module uses
   only those two calls, so HoldSpeak never computes a Codex hash itself.
 
-Only HoldSpeak's own hooks are trusted here (the rider and the gate, matched
-by command); a foreign hook is never touched. The trust write happens only in
+Only HoldSpeak's own hooks are trusted and enabled here: each matched EXACTLY
+(source, definition position, event, matcher, command, timeout) against the
+hooks HoldSpeak generates. A foreign hook, a wrapper, an appended command or a
+comment is never touched (Astra round 1 on #914). A launch needs every one of
+its hooks listed, enabled and trusted. The trust write happens only in
 the owner-only ``agent_hooks.install`` operation.
 """
 from __future__ import annotations
@@ -24,9 +27,11 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import select
 import subprocess
 import time
+import tomllib
 from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence
 
@@ -42,15 +47,95 @@ class CodexTrustError(RuntimeError):
         self.reason = reason
 
 
-def is_holdspeak_hook(hook: Mapping[str, Any]) -> bool:
-    """True for HoldSpeak's own Codex hooks: the rider and the gate."""
-    from ..coder_gate import GATE_HOOK_MARKER
-    from .hooks import AGENT_HOOK_COMMAND_MARKER
+SESSION_FLAGS_PATH = "/<session-flags>/config.toml"
 
-    command = str(hook.get("command") or "")
-    if "--agent codex" not in command or "holdspeak" not in command:
+
+def _snake(event: str) -> str:
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", event).lower()
+
+
+def _camel(event: str) -> str:
+    return event[:1].lower() + event[1:]
+
+
+def _specs_of(hooks: Mapping[str, Any], *, source: str, path: str) -> list[dict[str, Any]]:
+    """One exact spec per handler of a hooks document (event -> groups)."""
+    specs: list[dict[str, Any]] = []
+    for event, groups in hooks.items():
+        for g, group in enumerate(groups):
+            if group is None:
+                continue  # a foreign group position (hooks.json): not ours
+            for h, handler in enumerate(group.get("hooks") or []):
+                specs.append({
+                    "source": source, "path": path,
+                    "suffix": f":{_snake(event)}:{g}:{h}", "eventName": _camel(event),
+                    "matcher": group.get("matcher"), "command": handler["command"],
+                    "timeoutSec": handler.get("timeout"),
+                })
+    return specs
+
+
+def launch_specs(flags: Sequence[str]) -> list[dict[str, Any]]:
+    """The exact hooks a launch's ``-c hooks.<Event>=[...]`` flags define."""
+    hooks: dict[str, Any] = {}
+    pairs = zip(flags[0::2], flags[1::2])
+    for flag, value in pairs:
+        key, _, raw = str(value).partition("=")
+        if flag == "-c" and key.startswith("hooks."):
+            hooks[key[len("hooks."):]] = tomllib.loads(f"v = {raw}")["v"]
+    return _specs_of(hooks, source=SESSION_FLAGS_SOURCE, path=SESSION_FLAGS_PATH)
+
+
+def installed_specs(hooks_json: Path, template: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """HoldSpeak's rider entries in an installed ``hooks.json``: only entries
+    EQUAL to the template's, at the position the file holds them."""
+    try:
+        document = json.loads(Path(hooks_json).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    installed = document.get("hooks") if isinstance(document, Mapping) else None
+    ours = (template.get("hooks") or {})
+    positions: dict[str, list[Any]] = {}
+    for event, groups in (installed or {}).items():
+        wanted = ours.get(event) or []
+        positions[event] = [g if g in wanted else None for g in (groups if isinstance(groups, list) else [])]
+    return _specs_of(positions, source="user", path=os.path.realpath(str(hooks_json)))
+
+
+def _matches(hook: Mapping[str, Any], spec: Mapping[str, Any]) -> bool:
+    """An exact match: source, definition position, event, matcher, command,
+    timeout. A wrapper, an appended command or a comment never matches."""
+    if hook.get("source") != spec["source"] or hook.get("handlerType") != "command":
         return False
-    return AGENT_HOOK_COMMAND_MARKER in command or GATE_HOOK_MARKER in command
+    if bool(hook.get("async")) or hook.get("command") != spec["command"]:
+        return False
+    if hook.get("eventName") != spec["eventName"] or hook.get("matcher") != spec["matcher"]:
+        return False
+    if hook.get("timeoutSec") != spec["timeoutSec"]:
+        return False
+    key = str(hook.get("key") or "")
+    if spec["source"] == SESSION_FLAGS_SOURCE:
+        return key == spec["path"] + spec["suffix"]
+    source_path = str(hook.get("sourcePath") or "")
+    return bool(source_path) and os.path.realpath(source_path) == spec["path"] and key == source_path + spec["suffix"]
+
+
+def _problems(hooks: list[dict[str, Any]], specs: list[dict[str, Any]]) -> tuple[list[tuple[dict, dict]], list[str]]:
+    """Each spec's listed hook, and what keeps the set from running: a hook
+    missing, disabled or not trusted."""
+    found: list[tuple[dict, dict]] = []
+    problems: list[str] = []
+    for spec in specs:
+        hook = next((h for h in hooks if _matches(h, spec)), None)
+        if hook is None:
+            problems.append(f"missing:{spec['path']}{spec['suffix']}")
+            continue
+        found.append((spec, hook))
+        if hook.get("enabled") is False:
+            problems.append(f"disabled:{hook['key']}")
+        if hook.get("trustStatus") != TRUSTED:
+            problems.append(f"untrusted:{hook['key']}")
+    return found, problems
 
 
 class _AppServer:
@@ -149,61 +234,66 @@ def untrusted_launch_hooks(
     flags: Sequence[str], *, cwd: Optional[str] = None, executable: str = "codex",
     env: Optional[Mapping[str, str]] = None,
 ) -> list[str]:
-    """The HoldSpeak session-flag hooks of a launch that Codex will NOT run.
-
-    Empty when every one is trusted. A launch whose hooks Codex does not list
-    at all (a parse refusal) returns ``["session-flags:missing"]``."""
-    ours = [
-        hook for hook in list_hooks(flags, cwd=cwd, executable=executable, env=env)
-        if hook.get("source") == SESSION_FLAGS_SOURCE and is_holdspeak_hook(hook)
-    ]
-    if not ours:
-        return ["session-flags:missing"]
-    return [str(hook.get("key") or "") for hook in ours if hook.get("trustStatus") != TRUSTED]
+    """What keeps a launch's hooks from running: each expected hook that Codex
+    does not list exactly, has disabled, or does not trust. Empty: all run."""
+    specs = launch_specs(flags)
+    if not specs:
+        return ["missing:launch-hooks"]
+    _found, problems = _problems(list_hooks(flags, cwd=cwd, executable=executable, env=env), specs)
+    return problems
 
 
-def _key_path(key: str) -> str:
+def _key_path(key: str, leaf: str = "trusted_hash") -> str:
     escaped = str(key).replace("\\", "\\\\").replace('"', '\\"')
-    return f'hooks.state."{escaped}".trusted_hash'
+    return f'hooks.state."{escaped}".{leaf}'
+
+
+def _listed(server: "_AppServer", folder: str) -> list[dict[str, Any]]:
+    listed = server.call("hooks/list", {"cwds": [folder]}) or {}
+    return [
+        dict(hook)
+        for row in (listed.get("data") or [] if isinstance(listed, Mapping) else [])
+        for hook in (row.get("hooks") or [] if isinstance(row, Mapping) else [])
+        if isinstance(hook, Mapping)
+    ]
 
 
 def trust_holdspeak_hooks(
     flags: Sequence[str], *, cwd: Optional[str] = None, executable: str = "codex",
-    env: Optional[Mapping[str, str]] = None,
+    env: Optional[Mapping[str, str]] = None, hooks_json: Optional[Path] = None,
+    template: Optional[Mapping[str, Any]] = None,
 ) -> dict[str, Any]:
-    """Trust HoldSpeak's Codex hooks: the installed ``hooks.json`` entries and
-    the launch's session-flag hooks (``flags``). Foreign hooks are left alone.
+    """Trust and enable EXACTLY HoldSpeak's Codex hooks: the launch's
+    session-flag hooks (``flags``) and the rider entries of ``hooks_json``
+    that equal ``template``. Anything else, a look-alike included, is left
+    alone. Writes through Codex's ``config/batchWrite`` and lists again to
+    prove it. Returns ``{"trusted", "enabled", "already", "untrusted"}``;
+    ``untrusted`` names what still keeps a hook from running."""
+    from .hooks import codex_hook_template
 
-    Writes ``hooks.state.<key>.trusted_hash`` through Codex's own
-    ``config/batchWrite`` and lists again to prove it. Returns
-    ``{"trusted": [keys written], "already": n, "untrusted": [keys still not trusted]}``."""
+    specs = launch_specs(flags)
+    if hooks_json is not None:
+        specs += installed_specs(Path(hooks_json), template or codex_hook_template())
     folder = str(cwd or Path.home())
     with _AppServer(flags, cwd=folder, executable=executable, env=env) as server:
-        listed = server.call("hooks/list", {"cwds": [folder]}) or {}
-        hooks = [
-            dict(hook)
-            for row in (listed.get("data") or [] if isinstance(listed, Mapping) else [])
-            for hook in (row.get("hooks") or [] if isinstance(row, Mapping) else [])
-            if isinstance(hook, Mapping) and is_holdspeak_hook(hook)
-        ]
-        todo = [hook for hook in hooks if hook.get("trustStatus") != TRUSTED]
-        edits = [
-            {"keyPath": _key_path(str(hook["key"])), "value": str(hook["currentHash"]), "mergeStrategy": "upsert"}
-            for hook in todo
-            if hook.get("key") and str(hook.get("currentHash") or "").startswith("sha256:")
-        ]
+        found, _problems_before = _problems(_listed(server, folder), specs)
+        edits: list[dict[str, Any]] = []
+        trusted: list[str] = []
+        enabled: list[str] = []
+        for _spec, hook in found:
+            key = str(hook["key"])
+            if hook.get("trustStatus") != TRUSTED and str(hook.get("currentHash") or "").startswith("sha256:"):
+                edits.append({"keyPath": _key_path(key), "value": str(hook["currentHash"]), "mergeStrategy": "upsert"})
+                trusted.append(key)
+            if hook.get("enabled") is False:
+                edits.append({"keyPath": _key_path(key, "enabled"), "value": True, "mergeStrategy": "upsert"})
+                enabled.append(key)
         if edits:
             server.call("config/batchWrite", {"edits": edits, "reloadUserConfig": False})
-        relisted = server.call("hooks/list", {"cwds": [folder]}) or {}
-    after = [
-        str(hook.get("key") or "")
-        for row in (relisted.get("data") or [] if isinstance(relisted, Mapping) else [])
-        for hook in (row.get("hooks") or [] if isinstance(row, Mapping) else [])
-        if isinstance(hook, Mapping) and is_holdspeak_hook(hook) and hook.get("trustStatus") != TRUSTED
-    ]
+        _found_after, after = _problems(_listed(server, folder), specs)
     return {
-        "trusted": [str(hook["key"]) for hook in todo if str(hook.get("key") or "") not in after],
-        "already": len(hooks) - len(todo),
+        "trusted": trusted, "enabled": enabled,
+        "already": len(found) - len(set(trusted) | set(enabled)),
         "untrusted": after,
     }
 
@@ -236,7 +326,8 @@ def trust_stamp_matches(flags: Sequence[str], path: Path) -> bool:
 
 __all__ = [
     "CodexTrustError",
-    "is_holdspeak_hook",
+    "installed_specs",
+    "launch_specs",
     "list_hooks",
     "trust_holdspeak_hooks",
     "trust_stamp_matches",

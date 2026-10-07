@@ -451,6 +451,7 @@ class OnboardingService:
         if agent == "codex":
             result = {**result, "trust": trust_codex_hooks(
                 executable=str(self._which("codex")), env={**os.environ, **self._env()}, home=self._home(),
+                hooks_json=path,
             )}
         return {**self.agents_detect(principal), "used": {"agent": agent, **result}}
 
@@ -468,12 +469,16 @@ def codex_trust_stamp_path(home: Path) -> Path:
     return home / ".holdspeak" / "codex_hook_trust.json"
 
 
-def trust_codex_hooks(*, executable: str, env: dict[str, str], home: Path) -> dict[str, Any]:
+def trust_codex_hooks(
+    *, executable: str, env: dict[str, str], home: Path, hooks_json: Optional[Path] = None,
+) -> dict[str, Any]:
     """Codex runs a hook only when its user config trusts the hook's hash
     (``agent_context.codex_trust``). Inside ``agent_hooks.install`` only:
     trust HoldSpeak's installed rider hooks and the hooks every Codex launch
-    passes, through Codex's own config writer. A failure is named in the
-    receipt; the hooks file stays written."""
+    passes, through Codex's own config writer: exactly those hooks (matched
+    by source, position, event, matcher, command and timeout), trusted AND
+    enabled, then listed again. A failure is named in the receipt; the hooks
+    file stays written."""
     from .. import coder_gate
     from ..agent_context import codex_trust
 
@@ -481,7 +486,7 @@ def trust_codex_hooks(*, executable: str, env: dict[str, str], home: Path) -> di
     try:
         summary = codex_trust.trust_holdspeak_hooks(
             flags, cwd=str(home) if home.is_dir() else "/", executable=executable,
-            env={**env, "HOME": str(home)},
+            env={**env, "HOME": str(home)}, hooks_json=hooks_json,
         )
     except codex_trust.CodexTrustError as exc:
         log.warning("codex hook trust failed: %s", exc)

@@ -82,8 +82,8 @@ def parse_trust_prompt(lines: list[str]) -> Optional[dict[str, Any]]:
     Live means the prompt is the bottom of the screen: its footer is the last
     non-blank line, so a prompt left in the scrollback above other output is
     not live. Returns ``{paths, cursor}``: ``paths`` are the readings of the
-    path block (Ink breaks a long path over lines; the break may stand for
-    nothing or for one space) and ``cursor`` is ``"yes"``, ``"no"`` or
+    path block (Ink breaks a long path over lines; the rows are joined as
+    shown, and a break that hides a space reads as another path) and ``cursor`` is ``"yes"``, ``"no"`` or
     ``None``."""
     rows = [str(line).rstrip() for line in lines]
     while rows and not rows[-1].strip():
@@ -108,7 +108,10 @@ def parse_trust_prompt(lines: list[str]) -> Optional[dict[str, Any]]:
         return None
     pad = min(len(row) - len(row.lstrip(" ")) for row in path_rows)
     parts = [row[pad:] for row in path_rows]
-    paths = {"".join(parts), " ".join(parts)}
+    # The rows join with nothing between them: a break that stood for a
+    # space is not guessed (Astra round 1 on #914), so such a display reads
+    # as another path and gets no answer.
+    paths = {"".join(parts)}
     no_row = next((row for row in region[question:] if TRUST_NO in row), None)
     yes_row = next((row for row in region[question:] if TRUST_YES in row), None)
     if no_row is None or yes_row is None:
@@ -168,7 +171,9 @@ def parse_codex_trust_prompt(lines: list[str]) -> Optional[dict[str, Any]]:
         return None
     marked = [row for row in region[question:] if row.lstrip().startswith(_CODEX_CURSOR)]
     cursor = "yes" if yes_row.lstrip().startswith(_CODEX_CURSOR) else ("other" if marked else None)
-    return {"paths": {"".join(parts), " ".join(parts)}, "cursor": cursor}
+    # Codex breaks a long path at the pane width, character by character:
+    # the rows join with nothing between them. A space is never guessed.
+    return {"paths": {"".join(parts)}, "cursor": cursor}
 
 
 def codex_trust_prompt_for(lines: list[str], worktree_path: str) -> Optional[dict[str, Any]]:

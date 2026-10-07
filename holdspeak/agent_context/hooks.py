@@ -83,7 +83,7 @@ def our_hook_commands(settings: Mapping[str, Any]) -> list[str]:
             if not _is_our_hook_entry(entry):
                 continue
             for hook in entry.get("hooks") or []:
-                if isinstance(hook, Mapping) and AGENT_HOOK_COMMAND_MARKER in str(hook.get("command") or ""):
+                if isinstance(hook, Mapping) and is_our_hook_command(hook.get("command")):
                     commands.append(str(hook.get("command")))
     return commands
 
@@ -348,16 +348,29 @@ def uninstall_agent_hooks(settings_path: "Path") -> dict[str, Any]:
     }
 
 
+def is_our_hook_command(command: Any) -> bool:
+    """True only for a command ``_agent_hook_command`` writes, exactly:
+    ``<holdspeak> agent-hook ingest --agent <claude|codex> [--capture-messages]``.
+    A wrapper, an appended command or a comment that carries the words is
+    someone else's hook (Astra round 1 on #914)."""
+    try:
+        parts = shlex.split(str(command or ""))
+    except ValueError:
+        return False
+    if len(parts) not in (5, 6) or os.path.basename(parts[0]) != "holdspeak":
+        return False
+    if parts[1:4] != ["agent-hook", "ingest", "--agent"] or parts[4] not in AGENT_HOOK_SETTINGS_PATHS:
+        return False
+    return parts[5:] in ([], ["--capture-messages"]) and shlex.join(parts) == str(command)
+
+
 def _is_our_hook_entry(entry: Any) -> bool:
     if not isinstance(entry, Mapping):
         return False
     inner = entry.get("hooks")
     if not isinstance(inner, list):
         return False
-    for hook in inner:
-        if isinstance(hook, Mapping) and AGENT_HOOK_COMMAND_MARKER in str(hook.get("command") or ""):
-            return True
-    return False
+    return any(isinstance(hook, Mapping) and is_our_hook_command(hook.get("command")) for hook in inner)
 
 
 def _read_settings(settings_path: "Path") -> tuple[dict[str, Any], bool]:
