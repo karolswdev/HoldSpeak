@@ -131,6 +131,29 @@ def codex_args(hub_url: str, mode: Any) -> list[str]:
     return args
 
 
+#: Claude Code's permission mode that accepts file edits in its working
+#: folder (the launch's worktree) with no prompt.
+CLAUDE_EDIT_MODE = "acceptEdits"
+
+
+def claude_permission_args(mode: Any, argv: list[str]) -> list[str]:
+    """``--permission-mode acceptEdits`` in Normal and YOLO (Conductor R1).
+
+    Without it every Edit of a launched Claude asked in the pane, a TO
+    APPROVE row for each file change, whatever the Control mode. Edits stay
+    inside the worktree (Claude Code accepts edits in its working folder
+    only); Bash stays with the tool gate. Secure gets nothing: each edit
+    asks. A permission mode the launch already names is kept, in either
+    form (``--permission-mode plan`` or ``--permission-mode=plan``)."""
+    named = any(
+        str(token) == "--permission-mode" or str(token).startswith("--permission-mode=")
+        for token in argv
+    )
+    if not pre_approved(mode) or named:
+        return []
+    return ["--permission-mode", CLAUDE_EDIT_MODE]
+
+
 def config_control_mode() -> str:
     from ..config import Config
 
@@ -142,11 +165,13 @@ def config_control_mode() -> str:
 
 __all__ = [
     "CLAUDE_ALLOW_RULE",
+    "CLAUDE_EDIT_MODE",
     "CREDENTIAL_ENV",
     "HUB_URL_ENV",
     "SERVER_NAME",
     "claude_args",
     "claude_mcp_document",
+    "claude_permission_args",
     "codex_args",
     "config_control_mode",
     "mcp_config_path",

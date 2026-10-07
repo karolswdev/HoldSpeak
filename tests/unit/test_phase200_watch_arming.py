@@ -287,14 +287,17 @@ class TestArmOnCreate:
             [{"provider": "github", "scope": "acme/app",
               "watches": ["open_prs"]}],
         )
-        watch_id = db.automations.list_watches()[0]["id"]
-        assert db.automations.get_watch(watch_id).get("snapshot"), (
-            "precondition: the Door must have established a real baseline"
-        )
+        # Conductor R4: open_prs arms the PR queue and the open issues.
+        watch_ids = sorted(w["id"] for w in db.automations.list_watches())
+        assert len(watch_ids) == 2
+        for watch_id in watch_ids:
+            assert db.automations.get_watch(watch_id).get("snapshot"), (
+                "precondition: the Door must have established a real baseline"
+            )
 
         outcomes = ws.evaluate_due(OWNER)
 
-        assert [o["watch_id"] for o in outcomes] == [watch_id]
+        assert sorted(o["watch_id"] for o in outcomes) == watch_ids
         assert sum(o.get("transitions", 0) for o in outcomes) == 0
         assert _effect_rows(db) == []
 
@@ -471,9 +474,14 @@ class TestManualEvaluationRecordsEffects:
         from holdspeak.services.project_door_service import ProjectDoorService
         from holdspeak.services.project_service import ProjectService
 
-        ws = _watch_service(
-            db, _fetcher([_pr(1, "pending")], [_pr(1, "success")]),
-        )
+        prs = _fetcher([_pr(1, "pending")], [_pr(1, "success")])
+
+        def fetch(principal, **kwargs):
+            # Conductor R4: the Door also arms the open issues; they have
+            # no issues here, and they do not use up the PR phases.
+            return [] if kwargs.get("query_kind") == "issues" else prs(principal, **kwargs)
+
+        ws = _watch_service(db, fetch)
         ProjectDoorService(
             project_service=ProjectService(db), watch_service=ws,
         ).create(
@@ -481,7 +489,9 @@ class TestManualEvaluationRecordsEffects:
             [{"provider": "github", "scope": "acme/app",
               "watches": ["open_prs"]}],
         )
-        watch_id = db.automations.list_watches()[0]["id"]
+        watch_id = next(
+            w["id"] for w in db.automations.list_watches() if w["query_kind"] == "pull_requests"
+        )
         rule_id = _checks_changed_rule(db, watch_id)
         return ws, watch_id, rule_id
 

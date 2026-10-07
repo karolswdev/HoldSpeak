@@ -64,14 +64,27 @@ class AgentHandRefused(ServiceError):
     rides every transport (HTTP and MCP answer ``{error, code}``); the
     message is path-free."""
 
-    def __init__(self, reason: str, message: Optional[str] = None) -> None:
+    def __init__(
+        self, reason: str, message: Optional[str] = None, *,
+        context: Optional[dict[str, Any]] = None,
+    ) -> None:
         status = 404 if reason in _NOT_FOUND_REASONS else 409
-        super().__init__(reason, message or reason, context={"status": status})
+        super().__init__(reason, message or reason, context={**(context or {}), "status": status})
         self.reason = reason
+
+    @classmethod
+    def from_launch(cls, exc: Any) -> "AgentHandRefused":
+        """A launch refusal, its detail kept (R3: the hooks Codex will not run)."""
+        return cls(exc.reason, str(exc), context=dict(getattr(exc, "context", None) or {}))
 
 
 def item_exists(db: Any, kind: str, item_id: str) -> bool:
     from ..grounding import hydrate_refs_detailed
+
+    if kind == "issue":
+        from .agent_issue import read_issue
+
+        return read_issue(db, item_id) is not None
 
     try:
         hydrated = hydrate_refs_detailed(db, [], [], "summary", [f"{kind}:{item_id}"])
@@ -80,10 +93,39 @@ def item_exists(db: Any, kind: str, item_id: str) -> bool:
     return bool(hydrated.blocks) and not hydrated.unknown
 
 
-def worktree_spec(kind: str, item_id: str) -> dict[str, str]:
-    """``{mode: new, name: hs-<kind>-<id>, branch: hs/<kind>-<id>}``."""
+def worktree_spec(kind: str, item_id: str, round_: int = 1) -> dict[str, str]:
+    """``{mode: new, name: hs-<kind>-<id>, branch: hs/<kind>-<id>}``; a later
+    hand-off of the same item (``round_`` 2, 3, ...) adds ``-<round>``."""
     slug = _NAME_UNSAFE.sub("-", f"{kind}-{item_id}").strip("-.")[:60]
+    if round_ > 1:
+        slug = f"{slug}-{round_}"
     return {"mode": "new", "name": f"hs-{slug}", "branch": f"hs/{slug}"}
+
+
+#: The most hand-offs of one item that get their own worktree name.
+_MAX_ROUNDS = 50
+
+
+def free_worktree_spec(registry: Any, repo_path: Any, kind: str, item_id: str) -> dict[str, str]:
+    """The spec of this hand-off (Conductor R4, R1's walk).
+
+    K4's cleanup removes a merged worktree but keeps its branch, so a second
+    hand-off of the same item cannot reuse ``hs/<kind>-<id>`` (``git worktree
+    add -b`` refuses an existing branch). The first round whose worktree
+    folder exists (a held or live launch: the caller's own rules apply) or
+    whose branch and folder are both free is the one used."""
+    for round_ in range(1, _MAX_ROUNDS + 1):
+        spec = worktree_spec(kind, item_id, round_)
+        try:
+            folder = derive_worktree_path(repo_path, spec["name"])
+        except LaunchRefused:
+            return spec
+        if folder.exists():
+            return spec
+        branch = registry._git(Path(repo_path), "rev-parse", "--verify", "--quiet", f"refs/heads/{spec['branch']}")
+        if not branch:
+            return spec
+    return worktree_spec(kind, item_id)
 
 
 def _matches_repo(registry: Any, path: str, repositories: list[str]) -> bool:
@@ -183,8 +225,12 @@ class AgentHandService:
         gate_path: Optional[Path] = None,
         project_map: Optional[Mapping[str, Any]] = None,
         max_live: int = MAX_LIVE_LAUNCHES,
+        issue_reads: Optional[Mapping[str, Any]] = None,
     ) -> None:
         self._db = db
+        #: The tracker reads of an issue brief (``gh_runner``, ``jira_adapter``);
+        #: empty in production (the real CLIs).
+        self.issue_reads: Mapping[str, Any] = dict(issue_reads or {})
         self._launch_service = launch_service
         self._control_mode = control_mode or _config_control_mode
         self._gate_path = gate_path
@@ -204,7 +250,7 @@ class AgentHandService:
         try:
             kind, item_id = parse_item_ref({"kind": kind, "id": item_id})
         except AgentBriefRefused as exc:
-            raise AgentHandRefused(exc.reason, str(exc)) from exc
+            raise AgentHandRefused.from_launch(exc) from exc
         # The item first: an unknown item is item_unknown, whatever else is missing.
         if not item_exists(self._db, kind, item_id):
             raise AgentHandRefused("item_unknown", f"{kind}:{item_id} is not on the desk")
@@ -216,7 +262,7 @@ class AgentHandService:
         try:
             launcher._preflight(agent)
         except LaunchRefused as exc:
-            raise AgentHandRefused(exc.reason, str(exc)) from exc
+            raise AgentHandRefused.from_launch(exc) from exc
 
         project_id = project_id or project_for_item(self._db, kind, item_id)
         _reload_registry(launcher._registry)
@@ -227,11 +273,11 @@ class AgentHandService:
             raise AgentHandRefused(
                 "no_repository", "the item's Project names no local repository"
             )
-        spec = worktree_spec(kind, item_id)
+        spec = free_worktree_spec(launcher._registry, source.primary_path, kind, item_id)
         try:
             worktree_path = derive_worktree_path(source.primary_path, spec["name"])
         except LaunchRefused as exc:
-            raise AgentHandRefused(exc.reason, str(exc)) from exc
+            raise AgentHandRefused.from_launch(exc) from exc
         if worktree_path.exists():
             # Handed before: an earlier launch of this item whose brief is
             # still held resumes on that launch; it is never relaunched.
@@ -250,7 +296,7 @@ class AgentHandService:
                 try:
                     record = launcher.resume_delivery(str(existing["launch_id"]))
                 except LaunchRefused as exc:
-                    raise AgentHandRefused(exc.reason, str(exc)) from exc
+                    raise AgentHandRefused.from_launch(exc) from exc
                 return self._answer(
                     {"launch": record, "operation_id": record.get("operation_id")},
                     spec, source, None, kind, item_id, project_id, self._control_mode(),
@@ -275,14 +321,16 @@ class AgentHandService:
                 instruction=instruction,
                 control_mode=mode,
                 repo_path=source.primary_path,
+                principal=principal,
+                issue_reads=self.issue_reads,
             )
         except AgentBriefRefused as exc:
-            raise AgentHandRefused(exc.reason, str(exc)) from exc
+            raise AgentHandRefused.from_launch(exc) from exc
 
         try:
             story_ref = derived_story_ref(project_id or DESK_PROJECT, kind, item_id)
         except LaunchRefused as exc:
-            raise AgentHandRefused(exc.reason, str(exc)) from exc
+            raise AgentHandRefused.from_launch(exc) from exc
         request = {
             "agent_profile_id": profile_id,
             "source_id": source.source_id,
@@ -290,7 +338,8 @@ class AgentHandService:
             "story_ref": story_ref,
             "origin_ref": {"kind": kind, "id": item_id},
         }
-        if agent.get("executable") == "claude":
+        if agent.get("executable") in ("claude", "codex"):
+            # Conductor R3: Codex is gated like Claude Code (its -c hooks).
             result = self._launch_gated(launcher, request, brief["text"], principal, worktree_path, spec["name"])
         else:
             result = self._launch_ungated(launcher, request, brief["text"], principal)
@@ -346,7 +395,7 @@ class AgentHandService:
             instruction=instruction, profile=profile, project_id=project_id,
         )
 
-    # ── Claude: process.spawn, the gate armed for this worktree ──────
+    # ── Claude Code and Codex: process.spawn, the gate armed for this worktree ──
 
     def _launch_gated(
         self, launcher: Any, request: dict[str, Any], text: str, principal: Any,
@@ -361,7 +410,7 @@ class AgentHandService:
             )
         except LaunchRefused as exc:
             self._release_gate(worktree_path, name, prior, "the launch refused before it ran")
-            raise AgentHandRefused(exc.reason, str(exc)) from exc
+            raise AgentHandRefused.from_launch(exc) from exc
         except Exception:
             self._release_gate(worktree_path, name, prior, "the launch failed before it ran")
             raise
@@ -425,14 +474,15 @@ class AgentHandService:
     def _launch_ungated(
         self, launcher: Any, request: dict[str, Any], text: str, principal: Any,
     ) -> dict[str, Any]:
-        """Codex: the ungated launch. The brief is held and typed only when
+        """An agent with no gate hook (none since Conductor R3, which gates
+        Codex): the ungated launch. The brief is held and typed only when
         Codex's rider hooks register the session (its readiness); with no
         hooks installed it stays held as ``hooks_missing`` (K1's one-press
         install, then resume on the same launch)."""
         try:
             record = launcher.launch(request, principal=principal)
         except LaunchRefused as exc:
-            raise AgentHandRefused(exc.reason, str(exc)) from exc
+            raise AgentHandRefused.from_launch(exc) from exc
         if record.get("state") != "launched":
             return {"launch": record}
         ready = codex_hooks_installed()
@@ -459,7 +509,7 @@ class AgentHandService:
         try:
             record = launcher.resume_delivery(str(launch_id))
         except LaunchRefused as exc:
-            raise AgentHandRefused(exc.reason, str(exc)) from exc
+            raise AgentHandRefused.from_launch(exc) from exc
         return {
             "launch_id": record.get("launch_id"),
             "state": record.get("state"),
@@ -496,10 +546,15 @@ def live_launches(launcher: Any) -> list[dict[str, Any]]:
 
 
 def codex_hooks_installed(path: Optional[Path] = None) -> bool:
-    """Whether Codex's hook file carries HoldSpeak's rider hooks."""
-    from ..agent_context.hooks import AGENT_HOOK_COMMAND_MARKER
+    """Whether Codex's hook file carries HoldSpeak's rider hooks.
 
-    target = path or Path.home() / ".codex" / "hooks.json"
+    The file Codex reads: ``$CODEX_HOME/hooks.json`` when ``CODEX_HOME`` is
+    set, the same resolver the one-press install writes through (Conductor
+    R1: this read ``~/.codex`` only, so a launch read hooks as missing right
+    after the install had written them)."""
+    from ..agent_context.hooks import AGENT_HOOK_COMMAND_MARKER, agent_settings_path
+
+    target = path or agent_settings_path("codex")
     try:
         return AGENT_HOOK_COMMAND_MARKER in target.read_text(encoding="utf-8")
     except OSError:

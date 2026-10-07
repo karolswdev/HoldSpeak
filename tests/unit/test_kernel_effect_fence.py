@@ -363,6 +363,17 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         "urlopen",
         1,
     ): "loopback gate protocol transport outside census egress scope",
+    (
+        "holdspeak/agent_context/codex_trust.py",
+        "_AppServer.__init__",
+        "Popen",
+        1,
+    ): (
+        "Conductor R3: a short local `codex app-server` (JSON-RPC on stdio, no "
+        "network call) that lists Codex's hooks; its one write (the hook trust in "
+        "Codex's config) runs only inside the owner-only admitted "
+        "`agent_hooks.install` operation, whose receipt covers it"
+    ),
     # HS-171-02/05: local desktop notification dispatch (osascript).
     # Not an effect — a local-only notification, never egress.
     (
@@ -424,11 +435,23 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "mandatory authenticated owner read",
     (
+        "holdspeak/services/watch_sources.py",
+        "GitHubWatchSource._snapshot_issues",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # Conductor R4: `gh issue list`
+    (
         "holdspeak/services/github_provider.py",
         "GitHubProviderAdapter._run_gh",
         "run_read_subprocess",
         1,
     ): "mandatory authenticated owner read",
+    (
+        "holdspeak/services/agent_issue.py",
+        "_gh_body",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # Conductor R4: `gh issue view` for an issue brief
     (
         "holdspeak/services/jira_provider.py",
         "JiraProviderAdapter._run_acli",

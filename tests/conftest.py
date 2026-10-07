@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+import os
+
+# Conductor R4: no test reaches the owner's real `gh` or `acli` through a
+# production default runner (holdspeak/cli_guard.py). A hub a test starts
+# inherits the flag; a test's own stub under the temp directory still runs.
+# A real-metal run may set it to 0.
+os.environ.setdefault("HOLDSPEAK_TEST_NO_REAL_CLI", "1")
+
 import pytest
 import numpy as np
 from pathlib import Path

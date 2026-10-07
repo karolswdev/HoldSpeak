@@ -225,6 +225,12 @@ def test_a_branch_collision_releases_this_calls_hold_only(tmp_path, db, monkeypa
     other = str((tmp_path / "other-repo").resolve())
     coder_gate.save_gate_config(coder_gate.GateConfig(armed=False, repos={other: ["Bash"]}), rig.gate_path)
     subprocess.run(["git", "-C", str(rig.repo), "branch", "hs/action-ai_1"], check=True)
+    # Conductor R4: a kept branch now moves the hand-off to round 2; the
+    # collision this fence needs is a branch made after that choice (a race).
+    from holdspeak.services import agent_hand_service
+
+    monkeypatch.setattr(agent_hand_service, "free_worktree_spec",
+                        lambda _reg, _repo, kind, item_id: agent_hand_service.worktree_spec(kind, item_id))
     result = rig.hand.hand(OWNER, "action", "ai_1")
     assert result["status"] == "failed" and result["failure"]["stage"] == "worktree_create"
     assert not rig.worktree.exists() and rig.tmux.sessions == {}
@@ -351,11 +357,19 @@ def test_thread_agent_hands_through_the_declared_operation(tmp_path, monkeypatch
 # ── 7. Codex: readiness first, the receipt decides ───────────────────
 
 
-def test_codex_without_hooks_holds_the_brief_by_name(tmp_path, db, monkeypatch) -> None:
+def test_codex_is_gated_and_holds_the_brief_until_it_is_ready(tmp_path, db, monkeypatch) -> None:
+    """Conductor R3: Codex carries its hooks per launch (no ``hooks.json``
+    needed), so it is gated like Claude Code; the brief waits while neither
+    the rider registered nor the composer shows."""
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
-    rig = _rig(tmp_path, db, monkeypatch, agent="codex")
+    rig = _rig(tmp_path, db, monkeypatch, agent="codex", register_when=lambda tmux: False,
+               screen=lambda worktree: "OpenAI Codex\nLoading the model...")
     result = rig.hand.hand(OWNER, "action", "ai_1", profile="codex-default")
-    assert result["status"] == "launched" and result["instruction_state"] == "hooks_missing"
+    assert result["status"] == "launched" and result["instruction_state"] == "pending"
+    assert result["gate"] == "gated"
+    import time
+
+    time.sleep(0.3)
     assert rig.typed == []
     rig.tmux.ended = True
 

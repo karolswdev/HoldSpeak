@@ -43,6 +43,8 @@ export interface HandPreview {
   people_cut: number;
   sources: { kind: string; ref: string; title: string; lines: number | null }[];
   acceptance: string[];
+  /** An issue's body was read from its tracker: where, and the outcome. */
+  tracker?: { host: string; state: "read" | "not_read" } | null;
   repo: string | null;
   /** The repository as the face shows it (the hub's home is `~`). */
   repo_label?: string | null;
@@ -215,6 +217,23 @@ function AgentSummary({ agent, detect }: { agent: AgentId; detect: AgentsDetect 
   return <span className="surface-token" data-chip>{words}</span>;
 }
 
+/** The issue-body read as the sheet shows it: the host, and READING (the
+ * preview is out), READ, or NOT READ. */
+export function trackerToken(
+  origin: HandOrigin,
+  preview: Pick<HandPreview, "tracker"> | null,
+  previewError: string | null,
+): { host: string | null; state: "working" | "success" | "failure"; label: string } {
+  const host = preview?.tracker?.host || origin.trackerHost || null;
+  if (preview) {
+    return preview.tracker?.state === "read"
+      ? { host, state: "success", label: "READ" }
+      : { host, state: "failure", label: "NOT READ" };
+  }
+  if (previewError) return { host, state: "failure", label: "NOT READ" };
+  return { host, state: "working", label: "READING" };
+}
+
 function Sheet({ origin }: { origin: HandOrigin }) {
   const close = useAgentHand((s) => s.close);
   const detect = useDetect();
@@ -308,6 +327,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   const canLaunch = current && blocked.length === 0 && !launching && launched === null;
   const delivery = launched ? deliveryToken(launched) : null;
   const pick = (value: string) => { if (!frozen) setAgent(value as AgentId); };
+  const tracker = trackerToken(origin, current ? preview : null, previewError);
   return (
     <DeskWindowFrame
       id={HAND_WINDOW_ID}
@@ -339,6 +359,14 @@ function Sheet({ origin }: { origin: HandOrigin }) {
             ))}
           </ChoiceCardGroup>
         </SurfaceSection>
+        {origin.kind === "issue" ? (
+          /* The issue body is read from its tracker when the sheet opens: the
+             egress at the fetch, with its outcome (R4, Astra #912). */
+          <span className="desk-hand-tokens" data-testid="hand-tracker" data-state={tracker.state}>
+            <EgressChip label={tracker.host ? tracker.host.toUpperCase() : undefined} scope="cloud" />
+            <StateChip state={tracker.state} label={tracker.label} />
+          </span>
+        ) : null}
         {previewError ? (
           <div className="desk-hand-refused" role="alert" data-testid="hand-preview-refused">
             <StateChip state="failure" label="NO BRIEF" />

@@ -355,7 +355,7 @@ def handle_message_for_principal(
     *palette* is non-None, tools outside it are refused with MCP-005.
     ``call_gate(name, arguments)`` refuses one call of a palette tool on its
     arguments, the same way; ``resource_gate(uri)`` hides and refuses
-    resources (Conductor K6: the CONDUCTOR palette's People cut).
+    resources (Conductor K6; since R7 People resources pass while People access is on).
     """
     request_id = request.get("id")
     method = request.get("method")

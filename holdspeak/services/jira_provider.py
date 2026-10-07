@@ -1536,6 +1536,61 @@ class JiraProviderAdapter:
             "project_key": project.get("key") if isinstance(project, dict) else None,
         }
 
+    def view_description(
+        self,
+        principal: Principal,
+        connection_ref_str: str,
+        key: str,
+    ) -> dict[str, Any]:
+        """One work item's description and labels (Conductor R4: the issue
+        brief). Read only, and it changes no ambient acli state: it never
+        runs ``auth switch``. Under the acli lock it reads ``auth status``;
+        only when the active account IS the connection's does it run
+        ``acli jira workitem view KEY --fields description,labels --json``.
+        Another active account answers ``account_not_active`` (Astra #912:
+        a preview must not switch the owner's CLI account).
+
+        Returns ``{state: "ready", description, labels}`` or a typed
+        ``{state: failed, error_code}``."""
+        clean_key = str(key or "").strip()
+        if not re.match(r"^[A-Z][A-Z0-9_]*-\d+$", clean_key):
+            return {"state": DISCOVERY_FAILED, "error_code": CODE_QUERY_INVALID, "error_detail": "bad key"}
+        site, email = _parse_connection_ref(connection_ref_str)
+        if self._runner is None and shutil.which("acli") is None:
+            return {"state": DISCOVERY_FAILED, "error_code": CODE_UNAVAILABLE, "error_detail": "acli is not installed"}
+
+        def failed(code: str, detail: str = "") -> dict[str, Any]:
+            return {"state": DISCOVERY_FAILED, "error_code": code, "error_detail": detail[:300]}
+
+        with _ACLI_LOCK:
+            try:
+                status = self._run_acli(["acli", "jira", "auth", "status"], principal, timeout=10.0)
+            except Exception as exc:
+                return failed(CODE_UNAVAILABLE, str(exc))
+            combined = (status.stdout or "") + "\n" + (status.stderr or "")
+            if status.returncode != 0 or not _parse_acli_auth_status(combined, site, email).get("match"):
+                return failed("account_not_active", "the active acli account is not this connection")
+            command = [
+                "acli", "jira", "workitem", "view", clean_key,
+                "--fields", "description,labels", "--json",
+            ]
+            try:
+                completed = self._run_acli(command, principal, timeout=15.0)
+            except Exception as exc:
+                return failed(CODE_UNAVAILABLE, str(exc))
+        if completed.returncode != 0:
+            return failed(CODE_UNAVAILABLE, completed.stderr or "")
+        try:
+            obj = json.loads(completed.stdout or "{}")
+        except json.JSONDecodeError:
+            return failed(CODE_QUERY_INVALID, "acli returned invalid JSON")
+        fields = (obj or {}).get("fields") or {}
+        return {
+            "state": DISCOVERY_READY,
+            "description": fields.get("description"),
+            "labels": fields.get("labels") or [],
+        }
+
     def count(
         self,
         principal: Principal,

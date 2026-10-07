@@ -411,8 +411,12 @@ def test_a_codex_launch_gets_the_mcp_flags(tmp_path, db, monkeypatch) -> None:
     assert credential is not None and credential.launch_id == result["launch_id"]
     agent_argv = shlex.split(command.split(" exec ", 1)[1])
     hub_url = agent_credentials.hub_url
+    # Conductor R3: its own process and its hooks first, then the MCP.
+    from holdspeak import coder_gate
+
     assert agent_argv == [
-        "codex",
+        "codex", *coder_gate.codex_spawn_args(),
+        "--ask-for-approval", "on-request",  # R3: Normal keeps Codex's approvals
         "-c", f'mcp_servers.holdspeak.url="{hub_url}/api/mcp"',
         "-c", 'mcp_servers.holdspeak.bearer_token_env_var="HOLDSPEAK_AGENT_CREDENTIAL"',
         "-c", 'mcp_servers.holdspeak.default_tools_approval_mode="approve"',
@@ -1198,6 +1202,9 @@ def test_r9_people_projections_reach_every_launch_reader(hub: Hub) -> None:
     assert "Public task" in needs_you
     board = json.dumps(_call(agent, "follow_through.board", {}))
     assert "Public task" in board
+    # Since R5 a launch reads the Door (the Thought lane omitted): People in it too.
+    door = json.dumps(_call(agent, "door.get", {}))
+    assert "Public task" in door and "SECRET_PERSON_SENTINEL" in door, door
     for name, args in (
         ("people.relationship.list", {}),
         ("people.relationship.get", {"relationship_id": person["id"]}),
@@ -1209,6 +1216,20 @@ def test_r9_people_projections_reach_every_launch_reader(hub: Hub) -> None:
             assert "SECRET_PERSON_SENTINEL" in json.dumps(answer), (name, answer)
     is_error, ready = _result(_call(agent, "people.readiness", {}))
     assert is_error is False and ready["access"] in ("read", "write"), ready
+
+
+def test_r5_a_launch_reads_the_door_without_the_thought_lane(hub: Hub) -> None:
+    _reach(hub, False)
+    err, _item = hub.mcp("door.add_item", {"task": "Agent-visible task"})
+    assert not err
+    _err, owner_door = hub.mcp("door.get", {})
+    assert "active" in owner_door["board"] and "active" in owner_door["counts"]
+    agent = _client(hub, _launch_credential().token)
+    error, door = _result(_call(agent, "door.get", {}))
+    assert not error, door
+    assert "Agent-visible task" in json.dumps(door["board"])
+    assert "active" not in door["board"] and "active" not in door["counts"]
+    assert "thought_owner_required" not in json.dumps(door)
 
 
 def test_r9_people_writes_stay_the_owners_over_mcp_and_http(hub: Hub) -> None:

@@ -193,6 +193,10 @@ class PermissionGate:
         command_name = Path(argv[0]).name if argv else "<empty>"
         require_subprocess_read_authority(principal, command_name)
         self._require("run_subprocess")
+        if runner is None:
+            from .cli_guard import refuse_real_cli_in_tests
+
+            refuse_real_cli_in_tests(argv)
         actual = runner or subprocess.run
         return actual(list(argv), **kwargs)
 

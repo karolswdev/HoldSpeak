@@ -104,7 +104,11 @@ def test_github_pack_manifest_shape():
         (("gh", "pr", "list", "--repo", "o/r"), True),
         (("/usr/local/bin/gh", "pr", "view", "42", "--repo", "anthropic/holdspeak"), True),
         (("gh", "issue", "view", "12", "--repo", "o/r"), True),
+        # Conductor R4: a Room's open issues (read-only list).
+        (("gh", "issue", "list", "--repo", "o/r", "--state", "open"), True),
         # Rejected: mutating verbs.
+        (("gh", "issue", "edit", "1", "--add-label", "x"), False),
+        (("gh", "issue", "comment", "1", "--body", "x"), False),
         (("gh", "pr", "edit", "1", "--repo", "o/r"), False),
         (("gh", "pr", "merge", "1", "--repo", "o/r"), False),
         (("gh", "pr", "close", "1"), False),

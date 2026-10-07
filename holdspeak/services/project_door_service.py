@@ -294,6 +294,16 @@ class ProjectDoorService:
                     "state": "selected",
                     "test_state": "passed",
                 })
+                if provider == "github" and key == "open_prs":
+                    # Conductor R4: the open issues ride with the PR queue
+                    # (no toggle of their own), so a Room's GitHub issue
+                    # rows work out of the box.
+                    proposals.append({
+                        "id": f"door_{uuid.uuid4().hex[:12]}",
+                        "spec": self._compile_github("watch.github.open_issues", repo, {}),
+                        "state": "selected",
+                        "test_state": "passed",
+                    })
 
         setup_payload = {
             "name": name,

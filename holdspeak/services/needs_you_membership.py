@@ -307,6 +307,167 @@ def coder_items(
     return rows
 
 
+#: The source of a held tool call of a HoldSpeak launch (Conductor R1).
+GATE_SOURCE = "gate"
+
+
+def gate_items(holds: Iterable[dict[str, Any]], now: datetime | None = None) -> list[dict[str, Any]]:
+    """R5, held tool calls: each Bash call the tool gate holds for a
+    HoldSpeak-launched agent is one ``TO APPROVE`` row (Conductor R1: the
+    agent waited up to 240 s and nothing on the Desk said so).
+
+    ``holds`` are :func:`_read_gate_holds` records. The row's ref and its
+    Open name the gate proposal (``gate:<proposal_id>``); ``notifyKey`` is
+    the same ref, so one hold notifies once."""
+    clock = now or local_wall()
+    now_s = (clock if clock.tzinfo else clock.astimezone()).timestamp()
+    rows: list[dict[str, Any]] = []
+    for hold in holds:
+        proposal_id = str(hold.get("proposal_id") or "")
+        if not proposal_id or not hold.get("held", True):
+            continue
+        created = float(hold.get("created_at") or now_s)
+        since = datetime.fromtimestamp(created, timezone.utc).isoformat().replace("+00:00", "Z")
+        ref = f"{GATE_SOURCE}:{proposal_id}"
+        title = _excerpt(f"Approve: {hold.get('command') or hold.get('tool') or 'a tool call'}")
+        rows.append({
+            "id": ref,
+            "ref": ref,
+            "notifyKey": ref,
+            "projectId": "",
+            "projectName": "",
+            "title": title,
+            "why": TO_APPROVE,
+            "ageToken": since,
+            "since": since,
+            "dueAt": None,
+            "kind": GATE_SOURCE,
+            "source": GATE_SOURCE,
+            "verbHref": None,
+            "openRef": ref,
+            "severity": "warning",
+            "sessionKey": str(hold.get("session_key") or ""),
+            "launchId": str(hold.get("launch_id") or ""),
+            "question": title,
+            "waitKind": "approve",
+            "waitStartedAt": since,
+            "ageSeconds": max(0, int(now_s - created)),
+        })
+    return rows
+
+
+def _gate_command(args_head: str) -> str:
+    """The command of a held call from its (redacted, maybe cut) head."""
+    import json
+
+    try:
+        parsed = json.loads(args_head)
+    except ValueError:
+        return args_head
+    if isinstance(parsed, dict) and parsed.get("command"):
+        return str(parsed["command"])
+    return args_head
+
+
+#: How far back a decided or expired hold still names its session's
+#: permission wait (one notification identity through decision or expiry).
+GATE_RECENT_SECONDS = 30 * 60
+#: Clock slack between the gate hold and the hook's permission Notification.
+GATE_WAIT_SLACK_SECONDS = 2.0
+
+
+def _read_gate_holds(db: Any, *, ledger: Any = None, now: float | None = None) -> list[dict[str, Any]]:
+    """The gate proposals of live HoldSpeak launches: each held, unexpired
+    one (``held: True``, a row of its own) and each decided or expired in
+    the last :data:`GATE_RECENT_SECONDS` (``held: False``, read only to
+    correlate a permission wait, :func:`correlate_gate_waits`)."""
+    import time
+
+    from holdspeak.db.gate import ALL_STATES, HELD
+    from holdspeak.services.gate_service import _LIVE_LAUNCH_STATES, _is_launch_caller
+
+    if ledger is None:
+        from holdspeak.delivery.factory_launch import LaunchLedger
+
+        ledger = LaunchLedger()
+    moment = time.time() if now is None else now
+    launches = [r for r in ledger.list() if str(r.get("state") or "") in _LIVE_LAUNCH_STATES]
+    if not launches:
+        return []
+    holds: list[dict[str, Any]] = []
+    for state in sorted(ALL_STATES):
+        for proposal in db.gate.list_state(state, limit=200):
+            expired = bool(proposal.expires_at and proposal.expires_at <= moment)
+            held = state == HELD and not expired
+            ended = proposal.decided_at or proposal.expires_at or moment
+            if not held and moment - float(ended) > GATE_RECENT_SECONDS:
+                continue
+            launch = next((r for r in launches if _is_launch_caller(r, proposal.session_key)), None)
+            if launch is None:
+                continue
+            holds.append({
+                "proposal_id": proposal.id,
+                "launch_id": str(launch.get("launch_id") or ""),
+                "session_key": str(launch.get("session_key") or ""),
+                "tool": proposal.tool,
+                "command": _gate_command(proposal.args_head),
+                "created_at": proposal.created_at,
+                "held": held,
+                "ended_at": None if held else float(ended),
+            })
+    return holds
+
+
+def correlate_gate_waits(
+    coder_rows: list[dict[str, Any]], gate_rows: list[dict[str, Any]],
+    holds: Iterable[dict[str, Any]], now: datetime | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """One ask, one row, one notification (Astra on #916): a held tool call
+    and a permission wait of the SAME session that began while that call
+    was held are one ask. The gate row stays (it names the command and opens
+    the proposal); the coder row goes; the row's notification identity is
+    the one of whichever began first. After the hold is decided or expired,
+    a permission wait that began during it keeps the hold's identity, so the
+    ask never notifies twice. Questions (TO ANSWER) are never joined."""
+    clock = now or local_wall()
+    now_s = (clock if clock.tzinfo else clock.astimezone()).timestamp()
+    by_ref = {row["id"]: row for row in gate_rows}
+    records = [h for h in holds if h.get("proposal_id") and h.get("session_key")]
+    kept: list[dict[str, Any]] = []
+    for row in coder_rows:
+        start = _epoch_seconds(row.get("waitStartedAt"))
+        if row.get("waitKind") != "approve" or start is None:
+            kept.append(row)
+            continue
+        overlapping = []
+        for hold in records:
+            if hold["session_key"] != row.get("sessionKey"):
+                continue
+            begun = float(hold.get("created_at") or 0.0)
+            end = now_s if hold.get("held", True) else float(hold.get("ended_at") or now_s)
+            if begun - GATE_WAIT_SLACK_SECONDS <= start <= end + GATE_WAIT_SLACK_SECONDS:
+                overlapping.append(hold)
+        # A live hold first (Astra round 2 on #916: a call approved a moment
+        # before a new hold took the new hold's wait); a decided or expired
+        # one only when no held one overlaps. Among them, the newest.
+        held_ones = [h for h in overlapping if h.get("held", True)]
+        pool = held_ones or overlapping
+        match = max(pool, key=lambda h: float(h.get("created_at") or 0.0)) if pool else None
+        if match is None:
+            kept.append(row)
+            continue
+        ref = f"{GATE_SOURCE}:{match['proposal_id']}"
+        first = row["notifyKey"] if start < float(match.get("created_at") or 0.0) else ref
+        gate_row = by_ref.get(ref)
+        if gate_row is not None:
+            gate_row["notifyKey"] = first
+            gate_row["joined"] = row["id"]
+            continue  # one row: the gate's
+        row["notifyKey"] = first
+        kept.append(row)
+    return kept, gate_rows
+
+
 #: The names that mean the owner himself. The People store reserves ``me``
 #: and ``you`` (no person can take them, ``people_service._RESERVED_OWNER_ALIASES``)
 #: and its follow-through projection names the owner ``you`` / ``manager``.
@@ -484,6 +645,7 @@ def compute_needs_you(
     meetings: Iterable[dict[str, Any]] = (),
     decisions: Iterable[dict[str, Any]] = (),
     coders: Iterable[Any] = (),
+    gate_holds: Iterable[dict[str, Any]] = (),
     self_names: Iterable[str] = SELF_OWNER_NAMES,
     personal_names: Iterable[str] = (),
     now: datetime | None = None,
@@ -543,7 +705,13 @@ def compute_needs_you(
             row["why"] = YOURS if _waiting_on(his) else (his.get("why") or row.get("why"))
             row["severity"] = his.get("severity") or row.get("severity")
     # A coder row (R5) keeps its own row and its own ref (``coder:<key>``).
-    singles = people + decision_items(decisions) + coder_items(coders, clock)
+    # Conductor R1: held calls of launches; a held call and the same
+    # session's permission wait are one row with one notification identity.
+    holds = list(gate_holds)
+    coder_rows, gate_rows = correlate_gate_waits(
+        coder_items(coders, clock), gate_items(holds, clock), holds, clock,
+    )
+    singles = people + decision_items(decisions) + coder_rows + gate_rows
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
@@ -845,6 +1013,14 @@ def compose(
             "repair": {"token": "READ FAILED", "verb": "Retry", "href": "/"},
         })
 
+    # Conductor R1: the tool calls the gate holds for HoldSpeak launches.
+    gate_holds: list[dict[str, Any]] = []
+    try:
+        gate_holds = _read_gate_holds(db)
+    except Exception as exc:
+        log.warning("needs-you: the gate read failed: %s", exc)
+        errors["gate"] = _reason(exc)
+
     # The names that mean the owner: the reserved ones, his speaker label,
     # and the name and aliases he gave on first run (``config.owner``).
     speaker: list[Any] = []
@@ -868,6 +1044,7 @@ def compose(
         meetings=meetings,
         decisions=decisions,
         coders=coders,
+        gate_holds=gate_holds,
         self_names=names,
         personal_names=personal,
         now=now,

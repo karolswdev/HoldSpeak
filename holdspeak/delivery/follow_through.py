@@ -22,11 +22,17 @@ docs/internal/CONDUCTOR.md, step 6 (lane K4). On each Heartbeat sweep:
    - ``decision_record``: ``DecisionRecordService.link_work(record, "pr",
      url)``; ``decision``: the same, on the decision's record (minted from
      the meeting decision when it has none yet);
-   - other kinds have no close; the launch records ``not_closable``.
+   - ``project_item`` (Conductor R4): the done transition of its type
+     (milestone ``reached``, risk ``mitigated``, dependency ``resolved``,
+     workstream ``done``); a signal has no done state, so it is linked;
+   - ``note``, ``meeting``, ``artifact`` and ``issue`` (R4): the PR is
+     linked to the item in its Room (a ``conductor.pr_linked`` observation
+     and an evidence link, ``linked``). A merge closes nothing on GitHub or
+     Jira: that would be an act on the tracker the owner did not take.
 
    Control mode: Secure (``safe``) does not close. It puts one Door item
-   ``Merged: confirm close: ...`` (the smallest Needs you mechanism: an
-   action item with no owner reads UNASSIGNED in Needs you). When the owner
+   ``Merged: confirm close: ...`` owned by the owner (``me``) and due today,
+   so Needs you counts it (R4: it read UNASSIGNED before). When the owner
    marks that item done, the next sweep closes the origin with the same
    evidence; dismissed, the origin stays open (``close_declined``), whatever
    the mode is later. Normal and YOLO close at once.
@@ -56,12 +62,22 @@ log = get_logger("delivery.follow_through")
 
 #: Launch states that never ran an agent: nothing to follow.
 UNLAUNCHED_STATES = frozenset({"failed", "admitted", "approved", "rejected", "starting"})
-#: Origin kinds with a close (Conductor K4).
-CLOSABLE_KINDS = frozenset({"action", "decision", "decision_record"})
+#: Origin kinds with a close (Conductor K4; R4 gave every origin kind one).
+CLOSABLE_KINDS = frozenset(
+    {"action", "decision", "decision_record", "project_item", "note", "meeting", "artifact", "issue"}
+)
+#: The done state of each Project item type a merge closes (R4). A signal
+#: is a reading, not work: it has no done state, so its PR is linked.
+ITEM_DONE = {"milestone": "reached", "risk": "mitigated", "dependency": "resolved", "workstream": "done"}
+#: The Room observation that links a merged PR to the item it came from (R4).
+LINK_OBSERVATION = "conductor.pr_linked"
+#: The owner of a Door item the follow-through raises: the owner himself
+#: (``needs_you_membership.SELF_OWNER_NAMES``), so Needs you counts it.
+DOOR_OWNER = "me"
 #: Close states after which cleanup may run.
 CLOSE_RESOLVED = frozenset(
     {"closed", "linked", "already_closed", "origin_dismissed", "origin_missing",
-     "not_closable", "no_origin", "close_declined"}
+     "not_closable", "no_origin", "close_declined", "no_room"}
 )
 #: Cleanup outcomes that end the attempt (anything else is retried).
 _SESSION_FINAL = frozenset({"killed", "session_gone", "no_session"})
@@ -71,6 +87,17 @@ _WORKTREE_FINAL = frozenset(
 )
 #: Worktree outcomes after which the launch's live Work attempts abandon.
 _WORKTREE_GONE = frozenset({"worktree_removed", "worktree_absent"})
+#: Conductor R4: the Heartbeat's merged-only read per Room repository.
+MERGED_OBSERVATION = "conductor.pr_merged"
+MERGED_LIMIT = 30
+#: The first read of a repository goes back this far; later reads continue
+#: from the stored watermark, however long the hub was off.
+MERGED_LOOKBACK_DAYS = 8
+MERGED_QUERIES_PER_REPO = 4
+#: A full window this narrow is taken as read (it cannot be split usefully).
+MERGED_MIN_WINDOW_SECONDS = 60
+#: Registry outcomes that end the cleanup of a removed worktree (R4).
+_REGISTRY_FINAL = frozenset({"unregistered", "not_registered", "primary_kept"})
 SECURE_MODE = "safe"
 #: Conductor K5, the wall-clock budget of one launch: a running agent with no
 #: hook activity for this long, or running this long in all, raises one Door
@@ -118,8 +145,11 @@ class FollowThroughObserver:
         gate_path: Optional[Path] = None,
         audit: Optional[Callable[..., int]] = None,
         clock: Callable[[], datetime] = _now,
+        gh_runner: Any = None,
     ) -> None:
         self._db = db
+        #: ``gh`` for the merged-only read (R4); None runs the real CLI.
+        self._gh_runner = gh_runner
         self._ledger = ledger
         self._registry = registry
         self._receipts = receipts
@@ -201,6 +231,201 @@ class FollowThroughObserver:
             return False
         return not (record.get("follow_through") or {}).get("done")
 
+    # ── every merge of a Room repository (Conductor R4) ──────────────
+
+    def sweep_merged(self, principal: Any) -> dict[str, Any]:
+        """Read each Room repository's recently merged PRs (one bounded
+        ``gh pr list --state merged`` per repository) and record each merge
+        once per Room as a ``conductor.pr_merged`` observation keyed by its
+        URL, so the weekly update reports merges no agent made. K4's own
+        per-launch lookup reports an agent PR under the same key (the URL):
+        the update shows one line per PR. Room Watches stay open-only."""
+        with _SWEEP_LOCK:
+            return self._sweep_merged(principal)
+
+    def _room_repositories(self) -> dict[str, set[str]]:
+        """``owner/name`` (lower case) -> the Rooms that name it: the GitHub
+        repositories the Rooms' Watches read, and the repositories filed in
+        a Room (``repository:<source_id>``, by the clone's GitHub origin)."""
+        import json
+
+        from ..services.project_service import _PROVIDER_TO_CONNECTOR
+
+        repos: dict[str, set[str]] = {}
+        with self._db._connection() as conn:
+            # The GitHub connector id, named once (project_service): the gh
+            # call itself runs in GitHubWatchSource, not in this package.
+            watches = conn.execute(
+                "SELECT w.project_id, w.query_json FROM connector_watches w "
+                "JOIN projects p ON p.id = w.project_id "
+                "WHERE w.connector_id IN (?, 'github') AND w.project_id IS NOT NULL",
+                (_PROVIDER_TO_CONNECTOR["github"],),
+            ).fetchall()
+            filed = conn.execute(
+                "SELECT r.project_id, r.resource_ref FROM project_resources r "
+                "JOIN projects p ON p.id = r.project_id "
+                "WHERE r.deleted = 0 AND r.resource_ref LIKE 'repository:%'",
+            ).fetchall()
+        for project_id, query_json in watches:
+            try:
+                repo = str((json.loads(query_json or "{}") or {}).get("repository") or "").strip().lower()
+            except (TypeError, ValueError):
+                continue
+            if repo.count("/") == 1:
+                repos.setdefault(repo, set()).add(str(project_id))
+        for project_id, ref in filed:
+            repo = self._source_repo(str(ref).split(":", 1)[1])
+            if repo:
+                repos.setdefault(repo, set()).add(str(project_id))
+        return repos
+
+    def _sweep_merged(self, principal: Any) -> dict[str, Any]:
+        """Per repository: drain merged PRs from its completed-through
+        watermark to now, in merged-date windows of at most
+        :data:`MERGED_LIMIT` results.
+
+        - The first lower bound (8 days back) is stored before the first
+          read and kept until that interval is drained (Astra #912 r2).
+        - A full window is halved; a full window of
+          :data:`MERGED_MIN_WINDOW_SECONDS` or less is paged instead: sorted
+          by creation (``sort:created-asc``) with a ``created:>=<cursor>``
+          continuation, so no merge in it is skipped.
+        - The watermark moves only past a window whose last read returned
+          fewer than the limit. Window end and cursor are stored, so a later
+          sweep (or a hub off for weeks) continues where this one stopped.
+        - At most :data:`MERGED_QUERIES_PER_REPO` reads per repository per sweep."""
+        from datetime import timedelta
+
+        from ..services.errors import ServiceError
+        from ..services.watch_sources import GitHubWatchSource
+
+        receipt: dict[str, Any] = {"kind": "merged_prs", "repositories": [], "recorded": 0}
+        repos = self._room_repositories()
+        if not repos:
+            return receipt
+        now = self._clock().astimezone(timezone.utc).replace(microsecond=0)
+        marks, untils, cursors = self._merged_marks()
+        source = GitHubWatchSource(runner=self._gh_runner)
+        for repo, projects in sorted(repos.items()):
+            if _parse(marks.get(repo)) is None:
+                # The first lower bound, stored once: a retry never moves it.
+                marks[repo] = (now - timedelta(days=MERGED_LOOKBACK_DAYS)).isoformat()
+                self._save_merged_marks(marks, untils, cursors)
+            through = _parse(marks[repo])
+            # The continuation: the narrowed window a full read left for the
+            # next sweep (else the window runs to now), and its page cursor.
+            resume = _parse(untils.get(repo))
+            target = resume if resume is not None and through < resume <= now else now
+            if resume is None or target != resume:
+                cursors.pop(repo, None)
+            reads, merged, recorded, state = 0, 0, 0, "live"
+            while through < now and reads < MERGED_QUERIES_PER_REPO:
+                search = f"merged:{_gh_stamp(through)}..{_gh_stamp(target)}"
+                cursor = cursors.get(repo)
+                if cursor is not None:
+                    search += (f" created:>={cursor}" if cursor else "") + " sort:created-asc"
+                try:
+                    rows = source.snapshot(principal, query_kind="pull_requests", query={
+                        "repository": repo, "state": "merged", "limit": MERGED_LIMIT, "search": search,
+                    })
+                except ServiceError as exc:
+                    state = exc.code
+                    break
+                except Exception as exc:  # a refused or failed CLI never stops the sweep
+                    state = str(getattr(exc, "code", "") or "gh_failed")
+                    break
+                reads += 1
+                merged += len(rows)
+                recorded += sum(
+                    1 for row in rows for project_id in sorted(projects)
+                    if self._record_merge(project_id, repo, row)
+                )
+                if len(rows) < MERGED_LIMIT:
+                    # The window (or its last page) is read whole: the
+                    # watermark moves past it.
+                    through, target = target, now
+                    marks[repo] = through.isoformat()
+                    untils.pop(repo, None)
+                    cursors.pop(repo, None)
+                elif cursor is not None or (target - through).total_seconds() <= MERGED_MIN_WINDOW_SECONDS:
+                    # Too narrow to halve: page it by creation time.
+                    created = sorted(str(r.get("createdAt") or "") for r in rows if r.get("createdAt"))
+                    last = created[-1] if created else ""
+                    if cursor is not None and (not last or last <= cursor):
+                        # 30 or more created in one second: never skip them.
+                        state = "window_dense"
+                        untils[repo] = target.isoformat()
+                        self._save_merged_marks(marks, untils, cursors)
+                        break
+                    cursors[repo] = last if cursor is not None else ""
+                    untils[repo] = target.isoformat()
+                else:
+                    # Full: more may sit in it. Halve it; nothing is skipped.
+                    target = through + (target - through) / 2
+                    untils[repo] = target.isoformat()
+                    cursors.pop(repo, None)
+                self._save_merged_marks(marks, untils, cursors)
+            receipt["recorded"] += recorded
+            entry = {"repository": repo, "state": state, "merged": merged, "recorded": recorded,
+                     "through": marks.get(repo) or "", "drained": through >= now}
+            receipt["repositories"].append(entry)
+        return receipt
+
+    _MERGED_POLICY = "conductor.merged_prs"
+
+    def _merged_marks(self) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
+        """Per ``owner/name``: the instant through which every merge was read
+        (the watermark), the end of the window being read (the
+        continuation), and that window's page cursor ("" = first page)."""
+        try:
+            policy = self._db.cadence.get_policy(self._MERGED_POLICY)
+        except Exception:
+            return {}, {}, {}
+        config = getattr(policy, "config", None) or {}
+
+        def read(key: str) -> dict[str, str]:
+            return {str(k): str(v) for k, v in dict(config.get(key) or {}).items()}
+
+        return read("through"), read("until"), read("cursor")
+
+    def _save_merged_marks(self, marks: dict[str, str], untils: dict[str, str], cursors: dict[str, str]) -> None:
+        from ..cadence.models import CadencePolicy
+
+        self._db.cadence.upsert_policy(CadencePolicy(
+            id=self._MERGED_POLICY, name=self._MERGED_POLICY, enabled=True,
+            config={"through": dict(marks), "until": dict(untils), "cursor": dict(cursors)},
+        ))
+
+    def _record_merge(self, project_id: str, repo: str, row: Mapping[str, Any]) -> bool:
+        """One merged PR in one Room; a repeat read records nothing."""
+        import hashlib
+        import json
+
+        from ..project_contracts import generate_pobs_id
+
+        url = str(row.get("url") or "")
+        if not url or str(row.get("state") or "").upper() != "MERGED":
+            return False
+        fact = {
+            "event": "pr_merged",
+            "repository": repo,
+            "pr_url": url,
+            "pr_number": str(row.get("number") or url.rstrip("/").rsplit("/", 1)[-1]),
+            "title": " ".join(str(row.get("title") or "").split()),
+            "head_ref": str(row.get("headRefName") or ""),
+            "merged_at": str(row.get("mergedAt") or ""),
+        }
+        fact_str = json.dumps(fact, sort_keys=True, separators=(",", ":"))
+        obs_id = generate_pobs_id(
+            adapter="conductor-merged", source_id=f"{project_id}|{repo}", source_version=url, fact_key=url,
+        )
+        return bool(self._db.project_observations.insert_observation(
+            observation_id=obs_id, project_id=project_id, source_id=f"github:{repo}",
+            observation_kind=MERGED_OBSERVATION, subject_ref=url, source_version=url,
+            observed_at=fact["merged_at"] or self._clock().isoformat(timespec="seconds"),
+            fact_json=fact_str, content_hash=hashlib.sha256(fact_str.encode("utf-8")).hexdigest()[:32],
+        ))
+
     # ── the wall-clock budget (Conductor K5) ─────────────────────────
 
     def _budgets(self, principal: Any, launches: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -281,7 +506,7 @@ class FollowThroughObserver:
         )
         door = DoorService(FollowThroughService(self._db), None, None, None, db=self._db)  # type: ignore[arg-type]
         door.add_item(
-            principal, task, source_type="agent_launch",
+            principal, task, owner=DOOR_OWNER, due=self._today(), source_type="agent_launch",
             source_ref=f"agent_budget:{launch['launch_id']}:{kind}",
         )
 
@@ -334,7 +559,10 @@ class FollowThroughObserver:
         state["done"] = (
             cleanup.get("session") in _SESSION_FINAL
             and cleanup.get("worktree") in _WORKTREE_FINAL
-            and (cleanup.get("worktree") not in _WORKTREE_GONE or cleanup.get("attempts") == "reconciled")
+            and (
+                cleanup.get("worktree") not in _WORKTREE_GONE
+                or (cleanup.get("attempts") == "reconciled" and cleanup.get("registry") in _REGISTRY_FINAL)
+            )
         )
         self._save(launch_id, state)
         receipt["cleaned"].append({"launch_id": launch_id, **cleanup})
@@ -446,9 +674,20 @@ class FollowThroughObserver:
         if asked == "dismissed":
             return "close_declined"
         # Confirmed, or Normal/YOLO with no question asked: close.
-        return self._close(principal, kind, item_id, evidence)
+        return self._close(principal, kind, item_id, evidence, launch)
 
-    def _close(self, principal: Any, kind: str, item_id: str, evidence: dict[str, str]) -> str:
+    def _close(
+        self, principal: Any, kind: str, item_id: str, evidence: dict[str, str],
+        launch: Optional[Mapping[str, Any]] = None,
+    ) -> str:
+        if kind == "project_item":
+            return self._close_project_item(principal, item_id, evidence, launch or {})
+        if kind in ("note", "meeting", "artifact", "issue"):
+            # An issue may leave its Watch's snapshot (resolved, out of the
+            # query) before the merge: it is still linked, by its id.
+            if kind != "issue" and not self._origin_title(kind, item_id):
+                return "origin_missing"
+            return self._link_in_room(principal, kind, item_id, evidence, launch or {})
         if kind == "action":
             from ..services.follow_through_service import FollowThroughService
 
@@ -479,6 +718,100 @@ class FollowThroughObserver:
             return "origin_missing"
         return "linked"
 
+    def _origin_project(self, kind: str, item_id: str, launch: Mapping[str, Any]) -> Optional[str]:
+        """The Room of the origin: its own Project, else the launch's."""
+        from ..services.agent_brief import project_for_item
+
+        try:
+            project_id = project_for_item(self._db, kind, item_id)
+        except Exception:
+            project_id = None
+        if project_id:
+            return project_id
+        candidate = str((launch.get("story_ref") or {}).get("project") or "")
+        if not candidate:
+            return None
+        with self._db._connection() as conn:
+            row = conn.execute("SELECT id FROM projects WHERE id = ?", (candidate,)).fetchone()
+        return str(row[0]) if row is not None else None
+
+    def _close_project_item(
+        self, principal: Any, item_id: str, evidence: dict[str, str], launch: Mapping[str, Any],
+    ) -> str:
+        """A Project item takes the done transition of its type; a signal is
+        linked. The PR is linked in the Room either way (the evidence)."""
+        from ..services.errors import NotFound
+        from ..services.project_service import ProjectService
+
+        item = self._db.projects.get_project_item(item_id)
+        if item is None:
+            return "origin_missing"
+        linked = self._link_in_room(principal, "project_item", item_id, evidence, launch)
+        target = ITEM_DONE.get(str(item.get("item_type") or ""))
+        if target is None:
+            return linked
+        if str(item.get("lifecycle") or "") == target:
+            return "already_closed"
+        try:
+            ProjectService(self._db).transition_item(
+                principal, str(item["project_id"]), item_id, target,
+            )
+        except NotFound:
+            return "origin_missing"
+        return "closed"
+
+    def _link_in_room(
+        self, principal: Any, kind: str, item_id: str, evidence: dict[str, str],
+        launch: Mapping[str, Any],
+    ) -> str:
+        """The merged PR, linked to its origin in the origin's Room: one
+        ``conductor.pr_linked`` observation (deterministic id: a replay is a
+        no-op) and one evidence link from the item to the PR URL."""
+        import hashlib
+        import json
+
+        from ..project_contracts import generate_pobs_id
+
+        project_id = self._origin_project(kind, item_id, launch)
+        if not project_id:
+            return "no_room"
+        url = str(evidence.get("pr_url") or "")
+        origin = f"{kind}:{item_id}"
+        fact = {
+            "event": "pr_merged",
+            "origin_ref": origin,
+            "title": self._origin_title(kind, item_id) or origin,
+            "pr_url": url,
+            "pr_number": url.rstrip("/").rsplit("/", 1)[-1],
+            "merged_sha": str(evidence.get("merged_sha") or ""),
+            "merged_at": str(evidence.get("merged_at") or ""),
+            "launch_id": str(evidence.get("launch_id") or ""),
+            "attempt_id": str(evidence.get("attempt_id") or ""),
+        }
+        fact_str = json.dumps(fact, sort_keys=True, separators=(",", ":"))
+        content_hash = hashlib.sha256(fact_str.encode("utf-8")).hexdigest()[:32]
+        source_id = f"conductor:{fact['launch_id'] or origin}"
+        # Identity from immutable ids only (the Room, the origin, the PR):
+        # a retry after an interrupted save, with a renamed origin, is the
+        # same observation and the same link (Astra #912).
+        obs_id = generate_pobs_id(
+            adapter="conductor", source_id=f"{project_id}|{origin}", source_version=url, fact_key=url,
+        )
+        repo = self._db.project_observations
+        repo.insert_observation(
+            observation_id=obs_id, project_id=project_id, source_id=source_id,
+            observation_kind=LINK_OBSERVATION, subject_ref=origin, source_version=url,
+            observed_at=fact["merged_at"] or self._clock().isoformat(timespec="seconds"),
+            fact_json=fact_str, content_hash=content_hash,
+        )
+        link_id = "plink_" + hashlib.sha256(f"{project_id}|{origin}|{url}".encode()).hexdigest()[:24]
+        if repo.get_evidence_link(link_id) is None:
+            repo.insert_evidence_link(
+                link_id=link_id, project_id=project_id, target_ref=origin,
+                evidence_ref=url, relation="merged_pr", observation_id=obs_id,
+            )
+        return "linked"
+
     def _confirm_status(self, launch: Mapping[str, Any]) -> Optional[str]:
         """The Secure question of this launch: None (never asked), or
         ``pending`` | ``done`` | ``dismissed``. Found by its source ref."""
@@ -504,16 +837,34 @@ class FollowThroughObserver:
         number = ((state.get("pr") or {}).get("number")) or ""
         task = f"Merged: confirm close: {title}" + (f" (PR #{number})" if number else "")
         door = DoorService(FollowThroughService(self._db), None, None, None, db=self._db)  # type: ignore[arg-type]
+        # R4: the owner holds it, due today: Needs you counts it as his
+        # (DUE TODAY), never UNASSIGNED.
         door.add_item(
-            principal, task, source_type="agent_launch",
+            principal, task, owner=DOOR_OWNER, due=self._today(), source_type="agent_launch",
             source_ref=f"agent_launch:{launch['launch_id']}",
         )
 
+    @staticmethod
+    def _today() -> str:
+        """Today, local (the Door board reads a due date against the wall
+        clock, so this one is the wall clock too)."""
+        return datetime.now().astimezone().date().isoformat()
+
     def _origin_title(self, kind: str, item_id: str) -> str:
+        if kind == "issue":
+            from ..services.agent_issue import issue_label, read_issue
+
+            issue = read_issue(self._db, item_id)
+            return issue_label(issue)[:200] if issue else ""
         queries = {
             "action": "SELECT task FROM action_items WHERE id = ?",
             "decision": "SELECT text FROM decisions WHERE id = ?",
             "decision_record": "SELECT decision_text FROM decision_records WHERE id = ?",
+            # R4: an untitled item still exists; it is named by its id.
+            "project_item": "SELECT COALESCE(NULLIF(title, ''), id) FROM project_items WHERE id = ?",
+            "note": "SELECT COALESCE(NULLIF(title, ''), id) FROM notes WHERE id = ? AND deleted = 0",
+            "meeting": "SELECT COALESCE(NULLIF(title, ''), id) FROM meetings WHERE id = ?",
+            "artifact": "SELECT COALESCE(NULLIF(title, ''), id) FROM artifacts WHERE id = ?",
         }
         try:
             with self._db._connection() as conn:
@@ -576,7 +927,40 @@ class FollowThroughObserver:
         if result.get("session") in _SESSION_FINAL and result.get("gate") not in ("released", "not_armed"):
             # No agent runs there any more: the launch's own hold goes.
             result["gate"] = self._release_gate(path, str(launch.get("session") or ""))
+        if (
+            result["worktree"] in _WORKTREE_GONE
+            and result.get("attempts") == "reconciled"
+            and result.get("gate") in ("released", "not_armed")
+            and result.get("registry") not in _REGISTRY_FINAL
+        ):
+            # R4: the removed worktree leaves the Delivery registry, last
+            # (the gate release above reads its path there), with a receipt.
+            result["registry"] = self._unregister(launch)
         return result
+
+    def _unregister(self, launch: Mapping[str, Any]) -> str:
+        from .. import coder_steering
+
+        source_id = str(launch.get("source_id") or "")
+        worktree_id = str(launch.get("worktree_id") or "")
+        unregister = getattr(self._registry, "unregister_worktree", None)
+        if unregister is None:
+            return "not_registered"
+        try:
+            status = str(unregister(source_id, worktree_id))
+        except Exception as exc:  # a registry write error is retried next sweep
+            log.warning("worktree not unregistered (%s)", exc)
+            return "error"
+        record = self._audit or coder_steering._default_audit
+        try:
+            record(
+                session_key=f"factory:worktree:{worktree_id}", agent="factory", pane_id=None,
+                text=f"worktree unregister {worktree_id}", grounding=[], submit=False,
+                outcome=f"worktree_{status}", detail=f"source {source_id}",
+            )
+        except Exception as exc:  # the receipt never blocks the cleanup
+            log.warning("unregister receipt not written (%s)", exc)
+        return status
 
     @staticmethod
     def _owns_worktree(launch: Mapping[str, Any]) -> bool:
@@ -671,6 +1055,11 @@ class FollowThroughObserver:
         return "released"
 
 
+def _gh_stamp(moment: datetime) -> str:
+    """A GitHub search instant: ``2026-10-06T11:00:00+00:00``."""
+    return moment.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+
+
 def _git_runner(argv: list[str]) -> Any:
     """The launch engine's own git read (one ledgered subprocess site)."""
     from .factory_launch import _default_git_runner
@@ -699,6 +1088,8 @@ def default_follow_through(db: Any) -> FollowThroughObserver:
 
 __all__ = [
     "CLOSABLE_KINDS",
+    "LINK_OBSERVATION",
+    "MERGED_OBSERVATION",
     "UNLAUNCHED_STATES",
     "FollowThroughObserver",
     "default_follow_through",

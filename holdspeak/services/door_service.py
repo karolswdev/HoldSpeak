@@ -19,6 +19,14 @@ if TYPE_CHECKING:
 
 
 
+
+def _launch_reader(principal: Any) -> bool:
+    """A launched agent (Conductor R5): the Door omits the owner's Thought lane."""
+    from .conductor_launch import launch_id_of
+
+    return launch_id_of(principal) is not None
+
+
 class DoorService:
     def __init__(
         self,
@@ -117,22 +125,27 @@ class DoorService:
         if now.tzinfo is None:
             now = now.astimezone()
         now_utc = now.astimezone(timezone.utc)
-        projected_board = {
-            **self.asking_board(principal),
-            "active": self._active_thoughts(principal),
-        }
+        launch = _launch_reader(principal)
+        projected_board: dict[str, Any] = dict(self.asking_board(principal))
+        # Conductor R5: Thoughts are the owner's custody (the Thought service
+        # refuses every other principal), so a launched agent's Door has no
+        # Thought lane. People are visible to it (Conductor R7).
+        if not launch:
+            projected_board["active"] = self._active_thoughts(principal)
         upcoming = self._upcoming(now_utc)
         has_calendar = self._calendar_configured()
+        counts: dict[str, int] = {
+            "overdue": len(projected_board["overdue"]),
+            "now": len(projected_board["now"]),
+            "waiting": len(projected_board["waiting"]),
+        }
+        if not launch:
+            counts["active"] = len(projected_board["active"])
+        counts["upcoming_today"] = self._upcoming_today(upcoming, now)
         result: dict[str, Any] = {
             "board": projected_board,
             "upcoming": upcoming,
-            "counts": {
-                "overdue": len(projected_board["overdue"]),
-                "now": len(projected_board["now"]),
-                "waiting": len(projected_board["waiting"]),
-                "active": len(projected_board["active"]),
-                "upcoming_today": self._upcoming_today(upcoming, now),
-            },
+            "counts": counts,
             "calendar_configured": has_calendar,
             "week": self._week_strip(now_utc, has_calendar),
         }

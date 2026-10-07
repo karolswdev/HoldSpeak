@@ -101,15 +101,11 @@ def compose_from_body(
         return JSONResponse({"error": "text is required"}, status_code=400)
     grounding = body.get("grounding")
     if grounding is None:
-        blocks, unknown = service.hydrate_refs(
-            principal, [], [], "summary", query=text
-        )
-        if unknown:
-            return JSONResponse(
-                {"error": "grounding ids not on this hub", "unknown_ids": unknown},
-                status_code=400,
-            )
-        return compose_steer(text, blocks)
+        # Conductor R1: a steer carries only what the owner attached. The
+        # text is never a search: a one-line answer that named
+        # ``action:<id>`` reached the agent with that item, its meeting and
+        # its siblings (memory recall over the text).
+        return compose_steer(text, [])
     if not isinstance(grounding, dict):
         return JSONResponse({"error": "grounding must be an object"}, status_code=400)
     raw_m = grounding.get("meeting_ids")

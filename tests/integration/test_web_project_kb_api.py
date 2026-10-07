@@ -496,6 +496,63 @@ class TestDictationAgentContext:
         assert body["session"]["agent"] == "codex"
         assert body["session"]["last_assistant_text"] == "Should I update the docs next?"
 
+    def test_a_question_ten_minutes_old_still_waits_for_an_answer(
+        self,
+        test_client: TestClient,
+        project_root_dir: Path,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Conductor R5: the dictation agent-context routes use the shared
+        reply window (DEFAULT_RECENT_MAX_AGE_SECONDS, 30 min), not 120 s."""
+        import json as _json
+        from datetime import datetime, timedelta, timezone
+
+        from holdspeak.agent_context.models import DEFAULT_RECENT_MAX_AGE_SECONDS
+
+        state_path = tmp_path / "agent_sessions.json"
+        monkeypatch.setattr(agent_context_module, "AGENT_CONTEXT_FILE", state_path)
+        transcript = tmp_path / "codex.jsonl"
+        transcript.write_text(
+            '{"role":"assistant","content":"Should I rebase first?"}\n',
+            encoding="utf-8",
+        )
+        ingest_agent_hook_event(
+            agent="codex",
+            payload={
+                "session_id": "codex-old",
+                "hook_event_name": "Stop",
+                "cwd": str(project_root_dir),
+                "transcript_path": str(transcript),
+            },
+            state_path=state_path,
+            capture_messages=True,
+        )
+        ten_min_ago = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+
+        def _age(node):
+            if isinstance(node, dict):
+                return {k: (ten_min_ago if k == "updated_at" else _age(v)) for k, v in node.items()}
+            if isinstance(node, list):
+                return [_age(v) for v in node]
+            return node
+
+        state_path.write_text(
+            _json.dumps(_age(_json.loads(state_path.read_text(encoding="utf-8")))),
+            encoding="utf-8",
+        )
+
+        body = test_client.get("/api/dictation/agent-context").json()
+        assert body["max_age_seconds"] == DEFAULT_RECENT_MAX_AGE_SECONDS
+        assert body["awaiting_response"] is True
+        assert body["session"]["session_id"] == "codex-old"
+
+        cleared = test_client.post(
+            "/api/dictation/agent-context/clear",
+            json={"agent": "codex", "session_id": "codex-old"},
+        ).json()
+        assert cleared["cleared"] is True
+
     def test_clear_removes_captured_text(
         self,
         test_client: TestClient,

@@ -47,6 +47,8 @@ describe("the item join", () => {
     expect(itemOriginRefs({ _doorCard: { target_ref: "action_item:a2" } })).toEqual(["action:a2"]);
     expect(itemOriginRefs({ ref: "decision:d1", openRef: "decision:d1" })).toEqual(["decision:d1"]);
     expect(itemOriginRefs({ ref: "Write the runbook" })).toEqual([]);
+    // Conductor R4: a Room issue row is known by its Watch and entity.
+    expect(itemOriginRefs({ kind: "issue", watchId: "w1", entityId: "PAY-418" })).toEqual(["issue:w1.PAY-418"]);
   });
 
   it("finds the row's flight and skips an ended one", () => {

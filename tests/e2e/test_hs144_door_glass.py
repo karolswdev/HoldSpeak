@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import uuid
 from datetime import date, datetime, timedelta, timezone
+import re
 from pathlib import Path
 from typing import Any
 
@@ -276,7 +277,13 @@ def test_hs144_door_cold_open_keeps_first_sentence_one_job(
             page.on("console", lambda message: _record_console(errors, message))
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             first_sentence = page.get_by_test_id("chair-first-value")
-            first_sentence.get_by_role("heading", name="Dictate one sentence", exact=True).wait_for()
+            # The ratified first-run face (C1 "Heard first", 2026-10-05):
+            # the heading is "Get ready" and "Dictate one sentence" is the
+            # First words card's Button (disabled until speech is ready).
+            first_sentence.get_by_role("heading", name="Get ready", exact=True).wait_for()
+            first_sentence.get_by_role(
+                "button", name=re.compile(r"^(◖ )?Dictate one sentence$")
+            ).wait_for()
             assert first_sentence.get_by_role("button", name="Continue later", exact=True).is_visible()
             assert page.locator(".door-board-section").count() == 0
             _assert_clean(page, errors)

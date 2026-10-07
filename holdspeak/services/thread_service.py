@@ -1990,14 +1990,19 @@ class ThreadService:
         principal: Principal,
         thread_id: str,
         message_id: str,
-        as_kind: str = "artifact",
+        as_kind: str = "note",
     ) -> dict[str, Any]:
-        """Keep an assistant message as an artifact or note via the Ask keep path.
+        """Keep an assistant message as a Note (the default) or an Artifact.
 
-        Uses db.plugins.record_artifact directly with provenance
+        ``as_kind="note"`` (``/keep`` and "Keep as note") writes a desk Note
+        and announces it on the bus. ``as_kind="artifact"`` uses
+        db.plugins.record_artifact with provenance
         ``thread:<thread_id>/<message_id>`` — the same persistence as
         AskService.keep but without constructing a full broker.
         """
+        kind = str(as_kind or "note").strip().lower()
+        if kind not in ("note", "artifact"):
+            raise ValidationError("as must be 'note' or 'artifact'")
         msg = self._threads.get_message(message_id)
         if msg is None or msg.thread_id != thread_id:
             raise ServiceError("message_not_found", "Message not found", context={"status": 404})
@@ -2008,6 +2013,19 @@ class ThreadService:
             raise ValidationError("No text to keep")
 
         provenance = f"thread:{thread_id}/{message_id}"
+        if kind == "note":
+            thread = self._threads.get(thread_id)
+            title = (getattr(thread, "title", "") or "").strip() or "Thread"
+            note = self._db.notes.upsert(
+                note_id="note_" + uuid.uuid4().hex[:12],
+                title=title,
+                body_markdown=output,
+                tags=[],
+            )
+            from ..runtime.composition import notify_desk_changed
+
+            notify_desk_changed("note", note.id, "create")
+            return {"kind": "note", "id": note.id, "note_id": note.id}
         artifact_id = "artifact_" + uuid.uuid4().hex[:12]
         sources = [{"source_type": "ask", "source_ref": provenance}]
         self._db.plugins.record_artifact(
@@ -2027,7 +2045,7 @@ class ThreadService:
             plugin_version="0",
             sources=sources,
         )
-        return {"artifact_id": artifact_id}
+        return {"kind": "artifact", "id": artifact_id, "artifact_id": artifact_id}
 
     # ── Import ──────────────────────────────────────────────────────
 

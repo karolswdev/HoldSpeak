@@ -34,6 +34,8 @@ REPO = Path(__file__).resolve().parents[4]
 OUT = REPO / ".tmp/evidence-shots/conductor-f1"
 CANVAS = REPO / "docs/internal/conductor-canvas/shots"
 RUNBOOK = "Write the rollback runbook"
+ISSUE418 = "PAY-418 Reconciliation job slow on month-end data"
+GH418 = "#418 Reconciliation job slow on month-end data"
 ROOM = "surface-project-memory"
 BARE_PATH = "/usr/bin:/bin:/usr/sbin:/sbin"
 TOOLS = ("claude", "codex", "tmux")
@@ -62,6 +64,28 @@ db.automations.record_refresh("w-ledger-jira", {"schema": 1, "entities": {
                 "url": "https://acme.atlassian.net/browse/PAY-421"},
 }}, [])
 print("issues: 2")
+# Conductor R4: a GitHub issues Watch, baselined by the REAL producer
+# (WatchService -> GitHubWatchSource -> `gh issue list`); gh is answered at
+# its process boundary (no network). The canvas's #418 (stand-in S4).
+from types import SimpleNamespace
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.reaction_service import ReactionService
+from holdspeak.services.watch_service import WatchService
+from holdspeak.services.watch_sources import fetch_watch_snapshot
+from datetime import datetime, timezone
+owner = Principal(PrincipalKind.OWNER, "canvas-seed")
+ReactionService(db).create_watch(
+    owner, connector_id="gh", query_kind="issues", name="Open issues",
+    query={"repository": "acme/payments-ledger", "state": "open"}, watch_id="w-ledger-gh-issues")
+db.automations.update_watch_spec("w-ledger-gh-issues", project_id="p-ledger", revision=1)
+opened = (datetime.now(timezone.utc) - timedelta(days=2)).isoformat()
+rows = [{"number": 418, "title": "Reconciliation job slow on month-end data", "state": "OPEN",
+         "url": "https://github.com/acme/payments-ledger/issues/418", "labels": [{"name": "ledger"}],
+         "createdAt": opened, "updatedAt": opened}]
+gh = lambda argv, **kw: SimpleNamespace(returncode=0, stdout=json.dumps(rows), stderr="")
+WatchService(db, snapshot_fetcher=lambda p, **kw: fetch_watch_snapshot(p, github_runner=gh, **kw)).baseline_watch(
+    owner, "w-ledger-gh-issues")
+print("github issues: 1")
 """
 
 
@@ -127,6 +151,7 @@ class BuiltStack(rig.Stack):
         # The canvas's issue rows (#418, #421; its stand-in S4) through a REAL producer: the
         # Room's OPEN HERE reads issue rows only from a Jira `issues` Watch snapshot
         # (ProjectService._read_room_needs_you; a GitHub issues Watch yields no row on main).
+        # Since R4 each row names its Watch and entity, so Hand to agent takes it.
         seeded = subprocess.run(
             [rig.PY, "-c", ISSUE_SEED], cwd=REPO, capture_output=True, text=True, timeout=120,
             env={**os.environ, "HOME": self.home, "PYTHONPATH": str(REPO)},
@@ -237,6 +262,7 @@ def boards(r: board.Runner) -> None:
     r.shoot("K3a-launch-sheet-claude", "Hand to agent",
             whole=["[data-testid=hand-launch]", ".desk-hand-footer .gadget-chip-egress", "[data-testid=hand-control]"],
             checks={"the egress chip names Anthropic": "API.ANTHROPIC.COM" in ev(footer),
+                    "no tracker read for an action item (R4)": not ev("() => !!document.querySelector('[data-testid=hand-tracker]')"),
                     "the brief composed (sources listed)": ev("() => document.querySelectorAll('[data-testid=hand-sheet] li.surface-ledger-row').length") > 0,
                     "WHERE names the repository": "PAYMENTS-LEDGER" in ev("() => (document.querySelector('[data-testid=hand-where]') || {}).innerText || ''").upper()},
             extra={"sheet": ev("() => (document.querySelector('[data-testid=hand-sheet]') || {}).innerText || ''")[:1200]})
@@ -253,15 +279,27 @@ def boards(r: board.Runner) -> None:
     settle(400)
     rows = ev(f"() => [...document.querySelectorAll(\"[id='{ROOM}'] [data-testid=needs-you-row]\")].map((c) => c.innerText.replace(/\\s+/g, ' ').trim())")
     issue_rows = [x for x in rows if "PAY-418" in x or "PAY-421" in x]
-    r.shoot("K2e-room-row-verb", "Payments ledger cutover", whole=[f"[id='{ROOM}'] [aria-label='Hand to agent: {RUNBOOK}']"],
+    gh_rows = [x for x in rows if GH418 in x]
+    # Conductor R4: issue rows (Jira and GitHub) wear Hand to agent, as ratified (K2e).
+    r.shoot("K2e-room-row-verb", "Payments ledger cutover",
+            whole=[f"[id='{ROOM}'] [aria-label='Hand to agent: {RUNBOOK}']", f"[id='{ROOM}'] [aria-label='Hand to agent: {ISSUE418}']",
+                   f"[id='{ROOM}'] [aria-label='Hand to agent: {GH418}']"],
             checks={"the two issue rows are in OPEN HERE (real producer)": len(issue_rows) == 2,
-                    "an issue row has no Hand to agent (agent.hand takes no issue)": not any("Hand to agent" in x for x in issue_rows),
+                    "each issue row has Hand to agent (R4: agent.hand takes an issue)": len(issue_rows) == 2 and all("Hand to agent" in x for x in issue_rows),
+                    "the GitHub issue row is in OPEN HERE with Hand to agent (R4, real producer)": len(gh_rows) == 1 and "Hand to agent" in gh_rows[0] and "ISSUE · OPEN 2 D" in gh_rows[0],
                     "the runbook row has Hand to agent": any(RUNBOOK in x and "Hand to agent" in x for x in rows)},
             extra={"open_here": rows})
-    r.tap(rrow.locator("[data-testid=hand-row-verb]"), 2500)
+    # K3b as ratified: the sheet for the issue, from its Room row, Codex picked.
+    irow = page.locator(f"[id='{ROOM}'] [data-testid=needs-you-row]:has-text('PAY-418')").first
+    irow.scroll_into_view_if_needed()
+    settle(300)
+    r.tap(irow.locator("[data-testid=hand-row-verb]"), 2500)
     r.tap(page.locator("[data-testid=hand-sheet] label.surface-choice-card:has-text('Codex')").first, 2000)
     r.shoot("K3b-launch-sheet-codex", "Hand to agent", whole=["[data-testid=hand-launch]", ".desk-hand-footer .gadget-chip-egress"],
-            checks={"the egress chip follows the pick": "API.OPENAI.COM" in ev(footer)},
+            checks={"the egress chip follows the pick": "API.OPENAI.COM" in ev(footer),
+                    "the sheet carries the issue (R4)": "PAY-418" in ev("() => (document.querySelector('[data-testid=hand-sheet]') || {}).innerText || ''"),
+                    "the issue-body read names its host and an outcome (R4, Astra #912)": ev(
+                        "() => { const t = document.querySelector('[data-testid=hand-tracker]'); return !!t && t.innerText.includes('ACME.ATLASSIAN.NET') && ['success','failure'].includes(t.dataset.state); }")},
             extra={"sheet": ev("() => (document.querySelector('[data-testid=hand-sheet]') || {}).innerText || ''")[:1200]})
     close_sheet(r)
 

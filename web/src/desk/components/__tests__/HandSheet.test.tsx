@@ -202,8 +202,24 @@ describe("Hand to agent: where the verb reaches", () => {
     })).toEqual({ kind: "action", id: "c1", title: "Write the rollback runbook", projectId: "p" });
     expect(handOriginOfRow({ title: "T", source: "commitment", actionItemId: "a9" })).toMatchObject({ kind: "action", id: "a9" });
     expect(handOriginOfRow({ title: "Freeze", source: "decision", openRef: "decision:d-freeze" })).toMatchObject({ kind: "decision", id: "d-freeze" });
-    // A GitHub issue is not a kind agent.hand takes: no verb.
+    // A row that names no item (a PR waiting on review) has no verb.
     expect(handOriginOfRow({ title: "#418 Reconciliation job slow", source: "github" })).toBeNull();
+    // Conductor R4: a Room issue row names its Watch and entity: the issue kind.
+    expect(handOriginOfRow({
+      title: "PAY-418 Reconciliation job slow", source: "jira", kind: "issue",
+      watchId: "watch-r4-jira", entityId: "PAY-418", projectId: "p",
+    })).toEqual({ kind: "issue", id: "watch-r4-jira.PAY-418", title: "PAY-418 Reconciliation job slow", projectId: "p", trackerHost: null });
+    // An issue row missing its entity cannot be handed.
+    expect(handOriginOfRow({ title: "PAY-418", source: "jira", kind: "issue", watchId: "w" })).toBeNull();
+  });
+
+  it("R4: the Room issue row wears Hand to agent and opens the sheet for issue:<watch>.<entity>", () => {
+    const { container } = render(
+      <HandRowVerb item={{ title: "PAY-418 Reconciliation job slow", source: "jira", kind: "issue", watchId: "watch-r4-jira", entityId: "PAY-418" }} />,
+    );
+    expect(container.querySelectorAll("[data-testid=hand-row-verb]").length).toBe(1);
+    fireEvent.click(screen.getByRole("button", { name: "Hand to agent: PAY-418 Reconciliation job slow" }));
+    expect(useAgentHand.getState().origin).toMatchObject({ kind: "issue", id: "watch-r4-jira.PAY-418" });
   });
 
   it("the row verb opens the sheet for its item, and is withheld when the item cannot be handed", () => {
@@ -429,5 +445,64 @@ describe("after Launch (Astra #905 round 2)", () => {
     await waitFor(() => expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(true));
     await act(async () => { release?.(); await Promise.resolve(); await Promise.resolve(); });
     await waitFor(() => expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(false));
+  });
+});
+
+describe("R4 (Astra #912): the issue body read is egress, named at the fetch", () => {
+  const ISSUE = {
+    kind: "issue" as const, id: "w-ledger-jira.PAY-418", title: "PAY-418 Reconciliation job slow",
+    projectId: "p-ledger", trackerHost: "acme.atlassian.net",
+  };
+
+  it("READING with the tracker host while the preview is out, then READ", async () => {
+    let release: (a: Answer) => void = () => {};
+    previewAnswer = () => ({ status: 200, body: null });
+    const pending = new Promise<Answer>((resolve) => { release = resolve; });
+    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const base = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      if (!String(url).endsWith("/api/agent/hand/preview")) return base(url, init);
+      return pending.then((answer) => ({
+        ok: true, status: 200, headers: new Headers({ "content-type": "application/json" }),
+        json: () => Promise.resolve(answer.body), text: () => Promise.resolve(JSON.stringify(answer.body)),
+      }));
+    });
+    render(<HandSheet />);
+    act(() => useAgentHand.getState().open(ISSUE));
+    const line = await screen.findByTestId("hand-tracker");
+    expect(line.getAttribute("data-state")).toBe("working");
+    expect(line.textContent).toContain("ACME.ATLASSIAN.NET");
+    expect(line.textContent).toContain("READING");
+    await act(async () => release({ status: 200, body: preview({
+      kind: "issue", id: ISSUE.id, tracker: { host: "acme.atlassian.net", state: "read" },
+    }) }));
+    await waitFor(() => expect(screen.getByTestId("hand-tracker").getAttribute("data-state")).toBe("success"));
+    expect(screen.getByTestId("hand-tracker").textContent).toContain("READ");
+    expect(screen.getByTestId("hand-tracker").querySelector(".gadget-chip-egress")?.textContent).toBe("ACME.ATLASSIAN.NET");
+  });
+
+  it("NOT READ when the tracker did not answer", async () => {
+    previewAnswer = (profile) => ({ status: 200, body: preview({
+      kind: "issue", id: ISSUE.id, requested_profile: profile, profile,
+      tracker: { host: "github.com", state: "not_read" },
+    }) });
+    render(<HandSheet />);
+    act(() => useAgentHand.getState().open({ ...ISSUE, trackerHost: null }));
+    await waitFor(() => expect(screen.getByTestId("hand-tracker").getAttribute("data-state")).toBe("failure"));
+    expect(screen.getByTestId("hand-tracker").textContent).toContain("GITHUB.COM");
+    expect(screen.getByTestId("hand-tracker").textContent).toContain("NOT READ");
+  });
+
+  it("no tracker line for an item that is not an issue", async () => {
+    openSheet();
+    await screen.findByTestId("hand-brief-tokens");
+    expect(screen.queryByTestId("hand-tracker")).toBeNull();
+  });
+
+  it("the Room issue row gives the sheet its tracker host", () => {
+    expect(handOriginOfRow({
+      title: "#418 x", source: "github", kind: "issue", watchId: "w", entityId: "418",
+      url: "https://github.com/acme/payments-ledger/issues/418",
+    })?.trackerHost).toBe("github.com");
   });
 });

@@ -20,14 +20,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Optional
 
-from holdspeak.project_doc_suggestions import looks_like_secret
+from holdspeak.project_doc_suggestions import REDACTED_SECRET as _REDACTED  # noqa: F401  (re-export)
+from holdspeak.project_doc_suggestions import filter_secret
+from holdspeak.project_doc_suggestions import looks_like_secret  # noqa: F401  (re-export)
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from holdspeak.db.journal import DictationJournalRepository
 
 #: Run sources this recorder accepts (mirrors the repo's `VALID_JOURNAL_SOURCES`).
 VALID_SOURCES = ("dictation", "dry_run", "browser", "hotkey")
-_REDACTED = "[redacted: possible secret]"
 
 
 def passthrough_run(text: str) -> Any:
@@ -48,16 +49,6 @@ def passthrough_run(text: str) -> Any:
         intent=None,
         short_circuited=True,
     )
-
-
-def filter_secret(text: str) -> str:
-    """Redact the whole field if it trips the shared secret check.
-
-    Whole-field redaction (rather than substring scrubbing) is the safe posture
-    for a private journal: a known secret can never partially survive.
-    """
-    text = str(text or "")
-    return _REDACTED if looks_like_secret(text) else text
 
 
 def extract_stage_ms(run: object) -> tuple[dict[str, float], list[float]]:

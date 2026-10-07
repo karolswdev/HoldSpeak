@@ -19,6 +19,20 @@ _LIVE_LAUNCH_STATES = frozenset({"launched", "registered"})
 CONTROL_MODE_IDENTITY = "control-mode"
 
 
+def _is_launch_caller(record: Mapping[str, Any], identity: str) -> bool:
+    """True when ``identity`` is this launch's agent: its registered session
+    key, or the launch-bound credential (``agent:launch:<launch_id>``) the
+    spawn put in its tmux session only. The same rule as
+    :meth:`GateService._own_launch` (Conductor R3), for the readers of held
+    calls (Needs you, ``needs_you_membership._read_gate_holds``)."""
+    from ..coder_factory import launch_identity
+
+    if not identity:
+        return False
+    launch = str(record.get("launch_id") or "")
+    return record.get("session_key") == identity or bool(launch and launch_identity(launch) == identity)
+
+
 @observe_service
 class GateService:
     def __init__(
@@ -27,12 +41,17 @@ class GateService:
         *,
         observer: PipelineObserver | None = None,
         launches: Callable[[], Any] | None = None,
+        on_launch_hold: Callable[[str], Any] | None = None,
     ) -> None:
         self._db = db
         self._observer = observer or NullObserver()
         # Conductor K5: the launch driver whose ledger names each agent's own
         # worktree and branch (``default_launch_service`` in production).
         self._launches = launches
+        # Conductor R1: a held call of a HoldSpeak launch is a Needs you row
+        # (``needs_you_membership.gate_items``); this is the K3 immediate
+        # edge for it (the web composition passes the coder awaiting edge).
+        self._on_launch_hold = on_launch_hold
 
     def propose(self, principal: Principal, payload: dict[str, Any]) -> dict[str, Any]:
         from .. import kernel
@@ -93,6 +112,15 @@ class GateService:
             raise ServiceError("proposal_not_admitted", "proposal was not admitted", context={"handle": handle, "status": 409})
         if proposal.state == HELD and (proposal.policy_snapshot or {}).get("outcome") == "allowed":
             proposal = self._decide_by_mode(proposal)
+        if (
+            proposal.state == HELD
+            and verdict.get("launch_id")
+            and self._on_launch_hold is not None
+        ):
+            try:
+                self._on_launch_hold(f"gate:{proposal.id}")
+            except Exception:  # the edge never stops the hold
+                pass
         return proposal.to_dict()
 
     # ── Conductor K5: the Control-mode decision ──────────────────────
@@ -169,9 +197,11 @@ class GateService:
 
     def _own_launch(self, principal: Principal) -> Optional[tuple[str, str, str]]:
         """``(launch_id, worktree_path, branch)`` of the live launch whose
-        registered session IS this principal, ``None`` otherwise. Before the
-        rider registers the session, no call is the launch's: the parent
-        operation id the hook names is a claim any session could copy."""
+        registered session IS this principal, or whose launch-bound credential
+        (``agent:launch:<id>``) the principal holds; ``None`` otherwise. A
+        session credential is the launch's only once the rider registers the
+        session: the parent operation id the hook names is a claim any session
+        could copy."""
         if principal.kind is not PrincipalKind.AGENT:
             return None
         try:
@@ -179,7 +209,20 @@ class GateService:
         except Exception:
             return None
         live = [r for r in reversed(records) if str(r.get("state") or "") in _LIVE_LAUNCH_STATES]
-        record = next((r for r in live if r.get("session_key") == principal.identity), None)
+        # Conductor R3: inside a launch the hook authenticates with the
+        # launch-bound credential its tmux session carries (K6,
+        # ``agent:launch:<launch_id>``), not a ``<agent>:<session>`` one: that
+        # credential IS the launch's (issued into its session only).
+        from ..coder_factory import launch_identity
+
+        record = next(
+            (
+                r for r in live
+                if r.get("session_key") == principal.identity
+                or (r.get("launch_id") and launch_identity(str(r["launch_id"])) == principal.identity)
+            ),
+            None,
+        )
         if record is None:
             return None
         path = service._worktree_path(record)
