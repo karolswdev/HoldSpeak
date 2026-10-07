@@ -1039,16 +1039,20 @@ def test_a_project_carries_work_across_two_working_days(
                 detail = _api(page, "GET", f"/api/meetings/{meeting_id}", token=TOKEN)
                 assert detail["intel"]["summary"] == engine.result.summary, detail["intel"]
                 _open_review_wing(page, meeting_id)
-                not_run = page.get_by_test_id("review-not-run")
-                not_run.wait_for(timeout=15000)
-                assert (not_run.text_content() or "").strip() == "PROPOSALS · NOT RUN"
+                # PHILO-15 08 (B02 ruling 3): this summary carried no items, so
+                # Review says the summary RAN and left none; never NOT RUN.
+                ran = page.get_by_test_id("review-extractor").first
+                ran.wait_for(timeout=15000)
+                assert (ran.text_content() or "").strip() == "SUMMARY · RAN · NONE"
+                assert page.get_by_test_id("review-not-run").count() == 0
                 review_words = page.locator(".desk-surface-window").first.inner_text()
-                assert "EXTRACTED" not in review_words.upper(), review_words
-                assert "Nothing to review" not in review_words, review_words
+                # The summary's own stamp never reads as `EXTRACTED hh:mm`. PHILO-15 08:
+                # a reply without decisions says `DECISIONS · NOT EXTRACTED · <engine>`.
+                assert not __import__("re").search(r"(?<!NOT )EXTRACTED \d", review_words.upper()), review_words
                 walk.fact(
                     "day1-review-not-run", "proposal_origin",
                     "HISTORICAL FIXTURE only",
-                    "summary route: no proposals; Review: PROPOSALS · NOT RUN",
+                    "summary route: no items in this summary; Review: SUMMARY · RAN · NONE",
                     "MATCH",
                     "the current analysis-only route does not create proposals",
                 )
@@ -1535,15 +1539,15 @@ def test_a_project_carries_work_across_two_working_days(
                           "MATCH" if DECISION_TEXT in carried_text else "MISMATCH",
                           "day 2's preparation carries yesterday's decision: the loop closed")
                 assert DECISION_TEXT in carried_text, carried_text
-                # Four rows, not two: confirming EITHER kind writes the full
-                # chain (decision record + commitment) by design
-                # (holdspeak/services/proposal_bridge_service.py:588-590), so
-                # each of yesterday's two confirmations is carried twice.
-                walk.fact("day2-carry", "carried_forward_caption", "CARRIED FORWARD 4",
+                # Two rows, one per obligation: PHILO-15 08 (Astra #983) --
+                # Confirm keeps the kind. The decision is carried as its
+                # record; the action as its commitment (its record is only the
+                # Room's join anchor and is never carried as a decision).
+                walk.fact("day2-carry", "carried_forward_caption", "CARRIED FORWARD 2",
                           carried[0] if carried else "(absent)",
-                          "MATCH" if carried == ["CARRIED FORWARD 4"] else "MISMATCH",
-                          "2 decision records + 2 commitments from 2 confirmations")
-                assert carried == ["CARRIED FORWARD 4"], captions
+                          "MATCH" if carried == ["CARRIED FORWARD 2"] else "MISMATCH",
+                          "1 decision + 1 commitment from 2 confirmations")
+                assert carried == ["CARRIED FORWARD 2"], captions
                 carried_rows = [r.strip() for r in
                                 page.get_by_test_id("prepare-carried")
                                 .locator("li").all_inner_texts()]

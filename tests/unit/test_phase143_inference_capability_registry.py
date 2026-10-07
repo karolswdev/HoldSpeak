@@ -211,7 +211,17 @@ def test_result_contract_hashes_are_exact_and_only_shared_by_identical_schemas()
     )
     live = next(definition for definition in definitions if definition.id == "meeting.live_analysis")
     deferred = next(definition for definition in definitions if definition.id == "meeting.deferred_analysis")
-    assert live.output_schema_sha256 == deferred.output_schema_sha256
+    # PHILO-15 08: the deferred summary carries decisions; the live window
+    # keeps the earlier shape. Distinct schemas, distinct hashes -- and an
+    # engine claiming the live (earlier) summary result still serves the
+    # deferred one (the same MeetingIntel executor).
+    assert live.output_schema_sha256 != deferred.output_schema_sha256
+    assert "decisions" in deferred.output_schema["properties"]
+    assert "decisions" not in live.output_schema["properties"]
+    from holdspeak.inference_capabilities import accepted_result_schema_claims
+
+    assert f"result_schema:{live.output_schema_sha256}" in accepted_result_schema_claims(deferred)
+    assert accepted_result_schema_claims(live) == {f"result_schema:{live.output_schema_sha256}"}
     assert live.output_schema_sha256 != thought.output_schema_sha256
 
 

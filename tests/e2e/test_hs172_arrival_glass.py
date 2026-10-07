@@ -340,8 +340,8 @@ class TestArrivalProposals:
             # in a different member of the hub's one rule (#788):
             #   action   -> a Room commitment that owns its action item; the
             #               commitment row is the member, no Door card.
-            #   decision -> an action item with no owner; its Door card
-            #               (UNASSIGNED) is the member.
+            #   decision -> nothing more (PHILO-15 08): a decision is a record,
+            #               not an obligation.
             seeded = _api(page, "GET", "/api/projects/proj-a/proposals", token=TOKEN)["proposals"]
             by_kind = {p["kind"]: p for p in seeded if p["state"] == "proposed"}
             assert {"action", "decision"} <= set(by_kind), seeded
@@ -373,6 +373,13 @@ class TestArrivalProposals:
                 members = {member["ref"] for member in after["members"]}
                 same_title = [row for row in after["items"]
                               if row["title"] == title and row.get("source") != "proposal"]
+                if kind == "decision":
+                    # PHILO-15 08 (Astra #983 P1): a confirmed decision asks
+                    # nobody to do anything: no row, no UNASSIGNED card.
+                    assert same_title == [], (kind, same_title)
+                    new_headline = (headline.text_content() or "").strip()
+                    assert new_headline.startswith(f"{after['count']} need"), new_headline
+                    continue
                 assert len(same_title) == 1, (kind, after["items"])
                 row = same_title[0]
                 if kind == "action":

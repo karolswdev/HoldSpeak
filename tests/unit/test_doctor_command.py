@@ -407,7 +407,8 @@ def test_dictation_compile_check_warn_when_compiler_raises(monkeypatch, tmp_path
 
 
 def test_mir_routing_check_pass_when_router_disabled() -> None:
-    config = Config()  # MeetingConfig.intent_router_enabled defaults to False
+    config = Config()
+    config.meeting.intent_router_enabled = False  # PHILO-15 08: default is ON
     result = doctor._check_mir_routing(config)
     assert result.status == "PASS"
     assert "off" in result.detail.lower()

@@ -26,7 +26,8 @@ export type AssignmentProjection = {
 
 export type AssignmentIssue = {
   code: string;
-  severity: "blocking" | "repair";
+  /** `notice` (PHILO-15 08): said on the row, never repaired. */
+  severity: "blocking" | "repair" | "notice";
   profile_id?: string;
   capability_id?: string;
 };

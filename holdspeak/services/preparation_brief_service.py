@@ -331,6 +331,11 @@ def build_manifest(room: dict[str, Any], purpose: str, *, now: datetime) -> dict
     dsection = room.get("decisions") or {}
     if dsection.get("state") == "ok":
         for item in dsection.get("items") or []:
+            # PHILO-15 08 (Astra #983 r2): an action's record is its
+            # commitment's join anchor, not a decision. The action is carried
+            # once, as its commitment below.
+            if str(item.get("kind") or "") == "action":
+                continue
             lifecycle = str(item.get("lifecycle") or "active")
             row = {
                 "ref": f"decision_record:{item.get('id')}",

@@ -222,6 +222,7 @@ function AftercareNote() {
   }, [aftercareSlot, signal]);
   if (!signal) return null;
   const countLine = [
+    signal.proposalTotal > 0 ? `${signal.proposalTotal} to review` : null,
     signal.openTotal > 0 ? `${signal.openTotal} open` : null,
     signal.decidedTotal > 0 ? `${signal.decidedTotal} decided` : null,
   ].filter((part): part is string => part !== null).join(" · ");
@@ -236,12 +237,15 @@ function AftercareNote() {
       <strong>{signal.title}</strong>
       {countLine ? <p>{countLine}</p> : null}
       <div className="button-row">
-        {signal.openTotal > 0 || signal.decidedTotal > 0 ? (
+        {/* PHILO-15 08 (B13): the verb opens the meeting's Review wing,
+            where the proposals are; with none, it is not offered. */}
+        {signal.proposalTotal > 0 ? (
           <Button
             dense
             variant="primary"
+            data-testid="aftercare-open-proposals"
             onClick={() => {
-              openSurfaceWhenReady("review-meetings", `meeting:${signal.meetingId}`);
+              openSurfaceWhenReady("review-meetings", `meeting:${signal.meetingId}?view=review`);
               dismissAftercare();
             }}
           >

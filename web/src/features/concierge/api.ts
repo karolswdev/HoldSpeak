@@ -7,7 +7,9 @@ import type { EndpointDraft } from "./endpointDraft";
 /* ── Wire types ── */
 
 export type EngineKind = "lan" | "local" | "cloud" | "preset";
-export type EngineState = "READY" | "WAITING" | "NOT_SET" | "UNREACHABLE" | "CHECKING";
+/** NOT_SUPPORTED (PHILO-15 05): a cloud provider with no execution adapter
+ * (Anthropic); a key there does nothing. */
+export type EngineState = "READY" | "WAITING" | "NOT_SET" | "UNREACHABLE" | "CHECKING" | "NOT_SUPPORTED";
 
 export interface Engine {
   id: string;

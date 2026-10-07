@@ -437,7 +437,16 @@ def build_aftercare_ready_event(db, meeting_id: str) -> Optional[dict]:
         digest = compute_meeting_aftercare(db, meeting_id)
     except Exception:
         return None
-    if not digest or digest.get("is_empty"):
+    if not digest:
+        return None
+    # PHILO-15 08 (B13): the proposals still to review. The card offers
+    # `Open proposals` only when there are some (no counters of zero).
+    proposal_total = 0
+    try:
+        proposal_total = len(db.proposals.list_proposals(meeting_id=meeting_id, state="proposed"))
+    except Exception:
+        proposal_total = 0
+    if digest.get("is_empty") and proposal_total == 0:
         return None
     open_items = digest.get("open_items") or {}
     top: list[dict] = []
@@ -451,6 +460,7 @@ def build_aftercare_ready_event(db, meeting_id: str) -> Optional[dict]:
     return {
         "meeting_id": digest.get("meeting_id"),
         "title": digest.get("meeting_title"),
+        "proposal_total": proposal_total,
         "open_total": int(open_items.get("total") or 0),
         "decided_total": len(digest.get("decisions") or []),
         "top_items": top,

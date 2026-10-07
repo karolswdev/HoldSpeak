@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 from holdspeak.db.core import Database
 from holdspeak.services.monday_brief_service import BriefItem, MondayBriefService
+from tests.unit.brief_rule_stub import quiet_needs_you  # noqa: F401  (a fixture)
 
 
 def _insert_pipeline_event(
@@ -74,7 +75,7 @@ def test_compute_window_preserves_timezone_across_dst(tmp_path):
     assert period_end.utcoffset() == datetime.timedelta(hours=-4)
 
 
-def test_generate_creates_empty_brief(tmp_path):
+def test_generate_creates_empty_brief(tmp_path, quiet_needs_you):
     service = MondayBriefService(Database(tmp_path / "brief.db"))
     now = datetime.datetime(2026, 8, 3, 9, 30)
 
@@ -113,7 +114,7 @@ def test_get_latest_returns_most_recent_brief(tmp_path):
     assert later.id != earlier.id
 
 
-def test_generate_collects_write_operations_as_persisted_changes(tmp_path, monkeypatch):
+def test_generate_collects_write_operations_as_persisted_changes(tmp_path, monkeypatch, quiet_needs_you):
     service = MondayBriefService(Database(tmp_path / "brief.db"))
     monkeypatch.setattr(service, "_collect_breakage", lambda *_: [], raising=False)
     monkeypatch.setattr(service, "_collect_waiting", lambda *_: [], raising=False)
@@ -285,7 +286,7 @@ def test_compose_headline_is_specific_to_the_populated_section(tmp_path):
     assert composed["decisions"] == []
 
 
-def test_compose_empty_brief_has_honest_headline(tmp_path):
+def test_compose_empty_brief_has_honest_headline(tmp_path, quiet_needs_you):
     service = MondayBriefService(Database(tmp_path / "brief.db"))
 
     headline, sections = service._compose({})

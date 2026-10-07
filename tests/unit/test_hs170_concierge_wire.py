@@ -303,10 +303,12 @@ def test_probe_cloud_without_generate_no_network():
     """Probe on a cloud engine without generate does NOT call the network."""
     from holdspeak.services.concierge_service import probe, STATE_READY
 
+    # PHILO-15 05: a runnable cloud provider; Anthropic reads NOT_SUPPORTED
+    # (tests/unit/test_philo15_05_anthropic_not_supported.py).
     cloud_engine = {
-        "id": "cloud:anthropic",
+        "id": "cloud:openrouter",
         "kind": "cloud",
-        "host": "api.anthropic.com",
+        "host": "openrouter.ai",
         "keySet": True,
     }
 
@@ -331,9 +333,9 @@ def test_probe_cloud_not_set():
     from holdspeak.services.concierge_service import probe, STATE_NOT_SET
 
     cloud_engine = {
-        "id": "cloud:anthropic",
+        "id": "cloud:openrouter",
         "kind": "cloud",
-        "host": "api.anthropic.com",
+        "host": "openrouter.ai",
         "keySet": False,
     }
 

@@ -1694,7 +1694,11 @@ def test_claim_admits_one_job_parent_with_base_and_plugin_children(tmp_path, mon
     assert {row["plugin_id"] for row in _rows(db, "plugin_runs")} == {
         "requirements_extractor", "risk_heatmap"
     }
-    assert len(db.plugins.list_artifacts(state.id)) == 2
+    # PHILO-15 08: the summary's own decisions/actions artifact rides beside
+    # the two plugin artifacts.
+    artifacts = db.plugins.list_artifacts(state.id)
+    assert len([a for a in artifacts if a.plugin_id != "meeting_summary"]) == 2
+    assert [a.artifact_type for a in artifacts if a.plugin_id == "meeting_summary"] == ["summary_items"]
     assert db.intel.get_intel_job(state.id) is None
 
 
