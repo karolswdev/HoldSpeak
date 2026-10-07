@@ -4,11 +4,20 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-07
+**Last updated:** 2026-10-07 (Phase 14 chartered)
 
 ## Current phase
 
-None chartered. PHILO Phase 13, The Desk, is complete (18/18 stories, closed 2026-10-03).
+**PHILO Phase 14 — The Desk Is Objects** (chartered 2026-10-07 on the owner's three
+catches: the Conductor's face "stinks", the Desk went "Windows 1.0", features are
+"apps" and the explorer shows `[ ]`). Proposal: `docs/internal/philo/phase-14/PROPOSAL.md`.
+Three movements: A objects (drawers, icons from the mold, drag as composition, apps become
+views), B material (bevels back, chips become lamps, the Chair as a screen not tiles),
+C the Conductor as objects (agent icon, drop to hand, the agent's window as its lane).
+Now: lane 00 canvas (three alternatives + control, one page, he names a letter) and lane
+C0 lane backend (events appended, commits/files read, launch route) in parallel.
+
+PHILO Phase 13, The Desk, is complete (18/18 stories, closed 2026-10-03).
 Record: `pm/roadmap/holdspeak-philo/phase-13-the-desk/current-phase-status.md`.
 
 Now: the fast-lane change (owner ruling 2026-10-03): remove the commit gate; stop
