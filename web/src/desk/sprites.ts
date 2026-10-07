@@ -54,12 +54,23 @@ export const VARIANTS: Record<string, string[]> = {
   intelligence: ["cartridge"],
 };
 
+/** The sprites `agentSpriteName` can return. They sit outside the pools. */
+export const AGENT_SPRITES = ["agent-claude-code", "agent-codex"] as const;
+
 /** The agent sprite for an agent name: Codex wears `agent-codex`; Claude
  * Code and any unknown agent wear `agent-claude-code`. */
 export function agentSpriteName(
   agent: string | null | undefined,
-): "agent-claude-code" | "agent-codex" {
+): (typeof AGENT_SPRITES)[number] {
   return /codex/i.test(String(agent ?? "")) ? "agent-codex" : "agent-claude-code";
+}
+
+/** Every base sprite name `spriteName` can return: the pools plus the
+ * helper-selected agent sprites. The state-file guard walks this list. */
+export function allSpriteNames(): string[] {
+  const names = new Set<string>(AGENT_SPRITES);
+  for (const pool of Object.values(VARIANTS)) for (const n of pool) names.add(n);
+  return [...names].sort();
 }
 export const SPRITE_BASE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/`;
 export function variantIndex(id: string, poolLength: number): number {

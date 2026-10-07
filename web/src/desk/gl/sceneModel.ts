@@ -67,6 +67,10 @@ export interface SceneObject {
   scale: number;
   glow: string;
   sprite: string;
+  /** The lit (`_sel`) image for hover and drop-target light. Built here
+   * with the same agent as `sprite`, so a Codex stays Codex when lit
+   * (PHILO-14 A0b round 2). */
+  spriteSel: string;
   small: boolean;
   selected: boolean;
   dragging: boolean;
@@ -192,6 +196,7 @@ export function buildScene(input: SceneInputs): WorldScene {
             : "rest",
         refAgent(o.ref),
       ),
+      spriteSel: spriteUrl(o.kind, o.id, "sel", refAgent(o.ref)),
       small: o.kind === "note" || o.kind === "artifact",
       selected:
         input.selectedIds.includes(selectionRef) ||

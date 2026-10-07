@@ -415,7 +415,7 @@ export class WorldEngine {
     const size = SPRITE;
     const sprite =
       this.hoverKey === `obj:${o.key}`
-        ? spriteStateUrl(o.kind, o.id, "sel")
+        ? o.spriteSel
         : o.sprite;
     if (node.spriteUrl !== sprite) {
       node.spriteUrl = sprite;
@@ -554,10 +554,7 @@ export class WorldEngine {
       if (rule && target) {
         const node = this.objects.get(target.key);
         if (node)
-          this.setObjectSprite(
-            node,
-            spriteStateUrl(target.kind, target.id, "sel"),
-          );
+          this.setObjectSprite(node, target.spriteSel);
       }
     }
     this.callbacks.onDropHint?.(
