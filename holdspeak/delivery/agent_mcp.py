@@ -5,9 +5,10 @@ HoldSpeak MCP? We certainly should, because it could do a lot of very
 meaningful things for us with those tools at its disposal."
 
 The launch spawn issues a launch-bound agent credential (CONDUCTOR palette,
-``coder_factory.spawn``) into the tmux session's environment as
-``HOLDSPEAK_AGENT_CREDENTIAL``, beside ``HOLDSPEAK_HUB_URL``. This module
-turns that into the agent's MCP server ``holdspeak``:
+``coder_factory.spawn``) into the session's first shell as
+``HOLDSPEAK_AGENT_CREDENTIAL`` (Conductor R2: from a one-shot 0600 file the
+shell reads and deletes, never argv), beside ``HOLDSPEAK_HUB_URL``. This
+module turns that into the agent's MCP server ``holdspeak``:
 
 * Claude Code: ``--mcp-config <file>``. The file names the two environment
   variables (Claude Code expands ``${VAR}`` in ``url`` and ``headers``), so no
