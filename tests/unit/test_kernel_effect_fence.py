@@ -177,6 +177,16 @@ _CALL_RULES = (
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
     (
+        "holdspeak/principals.py",
+        "current_boot_id",
+        "run",
+        1,
+    ): (
+        "Conductor R2: `sysctl -n kern.bootsessionuuid`, a read of this machine "
+        "boot's id (macOS) so a stored monotonic credential deadline is compared "
+        "only within one boot; it changes nothing and runs once per process"
+    ),
+    (
         "holdspeak/services/agent_hand_preview.py",
         "LaunchReads.launcher.alive",
         "run",

@@ -17,10 +17,13 @@ Nothing autonomous; a human is behind every act.
 """
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
 import time
+import uuid
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 from . import coder_steering
@@ -80,57 +83,151 @@ def spawn(
         return _audited({"status": "bad_name", "detail": f"invalid session name: {name!r}"})
     if runner is None and shutil.which("tmux") is None:
         return _audited({"status": "tmux_absent"})
-    from .principals import agent_credentials
+    from .principals import CredentialPersistError, agent_credentials
 
     launch = str(launch_id or "").strip()
-    if launch:
-        from .mcp.palettes import CONDUCTOR, resolve_palette
+    identity = launch_identity(launch) if launch else f"agent:tmux:{name}"
+    try:
+        if launch:
+            from .mcp.palettes import CONDUCTOR, resolve_palette
 
-        identity = launch_identity(launch)
-        credential = agent_credentials.issue(
-            identity,
-            palette=resolve_palette(CONDUCTOR),
-            palette_name=CONDUCTOR,
-            launch_id=launch,
-            scope_items=scope_items,  # the launch's origin item
-            project_id=project_id,  # the launch's own Project
-        )
-    else:
-        identity = f"agent:tmux:{name}"
-        credential = agent_credentials.issue(identity)
-    # tmux installs these in the new session's environment before its first
-    # process starts.  The supervised agent receives only its scoped token,
-    # never the owner's browser credential.
+            credential = agent_credentials.issue(
+                identity,
+                palette=resolve_palette(CONDUCTOR),
+                palette_name=CONDUCTOR,
+                launch_id=launch,
+                scope_items=scope_items,  # the launch's origin item
+                project_id=project_id,  # the launch's own Project
+            )
+        else:
+            credential = agent_credentials.issue(identity)
+    except CredentialPersistError as exc:
+        return _audited({"status": "error", "detail": f"credential not stored: {exc}"})
+
+    def _fail(status: str, detail: str, env_file: Optional[Path] = None) -> dict[str, Any]:
+        agent_credentials.revoke(identity, "spawn_failed")
+        if env_file is not None:
+            _discard(env_file)
+        return _audited({"status": status, "detail": detail})
+
+    # The supervised agent receives only its scoped token, never the owner's
+    # browser credential. Conductor R2: the token never rides argv (``ps``
+    # shows argv) and is never read by a shell that traces: a 0600 file in a
+    # 0700 directory carries it; tmux runs the bootstrap directly (no user
+    # shell, no rc file), which turns tracing off, reads the file with
+    # ``read``, deletes it and only then execs the user's shell.
+    try:
+        env_file = write_credential_env(credential.token)
+    except OSError as exc:
+        return _fail("error", f"credential file: {exc}")
     argv = [
         "tmux",
         "new-session",
         "-d",
         "-e",
-        f"HOLDSPEAK_AGENT_CREDENTIAL={credential.token}",
-        "-e",
         f"HOLDSPEAK_HUB_URL={agent_credentials.hub_url}",
         "-s",
         name,
+        *session_argv(env_file, command),
     ]
-    if command:
-        argv.append(command)
     try:
         completed = _run(runner, argv)
     except (OSError, subprocess.TimeoutExpired) as exc:
-        agent_credentials.revoke(identity)
-        return _audited({"status": "error", "detail": str(exc)})
+        return _fail("error", str(exc), env_file)
     if completed.returncode != 0:
-        agent_credentials.revoke(identity)
         detail = (completed.stderr or "").strip()
         status = "exists" if "duplicate" in detail.lower() else "error"
-        return _audited({"status": status, "detail": detail or "tmux refused"})
+        return _fail(status, detail or "tmux refused", env_file)
+    # The session read its credential: the file is gone. A session that did
+    # not start (or exited first) is not reported spawned.
+    if not _consumed(env_file, START_TIMEOUT_SECONDS):
+        return _fail("error", "the session did not start: it did not read its credential", env_file)
+    # The session must still be there, with a live pane: a shell that exited
+    # after the bootstrap read the file is not a launch (a short settle lets
+    # an rc file that exits at once be seen).
+    if START_SETTLE_SECONDS > 0:
+        time.sleep(START_SETTLE_SECONDS)
     try:
-        panes = _run(runner, ["tmux", "list-panes", "-t", name, "-F", "#{pane_id}"])
-        pane_id = (panes.stdout or "").strip().splitlines()[0] if panes.stdout else None
-    except (OSError, subprocess.TimeoutExpired, IndexError):
-        pane_id = None
-    agent_credentials.bind_target(identity, name, pane_id)
+        panes = _run(runner, ["tmux", "list-panes", "-t", name, "-F", "#{pane_id} #{pane_dead}"])
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return _fail("error", f"the session is gone: {exc}")
+    first = (panes.stdout or "").strip().splitlines()[0].split() if (panes.stdout or "").strip() else []
+    if panes.returncode != 0 or not first or not first[0].startswith("%") or first[1:2] == ["1"]:
+        return _fail("error", "the session ended before the agent started")
+    pane_id = first[0]
+    try:
+        agent_credentials.bind_target(identity, name, pane_id)
+    except CredentialPersistError as exc:
+        return _fail("error", f"credential not stored: {exc}")
     return _audited({"status": "spawned", "session": name, "pane_id": pane_id}, pane_id)
+
+
+#: The environment variable the session's processes read the token from.
+CREDENTIAL_ENV = "HOLDSPEAK_AGENT_CREDENTIAL"
+
+#: How long a new session has to read its credential file.
+START_TIMEOUT_SECONDS = 15.0
+
+#: After the read, how long the session's shell has to prove it stays up.
+START_SETTLE_SECONDS = 0.3
+
+#: The session's first process: run by tmux directly, never by the user's
+#: shell. ``$1`` is the credential file, ``$2`` the command ("" = a login
+#: shell). /bin/sh -c reads no rc file; tracing is off before the read.
+BOOTSTRAP = (
+    "set +xv; "
+    f'IFS= read -r {CREDENTIAL_ENV} < "$1" || exit 97; '
+    'rm -f "$1"; '
+    f"export {CREDENTIAL_ENV}; "
+    'if [ -n "$2" ]; then exec "${SHELL:-/bin/sh}" -c "$2"; fi; '
+    'exec "${SHELL:-/bin/sh}" -l'
+)
+
+
+def credential_env_dir() -> Path:
+    """The private directory of the one-shot credential files (0700)."""
+    return Path.home() / ".holdspeak" / "agent-env"
+
+
+def write_credential_env(token: str, directory: Optional[Path] = None) -> Path:
+    """Write ``token`` (one line, no shell syntax) to a new 0600 file the
+    session's bootstrap reads once. A partial write is removed."""
+    folder = directory or credential_env_dir()
+    folder.mkdir(parents=True, exist_ok=True)
+    os.chmod(folder, 0o700)
+    target = folder / f"{uuid.uuid4().hex}.cred"
+    fd = os.open(str(target), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        try:
+            os.write(fd, (token + "\n").encode("utf-8"))
+        finally:
+            os.close(fd)
+    except OSError:
+        _discard(target)
+        raise
+    return target
+
+
+def session_argv(env_file: Path, command: Optional[str]) -> list[str]:
+    """The session's command as separate words: tmux runs it directly."""
+    return ["/bin/sh", "-c", BOOTSTRAP, "holdspeak-agent", str(env_file), command or ""]
+
+
+def _consumed(path: Path, timeout: float) -> bool:
+    deadline = time.monotonic() + max(0.0, timeout)
+    while True:
+        if not path.exists():
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.05)
+
+
+def _discard(path: Path) -> None:
+    try:
+        path.unlink()
+    except OSError:
+        pass
 
 
 def launch_identity(launch_id: str) -> str:
