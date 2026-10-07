@@ -342,7 +342,9 @@ def test_hand_launches_claude_in_a_new_worktree_with_origin(tmp_path, db, monkey
     assert gate["repos"] == {str(worktree.resolve()): ["Bash"]}
     assert gate["armed_paths"] == [str(worktree.resolve())]
     spawn_argv = next(c for c in rig.tmux.calls if c[1] == "new-session")
-    command = spawn_argv[spawn_argv.index("-s") + 2]
+    from tests.unit._spawn_env import command_of
+
+    command = command_of(spawn_argv)
     assert command.startswith(f"cd {shlex.quote(str(worktree.resolve()))} && ")
     assert f"--settings {rig.settings}" in command
     assert "HOLDSPEAK_STORY_REF=" + shlex.quote(f"{PROJECT}/action-ai_1") in command

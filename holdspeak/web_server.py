@@ -1350,6 +1350,20 @@ class MeetingWebServer:
             web_ctx, db=get_database(), observer=obs
         )
 
+        # Conductor R2: the hub's agent credentials, their targets and launch
+        # ownership survive a restart. After the composition is installed:
+        # the revoke hook first (a credential that expired while the hub was
+        # down ends its grants on load), then the reload, then every LIVE
+        # launch grant left with no live credential is ended.
+        from .services.conductor_launch import install_revoke_hook, reconcile_launch_grants
+
+        install_revoke_hook()
+        agent_credentials.attach(get_database(), follow_hub=True)
+        try:
+            reconcile_launch_grants(get_database())
+        except Exception:  # a start never fails on the sweep; it runs again next start
+            log.warning("launch grant reconcile failed", exc_info=True)
+
         from .web.routes.actuator_shared import DeskActuatorLifecycle
         web_ctx.actuator_service = ActuatorProposalService(
             get_database(), config_provider=lambda: Config.load(path=__import__("holdspeak.config", fromlist=["CONFIG_FILE"]).CONFIG_FILE),

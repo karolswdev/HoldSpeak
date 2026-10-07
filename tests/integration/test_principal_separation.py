@@ -149,6 +149,10 @@ def test_spawn_kill_respawn_invalidates_old_credential(monkeypatch) -> None:
 
     def runner(argv: list[str]):
         calls.append(argv)
+        if argv[1] == "new-session":
+            from tests.unit._spawn_env import consume
+
+            consume(argv)  # the session's bootstrap reads its credential
         if argv[1] == "list-panes":
             return type("Done", (), {"returncode": 0, "stdout": "%principal", "stderr": ""})()
         return type("Done", (), {"returncode": 0, "stdout": "", "stderr": ""})()
@@ -156,11 +160,9 @@ def test_spawn_kill_respawn_invalidates_old_credential(monkeypatch) -> None:
     first = coder_factory.spawn("principal-life", runner=runner, audit=lambda **_: 1)
     assert first["status"] == "spawned"
     first_argv = calls[0]
-    old_token = next(
-        value.split("=", 1)[1]
-        for value in first_argv
-        if value.startswith("HOLDSPEAK_AGENT_CREDENTIAL=")
-    )
+    from tests.unit._spawn_env import token_of
+
+    old_token = token_of(first_argv)
     assert agent_credentials.derive(old_token).identity == "agent:tmux:principal-life"
 
     monkeypatch.setattr(
@@ -181,11 +183,7 @@ def test_spawn_kill_respawn_invalidates_old_credential(monkeypatch) -> None:
     calls.clear()
     second = coder_factory.spawn("principal-life", runner=runner, audit=lambda **_: 3)
     assert second["status"] == "spawned"
-    new_token = next(
-        value.split("=", 1)[1]
-        for value in calls[0]
-        if value.startswith("HOLDSPEAK_AGENT_CREDENTIAL=")
-    )
+    new_token = token_of(calls[0])
     assert new_token != old_token
     assert agent_credentials.derive(new_token).identity == "agent:tmux:principal-life"
     agent_credentials.revoke("agent:tmux:principal-life")
