@@ -38,7 +38,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Mapping, Optional
+from typing import Any, Callable, Mapping, NamedTuple, Optional
 from urllib import error as urlerror
 from urllib import request as urlrequest
 
@@ -186,10 +186,25 @@ def gate_match_root(config: GateConfig, *, cwd: str, tool: str) -> Optional[str]
 # -- redaction -------------------------------------------------------------
 
 
-def redact_args(tool_input: Mapping[str, Any] | None) -> tuple[str, str]:
-    """(sha256, first-120-chars) over the canonical JSON of the tool
-    input — computed agent-side so the full payload never crosses the
-    wire, let alone lands in a row or a log."""
+class RedactedCall(NamedTuple):
+    """One tool call as the hook may send it: the hash of the real call, the
+    first :data:`ARGS_HEAD_CHARS` of its REDACTED canonical text, and the
+    length of that whole redacted text (PHILO-14 A5).
+
+    The length is the redacted text's, never the raw call's: the raw length
+    would be a side channel for the size of a redacted secret. The desk says
+    ``+N CHARS`` with ``N = length - len(head)`` and never offers Approve on
+    a call longer than its head."""
+
+    sha256: str
+    head: str
+    length: int
+
+
+def redact_call(tool_input: Mapping[str, Any] | None) -> RedactedCall:
+    """The hash, the head and the redacted length of one call, computed
+    agent-side so the full payload never crosses the wire, let alone lands
+    in a row or a log."""
     canonical = json.dumps(
         dict(tool_input or {}), separators=(",", ":"), sort_keys=True, ensure_ascii=False
     )
@@ -198,19 +213,15 @@ def redact_args(tool_input: Mapping[str, Any] | None) -> tuple[str, str]:
     # secret-redacted on the WHOLE text before it is cut.
     from .memory.defense import redact
 
-    return digest, redact(canonical)[:ARGS_HEAD_CHARS]
+    redacted = redact(canonical)
+    return RedactedCall(digest, redacted[:ARGS_HEAD_CHARS], len(redacted))
 
 
-def redacted_args_len(tool_input: Mapping[str, Any] | None) -> int:
-    """The length of the whole redacted call, of which the hub stores only
-    the first :data:`ARGS_HEAD_CHARS` (PHILO-14 A5: the desk says how much
-    of the command it cannot show, and never offers Approve on a cut one)."""
-    canonical = json.dumps(
-        dict(tool_input or {}), separators=(",", ":"), sort_keys=True, ensure_ascii=False
-    )
-    from .memory.defense import redact
-
-    return len(redact(canonical))
+def redact_args(tool_input: Mapping[str, Any] | None) -> tuple[str, str]:
+    """(sha256, first-120-chars) over the canonical JSON of the tool
+    input (:func:`redact_call` without the length)."""
+    call = redact_call(tool_input)
+    return call.sha256, call.head
 
 
 # -- supervised principal lifecycle ----------------------------------------
@@ -418,7 +429,8 @@ def run_hook(
 
     session_id = str(payload.get("session_id") or "").strip() or "unknown-session"
     proposal_id = str(payload.get("tool_use_id") or "").strip() or f"gate-{uuid.uuid4()}"
-    args_sha256, args_head = redact_args(payload.get("tool_input"))
+    redacted = redact_call(payload.get("tool_input"))
+    args_sha256, args_head, args_len = redacted.sha256, redacted.head, redacted.length
     # Conductor K5: the call is read HERE, against the held worktree, so the
     # full command never leaves the agent process; the hub gets the verdict
     # and applies the Control mode (``tool_gate_rules``).
@@ -454,7 +466,7 @@ def run_hook(
         "tool": tool,
         "args_sha256": args_sha256,
         "args_head": args_head,
-        "args_len": redacted_args_len(payload.get("tool_input")),
+        "args_len": args_len,
         "cwd": cwd,
         "ttl_seconds": ttl_seconds,
         "classification": verdict,

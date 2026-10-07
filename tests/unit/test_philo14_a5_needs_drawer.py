@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from holdspeak.coder_gate import ARGS_HEAD_CHARS
+from holdspeak.coder_gate import ARGS_HEAD_CHARS, redact_call
 from holdspeak.db.gate import HELD
 from holdspeak.memory.defense import redact
 from holdspeak.services import needs_you_membership as membership
@@ -51,7 +51,12 @@ def test_a_198_char_command_is_a_cut_row_that_names_what_is_missing(launched, tm
     held = _call(launched, command)
     assert held.proposal.state == HELD
     canonical = json.dumps({"command": command, "description": "x"}, separators=(",", ":"), sort_keys=True)
+    # The length is the REDACTED canonical text's (never the raw call's: the
+    # raw length would tell the size of a redacted secret).
     whole = len(redact(canonical))
+    assert redact_call({"command": command, "description": "x"}).length == whole
+    # The hook's body carries the number only (the census holds no tool_input there).
+    assert launched.posted[-1]["args_len"] == whole and "tool_input" not in launched.posted[-1]
     # The hub stores the head only, and now the length of the whole call.
     assert len(held.proposal.args_head) == ARGS_HEAD_CHARS
     assert held.proposal.operation["args_len"] == whole
@@ -135,3 +140,15 @@ def test_a_second_ask_of_the_same_session_folds_into_the_same_item() -> None:
     ]
     membership.fold_asks(items, [{"origin_ref": "action:ai-1", "session_key": "claude:s1", "state": "waiting"}])
     assert [i.get("foldedInto") for i in items] == [None, "ai-1", "ai-1"]
+
+
+def test_the_length_is_the_redacted_texts_never_the_raw_calls() -> None:
+    """A secret's size never leaks through the length: the redacted text is
+    what is measured."""
+    secret = "sk-ant-api03-" + "A" * 80
+    call = {"command": f"curl -H 'x-api-key: {secret}' https://example.invalid", "description": "x"}
+    canonical = json.dumps(call, separators=(",", ":"), sort_keys=True)
+    redacted = redact(canonical)
+    assert redacted != canonical  # the secret is redacted
+    assert redact_call(call).length == len(redacted) != len(canonical)
+

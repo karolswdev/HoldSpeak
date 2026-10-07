@@ -33,14 +33,14 @@ def _is_launch_caller(record: Mapping[str, Any], identity: str) -> bool:
     return record.get("session_key") == identity or bool(launch and launch_identity(launch) == identity)
 
 
-@observe_service
-
 def _args_len(value: Any) -> int:
     try:
         return max(0, int(value or 0))
     except (TypeError, ValueError):
         return 0
 
+
+@observe_service
 class GateService:
     def __init__(
         self,
