@@ -185,6 +185,30 @@ def locate_evidence(
     return Evidence(start, end, index, SUPPORT_SOURCE_LINKED, None)
 
 
+#: A plugin action stands for a summary action row when this share of its
+#: content words is in the row's task (a fixed mapping, not a score).
+_SAME_ACTION_OVERLAP = 0.6
+
+
+def _match_action_row(text: str, open_rows: dict[str, str]) -> Optional[str]:
+    """The summary action row this action restates, claimed once; or None."""
+    words = _content_words(text)
+    if not words:
+        return None
+    best, best_ratio = None, 0.0
+    for row_id, task in open_rows.items():
+        task_words = _content_words(task)
+        if not task_words:
+            continue
+        ratio = len(words & task_words) / max(len(words), len(task_words))
+        if ratio > best_ratio:
+            best, best_ratio = row_id, ratio
+    if best is None or best_ratio < _SAME_ACTION_OVERLAP:
+        return None
+    open_rows.pop(best)
+    return best
+
+
 def retry_key(
     meeting_id: str,
     revision: str,
@@ -509,16 +533,24 @@ class ProposalBridgeService:
         span_ordinals: dict[tuple[str, float, float], int],
         job: Any,
     ) -> list[Proposal]:
-        """Extract action items from an action_owner_enforcer artifact."""
+        """Extract action items from an action_owner_enforcer artifact.
+
+        PHILO-15 08 (Astra P2): the summary already wrote its own action rows
+        for this meeting. A plugin action that says the same thing stands for
+        that row (``action_item_id``), so Confirm accepts it and never adds a
+        second copy of one obligation.
+        """
         created: list[Proposal] = []
         structured = self._parse_structured(artifact)
         items = structured.get("action_items") or []
+        open_rows = self._unlinked_summary_actions(meeting_id)
         for item in items:
             if not isinstance(item, dict):
                 continue
             text = str(item.get("task") or item.get("text") or "").strip()
             if not text:
                 continue
+            action_item_id = _match_action_row(text, open_rows)
             prop = self._mint(
                 meeting_id=meeting_id, project_id=project_id, kind="action",
                 text=text, artifact=artifact, plugin=_ACTION_PLUGIN,
@@ -526,10 +558,28 @@ class ProposalBridgeService:
                 span_ordinals=span_ordinals, job=job,
                 timestamp=item.get("source_timestamp"), speaker=item.get("speaker"),
                 owner_hint=item.get("owner"), due_hint=item.get("due"),
+                action_item_id=action_item_id,
             )
             if prop is not None:
                 created.append(prop)
         return created
+
+    def _unlinked_summary_actions(self, meeting_id: str) -> dict[str, str]:
+        """The meeting's unreviewed action rows no proposal stands for yet."""
+        try:
+            with self._db._connection() as conn:
+                rows = conn.execute(
+                    """SELECT id, task FROM action_items
+                       WHERE meeting_id = ? AND review_state = 'pending'
+                         AND status NOT IN ('done', 'dismissed')
+                         AND id NOT IN (SELECT action_item_id FROM follow_through_proposals
+                                        WHERE meeting_id = ? AND action_item_id IS NOT NULL)
+                       ORDER BY created_at, id""",
+                    (meeting_id, meeting_id),
+                ).fetchall()
+        except Exception:
+            return {}
+        return {str(row["id"]): str(row["task"] or "") for row in rows}
 
     def _extraction_model(self, job: Any, capability: str) -> Optional[str]:
         """The model the bound job's FROZEN route ran this extractor on.
@@ -757,7 +807,13 @@ class ProposalBridgeService:
         record_id = f"record-{uuid.uuid4().hex[:16]}"
         record_source_id = f"record-source-{uuid.uuid4().hex[:16]}"
         action_id = f"action-{uuid.uuid4().hex[:16]}"
-        commitment_id = f"commitment-{uuid.uuid4().hex[:16]}"
+        commitment_id: Optional[str] = f"commitment-{uuid.uuid4().hex[:16]}"
+        # PHILO-15 08 (Astra P1): Confirm keeps the proposal's kind. A
+        # decision becomes a decision record only; it asks nobody to do
+        # anything, so it gets no action item and no commitment.
+        is_action = proposal.kind == "action"
+        if not is_action:
+            commitment_id = None
         anchored = proposal.segment_index is not None
         provenance = {
             "meeting_id": proposal.meeting_id,
@@ -851,12 +907,14 @@ class ProposalBridgeService:
                     ),
                 )
 
-            # 4. action_items row.  PHILO-15 08: a summary action proposal
-            #    stands for the summary's own row; Confirm accepts THAT row
-            #    (no second copy of one obligation).
+            # 4. action_items row (an action only).  PHILO-15 08: a summary
+            #    or plugin action proposal stands for the summary's own row;
+            #    Confirm accepts THAT row (no second copy of one obligation).
             delegated_at = now if final_owner else None
             linked = None
-            if proposal.action_item_id:
+            if not is_action:
+                action_id = None
+            elif proposal.action_item_id:
                 linked = conn.execute(
                     "SELECT id FROM action_items WHERE id = ?", (proposal.action_item_id,),
                 ).fetchone()
@@ -874,7 +932,7 @@ class ProposalBridgeService:
                         action_id,
                     ),
                 )
-            else:
+            elif is_action:
                 conn.execute(
                     """INSERT INTO action_items
                        (id, meeting_id, task, owner, due, status,
@@ -889,14 +947,16 @@ class ProposalBridgeService:
                     ),
                 )
 
-            # 5. decision_commitments linking decision to action_item.
-            conn.execute(
-                """INSERT INTO decision_commitments
-                   (id, decision_id, action_item_id, owner, due_at, status,
-                    created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, 'open', ?, ?)""",
-                (commitment_id, decision_id, action_id, final_owner, final_due, now, now),
-            )
+            # 5. decision_commitments linking the record to the action (an
+            #    action only: the Room reaches its commitments this way).
+            if is_action:
+                conn.execute(
+                    """INSERT INTO decision_commitments
+                       (id, decision_id, action_item_id, owner, due_at, status,
+                        created_at, updated_at)
+                       VALUES (?, ?, ?, ?, ?, 'open', ?, ?)""",
+                    (commitment_id, decision_id, action_id, final_owner, final_due, now, now),
+                )
 
             # Kernel receipt (Article XI).
             ServiceEventLedger(self._db).append_in_transaction(
@@ -924,9 +984,7 @@ class ProposalBridgeService:
                     f"meeting:{proposal.meeting_id}",
                     f"decision:{decision_id}",
                     f"decision_record:{record_id}",
-                    f"action_item:{action_id}",
-                    f"commitment:{commitment_id}",
-                ],
+                ] + ([f"action_item:{action_id}", f"commitment:{commitment_id}"] if is_action else []),
                 correlation_id=current_correlation_id(),
                 causation_id=f"proposal:{proposal_id}",
             )

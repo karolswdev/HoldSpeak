@@ -1311,7 +1311,7 @@ _BROKER_BUDGET_DEBT: dict[str, int] = {
     "holdspeak/kernel/inference_runner.py": 855,
     "holdspeak/kernel/inference_stream.py": 311,
     "holdspeak/kernel/journal.py": 485,  # PHILO-9-02 carved create_operation into journal_atomic
-    "holdspeak/kernel/meeting_plugin_projection.py": 369,
+    "holdspeak/kernel/meeting_plugin_projection.py": 368,
     "holdspeak/kernel/parent_run.py": 353,
     "holdspeak/kernel/projection_stager.py": 395,
 }

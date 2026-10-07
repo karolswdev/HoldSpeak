@@ -254,3 +254,118 @@ def test_an_unfiled_meeting_proposal_is_a_needs_row_until_deferred(tmp_path, mon
     past = (datetime.now().astimezone() - timedelta(minutes=1)).isoformat()
     ProposalBridgeService(db).defer_proposal(OWNER, priya["proposal_id"], until=past)
     assert priya["proposal_id"] in {r["proposal_id"] for r in service.proposal_needs(project_id=None)}
+
+
+# ── Astra round 1 (#983): kinds, Defer, one obligation ────────────────
+
+
+def test_confirm_keeps_the_kind_a_decision_is_no_task_an_action_is_no_decision(tmp_path, monkeypatch) -> None:
+    from holdspeak.services.decision_record_service import DecisionRecordService
+    from holdspeak.services.project_service import ProjectService
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    db = _run(tmp_path, monkeypatch)
+    service = ProposalBridgeService(db)
+    rows = _proposals(db, "m-day-one")
+    decision = next(p for p in rows if p["text"] == "Use SQLite for the local meeting ledger")
+    action = next(p for p in rows if p["text"].startswith("Write the migration"))
+    with db._connection() as conn:
+        actions_before = conn.execute("SELECT COUNT(*) FROM action_items").fetchone()[0]
+
+    kept = service.confirm_proposal(OWNER, decision["id"])
+    assert kept["decision_record_id"] and kept["action_item_id"] is None and kept["commitment_id"] is None
+    service.confirm_proposal(OWNER, action["id"])
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM action_items").fetchone()[0] == actions_before
+        assert conn.execute("SELECT COUNT(*) FROM decision_commitments").fetchone()[0] == 1
+
+    # The Decisions lists hold the decision, never the action.
+    records = DecisionRecordService(db)
+    listed = [r["decision_text"] for r in records.list_records(OWNER)]
+    assert listed == ["Use SQLite for the local meeting ledger"], listed
+    assert [r["decision_text"] for r in records.search(OWNER, "", recent=True)] == listed
+    assert records.search(OWNER, "migration plan") == []
+
+    # Combined Needs: no "Name an owner" row was invented by the decision.
+    answer = ProjectService(db).needs_you(OWNER)
+    titles = [str(i.get("title") or "") for i in answer["items"]]
+    assert "Use SQLite for the local meeting ledger" not in titles, titles
+    assert not any(str(i.get("why") or "") == "UNASSIGNED" for i in answer["items"]), answer["items"]
+
+
+def test_defer_holds_back_the_whole_obligation_in_combined_needs(tmp_path, monkeypatch) -> None:
+    from holdspeak.services.project_service import ProjectService
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    db = _run(tmp_path, monkeypatch)
+    title = "Add the named failure fence before ship"
+    priya = next(p for p in _proposals(db, "m-day-one") if p["text"] == title)
+
+    def needs_titles() -> list[str]:
+        answer = ProjectService(db).needs_you(OWNER)
+        return [str(i.get("title") or "") for i in answer["items"]]
+
+    assert needs_titles().count(title) == 1          # its proposal row, not a second card
+    ProposalBridgeService(db).defer_proposal(OWNER, priya["id"])
+    assert needs_titles().count(title) == 0          # neither the proposal nor its To review card
+    past = (datetime.now().astimezone() - timedelta(minutes=1)).isoformat()
+    ProposalBridgeService(db).defer_proposal(OWNER, priya["id"], until=past)
+    assert needs_titles().count(title) == 1          # back when the stamp passes
+
+
+def test_summary_and_plugin_output_together_make_one_proposal_and_one_action(tmp_path, monkeypatch) -> None:
+    """The real bridge over a summary that carried items AND the real plugins:
+    the plugins own both kinds (no summary proposal), and a plugin action that
+    restates the summary's action stands for that row: Confirm accepts it."""
+    from holdspeak.intel.models import ActionItem, IntelResult
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+    from tests.unit.test_phase200_meeting_outcomes import _drain, _meeting as _plugin_meeting, _rig
+
+    db, engine = _rig(tmp_path, monkeypatch)
+    engine.result = IntelResult(
+        topics=["Cut-over"],
+        action_items=[ActionItem(task="Confirm the freeze window with the payments team")],
+        summary="One decision, one action.",
+        raw_response="{}",
+        decisions=[{"decision": "Cut-over runs on the read replica first", "rationale": None}],
+    )
+    _plugin_meeting(db, "m-both", project_id=None)
+    _drain()
+    rows = _proposals(db, "m-both")
+    assert {p["source_plugin"] for p in rows} == {"decision_capture", "action_owner_enforcer"}, rows
+    texts = [p["text"] for p in rows]
+    assert len(texts) == len(set(texts)), texts      # never proposed twice
+    with db._connection() as conn:
+        summary_row = conn.execute(
+            "SELECT id FROM action_items WHERE meeting_id='m-both' AND task LIKE 'Confirm the freeze%'"
+        ).fetchone()["id"]
+        before = conn.execute("SELECT COUNT(*) FROM action_items WHERE meeting_id='m-both'").fetchone()[0]
+    freeze = next(p for p in rows if p["text"] == "Confirm the freeze window with the payments team")
+    assert freeze["action_item_id"] == summary_row
+    result = ProposalBridgeService(db).confirm_proposal(OWNER, freeze["id"])
+    assert result["action_item_id"] == summary_row
+    with db._connection() as conn:
+        after = conn.execute("SELECT COUNT(*) FROM action_items WHERE meeting_id='m-both'").fetchone()[0]
+        state = conn.execute("SELECT review_state FROM action_items WHERE id=?", (summary_row,)).fetchone()[0]
+    assert after == before and state == "accepted"
+
+
+def test_an_engine_added_before_the_summary_had_decisions_still_serves_summaries(tmp_path) -> None:
+    """The summary result grew ``decisions``; a profile minted before that
+    claims only the earlier summary result (the live window's, unchanged).
+    It is still a lawful summary engine, and a new profile claims both."""
+    from holdspeak.inference_capabilities import meeting_analysis_claims, process_inference_capability_registry
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import _profile
+    from tests.unit.test_phase200_readiness import _assign
+
+    db = Database(tmp_path / "claims.db")
+    registry = process_inference_capability_registry()
+    earlier = f"result_schema:{registry.require('meeting.live_analysis').output_schema_sha256}"
+    _profile(db, "lan-engine-before", claims=("language", earlier))
+    _assign(db, "meeting.deferred_analysis", ["lan-engine-before"])
+    resolved = InferenceAssignmentService(db).resolve_effective(OWNER, capability_id="meeting.deferred_analysis")
+    assert resolved["status"] == "assigned", resolved
+    assert set(meeting_analysis_claims()) == {
+        earlier, f"result_schema:{registry.require('meeting.deferred_analysis').output_schema_sha256}",
+    }

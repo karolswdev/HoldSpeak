@@ -905,6 +905,17 @@ def _result_schema(operation: str, kind: str, contract: str) -> dict[str, Any]:
         "dictation_target": _closed_object_schema(
             properties={"target": scalar, "confidence": {"type": "number"}}, required=("target", "confidence")
         ),
+        # PHILO-15 08: the LIVE window keeps the three-field result; only the
+        # deferred summary (the one the proposal bridge reads) carries
+        # decisions.
+        "meeting_live_analysis": _closed_object_schema(
+            properties={
+                "topics": {"type": "array", "items": scalar},
+                "summary": scalar,
+                "action_items": {"type": "array", "items": action_item},
+            },
+            required=("topics", "summary", "action_items"),
+        ),
         "meeting_analysis": _closed_object_schema(
             properties={
                 "topics": {"type": "array", "items": scalar},
@@ -1084,7 +1095,7 @@ def builtin_capability_definitions() -> tuple[InferenceCapabilityDefinition, ...
         _capability("speech.target_classify", "Dictation target", *writing, "Classify a bounded target profile for the active writing request.", operation="speech.target.classify", output_kind="dictation_target", structured_output=True, minimum_context_tokens=1024, policy="retry.structured.standard", fallback_dispositions=("known_no_generation_transient", "provider_permanent", "invalid_typed_output"), source_module="holdspeak.target_profile"),
         _capability("speech.transcribe", "Speech transcription", *speech, "Transcribe admitted audio into text.", operation="speech.transcribe", input_modalities=("audio",), output_kind="transcript", audio=True, minimum_context_tokens=1, policy="retry.audio.transcription", boundaries=("local",), fallback_dispositions=("known_no_generation_transient", "provider_permanent", "local_capacity_unavailable"), source_module="holdspeak.speech_session.transcription"),
         _capability("speech.preload", "Speech preload", *internal, "Warm a fixed speech artifact before an admitted transcription child.", operation="speech.preload", input_modalities=("audio",), output_kind="lifecycle", audio=True, minimum_context_tokens=1, policy="retry.internal.lifecycle", boundaries=("local",), fallback_dispositions=("known_no_generation_transient",), visibility="internal", source_module="holdspeak.speech_session.transcription"),
-        _capability("meeting.live_analysis", "Live meeting analysis", *meetings, "Analyze one admitted live meeting window.", operation="meeting.live.analysis", output_kind="meeting_analysis", structured_output=True, minimum_context_tokens=8192, policy="retry.structured.standard", fallback_dispositions=structured_fallback, source_module="holdspeak.meeting_session"),
+        _capability("meeting.live_analysis", "Live meeting analysis", *meetings, "Analyze one admitted live meeting window.", operation="meeting.live.analysis", output_kind="meeting_live_analysis", structured_output=True, minimum_context_tokens=8192, policy="retry.structured.standard", fallback_dispositions=structured_fallback, source_module="holdspeak.meeting_session"),
         _capability("meeting.bookmark_label", "Meeting bookmark label", *meetings, "Label one meeting bookmark from its admitted context.", operation="meeting.bookmark.label", output_kind="bookmark_label", minimum_context_tokens=2048, fallback_dispositions=text_fallback, source_module="holdspeak.meeting_session", revision=2),
         _capability("meeting.auto_title", "Meeting title", *meetings, "Generate a bounded meeting title.", operation="meeting.auto.title", output_kind="meeting_title", minimum_context_tokens=2048, fallback_dispositions=text_fallback, source_module="holdspeak.meeting_session", revision=2),
         _capability("meeting.deferred_analysis", "Deferred meeting analysis", *meetings, "Analyze a queued meeting window under its admitted job.", operation="meeting.deferred.analysis", output_kind="meeting_analysis", structured_output=True, minimum_context_tokens=8192, policy="retry.structured.standard", fallback_dispositions=structured_fallback, source_module="holdspeak.meeting_session.deferred_bound"),
@@ -1269,6 +1280,35 @@ def process_inference_capability_registry() -> InferenceCapabilityRegistry:
     if _process_registry is None:
         _process_registry = compose_inference_capability_registry()
     return _process_registry
+
+
+#: PHILO-15 08: the deferred summary's result grew a ``decisions`` field. The
+#: same executor (``MeetingIntel``) produces both shapes, so an engine that
+#: claims the earlier summary result (the live window's, unchanged) serves the
+#: deferred one too. Without this a profile minted before the change would
+#: read "incompatible" for summaries.
+_RESULT_SCHEMA_PREDECESSORS: dict[str, tuple[str, ...]] = {
+    "meeting.deferred_analysis": ("meeting.live_analysis",),
+}
+
+
+def accepted_result_schema_claims(capability: InferenceCapabilityDefinition) -> set[str]:
+    """The ``result_schema:<sha>`` claims that satisfy one capability."""
+    claims = {f"result_schema:{capability.output_schema_sha256}"}
+    registry = process_inference_capability_registry()
+    for predecessor in _RESULT_SCHEMA_PREDECESSORS.get(capability.id, ()):
+        claims.add(f"result_schema:{registry.require(predecessor).output_schema_sha256}")
+    return claims
+
+
+def meeting_analysis_claims() -> list[str]:
+    """The result claims an engine that runs ``MeetingIntel`` makes: the
+    deferred summary's and the live window's (PHILO-15 08)."""
+    registry = process_inference_capability_registry()
+    return [
+        f"result_schema:{registry.require(capability_id).output_schema_sha256}"
+        for capability_id in ("meeting.deferred_analysis", "meeting.live_analysis")
+    ]
 
 
 __all__ = [

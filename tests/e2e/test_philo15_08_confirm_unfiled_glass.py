@@ -156,3 +156,55 @@ class TestConfirmFromAnUnfiledMeeting:
             finally:
                 (SHOTS / f"glass-{width}.json").write_text(json.dumps(record, indent=2, default=str))
                 browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_defer_holds_back_the_whole_obligation(self, width: int) -> None:
+        """Astra #983 P1-2: Defer takes the action off Needs, its To review
+        card included, and the meeting's Review wing still lists it."""
+        from playwright.sync_api import sync_playwright
+
+        record: dict[str, Any] = {"width": width}
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                      device_scale_factor=1, has_touch=width < 720)
+            page = ctx.new_page()
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                page.reload(wait_until="load")
+                _normal_chair(page)
+
+                row = page.locator("[data-testid='needs-row']", has_text=ACTION).first
+                row.wait_for(timeout=20_000)
+                row.scroll_into_view_if_needed()
+                row.get_by_role("button", name=f"Defer: {ACTION}").click()
+                page.locator("[data-testid='needs-row']", has_text=ACTION).first.wait_for(
+                    state="detached", timeout=20_000,
+                )
+                _settle(page)
+                # A fresh read: the To review card of the same action does not
+                # come back in its place.
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.locator("[data-testid='needs-row']", has_text=DECISION).first.wait_for(timeout=20_000)
+                _settle(page)
+                assert page.locator("[data-testid='needs-row']", has_text=ACTION).count() == 0
+                assert page.locator("[data-testid='needs-source-row']", has_text=ACTION).count() == 0
+                page.screenshot(path=str(SHOTS / f"needs-after-defer-{width}.png"))
+
+                wire = _api(page, "GET", "/api/desk/needs-you", token=TOKEN)
+                titles = [str(i.get("title") or "") for i in wire.get("items") or []]
+                record["titles"] = titles
+                assert ACTION not in titles, titles
+                review = _api(page, "GET", f"/api/meetings/{MEETING}/outcome-review", token=TOKEN)
+                held = [p for p in review["proposals"] if p["text"] == ACTION]
+                assert held and held[0]["state"] == "proposed" and held[0]["deferred_until"], held
+                record["page_errors"] = errors
+                assert not errors, errors
+            finally:
+                (SHOTS / f"glass-defer-{width}.json").write_text(json.dumps(record, indent=2, default=str))
+                browser.close()

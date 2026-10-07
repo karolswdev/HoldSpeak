@@ -377,10 +377,9 @@ class ModelLibraryApplicationService:
         # Meeting result schema.  Carry that adapter support as a manifest
         # claim; readiness remains the separate endpoint observation below.
         if runtime == "openai_compatible_v1" and ModelLibraryApplicationService._provider_readiness_reason(draft["provider_family"]) is None:
-            from ..inference_capabilities import process_inference_capability_registry
+            from ..inference_capabilities import meeting_analysis_claims
 
-            schema = process_inference_capability_registry().require("meeting.deferred_analysis")
-            claims.append(f"result_schema:{schema.output_schema_sha256}")
+            claims.extend(meeting_analysis_claims())
         evidence = {
             "revision": "model-library-meeting-adapter-v2" if len(claims) > 1 else "model-library-provider-v1",
             "claims": claims,

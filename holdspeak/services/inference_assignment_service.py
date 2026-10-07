@@ -1989,7 +1989,9 @@ class InferenceAssignmentService:
         if "audio" in required_modalities and "audio" not in modalities:
             return "modality_unsupported"
         req = capability.requires
-        typed_result_claims = {f"result_schema:{capability.output_schema_sha256}"}
+        from ..inference_capabilities import accepted_result_schema_claims
+
+        typed_result_claims = accepted_result_schema_claims(capability)
         if req.structured_output and not (typed_result_claims & claims):
             return "structured_output_unsupported"
         if req.structured_tools:

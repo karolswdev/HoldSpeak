@@ -201,6 +201,13 @@ def normalize_meeting_analysis(raw: Any) -> Mapping[str, Any]:
     }
 
 
+def normalize_meeting_live_analysis(raw: Any) -> Mapping[str, Any]:
+    """The live window's three fields (PHILO-15 08: decisions are deferred-only)."""
+    result = dict(normalize_meeting_analysis(raw))
+    result.pop("decisions", None)
+    return result
+
+
 def normalize_bookmark_label(raw: Any) -> Mapping[str, Any]:
     if not isinstance(raw, str):
         raise ValueError("bookmark label")
@@ -256,8 +263,10 @@ def adapter_for(
     registry: InferenceCapabilityRegistry | None = None,
 ) -> ClosedSemanticAdapter:
     selected = registry or process_inference_capability_registry()
-    if capability_id in {"meeting.live_analysis", "meeting.deferred_analysis"}:
+    if capability_id == "meeting.deferred_analysis":
         normalize = normalize_meeting_analysis
+    elif capability_id == "meeting.live_analysis":
+        normalize = normalize_meeting_live_analysis
     elif capability_id == "meeting.bookmark_label":
         normalize = normalize_bookmark_label
     elif capability_id == "meeting.auto_title":
@@ -344,6 +353,7 @@ __all__ = [
     "normalize_bookmark_label",
     "normalize_lifecycle",
     "normalize_meeting_analysis",
+    "normalize_meeting_live_analysis",
     "normalize_meeting_title",
     "normalize_plugin_result",
     "normalize_transcript",

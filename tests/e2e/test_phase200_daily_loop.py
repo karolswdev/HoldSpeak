@@ -1537,15 +1537,14 @@ def test_a_project_carries_work_across_two_working_days(
                           "MATCH" if DECISION_TEXT in carried_text else "MISMATCH",
                           "day 2's preparation carries yesterday's decision: the loop closed")
                 assert DECISION_TEXT in carried_text, carried_text
-                # Four rows, not two: confirming EITHER kind writes the full
-                # chain (decision record + commitment) by design
-                # (holdspeak/services/proposal_bridge_service.py:588-590), so
-                # each of yesterday's two confirmations is carried twice.
-                walk.fact("day2-carry", "carried_forward_caption", "CARRIED FORWARD 4",
+                # Three rows: PHILO-15 08 (Astra #983 P1) -- Confirm keeps the
+                # kind. The decision is its record alone; the action is its
+                # record (the Room's join anchor) and its commitment.
+                walk.fact("day2-carry", "carried_forward_caption", "CARRIED FORWARD 3",
                           carried[0] if carried else "(absent)",
-                          "MATCH" if carried == ["CARRIED FORWARD 4"] else "MISMATCH",
-                          "2 decision records + 2 commitments from 2 confirmations")
-                assert carried == ["CARRIED FORWARD 4"], captions
+                          "MATCH" if carried == ["CARRIED FORWARD 3"] else "MISMATCH",
+                          "1 decision record + 1 action record + 1 commitment")
+                assert carried == ["CARRIED FORWARD 3"], captions
                 carried_rows = [r.strip() for r in
                                 page.get_by_test_id("prepare-carried")
                                 .locator("li").all_inner_texts()]
