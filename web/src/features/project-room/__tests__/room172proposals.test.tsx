@@ -400,6 +400,27 @@ describe("HS-172-03: Confirmed proposals in D&C", () => {
   });
 });
 
+describe("PHILO-15 08: a confirmed action's record reads as an action", () => {
+  it("says Action:, carries ACTION, and offers no decision Send well", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room") && !url.includes("/room/read")) {
+        const room = roomWithProposals();
+        (room.decisions.items[0] as Record<string, unknown>).kind = "action";
+        return Promise.resolve(room);
+      }
+      if (url.includes("/proposals")) return Promise.resolve(proposalsApiResponse());
+      if (url.includes("/suggested-sources")) return Promise.resolve(suggestedSourcesApiResponse());
+      return Promise.resolve({});
+    });
+    render(<WindowHarness scope="project:p1" />);
+    await waitFor(() => expect(screen.queryAllByTestId("decision-row")).toHaveLength(1));
+    const row = screen.getByTestId("decision-row");
+    expect(row.getAttribute("aria-label")).toBe("Action: Ania owns the API spec");
+    expect(row.textContent).toContain("ACTION");
+    expect(row.getAttribute("role")).toBeNull();
+  });
+});
+
 describe("HS-172-06: Suggested sources in SOURCES", () => {
   it("renders suggested source rows above existing sources", async () => {
     render(<WindowHarness scope="project:p1" />);

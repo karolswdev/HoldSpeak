@@ -121,6 +121,16 @@ export function generatedStampLocal(generatedAt: string | null | undefined): str
   return `${_MONTHS[gen.getMonth()]} ${pad(gen.getDate())} ${pad(gen.getHours())}:${pad(gen.getMinutes())}`;
 }
 
+/** PHILO-15 05: a source the producer could not read is a NOT READ row
+ *  (`source_ref` `not_read:<source>`); such a brief is PARTIAL. */
+export function briefIsPartial(
+  sections: Record<string, ReadonlyArray<{ source_ref?: string | null }> | undefined> | null | undefined,
+): boolean {
+  return Object.values(sections ?? {}).some((items) =>
+    (items ?? []).some((item) => String(item?.source_ref ?? "").startsWith("not_read:")),
+  );
+}
+
 /** `GENERATED SEP 05 08:00` in the viewer's local time. */
 export function generatedLabelLocal(generatedAt: string | null | undefined): string | null {
   const stamp = generatedStampLocal(generatedAt);
@@ -343,7 +353,7 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
         const generated = generatedLabelLocal(brief.generated_at) ?? brief.generated_label;
         return generated ? (
           <div className="intelligence-brief-generated" data-testid="brief-generated-label">
-            {generated}
+            {briefIsPartial(brief.sections) ? `${generated} · PARTIAL` : generated}
           </div>
         ) : null;
       })()}

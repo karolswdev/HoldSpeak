@@ -2272,6 +2272,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 min: 0,
               })}
             </GadgetGroup>
+            {/* PHILO-15 05: the morning Brief job, ON by default; its own setting. */}
+            <GadgetGroup label="Morning brief">
+              {check(["cadence", "brief_enabled"], "Enabled")}
+              {num(["cadence", "brief_hour"], "Make at", {
+                unit: "h",
+                min: 0,
+                max: 23,
+              })}
+            </GadgetGroup>
             <GadgetGroup label="Telegram">
               {check(["cadence_telegram", "enabled"], "Enabled")}
             </GadgetGroup>

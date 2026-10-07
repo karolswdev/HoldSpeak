@@ -4,6 +4,7 @@
 // the typed artifacts are wings; speakers/projects/queues plumbing
 // stacks behind the one gear door.
 import { wireClock } from "../../../desk/surface/format";
+import { countToken } from "../../../desk/surface/count";
 import type { ReactNode } from "react";
 
 export const WINGS = [
@@ -185,7 +186,81 @@ export function download(blob: Blob, name: string) {
 }
 
 /** The one receipt channel: what the machine just did, on the footer. */
-export type Receipt = { text: string; tone?: "danger" };
+/** PHILO-15-07 (B15): the summary run a receipt speaks for. */
+export type RunIdentity = { meetingId: string; jobId: string };
+export type Receipt = { text: string; tone?: "danger"; run?: RunIdentity };
+
+export const ACTIVE_RUN_STATES = new Set(["queued", "pending", "running", "claimed", "reserved", "retrying"]);
+export const FINAL_RUN_STATES = new Set(["ready", "complete", "error", "failed"]);
+
+/** PHILO-15-07 (Astra iteration 2): the footer receipt a face adopts on its
+ *  first read of the rows, from durable state only. An active run (the row's
+ *  intel state, or its job's status) gives a bound `QUEUED hh:mm`; otherwise
+ *  the newest stored run receipt gives `RAN · hh:mm` / `FAILED · hh:mm` at the
+ *  time its job was last written, but only when that was TODAY (a receipt
+ *  from another day is not footer material; it lives on the meeting record).
+ *  Null when no fresh run is on record. */
+function isToday(value: string): boolean {
+  const at = new Date(value);
+  if (Number.isNaN(at.getTime())) return false;
+  return at.toDateString() === new Date().toDateString();
+}
+
+export function adoptDurableRunReceipt(
+  rows: Record<string, unknown>[],
+): { receipt: Receipt; active: boolean } | null {
+  const jobOf = (row: Record<string, unknown>) =>
+    (row.intel_job && typeof row.intel_job === "object" ? row.intel_job : {}) as Record<string, unknown>;
+  const active = rows.find((row) =>
+    ACTIVE_RUN_STATES.has(intelStateOf(row.intel_status)) ||
+    ACTIVE_RUN_STATES.has(String(jobOf(row).status ?? "")),
+  );
+  if (active) {
+    const job = jobOf(active);
+    const at = typeof job.requested_at === "string" ? job.requested_at : new Date().toISOString();
+    return {
+      active: true,
+      receipt: {
+        text: `QUEUED ${clockTime(at)}`,
+        run: { meetingId: String(active.id), jobId: `durable:${String(active.id)}` },
+      },
+    };
+  }
+  let newest: { row: Record<string, unknown>; at: string } | null = null;
+  for (const row of rows) {
+    const receipt = row.run_receipt as Record<string, unknown> | null | undefined;
+    const at = jobOf(row).updated_at;
+    if (!receipt || typeof receipt !== "object" || typeof at !== "string") continue;
+    if (!newest || at > newest.at) newest = { row, at };
+  }
+  if (!newest || !isToday(newest.at)) return null;
+  const stored = newest.row.run_receipt as Record<string, unknown>;
+  const state = stored.outcome === "succeeded" ? "ready" : "failed";
+  return {
+    active: false,
+    receipt: {
+      ...finishedRunReceipt(state, newest.at),
+      run: { meetingId: String(newest.row.id), jobId: String(stored.job_id ?? newest.row.id) },
+    },
+  };
+}
+
+/** The intel state word from either wire shape (string or `{state}`). */
+export function intelStateOf(raw: unknown): string {
+  return typeof raw === "object" && raw !== null
+    ? String((raw as Record<string, unknown>).state ?? "")
+    : String(raw ?? "");
+}
+
+/** PHILO-15-07 (B15) — the footer receipt once a queued summary run ends:
+ *  `RAN · 11:02` or `FAILED · 11:02`; another final state says its own word. */
+export function finishedRunReceipt(state: string, at: string): Receipt {
+  const s = String(state || "").toLowerCase();
+  const clock = clockTime(at);
+  if (s === "ready" || s === "complete") return { text: `RAN · ${clock}` };
+  if (s === "error" || s === "failed") return { text: `FAILED · ${clock}`, tone: "danger" };
+  return { text: `${(s || "done").toUpperCase().replace(/_/g, " ")} · ${clock}` };
+}
 
 /** Needs-you table row shape shared between useMeetingData and NeedsYouTable. */
 export type NeedsRow = { cells: ReactNode[]; verbs: ReactNode };
@@ -197,6 +272,16 @@ export function wordsToken(transcriptWords: unknown): string | null {
   const n = Number(transcriptWords);
   if (!Number.isFinite(n) || n <= 0) return null;
   return `${n.toLocaleString()} WORDS`;
+}
+
+/** PHILO-15-07 (B01) — the lamp a transcript with honest gaps carries:
+ *  `WARN · 1 UNCLEAR SPAN`. Null at zero (no counters of zero). Reads the
+ *  list row's `unclearSpans`, the detail's `unclearSpans`, or the desk
+ *  model's field of the same name. */
+export function unclearLampLabel(row: Record<string, unknown> | null | undefined): string | null {
+  const raw = row?.unclearSpans ?? row?.unclear_spans;
+  const token = countToken(Number(raw ?? 0) || 0, "UNCLEAR SPAN");
+  return token ? `WARN · ${token}` : null;
 }
 
 /** HS-170-04 — true when the meeting is OFF (intel disabled) AND has a

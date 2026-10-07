@@ -160,6 +160,7 @@ class FollowThroughService:
             actions = self._action_rows(conn, project_id=project_id, owner=owner)
             loops = self._loop_rows(conn, project_id=project_id, owner=owner)
             decisions = self._decision_rows(conn, project_id=project_id)
+            deferred = self._deferred_action_ids(conn)
 
         # A cadence loop whose source is an action enriches the action card;
         # it is not a second card for the same obligation.
@@ -176,6 +177,10 @@ class FollowThroughService:
                 continue
             loop = action_loops.get(str(action["id"]))
             if loop is not None and self._is_snoozed(loop["snoozed_until"], today):
+                continue
+            # PHILO-15 08: Defer on its proposal holds the WHOLE obligation
+            # back until the stamp passes, its To review card included.
+            if str(action["id"]) in deferred:
                 continue
             card = FollowThroughCard(
                 id=str(action["id"]),
@@ -655,6 +660,24 @@ class FollowThroughService:
             return unavailable
 
     @staticmethod
+    def _deferred_action_ids(conn: Any) -> set[str]:
+        """Action rows whose open proposal is deferred into the future."""
+        from .proposal_bridge_service import is_deferred
+
+        try:
+            rows = conn.execute(
+                "SELECT action_item_id, deferred_until, state FROM follow_through_proposals "
+                "WHERE state = 'proposed' AND action_item_id IS NOT NULL "
+                "AND deferred_until IS NOT NULL"
+            ).fetchall()
+        except Exception:
+            return set()
+        return {
+            str(row["action_item_id"]) for row in rows
+            if is_deferred(_Deferral(row["deferred_until"]))
+        }
+
+    @staticmethod
     def _action_rows(conn: Any, *, project_id: str | None, owner: str | None) -> list[Any]:
         query = (
             "SELECT a.*, dc.decision_id FROM action_items a "
@@ -771,3 +794,12 @@ class FollowThroughService:
         if due_date <= today + timedelta(days=2):
             return "now"
         return "waiting"
+
+
+class _Deferral:
+    """The one field ``is_deferred`` reads."""
+
+    __slots__ = ("deferred_until",)
+
+    def __init__(self, deferred_until: Any) -> None:
+        self.deferred_until = deferred_until

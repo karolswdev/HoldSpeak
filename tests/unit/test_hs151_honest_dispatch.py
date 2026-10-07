@@ -278,7 +278,7 @@ class TestIntelSchemaConstant:
     """The ONE schema constant is well-formed and carries the named-owner shape."""
 
     def test_schema_has_required_top_level_keys(self) -> None:
-        assert set(INTEL_SCHEMA) == {"topics", "action_items", "summary"}
+        assert set(INTEL_SCHEMA) == {"topics", "action_items", "decisions", "summary"}
 
     def test_action_items_carry_named_owner_shape(self) -> None:
         item = INTEL_SCHEMA["action_items"][0]
@@ -290,7 +290,7 @@ class TestIntelSchemaConstant:
 
     def test_json_schema_matches_constant(self) -> None:
         props = INTEL_JSON_SCHEMA["properties"]
-        assert set(props) == {"topics", "action_items", "summary"}
+        assert set(props) == {"topics", "action_items", "decisions", "summary"}
         item_props = props["action_items"]["items"]["properties"]
         assert set(item_props) == {"task", "owner", "due"}
         # owner is string|null (the named-owner shape).

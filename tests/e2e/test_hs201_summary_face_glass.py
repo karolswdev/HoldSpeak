@@ -260,19 +260,22 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
             _shot(page, "record-after-run")
 
             # ── the Review wing after a real run (Astra's counsel finding 3) ──
-            # A disclosed summary request runs ANALYSIS only. Review must say
-            # the proposal chain did NOT run — never `EXTRACTED <time>`, whose
-            # stamp is the summary's own completion, and never the bare
-            # "Nothing to review" that claims it looked.
+            # PHILO-15 08 (B02 ruling 3): the summary carries its decisions and
+            # action items, so the summary IS an extractor. Review names what
+            # it did (`SUMMARY · RAN · n`); it never says NOT RUN under RAN,
+            # and never `EXTRACTED <time>` (the summary's own stamp).
             page.get_by_role("tab", name="Review").click()
-            not_run = page.get_by_test_id("review-not-run")
-            not_run.wait_for(timeout=15_000)
-            assert (not_run.text_content() or "").strip() == "PROPOSALS · NOT RUN"
+            ran = page.get_by_test_id("review-extractor").first
+            ran.wait_for(timeout=15_000)
+            assert (ran.text_content() or "").strip().startswith("SUMMARY · RAN"), ran.text_content()
+            assert page.get_by_test_id("review-not-run").count() == 0
             review_words = (page.locator(".desk-surface-window").first.text_content() or "")
-            assert "EXTRACTED" not in review_words.upper(), review_words
-            assert "Nothing to review" not in review_words, review_words
-            print(f"REVIEW {not_run.text_content()!r}")
-            _shot(page, "review-not-run")
+            # The summary's own stamp never reads as `EXTRACTED hh:mm`. PHILO-15 08:
+            # a reply without decisions says `DECISIONS · NOT EXTRACTED · <engine>`.
+            assert not __import__("re").search(r"(?<!NOT )EXTRACTED \d", review_words.upper()), review_words
+            assert "Not run" not in review_words, review_words
+            print(f"REVIEW {ran.text_content()!r}")
+            _shot(page, "review-summary-ran")
             page.get_by_role("tab", name="Outcomes").click()
             page.locator("#surface-meetings").get_by_test_id(
                 "meeting-summary-text"

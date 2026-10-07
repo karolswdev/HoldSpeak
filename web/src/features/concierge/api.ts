@@ -18,7 +18,10 @@ export type EngineState =
   /** The engine serves none of the group's work. */
   | "INCOMPATIBLE"
   /** The hub cannot say yet: never READY. */
-  | "UNKNOWN";
+  | "UNKNOWN"
+  /** NOT_SUPPORTED (PHILO-15 05): a cloud provider with no execution adapter
+   * (Anthropic); a key there does nothing. */
+  | "NOT_SUPPORTED";
 
 export interface Engine {
   id: string;

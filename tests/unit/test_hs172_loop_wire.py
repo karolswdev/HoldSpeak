@@ -305,14 +305,14 @@ class TestProposalBridge:
             assert src["source_type"] == "meeting"
             assert src["source_ref"] == meeting_id
 
-            # decision_commitments row
-            cmt = conn.execute(
-                "SELECT * FROM decision_commitments WHERE id = ?",
-                (result["commitment_id"],),
-            ).fetchone()
-            assert cmt is not None
-            assert cmt["decision_id"] == result["decision_id"]
-            assert cmt["action_item_id"] == result["action_item_id"]
+            # PHILO-15 08 (Astra P1): a decision asks nobody to do anything,
+            # so its Confirm writes no action item and no commitment.
+            assert result["action_item_id"] is None
+            assert result["commitment_id"] is None
+            assert conn.execute("SELECT COUNT(*) FROM decision_commitments").fetchone()[0] == 0
+            assert conn.execute(
+                "SELECT COUNT(*) FROM action_items WHERE meeting_id = ?", (meeting_id,)
+            ).fetchone()[0] == 0
 
     def test_confirm_action_writes_full_chain(self, db: Database) -> None:
         """Confirming an action proposal writes the full chain."""
@@ -433,7 +433,8 @@ class TestProposalBridge:
             assert result[key] == first[key], key
         with db._connection() as conn:
             assert conn.execute("SELECT COUNT(*) FROM decision_records").fetchone()[0] == 1
-            assert conn.execute("SELECT COUNT(*) FROM decision_commitments").fetchone()[0] == 1
+            # PHILO-15 08: a decision mints no commitment.
+            assert conn.execute("SELECT COUNT(*) FROM decision_commitments").fetchone()[0] == 0
 
 
 # ── Room needsYou proposals ─────────────────────────────────────────

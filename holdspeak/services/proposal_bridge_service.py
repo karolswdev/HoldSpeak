@@ -61,6 +61,12 @@ log = get_logger("proposal_bridge")
 # The two extractors whose artifacts we read.
 _DECISION_PLUGIN = "decision_capture"
 _ACTION_PLUGIN = "action_owner_enforcer"
+# PHILO-15 08 (B02): the summary run's own decisions and action items
+# (kernel/meeting_plugin_projection.py ``_write_summary_items``). The bridge
+# reads them for a kind no plugin artifact covers, so a meeting yields
+# proposals on day one and a plugin run never doubles them.
+_SUMMARY_PLUGIN = "meeting_summary"
+_SUMMARY_CAPABILITY = "meeting.deferred_analysis"
 
 # The deterministic quote match: a proposal whose content words are (almost)
 # all present in one segment is ANCHORED there.  This is a mapping over the
@@ -179,6 +185,38 @@ def locate_evidence(
     return Evidence(start, end, index, SUPPORT_SOURCE_LINKED, None)
 
 
+def _same_value(a: Any, b: Any) -> bool:
+    """Owner/due agreement: both absent, or equal after normalisation."""
+    left, right = _norm(str(a or "")), _norm(str(b or ""))
+    return left == right
+
+
+def _match_action_row(
+    text: str, owner: Any, due: Any, open_rows: dict[str, dict[str, Any]],
+) -> Optional[str]:
+    """The summary action row this plugin action IS, claimed once; or None.
+
+    PHILO-15 08 (Astra #983 r2 RULING): two obligations are never merged by
+    similarity. A link needs the SAME task (equal content words: only stop
+    words and punctuation may differ) AND the same owner AND the same due
+    (or both absent). "Rotate the staging database credentials" is not
+    "Rotate the production database credentials": both stand, since a
+    duplicate row is cheaper than a lost one.
+    """
+    words = _content_words(text)
+    if not words:
+        return None
+    for row_id, row in open_rows.items():
+        if (
+            _content_words(str(row.get("task") or "")) == words
+            and _same_value(owner, row.get("owner"))
+            and _same_value(due, row.get("due"))
+        ):
+            open_rows.pop(row_id)
+            return row_id
+    return None
+
+
 def retry_key(
     meeting_id: str,
     revision: str,
@@ -202,6 +240,32 @@ def retry_key(
     else:
         raw = f"{meeting_id}|{revision}|{kind}|text:{_norm(text)}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:32]
+
+
+def _tomorrow_stamp() -> str:
+    """The start of tomorrow, local time, as an ISO stamp with its offset."""
+    from datetime import datetime, timedelta
+
+    now = datetime.now().astimezone()
+    start = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    return start.isoformat()
+
+
+def is_deferred(p: Any, now: Any = None) -> bool:
+    """True while a proposed row's Defer stamp is in the future."""
+    from datetime import datetime
+
+    stamp = str(getattr(p, "deferred_until", None) or "").strip()
+    if not stamp:
+        return False
+    try:
+        until = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if until.tzinfo is None:
+        until = until.astimezone()
+    current = now or datetime.now().astimezone()
+    return until > current
 
 
 class ProposalBridgeService:
@@ -265,8 +329,25 @@ class ProposalBridgeService:
         artifacts = self._db.plugins.list_artifacts(meeting_id, limit=2000)
 
         span_ordinals: dict[tuple[str, float, float], int] = {}
+        # A kind a plugin covers -- one that wrote, or one this job planned
+        # (it may write on a retry) -- is that plugin's; the summary's items of
+        # that kind are not bridged, so one decision never reads twice.
+        plugin_ids = {art.plugin_id for art in artifacts} | {
+            str(member.get("plugin_id") or "")
+            for member in tuple(getattr(job, "frozen_plugin_members", ()) or ())
+            if isinstance(member, dict)
+        }
         for art in artifacts:
-            if art.plugin_id == _DECISION_PLUGIN:
+            if art.plugin_id == _SUMMARY_PLUGIN:
+                created.extend(
+                    self._bridge_summary_artifact(
+                        meeting_id, project_id, art, segments, revision,
+                        provenance, span_ordinals, job,
+                        decisions=_DECISION_PLUGIN not in plugin_ids,
+                        actions=_ACTION_PLUGIN not in plugin_ids,
+                    )
+                )
+            elif art.plugin_id == _DECISION_PLUGIN:
                 created.extend(
                     self._bridge_decision_artifact(
                         meeting_id, project_id, art, segments, revision,
@@ -302,6 +383,8 @@ class ProposalBridgeService:
         owner_hint: Any = None,
         due_hint: Any = None,
         rationale: Any = None,
+        action_item_id: Optional[str] = None,
+        capability: Optional[str] = None,
     ) -> Optional[Proposal]:
         evidence = locate_evidence(
             segments, text, timestamp, meeting_id=meeting_id, revision=revision,
@@ -332,14 +415,83 @@ class ProposalBridgeService:
             extraction_revision=revision or None,
             job_id=provenance.get("job_id"),
             job_attempt=provenance.get("job_attempt"),
-            extraction_model=self._extraction_model(job, f"meeting.plugin.{plugin}"),
+            extraction_model=self._extraction_model(job, capability or f"meeting.plugin.{plugin}"),
             span_start=evidence.span_start,
             span_end=evidence.span_end,
             segment_index=evidence.segment_index,
             support=evidence.support,
             support_record=evidence.record,
             rationale=str(rationale).strip() if isinstance(rationale, str) and rationale.strip() else None,
+            action_item_id=action_item_id,
         )
+
+    def _bridge_summary_artifact(
+        self,
+        meeting_id: str,
+        project_id: Optional[str],
+        artifact: Any,
+        segments: list[Any],
+        revision: str,
+        provenance: dict[str, Any],
+        span_ordinals: dict[tuple[str, float, float], int],
+        job: Any,
+        *,
+        decisions: bool,
+        actions: bool,
+    ) -> list[Proposal]:
+        """PHILO-15 08: the summary's decisions and action items as proposals.
+
+        An action proposal names the summary's own ``action_items`` row, so
+        Confirm accepts that row and Decline dismisses it (one obligation,
+        one row). An anchored action gives its row the transcript moment.
+        """
+        created: list[Proposal] = []
+        structured = self._parse_structured(artifact)
+        if decisions:
+            for dec in structured.get("decisions") or []:
+                if not isinstance(dec, dict):
+                    continue
+                text = str(dec.get("decision") or dec.get("text") or "").strip()
+                if not text:
+                    continue
+                prop = self._mint(
+                    meeting_id=meeting_id, project_id=project_id, kind="decision",
+                    text=text, artifact=artifact, plugin=_SUMMARY_PLUGIN,
+                    segments=segments, revision=revision, provenance=provenance,
+                    span_ordinals=span_ordinals, job=job, timestamp=None, speaker=None,
+                    rationale=dec.get("rationale"), capability=_SUMMARY_CAPABILITY,
+                )
+                if prop is not None:
+                    created.append(prop)
+        if actions:
+            for item in structured.get("action_items") or []:
+                if not isinstance(item, dict):
+                    continue
+                text = str(item.get("task") or "").strip()
+                if not text:
+                    continue
+                action_item_id = str(item.get("action_item_id") or "").strip() or None
+                prop = self._mint(
+                    meeting_id=meeting_id, project_id=project_id, kind="action",
+                    text=text, artifact=artifact, plugin=_SUMMARY_PLUGIN,
+                    segments=segments, revision=revision, provenance=provenance,
+                    span_ordinals=span_ordinals, job=job, timestamp=None, speaker=None,
+                    owner_hint=item.get("owner"), due_hint=item.get("due"),
+                    action_item_id=action_item_id, capability=_SUMMARY_CAPABILITY,
+                )
+                if prop is None:
+                    continue
+                created.append(prop)
+                if action_item_id and prop.span_start is not None:
+                    # The moment the item was said: Follow-through quotes it
+                    # instead of "source moment unavailable".
+                    with self._db._connection() as conn:
+                        conn.execute(
+                            "UPDATE action_items SET source_timestamp = ? "
+                            "WHERE id = ? AND source_timestamp IS NULL",
+                            (prop.span_start, action_item_id),
+                        )
+        return created
 
     def _bridge_decision_artifact(
         self,
@@ -389,16 +541,24 @@ class ProposalBridgeService:
         span_ordinals: dict[tuple[str, float, float], int],
         job: Any,
     ) -> list[Proposal]:
-        """Extract action items from an action_owner_enforcer artifact."""
+        """Extract action items from an action_owner_enforcer artifact.
+
+        PHILO-15 08 (Astra P2): the summary already wrote its own action rows
+        for this meeting. A plugin action that says the same thing stands for
+        that row (``action_item_id``), so Confirm accepts it and never adds a
+        second copy of one obligation.
+        """
         created: list[Proposal] = []
         structured = self._parse_structured(artifact)
         items = structured.get("action_items") or []
+        open_rows = self._unlinked_summary_actions(meeting_id)
         for item in items:
             if not isinstance(item, dict):
                 continue
             text = str(item.get("task") or item.get("text") or "").strip()
             if not text:
                 continue
+            action_item_id = _match_action_row(text, item.get("owner"), item.get("due"), open_rows)
             prop = self._mint(
                 meeting_id=meeting_id, project_id=project_id, kind="action",
                 text=text, artifact=artifact, plugin=_ACTION_PLUGIN,
@@ -406,10 +566,31 @@ class ProposalBridgeService:
                 span_ordinals=span_ordinals, job=job,
                 timestamp=item.get("source_timestamp"), speaker=item.get("speaker"),
                 owner_hint=item.get("owner"), due_hint=item.get("due"),
+                action_item_id=action_item_id,
             )
             if prop is not None:
                 created.append(prop)
         return created
+
+    def _unlinked_summary_actions(self, meeting_id: str) -> dict[str, dict[str, Any]]:
+        """The meeting's unreviewed action rows no proposal stands for yet."""
+        try:
+            with self._db._connection() as conn:
+                rows = conn.execute(
+                    """SELECT id, task, owner, due FROM action_items
+                       WHERE meeting_id = ? AND review_state = 'pending'
+                         AND status NOT IN ('done', 'dismissed')
+                         AND id NOT IN (SELECT action_item_id FROM follow_through_proposals
+                                        WHERE meeting_id = ? AND action_item_id IS NOT NULL)
+                       ORDER BY created_at, id""",
+                    (meeting_id, meeting_id),
+                ).fetchall()
+        except Exception:
+            return {}
+        return {
+            str(row["id"]): {"task": row["task"], "owner": row["owner"], "due": row["due"]}
+            for row in rows
+        }
 
     def _extraction_model(self, job: Any, capability: str) -> Optional[str]:
         """The model the bound job's FROZEN route ran this extractor on.
@@ -637,7 +818,13 @@ class ProposalBridgeService:
         record_id = f"record-{uuid.uuid4().hex[:16]}"
         record_source_id = f"record-source-{uuid.uuid4().hex[:16]}"
         action_id = f"action-{uuid.uuid4().hex[:16]}"
-        commitment_id = f"commitment-{uuid.uuid4().hex[:16]}"
+        commitment_id: Optional[str] = f"commitment-{uuid.uuid4().hex[:16]}"
+        # PHILO-15 08 (Astra P1): Confirm keeps the proposal's kind. A
+        # decision becomes a decision record only; it asks nobody to do
+        # anything, so it gets no action item and no commitment.
+        is_action = proposal.kind == "action"
+        if not is_action:
+            commitment_id = None
         anchored = proposal.segment_index is not None
         provenance = {
             "meeting_id": proposal.meeting_id,
@@ -698,10 +885,11 @@ class ProposalBridgeService:
                 """INSERT INTO decision_records
                    (id, decision_text, rationale, alternatives, owner,
                     review_date, lifecycle, source_type, source_id,
-                    created_at, updated_at)
+                    created_at, updated_at, kind)
                    VALUES (?, ?, ?, '', ?, '', 'active', 'meeting', ?,
-                           ?, ?)""",
-                (record_id, final_text, proposal.rationale or "", final_owner, decision_id, now, now),
+                           ?, ?, ?)""",
+                (record_id, final_text, proposal.rationale or "", final_owner, decision_id, now, now,
+                 "action" if is_action else "decision"),
             )
 
             # 3. decision_record_sources: the meeting (what every Room read
@@ -731,30 +919,56 @@ class ProposalBridgeService:
                     ),
                 )
 
-            # 4. action_items row.
+            # 4. action_items row (an action only).  PHILO-15 08: a summary
+            #    or plugin action proposal stands for the summary's own row;
+            #    Confirm accepts THAT row (no second copy of one obligation).
             delegated_at = now if final_owner else None
-            conn.execute(
-                """INSERT INTO action_items
-                   (id, meeting_id, task, owner, due, status,
-                    review_state, source_timestamp, created_at, delegated_at,
-                    source_type, source_ref)
-                   VALUES (?, ?, ?, ?, ?, 'open', 'accepted', ?, ?, ?, 'meeting', ?)""",
-                (
-                    action_id, proposal.meeting_id, final_text,
-                    final_owner, final_due,
-                    proposal.span_start if anchored else proposal.segment_timestamp,
-                    now, delegated_at, proposal.meeting_id,
-                ),
-            )
+            linked = None
+            if not is_action:
+                action_id = None
+            elif proposal.action_item_id:
+                linked = conn.execute(
+                    "SELECT id FROM action_items WHERE id = ?", (proposal.action_item_id,),
+                ).fetchone()
+            if linked is not None:
+                action_id = str(linked["id"])
+                conn.execute(
+                    """UPDATE action_items SET task = ?, owner = ?, due = ?,
+                       status = 'open', review_state = 'accepted', reviewed_at = ?,
+                       delegated_at = COALESCE(delegated_at, ?),
+                       source_timestamp = COALESCE(source_timestamp, ?)
+                       WHERE id = ?""",
+                    (
+                        final_text, final_owner, final_due, now, delegated_at,
+                        proposal.span_start if anchored else proposal.segment_timestamp,
+                        action_id,
+                    ),
+                )
+            elif is_action:
+                conn.execute(
+                    """INSERT INTO action_items
+                       (id, meeting_id, task, owner, due, status,
+                        review_state, source_timestamp, created_at, delegated_at,
+                        source_type, source_ref)
+                       VALUES (?, ?, ?, ?, ?, 'open', 'accepted', ?, ?, ?, 'meeting', ?)""",
+                    (
+                        action_id, proposal.meeting_id, final_text,
+                        final_owner, final_due,
+                        proposal.span_start if anchored else proposal.segment_timestamp,
+                        now, delegated_at, proposal.meeting_id,
+                    ),
+                )
 
-            # 5. decision_commitments linking decision to action_item.
-            conn.execute(
-                """INSERT INTO decision_commitments
-                   (id, decision_id, action_item_id, owner, due_at, status,
-                    created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, 'open', ?, ?)""",
-                (commitment_id, decision_id, action_id, final_owner, final_due, now, now),
-            )
+            # 5. decision_commitments linking the record to the action (an
+            #    action only: the Room reaches its commitments this way).
+            if is_action:
+                conn.execute(
+                    """INSERT INTO decision_commitments
+                       (id, decision_id, action_item_id, owner, due_at, status,
+                        created_at, updated_at)
+                       VALUES (?, ?, ?, ?, ?, 'open', ?, ?)""",
+                    (commitment_id, decision_id, action_id, final_owner, final_due, now, now),
+                )
 
             # Kernel receipt (Article XI).
             ServiceEventLedger(self._db).append_in_transaction(
@@ -782,9 +996,7 @@ class ProposalBridgeService:
                     f"meeting:{proposal.meeting_id}",
                     f"decision:{decision_id}",
                     f"decision_record:{record_id}",
-                    f"action_item:{action_id}",
-                    f"commitment:{commitment_id}",
-                ],
+                ] + ([f"action_item:{action_id}", f"commitment:{commitment_id}"] if is_action else []),
                 correlation_id=current_correlation_id(),
                 causation_id=f"proposal:{proposal_id}",
             )
@@ -835,6 +1047,14 @@ class ProposalBridgeService:
                         "replayed": True, "proposal": self._serialize(later),
                     }
                 return {"error": "Proposal not found or already decided"}
+            # PHILO-15 08: Decline of a summary action declines its row too
+            # (an accepted row is the owner's own and stays).
+            if proposal.action_item_id:
+                conn.execute(
+                    "UPDATE action_items SET status = 'dismissed' "
+                    "WHERE id = ? AND review_state != 'accepted'",
+                    (proposal.action_item_id,),
+                )
             # Receipt for the dismissal.
             ServiceEventLedger(self._db).append_in_transaction(
                 conn, principal,
@@ -862,6 +1082,49 @@ class ProposalBridgeService:
         return {
             "proposal_id": proposal_id, "state": "dismissed", "replayed": False,
             "proposal": self._serialize(dismissed),
+        }
+
+    def defer_proposal(
+        self,
+        principal: Principal,
+        proposal_id: str,
+        *,
+        until: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """PHILO-15 08: Defer -- the row leaves Needs until ``until``.
+
+        Default: the start of tomorrow, local time. The row stays proposed;
+        the meeting's Review still lists it. A second Defer moves the stamp.
+        """
+        proposal = self._db.proposals.get_proposal(proposal_id)
+        if proposal is None:
+            return {"error": "Proposal not found"}
+        if proposal.state != "proposed":
+            return {"error": "Proposal already decided", "code": proposal.state}
+        stamp = str(until or "").strip() or _tomorrow_stamp()
+        deferred = self._db.proposals.defer_proposal(proposal_id, stamp)
+        if deferred is None:
+            return {"error": "Proposal already decided"}
+        with self._db._connection() as conn:
+            ServiceEventLedger(self._db).append_in_transaction(
+                conn, principal,
+                event_type="proposal.deferred",
+                producer="ProposalBridgeService",
+                subject_ref=f"proposal:{proposal_id}",
+                source_revision="",
+                facts={"proposal_id": proposal_id, "kind": proposal.kind, "until": stamp},
+                refs=[f"proposal:{proposal_id}", f"meeting:{proposal.meeting_id}"],
+                correlation_id=current_correlation_id(),
+                causation_id=f"proposal:{proposal_id}",
+            )
+        try:
+            from .needs_you_aggregate import mark_needs_you_dirty
+            mark_needs_you_dirty(self._db)
+        except Exception:
+            pass
+        return {
+            "proposal_id": proposal_id, "state": "proposed", "deferred_until": stamp,
+            "proposal": self._serialize(deferred),
         }
 
     # ── accept reviewed (HS-200-12, counsel P1-1) ───────────────────
@@ -1042,10 +1305,16 @@ class ProposalBridgeService:
             p for p in proposals
             if revision and p.get("extraction_revision") and p["extraction_revision"] != revision
         ]
+        extractors = self._extractor_rows(
+            meeting_id, job, status, intel_state, proposals, revision,
+        )
         return {
             "meeting_id": meeting_id,
             "title": getattr(meeting, "title", "") or "",
             "started_at": started.isoformat() if started else None,
+            # PHILO-15 08 (B02 ruling 3): one honest row per extractor of the
+            # latest read -- ran (with its count), skipped (why), failed (why).
+            "extractors": extractors,
             "revision": revision or None,
             "prior_revision": {
                 "decided": sum(1 for p in prior if p["state"] != "proposed"),
@@ -1057,6 +1326,102 @@ class ProposalBridgeService:
             "extracted_at": completed.isoformat() if completed else None,
             "proposals": proposals,
         }
+
+    def _summary_decisions_missing(self, meeting_id: str) -> bool:
+        """True when the summary's reply carried no ``decisions`` field and no
+        plugin wrote decisions for this meeting."""
+        try:
+            artifacts = self._db.plugins.list_artifacts(meeting_id, limit=2000)
+        except Exception:
+            return False
+        if any(a.plugin_id == _DECISION_PLUGIN for a in artifacts):
+            return False
+        for art in artifacts:
+            if art.plugin_id == _SUMMARY_PLUGIN:
+                structured = self._parse_structured(art)
+                return "decisions" in structured and structured["decisions"] is None
+        return False
+
+    _SUCCESS = frozenset({"success", "succeeded", "ok", "completed", "proposed", "deduped"})
+    _SKIP = frozenset({"skipped", "disabled", "blocked"})
+
+    def _extractor_rows(
+        self,
+        meeting_id: str,
+        job: Any,
+        status: str,
+        intel_state: str,
+        proposals: list[dict[str, Any]],
+        revision: str,
+    ) -> list[dict[str, Any]]:
+        """What each extractor of the latest read did (PHILO-15 08).
+
+        ``state`` is ``ran`` / ``skipped`` / ``failed``; ``count`` is the
+        proposals it left under the current transcript revision; ``reason``
+        says why a row did not run. A job still queued or running has no rows:
+        the face says it is reading.
+        """
+        if job is None or status in {"queued", "reserved", "claimed", "running"}:
+            return []
+
+        def produced(plugin_id: str) -> int:
+            return sum(
+                1 for p in proposals
+                if p.get("source_plugin") == plugin_id
+                and (not revision or not p.get("extraction_revision")
+                     or p.get("extraction_revision") == revision)
+            )
+
+        rows: list[dict[str, Any]] = []
+        if status in {"failed", "refused"} or intel_state in {"error", "failed"}:
+            reason = str(getattr(job, "last_error", "") or "").strip() or status.upper()
+            rows.append({"id": _SUMMARY_PLUGIN, "label": "Summary", "state": "failed",
+                         "count": None, "reason": reason})
+            return rows
+        if status == "succeeded" or intel_state in {"complete", "ready"}:
+            rows.append({"id": _SUMMARY_PLUGIN, "label": "Summary", "state": "ran",
+                         "count": produced(_SUMMARY_PLUGIN), "reason": None})
+            # PHILO-15 08 (Astra #983 r2): a reply that did not carry the
+            # decisions field did NOT extract decisions -- said so, with the
+            # engine, never an empty list.
+            if self._summary_decisions_missing(meeting_id):
+                engine = (
+                    self._extraction_model(job, _SUMMARY_CAPABILITY)
+                    or str(getattr(job, "model_host", "") or "")
+                    or "this engine"
+                )
+                rows.append({"id": "summary_decisions", "label": "Decisions",
+                             "state": "not_extracted", "count": None, "reason": engine})
+        seen: set[str] = set()
+        try:
+            runs = self._db.plugins.list_plugin_runs(meeting_id, limit=200)
+        except Exception:
+            runs = []
+        for run in runs:
+            if run.plugin_id in seen:
+                continue
+            seen.add(run.plugin_id)
+            state = str(run.status or "").strip().lower()
+            label = run.plugin_id.replace("_", " ").capitalize()
+            if state in self._SUCCESS:
+                rows.append({"id": run.plugin_id, "label": label, "state": "ran",
+                             "count": produced(run.plugin_id), "reason": None})
+            elif state in self._SKIP:
+                rows.append({"id": run.plugin_id, "label": label, "state": "skipped",
+                             "count": None, "reason": str(run.error or state).strip()})
+            else:
+                rows.append({"id": run.plugin_id, "label": label, "state": "failed",
+                             "count": None, "reason": str(run.error or state).strip()})
+        route = dict(getattr(job, "frozen_plugin_route", {}) or {})
+        for skipped in route.get("plugin_chain_skipped") or []:
+            plugin_id = str((skipped or {}).get("plugin_id") or "").strip()
+            if not plugin_id or plugin_id in seen:
+                continue
+            seen.add(plugin_id)
+            reason = str((skipped or {}).get("reason") or "skipped").replace("_", " ")
+            rows.append({"id": plugin_id, "label": plugin_id.replace("_", " ").capitalize(),
+                         "state": "skipped", "count": None, "reason": reason})
+        return rows
 
     @staticmethod
     def _serialize(p: Proposal) -> dict[str, Any]:
@@ -1107,6 +1472,8 @@ class ProposalBridgeService:
             "unknowns": unknowns,
             "edited_at": p.edited_at,
             "text_edited": bool(p.edited_at) and p.text != (p.original_text or p.text),
+            "action_item_id": p.action_item_id,
+            "deferred_until": p.deferred_until,
         }
 
     @staticmethod

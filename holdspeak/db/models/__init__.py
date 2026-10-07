@@ -50,6 +50,7 @@ class MeetingSummary:
     calendar_event_id: Optional[str] = None
     attendees: list[str] = field(default_factory=list)
     transcript_words: Optional[int] = None  # HS-170-04: None when no transcript, never 0
+    unclear_spans: int = 0  # PHILO-15-07: segments carrying an `[unclear m:ss–m:ss]` mark
     needs_you_count: int = 0  # HS-172: proposed follow-through proposals count
     # HS-172-02: intel timing for the RAN chip.
     intel_requested_at: Optional[datetime] = None

@@ -142,7 +142,7 @@ def _hosted_command(_side: Side) -> dict[str, Any]:
     return {
         "draft": {
             "request_id": "transport-hosted", "profile_id": "transport-hosted", "expected_profile_revision": 0,
-            "label": "Transport hosted", "provider_family": "anthropic", "model": "safe-model", "requires_key": True,
+            "label": "Transport hosted", "provider_family": "openrouter", "model": "safe-model", "requires_key": True,
         },
         "secret": {"value": "transport-secret-sentinel"},
     }

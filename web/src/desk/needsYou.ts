@@ -61,6 +61,10 @@ export interface NeedsYouRoomItem extends RankableItem {
   /** Kept for A2-W: a row remains openable after it joins the membership. */
   openRef?: string | null;
   proposalId?: string;
+  /** PHILO-15 08: the meeting a proposal came from, and the summary's own
+   * action row it stands for. */
+  meetingId?: string | null;
+  proposalActionItemId?: string | null;
   /** True when the owner waits on someone else for this row: it is listed
    * (the WAITING filter shows it) and it is not counted. */
   waiting?: boolean;
@@ -500,6 +504,11 @@ export function computeNeedsYou(
       .filter((item) => item.source === "commitment" && item.actionItemId)
       .map((item) => String(item.actionItemId)),
   );
+  // PHILO-15 08: a summary action still to confirm is its proposal row; its
+  // To review card is the same obligation, not a second row.
+  for (const item of room) {
+    if (item.proposalId && item.proposalActionItemId) covered.add(String(item.proposalActionItemId));
+  }
   const now = input.now ?? new Date();
   const selfNames = input.selfNames ?? SELF_OWNER_NAMES;
   // An item the owner himself holds is his: it reads `YOURS`, never

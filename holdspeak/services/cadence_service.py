@@ -55,6 +55,9 @@ class CadenceService:
                 "tick_interval_seconds": c.tick_interval_seconds,
                 "quiet_hours": {"start": c.quiet_hours_start, "end": c.quiet_hours_end},
                 "max_nudges_per_day": c.max_nudges_per_day,
+                # PHILO-15 05: the morning Brief job (ON by default), its own setting.
+                "brief_job": {"enabled": bool(getattr(c, "brief_enabled", False)),
+                              "hour": int(getattr(c, "brief_hour", 6))},
                 "policies": len(self._db.cadence.list_policies()), "counts": counts,
                 "egress": _LOCAL_EGRESS}
 

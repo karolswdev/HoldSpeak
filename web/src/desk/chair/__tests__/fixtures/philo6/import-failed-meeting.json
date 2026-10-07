@@ -43,6 +43,7 @@
       "cause": "NO TRANSCRIPT LINES",
       "reason_code": "import_failed"
     },
+    "unclearSpans": 0,
     "web_url": null
   },
   "list_row": {
@@ -76,6 +77,7 @@
     "started_at": "2026-09-24T09:00:00",
     "tags": [],
     "title": "Architecture boundary review \u2014 empty transcript",
-    "transcriptWords": null
+    "transcriptWords": null,
+    "unclearSpans": 0
   }
 }
