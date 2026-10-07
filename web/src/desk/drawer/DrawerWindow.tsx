@@ -14,7 +14,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   DeskIcon,
+  EgressChip,
   FilterTokens,
+  ParkReceipt,
+  restoreFailedOutcome,
+  restoredOutcome,
   IconGrid,
   LampGadget,
   ObjectList,
@@ -25,13 +29,15 @@ import {
   type ObjectSortKey,
 } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
+import { restoreMeeting } from "../api";
 import { openProjectRoom } from "../shell";
 import { useDesk } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
 import { windowName } from "../windowName";
 import { memberOpens, openMember } from "./open";
 import { drawerWindowId, useDrawers, type OpenDrawer } from "./store";
-import { useDrawerData } from "./useDrawerData";
+import { useDrawerData, type DrawerRead } from "./useDrawerData";
+import { urlHost } from "./members";
 import type { DrawerHead, DrawerMember } from "./members";
 import "./drawer.css";
 
@@ -44,9 +50,20 @@ export function drawerReceipt(count: number, selected: number): string {
     .join(" · ");
 }
 
-function HeadFacts({ head, count }: { head: DrawerHead; count: number }) {
+function HeadFacts({ head, count, failed }: { head: DrawerHead; count: number; failed: readonly DrawerRead[] }) {
   return (
     <div className="drawer-facts" data-testid="drawer-facts">
+      {/* A failed read is named, never an empty or complete drawer (A.10). */}
+      {failed.map((read) => (
+        <span key={read} className="drawer-fact" data-tone="fail" data-testid="drawer-not-read">
+          {read} · <b>NOT READ</b>
+        </span>
+      ))}
+      {failed.length && count > 0 ? (
+        <span className="drawer-fact" data-tone="fail" data-testid="drawer-partial">
+          <b>PARTIAL</b>
+        </span>
+      ) : null}
       {head.needsYou > 0 ? <LampGadget label={`${head.needsYou} NEED YOU`} on tone="warn" /> : null}
       {head.target ? (
         <span className="drawer-fact" data-tone={head.targetPassed ? "fail" : undefined}>
@@ -85,6 +102,20 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
   }, [selectedId, selected]);
 
   const name = windowName({ kind: "project", name: data.name }, projectId);
+  // PHILO-13-02 on the surviving face: the park made from this drawer's Info
+  // window, with Restore (one press), also when the drawer is now empty.
+  const receipt = useDrawers((s) => s.receipts[projectId]);
+  const restore = async (ids: string[]) => {
+    const store = useDrawers.getState();
+    try {
+      for (const id of ids) await restoreMeeting(id);
+      store.setReceipt(projectId, restoredOutcome(ids));
+      store.changed();
+      void useDesk.getState().refresh();
+    } catch {
+      store.setReceipt(projectId, restoreFailedOutcome(ids));
+    }
+  };
   const byId = (id: string) => members.find((m) => m.id === id);
   const open = (member: DrawerMember | undefined | null) => {
     if (member && memberOpens(member)) openMember(member);
@@ -116,8 +147,13 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
       <div className="desk-pullout-body drawer-body">
         <div className="drawer-scroll">
           <div className="drawer-head">
-            <HeadFacts head={data.head} count={members.length || 0} />
+            <HeadFacts head={data.head} count={members.length || 0} failed={data.failed} />
             <span className="drawer-head-verbs">
+              {data.failed.length ? (
+                <Button dense variant="ghost" onClick={data.retry}>
+                  Retry
+                </Button>
+              ) : null}
               <FilterTokens
                 label="Drawer view"
                 value={view}
@@ -132,11 +168,9 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
               </Button>
             </span>
           </div>
-          {data.error && !members.length ? (
-            <SurfaceState error={data.error} onRetry={data.reload} />
-          ) : data.loading ? (
+          {data.loading ? (
             <SurfaceState loading />
-          ) : !members.length ? (
+          ) : !members.length && data.failed.length ? null : !members.length ? (
             <SurfaceState empty emptyLabel="Nothing filed here" />
           ) : view === "icons" ? (
             <IconGrid label={name} onClear={() => setSelectedId(null)}>
@@ -169,7 +203,14 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
         </div>
       </div>
       <SurfaceFooter
-        receipt={<span className="drawer-receipt">{drawerReceipt(members.length, selected ? 1 : 0)}</span>}
+        egress={selected?.url ? <EgressChip label={urlHost(selected.url)} scope="cloud" /> : null}
+        receipt={
+          receipt ? (
+            <ParkReceipt outcome={receipt} onRestore={(ids) => void restore(ids)} data-testid="drawer-park-receipt" />
+          ) : (
+            <span className="drawer-receipt">{drawerReceipt(members.length, selected ? 1 : 0)}</span>
+          )
+        }
         verbs={
           <>
             <Button dense variant="ghost" disabled={!selected} onClick={() => info(selected)}>

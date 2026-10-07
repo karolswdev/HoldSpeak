@@ -69,6 +69,8 @@ function compareRows(sort: ObjectSort) {
   };
   const sign = sort.dir === "asc" ? 1 : -1;
   return (a: ListRow, b: ListRow) => {
+    const grouped = (a.group ?? 0) - (b.group ?? 0);
+    if (grouped) return grouped;
     const va = value(a);
     const vb = value(b);
     const order = typeof va === "number" && typeof vb === "number" ? va - vb : String(va).localeCompare(String(vb));
@@ -76,23 +78,6 @@ function compareRows(sort: ObjectSort) {
   };
 }
 
-/** PHILO-14 A2: the Floor's Ask context is a set; the species draws one
- * selected row. Every other row in the set wears the same selected state and
- * says "in Ask context" to a screen reader (never a `[x]` mark). */
-function useAskContextRows(root: React.RefObject<HTMLElement | null>, selected: ReadonlySet<string>) {
-  useLayoutEffect(() => {
-    root.current?.querySelectorAll<HTMLElement>(".object-list-row[data-object-id]").forEach((row) => {
-      const on = selected.has(row.dataset.objectId ?? "");
-      row.setAttribute("aria-selected", on ? "true" : "false");
-      if (on) row.dataset.selected = "true";
-      else delete row.dataset.selected;
-      const open = row.querySelector<HTMLElement>(".object-list-open");
-      if (!open) return;
-      const base = (open.getAttribute("aria-label") ?? "").replace(/, in Ask context$/, "");
-      open.setAttribute("aria-label", on ? `${base}, in Ask context` : base);
-    });
-  });
-}
 
 /** PHILO-8-02 round three — the list's foot is held to the viewport, so the
  * list reserves the foot's measured reach at its end (the Chair's dock-lift
@@ -200,8 +185,9 @@ export function DeskListView() {
         const attention = attentionOf(object);
         const kind = (KIND_LABEL[object.kind] ?? object.kind).toUpperCase();
         // The Floor spans zones: a filed object names its zone beside its kind
-        // (ObjectList has no Where column; inside a drawer every object shares one).
-        const zone = divedZone ? "" : zoneNames.get(qualifiedRef(object.kind, object.id)) ?? zoneNames.get(object.id) ?? "";
+        // (ObjectList has no Where column; inside a drawer every object shares
+        // one). A dived row keeps it too: the row names where it lives.
+        const zone = zoneNames.get(qualifiedRef(object.kind, object.id)) ?? zoneNames.get(object.id) ?? "";
         return {
           id: qualifiedRef(object.kind, object.id),
           kind: object.kind === "coder" ? "agent" : object.kind,
@@ -211,6 +197,7 @@ export function DeskListView() {
           whenSort: wireDate(at)?.getTime(),
           state: attention ? { label: `ATTN ${attention}`, tone: "warn" as const } : undefined,
           sprite: spriteUrl(object.kind, object.id, "rest", refAgent(object.ref)),
+          group: 1,
           object,
         };
       }),
@@ -236,6 +223,7 @@ export function DeskListView() {
             kind: "directory",
             name: zone.title,
             kindWord: "ZONE",
+            group: 0, // zones (folders) above objects, as the Floor drew them
             // HS-202-04 (UX-CANON A.8): an empty zone says EMPTY, never `0 ITEMS`.
             when: countToken(zone.count, "ITEM") ?? "EMPTY",
             zoneId: zone.id,
@@ -253,8 +241,7 @@ export function DeskListView() {
     }
     return set;
   }, [rows, selectedIds]);
-  const lastSelected = [...selectedSet].at(-1) ?? null;
-  useAskContextRows(listRef, selectedSet);
+  const selectedRows = useMemo(() => [...selectedSet], [selectedSet]);
 
   const openCards = pullouts
     .map((p) => ({ ...p, obj: objectByRef(items, p.id) }))
@@ -265,6 +252,20 @@ export function DeskListView() {
     rowById((target as HTMLElement | null)?.closest<HTMLElement>("[data-object-id]")?.dataset.objectId);
   const renamingZone = renamingZoneId ? zones.find((zone) => zone.id === renamingZoneId) : null;
   const [renameCell, setRenameCell] = useState<HTMLElement | null>(null);
+  // A renamed zone moves to its new place in the sort: keep it in view.
+  const lastRenamed = useRef<string | null>(null);
+  useEffect(() => {
+    if (renamingZoneId) {
+      lastRenamed.current = renamingZoneId;
+      return;
+    }
+    const id = lastRenamed.current;
+    lastRenamed.current = null;
+    if (!id) return;
+    const row = [...(listRef.current?.querySelectorAll<HTMLElement>(".object-list-row[data-object-id]") ?? [])]
+      .find((r) => r.dataset.objectId === `zone:${id}`);
+    row?.scrollIntoView?.({ block: "nearest" });
+  }, [renamingZoneId, rows]);
   useLayoutEffect(() => {
     const cell = renamingZone
       ? [...(listRef.current?.querySelectorAll<HTMLElement>(".object-list-row[data-object-id]") ?? [])]
@@ -342,7 +343,10 @@ export function DeskListView() {
             onSort={(key) =>
               setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }))
             }
-            selectedId={lastSelected}
+            // The Ask context is a set: every row in it is selected, and a
+            // screen reader hears it (never a `[x]` mark).
+            selectedIds={selectedRows}
+            selectedLabel="in Ask context"
             onSelect={(id) => {
               const row = rowById(id);
               if (row?.zoneId) diveInto(row.zoneId);

@@ -554,7 +554,7 @@
             }
           ]
         },
-        "observe_at": ".desk-listmode .desk-sortable-table-open[aria-label^=Platform]",
+        "observe_at": ".desk-listmode .object-list-open[aria-label^=Platform]",
         "reads": [
           {
             "method": "GET",
@@ -977,7 +977,7 @@
           "kind": "ui",
           "action": "focus",
           "adapter": "ui-keyboard",
-          "selector": ".desk-listmode .desk-sortable-table-open[aria-label^=Inbox]",
+          "selector": ".desk-listmode .object-list-open[aria-label^=Inbox]",
           "why": "keyboard travel to the Inbox zone row (zone rows are not selectable; DeskListView.tsx F2 handler)"
         }
       ],
@@ -1195,7 +1195,7 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list delete']",
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list delete,']",
           "why": "the seeded row is drawn (the list refreshes after the reload)"
         },
         {
@@ -1204,6 +1204,7 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Atlas list delete",
+          "exact": false,
           "button": "right",
           "timeout_s": 25,
           "why": "the row menu opens on a right-click (DeskListView.tsx onRowContextMenu)"
@@ -1358,7 +1359,7 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list delete']",
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list delete,']",
           "why": "the seeded row is drawn (the list refreshes after the reload)"
         },
         {
@@ -1367,6 +1368,7 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Atlas list delete",
+          "exact": false,
           "button": "right",
           "timeout_s": 25,
           "why": "the row menu opens on a right-click (DeskListView.tsx onRowContextMenu)"
@@ -1795,13 +1797,13 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas long list 20']"
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas long list 20,']"
         },
         {
           "kind": "ui",
           "action": "focus",
           "adapter": "ui-keyboard",
-          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Everyday context']",
+          "selector": ".desk-listmode .object-list-open[aria-label^='Everyday context,']",
           "why": "keyboard travel to the list's LAST row (the seeded knowledge base; decisions sort above agents and knowledge) scrolls the page to its end"
         },
         {
@@ -1810,6 +1812,7 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Atlas long list 20",
+          "exact": false,
           "button": "right",
           "timeout_s": 25
         }

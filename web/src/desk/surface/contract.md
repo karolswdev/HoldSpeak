@@ -701,7 +701,8 @@ The drawer's list view (A-2L): a `grid` with Name (sprite + name), Kind,
 When, State (one lamp + word).
 
 - `label`, `rows: ObjectListRow[]` (`id, kind, name, kindWord?, when?,
-  whenSort?, state?: { label, tone }, sprite?`)
+  whenSort?, state?: { label, tone }, sprite?, group?`); `group` (PHILO-14
+  A2) sorts first, lower above (the Floor's zones above its objects)
 - `sort: { key: "name"|"kind"|"when"|"state", dir }`, `onSort?(key)`: the
   header is a strip of chrome Buttons on the Steel plate (raised; the
   active one sunken, `aria-sort` on its `columnheader`); the species sorts
@@ -709,8 +710,13 @@ When, State (one lamp + word).
 - `selectedId?`, `onSelect?(id)`, `onOpen?(id)`: the selection IS the row
   (the blue plate). No `[ ]` / `[x]` mark, ever. The row's one verb is the
   name Button, stretched over the row.
+- `selectedIds?` (PHILO-14 A2): a set selection (the Floor's Ask context);
+  when given it wins over `selectedId`, and every row in it is a selected
+  row. `selectedLabel?` (`in Ask context`) joins a selected row's
+  accessible name.
 - One Tab stop; arrows walk rows; Space selects; Enter opens.
-- Rows are at least 44 px. In a `surface` of 520 px or less Kind and When
+- Rows are at least 44 px and never shrink below their content in a short
+  scrolling list (PHILO-14 A2: the 393 fold line ran below the row). In a `surface` of 520 px or less Kind and When
   fold under the name (`KIND · WHEN`, the FoldLine of DeskListView without
   its marks) and the sort gadgets grow to 44 px. The fold is VISUAL only:
   all four headers stay, the Kind and When cells stay in their columns for

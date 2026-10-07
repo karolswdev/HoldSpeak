@@ -2,10 +2,11 @@
  *  (`openObject.ts`); a repository opens its own window; a pull request
  *  opens its page. */
 import { openRef, refOpener } from "../openObject";
+import { openPrimitive } from "../shell";
 import { useDesk } from "../store";
 import type { DrawerMember } from "./members";
 
-const WINDOW_REF = /^(meeting|decision|note|artifact|thread|repository):\S/;
+const WINDOW_REF = /^(meeting|decision|note|artifact|thread|repository|commitment):\S/;
 
 /** True when Open does something for this member (UX-CANON A.11). */
 export function memberOpens(member: DrawerMember): boolean {
@@ -15,6 +16,11 @@ export function memberOpens(member: DrawerMember): boolean {
 export function openMember(member: DrawerMember): void {
   if (member.url) {
     window.open(member.url, "_blank", "noopener");
+    return;
+  }
+  // A commitment with no action item opens as the Room's own row opens it.
+  if (member.ref.startsWith("commitment:")) {
+    openPrimitive(member.ref);
     return;
   }
   if (member.ref.startsWith("repository:")) {

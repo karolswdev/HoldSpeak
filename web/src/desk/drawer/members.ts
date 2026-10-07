@@ -82,7 +82,50 @@ function epoch(value: unknown): number | undefined {
 }
 
 const text = (value: unknown): string => (typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "");
-const norm = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+/** The ref a decision record's opener resolves: a meeting record's source is
+ *  a `decisions` row (`decision:<id>` reads `/api/decisions/<id>`); a desk
+ *  record's is a desk decision (`desk_decision:<id>`, its own window). */
+export function recordRef(sourceType: string | undefined, sourceId: string | undefined): string | null {
+  const id = text(sourceId);
+  if (!id) return null;
+  if (sourceType === "desk") return `desk_decision:${id}`;
+  if (sourceType === "meeting") return `decision:${id}`;
+  return null;
+}
+
+/** The producer's kind, in the object vocabulary (kinds.ts). */
+export function memberKind(kind: string | undefined, fallback: string): string {
+  const k = text(kind).toLowerCase();
+  if (!k) return fallback;
+  if (k === "action_item" || k === "action") return "action";
+  if (k === "decision" || k === "decision_record" || k === "desk_decision") return "decision";
+  return k;
+}
+
+/** A launch's origin ref in the open grammar (`action_item:` → `action:`). */
+function flightRef(originRef: string): string {
+  const [kind, ...rest] = originRef.split(":");
+  const id = rest.join(":");
+  if (kind === "action_item") return `action:${id}`;
+  if (kind === "decision_record") return `decision_record:${id}`;
+  return `${kind}:${id}`;
+}
+
+/** `owner/repo` from a pull request URL (github.com/<owner>/<repo>/pull/<n>). */
+export function prRepo(url: string | undefined): string {
+  const m = /^https?:\/\/[^/]+\/([^/]+\/[^/]+)\/pull\/\d+/.exec(text(url));
+  return m ? m[1] : "";
+}
+
+/** The host a URL leaves for (`GITHUB.COM`), for the egress chip. */
+export function urlHost(url: string | undefined): string {
+  try {
+    return new URL(text(url)).host.toUpperCase();
+  } catch {
+    return "";
+  }
+}
 
 /** The agent's state word (the boards: ASKS, WORKS, PR OPEN). */
 export function flightWord(flight: AgentFlight): { label: string; tone: ObjectTone } | null {
@@ -143,14 +186,12 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
   const now = reads.now ?? new Date();
   const out: DrawerMember[] = [];
   const seen = new Set<string>();
-  const names = new Set<string>();
   const meetingTitle = new Map<string, string>();
   const where = reads.projectName;
   const deskRef = (ref: string): string | undefined => (objectByRef(reads.items, ref) ? ref : undefined);
   const add = (member: DrawerMember) => {
     if (seen.has(member.ref)) return;
     seen.add(member.ref);
-    names.add(`${member.kind}|${norm(member.name)}`);
     out.push(member);
   };
 
@@ -173,35 +214,42 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
     });
   }
 
-  // Decisions: the Room's records first (the Desk's decision window), then
-  // a meeting's recorded decision the records do not already hold.
+  // Decisions. Identity, never text: a Room record names its source (a
+  // meeting record's source is the `decisions` row `decision:<id>` opens; a
+  // desk record's is the desk decision), and the lifecycle read names the
+  // same `decisions` rows, so one decision is one ref.
+  // A confirmed proposal writes a record AND its commitment: the Room folds
+  // the pair by the record's commitment id, and so does the drawer.
+  const commitmentIds = new Set(
+    reads.room?.commitments.state === "ok" ? reads.room.commitments.items.map((c) => c.id) : [],
+  );
   if (reads.room?.decisions.state === "ok") {
     for (const d of reads.room.decisions.items) {
-      const ref = `decision:${d.id}`;
+      const ref = recordRef(d.sourceType, d.sourceId);
+      if (!ref || (d.commitmentId && commitmentIds.has(d.commitmentId))) continue;
       add({
-        id: ref, ref, kind: "decision", name: d.text || "Decision",
+        id: ref, ref, kind: memberKind(d.kind, "decision"), name: d.text || "Decision",
         when: whenWord(d.at, now), whenSort: epoch(d.at),
-        facts: { where, from: d.meetingTitle, made: madeWord(d.at, now) },
-        renameRef: deskRef(ref),
+        facts: { where, from: d.meetingTitle || undefined, made: madeWord(d.at, now) },
+        renameRef: ref.startsWith("desk_decision:") ? deskRef(`decision:${ref.slice("desk_decision:".length)}`) : undefined,
       });
     }
   }
   for (const d of reads.decisions) {
     const id = text(d.id);
-    const name = text(d.text) || text(d.title);
-    if (!id || !name || names.has(`decision|${norm(name)}`)) continue;
+    if (!id) continue;
     const ref = `decision:${id}`;
     const at = d.decided_at ?? d.created_at;
     add({
-      id: ref, ref, kind: "decision", name,
+      id: ref, ref, kind: "decision", name: text(d.text) || text(d.title) || "Decision",
       when: whenWord(at, now), whenSort: epoch(at),
       facts: { where, from: meetingTitle.get(text(d.source_meeting_id)), made: madeWord(at, now) },
     });
   }
 
   // Action items: what needs you, the Room's commitments, an agent's item.
-  const action = (id: string, name: string, extra: { at?: unknown; due?: unknown; owner?: string | null; meetingId?: string; meetingTitle?: string }) => {
-    const ref = `action:${id}`;
+  // Follow-through keys its card by the action item: `action:<action item id>`.
+  const action = (ref: string, kind: string, name: string, extra: { at?: unknown; due?: unknown; owner?: string | null; meetingId?: string; meetingTitle?: string }) => {
     const flight = flightFor(ref);
     const word = flight ? flightWord(flight) : null;
     // The agent's word on its item (`CLAUDE CODE ASKS`); once a PR exists
@@ -212,13 +260,13 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
         : { label: `${agentWord(flight.agent)} ${word.label}`, tone: word.tone }
       : undefined;
     add({
-      id: ref, ref, kind: "action", name,
+      id: ref, ref, kind, name,
       when: whenWord(extra.at, now), whenSort: epoch(extra.at),
       state,
       lamp: state,
       facts: {
         where,
-        from: extra.meetingTitle ?? (extra.meetingId ? meetingTitle.get(extra.meetingId) : undefined),
+        from: extra.meetingTitle || (extra.meetingId ? meetingTitle.get(extra.meetingId) : undefined),
         made: madeWord(extra.at, now),
         due: dayWord(extra.due) || undefined,
         owner: flight ? `${agentName(flight.agent)} (agent)` : extra.owner || undefined,
@@ -231,7 +279,7 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
       const raw = item as unknown as Record<string, unknown>;
       const id = text(item.actionItemId) || text(raw.action_item_id);
       if (!id) continue;
-      action(id, item.title, {
+      action(`action:${id}`, "action", item.title, {
         at: item.createdAt ?? item.since,
         due: raw.due_at,
         owner: (raw.owner as string | null) ?? item.ownerHint,
@@ -241,10 +289,15 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
     }
   }
   if (reads.room?.commitments.state === "ok") {
-    for (const c of reads.room.commitments.items) action(c.id, c.text, { due: c.dueAt, owner: c.owner });
+    for (const c of reads.room.commitments.items) {
+      // A commitment with an action item is that item's card; one without
+      // opens as the Room opens it (`commitment:<id>`).
+      const ref = c.actionItemId ? `action:${c.actionItemId}` : `commitment:${c.id}`;
+      action(ref, memberKind(c.kind, "action"), c.text, { due: c.dueAt, owner: c.owner });
+    }
   }
   for (const f of flights) {
-    if (f.kind === "action" && f.id) action(f.id, f.title, {});
+    if (f.originRef.includes(":") && f.id) action(flightRef(f.originRef), memberKind(f.kind, "action"), f.title, {});
   }
 
   for (const a of reads.artifacts) {
@@ -264,9 +317,12 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
   for (const r of reads.resources) {
     if (r.deleted) continue;
     const raw = text(r.resource_ref);
-    const ref = raw.startsWith("desk_decision:") ? `decision:${raw.slice("desk_decision:".length)}` : raw;
+    // The filed ref verbatim (`desk_decision:<id>` stays itself: it is the
+    // identity a Room record of a desk decision carries too).
+    const ref = raw;
     if (!ref.includes(":") || seen.has(ref)) continue;
-    const object = objectByRef(reads.items, ref);
+    const deskName = ref.startsWith("desk_decision:") ? `decision:${ref.slice("desk_decision:".length)}` : ref;
+    const object = objectByRef(reads.items, deskName);
     if (!object) continue;
     const kind = object.kind === "coder" ? "agent" : object.kind;
     const record = object.ref as unknown as Record<string, unknown>;
@@ -275,7 +331,7 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
       id: ref, ref, kind, name: object.title,
       when: whenWord(at, now), whenSort: epoch(at),
       facts: { where, made: madeWord(record.createdAt ?? r.created_at, now), branch: text(record.branch) || undefined },
-      renameRef: ref,
+      renameRef: deskName,
     });
   }
 
@@ -301,7 +357,8 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
       });
     }
     if (f.pr?.number) {
-      const ref = `pr:${f.pr.number}`;
+      // Repository-qualified: two repositories' #412 are two objects.
+      const ref = `pr:${prRepo(f.pr.url) || f.projectId}#${f.pr.number}`;
       const state = { label: f.pr.state === "merged" || f.state === "merged" ? "MERGED" : "OPEN", tone: f.state === "merged" ? "ok" as const : "info" as const };
       add({
         id: ref, ref, kind: "pr", name: `#${f.pr.number} ${f.title}`,

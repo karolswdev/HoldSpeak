@@ -6,6 +6,7 @@
  *  desk store (`zoneViewPrefs["project:<id>"]`), not here.
  */
 import { create } from "zustand";
+import type { ParkOutcome } from "../surface";
 import type { DrawerMember } from "./members";
 
 export interface OpenDrawer {
@@ -25,6 +26,10 @@ interface DrawerState {
   infos: OpenInfo[];
   /** Bumped after a write from an Info window (Rename, Park): drawers re-read. */
   revision: number;
+  /** PHILO-13-02 on the surviving face: a drawer shows the park receipt
+   *  (`PARKED · <name>`, Restore) of the object parked from its Info window. */
+  receipts: Record<string, ParkOutcome>;
+  setReceipt(projectId: string, outcome: ParkOutcome | null): void;
   openDrawer(projectId: string, origin?: { x: number; y: number } | null): void;
   closeDrawer(projectId: string): void;
   openInfo(member: DrawerMember, projectId: string): void;
@@ -33,12 +38,20 @@ interface DrawerState {
 }
 
 export const drawerWindowId = (projectId: string) => `drawer:project:${projectId}`;
-export const infoWindowId = (ref: string) => `drawer-info:${ref}`;
+// The workspace keeps a window's place under an id of [A-Za-z0-9:_-] only.
+export const infoWindowId = (ref: string) => `drawer-info:${ref.replace(/[^A-Za-z0-9:_-]/g, "_")}`;
 
 export const useDrawers = create<DrawerState>((set, get) => ({
   drawers: [],
   infos: [],
   revision: 0,
+  receipts: {},
+  setReceipt(projectId, outcome) {
+    const next = { ...get().receipts };
+    if (outcome) next[projectId] = outcome;
+    else delete next[projectId];
+    set({ receipts: next });
+  },
   openDrawer(projectId, origin = null) {
     const id = projectId.trim();
     if (!id) return;

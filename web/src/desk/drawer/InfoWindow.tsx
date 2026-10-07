@@ -11,11 +11,12 @@ import { DeskWindowFrame } from "../components/DeskWindow";
 import { renameDeskObject } from "../components/InfoWindow";
 import { renameLock } from "../infoContract";
 import { useDesk } from "../store";
-import { EditInPlace, GetInfo, SurfaceFooter, objectSprite } from "../surface";
+import { EditInPlace, EgressChip, GetInfo, SurfaceFooter, objectSprite } from "../surface";
 import { plainFailure } from "../surface/plainFailure";
 import { windowName } from "../windowName";
 import { objectByRef } from "../world";
 import { memberOpens, openMember } from "./open";
+import { urlHost } from "./members";
 import { infoWindowId, useDrawers, type OpenInfo } from "./store";
 
 export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
@@ -55,6 +56,8 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
     setFailure("");
     try {
       await parkMeeting(id);
+      // The receipt lands on the surviving face: the drawer, with Restore.
+      useDrawers.getState().setReceipt(info.projectId, { kind: "parked", text: `PARKED · ${name}`, ids: [id] });
       close();
       useDrawers.getState().changed();
       void useDesk.getState().refresh();
@@ -98,6 +101,7 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
         </div>
       </div>
       <SurfaceFooter
+        egress={member.url ? <EgressChip label={urlHost(member.url)} scope="cloud" /> : null}
         receipt={failure ? <span className="drawer-receipt" data-tone="fail" role="status">{failure}</span> : null}
         verbs={
           <>

@@ -2153,6 +2153,7 @@ class ProjectService:
             placeholders = ",".join("?" * len(meeting_ids))
             decision_rows = conn.execute(
                 f"""SELECT DISTINCT r.id, r.decision_text, r.created_at, r.lifecycle,
+                           r.source_type AS record_source_type, r.source_id AS record_source_id,
                            p.id AS proposal_id,
                            p.meeting_id AS proposal_meeting_id,
                            p.kind AS proposal_kind,
@@ -2218,6 +2219,11 @@ class ProjectService:
                 # (recall_service.py:193-196); a consumer that cannot drop the
                 # row must at least tell the truth about what it is.
                 "kind": str(row["proposal_kind"] or "") or "decision",
+                # PHILO-14 A2: the record's source identity (a meeting record's
+                # source is the `decisions` row its opener reads), so a face
+                # opens and dedupes by identity, never by the text.
+                "source_type": row["record_source_type"],
+                "source_id": row["record_source_id"],
             }
             if item["lifecycle"] == "superseded":
                 with self._db._connection() as succ_conn:
@@ -2286,7 +2292,7 @@ class ProjectService:
 
             placeholders2 = ",".join("?" * len(decision_ids))
             commitment_rows = conn.execute(
-                f"""SELECT c.id, c.owner, c.due_at, c.status,
+                f"""SELECT c.id, c.owner, c.due_at, c.status, c.action_item_id,
                            ai.task AS text,
                            (SELECT p.kind FROM follow_through_proposals p
                              WHERE p.commitment_id = c.id LIMIT 1) AS proposal_kind
@@ -2309,6 +2315,8 @@ class ProjectService:
                 # decision-kind proposal also writes a commitment, so this
                 # section holds decisions too.  The kind rides with the row.
                 "kind": str(row["proposal_kind"] or "") or "action",
+                # PHILO-14 A2: Follow-through keys its card by the action item.
+                "action_item_id": row["action_item_id"],
             })
         return {"items": items}
 

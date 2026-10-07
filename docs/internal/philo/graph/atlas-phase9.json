@@ -182,14 +182,14 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list note 6']"
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list note 6,']"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "click",
         "adapter": "ui-pointer",
-        "selector": ".desk-listmode .desk-sortable-table-open[aria-label^='Personal zone']",
+        "selector": ".desk-listmode .object-list-open[aria-label^='Personal, ZONE']",
         "why": "dive into the starter zone Personal (two starter notes: About me, How I like help)"
       },
       "expected": {
@@ -384,14 +384,14 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list note 6']"
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list note 6,']"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "click",
         "adapter": "ui-pointer",
-        "selector": ".desk-listmode .desk-sortable-table-open[aria-label^='Personal zone']",
+        "selector": ".desk-listmode .object-list-open[aria-label^='Personal, ZONE']",
         "why": "dive into the starter zone Personal (two starter notes: About me, How I like help)"
       },
       "expected": {
@@ -399,7 +399,7 @@
           "kind": "readable_text",
           "value": "PERSONAL"
         },
-        "observe_at": ".desk-listmode tbody tr:has(.desk-list-name-cell[aria-label^=About])",
+        "observe_at": ".desk-listmode .object-list-row:has(.object-list-open[aria-label^=About])",
         "words": "the owner dives into a zone; the row 'About me' is wholly inside the viewport and names its zone PERSONAL: in the Zone column at 1440, on the fold line in the name Button at 393. Red on main at 393: the Kind, Zone and Attention cells run past the right edge, so the row is not in the viewport; preservation green at 1440."
       },
       "completion_bound_s": 25,
@@ -586,7 +586,7 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list note 6']"
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list note 6,']"
         }
       ],
       "trigger": {
@@ -594,9 +594,9 @@
         "action": "click_role",
         "adapter": "ui-pointer",
         "role": "button",
-        "name": "Zone",
+        "name": "Kind",
         "exact": true,
-        "why": "the Zone sort verb: a column header at 1440, in the Name header at 393 (DeskSortableTable.tsx SortButton)"
+        "why": "PHILO-14 A2: the Kind sort verb (the zone rides the Kind cell; ObjectList has no Zone column): a column header at both widths (ObjectList's header Buttons)"
       },
       "expected": {
         "predicate": {
@@ -604,8 +604,8 @@
           "attr": "aria-pressed",
           "value": "true"
         },
-        "observe_at": ".desk-listmode thead .desk-sortable-table-sort.is-current",
-        "words": "the owner sorts the list by Zone; the sorted verb is the library Button and says it is pressed (aria-pressed true). Red on main at both widths: the sort verbs are raw buttons with no pressed state."
+        "observe_at": ".desk-listmode [role=columnheader] .object-list-sort[aria-pressed=true]",
+        "words": "the owner sorts the list by Kind (PHILO-14 A2: the zone rides Kind); the sorted verb is the library Button and says it is pressed (aria-pressed true). Red on main at both widths: the sort verbs are raw buttons with no pressed state."
       },
       "completion_bound_s": 25,
       "viewports": [
@@ -791,13 +791,13 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list note 6']"
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list note 6,']"
         },
         {
           "kind": "ui",
           "action": "focus",
           "adapter": "ui-keyboard",
-          "selector": ".desk-listmode tbody tr.desk-sortable-table-row:last-child .desk-list-name-cell",
+          "selector": ".desk-listmode .object-list-row:last-child .object-list-open",
           "why": "keyboard travel to the list's LAST row scrolls the page to its end; the row sits at the bottom edge"
         }
       ],
@@ -806,7 +806,7 @@
         "action": "press",
         "adapter": "ui-keyboard",
         "key": "Shift+F10",
-        "why": "the row menu from the keyboard (DeskListView.tsx onRowKeyDown: ContextMenu or Shift+F10) on the focused last row"
+        "why": "the row menu from the keyboard (DeskListView.tsx: the list's onKeyDown, ContextMenu or Shift+F10) on the focused last row"
       },
       "expected": {
         "predicate": {

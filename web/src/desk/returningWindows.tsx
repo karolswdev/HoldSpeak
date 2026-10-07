@@ -19,6 +19,7 @@ import { useDeliveryTerminal, type OpenTarget } from "./deliveryTerminal";
 import { useMissionControl } from "./missioncontrol";
 import { useSteering } from "./steering";
 import { useTrustWindow } from "./components/TrustWindow";
+import { useDrawers, type OpenDrawer, type OpenInfo } from "./drawer/store";
 
 type DossierRecord =
   | { kind: "story"; project: string; storyId: string; source: string }
@@ -56,6 +57,13 @@ useSteering.subscribe((s, prev) => {
 
 useTrustWindow.subscribe((s, prev) => {
   if (s.open !== prev.open) rememberWindow("trust", s.open ? true : null);
+});
+
+// PHILO-14 A2: open drawers and their Get Info windows (their place and
+// size are the frame's panelRects; the view is zoneViewPrefs).
+useDrawers.subscribe((s, prev) => {
+  if (s.drawers !== prev.drawers) rememberWindow("drawers", s.drawers.length ? s.drawers : null);
+  if (s.infos !== prev.infos) rememberWindow("drawer-infos", s.infos.length ? s.infos : null);
 });
 
 useDesk.subscribe((s, prev) => {
@@ -96,6 +104,8 @@ function restoreOnce(): void {
   const schedule = keptWindow<boolean>("schedule-create");
   const ask = keptWindow<boolean>("ask");
   pendingEditor = keptWindow<string>("editor");
+  const drawers = keptWindow<OpenDrawer[]>("drawers");
+  const infos = keptWindow<OpenInfo[]>("drawer-infos");
 
   if (dossier?.kind === "story")
     void useDeliveryDossier.getState().openStory(dossier.project, dossier.storyId, dossier.source || undefined);
@@ -110,6 +120,13 @@ function restoreOnce(): void {
   if (schedule) desk.openScheduleCreate();
   if (ask) desk.openAsk();
   if (pendingEditor) rememberWindow("editor", pendingEditor); // kept until the read lands
+  const drawerStore = useDrawers.getState();
+  for (const drawer of Array.isArray(drawers) ? drawers : []) {
+    if (drawer?.projectId) drawerStore.openDrawer(drawer.projectId, drawer.origin ?? null);
+  }
+  for (const info of Array.isArray(infos) ? infos : []) {
+    if (info?.member?.ref && info.projectId) drawerStore.openInfo(info.member, info.projectId);
+  }
 }
 
 /** After the first Desk read whose collections all answered: the editor

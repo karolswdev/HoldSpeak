@@ -58,7 +58,9 @@ const ROOM = {
   sources: { state: "ok", items: [], count: 0, nextCheckAt: null },
   health: { state: "ok", assessment: "on_track", reason: null, inputs: { overdue: 0, overdueMilestones: 0, ciFailing: false, reviewWaitingDays: null, targetPassed: false } },
   sinceRead: { state: "ok", readAt: null, groups: [] },
-  decisions: { state: "ok", items: [{ id: "record-1", text: "Freeze the old ledger on Nov 5", at: today, url: null }] },
+  // The Room's record of the meeting decision dec-1 (its source), worded differently:
+  // one decision, by identity, never by text.
+  decisions: { state: "ok", items: [{ id: "record-1", text: "Freeze the old ledger (Nov 5)", at: today, url: null, kind: "decision", source_type: "meeting", source_id: "dec-1" }] },
   commitments: { state: "ok", items: [] },
   target: { state: "ok", targetAt: "2026-11-05", daysLeft: 30, passed: false },
   updates: { state: "absent", reason: "x" },
@@ -92,7 +94,7 @@ beforeEach(() => {
   apiFetch.mockReset();
   apiFetch.mockImplementation((url: string) => Promise.resolve(route(url)));
   useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
-  useDrawers.setState({ drawers: [], infos: [], revision: 0 });
+  useDrawers.setState({ drawers: [], infos: [], revision: 0, receipts: {} });
   useDesk.setState({
     items: { ...EMPTY_ITEMS, note: [{ kind: "note", id: "n-1", title: "Ledger cutover risks", createdAt: today } as never] },
     zoneViewPrefs: {},
@@ -105,7 +107,7 @@ afterEach(() => vi.restoreAllMocks());
 
 const EXPECTED = [
   "Ledger cutover sync",
-  "Freeze the old ledger on Nov 5",
+  "Freeze the old ledger (Nov 5)",
   "Write the rollback runbook",
   "Shard the reconciliation job",
   "Add the freeze flag",
@@ -130,7 +132,10 @@ describe("PHILO-14 A2 the drawer", () => {
     const names = [...document.querySelectorAll(".desk-icon-name")].map((n) => n.textContent);
     expect(names).toEqual(EXPECTED);
     // The meeting decision the Room's record already holds is not listed twice.
-    expect(names.filter((n) => n === "Freeze the old ledger on Nov 5")).toHaveLength(1);
+    expect(names.filter((n) => n.startsWith("Freeze the old ledger"))).toHaveLength(1);
+    const ids = [...document.querySelectorAll(".desk-icon")].map((n) => n.getAttribute("data-object-id"));
+    expect(ids).toContain("decision:dec-1"); // the `decisions` row its opener reads
+    expect(ids).toContain("pr:acme/ledger#412"); // repository-qualified
   });
 
   it("the head is the Room's intelligence line", async () => {
@@ -149,6 +154,7 @@ describe("PHILO-14 A2 the drawer", () => {
     expect(screen.getByRole("button", { name: "Write the rollback runbook, ACTION ITEM, CLAUDE CODE ASKS" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Claude Code: Write the rollback runbook, AGENT, ASKS" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "#412 Add the freeze flag, PULL REQUEST, OPEN" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add the freeze flag, ACTION ITEM, PR #412 OPEN" })).toBeInTheDocument();
   });
 
   it("Icons | List is remembered per drawer", async () => {
@@ -203,11 +209,54 @@ describe("PHILO-14 A2 the drawer", () => {
     expect(opened.refs).toEqual(["meeting:m-standup", "people:rel-j"]);
   });
 
-  it("a pull request opens its page", async () => {
+  it("a pull request opens its page, and says where at the verb", async () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     await renderDrawer();
+    fireEvent.click(screen.getByRole("button", { name: /^#412 Add the freeze flag/ }), { detail: 1 });
+    expect(document.querySelector(".surface-footer-egress")).toHaveTextContent("GITHUB.COM");
     fireEvent.doubleClick(screen.getByRole("button", { name: /^#412 Add the freeze flag/ }));
     expect(open).toHaveBeenCalledWith("https://github.com/acme/ledger/pull/412", "_blank", "noopener");
+  });
+
+  it("a failed read is named, the drawer reads PARTIAL, and Retry re-runs only it", async () => {
+    let peopleFails = true;
+    apiFetch.mockImplementation((url: string) =>
+      url.includes("/people") && peopleFails ? Promise.reject(new Error("locked")) : Promise.resolve(route(url)));
+    render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
+    await screen.findByText(/PEOPLE ·/);
+    expect(screen.getByTestId("drawer-facts")).toHaveTextContent("PEOPLE · NOT READ");
+    expect(screen.getByTestId("drawer-partial")).toHaveTextContent("PARTIAL");
+    expect(screen.queryByRole("button", { name: /^Jordan Patel/ })).toBeNull();
+    const before = apiFetch.mock.calls.map(([u]) => String(u));
+    peopleFails = false;
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }), { detail: 1 });
+    await screen.findByRole("button", { name: /^Jordan Patel, PERSON/ });
+    const retried = apiFetch.mock.calls.slice(before.length).map(([u]) => String(u));
+    expect(retried.every((u) => u.includes("/people"))).toBe(true);
+    expect(screen.queryByTestId("drawer-partial")).toBeNull();
+  });
+
+  it("a Room commitment opens its action item's card; a decision-kind one stays a decision", () => {
+    const members = drawerMembers({
+      projectId: "p", projectName: "P", meetings: [], decisions: [], artifacts: [], people: [], resources: [],
+      flights: [], sessions: [], items: EMPTY_ITEMS,
+      room: { decisions: { state: "ok", items: [] }, needsYou: { state: "absent", reason: "x" },
+        commitments: { state: "ok", items: [
+          { id: "c1", text: "Send the plan", dueAt: null, owner: null, kind: "action", actionItemId: "ai-9" },
+          { id: "c2", text: "Keep the old API", dueAt: null, owner: null, kind: "decision" },
+        ] } } as never,
+    });
+    expect(members.map((m) => [m.ref, m.kind])).toEqual([["action:ai-9", "action"], ["commitment:c2", "decision"]]);
+  });
+
+  it("Park leaves its receipt on the drawer, with Restore", async () => {
+    await renderDrawer();
+    useDrawers.getState().setReceipt("p-ledger", { kind: "parked", text: "PARKED · Ledger cutover sync", ids: ["m-standup"] });
+    const receipt = await screen.findByTestId("drawer-park-receipt");
+    expect(receipt).toHaveTextContent("PARKED · Ledger cutover sync");
+    fireEvent.click(within(receipt).getByRole("button", { name: "Restore" }), { detail: 1 });
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m-standup/restore", { method: "POST" }));
+    await waitFor(() => expect(screen.getByTestId("drawer-park-receipt")).toHaveTextContent("RESTORED"));
   });
 
   it("an empty drawer says so and counts nothing", async () => {
@@ -279,6 +328,7 @@ describe("PHILO-14 A2 Get Info window", () => {
     fireEvent.click(screen.getByRole("button", { name: "Park" }), { detail: 1 });
     await waitFor(() => expect(useDrawers.getState().infos).toEqual([]));
     expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m1", { method: "DELETE" });
+    expect(useDrawers.getState().receipts.p).toEqual({ kind: "parked", text: "PARKED · Ledger cutover sync", ids: ["m1"] });
     expect(useDrawers.getState().revision).toBe(1);
   });
 

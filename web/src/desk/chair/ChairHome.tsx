@@ -87,6 +87,7 @@ import {
   type PlannedRoute,
   type SummaryRefusal,
 } from "../../meetings/summaryRoute";
+import { openDrawer } from "../drawer/store";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -2640,7 +2641,7 @@ function CoderNeedsYouRow({ item, now, primary }: { item: NeedsYouItem; now: Dat
           {projectId && projectName ? (
             <ProjectButton
               name={projectName}
-              onOpen={() => openProjectRoom(projectId)}
+              onOpen={() => openDrawer(projectId)}
               data-testid="arrival-project"
             />
           ) : null}

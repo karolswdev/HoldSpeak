@@ -1,7 +1,10 @@
 /** PHILO-14 A2 — the drawer's reads: the Room's data layer (its controller,
  *  its people read) plus the Project's filed refs and the agents in flight.
- *  No new hub route; no second copy of the Room's reads. */
-import { useEffect, useMemo, useState } from "react";
+ *  No new hub route; no second copy of the Room's reads.
+ *
+ *  A read that fails is never an empty drawer: each failed read is named
+ *  (`ROOM`, `PEOPLE`, `RESOURCES` · NOT READ) and Retry re-runs only those. */
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useAgentFlights, useAgentFlightsLive } from "../agentFlights";
 import { useDesk } from "../store";
@@ -13,6 +16,9 @@ import { useDrawers } from "./store";
 
 type Resource = DrawerReads["resources"][number];
 
+/** The reads a drawer makes; the head names each one that failed. */
+export type DrawerRead = "ROOM" | "PEOPLE" | "RESOURCES";
+
 export function useDrawerData(projectId: string) {
   const ctrl = useProjectRoomController(`project:${projectId}`, undefined);
   useAgentFlightsLive();
@@ -22,20 +28,34 @@ export function useDrawerData(projectId: string) {
   const revision = useDrawers((s) => s.revision);
   const [people, setPeople] = useState<RoomPersonItem[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
+  const [peopleFailed, setPeopleFailed] = useState(false);
+  const [resourcesFailed, setResourcesFailed] = useState(false);
   const [tick, setTick] = useState(0);
   useOnDeskChanged(() => setTick((n) => n + 1));
 
+  const readPeople = useCallback(() => {
+    return fetchRoomPeople(projectId).then(
+      (rows) => {
+        setPeople(rows);
+        setPeopleFailed(false);
+      },
+      () => setPeopleFailed(true), // the last read stays on the glass
+    );
+  }, [projectId]);
+  const readResources = useCallback(() => {
+    return apiFetch<{ resources?: Resource[] }>(`/api/projects/${encodeURIComponent(projectId)}/resources`).then(
+      (body) => {
+        setResources(Array.isArray(body?.resources) ? body.resources : []);
+        setResourcesFailed(false);
+      },
+      () => setResourcesFailed(true),
+    );
+  }, [projectId]);
+
   useEffect(() => {
-    let live = true;
-    // Each read stands alone: one that fails leaves the others on the glass.
-    void fetchRoomPeople(projectId).then((rows) => live && setPeople(rows)).catch(() => undefined);
-    void apiFetch<{ resources?: Resource[] }>(`/api/projects/${encodeURIComponent(projectId)}/resources`)
-      .then((body) => live && setResources(Array.isArray(body?.resources) ? body.resources : []))
-      .catch(() => undefined);
-    return () => {
-      live = false;
-    };
-  }, [projectId, revision, tick]);
+    void readPeople();
+    void readResources();
+  }, [readPeople, readResources, revision, tick]);
 
   useEffect(() => {
     if (revision || tick) void ctrl.load(true);
@@ -60,11 +80,25 @@ export function useDrawerData(projectId: string) {
     [projectId, ctrl.projectName, ctrl.room, ctrl.meetings, ctrl.decisions, ctrl.artifacts, people, resources, flights, sessions, items],
   );
   const head = useMemo(() => drawerHead(ctrl.room), [ctrl.room]);
+  const failed = useMemo<DrawerRead[]>(
+    () => [
+      ...(ctrl.error ? (["ROOM"] as const) : []),
+      ...(peopleFailed ? (["PEOPLE"] as const) : []),
+      ...(resourcesFailed ? (["RESOURCES"] as const) : []),
+    ],
+    [ctrl.error, peopleFailed, resourcesFailed],
+  );
+  /** Retry re-runs exactly the reads that failed. */
+  const retry = () => {
+    if (ctrl.error) void ctrl.load();
+    if (peopleFailed) void readPeople();
+    if (resourcesFailed) void readResources();
+  };
   return {
     name: ctrl.projectName,
     loading: ctrl.loadStatus === "loading" && !ctrl.room,
-    error: ctrl.error,
-    reload: () => void ctrl.load(),
+    failed,
+    retry,
     head,
     members,
   };
