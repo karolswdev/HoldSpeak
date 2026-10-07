@@ -525,3 +525,35 @@ class TestMicAllowlist:
         mod = _load_scanner()
         assert len(mod.MIC_ALLOWLIST) == 24
         assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 24
+
+
+# PHILO-15 02 (ruling 2026-10-07): a secret is never dictated aloud.
+_SECRET_FACE = """import React from "react";
+export function Row() {
+  return (
+    <div>
+      <StringGadget
+        label="Server address"
+        value={a}
+        onChange={setA}
+        /* the owner's own address: an apostrophe in a comment */
+        placeholder="http://<host>:<port>/v1"
+      />
+      <StringGadget label="Key" type="password" mic={false} value={k} onChange={setK} />
+      <StringGadget label="Name" type="text" mic={false} value={n} onChange={setN} />
+    </div>
+  );
+}
+"""
+
+
+def test_mic_exempts_a_password_well_but_not_a_text_well() -> None:
+    scanner = _load_scanner()
+    content = _SECRET_FACE
+    found = scanner.scan_mic("features/x/Row.tsx", content, content.splitlines())
+    lines = [v.line for v in found]
+    # Only the text well with mic={false} is a hole; the password well is
+    # lawful, and the address well (it keeps its mic) is not misread past
+    # the apostrophe in its comment.
+    assert len(found) == 1, [v.__dict__ for v in found]
+    assert content.splitlines()[lines[0] - 1].strip().startswith('<StringGadget label="Name"')
