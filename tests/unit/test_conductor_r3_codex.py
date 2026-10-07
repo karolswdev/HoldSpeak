@@ -299,6 +299,7 @@ def test_an_untrusted_codex_launch_refuses_before_anything_runs(tmp_path, db, mo
     with pytest.raises(AgentHandRefused) as exc:
         rig.hand.hand(OWNER, "action", "ai_1", profile="codex-default")
     assert exc.value.reason == "codex_hooks_untrusted"
+    assert "Use it for Codex on the Agents card" in str(exc.value)  # the fix, by name
     assert asked and asked[0] == coder_gate.codex_hook_flags(coder_gate.spawn_prefix())
     assert not rig.worktree.exists()
     assert not any(c[1] == "new-session" for c in rig.tmux.calls)
@@ -622,3 +623,74 @@ def test_codex_sessions_have_their_own_receipt_adapter() -> None:
     assert _adapter_for("claude:x") == "claude-code-hooks" and _adapter_for("coder:p") == "tmux-pane"
     assert standing_for("codex-hooks", Capability.BLOCKING) is Standing.AUTHORITATIVE
     assert standing_for("codex-hooks", Capability.USAGE_TOKENS) is Standing.UNAVAILABLE
+
+
+# ── 9. the rider and gate hooks start fast and get time (R3, lost events) ──
+
+
+def test_rider_timeouts_cover_a_cold_start() -> None:
+    from holdspeak.agent_context.hooks import RIDER_HOOK_TIMEOUT_SECONDS, claude_hook_template
+
+    assert RIDER_HOOK_TIMEOUT_SECONDS == 30
+    claude = claude_hook_template()["hooks"]
+    assert {h["timeout"] for es in claude.values() for e in es for h in e["hooks"]} == {30}
+    codex = coder_gate.codex_spawn_hooks(PREFIX)["hooks"]
+    for event, entries in codex.items():
+        for entry in entries:
+            for hook in entry["hooks"]:
+                gate = " gate hook" in hook["command"]
+                if event == "SessionEnd":
+                    assert hook["timeout"] == 3  # Codex clamps SessionEnd to 3 s
+                elif gate:
+                    assert hook["timeout"] == (300 if event == "PreToolUse" else 15)
+                else:
+                    assert hook["timeout"] == 30, (event, hook)
+    spawn = coder_gate.spawn_settings(PREFIX)["hooks"]
+    riders = [h for es in spawn.values() for e in es for h in e["hooks"] if "agent-hook ingest" in h["command"]]
+    assert riders and {h["timeout"] for h in riders} == {30}
+
+
+#: Modules a hook must never load: the product's heavy half.
+HEAVY = ("holdspeak.main", "holdspeak.transcribe", "holdspeak.intel", "holdspeak.meeting_session",
+         "holdspeak.plugins.host", "openai", "numpy", "fastapi")
+
+
+@pytest.mark.parametrize("argv, payload", [
+    (["agent-hook", "ingest", "--agent", "codex"],
+     {"session_id": "s1", "cwd": "/tmp", "hook_event_name": "Stop",
+      "last_assistant_message": "Tests pass. Should I open the pull request?"}),
+    (["agent-hook", "ingest", "--agent", "claude"],
+     {"session_id": "s1", "cwd": "/tmp", "hook_event_name": "Notification",
+      "message": "Claude needs your permission to use Bash"}),
+    (["gate", "hook", "--agent", "codex"], _pre_tool_use("/tmp", "ls")),
+])
+def test_the_hook_entry_loads_no_heavy_module(tmp_path, argv, payload) -> None:
+    import subprocess
+
+    script = (
+        "import json, sys\n"
+        "from holdspeak.cli_entry import _fast\n"
+        f"code = _fast({argv!r})\n"
+        f"heavy = sorted(m for m in {HEAVY!r} if m in sys.modules)\n"
+        "print(json.dumps({'code': code, 'heavy': heavy}))\n"
+    )
+    env = {**os.environ, "HOME": str(tmp_path)}
+    env.pop("HOLDSPEAK_PARENT_OPERATION_ID", None)
+    done = subprocess.run([sys.executable, "-c", script], input=json.dumps(payload), capture_output=True,
+                          text=True, env=env, timeout=60)
+    assert done.returncode == 0, done.stderr
+    answer = json.loads(done.stdout.strip().splitlines()[-1])
+    assert answer == {"code": 0, "heavy": []}
+
+
+def test_every_other_command_still_reaches_main(monkeypatch) -> None:
+    from holdspeak import cli_entry
+
+    assert cli_entry._fast(["agent-hook", "templates"]) is None
+    assert cli_entry._fast(["gate", "status"]) is None
+    assert cli_entry._fast(["web"]) is None
+    called = []
+    monkeypatch.setattr("sys.argv", ["holdspeak", "doctor"])
+    monkeypatch.setattr("holdspeak.main.main", lambda: called.append(True))
+    cli_entry.main()
+    assert called == [True]

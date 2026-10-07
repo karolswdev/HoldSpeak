@@ -160,7 +160,8 @@ def _filter_question(text: str | None) -> str | None:
     carry a token/key)."""
     if not text:
         return None
-    from holdspeak.plugins.dictation.journal import filter_secret
+    # The light home of the journal's check: no plugin host on the hook path.
+    from holdspeak.project_doc_suggestions import filter_secret
 
     filtered = filter_secret(str(text).strip())
     return filtered or None

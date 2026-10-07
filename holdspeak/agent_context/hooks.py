@@ -183,6 +183,12 @@ def detect_story_claim(
     return {}
 
 
+#: The rider hook's timeout (Conductor R3). A rider event that passes its
+#: timeout is lost; ``holdspeak agent-hook ingest`` starts in about 0.1 s
+#: (``cli_entry``), but under load or on a cold ``uv run`` it took over 5 s.
+RIDER_HOOK_TIMEOUT_SECONDS = 30
+
+
 def claude_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
     command = _agent_hook_command("claude", capture_messages=capture_messages)
     return {
@@ -190,33 +196,33 @@ def claude_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
             "SessionStart": [
                 {
                     "matcher": "startup|resume|clear|compact",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
+                    "hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}],
                 }
             ],
             "CwdChanged": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}]}
             ],
             "UserPromptSubmit": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}]}
             ],
             # HSM-17-02: the live lifecycle. Notification carries the blocking
             # ask (permission prompts, "waiting for your input") -> waiting;
             # PostToolUse is the working heartbeat (bounded matcher so a spawn
             # happens per meaningful tool, not per read); SessionEnd tombstones.
             "Notification": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}]}
             ],
             "PostToolUse": [
                 {
                     "matcher": "Bash|Edit|Write|Task",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
+                    "hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}],
                 }
             ],
             "Stop": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}]}
             ],
             "SessionEnd": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}]}
             ],
         }
     }
@@ -245,7 +251,7 @@ def codex_hook_template(
 
     command = _agent_hook_command("codex", capture_messages=capture_messages)
 
-    def rider(timeout: int = 5) -> dict[str, Any]:
+    def rider(timeout: int = RIDER_HOOK_TIMEOUT_SECONDS) -> dict[str, Any]:
         return {"type": "command", "command": command, "timeout": timeout}
 
     hooks: dict[str, list[dict[str, Any]]] = {
