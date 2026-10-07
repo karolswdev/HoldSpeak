@@ -4,6 +4,10 @@ import { act, render, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
 import { ChairHome } from "../ChairHome";
+import { openChairWindows } from "./fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
 

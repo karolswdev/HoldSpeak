@@ -26,9 +26,11 @@ def open_chair_window(page: Any, name: str) -> Any:
         menu = "window" if page.viewport_size["width"] > 720 else "go"
         page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button").click()
         page.locator(".desk-verbbar-menu").wait_for()
-        sub = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')")
-        sub.scroll_into_view_if_needed()
-        sub.click()
+        if menu == "window":
+            # PHILO-14 A1 (#939): at 393 the Chair's windows are Go's first rows.
+            sub = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')")
+            sub.scroll_into_view_if_needed()
+            sub.click()
         page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')").click()
     win.first.wait_for()
     return win.first
@@ -36,7 +38,7 @@ def open_chair_window(page: Any, name: str) -> Any:
 
 def go_group(page: Any, group: str, press: Any = None) -> Any:
     """PHILO-13-17 (C7, Q3; ratified 2026-10-03): at 393 Go is grouped,
-    `Chair ▸ Desk ▸ Object ▸ Window ▸`, then its own rows. With Go open, open
+    the Chair's windows (PHILO-14 A1), `Desk ▸ Object ▸ Window ▸`, then its own rows. With Go open, open
     one group (the panel is replaced, a back row first) and return the menu."""
     import re
 

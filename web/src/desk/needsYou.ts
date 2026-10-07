@@ -547,6 +547,9 @@ type SourceName = "door" | "room" | "assignments" | "meetings" | "decisions" | "
 export type NeedsYouErrors = Partial<Record<SourceName, string>>;
 
 export interface NeedsYouSnapshot extends NeedsYouResult {
+  /** PHILO-14 A1: each Room's own count (its head's "N open here"), by
+   *  Project; null when the hub's answer did not carry it. */
+  roomCounts: Record<string, number> | null;
   complete: boolean;
   loading: boolean;
   errors: NeedsYouErrors;
@@ -580,6 +583,8 @@ export interface NeedsYouAnswer {
   /** The members by Project (`{projectId: n}`): the one count, split by
    *  Project. The shade's Projects list and the palette's badge read it. */
   projectCounts?: Record<string, number>;
+  /** PHILO-14 A1: each Room's own NEEDS YOU count (the Room head's number). */
+  roomCounts?: Record<string, number>;
   coverage?: CoverageRecord[];
   complete?: unknown;
   roomComplete?: unknown;
@@ -625,6 +630,26 @@ export function readProjectCounts(
   return projectCountsOf(items);
 }
 
+/** PHILO-14 A1 — one Project, one number: the Room's own count (its head's
+ *  "N open here") on the screen's drawer and the Dock. A snapshot without
+ *  the hub's `roomCounts` falls back to the members by Project. */
+export function projectOpenHere(
+  snapshot: { roomCounts?: Record<string, number> | null; unmutedItems: readonly NeedsYouRoomItem[] },
+): Record<string, number> {
+  if (snapshot.roomCounts) return snapshot.roomCounts;
+  return projectCountsOf(snapshot.unmutedItems);
+}
+
+function readRoomCounts(value: unknown): Record<string, number> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const out: Record<string, number> = {};
+  for (const [projectId, n] of Object.entries(value as Record<string, unknown>)) {
+    const count = Number(n);
+    if (projectId && Number.isFinite(count) && count > 0) out[projectId] = count;
+  }
+  return out;
+}
+
 /** Read the hub's answer into the shared result. No rule is applied here:
  * the rows, the blockers and the meetings are the hub's, in the hub's order. */
 export function readNeedsYouAnswer(answer: NeedsYouAnswer | null | undefined): NeedsYouResult {
@@ -657,6 +682,7 @@ const EMPTY_RESULT: NeedsYouResult = {
 
 let snapshot: NeedsYouSnapshot = {
   ...EMPTY_RESULT,
+  roomCounts: null,
   complete: false,
   loading: false,
   errors: {},
@@ -717,6 +743,7 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
     }
     publish({
       ...readNeedsYouAnswer(value),
+      roomCounts: readRoomCounts(value.roomCounts),
       complete:
         Object.keys(errors).length === 0 &&
         readCoverage(room.coverage, room.complete ?? undefined, false).complete &&
@@ -792,7 +819,7 @@ export function resetNeedsYou(): void {
   inflight = null;
   inflightFresh = false;
   generation += 1;
-  snapshot = { ...EMPTY_RESULT, complete: false, loading: false, errors: {}, room: null };
+  snapshot = { ...EMPTY_RESULT, roomCounts: null, complete: false, loading: false, errors: {}, room: null };
 }
 // The test setup resets through this handle and never imports this module:
 // an import there would bind the real API client before a test's mock.

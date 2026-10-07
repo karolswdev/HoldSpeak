@@ -156,8 +156,10 @@ class TestObjectSpeciesGlass:
             boxes = gallery.locator(".desk-icon-grid .desk-icon").evaluate_all(
                 "els => els.map(e => { const r = e.getBoundingClientRect(); return [r.left, r.top]; })"
             )
-            focused = lambda: page.evaluate(  # noqa: E731
-                "() => [...document.querySelectorAll('.desk-icon-grid .desk-icon')].indexOf(document.activeElement)"
+            # PHILO-14 A1 (#939): the Chair's screen of DeskIcons stands behind
+            # the gallery; count the gallery's own icons only.
+            focused = lambda: gallery.evaluate(  # noqa: E731
+                "(g) => [...g.querySelectorAll('.desk-icon-grid .desk-icon')].indexOf(document.activeElement)"
             )
             page.keyboard.press("ArrowRight")
             assert focused() == 1

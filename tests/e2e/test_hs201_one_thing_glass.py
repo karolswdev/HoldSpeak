@@ -42,6 +42,9 @@ from .glass_infra import (
 )
 from tests._evidence import evidence_dir
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 pytest.importorskip("playwright.sync_api", reason="HS-201 glass needs Playwright")
 
 SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots")
@@ -737,7 +740,8 @@ class TestQuietDesk:
             _arrive(page, self.base)
             _open_surface(page, "review-meetings")
             page.locator("[data-testid='meetings-headline']").wait_for(timeout=15_000)
-            page.get_by_text("Sprint planning rehearsal").first.wait_for(timeout=15_000)
+            # PHILO-14 A1: the same meeting is an icon on the screen behind the window.
+            page.locator(".desk-window-shell").get_by_text("Sprint planning rehearsal").first.wait_for(timeout=15_000)
 
             # The product's own truth: the meeting holds no open action.
             actions = _api(page, "GET", "/api/all-action-items", token=TOKEN)

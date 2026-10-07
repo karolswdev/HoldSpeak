@@ -15,7 +15,7 @@ and the 1440x900 control (mouse):
   S2 the swipe: 5 of 5 land where the ring says (Needs you, Brief, The week,
      Meetings, Ledger cutover sync; it wraps), and one swipe back.
   S3 the switcher: any open window in 2 taps.
-  S4 Go grouped: Chair ▸ Desk ▸ Object ▸ Window ▸ first; Object opens as a menu.
+  S4 Go grouped: the Chair's windows (PHILO-14 A1), Desk ▸ Object ▸ Window ▸; Object opens as a menu.
   S6 (Muad'Dib's ruling 2026-10-03): the meeting's own record in front in
      Meetings, which hosts the card's slot: the card lands there; Capture does
      not open; Meetings stays in front.
@@ -43,6 +43,9 @@ import pytest
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle
 from .test_philo13_11_frame_glass import _seed as _frame_seed
 from tests._evidence import evidence_dir
+
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
 
 pytest.importorskip("playwright.sync_api", reason="the phone desk glass needs Playwright")
 
@@ -386,7 +389,9 @@ class TestThePhoneDesk:
                 heads = page.locator(".desk-verbbar-menu [role=menuitem][aria-haspopup=menu] .desk-menu-label").all_inner_texts()
                 facts["go_heads"] = heads
                 first = page.locator(".desk-verbbar-menu [role=menuitem] .desk-menu-label").all_inner_texts()[:4]
-                if first != ["Chair", "Desk", "Object", "Window"]:
+                # PHILO-14 A1 (#939): the Chair's windows are Go's first rows
+                # now, so the groups are Desk, Object, Window.
+                if first[:3] != ["Desk", "Object", "Window"]:
                     fails.append(f"S4: Go leads with {first}")
                 self._board(page, width, "C7-5a-go-grouped", facts, fails)
                 self._tap(page, page.locator(".desk-verbbar-menu [role=menuitem][aria-haspopup=menu]", has_text="Object"), width, 500)

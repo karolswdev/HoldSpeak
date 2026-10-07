@@ -134,8 +134,8 @@ _GEOMETRY = """(id) => {
 #
 #   own            the Button, or something inside it, answered
 #   miss:nothing   elementFromPoint found no element at all
-#   miss:body      the body/root answered -- nothing is painted there, so
-#                  the halo is absent, not covered
+#   miss:body      the body/root (or the Chair's screen, PHILO-14 A1) answered
+#                  -- no window paints there, so the halo is absent, not covered
 #   miss:ancestor  an ancestor answered -- it CLIPPED the halo
 #   miss:sibling   a box in the SAME layer answered -- a neighbour owns it
 #   covered        a box in a DIFFERENT layer, in front, answered
@@ -152,6 +152,10 @@ OWNERSHIP_JS = """
       || (typeof top.className === 'string' && top.className.trim())
       || top.tagName;
     if (top === document.body || top === document.documentElement)
+      return { outcome: 'miss:body', owner };
+    // PHILO-14 A1: the Chair's screen of objects is the desk's glass, under
+    // every window (z 0): a point on it is the body, not a layer in front.
+    if (top.closest('.desk-screen') && !el.closest('.desk-screen'))
       return { outcome: 'miss:body', owner };
     if (top.contains(el)) return { outcome: 'miss:ancestor', owner };
     return { outcome: top.closest(HS202_LAYER) === el.closest(HS202_LAYER)

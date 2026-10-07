@@ -14,6 +14,10 @@ import { ApiError, apiFetch } from "../../../lib/api";
 import { ChairHome } from "../ChairHome";
 import headlineFixture from "../../../../../docs/internal/philo/phase-4/headline/fixture.json";
 import { asHub } from "../../../test/hubNeedsYou";
+import { openChairWindows } from "./fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -118,10 +122,14 @@ function wire() {
 }
 
 function expectHandledOrder(
-  section: HTMLElement,
+  staleSection: HTMLElement,
   count: number,
   expectedHeadline = DAY_ONE_HEADLINE,
 ) {
+  // PHILO-14 A1 (#939): the section is read again here: the one found before
+  // the brief's read settled can be replaced by the time the brief lands.
+  void staleSection;
+  const section = screen.getByTestId("arrival-brief");
   const headline = screen.getByTestId("arrival-brief-headline");
   const date = screen.getByTestId("arrival-brief-date");
   const handled = screen.getByTestId("arrival-brief-handled");

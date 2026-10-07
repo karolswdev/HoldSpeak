@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openIntelligence } from "../../intelligenceNavigation";
-import { refreshNeedsYou, useNeedsYou } from "../../needsYou";
+import { projectOpenHere, refreshNeedsYou, useNeedsYou } from "../../needsYou";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { DOCK_SPRITES, SYSTEM } from "../../systemSprites";
 import { spriteUrl } from "../../sprites";
@@ -30,7 +30,6 @@ import {
   formatDockTime,
   latestSendSettle,
   nextOneOnOneLabel,
-  projectNeedsYouCounts,
   reduceDockFrame,
   type DockRelationshipRead,
   type DockSendOutcome,
@@ -177,6 +176,8 @@ function useDockLiveReads(): {
   lastSuccessfulAt: number | null;
   needsYouCount: number;
   needsYouItems: ReturnType<typeof useNeedsYou>["unmutedItems"];
+  /** PHILO-14 A1: each Project's Room count (its head's number). */
+  projectOpen: Record<string, number>;
 } {
   const runtime = useOptionalRuntimeBus();
   const runtimeState = runtime?.state ?? "offline";
@@ -291,6 +292,7 @@ function useDockLiveReads(): {
     needsYouCount: needs.count,
     // A row the owner waits on someone else for is not counted on a badge.
     needsYouItems: needs.unmutedItems.filter((item) => !item.waiting),
+    projectOpen: projectOpenHere(needs),
   };
 }
 
@@ -319,7 +321,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // PHILO-13-03 / C3: every Desk face reads the same membership snapshot.
   // The Dock opts out of the hook's minute poll; RuntimeBus invalidations
   // call the explicit refresh path in useDockLiveReads.
-  const { live, reads, offline, lastSuccessfulAt, needsYouCount, needsYouItems } = useDockLiveReads();
+  const { live, reads, offline, lastSuccessfulAt, needsYouCount, projectOpen } = useDockLiveReads();
   const intelligenceBadge = !offline && needsYouCount > 0
     ? String(needsYouCount)
     : null;
@@ -438,7 +440,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // it only renders as a launcher while its surface is closed.
   const shown = launchers.filter((l) => !windows.some((w) => w.id === l.id));
   const activeProjects = useDesk((s) => s.projects).filter((project) => !project.is_archived);
-  const projectCounts = projectNeedsYouCounts(needsYouItems);
+  // PHILO-14 A1: one Project, one number: the Room's own count.
+  const projectCounts = projectOpen;
   const readyMeetingIds = new Set([...live.readyMeetingIds, ...reads.readyMeetingIds]);
   const readyMeetingBadge = !offline && readyMeetingIds.size > 0
     ? `READY ${readyMeetingIds.size}`

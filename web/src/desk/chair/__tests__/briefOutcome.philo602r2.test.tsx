@@ -28,6 +28,10 @@ vi.mock("../../components/MicButton", () => ({ MicButton: () => null }));
 import brief from "./fixtures/philo6/brief-failed-ops.json";
 import { ChairHome } from "../ChairHome";
 import { BriefView } from "../../pullouts/views/BriefView";
+import { openChairWindows } from "./fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 const SUCCESS = /Decision recorded|Summary requested|Brief triage saved|Decision changed|Decision loaded/;
 const IMPLEMENTATION = /Primitive|[A-Z][A-Za-z]*Service\b|[a-z]_[a-z]/;

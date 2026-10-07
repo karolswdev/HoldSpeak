@@ -42,7 +42,8 @@ from .test_hs202_05_button_hit_ownership import OWNERSHIP_JS
 from tests._evidence import evidence_dir
 from .chair_windows import open_chair_window
 
-pytestmark = [pytest.mark.e2e, pytest.mark.timeout(600, method="thread")]
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = [pytest.mark.e2e, pytest.mark.timeout(600, method="thread"), pytest.mark.chair_windows_open]
 
 REPO = Path(__file__).resolve().parents[2]
 SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-05-shots")

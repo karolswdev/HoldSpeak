@@ -86,7 +86,10 @@ vi.mock("../../../lib/api", () => ({
   apiFetch: mocks.apiFetch,
   apiRequest: mocks.apiRequest,
 }));
-vi.mock("../../needsYou", () => ({
+vi.mock("../../needsYou", async (original) => ({
+  // PHILO-14 A1 (#939): the Dock reads each Project's Room count through
+  // the real `projectOpenHere`.
+  projectOpenHere: (await original<typeof import("../../needsYou")>()).projectOpenHere,
   refreshNeedsYou: mocks.refreshNeedsYou,
   useNeedsYou: mocks.useNeedsYou,
 }));

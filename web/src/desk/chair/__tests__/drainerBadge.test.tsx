@@ -31,6 +31,10 @@ vi.mock("../../components/MicButton", () => ({ MicButton: () => null }));
 import { EMPTY_ITEMS } from "../../api";
 import { useDesk } from "../../store";
 import { ChairHome } from "../ChairHome";
+import { openChairWindows } from "./fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 const QUEUED_MEETING = {
   kind: "meeting" as const,

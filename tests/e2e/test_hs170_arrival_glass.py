@@ -33,6 +33,9 @@ from .glass_infra import (
 from tests._evidence import evidence_dir
 from .chair_windows import open_chair_window
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 pytest.importorskip("playwright.sync_api", reason="Arrival glass needs Playwright")
 
 SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots")

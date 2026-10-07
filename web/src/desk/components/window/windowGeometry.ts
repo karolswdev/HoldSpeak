@@ -7,6 +7,8 @@ import { DESK_WINDOW } from "../../../lib/tokens.gen";
 export const MARGIN = DESK_WINDOW.margin;
 /** Cascade step when several default-corner windows are open at once. */
 const CASCADE = DESK_WINDOW.cascade;
+/** PHILO-14 A1: the saturated cascade's step off the last placed window. */
+const CASCADE_STEP = 24;
 
 /** The window head strip considered for title-bar occlusion (px). */
 const HEAD = 44;
@@ -88,8 +90,22 @@ export function placeWindow(
     }
   }
   if (best.s >= 1e9) {
-    // Saturated: every position occludes a title bar somewhere. The
-    // cascade survives exactly here — step down-right off the home seat.
+    // Saturated: every position occludes a title bar somewhere.
+    // PHILO-14 A1 (Muad'Dib's ruling on #939): never stacked. Cascade
+    // 24/24 off the window placed last (`existing` is back to front), then
+    // off the ones under it, to the first seat that leaves every title bar
+    // partly in view: no window fully covers another.
+    const hidesAHead = (x: number, y: number) =>
+      existing.some((r) => x <= r.x && x + w >= r.x + r.w && y <= r.y && y + h >= r.y + HEAD);
+    for (let i = existing.length - 1; i >= 0; i--) {
+      const r = existing[i];
+      for (let m = 1; m <= 8; m++) {
+        const x = Math.min(Math.max(r.x + CASCADE_STEP * m, MARGIN), maxX);
+        const y = Math.min(Math.max(r.y + CASCADE_STEP * m, top), maxY);
+        if (!hidesAHead(x, y)) return { x, y, w, h };
+      }
+    }
+    // The old cascade off the home seat, when no seat leaves every head.
     const step = CASCADE * Math.min(existing.length, 8);
     return {
       x: Math.min(Math.max(sx + step, MARGIN), maxX),

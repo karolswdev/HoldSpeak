@@ -38,6 +38,9 @@ import pytest
 from .glass_infra import _assert_clean, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle
 from tests._evidence import evidence_dir
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 pytest.importorskip("playwright.sync_api", reason="the B4 Prep glass needs Playwright")
 
 TOKEN = "philo13-09-prep"
@@ -149,14 +152,14 @@ class TestOneOnOneFindsItsPerson:
         self._press(page, opt, width)
 
     def _chair_window(self, page: Any, width: int, name: str, walk: dict[str, Any]) -> None:
-        """At 393, Go > Chair > <name> (three frame taps); at 1440 the window stands."""
+        """At 393, Go > <name> (two frame taps); at 1440 the window stands."""
         shell = page.locator(f".desk-window-shell[aria-label='{name}']")
         if width > 720 or (shell.count() and shell.first.is_visible() and
                            shell.first.evaluate("e => e.classList.contains('is-front')")):
             return
+        # PHILO-14 A1 (#939): the Chair's windows are Go's first rows at 393.
         for loc in (
             page.locator(".desk-verbbar-item[data-menu-id='go'] button"),
-            page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')"),
             page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"),
         ):
             loc.first.wait_for()

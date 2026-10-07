@@ -11,6 +11,7 @@ import {
 import { useChairState } from "../desk/chairState";
 import { EMPTY_ITEMS } from "../desk/api";
 import { useDesk } from "../desk/store";
+import { openChairWindows } from "../desk/chair/__tests__/fixtures/openChairWindows";
 import {
   SurfaceWindowHost,
   type SurfaceRow,
@@ -81,6 +82,9 @@ beforeEach(() => {
     return null;
   });
   useChairState.setState({ surface: "chair" });
+  // PHILO-14 A1: the Chair is the screen; the slot is in the Capture window,
+  // which these specs open first.
+  openChairWindows();
   useDesk.setState({
     items: EMPTY_ITEMS,
     divedZone: null,

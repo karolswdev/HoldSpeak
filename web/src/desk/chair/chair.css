@@ -12,8 +12,9 @@
   min-height: calc(100dvh - var(--desk-snap-top) - var(--desk-snap-bottom));
 }
 
-/* PHILO-13-11 (C1, slice two) — the Chair is a Workbench SCREEN of four
-   windows (design §5; boards C1-1, C1-4a–e, C1-6a). The screen is the
+/* PHILO-13-11 (C1, slice two) — the Chair was a Workbench SCREEN of four
+   windows (design §5; boards C1-1, C1-4a–e, C1-6a); PHILO-14 A1 made it the
+   screen of objects (desk/screen/), the four windows open on demand. The screen is the
    dithered backdrop (WBPattern, a 4 px checker); it never scrolls. It is NOT
    a stacking context (no position, no z-index), so the Chair's windows
    stack in the one window band with every desk window (one front window). */
@@ -42,7 +43,13 @@
   }
 }
 
-/* ── The Chair's windows (DeskWindowFrame hosts, tiled) ─────────────────
+/* ── The Chair's windows ─────────────────────────────────────────────────
+   PHILO-14 A1 (board A-1, RATIFIED 2026-10-07): the Chair is the SCREEN of
+   objects (desk/screen/); the four windows open from it and float like
+   every desk window. The tile homes below are PARKED: they hold only under
+   `.chair-desk[data-layout="tiles"]`, which ChairHome never sets (never
+   delete; park). Their Phase-13 note follows.
+   (PARKED) DeskWindowFrame hosts, tiled ──────────────────────────────────
    Each window keeps its CSS home until the owner moves or sizes it; the
    body scrolls by itself. 1440: Needs you left (above Capture, 100 px);
    Brief right, 64 % of the column so SEND is on the first screen; The week
@@ -111,32 +118,60 @@
   .desk-next .chair-desk:has(.chair-window--capture [data-aftercare-slot]:not(:empty)) :is(.chair-window, .chair-window-closed) {
     --chair-capture-h: 300px;
   }
-  .desk-next .chair-window--needs,
-  .desk-next .chair-window-closed.chair-window--needs {
+  .desk-next .chair-desk[data-layout="tiles"] .chair-window--needs,
+  .desk-next .chair-desk[data-layout="tiles"] .chair-window-closed.chair-window--needs {
     left: 14px;
     top: var(--chair-top);
     width: calc(50% - 22px);
     bottom: calc(var(--chair-bottom) + var(--chair-capture-h) + 12px);
   }
-  .desk-next .chair-window--capture,
-  .desk-next .chair-window-closed.chair-window--capture {
+  .desk-next .chair-desk[data-layout="tiles"] .chair-window--capture,
+  .desk-next .chair-desk[data-layout="tiles"] .chair-window-closed.chair-window--capture {
     left: 14px;
     bottom: var(--chair-bottom);
     width: calc(50% - 22px);
     height: var(--chair-capture-h);
   }
-  .desk-next .chair-window--brief,
-  .desk-next .chair-window-closed.chair-window--brief {
+  .desk-next .chair-desk[data-layout="tiles"] .chair-window--brief,
+  .desk-next .chair-desk[data-layout="tiles"] .chair-window-closed.chair-window--brief {
     left: calc(50% + 8px);
     right: 14px;
     top: var(--chair-top);
     height: calc(var(--chair-band) * 0.64 - 8px);
   }
-  .desk-next .chair-window--week,
-  .desk-next .chair-window-closed.chair-window--week {
+  .desk-next .chair-desk[data-layout="tiles"] .chair-window--week,
+  .desk-next .chair-desk[data-layout="tiles"] .chair-window-closed.chair-window--week {
     left: calc(50% + 8px);
     right: 14px;
     bottom: var(--chair-bottom);
+    height: calc(var(--chair-band) * 0.36 - 8px);
+  }
+  /* PHILO-14 A1: the screen's Chair windows float. Each one's FIRST seat
+     (before he moves or sizes it; the desk then remembers his) is the
+     Phase-13 arrangement (board C1-1): Needs you left, Brief and The week
+     right, Capture under Needs you, so two open windows never pile up. */
+  .desk-next .chair-desk[data-layout="screen"] .chair-window--needs {
+    left: 14px;
+    top: var(--chair-top);
+    width: calc(50% - 22px);
+    height: calc(var(--chair-band) - var(--chair-capture-h) - 12px);
+  }
+  .desk-next .chair-desk[data-layout="screen"] .chair-window--capture {
+    left: 14px;
+    top: calc(var(--chair-top) + var(--chair-band) - var(--chair-capture-h));
+    width: calc(50% - 22px);
+    height: var(--chair-capture-h);
+  }
+  .desk-next .chair-desk[data-layout="screen"] .chair-window--brief {
+    left: calc(50% + 8px);
+    top: var(--chair-top);
+    width: calc(50% - 22px);
+    height: calc(var(--chair-band) * 0.64 - 8px);
+  }
+  .desk-next .chair-desk[data-layout="screen"] .chair-window--week {
+    left: calc(50% + 8px);
+    top: calc(var(--chair-top) + var(--chair-band) * 0.64 + 8px);
+    width: calc(50% - 22px);
     height: calc(var(--chair-band) * 0.36 - 8px);
   }
 }

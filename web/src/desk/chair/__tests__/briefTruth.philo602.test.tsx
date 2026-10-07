@@ -40,6 +40,10 @@ vi.mock("../../components/MicButton", () => ({ MicButton: () => null }));
 
 import brief from "./fixtures/philo6/brief-truth.json";
 import { ChairHome } from "../ChairHome";
+import { openChairWindows } from "./fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 const STAMP = /[A-Z]{3} \d{2} \d{2}:\d{2}|\d{1,2}:\d{2}\s?[AP]M/;
 const RAW = /[A-Z][A-Za-z]*(?:Service|Manager|Handler|Provider)\.[a-z_]+/;

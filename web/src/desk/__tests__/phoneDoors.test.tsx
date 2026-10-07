@@ -142,7 +142,7 @@ describe("the phone menu bar has one door that carries every verb", () => {
     ).toBeInTheDocument();
   });
 
-  it("carries the Desk, Object and Window menus, in that order, after Chair", () => {
+  it("carries the Desk, Object and Window menus, in that order, after the Chair's windows", () => {
     compact = true;
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
@@ -150,7 +150,10 @@ describe("the phone menu bar has one door that carries every verb", () => {
       .getAllByRole("menuitem")
       .filter((el) => el.getAttribute("aria-haspopup") === "menu")
       .map((el) => el.querySelector(".desk-menu-label")?.textContent ?? "");
-    expect(heads).toEqual(["Chair", "Desk", "Object", "Window"]);
+    // PHILO-14 A1 (#939): the Chair's windows are Go's first rows, not a group.
+    expect(heads).toEqual(["Desk", "Object", "Window"]);
+    expect(screen.getAllByRole("menuitemcheckbox").slice(0, 3).map((el) => el.querySelector(".desk-menu-label")?.textContent))
+      .toEqual(["Needs you", "Brief", "The week"]);
     const open = (name: string, needle: RegExp) => {
       fireEvent.click(screen.getByRole("menuitem", { name: new RegExp(`^${name}`) }));
       expect(screen.getAllByRole("menuitem").some((el) => needle.test(el.textContent ?? ""))).toBe(true);

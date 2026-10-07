@@ -119,7 +119,9 @@ describe("B2: every open window returns after a reload", () => {
     const chair = await import("../chair/chairWindows");
     chair.openChairWindow("chair:week");
     chair.closeChairWindow("chair:brief");
-    expect(stored().chair).toEqual({ closed: ["chair:brief"], phone: "chair:week" });
+    // PHILO-14 A1: a fresh desk opens with every Chair window closed (the
+    // screen of objects); the one he opened stays open, the rest closed.
+    expect(stored().chair).toEqual({ closed: ["chair:needs", "chair:brief", "chair:capture"], phone: "chair:week" });
 
     vi.resetModules();
     const fresh = await import("../chair/chairWindows");

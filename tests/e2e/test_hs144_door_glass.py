@@ -23,6 +23,9 @@ pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependenc
 
 from .glass_infra import seed_meeting_engines
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 DOOR_ASSETS = evidence_dir("pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots")
 RAIL_ASSETS = evidence_dir("pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-04-shots")
 TOKEN = "hs144-door-glass"
