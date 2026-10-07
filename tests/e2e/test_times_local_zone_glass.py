@@ -24,6 +24,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
+from .chair_windows import open_chair_window
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
@@ -109,10 +110,15 @@ def test_chair_next_shows_the_scheduled_local_time(denver):
 
     for width, height in ((1440, 900), (393, 852)):
         face = denver(width, height)
-        line = face.get_by_test_id("arrival-next")
+        # PHILO-14 A1 (#939): the Chair's windows start closed; he opens Needs
+        # you (Window > Chair at 1440, Go at 393). PHILO-14 A5 (#935): its
+        # body is the drawer, whose quiet footer line reads
+        # `NEXT · <HH:MM> · <title>` (needsFace.ts nextWord).
+        open_chair_window(face, "Needs you")
+        line = face.get_by_test_id("needs-next")
         line.wait_for(timeout=15000)
         text = line.text_content() or ""
-        assert text == f"NEXT · CUTOVER DRY RUN · {when.strftime('%H:%M')}", text
+        assert text == f"NEXT · {when.strftime('%H:%M')} · Cutover dry run", text
         _settle(face)
         face.screenshot(path=str(SHOTS / f"chair-next-{width}.png"))
 
