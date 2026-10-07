@@ -385,6 +385,17 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         "Codex's config) runs only inside the owner-only admitted "
         "`agent_hooks.install` operation, whose receipt covers it"
     ),
+    (
+        "holdspeak/macos_calendar.py",
+        "open_privacy_settings",
+        "run",
+        1,
+    ): (
+        "PHILO-15 04: `/usr/bin/open` on the System Settings Privacy_Calendars "
+        "link, a local open with no network call that changes no setting; it "
+        "runs only inside the owner-only admitted `calendar.open_settings` "
+        "operation, whose receipt covers it"
+    ),
     # HS-171-02/05: local desktop notification dispatch (osascript).
     # Not an effect — a local-only notification, never egress.
     (
