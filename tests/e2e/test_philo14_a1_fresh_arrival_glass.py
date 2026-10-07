@@ -98,6 +98,21 @@ class TestFreshArrival:
                 assert page.locator(".desk-window-shell.chair-window").count() == 0
                 page.screenshot(path=str(SHOTS / f"fresh-0-screen-{width}.png"))
 
+                # PHILO-15 04 (gap 18): the People drawer opens the People
+                # window on the desk, never another route (Enter at 1440; a
+                # double tap at 393). Then it closes, and the walk goes on.
+                people = page.locator(".desk-screen [data-object-id='drawer:people']")
+                if width < 720:
+                    people.first.dblclick()
+                else:
+                    people.first.focus()
+                    page.keyboard.press("Enter")
+                people_window = page.locator(".desk-window-shell[aria-label='People']")
+                people_window.wait_for()
+                assert page.url.split("?")[0].rstrip("/") == self.base.rstrip("/"), page.url
+                self._press(page, people_window.get_by_role("button", name="Close People"), width)
+                people_window.wait_for(state="detached")
+
                 # Needs you: Enter on its drawer at 1440; Go > Needs you at 393 (two
                 # taps); the engines-missing SETUP row is named
                 if width < 720:

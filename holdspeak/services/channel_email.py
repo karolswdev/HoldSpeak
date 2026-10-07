@@ -358,6 +358,11 @@ def resend_id(raw: bytes) -> str:
 #: THE registry table: provider name -> its implementation. One row per provider.
 EMAIL_PROVIDERS: dict[str, EmailProvider] = {"sendgrid": SendGridProvider(), "resend": ResendProvider()}
 
+#: PHILO-15 04 (gap 13): the provider a new email destination and a key save
+#: take when none is named. Resend is the owner's provider (the Phase 10/11
+#: rulings); SendGrid stays selectable by name.
+DEFAULT_EMAIL_PROVIDER = "resend"
+
 
 def provider(name: Any) -> EmailProvider:
     found = EMAIL_PROVIDERS.get(str(name or ""))
@@ -665,7 +670,7 @@ class EmailChannel:
 
     def target_at_save(self, fields: Mapping[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
         """``({provider, from_email, from_name, key_ref}, {to, cc})``, validated by name."""
-        chosen_name = str(fields.get("provider") or "sendgrid")
+        chosen_name = str(fields.get("provider") or DEFAULT_EMAIL_PROVIDER)
         chosen = provider(chosen_name)
         from_email = canonical_address(fields.get("from_email"))
         if "<" in from_email:

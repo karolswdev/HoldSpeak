@@ -328,17 +328,52 @@ describe("Calendar card", () => {
     await waitFor(() => expect(within(cal).getByTestId("firstrun-calendar-cant-read").textContent).toContain("NOT A CALENDAR LINK"));
   });
 
-  it("denied: CALENDAR · NOT ALLOWED; no verb the desk cannot honour", async () => {
+  it("denied: CALENDAR · NOT ALLOWED, then Open System Settings and Check again (PHILO-15 04)", async () => {
     hub.calendar = { macos: { state: "denied", can_request: false }, candidates: [], sources: 0 };
     render(<FirstRun />);
     const cal = await screen.findByTestId("firstrun-calendar");
     const denied = await within(cal).findByTestId("firstrun-calendar-denied");
     expect(within(denied).getByRole("status", { name: "CALENDAR · NOT ALLOWED" })).toBeTruthy();
-    // The desk cannot open System Settings (no-exit law): withheld, never dead.
-    expect(within(denied).queryByRole("button")).toBeNull();
+    // The way forward: two verbs, the library Button, on this device.
+    expect(within(denied).getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "Open System Settings", "Check again",
+    ]);
+    expect(within(denied).getByText("THIS DEVICE")).toBeTruthy();
     expect(within(cal).queryByRole("button", { name: "Allow calendar access" })).toBeNull();
     // A link still works.
     expect(within(cal).getByRole("textbox", { name: "Calendar URL" })).toBeTruthy();
+
+    // His press opens the Calendars pane (one owner-only system open).
+    await act(async () => {
+      fireEvent.click(within(denied).getByRole("button", { name: "Open System Settings" }));
+    });
+    expect(calls.filter((c) => c.path === "/api/onboarding/calendar/macos/settings" && c.method === "POST")).toHaveLength(1);
+    expect(within(denied).queryByRole("status", { name: "SETTINGS · NOT OPENED" })).toBeNull();
+
+    // He allows it there; Check again reads the new state and the card moves on.
+    hub.calendar = { macos: { state: "full_access", can_request: false }, candidates: [MAC_CAL], sources: 0 };
+    await act(async () => {
+      fireEvent.click(within(denied).getByRole("button", { name: "Check again" }));
+    });
+    await within(cal).findByRole("status", { name: "FOUND · 1" });
+    expect(within(cal).queryByTestId("firstrun-calendar-denied")).toBeNull();
+  });
+
+  it("denied: a pane that did not open says so", async () => {
+    hub.calendar = { macos: { state: "denied", can_request: false }, candidates: [], sources: 0 };
+    const base = mocks.apiFetch.getMockImplementation()!;
+    mocks.apiFetch.mockImplementation(async (path: string, init: { method?: string; json?: unknown } = {}) => {
+      if (path === "/api/onboarding/calendar/macos/settings") {
+        throw new ApiError(409, "System Settings did not open.", { code: "system_settings_not_opened" });
+      }
+      return base(path, init);
+    });
+    render(<FirstRun />);
+    const denied = await screen.findByTestId("firstrun-calendar-denied");
+    await act(async () => {
+      fireEvent.click(within(denied).getByRole("button", { name: "Open System Settings" }));
+    });
+    expect(await within(denied).findByRole("status", { name: "SETTINGS · NOT OPENED" })).toBeTruthy();
   });
 
   it("the macOS prompt shows only on his press; a 409 on Use it reads NOT ALLOWED", async () => {

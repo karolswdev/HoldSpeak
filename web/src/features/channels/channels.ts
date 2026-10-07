@@ -117,10 +117,14 @@ export const CHANNEL_WORD: Record<Channel, string> = {
 export type EmailProvider = "sendgrid" | "resend";
 /** One row per provider the hub carries (holdspeak/services/channel_email.py EMAIL_PROVIDERS). */
 export const EMAIL_PROVIDERS: Record<EmailProvider, { label: string; word: string; host: string; activity: string }> = {
-  sendgrid: { label: "SendGrid", word: "SENDGRID", host: "api.sendgrid.com", activity: "https://app.sendgrid.com/email_activity" },
+  // PHILO-15 04 (gap 13): Resend first, the default; SendGrid stays selectable.
   resend: { label: "Resend", word: "RESEND", host: "api.resend.com", activity: "https://resend.com/emails" },
+  sendgrid: { label: "SendGrid", word: "SENDGRID", host: "api.sendgrid.com", activity: "https://app.sendgrid.com/email_activity" },
 };
-/** An email account's provider (the hub's default is SendGrid). */
+/** The provider a new email destination takes (the hub's `DEFAULT_EMAIL_PROVIDER`). */
+export const DEFAULT_EMAIL_PROVIDER: EmailProvider = "resend";
+/** An email account's provider. Every saved account names one; an account
+ *  without one is read as SendGrid, the only provider before PHILO-10-07. */
 export const emailProvider = (a?: Record<string, unknown> | null) =>
   EMAIL_PROVIDERS[String(a?.provider ?? "sendgrid") as EmailProvider] ?? EMAIL_PROVIDERS.sendgrid;
 
@@ -579,7 +583,7 @@ export const wire = {
     call<{ destination: Destination; check: { state: string; answered_at?: string | null } }>(
       `/api/channels/destinations/${encodeURIComponent(id)}/check`, { method: "POST", json: {} }),
   /** Story 03/07: the provider's key, typed once, into the OS keychain (the key is the body, never shown again). */
-  saveKey: (keyRef: string, value: string, provider: EmailProvider = "sendgrid") =>
+  saveKey: (keyRef: string, value: string, provider: EmailProvider = DEFAULT_EMAIL_PROVIDER) =>
     call<{ key_ref: string; saved?: boolean }>(`/api/channels/email-keys/${encodeURIComponent(keyRef)}`, {
       method: "PUT", json: { api_key: value, provider, command_id: commandId() },
     }),

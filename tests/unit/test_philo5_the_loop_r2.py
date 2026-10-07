@@ -220,6 +220,7 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
     assert [d.name for d in operations.DESCRIPTORS if d.owner_only] == [
         "meeting.import", "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install",
         "people_access.set",  # Conductor R7: only the owner sets People MCP access
+        "calendar.open_settings",  # PHILO-15 04: only the owner opens the Calendars privacy pane
         "agent.hand",  # Conductor K2: only the owner hands an item to an agent
     ]
     assert "owner_required" in operations.MEETING_IMPORT.export()["refusals"]
@@ -586,6 +587,13 @@ def _p_people_access_set(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return hub.root.operations.invoke(OWNER, "people_access.set", {"mode": "read"})
 
 
+def _p_calendar_open_settings(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    """The real service and kernel path; only the macOS open is a double."""
+    service = hub.root.operations.target("calendar.open_settings")
+    monkeypatch.setattr(service, "_macos", type("Mac", (), {"open_privacy_settings": staticmethod(lambda: True)}))
+    return hub.root.operations.invoke(OWNER, "calendar.open_settings", {})
+
+
 def _p_agent_hand(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     # The process edge only: tmux and the agent are the canned runner of the
     # launch rig (git is real); the hub's own AgentHandService and route run.
@@ -645,6 +653,8 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "agent_hooks.install": _p_agent_hooks_install,
     # Conductor R7: People MCP access.
     "people_access.set": _p_people_access_set,
+    # PHILO-15 04: the Calendars privacy pane.
+    "calendar.open_settings": _p_calendar_open_settings,
     # Conductor K2: Hand to agent.
     "agent.hand": _p_agent_hand,
 }

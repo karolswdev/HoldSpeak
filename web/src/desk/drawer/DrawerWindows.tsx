@@ -4,6 +4,7 @@ import { ApplicationBoundary } from "../components/ApplicationBoundary";
 import { registerSurface } from "../shell";
 import { DrawerInfoWindow } from "./InfoWindow";
 import { DrawerWindow } from "./DrawerWindow";
+import { ParkedDrawer } from "./ParkedDrawer";
 import { openDrawer, useDrawers } from "./store";
 
 /** The surface key a Project primitive opens through (`lib/primitives.ts`):
@@ -13,6 +14,7 @@ export const PROJECT_DRAWER_KEY = "open-project-drawer";
 export function DrawerWindows() {
   const drawers = useDrawers((s) => s.drawers);
   const infos = useDrawers((s) => s.infos);
+  const parked = useDrawers((s) => s.parked);
   useEffect(
     () =>
       registerSurface(PROJECT_DRAWER_KEY, (scope) => {
@@ -27,6 +29,11 @@ export function DrawerWindows() {
           <DrawerWindow drawer={drawer} />
         </ApplicationBoundary>
       ))}
+      {parked ? (
+        <ApplicationBoundary label="Parked">
+          <ParkedDrawer origin={parked.origin} />
+        </ApplicationBoundary>
+      ) : null}
       {infos.map((info) => (
         <ApplicationBoundary key={info.ref} label="Info">
           <DrawerInfoWindow info={info} />
