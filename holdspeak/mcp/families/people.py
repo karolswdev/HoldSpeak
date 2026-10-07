@@ -278,6 +278,23 @@ def access_source(environ: Mapping[str, str] | None = None, *, config: Any = Non
     return "write", "default"
 
 
+def people_discoverable() -> bool:
+    """Whether People shows in MCP discovery (Conductor R7, Astra on #919):
+    not while the effective access is ``off`` (or unreadable)."""
+    try:
+        return access_mode() != "off"
+    except Exception:
+        return False
+
+
+def discoverable_tools(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The tool listing without People while access is off. ``people.access.set``
+    stays, so the owner can turn access back on from MCP."""
+    if people_discoverable():
+        return tools
+    return [t for t in tools if not t["name"].startswith("people.") or t["name"] == ACCESS_SET_TOOL["name"]]
+
+
 def access_mode(environ: Mapping[str, str] | None = None) -> str:
     """Return the effective capability (``access_source``), refusing unknown values.
 

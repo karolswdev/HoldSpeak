@@ -47,6 +47,7 @@ The answers to the two questions below:
 | The setting (`SOURCE · SETTING`, `AGENTS · READ`) | `shots/K7a-built-setting-1440.png` | `shots/K7a-built-setting-393.png` |
 | After a press on OFF (`AGENTS · OFF`, receipt `SUCCEEDED · ACCESS · OFF · BY OWNER`) | `shots/K7a-built-off-1440.png` | `shots/K7a-built-off-393.png` |
 | The variable set (`HOLDSPEAK_MCP_PEOPLE_ACCESS=off`): the strip disabled, `SOURCE · HOLDSPEAK_MCP_PEOPLE_ACCESS` | `shots/K7a-built-env-1440.png` | `shots/K7a-built-env-393.png` |
+| The read fails (Astra on #919): `READ FAILED · UNAVAILABLE` and **Retry**; no strip, no stale value. Stand-in: the browser answers the one GET with 503. Retry after the route is lifted brings the strip back | `shots/K7a-built-read-failed-1440.png` | `shots/K7a-built-read-failed-393.png` |
 
 One change from the board: the source token reads `SOURCE · …` as ruled, and a long one wraps inside its row at 393 (the new library chip modifier `data-wrap`).
 

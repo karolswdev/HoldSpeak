@@ -155,8 +155,88 @@
    "menu": null,
    "agents": "AGENTS · OFF",
    "source": "SOURCE · SETTING",
-   "receipt": "✓\nSUCCEEDED ACCESS · OFF BY OWNER 21:08"
+   "receipt": "✓\nSUCCEEDED ACCESS · OFF BY OWNER 21:39"
   }
+ },
+ "K7a-built-read-failed-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Settings · People",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Settings · People"
+   ],
+   "front": "Settings · People",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=people-access-read-failed]": {
+    "found": true,
+    "whole": true,
+    "w": 283,
+    "h": 24,
+    "top": 162
+   }
+  },
+  "submenus": [],
+  "intended_front": "Settings · People",
+  "failed": "✗\nREAD FAILED UNAVAILABLE Retry",
+  "stand_in": "GET /api/settings/people-access answered 503 by page.route",
+  "stand_in_console": [
+   "console: Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ]
+ },
+ "K7a-built-read-failed-retry-1440": {
+  "read": {
+   "tokens": [
+    [
+     "OFF",
+     "true",
+     false
+    ],
+    [
+     "READ",
+     "false",
+     false
+    ],
+    [
+     "WRITE",
+     "false",
+     false
+    ]
+   ],
+   "menu": null,
+   "agents": "AGENTS · OFF",
+   "source": "SOURCE · SETTING",
+   "receipt": null
+  },
+  "strip_back": true
  },
  "_browser_errors_1440": [],
  "_seat_guard_393": [],
@@ -323,7 +403,7 @@
    "menu": null,
    "agents": "AGENTS · OFF",
    "source": "SOURCE · SETTING",
-   "receipt": "✓\nSUCCEEDED ACCESS · OFF BY OWNER 21:09"
+   "receipt": "✓\nSUCCEEDED ACCESS · OFF BY OWNER 21:40"
   },
   "inherited_overlap": [
    {
@@ -333,6 +413,94 @@
     "h": 54
    }
   ]
+ },
+ "K7a-built-read-failed-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Settings · People",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Settings · People"
+   ],
+   "front": "Settings · People",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=people-access-read-failed]": {
+    "found": true,
+    "whole": true,
+    "w": 283,
+    "h": 72,
+    "top": 174
+   }
+  },
+  "submenus": [],
+  "intended_front": "Settings · People",
+  "failed": "✗\nREAD FAILED UNAVAILABLE Retry",
+  "stand_in": "GET /api/settings/people-access answered 503 by page.route",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ],
+  "stand_in_console": [
+   "console: Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ]
+ },
+ "K7a-built-read-failed-retry-393": {
+  "read": {
+   "tokens": [
+    [
+     "OFF",
+     "true",
+     false
+    ],
+    [
+     "READ",
+     "false",
+     false
+    ],
+    [
+     "WRITE",
+     "false",
+     false
+    ]
+   ],
+   "menu": null,
+   "agents": "AGENTS · OFF",
+   "source": "SOURCE · SETTING",
+   "receipt": null
+  },
+  "strip_back": true
  },
  "_browser_errors_393": [],
  "K7a-built-env-1440": {

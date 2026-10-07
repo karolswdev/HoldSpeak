@@ -1368,7 +1368,9 @@ class PeopleService:
     # -- Follow-through projection -------------------------------------------------
 
     def list_cards(self, principal: Any, *, owner: str | None = None) -> list[FollowThroughCard]:
-        self._require_ready_owner(principal)
+        # Conductor R7: a read (a launched agent's board and Door show People
+        # commitments); ``transition`` stays owner only.
+        self._require_ready_owner(principal, read=True)
         if owner not in (None, "", "you", "manager"):
             return []
         cards: list[FollowThroughCard] = []

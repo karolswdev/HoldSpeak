@@ -10,6 +10,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, apiFetch } from "../../lib/api";
+import { Button } from "../../components/signal/Signal";
 import { FilterTokens, GadgetGroup, GadgetRow, StateChip } from "../../desk/surface";
 
 export type PeopleAccess = {
@@ -34,21 +35,36 @@ export function sourceToken(access: PeopleAccess): string {
   return access.source === "config" ? "SOURCE · SETTING" : "SOURCE · DEFAULT";
 }
 
+/** The read's failure, kept apart from the access data (Astra on #919): a code, never a sentence. */
+function readFailureCode(cause: unknown): string {
+  if (cause instanceof ApiError) {
+    const payload = (cause.payload ?? {}) as Record<string, unknown>;
+    const code = payload.code ?? payload.error_code;
+    return typeof code === "string" && code ? code : `HTTP ${cause.status}`;
+  }
+  return "unreachable";
+}
+
 export function usePeopleAccess() {
   const [access, setAccess] = useState<PeopleAccess | null>(null);
+  const [readError, setReadError] = useState<string | null>(null);
   const reload = useCallback(async () => {
     try {
       setAccess(await apiFetch<PeopleAccess>("/api/settings/people-access"));
-    } catch {
+      setReadError(null);
+    } catch (cause) {
+      // No stale value is shown as the truth: the access tokens leave, the
+      // failure is named, and a press on Retry reads again.
       setAccess(null);
+      setReadError(readFailureCode(cause));
     }
   }, []);
   useEffect(() => { void reload(); }, [reload]);
-  return { access, setAccess, reload };
+  return { access, setAccess, readError, reload };
 }
 
 export function PeopleAccessModule() {
-  const { access, setAccess, reload } = usePeopleAccess();
+  const { access, setAccess, readError, reload } = usePeopleAccess();
   const [busy, setBusy] = useState(false);
   const [receipt, setReceipt] = useState<AccessReceipt | null>(null);
 
@@ -78,10 +94,20 @@ export function PeopleAccessModule() {
     }
   };
 
-  if (!access) return null;
-  const held = access.source === "env";
+  if (!access && !readError && !receipt) return null;
+  const held = access?.source === "env";
   return (
     <GadgetGroup label="MCP access">
+      {readError ? (
+        <GadgetRow label="Access">
+          <span data-testid="people-access-read-failed" data-code={readError}>
+            <StateChip state="failure" label="READ FAILED" />{" "}
+            <span className="surface-token" data-chip>{readError.toUpperCase()}</span>{" "}
+            <Button variant="secondary" dense onClick={() => void reload()}>Retry</Button>
+          </span>
+        </GadgetRow>
+      ) : null}
+      {access ? (<>
       <GadgetRow label="Access">
         <span data-testid="people-access">
           <FilterTokens
@@ -101,6 +127,7 @@ export function PeopleAccessModule() {
           {sourceToken(access)}
         </span>
       </GadgetRow>
+      </>) : null}
       {receipt ? (
         <GadgetRow label="Receipt">
           <span

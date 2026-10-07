@@ -126,3 +126,74 @@ def test_the_variable_holds_the_setting_server_side(hub, config_file, monkeypatc
     assert before == after
     is_error, answer = hub.mcp("people.access.set", {"mode": "read"})
     assert is_error is True and answer.get("code") == "people_access_env_override", answer
+
+
+# ── Astra round 1 on #919 (her probes, ported) ──────────────────────────
+
+
+def _owner_people_discovery(hub) -> tuple[list, list, list]:
+    tools = [t["name"] for t in _rpc(hub.client, "tools/list").json()["result"]["tools"] if t["name"].startswith("people.")]
+    listed = _rpc(hub.client, "resources/list").json()["result"]
+    resources = [r["uri"] for r in listed["resources"] if r["uri"].startswith("holdspeak://people/")]
+    templates = [r["uriTemplate"] for r in listed["resourceTemplates"] if r["uriTemplate"].startswith("holdspeak://people/")]
+    return tools, resources, templates
+
+
+def test_off_hides_people_from_owner_discovery(hub, config_file) -> None:
+    """Finding 3: a receipted PUT to off takes People out of the owner's MCP
+    discovery; people.access.set stays, so access can come back from MCP."""
+    tools, resources, templates = _owner_people_discovery(hub)
+    assert len(tools) > 1 and resources and templates
+    response = hub.client.put("/api/settings/people-access", json={"mode": "off"})
+    assert response.status_code == 200 and response.json()["receipt"]["outcome"] == "succeeded"
+    assert _owner_people_discovery(hub) == (["people.access.set"], [], [])
+    is_error, answer = hub.mcp("people.access.set", {"mode": "write"})
+    assert is_error is False and answer["mode"] == "write"
+    tools, resources, templates = _owner_people_discovery(hub)
+    assert len(tools) > 1 and resources and templates
+
+
+def test_env_off_hides_people_from_owner_discovery(hub, config_file, monkeypatch) -> None:
+    monkeypatch.setenv("HOLDSPEAK_MCP_PEOPLE_ACCESS", "off")
+    assert _owner_people_discovery(hub) == (["people.access.set"], [], [])
+    # The stdio path (handle_message) lists the same.
+    from holdspeak.mcp.server import handle_message
+
+    listed = handle_message({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
+    assert [t["name"] for t in listed["result"]["tools"] if t["name"].startswith("people.")] == ["people.access.set"]
+
+
+def test_door_keeps_real_people_commitment_for_launch(hub, config_file) -> None:
+    """Finding 1: a real accepted People commitment reaches the launched
+    agent's board and Door, as it reaches the owner's."""
+    from test_conductor_k6_agent_mcp import _people_rig
+
+    person = _people_rig(hub)
+    error, request = hub.mcp("people.request.create", {"relationship_id": person["id"], "body": "R7 commitment sentinel"})
+    assert not error
+    error, commitment = hub.mcp("people.request.accept", {"request_id": request["id"]})
+    assert not error and commitment["visibility"] == "shared_intent"
+    agent = _client(hub, _launch_credential().token)
+    error, direct = _result(_call(agent, "people.relationship.get", {"relationship_id": person["id"]}))
+    assert not error and "R7 commitment sentinel" in json.dumps(direct)
+    error, owner_door = hub.mcp("door.get", {})
+    assert not error and "R7 commitment sentinel" in json.dumps(owner_door)
+    error, agent_door = _result(_call(agent, "door.get", {}))
+    assert not error and "active" not in agent_door["board"]
+    assert "R7 commitment sentinel" in json.dumps(agent_door)
+    error, board = _result(_call(agent, "follow_through.board", {}))
+    assert not error and "R7 commitment sentinel" in json.dumps(board)
+    # Its transition stays the owner's.
+    from holdspeak.services.people_service import PeopleServiceError
+
+    service = hub.root.web_context.people_service
+    with pytest.raises(PeopleServiceError) as refused:
+        service.transition(agent_credentials_principal(agent), f"people:{commitment['id']}", "done")
+    assert str(refused.value) == "people_owner_required" or getattr(refused.value, "code", "") == "people_owner_required"
+
+
+def agent_credentials_principal(agent) -> Any:
+    from holdspeak.principals import agent_credentials
+
+    token = agent.headers["Authorization"].split(" ", 1)[1]
+    return agent_credentials.derive(token)

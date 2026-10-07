@@ -8,6 +8,10 @@ Boards, at 1440 and 393:
   K7a-built-off      after a press on OFF: AGENTS · OFF and the operation's receipt
   K7a-built-env      a second hub started with HOLDSPEAK_MCP_PEOPLE_ACCESS=off: the strip disabled,
                      SOURCE · HOLDSPEAK_MCP_PEOPLE_ACCESS
+  K7a-built-read-failed  the read fails (Astra on #919): READ FAILED · <code> and Retry. Stand-in: the
+                     browser answers the one GET /api/settings/people-access with 503 (page.route);
+                     every other request reaches the real hub. Retry is pressed after the route is
+                     lifted, and the strip returns.
 
 Usage (from the worktree root):
   PLAYWRIGHT_BROWSERS_PATH=$HOME/Library/Caches/ms-playwright \\
@@ -87,6 +91,30 @@ def boards(r: board.Runner) -> None:
             checks={"AGENTS · OFF": f["agents"] == "AGENTS · OFF",
                     "the receipt: SUCCEEDED · ACCESS · OFF": bool(f["receipt"]) and "SUCCEEDED" in f["receipt"] and "ACCESS · OFF" in f["receipt"]},
             extra={"read": f})
+    # ── the read failure: the stand-in answers the GET with 503 ──
+    url = "**/api/settings/people-access"
+    r.page.route(url, lambda route: route.fulfill(status=503, content_type="application/json",
+                                                  body='{"code": "unavailable"}')
+                 if route.request.method == "GET" else route.continue_())
+    r.ev("() => window.__cOpen.closeAll()")
+    r.settle(800)
+    r.ev("() => window.__cOpen.surface('configure-settings', 'people')")
+    r.settle(3500)
+    failed = r.ev("() => (document.querySelector('[data-testid=people-access-read-failed]') || {}).innerText || null")
+    r.shoot("K7a-built-read-failed", FRONT, whole=["[data-testid=people-access-read-failed]"],
+            checks={"READ FAILED · UNAVAILABLE and Retry": bool(failed) and "READ FAILED" in failed and "UNAVAILABLE" in failed and "Retry" in failed,
+                    "no strip while the read fails": r.ev("() => !document.querySelector('[data-testid=people-access]')")},
+            extra={"failed": failed, "stand_in": "GET /api/settings/people-access answered 503 by page.route"})
+    r.page.unroute(url)
+    # The stand-in's own 503 is the board's input, not a page fault: recorded, then cleared.
+    own = [e for e in r.errors if "status of 503" in e]
+    r.facts[f"K7a-built-read-failed-{r.width}"]["stand_in_console"] = own
+    r.errors[:] = [e for e in r.errors if e not in own]
+    r.tap(r.page.locator("[data-testid=people-access-read-failed] button", has_text="Retry"), 1500)
+    back = _read(r)
+    r.facts[f"K7a-built-read-failed-retry-{r.width}"] = {"read": back, "strip_back": bool(back["tokens"]) or back["menu"] is not None}
+    if not (bool(back["tokens"]) or back["menu"] is not None):
+        r.fails.append(f"K7a-built-read-failed-{r.width}: Retry did not bring the strip back")
 
 
 def main() -> int:
