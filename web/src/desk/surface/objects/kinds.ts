@@ -75,9 +75,9 @@ export function objectSprite(kind: string, id: string, state: SpriteState = "res
  *  beside a word (the row's), or the word is in the accessible name. */
 export type ObjectTone = "ok" | "warn" | "fail" | "info" | "ask";
 
-/** The LampGadget tone for an object tone (LampGadget has ok/warn/fail). */
-export function lampGadgetTone(tone: ObjectTone | undefined): "ok" | "warn" | "fail" {
-  if (tone === "fail") return "fail";
-  if (tone === "warn" || tone === "ask") return "warn";
-  return "ok";
+/** The LampGadget tone for an object tone. Since round 2 of B1 LampGadget
+ *  carries all five tones, so this is the identity (kept for callers):
+ *  an object is the same colour in the grid, the list and the Needs row. */
+export function lampGadgetTone(tone: ObjectTone | undefined): ObjectTone {
+  return tone ?? "ok";
 }

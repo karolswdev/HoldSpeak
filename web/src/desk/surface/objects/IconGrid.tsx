@@ -7,10 +7,11 @@
  *  the pointer drags over empty glass, null when it ends) and the ids under
  *  it through `iconsInRect`. A press on empty glass calls `onClear`.
  *
- *  Keyboard: one Tab stop; arrow keys walk the icons (useRovingRows).
+ *  Keyboard: one Tab stop; Left/Right move within the visual row, Up/Down
+ *  by the rendered column count, Home/End to the ends (useRovingGrid).
  */
 import { useRef, type PointerEvent, type ReactNode } from "react";
-import { useRovingRows } from "../roving";
+import { useRovingGrid } from "../roving";
 import "./objects.css";
 
 export interface GridRect {
@@ -51,7 +52,7 @@ export interface IconGridProps {
 export function IconGrid({ label, children, marquee, onMarquee, onClear, className }: IconGridProps) {
   const ref = useRef<HTMLDivElement>(null);
   const origin = useRef<{ x: number; y: number } | null>(null);
-  useRovingRows(ref, { selector: ".desk-icon" });
+  useRovingGrid(ref, { selector: ".desk-icon" });
 
   const point = (event: PointerEvent<HTMLDivElement>) => {
     const grid = ref.current!;

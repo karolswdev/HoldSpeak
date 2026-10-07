@@ -1056,6 +1056,15 @@ button.gadget-chip-egress {
 .gadget-lamp[data-on="true"][data-tone="fail"] .gadget-lamp-dot {
   background: var(--danger);
 }
+/* PHILO-14 B1: the object tones, so an object wears the same lamp colour on
+   its icon, its list row and its Needs-you row (UX-CANON D: one object, one
+   drawing). info = in progress (blue), ask = it asks you (ember). */
+.gadget-lamp[data-on="true"][data-tone="info"] .gadget-lamp-dot {
+  background: var(--lamp-info);
+}
+.gadget-lamp[data-on="true"][data-tone="ask"] .gadget-lamp-dot {
+  background: var(--lamp-ask);
+}
 
 /* ── HS-111-08: roving focus inside the table — the row's controls
    wear the same inset accent band the ledger rows do (never an
