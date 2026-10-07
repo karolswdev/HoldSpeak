@@ -120,6 +120,8 @@ def test_pr_is_the_fact_once_it_exists_even_after_the_session_ended(db, tmp_path
     [flight] = agent_flights(db, ledger=ledger)
     assert flight["state"] == "pr_open"
     assert flight["pr"] == {"number": 412, "url": pr["url"], "state": "open"}
+    # PHILO-14 C4: the launch's clock rides along (the Conductor's stale window).
+    assert flight["launched_at"] == "2026-10-06T10:00:00Z"
 
     ledger.update("l1", follow_through={
         "pr": {**pr, "state": "merged"}, "close": "closed",

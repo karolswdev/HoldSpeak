@@ -48,6 +48,7 @@ PAGE_ROUTES = [
     "/dictation",
     "/commands",
     "/companion",
+    "/conductor",
     "/presence",
     "/cadence",
     "/profiles",

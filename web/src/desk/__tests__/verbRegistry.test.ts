@@ -102,7 +102,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "go.change-places": "⌘⇧P",
       "go.dictate": "⌘1",
       "go.review-meetings": "⌘2",
-      "go.inspect-personas-and-coders": "⌘3",
+      "go.open-conductor": "⌘3",
       "go.configure-settings": "⌘4",
       "window.close": "⌘W",
       "window.minimize": "⌘M",

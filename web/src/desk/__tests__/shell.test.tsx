@@ -58,13 +58,14 @@ describe("the dock", () => {
     unmount();
     // HS-100-11 — the dock IS the launcher: with nothing open it still
     // carries the four applications (no window chips, no running marks).
+    // PHILO-14 C4: the Agents entry became the Conductor drawer.
     render(<Dock />);
     expect(screen.getByRole("toolbar", { name: "Dock" })).toBeTruthy();
-    for (const app of ["Speak", "Meetings", "Agents", "Settings"]) {
+    for (const app of ["Speak", "Meetings", "Conductor", "Settings"]) {
       expect(screen.getByRole("button", { name: app })).toBeTruthy();
     }
     expect(screen.queryByRole("button", { name: /Focus / })).toBeNull();
-    for (const app of ["Speak", "Meetings", "Agents", "Settings"]) {
+    for (const app of ["Speak", "Meetings", "Conductor", "Settings"]) {
       expect(
         screen.getByRole("button", { name: app }).className,
       ).not.toContain("is-run");

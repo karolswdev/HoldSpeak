@@ -183,6 +183,9 @@ def agent_flights(
             "session_cleanup": (follow.get("cleanup") or {}).get("session"),
             "merged_at": evidence.get("merged_at") or None,
             "launch_id": record.get("launch_id"),
+            # PHILO-14 C4: the Conductor drawer keeps an ended launch of the
+            # last 24 h as a stale object; this is its clock.
+            "launched_at": record.get("launched_at") or None,
         })
     return flights
 

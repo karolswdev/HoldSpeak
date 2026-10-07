@@ -1,5 +1,7 @@
-// Conductor K3: the arrival's AGENTS section and Needs you re-read on a
-// `scope:"coder"` frame, not only on mount (ChairHome fetched the agents once).
+// Conductor K3: the agents store and Needs you re-read on a `scope:"coder"`
+// frame, not only on mount (ChairHome fetched the agents once). PHILO-14 C4:
+// the AGENTS section is parked; ChairHome keeps the store live for the
+// screen's agent objects and the Conductor drawer.
 import { act, render, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
@@ -38,7 +40,7 @@ function emit(frame: { type: string; data: unknown }) {
 const calls = (path: string) =>
   vi.mocked(apiFetch).mock.calls.filter(([url]) => url === path).length;
 
-describe("arrival AGENTS follows the coder frame (Conductor K3)", () => {
+describe("the agents store follows the coder frame (Conductor K3; C4: no AGENTS section)", () => {
   beforeEach(() => {
     bus.handlers.clear();
     vi.mocked(apiFetch).mockReset();
