@@ -31,3 +31,11 @@
 .drawer-receipt[data-tone="fail"] { color: var(--lamp-fail, var(--danger)); }
 
 .drawer-info-rename { display: flex; }
+
+/* In a drawer the grid's rows grow with their names: a name is never
+   clipped or ellipsized (UX-CANON: an ellipsis counts as clipped). */
+.drawer-window .desk-icon-name {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}

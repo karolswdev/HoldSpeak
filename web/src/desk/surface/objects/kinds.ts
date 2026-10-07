@@ -49,15 +49,16 @@ export function objectKindWord(kind: string): string {
  *  has no action-item, PR, person, smart-drawer or Conductor sprite yet, so
  *  those borrow the nearest family — README S7). */
 export function objectSprite(kind: string, id: string, state: SpriteState = "rest"): string {
-  const drawer = (name: string) => `${SPRITE_BASE}${name}${state === "rest" ? "" : `_${state}`}.png`;
   switch (kind) {
+    // PHILO-14 A2: the D1 mold (A0b) names its drawers per kind; sprites.ts
+    // holds the map, so a drawer reads through spriteUrl like every kind.
     case "project":
     case "repository":
     case "conductor":
     case "smart":
-      return drawer("drawer");
+      return spriteUrl(kind, id, state);
     case "parked":
-      return `${SPRITE_BASE}drawer_stale.png`;
+      return `${SPRITE_BASE}parked-drawer${state === "rest" ? "" : `_${state}`}.png`;
     case "action":
       return spriteUrl("story", id, state);
     case "pr":
