@@ -115,7 +115,8 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
       // design §3: every window carries the full set (depth withheld until C2)
       expect(within(win!).getByRole("button", { name: `Iconify ${name}` })).toBeTruthy();
     }
-    expect(within(region("Needs you")!).getByTestId("arrival-headline")).toBeTruthy();
+    // PHILO-14 A5: the Needs-you window body is the smart drawer.
+    expect(within(region("Needs you")!).getByTestId("needs-drawer")).toBeTruthy();
     expect(within(region("Brief")!).getByTestId("arrival-brief")).toBeTruthy();
     expect(within(region("Capture")!).getByTestId("arrival-capture-bar")).toBeTruthy();
     expect(within(region("Capture")!).getByRole("button", { name: "Write a thought" })).toBeTruthy();
@@ -132,16 +133,19 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     expect(document.querySelectorAll(".desk-window-shell.is-front")).toHaveLength(1);
   });
 
-  it("the work first: the headline and the actions lead; SETUP is below the actions", async () => {
+  it("the work first: the head and the actions lead; SETUP is below the actions", async () => {
+    // PHILO-14 A5: the Needs-you window body is the smart drawer; its head
+    // leads and the SETUP row follows the action rows.
     render(<ChairHome />);
     const needs = region("Needs you")!;
-    await waitFor(() => expect(within(needs).getByTestId("arrival-needs-you")).toBeTruthy());
-    await waitFor(() => expect(within(needs).getByTestId("arrival-blocker")).toBeTruthy());
+    await waitFor(() => expect(needs.querySelector('[data-object-id="item-1"]')).toBeTruthy());
+    await waitFor(() => expect(needs.querySelector('[data-object-id^="blocker:"]')).toBeTruthy());
     const body = within(needs).getByTestId("chair-window-body-needs");
-    expect(body.firstElementChild?.getAttribute("data-testid")).toBe("arrival-headline");
-    const actions = within(needs).getByTestId("arrival-needs-you");
-    const setup = within(needs).getByTestId("arrival-blocker");
-    expect(actions.compareDocumentPosition(setup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(body.firstElementChild?.getAttribute("data-testid")).toBe("needs-drawer");
+    expect(body.firstElementChild?.firstElementChild?.getAttribute("data-testid")).toBe("needs-drawer-head");
+    const action = needs.querySelector('[data-object-id="item-1"]')!;
+    const setup = needs.querySelector('[data-object-id^="blocker:"]')!;
+    expect(action.compareDocumentPosition(setup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("Close closes; a reopen Button stands in its place; Window ▸ Chair checks the open ones", async () => {

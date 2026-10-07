@@ -69,6 +69,14 @@ function emitDeskChanged() {
   }
 }
 
+
+// PHILO-14 A5: the Needs-you window body is the smart drawer; the SETUP rows
+// are its rows (the object, one lamp, one verb) and the head is its display.
+const setupRows = () => [...document.querySelectorAll<HTMLElement>(
+  '[data-testid="needs-drawer"] .needs-row[data-object-id^="blocker:"]',
+)];
+const setupRow = () => setupRows()[0] ?? null;
+
 describe("HS-201-01 the row clears on the OPEN desk", () => {
   beforeEach(() => {
     vi.mocked(apiFetch).mockReset();
@@ -86,8 +94,8 @@ describe("HS-201-01 the row clears on the OPEN desk", () => {
     roster = [ASSIGNED as Record<string, unknown>];
     act(() => { window.dispatchEvent(new Event("focus")); });
 
-    await waitFor(() => expect(screen.queryByTestId("arrival-blocker")).toBeNull());
-    expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you");
+    await waitFor(() => expect(setupRow()).toBeNull());
+    expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you");
   });
 
   // Counsel round 2 (condition 1): the product's own return signal, the
@@ -101,8 +109,8 @@ describe("HS-201-01 the row clears on the OPEN desk", () => {
     roster = [ASSIGNED as Record<string, unknown>];
     act(() => { window.dispatchEvent(new Event("holdspeak:settings-updated")); });
 
-    await waitFor(() => expect(screen.queryByTestId("arrival-blocker")).toBeNull());
-    expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you");
+    await waitFor(() => expect(setupRow()).toBeNull());
+    expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you");
   });
 
   it("re-reads the roster on the hub's desk_changed frame", async () => {
@@ -113,7 +121,7 @@ describe("HS-201-01 the row clears on the OPEN desk", () => {
     roster = [ASSIGNED as Record<string, unknown>];
     act(() => { emitDeskChanged(); });
 
-    await waitFor(() => expect(screen.queryByTestId("arrival-blocker")).toBeNull(), {
+    await waitFor(() => expect(setupRow()).toBeNull(), {
       timeout: 5000,
     });
   });

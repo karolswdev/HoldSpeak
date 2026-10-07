@@ -19,6 +19,7 @@ import { useDesk } from "../store";
 import { answerSurfaceFirst } from "../shell";
 import {
   CHAIR_WINDOWS,
+  CHAIR_WINDOW_BODY,
   CHAIR_WINDOW_IDS,
   closeChairWindow,
   keepCaptureInRing,
@@ -145,9 +146,10 @@ export function ChairDesk(props: ChairDeskProps) {
           );
         }
         const shown = compact ? isOpen && phone === spec.id : isOpen;
+        const Body = CHAIR_WINDOW_BODY[spec.key];
         return (
           <ChairWindow key={spec.id} spec={spec} open={shown}>
-            {props[spec.key]}
+            {Body ? <Body /> : props[spec.key]}
           </ChairWindow>
         );
       })}

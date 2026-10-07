@@ -107,18 +107,23 @@ describe("Conductor F2: transitions land on a mounted Chair", () => {
     sessions = { sessions: [working(runbook), recon, solo], flights: [{ ...FLIGHT_RUNBOOK, state: "working" }, FLIGHT_RECON] };
     wire();
     render(<ChairHome />);
-    const door = () => screen.getAllByTestId("arrival-needs-you-row").find((r) => r.textContent?.includes("Write the rollback runbook"))!;
-    await waitFor(() => expect(within(door()).getByTestId("flight-chip").textContent).toContain("CLAUDE CODE · WORKING"));
+    // PHILO-14 A5: the Needs-you drawer row names the agent in its ONE lamp.
+    const lamp = () =>
+      [...document.querySelectorAll<HTMLElement>(".needs-row")]
+        .find((r) => r.querySelector(".needs-row-name")?.textContent?.endsWith("Write the rollback runbook")
+          && r.getAttribute("data-kind") !== "agent")
+        ?.querySelector(".gadget-lamp")?.textContent;
+    await waitFor(() => expect(lamp()).toBe("CLAUDE CODE · WORKING"));
 
     sessions = SESSIONS;   // the agent asked: waiting
     act(() => emit("intel_status", { state: "ready", scope: "coder" }));
-    await waitFor(() => expect(within(door()).getByTestId("flight-chip").textContent).toContain("CLAUDE CODE · WAITING"));
+    await waitFor(() => expect(lamp()).toBe("CLAUDE CODE · WAITING"));
 
     // The PR merged; the close waits for the owner (Secure): the session stays.
     const merged = { ...FLIGHT_RUNBOOK, state: "merged", close: "awaiting_confirm", pr: { number: 413, url: "u", state: "merged" } };
     sessions = { sessions: [{ ...runbook, flight: merged }, recon, solo], flights: [merged, FLIGHT_RECON] };
     act(() => emit("desk_changed"));
-    await waitFor(() => expect(within(door()).getByTestId("flight-chip").textContent).toContain("PR #413 · MERGED"));
+    await waitFor(() => expect(lamp()).toBe("MERGED · TO SECURE"));
     expect(within(screen.getByTestId("arrival-agents")).getAllByTestId("arrival-agent-row")).toHaveLength(3);
 
     // Confirmed, closed and cleaned up: the session leaves AGENTS.

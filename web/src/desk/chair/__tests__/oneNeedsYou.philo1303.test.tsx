@@ -110,18 +110,16 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
     useDesk.setState({ items: { ...useDesk.getState().items, meeting: [] } } as never);
   });
 
-  it("speaks the module's six, counts R3 from the server read, and names the narrower list ACTIONS", async () => {
+  it("speaks the module's six, counts R3 from the server read, and draws the six members as rows", async () => {
     installHub();
     render(<><ChairHome /><OtherReader /></>);
     await waitFor(
-      () => expect(screen.getByTestId("arrival-display").textContent).toMatch(/^6 need you/),
+      () => expect(screen.getByTestId("needs-drawer-head").textContent).toMatch(/^6 need you/),
       { timeout: 3000 },
     );
     expect(screen.getByTestId("other-reader").textContent).toBe("6");
-    const list = screen.getByTestId("arrival-needs-you");
-    const caption = list.querySelector(".surface-caption, [class*=caption]")?.textContent ?? list.textContent ?? "";
-    expect(caption).toMatch(/^ACTIONS \d/);
-    expect(list.textContent).not.toMatch(/NEEDS? YOU/);
+    // PHILO-14 A5: the drawer's rows ARE the members: six rows under `6 need you`.
+    expect(document.querySelectorAll("[data-testid='needs-drawer'] .needs-row")).toHaveLength(6);
     // No "need(s) you" on the face carries a number other than the one.
     const said = (document.body.textContent ?? "").match(/\d+ needs? you/gi) ?? [];
     expect(said.every((token) => token.startsWith("6 "))).toBe(true);
@@ -131,17 +129,16 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
     const hub = installHub();
     render(<><ChairHome /><OtherReader /></>);
     await waitFor(
-      () => expect(screen.getByTestId("arrival-display").textContent).toMatch(/^6 need you/),
+      () => expect(screen.getByTestId("needs-drawer-head").textContent).toMatch(/^6 need you/),
       { timeout: 3000 },
     );
-    const a1 = screen
-      .getAllByTestId("arrival-needs-you-row")
+    const a1 = [...document.querySelectorAll<HTMLElement>(".needs-row")]
       .find((row) => row.textContent?.includes("A1 close the overdue release note"));
     expect(a1).toBeDefined();
     hub.paths.length = 0;
     fireEvent.click(within(a1!).getByRole("button", { name: /^Done: / }));
     await waitFor(
-      () => expect(screen.getByTestId("arrival-display").textContent).toMatch(/^5 need you/),
+      () => expect(screen.getByTestId("needs-drawer-head").textContent).toMatch(/^5 need you/),
       { timeout: 1000 },
     );
     expect(screen.getByTestId("other-reader").textContent).toBe("5");

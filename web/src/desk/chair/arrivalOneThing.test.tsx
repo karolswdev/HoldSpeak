@@ -22,6 +22,14 @@ vi.mock("../../runtime/RuntimeBus", () => ({
   useRuntimeFrame: () => null,
 }));
 
+
+// PHILO-14 A5: the Needs-you window body is the smart drawer; the SETUP rows
+// are its rows (the object, one lamp, one verb) and the head is its display.
+const setupRows = () => [...document.querySelectorAll<HTMLElement>(
+  '[data-testid="needs-drawer"] .needs-row[data-object-id^="blocker:"]',
+)];
+const setupRow = () => setupRows()[0] ?? null;
+
 describe("HS-201-01 headline", () => {
   it("never says the all-clear while something is pending", () => {
     expect(headlineFor(0, 1, true, 0)).toBe("Nothing needs you");
@@ -103,26 +111,26 @@ describe("HS-201-01 the Chair names the one thing", () => {
     wire([NO_ENGINE, SPEECH_ASSIGNED]);
     render(<ChairHome />);
     await screen.findByText("No engine for summaries");
-    const row = screen.getByTestId("arrival-blocker-row");
+    const row = setupRow()!;
     expect(row.textContent).toContain("No engine for summaries");
-    const section = screen.getByTestId("arrival-blocker");
-    expect(section.querySelectorAll("[data-testid='arrival-blocker-row']").length).toBe(1);
+    const section = setupRow()!;
+    expect(setupRows().length).toBe(1);
     const verbs = section.querySelectorAll("button");
     expect(verbs.length).toBe(1);
     expect(verbs[0].textContent).toBe("Choose an engine");
     // no prose: the row says a state and a verb, nothing else
     expect(section.textContent).not.toMatch(/[.!?]/);
     // and the headline does not lie over it
-    expect(screen.getByTestId("arrival-display").textContent).toBe("1 need you");
+    expect(screen.getByTestId("needs-drawer-head").textContent).toBe("1 need you");
   });
 
   it("is gone once the summary capability is assigned", async () => {
     wire([ASSIGNED]);
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+      expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you"),
     );
-    expect(screen.queryByTestId("arrival-blocker")).toBeNull();
+    expect(setupRow()).toBeNull();
   });
 
   it("stays while only a global head exists (the queue cannot use it)", async () => {
@@ -144,8 +152,8 @@ describe("HS-201-01 the Chair names the one thing", () => {
     }));
     render(<ChairHome />);
     await waitFor(() => {
-      expect(screen.queryByTestId("arrival-blocker")).toBeNull();
-      expect(screen.getByTestId("arrival-display").textContent).not.toBe("Nothing needs you");
+      expect(setupRow()).toBeNull();
+      expect(screen.getByTestId("needs-drawer-head").textContent).not.toBe("Nothing needs you");
     });
   });
 
@@ -162,9 +170,9 @@ describe("HS-201-01 the Chair names the one thing", () => {
     render(<ChairHome />);
     const row = await screen.findByText("Could not read setup");
     expect(row).toBeTruthy();
-    expect(screen.getByTestId("arrival-display").textContent).not.toBe("Nothing needs you");
+    expect(screen.getByTestId("needs-drawer-head").textContent).not.toBe("Nothing needs you");
     // one verb, and it is the library Button
-    const section = screen.getByTestId("arrival-blocker");
+    const section = setupRow()!;
     const verbs = section.querySelectorAll("button");
     expect(verbs.length).toBe(1);
     expect(verbs[0].className).toContain("btn");
@@ -178,11 +186,11 @@ describe("HS-201-01 the Chair names the one thing", () => {
     render(<ChairHome />);
     const row = await screen.findByText("No engine for speech");
     expect(row).toBeTruthy();
-    const section = screen.getByTestId("arrival-blocker");
+    const section = setupRow()!;
     const verbs = section.querySelectorAll("button");
     expect(verbs.length).toBe(1);
     expect(verbs[0].textContent).toBe("Choose an engine");
-    expect(screen.getByTestId("arrival-display").textContent).toBe("1 need you");
+    expect(screen.getByTestId("needs-drawer-head").textContent).toBe("1 need you");
   });
 
   // Counsel fix round, second pass (ruling 2): ONE filled primary on the
@@ -192,8 +200,8 @@ describe("HS-201-01 the Chair names the one thing", () => {
     wire([NO_ENGINE, NO_SPEECH]);
     render(<ChairHome />);
     await screen.findByText("No engine yet");
-    const section = screen.getByTestId("arrival-blocker");
-    expect(section.querySelectorAll("[data-testid='arrival-blocker-row']").length).toBe(1);
+    const section = setupRow()!;
+    expect(setupRows().length).toBe(1);
     const verbs = section.querySelectorAll("button");
     expect(verbs.length).toBe(1);
     expect(verbs[0].textContent).toBe("Choose an engine");
@@ -204,16 +212,16 @@ describe("HS-201-01 the Chair names the one thing", () => {
     expect(verbs[0].className).toContain("btn");
     expect(screen.queryByText("No engine for speech")).toBeNull();
     expect(screen.queryByText("No engine for summaries")).toBeNull();
-    expect(screen.getByTestId("arrival-display").textContent).toBe("1 need you");
+    expect(screen.getByTestId("needs-drawer-head").textContent).toBe("1 need you");
   });
 
   it("clears the speech row when the speech capability is assigned", async () => {
     wire([ASSIGNED, SPEECH_ASSIGNED]);
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+      expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you"),
     );
-    expect(screen.queryByTestId("arrival-blocker")).toBeNull();
+    expect(setupRow()).toBeNull();
   });
 });
 
@@ -239,9 +247,9 @@ describe("HS-201-01 a microphone action never opens Models", () => {
     }));
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+      expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you"),
     );
-    expect(screen.queryByTestId("arrival-blocker")).toBeNull();
-    expect(screen.queryByTestId("arrival-blocker-verb")).toBeNull();
+    expect(setupRow()).toBeNull();
+    expect(document.querySelector("[data-testid='needs-setup']")).toBeNull();
   });
 });

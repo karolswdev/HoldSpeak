@@ -183,18 +183,18 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
     expect(arch.getAttribute("role")).toBeNull();
   });
 
-  it("a commitment row opens its person (door card and the Room's own row)", async () => {
+  it("a commitment row is its object in the Needs-you drawer: no row open; Open opens its person", async () => {
+    // PHILO-14 A5 (board A-5): a Needs-you row is the object with its own
+    // verbs; the row itself is not a button (the Chair row's open moved to
+    // the object's own window). Rows the Brief and the week draw still open.
     render(<ChairHome />);
-    const door = await screen.findByText("Review the rollout plan before Friday");
-    fireEvent.click(door.closest(".surface-ledger-line")!);
+    const name = await screen.findByText("Review the rollout plan before Friday");
+    const row = name.closest(".needs-row") as HTMLElement;
+    expect(row).toBeTruthy();
+    expect(row.getAttribute("role")).toBeNull();
+    // The card names its person and the Desk cannot run its verb: Open opens the person.
+    fireEvent.click(within(row).getByRole("button", { name: "Open: Review the rollout plan before Friday" }));
     expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:rel-priya");
-
-    vi.mocked(openSurfaceOr).mockReset();
-    const own = screen.getByText("Send the dry-run report").closest(".surface-ledger-line") as HTMLElement;
-    await waitFor(() => expect(own.getAttribute("role")).toBe("button"));
-    fireEvent.click(own);
-    expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:rel-priya");
-    expect(vi.mocked(apiFetch).mock.calls.some(([p]) => p === "/api/people/resolve")).toBe(true);
   });
 });
 

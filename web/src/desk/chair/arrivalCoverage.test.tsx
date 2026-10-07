@@ -1,7 +1,7 @@
 // HS-200-07 (C4) — the arrival's rendering rule: "Nothing needs you" is
 // spoken ONLY over complete coverage. An empty PARTIAL result shows the
 // coverage token and the repair row with its owning verb.
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { ChairHome } from "./ChairHome";
@@ -58,6 +58,14 @@ function wire(needsYou: unknown) {
   });
 }
 
+// PHILO-14 A5: the Needs-you window body is the smart drawer. A source the
+// hub could not read is a row of its own after the members (its name, its
+// reason, ONE lamp + word, its owning verb); the head never says the
+// all-clear over it.
+const gapRows = () => [...document.querySelectorAll<HTMLElement>(
+  '[data-testid="needs-drawer"] .needs-row[data-object-id^="coverage:"]',
+)];
+
 describe("Arrival coverage (HS-200-07 / C4)", () => {
   beforeEach(() => vi.mocked(apiFetch).mockReset());
 
@@ -66,8 +74,8 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
            coverage: [HEALTHY_ROOM], complete: true });
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"));
-    expect(screen.queryByTestId("arrival-coverage")).toBeNull();
+      expect(screen.getByTestId("needs-drawer-head").textContent).toBe("Nothing needs you"));
+    expect(gapRows()).toHaveLength(0);
   });
 
   it("never speaks the all-clear over an empty PARTIAL result", async () => {
@@ -75,16 +83,13 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
            coverage: [HEALTHY_ROOM, FAILED_ROOM], complete: false });
     render(<ChairHome />);
 
-    await waitFor(() => expect(screen.getByTestId("arrival-coverage")).toBeTruthy());
-    expect(screen.getByTestId("arrival-display").textContent)
+    await waitFor(() => expect(gapRows()).toHaveLength(1));
+    expect(screen.getByTestId("needs-drawer-head").textContent)
       .not.toBe("Nothing needs you");
-    expect(screen.getByText("COVERAGE · 1 OF 2")).toBeTruthy();
-    expect(screen.getByTestId("arrival-coverage-token").textContent).toContain("READ FAILED");
-    // HS-200-15: the boards' vocabulary — OBSERVED hh:mm (LAST SEEN stays the shade's).
-    expect(screen.getByTestId("arrival-coverage-observed").textContent)
-      .toContain("OBSERVED");
+    const row = gapRows()[0];
+    expect(row.querySelector(".gadget-lamp")?.textContent).toContain("READ FAILED");
     // The owning verb, as the library Button.
-    const verb = screen.getByTestId("arrival-coverage-verb");
+    const verb = within(row).getByTestId("needs-repair");
     expect(verb.textContent).toBe("Retry");
     expect(verb.className).toContain("btn");
   });
@@ -106,20 +111,20 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     });
     render(<ChairHome />);
 
-    await waitFor(() => expect(screen.getByTestId("arrival-needs-you")).toBeTruthy());
-    expect(screen.getByTestId("arrival-display").textContent).toContain("need you");
-    expect(screen.getByTestId("arrival-coverage")).toBeTruthy();
-    expect(screen.getByTestId("arrival-remembered").textContent).toContain("STILL TRUE · OBSERVED");
+    await waitFor(() => expect(screen.getByText("CI red on main")).toBeTruthy());
+    expect(screen.getByTestId("needs-drawer-head").textContent).toContain("need you");
+    expect(gapRows()).toHaveLength(1);
+    const row = screen.getByText("CI red on main").closest(".needs-row")!;
+    expect(row.querySelector(".needs-row-fact")?.textContent).toContain("observed 09:00");
   });
 
   it("treats a read that never landed as a coverage gap, not as quiet", async () => {
     wire("reject");
     render(<ChairHome />);
 
-    await waitFor(() => expect(screen.getByTestId("arrival-coverage")).toBeTruthy());
-    expect(screen.getByTestId("arrival-display").textContent)
+    await waitFor(() => expect(gapRows()).toHaveLength(1));
+    expect(screen.getByTestId("needs-drawer-head").textContent)
       .not.toBe("Nothing needs you");
-    expect(screen.getByText("COVERAGE · 0 OF 1")).toBeTruthy();
   });
 
   it("keeps the arrival honest at the narrow viewport rule (no prose row)", async () => {
@@ -127,10 +132,8 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
            coverage: [HEALTHY_ROOM, FAILED_ROOM], complete: false });
     render(<ChairHome />);
 
-    await waitFor(() => expect(screen.getByTestId("arrival-coverage")).toBeTruthy());
-    const rows = screen.getAllByTestId("arrival-coverage-row");
-    expect(rows).toHaveLength(1);
-    for (const row of rows) {
+    await waitFor(() => expect(gapRows()).toHaveLength(1));
+    for (const row of gapRows()) {
       for (const text of Array.from(row.querySelectorAll("*"))
         .map((n) => n.textContent ?? "")) {
         expect(text.length).toBeLessThanOrEqual(60);
