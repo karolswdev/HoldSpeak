@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
+import errno
 import socket
 import threading
 import time
@@ -80,6 +81,55 @@ def _bind_listen_socket(host: str, preferred: int) -> socket.socket:
         sock.bind((host, 0))
     sock.set_inheritable(True)
     return sock
+
+
+def _bind_host_sockets(host: str) -> list[socket.socket]:
+    """Bind a free port on EVERY address the host resolves to (Conductor R5).
+
+    One socket per resolved address (``localhost``: 127.0.0.1 and ::1), all
+    on the same port, bound now and handed to uvicorn, so no other process
+    can take the port before the hub listens. uvicorn bound ``host`` itself
+    before, which listened on each resolved address; this keeps that. An
+    address this machine cannot bind (no ::1) is left out, as asyncio has no
+    listener for it either; a port another listener holds on a later address
+    makes the whole pick start again.
+    """
+    infos = socket.getaddrinfo(host, None, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)
+    addresses: list[tuple[int, Any]] = []
+    for family, _type, _proto, _name, sockaddr in infos:
+        if family not in (socket.AF_INET, socket.AF_INET6):
+            continue
+        if (family, sockaddr[0]) not in [(f, a[0]) for f, a in addresses]:
+            addresses.append((family, sockaddr))
+    if not addresses:
+        return [_bind_listen_socket(host, 0)]
+    for _attempt in range(10):
+        bound: list[socket.socket] = []
+        port = 0
+        retry = False
+        for family, sockaddr in addresses:
+            sock = socket.socket(family, socket.SOCK_STREAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if family == socket.AF_INET6:
+                sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+            try:
+                sock.bind((sockaddr[0], port, *sockaddr[2:]))
+            except OSError as exc:
+                sock.close()
+                if not bound:
+                    raise
+                if exc.errno == errno.EADDRINUSE:
+                    retry = True
+                    break
+                continue  # this machine cannot bind the address (e.g. no ::1)
+            sock.set_inheritable(True)
+            bound.append(sock)
+            port = int(sock.getsockname()[1])
+        if not retry:
+            return bound
+        for sock in bound:
+            sock.close()
+    raise OSError(errno.EADDRINUSE, f"no free port on every address of {host!r}")
 
 
 def _coder_watch_step(
@@ -517,9 +567,8 @@ class MeetingWebServer:
             # Picking a port, closing it and letting uvicorn bind it after
             # lifespan startup left a window in which another process could
             # take the port (a check-then-bind race).
-            listen = _bind_listen_socket(self.host, 0)
-            self._listen_sockets = [listen]
-            self.port = int(listen.getsockname()[1])
+            self._listen_sockets = _bind_host_sockets(self.host)
+            self.port = int(self._listen_sockets[0].getsockname()[1])
         from .principals import agent_credentials
 
         agent_credentials.set_hub_url(f"http://{self.host}:{self.port}")

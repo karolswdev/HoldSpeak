@@ -45,14 +45,14 @@ def _health(url: str) -> int:
 @pytest.mark.integration
 def test_the_port_is_held_during_startup_and_served_on_the_picked_socket(isolated_db, monkeypatch) -> None:
     picked: list[socket.socket] = []
-    real_bind = web_server_module._bind_listen_socket
+    real_bind = web_server_module._bind_host_sockets
 
-    def recording_bind(host: str, preferred: int) -> socket.socket:
-        sock = real_bind(host, preferred)
-        picked.append(sock)
-        return sock
+    def recording_bind(host: str) -> list[socket.socket]:
+        socks = real_bind(host)
+        picked.extend(socks)
+        return socks
 
-    monkeypatch.setattr(web_server_module, "_bind_listen_socket", recording_bind)
+    monkeypatch.setattr(web_server_module, "_bind_host_sockets", recording_bind)
     server = _server()
     taken_during_startup: list[bool] = []
 
@@ -115,3 +115,40 @@ def test_concurrent_hubs_never_collide_on_a_port(isolated_db) -> None:
         finally:
             for server in servers:
                 server.stop()
+
+
+def _has_ipv6_loopback() -> bool:
+    try:
+        with socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as probe:
+            probe.bind(("::1", 0))
+        return True
+    except OSError:
+        return False
+
+
+def _localhost_server() -> MeetingWebServer:
+    return MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={}),
+        ),
+        host="localhost",
+    )
+
+
+@pytest.mark.integration
+def test_localhost_listens_on_ipv4_and_ipv6_on_one_port(isolated_db) -> None:
+    """Astra round 1 on #915 (P2): main, with host="localhost", listened on
+    127.0.0.1 and ::1. The held sockets keep both, on the same port."""
+    server = _localhost_server()
+    server.start()
+    held = list(server._listen_sockets or [])
+    try:
+        port = int(server.port)
+        assert _health(f"http://127.0.0.1:{port}") == 200
+        if _has_ipv6_loopback():
+            assert _health(f"http://[::1]:{port}") == 200
+            assert {s.family for s in held} == {socket.AF_INET, socket.AF_INET6}
+            assert {s.getsockname()[1] for s in held} == {port}
+    finally:
+        server.stop()
+    assert held and all(s.fileno() == -1 for s in held), "stop() left a held socket open"
