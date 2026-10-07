@@ -8,6 +8,7 @@
  */
 import type { ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
+import { listSprite } from "../../sprites";
 import { objectSprite } from "./kinds";
 import "./objects.css";
 
@@ -60,9 +61,9 @@ export function ConfirmLine({
   return (
     <div className="confirm-line" role="group" aria-label={`Hand: ${title}`}>
       <span className="confirm-line-ends" aria-hidden="true">
-        <img src={from.sprite ?? objectSprite(from.kind, from.id)} alt="" draggable={false} />
+        <img src={listSprite(from.sprite ?? objectSprite(from.kind, from.id))} alt="" draggable={false} />
         <span className="confirm-line-arrow">→</span>
-        <img src={to.sprite ?? objectSprite(to.kind, to.id)} alt="" draggable={false} />
+        <img src={listSprite(to.sprite ?? objectSprite(to.kind, to.id))} alt="" draggable={false} />
       </span>
       <span className="confirm-line-what">
         <span className="confirm-line-title">{title}</span>

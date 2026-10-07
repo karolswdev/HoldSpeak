@@ -1,6 +1,7 @@
 /** PHILO-14 B1 — NeedsRow, DropTarget, DragGhost.
  *
- *  NeedsRow (board A-5): a Needs-you row IS the object: its sprite (40 px),
+ *  NeedsRow (board A-5): a Needs-you row IS the object: its sprite (the
+ *  32 px set drawn at 32, PHILO-14 A0c, in the 40 px cell),
  *  its name (primary step), one fact line, ONE lamp and its word, and the
  *  object's own verbs at the right. In a narrow `surface` the lamp falls
  *  under the name and the verbs under the row, left-aligned.
@@ -13,6 +14,7 @@
  */
 import type { ReactNode } from "react";
 import { LampGadget } from "../gadgets";
+import { listSprite } from "../../sprites";
 import { lampGadgetTone, objectSprite, type ObjectTone } from "./kinds";
 import "./objects.css";
 
@@ -31,7 +33,7 @@ export interface NeedsRowProps {
 export function NeedsRow({ id, kind, name, fact, lamp, verbs, sprite }: NeedsRowProps) {
   return (
     <li className="needs-row" data-object-id={id} data-kind={kind}>
-      <img src={sprite ?? objectSprite(kind, id)} alt="" draggable={false} />
+      <img src={listSprite(sprite ?? objectSprite(kind, id))} alt="" draggable={false} />
       <span className="needs-row-what">
         <span className="needs-row-name">{name}</span>
         {fact ? <span className="needs-row-fact">{fact}</span> : null}

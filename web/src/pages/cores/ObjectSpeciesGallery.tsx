@@ -40,7 +40,7 @@ const DRAWER: ObjectListRow[] = [
   { id: "m-standup-a3", kind: "action", name: "Add the ledger freeze flag", when: "TODAY", whenSort: 9, state: { label: "PR #412", tone: "ok" } },
   { id: "act-cutover-comms", kind: "action", name: "Write the cutover comms", when: "TODAY", whenSort: 9 },
   { id: "claude:c1a0de00-runbook", kind: "agent", name: "Claude Code: rollback runbook", when: "42 MIN", whenSort: 10, state: { label: "ASKS", tone: "ask" } },
-  { id: "codex:c0dex000-recon", kind: "agent", name: "Codex: reconciliation", when: "30 MIN", whenSort: 11, state: { label: "WORKS", tone: "info" } },
+  { id: "codex:c0dex000-recon", kind: "agent", name: "Codex: reconciliation", when: "30 MIN", whenSort: 11, state: { label: "WORKS", tone: "info" }, sprite: objectSprite("agent", "codex:c0dex000-recon", "rest", 64, "codex") },
   { id: "n-1", kind: "note", name: "Ledger cutover risks", when: "OCT 5", whenSort: 5 },
   { id: "art-cutover-reqs", kind: "artifact", name: "Cutover requirements", when: "TODAY", whenSort: 9 },
   { id: "repo-payments-ledger", kind: "repository", name: "payments-ledger", when: "OCT 4", whenSort: 4 },
@@ -95,6 +95,12 @@ function IconsSpecimen() {
             kind={o.kind}
             name={o.name}
             lamp={ICON_LAMP[o.id]}
+            {...(o.id.startsWith("codex:")
+              ? {
+                  sprite: objectSprite("agent", o.id, "rest", 64, "codex"),
+                  spriteSelected: objectSprite("agent", o.id, "sel", 64, "codex"),
+                }
+              : {})}
             selected={sel.includes(o.id)}
             ghost={o.id === "act-cutover-comms"}
             onSelect={() => setSel([o.id])}
@@ -271,6 +277,7 @@ export function ObjectSpeciesGallery() {
           <NeedsRow
             id="codex:c0dex000-recon"
             kind="agent"
+            sprite={objectSprite("agent", "codex:c0dex000-recon", "rest", 64, "codex")}
             name="Codex: reconciliation"
             fact="psql -h staging-ledger -c 'select count(*) from entries'"
             lamp={{ label: "HELD CALL", tone: "warn" }}

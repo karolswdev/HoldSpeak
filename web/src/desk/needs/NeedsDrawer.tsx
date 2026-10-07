@@ -47,6 +47,12 @@ import "./needs.css";
 /** Answer: the agent's window with the answer field focused. Lane C2 builds
  *  the agent window and honors the hint; today the session opener opens the
  *  answer well (Conductor F2 K5b). */
+/** A Needs row's sprite: an agent row wears its OWN agent (Codex keeps its
+ *  face; PHILO-14 A0c r2); any other row takes its kind's sprite. */
+export function needsRowSprite(face: { id: string; agent?: string | null }): string | undefined {
+  return face.agent ? spriteUrl("agent", face.id, "rest", face.agent) : undefined;
+}
+
 export function openAgentAnswer(sessionKey: string): void {
   openCoderSession(sessionKey, { answer: true });
 }
@@ -299,7 +305,7 @@ function NeedRow({ face, primary }: { face: NeedFace; primary: boolean }) {
         name={face.name}
         fact={face.fact || undefined}
         lamp={face.lamp}
-        sprite={face.agent ? spriteUrl("agent", face.id, "rest", face.agent) : undefined}
+        sprite={needsRowSprite(face)}
         verbs={(
           <>
             {face.moreAsks ? (

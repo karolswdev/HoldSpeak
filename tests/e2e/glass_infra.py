@@ -364,6 +364,21 @@ def _settle(page: Any) -> None:
     page.wait_for_timeout(120)
 
 
+def _images_loaded(page: Any, scope: str = "[data-testid=desk-screen]", timeout: int = 15_000) -> None:
+    """Wait until every img in `scope` is decoded (complete, naturalWidth > 0).
+
+    PHILO-14 A1d: _settle waits for animations only, so a shot could catch
+    the icons with their names drawn and no sprite yet. On a timeout the
+    error names each img that did not load, with its src.
+    """
+    js = f"""() => [...document.querySelectorAll({scope!r} + ' img')]
+        .filter(i => !(i.complete && i.naturalWidth > 0)).map(i => i.getAttribute('src'))"""
+    try:
+        page.wait_for_function(f"() => ({js})().length === 0", timeout=timeout)
+    except Exception as exc:  # name the misses, then fail
+        raise AssertionError(f"images not loaded in {scope}: {page.evaluate(js)}") from exc
+
+
 # ── _rendered_text_faults: the frame glass's F3 law, for any scope ──
 #
 # PHILO-13-02 r2 (Astra's single pass on #734): a receipt check that reads

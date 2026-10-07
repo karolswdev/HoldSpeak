@@ -58,6 +58,9 @@ interface ChairWindowsState {
   /** PHILO-13-17 (C7, Q4b): 393: Capture joins the phone's window ring when
    * it opens there and stays in it until it is closed. */
   captureInRing: boolean;
+  /** PHILO-14 A1c: the Chair is mounted as the screen of objects (A1), not
+   * the parked tiles. Set by ChairDesk; read by the aftercare card. */
+  screenMounted: boolean;
 }
 
 // PHILO-13-07 (B2): the closed Chair windows and the phone's window come
@@ -79,6 +82,7 @@ export const useChairWindows = create<ChairWindowsState>(() => ({
       ? storedChair.phone
       : "",
   captureInRing: storedChair?.phone === "chair:capture",
+  screenMounted: false,
 }));
 
 // PHILO-13-07 (B2): a closed Chair window stays closed after a reload.
@@ -186,5 +190,31 @@ export function keepCaptureInRing(): void {
     s.captureInRing && !s.closed["chair:capture"]
       ? s
       : { captureInRing: true, closed: { ...s.closed, "chair:capture": false } },
+  );
+}
+
+/** PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): an arriving aftercare card
+ * lands in Capture's slot at both widths. At 393 Capture takes the work area
+ * (PHILO-13-17 Q4). At 1440 a closed Capture opens and comes to the front; an
+ * open one already holds the card, so nothing moves. True when it opened. */
+export function openCaptureForCard(): boolean {
+  if (compactNow()) return openCaptureOnPhone();
+  if (!useChairWindows.getState().closed["chair:capture"]) return false;
+  openChairWindow("chair:capture");
+  return true;
+}
+
+/** PHILO-14 A1c: a card already waiting when the Chair mounts. At 393 Capture
+ * joins the ring without the front (Q4b); at 1440 a closed Capture opens in
+ * its seat without the front, so the card has its slot. */
+export function keepCaptureForCard(): void {
+  if (compactNow()) {
+    keepCaptureInRing();
+    return;
+  }
+  useChairWindows.setState((s) =>
+    s.closed["chair:capture"]
+      ? { closed: { ...s.closed, "chair:capture": false } }
+      : s,
   );
 }

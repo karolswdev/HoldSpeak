@@ -19,9 +19,13 @@ const SPRITES_DIR = join(
   "../../../../public/desk/sprites",
 );
 
+// PHILO-14 A0c: both drawn sizes, the 64 px icon set (root) and the 32 px
+// list set (`32/`), carry every base name in all three states.
 function requiredFiles(): string[] {
-  return allSpriteNames().flatMap((name) =>
-    ["", "_sel", "_stale"].map((suffix) => `${name}${suffix}.png`),
+  return ["", "32/"].flatMap((dir) =>
+    allSpriteNames().flatMap((name) =>
+      ["", "_sel", "_stale"].map((suffix) => `${dir}${name}${suffix}.png`),
+    ),
   );
 }
 
@@ -56,6 +60,8 @@ describe("the cell contract (HS-105-01)", () => {
   it("the guard fails when any one required file is withheld", () => {
     const required = requiredFiles();
     expect(required).toContain("agent-codex_sel.png");
+    expect(required).toContain("32/agent-codex_sel.png");
+    expect(required).toContain("32/memory_stale.png");
     const dir = mkdtempSync(join(tmpdir(), "hs-sprite-guard-"));
     try {
       cpSync(SPRITES_DIR, dir, { recursive: true });

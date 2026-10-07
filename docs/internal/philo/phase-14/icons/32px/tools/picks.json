@@ -1,0 +1,110 @@
+{
+ "jobs": {
+  "action-item": {
+   "e1": "3bfc0a07-085f-4dac-932a-57fca99fc679"
+  },
+  "agent-claude-code": {
+   "e1": "0ec41699-f034-4d7e-bac3-e1d12f4d66af",
+   "e2": "6800685b-1f03-412b-9f57-72f2ae350aad"
+  },
+  "agent-codex": {
+   "e1": "00123568-d669-4977-8712-f41883c09eb9",
+   "e2": "a5e67ae2-1a5f-4897-9b6a-9857c72b9190"
+  },
+  "artifact": {
+   "e1": "e17a229b-fab9-4811-8166-415afbafa1b2",
+   "e2": "3c2f03ea-cc74-4fa1-adff-7ef1f1040419"
+  },
+  "cartridge": {
+   "e1": "706add82-b3d2-4a27-a867-438f443de609",
+   "e2": "5c1b2364-f7ea-48ce-82c3-55018ecc4805"
+  },
+  "conductor-drawer": {
+   "e1": "94a738a3-0cb6-4957-bf32-8e3e0ce02fd3",
+   "e2": "cd3c8cb0-b945-4308-bd7c-d4093021439c"
+  },
+  "decision": {
+   "e1": "b2045c93-1eeb-4c19-bda7-75a3d5b6d5ed",
+   "e2": "12e64bf1-5ce9-4ca9-b9bf-76c58ce54820"
+  },
+  "meeting": {
+   "e1": "2758b64d-66e1-4b8a-9b93-f20dbfa63b26",
+   "e2": "2f5e9acb-7aa7-457d-a023-a0bebd11b47f"
+  },
+  "memory": {
+   "e1": "f493f741-621c-4b75-89e1-8c04ec0448fe",
+   "e2": "91934e89-4997-4c58-a58d-7aeb08b2cacf"
+  },
+  "note": {
+   "e1": "b51fcd48-f3b6-4b52-841e-58511f841dca",
+   "e2": "aaf201c7-4ac1-4463-b65e-c4e1cdd34a35"
+  },
+  "parked-drawer": {
+   "e1": "82e9ed00-3190-4bcb-b1c4-e70a386d669a"
+  },
+  "people-ledger": {
+   "e1": "5b3600f1-7164-4002-aa58-205459aba7af",
+   "e2": "e533cee6-72f5-44ea-ad63-a0c52d126ee6"
+  },
+  "person": {
+   "e1": "b69f2f69-9a80-43da-ae8b-a382458464f6"
+  },
+  "project-drawer": {
+   "e1": "a3b9057d-4c0e-4c34-aeb0-6739121c5af2"
+  },
+  "pull-request": {
+   "e1": "84c2c267-4ee9-4a12-95a0-b922301f2465",
+   "e2": "d519464d-72ae-40f8-bccb-3ddd65ab6122"
+  },
+  "repository": {
+   "e1": "012d9976-e24b-44ed-9280-d6df609f950a"
+  },
+  "smart-drawer": {
+   "e1": "54e5f634-ce1a-46f3-8abe-7213d7c4b633",
+   "e2": "c74b1f8e-99b4-4aa2-a27a-5ffc2cf4eca7"
+  },
+  "thread": {
+   "e1": "18ac445e-8905-4931-972f-abb4ea2f37c2"
+  }
+ },
+ "picks": {
+  "action-item": "e1",
+  "agent-claude-code": "e2",
+  "agent-codex": "e1",
+  "artifact": "e2",
+  "cartridge": "e2",
+  "conductor-drawer": "e1",
+  "decision": "e2",
+  "meeting": "e1",
+  "memory": "e1",
+  "note": "e1",
+  "parked-drawer": "e1",
+  "people-ledger": "e1",
+  "person": "e1",
+  "project-drawer": "e1",
+  "pull-request": "e2",
+  "repository": "e1",
+  "smart-drawer": "e2",
+  "thread": "e1"
+ },
+ "why": {
+  "action-item": "One candidate; the ticket, the checklist and the one ember check all read.",
+  "agent-claude-code": "e1 lost the antenna stem (the knob floats); e2 keeps it and the eye ring is bolder.",
+  "agent-codex": "e1: the cyan eyes are brighter and the mask reads as a face; e2 is taller and flatter.",
+  "artifact": "e2: fewer, cleaner text lines and a clear fold; e1 is busier at 1:1.",
+  "cartridge": "e1 garbled the DATA label into false letters; e2 keeps a plain label (no text at 32).",
+  "conductor-drawer": "e1: the drawer and its handle read; e2 muddies the drawer face.",
+  "decision": "e2: three clean lines and a round seal; e1's lines blur into a grey block.",
+  "meeting": "e1: dark reels against the steel body read as tape at 1:1; e2's pale reels merge with the body.",
+  "memory": "e1 keeps the gold pins of the 64; e2 turns them orange-red.",
+  "note": "e1 keeps the 64's angled push pin; e2 makes it a round tack.",
+  "parked-drawer": "One candidate; the dark cabinet and its handle read on both grounds.",
+  "people-ledger": "e1 keeps the ledger's row marks and the tabs; e2 is a plain blue book.",
+  "person": "One candidate; the clip, the photo and the lines all read.",
+  "project-drawer": "One candidate; two drawers, two ember handles.",
+  "pull-request": "e1 dropped the paper and kept only the glyph (a second silhouette); e2 keeps the page.",
+  "repository": "One candidate; the crate and the code glyph read.",
+  "smart-drawer": "e2: a bigger lens with a lit glass over the open drawer; e1's lens is small at 1:1.",
+  "thread": "One candidate; the two bubbles read on both grounds."
+ }
+}
