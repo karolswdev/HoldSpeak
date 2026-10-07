@@ -258,7 +258,9 @@ APPLICATIONS: list[Surface] = [
     Surface("app-places", "Change places", "application", "go:Change places", "#surface-places", "Go > Change places"),
     Surface("app-speak", "Speak (dictation)", "application", "go:Speak", "#surface-dictation", "Dock ⌁ / Go > Speak"),
     Surface("app-meetings", "Meetings", "application", "go:Meetings", "#surface-meetings", "Dock ▣ / Go > Meetings"),
-    Surface("app-agents", "Agents", "application", "go:Agents", "#surface-companion", "Dock / Go > Agents"),
+    # PHILO-14 C4 (#947): the Agents application folded into the Conductor
+    # (web/src/desk/applications.ts); the old `#surface-companion` is parked.
+    Surface("app-conductor", "Conductor", "application", "go:Conductor", "#conductor", "Dock ◉ / Go > Conductor"),
     Surface("app-settings", "Settings", "application", "go:Settings", "#surface-settings", "Dock / Go > Settings"),
     Surface("app-rhythm", "Rhythm (cadence)", "application", "go:Rhythm", "#surface-cadence", "Go > Rhythm"),
     Surface("app-context", "Context", "application", "go:Context", "#surface-constitutional-context", "Go > Context"),
@@ -429,8 +431,8 @@ WINGED_CORES = [
      ["Outcomes", "Review", "Record", "Artifacts"], "Meeting plumbing"),
     ("activity", "Activity", "#surface-activity",
      ["Records", "Rules"], "Candidates and connectors"),
-    ("agents", "Agents", "#surface-companion",
-     ["Roster", "Delivery"], "How it connects"),
+    # PHILO-14 C4 (#947): Agents (Roster, Delivery, How it connects) folded
+    # into the Conductor window, which has no wings or gear door.
 ]
 
 INTELLIGENCE_VIEWS = ["Brief", "Follow-through", "Decisions"]

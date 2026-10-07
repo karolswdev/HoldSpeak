@@ -109,9 +109,9 @@ class TestBuiltinSendFolderGlass:
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 page.wait_for_timeout(1200)
-                if width <= 720:
-                    open_chair_window(page, "Brief")
-                    page.wait_for_timeout(600)
+                # PHILO-14 A1 (#939): the Brief window starts closed; open it by the gesture.
+                open_chair_window(page, "Brief")
+                page.wait_for_timeout(600)
                 _settle(page)
 
                 # One row, picked with no click: the preview and Send are open.
@@ -185,9 +185,9 @@ class TestBuiltinSendFolderGlass:
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 page.wait_for_timeout(1200)
-                if width <= 720:
-                    open_chair_window(page, "Brief")
-                    page.wait_for_timeout(600)
+                # PHILO-14 A1 (#939): the Brief window starts closed; open it by the gesture.
+                open_chair_window(page, "Brief")
+                page.wait_for_timeout(600)
                 _settle(page)
 
                 page.locator(team_row).wait_for(timeout=T)

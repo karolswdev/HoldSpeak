@@ -7,8 +7,8 @@ default desk and reaches each window by the owner's real gestures:
 
   1440  Needs you: Enter on its drawer (or a double press). Brief, The week,
         Capture: Window > Chair > <name>. TALK: one press, on the screen.
-  393   Needs you: Enter on its drawer. Brief, The week: Go > <name> (two
-        taps, Astra's P3 ruling). Capture: the Dock's Speak (one tap).
+  393   Needs you, Brief, The week: Go > <name> (two taps, Astra's P3
+        ruling; a phone has no Enter key). Capture: the Dock's Speak (one tap).
 
 And the engines-missing arrival: the Needs you window, reached that way,
 names its SETUP row (the cold HOME assigns no summary engine).
@@ -93,10 +93,14 @@ class TestFreshArrival:
                 assert page.locator(".desk-window-shell.chair-window").count() == 0
                 page.screenshot(path=str(SHOTS / f"fresh-0-screen-{width}.png"))
 
-                # Needs you: Enter on its drawer; the engines-missing SETUP row is named
-                drawer = page.locator(".desk-screen [data-object-id='drawer:needs']")
-                drawer.focus()
-                page.keyboard.press("Enter")
+                # Needs you: Enter on its drawer at 1440; Go > Needs you at 393 (two
+                # taps); the engines-missing SETUP row is named
+                if width < 720:
+                    assert self._menu_pick(page, width, "Needs you") <= 2
+                else:
+                    drawer = page.locator(".desk-screen [data-object-id='drawer:needs']")
+                    drawer.focus()
+                    page.keyboard.press("Enter")
                 _shell(page, "Needs you").wait_for()
                 setup = page.get_by_test_id("arrival-blocker")
                 setup.wait_for()

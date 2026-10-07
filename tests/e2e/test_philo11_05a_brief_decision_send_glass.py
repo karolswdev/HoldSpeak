@@ -32,7 +32,8 @@ from typing import Any
 import pytest
 
 from ._doc_send_glass import Boards
-from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle, park_builtin_folder
+from .glass_infra import (_api, _api_allow_error, _boot, _ensure_build, _normal_chair, _room_through_drawer, _settle,
+                          park_builtin_folder)
 from .chair_windows import open_chair_window
 from tests._evidence import evidence_dir
 
@@ -149,9 +150,10 @@ class _Rig:
         page.reload(wait_until="load")
         _normal_chair(page)
         page.wait_for_timeout(1200)
-        # PHILO-13-11 (slice two, R2): at 393 one Chair window at a time; the
-        # seat under test (Brief, The week) is opened through Go ▸ Chair.
-        if chair and page.viewport_size["width"] <= 720:
+        # PHILO-14 A1 (#939): the Chair is the screen; its windows start closed.
+        # The seat under test (Brief, The week) opens by the owner's gesture:
+        # Window ▸ Chair ▸ <name> at 1440, Go ▸ <name> at 393.
+        if chair:
             open_chair_window(page, chair)
             page.wait_for_timeout(600)
         _settle(page)
@@ -729,6 +731,8 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 page.locator("[aria-controls=desk-tool-shelf]").first.click()
                 page.locator("[aria-controls=desk-palette-listbox]").fill(PROJECT)
                 page.get_by_text(f"Open {PROJECT}").first.click(timeout=T)
+                # PHILO-14 A2 (#937): the generic Open lands in the drawer; its Room Button opens the Room.
+                _room_through_drawer(page)
                 page.locator("[data-testid=room-body]").wait_for(timeout=T)
                 page.locator("[data-testid=decision-row]").first.wait_for(timeout=T)
                 page.wait_for_timeout(1200)

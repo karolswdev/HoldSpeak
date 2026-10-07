@@ -38,8 +38,10 @@ import pytest
 from .glass_infra import _assert_clean, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle
 from tests._evidence import evidence_dir
 
-# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
-pytestmark = pytest.mark.chair_windows_open
+# PHILO-14 A1: the Chair is the screen of objects. This walk is NOT marked
+# `chair_windows_open`: step 3 is a FRESH Chair (no remembered windows), so
+# The week opens by the owner's gesture (Window > Chair > The week at 1440,
+# Go > The week at 393) before the one row tap.
 
 pytest.importorskip("playwright.sync_api", reason="the B4 Prep glass needs Playwright")
 
@@ -152,16 +154,18 @@ class TestOneOnOneFindsItsPerson:
         self._press(page, opt, width)
 
     def _chair_window(self, page: Any, width: int, name: str, walk: dict[str, Any]) -> None:
-        """At 393, Go > <name> (two frame taps); at 1440 the window stands."""
+        """Open the Chair window `name` from the menu (frame taps, counted):
+        Go > <name> at 393; Window > Chair > <name> at 1440 (PHILO-14 A1, #939:
+        a fresh desk opens with the Chair's windows closed)."""
         shell = page.locator(f".desk-window-shell[aria-label='{name}']")
-        if width > 720 or (shell.count() and shell.first.is_visible() and
-                           shell.first.evaluate("e => e.classList.contains('is-front')")):
+        if shell.count() and shell.first.is_visible() and \
+                shell.first.evaluate("e => e.classList.contains('is-front')"):
             return
-        # PHILO-14 A1 (#939): the Chair's windows are Go's first rows at 393.
-        for loc in (
-            page.locator(".desk-verbbar-item[data-menu-id='go'] button"),
-            page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"),
-        ):
+        steps = [page.locator(f".desk-verbbar-item[data-menu-id='{'go' if width <= 720 else 'window'}'] button")]
+        if width > 720:
+            steps.append(page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')"))
+        steps.append(page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"))
+        for loc in steps:
             loc.first.wait_for()
             self._press(page, loc.first, width)
             page.wait_for_timeout(250)
@@ -247,6 +251,8 @@ class TestOneOnOneFindsItsPerson:
             browser, page, fresh_errors = self._page(pw, width)
             errors.extend(fresh_errors)
             try:
+                page.locator("[data-testid=desk-screen]").wait_for()
+                walk["chair_windows_fresh"] = page.locator(".desk-window-shell.chair-window").count()
                 self._chair_window(page, width, "The week", walk)
                 row = page.locator("[data-testid='arrival-meeting-row']", has_text=self.ids["title"]).first
                 row.wait_for()
@@ -310,6 +316,8 @@ class TestOneOnOneFindsItsPerson:
             fails["Now side reads as the header"] = [walk.get("now_side"), head, label]
         if walk.get("people_iso") or walk.get("prep_iso"):
             fails["no ISO time on People"] = [walk.get("people_iso"), walk.get("prep_iso")]
+        if walk.get("chair_windows_fresh") != 0:
+            fails["the fresh Chair opens with no Chair window"] = walk.get("chair_windows_fresh")
         if walk.get("row_taps") != 1 or walk.get("lens_after_row") != "Prep" or \
                 not any(t.startswith("People") for t in walk.get("front_after_row", [])):
             fails["Chair 1:1 row -> Priya on Prep in 1 gesture"] = [walk.get("front_after_row"), walk.get("lens_after_row")]

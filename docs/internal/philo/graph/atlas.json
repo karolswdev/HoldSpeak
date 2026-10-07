@@ -479,7 +479,7 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "no assignment for speech.transcribe and none for meeting.deferred_analysis",
+        "no assignment for speech.transcribe and none for meeting.deferred_analysis: made in setup through POST /api/inference/assignments/clear, then read back by GET /api/inference/assignments (Astra r2 on #939)",
         "PHILO-14 A1 (#939): the Chair is the screen of objects; the Needs you window opens from its drawer (Enter), as the owner opens it"
       ],
       "setup": [
@@ -499,9 +499,52 @@
         },
         {
           "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/clear",
+          "body": {
+            "command_id": "graph-walk-j2-clear-speech-transcribe",
+            "expected_revision": 1,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "speech.transcribe"
+            },
+            "capability_id": "speech.transcribe"
+          },
+          "expect_status": 200,
+          "optional": true,
+          "adapter": "http-route",
+          "why": "Astra r2 on #939: the case makes its own precondition. A fresh HOME may migrate a local speech engine (inference_adoption_service.py, speech-migrated-*, revision 1, host-dependent); clear it, and any meeting.deferred_analysis override, through the real clear route. Optional: no assignment there already (the route refuses revision 1) is the precondition met; the response is retained."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/clear",
+          "body": {
+            "command_id": "graph-walk-j2-clear-meeting-deferred_analysis",
+            "expected_revision": 1,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "meeting.deferred_analysis"
+            },
+            "capability_id": "meeting.deferred_analysis"
+          },
+          "expect_status": 200,
+          "optional": true,
+          "adapter": "http-route",
+          "why": "Astra r2 on #939: the case makes its own precondition. A fresh HOME may migrate a local speech engine (inference_adoption_service.py, speech-migrated-*, revision 1, host-dependent); clear it, and any meeting.deferred_analysis override, through the real clear route. Optional: no assignment there already (the route refuses revision 1) is the precondition met; the response is retained."
+        },
+        {
+          "kind": "api",
           "method": "GET",
           "path": "/api/inference/assignments",
-          "body": null
+          "body": null,
+          "why": "the read after the clears: both rows show no assignment (retained in the observation)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the desk reads its assignments again after the clears (the first load ran before them)"
         },
         {
           "kind": "ui",
@@ -6954,10 +6997,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-headline"
+            "value": "chair-desk"
           },
-          "observe_at": "[data-testid=arrival-headline]",
-          "why": "the desk is really past the first-value gate"
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-14 A1 (#939): read on the Chair screen [data-testid=chair-desk], which renders only past the gate (the headline is in the Needs you window, closed on arrival), as case.j11 reads it"
         }
       ],
       "setup": [
@@ -6985,6 +7028,53 @@
           },
           "adapter": "http-route",
           "why": "the brief's real material, minted through the production create route (holdspeak/web/routes/primitives/decisions.py:43, 201 {decision}); the decisions collector turns every proposed desk decision into the item 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:750-758). No engine is needed."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair is the screen of objects and its windows start closed; open the Brief the way the owner does: Window > Chair > Brief at 1440, Go > Brief at 393 (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair is the screen of objects and its windows start closed; open the Brief the way the owner does: Window > Chair > Brief at 1440, Go > Brief at 393 (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair is the screen of objects and its windows start closed; open the Brief the way the owner does: Window > Chair > Brief at 1440, Go > Brief at 393 (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair is the screen of objects and its windows start closed; open the Brief the way the owner does: Window > Chair > Brief at 1440, Go > Brief at 393 (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair is the screen of objects and its windows start closed; open the Brief the way the owner does: Window > Chair > Brief at 1440, Go > Brief at 393 (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
+          "why": "PHILO-14 A1 (#939): the Chair is the screen of objects and its windows start closed; open the Brief the way the owner does: Window > Chair > Brief at 1440, Go > Brief at 393 (tests/e2e/chair_windows.py)"
         },
         {
           "kind": "ui",
@@ -7279,6 +7369,38 @@
           "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Capture the way the owner does (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair is the screen; the Capture window starts closed at 1440 too (the screen's foot carries TALK only). Open Capture the way the owner does: Window > Chair > Capture (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair is the screen; the Capture window starts closed at 1440 too (the screen's foot carries TALK only). Open Capture the way the owner does: Window > Chair > Capture (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Capture')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair is the screen; the Capture window starts closed at 1440 too (the screen's foot carries TALK only). Open Capture the way the owner does: Window > Chair > Capture (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair is the screen; the Capture window starts closed at 1440 too (the screen's foot carries TALK only). Open Capture the way the owner does: Window > Chair > Capture (tests/e2e/chair_windows.py)"
         }
       ],
       "trigger": {
