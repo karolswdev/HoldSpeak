@@ -79,15 +79,24 @@ def test_the_placeholder_is_active_while_the_worker_runs(tmp_path):
             return "held"
 
     service = MeetingService(db)
+    before = set(threading.enumerate())
     result = service.import_meeting(
         OWNER, tmp_path=_wav(tmp_path), filename="held.wav", title=None,
         speaker=None, tags=[], started_at=datetime.now(), config=Config(),
         transcriber_factory=lambda _cfg: _Held(),
     )
-    row = db.meetings.get_meeting(result["meeting_id"])
-    assert row.intel_status == "importing"
-    assert row.transcription_status == "active"
-    gate.set()
+    workers = [w for w in set(threading.enumerate()) - before
+               if w.name == f"meeting-import-{result['meeting_id']}"]
+    try:
+        row = db.meetings.get_meeting(result["meeting_id"])
+        assert row.intel_status == "importing"
+        assert row.transcription_status == "active"
+    finally:
+        # Join before teardown removes the DB, even when an assert fails.
+        gate.set()
+        for worker in workers:
+            worker.join(timeout=30)
+    assert db.meetings.get_meeting(result["meeting_id"]).transcription_status == "complete"
 
 
 def test_a_succeeding_import_writes_complete(tmp_path):
@@ -137,3 +146,100 @@ def test_a_named_import_error_keeps_its_short_cause(tmp_path):
 def test_the_status_never_stays_active_after_the_worker(tmp_path, factory):
     db, meeting_id = _import(tmp_path, factory)
     assert db.meetings.get_meeting(meeting_id).transcription_status in {"complete", "failed"}
+
+
+def _placeholder(db: Database, meeting_id: str = "stuck-import") -> str:
+    from holdspeak.meeting_session import MeetingState
+
+    row = MeetingState(id=meeting_id, started_at=datetime.now(), title="Stuck", segments=[])
+    row.intel_status = "importing"
+    row.intel_status_detail = "Transcribing — window 1 of 4."
+    db.meetings.save_meeting(row)
+    return meeting_id
+
+
+def test_hub_start_recovery_ends_an_interrupted_import_failed(tmp_path):
+    db = Database(tmp_path / "import.db")
+    meeting_id = _placeholder(db)
+    assert db.meetings.get_meeting(meeting_id).transcription_status == "active"
+
+    assert MeetingService(db).recover_interrupted_imports() == 1
+
+    row = db.meetings.get_meeting(meeting_id)
+    assert row.intel_status == "import_failed"
+    assert row.transcription_status == "failed"
+    assert row.transcription_status_detail == {
+        "reason_code": "import_failed", "cause": "INTERRUPTED BY A RESTART",
+    }
+    assert MeetingService(db).recover_interrupted_imports() == 0
+
+
+def test_recovery_leaves_finished_and_live_meetings_alone(tmp_path):
+    from holdspeak.meeting_session import MeetingState
+
+    db = Database(tmp_path / "import.db")
+    live = MeetingState(id="live-recording", started_at=datetime.now(), segments=[])
+    db.meetings.save_meeting(live)  # disabled / active: a live recording
+    _db, done = _import(tmp_path, lambda _cfg: _Words())
+    assert MeetingService(_db).recover_interrupted_imports() == 0
+    assert MeetingService(db).recover_interrupted_imports() == 0
+    assert db.meetings.get_meeting("live-recording").transcription_status == "active"
+    assert _db.meetings.get_meeting(done).transcription_status == "complete"
+
+
+def test_a_cancelled_worker_writes_failed_and_reraises(tmp_path):
+    db = Database(tmp_path / "import.db")
+    meeting_id = _placeholder(db)
+
+    class _Cancelled:
+        def transcribe(self, audio, **_admission):
+            raise KeyboardInterrupt  # a BaseException, like CancelledError
+
+    with pytest.raises(KeyboardInterrupt):
+        MeetingService(db)._run_import_job(
+            principal=OWNER, config=Config(), meeting_id=meeting_id,
+            tmp_path=_wav(tmp_path), title="Stuck", speaker=None, tags=[],
+            started_at=datetime.now(), transcriber_factory=lambda _cfg: _Cancelled(),
+        )
+    row = db.meetings.get_meeting(meeting_id)
+    assert row.transcription_status == "failed"
+    assert row.intel_status_detail == "CANCELLED"
+
+
+def test_a_thread_that_cannot_start_writes_failed(tmp_path, monkeypatch):
+    db = Database(tmp_path / "import.db")
+
+    def refuse(self):
+        raise RuntimeError("can't start new thread")
+
+    monkeypatch.setattr(threading.Thread, "start", refuse)
+    with pytest.raises(RuntimeError):
+        MeetingService(db).import_meeting(
+            OWNER, tmp_path=_wav(tmp_path), filename="x.wav", title="Never started",
+            speaker=None, tags=[], started_at=datetime.now(), config=Config(),
+            transcriber_factory=lambda _cfg: _Words(),
+        )
+    rows = db.meetings.list_meetings()
+    assert len(rows) == 1
+    row = db.meetings.get_meeting(rows[0].id)
+    assert row.transcription_status == "failed"
+    assert row.intel_status_detail == "IMPORT DID NOT START"
+
+
+def test_a_failure_write_that_fails_is_logged_and_stays_active(tmp_path, monkeypatch, caplog):
+    """The one honest limit: the next hub start recovers this row."""
+    db = Database(tmp_path / "import.db")
+    meeting_id = _placeholder(db)
+    service = MeetingService(db)
+    real_save = db.meetings.save_meeting
+
+    def broken(*_a, **_k):
+        raise RuntimeError("disk full")
+
+    monkeypatch.setattr(db.meetings, "save_meeting", broken)
+    assert service._fail_import(meeting_id, "UNEXPECTED ERROR") is False
+    assert "could not write its failed status" in caplog.text
+    monkeypatch.setattr(db.meetings, "save_meeting", real_save)
+    assert db.meetings.get_meeting(meeting_id).transcription_status == "active"
+    assert service.recover_interrupted_imports() == 1
+    assert db.meetings.get_meeting(meeting_id).transcription_status == "failed"

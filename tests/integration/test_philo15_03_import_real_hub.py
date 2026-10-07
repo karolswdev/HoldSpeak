@@ -113,3 +113,32 @@ def test_a_real_whisper_import_reaches_complete(client, monkeypatch):
     assert row["segments"], row
     assert "fox" in " ".join(s["text"] for s in row["segments"]).lower(), row["segments"]
     assert (row.get("intel_status") or {}).get("state") != "import_failed"
+
+
+def test_hub_start_ends_an_interrupted_import_failed(client):
+    """Astra r1 #2: a row a killed hub left `importing / active` ends `failed`
+    when the hub starts again (no import worker survives a restart)."""
+    from datetime import datetime
+
+    from holdspeak.meeting_session import MeetingState
+
+    _unused, _temp_dir = client
+    row = MeetingState(id="interrupted-import", started_at=datetime.now(), title="Killed", segments=[])
+    row.intel_status = "importing"
+    row.intel_status_detail = "Transcribing — window 2 of 9."
+    get_database().meetings.save_meeting(row)
+
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=lambda *_a, **_k: None,
+            on_stop=lambda *_a, **_k: None,
+            get_state=lambda: None,
+        ),
+        host="127.0.0.1",
+    )
+    with TestClient(server.app) as started:  # runs the hub's startup handlers
+        detail = started.get("/api/meetings/interrupted-import").json()
+
+    assert detail["transcription_status"] == "failed", detail
+    assert (detail.get("intel_status") or {}).get("state") == "import_failed"
+    assert detail["transcription_status_detail"]["cause"] == "INTERRUPTED BY A RESTART"
