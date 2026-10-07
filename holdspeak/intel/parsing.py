@@ -25,6 +25,14 @@ INTEL_SCHEMA: dict[str, Any] = {
             "due": "<date or null>",
         },
     ],
+    # PHILO-15 08 (B02): the summary carries the decisions as structured
+    # items, so a meeting yields decision proposals on day one.
+    "decisions": [
+        {
+            "decision": "<what was decided>",
+            "rationale": "<why, or null>",
+        },
+    ],
     "summary": "<short summary>",
 }
 
@@ -50,9 +58,21 @@ INTEL_JSON_SCHEMA: dict[str, Any] = {
                 "additionalProperties": False,
             },
         },
+        "decisions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "decision": {"type": "string"},
+                    "rationale": {"type": ["string", "null"]},
+                },
+                "required": ["decision", "rationale"],
+                "additionalProperties": False,
+            },
+        },
         "summary": {"type": "string"},
     },
-    "required": ["topics", "action_items", "summary"],
+    "required": ["topics", "action_items", "decisions", "summary"],
     "additionalProperties": False,
 }
 
@@ -104,7 +124,10 @@ def _json_only_messages(transcript: str, memory_context: str = "") -> list[dict[
                 "For action_items owner: name the owner ONLY when the transcript names them. "
                 "Use the person's name as spoken in the transcript. "
                 "Me = the speaker/leader; Remote = the counterpart; null when unclear. "
-                "Me and Remote are the ONLY reserved tokens — every other string is a literal person name.\n\n"
+                "Me and Remote are the ONLY reserved tokens — every other string is a literal person name.\n"
+                "decisions: each decision the meeting made, one item per decision, in the "
+                "transcript's words. A task someone must do is an action item, not a decision. "
+                "If the summary says the meeting made N decisions, decisions has N items.\n\n"
                 f"{memory_part}"
                 "Transcript:\n"
                 f"{transcript}\n"
@@ -196,6 +219,29 @@ def _coerce_action_items(value: object) -> list[ActionItem]:
             )
         )
     return items
+
+
+def _coerce_decisions(value: object) -> list[dict[str, Optional[str]]]:
+    """PHILO-15 08: the summary's decisions as ``{decision, rationale}`` items.
+
+    A bare string is one decision with no rationale; an item with no decision
+    text is dropped.
+    """
+    if not isinstance(value, list):
+        return []
+    out: list[dict[str, Optional[str]]] = []
+    for entry in value:
+        if isinstance(entry, str):
+            text, why = entry.strip(), None
+        elif isinstance(entry, dict):
+            text = str(entry.get("decision") or entry.get("text") or "").strip()
+            raw_why = entry.get("rationale")
+            why = None if raw_why in (None, "", "null") else str(raw_why).strip() or None
+        else:
+            continue
+        if text:
+            out.append({"decision": text, "rationale": why})
+    return out
 
 
 def _extract_openai_message_text(content: object) -> str:

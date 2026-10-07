@@ -42,7 +42,8 @@ import { onReturnToTask } from "../../desk/returnToTask";
 import { renderHeroSlot } from "./core-layout";
 import {
   WINGS, clockTime, ledgerDate, download, needsIntelligence, summaryIsOff, meetingsHeadline,
-  hasOpenMeetingActions,
+  hasOpenMeetingActions, finishedRunReceipt, intelStateOf,
+  ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt, type RunIdentity,
   type Receipt, type DetailView,
   MeetingDetail, ImportSection, CatalogRail, DoorSection,
 } from "./history";
@@ -57,6 +58,10 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const requestedMomentSegment = requestedMeetingQuery
     ? Number(new URLSearchParams(requestedMeetingQuery).get("segment"))
     : null;
+  // PHILO-15 08 (B13): `meeting:<id>?view=review` opens the meeting on its
+  // Review wing, where its proposals are.
+  const requestedView: DetailView =
+    new URLSearchParams(requestedMeetingQuery ?? "").get("view") === "review" ? "review" : "outcomes";
   const wings = useCoreWings(WINGS, "outcomes", "Meeting plumbing");
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
   const markReadyRead = useCallback((meetingId: string) => {
@@ -174,6 +179,57 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   useEffect(() => {
     if (!parked.length) setParkedOn(false);
   }, [parked.length]);
+  // PHILO-15-07 (B15): a `QUEUED hh:mm` receipt is bound to its run
+  // (meeting id + job id, Astra r1 on #982). It turns into `RAN · hh:mm` only
+  // for that run: from the poll below, or when a refreshed list row shows
+  // the meeting active and then final (a row read before the run started
+  // still holds the PREVIOUS run's final state and never counts).
+  // Astra iteration 2: the settled receipt KEEPS its run identity, so the
+  // Review wing (which shows only a receipt bound to its meeting) sees the
+  // completion too.
+  const settleRun = useCallback((run: RunIdentity, state: string, at?: string) => {
+    setReceipt((current) =>
+      current?.run &&
+      current.run.meetingId === run.meetingId &&
+      current.run.jobId === run.jobId
+        ? { ...finishedRunReceipt(state, at || new Date().toISOString()), run: current.run }
+        : current,
+    );
+  }, []);
+  const seenActive = useRef<string | null>(null);
+  // Astra iteration 2 (reload): the face's first read of the rows adopts the
+  // durable run state, so a reload never forgets the timed receipt. An active
+  // run becomes a bound `QUEUED hh:mm` (and settles below when it ends); with
+  // none active, the newest durable run receipt says `RAN · hh:mm` (or
+  // `FAILED · hh:mm`) at the time the hub recorded it.
+  const adoptedDurable = useRef(false);
+  useEffect(() => {
+    if (adoptedDurable.current || meetingRows.length === 0) return;
+    adoptedDurable.current = true;
+    const adopted = adoptDurableRunReceipt(meetingRows);
+    if (!adopted) return;
+    if (adopted.active && adopted.receipt.run) {
+      seenActive.current = `${adopted.receipt.run.meetingId}:${adopted.receipt.run.jobId}`;
+    }
+    setReceipt((current) => current ?? adopted.receipt);
+  }, [meetingRows]);
+  useEffect(() => {
+    const run = receipt?.run;
+    if (!run) return;
+    const row = meetingRows.find((item) => String(item.id) === run.meetingId);
+    if (!row) return;
+    const state = intelStateOf(row.intel_status);
+    const key = `${run.meetingId}:${run.jobId}`;
+    if (ACTIVE_RUN_STATES.has(state)) {
+      seenActive.current = key;
+      return;
+    }
+    if (FINAL_RUN_STATES.has(state) && seenActive.current === key) {
+      seenActive.current = null;
+      const job = row.intel_job as Record<string, unknown> | null | undefined;
+      settleRun(run, state, typeof job?.updated_at === "string" ? job.updated_at : undefined);
+    }
+  }, [meetingRows, receipt, settleRun]);
   // A later receipt (export, queued run) takes the slot from the park outcome.
   useEffect(() => {
     if (receipt) setParkOutcome(null);
@@ -202,13 +258,15 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   useEffect(() => {
     if (
       !requestedMeetingId ||
-      openedRequestedMeetingId === requestedMeetingId ||
+      openedRequestedMeetingId === requestedMeetingScope ||
       meetings.loading
     )
       return;
-    setOpenedRequestedMeetingId(requestedMeetingId);
+    // The whole scope (id and view) is the request: asking again for the
+    // open meeting's Review wing still lands there.
+    setOpenedRequestedMeetingId(requestedMeetingScope);
     setRequestedMeetingError("");
-    wings.setView("outcomes");
+    wings.setView(requestedView);
     if (requestedMeeting) {
       setSelected(requestedMeeting);
       markReadyRead(requestedMeetingId);
@@ -228,6 +286,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     requestedMeeting,
     markReadyRead,
     requestedMeetingId,
+    requestedMeetingScope,
+    requestedView,
   ]);
 
   /* ── the face re-reads itself (HS-202-02 job 2) ──
@@ -383,7 +443,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         return;
       }
       const result = outcome.result;
-      setReceipt({ text: `QUEUED ${clockTime(new Date().toISOString())}` });
+      const run: RunIdentity = { meetingId, jobId: String(result.jobId ?? meetingId) };
+      setReceipt({ text: `QUEUED ${clockTime(new Date().toISOString())}`, run });
       // HS-200-42: when the route says no drainer exists, polling every 3s for
       // 120s is a lie told forty times — nothing in the hub will move this job.
       // Stop the poll and refresh the row once.
@@ -411,6 +472,10 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           if (state !== "queued" && state !== "running" && state !== "pending") {
             clearInterval(poll);
             setRunningId(null);
+            // PHILO-15-07 (B15): this run's receipt (and only this run's)
+            // follows it to the final state. It said `QUEUED 10:59` after
+            // the summary RAN.
+            settleRun(run, state);
             void refreshFace();
           }
         } catch {
@@ -434,7 +499,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       const msg = readableError(reason);
       setReceipt({ text: `REFUSED · ${msg}`, tone: "danger" });
     }
-  }, [meetings, meetingRows]);
+  }, [meetings, meetingRows, settleRun]);
 
   // HS-201-04 (UX-CANON A.9, audit "where the host is shown"): the footer
   // chip was a prop-less constant that always read "This device". It reads
@@ -585,6 +650,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       onClose={() => setSelected(null)}
       onDeleted={() => void meetings.reload()}
       onReceipt={setReceipt}
+      footerRunReceipt={
+        receipt?.run && selected && receipt.run.meetingId === String(selected.id)
+          ? receipt
+          : null
+      }
       runRefusal={
         runRefusal && selected && runRefusal.meetingId === String(selected.id)
           ? runRefusal.refusal
@@ -742,7 +812,15 @@ export function HistoryCore({ hero, scope }: CoreProps) {
               data-tone={receipt?.tone}
               role="status"
             >
-              {receipt
+              {receipt?.run ? (
+                // PHILO-15-07 (coordinator ruling): the record count stays;
+                // a fresh run receipt shows BESIDE it, count first.
+                <>
+                  {countToken(meetingRows.length, "RECORD") ?? "RECORDS"}
+                  <span className="meetings-stream-dot" aria-hidden="true">{" · "}</span>
+                  <span data-testid="meetings-run-receipt">{receipt.text}</span>
+                </>
+              ) : receipt
                 ? receipt.text
                 : countToken(meetingRows.length, "RECORD") ?? "RECORDS"}
             </span>

@@ -49,6 +49,14 @@ def test_cadence_is_off_by_default():
     assert Config().cadence.enabled is False
 
 
+def test_the_morning_brief_job_is_on_by_default():
+    # PHILO-15 05: one setting per job; the Brief job is ON, at 06:00 local.
+    cadence = Config().cadence
+    assert cadence.brief_enabled is True
+    assert cadence.brief_hour == 6
+    assert CadenceConfig(brief_hour=30).brief_hour == 6  # wrapped
+
+
 def test_cadence_config_clamps_invalid_values():
     c = CadenceConfig(pressure="wild", tick_interval_seconds=1, quiet_hours_start=99)
     assert c.pressure == "normal"          # invalid pressure falls back
@@ -70,3 +78,9 @@ def test_runtime_gate_reflects_config():
     strict = _Stub(True)
     strict.config.control_mode = "safe"
     assert strict._cadence_enabled() is False
+    # The thread still starts for the Brief job (ON by default); with both
+    # jobs off it does not start.
+    assert _Stub(False)._cadence_jobs_enabled() is True
+    both_off = _Stub(False)
+    both_off.config.cadence.brief_enabled = False
+    assert both_off._cadence_jobs_enabled() is False

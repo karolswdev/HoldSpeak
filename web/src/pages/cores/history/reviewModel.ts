@@ -47,6 +47,18 @@ export interface ReviewProposal {
   commitmentId: string | null;
   decidedAt: string | null;
   textEdited: boolean;
+  /** PHILO-15 08: Defer hides the row from Needs until this stamp. */
+  deferredUntil: string | null;
+}
+
+/** PHILO-15 08 (B02 ruling 3): what one extractor of the latest read did. */
+export interface ReviewExtractor {
+  id: string;
+  label: string;
+  /** `not_extracted` (PHILO-15 08): the reply did not carry the field. */
+  state: "ran" | "skipped" | "failed" | "not_extracted";
+  count: number | null;
+  reason: string | null;
 }
 
 export interface ReviewJob {
@@ -81,6 +93,9 @@ export interface MeetingReviewModel {
   coverage: ReviewCoverage;
   extractedAt: string | null;
   proposals: ReviewProposal[];
+  /** One row per extractor of the latest read (empty while it reads, and on
+   * a projection written before PHILO-15 08). */
+  extractors: ReviewExtractor[];
 }
 
 const str = (v: unknown): string | null => (v == null || v === "" ? null : String(v));
@@ -132,6 +147,18 @@ export function decodeReviewProposal(raw: Record<string, unknown>): ReviewPropos
     commitmentId: str(raw.commitment_id),
     decidedAt: str(raw.decided_at),
     textEdited: Boolean(raw.text_edited),
+    deferredUntil: str(raw.deferred_until),
+  };
+}
+
+function decodeExtractor(raw: Record<string, unknown>): ReviewExtractor {
+  const state = String(raw.state ?? "");
+  return {
+    id: String(raw.id ?? ""),
+    label: String(raw.label ?? raw.id ?? ""),
+    state: state === "ran" || state === "skipped" || state === "not_extracted" ? state : "failed",
+    count: num(raw.count),
+    reason: str(raw.reason),
   };
 }
 
@@ -173,6 +200,9 @@ export function decodeMeetingReview(raw: Record<string, unknown>): MeetingReview
     extractedAt: str(raw.extracted_at),
     proposals: Array.isArray(raw.proposals)
       ? (raw.proposals as Record<string, unknown>[]).map(decodeReviewProposal)
+      : [],
+    extractors: Array.isArray(raw.extractors)
+      ? (raw.extractors as Record<string, unknown>[]).map(decodeExtractor)
       : [],
   };
 }
@@ -279,10 +309,31 @@ export function reviewHeadline(model: MeetingReviewModel): { text: string; accen
   return { text: "Nothing to review", accent: false };
 }
 
-/** True only when the proposal chain left something of its own behind.
- *  The review read model's `job` is the SUMMARY job and `extracted_at` is
- *  the SUMMARY's completion stamp (`proposal_bridge_service.py:1046`,
- *  `:1048`) — neither says extraction ran. A proposal does. */
-export function extractionRan(model: MeetingReviewModel): boolean {
-  return model.proposals.length > 0;
+/** True only when an extractor ran: a proposal proves it, and so does an
+ *  extractor row that reads RAN (PHILO-15 08). The read model's `job` and
+ *  `extracted_at` are the SUMMARY's — on their own neither says extraction
+ *  ran. */
+export function extractionRan(model: Pick<MeetingReviewModel, "proposals" | "extractors">): boolean {
+  return model.proposals.length > 0 || (model.extractors ?? []).some((x) => x.state === "ran");
+}
+
+/** One extractor as its head token: `SUMMARY · RAN · 6`,
+ *  `DECISION CAPTURE · SKIPPED · NO ASSIGNMENT`, `SUMMARY · FAILED · <why>`.
+ *  A row that ran and left nothing reads `RAN · NONE`, never `0`
+ *  (UX-CANON: no counters of zero). */
+export function extractorToken(x: ReviewExtractor): string {
+  const name = x.label.toUpperCase();
+  if (x.state === "ran") {
+    return `${name} · RAN · ${x.count && x.count > 0 ? x.count : "NONE"}`;
+  }
+  const why = (x.reason ?? "").trim().toUpperCase();
+  const word = x.state === "skipped" ? "SKIPPED" : x.state === "not_extracted" ? "NOT EXTRACTED" : "FAILED";
+  return `${name} · ${word}${why ? ` · ${why}` : ""}`;
+}
+
+/** True while a proposed row's Defer stamp is in the future. */
+export function isDeferred(p: Pick<ReviewProposal, "deferredUntil" | "state">, now: Date = new Date()): boolean {
+  if (p.state !== "proposed" || !p.deferredUntil) return false;
+  const until = wireDate(p.deferredUntil);
+  return Boolean(until && until.getTime() > now.getTime());
 }

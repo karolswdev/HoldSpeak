@@ -467,7 +467,15 @@ class _MeetingSummarySource:
         if not summary:
             raise _no_summary(source_id)
         title = str(meeting.title or "Meeting")
-        lines = [f"# {title}", f"Date: {_date_text(meeting.started_at)}", "", "## Summary", summary]
+        lines = [f"# {title}", f"Date: {_date_text(meeting.started_at)}"]
+        # PHILO-15-07 (Astra r1 on #982): a transcript with honest gaps says so
+        # in the sent document, from the marks themselves, never from the model.
+        from ..transcript_guard import count_unclear
+
+        unclear = count_unclear(getattr(segment, "text", "") for segment in (meeting.segments or []))
+        if unclear:
+            lines.append(f"Transcript: {unclear} unclear span{'' if unclear == 1 else 's'}")
+        lines.extend(["", "## Summary", summary])
         topics = [str(topic).strip() for topic in ((intel.topics if intel else []) or []) if str(topic).strip()]
         if topics:
             lines.extend(["", "## Topics", *[f"- {topic}" for topic in topics]])

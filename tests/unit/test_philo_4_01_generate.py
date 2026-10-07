@@ -19,9 +19,10 @@ import uuid
 
 from holdspeak.db.core import Database
 from holdspeak.services.monday_brief_service import BriefItem, MondayBriefService
+from tests.unit.brief_rule_stub import quiet_needs_you  # noqa: F401  (a fixture)
 
 
-def test_empty_brief_headline_is_no_changes(tmp_path):
+def test_empty_brief_headline_is_no_changes(tmp_path, quiet_needs_you):
     service = MondayBriefService(Database(tmp_path / "brief.db"))
 
     headline, _sections = service._compose({})

@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 
 from holdspeak.db.core import Database
 from holdspeak.services.monday_brief_service import MondayBriefService
+from tests.unit.brief_rule_stub import quiet_needs_you  # noqa: F401  (a fixture)
 
 
 def _service(tmp_path):
@@ -342,7 +343,7 @@ def test_untitled_meeting_is_named_honestly(tmp_path):
     assert items[0].detail is None
 
 
-def test_a_recorded_week_no_longer_reads_nothing_material_changed(tmp_path):
+def test_a_recorded_week_no_longer_reads_nothing_material_changed(tmp_path, quiet_needs_you):
     """The audit's defect: only observer method markers reached Changed."""
     service = _service(tmp_path)
     with service._db._connection() as conn:

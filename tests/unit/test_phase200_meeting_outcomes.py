@@ -278,9 +278,8 @@ def test_confirm_preserves_meeting_span_and_extraction_provenance(tmp_path, monk
         assert ("meeting", "m-prov") in sources
         assert ("proposal", cut["id"]) in sources
         assert ("transcript", "meeting:m-prov#segment:1") in sources
-        action = conn.execute("SELECT * FROM action_items WHERE id = ?", (result["action_item_id"],)).fetchone()
-        assert action["meeting_id"] == "m-prov" and action["source_ref"] == "m-prov"
-        assert action["source_timestamp"] == 120.0
+        # PHILO-15 08 (Astra P1): a decision keeps its kind: no action row.
+        assert result["action_item_id"] is None and result["commitment_id"] is None
         receipt = conn.execute(
             "SELECT facts_json FROM service_events WHERE event_type = 'proposal.confirmed' "
             "AND subject_ref = ?", (f"proposal:{cut['id']}",),
@@ -370,8 +369,10 @@ def test_edit_in_place_drops_support_keeps_the_record_and_confirm_returns_the_id
 
     result = svc.confirm_proposal(OWNER, cut["id"])
     assert result["state"] == "confirmed"
-    for key in ("decision_id", "decision_record_id", "action_item_id", "commitment_id"):
+    for key in ("decision_id", "decision_record_id"):
         assert result[key], key
+    # PHILO-15 08: a confirmed decision asks nobody to do anything.
+    assert result["action_item_id"] is None and result["commitment_id"] is None
     with db._connection() as conn:
         record = conn.execute("SELECT decision_text FROM decision_records WHERE id = ?", (result["decision_record_id"],)).fetchone()
         events = [r["event_type"] for r in conn.execute(
@@ -473,7 +474,7 @@ def test_a_model_retry_mints_no_duplicate_proposal_or_commitment(tmp_path, monke
     assert _by_text(rows, "Sunday 02:00")["job_attempt"] == 1
     assert all(p["job_attempt"] == 2 for p in rows if p["kind"] == "action")
     assert _count(db, "decision_records") == 1
-    assert _count(db, "decision_commitments") == 1
+    assert _count(db, "decision_commitments") == 0   # PHILO-15 08: a decision mints none
 
 
 def test_a_lost_acknowledgement_replays_the_same_durable_result(tmp_path, monkeypatch):
@@ -515,7 +516,7 @@ def test_a_lost_acknowledgement_replays_the_same_durable_result(tmp_path, monkey
     assert sorted(r["replayed"] for r in results) == [False, True]
     assert len({r["decision_record_id"] for r in results}) == 1
     assert _count(db, "decision_records") == 2          # cut + freeze, once each
-    assert _count(db, "decision_commitments") == 2
+    assert _count(db, "decision_commitments") == 0      # PHILO-15 08: decisions mint none
     assert _count(db, "follow_through_proposals", "WHERE state = 'confirmed'") == 2
 
 
@@ -583,7 +584,8 @@ def test_seeded_lost_acknowledgement_replays_the_same_result(tmp_path: Any) -> N
     assert retry["decision_record_id"] == first["decision_record_id"]
     assert retry["commitment_id"] == first["commitment_id"]
     assert _count(db, "decision_records") == 1
-    assert _count(db, "decision_commitments") == 1
+    # PHILO-15 08: commitments only for actions.
+    assert _count(db, "decision_commitments") == (1 if created[0].kind == "action" else 0)
 
 
 # ── counsel-on-built (RATIFY-WITH-CONDITIONS), the fences ─────────────

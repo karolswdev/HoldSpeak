@@ -129,6 +129,8 @@ export interface Meeting {
   calendarSourceLabel?: string | null;
   /** HS-170-04: word count of the transcript (null when no transcript). */
   transcriptWords?: number | null;
+  /** PHILO-15-07: transcript spans marked `[unclear m:ss–m:ss]` (0 when none). */
+  unclearSpans?: number;
   /** PHILO-13-04 H-A3 (#729): the list row's durable fact — a summary is
    *  stored for this meeting (read from the persisted summary, apart from
    *  the config switch and the run status). */

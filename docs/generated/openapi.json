@@ -22993,6 +22993,60 @@
         ]
       }
     },
+    "/api/proposals/{proposal_id}/defer": {
+      "post": {
+        "operationId": "api_defer_proposal_api_proposals__proposal_id__defer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "default": {},
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Defer Proposal Api Proposals  Proposal Id  Defer Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Defer Proposal",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
     "/api/proposals/{proposal_id}/dismiss": {
       "post": {
         "operationId": "api_dismiss_proposal_api_proposals__proposal_id__dismiss_post",

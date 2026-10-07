@@ -70,9 +70,9 @@ def test_model_library_mcp_stages_base64_and_never_returns_secret_or_paths(
         "model_library.connect_hosted_model",
         {
             "draft": {
-                "request_id": "hosted-anthropic", "profile_id": "mcp-anthropic",
-                "expected_profile_revision": 0, "label": "MCP Anthropic", "provider_family": "anthropic",
-                "model": "claude-safe", "requires_key": True,
+                "request_id": "hosted-openrouter", "profile_id": "mcp-openrouter",
+                "expected_profile_revision": 0, "label": "MCP OpenRouter", "provider_family": "openrouter",
+                "model": "qwen-safe", "requires_key": True,
             },
             "secret": {"value": secret},
         },
@@ -82,6 +82,24 @@ def test_model_library_mcp_stages_base64_and_never_returns_secret_or_paths(
     for forbidden in (secret, "secret_slot", "endpoint"):
         assert forbidden not in provider_rendered
     assert provider["provider"]["secret"] == {"required": True, "present": True}
+
+    # PHILO-15 05 (Astra r1): MCP gets the form's honest answer for Anthropic:
+    # refused with not_supported, nothing stored.
+    with pytest.raises(ServiceError) as refused:
+        model_library.dispatch(
+            "model_library.connect_hosted_model",
+            {
+                "draft": {
+                    "request_id": "hosted-anthropic", "profile_id": "mcp-anthropic",
+                    "expected_profile_revision": 0, "label": "MCP Anthropic", "provider_family": "anthropic",
+                    "model": "claude-safe", "requires_key": True,
+                },
+                "secret": {"value": secret},
+            },
+            OWNER,
+        )
+    assert refused.value.code == "not_supported"
+    assert secret not in str(refused.value) and secret not in json.dumps(refused.value.context)
 
 
 def test_model_library_mcp_refuses_paths_and_oversized_encoded_input_before_staging(

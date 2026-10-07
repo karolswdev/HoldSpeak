@@ -175,7 +175,8 @@ class TestMeetingConfig:
         assert config.mir_enabled is True
         assert config.routing_profile == "balanced"
         # HS-2-09 (spec §9.9) — MIR-01 routing pipeline knobs.
-        assert config.intent_router_enabled is False
+        # PHILO-15 08: on by default (strong defaults).
+        assert config.intent_router_enabled is True
         assert config.intent_window_seconds == 90
         assert config.intent_step_seconds == 30
         assert config.intent_score_threshold == 0.6

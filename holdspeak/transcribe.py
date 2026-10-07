@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import json
 import platform
 import sys
 import threading
@@ -28,6 +29,33 @@ from .errors import TranscriptionError as _TranscriptionErrorBase
 from .logging_config import get_logger
 
 log = get_logger("transcribe")
+
+#: PHILO-15-07: Whisper's own guards, passed explicitly for the segment decode
+#: (the values Whisper documents as its defaults).
+WHISPER_COMPRESSION_RATIO_THRESHOLD = 2.4
+WHISPER_LOGPROB_THRESHOLD = -1.0
+WHISPER_NO_SPEECH_THRESHOLD = 0.6
+#: The second decode of a degenerate window starts warm (Whisper's fallback
+#: ladder without the greedy step that produced the loop).
+WHISPER_RETRY_TEMPERATURES = (0.2, 0.4, 0.6, 0.8, 1.0)
+
+
+def _segment_guards(temperature: Any = None) -> dict[str, Any]:
+    """Whisper's degenerate-output guards for a segment decode (PHILO-15-07).
+
+    ``condition_on_previous_text=False`` stops one loop from priming the next
+    window; the thresholds are the ones Whisper itself uses to fall back to a
+    warmer decode.
+    """
+    guards: dict[str, Any] = {
+        "compression_ratio_threshold": WHISPER_COMPRESSION_RATIO_THRESHOLD,
+        "logprob_threshold": WHISPER_LOGPROB_THRESHOLD,
+        "no_speech_threshold": WHISPER_NO_SPEECH_THRESHOLD,
+        "condition_on_previous_text": False,
+    }
+    if temperature is not None:
+        guards["temperature"] = temperature
+    return guards
 
 
 #: HS-200-05: the ONE thread every MLX call in this process runs on.
@@ -100,7 +128,7 @@ class _TranscriberImpl(Protocol):
     device: str
     compute_type: str
 
-    def transcribe(self, audio_array: np.ndarray) -> str: ...
+    def transcribe(self, audio_array: np.ndarray, **options: Any) -> Any: ...
 
     def ensure_loaded(self, admission: object) -> None: ...
 
@@ -419,14 +447,20 @@ class _MlxTranscriber:
 
         return str(self._mlx_thread.submit(_run).result())
 
-    def transcribe(self, audio_array: np.ndarray) -> str:
+    def transcribe(
+        self, audio_array: np.ndarray, *, segments: bool = False, temperature: Any = None
+    ) -> Any:
         """Transcribe an in-memory audio array.
 
         Args:
             audio_array: Numpy array of mono audio. Prefer float32 at 16 kHz.
+            segments: PHILO-15-07 — return Whisper's own segments
+                (``[{start, end, text}]``) decoded with Whisper's guards
+                stated explicitly, instead of one text blob.
+            temperature: the decode temperature ladder (segments mode only).
 
         Returns:
-            Transcribed text (may be empty).
+            Transcribed text (may be empty), or the segment list.
 
         Raises:
             TranscriberError: If transcription fails.
@@ -443,17 +477,19 @@ class _MlxTranscriber:
             raise ValueError("audio_array must be mono (shape (n,) or (n, 1))")
 
         if audio.size == 0:
-            return ""
+            return [] if segments else ""
         if self._path_or_hf_repo is None:
             raise TranscriberError("the MLX model is not loaded; preload was never admitted")
 
         audio = np.ascontiguousarray(audio, dtype=np.float32)
         log.debug(f"Transcribing {len(audio)} samples ({len(audio)/16000:.2f}s)")
 
-        def _run() -> str:
+        def _run() -> Any:
             # HS-59: pass `language` only when pinned — the auto-detect call
             # stays byte-identical to the pre-knob behavior.
-            extra = {"language": self.language} if self.language else {}
+            extra: dict[str, Any] = {"language": self.language} if self.language else {}
+            if segments:
+                extra.update(_segment_guards(temperature))
             result = self._mlx_whisper.transcribe(  # type: ignore[union-attr]
                 audio,
                 # The same source the preload loaded, so ModelHolder's cache
@@ -463,6 +499,16 @@ class _MlxTranscriber:
                 verbose=None,
                 **extra,
             )
+            if segments:
+                raw = result.get("segments", []) if isinstance(result, dict) else []
+                return [
+                    {
+                        "start": float(seg.get("start", 0.0)),
+                        "end": float(seg.get("end", 0.0)),
+                        "text": str(seg.get("text", "")).strip(),
+                    }
+                    for seg in raw
+                ]
             if isinstance(result, dict):
                 return str(result.get("text", "")).strip()
             return str(getattr(result, "text", result)).strip()
@@ -472,11 +518,14 @@ class _MlxTranscriber:
             # thread-bound, and a cross-thread call is a process-fatal C++
             # exception, not a Python error.
             text = self._mlx_thread.submit(_run).result()
+            if segments:
+                return text
             log.info(f"Transcription result: '{text[:100]}{'...' if len(text) > 100 else ''}'")
             return text
         except Exception as exc:
             log.error(f"Transcription failed: {exc}", exc_info=True)
             raise TranscriberError(f"Transcription failed: {exc}") from exc
+
 
 
 class _FasterWhisperTranscriber:
@@ -538,7 +587,9 @@ class _FasterWhisperTranscriber:
         """
         return None
 
-    def transcribe(self, audio_array: np.ndarray) -> str:
+    def transcribe(
+        self, audio_array: np.ndarray, *, segments: bool = False, temperature: Any = None
+    ) -> Any:
         audio = np.asarray(audio_array)
         if audio.ndim == 2:
             if audio.shape[1] != 1:
@@ -548,16 +599,30 @@ class _FasterWhisperTranscriber:
             raise ValueError("audio_array must be mono (shape (n,) or (n, 1))")
 
         if audio.size == 0:
-            return ""
+            return [] if segments else ""
 
         audio = np.ascontiguousarray(audio, dtype=np.float32)
 
         try:
             # HS-59: pass `language` only when pinned — auto stays byte-identical.
-            extra = {"language": self.language} if self.language else {}
-            segments, _info = self._model.transcribe(audio, vad_filter=False, **extra)
+            extra: dict[str, Any] = {"language": self.language} if self.language else {}
+            if segments:
+                guards = _segment_guards(temperature)
+                # faster-whisper spells the log-probability knob differently.
+                guards["log_prob_threshold"] = guards.pop("logprob_threshold")
+                extra.update(guards)
+            decoded, _info = self._model.transcribe(audio, vad_filter=False, **extra)
+            if segments:
+                return [
+                    {
+                        "start": float(getattr(seg, "start", 0.0)),
+                        "end": float(getattr(seg, "end", 0.0)),
+                        "text": str(getattr(seg, "text", "")).strip(),
+                    }
+                    for seg in decoded
+                ]
             parts: list[str] = []
-            for seg in segments:
+            for seg in decoded:
                 text = str(getattr(seg, "text", "")).strip()
                 if text:
                     parts.append(text)
@@ -566,8 +631,13 @@ class _FasterWhisperTranscriber:
             raise TranscriberError(f"Transcription failed: {exc}") from exc
 
 
+
 class Transcriber:
     """Transcribe audio locally using the selected backend."""
+
+    #: PHILO-15-07: ``transcribe(..., segments=True)`` returns Whisper's own
+    #: timestamped segments; the import reads them (meeting_import).
+    supports_segments = True
 
     def __init__(
         self,
@@ -627,8 +697,15 @@ class Transcriber:
         *,
         admission: Any = None,
         capability: str = "whisper-transcribe",
-    ) -> str:
+        segments: bool = False,
+        temperature: Any = None,
+    ) -> Any:
         """Transcribe under ONE admitted invocation child (HS-131-09).
+
+        PHILO-15-07: ``segments=True`` returns Whisper's own timestamped
+        segments (``[{start, end, text}]``) decoded with its guards; the
+        import reads them so a window never cuts a sentence. ``temperature``
+        names a second decode of the same audio (its own child seed).
 
         ``admission`` is the live session's
         :class:`~holdspeak.speech_session.transcription.TranscriptionAdmission`
@@ -652,7 +729,7 @@ class Transcriber:
             raise ValueError("audio_array must be mono (shape (n,) or (n, 1))")
         if audio.size == 0:
             # Mechanical: no model runs, so no child and no receipt exist.
-            return ""
+            return [] if segments else ""
         if admission is None:
             raise SpeechSessionRefused(TRANSCRIPTION_CONTEXT_REQUIRED, capability)
 
@@ -662,12 +739,20 @@ class Transcriber:
         self.warm(admission)
         errors: list[BaseException] = []
 
+        options: dict[str, Any] = {}
+        if segments:
+            options["segments"] = True
+            if temperature is not None:
+                options["temperature"] = temperature
+
         def _dispatch() -> str:
             try:
-                return self._timed_transcribe(audio)
+                result = self._timed_transcribe(audio, **options)
             except BaseException as exc:  # noqa: BLE001 - re-raised for the child
                 errors.append(exc)
                 raise
+            # The child's result stays a string; segments travel as JSON.
+            return json.dumps(result) if segments else result
 
         outcome, text = admission.transcribe_child(
             material={
@@ -682,17 +767,21 @@ class Transcriber:
                 "timeout_seconds": float(self.timeout_seconds),
             },
             run=_dispatch,
-            seed=digest,
+            # A second decode of the same audio is its own child, never a
+            # replay of the first one's invocation.
+            seed=digest if temperature is None else f"{digest}:t{temperature}",
         )
         if outcome.outcome != "succeeded":
             if errors:
                 raise errors[0]
             raise TranscriberError(f"Transcription was not admitted: {outcome.outcome}")
+        if segments:
+            return json.loads(text) if text else []
         return str(text or "")
 
-    def _timed_transcribe(self, audio_array: np.ndarray) -> str:
+    def _timed_transcribe(self, audio_array: np.ndarray, **options: Any) -> Any:
         if self.timeout_seconds <= 0:
-            return self._impl.transcribe(audio_array)
+            return self._impl.transcribe(audio_array, **options)
 
         # Run the (possibly native, uninterruptible) backend on a daemon worker
         # and bound the wait. On timeout we abandon the worker — it cannot be
@@ -702,7 +791,7 @@ class Transcriber:
 
         def _run() -> None:
             try:
-                outcome["text"] = self._impl.transcribe(audio_array)
+                outcome["text"] = self._impl.transcribe(audio_array, **options)
             except BaseException as exc:  # noqa: BLE001 - propagated to caller
                 outcome["error"] = exc
 
@@ -719,4 +808,6 @@ class Transcriber:
             )
         if "error" in outcome:
             raise outcome["error"]  # type: ignore[misc]
+        if options.get("segments"):
+            return outcome.get("text", [])
         return str(outcome.get("text", ""))

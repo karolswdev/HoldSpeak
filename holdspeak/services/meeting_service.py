@@ -25,6 +25,7 @@ from ..meeting_import import (
     TRANSCRIPTION_FAILED,
     import_meeting as run_meeting_import,
     import_transcript,
+    humanize_title,
     is_transcript_filename,
     validate_format,
 )
@@ -195,7 +196,9 @@ class MeetingService:
     ) -> dict[str, str]:
         """Create the visible importing row and start its background worker."""
         meeting_id = uuid.uuid4().hex[:8]
-        resolved_title = (title or Path(filename).stem).strip() or Path(filename).stem
+        # PHILO-15-07 (B30): a stated title wins; else the file name humanised
+        # (no extension, no underscores, no ids), never the raw stem.
+        resolved_title = (title or "").strip() or humanize_title(filename)
         placeholder = MeetingState(
             id=meeting_id,
             started_at=started_at,
@@ -985,6 +988,8 @@ class MeetingService:
             # transcript (never 0). The list query computes it via subquery;
             # the detail computes it from the loaded segments.
             "transcriptWords": getattr(meeting, "transcript_words", None),
+            # PHILO-15-07: segments with an honest `[unclear …]` mark.
+            "unclearSpans": int(getattr(meeting, "unclear_spans", 0) or 0),
             "needs_you_count": getattr(meeting, "needs_you_count", 0),
             # PHILO-13 H-A3: disclose only the durable summary fact.  Route
             # availability and intel job state are separate projections.
