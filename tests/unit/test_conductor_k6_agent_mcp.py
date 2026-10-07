@@ -1189,10 +1189,25 @@ def test_r9_people_projections_stay_out_of_every_launch_reader(hub: Hub) -> None
         text = json.dumps(answer)
         assert "SECRET_PERSON_SENTINEL" not in text and person["id"] not in text, name
         assert "person_label" not in text and "person_relationship_id" not in text, name
-    # The Public task is still there for the agent (door.get needs the owner
-    # for its Thought lane, so the board is the agent's read).
+    # The Public task is there for the agent on the board and, since R5, on
+    # the Door (read with the Thought lane omitted).
     assert "Public task" in json.dumps(readers["follow_through.board"])
+    assert "Public task" in json.dumps(readers["door.get"])
     assert "Public task" in json.dumps(readers["desk.needs_you"])
+
+
+def test_r5_a_launch_reads_the_door_without_the_thought_lane(hub: Hub) -> None:
+    _reach(hub, False)
+    err, _item = hub.mcp("door.add_item", {"task": "Agent-visible task"})
+    assert not err
+    _err, owner_door = hub.mcp("door.get", {})
+    assert "active" in owner_door["board"] and "active" in owner_door["counts"]
+    agent = _client(hub, _launch_credential().token)
+    error, door = _result(_call(agent, "door.get", {}))
+    assert not error, door
+    assert "Agent-visible task" in json.dumps(door["board"])
+    assert "active" not in door["board"] and "active" not in door["counts"]
+    assert "thought_owner_required" not in json.dumps(door)
 
 
 def test_r9_the_output_boundary_drops_people_fields() -> None:
