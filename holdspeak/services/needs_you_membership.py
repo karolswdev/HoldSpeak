@@ -352,8 +352,27 @@ def gate_items(holds: Iterable[dict[str, Any]], now: datetime | None = None) -> 
             "waitKind": "approve",
             "waitStartedAt": since,
             "ageSeconds": max(0, int(now_s - created)),
+            # PHILO-14 A5: the head is not the whole call; the desk offers
+            # Deny and Open, never Approve, on a command it cannot show whole.
+            "argsCut": bool(hold.get("args_cut")),
+            "argsHidden": int(hold.get("args_hidden") or 0),
         })
     return rows
+
+
+def _gate_view(args_head: str, args_len: Any) -> dict[str, Any]:
+    """The command, cut flag and hidden count every approval surface shows
+    (``db.gate.command_view``: one place, on the text the owner sees)."""
+    from holdspeak.db.gate import command_view
+
+    view = command_view(args_head, args_len)
+    return {"command": view["command"], "args_cut": view["args_cut"], "args_hidden": view["args_hidden"]}
+
+
+def _args_cut(args_head: str, args_len: Any) -> dict[str, Any]:
+    """The cut flag and hidden count alone (``_gate_view``)."""
+    view = _gate_view(args_head, args_len)
+    return {"args_cut": view["args_cut"], "args_hidden": view["args_hidden"]}
 
 
 def _gate_command(args_head: str) -> str:
@@ -363,6 +382,11 @@ def _gate_command(args_head: str) -> str:
     try:
         parsed = json.loads(args_head)
     except ValueError:
+        # A cut head is a JSON fragment: show the command's own text, never
+        # the JSON around it (PHILO-14 A5).
+        prefix = '{"command":"'
+        if args_head.startswith(prefix):
+            return args_head[len(prefix):].replace('\\"', '"').replace("\\\\", "\\")
         return args_head
     if isinstance(parsed, dict) and parsed.get("command"):
         return str(parsed["command"])
@@ -410,7 +434,7 @@ def _read_gate_holds(db: Any, *, ledger: Any = None, now: float | None = None) -
                 "launch_id": str(launch.get("launch_id") or ""),
                 "session_key": str(launch.get("session_key") or ""),
                 "tool": proposal.tool,
-                "command": _gate_command(proposal.args_head),
+                **_gate_view(proposal.args_head, (proposal.operation or {}).get("args_len")),
                 "created_at": proposal.created_at,
                 "held": held,
                 "ended_at": None if held else float(ended),
@@ -635,6 +659,66 @@ def _item_ref(item: dict[str, Any]) -> str:
     return str(ref if ref is not None else item.get("id") or "")
 
 
+def item_origin_refs(item: dict[str, Any]) -> set[str]:
+    """The launch ``origin_ref`` grammar an item row is known by (the twin of
+    ``itemOriginRefs`` in ``web/src/desk/agentFlights.ts``)."""
+    refs: set[str] = set()
+    if item.get("actionItemId"):
+        refs.add(f"action:{item['actionItemId']}")
+    if item.get("kind") == "issue" and item.get("watchId") and item.get("entityId"):
+        refs.add(f"issue:{item['watchId']}.{item['entityId']}")
+    card = item.get("_doorCard") if isinstance(item.get("_doorCard"), dict) else {}
+    for raw in (card.get("target_ref"), card.get("open_ref"), item.get("ref"), item.get("openRef"), item.get("id")):
+        ref = str(raw or "").strip()
+        if ":" not in ref:
+            continue
+        kind, _, rest = ref.partition(":")
+        if not rest:
+            continue
+        if kind in ("action_item", "action"):
+            refs.add(f"action:{rest}")
+        elif kind == "decision":
+            refs.add(f"decision:{rest}")
+        elif kind in ("desk_decision", "decision_record"):
+            refs.add(f"decision_record:{rest}")
+        elif kind in ("note", "project_item"):
+            refs.add(f"{kind}:{rest}")
+    return refs
+
+
+_LIVE_FLIGHT_STATES = ("starting", "working", "waiting", "pr_open")
+
+
+def fold_asks(items: list[dict[str, Any]], flights: Iterable[dict[str, Any]]) -> None:
+    """Mark each agent ask (``coder`` / ``gate`` row) whose session works an
+    item in ``items`` with ``foldedInto``: that item's ref. In place."""
+    by_session: dict[str, str] = {}
+    for flight in flights or ():
+        key = str(flight.get("session_key") or "")
+        live = flight.get("state") in _LIVE_FLIGHT_STATES or (
+            flight.get("state") == "merged" and flight.get("close") == "awaiting_confirm"
+        )
+        if key and live and flight.get("origin_ref"):
+            by_session.setdefault(key, str(flight["origin_ref"]))
+    if not by_session:
+        return
+    owners: dict[str, str] = {}
+    for item in items:
+        if item.get("source") in (CODER_SOURCE, GATE_SOURCE):
+            continue
+        for ref in item_origin_refs(item):
+            owners.setdefault(ref, _item_ref(item))
+    for item in items:
+        if item.get("source") not in (CODER_SOURCE, GATE_SOURCE):
+            continue
+        origin = by_session.get(str(item.get("sessionKey") or ""))
+        target = owners.get(origin or "")
+        # Every ask on the item is the item's (owner ruling 2026-10-07: one
+        # object, one row, always); the desk shows the most urgent one.
+        if target:
+            item["foldedInto"] = target
+
+
 def compute_needs_you(
     *,
     door: dict[str, Any] | None = None,
@@ -646,6 +730,7 @@ def compute_needs_you(
     decisions: Iterable[dict[str, Any]] = (),
     coders: Iterable[Any] = (),
     gate_holds: Iterable[dict[str, Any]] = (),
+    flights: Iterable[dict[str, Any]] = (),
     self_names: Iterable[str] = SELF_OWNER_NAMES,
     personal_names: Iterable[str] = (),
     now: datetime | None = None,
@@ -715,12 +800,25 @@ def compute_needs_you(
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
+    # PHILO-14 A5, one object, one row, one count (owner ruling 2026-10-07):
+    # EVERY agent ask on an item it was handed is that item's (``foldedInto``),
+    # whatever the item's mute or wait. An item with an ask is shown and
+    # counted once: the ask overrides its mute and its wait.
+    fold_asks(ranked, flights)
+    asked = {str(item["foldedInto"]) for item in ranked if item.get("foldedInto")}
+    for item in ranked:
+        if item.get("source") not in (CODER_SOURCE, GATE_SOURCE) and _item_ref(item) in asked:
+            item["askOverrides"] = True
+            item["waiting"] = False
     muted_projects = {str(pid) for pid in muted_project_ids}
     unmuted_items: list[dict[str, Any]] = []
     muted_items: list[dict[str, Any]] = []
     for item in ranked:
         project_id = item.get("projectId")
-        if bool(item.get("muted")) or (project_id and str(project_id) in muted_projects):
+        if item.get("askOverrides"):
+            item["muted"] = False
+            unmuted_items.append(item)
+        elif bool(item.get("muted")) or (project_id and str(project_id) in muted_projects):
             item["muted"] = True
             muted_items.append(item)
         else:
@@ -729,6 +827,9 @@ def compute_needs_you(
     # What the owner waits on someone else for is listed and is not counted.
     waiting_items = [item for item in unmuted_items if item["waiting"]]
     counted_items = [item for item in unmuted_items if not item["waiting"]]
+    # The asks folded above are listed (the desk draws each on its item's
+    # row) and are not members of their own.
+    counted_items = [item for item in counted_items if not item.get("foldedInto")]
 
     blockers = meeting_path_blockers(
         None if assignment_read == "failed" else assignments, assignment_read,
@@ -1035,6 +1136,15 @@ def compose(
         log.warning("needs-you: the owner names read failed: %s", exc)
     names = owner_names(speaker)
 
+    # PHILO-14 A5: the items agents were handed, so an ask on one is that item.
+    flights: list[dict[str, Any]] = []
+    try:
+        from .agent_flights import agent_flights
+
+        flights = agent_flights(db, coders)
+    except Exception as exc:
+        log.warning("needs-you: the flight read failed: %s", exc)
+
     result = compute_needs_you(
         door=door,
         room_items=room_items,
@@ -1045,6 +1155,7 @@ def compose(
         decisions=decisions,
         coders=coders,
         gate_holds=gate_holds,
+        flights=flights,
         self_names=names,
         personal_names=personal,
         now=now,
@@ -1114,7 +1225,7 @@ def project_counts(unmuted_items: Iterable[dict[str, Any]]) -> dict[str, int]:
     counts: dict[str, int] = {}
     for item in unmuted_items:
         project_id = item.get("projectId")
-        if not project_id or item.get("muted") or item.get("waiting"):
+        if not project_id or item.get("muted") or item.get("waiting") or item.get("foldedInto"):
             continue
         counts[str(project_id)] = counts.get(str(project_id), 0) + 1
     return counts

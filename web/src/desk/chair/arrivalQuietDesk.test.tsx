@@ -29,6 +29,14 @@ vi.mock("../../runtime/RuntimeBus", () => ({
   useRuntimeFrame: () => null,
 }));
 
+
+// PHILO-14 A5: the Needs-you window body is the smart drawer; the SETUP rows
+// are its rows (the object, one lamp, one verb) and the head is its display.
+const setupRows = () => [...document.querySelectorAll<HTMLElement>(
+  '[data-testid="needs-drawer"] .needs-row[data-object-id^="blocker:"]',
+)];
+const setupRow = () => setupRows()[0] ?? null;
+
 describe("HS-201-11 the head speaks one total", () => {
   it("adds what asks outside the attention list", () => {
     // one attention row + one SETUP row = two rows that ask, one total
@@ -92,12 +100,10 @@ describe("HS-201-11 the arrival head and its asking rows agree", () => {
     wire([NO_ENGINE, SPEECH_ASSIGNED], false);
     render(<ChairHome />);
     await screen.findByText("No engine for summaries");
-    expect(screen.getByTestId("arrival-blocker-row")).toBeTruthy();
-    // the offer IS drawn, with its own library Button
-    expect(screen.getByTestId("arrival-connect-calendar")).toBeTruthy();
-    expect(screen.getByTestId("arrival-connect-calendar").textContent).toContain(
-      "Connect calendar",
-    );
+    expect(setupRow()!).toBeTruthy();
+    // PHILO-14 A5: the drawer is the head and the rows (board A-5); the
+    // calendar offer is not a row and is not on it.
+    expect(screen.queryByTestId("arrival-connect-calendar")).toBeNull();
     // ...and the head still counts the SETUP row alone
     await waitFor(() =>
       expect(screen.getByTestId("arrival-display").textContent).toBe("1 need you"),
@@ -110,10 +116,9 @@ describe("HS-201-11 the arrival head and its asking rows agree", () => {
     await waitFor(() =>
       expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
     );
-    expect(screen.queryByTestId("arrival-blocker")).toBeNull();
+    expect(setupRow()).toBeNull();
     // an offer with no calendar is not an obligation (owner's ruling):
     // the row stands, the head is quiet, and it says the all-clear ONCE.
-    expect(screen.getByTestId("arrival-connect-calendar")).toBeTruthy();
     expect(screen.getAllByText("Nothing needs you")).toHaveLength(1);
   });
 
@@ -124,6 +129,6 @@ describe("HS-201-11 the arrival head and its asking rows agree", () => {
       expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
     );
     expect(screen.queryByTestId("arrival-connect-calendar")).toBeNull();
-    expect(screen.queryByTestId("arrival-blocker")).toBeNull();
+    expect(setupRow()).toBeNull();
   });
 });

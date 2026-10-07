@@ -20,6 +20,11 @@ export interface GateProposal {
   decided_by: string | null;
   decided_at: number | null;
   reason: string | null;
+  /** PHILO-14 A5 (`db.gate.command_view`): the shown command, whether the
+   * hub holds it whole, and how many of its characters are missing. */
+  args_shown?: string | null;
+  args_cut?: boolean | null;
+  args_hidden?: number | null;
 }
 
 interface GateStore {

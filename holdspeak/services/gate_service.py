@@ -33,6 +33,13 @@ def _is_launch_caller(record: Mapping[str, Any], identity: str) -> bool:
     return record.get("session_key") == identity or bool(launch and launch_identity(launch) == identity)
 
 
+def _args_len(value: Any) -> int:
+    try:
+        return max(0, int(value or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
 @observe_service
 class GateService:
     def __init__(
@@ -98,6 +105,9 @@ class GateService:
                 "arguments": {
                     "proposal_id": proposal_id, "tool": tool, "args_sha256": args_sha256,
                     "args_head": str(payload.get("args_head") or ""), "cwd": str(payload.get("cwd") or ""),
+                    # PHILO-14 A5: how long the whole redacted call is (the
+                    # head is its first 120 chars); 0 = an older hook.
+                    "args_len": _args_len(payload.get("args_len")),
                     "ttl_seconds": ttl if ttl > 0.0 else DEFAULT_TTL_SECONDS,
                     "classification": verdict,
                 }, "placement": "node:local",
@@ -264,7 +274,12 @@ class GateService:
     def list_proposals(self, principal: Principal, filters: dict[str, Any] | None = None) -> dict[str, Any]:
         state = str((filters or {}).get("state") or HELD)
         self._db.gate.expire_due()
-        return {"proposals": [proposal.to_dict() for proposal in self._db.gate.list_state(state)], "state": state}
+        # PHILO-14 A5: the owner's list (the shade) carries what it shows of
+        # each call; Approve is withheld on a cut one.
+        return {
+            "proposals": [{**proposal.to_dict(), **proposal.shown()} for proposal in self._db.gate.list_state(state)],
+            "state": state,
+        }
 
     def decide(self, principal: Principal, proposal_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         from .. import kernel

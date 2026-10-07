@@ -102,7 +102,10 @@ class TestFreshArrival:
                     drawer.focus()
                     page.keyboard.press("Enter")
                 _shell(page, "Needs you").wait_for()
-                setup = page.get_by_test_id("arrival-blocker")
+                # PHILO-14 A5: the SETUP row is a row of the Needs-you drawer
+                # (`needs-row`, its member ref `blocker:<key>`).
+                setup = _shell(page, "Needs you").locator(
+                    "[data-testid='needs-row'][data-object-id^='blocker:']").first
                 setup.wait_for()
                 assert "No engine" in setup.inner_text(), setup.inner_text()
                 assert "Choose an engine" in setup.inner_text()

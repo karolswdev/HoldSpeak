@@ -376,6 +376,8 @@ def launch_lane(
                 "id": p.id, "tool": p.tool, "args_head": p.args_head, "state": p.state,
                 "created_at": p.created_at, "decided_by": p.decided_by, "decided_at": p.decided_at,
                 "reason": p.reason, "policy": dict(p.policy_snapshot),
+                # PHILO-14 A5: the shown command, and whether it is whole.
+                **p.shown(),
             }
             for p in db.gate.proposals_for_session(key)
         ]

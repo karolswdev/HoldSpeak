@@ -114,7 +114,7 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
     useDesk.setState({ items: { ...useDesk.getState().items, meeting: [] } } as never);
   });
 
-  it("speaks the module's six, counts R3 from the server read, and names the narrower list ACTIONS", async () => {
+  it("speaks the module's six, counts R3 from the server read, and draws the six members as rows", async () => {
     installHub();
     render(<><ChairHome /><OtherReader /></>);
     await waitFor(
@@ -122,10 +122,8 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
       { timeout: 3000 },
     );
     expect(screen.getByTestId("other-reader").textContent).toBe("6");
-    const list = screen.getByTestId("arrival-needs-you");
-    const caption = list.querySelector(".surface-caption, [class*=caption]")?.textContent ?? list.textContent ?? "";
-    expect(caption).toMatch(/^ACTIONS \d/);
-    expect(list.textContent).not.toMatch(/NEEDS? YOU/);
+    // PHILO-14 A5: the drawer's rows ARE the members: six rows under `6 need you`.
+    expect(document.querySelectorAll("[data-testid='needs-drawer'] [data-testid='needs-row']")).toHaveLength(6);
     // No "need(s) you" on the face carries a number other than the one.
     const said = (document.body.textContent ?? "").match(/\d+ needs? you/gi) ?? [];
     expect(said.every((token) => token.startsWith("6 "))).toBe(true);
@@ -138,8 +136,7 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
       () => expect(screen.getByTestId("arrival-display").textContent).toMatch(/^6 need you/),
       { timeout: 3000 },
     );
-    const a1 = screen
-      .getAllByTestId("arrival-needs-you-row")
+    const a1 = [...document.querySelectorAll<HTMLElement>(".needs-row")]
       .find((row) => row.textContent?.includes("A1 close the overdue release note"));
     expect(a1).toBeDefined();
     hub.paths.length = 0;

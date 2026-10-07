@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, type JsonRecord } from "../../lib/api";
 import { gateAge, useGate } from "../gate";
+import { cutMark } from "../lane/laneWire";
 import { useProjections } from "../projections";
 import { humanTime } from "../surface/format";
 import { countToken } from "../surface/count";
@@ -280,6 +281,13 @@ export function SystemShade({
                 <strong>
                   {humanizeWireValue(String(proposal.tool))} held
                 </strong>
+                {/* PHILO-14 A5: the arguments are shown before any decision;
+                    a call the hub cannot show whole says how much is missing. */}
+                {proposal.args_shown ? (
+                  <code className="desk-gate-command" data-testid="shade-gate-command">
+                    {cutMark(String(proposal.args_shown), proposal)}
+                  </code>
+                ) : null}
                 <small>waiting {gateAge(proposal)}</small>
                 {denyingId === proposal.id ? (
                   <span className="desk-shade-do">
@@ -320,13 +328,15 @@ export function SystemShade({
                   </span>
                 ) : (
                   <span className="desk-shade-do">
-                    <Button
-                      dense
-                      variant="primary"
-                      onClick={() => void gate.decide(proposal.id, "approved")}
-                    >
-                      Approve
-                    </Button>
+                    {proposal.args_cut ? null : (
+                      <Button
+                        dense
+                        variant="primary"
+                        onClick={() => void gate.decide(proposal.id, "approved")}
+                      >
+                        Approve
+                      </Button>
+                    )}
                     <Button
                       dense
                       variant="ghost"
