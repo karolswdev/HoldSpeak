@@ -157,11 +157,17 @@ class _AppServer:
             raise CodexTrustError("codex_unavailable", str(exc)) from exc
         # A selector, not select.select: select() refuses a descriptor at or
         # above FD_SETSIZE (1024), which a long-running hub reaches.
-        self._ready = selectors.DefaultSelector()
-        assert self._proc.stdout is not None
-        self._ready.register(self._proc.stdout, selectors.EVENT_READ)
-        self.call("initialize", {"clientInfo": {"name": "holdspeak", "version": "1"}})
-        self._send({"jsonrpc": "2.0", "method": "initialized"})
+        self._ready: Optional[selectors.BaseSelector] = None
+        try:
+            self._ready = selectors.DefaultSelector()
+            assert self._proc.stdout is not None
+            self._ready.register(self._proc.stdout, selectors.EVENT_READ)
+            self.call("initialize", {"clientInfo": {"name": "holdspeak", "version": "1"}})
+            self._send({"jsonrpc": "2.0", "method": "initialized"})
+        except BaseException:
+            # A failed start never reaches __exit__: release the selector and the child here.
+            self.close()
+            raise
 
     def __enter__(self) -> "_AppServer":
         return self
@@ -170,7 +176,8 @@ class _AppServer:
         self.close()
 
     def close(self) -> None:
-        self._ready.close()
+        if self._ready is not None:
+            self._ready.close()
         proc = self._proc
         try:
             if proc.stdin:
@@ -182,6 +189,8 @@ class _AppServer:
         except subprocess.TimeoutExpired:
             proc.kill()
             proc.wait(timeout=2)
+        if proc.stdout:
+            proc.stdout.close()
 
     def _send(self, message: Mapping[str, Any]) -> None:
         assert self._proc.stdin is not None
