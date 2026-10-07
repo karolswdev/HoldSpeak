@@ -5,7 +5,7 @@
 // Stable testids: `needs-drawer` (the body), `needs-row` (a member's row),
 // `needs-source-row` (a source not read, no calendar), `needs-row-verb`
 // (every row verb; `data-verb` names it: answer, open, deny, approve,
-// open-pr, review, done, name-owner, set-date, confirm, door-verb,
+// open-pr, review, done, name-owner, set-date, confirm, defer, decline, door-verb,
 // summarize, setup, repair, cancel, connect-calendar), `needs-well`,
 // `needs-next` (the footer line), `needs-muted-toggle`, `needs-muted`.
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -494,6 +494,56 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     // The row body opens the agent's lane, where every ask is answered.
     fireEvent.click(item.querySelector(".needs-row-name")!);
     expect(openCoderSession).toHaveBeenCalledWith("claude:s-run");
+  });
+  it("PHILO-15 08: a proposal from a meeting in no Project has Confirm, Defer and Decline with words", async () => {
+    const proposals = [
+      {
+        id: "proposal:prop-priya", ref: "Add the named failure fence before ship", kind: "proposal",
+        source: "proposal", title: "Add the named failure fence before ship",
+        why: "PROPOSED · philo3_architect_meeting", severity: "info", projectId: "", projectName: "",
+        proposalId: "prop-priya", proposalKind: "action", meetingId: "m-wav",
+        meetingTitle: "philo3_architect_meeting", proposalActionItemId: "action_1",
+      },
+      {
+        id: "proposal:prop-sqlite", ref: "Use SQLite for the local meeting ledger", kind: "proposal",
+        source: "proposal", title: "Use SQLite for the local meeting ledger",
+        why: "PROPOSED · philo3_architect_meeting", severity: "info", projectId: "", projectName: "",
+        proposalId: "prop-sqlite", proposalKind: "decision", meetingId: "m-wav",
+        meetingTitle: "philo3_architect_meeting",
+      },
+    ];
+    const posted: string[] = [];
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const value = String(path);
+      if (value.startsWith("/api/desk/needs-you")) {
+        return { count: 2, items: proposals, blockers: [], failedMeetings: [], coverage: [], complete: true } as never;
+      }
+      if (value.startsWith("/api/proposals/")) posted.push(value);
+      if (value === "/api/door") return DOOR as never;
+      return {} as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("2 need you");
+    const action = row("Add the named failure fence before ship");
+    expect(face(action)).toMatchObject({
+      kind: "action",
+      fact: "from philo3_architect_meeting",
+      lamps: ["TO CONFIRM"],
+      verbs: ["Decline", "Defer", "Confirm"],
+    });
+    // No glyph-only control: every verb carries its word.
+    for (const button of action.querySelectorAll(".needs-row-verbs button")) {
+      expect((button.textContent ?? "").trim()).toMatch(/^[A-Z][a-z]+$/);
+    }
+    expect(face(row("Use SQLite for the local meeting ledger")).verbs).toEqual(["Decline", "Defer", "Confirm"]);
+    expect(action.getAttribute("data-opens")).toBe("true");
+
+    fireEvent.click(within(action).getByRole("button", { name: "Confirm: Add the named failure fence before ship" }));
+    await waitFor(() => expect(posted).toContain("/api/proposals/prop-priya/confirm"));
+    fireEvent.click(within(row("Use SQLite for the local meeting ledger")).getByRole("button", { name: /^Defer:/ }));
+    await waitFor(() => expect(posted).toContain("/api/proposals/prop-sqlite/defer"));
+    fireEvent.click(within(row("Use SQLite for the local meeting ledger")).getByRole("button", { name: /^Decline:/ }));
+    await waitFor(() => expect(posted).toContain("/api/proposals/prop-sqlite/dismiss"));
   });
 });
 

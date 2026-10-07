@@ -756,6 +756,13 @@ def compute_needs_you(
         for item in room
         if item.get("source") == "commitment" and item.get("actionItemId")
     }
+    # PHILO-15 08: a summary action still to confirm is its proposal row;
+    # its To review card is the same obligation, not a second row.
+    covered |= {
+        str(item["proposalActionItemId"])
+        for item in room
+        if item.get("proposalId") and item.get("proposalActionItemId")
+    }
     board = (door or {}).get("board") if isinstance((door or {}).get("board"), dict) else (door or {})
     combined = door_items(board, covered, clock) + room
     # An item the owner himself holds is his: it reads ``YOURS``, never

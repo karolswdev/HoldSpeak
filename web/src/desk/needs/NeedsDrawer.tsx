@@ -186,6 +186,15 @@ function NeedVerbsView({ face, primary, onWell, well }: {
             <Button dense variant="ghost" aria-label={named("Room")} data-testid="needs-row-verb" data-verb="room"
               onClick={() => openProjectProposal(v.projectId, v.proposalId)}>Room</Button>
           ) : null}
+          {/* PHILO-15 08 (B03): three verbs with words, Project or not. */}
+          <Button dense variant="ghost" disabled={busy} aria-label={named("Decline")} data-testid="needs-row-verb" data-verb="decline"
+            onClick={() => void act("Decline", () => apiFetch(
+              `/api/proposals/${encodeURIComponent(v.proposalId)}/dismiss`, { method: "POST" },
+            ), `proposal:${v.proposalId}`)}>Decline</Button>
+          <Button dense variant="ghost" disabled={busy} aria-label={named("Defer")} data-testid="needs-row-verb" data-verb="defer"
+            onClick={() => void act("Defer", () => apiFetch(
+              `/api/proposals/${encodeURIComponent(v.proposalId)}/defer`, { method: "POST", json: {} },
+            ), `proposal:${v.proposalId}`)}>Defer</Button>
           <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")} data-testid="needs-row-verb" data-verb="confirm"
             onClick={() => void act("Confirm", () => apiFetch(
               `/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST" },

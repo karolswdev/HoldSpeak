@@ -35,6 +35,17 @@ _EDITABLE_FIELDS = frozenset(
 )
 
 
+#: PHILO-15 08 (Astra MISSED 1): a confirmed ACTION writes a record row as the
+#: Room's join anchor for its commitment (proposal_bridge_service.py, step 2).
+#: That row is an action, not a decision: no decision list shows it.
+_NOT_AN_ACTION = (
+    "COALESCE(r.kind, 'decision') != 'action' AND "
+    # A record written before the kind column read its kind from its proposal.
+    "NOT EXISTS (SELECT 1 FROM follow_through_proposals AS fp "
+    "WHERE fp.decision_record_id = r.id AND fp.kind = 'action')"
+)
+
+
 @observe_service
 class DecisionRecordService:
     """Create and retrieve the durable canon for a decision."""
@@ -257,9 +268,9 @@ class DecisionRecordService:
         """List records that govern one typed work item."""
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT r.* FROM decision_records AS r
+                f"""SELECT r.* FROM decision_records AS r
                    JOIN decision_record_work AS w ON w.record_id = r.id
-                   WHERE w.work_type = ? AND w.work_ref = ?
+                   WHERE w.work_type = ? AND w.work_ref = ? AND {_NOT_AN_ACTION}
                    ORDER BY r.created_at DESC, r.id DESC""",
                 (self._required("work_type", work_type), self._required("work_ref", work_ref)),
             ).fetchall()
@@ -272,9 +283,10 @@ class DecisionRecordService:
         del principal
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT * FROM decision_records
-                   WHERE source_type = ? AND source_id = ? AND deleted = 0
-                   ORDER BY created_at DESC, id DESC""",
+                f"""SELECT r.* FROM decision_records AS r
+                   WHERE r.source_type = ? AND r.source_id = ? AND r.deleted = 0
+                     AND {_NOT_AN_ACTION}
+                   ORDER BY r.created_at DESC, r.id DESC""",
                 (self._required("source_type", source_type), self._required("source_id", source_id)),
             ).fetchall()
         return [self._record_dict(row) for row in rows]
@@ -418,9 +430,9 @@ class DecisionRecordService:
         """Return active records whose review date is today or earlier."""
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT * FROM decision_records
-                   WHERE review_date IS NOT NULL AND review_date <= ?
-                     AND lifecycle = 'active' AND deleted = 0
+                f"""SELECT r.* FROM decision_records AS r
+                   WHERE r.review_date IS NOT NULL AND r.review_date <= ?
+                     AND r.lifecycle = 'active' AND r.deleted = 0 AND {_NOT_AN_ACTION}
                    ORDER BY review_date, created_at, id""",
                 (date.today().isoformat(),),
             ).fetchall()
@@ -485,8 +497,9 @@ class DecisionRecordService:
         bounded_offset = max(0, int(offset))
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT * FROM decision_records WHERE deleted = 0
-                   ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?""",
+                f"""SELECT r.* FROM decision_records AS r
+                   WHERE r.deleted = 0 AND {_NOT_AN_ACTION}
+                   ORDER BY r.created_at DESC, r.id DESC LIMIT ? OFFSET ?""",
                 (bounded_limit, bounded_offset),
             ).fetchall()
         return [self._record_dict(row) for row in rows]
@@ -516,9 +529,9 @@ class DecisionRecordService:
                 return []
             with self._db._connection() as conn:
                 rows = conn.execute(
-                    """SELECT r.*, 0 AS relevance
+                    f"""SELECT r.*, 0 AS relevance
                        FROM decision_records AS r
-                       WHERE r.deleted = 0
+                       WHERE r.deleted = 0 AND {_NOT_AN_ACTION}
                        ORDER BY r.updated_at DESC, r.id DESC
                        LIMIT ?""",
                     (bounded_limit,),
@@ -550,7 +563,7 @@ class DecisionRecordService:
             rows = conn.execute(
                 f"""SELECT r.*, {relevance} AS relevance
                     FROM decision_records AS r
-                    WHERE r.deleted = 0 AND {' AND '.join(predicates)}
+                    WHERE r.deleted = 0 AND {_NOT_AN_ACTION} AND {' AND '.join(predicates)}
                     ORDER BY relevance DESC, r.updated_at DESC, r.id DESC
                     LIMIT ?""",
                 [phrase] * 4 + params + [bounded_limit],

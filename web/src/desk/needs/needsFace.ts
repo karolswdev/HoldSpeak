@@ -30,7 +30,9 @@ export type NeedVerbs =
   | { kind: "review"; ref: string }
   | { kind: "commitment"; next: "name_owner" | "set_date" | "mark_done"; cardId: string }
   | { kind: "name-owner"; cardId: string | null; openRef: string | null }
-  | { kind: "confirm"; proposalId: string; projectId: string }
+  /** A proposal from a meeting, Project or not: Confirm / Defer / Decline
+   *  (PHILO-15 08, B03). */
+  | { kind: "confirm"; proposalId: string; projectId: string; meetingId: string }
   | { kind: "door"; card: NonNullable<DoorCardLike> }
   | { kind: "link"; url: string }
   | { kind: "summarize"; meetingId: string }
@@ -325,10 +327,20 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       // The act the proposal asks for: decide it, or confirm it.
       lamp: { label: item.proposalKind === "decision" ? "TO DECIDE" : "TO CONFIRM", tone: "warn" },
       group: "rest",
-      verbs: { kind: "confirm", proposalId: String(item.proposalId), projectId: String(item.projectId ?? "") },
+      verbs: {
+        kind: "confirm",
+        proposalId: String(item.proposalId),
+        projectId: String(item.projectId ?? ""),
+        meetingId: String(item.meetingId ?? ""),
+      },
       // The row opens the Room with this proposal selected (A2b), not the drawer.
       proposal: item.projectId
         ? { projectId: String(item.projectId), proposalId: String(item.proposalId) }
+        : undefined,
+      // PHILO-15 08: a meeting in no Project has no Room; its row opens the
+      // meeting on its Review wing, where the proposal is.
+      openRef: !item.projectId && item.meetingId
+        ? `meeting:${String(item.meetingId)}?view=review`
         : undefined,
     };
   }

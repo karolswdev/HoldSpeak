@@ -7,9 +7,13 @@
 // Laws this face obeys (settled design D1 / D2(d)):
 //  - coverage rides above the answer, in every state, and is N OF N only
 //    when the read is complete;
-//  - one verb per row (`Confirm`); `Edit`, `Dismiss` and `Open evidence`
-//    live in the row's MORE disclosure; `Open evidence` is withheld when
-//    the proposal has no span (a verb that does nothing is a lie);
+//  - PHILO-15 08 (B03): three verbs with words on every open row
+//    (`Confirm`, `Defer`, `Decline`), Project or not; `Edit` and `Open
+//    evidence` live in the row's MORE disclosure; `Open evidence` is
+//    withheld when the proposal has no span (a verb that does nothing is a
+//    lie);
+//  - PHILO-15 08 (B02): the head names what each extractor did (RAN · n,
+//    SKIPPED · why, FAILED · why); NOT RUN only when nothing ran;
 //  - the three claim axes are three chips: PROPOSAL · <support> ·
 //    <acceptance>; an unknown owner/due is a typed unknown chip until
 //    supplied; an edited sentence reads LINKED · EDITED;
@@ -18,7 +22,7 @@
 //  - `ATTEMPT n · SAME JOB` and `ALREADY KEPT n` (a verb that opens the kept
 //    rows) on the processing face — the owner's Q5 verdict;
 //  - Enter on a row fires Confirm, Escape closes MORE, Backspace never
-//    dismisses; Confirm leaves the row in place, Dismiss moves focus on.
+//    declines; Confirm leaves the row in place, Decline moves focus on.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
@@ -45,6 +49,8 @@ import {
   isPriorRevision,
   jobHandle,
   extractionRan,
+  extractorToken,
+  isDeferred,
   reviewHeadline,
   spanLabel,
   stamp,
@@ -182,6 +188,28 @@ export function MeetingReview({
     }
   };
 
+  // PHILO-15 08: Defer leaves the row open here and takes it off Needs
+  // until tomorrow.
+  const defer = async (p: ReviewProposal) => {
+    if (busyId) return;
+    setBusyId(p.id);
+    try {
+      const result = await apiFetch<Record<string, unknown>>(
+        `/api/proposals/${encodeURIComponent(p.id)}/defer`,
+        { method: "POST", json: {} },
+      );
+      const durable = result.proposal as Record<string, unknown> | undefined;
+      if (durable) replace(decodeReviewProposal(durable));
+      setReceipt({ text: `DEFERRED ${nowStamp()} · UNTIL TOMORROW` });
+      onChanged?.();
+      focusRow(p.id);
+    } catch (reason) {
+      setReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const dismiss = async (p: ReviewProposal) => {
     if (busyId || !model) return;
     setBusyId(p.id);
@@ -196,7 +224,7 @@ export function MeetingReview({
       const durable = result.proposal as Record<string, unknown> | undefined;
       if (durable) replace(decodeReviewProposal(durable));
       setOpenId((current) => (current === p.id ? null : current));
-      setReceipt({ text: `DISMISSED ${nowStamp()}` });
+      setReceipt({ text: `DECLINED ${nowStamp()}` });
       onChanged?.();
       focusRow(successor);
     } catch (reason) {
@@ -364,14 +392,29 @@ export function MeetingReview({
     );
     if (dismissed > 0) {
       headTokens.push(
-        <span key="dismissed" className="surface-token">{`DISMISSED ${dismissed}`}</span>,
+        <span key="dismissed" className="surface-token">{`DECLINED ${dismissed}`}</span>,
       );
     }
     // HS-201-04: `EXTRACTED <time>` reads as "extraction ran at 12:04",
-    // but its stamp is the SUMMARY's completion. Only a real proposal
-    // proves the chain ran; otherwise the token says NOT RUN.
+    // but its stamp is the SUMMARY's completion. PHILO-15 08: each
+    // extractor says what it did; NOT RUN only when no extractor ran.
     const extracted = stamp(model.extractedAt);
-    if (!extractionRan(model)) {
+    if (model.extractors.length > 0) {
+      for (const x of model.extractors) {
+        headTokens.push(
+          <span
+            key={`x-${x.id}`}
+            className="surface-token"
+            data-testid="review-extractor"
+            data-extractor={x.id}
+            data-state={x.state}
+            data-tone={x.state === "failed" || x.state === "not_extracted" ? "warn" : undefined}
+          >
+            {extractorToken(x)}
+          </span>,
+        );
+      }
+    } else if (!extractionRan(model)) {
       headTokens.push(
         <span key="not-run" className="surface-token" data-testid="review-not-run">
           PROPOSALS · NOT RUN
@@ -453,6 +496,9 @@ export function MeetingReview({
           </span>
         )}
         <span className="surface-token" data-chip data-testid="review-kind">PROPOSAL</span>
+        {isDeferred(p) ? (
+          <span className="surface-token" data-chip data-testid="review-deferred">DEFERRED</span>
+        ) : null}
         <span data-testid="review-support" data-support={p.support}>
           <StateChip state={support.state} label={support.label} />
         </span>
@@ -520,7 +566,7 @@ export function MeetingReview({
             <span className="surface-token" data-testid="review-kept">
               {p.state === "confirmed"
                 ? `${p.kind === "decision" ? "DECISION RECORD" : "COMMITMENT"} · KEPT ${stamp(p.decidedAt)}`
-                : `DISMISSED ${stamp(p.decidedAt)}`}
+                : `DECLINED ${stamp(p.decidedAt)}`}
             </span>
           ) : (
             <>
@@ -545,6 +591,24 @@ export function MeetingReview({
               >
                 Confirm
               </Button>
+              <Button
+                variant="ghost"
+                dense
+                disabled={Boolean(busyId)}
+                aria-label={`Defer: ${p.text}`}
+                onClick={() => void defer(p)}
+                data-testid="review-defer"
+              >
+                Defer
+              </Button>
+              <ConfirmVerb
+                label="Decline"
+                confirmLabel="Decline?"
+                ariaLabel={`Decline: ${p.text}`}
+                busy={busy}
+                onConfirm={() => void dismiss(p)}
+                data-testid="review-decline"
+              />
             </>
           )}
         </div>
@@ -562,13 +626,6 @@ export function MeetingReview({
             >
               Edit
             </Button>
-            <ConfirmVerb
-              label="Dismiss"
-              confirmLabel="Dismiss?"
-              ariaLabel={`Dismiss: ${p.text}`}
-              busy={busy}
-              onConfirm={() => void dismiss(p)}
-            />
             {p.segmentIndex != null ? (
               <Button
                 variant="ghost"
@@ -628,7 +685,7 @@ export function MeetingReview({
             ? p.kind === "decision"
               ? "ACCEPTED"
               : "NOT COMPLETE"
-            : "DISMISSED"
+            : "DECLINED"
         }
       />
       {p.jobAttempt != null ? (
@@ -659,7 +716,7 @@ export function MeetingReview({
       <span className="meetings-review-text">{p.text}</span>
       <StateChip
         state={p.state === "confirmed" ? "success" : p.state === "dismissed" ? "idle" : "warning"}
-        label={p.state === "confirmed" ? "ACCEPTED" : p.state === "dismissed" ? "DISMISSED" : "UNREVIEWED"}
+        label={p.state === "confirmed" ? "ACCEPTED" : p.state === "dismissed" ? "DECLINED" : "UNREVIEWED"}
       />
       {p.state === "proposed" ? (
         <Button variant="ghost" dense aria-label={`Confirm: ${p.text}`} loading={busyId === p.id} onClick={() => void confirm(p)} data-testid="review-prior-confirm">

@@ -129,7 +129,8 @@ def starter_claims() -> list[str]:
     * ``language``: a chat model (the same base claim the Models library
       gives a connected provider).
     * ``result_schema:<meeting intel schema>``: meeting analysis
-      (``meeting.deferred_analysis`` and ``meeting.live_analysis`` share it).
+      (``meeting.deferred_analysis`` and ``meeting.live_analysis``; one claim
+      each since PHILO-15 08 gave the summary its decisions).
       The same-device engine (``inference_targets._local_pinned_engine`` ->
       ``MeetingIntel(provider="local")``) sends that schema to llama.cpp as a
       JSON-schema grammar, so the output is constrained to it.
@@ -140,10 +141,11 @@ def starter_claims() -> list[str]:
     ``agent.plan``/``agent.tool_turn``, ``calendar.snapshot_extract`` (image)
     and the speech classifiers.  No profile in the product claims those today.
     """
-    from ..inference_capabilities import process_inference_capability_registry
+    from ..inference_capabilities import meeting_analysis_claims
 
-    schema = process_inference_capability_registry().require("meeting.deferred_analysis")
-    return ["language", f"result_schema:{schema.output_schema_sha256}"]
+    # PHILO-15 08: the deferred summary and the live window now have two
+    # result shapes; the one executor serves both.
+    return ["language", *meeting_analysis_claims()]
 
 
 def file_ref(model: PinnedModel) -> str:

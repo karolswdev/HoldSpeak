@@ -65,6 +65,8 @@ export type AftercareSignal = {
   title: string;
   openTotal: number;
   decidedTotal: number;
+  /** PHILO-15 08 (B13): proposals still to review; 0 withholds the verb. */
+  proposalTotal: number;
 };
 
 let aftercare: AftercareSignal | null = null;
@@ -94,6 +96,7 @@ export function publishAftercare(frame: unknown): AftercareSignal | null {
       (typeof data.title === "string" && data.title.trim()) || "Meeting with no title",
     openTotal: Number(data.open_total ?? 0) || 0,
     decidedTotal: Number(data.decided_total ?? 0) || 0,
+    proposalTotal: Number(data.proposal_total ?? 0) || 0,
   };
   publish(signal);
   return signal;
