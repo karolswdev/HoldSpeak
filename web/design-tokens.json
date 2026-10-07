@@ -1439,6 +1439,16 @@
         "doc": "PHILO-14 B1 (the object species): the bevel grammar: a well you type or drop into, and a pressed gadget, sits sunken"
       },
       {
+        "name": "--bevel-raised-soft",
+        "value": "inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark-soft)",
+        "doc": "PHILO-14 B2 (the material pass): the light bevel of a filter token: you press it, but it is no plate and never looks like a wing"
+      },
+      {
+        "name": "--bevel-sunken-soft",
+        "value": "inset 1px 1px 0 var(--bevel-dark-soft), inset -1px -1px 0 var(--bevel-light)",
+        "doc": "PHILO-14 B2 (the material pass): the active filter token, sunken at the light strength"
+      },
+      {
         "name": "--lamp-ok",
         "value": "var(--ok)",
         "doc": "PHILO-14 B1 (the object species): IconLamp tone ok: done, checks pass"

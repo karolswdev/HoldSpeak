@@ -117,6 +117,9 @@ _WINDOW_FACTS = """() => {
   for (const root of scope) for (const el of root.querySelectorAll('.surface-state-chip, .surface-token, .gadget-fact, .surface-receipt, .surface-ledger-count, .surface-disclosure-label')) {
     const r = el.getBoundingClientRect();
     if (!r.width || !txt(el)) continue;
+    // PHILO-14 B2: a lead StateChip with no word is a lamp (its glyph is
+    // not drawn); a lamp is no text, so it has no text contrast to read.
+    if (/^[●○✓✗⚠—↻ℹ«»·▸▾◆?]$/.test(txt(el))) continue;
     let paint = el;
     const inner = [...el.querySelectorAll('*')].filter(c => [...c.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()));
     if (!([...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) && inner.length) paint = inner[inner.length - 1];

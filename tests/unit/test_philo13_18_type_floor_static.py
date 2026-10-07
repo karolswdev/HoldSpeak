@@ -38,7 +38,6 @@ GLYPHS = {
     ("desk/surface/gadgets.css", ".gadget-fold > summary::before"),  # ▸ caret; the summary is the word
     ("desk/surface/patterns/disclosure.css", ".surface-disclosure-caret"),  # ▸ aria-hidden; the label is the word
     ("desk/surface/patterns/progress-plan.css", ".surface-plan-step-icon"),  # ○ ● ✓ ✗ aria-hidden; the step label
-    ("desk/surface/patterns/state-chip.css", ".surface-state-chip-icon"),  # state icon aria-hidden; the chip label
     ("desk/surface/surface-footer.css", ".desk-next .ledger-filter-well .desk-mic"),  # image-only mic
     ("desk/surface/surface.css", ".surface-edit-mic .desk-mic, .desk-next .surface-edit-mic .desk-mic"),  # image-only mic
 }

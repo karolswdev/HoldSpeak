@@ -361,6 +361,8 @@
   --wb-raised-soft: inset 1px 1px 0 rgba(255, 255, 255, 0.36), inset -1px -1px 0 rgba(0, 0, 0, 0.25); /* PHILO-13-11 title bar B (owner pick 2026-10-03): a gadget cell, the raised bevel at half strength */
   --bevel-raised: inset 1px 1px 0 var(--bevel-light-strong), inset -1px -1px 0 var(--bevel-dark); /* PHILO-14 B1 (the object species): the bevel grammar: a control you click (a gadget, a sort header, a plate) LOOKS raised */
   --bevel-sunken: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light-strong); /* PHILO-14 B1 (the object species): the bevel grammar: a well you type or drop into, and a pressed gadget, sits sunken */
+  --bevel-raised-soft: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark-soft); /* PHILO-14 B2 (the material pass): the light bevel of a filter token: you press it, but it is no plate and never looks like a wing */
+  --bevel-sunken-soft: inset 1px 1px 0 var(--bevel-dark-soft), inset -1px -1px 0 var(--bevel-light); /* PHILO-14 B2 (the material pass): the active filter token, sunken at the light strength */
   --lamp-ok: var(--ok); /* PHILO-14 B1 (the object species): IconLamp tone ok: done, checks pass */
   --lamp-warn: var(--warn-signal); /* PHILO-14 B1 (the object species): IconLamp tone warn: a held call, due, to review */
   --lamp-fail: var(--danger); /* PHILO-14 B1 (the object species): IconLamp tone fail: a failed check, a stopped agent */

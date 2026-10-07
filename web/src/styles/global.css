@@ -142,7 +142,11 @@ small {
   border: 1px solid var(--border);
   border-radius: 0;
   background: var(--surface-2);
-  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  /* PHILO-14 B2 (the material pass): a plated Button is a control you
+     press, so it wears the raised bevel of the grammar (contract.md "The
+     bevel grammar"); pressed, it sinks (below). Ghost and danger inherit
+     it: every plated variant LOOKS clickable (UX-CANON D). */
+  box-shadow: var(--bevel-raised);
   color: var(--text);
   font: 600 12px / 1 var(--font-mono);
   cursor: pointer;
@@ -214,7 +218,7 @@ small {
   border-color: var(--accent-ink);
   background: var(--accent-ink);
   color: var(--accent-on);
-  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.22), inset -1px -1px 0 rgba(0,0,0,0.3);
+  box-shadow: var(--bevel-raised);
 }
 
 :where(.btn--secondary) {
@@ -234,8 +238,16 @@ small {
 }
 
 :where(.btn):active:not(:disabled) {
-  /* HS-96-03: one pressed grammar — a 1px settle, compositor-only. */
+  /* HS-96-03: one pressed grammar — a 1px settle, compositor-only.
+     PHILO-14 B2: and the bevel inverts — a pressed Button sits sunken. */
   transform: translateY(1px);
+  box-shadow: var(--bevel-sunken);
+}
+
+/* PHILO-14 B2: a Button held down by its state (aria-pressed) also sits
+   sunken, as the grammar's pressed gadget. */
+:where(.btn)[aria-pressed="true"]:not(:disabled) {
+  box-shadow: var(--bevel-sunken);
 }
 
 :where(.btn--primary, .btn.primary):active:not(:disabled) {
@@ -679,21 +691,32 @@ input[type="file"]::file-selector-button:hover {
  * type-scale ruling lightens `--text-faint`, and `--disabled-fg` IS
  * `--text-faint`, so gray alone had to stop carrying it. The enabled
  * faces are untouched: the guard only steps aside for `:disabled`. */
-.btn--secondary:not(:disabled),
-.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled) {
+/* PHILO-14 B2 (the material pass): the glass inner highlight (a 7 %
+ * top line, and a soft drop on the primary) drew the plated Button FLAT:
+ * "every verb a flat grey box" (PROPOSAL §2). The fill and the bottom
+ * stroke stay; the face wears the raised bevel of the grammar, and it
+ * sinks while pressed (`:active`) or held (`aria-pressed`). These rules
+ * carry real specificity, so the pressed state is restated here. A filter
+ * token is no plate: FilterTokens draws its own light material
+ * (filter-tokens.css), so it steps out of this block. */
+.btn--secondary:not(:disabled):not(.surface-filter-token),
+.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled):not(.surface-filter-token) {
   background: var(--wash-2);
   border: 1px solid var(--wash-2);
   border-bottom-color: var(--shade-1);
-  box-shadow: inset 0 1px 0 var(--gleam-1);
+  box-shadow: var(--bevel-raised);
 }
-.btn--secondary:not(:disabled):hover,
-.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled):hover {
+.btn--secondary:not(:disabled):not(.surface-filter-token):hover,
+.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled):not(.surface-filter-token):hover {
   background: var(--gleam-2);
 }
 .btn--primary:not(:disabled) {
-  box-shadow:
-    inset 0 1px 0 var(--gleam-3),
-    0 1px 2px var(--shade-1);
+  box-shadow: var(--bevel-raised);
+}
+.btn--secondary:not(:disabled):not(.surface-filter-token):is(:active, [aria-pressed="true"]),
+.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled):not(.surface-filter-token):is(:active, [aria-pressed="true"]),
+.btn--primary:not(:disabled):is(:active, [aria-pressed="true"]) {
+  box-shadow: var(--bevel-sunken);
 }
 .desk-next :where(select, textarea, input):not([type="checkbox"]):not([type="radio"]),
 :where(.input, .select, .hs-control) {

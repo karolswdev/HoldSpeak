@@ -1,28 +1,50 @@
-/* ── StateChip: the closed-vocabulary status chip ──
-   Inline-flex, mono, uppercase, etched — consistent with .gadget-chip.
-   Always icon + text (never color alone, a11y law). */
+/* ── StateChip: the closed-vocabulary status, drawn as a LAMP ──
+   PHILO-14 B2 (the material pass; PROPOSAL §3 Movement B "chips become
+   lamps"): a state is one lit square and its word, never a plated chip.
+   No border, no well, no etch: the word is the fact, the lamp is the
+   state. The lamp is the icon slot: a 10 px square with the raised bevel
+   of the grammar, lit in the state's tone (the IconLamp tones). The glyph
+   stays in the DOM (aria-hidden, the caller's data) and is not drawn; the
+   word, or the row's own name beside a lead lamp, carries the meaning. */
 
 .desk-next .surface-state-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   min-height: 18px;
-  padding: 0 8px;
-  border: 1px solid var(--border);
+  padding: 0;
+  border: 0;
   border-radius: 0;
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
+  background: transparent;
+  box-shadow: none;
   font: 600 var(--desk-surface-label-size) / 1 var(--font-mono); /* PHILO-7-02: the 12 px floor (was 10px) */
   letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   white-space: nowrap;
+  /* The lamp leads and draws no text, so the chip has no text baseline of
+     its own to sit on: it sits on the middle of its line. */
+  vertical-align: middle;
 }
 
 .surface-state-chip-icon {
   flex: none;
-  font-size: 11px;
-  line-height: 1;
+  width: 10px;
+  height: 10px;
+  overflow: hidden;
+  font-size: 0;
+  line-height: 0;
+  color: transparent;
+  background: var(--wash-2);
+  box-shadow: var(--bevel-raised), 0 0 0 1px var(--wb-ink);
 }
+
+/* The lamp tones: lit for a state that is true now, unlit (the wash) for
+   idle and unreachable. */
+.desk-next .surface-state-chip[data-state="active"] .surface-state-chip-icon { background: var(--lamp-ask); }
+.desk-next .surface-state-chip[data-state="working"] .surface-state-chip-icon { background: var(--lamp-info); }
+.desk-next .surface-state-chip[data-state="success"] .surface-state-chip-icon { background: var(--lamp-ok); }
+.desk-next .surface-state-chip[data-state="warning"] .surface-state-chip-icon { background: var(--lamp-warn); }
+.desk-next .surface-state-chip[data-state="failure"] .surface-state-chip-icon { background: var(--lamp-fail); }
 
 /* ── Tone colors: each state maps to a design-token color ── */
 
@@ -50,7 +72,7 @@
   color: var(--text-faint);
 }
 
-/* ── Working state: pulsing icon (respects reduced motion) ── */
+/* ── Working state: the lamp pulses (respects reduced motion) ── */
 
 .desk-next .surface-state-chip[data-state="working"] .surface-state-chip-icon {
   animation: surface-chip-pulse var(--duration-medium) ease-in-out infinite alternate;
