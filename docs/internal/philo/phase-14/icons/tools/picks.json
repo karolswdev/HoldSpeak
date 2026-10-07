@@ -1,0 +1,5 @@
+{
+ "D1": {"project-drawer":"b1:0","smart-drawer":"b2:4","conductor-drawer":"b2:7","parked-drawer":"b1:3","meeting":"b1:4","note":"b1:5","decision":"b1:6","action-item":"b1:7","artifact":"b1:8","pull-request":"b1:9","repository":"b1:10","person":"b1:11","people-ledger":"b1:12","agent-claude-code":"b1:13","agent-codex":"b2:13","thread":"b1:15","memory":"b2:0"},
+ "D2": {"project-drawer":"b1:0","smart-drawer":"b2:5","conductor-drawer":"b2:6","parked-drawer":"b1:3","meeting":"b2:11","note":"b1:5","decision":"b1:6","action-item":"b1:7","artifact":"b1:8","pull-request":"b1:9","repository":"b1:10","person":"b1:11","people-ledger":"b1:12","agent-claude-code":"b1:13","agent-codex":"b1:14","thread":"b1:15","memory":"b2:0"},
+ "D3": {"project-drawer":"b1:0","smart-drawer":"b2:6","conductor-drawer":"b2:7","parked-drawer":"b1:3","meeting":"b1:4","note":"b1:5","decision":"b1:6","action-item":"b1:7","artifact":"b1:8","pull-request":"b2:9","repository":"b1:10","person":"b2:14","people-ledger":"b1:12","agent-claude-code":"b1:13","agent-codex":"b2:13","thread":"b1:15","memory":"b2:2"}
+}
