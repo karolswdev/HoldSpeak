@@ -360,13 +360,19 @@ def reconcile_backup_follows_bookmarks_repair() -> bool:
             conn.close()
 
 
-def gate_preview_preserves_short_secret_marker() -> bool:
+def gate_preview_redacts_then_truncates() -> bool:
+    import hashlib
+
     from holdspeak.coder_gate import redact_args
 
     payload = {"command": "TOKEN=philo-synthetic-marker echo ok"}
     canonical = json.dumps(payload, separators=(",", ":"), sort_keys=True, ensure_ascii=False)
-    _digest, head = redact_args(payload)
-    return head == canonical and "philo-synthetic-marker" in head
+    digest, head = redact_args(payload)
+    return (
+        digest == hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        and "philo-synthetic-marker" not in head
+        and len(head) <= 120
+    )
 
 
 def kernel_parent_snapshot_retains_prompt() -> bool:
@@ -404,12 +410,12 @@ CLAIMS: list[Claim] = [
     ),
     Claim(
         doc="docs/SECURITY_MODEL.md",
-        anchor="Gate argument previews truncate canonical JSON. They do not remove secrets.",
-        sentence="Gate argument previews truncate canonical JSON; they do not remove secrets.",
-        predicate=gate_preview_preserves_short_secret_marker,
+        anchor="Gate argument previews redact secrets, then truncate canonical JSON.",
+        sentence="Gate argument previews redact secrets, then truncate canonical JSON; the hash is over the real input.",
+        predicate=gate_preview_redacts_then_truncates,
         state="holds",
-        truth="A short synthetic tool input survives intact in the returned prefix, including its credential-like marker.",
-        story="PHILO-1-04",
+        truth="A synthetic NAME=value credential is gone from the returned 120-character head, and the digest is the SHA-256 of the unredacted canonical JSON.",
+        story="PHILO-14-C0",
     ),
     Claim(
         doc="docs/STORAGE_AND_MIGRATIONS.md",
