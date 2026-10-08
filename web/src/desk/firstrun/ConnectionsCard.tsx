@@ -79,9 +79,10 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
                     </span>
                     {/* PHILO-15 B31: the same words Settings › Connections reads. */}
                     {row.state === "signed_in" && !row.connected ? (
-                      <span data-testid="firstrun-connection-signin">
+                      <span data-testid="firstrun-connection-signin" className="firstrun-signin">
                         <StateChip
                           state="success"
+                          wrap
                           label={stateWords("signed_in", row.provider, { account: { login: row.account } })}
                         />
                       </span>

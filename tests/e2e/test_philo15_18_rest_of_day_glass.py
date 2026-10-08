@@ -115,6 +115,31 @@ class TestOneSignInTruth:
                 card.scroll_into_view_if_needed()
                 _shot(page, "b31-firstrun-connections", width)
                 card_text = card.inner_text()
+                # Astra r2: visible, not just in the DOM. The sign-in chip and
+                # every word in it lie inside the card's box, nothing clipped.
+                geo = card.get_by_test_id("firstrun-connection-signin").evaluate("""(el) => {
+                  const card = el.closest('[data-testid=firstrun-connections]').getBoundingClientRect();
+                  const chip = el.querySelector('.surface-state-chip');
+                  const r = chip.getBoundingClientRect();
+                  const range = document.createRange(); range.selectNodeContents(chip);
+                  const words = [...range.getClientRects()].map((b) => [b.left, b.right, b.top, b.bottom]);
+                  let clipped = false;
+                  // Clipped = a clipping ancestor's box does not hold the chip's box.
+                  for (let a = chip.parentElement; a; a = a.parentElement) {
+                    const cs = getComputedStyle(a);
+                    if (/(hidden|clip|auto|scroll)/.test(cs.overflowX + cs.overflowY)) {
+                      const b = a.getBoundingClientRect();
+                      if (r.left < b.left - 1 || r.right > b.right + 1 || r.top < b.top - 1 || r.bottom > b.bottom + 1) clipped = true;
+                    }
+                    if (a.matches('[data-testid=firstrun-connections]')) break;
+                  }
+                  return { card: [card.left, card.right], chip: [r.left, r.right], words, clipped,
+                           text: chip.innerText };
+                }""")
+                assert not geo["clipped"], geo
+                assert geo["chip"][0] >= geo["card"][0] - 1 and geo["chip"][1] <= geo["card"][1] + 1, geo
+                assert all(w[0] >= geo["card"][0] - 1 and w[1] <= geo["card"][1] + 1 for w in geo["words"]), geo
+                assert "GH CONFIG" in " ".join(geo["text"].upper().split()), geo
 
                 _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
                 page.evaluate("""() => sessionStorage.setItem("hs.desk.staged-surface-open",

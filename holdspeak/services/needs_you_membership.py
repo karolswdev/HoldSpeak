@@ -546,6 +546,10 @@ def _is_me(
         return False
     if _is_self(owner, personal_names):
         return True
+    # PHILO-15 B57 (Astra r2 P1): his own FIRST name, exactly, is him: it
+    # never depends on the People store or on the one-edit guard below.
+    if _is_own_first_name(owner, personal_names):
+        return True
     # PHILO-15 B57 (Astra r1 P1): a one-edit mishearing counts as him ONLY
     # when no Person on the desk has that exact name. ``known_people`` is
     # None when the People store could not be read: then nobody can prove
@@ -556,6 +560,18 @@ def _is_me(
     if said in set(known_people):
         return False
     return sounds_like_owner(owner, personal_names)
+
+
+def _is_own_first_name(owner: Any, personal_names: Iterable[str]) -> bool:
+    """A bare one-word owner that IS the first word of his name or an alias."""
+    said = " ".join(str(owner or "").split()).casefold()
+    if not said or " " in said:
+        return False
+    for raw in personal_names:
+        name = " ".join(str(raw or "").split()).casefold()
+        if name and name.split(" ")[0] == said:
+            return True
+    return False
 
 
 #: The shortest name a one-letter mishearing may match (PHILO-15 B57): a
