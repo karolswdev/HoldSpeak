@@ -354,9 +354,10 @@ def test_hs145_connect_calendar_affordance_and_quiet_state(
             # Connect calendar verb. Re-anchored there (inherited A5 drift,
             # recorded on #958).
             _open_needs_drawer(page)
-            cal_row = page.locator(".needs-drawer [data-object-id='source:calendar']")
+            # PHILO-15-09 (B11): the offer is in the drawer's foot, not a row.
+            cal_row = page.locator(".needs-drawer [data-testid='needs-no-calendar']")
             cal_row.wait_for(timeout=10_000)
-            assert "NOT CONNECTED" in (cal_row.text_content() or "")
+            assert "NO CALENDAR" in (cal_row.text_content() or "")
             connect_btn = cal_row.locator("[data-verb='connect-calendar']")
             assert connect_btn.is_visible()
             _assert_clean(page, errors)
@@ -431,7 +432,7 @@ def test_hs145_connect_calendar_affordance_and_quiet_state(
             headline = page.locator(".needs-drawer [data-testid='arrival-display']").text_content() or ""
             assert "nothing needs you" in headline.lower(), \
                 f"Headline should read 'Nothing needs you' on quiet calendar: {headline}"
-            assert page.locator("[data-object-id='source:calendar']").count() == 0
+            assert page.locator("[data-testid='needs-no-calendar']").count() == 0
             assert page.locator("[data-verb='connect-calendar']").count() == 0
             assert page.locator(".needs-drawer [data-testid='needs-next']").count() == 0
             _assert_clean(page, errors)

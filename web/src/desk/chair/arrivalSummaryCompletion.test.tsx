@@ -175,7 +175,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     render(<ChairHome />);
 
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("RETRYING"));
-    expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 need you");
+    expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 needs you");
     expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
       "LAST ATTEMPT · THIS DEVICE",
     );
@@ -194,7 +194,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       "LAST ATTEMPT · THIS DEVICE",
     );
     expectProducerCause(failed);
-    expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 need you");
+    expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 needs you");
     expect(screen.queryByText("Nothing needs you")).toBeNull();
   });
 
@@ -492,7 +492,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expectProducerCause(snapshots[2]);
     // PHILO-13-03: the head is the one needs-you snapshot, which re-reads on
     // the same debounced desk_changed frame; it follows within the wait.
-    await waitFor(() => expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 need you"));
+    await waitFor(() => expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 needs you"));
     expect(screen.queryAllByTestId("arrival-run-intel")).toHaveLength(0);
     expect(mockedApiFetch.mock.calls.filter(([path]) => String(path).endsWith("/intelligence/run"))).toHaveLength(1);
   });

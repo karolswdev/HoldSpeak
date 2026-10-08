@@ -8,7 +8,7 @@
 import type { Items } from "../api";
 import { qualifiedRef } from "../api";
 import { isInFlight, liveAgentSessions, type AgentFlight, type CoderSessionRow } from "../agentFlights";
-import { objectSprite, type ObjectTone } from "../surface";
+import { needYouWords, objectSprite, type ObjectTone } from "../surface";
 import { spriteUrl } from "../sprites";
 import { allObjects } from "../world";
 import type { ScreenTarget } from "./open";
@@ -186,7 +186,7 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
     name: "Needs you",
     ...sprites("smart", "needs-you"),
     lamp: input.needsCount > 0 ? { tone: "ask", count: input.needsCount } : undefined,
-    ariaExtra: input.needsCount > 0 ? `${input.needsCount} need you` : undefined,
+    ariaExtra: input.needsCount > 0 ? needYouWords(input.needsCount) : undefined,
     target: { type: "needs" },
   });
   out.push({

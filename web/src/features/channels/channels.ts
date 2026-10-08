@@ -353,6 +353,18 @@ export function stamp(iso: string | null | undefined): string {
 }
 
 /** The short target token for a destination row. Literal: keeps its case. */
+/** PHILO-15 lane 12 (B23): what a SEND well row and its preview call the
+ *  target. A folder reads by its NAME, the last two folder names
+ *  (`HoldSpeak/Sent`), never a path; the `~` token stays on hover
+ *  (`targetToken`) and in Settings ▸ Destinations. Other channels read their
+ *  token. */
+export function targetName(channel: Channel, t: Record<string, string | number>): string {
+  if (channel !== "file") return targetToken(channel, t);
+  const path = String(t.display || t.folder || "");
+  const names = path.split("/").filter((n) => n && n !== "~");
+  return names.slice(-2).join("/") || path;
+}
+
 export function targetToken(channel: Channel, t: Record<string, string | number>): string {
   switch (channel) {
     // The hub's short token (home_paths.py, the known HOME as ~); never a
@@ -448,7 +460,8 @@ export function previewOf(
   switch (channel) {
     case "file":
       return {
-        fields: [{ label: "Folder", value: String(t.folder ?? "") },
+        // B23: the folder by its name, never the raw path (`/private/var/...`).
+        fields: [{ label: "Folder", value: targetName("file", t) },
           ...(filePath ? [{ label: "File", value: baseName(filePath) }] : [])],
         body_kind: "markdown", body,
       };

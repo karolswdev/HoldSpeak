@@ -250,9 +250,13 @@ def _parked_brief_person_overlay(db: Any, brief: Any) -> dict[str, Any]:
 
 def _brief_markdown(brief: Any) -> str:
     """The Brief as a sent document: the stored items only, no People data."""
+    from .monday_brief_service import brief_period_label, brief_title
+
+    period = brief_period_label(brief.period_start, brief.period_end)
     lines = [
-        "# Monday Brief",
-        f"Period: {_format_period(brief.period_start, brief.period_end)}",
+        f"# {brief_title(brief.period_end)}",
+        # PHILO-15-09 (B04, ruling 3): the one range the window head says.
+        *([f"Period: {period}"] if period else []),
         f"Generated: {_time_text(brief.generated_at)}",
         "",
         str(brief.headline or "").strip(),
@@ -326,9 +330,12 @@ class _MondayBriefSource:
 
         brief = MondayBriefService(db).get_by_id(source_id)
         if brief is None:
-            raise _document_not_found("Monday brief", source_id)
+            raise _document_not_found("brief", source_id)
+        from .monday_brief_service import brief_title
+
         period = _date_text(brief.period_end) or _date_text(brief.generated_at)
-        title = f"Monday Brief — {period}" if period else "Monday Brief"
+        # PHILO-15-09 (B04, ruling 2): the brief's own weekday and date.
+        title = brief_title(brief.period_end or brief.generated_at)
         return _make_document(
             ref=f"{self.kind}:{brief.id}",
             title=title,
