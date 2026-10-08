@@ -505,6 +505,10 @@ def execute_worktree_remove(
 # ── the launch ledger (durable launch records) ───────────────────────
 
 
+class LaunchLedgerNotRead(RuntimeError):
+    """The launch file exists and could not be read (its reason)."""
+
+
 class LaunchLedger:
     """Launch records at ``~/.holdspeak/agent_launches.json``
     (``launches_schema: 1``, newest :data:`LAUNCH_LEDGER_MAX_ROWS`
@@ -514,17 +518,38 @@ class LaunchLedger:
     def __init__(self, path: Optional[Path] = None) -> None:
         self._path = Path(path) if path else DEFAULT_LAUNCHES_PATH
         self._records: list[dict[str, Any]] = []
+        #: PHILO-15 lane 19 (Astra r1): why the last read of a file that
+        #: EXISTS could not be used; None when it was read (or is absent).
+        self.not_read: Optional[str] = None
         self._load()
 
     def _load(self) -> None:
+        if not self._path.exists():
+            self.not_read = None
+            return
         try:
             raw = json.loads(self._path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
+        except OSError as exc:
+            self.not_read = f"the launch file cannot be read ({exc.strerror or type(exc).__name__})"
             return
-        if isinstance(raw, dict) and raw.get("launches_schema") == LAUNCHES_SCHEMA:
-            rows = raw.get("launches")
-            if isinstance(rows, list):
-                self._records = [dict(row) for row in rows if isinstance(row, dict)]
+        except ValueError:
+            self.not_read = "the launch file is not valid JSON"
+            return
+        rows = raw.get("launches") if isinstance(raw, dict) else None
+        if not (isinstance(raw, dict) and raw.get("launches_schema") == LAUNCHES_SCHEMA
+                and isinstance(rows, list)):
+            self.not_read = "the launch file has an unknown format"
+            return
+        self.not_read = None
+        self._records = [dict(row) for row in rows if isinstance(row, dict)]
+
+    def read_all(self) -> list[dict[str, Any]]:
+        """Every launch record, read now; a file that exists and cannot be
+        read raises :class:`LaunchLedgerNotRead` (never an empty list)."""
+        self._load()
+        if self.not_read:
+            raise LaunchLedgerNotRead(self.not_read)
+        return [dict(row) for row in self._records]
 
     def _save(self) -> None:
         doc = {

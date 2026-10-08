@@ -6,10 +6,14 @@ Rehearsal 2 (docs/internal/philo/phase-15/rehearsal-2/BOUNCES-C.md):
   B59  the open Brief window kept yesterday's Brief until a page reload.
   B73  rows carried JSON details and UTC ISO stamps.
 
-The rig opens the Brief window on the morning's Brief, then makes the day
-through the real producers (a meeting decision confirmed, an action done, an
-update published and sent to the HoldSpeak folder) and the scheduled write
-lands while the window is open. The window shows the new rows with no reload.
+The rig opens the Brief window on YESTERDAY's Brief, makes the day through
+the real producers (a meeting decision confirmed, an action done, an update
+published and sent to the HoldSpeak folder), then runs the REAL cadence tick
+(the scheduled path: regenerate=False, key-free) while the window is open.
+Today's Brief replaces yesterday's on the glass with no reload; its first three
+rows are the merge, the sent update and the PR (the order ruling), and the
+key-free Brief says NOT READ · People (the People store exists, its key is
+not asked for with nobody at the desk).
 The agent launch is the one record written as the follow-through leaves it
 (the launch, its PR and the merge are fenced through the real producers in
 tests/unit/test_philo15_19_brief_carries_the_day.py).
@@ -90,18 +94,30 @@ def _the_day(page: Any, ledger_path: Path) -> None:
     })
 
 
-def _scheduled_write() -> None:
-    """The cadence tick's write (key-free, read-only principal), announced
-    as the tick announces it: one desk_changed frame."""
+def _yesterdays_brief() -> None:
+    """Yesterday's Brief is the one on the desk this morning."""
     from holdspeak.db import get_database
     from holdspeak.principals import Principal, PrincipalKind
-    from holdspeak.runtime.announce_scope import announce_writes
-    from holdspeak.runtime.cadence import BRIEF_PRINCIPAL_IDENTITY
     from holdspeak.services.monday_brief_service import MondayBriefService
+    from holdspeak.timestamps import local_wall
 
-    with announce_writes("cadence", "tick"):
-        MondayBriefService(get_database()).generate(
-            Principal(PrincipalKind.BRIEF_CONDUCTOR, BRIEF_PRINCIPAL_IDENTITY), people_reads=False)
+    MondayBriefService(get_database()).generate(
+        Principal(PrincipalKind.OWNER, "karol"), now=local_wall() - timedelta(days=1))
+
+
+def _cadence_tick() -> None:
+    """The hub's own scheduled tick, unchanged (regenerate=False, key-free,
+    announced as one desk_changed frame). Only its hour is set to 00:00 so
+    the rig runs at any time of day."""
+    from holdspeak.config import Config
+    from holdspeak.runtime.cadence import CadenceMixin
+
+    class _Hub(CadenceMixin):
+        def __init__(self) -> None:
+            self.config = Config()
+            self.config.cadence.brief_hour = 0
+
+    _Hub()._cadence_tick_once()
 
 
 def _shell(page: Any, name: str) -> Any:
@@ -156,23 +172,37 @@ class TestTheBriefCarriesTheDay:
             errors: list[str] = []
             page.on("pageerror", lambda e: errors.append(str(e)[:200]))
             try:
+                from holdspeak.people import production_people_store
+
+                production_people_store().initialize()
+                _yesterdays_brief()
                 page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
                 _normal_chair(page)
                 page.locator("[data-testid=desk-screen]").wait_for()
-                # The morning's Brief, before the day; the window is open on it.
-                _api(page, "POST", "/api/brief/generate", token=TOKEN)
+                # Yesterday's Brief is on the desk at load; the window opens on it.
                 _menu_pick(page, width, "Brief")
                 brief = _shell(page, "Brief")
-                brief.get_by_test_id("arrival-brief-receipt").wait_for()
-                assert "Decision confirmed" not in brief.inner_text()
+                brief.get_by_test_id("arrival-brief").first.wait_for()
+                yesterday = _api(page, "GET", "/api/brief/latest", token=TOKEN)
+                title = brief.locator(".desk-window-title").first
+                page.wait_for_function(
+                    "([el, want]) => el.innerText.trim() === want",
+                    arg=[title.element_handle(), yesterday["title"]], timeout=15_000)
 
                 _the_day(page, self.ledger)
-                _scheduled_write()
+                _cadence_tick()
 
                 # B59: no reload. The window re-reads on the hub's frame.
-                brief.locator("[data-testid=arrival-brief-row]",
-                              has_text="Decision confirmed: Squash merges only").wait_for(timeout=15_000)
                 latest = _api(page, "GET", "/api/brief/latest", token=TOKEN)
+                assert latest["id"] != yesterday["id"], "the tick made today's Brief"
+                page.wait_for_function(
+                    "([el, want]) => el.innerText.trim() === want",
+                    arg=[title.element_handle(), latest["title"]], timeout=15_000)
+                brief.locator("[data-testid=arrival-brief-row]", has_text="PR merged").wait_for()
+                # ORDER RULING: the three rows on the face.
+                shown = [r.split("\n")[0].strip() for r in
+                         brief.get_by_test_id("arrival-brief-row").all_inner_texts()]
+                assert [t.split(": ", 1)[0] for t in shown] == ["PR merged", "Update sent", "PR opened"], shown
                 rows = {i["text"]: i for items in latest["sections"].values() for i in items}
                 for wanted in (
                     "Decision confirmed: Squash merges only on the rehearsal repository",
@@ -181,15 +211,20 @@ class TestTheBriefCarriesTheDay:
                     "PR opened: Add CODEOWNERS naming the owner (PR #4)",
                     "PR merged: Add CODEOWNERS naming the owner (PR #4)",
                     "Update sent: Rehearsal repo hygiene",
+                    "Meeting recorded: Repo hygiene sync",
+                    "Project added: Rehearsal repo hygiene",
                 ):
                     assert wanted in rows, (wanted, sorted(rows))
                     assert re.search(r"\d{2}:\d{2}$", rows[wanted]["detail"] or ""), rows[wanted]
                 # B73: no JSON, no id, no UTC stamp in any row.
                 for text, item in rows.items():
                     assert not _RAW.search(text) and not _RAW.search(item.get("detail") or ""), item
-                row = brief.locator("[data-testid=arrival-brief-row]", has_text="Decision confirmed")
+                # One honest NOT READ row: the key-free Brief did not read People.
+                assert any(t.startswith("NOT READ · People") for t in rows), sorted(rows)
+                row = brief.locator("[data-testid=arrival-brief-row]", has_text="Update sent")
                 detail = row.get_by_test_id("arrival-brief-row-detail")
-                assert re.fullmatch(r"\d{2}:\d{2}", detail.inner_text().strip()), detail.inner_text()
+                assert re.fullmatch(r"HoldSpeak folder · \d{2}:\d{2}", detail.inner_text().strip()), \
+                    detail.inner_text()
                 assert not _RAW.search(brief.inner_text()), brief.inner_text()
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"brief-window-after-write-{width}.png"))
@@ -200,6 +235,11 @@ class TestTheBriefCarriesTheDay:
                 full.wait_for()
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"brief-full-{width}.png"))
+                intel = page.locator(".desk-window[aria-label='Intelligence']")
+                unread = intel.get_by_text("NOT READ · People", exact=False).first
+                unread.scroll_into_view_if_needed()
+                _settle(page)
+                page.screenshot(path=str(SHOTS / f"brief-full-not-read-{width}.png"))
                 assert not errors, errors
             finally:
                 browser.close()

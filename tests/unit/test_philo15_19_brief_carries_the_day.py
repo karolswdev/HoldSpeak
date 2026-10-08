@@ -211,6 +211,11 @@ def test_the_brief_carries_the_decision_the_agent_its_pr_the_merge_and_the_done_
             assert item.source_ref == ref, (text, item.source_ref)
             assert item.detail and item.detail.endswith(clock), (text, item.detail)
         assert "Claude Code" in rows["Agent launched: Fix the login timeout"].detail
+        # ORDER RULING (Astra r1, 2): merge, (sent update), opened PR,
+        # confirmed decision, done action, launch, then the rest.
+        kinds = [item.text.split(": ", 1)[0] for item in brief.sections["changed"]]
+        assert kinds[:5] == ["PR merged", "PR opened", "Decision confirmed", "Action done",
+                             "Agent launched"], kinds
         # Said once: the merge and the close are one row each.
         assert sum(t.startswith("PR merged: ") for t in rows) == 1
         assert not any(t.startswith("Follow-up completed: Fix the login timeout") for t in rows)
@@ -246,16 +251,110 @@ def test_the_scheduled_brief_carries_the_day_key_free(tmp_path, db, monkeypatch)
         rig.tmux.ended = True
 
 
-def test_an_unreadable_launch_ledger_is_a_not_read_row(tmp_path, db) -> None:
-    class _Broken:
-        def list(self):
-            raise OSError("agent_launches.json: permission denied")
+def test_a_corrupt_launch_file_is_a_not_read_row(tmp_path, db, monkeypatch) -> None:
+    """Astra r1 (1): the REAL ledger over a REAL corrupt file, through the
+    real service's default ledger: NOT READ · Agents with the reason."""
+    from holdspeak.delivery.factory_launch import LaunchLedger, LaunchLedgerNotRead
 
-    brief = MondayBriefService(db, launch_ledger=_Broken()).generate(OWNER)
+    bad = tmp_path / "agent_launches.json"
+    bad.write_text('{"launches_schema": 1, "launches": [', encoding="utf-8")
+    monkeypatch.setattr("holdspeak.delivery.factory_launch.DEFAULT_LAUNCHES_PATH", bad)
+    assert LaunchLedger().list() == [], "the old read still answers empty"
+    with pytest.raises(LaunchLedgerNotRead):
+        LaunchLedger().read_all()
+
+    brief = MondayBriefService(db).generate(OWNER)
     waiting = {item.text: item for item in brief.sections["waiting"]}
     assert "NOT READ · Agents" in waiting, sorted(waiting)
-    assert "permission denied" in (waiting["NOT READ · Agents"].detail or "")
+    assert waiting["NOT READ · Agents"].detail == "the launch file is not valid JSON"
     assert "source not read" in brief.headline
+
+    # An absent file is no launches, not a NOT READ row.
+    bad.unlink()
+    brief = MondayBriefService(db).generate(OWNER)
+    assert not any(i.text == "NOT READ · Agents" for i in brief.sections["waiting"])
+
+
+def test_a_corrupt_room_merge_record_is_a_not_read_row(tmp_path, db) -> None:
+    """Astra r1 (1): a Room merge record that cannot be read, written through
+    the real observation repository, is a NOT READ row, never a silent zero."""
+    from holdspeak.delivery.follow_through import MERGED_OBSERVATION
+
+    db.project_observations.insert_observation(
+        observation_id="pobs-corrupt-19", project_id=PROJECT, source_id="github:acme/railsproj",
+        observation_kind=MERGED_OBSERVATION, subject_ref="https://github.com/acme/railsproj/pull/9",
+        source_version="v1", observed_at=_z(BRIEF_NOW - timedelta(minutes=5)),
+        fact_json='{"event": "pr_merged", "pr_url": ', content_hash="x",
+    )
+    brief = MondayBriefService(db, launch_ledger=_NoLaunches()).generate(OWNER, now=BRIEF_NOW)
+    waiting = {item.text: item for item in brief.sections["waiting"]}
+    assert "NOT READ · Room merges" in waiting, sorted(waiting)
+    assert waiting["NOT READ · Room merges"].detail == "1 merge record cannot be read"
+
+
+# ── Astra r1 (3, 4): the opened stamp backfills; discovery retires ──
+
+
+def test_a_pr_kept_before_the_stamp_gains_gh_created_at(tmp_path, db, monkeypatch) -> None:
+    rig = _rig(tmp_path, db, monkeypatch)
+    try:
+        launch_id = rig.result["launch_id"]
+        rig.gh.prs = [_pr(rig.branch, rig.head, "OPEN")]
+        assert rig.observer.poll_open_prs(OWNER)["found"]
+        # The upgrade state: a launch record written before this change kept
+        # its PR and has no opened stamp.
+        state = dict(rig.launches.get(launch_id)["follow_through"])
+        state.pop("pr_opened_at")
+        rig.launches.update(launch_id, follow_through=state)
+        receipt = rig.observer.poll_open_prs(OWNER)
+        assert receipt["polled"] and receipt["discovered"] == []
+        assert rig.launches.get(launch_id)["follow_through"]["pr_opened_at"] == _z(OPENED)
+    finally:
+        rig.tmux.ended = True
+
+
+def test_discovery_retires_when_the_branch_is_gone(tmp_path, db, monkeypatch) -> None:
+    import subprocess
+
+    rig = _rig(tmp_path, db, monkeypatch)
+    try:
+        launch_id = rig.result["launch_id"]
+        subprocess.run(["git", "-C", str(rig.repo), "worktree", "remove", "--force", str(rig.worktree)],
+                       check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(rig.repo), "branch", "-D", rig.branch],
+                       check=True, capture_output=True)
+        receipt = rig.observer.poll_open_prs(OWNER)
+        assert receipt["retired"] == [launch_id]
+        follow = rig.launches.get(launch_id)["follow_through"]
+        assert (follow["discovery"], follow["discovery_reason"]) == ("retired", "branch_gone")
+        calls = len(rig.gh.calls)
+        assert rig.observer.poll_open_prs(OWNER)["discovered"] == []
+        assert len(rig.gh.calls) == calls, "a retired launch reads no gh"
+    finally:
+        rig.tmux.ended = True
+
+
+def test_a_working_agent_with_no_pr_is_not_retired(tmp_path, db, monkeypatch) -> None:
+    rig = _rig(tmp_path, db, monkeypatch)
+    try:
+        for _ in range(3):
+            assert "retired" not in rig.observer.poll_open_prs(OWNER)
+        assert len(rig.gh.calls) == 3, "one branch list per poll while the branch exists"
+    finally:
+        rig.tmux.ended = True
+
+
+def test_a_stopped_or_done_launch_is_not_discovered(tmp_path, db, monkeypatch) -> None:
+    rig = _rig(tmp_path, db, monkeypatch)
+    try:
+        launch_id = rig.result["launch_id"]
+        rig.launches.update(launch_id, stopped={"at": "2026-10-07T23:00:00Z"})
+        assert rig.observer.poll_open_prs(OWNER)["discovered"] == []
+        rig.launches.update(launch_id, stopped=None, follow_through={"done": True})
+        assert rig.observer.poll_open_prs(OWNER)["discovered"] == []
+        assert rig.gh.calls == []
+    finally:
+        rig.tmux.ended = True
 
 
 # ── B73: plain words ─────────────────────────────────────────────────
@@ -328,6 +427,12 @@ def test_the_sent_update_is_a_brief_row_that_opens_its_room(hub) -> None:
     assert re.fullmatch(r"HoldSpeak folder · \d{2}:\d{2}", row["detail"]), row["detail"]
     # One row per update: sent, not also "published".
     assert "Update published: Rehearsal repo hygiene" not in rows
+    # Astra r1 (2, 6): the sent update leads the recorded/added rows; the
+    # project row carries its time.
+    changed = [i["text"] for i in brief["sections"]["changed"]]
+    assert changed.index("Update sent: Rehearsal repo hygiene") < changed.index(
+        "Project added: Rehearsal repo hygiene"), changed
+    assert re.fullmatch(r"\d{2}:\d{2}", rows["Project added: Rehearsal repo hygiene"]["detail"])
 
 
 # ── B59: the first tick at start ─────────────────────────────────────
@@ -389,3 +494,68 @@ def test_a_hub_started_before_the_briefs_hour_waits(tmp_path) -> None:
     ):
         runtime._cadence_loop()
     assert runtime.ticks == 0 and _briefs(db) == 0
+
+
+# ── Astra r1 (5): the REAL next-morning transition, through the cadence ──
+
+
+@pytest.fixture
+def denver(monkeypatch):
+    """The hub's zone, pinned: the rehearsal's machine (America/Denver)."""
+    import time
+
+    monkeypatch.setenv("TZ", "America/Denver")
+    time.tzset()
+    yield
+    monkeypatch.undo()
+    time.tzset()
+
+
+def test_the_next_mornings_scheduled_brief_carries_last_evening(tmp_path, db, monkeypatch, denver) -> None:
+    """The cadence path untouched (regenerate=False, key-free): Wednesday's
+    Brief exists; the evening's decision and done action land after it; the
+    clock passes midnight (no Brief before its hour) and 07:10 Thursday makes
+    Thursday's Brief, which covers Wednesday 17:00 through 07:10."""
+    from holdspeak.services.follow_through_service import FollowThroughService
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    monkeypatch.setattr("holdspeak.delivery.factory_launch.DEFAULT_LAUNCHES_PATH", tmp_path / "none.json")
+    wed = datetime(2026, 10, 7)
+
+    def at(hour: int, minute: int, days: int = 0) -> datetime:
+        return wed + timedelta(days=days, hours=hour, minutes=minute)
+
+    runtime = _runtime()
+
+    def tick(moment: datetime) -> None:
+        with patch("holdspeak.db.get_database", return_value=db), patch(
+            "holdspeak.runtime.cadence.local_now", return_value=moment
+        ):
+            runtime._cadence_tick_body()
+
+    tick(at(7, 10))  # Wednesday's scheduled Brief
+    assert _briefs(db) == 1
+
+    decided = at(21, 14).astimezone()
+    monkeypatch.setattr("holdspeak.db.proposals.utc_now_iso", lambda: _z(decided))
+    monkeypatch.setattr("holdspeak.services.follow_through_service.utc_now_iso",
+                        lambda: _z(at(21, 40).astimezone()))
+    proposal = db.proposals.create_proposal(
+        meeting_id="m1", project_id=PROJECT, kind="decision",
+        text="Squash merges only on the rehearsal repository", source_plugin="rehearsal")
+    ProposalBridgeService(db).confirm_proposal(OWNER, proposal.id)
+    FollowThroughService(db).complete(OWNER, "ai_1", "done", {})
+
+    tick(at(23, 59))
+    tick(at(0, 30, days=1))  # past midnight, before the Brief's hour
+    assert _briefs(db) == 1
+    tick(at(7, 10, days=1))
+    assert _briefs(db) == 2
+
+    latest = MondayBriefService(db).get_latest(OWNER)
+    assert latest.period_end.startswith("2026-10-08T07:10")
+    assert latest.period_start.startswith("2026-10-07T17:00")
+    rows = _rows(latest)
+    assert rows["Decision confirmed: Squash merges only on the rehearsal repository"].detail == "Wed 21:14"
+    assert rows["Action done: Fix the login timeout"].detail == "Wed 21:40"
+    _assert_plain(latest)

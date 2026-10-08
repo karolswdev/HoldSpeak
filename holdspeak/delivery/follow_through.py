@@ -270,11 +270,30 @@ class FollowThroughObserver:
 
     @staticmethod
     def _unpaired(record: Mapping[str, Any]) -> bool:
-        """PHILO-15 B65: a followed launch that has no PR yet."""
+        """PHILO-15 B65: a followed launch that has no PR yet, and whose
+        discovery was not retired (its branch is gone)."""
         if not FollowThroughObserver._followed(record) or record.get("stopped"):
             return False
-        pr = (record.get("follow_through") or {}).get("pr") or {}
+        follow = record.get("follow_through") or {}
+        if follow.get("discovery") == "retired":
+            return False
+        pr = follow.get("pr") or {}
         return not (pr.get("number") and pr.get("url"))
+
+    def _branch_gone(self, launch: Mapping[str, Any], branch: str) -> bool:
+        """Astra r1 (4): the launch's branch no longer exists in its clone
+        (one local ``git rev-parse``, no egress). A branch that was never
+        pushed still exists locally, so this never retires a working agent."""
+        source = self._registry.get(str(launch.get("source_id") or ""))
+        if source is None or not source.primary_path:
+            return False
+        run = self._git or _git_runner
+        try:
+            proc = run(["git", "-C", str(source.primary_path), "rev-parse", "--verify", "--quiet",
+                        f"refs/heads/{branch}"])
+        except Exception:
+            return False
+        return proc.returncode != 0
 
     def _poll_open_prs(self, principal: Any) -> dict[str, Any]:
         receipt: dict[str, Any] = {
@@ -323,6 +342,13 @@ class FollowThroughObserver:
                 rows, gh = lister(source_id, branches[launch_id])
                 receipt["discovered"].append({"launch_id": launch_id, "gh_state": gh, "prs": len(rows)})
                 if gh != "live":
+                    continue
+                if not rows and self._branch_gone(launch, branches[launch_id]):
+                    # No PR and no branch: discovery stops for this launch.
+                    launch["follow_through"] = {**launch["follow_through"], "discovery": "retired",
+                                                "discovery_reason": "branch_gone"}
+                    self._save(launch_id, launch["follow_through"])
+                    receipt.setdefault("retired", []).append(launch_id)
                     continue
             try:
                 self._follow(principal, launch, {source_id: rows}, mode, receipt)
@@ -635,6 +661,10 @@ class FollowThroughObserver:
                 # else the first read that found it), once, for the Brief.
                 state["pr_opened_at"] = str(row.get("created_at") or "") or self._clock().isoformat(
                     timespec="seconds")
+            elif not state.get("pr_opened_at") and row.get("created_at"):
+                # Astra r1 (3): a PR kept before the stamp existed gets gh's
+                # own createdAt on its next read (never the read time).
+                state["pr_opened_at"] = str(row["created_at"])
             state["pr"] = {
                 "url": row.get("url"), "number": row.get("number"),
                 # PHILO-15 B50: the PR's own title, for the lane's PR card.

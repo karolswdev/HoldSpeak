@@ -106,6 +106,12 @@ def _failure_words(error_code: Any, error: Any) -> str | None:
     return code.replace("_", " ").capitalize() if code else "Failed"
 
 
+def _day_of(value: Any) -> datetime.date | None:
+    """The local day of a window bound (the Brief's own day)."""
+    moment = _local_moment(value)
+    return moment.date() if moment is not None else None
+
+
 def _join(*parts: Any) -> str | None:
     return " · ".join(str(p) for p in parts if p) or None
 
@@ -353,6 +359,8 @@ _RETRY_WINDOW_SECONDS = 5 * 60
 # HS-132-08: a recorded meeting is the most material thing a week contains, so
 # it leads Changed ahead of the observer's method-level receipts (priority 0).
 _MEETING_PRIORITY = 50
+#: PHILO-15 lane 19: the top of the day's rows in Changed (see _DAY_PRIORITY).
+_DAY_TOP = 110
 SHELF_STATES = ("acknowledged", "deferred")
 
 
@@ -459,6 +467,7 @@ _UNREAD_SOURCE_WORDS = {
     "door": "Door",
     "follow_through": "Follow-through",
     "needs_you": "Needs you",
+    "room_merges": "Room merges",
     "updates": "Updates",
 }
 #: The source_ref prefix of a NOT READ row; any such row makes a brief PARTIAL.
@@ -511,6 +520,10 @@ class MondayBrief:
     shelf: dict[str, str] = field(default_factory=dict)
     # HS-171-06: kernel operation ledger (not counted as items).
     ledger: LedgerSummary = field(default_factory=LedgerSummary)
+
+
+class _RoomNotRead(RuntimeError):
+    """A Room source the Brief could not read (its reason)."""
 
 
 def _agent_word(profile_id: Any) -> str | None:
@@ -930,6 +943,7 @@ class MondayBriefService:
             items.append(BriefItem(
                 id=f"brief-item-{uuid.uuid4().hex}", section="changed",
                 text=f"Decision made: {title}", source_ref=f"desk_decision:{row['id']}",
+                detail=_when_words(row["created_at"], _day_of(window_end)),
                 priority=_MEETING_PRIORITY - 1, created_at=str(row["created_at"]),
             ))
         for row in sorted(projects, key=lambda r: (str(r["created_at"]), str(r["id"]))):
@@ -939,6 +953,7 @@ class MondayBriefService:
             items.append(BriefItem(
                 id=f"brief-item-{uuid.uuid4().hex}", section="changed",
                 text=f"Project added: {name}", source_ref=f"project:{row['id']}",
+                detail=_when_words(row["created_at"], _day_of(window_end)),
                 priority=_MEETING_PRIORITY - 2, created_at=str(row["created_at"]),
             ))
         people = self._people_added(window_start, window_end)
@@ -953,13 +968,16 @@ class MondayBriefService:
     # PHILO-15 B58: the rows of the day. Each has the title and the local
     # time, and a source_ref the face opens (``refOpener``).
     _DAY_PRIORITY = {
-        "Decision confirmed": _MEETING_PRIORITY - 4,
-        "PR merged": _MEETING_PRIORITY - 5,
-        "Update sent": _MEETING_PRIORITY - 6,
-        "Update published": _MEETING_PRIORITY - 6,
-        "Action done": _MEETING_PRIORITY - 7,
-        "PR opened": _MEETING_PRIORITY - 8,
-        "Agent launched": _MEETING_PRIORITY - 9,
+        # PHILO-15 lane 19 ORDER RULING: these lead Changed, above the
+        # recorded / added / requested rows, so the Chair's three rows are the
+        # merge, the sent update and the PR.
+        "PR merged": _DAY_TOP,
+        "Update sent": _DAY_TOP - 1,
+        "Update published": _DAY_TOP - 1,
+        "PR opened": _DAY_TOP - 2,
+        "Decision confirmed": _DAY_TOP - 3,
+        "Action done": _DAY_TOP - 4,
+        "Agent launched": _DAY_TOP - 5,
     }
     #: How an update left (``project_update_deliveries.channel``).
     _CHANNEL_WORDS = {
@@ -1024,6 +1042,10 @@ class MondayBriefService:
             merged_urls = set()
         try:
             self._collect_room_merges(items, inside, today, merged_urls)
+        except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
+            log.warning("brief: the Room merges were not read: %s", exc)
+            unread.append(_not_read_item("room_merges", exc))
+        try:
             self._collect_updates(items, inside, today, lo, hi)
         except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
             log.warning("brief: the Room updates were not read: %s", exc)
@@ -1042,7 +1064,10 @@ class MondayBriefService:
 
             ledger = LaunchLedger()
         merged: set[str] = set()
-        for launch in sorted(ledger.list(), key=lambda r: str(r.get("launched_at") or "")):
+        # A file that exists and cannot be read raises (NOT READ · Agents).
+        read = getattr(ledger, "read_all", None)
+        records = read() if callable(read) else ledger.list()
+        for launch in sorted(records, key=lambda r: str(r.get("launched_at") or "")):
             if str(launch.get("state") or "") in UNLAUNCHED_STATES:
                 continue
             launch_id = str(launch.get("launch_id") or "")
@@ -1082,10 +1107,14 @@ class MondayBriefService:
                 (MERGED_OBSERVATION,),
             ).fetchall()
         seen = set(said)
+        unreadable = 0
         for row in sorted(rows, key=lambda r: str(r["observed_at"])):
             try:
                 fact = json.loads(row["fact_json"] or "{}")
             except (TypeError, ValueError):
+                fact = None
+            if not isinstance(fact, dict):
+                unreadable += 1
                 continue
             url = str(fact.get("pr_url") or "")
             stamp = fact.get("merged_at") or row["observed_at"]
@@ -1096,6 +1125,11 @@ class MondayBriefService:
             title = f"{fact.get('title') or 'Pull request'}" + (f" (PR #{number})" if number else "")
             items.append(self._day_item("PR merged", title, stamp, f"project:{row['project_id']}",
                                         today, str(row["name"] or "").strip()))
+        if unreadable:
+            # Astra r1 (1): a merge record that cannot be read is never a
+            # silent zero.
+            raise _RoomNotRead(
+                f"{unreadable} merge record{'' if unreadable == 1 else 's'} cannot be read")
 
     def _collect_updates(self, items: list[BriefItem], inside: Callable[[Any], bool],
                          today: Any, lo: str, hi: str) -> None:
@@ -1341,10 +1375,28 @@ class MondayBriefService:
                 ),
                 reverse=True,
             )
+        if section == "changed":
+            # PHILO-15 lane 19 ruling: by kind (priority), newest first
+            # within a kind.
+            return sorted(
+                items,
+                key=lambda item: (
+                    -item.priority,
+                    -MondayBriefService._instant_sort_value(item.created_at),
+                    item.source_ref or "",
+                    item.id,
+                ),
+            )
         return sorted(
             items,
             key=lambda item: (-item.priority, item.source_ref or "", item.id),
         )
+
+    @staticmethod
+    def _instant_sort_value(created_at: str | None) -> float:
+        """Any stored stamp shape as epoch seconds (unknown: oldest)."""
+        stamp = parse_stamp(created_at) if created_at else None
+        return stamp.timestamp() if stamp is not None else float("-inf")
 
     @staticmethod
     def _created_at_sort_value(created_at: str | None) -> float:
@@ -1519,6 +1571,8 @@ class MondayBriefService:
                     section="changed",
                     text=text,
                     detail=detail,
+                    created_at=datetime.datetime.fromtimestamp(
+                        float(outcome["timestamp"]), datetime.timezone.utc).isoformat(),
                     source_ref=(
                         f"pipeline:{first['correlation_id']}"
                         if first["correlation_id"]
@@ -1568,6 +1622,10 @@ class MondayBriefService:
             actions = int(row["action_count"] or 0)
             if actions:
                 parts.append(f"{actions} action item{'' if actions == 1 else 's'}")
+            # PHILO-15 lane 19 (Astra r1, 6): the meeting row carries its time.
+            when = _when_words(row["window_at"], _day_of(window_end))
+            if when:
+                parts.append(when)
             items.append(
                 BriefItem(
                     id=f"brief-item-{uuid.uuid4().hex}",
@@ -1576,6 +1634,7 @@ class MondayBriefService:
                     detail=" · ".join(parts) or None,
                     source_ref=f"meeting:{row['id']}",
                     priority=_MEETING_PRIORITY,
+                    created_at=str(row["window_at"]),
                 )
             )
         return items
@@ -2327,6 +2386,9 @@ class MondayBriefService:
             )
         sections["decisions"] = MondayBriefService._sort_section(
             "decisions", sections["decisions"]
+        )
+        sections["changed"] = MondayBriefService._sort_section(
+            "changed", sections["changed"]
         )
         return MondayBrief(
             id=str(row["id"]),
