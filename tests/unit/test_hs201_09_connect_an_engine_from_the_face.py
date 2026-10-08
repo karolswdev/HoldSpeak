@@ -321,7 +321,9 @@ def test_apply_on_after_off_presents_the_tombstone_revision() -> None:
         db=db,
     )
 
-    body = svc.set_assignment.call_args.args[1]
+    # The first write is the summary selection; PHILO-15 10 adds a second,
+    # the Default for AI work, when none ever existed.
+    body = svc.set_assignment.call_args_list[0].args[1]
     assert body["expected_revision"] == 3, body
     assert result["results"][0]["state"] == "READY", result
 

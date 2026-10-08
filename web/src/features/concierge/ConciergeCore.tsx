@@ -10,6 +10,7 @@ import {
   EgressChip,
   ChoiceCardShell,
   StringGadget,
+  CheckGadget,
   countToken,
 } from "../../desk/surface";
 import { Button } from "../../components/signal/Signal";
@@ -24,6 +25,7 @@ import {
   engineHostLabel,
   engineHostScope,
   GROUP_GLYPHS,
+  receiptLine,
   type ConciergeController,
   type FoundRow,
   type SetRow,
@@ -190,6 +192,11 @@ function SetGroupRow({
             : row.state === "CHECKING" ? <StateChip state="working" label="CHECKING" icon="○" />
             : row.state === "WAITING" ? <StateChip state="warning" label="WAITING" icon="○" />
             : row.state === "NOT_SET" ? <StateChip state="warning" label="NOT SET" />
+            /* PHILO-15 10 (B05): READY only where the whole group runs. */
+            : row.state === "LIMITED" ? <StateChip state="warning" label="LIMITED" />
+            : row.state === "INCOMPATIBLE" ? <StateChip state="failure" label="INCOMPATIBLE" />
+            : row.state === "UNKNOWN" ? <StateChip state="idle" label="UNKNOWN · TRY" />
+            : row.state === "UNREACHABLE" ? <StateChip state="failure" label="FAILED" />
             : null}
           </span>
           {/* Line 2: latency + host */}
@@ -197,6 +204,22 @@ function SetGroupRow({
             {!isOff && latency ? <span className="concierge-token">{latency}</span> : null}
             {!isOff && hostLabel ? <EgressChip label={hostLabel} scope={engine ? engineHostScope(engine) : "local"} /> : null}
           </span>
+          {/* The work it cannot do, in the owner's names, as tokens
+              (Astra r1, finding 5: no sentence, no internal labels). */}
+          {!isOff && (row.state === "LIMITED" || row.state === "INCOMPATIBLE") && row.blocked?.length ? (
+            <span className="concierge-set-line2 concierge-set-limit" data-testid={`concierge-set-limit-${row.group}`}>
+              <span className="concierge-limit-caption">WITHOUT</span>
+              {row.blocked.map((name) => (
+                <span className="concierge-token" key={name}>{name.toUpperCase()}</span>
+              ))}
+            </span>
+          ) : null}
+          {/* A failed group keeps its reason token until the next press. */}
+          {row.state === "UNREACHABLE" && row.failToken ? (
+            <span className="concierge-set-line2" data-testid={`concierge-set-fail-${row.group}`}>
+              <span className="concierge-token" data-tone="danger">{row.failToken}</span>
+            </span>
+          ) : null}
         </span>
       }
       open={row.pickerOpen}
@@ -403,6 +426,127 @@ function ProbeRow({ ctrl }: { ctrl: ConciergeController }) {
   );
 }
 
+/* ── The add-engine row (HS-201-09; PHILO-15 10 reuses it on first run) ──
+   Address + key, Check (the hub asks the server), Use this for summaries.
+   One component, two faces: the Concierge and the first-run Local AI card. */
+
+export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: boolean }) {
+  // The address the Check will contact, named before he presses it.
+  const checkHost = endpointHostPort(ctrl.addEngineUrl).toUpperCase();
+  const checkScope = isLanAddress(ctrl.addEngineUrl) ? "local" : "cloud";
+  return (
+      <div className="concierge-add-engine-row" data-testid="concierge-add-engine-row">
+        <StringGadget
+          label="Server address"
+          caption
+          value={ctrl.addEngineUrl}
+          onChange={ctrl.setAddEngineUrl}
+          /* HS-202-02 — the shipped placeholder was the owner's own
+             private LAN address (04-sober-eye.md, rank 8). It shows
+             the SHAPE of an address now, not a real host. */
+          placeholder="http://<host>:<port>/v1"
+          autoFocus
+        />
+        {/* PHILO-15 02: the optional key (llama.cpp --api-key, a vLLM
+            or LM Studio token). Secret: no mic, never echoed; Check
+            uses it, and Use this for summaries stores it in the
+            profile key store, never in the config file. */}
+        <span className="concierge-add-key" data-testid="concierge-add-key">
+          <StringGadget
+            label="Key"
+            caption
+            type="password"
+            mic={false}
+            value={ctrl.addEngineKey}
+            onChange={ctrl.setAddEngineKey}
+            placeholder="optional"
+          />
+        </span>
+        {/* Astra r1 (finding 4): MY SERVER is the owner's word that this
+            address is his own server; only then does the Check send its
+            1-token request to an address with a key or a name. */}
+        <span data-testid="concierge-add-my-server">
+          <CheckGadget
+            variant="token"
+            label="MY SERVER"
+            checked={ctrl.addEngineMyServer}
+            onChange={ctrl.setAddEngineMyServer}
+          />
+        </span>
+        {/* Article III / UX-CANON A9: the host is named ON the row that
+            leaves the machine, BEFORE the verb that leaves it. */}
+        {checkHost ? (
+          <span data-testid="concierge-add-egress">
+            <EgressChip label={checkHost} scope={checkScope} />
+          </span>
+        ) : null}
+        <Button
+          dense
+          variant="ghost"
+          onClick={ctrl.checkNewEngine}
+          disabled={ctrl.addEngineChecking || !ctrl.addEngineUrl.trim()}
+          loading={ctrl.addEngineState === "CHECKING"}
+          data-testid="concierge-add-check"
+        >
+          Check
+        </Button>
+        {/* The check's answer sits BESIDE its verb — the rehearsal found
+            the refusal 400 px below the button, off-screen (defect 1). */}
+        {ctrl.addEngineState === "READY" ? (
+          <span className="concierge-add-engine-answer">
+            <StateChip state="success" label="READY" icon="●" />
+            <span className="concierge-token" data-testid="concierge-add-model">
+              {ctrl.addEngineModel}
+            </span>
+            {/* PHILO-15 10: the server's own answer about tool calls. */}
+            {ctrl.addEngineTools ? (
+              <span className="concierge-token" data-testid="concierge-add-tools">
+                {ctrl.addEngineTools === "yes"
+                  ? "TOOLS"
+                  : ctrl.addEngineTools === "no"
+                    ? "NO TOOLS"
+                    : "TOOLS UNKNOWN"}
+              </span>
+            ) : null}
+          </span>
+        ) : null}
+        {/* PHILO-15 02: a key answer is a word, not an instruction. */}
+        {ctrl.addEngineState === "KEY_REQUIRED" ? (
+          <span className="concierge-add-engine-answer" data-testid="concierge-add-key-answer" role="alert">
+            <StateChip state="failure" label="KEY REQUIRED" />
+          </span>
+        ) : null}
+        {ctrl.addEngineState === "KEY_INVALID" ? (
+          <span className="concierge-add-engine-answer" data-testid="concierge-add-key-answer">
+            <StateChip state="failure" label="KEY INVALID" />
+            {/* UX-CANON A3: a token, never the server's sentence. */}
+            <span className="concierge-token" data-testid="concierge-add-reason" role="alert">
+              BAD CHARACTERS
+            </span>
+          </span>
+        ) : null}
+        {ctrl.addEngineState === "UNREACHABLE" ? (
+          <span className="concierge-add-engine-answer">
+            <StateChip state="failure" label="UNREACHABLE" />
+            <span className="concierge-add-engine-reason" data-testid="concierge-add-reason" role="alert">
+              {ctrl.addEngineReason}
+            </span>
+          </span>
+        ) : null}
+        <Button
+          dense
+          variant={lead ? "primary" : "secondary"}
+          onClick={ctrl.useNewEngineForSummaries}
+          disabled={ctrl.addEngineChecking || ctrl.addEngineState !== "READY"}
+          loading={ctrl.addEngineChecking && ctrl.addEngineState === "READY"}
+          data-testid="concierge-add-submit"
+        >
+          Use this for summaries
+        </Button>
+      </div>
+  );
+}
+
 /* ── ConciergeCore ── */
 
 export function ConciergeCore({ scope }: CoreProps) {
@@ -414,10 +558,6 @@ export function ConciergeCore({ scope }: CoreProps) {
   const firstPresetId = ctrl.foundRows.find(
     (row) => row.engine.kind === "preset" && row.engine.state !== "READY",
   )?.engine.id;
-  // The address the Check will contact, named before he presses it.
-  const checkHost = endpointHostPort(ctrl.addEngineUrl).toUpperCase();
-  const checkScope = isLanAddress(ctrl.addEngineUrl) ? "local" : "cloud";
-
   useEffect(() => {
     setTitle?.("Models");
   }, [setTitle]);
@@ -446,7 +586,11 @@ export function ConciergeCore({ scope }: CoreProps) {
   // Receipt: `7 GROUPS · 3 ENGINES · 1 WAITING` or `NO ENGINE · SET UP NOTHING`
   // After apply: `3 GROUPS SET · 1 FAILED · <plainReason>`
   const receiptParts: string[] = [];
-  if (ctrl.applyFailures.length > 0) {
+  if (ctrl.applyReceipt) {
+    // PHILO-15 10 (B10): the press's own receipt, on this face; every
+    // failed group as `<GROUP> · <REASON TOKEN>` (Astra r1, finding 3).
+    receiptParts.push(receiptLine(ctrl.applyReceipt));
+  } else if (ctrl.applyFailures.length > 0) {
     const setCount = ctrl.setRows.length - ctrl.applyFailures.length;
     const setToken = countToken(setCount, "GROUP SET", "GROUPS SET");
     const failToken = countToken(ctrl.applyFailures.length, "FAILED");
@@ -459,8 +603,12 @@ export function ConciergeCore({ scope }: CoreProps) {
     const groupsToken = countToken(ctrl.receipt.groups, "GROUP");
     const enginesToken = countToken(ctrl.receipt.engines, "ENGINE");
     const waitingToken = countToken(ctrl.receipt.waiting, "WAITING");
+    const limitedToken = countToken(ctrl.receipt.limited ?? 0, "LIMITED", "LIMITED");
+    const unknownToken = countToken(ctrl.receipt.unknown ?? 0, "UNKNOWN", "UNKNOWN");
     if (groupsToken) receiptParts.push(groupsToken);
     if (enginesToken) receiptParts.push(enginesToken);
+    if (limitedToken) receiptParts.push(limitedToken);
+    if (unknownToken) receiptParts.push(unknownToken);
     if (waitingToken) receiptParts.push(waitingToken);
   }
   const receiptText = receiptParts.length > 0 ? receiptParts.join(" · ") : "NO ENGINE · SET UP NOTHING";
@@ -519,94 +667,7 @@ export function ConciergeCore({ scope }: CoreProps) {
           ))}
         </ul>
         {ctrl.addEngineOpen ? (
-          <div className="concierge-add-engine-row" data-testid="concierge-add-engine-row">
-            <StringGadget
-              label="Server address"
-              caption
-              value={ctrl.addEngineUrl}
-              onChange={ctrl.setAddEngineUrl}
-              /* HS-202-02 — the shipped placeholder was the owner's own
-                 private LAN address (04-sober-eye.md, rank 8). It shows
-                 the SHAPE of an address now, not a real host. */
-              placeholder="http://<host>:<port>/v1"
-              autoFocus
-            />
-            {/* PHILO-15 02: the optional key (llama.cpp --api-key, a vLLM
-                or LM Studio token). Secret: no mic, never echoed; Check
-                uses it, and Use this for summaries stores it in the
-                profile key store, never in the config file. */}
-            <span className="concierge-add-key" data-testid="concierge-add-key">
-              <StringGadget
-                label="Key"
-                caption
-                type="password"
-                mic={false}
-                value={ctrl.addEngineKey}
-                onChange={ctrl.setAddEngineKey}
-                placeholder="optional"
-              />
-            </span>
-            {/* Article III / UX-CANON A9: the host is named ON the row that
-                leaves the machine, BEFORE the verb that leaves it. */}
-            {checkHost ? (
-              <span data-testid="concierge-add-egress">
-                <EgressChip label={checkHost} scope={checkScope} />
-              </span>
-            ) : null}
-            <Button
-              dense
-              variant="ghost"
-              onClick={ctrl.checkNewEngine}
-              disabled={ctrl.addEngineChecking || !ctrl.addEngineUrl.trim()}
-              loading={ctrl.addEngineState === "CHECKING"}
-              data-testid="concierge-add-check"
-            >
-              Check
-            </Button>
-            {/* The check's answer sits BESIDE its verb — the rehearsal found
-                the refusal 400 px below the button, off-screen (defect 1). */}
-            {ctrl.addEngineState === "READY" ? (
-              <span className="concierge-add-engine-answer">
-                <StateChip state="success" label="READY" icon="●" />
-                <span className="concierge-token" data-testid="concierge-add-model">
-                  {ctrl.addEngineModel}
-                </span>
-              </span>
-            ) : null}
-            {/* PHILO-15 02: a key answer is a word, not an instruction. */}
-            {ctrl.addEngineState === "KEY_REQUIRED" ? (
-              <span className="concierge-add-engine-answer" data-testid="concierge-add-key-answer" role="alert">
-                <StateChip state="failure" label="KEY REQUIRED" />
-              </span>
-            ) : null}
-            {ctrl.addEngineState === "KEY_INVALID" ? (
-              <span className="concierge-add-engine-answer" data-testid="concierge-add-key-answer">
-                <StateChip state="failure" label="KEY INVALID" />
-                {/* UX-CANON A3: a token, never the server's sentence. */}
-                <span className="concierge-token" data-testid="concierge-add-reason" role="alert">
-                  BAD CHARACTERS
-                </span>
-              </span>
-            ) : null}
-            {ctrl.addEngineState === "UNREACHABLE" ? (
-              <span className="concierge-add-engine-answer">
-                <StateChip state="failure" label="UNREACHABLE" />
-                <span className="concierge-add-engine-reason" data-testid="concierge-add-reason" role="alert">
-                  {ctrl.addEngineReason}
-                </span>
-              </span>
-            ) : null}
-            <Button
-              dense
-              variant={primary === "add" ? "primary" : "secondary"}
-              onClick={ctrl.useNewEngineForSummaries}
-              disabled={ctrl.addEngineChecking || ctrl.addEngineState !== "READY"}
-              loading={ctrl.addEngineChecking && ctrl.addEngineState === "READY"}
-              data-testid="concierge-add-submit"
-            >
-              Use this for summaries
-            </Button>
-          </div>
+          <AddEngineRow ctrl={ctrl} lead={primary === "add"} />
         ) : (
           /* UX-CANON A1: every verb is the library Button — this was a
              `<span role="button">` until HS-201-09. */

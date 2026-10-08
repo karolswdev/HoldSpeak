@@ -175,7 +175,7 @@ def test_old_v1_manifest_stays_incompatible_while_producer_mints_v2(
         ).fetchone())
     assert new_row == old_row
     profile = library._profiles.get_profile(OWNER, second["provider"]["profile_id"])
-    assert profile["capability_manifest"]["revision"] == "model-library-meeting-adapter-v2"
+    assert profile["capability_manifest"]["revision"] == "model-library-enforced-results-v3"
     assert any(
         claim.startswith("result_schema:")
         for claim in profile["capability_manifest"]["claims"]
@@ -256,6 +256,7 @@ def test_summary_apply_refuses_a_profile_without_an_immutable_revision(
             "capabilityId": "meeting.deferred_analysis",
             "state": "FAILED",
             "code": "concierge_summary_profile_revision_missing",
+            "token": "NO MODEL RECORD",
             "plainReason": "This engine has no immutable model profile revision.",
         }
     ]

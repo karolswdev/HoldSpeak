@@ -217,6 +217,21 @@ BLOCKER_VERB = "[data-testid='needs-row-verb'][data-verb='setup']"
 BLOCKER_ROW = "li.needs-row[data-object-id^='blocker:']"
 
 
+def _receipt_then_close(page: Any) -> None:
+    """PHILO-15 10 (B10): a press keeps the Models window and writes its
+    receipt (`USING · <model> ...`); the owner closes the window."""
+    page.wait_for_function(
+        """() => (document.querySelector("[data-testid='concierge-receipt']")?.textContent || "")
+                   .match(/^USING|\\bOFF\\b|FAILED/)""",
+        timeout=60_000,
+    )
+    page.locator("[data-testid='concierge-cancel']").click()
+    page.wait_for_function(
+        """() => !document.querySelector("[data-testid='concierge-root']")""",
+        timeout=30_000,
+    )
+
+
 def _open_models_from_the_blocker(page: Any) -> None:
     page.locator(BLOCKER_VERB).first.click()
     page.locator("[data-testid='concierge-root']").wait_for(timeout=30_000)
@@ -400,8 +415,9 @@ class TestConnectAnEngineFromTheFace:
             _shot(page, "add-engine-ready", width)
 
             # ── ONE gesture finishes setup (counsel finding 1) ──
-            # No second click: the window must close itself, and the
-            # arrival must drop its SETUP row on the readiness signal.
+            # No second click for the setup itself: the arrival drops its
+            # SETUP row on the readiness signal. PHILO-15 10 (B10): the
+            # window STAYS and says what was set; the owner closes it.
             assert page.locator(BLOCKER_VERB).count() > 0, (
                 "the SETUP row was already gone before the gesture"
             )
@@ -409,10 +425,7 @@ class TestConnectAnEngineFromTheFace:
                 "the blocker row was already gone before the gesture"
             )
             submit.click()
-            page.wait_for_function(
-                """() => !document.querySelector("[data-testid='concierge-root']")""",
-                timeout=60_000,
-            )
+            _receipt_then_close(page)
             page.wait_for_function(
                 """() => !document.querySelector(
                      "[data-testid='needs-row-verb'][data-verb='setup']") &&
@@ -443,10 +456,7 @@ class TestConnectAnEngineFromTheFace:
             apply_verb = page.locator("[data-testid='concierge-apply']")
             assert not apply_verb.is_disabled(), waiting
             apply_verb.click()
-            page.wait_for_function(
-                """() => !document.querySelector("[data-testid='concierge-root']")""",
-                timeout=60_000,
-            )
+            _receipt_then_close(page)
             still = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
                 "summaryAssignment"
             ]
@@ -457,10 +467,7 @@ class TestConnectAnEngineFromTheFace:
             page.locator("[data-testid='concierge-picker-meetings']").click()
             page.locator("[data-testid='concierge-pick-meetings-off']").click()
             page.locator("[data-testid='concierge-apply']").click()
-            page.wait_for_function(
-                """() => !document.querySelector("[data-testid='concierge-root']")""",
-                timeout=60_000,
-            )
+            _receipt_then_close(page)
             off = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
                 "summaryAssignment"
             ]
@@ -507,10 +514,7 @@ class TestConnectAnEngineFromTheFace:
             ).first.click()
             _settle(page)
             page.locator("[data-testid='concierge-apply']").click()
-            page.wait_for_function(
-                """() => !document.querySelector("[data-testid='concierge-root']")""",
-                timeout=60_000,
-            )
+            _receipt_then_close(page)
             back_on = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
                 "summaryAssignment"
             ]

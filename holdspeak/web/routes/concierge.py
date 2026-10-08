@@ -29,7 +29,11 @@ def _safe_error(exc: ServiceError) -> JSONResponse:
     status = int(ctx.get("status", 400))
     if isinstance(exc, ConflictError) and status < 400:
         status = 409
-    return JSONResponse({"code": exc.code, "message": exc.detail}, status_code=status)
+    body: dict[str, Any] = {"code": exc.code, "message": exc.detail}
+    # PHILO-15 10: a refused group is named, so the face can say which one.
+    if ctx.get("group"):
+        body["group"] = str(ctx["group"])
+    return JSONResponse(body, status_code=status)
 
 
 def _live_hub() -> bool:
@@ -99,6 +103,11 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             except Exception as exc:  # pragma: no cover - never break detect
                 log.warning(f"concierge repairs unavailable: {exc}")
                 result["repairs"] = []
+            # PHILO-15 10 (Astra r2, finding 3): the last press's failed
+            # groups, read from its receipt, survive a reload.
+            from ...services.concierge_service import last_apply
+
+            result["lastApply"] = last_apply(db)
             return JSONResponse(result)
         except ServiceError as exc:
             return _safe_error(exc)
@@ -126,7 +135,18 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             home = setup_svc._home_provider() if setup_svc is not None else Path.home()
 
             detection = detect(db=db, home=home, scan_loopback=_live_hub())
-            result = propose(engines=detection["engines"])
+            # PHILO-15 10 (B05): READY only where the assignment authority
+            # serves the whole group; the same check a write runs.
+            fit = None
+            if ctx.inference_assignment_service is not None:
+                from ...services.concierge_service import authority_fit
+
+                fit = authority_fit(
+                    ctx.inference_assignment_service,
+                    getattr(request.state, "principal", None),
+                    db,
+                )
+            result = propose(engines=detection["engines"], fit=fit)
             return JSONResponse(result)
         except ServiceError as exc:
             return _safe_error(exc)
@@ -293,6 +313,10 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
                 "profileId",
                 "profileRevision",
             }
+            # PHILO-15 10 (Astra r1, finding 2): `setDefault` (optional) also
+            # makes this engine the Default for AI work, once, when no
+            # default ever existed (revision-0 rule).
+            set_default = bool(isinstance(body, dict) and body.pop("setDefault", False) is True)
             if not isinstance(body, dict) or set(body) != allowed:
                 raise ServiceError(
                     "concierge_summary_selection_invalid",
@@ -323,6 +347,15 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
                 expected_assignment_revision=body["expectedAssignmentRevision"],
                 command_id=body["commandId"],
             )
+            if set_default and result.get("status") == "succeeded":
+                from ...services.concierge_service import set_default_once
+
+                result["defaultSet"] = set_default_once(
+                    assignment_service=assignment_svc,
+                    principal=request.state.principal,
+                    profile_id=body["profileId"],
+                    profile_revision=body["profileRevision"],
+                )
             return JSONResponse(result)
         except ServiceError as exc:
             return _safe_error(exc)

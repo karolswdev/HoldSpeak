@@ -68,6 +68,54 @@ def _text(value: Any, fallback: str = "Model") -> str:
     return text
 
 
+#: PHILO-15 10 (Astra r1, finding 5): the structured works whose executor
+#: path checks the typed result before the run succeeds, so an
+#: OpenAI-compatible engine can honestly claim their result schemas.
+#: Each line names the check.
+ENFORCED_RESULT_CAPABILITIES: tuple[str, ...] = (
+    # ClosedSemanticAdapter.validate_result (inference_semantic_adapters.py)
+    "meeting.deferred_analysis",
+    "meeting.live_analysis",
+    # _QuestionOrSynthesisAdapter.validate_result (ask_service.py)
+    "thought.interview",
+    # the speech provider's validate_result (speech_session/provider.py)
+    "speech.intent_classify",
+    "speech.target_classify",
+    # a json_schema response_format on every call (thread_practice.py)
+    "chat.guardrail",
+    "chat.compact",
+)
+#: The meeting plugins run through the same ClosedSemanticAdapter
+#: (meeting_session/deferred_bound.py -> adapter_for_frozen_definition).
+ENFORCED_RESULT_PREFIXES: tuple[str, ...] = ("meeting.plugin.",)
+
+
+def enforced_result_claims() -> list[str]:
+    """The result-schema claims (and the plugin class) an executor enforces.
+
+    Not claimed: agent.plan (no producer runs it), agent.tool_turn (needs a
+    qualified tool manifest), calendar.snapshot_extract (needs vision).
+    """
+    from ..inference_capabilities import process_inference_capability_registry
+
+    registry = process_inference_capability_registry()
+    claims: list[str] = []
+    plugins = False
+    for capability in registry._capabilities.values():
+        enforced = capability.id in ENFORCED_RESULT_CAPABILITIES or capability.id.startswith(
+            ENFORCED_RESULT_PREFIXES
+        )
+        if not enforced:
+            continue
+        claim = f"result_schema:{capability.output_schema_sha256}"
+        if claim not in claims:
+            claims.append(claim)
+        plugins = plugins or capability.id.startswith("meeting.plugin.")
+    if plugins:
+        claims.append("meeting_plugin")
+    return claims
+
+
 class ModelLibraryApplicationService:
     """The one owner-only aggregate and availability command boundary."""
 
@@ -395,11 +443,13 @@ class ModelLibraryApplicationService:
         # Meeting result schema.  Carry that adapter support as a manifest
         # claim; readiness remains the separate endpoint observation below.
         if runtime == "openai_compatible_v1" and ModelLibraryApplicationService._provider_readiness_reason(draft["provider_family"]) is None:
-            from ..inference_capabilities import meeting_analysis_claims
-
-            claims.extend(meeting_analysis_claims())
+            # PHILO-15 10 (Astra r1, finding 5): every structured work whose
+            # executor path checks the typed result before it succeeds. It
+            # holds both meeting analysis schemas (PHILO-15 08,
+            # meeting_analysis_claims) among them.
+            claims.extend(enforced_result_claims())
         evidence = {
-            "revision": "model-library-meeting-adapter-v2" if len(claims) > 1 else "model-library-provider-v1",
+            "revision": "model-library-enforced-results-v3" if len(claims) > 1 else "model-library-provider-v1",
             "claims": claims,
         }
         manifest = {**evidence, "sha256": _digest(evidence)}
