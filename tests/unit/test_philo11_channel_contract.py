@@ -172,7 +172,11 @@ def test_inline_send_refuses_changed_preview_then_sends_new_preview(
     with hub.db._connection() as conn:
         if kind == "project_update":
             conn.execute("UPDATE project_updates SET body_md=? WHERE id=?",
-                         ("# Changed source\n\nThe new durable text.\n", ref.split(":", 1)[1]))
+                         # PHILO-15 B64: the reviewed line stays (an update
+                         # with no verified claim is refused); the new words
+                         # change the preview.
+                         ("# Changed source\n\nThe source fixture is durable.\n\nThe new durable text.\n",
+                          ref.split(":", 1)[1]))
         else:
             conn.execute("UPDATE desk_decisions SET decision_markdown=? WHERE id=?",
                          ("Render the changed durable decision.", ref.split(":", 1)[1]))

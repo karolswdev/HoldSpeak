@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 751 (plus static mounts). iOS-consumed: 89. Web-consumed: 583.
+Routes: 752 (plus static mounts). iOS-consumed: 89. Web-consumed: 585.
 
 ## device_audio_ws
 
@@ -940,6 +940,7 @@ Routes: 751 (plus static mounts). iOS-consumed: 89. Web-consumed: 583.
 | GET | `/api/projects/{project_id}/updates` | web |
 | POST | `/api/projects/{project_id}/updates/draft` | web |
 | PUT | `/api/updates/{update_id}` | web |
+| POST | `/api/updates/{update_id}/claims/{span_id}/review` | web |
 | POST | `/api/updates/{update_id}/delivered` | web |
 | GET | `/api/updates/{update_id}/markdown` | web |
 | POST | `/api/updates/{update_id}/publish` | web |
@@ -1024,7 +1025,7 @@ Routes: 751 (plus static mounts). iOS-consumed: 89. Web-consumed: 583.
 | GET | `/api/providers/jira/discover` | server only |
 | POST | `/api/providers/jira/search` | server only |
 | POST | `/api/providers/jira/validate-scope` | server only |
-| POST | `/api/watches/{watch_id}/evaluate` | server only |
+| POST | `/api/watches/{watch_id}/evaluate` | web |
 
 ## web.routes.repositories
 

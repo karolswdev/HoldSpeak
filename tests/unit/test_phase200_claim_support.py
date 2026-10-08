@@ -692,7 +692,14 @@ class TestLegacyMigration:
         saved = svc.save_update(
             OWNER, update_id, body_md="## Progress\n\n- Owner text\n",
         )
-        for claim in json.loads(saved["claims_json"]):
+        claims = json.loads(saved["claims_json"])
+        # PHILO-15 B64 (Astra r1 P1-3): the owner's own new words are a new,
+        # reviewed claim; the migrated claims are left as they were.
+        authored = [c for c in claims if (c.get("support_record") or {}).get("fields") == ["owner_text"]]
+        assert [c["text"] for c in authored] == ["Owner text"]
+        for claim in claims:
+            if claim in authored:
+                continue
             # Nothing was supported, so nothing is invalidated.
             assert "support_record" not in claim
             assert claim["support"] != SUPPORT_SUPPORTED

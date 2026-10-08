@@ -491,6 +491,8 @@ def _channel(hub: Hub, tmp_path: Path) -> tuple[str, str]:
     """PHILO-10-01: a published update and a saved folder destination, through the real registry."""
     pid = _project(hub, "Send shape")
     uid = hub.client.post(f"/api/projects/{pid}/updates/draft", json={}).json()["update"]["id"]
+    # PHILO-15 B64: an update with no verified claim is refused; the owner's saved line is reviewed.
+    hub.client.put(f"/api/updates/{uid}", json={"body_md": "## Progress\n\nThe ledger cutover is on track.\n"})
     hub.client.post(f"/api/updates/{uid}/publish", json={})
     folder = tmp_path / "send-shape"
     folder.mkdir(exist_ok=True)

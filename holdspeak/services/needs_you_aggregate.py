@@ -66,7 +66,12 @@ _SEVERITY_ORDER = {"danger": 0, "warning": 1, "info": 2}
 
 # ── C4 coverage vocabulary ───────────────────────────────────────────
 
-COVERAGE_STATES = ("available", "stale", "failed", "forbidden", "unavailable")
+#: ``quiet`` (PHILO-15 B60): a source not checked since quiet hours began,
+#: because HoldSpeak's own quiet hours held the sweep. It is listed with its
+#: quiet end, it is not counted and it does not make the answer incomplete.
+COVERAGE_STATES = ("available", "stale", "failed", "forbidden", "unavailable", "quiet")
+#: The states that count as observed for ``complete`` and for the count.
+OBSERVED_STATES = ("available", "quiet")
 COVERAGE_KINDS = ("project", "watch", "meeting", "commitment", "coder")
 
 #: A live source whose last successful check is older than this is
@@ -86,6 +91,9 @@ def _repair(state: str, kind: str, project_id: str, reason: str | None) -> dict[
     verb to its own action (Retry re-reads the aggregate fresh).
     """
     room_href = f"/projects/{project_id}" if project_id else "/projects"
+    if state == "quiet":
+        # PHILO-15 B60: the reason carries the quiet end ("quiet until 08:00").
+        return {"token": str(reason or "quiet").upper(), "verb": "Retry", "href": room_href}
     if state == "forbidden":
         return {"token": "FORBIDDEN", "verb": "Open source", "href": room_href}
     if kind == "watch":
@@ -618,7 +626,7 @@ def build_aggregate(
         "stale": False,
         "sweepId": None,
         "coverage": coverage,
-        "complete": all(row["state"] == "available" for row in coverage),
+        "complete": all(row["state"] in OBSERVED_STATES for row in coverage),
         "roomCounts": room_counts,
     }
 
@@ -747,32 +755,109 @@ def _watch_coverage(
         # The sources read itself failed; the project row already says so.
         return []
     out: list[dict[str, Any]] = []
-    horizon = now - timedelta(seconds=stale_after_s)
     for src in sources.get("items") or []:
         watch_id = str(src.get("watchId") or "")
-        label = " ".join(
-            part for part in (str(src.get("provider") or ""), str(src.get("scope") or ""))
-            if part
-        ) or pname
+        label = source_label(src) or pname
         checked_at = src.get("checkedAt")
-        w_state = str(src.get("state") or "")
-        if w_state == "cant_check":
-            state, reason = "failed", (src.get("plainReason") or "cannot check")
-        elif w_state == "paused":
-            state, reason = "unavailable", "paused"
-        elif not checked_at:
-            state, reason = "unavailable", "never checked"
-        elif _older_than(str(checked_at), horizon):
-            state, reason = "stale", "not checked recently"
-        else:
-            state, reason = "available", None
-        out.append(_coverage_row(
+        state, reason = source_freshness(src, now=now, stale_after_s=stale_after_s)
+        row = _coverage_row(
             source_id=f"watch:{watch_id}" if watch_id else f"watch:{pid}:{label}",
             kind="watch", state=state,
             observed_at=str(checked_at) if checked_at else None,
             label=label, project_id=pid, reason=reason,
-        ))
+        )
+        # PHILO-15 B61: Retry re-checks THESE Watches (a merged source row
+        # stands for every Watch of its provider and scope).
+        ids = [str(w) for w in (src.get("watchIds") or [watch_id]) if w]
+        if ids:
+            row["watch_ids"] = ids
+        # Astra r1 P2-6: egress where egress happens: the host Retry reaches.
+        if src.get("host"):
+            row["host"] = str(src["host"])
+        out.append(row)
     return out
+
+
+#: PHILO-15 B74: a provider's name as a person reads it.
+_PROVIDER_NAMES = {
+    "github": "GitHub", "gh": "GitHub", "jira": "Jira",
+    "confluence": "Confluence", "meeting": "Meetings",
+}
+
+
+def source_label(src: dict[str, Any]) -> str:
+    """PHILO-15 B74: ``GitHub · owner/repo``, ``Jira · KEY``, ``Meetings``."""
+    provider = str(src.get("provider") or "").strip()
+    scope = str(src.get("scope") or "").strip()
+    name = _PROVIDER_NAMES.get(provider.lower(), provider)
+    if provider.lower() == "meeting":
+        return name
+    return " · ".join(part for part in (name, scope) if part)
+
+
+def source_freshness(
+    src: dict[str, Any], *, now: datetime | None = None,
+    stale_after_s: float = DEFAULT_SOURCE_STALE_AFTER_S,
+) -> tuple[str, str | None]:
+    """The ONE freshness rule for a Room source row: ``(state, reason)``.
+
+    The Room's own vocabulary, unchanged: ``live`` observed recently is
+    available, ``live`` observed long ago is stale, a never-checked ``live``
+    source and a paused one are unavailable, ``cant_check`` is failed with the
+    Room's plain reason. PHILO-15 B60: a source that went stale while
+    HoldSpeak's own quiet hours held the sweep (the Room's ``quietUntil``, a
+    future instant) is ``quiet`` with "quiet until HH:MM", never stale.
+
+    ``now`` is a LOCAL wall clock, naive (see :func:`room_coverage`). The Room
+    face and the attention aggregate both read this function on one Room read,
+    so a source has one state everywhere.
+    """
+    clock = now or local_wall()
+    checked_at = src.get("checkedAt")
+    w_state = str(src.get("state") or "")
+    if w_state == "cant_check":
+        return "failed", (src.get("plainReason") or "cannot check")
+    if w_state == "paused":
+        return "unavailable", "paused"
+    if not checked_at:
+        return "unavailable", "never checked"
+    horizon = clock - timedelta(seconds=stale_after_s)
+    if _older_than(str(checked_at), horizon):
+        until = _quiet_until_local(src.get("quietUntil"), clock)
+        if until is not None and _went_stale_in_quiet(checked_at, src.get("quietSince"), stale_after_s):
+            return "quiet", f"quiet until {until:%H:%M}"
+        return "stale", "not checked recently"
+    return "available", None
+
+
+def _went_stale_in_quiet(checked_at: Any, since: Any, stale_after_s: float) -> bool:
+    """True when the source was still fresh when quiet hours began: the quiet
+    hold, not something else, made it late. No ``since``: assume so."""
+    if not since:
+        return True
+    try:
+        checked = datetime.fromisoformat(str(checked_at).replace("Z", "+00:00"))
+        began = datetime.fromisoformat(str(since).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return True
+    if checked.tzinfo is None or began.tzinfo is None:
+        checked = checked.replace(tzinfo=None)
+        began = began.replace(tzinfo=None)
+    return checked + timedelta(seconds=stale_after_s) > began
+
+
+def _quiet_until_local(stamp: Any, clock: datetime) -> datetime | None:
+    """The Room's quiet end as naive local time, when it is after ``clock``."""
+    if not stamp:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is not None:
+        parsed = parsed.astimezone().replace(tzinfo=None)
+    reference = clock.astimezone().replace(tzinfo=None) if clock.tzinfo else clock
+    return parsed if parsed > reference else None
 
 
 def _older_than(stamp: str, horizon: datetime) -> bool:

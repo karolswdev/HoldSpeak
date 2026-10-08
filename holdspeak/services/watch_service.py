@@ -652,6 +652,33 @@ class WatchService:
 
     # ── Baseline ────────────────────────────────────────────────────
 
+    def hold_armed_until(self, until: datetime) -> int:
+        """PHILO-15 B60: quiet hours held the sweep. Every armed, evaluable
+        Watch whose next check comes sooner waits for ``until`` (aware); a
+        later next check is kept. Returns the rows moved."""
+        stamp = until.astimezone(timezone.utc).isoformat(timespec="seconds")
+        with self._db._connection() as conn:
+            cur = conn.execute(
+                """UPDATE connector_watches SET next_evaluation_at = ?
+                   WHERE enabled = 1 AND state IN ('active', 'tested')
+                     AND next_evaluation_at IS NOT NULL
+                     AND next_evaluation_at < ?""",
+                (stamp, stamp),
+            )
+            return int(cur.rowcount or 0)
+
+    def _mark_read(self, watch_id: str) -> None:
+        """A read that found nothing new still counts as a successful check."""
+        try:
+            with self._db._connection() as conn:
+                conn.execute(
+                    "UPDATE connector_watches SET last_success_at=datetime('now'), "
+                    "last_error=NULL WHERE id=?",
+                    (watch_id,),
+                )
+        except Exception:  # pragma: no cover - bookkeeping only
+            pass
+
     def _persist_baseline(
         self,
         watch_id: str,
@@ -804,6 +831,9 @@ class WatchService:
             watch_id, watch_revision, source_revision,
         )
         if existing is not None:
+            # PHILO-15 B61: the source WAS read, and said nothing new: that
+            # is a successful check (the row is fresh, not STALE).
+            self._mark_read(watch_id)
             return {
                 "watch_id": watch_id,
                 "evaluation_id": existing["id"],

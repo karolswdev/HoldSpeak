@@ -42,6 +42,20 @@ export async function saveUpdate(
   return decodeUpdate(raw.update);
 }
 
+/** PHILO-15 B64: POST /api/updates/{id}/claims/{span}/review — the owner's
+ *  Accept / Reject on one claim (draft only). */
+export async function reviewClaim(
+  updateId: string,
+  spanId: string,
+  acceptance: "accepted" | "rejected",
+): Promise<{ update: ProjectUpdate; reviewedAt: string }> {
+  const raw = await apiFetch<{ success: boolean; update: Record<string, unknown>; reviewed_at: string }>(
+    `/api/updates/${encodeURIComponent(updateId)}/claims/${encodeURIComponent(spanId)}/review`,
+    { method: "POST", json: { acceptance } },
+  );
+  return { update: decodeUpdate(raw.update), reviewedAt: String(raw.reviewed_at ?? "") };
+}
+
 /** POST /api/updates/{id}/regenerate — supersede + fresh draft. */
 export async function regenerateUpdate(
   updateId: string,

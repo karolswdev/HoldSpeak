@@ -1047,8 +1047,10 @@ def compile_recipe(
 
 #: Worst-first, so reducing many rows to one state can never read better
 #: than the sources behind it.
+#: PHILO-15 B60: ``quiet`` (held by HoldSpeak's own quiet hours) ranks
+#: between stale and fresh: better than late, never an all-clear claim.
 _WORST_FIRST: tuple[str, ...] = (
-    "forbidden", "failed", "unavailable", "stale", "available",
+    "forbidden", "failed", "unavailable", "stale", "quiet", "available",
 )
 
 

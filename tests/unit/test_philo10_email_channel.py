@@ -1278,6 +1278,8 @@ def test_c2_r3_a_restart_during_an_email_send_ends_unknown_once_and_never_sends_
         _s, made = first.call("POST", "/api/projects", {"name": "Payments ledger cutover"})
         _s, drafted = first.call("POST", f"/api/projects/{made['project']['id']}/updates/draft", {})
         update = drafted["update"]["id"]
+        # PHILO-15 B64: an update with no verified claim is refused; the owner's saved line is reviewed.
+        assert first.call("PUT", f"/api/updates/{update}", {"body_md": "## Progress\n\nThe ledger cutover is on track.\n"})[0] == 200
         assert first.call("POST", f"/api/updates/{update}/publish", {})[0] == 200
         status, saved = first.call("POST", "/api/channels/destinations", {
             "name": "Priya by email", "channel": "email", "provider": "sendgrid", "from_email": "karol@example.com",
@@ -1335,6 +1337,8 @@ def test_r3_the_hub_answers_a_read_during_a_slow_email_send(tmp_path: Path, tran
         assert hub.call("PUT", "/api/channels/email-keys/sendgrid", {"api_key": KEY, "provider": "sendgrid"})[0] == 200
         _s, made = hub.call("POST", "/api/projects", {"name": "Payments ledger cutover"})
         update = hub.call("POST", f"/api/projects/{made['project']['id']}/updates/draft", {})[1]["update"]["id"]
+        # PHILO-15 B64: an update with no verified claim is refused; the owner's saved line is reviewed.
+        assert hub.call("PUT", f"/api/updates/{update}", {"body_md": "## Progress\n\nThe ledger cutover is on track.\n"})[0] == 200
         assert hub.call("POST", f"/api/updates/{update}/publish", {})[0] == 200
         status, saved = hub.call("POST", "/api/channels/destinations", {
             "name": "Priya by email", "channel": "email", "provider": "sendgrid", "from_email": "karol@example.com",

@@ -1756,6 +1756,13 @@ class ProjectService:
 
             sources.append(merged)
 
+        # PHILO-15 B60/B69: ONE freshness state per source, from this read,
+        # by the rule the attention aggregate reads (``source_freshness``);
+        # and a next check that is always ahead: the quiet end while
+        # HoldSpeak's quiet hours hold the sweep, else the Watch's own time,
+        # or the next sweep when that time has passed.
+        quiet_iso = self._annotate_source_freshness(sources)
+
         # Top-level nextCheckAt: soonest non-null over live sources
         live_next = [
             s["nextCheckAt"] for s in sources
@@ -1763,7 +1770,57 @@ class ProjectService:
         ]
         next_check_at = min(live_next) if live_next else None
 
-        return {"items": sources, "count": len(sources), "nextCheckAt": next_check_at}
+        return {"items": sources, "count": len(sources), "nextCheckAt": next_check_at,
+                "quietUntil": quiet_iso}
+
+    def _annotate_source_freshness(self, sources: list[dict[str, Any]]) -> str | None:
+        """Write ``freshness``/``freshnessReason`` (and ``quietUntil`` while
+        quiet hours hold the sweep) on each source row, and move a past
+        ``nextCheckAt`` ahead. Returns the quiet end (aware ISO) or None."""
+        from datetime import timezone as _tz
+
+        from .heartbeat_service import read_next_sweep_at, read_quiet_window
+        from .needs_you_aggregate import source_freshness
+
+        now_utc = datetime.now(_tz.utc)
+        window = read_quiet_window(self._db, now_utc)
+        quiet_iso = window[1].isoformat(timespec="seconds") if window is not None else None
+        since_iso = window[0].isoformat(timespec="seconds") if window is not None else None
+        nxt_sweep = read_next_sweep_at(self._db)
+        # The loop ticks once a minute: a due check runs within one minute.
+        ahead = nxt_sweep if (nxt_sweep is not None and nxt_sweep > now_utc) else (
+            now_utc + timedelta(minutes=1)
+        ).replace(second=0, microsecond=0)
+        for src in sources:
+            if quiet_iso:
+                src["quietUntil"] = quiet_iso
+                src["quietSince"] = since_iso
+            state, reason = source_freshness(src)
+            src["freshness"] = state
+            src["freshnessReason"] = reason
+            if src.get("state") != "live":
+                continue
+            when = src.get("nextCheckAt")
+            try:
+                parsed = datetime.fromisoformat(str(when).replace("Z", "+00:00")) if when else None
+            except (TypeError, ValueError):
+                parsed = None
+            if parsed is not None and parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=_tz.utc)
+            if window is not None:
+                # A check missed BEFORE quiet hours began is still missed.
+                if parsed is not None and parsed < window[0]:
+                    src["missedCheckAt"] = when
+                # Held until the quiet end: never sooner than that.
+                if parsed is None or parsed <= window[1]:
+                    src["nextCheckAt"] = quiet_iso
+            elif parsed is None or parsed <= now_utc:
+                if parsed is not None:
+                    # The fact stays: this check was missed (the preparation
+                    # Brief reads it as STALE); the face shows the next one.
+                    src["missedCheckAt"] = when
+                src["nextCheckAt"] = ahead.isoformat(timespec="seconds")
+        return quiet_iso
 
     def _read_room_health(self, project_id: str, target_at: str | None) -> dict[str, Any]:
         """HEALTH: AT RISK / ON TRACK derivation + HS-173 health signals."""
@@ -2191,7 +2248,9 @@ class ProjectService:
                            p.commitment_id AS proposal_commitment_id,
                            r.owner AS record_owner,
                            dc.due_at AS commitment_due_at,
-                           dc.owner AS commitment_owner
+                           dc.owner AS commitment_owner,
+                           ai.status AS action_status,
+                           ai.completed_at AS action_completed_at
                     FROM decision_records r
                     JOIN decision_record_sources s ON s.record_id = r.id
                     LEFT JOIN follow_through_proposals p
@@ -2199,6 +2258,8 @@ class ProjectService:
                         AND p.state = 'confirmed'
                     LEFT JOIN decision_commitments dc
                          ON dc.id = p.commitment_id
+                    LEFT JOIN action_items ai
+                         ON ai.id = dc.action_item_id
                     WHERE s.source_type = 'meeting'
                       AND s.source_ref IN ({placeholders})
                       AND r.deleted = 0
@@ -2271,6 +2332,10 @@ class ProjectService:
                 item["meeting_title"] = mtg_titles.get(prop_meeting_id, "")
                 item["confirmed_at"] = row["proposal_confirmed_at"]
                 item["commitment_id"] = row["proposal_commitment_id"]
+                # PHILO-15 B70: an action marked done says DONE on its row.
+                if str(row["action_status"] or "") == "done":
+                    item["done"] = True
+                    item["done_at"] = aware_iso(row["action_completed_at"])
 
                 # Build "was" dict: only fields the owner changed.
                 was: dict[str, str] = {}

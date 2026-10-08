@@ -12,7 +12,10 @@ export type CoverageState =
   | "stale"
   | "failed"
   | "forbidden"
-  | "unavailable";
+  | "unavailable"
+  /** PHILO-15 B60: not checked since HoldSpeak's own quiet hours held the
+   *  sweep. Listed with its quiet end; never counted; not a gap. */
+  | "quiet";
 
 export interface CoverageRepair {
   token: string;
@@ -29,6 +32,10 @@ export interface CoverageRecord {
   project_id?: string;
   reason?: string | null;
   repair?: CoverageRepair | null;
+  /** PHILO-15 B61: the Watches Retry re-checks for this source. */
+  watch_ids?: string[];
+  /** The host a re-check reaches (github.com, a Jira site); none = local. */
+  host?: string | null;
 }
 
 export interface CoverageReading {
@@ -40,6 +47,8 @@ export interface CoverageReading {
   token: string | null;
   /** The sources that were not observed, worst first. */
   gaps: CoverageRecord[];
+  /** PHILO-15 B60: sources held by quiet hours (listed, not counted, not gaps). */
+  quiet: CoverageRecord[];
 }
 
 const COMPLETE: CoverageReading = {
@@ -48,6 +57,7 @@ const COMPLETE: CoverageReading = {
   available: 0,
   token: null,
   gaps: [],
+  quiet: [],
 };
 
 /** The synthetic gap for a needs-you read the browser could not make. */
@@ -66,6 +76,8 @@ const GAP_ORDER: Record<string, number> = {
   forbidden: 1,
   unavailable: 2,
   stale: 3,
+  // PHILO-15 B60: held by quiet hours, between stale and fresh.
+  quiet: 4,
 };
 
 /**
@@ -87,18 +99,21 @@ export function readCoverage(
       available: 0,
       token: "COVERAGE · 0 OF 1",
       gaps: [DESK_UNREAD],
+      quiet: [],
     };
   }
   if (!coverage || coverage.length === 0) {
     // No coverage on the wire (an older payload): claim nothing new.
     return complete === false ? { ...COMPLETE, complete: false } : COMPLETE;
   }
+  // PHILO-15 B60: a quiet source counts as observed (HoldSpeak chose to wait).
+  const quiet = coverage.filter((row) => row.state === "quiet");
   const expected = coverage.length;
-  const available = coverage.filter((row) => row.state === "available").length;
+  const available = coverage.filter((row) => row.state === "available" || row.state === "quiet").length;
   const isComplete = complete ?? available === expected;
-  if (isComplete && available === expected) return { ...COMPLETE, expected, available };
+  if (isComplete && available === expected) return { ...COMPLETE, expected, available, quiet };
   const gaps = coverage
-    .filter((row) => row.state !== "available")
+    .filter((row) => row.state !== "available" && row.state !== "quiet")
     .sort(
       (a, b) =>
         (GAP_ORDER[a.state] ?? 9) - (GAP_ORDER[b.state] ?? 9) ||
@@ -110,6 +125,7 @@ export function readCoverage(
     available,
     token: `COVERAGE · ${available} OF ${expected}`,
     gaps,
+    quiet,
   };
 }
 

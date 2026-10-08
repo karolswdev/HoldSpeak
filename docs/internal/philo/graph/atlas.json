@@ -16445,8 +16445,8 @@
       ],
       "sources": [
         {
-          "path": "holdspeak/runtime/heartbeat.py",
-          "symbol": "if last_sweep is None:",
+          "path": "holdspeak/services/heartbeat_service.py",
+          "symbol": "if last is None:",
           "claim": "no recorded sweep makes the next tick due"
         },
         {
@@ -16473,9 +16473,9 @@
       ],
       "sources": [
         {
-          "path": "holdspeak/runtime/heartbeat.py",
-          "symbol": "should_sweep = elapsed >= sweep_interval",
-          "claim": "a sweep is due once the elapsed seconds reach the interval"
+          "path": "holdspeak/services/heartbeat_service.py",
+          "symbol": "return current >= due_at",
+          "claim": "a sweep is due at the earlier of the stored next sweep and the last sweep plus the interval (a quiet hold stores the quiet end)"
         },
         {
           "path": "holdspeak/runtime/heartbeat.py",

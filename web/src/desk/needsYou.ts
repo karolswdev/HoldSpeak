@@ -785,8 +785,9 @@ export function readNeedsYouAnswer(answer: NeedsYouAnswer | null | undefined): N
   const arming = (Array.isArray(value.arming) ? value.arming : [])
     .filter((row) => row && row.scheduleId)
     .map((row) => ({ scheduleId: String(row.scheduleId), title: String(row.title ?? "") }));
+  // PHILO-15 B60: a source held by quiet hours is listed, never counted.
   const unread = (Array.isArray(value.coverage) ? value.coverage : [])
-    .filter((row) => row && row.state !== "available").length;
+    .filter((row) => row && row.state !== "available" && row.state !== "quiet").length;
   return {
     members, count: members.length + unread + arming.length, waitingCount: waitingItems.length,
     unmutedItems, waitingItems, mutedItems, blockers, failedMeetings, arming,

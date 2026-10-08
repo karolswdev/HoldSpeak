@@ -24,7 +24,7 @@ import pytest
 
 from holdspeak.delivery import follow_through
 from holdspeak.services.agent_flights import agent_flights
-from holdspeak.services.channel_contract import render_update
+from holdspeak.services.channel_contract import render_update, stored_claims
 from tests.unit.test_agent_hand import OWNER, PROJECT
 from tests.unit.test_conductor_k4_follow_through import (
     FakeGh,
@@ -324,12 +324,16 @@ def test_unchecked_model_claims_never_leave_the_desk(tmp_path, db, monkeypatch) 
         assert "Carol ships the ledger cutover" not in sent, "an unchecked claim is not sent as fact"
         assert "No dependencies tracked." not in sent
         assert sent.count("Not checked.") == 3
-        assert sent.rstrip().endswith("3 claims not checked, kept on the desk.")
-        assert "The contributing file was merged into the rehearsal repository." in sent
+        # PHILO-15 B64 ruling: a cited model sentence is an INFERENCE the
+        # owner did not review; it stays on the desk like an unverified one.
+        assert sent.rstrip().endswith("4 claims not checked, kept on the desk.")
+        assert "The contributing file was merged into the rehearsal repository." not in sent
         assert ROW in sent, "the merge row is a record, not a claim"
         assert "_" not in sent.split("## Source Coverage", 1)[1], "plain words, never a raw code"
         # Copy leaves the desk the same way; the desk keeps every claim.
-        copied = without_desk_marks(db.project_updates.get_update(draft["id"])["body_md"])
+        stored = db.project_updates.get_update(draft["id"])
+        # The Copy route's own call (PHILO-15 B64: with the stored claims).
+        copied = without_desk_marks(stored["body_md"], claims=stored_claims(stored))
         assert "UNVERIFIED" not in copied and "Carol ships" not in copied
         assert "Carol ships" in db.project_updates.get_update(draft["id"])["body_md"]
     finally:
@@ -367,11 +371,14 @@ def test_a_multiline_unchecked_claim_is_omitted_whole(tmp_path, db, monkeypatch)
         assert "The rollout is complete." in draft["body_md"], "the desk keeps the claim"
         updates.publish_update(OWNER, draft["id"])
         sent = render_update(db, draft["id"]).body_md
-        copied = without_desk_marks(db.project_updates.get_update(draft["id"])["body_md"])
+        stored = db.project_updates.get_update(draft["id"])
+        # The Copy route's own call (PHILO-15 B64: with the stored claims).
+        copied = without_desk_marks(stored["body_md"], claims=stored_claims(stored))
         for out in (sent, copied):
             assert "The rollout is complete." not in out and "Unverified." not in out, out
-            assert "The contributing file was merged." in out
-            assert "1 claim not checked, kept on the desk." in out
+            # PHILO-15 B64: the cited sentence is an unreviewed inference.
+            assert "The contributing file was merged." not in out
+            assert "2 claims not checked, kept on the desk." in out
         # A legacy body (the mark on the first line only) is omitted whole too.
         legacy = "## Progress\n\n- **[UNVERIFIED]** Unverified.\nThe rollout is complete.\n- Kept.\n"
         assert without_desk_marks(legacy) == "## Progress\n\n- Kept.\n\n1 claim not checked, kept on the desk.\n"

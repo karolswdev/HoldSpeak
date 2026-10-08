@@ -665,9 +665,16 @@ class TestQuietHoursHoldEvaluation:
         assert self._evaluation_count(db) == 0, (
             "a watch was evaluated during quiet hours"
         )
-        # Held, not consumed: the row is still due for the first sweep
-        # after the window closes.
-        assert watch_id in _due_ids(db)
+        # Held, not consumed. PHILO-15 B60 ruling: its next check is the
+        # quiet end, so the first sweep after the window takes it (and no
+        # source reads late because HoldSpeak slept).
+        until = receipt["quiet_hold"]["until"]
+        with db._connection() as conn:
+            row = conn.execute(
+                "SELECT next_evaluation_at FROM connector_watches WHERE id=?", (watch_id,),
+            ).fetchone()
+        assert row["next_evaluation_at"] == until
+        assert watch_id in [w["id"] for w in db.automations.list_due_watches(until)]
 
     def test_due_watch_is_evaluated_outside_quiet_hours(
         self, db: Any,

@@ -11,6 +11,8 @@ import { apiFetch } from "../../lib/api";
 import { ChairHome, headlineFor } from "./ChairHome";
 import { asHub } from "../../test/hubNeedsYou";
 import { useDesk } from "../store";
+import { whenWord } from "../needs/needsFace";
+import { wireDate } from "../surface/format";
 import { openChairWindows } from "./__tests__/fixtures/openChairWindows";
 
 // PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
@@ -169,7 +171,8 @@ describe("Arrival attention (HS-200-15)", () => {
     const gap = sourceRows()[0];
     expect(gap.compareDocumentPosition(needsRows()[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(gap.querySelector(".needs-row-name")?.textContent).toBe("jira KAN");
-    expect(factOf(gap)).toBe("Jira rejected the query · observed 08:41");
+    // PHILO-15 B74: a time from another day carries its day.
+    expect(factOf(gap)).toBe(`Jira rejected the query · observed ${whenWord(wireDate("2026-09-07T08:41:00")!)}`);
     expect(lampOf(gap)).toBe("CANT CHECK");
     const verb = within(gap).getByRole("button", { name: "Reconnect: jira KAN" });
     expect(verb.className).toContain("btn");
@@ -192,7 +195,7 @@ describe("Arrival attention (HS-200-15)", () => {
       reason: "jira rejected the query", repair: { token: "READ FAILED", verb: "Retry", href: "/projects/p1" } }], complete: false });
     render(<ChairHome />);
     await waitFor(() => expect(rowNamed("KAN-7 Runbook")).toBeTruthy(), { timeout: 5000 });
-    expect(factOf(rowNamed("KAN-7 Runbook"))).toContain("observed 08:41");
+    expect(factOf(rowNamed("KAN-7 Runbook"))).toContain(`observed ${whenWord(wireDate("2026-09-07T08:41:00")!)}`);
     expect(lampOf(rowNamed("KAN-7 Runbook"))).toBe("OVERDUE · 2 DAYS");
   });
 

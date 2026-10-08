@@ -68,6 +68,101 @@ def _as_item_map(value: Any) -> dict[str, dict[str, str]]:
     return {}
 
 
+def _parse_aware(value: Any) -> datetime | None:
+    """An ISO stamp as an aware datetime (naive = UTC); ``None`` when unreadable."""
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
+
+
+def _in_window(hour: int, start: int, end: int) -> bool:
+    if start == end:
+        return False
+    if start < end:
+        return start <= hour < end
+    return hour >= start or hour < end
+
+
+def _quiet_end(local: datetime, start: int, end: int) -> datetime | None:
+    """The next quiet-hours end after ``local`` (aware) while inside the
+    window, as aware UTC; ``None`` outside it."""
+    if not _in_window(local.hour, start, end):
+        return None
+    candidate = local.replace(hour=end, minute=0, second=0, microsecond=0)
+    if candidate <= local:
+        candidate += timedelta(days=1)
+    return candidate.astimezone(timezone.utc)
+
+
+def _quiet_start(local: datetime, start: int) -> datetime:
+    """The latest quiet-hours start at or before ``local`` (aware), as UTC."""
+    candidate = local.replace(hour=start, minute=0, second=0, microsecond=0)
+    if candidate > local:
+        candidate -= timedelta(days=1)
+    return candidate.astimezone(timezone.utc)
+
+
+def read_quiet_window(
+    db: Database, now: datetime | None = None,
+) -> tuple[datetime, datetime] | None:
+    """PHILO-15 B60: ``(since, until)`` of the quiet hours ``now`` is inside
+    (aware UTC), or ``None`` outside them / when the policy is unreadable."""
+    try:
+        policy = db.cadence.get_policy(_HEARTBEAT_POLICY_ID)
+        config = (
+            policy.config if hasattr(policy, "config")
+            else (policy.get("config") if isinstance(policy, dict) else {})
+        ) if policy is not None else {}
+        config = config or {}
+        start = int(config.get("quiet_start", _DEFAULT_QUIET_START))
+        end = int(config.get("quiet_end", _DEFAULT_QUIET_END))
+    except Exception:
+        return None
+    local = (now or datetime.now(timezone.utc)).astimezone()
+    until = _quiet_end(local, start, end)
+    if until is None:
+        return None
+    return _quiet_start(local, start), until
+
+
+def read_quiet_until(db: Database, now: datetime | None = None) -> datetime | None:
+    """PHILO-15 B60: when quiet hours end (aware UTC), read straight from the
+    heartbeat policy, while this machine's local clock is inside them.
+
+    A light read for the Room and the attention aggregate (no remote-host
+    query). ``None`` outside quiet hours or when the policy is unreadable.
+    """
+    try:
+        policy = db.cadence.get_policy(_HEARTBEAT_POLICY_ID)
+        config = (
+            policy.config if hasattr(policy, "config")
+            else (policy.get("config") if isinstance(policy, dict) else {})
+        ) if policy is not None else {}
+        config = config or {}
+        start = int(config.get("quiet_start", _DEFAULT_QUIET_START))
+        end = int(config.get("quiet_end", _DEFAULT_QUIET_END))
+    except Exception:
+        return None
+    local = (now or datetime.now(timezone.utc)).astimezone()
+    return _quiet_end(local, start, end)
+
+
+def read_next_sweep_at(db: Database) -> datetime | None:
+    """The stored next scheduled sweep (aware), or ``None``."""
+    try:
+        policy = db.cadence.get_policy(_HEARTBEAT_POLICY_ID)
+        if policy is None:
+            return None
+        config = policy.config if hasattr(policy, "config") else (policy.get("config") or {})
+        return _parse_aware((config or {}).get("next_sweep_at"))
+    except Exception:
+        return None
+
+
 def _now_epoch() -> float:
     return time.time()
 
@@ -188,6 +283,9 @@ class HeartbeatService:
             current["sweep_every_minutes"] = val
         if "quiet_hours" in patch:
             qh = patch["quiet_hours"]
+            # PHILO-15 B60: a held sweep stored the old window's end as the
+            # next sweep; a new window is read by the next tick at once.
+            current["next_sweep_at"] = None
             if isinstance(qh, dict):
                 if "start" in qh:
                     current["quiet_hours"]["start"] = int(qh["start"]) % 24
@@ -342,15 +440,54 @@ class HeartbeatService:
             # HS-200-03: default through the injected clock, in local hours,
             # so no caller can reach an un-injectable wall clock from here.
             now = self._now_local()
-        hour = now.hour
-        start = settings["quiet_hours"]["start"]
-        end = settings["quiet_hours"]["end"]
-        if start == end:
-            return False
-        if start < end:
-            return start <= hour < end
-        # Wraps midnight (e.g. 22..8)
-        return hour >= start or hour < end
+        # Wraps midnight (e.g. 22..8) when start > end.
+        return _in_window(
+            now.hour, settings["quiet_hours"]["start"], settings["quiet_hours"]["end"],
+        )
+
+    def quiet_until(self, now: datetime | None = None) -> datetime | None:
+        """PHILO-15 B60: the instant quiet hours end (aware UTC) while ``now``
+        is inside them; ``None`` outside them."""
+        local = now if now is not None else self._now_local()
+        if local.tzinfo is None:
+            local = local.astimezone()
+        settings = self.get_settings()
+        return _quiet_end(
+            local, settings["quiet_hours"]["start"], settings["quiet_hours"]["end"],
+        )
+
+    def sweep_due(self, now: datetime | None = None) -> bool:
+        """Whether the scheduled loop runs a sweep now.
+
+        Due at the EARLIER of the stored ``next_sweep_at`` and the last sweep
+        plus the interval. PHILO-15 B60: a sweep held by quiet hours stores the
+        quiet end as its next sweep, so the first sweep after 08:00 runs at
+        once (not up to one interval later); the interval rule still covers an
+        interval the owner shortened since the last sweep.
+        """
+        current = now or self._now_utc()
+        settings = self.get_settings()
+        last = _parse_aware(settings.get("last_sweep_at"))
+        if last is None:
+            return True
+        due_at = last + timedelta(minutes=settings["sweep_every_minutes"])
+        nxt = _parse_aware(settings.get("next_sweep_at"))
+        if nxt is not None and nxt < due_at:
+            due_at = nxt
+        return current >= due_at
+
+    def _hold_sources_until(self, until: datetime) -> int:
+        """PHILO-15 B60: a sweep held by quiet hours moves every armed Watch's
+        next check to the quiet end, through WatchService (the one writer of
+        connector_watches), so no source reads as late because HoldSpeak
+        slept. Returns the rows moved."""
+        from holdspeak.services.watch_service import WatchService
+
+        try:
+            return WatchService(self._db).hold_armed_until(until)
+        except Exception as exc:
+            log.error("heartbeat quiet hold of sources failed: %s", exc)
+            return 0
 
     # ── The sweep ──────────────────────────────────────────────────────
 
@@ -579,6 +716,15 @@ class HeartbeatService:
         # Compute next sweep time
         sweep_minutes = settings["sweep_every_minutes"]
         next_at = (now + timedelta(minutes=sweep_minutes)).isoformat(timespec="seconds")
+        # PHILO-15 B60: a held sweep checks nothing until quiet hours end; the
+        # sources wait for the quiet end, and so does the next sweep.
+        quiet_hold: dict[str, Any] | None = None
+        if held:
+            until = self.quiet_until(self._now_local())
+            if until is not None:
+                moved = self._hold_sources_until(until)
+                next_at = until.astimezone(timezone.utc).isoformat(timespec="seconds")
+                quiet_hold = {"until": next_at, "sources": moved}
 
         # Persist timestamps
         settings["last_sweep_at"] = now.isoformat(timespec="seconds")
@@ -609,6 +755,8 @@ class HeartbeatService:
             receipt["follow_through"] = follow_through_receipt
         if merged_receipt is not None:
             receipt["merged_prs"] = merged_receipt
+        if quiet_hold is not None:
+            receipt["quiet_hold"] = quiet_hold
 
         # Write kernel receipt (Article XI.2)
         self._write_receipt(receipt)

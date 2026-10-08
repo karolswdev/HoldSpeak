@@ -96,8 +96,15 @@ function enabledWatchKeys(provider: string, toggles: Record<string, boolean>): s
   return defs.filter((d) => toggles[d.key]).map((d) => d.key);
 }
 
+/** PHILO-15 B75: ONE sign-in truth. A GitHub sign-in read from gh's own
+ *  file (`signed_in`, the first-run card's SIGNED IN) is ready on the Door
+ *  too: it offers Choose a repository at once, no Recheck first. */
+export function isUsable(state: string): boolean {
+  return state === "connected" || state === "signed_in";
+}
+
 function makeRow(tool: ConnectionTool): SourceRow {
-  const connected = tool.state === "connected";
+  const connected = isUsable(tool.state);
   return {
     provider: tool.provider_id,
     connected,
@@ -203,7 +210,7 @@ export function useDoorController(): DoorController {
             const tool = resp.tools.find((t) => t.provider_id === row.provider);
             if (!tool) return row;
             const wasConnected = row.connected;
-            const nowConnected = tool.state === "connected";
+            const nowConnected = isUsable(tool.state);
             return {
               ...row,
               connected: nowConnected,

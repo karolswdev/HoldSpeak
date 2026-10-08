@@ -1,6 +1,7 @@
 """Real PHILO-11 document producers shared by focused and rig tests."""
 from __future__ import annotations
 
+import json
 import os
 from datetime import datetime
 from pathlib import Path
@@ -57,6 +58,12 @@ def mint_documents(
         project_id=project_id,
         project_revision=1,
         body_md="# Published update\n\nThe source fixture is durable.\n",
+        # PHILO-15 B64: the owner's own reviewed line (an update with no
+        # verified claim is refused NOTHING VERIFIED).
+        claims_json=json.dumps([{
+            "span_id": f"s_owner_{i}", "text": text, "refs": [],
+            "section": "progress", "kind": "observation", "support": "unknown", "acceptance": "accepted",
+        } for i, text in enumerate(("Published update", "The source fixture is durable."))]),
     )
     from holdspeak.services.project_service import ProjectService
     from holdspeak.services.project_update_service import ProjectUpdateService

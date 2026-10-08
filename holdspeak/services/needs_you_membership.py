@@ -1104,7 +1104,12 @@ def _read_arming(db: Any) -> list[dict[str, Any]]:
 
 def unread_sources(coverage: Iterable[Any]) -> list[dict[str, Any]]:
     """PHILO-15-09 (B11): the coverage records the desk draws as rows."""
-    return [row for row in coverage or () if isinstance(row, dict) and row.get("state") != "available"]
+    # PHILO-15 B60: a source held by HoldSpeak's own quiet hours is listed
+    # with its quiet end and is never counted.
+    return [
+        row for row in coverage or ()
+        if isinstance(row, dict) and row.get("state") not in ("available", "quiet")
+    ]
 
 
 def _read_coders() -> list[Any]:

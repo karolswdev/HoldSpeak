@@ -5,6 +5,8 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { ChairHome } from "./ChairHome";
+import { whenWord } from "../needs/needsFace";
+import { wireDate } from "../surface/format";
 import { openChairWindows } from "./__tests__/fixtures/openChairWindows";
 
 // PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
@@ -119,7 +121,8 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     expect(screen.getByTestId("arrival-display").textContent).toMatch(/needs? you/);
     expect(gapRows()).toHaveLength(1);
     const row = screen.getByText("CI red on main").closest(".needs-row")!;
-    expect(row.querySelector(".needs-row-fact")?.textContent).toContain("observed 09:00");
+    // PHILO-15 B74: a time from another day carries its day.
+    expect(row.querySelector(".needs-row-fact")?.textContent).toContain(`observed ${whenWord(wireDate("2026-09-06T09:00:00")!)}`);
   });
 
   it("treats a read that never landed as a coverage gap, not as quiet", async () => {

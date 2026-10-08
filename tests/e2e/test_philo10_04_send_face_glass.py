@@ -159,8 +159,13 @@ class _Rig:
 
     @staticmethod
     def _published(page: Any, pid: str) -> str:
-        uid = _api(page, "POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"},
-                   token=TOKEN)["update"]["id"]
+        drafted = _api(page, "POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"},
+                       token=TOKEN)["update"]
+        uid = drafted["id"]
+        # PHILO-15 B64: an update with no verified claim is refused; the
+        # owner's saved line is reviewed (the draft's shape kept).
+        mine = OWNER_BODY
+        _api(page, "PUT", f"/api/updates/{uid}", {"body_md": mine}, token=TOKEN)
         _api(page, "POST", f"/api/updates/{uid}/publish", {}, token=TOKEN)
         return uid
 
@@ -256,6 +261,15 @@ class _Rig:
         agent.headers.pop("x-holdspeak-token", None)  # the app's own owner token: never the agent's
         agent.headers.update({"Authorization": f"Bearer {issued.json()['token']}"})
         return agent
+
+
+#: PHILO-15 B64: the owner's saved update (an update with no verified claim is
+#: refused); the six sections keep the well's layout of a full update.
+OWNER_BODY = (
+    "## Progress\n\nThe ledger cutover is on track.\n\n## Decisions\n\nNo decisions in this window.\n\n"
+    "## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n"
+    "## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+)
 
 
 class TestSendFaceGlass(_Rig):
@@ -1330,6 +1344,8 @@ def test_board_25_unknown_after_a_real_restart(tmp_path: Path, width: int) -> No
         assert call("PUT", "/api/setup/onboarding", {"disposition": "completed"})[0] == 200
         pid = call("POST", "/api/projects", {"name": NAME})[1]["project"]["id"]
         uid = call("POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"})[1]["update"]["id"]
+        # PHILO-15 B64: an update with no verified claim is refused; the owner's saved line is reviewed.
+        assert call("PUT", f"/api/updates/{uid}", {"body_md": "## Progress\n\nThe ledger cutover is on track.\n"})[0] == 200
         assert call("POST", f"/api/updates/{uid}/publish", {})[0] == 200
         assert call("POST", "/api/channels/destinations",
                     {"name": "Folder Payments", "channel": "file", "folder": str(folder)})[0] == 200

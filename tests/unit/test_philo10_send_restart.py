@@ -162,6 +162,8 @@ def _source(hub: HubProcess, source_kind: str) -> str:
         status, drafted = hub.call("POST", f"/api/projects/{pid}/updates/draft", {})
         assert status == 200, drafted
         update = drafted["update"]["id"]
+        # PHILO-15 B64: an update with no verified claim is refused; the owner's saved line is reviewed.
+        assert hub.call("PUT", f"/api/updates/{update}", {"body_md": "## Progress\n\nThe ledger cutover is on track.\n"})[0] == 200
         assert hub.call("POST", f"/api/updates/{update}/publish", {})[0] == 200
         return f"project_update:{update}"
     if source_kind == "desk_decision":

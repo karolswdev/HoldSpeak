@@ -278,6 +278,11 @@ export type RoomSourceItem = {
   state: "live" | "paused" | "cant_check";
   plainReason: string | null;
   suggested: boolean;
+  /** PHILO-15 B69: the hub's ONE freshness state for this source (the rule
+   *  Needs you reads): available | stale | quiet | failed | unavailable. */
+  freshness?: string;
+  /** PHILO-15 B60: while quiet hours hold the sweep, when they end. */
+  quietUntil?: string | null;
 };
 
 /** Sources section data shape (when ok). */
@@ -285,6 +290,8 @@ export type RoomSourcesData = {
   items: RoomSourceItem[];
   count: number;
   nextCheckAt: string | null;
+  /** PHILO-15 B60: while quiet hours hold the sweep, when they end. */
+  quietUntil?: string | null;
 };
 
 /** Health derivation. */
@@ -415,6 +422,9 @@ export type RoomDecisionItem = {
   meetingTitle?: string;
   confirmedAt?: string;
   commitmentId?: string;
+  /** PHILO-15 B70: the action this row anchors is done (and when). */
+  done?: boolean;
+  doneAt?: string;
   was?: { text?: string; owner?: string; due?: string };
 };
 
@@ -626,6 +636,8 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
               ? String(r.state) : "live") as "live" | "paused" | "cant_check",
             plainReason: r.plainReason != null ? String(r.plainReason) : null,
             suggested: Boolean(r.suggested),
+            ...(r.freshness != null ? { freshness: String(r.freshness) } : {}),
+            ...(r.quietUntil != null ? { quietUntil: String(r.quietUntil) } : {}),
           }))
         : [];
       // Group by (provider, scope): merge tokens and watchIds.
@@ -660,6 +672,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
         items,
         count: items.length,
         nextCheckAt: s.nextCheckAt != null ? String(s.nextCheckAt) : null,
+        quietUntil: s.quietUntil != null ? String(s.quietUntil) : null,
       };
     }),
     health: decodeSection<RoomHealthData>(raw.health, (s) => {
@@ -779,6 +792,8 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             if (r.meeting_title != null) item.meetingTitle = String(r.meeting_title);
             if (r.confirmed_at != null) item.confirmedAt = String(r.confirmed_at);
             if (r.commitment_id != null) item.commitmentId = String(r.commitment_id);
+            if (r.done === true) item.done = true;
+            if (r.done_at != null) item.doneAt = String(r.done_at);
             if (r.was && typeof r.was === "object") {
               const w = r.was as Record<string, unknown>;
               item.was = {};
