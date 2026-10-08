@@ -716,8 +716,10 @@ class MondayBriefService:
 
             brief_day = _local_moment(_stored_stamp(period_end))
             today = brief_day.date() if brief_day is not None else None
+            # The day for the rows' times is the window end's own local day
+            # (``_collect_changes`` reads it from the bound).
             human_changes, ledger = self._collect_changes(
-                period_start.isoformat(), period_end.isoformat(), today
+                period_start.isoformat(), period_end.isoformat()
             )
             # PHILO-15-09 (B04, ruling 4): what the owner added to the desk
             # in the window (a decision he made, a Project, a person).
