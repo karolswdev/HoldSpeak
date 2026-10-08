@@ -6,7 +6,7 @@ Read first, in order: `CLAUDE.md`, `pm/STATUS.md`, `docs/internal/philo/phase-15
 
 Phase 14 closed with handover XXXIV. Under the owner's autonomy grant ("once you have already moved this mountain, that we move another one, of your choosing, that makes the most sense to work out, to PERFECT the experience with HoldSpeak") I chartered **PHILO Phase 15, The First Day** (#964): rehearse the owner's first real day on real metal with isolated credentials, pay every bounce in a lane, and leave him a runbook. No new face.
 
-**Phase 15 is CLOSED.** 22 lanes, two rehearsals, 90 bounces logged (B01–B90), 59 paid, the runbook written. Main at the close: the merge of #1016.
+**Phase 15 is CLOSED.** 22 lanes, two rehearsals, 90 bounces logged (B01–B90), 73 paid in a merged lane (four in part), 17 open; the "59" first written here was a tally, reconciled 2026-10-08 (`pm/STATUS.md`), the runbook written. Main at the close: the merge of #1016.
 
 | Movement | PRs | What the owner gets |
 |---|---|---|
@@ -45,12 +45,12 @@ Status PRs #973–#1016 carry every "Open from #…" residual. `pm/STATUS.md` li
 3. **A lane's FAST reds are the lane's.** Every real red (API surface drift, fixture regeneration, a third-door write, the UX-canon ratchet) came from the lane's own change. Send the exact assertion line; the lane fixes it in minutes.
 4. **Rehearsal 2 under a fake clock.** `time-machine` in the worktree venv moved the hub's clock; GitHub, gh, Codex and SQLite stayed real, so some stamps read ten hours old. Mark those rows; do not chase them.
 5. **Bounded Astra briefs work.** Four claims, four verify items, 20–25 minutes: she returned every time, with reproductions. Her rulings (the Brief order, the quiet-hours rule, the review gesture) were better than mine and were adopted.
-6. **Lane 14's B49 is a platform limit**, not ours: Codex 0.159 offers deferred MCP tools only through tool search, which the LAN model lacks. The owner's first real hand to Codex on an OpenAI model is unverified.
+6. **Lane 14's B49 is a platform limit**, not ours: Codex 0.159 offers deferred MCP tools only through tool search, which the LAN model lacks. Verified 2026-10-08 on the owner's sign-in: an OpenAI model calls `tool_search` and gets them.
 
 ## Open at the close (for the next phase to weigh)
 
 - **Not reached by any rehearsal:** a Hand to Claude Code (no key on the rig), email (no Resend key), live recording, the calendar, People, Parked, The week, the lane at 393.
-- **B49** Codex + LAN model sees no HoldSpeak tool. **B75** Connections read NEVER CHECKED once after a SIGNED IN first run, cause unknown. **B90** the second-morning Brief starts at 17:00 the day before, so day-one daytime work is not in it.
+- **B49** Codex + LAN model sees no HoldSpeak tool; VERIFIED RIG-ONLY 2026-10-08 on Codex 0.161 with the owner's ChatGPT sign-in (project.list and desk.needs_you called in one turn). **B75** Connections read NEVER CHECKED once after a SIGNED IN first run, cause unknown. **B90** the second-morning Brief starts at 17:00 the day before, so day-one daytime work is not in it.
 - **Queued bounces:** B76 (drag a meeting onto a Project does nothing), B77 (a commitment the transcript says reads NO SOURCE), B78 ("Carol" stays his name in the Room, the agent brief and updates), the P3s B79–B89.
 - The folder Send chip reads THIS DEVICE; the claim-review verb is a route with no registry operation; a renamed agent branch retires PR discovery; the Anthropic key has no execution adapter; `gen_docs.sh` stops on a stale `voice.json` line reference; one inherited tsc error in `HandSheet.test.tsx`; `conductor.test.tsx` "LIST keeps the asking agent first" is an inherited vitest red.
 - Stale worktrees under `/Users/karol/dev/tools/wt-*` (philo-11-05b, philo-11-06, philo-13-b0-r2, two canvases, 202-01-baseline, one Astra check) are the owner's; not removed.
