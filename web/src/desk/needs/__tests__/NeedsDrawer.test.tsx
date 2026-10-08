@@ -421,7 +421,8 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(held.verbs).toEqual(["Deny", "Open"]);
     expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
     fireEvent.click(within(row("Codex: reconciliation")).getByText("Open"));
-    expect(openCoderSession).toHaveBeenCalledWith("codex:s-recon");
+    // PHILO-15 20 (B63): Open opens the lane on Raw, where the cut call is approved.
+    expect(openCoderSession).toHaveBeenCalledWith("codex:s-recon", { raw: true });
   });
 
   it("PHILO-15 15: a held call says why it waits; a cut one says CUT · APPROVE IN RAW, never Approve", async () => {

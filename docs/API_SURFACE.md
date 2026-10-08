@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 749 (plus static mounts). iOS-consumed: 89. Web-consumed: 581.
+Routes: 751 (plus static mounts). iOS-consumed: 89. Web-consumed: 583.
 
 ## device_audio_ws
 
@@ -109,6 +109,7 @@ Routes: 749 (plus static mounts). iOS-consumed: 89. Web-consumed: 581.
 | POST | `/api/agent/launches/{launch_id}/deliver` | server only |
 | GET | `/api/agent/launches/{launch_id}/lane` | web |
 | POST | `/api/agent/launches/{launch_id}/rebrief` | web |
+| POST | `/api/agent/launches/{launch_id}/rebrief/{press_id}/take-back` | web |
 | GET | `/api/projects/{project_id}/repository` | web |
 | POST | `/api/projects/{project_id}/repository` | web |
 
@@ -1158,6 +1159,7 @@ Routes: 749 (plus static mounts). iOS-consumed: 89. Web-consumed: 581.
 | GET | `/api/gate/proposals` | web |
 | POST | `/api/gate/proposals` | web |
 | GET | `/api/gate/proposals/{proposal_id}` | server only |
+| GET | `/api/gate/proposals/{proposal_id}/command` | web |
 | POST | `/api/gate/proposals/{proposal_id}/decide` | web |
 | POST | `/api/gate/proposals/{proposal_id}/receipt` | server only |
 | POST | `/api/gate/usage` | web |

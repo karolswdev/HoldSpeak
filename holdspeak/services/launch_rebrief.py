@@ -15,7 +15,8 @@ keystroke refuses it (``wait_not_current``) and the press stays queued.
 
 Every press ends in one receipt on the launch (``rebriefs``): SENT, or
 SUPERSEDED, or EXPIRED · AGENT NEVER RETURNED after
-:data:`QUEUE_EXPIRY_SECONDS`.
+:data:`QUEUE_EXPIRY_SECONDS`, or TAKEN BACK when the owner discards a
+queued press (PHILO-15 20, B67).
 """
 from __future__ import annotations
 
@@ -188,6 +189,8 @@ MAX_RECEIPTS = 50
 SENT = "sent"
 SUPERSEDED = "superseded"
 EXPIRED = "expired"
+#: PHILO-15 20 (B67): the owner took a queued Re-brief back before it was typed.
+TAKEN_BACK = "taken_back"
 
 _LOCK = threading.Lock()
 
@@ -360,6 +363,27 @@ def rebrief(
     return result
 
 
+def take_back(launch_id: str, press_id: str, principal: Any, *, service: Any) -> dict[str, Any]:
+    """PHILO-15 20 (B67): discard one queued Re-brief (``press_id``) before
+    the agent's turn ends. Its receipt is TAKEN BACK, with who pressed and
+    when. A press that was typed already, or is not queued, is
+    ``not_queued`` (nothing changes)."""
+    ledger = service._ledger
+    with _LOCK:
+        record = ledger.get(launch_id)
+        if not record:
+            return {"status": "launch_unknown"}
+        queue = _queue(record)
+        item = next((q for q in queue if str(q.get("id") or "") == str(press_id or "")), None)
+        if item is None or not press_id:
+            return {"status": "not_queued"}
+        who = _principal_record(principal)
+        receipt = _receipt(item, TAKEN_BACK, detail="BY YOU")
+        receipt["taken_back_by"] = who
+        _write(service, launch_id, [q for q in queue if q is not item], [receipt])
+    return {"status": TAKEN_BACK, "receipt": receipt}
+
+
 def flush_queued(
     keys: Iterable[str], *, service: Any, sessions: Optional[Callable[[], list[Any]]] = None,
 ) -> list[str]:
@@ -408,5 +432,6 @@ def flush_queued(
 
 __all__ = [
     "EXPIRED", "MAX_QUEUED", "MID_TURN_EVENTS", "QUEUED", "QUEUE_EXPIRY_SECONDS", "SENT", "SUPERSEDED",
-    "current_wait_id", "deliver", "expire_queued", "flush_queued", "mid_turn", "rebrief",
+    "TAKEN_BACK", "current_wait_id", "deliver", "expire_queued", "flush_queued", "mid_turn", "rebrief",
+    "take_back",
 ]

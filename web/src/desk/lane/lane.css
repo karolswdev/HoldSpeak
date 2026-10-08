@@ -55,6 +55,9 @@
 
 /* Raw: the terminal pane behind the title-bar gadget */
 .lw-raw { display: flex; flex-direction: column; gap: 10px; min-height: 0; flex: 1 1 auto; }
+/* PHILO-15 20 (B63): a held CUT call, whole, with Deny and Approve */
+.lw-raw-held { flex: none; }
+.lw-raw-command { margin: 0; padding: 10px 12px; background: var(--surface-1); box-shadow: var(--wb-sunken); border: 1px solid var(--wb-ink); font: 12px/1.5 var(--font-mono); color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow-y: auto; }
 
 .lw-footer-branch { font: 12px/1.4 var(--font-mono); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
@@ -68,6 +71,9 @@
 /* receipts and ARM, kept on the face */
 .lw-receipt { margin: 0; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.04em; color: var(--text-muted); overflow-wrap: anywhere; }
 .lw-receipt[data-tone="fail"] { color: var(--danger); }
+/* PHILO-15 20 (B67): a queued Re-brief and its Take back */
+.lw-queued { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.lw-queued > .lw-receipt { flex: 1 1 auto; min-width: 0; }
 /* NOT CONFIRMED: the hub may have delivered; not a failure, not a send. */
 .lw-receipt[data-tone="warn"] { color: var(--warn); }
 .lw-arm { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }

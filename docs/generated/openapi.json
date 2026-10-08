@@ -3629,6 +3629,55 @@
         "summary": "Api Agent Rebrief"
       }
     },
+    "/api/agent/launches/{launch_id}/rebrief/{press_id}/take-back": {
+      "post": {
+        "description": "PHILO-15 20 (B67): discard one queued Re-brief before the agent's\nturn ends; its receipt is TAKEN BACK. 409 ``not_queued`` when it was\ntyped already or is not queued.",
+        "operationId": "api_agent_rebrief_take_back_api_agent_launches__launch_id__rebrief__press_id__take_back_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "press_id",
+            "required": true,
+            "schema": {
+              "title": "Press Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Rebrief Take Back Api Agent Launches  Launch Id  Rebrief  Press Id  Take Back Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Rebrief Take Back"
+      }
+    },
     "/api/agents/capabilities": {
       "get": {
         "operationId": "api_agent_capabilities_api_agents_capabilities_get",
@@ -13531,6 +13580,46 @@
           }
         },
         "summary": "Api Gate Read"
+      }
+    },
+    "/api/gate/proposals/{proposal_id}/command": {
+      "get": {
+        "description": "PHILO-15 20 (B63): the whole command of a held cut call, for the\nowner's Raw read only (403 for an agent; 409 once decided).",
+        "operationId": "api_gate_full_call_api_gate_proposals__proposal_id__command_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Gate Full Call Api Gate Proposals  Proposal Id  Command Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Gate Full Call"
       }
     },
     "/api/gate/proposals/{proposal_id}/decide": {

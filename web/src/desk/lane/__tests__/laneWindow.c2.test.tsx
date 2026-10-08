@@ -672,3 +672,115 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
     await waitFor(() => expect(posts(STEER)[0]).toMatchObject({ text: "Jordan.", expected_pane_id: "%42", kind: "answer" }));
   });
 });
+
+// PHILO-15 20 (B63, B67): Raw shows a cut held call whole, read from the
+// hub, with Deny and Approve; a queued Re-brief has Take back.
+describe("PHILO-15 20: Raw approves a cut call; Take back", () => {
+  const head = 'cd /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-r2.faJEcODmah/.holdspeak/repositories/karolsw';
+  const whole = `${head}dev/holdspeak-dayone-rehearsal-1558 && git status --short && echo done`;
+  const cutLane = () => fixture({
+    wait: { question: "Codex needs your permission to use Bash", kind: "TO APPROVE", started: null },
+    gated: [{ id: "toolu_cut", tool: "Bash", args_head: `{"command":"${head}`, args_shown: head, args_cut: true,
+      args_hidden: whole.length - head.length, state: "held", hold_reason: "OUTSIDE THE WORKTREE",
+      created_at: Date.parse(T("09:55")) / 1000 }],
+  });
+
+  function serveWhole(lane: LaneWire, body: Record<string, unknown>) {
+    serve(lane);
+    const base = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (String(url) === "/api/gate/proposals/toolu_cut/command") return body;
+      return base(url, init);
+    });
+  }
+
+  it("B63: Raw reads the whole command from the hub and approves it there", async () => {
+    await openLane(cutLane());
+    serveWhole(cutLane(), { id: "toolu_cut", state: "held", command: whole, whole: true, hold_reason: "OUTSIDE THE WORKTREE" });
+    fireEvent.click(within(screen.getByTestId("lane-approve-well")).getByTestId("lane-raw-cut"));
+    const held = await screen.findByTestId("lane-raw-held");
+    await waitFor(() => expect(within(held).getByTestId("lane-raw-command").textContent).toBe(whole));
+    expect(within(held).getByText("HELD · OUTSIDE THE WORKTREE")).toBeTruthy();
+    expect(within(held).getByTestId("lane-raw-deny")).toBeTruthy();
+    fireEvent.click(within(held).getByTestId("lane-raw-approve"));
+    await waitFor(() => expect(api.fetch.mock.calls.some(([url, init]) =>
+      String(url) === "/api/gate/proposals/toolu_cut/decide" && (init as { json?: { decision?: string } })?.json?.decision === "approved")).toBe(true));
+    // Astra r1 on #1011 (P2-6): the decision leaves its receipt on Raw.
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^APPROVED · \d\d:\d\d$/));
+    expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
+  });
+
+  it("B63: a call decided elsewhere first says NOT DECIDED · ALREADY DENIED", async () => {
+    await openLane(cutLane());
+    serveWhole(cutLane(), { id: "toolu_cut", state: "held", command: whole, whole: true, hold_reason: "OUTSIDE THE WORKTREE" });
+    const base = api.fetch.getMockImplementation()!;
+    const { ApiError } = await import("../../../lib/api");
+    api.fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (String(url).endsWith("/decide")) throw new ApiError(409, "conflict", { error: "already_decided", state: "denied" });
+      return base(url, init);
+    });
+    act(() => useLane.getState().setRaw(true));
+    const held = await screen.findByTestId("lane-raw-held");
+    await waitFor(() => expect(within(held).getByTestId("lane-raw-approve")).toBeTruthy());
+    fireEvent.click(within(held).getByTestId("lane-raw-approve"));
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^NOT DECIDED · \d\d:\d\d · ALREADY DENIED$/));
+  });
+
+  it("B63: a call the hub did not keep whole is Deny only", async () => {
+    await openLane(cutLane());
+    serveWhole(cutLane(), { id: "toolu_cut", state: "held", command: head, whole: false, hold_reason: "OUTSIDE THE WORKTREE",
+      shown_chars: head.length, declared_chars: whole.length });
+    act(() => useLane.getState().setRaw(true));
+    const held = await screen.findByTestId("lane-raw-held");
+    await waitFor(() => expect(within(held).getByTestId("lane-raw-command").textContent).toBe(head));
+    // Astra r1 on #1011 (P1-2): a part says how much of the call is there.
+    expect(within(held).getByText(`HELD · OUTSIDE THE WORKTREE · CUT · ${head.length} OF ${whole.length} CHARS`)).toBeTruthy();
+    expect(within(held).queryByTestId("lane-raw-approve")).toBeNull();
+    expect(within(held).getByTestId("lane-raw-deny")).toBeTruthy();
+  });
+
+  it("B63: open on Raw binds the lane's session and shows Raw first", async () => {
+    serve(cutLane());
+    answer({});
+    steering();
+    render(<LaneWindow />);
+    await act(async () => {
+      await useLane.getState().open("launch_f2_runbook", { sessionKey: KEY, raw: true });
+    });
+    expect(useLane.getState().raw).toBe(true);
+    expect(useSteering.getState().openSession).toHaveBeenCalledWith(KEY);
+    expect(await screen.findByTestId("lane-raw-pane")).toBeTruthy();
+  });
+
+  it("B67: Take back discards a queued Re-brief and says TAKEN BACK", async () => {
+    const queued = fixture({ wait: null, launch: { ...fixture().launch, queued_rebriefs: [
+      { id: "press-1", text: "Re-brief: do not write outside the worktree.", at: "2026-10-07T21:30:00Z" },
+    ] } });
+    await openLane(queued);
+    answer({ [`${REBRIEF}/press-1/take-back`]: [200, { status: "taken_back" }] });
+    serve(fixture({ wait: null }));
+    fireEvent.click(screen.getByTestId("lane-take-back"));
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^TAKEN BACK · .* · Re-brief: do not write outside/));
+    expect(posts(`${REBRIEF}/press-1/take-back`)).toEqual([{}]);
+    await waitFor(() => expect(screen.queryByTestId("lane-queued")).toBeNull());
+  });
+
+  it("B67: a Re-brief already typed is NOT TAKEN BACK · ALREADY SENT", async () => {
+    await openLane(fixture({ wait: null, launch: { ...fixture().launch, queued_rebriefs: [
+      { id: "press-2", text: "Re-brief: two.", at: "2026-10-07T21:30:00Z" },
+    ] } }));
+    answer({ [`${REBRIEF}/press-2/take-back`]: [409, { status: "not_queued" }] });
+    fireEvent.click(screen.getByTestId("lane-take-back"));
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^NOT TAKEN BACK · .* · ALREADY SENT$/));
+  });
+
+  it("the rail names a taken-back press", async () => {
+    await openLane(fixture({ wait: null, launch: { ...fixture().launch, rebriefs: [
+      { id: "p9", state: "taken_back", text_head: "Re-brief: x.", approved_at: "2026-10-07T21:30:00Z",
+        at: "2026-10-07T21:31:00Z", press_id: "p9", command_id: null, detail: "BY YOU" },
+    ] as never } }));
+    expect(within(screen.getByTestId("lane-rail")).getByText(
+      `TAKEN BACK · ${wireClock("2026-10-07T21:31:00Z")} · BY YOU · BY YOUR PRESS ${wireClock("2026-10-07T21:30:00Z")}`,
+    )).toBeTruthy();
+  });
+});

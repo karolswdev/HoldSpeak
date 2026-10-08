@@ -154,13 +154,13 @@ export function openPersona(personaId: string): void {
 /** Open a Coder session's window. PHILO-14 C2: a session that belongs to a
  * launch opens the agent's lane window (its face); a plain session keeps
  * the session window. */
-export function openCoderSession(key: string, opts?: { answer?: boolean }): void {
+export function openCoderSession(key: string, opts?: { answer?: boolean; raw?: boolean }): void {
   // Conductor F2 (K5b): `answer` opens the answer well in the window's body,
   // the steer composer recording (in the lane: the ask well's mic).
   void Promise.all([import("./steering"), import("./lane/laneStore")]).then(([steering, lane]) => {
     const launchId = lane.launchForSession(key);
     if (launchId) {
-      lane.useLane.getState().open(launchId, { sessionKey: key, answer: opts?.answer });
+      lane.useLane.getState().open(launchId, { sessionKey: key, answer: opts?.answer, raw: opts?.raw });
       return;
     }
     if (lane.useLane.getState().launchId) lane.useLane.getState().close();

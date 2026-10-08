@@ -58,10 +58,11 @@ HOOK_TIMEOUT_SECONDS = 300
 DEFAULT_HUB_URL = "http://127.0.0.1:8765"
 POLL_INTERVAL_SECONDS = 1.0
 
-#: The head of the redacted call the hook sends (Phase 14 law, kept by the
-#: owner's ruling on PHILO-15 15: redaction knows shapes, not secrets, so the
-#: whole command never leaves the agent). A longer call is CUT: the owner
-#: approves it in the pane (Raw), never from a HoldSpeak face.
+#: The head of the redacted call every HoldSpeak face shows (Phase 14 law,
+#: kept by the ruling on PHILO-15 15). A longer call is CUT: its rows say
+#: ``CUT · APPROVE IN RAW``. PHILO-15 20 (B63): the hook also sends the
+#: whole REDACTED call of a cut hold; the hub keeps it while the call is held,
+#: for the owner's Raw read only (Approve there), never for an agent.
 ARGS_HEAD_CHARS = 120
 
 
@@ -204,12 +205,16 @@ class RedactedCall(NamedTuple):
     sha256: str
     head: str
     length: int
+    #: PHILO-15 20 (B63): the whole REDACTED canonical text when the head is
+    #: cut ("" otherwise), sent for the owner's Raw read only.
+    full: str = ""
 
 
 def redact_call(tool_input: Mapping[str, Any] | None) -> RedactedCall:
     """The hash, the head and the redacted length of one call, computed
-    agent-side so the full payload never crosses the wire, let alone lands
-    in a row or a log."""
+    agent-side so the RAW payload never crosses the wire. A cut call also
+    carries its whole REDACTED text (PHILO-15 20, B63): the hub keeps it
+    for the owner's Raw read while the call is held, never for an agent."""
     canonical = json.dumps(
         dict(tool_input or {}), separators=(",", ":"), sort_keys=True, ensure_ascii=False
     )
@@ -225,7 +230,10 @@ def redact_call(tool_input: Mapping[str, Any] | None) -> RedactedCall:
         parsed = None
     command = parsed.get("command") if isinstance(parsed, dict) else None
     shown = command if isinstance(command, str) and command else redacted
-    return RedactedCall(digest, redacted[:ARGS_HEAD_CHARS], len(shown))
+    # PHILO-15 20 (B63): a cut call also carries its whole redacted text, for
+    # the owner's Raw read only (the hub never sends it to an agent).
+    full = redacted if len(redacted) > ARGS_HEAD_CHARS else ""
+    return RedactedCall(digest, redacted[:ARGS_HEAD_CHARS], len(shown), full)
 
 
 def redact_args(tool_input: Mapping[str, Any] | None) -> tuple[str, str]:
@@ -442,6 +450,7 @@ def run_hook(
     proposal_id = str(payload.get("tool_use_id") or "").strip() or f"gate-{uuid.uuid4()}"
     redacted = redact_call(payload.get("tool_input"))
     args_sha256, args_head, args_len = redacted.sha256, redacted.head, redacted.length
+    args_full = redacted.full
     # Conductor K5: the call is read HERE, against the held worktree, so the
     # full command never leaves the agent process; the hub gets the verdict
     # and applies the Control mode (``tool_gate_rules``).
@@ -483,6 +492,9 @@ def run_hook(
         "args_sha256": args_sha256,
         "args_head": args_head,
         "args_len": args_len,
+        # PHILO-15 20 (B63): the whole redacted call of a CUT hold, which the
+        # hub keeps for the owner's Raw read (Approve there), never the agent's.
+        **({"args_full": args_full} if args_full else {}),
         "cwd": cwd,
         "ttl_seconds": ttl_seconds,
         "classification": verdict,
@@ -628,6 +640,11 @@ def _deny_reason(response: Mapping[str, Any]) -> str:
         base_text = "the hold expired with no decision"
     else:
         base_text = "the hold was invalidated (hub restart); propose again by retrying"
+    if state == "denied":
+        # PHILO-15 20 (B66): the hold's reason, and that the owner decided,
+        # so the agent stops instead of trying the call another way.
+        said = f"{base_text}: {reason}" if reason else base_text
+        return f"{said}. The owner denied this call. Do not try it again in a different form."
     if reason:
         return f"{base_text}: {reason}"
     return base_text
