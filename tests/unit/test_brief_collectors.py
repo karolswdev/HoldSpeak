@@ -136,7 +136,8 @@ def test_breakage_pipeline_event_with_error_appears(tmp_path):
     # PHILO-6-02 round 3: a failed call outside the table is
     # ``<Object> did not complete`` (no verb read from the method name).
     assert items[0].text == "Sync did not complete"
-    assert items[0].detail == "NETWORK: network unavailable"
+    # PHILO-15 B73: the reason in words, then the local time.
+    assert items[0].detail.split(" · ")[0] == "network unavailable"
     assert items[0].source_ref == "pipeline-event:evt-failed"
 
 
@@ -167,7 +168,7 @@ def test_breakage_repeated_service_method_failures_deduplicate(tmp_path):
 
     assert len(items) == 1
     assert items[0].source_ref == "pipeline-event:evt-latest"
-    assert items[0].detail == "NETWORK: retry exhausted"
+    assert items[0].detail.split(" · ")[0] == "retry exhausted"
 
 
 def test_breakage_events_outside_window_are_excluded(tmp_path):
@@ -291,7 +292,8 @@ def test_recorded_meeting_appears_under_changed(tmp_path):
     assert [(item.section, item.text, item.source_ref) for item in items] == [
         ("changed", "Meeting recorded: Weekly sync", "meeting:meeting-recorded")
     ]
-    assert items[0].detail == "60 min"
+    # PHILO-15 lane 19 (Astra r1, 6): the meeting row carries its time.
+    assert items[0].detail == "60 min · 11:00"
 
 
 def test_meeting_detail_counts_action_items(tmp_path):
@@ -308,7 +310,7 @@ def test_meeting_detail_counts_action_items(tmp_path):
 
     items = service._collect_meetings(*_breakage_window())
 
-    assert items[0].detail == "60 min · 2 action items"
+    assert items[0].detail == "60 min · 2 action items · 11:00"
 
 
 def test_meeting_outside_the_window_is_excluded(tmp_path):
@@ -340,7 +342,7 @@ def test_untitled_meeting_is_named_honestly(tmp_path):
     items = service._collect_meetings(*_breakage_window())
 
     assert items[0].text == "Meeting recorded: Untitled meeting"
-    assert items[0].detail is None
+    assert items[0].detail == "11:00"  # no length, no actions: the time alone
 
 
 def test_a_recorded_week_no_longer_reads_nothing_material_changed(tmp_path, quiet_needs_you):
@@ -378,7 +380,7 @@ def test_breakage_failed_connector_run_appears(tmp_path):
 
     assert len(items) == 1
     assert items[0].text == "Connector github failed"
-    assert items[0].detail == "token expired"
+    assert items[0].detail.split(" · ")[0] == "token expired"
     assert items[0].source_ref == "connector-run:1"
 
 

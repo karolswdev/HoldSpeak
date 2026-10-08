@@ -24,6 +24,8 @@ The failures come from their real producers:
 """
 from __future__ import annotations
 
+import re
+
 import datetime
 from types import SimpleNamespace
 
@@ -182,4 +184,5 @@ def test_a_connector_failure_in_two_lookbacks_generates_both_briefs(tmp_path, mo
     day_one, day_two = _two_days(client, clock, db, source_ref)
     row = [i for i in _broke(day_two) if i["source_ref"] == source_ref][0]
     assert row["text"] == "Connector github failed"
-    assert row["detail"] == "token expired"
+    # PHILO-15 lane 19 (B73): the reason in plain words, then the local time.
+    assert re.fullmatch(r"token expired · \d{2}:\d{2}", row["detail"]), row["detail"]

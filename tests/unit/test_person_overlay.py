@@ -311,9 +311,9 @@ class TestD2HygienePin:
         # Empty args.
         assert _sanitize_detail("{}") is None
 
-        # No path, normal args.
-        result = _sanitize_detail('{"key": "value"}')
-        assert result == '{"key": "value"}'
+        # PHILO-15 B73: no JSON in a Brief row: a short plain value is words.
+        result = _sanitize_detail('{"verb": "done"}')
+        assert result == "verb done"
 
 
 # -- briefs/latest resource shape pin -----------------------------------------
