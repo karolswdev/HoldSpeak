@@ -1,0 +1,3 @@
+[gate] BLOCK after 21.4s: denied from the desk: spike: owner denied the echo. The owner denied this call. Do not try it again in a different form.
+s.stdout:
+BrokenPipeError: [Errno 32] Broken pipe
