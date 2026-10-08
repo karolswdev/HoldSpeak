@@ -631,6 +631,23 @@ class HeartbeatService:
 
         return receipt
 
+    def poll_open_prs(self, principal: Principal) -> dict[str, Any]:
+        """PHILO-15 B51: between sweeps, read each open agent PR now (one
+        ``gh pr view`` per PR, bounded by the follow-through). A merge closes
+        the origin at once; the block announces itself, so the faces re-read
+        and the Room receipt lands with no press. A poll with no open PR
+        runs no ``gh`` and writes nothing."""
+        from holdspeak.runtime.announce_scope import announce_writes
+
+        poll = getattr(self._follow_through, "poll_open_prs", None)
+        if not callable(poll):
+            return {"kind": "pr_poll", "polled": []}
+        with announce_writes("heartbeat", "pr_poll"):
+            receipt = poll(principal)
+            if receipt.get("closed") or receipt.get("cleaned"):
+                self.refresh_aggregate(principal)
+        return receipt
+
     def _write_receipt(self, receipt: dict[str, Any]) -> None:
         """Write a kernel receipt for the sweep."""
         receipt_id = f"hb_rcpt_{uuid.uuid4().hex[:12]}"

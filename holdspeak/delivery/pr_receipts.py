@@ -355,83 +355,129 @@ class PrReceiptsService:
             self._degrade(source.source_id, "gh returned an unexpected shape")
             return
 
-        worktree_branches = [wt.branch for wt in source.worktrees if wt.branch]
-        worktree_head_by_id = {
-            wt.worktree_id: (self._git(["rev-parse", "HEAD"], wt.path) or "").strip()
-            for wt in source.worktrees
-        }
-        worktree_heads = list(worktree_head_by_id.values())
+        worktrees = self._worktree_facts(source)
         observed = _utc_now()
-        rows = []
-        for pr in raw:
-            if not isinstance(pr, dict):
-                continue
-            head_ref = str(pr.get("headRefName") or "")
-            head_sha = str(pr.get("headRefOid") or "")
-            matched_worktree = next(
-                (
-                    wt for wt in source.worktrees
-                    if wt.branch == head_ref or worktree_head_by_id.get(wt.worktree_id) == head_sha
-                ),
-                None,
-            )
-            url = str(pr.get("url") or "")
-            repo = _github_repo(url)
-            worktree_reason = "no matching worktree"
-            agent_gated = bool(
-                matched_worktree and self._gate_matcher(str(matched_worktree.path))
-            )
-            agent_reason = worktree_reason if matched_worktree is None else "not gated"
-            github_reason = "local-only branch" if not repo else ""
-            rows.append(
-                {
-                    "source_id": source.source_id,
-                    "number": int(pr.get("number") or 0),
-                    "title": str(pr.get("title") or ""),
-                    "url": url,
-                    "repo": repo,
-                    "head_ref": head_ref,
-                    "base_ref": str(pr.get("baseRefName") or ""),
-                    "head_sha": head_sha,
-                    "base_sha": str(pr.get("baseRefOid") or ""),
-                    "state": pr_state(pr.get("state"), pr.get("isDraft")),
-                    "ci": rollup_conclusion(pr.get("statusCheckRollup")),
-                    "checks": check_details(pr.get("statusCheckRollup")),
-                    "author": str((pr.get("author") or {}).get("login") or ""),
-                    "review_decision": str(pr.get("reviewDecision") or "").lower(),
-                    "merged_at": str(pr.get("mergedAt") or ""),
-                    "merged_sha": str((pr.get("mergeCommit") or {}).get("oid") or "")
-                    if isinstance(pr.get("mergeCommit"), dict) else "",
-                    # Repository identity (Conductor K4): a fork's PR is
-                    # never the launch's PR, whatever its branch is called.
-                    "cross_repository": bool(pr.get("isCrossRepository")),
-                    "head_repo": _head_repo(pr),
-                    "observed_at": observed,
-                    "needs_you": str(pr.get("state") or "").lower() == "open"
-                    and rollup_conclusion(pr.get("statusCheckRollup")) in {"failing", "pending"},
-                    "worktree_id": matched_worktree.worktree_id if matched_worktree else "",
-                    "agent_gate": "gated" if agent_gated else "ungated",
-                    "verbs": {
-                        "send_agent": _verb(agent_gated, agent_reason),
-                        "draft_review": _verb(matched_worktree is not None, worktree_reason),
-                        "post_comment": _verb(bool(repo), github_reason),
-                        "post_status": _verb(bool(repo and head_sha), github_reason or "no head SHA"),
-                    },
-                    **attribute(
-                        head_ref,
-                        head_sha,
-                        worktree_branches=worktree_branches,
-                        worktree_heads=worktree_heads,
-                        attempt_story_ids=attempt_story_ids,
-                    ),
-                }
-            )
+        rows = [
+            self._row(source, pr, worktrees, attempt_story_ids, observed)
+            for pr in raw
+            if isinstance(pr, dict)
+        ]
         with self._lock:
             state = self._states[source.source_id]
             state.rows = rows
             state.status = "live"
             state.detail = ""
             state.observed_at = observed
+
+    def _worktree_facts(self, source: Any) -> tuple[list[str], dict[str, str], list[str]]:
+        """The source's worktree branches, HEAD per worktree id, and HEADs
+        (one ``git rev-parse`` per worktree), for attribution."""
+        worktree_branches = [wt.branch for wt in source.worktrees if wt.branch]
+        worktree_head_by_id = {
+            wt.worktree_id: (self._git(["rev-parse", "HEAD"], wt.path) or "").strip()
+            for wt in source.worktrees
+        }
+        return worktree_branches, worktree_head_by_id, list(worktree_head_by_id.values())
+
+    def _row(
+        self, source: Any, pr: dict[str, Any],
+        worktrees: tuple[list[str], dict[str, str], list[str]],
+        attempt_story_ids: list[str], observed: str,
+    ) -> dict[str, Any]:
+        """One PR row of the receipts (the shape every reader takes)."""
+        worktree_branches, worktree_head_by_id, worktree_heads = worktrees
+        head_ref = str(pr.get("headRefName") or "")
+        head_sha = str(pr.get("headRefOid") or "")
+        matched_worktree = next(
+            (
+                wt for wt in source.worktrees
+                if wt.branch == head_ref or worktree_head_by_id.get(wt.worktree_id) == head_sha
+            ),
+            None,
+        )
+        url = str(pr.get("url") or "")
+        repo = _github_repo(url)
+        worktree_reason = "no matching worktree"
+        agent_gated = bool(
+            matched_worktree and self._gate_matcher(str(matched_worktree.path))
+        )
+        agent_reason = worktree_reason if matched_worktree is None else "not gated"
+        github_reason = "local-only branch" if not repo else ""
+        return (
+            {
+                "source_id": source.source_id,
+                "number": int(pr.get("number") or 0),
+                "title": str(pr.get("title") or ""),
+                "url": url,
+                "repo": repo,
+                "head_ref": head_ref,
+                "base_ref": str(pr.get("baseRefName") or ""),
+                "head_sha": head_sha,
+                "base_sha": str(pr.get("baseRefOid") or ""),
+                "state": pr_state(pr.get("state"), pr.get("isDraft")),
+                "ci": rollup_conclusion(pr.get("statusCheckRollup")),
+                "checks": check_details(pr.get("statusCheckRollup")),
+                "author": str((pr.get("author") or {}).get("login") or ""),
+                "review_decision": str(pr.get("reviewDecision") or "").lower(),
+                "merged_at": str(pr.get("mergedAt") or ""),
+                "merged_sha": str((pr.get("mergeCommit") or {}).get("oid") or "")
+                if isinstance(pr.get("mergeCommit"), dict) else "",
+                # Repository identity (Conductor K4): a fork's PR is
+                # never the launch's PR, whatever its branch is called.
+                "cross_repository": bool(pr.get("isCrossRepository")),
+                "head_repo": _head_repo(pr),
+                "observed_at": observed,
+                "needs_you": str(pr.get("state") or "").lower() == "open"
+                and rollup_conclusion(pr.get("statusCheckRollup")) in {"failing", "pending"},
+                "worktree_id": matched_worktree.worktree_id if matched_worktree else "",
+                "agent_gate": "gated" if agent_gated else "ungated",
+                "verbs": {
+                    "send_agent": _verb(agent_gated, agent_reason),
+                    "draft_review": _verb(matched_worktree is not None, worktree_reason),
+                    "post_comment": _verb(bool(repo), github_reason),
+                    "post_status": _verb(bool(repo and head_sha), github_reason or "no head SHA"),
+                },
+                **attribute(
+                    head_ref,
+                    head_sha,
+                    worktree_branches=worktree_branches,
+                    worktree_heads=worktree_heads,
+                    attempt_story_ids=attempt_story_ids,
+                ),
+            }
+        )
+
+    def view_pr(self, source_id: str, url: str) -> tuple[Optional[dict[str, Any]], str]:
+        """PHILO-15 B51: one PR's state, read now: one ``gh pr view <url>``.
+        Returns ``(row, gh_state)``; the row also replaces that PR's row in
+        the cache, so the next read shows it. ``None`` with a named state
+        when gh is missing, refused or answered no PR."""
+        source = self._registry.get(source_id)
+        if source is None:
+            return None, "source_unknown"
+        if not self._gh_available():
+            return None, "gh_missing"
+        argv = ["gh", "pr", "view", str(url), "--json", GH_FIELDS]
+        try:
+            proc = self._runner(argv, str(source.primary_path) if source.primary_path else None)
+        except (subprocess.TimeoutExpired, OSError):
+            return None, "gh_failed"
+        if proc.returncode != 0:
+            error = str(proc.stderr or "").lower()
+            auth = any(token in error for token in ("auth", "login", "token", "credential"))
+            return None, "gh_unauthenticated" if auth else "gh_failed"
+        try:
+            raw = json.loads(proc.stdout)
+        except (json.JSONDecodeError, ValueError):
+            return None, "gh_failed"
+        if not isinstance(raw, dict):
+            return None, "gh_failed"
+        row = self._row(source, raw, self._worktree_facts(source), [], _utc_now())
+        with self._lock:
+            state = self._states.get(source_id)
+            if state is not None and state.rows is not None:
+                state.rows = [r for r in state.rows if r.get("number") != row["number"]] + [row]
+        return row, "live"
 
     def _degrade(self, source_id: str, detail: str) -> None:
         """Last-known-good retained; the status names the failure."""

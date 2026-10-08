@@ -219,6 +219,84 @@ def _slug(name: str) -> str:
     return "-".join(words)[:60].strip("-") or "project"
 
 
+#: The model drafter's mark on a claim with no evidence (UPD-002).
+_UNVERIFIED_MARK = re.compile(r"\*\*\[UNVERIFIED\]\*\*[ \t]*")
+
+
+def _outbound(body_md: str) -> tuple[list[list[str]], int]:
+    """The body's sections (heading line first) with every unchecked claim
+    omitted WHOLE: a marked line and its continuation lines (up to a blank
+    line, the next list item or the next heading), and the count omitted."""
+    sections: list[list[str]] = [[]]
+    dropped_in: list[int] = [0]
+    dropped = 0
+    skipping = False
+    for line in str(body_md or "").splitlines():
+        stripped = line.strip()
+        if line.startswith("## "):
+            skipping = False
+            sections.append([line])
+            dropped_in.append(0)
+        elif _UNVERIFIED_MARK.search(line):
+            if not skipping or stripped.startswith(("- ", "* ")):
+                dropped += 1
+                dropped_in[-1] += 1
+            skipping = True
+        elif skipping and stripped and not stripped.startswith(("- ", "* ")):
+            continue  # the rest of the omitted claim
+        else:
+            skipping = False
+            sections[-1].append(line)
+    out: list[list[str]] = []
+    for lines, cut in zip(sections, dropped_in):
+        if cut and not any(l.strip() for l in lines[1:]):
+            lines = [lines[0], "", "Not checked.", ""] if lines else ["Not checked.", ""]
+        out.append(lines)
+    return out, dropped
+
+
+def without_desk_marks(body_md: str, heading: str = "") -> str:
+    """An update's Markdown as it leaves the desk (Send, Copy), PHILO-15 B53
+    and Astra's rulings: a claim the model could not tie to evidence (the
+    ``[UNVERIFIED]`` mark) is OMITTED whole, continuation lines included,
+    never sent as a fact; a section left empty by that reads "Not checked.";
+    the last line counts what stayed on the desk. ``heading`` (the
+    document's identity) leads when given."""
+    sections, dropped = _outbound(body_md)
+    text = "\n".join(line for lines in sections for line in lines).rstrip("\n") + "\n"
+    if dropped:
+        text += f"\n{dropped} claim{'' if dropped == 1 else 's'} not checked, kept on the desk.\n"
+    if heading:
+        text = f"# {heading}\n\n" + text
+    return text
+
+
+#: The sentences that say a section has nothing (the drafter's honest
+#: minimums, and the omission's own word): not substantive content.
+_EMPTY_WORDS = frozenset({"Not checked."})
+
+
+def nothing_verified(body_md: str) -> bool:
+    """Astra r2 ruling: True when omitting the unchecked claims leaves no
+    substantive content (only headings, "Not checked." and the drafter's
+    "nothing in this window" sentences; Source Coverage is not content). A
+    verified row, a merge row for one, keeps the update sendable."""
+    from .project_update_service import _HONEST_MINIMAL
+
+    sections, dropped = _outbound(body_md)
+    if not dropped:
+        return False
+    empty = _EMPTY_WORDS | {str(v).strip() for v in _HONEST_MINIMAL.values()}
+    for lines in sections:
+        if lines and lines[0].strip().lower() == "## source coverage":
+            continue
+        for line in lines[1 if lines and lines[0].startswith("## ") else 0:]:
+            text = line.strip()
+            if text and text not in empty:
+                return False
+    return True
+
+
 def render_update(db: Any, update_id: str) -> Document:
     """``project_update:<id>`` -> its Document: a PUBLISHED update, its exact Markdown."""
     row = db.project_updates.get_update(str(update_id or ""))
@@ -234,7 +312,19 @@ def render_update(db: Any, update_id: str) -> Document:
     published = str(row.get("published_at") or "")[:10]
     title = f"{name} — update r{row.get('draft_revision') or 1}" + (f" ({published})" if published else "")
     revision = int(row.get("draft_revision") or 1)
-    return Document(ref=f"project_update:{row['id']}", title=title, body_md=str(row.get("body_md") or ""),
+    # PHILO-15 B53: an unchecked claim never leaves the desk as a fact (the
+    # face keeps it, with its UNVERIFIED lamp).
+    # The document names itself (PHILO-15 B53 ruling): "<Project> · Update · <date>".
+    heading = f"{name} · Update" + (f" · {published}" if published else "")
+    raw = str(row.get("body_md") or "")
+    if nothing_verified(raw):
+        # Astra r2 ruling: an update whose every claim stays on the desk is not
+        # sent (its stored claims are kept; the owner checks them first).
+        raise ChannelRefused("nothing_verified",
+                             "NOTHING VERIFIED: every claim in this update is not checked; it stays on the desk",
+                             status=400)
+    body = without_desk_marks(raw, heading)
+    return Document(ref=f"project_update:{row['id']}", title=title, body_md=body,
                     slug=_slug(name), label=f"REV {revision}")
 
 

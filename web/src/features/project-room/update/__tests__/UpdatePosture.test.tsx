@@ -652,20 +652,34 @@ describe("Five verbs as separate controls", () => {
 // ── EGRESS BADGE: on the model-draft action ──
 
 describe("Egress badge on model drafting", () => {
-  it("shows EgressChip next to Draft-with-model", async () => {
+  // PHILO-15 B53: the chip names the host of the model assigned to update
+  // drafts (a LAN box here), never a fixed LOCAL + CLOUD.
+  it("names the update-draft model's host next to Draft-with-model", async () => {
     setupUpdatePosture({ listUpdates: [] });
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
+      if (url.includes("/api/inference/assignments")) {
+        return Promise.resolve({
+          task_overrides: [{
+            id: "project.update_draft",
+            effective: { status: "assigned", assignment: { entries: [{ profile_id: "lan", label: "qwen", boundary: "private_network" }] } },
+          }],
+        });
+      }
+      return base(url, init);
+    });
+    useDesk.setState({ inferenceTargets: [{ id: "lan", profile_id: "lan", endpoint: "http://192.168.1.43:8080/v1" }] } as never);
     render(<WindowHarness scope="project:p1" />);
 
     fireEvent.click(await screen.findByTestId("updates-verb"));
     await waitFor(() => screen.getByTestId("update-posture"));
 
     const modelAction = screen.getByTestId("update-draft-model-action");
-    expect(modelAction).toBeTruthy();
-
     const egressChip = modelAction.querySelector(".gadget-chip-egress");
     expect(egressChip).toBeTruthy();
-    expect(egressChip!.textContent).toBe("local + cloud");
-    expect(egressChip!.getAttribute("data-scope")).toBe("mixed");
+    await waitFor(() => expect(egressChip!.textContent).toContain("192.168.1.43"));
+    expect(egressChip!.textContent).not.toMatch(/cloud/i);
+    expect(apiFetch.mock.calls.some(([u]) => String(u).includes("/api/inference/assignments"))).toBe(true);
   });
 });
 
@@ -703,8 +717,9 @@ describe("Generator provenance", () => {
 
     await waitFor(() => screen.getByTestId("update-editor"));
 
+    // PHILO-15 B53: names, never ids: the assignment id is not shown.
     const label = screen.getByTestId("update-generator-label");
-    expect(label.textContent).toBe("Model (gpt-4o)");
+    expect(label.textContent).toBe("Model");
   });
 
   it("surfaces fallback_reason when model fell back to deterministic", async () => {

@@ -260,8 +260,10 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             update = ctx.project_update_service.get_update(
                 principal(request), update_id,
             )
+            from ...services.channel_contract import without_desk_marks
+
             return PlainTextResponse(
-                update.get("body_md", ""),
+                without_desk_marks(update.get("body_md", "")),
                 media_type="text/markdown",
             )
         except NotFound as exc:
