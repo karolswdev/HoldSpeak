@@ -261,6 +261,8 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "people_access.set",
         # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
         "calendar.open_settings",
+        # PHILO-15 16: the owner names a Project's repository (HTTP only).
+        "project.repository.register",
         # Conductor K2: Hand to agent.
         "agent.hand",
     ]

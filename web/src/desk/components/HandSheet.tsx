@@ -60,6 +60,9 @@ export interface HandPreview {
   profile: string;
   /** A held launch of this item that Launch resumes (its brief, its agent). */
   resume?: { launch_id: string; profile: string; instruction_state: string | null } | null;
+  /** PHILO-15 16: the Project's registered repository is not cloned yet; the
+   *  hand clones it from `host` first (egress), into `label`. */
+  clone?: { repository: string; host: string; state: string; label?: string | null } | null;
   refused: string[];
 }
 
@@ -72,6 +75,8 @@ export interface HandLaunch {
   resumed?: boolean;
   profile?: string | null;
   failure?: { stage?: string; outcome?: string } | null;
+  /** PHILO-15 16: the clone this hand made first (its own receipt). */
+  clone?: { repository: string; host: string; state: string; operation_id?: string | null } | null;
 }
 
 export const HAND_LAUNCH_PATH = (id: string) => `/api/agent/launches/${encodeURIComponent(id)}`;
@@ -153,6 +158,14 @@ export function refusalToken(code: string, agent: AgentId): string {
   switch (code) {
     case "no_repository":
       return "NO REPOSITORY";
+    case "repository_not_registered":
+      return "REPOSITORY NOT REGISTERED";
+    case "clone_failed":
+      return "CLONE FAILED";
+    case "clone_timed_out":
+      return "CLONE TIMED OUT";
+    case "gh_not_installed":
+      return "GH NOT INSTALLED";
     case "item_unknown":
       return "ITEM NOT FOUND";
     case "executable_absent":
@@ -407,6 +420,13 @@ function Sheet({ origin }: { origin: HandOrigin }) {
             </SurfaceSection>
             <SurfaceSection label="WHERE">
               <span className="desk-hand-tokens" data-testid="hand-where">
+                {preview.clone ? (
+                  <span className="desk-hand-tokens" data-testid="hand-clone">
+                    <EgressChip label={preview.clone.host.toUpperCase()} scope="cloud" />
+                    <span className="surface-token" data-chip>CLONES {preview.clone.repository}</span>
+                    <span className="surface-token" data-chip>{preview.branch}</span>
+                  </span>
+                ) : null}
                 {preview.repo ? (
                   <>
                     <span className="surface-token" data-chip>{preview.repo_label || tilde(preview.repo)}</span>

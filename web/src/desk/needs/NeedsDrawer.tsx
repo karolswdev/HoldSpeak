@@ -43,6 +43,7 @@ import {
   type NeedFace,
 } from "./needsFace";
 import { cancelArming, useArmingOutcome } from "./arming";
+import { AddToProject } from "../AddToProject";
 import "./needs.css";
 
 /** Answer: the agent's window with the answer field focused. Lane C2 builds
@@ -187,6 +188,8 @@ function NeedVerbsView({ face, primary, onWell, well }: {
             <Button dense variant="ghost" aria-label={named("Room")} data-testid="needs-row-verb" data-verb="room"
               onClick={() => openProjectProposal(v.projectId, v.proposalId)}>Room</Button>
           ) : null}
+          {/* PHILO-15 16 (B37): a meeting in no Project joins one here. */}
+          {!v.projectId && v.meetingId ? <AddToProject meetingId={v.meetingId} /> : null}
           {/* PHILO-15 08 (B03): three verbs with words, Project or not. */}
           <Button dense variant="ghost" disabled={busy} aria-label={named("Decline")} data-testid="needs-row-verb" data-verb="decline"
             onClick={() => void act("Decline", () => apiFetch(
@@ -225,8 +228,11 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       // The summary route (where the text goes) is disclosed on the meeting,
       // before the run: Summarize opens it there.
       return (
-        <Button dense variant={lead} aria-label={named("Summarize")} data-testid="needs-row-verb" data-verb="summarize"
-          onClick={() => openSourceRef(`meeting:${v.meetingId}`)}>Summarize</Button>
+        <>
+          <AddToProject meetingId={v.meetingId} />
+          <Button dense variant={lead} aria-label={named("Summarize")} data-testid="needs-row-verb" data-verb="summarize"
+            onClick={() => openSourceRef(`meeting:${v.meetingId}`)}>Summarize</Button>
+        </>
       );
     case "setup":
       return (

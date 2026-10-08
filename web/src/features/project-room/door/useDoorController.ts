@@ -11,6 +11,7 @@ import {
 } from "../../../pages/cores/connections/api";
 import { discoverGitHub, discoverJira, discoverConfluence } from "./api";
 import * as doorApi from "./api";
+import { registerProjectRepository } from "../../../desk/projectRepository";
 import type { CountToken } from "./api";
 
 /* ── Default watch toggles per provider ── */
@@ -511,6 +512,14 @@ export function useDoorController(): DoorController {
           adjust: r.adjust as Record<string, unknown>,
         }));
       const resp = await doorApi.doorCreate(outcome.trim(), payloads);
+      // PHILO-15 16 (B38): the GitHub row's repository is the Project's
+      // repository (owner-only, one receipt; the first hand clones it). A
+      // register that fails leaves the drawer's Register verb, never a dead
+      // NO REPOSITORY.
+      const repository = payloads.find((p) => p.provider === "github" && typeof p.scope === "string")?.scope;
+      if (resp.projectId && typeof repository === "string" && repository) {
+        await registerProjectRepository(resp.projectId, repository).catch(() => null);
+      }
       safe(() => {
         setCreating(false);
         // Open the Room, then close the Door so only the Room remains.

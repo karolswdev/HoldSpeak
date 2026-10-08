@@ -34,6 +34,14 @@ from ..delivery.factory_launch import (
 from ..delivery.registry import RegistryError, normalize_git_url
 from ..logging_config import get_logger
 from .errors import ServiceError
+from .project_repository import (
+    CLONE_HOST,
+    ProjectRepositories,
+    register as register_repository,
+    registered_source,
+    repository_state,
+    watched_repositories,
+)
 from .agent_brief import (
     AgentBriefRefused,
     compose_agent_brief,
@@ -146,16 +154,19 @@ def resolve_project_repository(
     registry: Any,
     *,
     project_map: Optional[Mapping[str, Any]] = None,
+    registrations: Optional[ProjectRepositories] = None,
 ) -> Any:
     """The Delivery Source of a Project's repository, registered if absent.
 
     In order: a repository filed in the Project (``repository:<source_id>``);
-    the GitHub repositories the Project's Room watches, matched by origin
-    against the registered sources; the one registered clone labelled with
-    the Project's name; then the project map (by watch origin or name). ``None`` when nothing names a
-    local clone."""
+    the clone of the Project's registered repository (PHILO-15 16); the
+    GitHub repositories the Project's Room watches (and the registered one),
+    matched by origin against the registered sources; the one registered
+    clone labelled with the Project's name; then the project map (by watch
+    origin or name). ``None`` when nothing names a local clone."""
     if not project_id:
         return None
+    record = registrations.get(project_id) if registrations is not None else None
     with db._connection() as conn:
         filed = [
             str(row[0]).split(":", 1)[1]
@@ -179,11 +190,16 @@ def resolve_project_repository(
                 repositories.append(str(repo))
         name_row = conn.execute("SELECT name FROM projects WHERE id=?", (project_id,)).fetchone()
     project_name = str(name_row[0]) if name_row else ""
+    if record and str(record["repository"]) not in repositories:
+        repositories.append(str(record["repository"]))
 
     for source_id in filed:
         source = registry.get(source_id)
         if source is not None and source.primary_path:
             return source
+    source = registered_source(record, registry)
+    if source is not None:
+        return source
     if repositories:
         for source in registry.sources():
             if source.primary_path and _matches_repo(registry, source.primary_path, repositories):
@@ -226,8 +242,11 @@ class AgentHandService:
         project_map: Optional[Mapping[str, Any]] = None,
         max_live: int = MAX_LIVE_LAUNCHES,
         issue_reads: Optional[Mapping[str, Any]] = None,
+        repositories: Optional[ProjectRepositories] = None,
     ) -> None:
         self._db = db
+        #: PHILO-15 16: the Projects' registered repositories and their clones.
+        self.repositories = repositories or ProjectRepositories()
         #: The tracker reads of an issue brief (``gh_runner``, ``jira_adapter``);
         #: empty in production (the real CLIs).
         self.issue_reads: Mapping[str, Any] = dict(issue_reads or {})
@@ -267,9 +286,19 @@ class AgentHandService:
         project_id = project_id or project_for_item(self._db, kind, item_id)
         _reload_registry(launcher._registry)
         source = resolve_project_repository(
-            self._db, project_id, launcher._registry, project_map=self._project_map
+            self._db, project_id, launcher._registry, project_map=self._project_map,
+            registrations=self.repositories,
         )
+        clone: Optional[dict[str, Any]] = None
         if source is None:
+            # PHILO-15 16: the Project's registered repository, cloned on its
+            # first hand (one receipt), then registered as a Delivery Source.
+            source, clone = self._clone_registered(principal, project_id, launcher._registry)
+        if source is None:
+            if watched_repositories(self._db, project_id):
+                raise AgentHandRefused(
+                    "repository_not_registered", "the Project's Room watches a repository nobody registered"
+                )
             raise AgentHandRefused(
                 "no_repository", "the item's Project names no local repository"
             )
@@ -343,7 +372,70 @@ class AgentHandService:
             result = self._launch_gated(launcher, request, brief["text"], principal, worktree_path, spec["name"])
         else:
             result = self._launch_ungated(launcher, request, brief["text"], principal)
-        return self._answer(result, spec, source, brief, kind, item_id, project_id, mode)
+        answer = self._answer(result, spec, source, brief, kind, item_id, project_id, mode)
+        if clone is not None:
+            answer["clone"] = clone
+        return answer
+
+    # ── PHILO-15 16: the Project's repository ───────────────────────
+
+    def _clone_registered(
+        self, principal: Any, project_id: Optional[str], registry: Any,
+    ) -> tuple[Any, Optional[dict[str, Any]]]:
+        """Clone the Project's registered repository (``project.repository.clone``,
+        an admitted kernel operation: one receipt) and register the clone as a
+        Delivery Source. ``(None, None)`` when the Project registered none."""
+        record = self.repositories.get(project_id)
+        if record is None:
+            return None, None
+        repository = str(record["repository"])
+        from . import project_kernel
+
+        payload = {"project_id": str(project_id), "repository": repository}
+        try:
+            path, kernel = project_kernel.run(
+                self._db, principal, "project.repository.clone", payload,
+                lambda _minted: self.repositories.clone(repository),
+            )
+        except ServiceError as exc:
+            raise AgentHandRefused(exc.code, exc.detail, context={
+                key: value for key, value in exc.context.items() if key in ("operation_id", "receipt")
+            }) from exc
+        try:
+            source, _ = registry.register(str(path), label=repository.split("/", 1)[1])
+        except RegistryError as exc:
+            raise AgentHandRefused("clone_not_registered", str(exc)) from exc
+        self.repositories.put(str(project_id), {
+            **record, "source_id": source.source_id, "cloned_at": record.get("cloned_at") or _iso_now(),
+        })
+        return source, {
+            "repository": repository,
+            "host": CLONE_HOST,
+            "state": "cloned",
+            "operation_id": (kernel or {}).get("operation_id"),
+            "receipt": (kernel or {}).get("receipt"),
+        }
+
+    def register_project_repository(
+        self, principal: Any, *, project_id: str, repository: str, command_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """``project.repository.register`` (PHILO-15 16, B38): the Door's GitHub
+        row (or the drawer's Register) names the Project's repository. Owner
+        only; an admitted kernel operation (one receipt). Nothing is cloned
+        here: the first hand clones it."""
+        from . import project_kernel
+        from ..principals import PrincipalKind
+
+        if project_kernel.current() is None:
+            raise RuntimeError("project.repository.register runs only as an admitted kernel operation")
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise ServiceError("owner_required", "Only the owner registers a repository.", context={"status": 403})
+        register_repository(self._db, self.repositories, project_id, repository)
+        return self.repository_state(principal, project_id)
+
+    def repository_state(self, principal: Any, project_id: str, *, registry: Any = None) -> dict[str, Any]:
+        """The Project's repository as the drawer's Get Info shows it."""
+        return repository_state(self._db, project_id, self.repositories, registry)
 
     def _answer(
         self, result: Mapping[str, Any], spec: Mapping[str, str], source: Any,
@@ -516,6 +608,12 @@ class AgentHandService:
             "instruction_state": record.get("instruction_state"),
             "trust_state": record.get("trust_state"),
         }
+
+
+def _iso_now() -> str:
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _reload_registry(registry: Any) -> None:

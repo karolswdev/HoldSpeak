@@ -10,6 +10,10 @@ worktree, the launch, ``origin_ref`` on the launch and the attempt. The
 caller's authenticated principal admits the ``process.spawn`` operation
 (its kernel receipt is the launch receipt), the same as the PR send-agent
 verb (``delivery_prs.py``). Blocking work runs off the event loop.
+
+PHILO-15 16: ``GET /api/projects/{project_id}/repository`` (the Project's
+registered repository, cloned or not) and ``POST`` of the same path
+(``project.repository.register``, owner only, one receipt).
 """
 from __future__ import annotations
 
@@ -224,6 +228,61 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
                 {"error": exc.code, "code": exc.code, "detail": exc.detail, **payload}, status_code=status
             )
         return JSONResponse(result, status_code=202)
+
+    # ── PHILO-15 16 (B38): a Project knows its repository ──────────────
+
+    @router.get("/api/projects/{project_id}/repository")
+    async def api_project_repository(project_id: str) -> Any:
+        """The Project's registered repository, CLONED or not, and the
+        repositories its Room watches (the drawer's Get Info and Register).
+        Owner only (the edge default); reads only."""
+        from ...services.agent_hand_preview import LaunchReads
+
+        reads = getattr(ctx, "agent_hand_reads", None) or LaunchReads()
+        principal = Principal(PrincipalKind.OWNER, "owner-session")
+
+        def run() -> Any:
+            # The one service instance the register operation is bound to.
+            service = _ops().target("project.repository.register")
+            return service.repository_state(principal, project_id, registry=reads.registry())
+
+        try:
+            return JSONResponse(await asyncio.to_thread(run))
+        except Exception as exc:
+            log.error(f"project repository read failed: {exc}")
+            return JSONResponse({"error": "project_repository_failed"}, status_code=500)
+
+    @router.post("/api/projects/{project_id}/repository")
+    async def api_register_project_repository(project_id: str, request: Request) -> Any:
+        """``project.repository.register``: the owner's press names the
+        Project's repository (owner/name). One admitted kernel operation, one
+        receipt; nothing is cloned until the first hand."""
+        from ...operations import OperationRefused
+        from ._room_kernel import body_or_refusal, kernel_fields, kernel_refusal, refusal_fields, service_refusal
+
+        name = "project.repository.register"
+        principal = getattr(request.state, "principal", None) or Principal(PrincipalKind.OWNER, "owner-session")
+        registry = _ops()
+        data, refused = await body_or_refusal(request, registry, principal, name)
+        if refused is not None:
+            return refused
+        args = {"project_id": project_id, "repository": data.get("repository")}
+        if data.get("command_id"):
+            args["command_id"] = data.get("command_id")
+
+        def run() -> JSONResponse:
+            try:
+                result, kernel = registry.invoke_receipted(principal, name, args)
+                return JSONResponse({**result, **kernel_fields(kernel)})
+            except OperationRefused as exc:
+                return JSONResponse({"success": False, "code": exc.code, "error_code": exc.code,
+                                     "message": exc.detail, **refusal_fields(exc)}, status_code=400)
+            except ServiceError as exc:
+                if (answer := kernel_refusal(exc)) is not None:
+                    return answer
+                return service_refusal(exc)
+
+        return await asyncio.to_thread(run)
 
     return router
 

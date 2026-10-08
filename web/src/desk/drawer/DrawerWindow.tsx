@@ -49,6 +49,8 @@ import {
   useDropHand,
 } from "../hand";
 import type { DrawerHead, DrawerMember } from "./members";
+import { plainFailure } from "../surface/plainFailure";
+import { registerProjectRepository, registrable, useProjectRepository } from "../projectRepository";
 import "./drawer.css";
 
 export type DrawerView = "icons" | "list";
@@ -95,6 +97,19 @@ function HeadFacts({ head, count, failed }: { head: DrawerHead; count: number; f
   );
 }
 
+/** The Project itself as a drawer member: what Get Info opens with nothing selected. */
+export function projectInfoMember(projectId: string, name: string): DrawerMember {
+  return {
+    id: projectId,
+    ref: `project:${projectId}`,
+    kind: "project",
+    name,
+    kindWord: "Project",
+    sprite: objectSprite("project", projectId),
+    facts: {},
+  };
+}
+
 export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
   const { projectId } = drawer;
   const data = useDrawerData(projectId);
@@ -131,8 +146,27 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
   const open = (member: DrawerMember | undefined | null) => {
     if (member && memberOpens(member)) openMember(member);
   };
+  // PHILO-15 16: Get Info with nothing selected is the Project's own Info
+  // (its REPOSITORY, CLONED or not; Register when the Room watches one).
+  const repository = useProjectRepository(projectId);
+  const [registering, setRegistering] = useState(false);
+  const [registerFailure, setRegisterFailure] = useState("");
+  const toRegister = registrable(repository.state);
+  const register = async () => {
+    if (!toRegister) return;
+    setRegistering(true);
+    setRegisterFailure("");
+    try {
+      await registerProjectRepository(projectId, toRegister);
+      repository.reload();
+    } catch (reason) {
+      setRegisterFailure(plainFailure("NOT REGISTERED", reason));
+    } finally {
+      setRegistering(false);
+    }
+  };
   const info = (member: DrawerMember | null) => {
-    if (member) useDrawers.getState().openInfo(member, projectId);
+    useDrawers.getState().openInfo(member ?? projectInfoMember(projectId, name), projectId);
   };
   // PHILO-14 C3: drop to hand. A work item drags out of the icons; an agent
   // here takes it; the selection's Hand to agent is the same hand by press
@@ -245,13 +279,20 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
         receipt={
           receipt ? (
             <ParkReceipt outcome={receipt} onRestore={(ids) => void restore(ids)} data-testid="drawer-park-receipt" />
+          ) : registerFailure ? (
+            <span className="drawer-receipt" data-tone="fail" role="status">{registerFailure}</span>
           ) : (
             <span className="drawer-receipt">{drawerReceipt(members.length, selected ? 1 : 0)}</span>
           )
         }
         verbs={
           <>
-            <Button dense variant="ghost" disabled={!selected} onClick={() => info(selected)}>
+            {toRegister ? (
+              <Button dense variant="ghost" loading={registering} onClick={() => void register()} data-testid="drawer-register">
+                Register
+              </Button>
+            ) : null}
+            <Button dense variant="ghost" onClick={() => info(selected)} data-testid="drawer-get-info">
               Get Info
             </Button>
             {selectedHand ? (

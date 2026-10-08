@@ -69,7 +69,21 @@ const ROOM = {
   receipts: { state: "ok", items: [] },
 };
 
-function route(url: string): unknown {
+/** PHILO-15 16: the Project's repository as the hub answers it (a test sets it). */
+const repo = vi.hoisted(() => ({
+  state: null as null | Record<string, unknown>,
+  posts: [] as unknown[],
+}));
+
+function route(url: string, init?: { method?: string; json?: unknown }): unknown {
+  if (url.endsWith("/repository")) {
+    if (init?.method === "POST") {
+      repo.posts.push(init.json);
+      const name = String((init.json as { repository?: string })?.repository ?? "");
+      repo.state = { ...(repo.state ?? {}), repository: name, registered: true, cloned: false };
+    }
+    return repo.state ?? { project_id: "p-ledger", repository: null, registered: false, cloned: false, watched: [], host: "github.com" };
+  }
   if (url.includes("/room")) return ROOM;
   if (url.includes("/meetings")) return { meetings: [{ id: "m-standup", title: "Ledger cutover sync", started_at: today }] };
   if (url.startsWith("/api/decisions")) return { decisions: [{ id: "dec-1", text: "Freeze the old ledger on Nov 5", source_meeting_id: "m-standup", created_at: today }] };
@@ -93,7 +107,9 @@ beforeEach(() => {
   opened.refs = [];
   shell.rooms = [];
   apiFetch.mockReset();
-  apiFetch.mockImplementation((url: string) => Promise.resolve(route(url)));
+  apiFetch.mockImplementation((url: string, init?: { method?: string; json?: unknown }) => Promise.resolve(route(url, init)));
+  repo.state = null;
+  repo.posts = [];
   useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
   useDrawers.setState({ drawers: [], infos: [], revision: 0, receipts: {} });
   useDesk.setState({
@@ -191,7 +207,8 @@ describe("PHILO-14 A2 the drawer", () => {
     await renderDrawer();
     expect(footer()).toBe(`${EXPECTED.length} OBJECTS`);
     expect(footer()).not.toMatch(/0 SELECTED/);
-    expect(screen.getByRole("button", { name: "Get Info" })).toBeDisabled();
+    // PHILO-15 16: nothing selected, Get Info is the Project's own Info.
+    expect(screen.getByRole("button", { name: "Get Info" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: /^Ledger cutover sync, MEETING/ }), { detail: 1 });
     const row = document.querySelector('.object-list-row[data-object-id="meeting:m-standup"]')!;
     expect(row).toHaveAttribute("aria-selected", "true");
@@ -370,6 +387,45 @@ function member(over: Partial<DrawerMember> = {}): DrawerMember {
     facts: { where: "Payments ledger cutover", made: "TODAY 08:40" }, parks: true, ...over,
   };
 }
+
+describe("PHILO-15 16 the Project knows its repository", () => {
+  const REPO = "karolswdev/holdspeak-dayone-rehearsal-1558";
+
+  it("Get Info with nothing selected: REPOSITORY · owner/name · NOT CLONED", async () => {
+    repo.state = { project_id: "p-ledger", repository: REPO, registered: true, cloned: false, watched: [REPO], host: "github.com" };
+    await renderDrawer();
+    expect(screen.queryByTestId("drawer-register")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Get Info" }), { detail: 1 });
+    const info = useDrawers.getState().infos[0];
+    expect(info.ref).toBe("project:p-ledger");
+    render(<DrawerInfoWindow info={info} />);
+    const fact = await waitFor(() => {
+      const el = document.querySelector('.object-info-fact[data-fact="repository"]');
+      expect(el).toBeTruthy();
+      return el!;
+    });
+    expect(within(fact as HTMLElement).getByText("Repository")).toBeTruthy();
+    expect(within(fact as HTMLElement).getByText(`${REPO} · NOT CLONED`)).toBeTruthy();
+  });
+
+  it("CLONED once the first hand cloned it", async () => {
+    repo.state = { project_id: "p-ledger", repository: REPO, registered: true, cloned: true, watched: [REPO], host: "github.com" };
+    await renderDrawer();
+    fireEvent.click(screen.getByRole("button", { name: "Get Info" }), { detail: 1 });
+    render(<DrawerInfoWindow info={useDrawers.getState().infos[0]} />);
+    expect(await screen.findByText(`${REPO} · CLONED`)).toBeTruthy();
+  });
+
+  it("an older Project the Room watches a repository for: Register on the drawer, one press", async () => {
+    repo.state = { project_id: "p-ledger", repository: null, registered: false, cloned: false, watched: [REPO], host: "github.com" };
+    await renderDrawer();
+    const register = await screen.findByTestId("drawer-register");
+    expect(register).toHaveTextContent("Register");
+    fireEvent.click(register);
+    await waitFor(() => expect(repo.posts).toEqual([{ repository: REPO }]));
+    await waitFor(() => expect(screen.queryByTestId("drawer-register")).toBeNull());
+  });
+});
 
 describe("PHILO-14 A2 Get Info window", () => {
   it("shows the facts the object has and its own verbs", () => {
