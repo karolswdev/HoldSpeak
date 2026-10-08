@@ -27,6 +27,9 @@ from .base import BaseRepository
 #: PHILO-15 15 kept it: a long held command is CUT and approved in Raw).
 ARGS_HEAD_CHARS = 120
 
+#: The longest whole call the hub keeps for the owner's Raw read (B63).
+FULL_CALL_MAX_CHARS = 65536
+
 _COMMAND_PREFIX = '{"command":"'
 _ESCAPES = {'"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t"}
 
@@ -328,6 +331,8 @@ class GateProposalRepository(BaseRepository):
         if not won:
             standing = self.get(proposal_id)
             raise GateStateError(proposal_id, standing.state, target)
+        # PHILO-15 20 (B63): the whole call is kept only while it is held.
+        self.drop_full_call(proposal_id)
         after = self.get(proposal_id)
         self._audit(
             proposal_id=proposal_id,
@@ -384,6 +389,41 @@ class GateProposalRepository(BaseRepository):
             except GateStateError:
                 pass
         return flipped
+
+    # -- the whole call of a cut hold (PHILO-15 20, B63) --------------------
+
+    def store_full_call(self, proposal_id: str, args_full: str) -> bool:
+        """Keep the whole redacted call of a HELD proposal for the owner's
+        Raw read. The text is redacted again here and must begin with the
+        stored head (the call the owner decides is the call the head shows);
+        anything else is not kept. Returns whether it was kept."""
+        from ..memory.defense import redact
+
+        proposal = self.get(proposal_id)
+        if proposal is None or proposal.state != HELD:
+            return False
+        text = redact(str(args_full or ""))[:FULL_CALL_MAX_CHARS]
+        if len(text) <= ARGS_HEAD_CHARS or not text.startswith(proposal.args_head):
+            return False
+        with self._connection() as conn:
+            conn.execute(
+                "INSERT INTO gate_full_calls (proposal_id, args_full, stored_at) VALUES (?, ?, ?) "
+                "ON CONFLICT(proposal_id) DO UPDATE SET args_full = excluded.args_full, stored_at = excluded.stored_at",
+                (proposal_id, text, self._now()),
+            )
+        return True
+
+    def full_call(self, proposal_id: str) -> Optional[str]:
+        """The whole redacted call kept for a held proposal, else ``None``."""
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT args_full FROM gate_full_calls WHERE proposal_id = ?", (proposal_id,)
+            ).fetchone()
+        return str(row["args_full"]) if row is not None else None
+
+    def drop_full_call(self, proposal_id: str) -> None:
+        with self._connection() as conn:
+            conn.execute("DELETE FROM gate_full_calls WHERE proposal_id = ?", (proposal_id,))
 
     # -- reads -------------------------------------------------------------
 

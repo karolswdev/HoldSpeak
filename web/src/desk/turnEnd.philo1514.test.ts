@@ -2,7 +2,7 @@
 // The same cases as `tests/unit/test_philo15_codex_launch_truth.py`
 // (`agent_context.models.asks_a_question`): the hub and the client agree.
 import { describe, expect, it } from "vitest";
-import { asksAQuestion, coderItems, coderTurnEnd } from "./needsYou";
+import { asksAQuestion, coderItems, coderTurnEnd, reportsAProblem } from "./needsYou";
 import { fromWireFlight, fromWireSessionRow } from "./agentFlights";
 import { flightWord } from "./drawer/members";
 import { agentState } from "./screen/compose";
@@ -55,5 +55,37 @@ describe("IDLE is a lamp, never a Needs you row (the A5 law)", () => {
     const idleFlight = fromWireFlight({ origin_ref: "action:a", state: "waiting", turn_end: "idle", agent: "codex" });
     expect(flightWord(idleFlight)).toEqual({ label: "IDLE", tone: "info" });
     expect(flightWord(fromWireFlight({ origin_ref: "action:a", state: "waiting", turn_end: "asks", agent: "codex" }))).toEqual({ label: "ASKS", tone: "ask" });
+  });
+});
+
+// PHILO-15 20 (B68): the finished report of rehearsal 2 (shot 49, its exact
+// words) is no question and no problem: the turn end is DONE, not ASKS. The
+// same text is fenced in `tests/unit/test_philo15_20_yolo_reads.py`.
+describe("B68: a confirmation with no question reads done", () => {
+  const REPORT =
+    "Confirmed — already conforming to the re-brief: - No files written outside the worktree. Only " +
+    "`CODEOWNERS` and `tests/codeowners_test.sh` were created, both inside the worktree. (The earlier " +
+    "`/tmp` write attempts were blocked, so nothing landed outside.) - PR opened via `gh pr create` with " +
+    "the body passed inline through `--body`. **Current state** - Worktree clean; branch " +
+    "`hs/action-action_8ea0eb39eb080881760399af` pushed, not on main. - PR " +
+    "https://github.com/karolswdev/holdspeak-dayone-rehearsal-1558/pull/4 — `OPEN`, `MERGEABLE`, body " +
+    "names `action:action_8ea0eb39eb080881760399af` and its test `tests/codeowners_test.sh`. - " +
+    "`CODEOWNERS` maps `*` → Kiraal Swedeva; test passes. Item meets the done criteria (PR open, tests " +
+    "pass). I left the merge to you per the Squash-Merge-only decision.";
+
+  it("is no question, no problem, and no Needs row", () => {
+    expect(asksAQuestion(REPORT)).toBe(false);
+    expect(reportsAProblem(REPORT)).toBe(false);
+    expect(coderTurnEnd({ hook_event_name: "Stop", question: REPORT })).toBe("idle");
+  });
+
+  it.each([
+    ["The earlier /tmp write attempts were blocked, so nothing landed outside.", false],
+    ["The push was denied by the gate; the branch stays local.", false],
+    ["The lint check failed on PR #3.", true],
+    ["The build is blocked on a missing secret.", true],
+    ["Tests failed after the write attempts were blocked.", true],
+  ])("%j → problem %s", (text, problem) => {
+    expect(reportsAProblem(text)).toBe(problem);
   });
 });

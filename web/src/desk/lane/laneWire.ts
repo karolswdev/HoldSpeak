@@ -570,7 +570,9 @@ export function briefLine(brief: string | null | undefined): string {
 
 /* ── the Re-brief receipts ───────────────────────────────────────── */
 
-const REBRIEF_STATE_WORD: Record<string, string> = { sent: "SENT", superseded: "SUPERSEDED", expired: "EXPIRED" };
+const REBRIEF_STATE_WORD: Record<string, string> = {
+  sent: "SENT", superseded: "SUPERSEDED", expired: "EXPIRED", taken_back: "TAKEN BACK",
+};
 
 /** `SENT · 17:22 · BY YOUR PRESS 17:13`; `SUPERSEDED · …`; `EXPIRED · AGENT
  * NEVER RETURNED · BY YOUR PRESS …`. */

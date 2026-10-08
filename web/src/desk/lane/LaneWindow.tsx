@@ -456,12 +456,24 @@ function LaneReceipts({ lane }: { lane: LaneWire }) {
       {stopped ? <ReceiptTokens testId="lane-stopped" tokens={["STOPPED", wireClock(stopped.at), "BY YOU"]} /> : null}
       {queued
         ? queued.map((q, i) => (
-            <ReceiptTokens
-              key={String(q.id ?? i)}
-              testId="lane-queued"
-              tone="warn"
-              tokens={["QUEUED", i === 0 ? "AFTER THIS TURN" : `AFTER ${i + 1} TURNS`, String(q.text)]}
-            />
+            <div className="lw-queued" key={String(q.id ?? i)}>
+              <ReceiptTokens
+                testId="lane-queued"
+                tone="warn"
+                tokens={["QUEUED", i === 0 ? "AFTER THIS TURN" : `AFTER ${i + 1} TURNS`, String(q.text)]}
+              />
+              {q.id ? (
+                <Button
+                  dense
+                  variant="ghost"
+                  data-testid="lane-take-back"
+                  aria-label={`Take back: ${String(q.text)}`}
+                  onClick={() => void useLane.getState().takeBack(String(q.id), String(q.text ?? ""))}
+                >
+                  Take back
+                </Button>
+              ) : null}
+            </div>
           ))
         : null}
       {shown && !(stopped && shown.word === "STOPPED") && !(queued && shown.word === "QUEUED") ? (
@@ -549,7 +561,73 @@ function RebriefWell() {
 
 /* ── Raw ──────────────────────────────────────────────────────────── */
 
+/** PHILO-15 20 (B63): the whole command of a held CUT call, read from the
+ * hub (it keeps it for this read only, never for the agent), with Deny and
+ * Approve. The Needs row and the lane rail say `CUT · APPROVE IN RAW`. */
+interface FullCall {
+  id: string;
+  state: string;
+  command: string;
+  whole: boolean;
+  hold_reason?: string;
+}
+
+function RawHeldCall({ call }: { call: LaneGated }) {
+  const [full, setFull] = useState<FullCall | null>(null);
+  const [notRead, setNotRead] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    let live = true;
+    apiFetch<FullCall>(`/api/gate/proposals/${encodeURIComponent(call.id)}/command`)
+      .then((data) => {
+        if (live) setFull(data);
+      })
+      .catch((err: unknown) => {
+        if (live) setNotRead(err instanceof Error ? err.message : String(err));
+      });
+    return () => {
+      live = false;
+    };
+  }, [call.id]);
+  const decide = async (decision: "approved" | "denied") => {
+    setBusy(true);
+    try {
+      await useGate.getState().decide(call.id, decision);
+    } finally {
+      setBusy(false);
+      void useLane.getState().load();
+    }
+  };
+  const reason = full?.hold_reason || call.hold_reason || "";
+  const caption = ["HELD", reason].filter(Boolean).join(" · ");
+  return (
+    <section className="lw-ask lw-raw-held" aria-label="Held call" data-testid="lane-raw-held">
+      <p className="lw-caption">{caption}</p>
+      {notRead ? (
+        <p className="lw-notread" role="status">{`CALL · NOT READ · ${notRead}`}</p>
+      ) : full ? (
+        <pre className="lw-raw-command" data-testid="lane-raw-command">{full.command}</pre>
+      ) : (
+        <p className="lw-notread">CALL · READING</p>
+      )}
+      <div className="lw-verbs">
+        <Button dense variant="ghost" disabled={busy} onClick={() => void decide("denied")} data-testid="lane-raw-deny">
+          Deny
+        </Button>
+        {full?.whole ? (
+          <Button dense variant="primary" disabled={busy} onClick={() => void decide("approved")} data-testid="lane-raw-approve">
+            Approve
+          </Button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function RawPane() {
+  const lane = useLane((s) => s.lane);
+  const gated = lane && Array.isArray(lane.gated) ? lane.gated : [];
+  const cut = gated.filter((g) => g.args_cut && (g.state === "held" || g.state === "pending"));
   const paneStatus = useSteering((s) => s.paneStatus);
   const paneLines = useSteering((s) => s.paneLines);
   const paneRaw = useSteering((s) => s.paneRaw);
@@ -559,6 +637,9 @@ function RawPane() {
   const postureAuthorized = useSteering((s) => s.postureAuthorized);
   return (
     <div className="lw-raw" data-testid="lane-raw-pane">
+      {cut.map((call) => (
+        <RawHeldCall key={call.id} call={call} />
+      ))}
       <PaneWell
         live={paneStatus === "live"}
         lines={paneLines}

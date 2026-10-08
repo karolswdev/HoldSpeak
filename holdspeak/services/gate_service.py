@@ -122,6 +122,11 @@ class GateService:
             raise ServiceError("proposal_not_admitted", "proposal was not admitted", context={"handle": handle, "status": 409})
         if proposal.state == HELD and (proposal.policy_snapshot or {}).get("outcome") == "allowed":
             proposal = self._decide_by_mode(proposal)
+        args_full = payload.get("args_full")
+        if proposal.state == HELD and isinstance(args_full, str) and args_full:
+            # PHILO-15 20 (B63): a cut call's whole redacted text, for the
+            # owner's Raw read (``full_call``) while it is held.
+            self._db.gate.store_full_call(proposal.id, args_full)
         if (
             proposal.state == HELD
             and verdict.get("launch_id")
@@ -284,6 +289,35 @@ class GateService:
                     raise ServiceError(exc.reason, exc.reason, context={"status": 409, "operation_id": exc.operation_id}) from exc
         return proposal.to_dict()
 
+    def full_call(self, principal: Principal, proposal_id: str) -> dict[str, Any]:
+        """PHILO-15 20 (B63): the whole command of a HELD cut call, for the
+        owner's Raw read (Approve and Deny there). Never an agent's read: the
+        whole call does not go back to any agent."""
+        from ..db.gate import command_view
+
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("principal_scope_required", "principal scope required", context={
+                "status": 403, "principal": principal.name, "missing_right": "owner.read:gate_full_call",
+            })
+        self._db.gate.expire_due()
+        proposal = self._db.gate.get(proposal_id)
+        if proposal is None:
+            raise NotFound("proposal", proposal_id)
+        shown = proposal.shown()
+        if proposal.state != HELD:
+            raise ConflictError("the call is no longer held", code="not_held", context={"state": proposal.state})
+        full = self._db.gate.full_call(proposal_id)
+        command = command_view(full)["command"] if full else ""
+        return {
+            "id": proposal.id, "state": proposal.state, "session_key": proposal.session_key,
+            "tool": proposal.tool, "cwd": proposal.cwd, "expires_at": proposal.expires_at,
+            "hold_reason": shown.get("hold_reason") or "",
+            # The whole call when the hook sent it; else the head the hub keeps.
+            "command": command or shown.get("args_shown") or "",
+            "whole": bool(command) or not shown.get("args_cut"),
+            "args_cut": bool(shown.get("args_cut")),
+        }
+
     def list_proposals(self, principal: Principal, filters: dict[str, Any] | None = None) -> dict[str, Any]:
         state = str((filters or {}).get("state") or HELD)
         self._db.gate.expire_due()
@@ -309,6 +343,12 @@ class GateService:
         if not operation_id:
             raise ConflictError("proposal not kernel admitted", code="proposal_not_kernel_admitted")
         reason = str(payload.get("reason") or "").strip()[:200]
+        if decision == DENIED and not reason:
+            # PHILO-15 20 (B66): a Deny from the desk names why the call was
+            # held (``OUTSIDE THE WORKTREE · /tmp/x``), so the agent reads the
+            # reason and does not try the same call again in another form.
+            # The word is one the stored head already shows (``visible_target``).
+            reason = str(proposal.shown().get("hold_reason") or "")[:200]
         try:
             with _as_principal(principal):
                 projected = kernel.read([f"operation:{operation_id}"], "state", "committed")

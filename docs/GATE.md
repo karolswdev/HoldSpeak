@@ -49,7 +49,12 @@ When both opt-ins match, the hook does these steps:
 
 1. It takes the proposal ID from the Claude Code `tool_use_id`, or makes a UUID.
 2. It computes the SHA-256 of the arguments and keeps the first 120 characters.
-3. It sends only that bounded data to `POST /api/gate/proposals`.
+   When the redacted call is longer than 120 characters (a CUT call), it also
+   keeps the whole redacted call.
+3. It sends that data to `POST /api/gate/proposals`. The hub keeps the whole
+   redacted call only while the call is held, and only for your Raw read
+   (`GET /api/gate/proposals/{proposal_id}/command`). It never sends it to an
+   agent. It removes it when the call is decided, expires or is invalidated.
 4. It polls `GET /api/gate/proposals/{proposal_id}` until the proposal is
    approved, denied, expired, or invalidated.
 
@@ -98,7 +103,8 @@ A proposal is `held`, `approved`, `denied`, `expired`, or `invalidated`. Only
 
 ## Preview and credentials
 
-The preview is truncation. It is not secret removal. A short tool input can fit in
+The preview is truncation. Redaction removes known secret shapes only.
+A CUT call is kept whole, redacted, while it is held (see above). A short tool input can fit in
 the first 120 characters. A credential in that prefix reaches the hub and the
 stored Gate record. The hash does not hide the prefix. Treat the preview as
 sensitive tool content. Provider keys that the hub holds are a different
@@ -120,6 +126,7 @@ approval.
 |---|---|
 | Propose, read, list | `POST /api/gate/proposals`, `GET /api/gate/proposals/{proposal_id}`, `GET /api/gate/proposals` |
 | Decide, receipt | `POST /api/gate/proposals/{proposal_id}/decide`, `POST /api/gate/proposals/{proposal_id}/receipt` |
+| Whole held call (owner only) | `GET /api/gate/proposals/{proposal_id}/command` |
 | Usage, audit, config | `POST /api/gate/usage`, `GET /api/sessions/{session_key}/receipt`, `GET /api/gate/audit`, `GET /api/gate/config` |
 | Agent principal | `POST /api/principals/agents`, `DELETE /api/principals/agents/{identity}`, `DELETE /api/principals/self` |
 

@@ -113,6 +113,16 @@ _GIT_SHARED_WRITE = {
 _GIT_SHARED_ALWAYS = frozenset({"update-ref", "reflog", "gc", "prune", "filter-branch", "replace"})
 _GIT_REMOTE_READ = frozenset({"", "-v", "--verbose", "show", "get-url"})
 _GIT_CONFIG_READ = frozenset({"--get", "--get-all", "--get-regexp", "--list", "-l"})
+#: ``git config`` flags that write (PHILO-15 20): any of them holds the call.
+_GIT_CONFIG_WRITE = frozenset({
+    "--add", "--unset", "--unset-all", "--replace-all", "--rename-section", "--remove-section",
+    "-e", "--edit", "--append",
+})
+#: ``git config`` flags that take a value (the value is never the key).
+_GIT_CONFIG_VALUE_FLAGS = frozenset({"-f", "--file", "--blob", "--type", "--default", "--comment"})
+#: git 2.46 subcommands of ``git config`` that read.
+_GIT_CONFIG_READ_VERBS = frozenset({"get", "list"})
+_GIT_CONFIG_WRITE_VERBS = frozenset({"set", "unset", "rename-section", "remove-section", "edit"})
 _GIT_PUSH_FLAGS = frozenset({"-u", "--set-upstream", "-q", "--quiet", "-v", "--verbose", "--porcelain", "--no-verify"})
 
 #: git verbs this reading knows (Astra round 1 on #914). Any other verb may
@@ -271,7 +281,8 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
         reader = _Reader(real_root, real_cwd)
         segments = _segments(_tokens(
             command, cat_is_system=reader.identity("cat") == SYSTEM, bodies=reader.heredocs,
-            stdin=reader.stdin_bodies,
+            stdin=reader.stdin_bodies, expansions=reader.expansions,
+            check_subst=lambda inner: _read_only_substitution(inner, cwd=real_cwd, root=real_root),
         ))
         return reader.read(segments)
     except _Unparsed as exc:
@@ -280,6 +291,16 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
         return BashCall(OUTSIDE, exc.rule, target=exc.target)
     except ValueError:  # shlex: an unclosed quote
         return BashCall(UNPARSED, "unbalanced_quotes")
+
+
+def _read_only_substitution(inner: str, *, cwd: str, root: str) -> bool:
+    """PHILO-15 20 (B62): the one command of a ``$( ... )`` is a read in
+    the worktree (``git rev-parse HEAD``, ``pwd``, ``cat VERSION``). It runs
+    where the call starts; a read in any folder of the worktree stays one."""
+    if not inner.strip():
+        return False
+    verdict = classify_bash(inner, cwd=cwd, root=root)
+    return verdict.scope == INSIDE and verdict.read_rule in _SUBST_READS
 
 
 #: Conductor R5 (Astra round 1 on #915): the whole command is one plain
@@ -351,9 +372,50 @@ def _word_at(text: str, index: int) -> str:
     return text[start:end].strip("'\"") or text[index:index + 1]
 
 
+#: A plain-text expansion the reading accepts (PHILO-15 20, B62): it stands
+#: in the token stream as this mark and its slot. A NUL is never in a command.
+_EXPANSION_MARK = "\x00EXP"
+_EXPANSION_WORD = re.compile("\x00EXP(\\d+)\x00")
+#: The text of a ``$( ... )`` the reading may accept: one simple command with
+#: no quote, expansion, group, operator or newline in it.
+_PLAIN_SUBST = re.compile(r"\$\((?P<inner>[^()$`'\"\\\n;&|<>]*)\)")
+#: Commands that only print or test the words they get: an accepted expansion
+#: may stand in their words only (never in a path, a program or a push).
+_EXPANSION_SINKS = frozenset({"echo", "printf", "test", "["})
+#: The reads a ``$( ... )`` may run (the Normal-mode read rules, no test run).
+_SUBST_READS = frozenset({
+    "ls", "cat", "head", "tail", "wc", "pwd", "stat", "file", "which", "echo",
+    "git-status", "git-diff", "git-log", "git-show", "git-rev-parse", "git-ls-files", "git-branch",
+})
+
+
+def _safe_expansion(
+    text: str, index: int, check_subst: Optional[Any], expansions: Optional[list[str]],
+) -> Optional[tuple[str, int]]:
+    """PHILO-15 20 (B62): ``$?`` (the last exit status, a number) and a
+    ``$( ... )`` whose one command is a read in the worktree
+    (``$(git rev-parse HEAD)``) are plain text. Return ``(mark, end)`` for
+    one of them at ``index``, else ``None`` (the call is unparsed). Where a
+    mark may stand is checked by the reader (:data:`_EXPANSION_SINKS`)."""
+    if expansions is None:
+        return None
+    original = ""
+    if text.startswith("$?", index):
+        original = "$?"
+    else:
+        match = _PLAIN_SUBST.match(text, index)
+        if match is not None and check_subst is not None and check_subst(match.group("inner")):
+            original = match.group(0)
+    if not original:
+        return None
+    expansions.append(original)
+    return f"{_EXPANSION_MARK}{len(expansions) - 1}\x00", index + len(original)
+
+
 def _prepare(
     command: str, *, cat_is_system: bool = True, bodies: Optional[list[str]] = None,
-    stdin: Optional[list[str]] = None,
+    stdin: Optional[list[str]] = None, check_subst: Optional[Any] = None,
+    expansions: Optional[list[str]] = None,
 ) -> str:
     """Replace quoted here-document bodies with plain text, refuse every
     construct that expands at run time, and turn unquoted newlines into
@@ -389,13 +451,23 @@ def _prepare(
             if char == '"':
                 quote = ""
             elif char in "$`":
-                raise _Unparsed("shell_expansion", _expansion_at(text, index))
+                safe = _safe_expansion(text, index, check_subst, expansions) if char == "$" else None
+                if safe is None:
+                    raise _Unparsed("shell_expansion", _expansion_at(text, index))
+                out.append(safe[0])
+                index = safe[1]
+                continue
             out.append(char)
         else:
             if char in "'\"":
                 quote = char
             elif char in "$`":
-                raise _Unparsed("shell_expansion", _expansion_at(text, index))
+                safe = _safe_expansion(text, index, check_subst, expansions) if char == "$" else None
+                if safe is None:
+                    raise _Unparsed("shell_expansion", _expansion_at(text, index))
+                out.append(safe[0])
+                index = safe[1]
+                continue
             elif char in "(){}":
                 raise _Unparsed("subshell_or_group", _word_at(text, index))
             elif char == "\n":
@@ -496,11 +568,15 @@ def _quoted_heredocs(command: str, *, cat_is_system: bool = True, bodies: Option
 
 def _tokens(
     command: str, *, cat_is_system: bool = True, bodies: Optional[list[str]] = None,
-    stdin: Optional[list[str]] = None,
+    stdin: Optional[list[str]] = None, check_subst: Optional[Any] = None,
+    expansions: Optional[list[str]] = None,
 ) -> list[tuple[str, bool]]:
     """``(token, is_operator)`` pairs. Quoted text is never an operator."""
     lexer = shlex.shlex(
-        _prepare(command, cat_is_system=cat_is_system, bodies=bodies, stdin=stdin),
+        _prepare(
+            command, cat_is_system=cat_is_system, bodies=bodies, stdin=stdin,
+            check_subst=check_subst, expansions=expansions,
+        ),
         posix=True, punctuation_chars=";&|<>",
     )
     lexer.whitespace_split = True
@@ -573,6 +649,8 @@ class _Reader:
         self.heredocs: list[str] = []
         #: PHILO-15 15: here-document bodies (standard input), by slot.
         self.stdin_bodies: list[str] = []
+        #: PHILO-15 20: the original text of each accepted expansion, by slot.
+        self.expansions: list[str] = []
         #: A segment before ran ``git checkout``/``git switch``: HEAD may name
         #: another branch by the time a later ``git push origin HEAD`` runs.
         self.head_moved = False
@@ -590,7 +668,32 @@ class _Reader:
 
     # one simple command -----------------------------------------------------
 
+    def _expansion_in(self, word: str) -> str:
+        """The original text of the first accepted expansion in ``word``."""
+        match = _EXPANSION_WORD.search(word)
+        if match is None:
+            return ""
+        slot = int(match.group(1))
+        return self.expansions[slot] if slot < len(self.expansions) else "$"
+
     def _segment(self, joined: str, words: list[str], redirects: list[tuple[str, str]]) -> None:
+        # PHILO-15 20 (B62): an accepted expansion (``$?``, a read in
+        # ``$( ... )``) is text only to a command that prints or tests it.
+        # Anywhere else (a path, a program, a redirect, an assignment) its
+        # value is a word the reading cannot resolve.
+        for _op, target in redirects:
+            found = self._expansion_in(target)
+            if found:
+                raise _Unparsed("shell_expansion", found)
+        start = 0
+        while start < len(words) and _ENV_ASSIGN.match(words[start]):
+            start += 1
+        sink = words[start] if start < len(words) else ""
+        printed = sink in _EXPANSION_SINKS and self.identity(sink) == BUILTIN
+        for position, word in enumerate(words):
+            found = self._expansion_in(word)
+            if found and (not printed or position <= start):
+                raise _Unparsed("shell_expansion", found)
         stdin: list[str] = []
         for op, target in redirects:
             if op == "<" and target.startswith(_STDIN_MARK):
@@ -759,7 +862,7 @@ class _Reader:
             raise _Outside("git_shared_state")
         if verb == "remote" and (rest[:1] or [""])[0] not in _GIT_REMOTE_READ:
             raise _Outside("git_shared_state")
-        if verb == "config" and not any(flag in _GIT_CONFIG_READ for flag in rest):
+        if verb == "config" and not _git_config_read(rest):
             raise _Outside("git_shared_state")
         self._args(rest, cwd=cwd)
         if verb in _GIT_READ and not any(a.startswith("--output") for a in rest):
@@ -790,6 +893,10 @@ class _Reader:
             if len(positional) == 2:
                 break
         form = tuple(positional[:2])
+        if not positional and args and all(a in _GH_INFO_FLAGS for a in args):
+            return  # PHILO-15 20 (B62): ``gh --version`` reads the program's version
+        if form in (("version",), ("--version",)):
+            return
         if form not in _GH_ALLOWED:
             raise _Outside("gh_effect")
         if form in (("pr", "create"), ("pr", "edit")):
@@ -921,6 +1028,10 @@ class _Reader:
     def _path(self, word: str, *, cwd: str, rule: str) -> None:
         if not word or word == "-":
             return
+        if _EXPANSION_MARK in word:
+            # Text a printing command prints (``_segment`` let a mark stand
+            # nowhere else): never a path.
+            return
         if _URL.match(word) or _REMOTE.match(word) or _HOST_PORT.match(word):
             raise _Outside("network_target", word)
         if word.startswith("~"):
@@ -978,6 +1089,8 @@ _GH_VALUE_FLAGS = frozenset({
     "-p", "--project", "-r", "--reviewer", "-T", "--template", "-q", "--jq", "--json",
     "-L", "--limit", "-s", "--state", "-A", "--author", "-S", "--search",
 })
+#: ``gh`` flags that only print about the program itself.
+_GH_INFO_FLAGS = frozenset({"--version", "--help", "-h"})
 #: The gh forms an agent runs in its own right (read, or its own PR).
 _GH_ALLOWED = frozenset({
     ("pr", "create"), ("pr", "edit"), ("pr", "view"), ("pr", "list"), ("pr", "status"),
@@ -1053,6 +1166,33 @@ def _flag_values(args: list[str], flags: frozenset[str]) -> list[tuple[str, str]
                     break
         index += 1
     return found
+
+
+def _git_config_read(args: list[str]) -> bool:
+    """PHILO-15 20 (B62): ``git config user.name``, ``git config --get x``,
+    ``git config --global --list``, ``git config get x`` read; a call that
+    names a value (``git config user.name Bob``), a write flag or a write
+    subcommand changes the config every worktree shares."""
+    positional: list[str] = []
+    index = 0
+    while index < len(args):
+        arg = args[index]
+        name = arg.split("=", 1)[0]
+        if name in _GIT_CONFIG_WRITE:
+            return False
+        if name in _GIT_CONFIG_VALUE_FLAGS and "=" not in arg:
+            index += 2
+            continue
+        if not arg.startswith("-"):
+            positional.append(arg)
+        index += 1
+    if positional and positional[0] in _GIT_CONFIG_WRITE_VERBS:
+        return False
+    if positional and positional[0] in _GIT_CONFIG_READ_VERBS:
+        return len(positional) <= 3  # ``get <key> [<pattern>]``, ``list``
+    if any(flag in _GIT_CONFIG_READ for flag in args):
+        return True
+    return len(positional) == 1  # ``git config <key>``: a value would follow it
 
 
 def _looks_like_path(value: str) -> bool:

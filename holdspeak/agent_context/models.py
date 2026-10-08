@@ -322,7 +322,12 @@ _PROBLEM_RE = re.compile(
 _NEGATED_PROBLEM_RE = re.compile(
     r"\b(?:no|without|zero|0|did\s+not|didn't|never)\s+(?:new\s+|further\s+)?"
     r"(?:fail(?:s|ed|ing|ures?)?|errors?|problems?|blockers?)\b"
-    r"|\berror[- ]free\b",
+    r"|\berror[- ]free\b"
+    # PHILO-15 20 (B68): the gate held the agent's own attempt and the owner
+    # decided it ("the earlier /tmp write attempts were blocked, so nothing
+    # landed outside"): a report of the owner's decision, not a problem.
+    r"|\b(?:attempts?|writes?|calls?|commands?|tries)\s+(?:were|was|got)\s+(?:blocked|denied)\b"
+    r"|\b(?:blocked|denied)\s+by\s+the\s+(?:gate|desk|owner|hook)\b",
     re.IGNORECASE,
 )
 
