@@ -14,7 +14,7 @@ from fastapi import APIRouter, Body, HTTPException, Request
 from ... import operations
 from ...db import get_database, get_observer
 from ...principals import PrincipalKind, UNAUTHENTICATED
-from ...services.monday_brief_service import MondayBriefService
+from ...services.monday_brief_service import MondayBriefService, brief_period_label, brief_title
 from ...services.person_overlay import compose_person_overlay
 from ..context import WebContext
 
@@ -26,22 +26,8 @@ _MONTHS = [
 
 
 def _period_label(brief_dict: dict[str, Any]) -> str | None:
-    generated_at = brief_dict.get("generated_at", "")
-    if not generated_at:
-        return None
-    try:
-        gen_dt = datetime.datetime.fromisoformat(
-            str(generated_at).replace("Z", "+00:00")
-        )
-        days_since_monday = gen_dt.weekday()
-        monday = gen_dt - datetime.timedelta(days=days_since_monday)
-        mon_month = _MONTHS[monday.month - 1]
-        gen_month = _MONTHS[gen_dt.month - 1]
-        if monday.month == gen_dt.month:
-            return f"{mon_month} {monday.day:02d} – {gen_dt.day:02d}"
-        return f"{mon_month} {monday.day:02d} – {gen_month} {gen_dt.day:02d}"
-    except (ValueError, TypeError):
-        return None
+    """PHILO-15-09 (B04, ruling 3): the brief's one range, from its window."""
+    return brief_period_label(brief_dict.get("period_start"), brief_dict.get("period_end"))
 
 
 def _generated_label(brief_dict: dict[str, Any]) -> str | None:
@@ -118,6 +104,7 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
         result = asdict(brief)
         result["period_label"] = _period_label(result)
         result["generated_label"] = _generated_label(result)
+        result["title"] = brief_title(result.get("period_end"))
         return _compose_overlay(result, registry.target("brief.latest"), request)
 
     @router.post("/generate")
@@ -126,6 +113,7 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
         result = asdict(registry.invoke(principal(request), "brief.generate", {}))
         result["period_label"] = _period_label(result)
         result["generated_label"] = _generated_label(result)
+        result["title"] = brief_title(result.get("period_end"))
         return _compose_overlay(result, registry.target("brief.generate"), request)
 
     # HS-132-08 -- brief triage is a durable owner verb, not React state.
@@ -170,6 +158,7 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
         result = asdict(brief)
         result["period_label"] = _period_label(result)
         result["generated_label"] = _generated_label(result)
+        result["title"] = brief_title(result.get("period_end"))
         return _compose_overlay(result, service, request)
 
     return router

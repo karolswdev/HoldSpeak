@@ -329,8 +329,12 @@ class TestSendFaceGlass(_Rig):
                 assert [r.split(" FILE ")[0].split(" ", 1)[1] for r in listed["destinations"]] == [
                     "Folder Payments", "Team drive", "Locked folder", "Long path folder"], listed["destinations"]
                 assert "SYNCED FOLDER:cloud" in listed["egress_chips"] and "THIS DEVICE:local" in listed["egress_chips"]
-                # The literal path keeps its case (the token species uppercases; the literal does not).
-                assert "/Reports/Payments" in listed["destinations"][0], listed["destinations"][0]
+                # The literal keeps its case (the token species uppercases; the literal does not).
+                # PHILO-15 lane 12 (B23): the row reads the folder by its NAME (its last two
+                # folder names); the full path is the target's hover title.
+                assert "Reports/Payments" in listed["destinations"][0], listed["destinations"][0]
+                target_title = page.locator(f"{self._row('Folder Payments')} .send-target").first.get_attribute("title")
+                assert target_title and target_title.endswith("/Reports/Payments"), target_title
 
                 # Board 4 (A1): the pick opens the preview and Send in place.
                 self._pick(page, "Folder Payments")
@@ -338,7 +342,8 @@ class TestSendFaceGlass(_Rig):
                                      [self._row("Folder Payments"),
                                       f"{self._open_sel('Folder Payments')} [data-testid=send-preview-field] dd",
                                       f"{self._open_sel('Folder Payments')} [data-testid=send-verb]"])
-                assert picked["preview_fields"] == [f"FOLDER {payments.resolve()}"], picked["preview_fields"]
+                # B23: the preview's Folder field is the folder's name, never the raw path.
+                assert picked["preview_fields"] == [f"FOLDER {'/'.join(payments.resolve().parts[-2:])}"], picked["preview_fields"]
                 assert picked["send_verbs"] == [{"text": "Send", "disabled": False, "busy": False}], picked["send_verbs"]
 
                 # Board 5: a DOUBLE click is one send; SAVED + the exact path.

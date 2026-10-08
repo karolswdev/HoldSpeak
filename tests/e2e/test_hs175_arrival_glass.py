@@ -801,8 +801,9 @@ class TestArrivalWeekStrip:
                 f"WEEK strip should be absent without calendar, count={strip.count()}"
             )
 
-            # NO CALENDAR: one source row of the Needs-you drawer (PHILO-14 A5)
-            no_cal = page.locator("[data-testid='needs-source-row'][data-object-id='source:calendar']")
+            # NO CALENDAR: an offer in the Needs-you drawer's foot, never a
+            # row (PHILO-15-09 B11: the head is the row count)
+            no_cal = page.locator("[data-testid='needs-no-calendar']")
             no_cal.first.wait_for(timeout=10_000)
             no_cal_text = no_cal.first.text_content() or ""
             assert "NO CALENDAR" in no_cal_text.upper(), (

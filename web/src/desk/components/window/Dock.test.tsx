@@ -192,7 +192,7 @@ describe("H-C3 Dock rendering", () => {
 
     expect(screen.getByRole("button", { name: "Alpha, 1 open here" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Quiet" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Intelligence, 1 need you" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Intelligence, 1 needs you" })).toBeTruthy();
     expect(screen.queryByText("0")).toBeNull();
 
     await waitFor(() => expect(screen.getByTestId("desk-dock-send-state")).toHaveTextContent("SEND FAILED"));
@@ -200,6 +200,23 @@ describe("H-C3 Dock rendering", () => {
     expect(screen.getByTestId("desk-dock-people-state")).toHaveTextContent("1:1");
     expect(mocks.refreshNeedsYou).toHaveBeenCalledWith(true);
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/people/relationships/r1/brief");
+  });
+
+  // PHILO-15-09 (B11, Astra r2): the Dock badge reads the one snapshot the
+  // Needs drawer's head reads: the shared seed (an item with a folded
+  // question, an unread source, an arming recording) says the same number.
+  it("says the Needs drawer's number for the one-number seed", async () => {
+    const { ONE_NUMBER_SEED, ONE_NUMBER_ROWS } = await import("../../../test/oneNumberSeed");
+    const real = await vi.importActual<typeof import("../../needsYou")>("../../needsYou");
+    const snapshot = real.readNeedsYouAnswer(ONE_NUMBER_SEED as never);
+    expect(snapshot.count).toBe(ONE_NUMBER_ROWS);
+    mocks.useNeedsYou.mockImplementation((() => snapshot) as never);
+    try {
+      render(<Dock />);
+      expect(screen.getByRole("button", { name: `Intelligence, ${ONE_NUMBER_ROWS} need you` })).toBeTruthy();
+    } finally {
+      mocks.useNeedsYou.mockImplementation((() => ({ count: 1, unmutedItems: [{ projectId: "p1" }] })) as never);
+    }
   });
 
   // PHILO-14 A2: the Dock opens a Project as its drawer.

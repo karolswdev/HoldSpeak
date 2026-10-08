@@ -41,7 +41,7 @@ import { fetchConnections, type ConnectionsResponse, type ConnectionState } from
 import { chipLabel } from "../../../pages/cores/connections/ConnectionsPane";
 import {
   CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide, previewOf,
-  refusalSize, refusedWord, requestDestinationsFocus, sentWord, stamp, targetToken, unknownWord, wire, Refusal,
+  refusalSize, refusedWord, requestDestinationsFocus, sentWord, stamp, targetName, targetToken, unknownWord, wire, Refusal,
   type Channel, type Destination, type Preview, type Send, type WirePreview,
 } from "../../../features/channels/channels";
 import "../../../features/channels/channels.css";
@@ -50,7 +50,9 @@ import "./send-well.css"; import { keepPlace, keptPlace } from "../../deskMemory
 /** The one document a well sends: `ref` is `<kind>:<id>` (the wire's
  *  `document_ref`), `title` its name, `label` the short token a prepared row
  *  shows (REV 4, BRIEF SEP 29, D-1a2b3c). */
-export type DocRef = { ref: string; title: string; label: string };
+/** `version`: what changes when the document's text does under the same ref
+ *  (PHILO-15-09: a regenerated Brief keeps its id); the preview reads again. */
+export type DocRef = { ref: string; title: string; label: string; version?: string };
 
 /* ── the per-document store (survives Back and another document) ──────── */
 
@@ -513,7 +515,7 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
           : { ref, id: picked, failed: true });
       });
     return () => { live = false; };
-  }, [ref, picked, previewTry]);
+  }, [ref, picked, previewTry, doc.version]);
   // T2: a PREVIEW CHANGED refusal reads the preview again (same document, same destination).
   const pickedOutcome = picked ? store.outcomes.get(`${ref}|${picked}`) : undefined;
   const changedAt = pickedOutcome?.kind === "refused"
@@ -615,7 +617,7 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                     primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
                     cells={<span className="send-cells">
                       <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
-                      <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetToken(d.channel, d.target)}</span>
+                      <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</span>
                       {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
                       {open ? <LastChip s={last} /> : <ClosedReceipt o={o} last={last} />}
                       <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />

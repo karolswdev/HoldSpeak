@@ -154,3 +154,80 @@ class TestFreshArrival:
                 assert not errors, errors
             finally:
                 browser.close()
+
+
+class TestChairWindowComesToFront:
+    """PHILO-15-09 (B16): Window > Chair > Brief opened the Brief BEHIND the
+    Models and Settings windows ("Nothing happened"). A window the owner's
+    gesture opens always comes to the front."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        keyfile = tmp_path / "people.key"
+        keyfile.write_text("{}")
+        keyfile.chmod(0o600)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
+        _ensure_build()
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        _seed(tmp_path / "home")
+        self.base = base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    def test_window_chair_brief_opens_in_front_of_settings(self) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=1)
+            page = ctx.new_page()
+            page.set_default_timeout(20_000)
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _normal_chair(page)
+                page.locator("[data-testid=desk-screen]").wait_for()
+                _settle(page)
+                fresh = TestFreshArrival()
+
+                def front_of(name: str) -> bool:
+                    return page.evaluate(
+                        """(name) => {
+                          const shell = document.querySelector(`.desk-window-shell[aria-label='${name}']`);
+                          if (!shell) return false;
+                          const r = shell.getBoundingClientRect();
+                          const hit = document.elementFromPoint(r.left + r.width / 2, r.top + 12);
+                          return Boolean(hit && shell.contains(hit));
+                        }""",
+                        name,
+                    )
+
+                # The rehearsal's desk: Needs you, Models (its SETUP row's
+                # Choose an engine) and Settings are open.
+                drawer = page.locator(".desk-screen [data-object-id='drawer:needs']")
+                drawer.focus()
+                page.keyboard.press("Enter")
+                _shell(page, "Needs you").wait_for()
+                _shell(page, "Needs you").get_by_role("button", name="Choose an engine").first.click()
+                page.locator(".desk-window-shell[aria-label='Models']").first.wait_for()
+                _settle(page)
+
+                # 1) a fresh Brief over the open Settings and Models windows
+                page.locator(".desk-dock [aria-label^='Settings']").first.click()
+                page.locator(".desk-window-shell[aria-label^='Settings']").first.wait_for()
+                _settle(page)
+                fresh._menu_pick(page, 1440, "Brief")
+                _shell(page, "Brief").wait_for()
+                _settle(page)
+                page.screenshot(path=str(SHOTS / "b16-brief-over-settings-1440.png"))
+                assert front_of("Brief"), "Window > Chair > Brief opened behind another window"
+
+                # 2) an open Brief behind Settings comes to the front again
+                page.locator(".desk-dock [aria-label^='Settings']").first.click()
+                _settle(page)
+                fresh._menu_pick(page, 1440, "Brief")
+                _settle(page)
+                assert front_of("Brief"), "an open Brief stayed behind Settings"
+            finally:
+                browser.close()

@@ -305,7 +305,18 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
   it("one object, one row: the item an agent works carries its agent's question", async () => {
     const asking: AgentFlight = { ...WORKING, state: "waiting", sessionKey: "claude:s-run" };
     useAgentFlights.setState({ flights: [FLIGHT, asking], sessions: [] } as never);
-    await mount();
+    // PHILO-15-09 (B11): the hub folds the ask into the item it works
+    // (`foldedInto`, needs_you_membership.fold_asks), so its one number and
+    // the rows agree: one object, one row, one count.
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, count: 7, items: ITEMS.map((item) => item.id === "coder:claude:s-run"
+          ? { ...item, foldedInto: "ai-worked" } : item) } as never;
+      return { ...DOOR } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("7 need you");
+    expect(document.querySelectorAll("[data-testid='needs-list'] li.needs-row")).toHaveLength(7);
     const item = row("Write the rollback runbook");
     expect(face(item)).toMatchObject({
       kind: "action",
@@ -323,7 +334,14 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       scheduledArming: { scheduleId: "sch-1", title: "Ledger cutover sync", countdownSeconds: 10, fireAt: Date.now() + 8_000, outcome: null },
       cancelArmedSchedule: cancel,
     } as never);
-    await mount();
+    // PHILO-15-09 (B11): the hub counts the recording that arms; it is a row.
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, arming: [{ scheduleId: "sch-1", title: "Ledger cutover sync" }] } as never;
+      return { ...DOOR } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
     const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-row']");
     expect(rows[0].getAttribute("data-object-id")).toBe("arming:sch-1");
     expect(rows[0].getAttribute("data-kind")).toBe("meeting");
@@ -335,18 +353,21 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(cancel).toHaveBeenCalledWith("sch-1");
   });
 
-  it("NEXT is a quiet footer line; no calendar is one source row with Connect calendar", async () => {
+  it("NEXT is a quiet footer line; no calendar is an offer in the foot, never a row (PHILO-15-09 B11)", async () => {
     const at = new Date();
     at.setHours(14, 0, 0, 0);
     DOOR = { upcoming: [{ title: "Ledger cutover sync", starts_at: at.toISOString(), source: "calendar_event" }], calendar_configured: false };
     await mount();
     await waitFor(() => expect(screen.getByTestId("needs-next").textContent).toBe("NEXT · 14:00 · Ledger cutover sync"));
-    const offer = await screen.findByTestId("needs-source-row");
-    expect(offer.querySelector(".needs-row-fact")?.textContent).toBe("No calendar");
+    const offer = await screen.findByTestId("needs-no-calendar");
+    expect(offer.textContent).toContain("NO CALENDAR");
+    expect(screen.queryByTestId("needs-source-row")).toBeNull();
     fireEvent.click(offer.querySelector("[data-verb='connect-calendar']")!);
     expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
-    // The offer is not counted.
-    expect(screen.getByTestId("arrival-display").textContent).toBe("8 need you");
+    // One count: the head says the number of rows under it.
+    const rows = document.querySelectorAll("[data-testid='needs-list'] li.needs-row");
+    expect(screen.getByTestId("arrival-display").textContent).toBe(`${rows.length} need you`);
+    expect(rows.length).toBe(8);
   });
 
   it("muted rows are not drawn; Muted · N opens them", async () => {
@@ -393,7 +414,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       return { upcoming: [], calendar_configured: true } as never;
     });
     render(<NeedsDrawer />);
-    await screen.findByText("1 need you");
+    await screen.findByText("1 needs you");
     const held = face(row("Codex: reconciliation"));
     expect(held.fact).toBe("psql -h staging-ledger -c 'select… +78 CHARS");
     expect(held.verbs).toEqual(["Deny", "Open"]);
@@ -407,17 +428,22 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       schedule_id: "sch-9", title: "Ledger cutover sync", countdown_seconds: 30, fire_at: Date.now() / 1000 + 30,
     });
     let refuse = true;
+    let cancelled = false;
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       const value = String(path);
       if (value === "/api/scheduled-recordings/sch-9/cancel") {
         if (refuse) throw new ApiError(409, "conflict", { error: "the recording already started", code: "already_started" });
+        cancelled = true;
         return { ok: true } as never;
       }
-      if (value.startsWith("/api/desk/needs-you")) return ANSWER as never;
+      if (value.startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, arming: refuse || !cancelled ? [{ scheduleId: "sch-9", title: "Ledger cutover sync" }] : [] } as never;
       if (value.startsWith("/api/scheduled-recordings")) return { items: [] } as never;
       return { upcoming: [], calendar_configured: true } as never;
     });
-    await mount();
+    // PHILO-15-09 (B11): the arming row counts.
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
     const armed = () => document.querySelector<HTMLElement>("[data-object-id='arming:sch-9']");
     fireEvent.click(armed()!.querySelector("[data-verb='cancel']")!);
     await waitFor(() => expect(armed()!.querySelector(".needs-row-fact")?.textContent)
@@ -525,3 +551,78 @@ async function mount7() {
   render(<NeedsDrawer />);
   await screen.findByText("7 need you");
 }
+
+// PHILO-15-09 (B11, B12): one count, and every row says what it is.
+describe("NeedsDrawer one count and kind words (PHILO-15-09)", () => {
+  it("the head is the number of rows, and each member row names its kind", async () => {
+    DOOR = { upcoming: [], calendar_configured: false };
+    await mount();
+    const rows = Array.from(document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row"));
+    expect(screen.getByTestId("arrival-display").textContent).toBe(`${rows.length} need you`);
+    const word = (title: string) =>
+      rows.find((r) => r.textContent?.includes(title))?.querySelector("[data-testid='needs-row-kind']")?.textContent;
+    expect(word("Run a second ops interview")).toBe("DECISION");
+    expect(word("Pick the vendor")).toBe("ACTION");
+    expect(word("Vendor call")).toBe("MEETING");
+    expect(word("Jordan or Avery")).toBe("AGENT");
+    for (const row of rows) expect(row.querySelector("[data-testid='needs-row-kind']")).not.toBeNull();
+  });
+
+  it("one thing says `1 needs you`", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, count: 1, items: [ITEMS[4]], failedMeetings: [] } as never;
+      return { upcoming: [], calendar_configured: false } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("1 needs you");
+    expect(document.querySelectorAll("[data-testid='needs-list'] li.needs-row")).toHaveLength(1);
+  });
+});
+
+
+describe("NeedsDrawer every row counts (PHILO-15-09 B11, Astra r1)", () => {
+  it("the hub's one number counts a source not read, a recording that arms and a folded ask; the rows agree", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return {
+          ...ANSWER,
+          complete: false,
+          coverage: [
+            { source_id: "gh:ledger", kind: "project", state: "failed", observed_at: null, label: "CI red on main", project_id: "p1", reason: "gh not signed in" },
+            { source_id: "jira:ops", kind: "project", state: "available", observed_at: null, label: "Ops", project_id: "p2" },
+          ],
+          arming: [{ scheduleId: "sch-2", title: "Standup" }],
+          // the hub folded the agent's question into the item it works
+          items: ITEMS.map((item) => item.id === "coder:claude:s-run" ? { ...item, foldedInto: "ai-worked" } : item),
+        } as never;
+      return { upcoming: [], calendar_configured: false } as never;
+    });
+    useDesk.setState({
+      scheduledArming: { scheduleId: "sch-2", title: "Standup", countdownSeconds: 60, fireAt: Date.now() + 60_000, outcome: null },
+    } as never);
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
+    const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row");
+    expect(rows).toHaveLength(9);
+    // The Dock badge and the bell read the same snapshot (`useNeedsYou`).
+    const { readNeedsYouAnswer } = await import("../../needsYou");
+    const answer = await vi.mocked(apiFetch).getMockImplementation()!("/api/desk/needs-you") as never;
+    expect(readNeedsYouAnswer(answer).count).toBe(9);
+    expect(screen.getAllByTestId("needs-source-row")).toHaveLength(1);
+    for (const row of rows) expect(row.getAttribute("data-counted")).toBe("true");
+  });
+});
+
+// PHILO-15-09 (Astra r2): the one-number seed shared with Dock.test.tsx.
+describe("NeedsDrawer one-number seed (PHILO-15-09 r3)", () => {
+  it("draws the seed's rows under the head that says their number", async () => {
+    const { ONE_NUMBER_SEED, ONE_NUMBER_ROWS } = await import("../../../test/oneNumberSeed");
+    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+      (String(path).startsWith("/api/desk/needs-you") ? ONE_NUMBER_SEED : { upcoming: [], calendar_configured: true }) as never);
+    useAgentFlights.setState({ flights: [], sessions: [] } as never);
+    render(<NeedsDrawer />);
+    await screen.findByText(`${ONE_NUMBER_ROWS} need you`);
+    expect(document.querySelectorAll("[data-testid='needs-list'] li.needs-row")).toHaveLength(ONE_NUMBER_ROWS);
+  });
+});

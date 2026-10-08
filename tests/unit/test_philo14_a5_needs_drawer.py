@@ -243,3 +243,34 @@ def test_the_lane_route_carries_the_cut_view(tmp_path, worktree, monkeypatch) ->
     assert command.startswith(gated["toolu_cut"]["args_shown"]) and len(gated["toolu_cut"]["args_shown"]) == 108
     assert gated["toolu_1"]["args_cut"] is False  # the short call stays whole
 
+
+
+# ── PHILO-15-09 (B11, the A5 ruling: headline = Dock badge = notch = rows) ──
+
+
+def test_the_one_number_counts_every_row_the_drawer_draws(hooks, monkeypatch, tmp_path) -> None:  # noqa: F811
+    """A seed with an unread source, a recording that arms and a folded
+    question: the hub's count is the drawer's rows (1 member + 1 source +
+    1 arming; the ask rides on its item's row and is not counted again)."""
+    from holdspeak.db.core import Database
+
+    _stub_other_hub_reads(monkeypatch)
+    monkeypatch.setattr(membership, "_read_door", lambda db, p: _door_with_item())
+    flights = [{"origin_ref": "action:ai-runbook", "session_key": "claude:s1", "state": "waiting", "close": None}]
+    monkeypatch.setattr("holdspeak.services.agent_flights.agent_flights", lambda db, sessions=None, **k: flights)
+    hooks.ask("The runbook needs a rollback owner. Jordan or Avery?", T0)
+    hub = Database(tmp_path / "arming.db")
+    rec = hub.scheduled_recordings.create(title="Standup", cron_expr="0 9 * * *")
+    hub.scheduled_recordings.set_state(rec.id, "arming")
+    unread = {"source_id": "gh:ledger", "kind": "project", "state": "failed", "observed_at": None,
+              "label": "CI red on main", "project_id": "p-ledger"}
+    seen = {"source_id": "jira:ops", "kind": "project", "state": "available", "observed_at": None}
+    answer = membership.compose(hub, OWNER, {"items": [], "coverage": [unread, seen], "complete": False},
+                                muted_project_ids=[], now=T0)
+    [ask] = [r for r in answer["items"] if r["source"] == "coder"]
+    assert ask["foldedInto"] == "ai-runbook"
+    assert [m["ref"] for m in answer["members"]] == ["ai-runbook"]
+    assert answer["arming"] == [{"scheduleId": rec.id, "title": "Standup", "armedAt": answer["arming"][0]["armedAt"]}]
+    rows = len(answer["members"]) + len(membership.unread_sources(answer["coverage"])) + len(answer["arming"])
+    assert rows == 3
+    assert answer["count"] == rows

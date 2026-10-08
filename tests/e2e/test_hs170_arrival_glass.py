@@ -657,12 +657,14 @@ def _run_muted_rig(
             # ── HEADLINE: count excludes muted (only proj-alpha's 1 item) ──
             headline = page.get_by_test_id("arrival-display")
             headline_text = headline.text_content() or ""
-            # proj-alpha has 1 item, proj-beta has 2 items (muted)
-            # headline should say "1 need you" (not 3)
-            assert headline_text[0] == "1", \
-                f"Headline should start with 1 (muted excluded): {headline_text}"
+            # proj-alpha has 1 item, proj-beta has 2 items (muted).
+            # PHILO-15-09 (B11): the head IS the rows of the list (the member
+            # and any source the hub could not read); the muted are not rows.
+            rows = page.locator("[data-testid='needs-list'] > ul > li.needs-row")
+            assert headline_text.strip() == f"{rows.count()} {'needs' if rows.count() == 1 else 'need'} you", \
+                f"Headline is not the row count (muted excluded): {headline_text}"
 
-            # ── NEEDS YOU has 1 unmuted row ──
+            # ── NEEDS YOU has 1 unmuted member row ──
             members = page.locator("[data-testid='needs-list'] > ul > [data-testid='needs-row']")
             assert members.count() == 1, members.all_inner_texts()
 

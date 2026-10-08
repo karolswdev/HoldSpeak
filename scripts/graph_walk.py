@@ -2101,7 +2101,7 @@ def check_predicate(
 #: ``reads`` (by index among the op reads), ``trigger`` the trigger's own
 #: recorded operation (never re-fired).
 OP_FACT_SOURCES = frozenset({"observe", "read", "trigger"})
-OP_FACT_TESTS = ("value", "absent", "nonempty", "contains", "lacks", "length", "integer")
+OP_FACT_TESTS = ("value", "differs", "absent", "nonempty", "contains", "lacks", "length", "integer")
 
 
 def _op_fact_record(fact: dict[str, Any], after: dict[str, Any]) -> tuple[dict[str, Any] | None, str]:
@@ -2162,6 +2162,9 @@ def _op_fact(fact: dict[str, Any], after: dict[str, Any]) -> tuple[bool, str]:
         return False, f"{where} is not an integer ({value!r})"
     if "value" in fact and value != fact["value"]:
         return False, f"{where} = {value!r}, wanted {fact['value']!r}"
+    # PHILO-15-09: a value that must have moved (a newer generated_at).
+    if "differs" in fact and (value in (None, "") or value == fact["differs"]):
+        return False, f"{where} = {value!r}, wanted a value other than {fact['differs']!r}"
     if fact.get("nonempty") and value in (None, "", [], {}):
         return False, f"{where} is empty"
     if "length" in fact and (not isinstance(value, list) or len(value) != fact["length"]):

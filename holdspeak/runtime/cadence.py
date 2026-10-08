@@ -151,7 +151,10 @@ class CadenceMixin:
             # brief-conductor kind holds READ only; the brief row is the one
             # write, made by MondayBriefService itself.
             brief_principal = Principal(PrincipalKind.BRIEF_CONDUCTOR, BRIEF_PRINCIPAL_IDENTITY)
-            brief = brief_svc.generate(brief_principal, now=now)
+            # PHILO-15-09: the schedule makes one brief a day (only the
+            # owner's Generate makes it again), and nobody is at the desk:
+            # no People key request (Astra r1, P1).
+            brief = brief_svc.generate(brief_principal, now=now, regenerate=False, people_reads=False)
 
             db.cadence.upsert_policy(CadencePolicy(
                 name="brief_regeneration",

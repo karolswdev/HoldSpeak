@@ -641,7 +641,7 @@ export function ConciergeCore({ scope }: CoreProps) {
       {/* 5. Footer — portaled into the frame's foot slot */}
       <SurfaceFooter
         className="concierge-footer"
-        receipt={<span className="concierge-receipt" data-testid="concierge-receipt">{receiptText}</span>}
+        receipt={<span className="concierge-receipt" data-testid="concierge-receipt" title={receiptText}>{receiptText}</span>}
         verbs={
           <>
             <Button dense variant="ghost" onClick={ctrl.cancel} data-testid="concierge-cancel">Cancel</Button>

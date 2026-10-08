@@ -294,9 +294,20 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
   /* HS-100-08 — a railed split: the list is a rail, the open detail
-     (the outcomes face) takes the room. */
+     (the outcomes face) takes the room.
+     PHILO-15 lane 12 (B22): the rail is a strip ABOVE the open record, not
+     a column beside it. As a column it squeezed the record into 370 px of
+     a 640 px window, and zoomed it left a 400 px column empty under one
+     row. Now the record has the window's whole width at every size; the
+     list stays in reach as a short strip that scrolls inside itself. */
   .surface-split-railed .surface-split-open {
-    grid-template-columns: minmax(210px, 0.55fr) minmax(0, 1.45fr);
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .surface-split-railed .surface-split-open > .surface-split-main {
+    max-height: 9.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-bottom: 1px solid var(--border-subtle);
   }
 }
 @container surface (max-width: 559.9px) {
@@ -3743,8 +3754,11 @@ button.surface-edit-in-place:hover {
   flex: 1 1 200px;
   min-width: 0;
 }
+/* PHILO-15 lane 12 (B28): a chip that asks to wrap ([data-wrap], a topic
+   or a literal name) keeps its wrap inside a room row; this rule tied with
+   the variant on specificity, came later, and ran the topic past the edge. */
 .surface-ledger[data-cols="room"] .surface-ledger-cell,
-.surface-ledger[data-cols="room"] .surface-token,
+.surface-ledger[data-cols="room"] .surface-token:not([data-wrap]),
 .surface-ledger[data-cols="room"] .surface-state-chip,
 .surface-ledger[data-cols="room"] .surface-provenance-chip {
   flex: none;
