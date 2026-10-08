@@ -161,8 +161,8 @@ def test_sweep_refreshes_the_pr_of_a_live_launch(tmp_path, db, monkeypatch) -> N
     assert ft["sources"] == [{"source_id": rig.source.source_id, "gh_state": "live", "detail": ""}]
     record = rig.launches.get(rig.result["launch_id"])
     assert record["follow_through"]["pr"] == {
-        "url": PR_URL, "number": 7, "state": "open", "review_decision": "",
-        "ci": "none", "checks": [],
+        "url": PR_URL, "number": 7, "title": "Fix the login timeout", "state": "open",
+        "review_decision": "", "ci": "none", "checks": [],
     }
     # The shared receipts cache shows the sweep's rows to the next read.
     rows = rig.receipts.rows_view()["sources"][0]["prs"]
@@ -230,6 +230,8 @@ def test_merge_closes_the_action_with_evidence_and_cleans_up(tmp_path, db, monke
     assert events[0]["facts"]["evidence"] == {
         "pr_url": PR_URL, "merged_sha": MERGE_COMMIT, "merged_at": "2026-10-06T11:00:00Z",
         "attempt_id": rig.result["attempt_id"], "launch_id": launch_id,
+        # PHILO-15 B52: the PR's own number and title ride the receipt.
+        "pr_number": "7", "pr_title": "Fix the login timeout",
     }
     assert receipt["follow_through"]["closed"] == [{"launch_id": launch_id, "close": "closed"}]
 
@@ -664,7 +666,7 @@ def test_watch_merge_is_closed_in_the_draft_whatever_the_review(db) -> None:
     and after it is accepted, the period's merge is reported as closed."""
     _watch_merge(db)
     delta, updates = _updates(db)
-    line = "Closed: Fix the login timeout (#42) -- merged"
+    line = "Merged: Fix the login timeout (PR #42) https://github.com/acme/railsproj/pull/42"
 
     before = updates.draft_update(OWNER, PROJECT)["body_md"]
     review = delta.open_review(OWNER, PROJECT)
@@ -694,7 +696,7 @@ def test_published_update_starts_the_next_period(db) -> None:
             "UPDATE project_updates SET lifecycle='published', published_at=? WHERE id=?",
             ("2099-01-01T00:00:00+00:00", draft["id"]),
         )
-    assert "Closed:" not in updates.draft_update(OWNER, PROJECT)["body_md"]
+    assert "Merged:" not in updates.draft_update(OWNER, PROJECT)["body_md"]
 
 
 def test_agent_merge_is_closed_in_the_draft(tmp_path, db, monkeypatch) -> None:
@@ -705,9 +707,9 @@ def test_agent_merge_is_closed_in_the_draft(tmp_path, db, monkeypatch) -> None:
     _sweep(rig)
     _delta, updates = _updates(db)
     draft = updates.draft_update(OWNER, PROJECT)
-    assert "Closed: Fix the login timeout (PR #7) -- merged" in _progress(draft["body_md"])
+    assert f"Merged: Fix the login timeout (PR #7) {PR_URL}" in _progress(draft["body_md"])
     claims = json.loads(draft["claims_json"])
-    assert any(c["refs"] == ["action_item:ai_1"] and c["text"].startswith("Closed: ") for c in claims)
+    assert any(c["refs"] == ["action_item:ai_1"] and c["text"].startswith("Merged: ") for c in claims)
 
 
 # ── 5. GitHub Watch fields; open coverage stays open-only ───────────
@@ -758,14 +760,14 @@ def test_merge_observed_after_draft_before_publish_is_not_lost(db) -> None:
     reported in the next draft (no time cutoff at publication)."""
     _delta, updates = _updates(db)
     previous = updates.draft_update(OWNER, PROJECT)
-    assert "Closed:" not in _progress(previous["body_md"])
+    assert "Merged:" not in _progress(previous["body_md"])
     _watch_merge(db)
     updates.publish_update(OWNER, previous["id"])
     current = updates.draft_update(OWNER, PROJECT)
-    assert "Closed: Fix the login timeout (#42) -- merged" in _progress(current["body_md"])
+    assert "Merged: Fix the login timeout (PR #42) https://github.com/acme/railsproj/pull/42" in _progress(current["body_md"])
     # Once a draft that reports it is published, it is not reported again.
     updates.publish_update(OWNER, current["id"])
-    assert "Closed:" not in _progress(updates.draft_update(OWNER, PROJECT)["body_md"])
+    assert "Merged:" not in _progress(updates.draft_update(OWNER, PROJECT)["body_md"])
 
 
 def test_secure_close_after_publication_is_reported(tmp_path, db, monkeypatch) -> None:
@@ -778,7 +780,7 @@ def test_secure_close_after_publication_is_reported(tmp_path, db, monkeypatch) -
         assert _status(db, "ai_1") == "open"
         _delta, updates = _updates(db)
         previous = updates.draft_update(OWNER, PROJECT)
-        assert "Closed:" not in _progress(previous["body_md"])
+        assert "Merged:" not in _progress(previous["body_md"])
         updates.publish_update(OWNER, previous["id"])
         with db._connection() as conn:
             confirm_id = conn.execute(
@@ -789,7 +791,7 @@ def test_secure_close_after_publication_is_reported(tmp_path, db, monkeypatch) -
         _sweep(rig)
         assert _status(db, "ai_1") == "done"
         current = updates.draft_update(OWNER, PROJECT)
-        assert "Closed: Fix the login timeout (PR #7) -- merged" in _progress(current["body_md"])
+        assert f"Merged: Fix the login timeout (PR #7) {PR_URL}" in _progress(current["body_md"])
         assert json.loads(current["source_manifest_json"])["closure_keys"] == [PR_URL]
     finally:
         rig.tmux.ended = True

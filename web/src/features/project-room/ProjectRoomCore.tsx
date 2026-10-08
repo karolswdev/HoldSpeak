@@ -2413,7 +2413,9 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   const merged = mergeReceipt(agentFlights, ctrl.projectId);
   const footerReceipt = ctrl.view !== "history" && merged ? (
     <span className="surface-footer-receipt-line" data-tone="ok" role="status" data-testid="room-merge-receipt">
-      {`DONE · ${merged.title} · PR #${merged.pr?.number ?? ""} MERGED · ${formatTimeShort(merged.mergedAt ?? "")}`}
+      {/* PHILO-15 B51/B52: the PR by its own title and number (the item's
+          title only when the hub has not read the PR's yet). */}
+      {`DONE · ${merged.pr?.title || merged.title} · PR #${merged.pr?.number ?? ""} MERGED · ${formatTimeShort(merged.mergedAt ?? "")}`}
     </span>
   ) : ctrl.view === "history" ? (
     <span className="surface-footer-receipt-line" role="status" data-testid="room-footer-receipt">
@@ -2519,7 +2521,12 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
       <SurfaceFooter
         receipt={footerReceipt}
         verbs={
-          <Button dense variant="ghost" onClick={handleRefresh} data-testid="room-refresh">Refresh</Button>
+          <>
+            {ctrl.view !== "history" && merged ? (
+              <FlightVerbs flight={merged} title={merged.pr?.title || merged.title} />
+            ) : null}
+            <Button dense variant="ghost" onClick={handleRefresh} data-testid="room-refresh">Refresh</Button>
+          </>
         }
       />
     </>

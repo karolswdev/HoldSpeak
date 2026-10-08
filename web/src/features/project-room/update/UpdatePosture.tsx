@@ -42,6 +42,10 @@ import {
 } from "./model";
 import "./update-posture.css";
 import { ListChips, PublishedWells } from "../../channels/SendWell";
+import { useDraftEgress } from "../../../desk/lane/LaneWindow";
+
+/** The capability that drafts a project update (`project_update_service`). */
+const UPDATE_DRAFT_CAPABILITY = "project.update_draft";
 
 
 /* PHILO-10-04 (the owner's A2 ruling, 2026-09-29): the SEND well and the
@@ -329,7 +333,7 @@ function ProvenanceLabel({ update }: { update: ProjectUpdate }) {
   return (
     <span className="update-provenance" data-testid="update-provenance">
       <span className="surface-token" data-testid="update-generator-label">
-        {generatorLabel(update.generator)}
+        {generatorLabel(update.generator, update.generatorModel)}
       </span>
       {fallbackLabel ? (
         <span
@@ -466,6 +470,10 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
   const onOpenRef = useCallback((ref: string) => {
     openRef(ref);
   }, []);
+  // PHILO-15 B53: "Draft with model" names the host of the model assigned
+  // to update drafts (`192.168.1.43 · LAN`, `THIS DEVICE`, a cloud host),
+  // never a fixed LOCAL + CLOUD.
+  const modelEgress = useDraftEgress(ctrl.posture === "list", UPDATE_DRAFT_CAPABILITY);
 
   // ── Loading / error ──
   if (ctrl.loading && ctrl.posture === "off") {
@@ -498,9 +506,9 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
               Draft with model
             </Button>
             <EgressChip
-              label="local + cloud"
-              scope="mixed"
-              title="May send project data to the inference provider."
+              label={modelEgress.label}
+              scope={modelEgress.scope}
+              title="The model that drafts updates reads the project's evidence here."
             />
           </span>
         </SurfaceVerbs>
@@ -560,7 +568,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
           receipt={
             <span className="surface-footer-receipt-line" data-testid="update-footer-receipt" role="status">
               {ctrl.current
-                ? `UPDATE ${lifecycleLabel(ctrl.current.lifecycle)} · ${generatorLabel(ctrl.current.generator)}${ctrl.dirty ? " · UNSAVED" : ""}`
+                ? `UPDATE ${lifecycleLabel(ctrl.current.lifecycle)} · ${generatorLabel(ctrl.current.generator, ctrl.current.generatorModel)}${ctrl.dirty ? " · UNSAVED" : ""}`
                 : "UPDATE"}
             </span>
           }

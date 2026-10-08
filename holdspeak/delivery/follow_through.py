@@ -106,6 +106,13 @@ QUIET_LIMIT_SECONDS = 2 * 3600
 TOTAL_LIMIT_SECONDS = 8 * 3600
 _LIVE_STATES = frozenset({"launched", "registered"})
 
+#: PHILO-15 B51: while a launch has an open PR, the hub reads that PR's
+#: state this often (one ``gh pr view`` per PR), at most this many PRs a poll.
+POLL_SECONDS = 120
+POLL_MAX_PRS = 10
+#: A kept PR in one of these states is polled (``pr_receipts.pr_state``).
+POLLED_PR_STATES = frozenset({"open", "draft"})
+
 _SWEEP_LOCK = threading.Lock()
 
 
@@ -230,6 +237,54 @@ class FollowThroughObserver:
         if not record.get("attempt_id") or not record.get("worktree_id") or not record.get("source_id"):
             return False
         return not (record.get("follow_through") or {}).get("done")
+
+    # ── the open-PR poll (PHILO-15 B51) ──────────────────────────────
+
+    def poll_open_prs(self, principal: Any) -> dict[str, Any]:
+        """Read the state of each followed launch's open PR: one ``gh pr
+        view`` per PR, at most :data:`POLL_MAX_PRS` per poll. A merged PR
+        closes the origin and cleans up exactly as the sweep does, so the
+        Room receipt lands within one poll of the merge, with no press.
+
+        A launch is polled while its PR is kept and open: the poll stops
+        when the PR is merged or closed, or the follow-through is done (the
+        launch ended). An agent session that ended with its PR open is still
+        polled: the owner merges after the agent leaves."""
+        with _SWEEP_LOCK:
+            return self._poll_open_prs(principal)
+
+    @staticmethod
+    def _polled(record: Mapping[str, Any]) -> bool:
+        if not FollowThroughObserver._followed(record) or record.get("stopped"):
+            return False
+        pr = (record.get("follow_through") or {}).get("pr") or {}
+        return bool(pr.get("number") and pr.get("url")) and str(pr.get("state") or "open") in POLLED_PR_STATES
+
+    def _poll_open_prs(self, principal: Any) -> dict[str, Any]:
+        receipt: dict[str, Any] = {
+            "kind": "pr_poll", "polled": [], "closed": [], "confirm": [], "cleaned": [],
+        }
+        launches = [r for r in self._ledger.list() if self._polled(r)][:POLL_MAX_PRS]
+        if not launches:
+            return receipt
+        view = getattr(self._receipts, "view_pr", None)
+        if not callable(view):
+            return receipt
+        mode = str(self._control_mode() or "yolo").lower()
+        for launch in launches:
+            pr = launch["follow_through"]["pr"]
+            source_id = str(launch.get("source_id") or "")
+            row, gh = view(source_id, str(pr["url"]))
+            receipt["polled"].append({"launch_id": launch["launch_id"], "gh_state": gh,
+                                      "state": (row or {}).get("state")})
+            if row is None:
+                continue
+            try:
+                self._follow(principal, launch, {source_id: [row]}, mode, receipt)
+            except Exception as exc:  # one launch never stops the others
+                log.error("PR poll for %s failed: %s", launch.get("launch_id"), exc)
+                receipt.setdefault("errors", []).append(str(launch.get("launch_id") or ""))
+        return receipt
 
     # ── every merge of a Room repository (Conductor R4) ──────────────
 
@@ -525,6 +580,8 @@ class FollowThroughObserver:
         if row is not None:
             state["pr"] = {
                 "url": row.get("url"), "number": row.get("number"),
+                # PHILO-15 B50: the PR's own title, for the lane's PR card.
+                "title": " ".join(str(row.get("title") or "").split()) or None,
                 "state": row.get("state"), "review_decision": row.get("review_decision"),
                 # PHILO-14 C0: the checks rollup and each check, for the lane.
                 "ci": row.get("ci"), "checks": list(row.get("checks") or []),
@@ -539,6 +596,10 @@ class FollowThroughObserver:
             return
         evidence = {
             "pr_url": str(row.get("url") or ""),
+            # PHILO-15 B52: the update's row and the Room receipt name the PR
+            # by its own title and number.
+            "pr_number": str(row.get("number") or ""),
+            "pr_title": " ".join(str(row.get("title") or "").split()),
             "merged_sha": str(row.get("merged_sha") or row.get("head_sha") or ""),
             "merged_at": str(row.get("merged_at") or ""),
             "attempt_id": str(launch.get("attempt_id") or ""),
@@ -784,7 +845,9 @@ class FollowThroughObserver:
             "origin_ref": origin,
             "title": self._origin_title(kind, item_id) or origin,
             "pr_url": url,
-            "pr_number": url.rstrip("/").rsplit("/", 1)[-1],
+            "pr_number": str(evidence.get("pr_number") or "") or url.rstrip("/").rsplit("/", 1)[-1],
+            # PHILO-15 B52: ``title`` is the origin's; this is the PR's own.
+            "pr_title": str(evidence.get("pr_title") or ""),
             "merged_sha": str(evidence.get("merged_sha") or ""),
             "merged_at": str(evidence.get("merged_at") or ""),
             "launch_id": str(evidence.get("launch_id") or ""),

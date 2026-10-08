@@ -444,6 +444,43 @@ CHANGE_CLASS_CLOSED = "closed"
 
 #: The source-manifest key that freezes what a draft reported as closed.
 CLOSURE_KEYS = "closure_keys"
+#: PHILO-15 B52: each closure key's row text, frozen with the draft. A
+#: published update reports a closure only when its published body carries
+#: the row (or the PR link): a model draft that dropped the row, or an owner
+#: edit that cut it, does not consume the watermark.
+CLOSURE_LINES = "closure_lines"
+
+
+def merged_line(title: str, number: str, url: str) -> str:
+    """The one row a merged PR gets in an update (PHILO-15 B52):
+    ``Merged: <PR title> (PR #n) <link>``."""
+    name = " ".join(str(title or "").split()) or "Untitled"
+    return f"Merged: {name} (PR #{number})" + (f" {url}" if url else "")
+
+
+def reported_closures(published: list[dict[str, Any]]) -> set[str]:
+    """The closure keys the PUBLISHED updates reported: a key frozen into a
+    published update's manifest whose row (or PR link) is in its published
+    body. A manifest from before PHILO-15 (keys, no lines) reports its keys."""
+    reported: set[str] = set()
+    for row in published:
+        try:
+            frozen = json.loads(row.get("source_manifest_json") or "{}")
+        except (TypeError, ValueError):
+            frozen = {}
+        if not isinstance(frozen, dict):
+            continue
+        keys = [str(k) for k in frozen.get(CLOSURE_KEYS) or []]
+        lines = frozen.get(CLOSURE_LINES)
+        if not isinstance(lines, dict):
+            reported.update(keys)
+            continue
+        body = " ".join(str(row.get("body_md") or "").split())
+        for key in keys:
+            text = " ".join(str(lines.get(key) or "").split())
+            if (text and text in body) or (key.startswith("http") and key in body):
+                reported.add(key)
+    return reported
 
 #: Conductor R4: a merged agent PR linked to its origin in the Room
 #: (``delivery.follow_through.LINK_OBSERVATION``).
@@ -480,6 +517,19 @@ def period_closures(
 
     out: list[dict[str, Any]] = []
     seen: set[str] = set()
+    pr_titles: dict[str, str] = {}
+    for obs in observations:
+        if obs.get("observation_kind") not in (MERGED_OBSERVATION_KIND, LINK_OBSERVATION_KIND):
+            continue
+        try:
+            fact = json.loads(obs.get("fact_json") or "{}")
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(fact, dict) or not fact.get("pr_url"):
+            continue
+        title = fact.get("pr_title") if obs.get("observation_kind") == LINK_OBSERVATION_KIND else fact.get("title")
+        if title:
+            pr_titles.setdefault(str(fact["pr_url"]), " ".join(str(title).split()))
     for event in completions:
         facts = event.get("facts") or {}
         evidence = facts.get("evidence") or {}
@@ -490,12 +540,18 @@ def period_closures(
         if url in seen or url in reported:
             continue
         seen.add(url)
-        number = url.rstrip("/").rsplit("/", 1)[-1]
-        task = " ".join(str(action_tasks[action_id] or "").split()) or "Untitled"
+        number = str(evidence.get("pr_number") or url.rstrip("/").rsplit("/", 1)[-1])
+        # PHILO-15 B52/B50: the row names the PR by ITS title (gh's), never
+        # the item's: the receipt's own, else the Heartbeat's read of the
+        # same merge, else the item's task for a receipt from before.
+        title = (
+            str(evidence.get("pr_title") or "") or pr_titles.get(url)
+            or str(action_tasks[action_id] or "")
+        )
         out.append({
             "key": url,
             "order": (str(evidence.get("merged_at") or ""), url),
-            "text": f"Closed: {task} (PR #{number}) -- merged",
+            "text": merged_line(title, number, url),
             "ref": format_ref("action_item", action_id),
             "fields": ["status", "evidence.pr_url", "evidence.merged_at"],
         })
@@ -518,11 +574,13 @@ def period_closures(
                 continue
             seen.add(url)
             number = str(fact.get("pr_number") or url.rstrip("/").rsplit("/", 1)[-1])
-            title = " ".join(str(fact.get("title") or "").split()) or "Untitled"
-            text = (
-                f"Merged: PR #{number} for {title}" if wanted == LINK_OBSERVATION_KIND
-                else f"Merged: {title} (PR #{number})"
+            # A link observation's ``title`` is its origin's; the PR's own
+            # title is ``pr_title`` (PHILO-15 B52), else the Heartbeat's read.
+            title = (
+                (fact.get("pr_title") or pr_titles.get(url) or fact.get("title"))
+                if wanted == LINK_OBSERVATION_KIND else fact.get("title")
             )
+            text = merged_line(str(title or ""), number, url)
             out.append({
                 "key": url,
                 "order": (str(fact.get("merged_at") or obs.get("observed_at") or ""), url),
@@ -555,7 +613,12 @@ def period_closures(
         out.append({
             "key": key,
             "order": (str(obs.get("observed_at") or ""), key),
-            "text": f"Closed: {name}{marker} -- {outcome}",
+            # PHILO-15 B52: a merged PR reads as every merged PR does.
+            "text": (
+                merged_line(name, entity, str(fact.get("url") or ""))
+                if event_type == "github.pr.merged" and entity
+                else f"Closed: {name}{marker} -- {outcome}"
+            ),
             "ref": f"pobs:{obs.get('id', '')}",
             "fields": ["observation_kind", "fact_json"],
         })
@@ -586,6 +649,44 @@ def _build_closed(
         ))
         lines.append(f"- {closure['text']}")
     return lines
+
+
+def _carry_closed_rows(
+    body_md: str,
+    claims_json: str,
+    closed_lines: list[str],
+    det_claims: list[Claim],
+) -> tuple[str, str]:
+    """PHILO-15 B52: every closed row of the deterministic inventory, in the
+    model draft's Progress, word for word, with its claim. A row the model
+    already wrote is not repeated."""
+    missing = [line for line in closed_lines if line not in body_md]
+    if missing:
+        head = f"## {_SECTION_HEADINGS['progress']}\n\n"
+        block = "\n".join(missing)
+        at = body_md.find(head)
+        if at < 0:
+            body_md = head + block + "\n\n" + body_md
+        else:
+            start = at + len(head)
+            minimal = _HONEST_MINIMAL["progress"]
+            if body_md.startswith(minimal, start):
+                body_md = body_md[:start] + block + body_md[start + len(minimal):]
+            else:
+                body_md = body_md[:start] + block + "\n" + body_md[start:]
+    try:
+        claims = json.loads(claims_json or "[]")
+    except (TypeError, ValueError):
+        claims = []
+    if isinstance(claims, list):
+        texts = {str(c.get("text") or "") for c in claims if isinstance(c, dict)}
+        added = [
+            c.to_dict() for c in det_claims
+            if c.span_id.startswith("s_progress_closed_") and c.text not in texts
+        ]
+        if added:
+            claims_json = json.dumps(claims + added, sort_keys=True, separators=(",", ":"))
+    return body_md, claims_json
 
 
 def _build_risks_blockers(
@@ -1813,7 +1914,11 @@ class ProjectUpdateService:
         )
         # What this draft reports as closed, frozen with it: once it is
         # published, the next draft does not report these again.
-        manifest = {**manifest, CLOSURE_KEYS: sorted(c["key"] for c in closures)}
+        manifest = {
+            **manifest,
+            CLOSURE_KEYS: sorted(c["key"] for c in closures),
+            CLOSURE_LINES: {c["key"]: c["text"] for c in closures},
+        }
         manifest_json = json.dumps({
             **manifest, "week_source_refs": week["source_refs"],
         }, sort_keys=True, separators=(",", ":"))
@@ -1845,6 +1950,11 @@ class ProjectUpdateService:
                         known_names=_known_names_for_room(room),
                         memory=memory,
                     )
+                )
+                # PHILO-15 B52: the model writes prose; a merged PR's row is
+                # a record, carried into the model draft word for word.
+                body_md, claims_json = _carry_closed_rows(
+                    body_md, claims_json, closed_lines, det_claims,
                 )
                 if memory:
                     manifest_json = json.dumps({
@@ -1920,16 +2030,9 @@ class ProjectUpdateService:
     ) -> list[dict[str, Any]]:
         """:func:`period_closures` over this Project's durable records, less
         what its published updates already reported."""
-        reported: set[str] = set()
-        for row in self._db.project_updates.list_updates(
+        reported = reported_closures(self._db.project_updates.list_updates(
             project_id, lifecycle="published", limit=100_000,
-        ):
-            try:
-                frozen = json.loads(row.get("source_manifest_json") or "{}")
-            except (TypeError, ValueError):
-                frozen = {}
-            if isinstance(frozen, dict):
-                reported.update(str(k) for k in frozen.get(CLOSURE_KEYS) or [])
+        ))
         try:
             tasks = {
                 str(a["id"]): str(a.get("task") or "")

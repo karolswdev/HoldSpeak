@@ -219,6 +219,16 @@ def _slug(name: str) -> str:
     return "-".join(words)[:60].strip("-") or "project"
 
 
+#: The model drafter's mark on a claim with no evidence (UPD-002).
+_UNVERIFIED_MARK = re.compile(r"\*\*\[UNVERIFIED\]\*\*[ \t]*")
+
+
+def without_desk_marks(body_md: str) -> str:
+    """An update's Markdown as it leaves the desk (Send, Copy): the
+    ``[UNVERIFIED]`` mark removed (PHILO-15 B53)."""
+    return _UNVERIFIED_MARK.sub("", str(body_md or ""))
+
+
 def render_update(db: Any, update_id: str) -> Document:
     """``project_update:<id>`` -> its Document: a PUBLISHED update, its exact Markdown."""
     row = db.project_updates.get_update(str(update_id or ""))
@@ -234,7 +244,10 @@ def render_update(db: Any, update_id: str) -> Document:
     published = str(row.get("published_at") or "")[:10]
     title = f"{name} — update r{row.get('draft_revision') or 1}" + (f" ({published})" if published else "")
     revision = int(row.get("draft_revision") or 1)
-    return Document(ref=f"project_update:{row['id']}", title=title, body_md=str(row.get("body_md") or ""),
+    # PHILO-15 B53: ``[UNVERIFIED]`` is the desk's own mark (the face shows
+    # it as a lamp on the claim); it never leaves the desk.
+    body = without_desk_marks(str(row.get("body_md") or ""))
+    return Document(ref=f"project_update:{row['id']}", title=title, body_md=body,
                     slug=_slug(name), label=f"REV {revision}")
 
 

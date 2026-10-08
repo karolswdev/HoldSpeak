@@ -221,6 +221,25 @@ def _agent_spool_timer(web_ctx: Any = None, *, spool_dir: Optional[Path] = None)
     )
 
 
+def _poll_agent_prs() -> Optional[dict[str, Any]]:
+    """PHILO-15 B51: one poll of the open agent PRs (the Heartbeat's
+    ``poll_open_prs``: one ``gh pr view`` per open PR; none with no open
+    PR). A failure is logged and never stops the hub's timer."""
+    try:
+        from .db import get_database, get_observer
+        from .delivery.follow_through import default_follow_through
+        from .principals import Principal, PrincipalKind
+        from .services.heartbeat_service import HeartbeatService
+
+        db = get_database()
+        return HeartbeatService(
+            db, observer=get_observer(), follow_through=default_follow_through(db),
+        ).poll_open_prs(Principal(PrincipalKind.OWNER, "heartbeat-conductor"))
+    except Exception as exc:
+        log.warning(f"agent PR poll failed: {exc}")
+        return None
+
+
 def _coder_answer_triage(keys: list[str]) -> list[str]:
     """Conductor K5: the waits that began, split by Control mode. Returns
     the keys to notify now; a HoldSpeak-launched agent's wait in YOLO is
@@ -535,6 +554,7 @@ class MeetingWebServer:
         self._rails_observer_task: Optional[asyncio.Task[None]] = None
         self._kernel_liveness_task: Optional[asyncio.Task[None]] = None
         self._agent_spool_task: Optional[asyncio.Task[None]] = None
+        self._agent_pr_poll_task: Optional[asyncio.Task[None]] = None
 
         self.app = self._create_app()
 
@@ -1615,6 +1635,9 @@ class MeetingWebServer:
             # PHILO-14 C0b: the agent-event spool drains on the hub's own timer
             # while a launch is live, not only when a lane or the coder set is read.
             self._agent_spool_task = asyncio.create_task(self._agent_spool_loop(web_ctx))
+            # PHILO-15 B51: an open agent PR is read every 2 minutes, so its
+            # merge closes the item within one poll, with no press.
+            self._agent_pr_poll_task = asyncio.create_task(self._agent_pr_poll_loop())
             await asyncio.to_thread(_kernel_service().reap_and_recover_projections)
             try:
                 await refinement_coordinator.start()
@@ -1789,6 +1812,7 @@ class MeetingWebServer:
                 self._rails_observer_task,
                 self._kernel_liveness_task,
                 self._agent_spool_task,
+                self._agent_pr_poll_task,
             ):
                 if task is None:
                     continue
@@ -1929,6 +1953,16 @@ class MeetingWebServer:
         while True:
             await asyncio.to_thread(timer.tick)
             await asyncio.sleep(event_log.SpoolTimer.INTERVAL)
+
+    async def _agent_pr_poll_loop(self) -> None:
+        """PHILO-15 B51: every ``follow_through.POLL_SECONDS`` (2 min), read
+        each followed launch's open PR (``_poll_agent_prs``). With no open PR
+        a tick reads the launch ledger and runs no ``gh``."""
+        from .delivery import follow_through
+
+        while True:
+            await asyncio.sleep(follow_through.POLL_SECONDS)
+            await asyncio.to_thread(_poll_agent_prs)
 
     async def _rails_observer_loop(self) -> None:
         """The ambient dw observer (HS-88-03) — OFF BY DEFAULT. When
