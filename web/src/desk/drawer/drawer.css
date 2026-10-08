@@ -32,13 +32,11 @@
 
 .drawer-info-rename { display: flex; }
 
-/* In a drawer the grid's rows grow with their names: a name is never
-   clipped or ellipsized (UX-CANON: an ellipsis counts as clipped). */
+/* PHILO-15 B40 (rehearsal 1B): a drawer name that grew with its text read
+   14 lines (an action item, an agent's task). In a drawer the name is ONE
+   line: the species' clamp (DeskIcon's fitName, B30) sets it, cut in the
+   middle so its end stays; the full name is its title (hover), the List
+   view and Get Info. */
 .drawer-window .desk-icon-name {
-  display: block;
-  -webkit-line-clamp: unset;
-  overflow: visible;
-  /* B30: words break at their joins first (<wbr>); only a word longer than
-     the whole line breaks inside, since a drawer never clips a name. */
-  overflow-wrap: break-word;
+  -webkit-line-clamp: 1;
 }

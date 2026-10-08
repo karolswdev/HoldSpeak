@@ -163,9 +163,9 @@ export function DeskIcon({
 /** PHILO-15 lane 12 (B30, Astra r1): the label. A clamped label (the desk,
  *  two lines) is set by `fitName` from its measured width: spaces break
  *  first, a too-long word breaks at its joins, an overlong name is cut in
- *  the middle so its end stays. An unclamped label (a drawer: a name is
- *  never clipped) is set by CSS from `nameBreaks`. The full name is the
- *  title either way. */
+ *  the middle so its end stays. A drawer's label is clamped to one line
+ *  (PHILO-15 B40). An unclamped label is set by CSS from `nameBreaks`. The
+ *  full name is the title either way. */
 function IconName({ name }: { name: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [lines, setLines] = useState<string[] | null>(null);

@@ -7,6 +7,7 @@ Helpers reused from the Phase 144 Door glass test.
 from __future__ import annotations
 
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -379,7 +380,9 @@ def test_hs145_connect_calendar_affordance_and_quiet_state(
             page.screenshot(path=str(SHOT_DIR / "rail-connect-settings-open-1440.png"), full_page=False)
 
             # Close settings for the next leg.
-            page.get_by_role("button", name="Close Settings", exact=True).click()
+            # The window is named by its open section since PHILO-13 (useWindowTitle):
+            # `Settings · Meetings`, so its close gadget is `Close Settings · Meetings`.
+            page.get_by_role("button", name=re.compile(r"^Close Settings\b")).first.click()
             settings.wait_for(state="detached")
 
             # --- LEG 4: Configured-but-quiet calendar ---

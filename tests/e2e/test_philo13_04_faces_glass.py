@@ -658,6 +658,21 @@ class TestMeetingsRailNamesStored:
                 stored.wait_for()
                 none.wait_for()
                 stored.scroll_into_view_if_needed()  # at 393 the rail scrolls
+                # PHILO-15 08 (#983): a stored summary proposes its decisions
+                # and actions, so the stored meeting first reads its proposal
+                # (the rail's precedence: NEEDS YOU before SUMMARY STORED).
+                from holdspeak.db import get_database
+
+                proposed = get_database().proposals.list_proposals(meeting_id=A3W_STORED, state="proposed")
+                assert proposed, "the stored summary proposed nothing"
+                assert stored.get_by_test_id("state-token").inner_text() == f"{len(proposed)} TO REVIEW"
+                # Handled, the record says what it holds: SUMMARY STORED, never OFF.
+                for proposal in proposed:
+                    _api(page, "POST", f"/api/proposals/{proposal.id}/dismiss", token=TOKEN)
+                page.wait_for_function(
+                    f"() => document.querySelector('[data-testid=meeting-row-{A3W_STORED}] [data-testid=state-token]')"
+                    "?.textContent === 'SUMMARY STORED'", timeout=30_000)
+                stored.scroll_into_view_if_needed()
                 TestFacesDoNotLie._shot(page, "meetings-rail-stored", width)
                 assert stored.get_by_test_id("state-token").inner_text() == "SUMMARY STORED"
                 assert not stored.get_by_text(re.compile(r"\bOFF\b")).count()
@@ -711,7 +726,15 @@ class TestMeetingsRailNamesStored:
                 assert token(A3W_QUEUED) in {"QUEUED", "NOT DRAINING"}
                 # PHILO-13-03: a meeting's proposals are TO REVIEW.
                 assert token(A3W_OUTCOMES) == "5 TO REVIEW"
-                assert token(A3W_STORED) == "SUMMARY STORED"
+                # PHILO-15 08 (#983): the stored summary proposes too. No run
+                # is live on it, so its count shows (the count never covers a
+                # run, and a run never hides behind a stored summary).
+                from holdspeak.db import get_database
+
+                stored_review = len(get_database().proposals.list_proposals(meeting_id=A3W_STORED, state="proposed"))
+                assert stored_review > 0
+                assert rows[A3W_STORED]["intel_status"] not in {"running", "queued"}
+                assert token(A3W_STORED) == f"{stored_review} TO REVIEW"
                 meetings.get_by_test_id(f"meeting-row-{A3W_FAILED}").scroll_into_view_if_needed()
                 TestFacesDoNotLie._shot(page, "meetings-rail-precedence", width)
                 assert not errors, errors

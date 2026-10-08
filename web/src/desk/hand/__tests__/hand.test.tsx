@@ -19,6 +19,12 @@ import { resetScreenMembers } from "../../screen/members";
 import { HandSheet } from "../../components/HandSheet";
 import { DragLayer, useDropHand, agentOfTarget, handOriginOfRef } from "..";
 
+/** A name the species sets word by word (#989 B30 `.name-word` spans): the
+ *  innermost element whose whole text is `text`. */
+const wholeText = (text: string) => (_: string, el: Element | null) =>
+  !!el && el.textContent === text && ![...el.children].some((c) => c.textContent === text);
+
+
 const apiFetch = vi.fn();
 vi.mock("../../../lib/api", async () => {
   const actual = await vi.importActual<typeof import("../../../lib/api")>("../../../lib/api");
@@ -101,11 +107,12 @@ const world = {
   preview: { ...PREVIEW } as typeof PREVIEW,
   hand: null as null | (() => unknown),
   calls: [] as Array<{ url: string; init?: { method?: string; json?: unknown } }>,
+  agents: [] as unknown[],
 };
 
 function route(url: string, init?: { method?: string; json?: unknown }): unknown {
   world.calls.push({ url, init });
-  if (url.startsWith("/api/onboarding/agents")) return { agents: [] };
+  if (url.startsWith("/api/onboarding/agents")) return { agents: world.agents };
   if (url === "/api/authority/policy") return { control_mode: world.mode };
   if (url === "/api/agent/hand/preview") {
     const profile = String((init?.json as { profile?: string })?.profile ?? "claude-default");
@@ -187,6 +194,7 @@ beforeEach(() => {
   world.preview = { ...PREVIEW, refused: [] };
   world.hand = null;
   world.calls = [];
+  world.agents = [];
   world.sessionReads = 0;
   world.launchedAfter = null;
   apiFetch.mockReset();
@@ -279,6 +287,31 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual(["Close"]);
     fireEvent.click(within(group).getByRole("button", { name: "Close" }));
     expect(screen.queryByTestId("hand-confirm")).toBeNull();
+  });
+
+  it("PHILO-15 B36: the Conductor hands to the first KNOWN sign-in, and the line says why", async () => {
+    const row = (id: string, signedIn: string) => ({
+      id, label: id, installed: true, path: `/bin/${id}`, version: "1", hooks: "installed", signed_in: signedIn, ready: true, verb: null,
+    });
+    world.agents = [row("claude", "unknown"), row("codex", "yes")];
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    await within(line).findByText("CODEX · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).getByTestId("hand-confirm-skipped")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");
+    expect((posts("/api/agent/hand/preview")[0].init?.json as { profile: string }).profile).toBe("codex-default");
+  });
+
+  it("PHILO-15 B36: with Claude Code signed in, the default stays Claude Code and nothing is said", async () => {
+    const row = (id: string, signedIn: string) => ({
+      id, label: id, installed: true, path: `/bin/${id}`, version: "1", hooks: "installed", signed_in: signedIn, ready: true, verb: null,
+    });
+    world.agents = [row("claude", "yes"), row("codex", "yes")];
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    await within(line).findByText("CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).queryByTestId("hand-confirm-skipped")).toBeNull();
   });
 
   it("drop on an agent icon hands to that agent's kind (Codex)", async () => {
@@ -416,7 +449,7 @@ describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
         <DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />
       </>,
     );
-    const row = await within(drawer()).findByText("Write the cutover comms");
+    const row = await within(drawer()).findByText(wholeText("Write the cutover comms"));
     for (const el of document.querySelectorAll(".desk-screen .desk-icon")) expect(el).not.toHaveAttribute("draggable", "true");
     // The verb is withheld until a handable object is selected.
     expect(within(drawer()).queryByRole("button", { name: "Hand to agent" })).toBeNull();

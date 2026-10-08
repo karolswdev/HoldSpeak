@@ -163,7 +163,14 @@ def test_the_conductor_drawer_at_1440_and_393(tmp_path: Path, monkeypatch) -> No
                 asking = window.locator("[data-object-id='launch:launch_c4_runbook']")
                 asking.wait_for(timeout=T)
                 for name in ("Claude Code: rollback runbook", "Codex: reconciliation job", "Claude Code: ledger freeze flag"):
-                    assert window.get_by_text(name, exact=False).count() > 0, name
+                    # PHILO-15 B40: a drawer label is one line, cut in the middle;
+                    # the full name is its title (hover) and the icon's name.
+                    assert window.locator(f"[title='{name}'], [aria-label^='{name}']").count() > 0, name
+                one_line = window.locator(".desk-icon-name").evaluate_all(
+                    "(els) => els.map((e) => [e.title, Math.round(e.getBoundingClientRect().height),"
+                    " parseFloat(getComputedStyle(e).lineHeight) || 16])")
+                for title, height, line in one_line:
+                    assert height <= line * 1.5 + 2, (title, height, line)
                 # The ready agents (whatever this Mac has installed: the hub's own read).
                 assert window.locator("[data-object-id='agent:claude']").count() == 1
                 assert window.locator("[data-object-id='agent:codex']").count() == 1
