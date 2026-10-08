@@ -136,7 +136,8 @@ def test_breakage_pipeline_event_with_error_appears(tmp_path):
     # PHILO-6-02 round 3: a failed call outside the table is
     # ``<Object> did not complete`` (no verb read from the method name).
     assert items[0].text == "Sync did not complete"
-    assert items[0].detail == "NETWORK: network unavailable"
+    # PHILO-15 B73: the reason in words, then the local time.
+    assert items[0].detail.split(" · ")[0] == "network unavailable"
     assert items[0].source_ref == "pipeline-event:evt-failed"
 
 
@@ -167,7 +168,7 @@ def test_breakage_repeated_service_method_failures_deduplicate(tmp_path):
 
     assert len(items) == 1
     assert items[0].source_ref == "pipeline-event:evt-latest"
-    assert items[0].detail == "NETWORK: retry exhausted"
+    assert items[0].detail.split(" · ")[0] == "retry exhausted"
 
 
 def test_breakage_events_outside_window_are_excluded(tmp_path):
@@ -378,7 +379,7 @@ def test_breakage_failed_connector_run_appears(tmp_path):
 
     assert len(items) == 1
     assert items[0].text == "Connector github failed"
-    assert items[0].detail == "token expired"
+    assert items[0].detail.split(" · ")[0] == "token expired"
     assert items[0].source_ref == "connector-run:1"
 
 

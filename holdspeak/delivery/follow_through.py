@@ -252,7 +252,12 @@ class FollowThroughObserver:
         A launch is polled while its PR is kept and open: the poll stops
         when the PR is merged or closed, or the follow-through is done (the
         launch ended). An agent session that ended with its PR open is still
-        polled: the owner merges after the agent leaves."""
+        polled: the owner merges after the agent leaves.
+
+        PHILO-15 B65: a followed launch with no PR yet and a known branch is
+        polled too: one ``gh pr list --head <branch>`` finds its NEW PR
+        within one poll (it was the 15-minute sweep). Both kinds share the
+        same :data:`POLL_MAX_PRS` ceiling and the same round robin."""
         with _SWEEP_LOCK:
             return self._poll_open_prs(principal)
 
@@ -263,42 +268,74 @@ class FollowThroughObserver:
         pr = (record.get("follow_through") or {}).get("pr") or {}
         return bool(pr.get("number") and pr.get("url")) and str(pr.get("state") or "open") in POLLED_PR_STATES
 
+    @staticmethod
+    def _unpaired(record: Mapping[str, Any]) -> bool:
+        """PHILO-15 B65: a followed launch that has no PR yet."""
+        if not FollowThroughObserver._followed(record) or record.get("stopped"):
+            return False
+        pr = (record.get("follow_through") or {}).get("pr") or {}
+        return not (pr.get("number") and pr.get("url"))
+
     def _poll_open_prs(self, principal: Any) -> dict[str, Any]:
         receipt: dict[str, Any] = {
-            "kind": "pr_poll", "polled": [], "closed": [], "confirm": [], "cleaned": [],
+            "kind": "pr_poll", "polled": [], "discovered": [], "closed": [], "confirm": [], "cleaned": [],
         }
+        records = self._ledger.list()
+        eligible = [r for r in records if self._polled(r)]
+        lister = getattr(self._receipts, "list_branch_prs", None)
+        unpaired = [r for r in records if self._unpaired(r)] if callable(lister) else []
+        if unpaired and callable(getattr(self._registry, "reload", None)):
+            # A launch registers its worktree through its own registry
+            # instance: read the file again so its branch is known.
+            self._registry.reload()
+        branches = {str(r["launch_id"]): self._launch_branch(r) for r in unpaired}
+        eligible += [r for r in unpaired if branches.get(str(r["launch_id"]))]
         # Round robin (Astra r1): the launches read longest ago go first, so
-        # with more than POLL_MAX_PRS open PRs every one is read within
+        # with more than POLL_MAX_PRS launches every one is read within
         # ceil(n / POLL_MAX_PRS) polls. A launch never polled reads as oldest.
-        eligible = [r for r in self._ledger.list() if self._polled(r)]
         eligible.sort(key=lambda r: (int((r.get("follow_through") or {}).get("polled_ns") or 0),
                                      str(r.get("launch_id") or "")))
         launches = eligible[:POLL_MAX_PRS]
         if not launches:
             return receipt
         view = getattr(self._receipts, "view_pr", None)
-        if not callable(view):
-            return receipt
         mode = str(self._control_mode() or "yolo").lower()
         stamp = 0
         for launch in launches:
+            launch_id = str(launch["launch_id"])
             # The read stamp rides the launch's own follow-through state, so
             # the order survives the hub building a new observer per poll.
             stamp = max(time.time_ns(), stamp + 1)
-            launch["follow_through"] = {**launch["follow_through"], "polled_ns": stamp}
-            self._save(str(launch["launch_id"]), launch["follow_through"])
-            pr = launch["follow_through"]["pr"]
+            launch["follow_through"] = {**(launch.get("follow_through") or {}), "polled_ns": stamp}
+            self._save(launch_id, launch["follow_through"])
             source_id = str(launch.get("source_id") or "")
-            row, gh = view(source_id, str(pr["url"]))
-            receipt["polled"].append({"launch_id": launch["launch_id"], "gh_state": gh,
-                                      "state": (row or {}).get("state")})
-            if row is None:
-                continue
+            pr = launch["follow_through"].get("pr") or {}
+            if pr.get("number") and pr.get("url"):
+                if not callable(view):
+                    continue
+                row, gh = view(source_id, str(pr["url"]))
+                receipt["polled"].append({"launch_id": launch_id, "gh_state": gh,
+                                          "state": (row or {}).get("state")})
+                if row is None:
+                    continue
+                rows = [row]
+            else:
+                rows, gh = lister(source_id, branches[launch_id])
+                receipt["discovered"].append({"launch_id": launch_id, "gh_state": gh, "prs": len(rows)})
+                if gh != "live":
+                    continue
             try:
-                self._follow(principal, launch, {source_id: [row]}, mode, receipt)
+                self._follow(principal, launch, {source_id: rows}, mode, receipt)
             except Exception as exc:  # one launch never stops the others
-                log.error("PR poll for %s failed: %s", launch.get("launch_id"), exc)
-                receipt.setdefault("errors", []).append(str(launch.get("launch_id") or ""))
+                log.error("PR poll for %s failed: %s", launch_id, exc)
+                receipt.setdefault("errors", []).append(launch_id)
+                continue
+            if not (pr.get("number") and pr.get("url")):
+                found = ((self._ledger.get(launch_id) or {}).get("follow_through") or {}).get("pr") or {}
+                if found.get("number"):
+                    # The lane, the drawer and Needs re-read on this (the
+                    # ledger is a file: no row write announces it).
+                    receipt.setdefault("found", []).append(launch_id)
         return receipt
 
     # ── every merge of a Room repository (Conductor R4) ──────────────
@@ -593,6 +630,11 @@ class FollowThroughObserver:
         before = dict(state)
         state["pr_state"] = pr_state
         if row is not None:
+            if not (before.get("pr") or {}).get("number"):
+                # PHILO-15 B58: the time the PR was opened (gh's own stamp,
+                # else the first read that found it), once, for the Brief.
+                state["pr_opened_at"] = str(row.get("created_at") or "") or self._clock().isoformat(
+                    timespec="seconds")
             state["pr"] = {
                 "url": row.get("url"), "number": row.get("number"),
                 # PHILO-15 B50: the PR's own title, for the lane's PR card.
@@ -931,27 +973,7 @@ class FollowThroughObserver:
         return datetime.now().astimezone().date().isoformat()
 
     def _origin_title(self, kind: str, item_id: str) -> str:
-        if kind == "issue":
-            from ..services.agent_issue import issue_label, read_issue
-
-            issue = read_issue(self._db, item_id)
-            return issue_label(issue)[:200] if issue else ""
-        queries = {
-            "action": "SELECT task FROM action_items WHERE id = ?",
-            "decision": "SELECT text FROM decisions WHERE id = ?",
-            "decision_record": "SELECT decision_text FROM decision_records WHERE id = ?",
-            # R4: an untitled item still exists; it is named by its id.
-            "project_item": "SELECT COALESCE(NULLIF(title, ''), id) FROM project_items WHERE id = ?",
-            "note": "SELECT COALESCE(NULLIF(title, ''), id) FROM notes WHERE id = ? AND deleted = 0",
-            "meeting": "SELECT COALESCE(NULLIF(title, ''), id) FROM meetings WHERE id = ?",
-            "artifact": "SELECT COALESCE(NULLIF(title, ''), id) FROM artifacts WHERE id = ?",
-        }
-        try:
-            with self._db._connection() as conn:
-                row = conn.execute(queries[kind], (item_id,)).fetchone()
-        except Exception:
-            return ""
-        return " ".join(str(row[0] or "").split())[:200] if row else ""
+        return origin_title(self._db, kind, item_id)
 
     def _release_mcp_if_session_ended(self, launch: Mapping[str, Any]) -> bool:
         """K6: the agent's tmux session ended (the process exited, crashed or
@@ -1135,6 +1157,31 @@ class FollowThroughObserver:
         return "released"
 
 
+def origin_title(db: Any, kind: str, item_id: str) -> str:
+    """The plain title of a launch's origin item ("" when it is not found)."""
+    if kind == "issue":
+        from ..services.agent_issue import issue_label, read_issue
+
+        issue = read_issue(db, item_id)
+        return issue_label(issue)[:200] if issue else ""
+    queries = {
+        "action": "SELECT task FROM action_items WHERE id = ?",
+        "decision": "SELECT text FROM decisions WHERE id = ?",
+        "decision_record": "SELECT decision_text FROM decision_records WHERE id = ?",
+        # R4: an untitled item still exists; it is named by its id.
+        "project_item": "SELECT COALESCE(NULLIF(title, ''), id) FROM project_items WHERE id = ?",
+        "note": "SELECT COALESCE(NULLIF(title, ''), id) FROM notes WHERE id = ? AND deleted = 0",
+        "meeting": "SELECT COALESCE(NULLIF(title, ''), id) FROM meetings WHERE id = ?",
+        "artifact": "SELECT COALESCE(NULLIF(title, ''), id) FROM artifacts WHERE id = ?",
+    }
+    try:
+        with db._connection() as conn:
+            row = conn.execute(queries[kind], (item_id,)).fetchone()
+    except Exception:
+        return ""
+    return " ".join(str(row[0] or "").split())[:200] if row else ""
+
+
 def _gh_stamp(moment: datetime) -> str:
     """A GitHub search instant: ``2026-10-06T11:00:00+00:00``."""
     return moment.astimezone(timezone.utc).replace(microsecond=0).isoformat()
@@ -1173,4 +1220,5 @@ __all__ = [
     "UNLAUNCHED_STATES",
     "FollowThroughObserver",
     "default_follow_through",
+    "origin_title",
 ]

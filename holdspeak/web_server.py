@@ -1989,8 +1989,9 @@ class MeetingWebServer:
         """PHILO-15 B51: every ``follow_through.POLL_SECONDS`` (2 min, from
         the start of one poll to the start of the next), read the followed
         launches' open PRs (``_poll_agent_prs``, round robin, at most 10 a
-        poll). With no open PR a tick reads the launch ledger and runs no
-        ``gh``."""
+        poll), and find the NEW PR of a launch that has none yet (B65: one
+        ``gh pr list --head <branch>`` each, inside the same 10). With no
+        followed launch a tick reads the launch ledger and runs no ``gh``."""
         from .delivery import follow_through
 
         loop = asyncio.get_running_loop()

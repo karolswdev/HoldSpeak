@@ -22,21 +22,92 @@ _SECTIONS = ("this_week", "changed", "broke", "waiting", "decisions")
 _PATH_FRAGMENT = re.compile(r'[/\\](?:\w+[/\\]){1,}[\w.]+')
 
 
-def _sanitize_detail(args_summary: str) -> str | None:
-    """Truncate raw args_summary to a summary-level detail.
+#: PHILO-15 B73: argument keys that name a record, a digest or a place, never
+#: a thing a person reads: left out of a Brief row.
+_RAW_KEY = re.compile(r"(?:^id$|_id$|^ids?_|_ids$|hash|digest|_ref$|^ref$|path|token|key$|sha)", re.I)
+_RAW_VALUE = re.compile(r"^(?:[0-9a-f]{8,}|sha256:.*|[a-z]+[-_][0-9a-f]{6,}.*|[a-z]+:[^\s]+)$", re.I)
 
-    HS-150-03 D2: raw filesystem paths from observer arguments must never
-    enter monday_brief_items.  The detail becomes the event/method name from
-    the JSON keys, stripping path-valued fragments.
+
+def _sanitize_detail(args_summary: str) -> str | None:
+    """A recorded call's arguments as plain words, else None.
+
+    HS-150-03 D2: raw filesystem paths from observer arguments never enter
+    monday_brief_items. PHILO-15 B73: nor does the JSON itself, a record id
+    or a digest (``{"meeting_id": ..., "expected_selection_hash": ...}`` was a
+    row's detail). An argument that is a short plain value stays as
+    ``<key words> <value>``; everything else is left out.
     """
-    if args_summary == "{}":
+    text = str(args_summary or "").strip()
+    if text in ("", "{}"):
         return None
-    # Strip any string that looks like a filesystem path.
-    cleaned = _PATH_FRAGMENT.sub("<path>", args_summary)
-    # If everything was a path, collapse to None.
-    if cleaned.strip() in ("{}", "", '{"": "<path>"}'):
+    try:
+        args = json.loads(text)
+    except (TypeError, ValueError):
+        args = None
+    if not isinstance(args, dict):
+        cleaned = _PATH_FRAGMENT.sub("", text).strip()
+        if not cleaned or cleaned[:1] in "{[" or _RAW_VALUE.match(cleaned):
+            return None
+        return cleaned[:120]
+    words: list[str] = []
+    for key, value in args.items():
+        if _RAW_KEY.search(str(key)) or not isinstance(value, (str, int, float)) or isinstance(value, bool):
+            continue
+        shown = " ".join(str(value).split())
+        if not shown or len(shown) > 60 or _PATH_FRAGMENT.search(shown) or _RAW_VALUE.match(shown):
+            continue
+        words.append(f"{str(key).replace('_', ' ')} {shown}")
+    return " · ".join(words)[:120] or None
+
+
+def _local_moment(value: Any) -> datetime.datetime | None:
+    """A stored stamp (text, epoch seconds or datetime) on the hub's clock."""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        try:
+            return datetime.datetime.fromtimestamp(float(value)).astimezone()
+        except (OverflowError, OSError, ValueError):
+            return None
+    stamp = parse_stamp(value)
+    return stamp.astimezone() if stamp is not None else None
+
+
+def _when_words(value: Any, today: datetime.date | None = None) -> str | None:
+    """PHILO-15 B58/B73: a time a person reads: ``21:14`` on the Brief's own
+    day, ``Wed 21:14`` on another day. Local time, never a UTC ISO stamp."""
+    moment = _local_moment(value)
+    if moment is None:
         return None
-    return cleaned
+    clock = moment.strftime("%H:%M")
+    if today is not None and moment.date() != today:
+        return f"{_WEEKDAYS[moment.weekday()][:3]} {clock}"
+    return clock
+
+
+_EXCEPTION_REPR = re.compile(r"""^\s*[A-Za-z_][\w.]*\((['"])(.*)\1\)\s*$""", re.S)
+_TRAILING_ID = re.compile(r":\s*[^\s:]*[\d_\-./][^\s:]*\s*$")
+
+
+def _failure_words(error_code: Any, error: Any) -> str | None:
+    """PHILO-15 B73: why a call failed, in words a person reads.
+
+    ``not_found: NotFound('Unknown decision: philo602-x')`` reads
+    ``Unknown decision``: no exception class, no code token, no record id.
+    """
+    message = " ".join(str(error or "").split("\n", 1)[0].split())
+    if ": " in message and re.match(r"^[a-z]+(?:_[a-z]+)+:", message):
+        message = message.split(": ", 1)[1]  # a ``code: `` prefix
+    match = _EXCEPTION_REPR.match(message)
+    if match:
+        message = match.group(2)
+    message = _TRAILING_ID.sub("", message).strip().rstrip(".")
+    if message and not re.search(r"[A-Za-z]+Error\b|\w_\w|[{}\[\]]|/", message):
+        return message[:120]
+    code = str(error_code or "").strip()
+    return code.replace("_", " ").capitalize() if code else "Failed"
+
+
+def _join(*parts: Any) -> str | None:
+    return " · ".join(str(p) for p in parts if p) or None
 
 
 _CHANGE_METHOD_MARKERS = (
@@ -382,11 +453,13 @@ class _NeedsYouUnread(list):
 
 #: PHILO-15 05: the words for a source the needs-you rule could not read.
 _UNREAD_SOURCE_WORDS = {
+    "agents": "Agents",
     "assignments": "AI models",
     "decisions": "Decisions",
     "door": "Door",
     "follow_through": "Follow-through",
     "needs_you": "Needs you",
+    "updates": "Updates",
 }
 #: The source_ref prefix of a NOT READ row; any such row makes a brief PARTIAL.
 NOT_READ_REF = "not_read:"
@@ -440,6 +513,16 @@ class MondayBrief:
     ledger: LedgerSummary = field(default_factory=LedgerSummary)
 
 
+def _agent_word(profile_id: Any) -> str | None:
+    """The agent's plain name from its profile id (never the id itself)."""
+    text = str(profile_id or "").lower()
+    if "codex" in text:
+        return "Codex"
+    if "claude" in text:
+        return "Claude Code"
+    return None
+
+
 @observe_service
 class MondayBriefService:
     """Create one durable brief per local calendar day.
@@ -456,8 +539,11 @@ class MondayBriefService:
         observer: PipelineObserver | None = None,
         clock: Callable[[], datetime.datetime] | None = None,
         people_store: Any = None,
+        launch_ledger: Any = None,
     ) -> None:
         self._db = db
+        # PHILO-15 B58: the agent launches (None: the hub's launch ledger).
+        self._launch_ledger = launch_ledger
         # PHILO-15-09: the People store whose metadata counts the people
         # added (None: the production store, built when it is read).
         self._people_store = people_store
@@ -615,14 +701,30 @@ class MondayBriefService:
             if existing is not None and not regenerate:
                 return self._load_brief(conn, existing)
 
+            brief_day = _local_moment(_stored_stamp(period_end))
+            today = brief_day.date() if brief_day is not None else None
             human_changes, ledger = self._collect_changes(
-                period_start.isoformat(), period_end.isoformat()
+                period_start.isoformat(), period_end.isoformat(), today
             )
             # PHILO-15-09 (B04, ruling 4): what the owner added to the desk
             # in the window (a decision he made, a Project, a person).
             desk_changes = self._collect_desk_additions(
                 period_start.isoformat(), period_end.isoformat()
             )
+            # PHILO-15 B58: what the day did: decisions confirmed, actions
+            # done, agent launches, their PRs and merges, updates sent.
+            day_changes, day_unread = self._collect_day(
+                period_start.isoformat(), period_end.isoformat(), today
+            )
+            said = {item.text.split(": ", 1)[1] for item in day_changes
+                    if item.text.startswith("Action done: ")}
+            # A completion the observer recorded is said once, as the action.
+            human_changes = [
+                item for item in human_changes
+                if not (item.text.startswith("Follow-up completed: ")
+                        and item.text.split(": ", 1)[1] in said)
+            ]
+            waiting_items = waiting_items + day_unread
 
             # HS-175-05 / counsel C11: the THIS WEEK half is the ruled
             # forward window [now, Sunday 23:59] (Addendum 1, condition 2)
@@ -684,6 +786,7 @@ class MondayBriefService:
                 "this_week": calendar_items + meeting_watch_items,
                 "changed": human_changes
                 + desk_changes
+                + day_changes
                 + self._collect_meetings(
                     period_start.isoformat(), period_end.isoformat()
                 ),
@@ -847,6 +950,186 @@ class MondayBriefService:
             ))
         return items
 
+    # PHILO-15 B58: the rows of the day. Each has the title and the local
+    # time, and a source_ref the face opens (``refOpener``).
+    _DAY_PRIORITY = {
+        "Decision confirmed": _MEETING_PRIORITY - 4,
+        "PR merged": _MEETING_PRIORITY - 5,
+        "Update sent": _MEETING_PRIORITY - 6,
+        "Update published": _MEETING_PRIORITY - 6,
+        "Action done": _MEETING_PRIORITY - 7,
+        "PR opened": _MEETING_PRIORITY - 8,
+        "Agent launched": _MEETING_PRIORITY - 9,
+    }
+    #: How an update left (``project_update_deliveries.channel``).
+    _CHANNEL_WORDS = {
+        "file": "HoldSpeak folder", "github": "GitHub", "jira": "Jira",
+        "confluence": "Confluence", "slack": "Slack", "email": "Email",
+        "manual": "Marked sent",
+    }
+
+    def _day_item(self, kind: str, title: str, stamp: Any, ref: str, today: Any,
+                  *extra: Any) -> BriefItem:
+        return BriefItem(
+            id=f"brief-item-{uuid.uuid4().hex}", section="changed",
+            text=f"{kind}: {title}" if title else kind,
+            detail=_join(*extra, _when_words(stamp, today)),
+            source_ref=ref, priority=self._DAY_PRIORITY[kind],
+            created_at=str(stamp) if stamp else None,
+        )
+
+    def _collect_day(
+        self, window_start: str, window_end: str, today: datetime.date | None,
+    ) -> tuple[list[BriefItem], list[BriefItem]]:
+        """PHILO-15 B58: decisions confirmed, actions done, agent launches,
+        PRs opened and merged, and updates published or sent, in the window.
+
+        Returns ``(changed rows, NOT READ rows)``: a source that cannot be
+        read is never a silent zero.
+        """
+        items: list[BriefItem] = []
+        unread: list[BriefItem] = []
+
+        def inside(stamp: Any) -> bool:
+            return bool(stamp) and in_window(stamp, window_start, window_end)
+
+        lo, hi = sql_window(window_start, window_end)
+        with self._db._connection() as conn:
+            confirmed = conn.execute(
+                """SELECT id, meeting_id, kind, text, decided_at FROM follow_through_proposals
+                   WHERE state = 'confirmed' AND kind = 'decision'
+                     AND decided_at BETWEEN ? AND ?""",
+                (lo, hi),
+            ).fetchall()
+            done = conn.execute(
+                """SELECT id, task, completed_at FROM action_items
+                   WHERE status = 'done' AND completed_at BETWEEN ? AND ?""",
+                (lo, hi),
+            ).fetchall()
+        for row in sorted(confirmed, key=lambda r: (str(r["decided_at"]), str(r["id"]))):
+            if inside(row["decided_at"]):
+                title = " ".join(str(row["text"] or "").split())[:160] or "Untitled decision"
+                items.append(self._day_item("Decision confirmed", title, row["decided_at"],
+                                            f"meeting:{row['meeting_id']}", today))
+        for row in sorted(done, key=lambda r: (str(r["completed_at"]), str(r["id"]))):
+            if inside(row["completed_at"]):
+                title = " ".join(str(row["task"] or "").split())[:160] or "Untitled action"
+                items.append(self._day_item("Action done", title, row["completed_at"],
+                                            f"action_item:{row['id']}", today))
+        try:
+            merged_urls = self._collect_launches(items, inside, today)
+        except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
+            log.warning("brief: the agent launches were not read: %s", exc)
+            unread.append(_not_read_item("agents", exc))
+            merged_urls = set()
+        try:
+            self._collect_room_merges(items, inside, today, merged_urls)
+            self._collect_updates(items, inside, today, lo, hi)
+        except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
+            log.warning("brief: the Room updates were not read: %s", exc)
+            unread.append(_not_read_item("updates", exc))
+        return items, unread
+
+    def _collect_launches(self, items: list[BriefItem], inside: Callable[[Any], bool],
+                          today: Any) -> set[str]:
+        """Agent launched, PR opened and PR merged, from the launch ledger's
+        follow-through receipts. Returns the URLs of the merges said."""
+        from holdspeak.delivery.follow_through import UNLAUNCHED_STATES, origin_title
+
+        ledger = self._launch_ledger
+        if ledger is None:
+            from holdspeak.delivery.factory_launch import LaunchLedger
+
+            ledger = LaunchLedger()
+        merged: set[str] = set()
+        for launch in sorted(ledger.list(), key=lambda r: str(r.get("launched_at") or "")):
+            if str(launch.get("state") or "") in UNLAUNCHED_STATES:
+                continue
+            launch_id = str(launch.get("launch_id") or "")
+            ref = f"launch:{launch_id}"
+            origin = launch.get("origin_ref") or {}
+            kind, item_id = str(origin.get("kind") or ""), str(origin.get("id") or "")
+            title = origin_title(self._db, kind, item_id) if kind and item_id else ""
+            if title == item_id:
+                title = ""  # an untitled item is named by its id: no raw id here
+            follow = launch.get("follow_through") or {}
+            pr = follow.get("pr") or {}
+            if inside(launch.get("launched_at")):
+                items.append(self._day_item("Agent launched", title, launch.get("launched_at"), ref,
+                                            today, _agent_word(launch.get("profile_id"))))
+            if not pr.get("number"):
+                continue
+            pr_title = f"{pr.get('title') or title or 'Pull request'} (PR #{pr['number']})"
+            if inside(follow.get("pr_opened_at")):
+                items.append(self._day_item("PR opened", pr_title, follow.get("pr_opened_at"), ref, today))
+            evidence = follow.get("evidence") or {}
+            merged_at = evidence.get("merged_at")
+            if str(pr.get("state") or "") == "merged" and inside(merged_at):
+                items.append(self._day_item("PR merged", pr_title, merged_at, ref, today))
+                merged.add(str(pr.get("url") or evidence.get("pr_url") or ""))
+        return merged
+
+    def _collect_room_merges(self, items: list[BriefItem], inside: Callable[[Any], bool],
+                             today: Any, said: set[str]) -> None:
+        """A merge in a Room's repository that no agent made (Conductor R4)."""
+        from holdspeak.delivery.follow_through import MERGED_OBSERVATION
+
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                """SELECT o.project_id, o.fact_json, o.observed_at, p.name
+                   FROM project_observations o JOIN projects p ON p.id = o.project_id
+                   WHERE o.observation_kind = ?""",
+                (MERGED_OBSERVATION,),
+            ).fetchall()
+        seen = set(said)
+        for row in sorted(rows, key=lambda r: str(r["observed_at"])):
+            try:
+                fact = json.loads(row["fact_json"] or "{}")
+            except (TypeError, ValueError):
+                continue
+            url = str(fact.get("pr_url") or "")
+            stamp = fact.get("merged_at") or row["observed_at"]
+            if not url or url in seen or not inside(stamp):
+                continue
+            seen.add(url)
+            number = str(fact.get("pr_number") or "")
+            title = f"{fact.get('title') or 'Pull request'}" + (f" (PR #{number})" if number else "")
+            items.append(self._day_item("PR merged", title, stamp, f"project:{row['project_id']}",
+                                        today, str(row["name"] or "").strip()))
+
+    def _collect_updates(self, items: list[BriefItem], inside: Callable[[Any], bool],
+                         today: Any, lo: str, hi: str) -> None:
+        """One row per Room update: sent (its last delivery in the window),
+        else published in the window."""
+        with self._db._connection() as conn:
+            published = conn.execute(
+                """SELECT u.id, u.project_id, u.published_at, p.name FROM project_updates u
+                   JOIN projects p ON p.id = u.project_id
+                   WHERE u.lifecycle = 'published' AND u.published_at BETWEEN ? AND ?""",
+                (lo, hi),
+            ).fetchall()
+            delivered = conn.execute(
+                """SELECT d.update_id, d.project_id, d.delivered_at, d.channel, d.outcome, p.name
+                   FROM project_update_deliveries d JOIN projects p ON p.id = d.project_id
+                   WHERE d.delivered_at BETWEEN ? AND ?""",
+                (lo, hi),
+            ).fetchall()
+        sent: dict[str, Any] = {}
+        for row in sorted(delivered, key=lambda r: str(r["delivered_at"])):
+            if inside(row["delivered_at"]):
+                sent[str(row["update_id"])] = row
+        for update_id, row in sent.items():
+            how = self._CHANNEL_WORDS.get(str(row["channel"] or ""), "Sent")
+            if str(row["outcome"] or "") == "unknown":
+                how = f"{how} · NOT CONFIRMED"
+            items.append(self._day_item("Update sent", str(row["name"] or "").strip() or "Project",
+                                        row["delivered_at"], f"project:{row['project_id']}", today, how))
+        for row in sorted(published, key=lambda r: str(r["published_at"])):
+            if str(row["id"]) in sent or not inside(row["published_at"]):
+                continue
+            items.append(self._day_item("Update published", str(row["name"] or "").strip() or "Project",
+                                        row["published_at"], f"project:{row['project_id']}", today))
+
     def _people_added(self, window_start: str, window_end: str) -> int:
         """The people added in the window, from the People store's metadata.
 
@@ -973,7 +1256,7 @@ class MondayBriefService:
         counts = {section: len(items) for section, items in finalized_sections.items()}
         # PHILO-15 05: NOT READ rows are said as such, never as things waiting.
         # PHILO-15-09 (Astra r2, P2): a source the coverage could not observe
-        # ("Not observed: ...") is the same kind of row: said once, as a
+        # (a ``coverage:`` "NOT READ · ..." row) is the same kind: said once, as a
         # source not read.
         unread = sum(
             1 for item in finalized_sections["waiting"]
@@ -1131,7 +1414,7 @@ class MondayBriefService:
         return f"{words}: {subject}" if subject else words
 
     def _collect_changes(
-        self, window_start: str, window_end: str
+        self, window_start: str, window_end: str, today: datetime.date | None = None,
     ) -> tuple[list[BriefItem], LedgerSummary]:
         """Reduce pipeline events in the window to material state changes.
 
@@ -1143,6 +1426,9 @@ class MondayBriefService:
         """
         start_timestamp = self._window_timestamp(window_start)
         end_timestamp = self._window_timestamp(window_end)
+        if today is None:
+            end_moment = _local_moment(window_end)
+            today = end_moment.date() if end_moment is not None else None
         with self._db._connection() as conn:
             rows = conn.execute(
                 """SELECT id, event_id, timestamp, service, method, args_summary,
@@ -1222,7 +1508,11 @@ class MondayBriefService:
             # Round 3: no line the record does not prove.
             if text is None:
                 continue
-            detail = _sanitize_detail(str(outcome["args_summary"]))
+            # PHILO-15 B73: plain words and the local time, never the JSON.
+            detail = _join(
+                _sanitize_detail(str(outcome["args_summary"])),
+                _when_words(outcome["timestamp"], today),
+            )
             items.append(
                 BriefItem(
                     id=f"brief-item-{uuid.uuid4().hex}",
@@ -1325,9 +1615,10 @@ class MondayBriefService:
                 if (service, method) in seen_methods:
                     continue
                 seen_methods.add((service, method))
-                error = str(row["error"])
-                error_code = row["error_code"]
-                detail = f"{error_code}: {error}" if error_code else error
+                # PHILO-15 B73: the reason in words and the local time.
+                detail = _join(_failure_words(row["error_code"], row["error"]),
+                               _when_words(row["timestamp"], _local_moment(window_end).date()
+                                           if _local_moment(window_end) else None))
                 items.append(
                     BriefItem(
                         id=f"brief-break-pipeline-{brief_id}-{row['event_id']}",
@@ -1371,7 +1662,9 @@ class MondayBriefService:
                             id=f"brief-break-connector-{brief_id}-{row['id']}",
                             section="broke",
                             text=f"Connector {connector_id} failed",
-                            detail=str(row["error"] or "No error detail recorded."),
+                            detail=_join(_failure_words(None, row["error"])
+                                         if row["error"] else "No error detail recorded",
+                                         _when_words(row["started_at"])),
                             source_ref=f"connector-run:{row['id']}",
                             priority=2,
                         )
@@ -1409,7 +1702,7 @@ class MondayBriefService:
                 BriefItem(
                     id=f"brief-item-{uuid.uuid4().hex}",
                     section="waiting",
-                    text="Not observed: attention coverage",
+                    text="NOT READ · attention coverage",
                     detail=str(exc).split("\n")[0][:120] or "Coverage unavailable",
                     source_ref="coverage:aggregate",
                     priority=320,
@@ -1417,6 +1710,7 @@ class MondayBriefService:
             ]
 
         items: list[BriefItem] = []
+        today = _local_moment(self._clock())
         for row in coverage:
             if row.get("state") == "available":
                 continue
@@ -1425,13 +1719,17 @@ class MondayBriefService:
             detail_parts = [str(repair.get("token") or row.get("state") or "").strip()]
             if row.get("reason"):
                 detail_parts.append(str(row["reason"]))
-            if row.get("observed_at"):
-                detail_parts.append(f"last seen {str(row['observed_at'])[:16]}")
+            # PHILO-15 B73: the last read in local time, never a UTC stamp.
+            seen = _when_words(row.get("observed_at"), today.date() if today else None)
+            if seen:
+                detail_parts.append(f"last read {seen}")
             items.append(
                 BriefItem(
                     id=f"brief-item-{uuid.uuid4().hex}",
                     section="waiting",
-                    text=f"Not observed: {label}",
+                    # PHILO-15 ruling: a thing not read says NOT READ, with
+                    # the reason in the detail.
+                    text=f"NOT READ · {label}",
                     detail=" · ".join(part for part in detail_parts if part),
                     source_ref=f"coverage:{row.get('source_id')}",
                     # Above every other WAITING row: an unobserved source
