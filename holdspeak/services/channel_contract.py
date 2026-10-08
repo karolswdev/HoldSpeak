@@ -245,18 +245,42 @@ def claim_verified(claim: Mapping[str, Any]) -> bool:
     return bool(claim.get("refs"))
 
 
+#: Astra r2: the desk mark in any styling (bold, italic, code, bare).
+_ANY_MARK = re.compile(r"\[\s*UNVERIFIED\s*\]", re.IGNORECASE)
+_LEAD = re.compile(r"^(?:\s*(?:#{1,6}\s+|>\s*|[-*+]\s+|\d+[.)]\s+))+")
+_EMPHASIS = re.compile(r"\*\*|__|~~|`|\*|(?<!\w)_|_(?!\w)")
+
+
+def _normalized(text: str) -> str:
+    """A line's words with every formatting removed (Astra r2): heading,
+    quote and list markers, markdown emphasis, the desk mark in any styling,
+    and spacing. Formatting never makes a sentence new, and never reviews it."""
+    out = _EMPHASIS.sub("", str(text))
+    out = _ANY_MARK.sub("", out)
+    out = _LEAD.sub("", out)
+    out = _EMPHASIS.sub("", out)
+    return " ".join(out.split()).strip()
+
+
+def has_desk_mark(line: str) -> bool:
+    """The producer's ``[UNVERIFIED]`` mark, bold or not."""
+    return bool(_ANY_MARK.search(_EMPHASIS.sub("", str(line))))
+
+
 def _sentence(line: str) -> str:
-    """A body line as a claim's words: the list marker, the desk mark and the
-    spacing dropped (formatting is never what decides, Astra r1 P1-1)."""
-    text = _UNVERIFIED_MARK.sub("", str(line))
-    text = " ".join(text.split())
-    if text.startswith(("- ", "* ")):
-        text = text[2:]
-    return _UNVERIFIED_MARK.sub("", text).strip()
+    """A body line as a claim's words, formatting removed (Astra r1 P1-1, r2)."""
+    return _normalized(line)
 
 
 def _claim_lines(claim: Mapping[str, Any]) -> list[str]:
-    return [t for t in (" ".join(part.split()) for part in str(claim.get("text") or "").split("\n")) if t]
+    return [t for t in (_normalized(part) for part in str(claim.get("text") or "").split("\n")) if t]
+
+
+#: The drafter's own section headings: the only headings sent as structure.
+def _section_headings() -> frozenset[str]:
+    from .project_update_service import _SECTION_HEADINGS
+
+    return frozenset(f"## {h}" for h in _SECTION_HEADINGS.values())
 
 
 def stored_claims(row: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -307,9 +331,14 @@ def _outbound(body_md: str, claims: Any = None) -> tuple[list[list[str]], int]:
                 firsts.add(lines[0])
                 tails.update(lines[1:])
     neutral = _EMPTY_WORDS | {str(v).strip() for v in _HONEST_MINIMAL.values()}
+    headings = _section_headings()
     for line in str(body_md or "").splitlines():
         stripped = line.strip()
-        if line.startswith("#"):
+        if use_claims and line.startswith("#") and stripped not in headings:
+            # Astra r2: a heading that is not one of the drafter's own section
+            # headings is a sentence like any other (below).
+            pass
+        elif line.startswith("#"):
             skipping = False
             if line.startswith("## "):
                 sections.append([line])
@@ -321,11 +350,11 @@ def _outbound(body_md: str, claims: Any = None) -> tuple[list[list[str]], int]:
             words = _sentence(line)
             # The desk mark still says "not checked" for words no verified
             # claim carries (the review, never the formatting, clears it).
-            held = words in firsts or words in tails or bool(_UNVERIFIED_MARK.search(line))
+            held = words in firsts or words in tails or has_desk_mark(line)
             if not words or words in verified or (words in neutral and not held):
                 skipping = False
                 # A desk mark never leaves the desk (the owner's review won).
-                sections[-1].append(_UNVERIFIED_MARK.sub("", line))
+                sections[-1].append(_ANY_MARK.sub("", _UNVERIFIED_MARK.sub("", line)))
                 continue
             # Omitted. A tail line of the claim omitted just above is not
             # counted again.

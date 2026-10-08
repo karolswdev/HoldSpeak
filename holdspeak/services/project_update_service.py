@@ -2014,6 +2014,16 @@ class ProjectUpdateService:
         }
 
         det_body_md = _assemble_body(_append_week_sources(det_sections, det_claims, source_version, week))
+        if not det_claims:
+            # PHILO-15 B64 (Astra r2 ruling): nothing observed is one claim,
+            # NOTHING TO REPORT, unreviewed by default. The update is refused
+            # NOTHING VERIFIED until the owner presses Accept on it; accepted,
+            # it is sent as "Nothing to report." (no filler needed).
+            det_claims.append(Claim(
+                span_id="s_nothing_0", text=NOTHING_TO_REPORT, refs=[], section="progress",
+                kind=KIND_OBSERVATION, support=SUPPORT_UNKNOWN,
+            ))
+            det_body_md = NOTHING_TO_REPORT + "\n"
         det_claims_json = json.dumps(
             [c.to_dict() for c in det_claims],
             sort_keys=True,
@@ -3007,6 +3017,9 @@ def _append_week_sources(
     return sections
 
 
+#: PHILO-15 B64 (Astra r2): the one claim of a draft with nothing observed.
+NOTHING_TO_REPORT = "Nothing to report."
+
 #: PHILO-15 B64: the provenance of a sentence the owner wrote in the editor.
 OWNER_TEXT_FIELD = "owner_text"
 
@@ -3017,7 +3030,7 @@ def _owner_authored_claims(claims_json: str, body_md: str, principal: Principal)
     whose words are no claim's words gets an accepted claim naming the owner.
     A line that still carries the desk mark is not authored (formatting is
     not review). Returns the new blob, or None when nothing was added."""
-    from .channel_contract import _UNVERIFIED_MARK, _claim_lines, _sentence
+    from .channel_contract import _claim_lines, _section_headings, _sentence, has_desk_mark
 
     try:
         claims = json.loads(claims_json or "[]")
@@ -3032,12 +3045,16 @@ def _owner_authored_claims(claims_json: str, body_md: str, principal: Principal)
     section = "progress"
     added: list[dict[str, Any]] = []
     ordinal = sum(1 for c in claims if isinstance(c, dict) and str(c.get("span_id", "")).startswith("s_owner_"))
+    headings = _section_headings()
     for line in str(body_md or "").splitlines():
-        if line.startswith("#"):
+        if line.strip() in headings:
             section = by_heading.get(line.strip(), section)
             continue
+        # Astra r2: compared with formatting removed, so pasting or re-styling
+        # the model's sentence (bold, a list, a quote, a heading, the desk mark
+        # unbolded) is never new authorship. Accept is the review gesture.
         words = _sentence(line)
-        if not words or words in neutral or words in known or _UNVERIFIED_MARK.search(line):
+        if not words or words in neutral or words in known or has_desk_mark(line):
             continue
         known.add(words)
         added.append({

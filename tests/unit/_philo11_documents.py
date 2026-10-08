@@ -61,9 +61,9 @@ def mint_documents(
         # PHILO-15 B64: the owner's own reviewed line (an update with no
         # verified claim is refused NOTHING VERIFIED).
         claims_json=json.dumps([{
-            "span_id": "s_owner_0", "text": "The source fixture is durable.", "refs": [],
+            "span_id": f"s_owner_{i}", "text": text, "refs": [],
             "section": "progress", "kind": "observation", "support": "unknown", "acceptance": "accepted",
-        }]),
+        } for i, text in enumerate(("Published update", "The source fixture is durable."))]),
     )
     from holdspeak.services.project_service import ProjectService
     from holdspeak.services.project_update_service import ProjectUpdateService

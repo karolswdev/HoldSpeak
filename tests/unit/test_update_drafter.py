@@ -324,37 +324,19 @@ class TestGoldenRich:
 class TestGoldenEmpty:
     """A room with nothing to say drafts honest minimal lines."""
 
-    def test_empty_draft_has_all_sections(self, rig):
+    # PHILO-15 B64 (Astra r2 ruling): a room with nothing observed drafts ONE
+    # claim, NOTHING TO REPORT, unreviewed (the owner presses Accept), and
+    # the body is that sentence: no filler sections.
+    def test_empty_draft_is_nothing_to_report(self, rig):
         db = rig
         pid = _seed_project(db)
 
         svc = _make_service(db)
         result = svc.draft_update(OWNER, pid)
 
-        body = result["body_md"]
-        assert "## Progress" in body
-        assert "## Decisions" in body
-        assert "## Risks & Blockers" in body
-        assert "## Dependencies" in body
-        assert "## Next Actions" in body
-        assert "## Source Coverage" in body
+        assert result["body_md"] == "Nothing to report.\n"
 
-    def test_empty_draft_honest_minimal_lines(self, rig):
-        db = rig
-        pid = _seed_project(db)
-
-        svc = _make_service(db)
-        result = svc.draft_update(OWNER, pid)
-
-        body = result["body_md"]
-        assert "No focus items in this window." in body
-        assert "No decisions in this window." in body
-        assert "No risks or blockers in this window." in body
-        assert "No dependencies tracked." in body
-        assert "No upcoming actions." in body
-
-    def test_empty_draft_no_claims(self, rig):
-        """An empty room (all sections ok) produces no factual claims."""
+    def test_empty_draft_one_unreviewed_claim(self, rig):
         db = rig
         pid = _seed_project(db)
 
@@ -362,8 +344,8 @@ class TestGoldenEmpty:
         result = svc.draft_update(OWNER, pid)
 
         claims = json.loads(result["claims_json"])
-        # With delta_service wired, review is "ok" (no caveats)
-        assert claims == [], "Empty room should produce no claims"
+        assert [(c["span_id"], c["text"], c["acceptance"], c["refs"]) for c in claims] == [
+            ("s_nothing_0", "Nothing to report.", "unreviewed", [])]
 
     def test_empty_draft_manifest_records_empty(self, rig):
         db = rig

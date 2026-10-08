@@ -570,3 +570,94 @@ def test_a_model_draft_says_each_merge_once(tmp_path, monkeypatch) -> None:
         assert not any("was merged (PR #1)" in t for t in texts), texts
     finally:
         rig.tmux.ended = True
+
+
+# ── B64 (Astra r2): formatting never sends a sentence, nor reviews it ──
+
+
+def test_a_sentence_made_a_heading_is_not_sent(hub, tmp_path, monkeypatch) -> None:
+    """Astra r2 probe 1: with one accepted claim present, an unreviewed
+    sentence turned into ``## <sentence>`` is omitted (only the drafter's own
+    section headings are structure)."""
+    body = "## Progress\n\n- The ledger moved to staging.\n- Carol is to add a CODEOWNERS file by Friday.\n"
+    _pid, update = _model_draft(hub, body, [
+        _inference("s_progress_0", "The ledger moved to staging."),
+        _inference("s_progress_1", "Carol is to add a CODEOWNERS file by Friday."),
+    ], monkeypatch)
+    c = hub.client
+    assert c.post(f"/api/updates/{update}/claims/s_progress_0/review",
+                  json={"acceptance": "accepted"}).status_code == 200
+    headed = body.replace("- Carol is to add", "## Carol is to add")
+    saved = c.put(f"/api/updates/{update}", json={"body_md": headed})
+    assert saved.status_code == 200
+    assert not any(cl["span_id"].startswith("s_owner_") for cl in json.loads(saved.json()["update"]["claims_json"]))
+    preview = _preview(hub, update, tmp_path)
+    assert preview.status_code == 200, preview.text
+    text = json.dumps(preview.json()["preview"])
+    assert "The ledger moved to staging." in text and "CODEOWNERS" not in text, text
+
+
+@pytest.mark.parametrize("reformat", [
+    lambda s: f"**{s}**",                       # bold
+    lambda s: f"1. {s}",                        # a numbered list
+    lambda s: f"> {s}",                         # a quote
+    lambda s: f"- [UNVERIFIED] {s}",            # the desk mark, unbolded
+], ids=["bold", "numbered", "quote", "unbolded-mark"])
+def test_reformatting_the_models_sentence_is_not_review(hub, tmp_path, monkeypatch, reformat) -> None:
+    """Astra r2 probe 2 (her four cases, the real producer): re-styling the
+    model's sentence creates no owner claim; the update stays NOTHING VERIFIED."""
+    from holdspeak.services.project_update_service import UNVERIFIED_MARKER
+
+    sentence = "We ship Friday."
+    body = f"## Progress\n\n- {UNVERIFIED_MARKER} {sentence}\n"
+    _pid, update = _model_draft(hub, body, [_inference("s_progress_0", sentence, verified=False)], monkeypatch)
+    restyled = f"## Progress\n\n{reformat(sentence)}\n"
+    saved = hub.client.put(f"/api/updates/{update}", json={"body_md": restyled})
+    assert saved.status_code == 200, saved.text
+    claims = json.loads(saved.json()["update"]["claims_json"])
+    assert [cl["span_id"] for cl in claims] == ["s_progress_0"], claims
+    preview = _preview(hub, update, tmp_path)
+    assert preview.status_code == 400 and preview.json()["code"] == "nothing_verified", preview.text
+
+
+# ── B64 (Astra r2 P2 ruling): NOTHING TO REPORT ──────────────────────
+
+
+def test_nothing_to_report_waits_for_accept_then_sends(hub, tmp_path) -> None:
+    c = hub.client
+    pid = c.post("/api/projects", json={"name": "Quiet Project"}).json()["project"]["id"]
+    update = c.post(f"/api/projects/{pid}/updates/draft", json={}).json()["update"]
+    claims = json.loads(update["claims_json"])
+    assert [(cl["span_id"], cl["text"], cl["acceptance"]) for cl in claims] == [
+        ("s_nothing_0", "Nothing to report.", "unreviewed")]
+    assert update["body_md"] == "Nothing to report.\n"
+    # Unreviewed: refused, no filler needed.
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _philo10_send import destination
+
+    dest = destination(hub, tmp_path / "sent")
+    ref = {"document_ref": f"project_update:{update['id']}", "destination_id": dest}
+    assert c.post(f"/api/updates/{update['id']}/claims/s_nothing_0/review",
+                  json={"acceptance": "accepted"}).status_code == 200
+    assert c.post(f"/api/updates/{update['id']}/publish", json={}).status_code == 200
+    preview = c.post("/api/channels/preview", json=ref)
+    assert preview.status_code == 200, preview.text
+    assert preview.json()["preview"]["text"].endswith("\n\nNothing to report.\n"), preview.json()
+
+
+def test_nothing_to_report_unaccepted_is_refused(hub, tmp_path) -> None:
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _philo10_send import destination
+
+    c = hub.client
+    pid = c.post("/api/projects", json={"name": "Quiet Project"}).json()["project"]["id"]
+    update = c.post(f"/api/projects/{pid}/updates/draft", json={}).json()["update"]["id"]
+    assert c.post(f"/api/updates/{update}/publish", json={}).status_code == 200
+    dest = destination(hub, tmp_path / "sent")
+    preview = c.post("/api/channels/preview", json={"document_ref": f"project_update:{update}",
+                                                     "destination_id": dest})
+    assert preview.status_code == 400 and preview.json()["code"] == "nothing_verified", preview.text
