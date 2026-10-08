@@ -1,298 +1,414 @@
-# Day One — the owner's first real day with HoldSpeak (v1, the rehearsal script)
+# Day One — the runbook
 
-Version 1, written 2026-10-07 by Muad'Dib from `DAY-ONE-INVENTORY.md` (main `b88fc3f7b`
-plus lanes 01, 02 and 03 of Phase 15). This version is the script the rehearsal walks.
-Version 2, after rehearsal 1 and the second morning, is the runbook the owner follows:
-one screen per step, the shot beside it, ASD-STE100.
+**v2 · 2026-10-08.** What changed from v1: v1 was the script the rehearsals walked; v2 is the
+runbook you follow on your own desk, rewritten from rehearsals 1a, 1b and 2 and lanes 01–21.
+v1 is parked verbatim in `DAY-ONE-v1.md`.
 
-Each step names: the face; the gesture at 1440 and at 393; the proof that covers it today;
-the state (WORKS / UNVERIFIED / KNOWN BROKEN / NEEDS REAL METAL); and, for the rehearsal,
-what to look at. The states are the inventory's, updated for the lanes merged since.
+This runbook is for your real desk. The rehearsals used an isolated HOME, separate agent
+logins, a moved clock and a throwaway repository; you need none of these.
 
-## The rig for rehearsal 1
+How to read a step:
 
-- A fresh isolated `HOME` (`mktemp -d`); `HF_HOME` at the real Whisper cache with
-  `HF_HUB_OFFLINE=1` (the model is under the real HOME; nothing else is).
-- Engines: the LAN model at `http://192.168.1.43:8080` (`qwen3.8-27b`, key `local`) set as
-  the global default through the Concierge; Whisper `base` for speech; the local embedder for
-  meaning search.
-- Agents: a real Claude Code and a real Codex under an ISOLATED `CLAUDE_CONFIG_DIR` /
-  `CODEX_HOME` login or API keys. Never the owner's keychain or `auth.json` (law from
-  handover XXXIII; the R1 walk broke it and said so).
-- Egress: a throwaway GitHub repository under the owner's account for the agent's PR; a
-  Resend test key for email; the built-in Folder destination for the first send.
-- Both widths for every face: 1440 and 393. One shot per step into
-  `docs/internal/philo/phase-15/day-one-shots/<step>-<width>.png`.
-- Every bounce becomes a row in `BOUNCES.md` (step, what happened, the shot, the lane that
-  pays it) the same day.
+- **Do**: one press or one check.
+- **See**: the words on the face. Tokens are in `CODE`.
+- **Else**: what to do if the face reads otherwise.
+- **Paid**: the bounce id and the PR that made the step true. "(after #1012)" marks a step that
+  is true only when PR #1012 is on main.
 
-## 1. Install and first launch
+Widths: every step works at 1440 (a window) and at 393 (a phone). Where the gesture differs,
+the step says so.
 
-### 1.1 Install
-- Face: a terminal. `git clone`, `uv venv && source .venv/bin/activate`, `uv pip install -e .`,
-  `holdspeak` (README). Python 3.10+, uv, Node 22.12+, a C++ compiler. No PyPI or brew install.
-- Gesture: CLI. `holdspeak` binds 127.0.0.1:8765 (or a free port), prints a token URL, opens
-  the browser.
-- Proof: `tests/unit/test_phase200_first_value.py`; the clean-venv install is `slow` (FULL only).
-- State: UNVERIFIED on a clean Mac. Rehearsal: time the install; the llama-cpp build is the
-  heaviest step.
+---
 
-### 1.2 `holdspeak doctor`
-- Face: a terminal.
-- Proof: `tests/unit/test_doctor_cli_one_list.py` (#966): the CLI runs the same list the
-  Setup page runs (Coding agents, mic, hotkey, connectors), honours `--strict` and
-  `--connectors`, then the 10 hub checks.
-- State: WORKS (#966). Rehearsal: read every row; a WARN here is a first-day gap.
+## 0. Before you start
 
-### 1.3 The first-value gate
-- Face: `/` → `chair-first-value` → `firstrun`: Set up local AI, You (name, aliases), First
-  words (dictate one sentence → Keep as note), Calendar, Connections, Agents (Install hooks,
-  optional), Found engines, Ready. "Continue later" at the foot.
-- Gesture: one scrolling page at both widths.
-- Proof: `test_firstrun_one_screen_glass.py`, `test_firstrun_heard_glass.py`,
-  `test_hs202_02_first_use_glass.py`, `tests/integration/test_setup_first_value_journey.py`;
-  atlas `case.j1.*`.
-- State: WORKS on glass (speech is a double). NEEDS REAL METAL: the physical mic, real
-  inference. Rehearsal: dictate the real sentence; press Install hooks (no glass test presses
-  it; no testid on the button).
+0.1 **Check** the LAN engine box. Open `http://192.168.1.43:8080` in a browser.
+- See: the llama.cpp page. The model is `qwen3.8-27b`. The key is `local`.
+- Else: start the box first. HoldSpeak does not start it for you.
 
-### 1.4 Engines: the default
-- Set up local AI downloads Whisper `base`, the embedder and the 4B starter model, assigns a
-  responding LOOPBACK engine as the global default, turns meaning search on. A LAN or cloud
-  engine is never auto-assigned; it is a proposal that needs "Use it".
-- State: WORKS for the loopback default. The false "No engine for summaries" row after the
-  default is assigned is FIXED in #967 (the blocker asks the route policy; an explicit OFF
-  holds). Rehearsal: after the default is assigned, Needs you and the Brief show no engine
-  row; turn summaries OFF in the Concierge and see OFF everywhere; turn them back on.
+0.2 **Check** GitHub. Run `gh auth status` in a terminal.
+- See: `Logged in to github.com account karolswdev`.
+- Else: run `gh auth login`. HoldSpeak reads this sign-in; it has no sign-in of its own.
 
-### 1.5 Engines: the LAN model and keys
-- Face: Settings › Models = the Concierge (`/models`): Add an engine → Server address, Key
-  (optional, #966), Check → READY / UNREACHABLE / KEY REQUIRED / KEY INVALID, Use this for
-  summaries.
-- Gesture: 1440 the window; 393 the stacked Concierge.
-- Proof: `test_hs170_concierge_glass.py`, `test_concierge_key_boundary.py` (#966); atlas
-  `case.j3.*` (the `assigned_ready` case blocks before the Concierge: old entry path, open).
-- State: WORKS for the keyless .43 box (it takes any key); the keyed path is proven on a
-  stub. KNOWN: an Anthropic key does nothing (no execution adapter); the 393 footer receipt
-  overlaps Cancel. Rehearsal: add the .43 box with key `local`, Check, Use this for
-  summaries; at 393 look at the footer.
+0.3 **Check** your coding agent. Run `codex --version` and `claude --version`.
+- See: a version for each agent that you will use.
+- Else: install the agent and sign in to it. Each agent uses its own sign-in.
+- Note: the rehearsals launched Codex only. A launch of Claude Code was never pressed (no key on
+  the rig). See §10.
 
-### 1.6 Meaning search
-- Face: the Concierge's Meaning search row (OFF / DOWNLOADING / INDEXING / ON).
-- Proof: `test_meaning_search_row_glass.py`; the real-model case needs
-  `HOLDSPEAK_MEMORY_EMBED_MODEL`.
-- State: WORKS; real indexing NEEDS REAL METAL (new items take up to 120 s). Rehearsal: turn
-  it on, time the first index.
+0.4 **Know** where the hub writes. All of it is on this Mac.
 
-## 2. The Morning
+| What | Where |
+|---|---|
+| Your desk (meetings, decisions, Projects, updates) | `~/.local/share/holdspeak/holdspeak.db` |
+| Settings | `~/.config/holdspeak/config.json` |
+| Project repositories and their clones | `~/.holdspeak/project_repositories.json`, `~/.holdspeak/repositories/` |
+| Sent updates (the built-in folder) | `~/Documents/HoldSpeak/Sent/` |
+| Agent hooks (after Install hooks) | your Claude Code settings and your Codex config |
+| People keys | the macOS Keychain (the first Person you add asks for it) |
 
-### 2.1 Arrival on the Chair screen
-- Face: `chair-desk` with the screen: Project drawers, People, Conductor, Needs you, Parked,
-  loose objects; TALK at the foot-left (1440). The Chair windows start closed.
-- Gesture: 1440 Window ▸ Chair ▸ name or the icon; 393 Go ▸ Needs you / Brief / The week.
-- Proof: `test_philo14_a1_fresh_arrival_glass.py` (waits for the sprites, #959),
-  `test_philo13_11_chair_glass.py`, `test_philo13_17_phone_desk_glass.py`.
-- State: WORKS. Open: the long desk scrolls uncapped; ~40 membership GETs on a 20-Project
-  desk. Rehearsal: the first screen he sees; every icon readable at 393.
+0.5 **Install** HoldSpeak (README, Quick start).
+- Do: `git clone https://github.com/karolswdev/HoldSpeak.git`, then `uv venv && source .venv/bin/activate`, then `uv pip install -e .`
+- See: the install ends with no error. The rehearsal `uv sync` took about 10 s.
+- Else: you need Python 3.10+, uv, Node 22.12+ and a C++ compiler.
 
-### 2.2 Needs you
-- Face: the Needs drawer: one object one row; a row's Project button opens the drawer (#965);
-  a proposal row opens the Room with that proposal selected; agent asks, held calls
-  (Deny + Open; never Approve on a cut command), PRs, decisions, commitments, engine blockers,
-  failed summaries, ARMED / NEXT, Connect calendar. Dock badge = count.
-- Proof: `test_philo13_03_needs_you_glass.py`, `test_needs_you_means_you_glass.py`,
-  `test_conductor_r1_gate_row_glass.py`, `test_philo14_a2_drawer_glass.py`,
-  `test_philo14_a2b_paths_glass.py`.
-- State: WORKS (#935, #965, #967). Open: at 393 the seventh row sits under the Dock (scroll
-  reach unverified). Rehearsal: seven or more rows at 393; reach the last one.
+---
 
-### 2.3 The Brief
-- Face: the `chair:brief` window; Generate; rows; handled; receipt; standing pages; "Add to
-  1:1 agenda". One brief per local day, deterministic, no model.
-- Proof: `test_philo11_05a_brief_decision_send_glass.py`, `test_hs175_rhythm_brief_glass.py`;
-  atlas `case.j10.*` (the five empty-brief cases set up an engine first, #967).
-- State: WORKS on a press. KNOWN: the Brief does not generate itself (the cadence loop is off
-  by default; the Heartbeat holds 22:00–08:00). Rehearsal: the first morning starts with
-  Generate; decide whether day one should find the brief already there.
+## 1. First run
 
-### 2.4 The week
-- Face: the `chair:week` window: the strip, this week, meetings, thoughts. Data from the Door.
-- Proof: `test_hs175_arrival_glass.py`; atlas `p13.dock.needs_you_week`.
-- State: WORKS with a seeded calendar; a real calendar NEEDS REAL METAL (EventKit prompt and
-  read unverified). Rehearsal: connect the real calendar; see this week.
+1.1 **Run** `holdspeak doctor` before the first start.
+- See: about 28 PASS and 4 WARN, then one last line `HUB · NOT RUNNING · start it with holdspeak`.
+- Expected WARNs: `Where AI runs`, `Dictation AI model`, `Coding agents` (until 1.6). These are true before setup.
+- Else: a FAIL names the missing file and its path. Fix that file first.
+- Paid: B08 (#986).
+
+1.2 **Run** `holdspeak`.
+- See: the hub prints a URL with a token and opens your browser on the first-run page.
+- The page is one scrolling page at both widths.
+
+1.3 **Press** "Use a server on my network" on the Local AI card.
+- See: the add-engine row with Server address and Key.
+- Do: type `http://192.168.1.43:8080` and the key `local`.
+- Do not press Set up local AI. It downloads 2.9 GB that a LAN desk does not need.
+- Paid: B09 (#985).
+
+1.4 **Press** Check.
+- See: `READY · qwen3.8-27b` within about 4 s.
+- Else: `UNREACHABLE` means the box is off (0.1). `KEY REQUIRED` or `KEY INVALID` means the key is wrong.
+- Paid: B05 (#985), keys (#966).
+
+1.5 **Press** "Use this for summaries".
+- See: the receipt `USING · QWEN3.8-27B · SUMMARIES · DEFAULT SET` on the card. The menu-bar chip reads `→ LAN · 192.168.1.43`.
+- Else: if any face says "No engine for summaries" after this, it is a defect. Note it.
+- Paid: B10 (#985), B33 (#1001), the false blocker (#967).
+- Speech stays on this Mac (Whisper). Set up speech · 144 MB appears beside the LAN row on a Mac without Whisper.
+
+1.6 **Press** Install hooks on the Agents card.
+- See: the card reads `2 AGENTS FOUND` and tmux as a `TOOL`. After the press: `CLAUDE CODE · HOOKS IN` and `CODEX · HOOKS IN`.
+- Else: if a row has no Install hooks, that agent is not installed (0.3).
+- Paid: B17 (#986), B34 B35 (#1001).
+
+1.7 **Read** the Connections line on the same page.
+- See: `SIGNED IN · KAROLSWDEV · FROM GH CONFIG`. This is gh's own config. No check ran yet.
+- See also: the footer reads `NOT CHECKED` until a real check runs. This is true, not a failure.
+- Paid: B31 (#1001).
+
+1.8 **Type** your name and your aliases in the You card.
+- Do: add "Karol" and, as an alias, any spelling Whisper uses for you ("Carol").
+- See: `SET`. No Save button.
+- Why: a meeting owner "Carol" then counts as you in Needs you and the Brief. See B78 in §10.
+- Paid: B57 (#1001).
+
+1.9 **Press** Continue later, or scroll to Ready.
+- See: the Desk. The Dock has sprites for every place. The screen has five notes: Start here, About me, 1:1 prep, Current priorities, Weekly update.
+- Paid: B19 (#989), B20 (#986).
+
+---
+
+## 2. The morning
+
+2.1 **Open** the Brief. At 1440: Window ▸ Chair ▸ Brief. At 393: Go ▸ Brief.
+- See: the window comes to the front, titled `Brief · Thursday 8 Oct 2026` (today's day and date).
+- The Brief makes itself at 06:00. If the hub starts after 06:00, it makes it at once.
+- No model runs and nothing leaves the Mac.
+- Paid: B04 B16 (#980), B54 (#975), B59 (#1010).
+
+2.2 **Read** the Brief rows.
+- See, in this order, newest first in each kind: a merged PR, a sent (or published) update, an opened PR, a confirmed decision, a done action, an agent launch, then recorded and added things.
+- Each row has its local time and opens its object. The Chair shows three rows; the window shows all.
+- Else: a row in JSON, a hash or a UTC stamp is a defect.
+- Paid: B58 B73 (#1010).
+
+2.3 **Read** a `NOT READ` row if one is there.
+- See: `NOT READ · People (locked) · Generate for the full brief`, and the receipt `GENERATED · PARTIAL`.
+- Why: the 06:00 Brief does not unlock People.
+- Do: press Generate. It makes today's Brief again with People read.
+- Paid: B04 (#980), the key-free Brief (#975).
+
+2.4 **Read** the one Needs number.
+- See: the same number on the Needs drawer head, the Dock badge and the menu-bar bell.
+- Every row says its kind: `ACTION`, `AGENT`, `HELD`, a decision, a source.
+- Paid: B11 B12 (#980).
+
+2.5 **Read** a `QUIET UNTIL` row before 08:00 (after #1012).
+- See: a source row `QUIET UNTIL 08:00`. It is not counted in the one Needs number.
+- Why: the Heartbeat sleeps 22:00–08:00. The first check after 08:00 runs at once.
+- Else (before #1012): the same source reads `STALE` and is counted. Wait until 08:00, or press Retry (8.4).
+- Paid: B60 (#1012).
+
+2.6 **Open** The week. At 393: Go ▸ The week.
+- See: this week's decisions and due items, or `NO CALENDAR · Connect`, or `NOTHING THIS WEEK`. Never an empty window.
+- Paid: B07 (#980). The week was not rehearsed with a real calendar (§10).
+
+---
 
 ## 3. A meeting
 
-### 3.1 Schedule and one-tap record
-- Face: the Dock's Record orb; Capture's Record meeting / Schedule; Needs you's ARMED / NEXT
-  with Cancel / Retry. Calendar auto-record is OFF by default.
-- Proof: `test_hs144_door_glass.py` (schedule round trip), `test_philo13_16_capture_glass.py`;
-  `test_hs147_one_tap_glass.py` is RETIRED.
-- State: schedule / cancel WORKS; live recording UNVERIFIED (no browser-audio rig); the mic,
-  BlackHole and permissions NEEDS REAL METAL. Rehearsal: record a real two-minute meeting from
-  the orb at 1440 and from the Dock at 393.
+3.1 **Open** Meetings and **press** Import.
+- See: the RECORD tab with a drop zone and a second Import.
+- Do: drop the WAV file, or pick it and press Import. This is two presses (B84, §10).
+- Paid: the final status (#968).
 
-### 3.2 Import a WAV
-- Face: Meetings window → Import, or drop a file on the desk. 202, then "Transcribing — window
-  N of M". Import does not auto-run the summary.
-- Proof: `test_hs202_first_use_smoke.py` (re-anchored, strict mode green, #968),
-  `tests/unit/test_philo15_03_import_final_status.py`, the real-hub import tests; atlas
-  `case.j4.meetings_import.imported`, `case.j5.meeting_open.*`.
-- State: WORKS (#968): an import always reaches a final status (failed with its cause, or
-  complete), sync keeps it, an import interrupted by a restart is marked failed on the next
-  start. Open: two j5 cases block at the old engine-setup step. Rehearsal: import a real WAV;
-  kill the hub mid-import once and restart.
+3.2 **Wait** for the row to finish.
+- See: the title from the recording (not the file name), then `<N> WORDS · NOT RUN`.
+- Import does not run the summary. `NOT RUN` is true.
+- Else: `IMPORT DID NOT START` or `INTERRUPTED BY A RESTART` names the cause. Import the file again.
+- Paid: B14 B30 (#985 #982), B01 (#982).
 
-### 3.3 Transcription and summary
-- Face: Run intelligence (`arrival-run-intel` / the record's button) → the summary slab (one
-  render, #968), the balanced plugin profile + project detector.
-- Proof: `test_hs201_summary_face_glass.py`, `test_hs201_summary_trust_glass.py`,
-  `test_hs202_first_use_smoke.py`; atlas `case.j6.*`.
-- State: WORKS with doubles; the LAN model's summary NEEDS REAL METAL (the first real-LAN
-  closure s2 walk drew no summary in 300 s; the second passed). Rehearsal: the real summary
-  on the real meeting; time it; read it as a Senior Architect would.
+3.3 **Read** the transcript lamp.
+- See: no lamp, or `WARN · <N> UNCLEAR SPAN`. Each unclear part is marked `[unclear m:ss–m:ss]` in the text.
+- HoldSpeak never deletes the words it heard. A Whisper loop shows its words and the mark.
+- Paid: B01 (#982).
 
-### 3.4 The aftercare card
-- Face: MEETING READY in Capture's slot (Capture opens for it at both widths, #954); Open
-  proposals, Dismiss.
-- Proof: `test_philo14_a1c_aftercare_capture_glass.py`; atlas `philo603.toast.*`, `j6`, `s2`.
-- State: WORKS. Open: two Floor toast cases block on setup. Rehearsal: let the card land
-  while Capture is moved; while Meetings is in front.
+3.4 **Press** Run summary on the meeting's row.
+- See: `RAN · <n> S` (6 s to 22 s on the LAN box), the summary once, and the `MEETING READY` card in Capture.
+- The card count is live. It leaves at zero.
+- Paid: B13 B56 (#1001), the summary slab (#968).
 
-### 3.5 Decisions and action items
-- Face: proposals from the extractors; Confirm on the Needs row, the record, the Room; a
-  proposal row opens the Room with the proposal selected (#965).
-- Proof: `test_hs172_meeting_glass.py`, `test_hs200_meeting_outcomes_glass.py`,
-  `test_philo13_08_decide_glass.py`, `test_philo14_a2b_paths_glass.py`.
-- State: WORKS on fixtures; extraction quality on the LAN model NEEDS REAL METAL. Rehearsal:
-  confirm one decision and one action item from the real summary.
+3.5 **Open** the meeting's REVIEW tab.
+- See: each decision and each action item with Confirm, Defer and Decline.
+- Else: `DECISIONS · NOT EXTRACTED · <engine>` means the model sent no decisions. An empty list means it found none.
+- Paid: B02 B03 (#983).
 
-## 4. People and Projects
+3.6 **Press** Confirm on each decision and action item that is true.
+- See: the row reads confirmed. A confirmed action keeps its kind: the Room reads `Action:`.
+- You can also Confirm from the Needs row.
+- Known: an action may read `NO SOURCE · ⚠ UNSUPPORTED` when the transcript says it (B77). The owner may read "Carol" (B78).
+- Paid: B02 B03 (#983).
 
-### 4.1 Add a person
-- Face: the People window; New relationship → Enter or Add; 1:1 prep lens.
-- Gesture: 1440 the People drawer icon (opens People, lane 04); 393 the palette or menu verb.
-- Proof: `test_hs172_people_glass.py`, `test_hs200_people_preparation_glass.py`,
-  `test_philo13_09_prep_glass.py`.
-- State: WORKS. Open: person memory pages do not exist. Rehearsal: add one real report.
+3.7 **Press** "Add to Project ▸" on the open meeting, then the Project.
+- See: `IN <Project>`.
+- Do not drag the meeting onto the Project drawer. The drop does nothing (B76, §10).
+- Paid: B37 (#1000).
 
-### 4.2 Make a Project
-- Face: New project → the Door (outcome, rows, connect) → Create → the DRAWER (icons or list,
-  Get Info, Park, Hand, the Room one press away).
-- Proof: `test_hs169_door_glass.py`, `test_philo14_a2_drawer_glass.py`,
-  `test_philo14_a2b_paths_glass.py`, `test_hs169_room_glass.py`.
-- State: WORKS. Open: the drawer's LIST view has no drag. Rehearsal: a real Project of his
-  with its GitHub repo.
+---
 
-### 4.3 Connectors
-- Face: Settings › Connections: GitHub (`gh`), Jira (`acli`, site + email), Confluence,
-  Calendar (EventKit or ICS).
-- Proof: `test_hs168_connections_glass.py`, `test_hs161_github_glass.py`,
-  `test_hs166_jira_glass.py`, `test_hs146_calendar_snapshot_glass.py`; tests refuse the real
-  CLIs.
-- State: NEEDS REAL METAL (gh / acli auth, EventKit). KNOWN: a sign-in saves no Send
-  destination; calendar denied had no way forward (lane 04 adds the System Settings verb); a
-  GitHub Enterprise egress host reads github.com. Rehearsal: connect gh and the calendar for
-  real; deny the calendar once and recover.
+## 4. A Project
 
-## 5. The Conductor
+4.1 **Press** New ▸ Project. At 1440: the Desk menu. At 393: Go ▸ New ▸ Project.
+- See: the Door.
+- Do: type the outcome. It becomes the Project's name.
 
-### 5.1 Install hooks
-- Face: the first-run Agents card, or the Conductor drawer (Dock ⌘3): Copy install / Install
-  hooks. CLI `holdspeak agent-hook install`.
-- Proof: `tests/unit/test_onboarding_agents.py`, `test_conductor_r3_codex.py`; no glass test
-  presses Install; no testid.
-- State: UNVERIFIED on glass; NEEDS REAL METAL (Codex trust hash; live hook delivery never
-  observed on a real desk). Rehearsal: press it; read the receipt; `holdspeak doctor` shows
-  Coding agents green.
+4.2 **Press** "Choose a repository" on the GitHub row (after #1012).
+- See: your repositories in about 4 s.
+- Else (before #1012): the Door reads `NOT SET UP · Connect`. Open Settings › Connections › GitHub and press Recheck. The Door then offers "Choose a repository".
+- Paid: B75 (#1012), B31 (#1001).
 
-### 5.2 Hand to agent
-- Face: drag an object from the screen or a drawer onto the Conductor or an agent icon (1440);
-  the drawer's Hand verb; the Chair row's verb. YOLO = ConfirmLine (item → agent, CLAUDE CODE ·
-  YOLO · hs/<branch>, egress chip, Brief ▸ / Cancel / Hand); Secure / Normal = HandSheet. 393:
-  the verb opens the confirm line.
-- Proof: `test_philo14_c3_drop_to_hand_glass.py`, `tests/unit/test_agent_hand*.py`.
-- State: WORKS with doubles; a real launch NEEDS REAL METAL. Open: Door / Room row verbs and
-  ⌘K open the sheet even in YOLO; the new agent icon can sit behind the open drawer; no issue
-  object on the screen. Rehearsal: hand one real small action item from his Project to Claude
-  Code in YOLO; then one to Codex.
+4.3 **Pick** the repository.
+- See: the pick, `1 SOURCE`, its watches. No "0 open PRs".
+- Paid: the Door (#1000).
 
-### 5.3 The lane
-- Face: the agent's window: the station track (BRIEF · WORK · COMMIT · PR · HELD · ASKS ·
-  MERGE), the question with voice answer (`wait_id` must be current), Deny / Approve on a held
-  call (a cut command: Deny + Raw only), Re-brief, Stop (two presses), Raw (the tmux pane).
-  From Needs you: answer / approve / deny on the row.
-- Proof: `test_philo14_c2_lane_glass.py`, `test_philo14_c2_lane_actions_glass.py`,
-  `test_conductor_r1_gate_row_glass.py`, `tests/unit/test_philo14_c0_launch_lane.py`.
-- State: WORKS with doubles. KNOWN: the draft chip reads NOT SET without a Cadence-drafts
-  model, so YOLO answers nothing routine and every question reaches Needs you (the global
-  default does not feed capability-only services); BRIEF shows a word count; Files changed
-  shows names only. The real loop ran once (R1) with non-isolated credentials. Rehearsal:
-  answer one real question from the lane and one from Needs you; deny one held call and
-  approve one; assign the LAN model to Cadence drafts and watch a routine question get
-  answered with a receipt.
+4.4 **Press** CREATE.
+- See: the Room opens. The receipt names the registered repository.
+- An empty Project reads `NEW`.
+- Paid: B25 (#989), B38 (#1000).
 
-### 5.4 The PR, the merge, the update row
-- Face: the lane's PR card (Open PR → GITHUB.COM); the Room's merge receipt; the weekly
-  update's `Merged: <title> (PR #n)` row (`report_merged_prs` on).
-- Proof: vitest and unit only; NO glass test reads the merge receipt or the Merged row; no
-  atlas Conductor case; merges proven with a fake gh.
-- State: UNVERIFIED / NEEDS REAL METAL. Rehearsal: let the agent open the real PR on the
-  throwaway repo; merge it on GitHub; watch the Heartbeat close the origin and the receipt
-  land in the Room and in the update.
+4.5 **Know** what the clone does.
+- Nothing clones at CREATE. The first Hand to an agent clones the repository.
+- The clone lives in `~/.holdspeak/repositories/<owner>/<name>/<name>` (the name twice; B86, §10).
+- It is bound to github.com. A clone with another origin is parked beside it as `.not-github-<stamp>`.
+- Get Info on the Project shows the clone's Folder.
+- Else: `REPOSITORY · NOT READ` with Retry means the registrations file cannot be read. HoldSpeak does not overwrite it. Press Retry.
+- Paid: B38 B39 (#1000).
 
-## 6. The weekly update and Send
-- Face: the Room → Updates → Draft (deterministic or model) → the editor → Publish → the Send
-  well (destination row, Check, preview, Sent). Destinations: Folder (built-in), GitHub
-  comment, Jira comment, Confluence, Email (Resend default, lane 04), Slack webhook. "Send to
-  ▸" on a window.
-- Proof: `test_hs162_update_glass.py`, `test_hs173_update_glass.py`,
-  `test_builtin_send_folder_glass.py`, `test_philo10_04_send_face_glass.py`,
-  `test_philo13_15_send_to_glass.py`; atlas `p10.*`, `p11.*`.
-- State: Folder send WORKS; gh / Jira / email / Slack and the model-drafted update NEEDS REAL
-  METAL. KNOWN: `p11.meeting_summary.chair.sent` sends 200 but no sent row matches (unchecked).
-  Rehearsal: draft with the LAN model, publish, send to the Folder and by Resend to himself.
+---
 
-## 7. The end of the day
+## 5. Hand to an agent
 
-### 7.1 Parked
-- Face: the Parked drawer (lane 04: every parked object across kinds, Open and Restore);
-  `meetings-parked`, the Workbench's parked, a Project's park receipt.
-- Proof: `test_philo13_02_park_glass.py`; lane 04's glass.
-- State: park / restore per kind WORKS; the one Parked place is lane 04. Rehearsal: park the
-  test meeting and restore it from the drawer.
+5.1 **Open** the Project drawer and **select** the action item.
 
-### 7.2 Memory, and the second morning
-- What is remembered: the MemoryWorker sweeps every 120 s; the keyword index needs no model;
-  vectors, facts, beliefs and pages each need an assigned engine. Where it shows: Desk memory
-  (`/project-memory`), the Room's and the Brief's standing pages, ⌘K. Nothing memory-related is
-  on the Chair screen. Overnight the Heartbeat holds 22:00–08:00; the Brief is not regenerated.
-- Proof: `test_memory_faces_glass.py`, `test_hs526_desk_memory_glass.py`,
-  `test_phase200_daily_loop.py` (day-2 recall across a restart).
-- State: keyword recall WORKS; facts, beliefs and pages NEEDS REAL METAL (never run on the LAN
-  model); the Desk memory face hides the four new kinds. Rehearsal 2: the next morning on the
-  same HOME: the Brief carries yesterday's meeting, decision and the agent's merge; ⌘K finds
-  yesterday's words; nothing doubles.
+5.2 **Press** Hand to agent.
+- See: the confirm line `→ <item> · CLAUDE CODE · YOLO · hs/<branch> · <egress chip>`, with Brief ▸, Cancel and Hand.
+- The first agent is the first one with a known sign-in. `SIGN-IN UNKNOWN` on the line means HoldSpeak cannot see that agent's sign-in.
+- Paid: B36 B39 (#1001 #1000).
 
-## Open before the rehearsal (from the inventory, ranked; the owners)
+5.3 **Press** the agent name on the line to flip it (Claude Code ↔ Codex).
+- See: `CODEX · YOLO · …` and the chip `API.OPENAI.COM` for a Codex signed in to OpenAI.
+- The Project remembers your choice.
+- Paid: B39 (#1000).
 
-| # | Gap | Lane |
-|---|---|---|
-| 1 | LAN key on the Concierge | #966 merged |
-| 2 | False "No engine for summaries"; OFF holds | #967 in review |
-| 3 | WAV import final status | #968 in review |
-| 4 | Summary slab consolidated; smoke re-anchored | #968 in review |
-| 5 | Anthropic key has no execution adapter | queued (decide: adapter, or say OpenRouter / openai-compatible only on the face) |
-| 6 | Needs-you paths | #965 merged |
-| 7 | doctor runs the whole list | #966 merged |
-| 8 | YOLO routine answers need a Cadence-drafts model | queued (the default should feed Cadence drafts; or the Concierge assigns it with summaries) |
-| 9 | launch → PR → merge unproven on glass / atlas | rehearsal 1 is the proof; a Conductor atlas case after |
-| 10 | The Brief does not generate itself | queued (ruling needed: cadence on by default for the brief only?) |
-| 11 | Live recording has no browser-audio rig | rehearsal 1 records for real |
-| 12 | Calendar denied: no way forward | lane 04 |
-| 13 | Email default SendGrid → Resend | lane 04 |
-| 14 | Parked icon opens Meetings only | lane 04 |
-| 15 | 393 seventh Needs row under the Dock | rehearsal 1 looks |
-| 16 | Memory invisible on the Chair; model kinds unrun | rehearsal 2 looks; a canvas if a face is needed |
-| 17 | Install hooks has no glass or testid | rehearsal 1 presses; a fence after |
-| 18 | People icon opens `/` | lane 04 |
+5.4 **Press** Brief ▸ to read what the agent gets, then **press** Hand.
+- See: the receipt `CLONED · KAROLSWDEV/<NAME> · hh:mm`, then the agent's lane.
+- See on the lane: `SENT · hh:mm` when the brief is typed. Codex has no folder-trust stall.
+- Paid: B41 B42 (#996).
+
+5.5 **Know** what YOLO lets pass.
+- Passes with no hold: reads of git config, `gh --version`, `gh auth status`, `gh pr view`, file writes in the agent's worktree (heredocs too), a script in its worktree, `echo "$?"`, the commit, the push of its own branch.
+- Holds: a write outside the worktree, a git config write, a push to another branch, a pipe into an interpreter (`RUNS CODE · <name>`), a `cd` to a missing folder (`FOLDER NOT RESOLVED · <dir>`), a `$(…)` used as a path or a program.
+- Paid: B43 (#998), B62 (#1011).
+
+5.6 **Answer** a `HELD` row in Needs you.
+- See: `HELD · <reason>` with the command, Deny and Approve. One press each.
+- A hold expires after 4 minutes with no decision.
+- Paid: B45 (#998).
+
+5.7 **Open** a cut call in Raw.
+- See on Needs: `CUT · APPROVE IN RAW`, with Deny and Open.
+- Do: press Open, then Raw. Raw shows the whole command with Approve and Deny.
+- See: `APPROVED · hh:mm` or `DENIED · hh:mm`. If someone decided first: `NOT DECIDED · hh:mm · ALREADY <state>`.
+- Else: `HELD · <reason> · CUT · n OF m CHARS` with Deny only means the hub does not have the whole command. Deny it.
+- Paid: B44 B63 (#1011).
+
+5.8 **Press** Deny when a call must not run.
+- See: the agent gets the reason, for example "denied from the desk: OUTSIDE THE WORKTREE · /tmp/pr_body.md … Do not try it again in a different form".
+- Paid: B66 (#1011).
+
+5.9 **Read** the lane's HELD station.
+- See: `<n> HELD · <n> APPROVED · <n> DENIED · <n> EXPIRED`.
+- See: `THE DESK ANSWERED` on a routine question the desk answered for you from the brief.
+- A finished report reads DONE. It is not a Needs row.
+- Paid: B45 B47 (#998), B48 (#996), B68 (#1011).
+
+5.10 **Press** Re-brief to give the agent a new instruction.
+- See: `QUEUED · AFTER THIS TURN` while the agent works, then `SENT · hh:mm`.
+- Do: press Take back if you no longer need it.
+- See: `TAKEN BACK`, or `NOT TAKEN BACK · ALREADY SENT`.
+- Paid: B46 (#996), B67 (#1011).
+
+---
+
+## 6. The PR and the merge
+
+6.1 **Wait** for the PR.
+- See: the lane's PR station `#<n> <PR title>` within one 2-minute poll after the agent opens it. No press.
+- Paid: B50 (#996), B65 (#1010).
+
+6.2 **Merge** the PR on GitHub (your usual way).
+
+6.3 **Read** the Room.
+- See, within about 2 minutes and with no press: `DONE · <PR title> · PR #<n> MERGED · hh:mm`, with Open PR and the `GITHUB.COM` chip.
+- See: the agent's worktree is removed and its session ends. The action is done.
+- See (after #1012): the decision row reads `DONE · hh:mm`, not CONFIRMED.
+- Paid: B51 (#1002), B70 (#1012).
+
+---
+
+## 7. The update
+
+7.1 **Open** the Room › Updates and **press** Draft with model.
+- See: the chip `UPDATE DRAFTS · <host>` before you press. The draft comes in about 30 s.
+- Draft (with no model) is deterministic and takes under 1 s.
+- Paid: B53 (#1002).
+
+7.2 **Read** the claims in the editor.
+- See: the label `MODEL · OPENAI COMPATIBLE`. Each claim has its chips. A model sentence reads `INFERENCE · UNREVIEWED`.
+- See: one `Merged: <PR title> (PR #<n>) <link>` row for each merge in the period.
+- See (after #1012): a model sentence that repeats a merged PR is dropped. The list chip reads `QWEN3.8-27B · 192.168.1.43:8080 · LAN`.
+- Paid: B52 (#1002), B71 B72 (#1012).
+
+7.3 **Read** what Send will leave out.
+- An `[UNVERIFIED]` claim is left out of the sent text, with its next lines.
+- (after #1012) An unreviewed model sentence is left out the same way.
+- The last line counts them: `<N> claims not checked, kept on the desk.` The stored update keeps every claim.
+- Paid: B53 (#1002), B64 (#1012).
+- Not found: an Accept or Reject verb on a claim in the editor (see §10).
+
+7.4 **Press** Publish.
+
+7.5 **Press** Send in the Send well.
+- See: the destination `HoldSpeak/Sent` (the path shows on hover), Check, the preview, then `✓ SAVED ~/Documents/HoldSpeak/Sent/<date>-<project>-rev-1-<id>.md`.
+- Else: `✗ REFUSED · NOTHING VERIFIED · NOTHING SENT`. Nothing in the update is verified. A verified `Merged:` row is enough to send.
+- Paid: B23 (#989), NOTHING VERIFIED (#1002), B64 (#1012).
+
+7.6 **Open** the sent file. Its shape:
+
+```
+# <Project> · Update · <date>
+
+## Progress
+- Merged: <PR title> (PR #<n>) <link>
+
+## Decisions
+## Risks & Blockers
+## Dependencies
+## Next Actions
+## Source Coverage
+
+<N> claims not checked, kept on the desk.
+```
+
+- A section with nothing in it reads `Not checked.` or "No … in this window." (B87, §10).
+- Names, never ids. Paid: B53 (#1002).
+
+---
+
+## 8. The second morning
+
+8.1 **Start** the hub after 08:00 if you can.
+- Before 08:00 the Heartbeat sleeps. Sources read `QUIET UNTIL 08:00` (after #1012) or `STALE` (before #1012).
+
+8.2 **Open** the Brief (2.1).
+- See: yesterday's merged PR, sent update, opened PR, confirmed decision, done action and agent launch, each with its time.
+- Limit: the Brief covers yesterday 17:00 until now (Monday: from Friday 17:00). Work done before 17:00 yesterday is in yesterday's Brief only, after a Generate (§10).
+- The open Brief window updates itself when the hub writes a new Brief, and when you come back to the page.
+- Paid: B58 B59 (#1010).
+
+8.3 **Read** the source rows in Needs you.
+- See (after #1012): `GitHub · <owner>/<repo>`, `Meetings`, and times with their day: `yesterday 21:23`.
+- Paid: B74 (#1012).
+
+8.4 **Press** Retry on a source row.
+- See (after #1012): `CHECKED · Meetings · hh:mm`, or `NOT CHECKED · <source> · <reason>`.
+- Else (before #1012): Retry only reloads the list.
+- Paid: B61 (#1012).
+
+8.5 **Open** the Room.
+- See (after #1012): one state per source: `STALE · CHECKED <n>H AGO` or `QUIET UNTIL 08:00`. The next check is never in the past.
+- Paid: B69 (#1012).
+
+8.6 **Search** with ⌘K for a word from yesterday's meeting.
+- See: the meeting, the decision, the action (marked done) and the artifact.
+- Known: a search for "PR #<n>" finds nothing (B79).
+
+---
+
+## 9. Doctor
+
+9.1 **Run** `holdspeak doctor` with the hub running.
+- See: the same list the Setup page runs (mic, hotkey, Coding agents, connectors), then the hub checks.
+- See: `Coding agents` PASS after Install hooks.
+- Known on a LAN-only desk: WARN `Where AI runs: This device · not set up yet` and WARN `Dictation AI model … not on this device yet`, although the LAN engine runs summaries (B81).
+- Do: `holdspeak doctor --strict` makes a WARN fail. `--connectors` adds the connector checks.
+- Paid: B08 (#986), one list (#966).
+
+---
+
+## 10. What is still open on day one
+
+From rehearsal 2 (not paid):
+
+- **B76** A meeting dropped on a Project drawer does nothing. Use "Add to Project ▸".
+- **B77** An action the transcript says can read `NO SOURCE · ⚠ UNSUPPORTED`.
+- **B78** "Carol" stays your name in the Room, the agent's brief and the update. Needs and the Brief treat it as yours.
+- **B79** ⌘K does not find a PR by "PR #<n>".
+- **B80** The 06:00 Brief's receipt says 0 items. The Brief itself is right.
+- **B81** Doctor WARNs about this-device AI on a LAN-only desk; the event-log count is very high.
+- **B82** The confirm line's chip for Codex reads `API.OPENAI.COM` even when Codex uses another provider.
+- **B83** A `cd` through `/private/var` was held as outside the worktree. Probably the rig only; not verified on `/Users/karol`.
+- **B84** Import is two presses.
+- **B85** Hold labels can read snake_case (`NOT READ · shell_expansion`) or the wrong kind (`GITHUB ACTION FOR YOU` for `gh --version`).
+- **B86** The clone folder repeats the repository name.
+- **B87** The sent file keeps sections that read only "Not checked.".
+- **B88** A Brief header count can differ from its body.
+- **B89** The deterministic draft can say "All sources consulted successfully" while a source is stale.
+
+From the lanes (not paid):
+
+- **B32** Settings has no macOS calendar path (ICS only). Allow calendar access is on the first-run card only.
+- **B49** Codex on the LAN model gets none of HoldSpeak's tools. On an OpenAI model: not verified.
+- **No Send destination from a sign-in** (#974 #1001): a GitHub sign-in adds no GitHub Send destination. Only the folder is ready.
+- **Folder chip** (#1002): the folder Send chip reads `THIS DEVICE`, not `FOLDER · <name>`.
+- **Anthropic key** (#975): reads `NOT SUPPORTED YET`. Use OpenRouter or an OpenAI-compatible server.
+- **Renamed branch** (#1010): if the agent renames its branch, the PR is not found.
+- **Jira and Confluence** (#1001): read `NEVER CHECKED` until a check runs.
+- **Credentials** (#1000): the agent's worktree uses your own credentials. It is not a sandbox.
+- **Parked guard notes** (#986): no desk verb restores them.
+
+From the runbook itself (no bounce id yet):
+
+- **The Brief period**: the second morning's Brief starts at 17:00 yesterday. A day-one meeting, merge or update before 17:00 is not in it.
+- **Claim review**: no Accept or Reject verb on a claim was found in the update editor, on main or in #1012. How you mark a model sentence as reviewed so that it is sent is not known.
+
+Not rehearsed yet (the steps exist; no rehearsal pressed them):
+
+- A Hand to Claude Code; email (Resend); live recording and First words; the real calendar; the Parked drawer; People beyond one added Person; the lane at 393.
