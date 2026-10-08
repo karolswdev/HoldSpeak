@@ -101,11 +101,12 @@ const world = {
   preview: { ...PREVIEW } as typeof PREVIEW,
   hand: null as null | (() => unknown),
   calls: [] as Array<{ url: string; init?: { method?: string; json?: unknown } }>,
+  agents: { agents: [] } as { agents: Array<Record<string, unknown>> },
 };
 
 function route(url: string, init?: { method?: string; json?: unknown }): unknown {
   world.calls.push({ url, init });
-  if (url.startsWith("/api/onboarding/agents")) return { agents: [] };
+  if (url.startsWith("/api/onboarding/agents")) return world.agents;
   if (url === "/api/authority/policy") return { control_mode: world.mode };
   if (url === "/api/agent/hand/preview") {
     const profile = String((init?.json as { profile?: string })?.profile ?? "claude-default");
@@ -187,6 +188,7 @@ beforeEach(() => {
   world.preview = { ...PREVIEW, refused: [] };
   world.hand = null;
   world.calls = [];
+  world.agents = { agents: [] };
   world.sessionReads = 0;
   world.launchedAfter = null;
   apiFetch.mockReset();
@@ -412,6 +414,32 @@ describe("PHILO-14 C3 Secure and Normal: the sheet", () => {
   });
 });
 
+describe("PHILO-15 16 the sheet carries the clone through a launch refusal", () => {
+  it("Secure: CLONES before Launch, CLONED · owner/name · hh:mm after a refused launch", async () => {
+    world.mode = "safe";
+    world.preview = {
+      ...PREVIEW, repo: null as unknown as string,
+      clone: { repository: "acme/ledger", host: "github.com", state: "to_clone" },
+    } as typeof PREVIEW;
+    world.hand = () => {
+      throw new ApiError(409, "refused", {
+        code: "launch_cap_reached",
+        clone: { repository: "acme/ledger", host: "github.com", state: "cloned", cloned_at: "2026-10-07T09:05:00" },
+      });
+    };
+    render(<HandSheet />);
+    act(() => useAgentHand.getState().open({ kind: "action", id: "a-comms", title: "Write the cutover comms", projectId: "p-ledger" }));
+    const before = await screen.findByTestId("hand-clone");
+    expect(before).toHaveAttribute("data-state", "to_clone");
+    expect(before).toHaveTextContent("CLONES acme/ledger");
+    fireEvent.click(await screen.findByTestId("hand-launch"));
+    expect(await screen.findByTestId("hand-launch-refused")).toHaveTextContent("NOT LAUNCHED · AGENT LIMIT REACHED");
+    const after = screen.getByTestId("hand-clone");
+    expect(after).toHaveAttribute("data-state", "cloned");
+    expect(after).toHaveTextContent("CLONED · acme/ledger · 09:05");
+  });
+});
+
 describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
   it("icons do not lift; the drawer list's Hand to agent opens the confirm line over the list", async () => {
     setCompact(true);
@@ -421,7 +449,7 @@ describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
         <DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />
       </>,
     );
-    const row = await within(drawer()).findByText("Write the cutover comms");
+    const row = await within(drawer()).findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
     for (const el of document.querySelectorAll(".desk-screen .desk-icon")) expect(el).not.toHaveAttribute("draggable", "true");
     // The verb is withheld until a handable object is selected.
     expect(within(drawer()).queryByRole("button", { name: "Hand to agent" })).toBeNull();
@@ -461,7 +489,7 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
   it("393: the drawer's Hand to agent verb reaches the same token", async () => {
     setCompact(true);
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
-    fireEvent.click(await within(drawer()).findByText("Write the cutover comms"));
+    fireEvent.click(await within(drawer()).findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ }));
     fireEvent.click(within(drawer()).getByRole("button", { name: "Hand to agent" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
@@ -473,7 +501,61 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
   });
 });
 
+describe("PHILO-15 16 (Astra r1 on #1000): the default and the owner's flip", () => {
+  const agent = (id: string, signedIn: string) => ({
+    id, label: id, installed: true, path: `/bin/${id}`, version: "1", hooks: "installed", signed_in: signedIn, ready: true, verb: null,
+  });
+
+  it("the Conductor's default is the agent whose sign-in is known; the line says why", async () => {
+    world.agents = { agents: [agent("claude", "unknown"), agent("codex", "yes")] };
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).getByTestId("hand-confirm-skipped")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");
+  });
+
+  it("the owner's flip is this Project's next default (the verb and the drop)", async () => {
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    let line = await within(drawer()).findByTestId("hand-confirm");
+    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    fireEvent.click(within(line).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByTestId("hand-confirm")).toBeNull();
+    dragOnto(comms(), conductor());
+    line = await within(drawer()).findByTestId("hand-confirm");
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).queryByTestId("hand-confirm-skipped")).toBeNull();
+  });
+});
+
 describe("PHILO-15 16 B38: the first hand clones the Project's repository", () => {
+  it("a clone the hand made stays CLONED when the launch after it refuses (Astra r1 on #1000)", async () => {
+    world.preview = {
+      ...PREVIEW, repo: null as unknown as string,
+      clone: { repository: "karolswdev/holdspeak-dayone-rehearsal-1558", host: "github.com", state: "to_clone" },
+    } as typeof PREVIEW;
+    world.hand = () => {
+      throw new ApiError(409, "refused", {
+        code: "launch_cap_reached",
+        clone: { repository: "karolswdev/holdspeak-dayone-rehearsal-1558", host: "github.com", state: "cloned",
+                 cloned_at: "2026-10-07T18:06:00" },
+      });
+    };
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    expect(await within(line).findByTestId("hand-confirm-clone")).toHaveAttribute("data-state", "to_clone");
+    fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
+    expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent("NOT LAUNCHED · AGENT LIMIT REACHED");
+    const clone = within(line).getByTestId("hand-confirm-clone");
+    expect(clone).toHaveAttribute("data-state", "cloned");
+    expect(clone).toHaveTextContent("CLONED · karolswdev/holdspeak-dayone-rehearsal-1558 · 18:06");
+    expect(within(line).queryByText(/^CLONES /)).toBeNull();
+  });
+
   it("the line names the clone's egress before the press and CLONED after it; never NO REPOSITORY", async () => {
     world.preview = {
       ...PREVIEW, repo: null as unknown as string, repo_label: "~/.holdspeak/repositories/karolswdev/r/r",

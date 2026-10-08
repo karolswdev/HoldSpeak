@@ -21,6 +21,8 @@ export interface ProjectRepository {
    *  registers the first one). */
   watched: string[];
   host: string;
+  /** `not_read`: the registrations file exists and cannot be read (never "none"). */
+  store?: "read" | "not_read";
 }
 
 export const projectRepositoryPath = (projectId: string) =>
@@ -36,7 +38,9 @@ export function registerProjectRepository(projectId: string, repository: string)
 
 /** `owner/name · CLONED`, `owner/name · NOT CLONED`, or `owner/name · NOT REGISTERED`
  *  (a watched repository nobody registered); "" when the Project names none. */
-export function repositoryWords(state: ProjectRepository | null): string {
+export function repositoryWords(state: ProjectRepository | null, failed = false): string {
+  // A read that failed, or a store the hub cannot read, is NOT READ (A.10).
+  if (failed || state?.store === "not_read") return "NOT READ";
   if (!state) return "";
   if (state.repository) return `${state.repository} · ${state.cloned ? "CLONED" : "NOT CLONED"}`;
   const watched = state.watched?.[0];
@@ -46,7 +50,7 @@ export function repositoryWords(state: ProjectRepository | null): string {
 /** The repository the drawer's Register verb names: the first watched one,
  *  when the Project registered none. */
 export function registrable(state: ProjectRepository | null): string | null {
-  if (!state || state.registered) return null;
+  if (!state || state.registered || state.store === "not_read") return null;
   return state.watched?.[0] ?? null;
 }
 

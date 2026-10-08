@@ -408,6 +408,26 @@ describe("PHILO-15 16 the Project knows its repository", () => {
     expect(within(fact as HTMLElement).getByText(`${REPO} · NOT CLONED`)).toBeTruthy();
   });
 
+  it("a store the hub cannot read is NOT READ with Retry, never NOT REGISTERED (Astra r1 on #1000)", async () => {
+    repo.state = { project_id: "p-ledger", repository: null, registered: false, cloned: false, watched: [REPO], host: "github.com", store: "not_read" };
+    await renderDrawer();
+    expect(screen.queryByTestId("drawer-register")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Get Info" }), { detail: 1 });
+    render(<DrawerInfoWindow info={useDrawers.getState().infos[0]} />);
+    const fact = await waitFor(() => {
+      const el = document.querySelector('.object-info-fact[data-fact="repository"] dd');
+      expect(el?.textContent).toBe("NOT READ");
+      return el!;
+    });
+    expect(fact).toBeTruthy();
+    expect(screen.queryByTestId("info-register")).toBeNull();
+    repo.state = { project_id: "p-ledger", repository: REPO, registered: true, cloned: false, watched: [REPO], host: "github.com", store: "read" };
+    fireEvent.click(screen.getByTestId("info-repository-retry"));
+    await waitFor(() =>
+      expect(document.querySelector('.object-info-fact[data-fact="repository"] dd')?.textContent).toBe(`${REPO} · NOT CLONED`),
+    );
+  });
+
   it("CLONED once the first hand cloned it", async () => {
     repo.state = { project_id: "p-ledger", repository: REPO, registered: true, cloned: true, watched: [REPO], host: "github.com" };
     await renderDrawer();

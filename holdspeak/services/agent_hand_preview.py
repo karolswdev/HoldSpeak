@@ -50,7 +50,7 @@ from .agent_hand_service import (
     worktree_spec,
 )
 from .errors import ServiceError
-from .project_repository import CLONE_HOST, watched_repositories
+from .project_repository import CLONE_HOST, StoreNotRead, watched_repositories
 
 
 @dataclass
@@ -213,6 +213,13 @@ def preview_hand(
 
     project_id = project_id or project_for_item(db, kind, item_id)
     registrations = getattr(service, "repositories", None)
+    store_refusal: Optional[str] = None
+    try:
+        if registrations is not None:
+            registrations.get(project_id)
+    except StoreNotRead as exc:
+        # NOT READ: named, and the registrations are left out of this read.
+        store_refusal, registrations = exc.code, None
     source = resolve_project_repository(
         db, project_id, reads.registry(), project_map=service._project_map, registrations=registrations,
     )
@@ -233,7 +240,9 @@ def preview_hand(
     resume: Optional[dict[str, Any]] = None
     actual = requested
     held_text: Optional[str] = None
-    if repo is None and clone is None:
+    if repo is None and clone is None and store_refusal:
+        refused.append(store_refusal)
+    elif repo is None and clone is None:
         # A repository the Room watches but nobody registered: the drawer's
         # Register verb fixes it; with none at all, NO REPOSITORY.
         watched = watched_repositories(db, project_id)

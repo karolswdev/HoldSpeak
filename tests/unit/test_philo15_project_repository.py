@@ -43,10 +43,12 @@ class FakeGh:
     """``gh repo clone <owner/name> <dir> -- --quiet``: a real git repository
     on disk with the GitHub origin, as the real clone leaves it."""
 
-    def __init__(self, *, fails: bool = False) -> None:
+    def __init__(self, *, fails: bool = False, origin: str | None = None) -> None:
         self.calls: list[list[str]] = []
         self.envs: list[dict[str, str]] = []
         self.fails = fails
+        #: The origin the clone ends with (default: the URL it was given).
+        self.origin = origin
 
     def __call__(self, argv: list[str], env: Any) -> Any:
         self.calls.append(list(argv))
@@ -54,7 +56,7 @@ class FakeGh:
         if self.fails:
             return SimpleNamespace(returncode=1, stdout="", stderr="repository not found")
         assert argv[:3] == ["gh", "repo", "clone"], argv
-        repository, target = argv[3], Path(argv[4])
+        url, target = argv[3], Path(argv[4])
         target.mkdir(parents=True)
         (target / "README.md").write_text("# rehearsal\n", encoding="utf-8")
         _git(target, "init", "-b", "main")
@@ -62,7 +64,7 @@ class FakeGh:
         _git(target, "config", "user.name", "Test")
         _git(target, "add", "-A")
         _git(target, "commit", "-m", "seed")
-        _git(target, "remote", "add", "origin", f"https://github.com/{repository}.git")
+        _git(target, "remote", "add", "origin", self.origin or f"{url}.git")
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
 
@@ -193,8 +195,8 @@ def test_the_first_hand_clones_the_registered_repository_with_its_receipt(tmp_pa
     finally:
         rig.tmux.ended = True
     assert result["status"] == "launched", result
-    assert gh.calls == [["gh", "repo", "clone", REPO, str(clone), "--", "--quiet"]]
-    assert gh.envs[0]["GIT_TERMINAL_PROMPT"] == "0"
+    assert gh.calls == [["gh", "repo", "clone", f"https://github.com/{REPO}", str(clone), "--", "--quiet"]]
+    assert gh.envs[0]["GIT_TERMINAL_PROMPT"] == "0" and gh.envs[0]["GH_HOST"] == "github.com"
     assert result["clone"]["repository"] == REPO and result["clone"]["host"] == "github.com"
     assert result["clone"]["receipt"]["outcome"] == "succeeded" and result["clone"]["operation_id"]
     # The clone is a Delivery Source; the worktree is its sibling.
@@ -270,3 +272,111 @@ def test_a_watched_repository_nobody_registered_is_named(tmp_path, db, monkeypat
         runner=lambda argv: SimpleNamespace(returncode=1),
     )
     assert "repository_not_registered" in preview_hand(rig.hand, OWNER, "action", "ai_1", reads=reads)["refused"]
+
+
+# ── Astra r1 on #1000 ───────────────────────────────────────────────
+
+
+def test_an_enterprise_gh_host_cannot_move_the_clone(tmp_path, db, monkeypatch) -> None:
+    """Finding 1: GH_HOST=ghe.example in the hub's environment; the clone still
+    names https://github.com/<owner>/<name> and GH_HOST=github.com."""
+    monkeypatch.setenv("GH_HOST", "ghe.example")
+    gh = FakeGh()
+    rig = _registered_rig(tmp_path, db, monkeypatch, gh)
+    try:
+        assert rig.hand.hand(OWNER, "action", "ai_1")["status"] == "launched"
+    finally:
+        rig.tmux.ended = True
+    assert gh.calls[0][3] == f"https://github.com/{REPO}"
+    assert gh.envs[0]["GH_HOST"] == "github.com"
+
+
+def test_a_clone_from_another_host_is_refused_by_name(tmp_path, db, monkeypatch) -> None:
+    """Finding 1: a clone whose origin is not the disclosed host is never used."""
+    rig = _registered_rig(tmp_path, db, monkeypatch, FakeGh(origin=f"https://ghe.example/{REPO}.git"))
+    with pytest.raises(AgentHandRefused) as exc:
+        rig.hand.hand(OWNER, "action", "ai_1")
+    assert exc.value.reason == "clone_host_mismatch"
+    assert not (tmp_path / "clones" / "acme" / "railsproj" / "railsproj").exists()
+    assert rig.tmux.calls == []
+
+
+def _corrupt(path: Path) -> bytes:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('{"schema": 1, "projects": {"proj-x": {"repository": "acme/rail', encoding="utf-8")
+    return path.read_bytes()
+
+
+def test_a_store_that_cannot_be_read_is_not_read_and_never_overwritten(hub, home) -> None:
+    """Finding 2, producer-backed: the hub's own routes over a corrupt file."""
+    _project(hub)
+    store = home / ".holdspeak" / "project_repositories.json"
+    before = _corrupt(store)
+    read = hub.client.get(f"/api/projects/{PROJECT}/repository").json()
+    assert (read["store"], read["registered"], read["repository"]) == ("not_read", False, None)
+    refused = hub.client.post(f"/api/projects/{PROJECT}/repository", json={"repository": REPO})
+    assert refused.status_code == 409, refused.text
+    body = refused.json()
+    assert body["code"] == "repository_store_unreadable"
+    assert body["receipt"]["outcome"] == "repository_store_unreadable"
+    assert store.read_bytes() == before  # nothing written over it
+
+
+def test_a_store_that_cannot_be_read_refuses_the_hand_and_names_it_in_the_preview(tmp_path, db, monkeypatch) -> None:
+    from holdspeak.services.agent_hand_preview import LaunchReads, preview_hand
+
+    rig = _registered_rig(tmp_path, db, monkeypatch, FakeGh())
+    before = _corrupt(rig.hand.repositories.store_path)
+    with pytest.raises(AgentHandRefused) as exc:
+        rig.hand.hand(OWNER, "action", "ai_1")
+    assert exc.value.reason == "repository_store_unreadable"
+    reads = LaunchReads(
+        profiles_path=tmp_path / "profiles.json", registry_path=tmp_path / "sources.json",
+        ledger_path=tmp_path / "launches.json", which=lambda name: f"/bin/{name}",
+        runner=lambda argv: SimpleNamespace(returncode=1),
+    )
+    assert preview_hand(rig.hand, OWNER, "action", "ai_1", reads=reads)["refused"] == ["repository_store_unreadable"]
+    assert rig.hand.repositories.store_path.read_bytes() == before
+
+
+def test_the_persisted_clone_receipt_names_the_host_and_repository(tmp_path, db, monkeypatch) -> None:
+    """Finding 3: the durable kernel row and its receipt name the egress."""
+    rig = _registered_rig(tmp_path, db, monkeypatch, FakeGh())
+    try:
+        result = rig.hand.hand(OWNER, "action", "ai_1")
+    finally:
+        rig.tmux.ended = True
+    op = result["clone"]["operation_id"]
+    with db._connection() as conn:
+        row = conn.execute("SELECT name, target_ref, state FROM kernel_operations WHERE operation_id=?",
+                           (op,)).fetchone()
+    assert tuple(row) == ("project.repository.clone", f"repository:github.com/{REPO}", "succeeded")
+    assert result["clone"]["receipt"]["result_ref"] == f"repository:github.com/{REPO}"
+
+
+def test_a_clone_survives_a_launch_refusal(tmp_path, db, monkeypatch) -> None:
+    """Finding 4: the clone happened; the launch then refuses; the refusal
+    still names the clone (CLONED), and the next hand clones nothing."""
+    gh = FakeGh()
+    rig = _registered_rig(tmp_path, db, monkeypatch, gh)
+    rig.hand._max_live = 0
+    with pytest.raises(AgentHandRefused) as exc:
+        rig.hand.hand(OWNER, "action", "ai_1")
+    assert exc.value.reason == "launch_cap_reached"
+    clone = exc.value.context["clone"]
+    assert (clone["repository"], clone["state"], clone["host"]) == (REPO, "cloned", "github.com")
+    assert clone["cloned_at"] and clone["receipt"]["outcome"] == "succeeded"
+    assert len(gh.calls) == 1
+
+
+def test_the_door_count_line_says_no_zero(monkeypatch) -> None:
+    """Astra on #1000 (MISSED 4): the Door read "0 open PRs" at 393."""
+    from holdspeak.services.project_door_service import ProjectDoorService
+
+    door = ProjectDoorService()
+    monkeypatch.setattr(door, "_snapshot_for_key", lambda *a, **k: [])
+    answer = door.count(OWNER, "github", REPO, ["open_prs", "ci"])
+    assert answer["plain"] == "CI —"
+    assert [t["count"] for t in answer["tokens"]] == [0, 0]
+    monkeypatch.setattr(door, "_snapshot_for_key", lambda *a, **k: [{"number": 1}, {"number": 2}])
+    assert door.count(OWNER, "github", REPO, ["open_prs"])["plain"] == "2 open PRs"

@@ -37,6 +37,7 @@ from .errors import ServiceError
 from .project_repository import (
     CLONE_HOST,
     ProjectRepositories,
+    StoreNotRead,
     register as register_repository,
     registered_source,
     repository_state,
@@ -266,6 +267,34 @@ class AgentHandService:
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
     ) -> dict[str, Any]:
+        """Hand the item. A clone this hand made is named on the answer AND on
+        a later refusal (the launch can still fail after it): the face shows
+        CLONED either way (Astra r1 on #1000, finding 4)."""
+        made: dict[str, Any] = {}
+        try:
+            answer = self._hand(
+                principal, kind, item_id, made,
+                instruction=instruction, profile=profile, project_id=project_id,
+            )
+        except ServiceError as exc:
+            if made.get("clone"):
+                exc.context["clone"] = made["clone"]
+            raise
+        if made.get("clone"):
+            answer["clone"] = made["clone"]
+        return answer
+
+    def _hand(
+        self,
+        principal: Any,
+        kind: str,
+        item_id: str,
+        made: dict[str, Any],
+        *,
+        instruction: Optional[str] = None,
+        profile: Optional[str] = None,
+        project_id: Optional[str] = None,
+    ) -> dict[str, Any]:
         try:
             kind, item_id = parse_item_ref({"kind": kind, "id": item_id})
         except AgentBriefRefused as exc:
@@ -285,15 +314,20 @@ class AgentHandService:
 
         project_id = project_id or project_for_item(self._db, kind, item_id)
         _reload_registry(launcher._registry)
-        source = resolve_project_repository(
-            self._db, project_id, launcher._registry, project_map=self._project_map,
-            registrations=self.repositories,
-        )
+        try:
+            source = resolve_project_repository(
+                self._db, project_id, launcher._registry, project_map=self._project_map,
+                registrations=self.repositories,
+            )
+        except StoreNotRead as exc:
+            raise AgentHandRefused(exc.code, exc.detail) from exc
         clone: Optional[dict[str, Any]] = None
         if source is None:
             # PHILO-15 16: the Project's registered repository, cloned on its
             # first hand (one receipt), then registered as a Delivery Source.
             source, clone = self._clone_registered(principal, project_id, launcher._registry)
+            if clone is not None:
+                made["clone"] = clone
         if source is None:
             if watched_repositories(self._db, project_id):
                 raise AgentHandRefused(
@@ -372,10 +406,7 @@ class AgentHandService:
             result = self._launch_gated(launcher, request, brief["text"], principal, worktree_path, spec["name"])
         else:
             result = self._launch_ungated(launcher, request, brief["text"], principal)
-        answer = self._answer(result, spec, source, brief, kind, item_id, project_id, mode)
-        if clone is not None:
-            answer["clone"] = clone
-        return answer
+        return self._answer(result, spec, source, brief, kind, item_id, project_id, mode)
 
     # ── PHILO-15 16: the Project's repository ───────────────────────
 
@@ -391,7 +422,8 @@ class AgentHandService:
         repository = str(record["repository"])
         from . import project_kernel
 
-        payload = {"project_id": str(project_id), "repository": repository}
+        # The receipt's target names the egress: repository:github.com/<owner>/<name>.
+        payload = {"project_id": str(project_id), "repository": repository, "host": CLONE_HOST}
         try:
             path, kernel = project_kernel.run(
                 self._db, principal, "project.repository.clone", payload,
@@ -405,13 +437,13 @@ class AgentHandService:
             source, _ = registry.register(str(path), label=repository.split("/", 1)[1])
         except RegistryError as exc:
             raise AgentHandRefused("clone_not_registered", str(exc)) from exc
-        self.repositories.put(str(project_id), {
-            **record, "source_id": source.source_id, "cloned_at": record.get("cloned_at") or _iso_now(),
-        })
+        cloned_at = record.get("cloned_at") or _iso_now()
+        self.repositories.put(str(project_id), {**record, "source_id": source.source_id, "cloned_at": cloned_at})
         return source, {
             "repository": repository,
             "host": CLONE_HOST,
             "state": "cloned",
+            "cloned_at": cloned_at,
             "operation_id": (kernel or {}).get("operation_id"),
             "receipt": (kernel or {}).get("receipt"),
         }

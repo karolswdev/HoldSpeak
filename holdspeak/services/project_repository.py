@@ -62,12 +62,52 @@ def normalize_repository(value: Any) -> str:
     return text
 
 
+def clone_url(repository: str) -> str:
+    """The one URL a clone reads: https://github.com/<owner>/<name>."""
+    return f"https://{CLONE_HOST}/{repository}"
+
+
+def _origin_of(path: Path) -> str:
+    """The clone's origin, credential-free and without ``.git`` (lower case),
+    read from its ``.git/config`` (a file read, no process)."""
+    from ..delivery.registry import normalize_git_url
+
+    try:
+        text = (path / ".git" / "config").read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    section, url = "", ""
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("["):
+            section = stripped
+        elif section == '[remote "origin"]' and stripped.startswith("url") and "=" in stripped:
+            url = stripped.split("=", 1)[1].strip()
+            break
+    url = normalize_git_url(url) if url else ""
+    url = url[:-len(".git")] if url.endswith(".git") else url
+    if url and "://" not in url:
+        url = "https://" + url
+    return url.lower()
+
+
 def _gh_clone(argv: list[str], env: Mapping[str, str]) -> Any:
     """The real clone: ``gh repo clone`` (gh's own git credential, no prompt)."""
     return subprocess.run(
         argv, capture_output=True, text=True, errors="replace",
         timeout=CLONE_TIMEOUT_SECONDS, env=dict(env), stdin=subprocess.DEVNULL,
     )
+
+
+class StoreNotRead(ServiceError):
+    """``repository_store_unreadable``: the registrations file exists and cannot be read."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "repository_store_unreadable",
+            "The Project repository registrations cannot be read; nothing was changed.",
+            context={"status": 409},
+        )
 
 
 def _now() -> str:
@@ -101,14 +141,19 @@ class ProjectRepositories:
     # ── the registrations ───────────────────────────────────────────
 
     def _read(self) -> dict[str, Any]:
-        try:
-            raw = json.loads(self.store_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            raw = None
-        if not isinstance(raw, dict) or raw.get("schema") != STORE_SCHEMA:
+        """The registrations. An absent file is empty; a file that cannot be
+        read (an OS error, broken JSON, another schema) is NOT READ: it
+        refuses by name, so nothing reads it as "no registration" and no
+        registration writes over it (Astra r1 on #1000, finding 2)."""
+        path = self.store_path
+        if not path.exists():
             return {"schema": STORE_SCHEMA, "projects": {}}
-        projects = raw.get("projects")
-        raw["projects"] = projects if isinstance(projects, dict) else {}
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise StoreNotRead() from exc
+        if not isinstance(raw, dict) or raw.get("schema") != STORE_SCHEMA or not isinstance(raw.get("projects"), dict):
+            raise StoreNotRead()
         return raw
 
     def get(self, project_id: Optional[str]) -> Optional[dict[str, Any]]:
@@ -149,7 +194,11 @@ class ProjectRepositories:
         # No prompt can hang the hub; gh gives git its own credential.
         env["GIT_TERMINAL_PROMPT"] = "0"
         env["GH_PROMPT_DISABLED"] = "1"
-        argv = ["gh", "repo", "clone", repository, str(target), "--", "--quiet"]
+        # The clone goes to the host the face names (GITHUB.COM), never to a
+        # GH_HOST the environment chose: the full URL and the host, both bound
+        # (Astra r1 on #1000, finding 1).
+        env["GH_HOST"] = CLONE_HOST
+        argv = ["gh", "repo", "clone", clone_url(repository), str(target), "--", "--quiet"]
         try:
             proc = (self._runner or _gh_clone)(argv, env)
         except FileNotFoundError as exc:
@@ -160,6 +209,14 @@ class ProjectRepositories:
                                context={"status": 409}) from exc
         if getattr(proc, "returncode", 1) != 0 or not (target / ".git").exists():
             raise ServiceError("clone_failed", f"The clone of {repository} failed.", context={"status": 409})
+        origin = _origin_of(target)
+        if origin != clone_url(repository).lower():
+            # The clone is not the disclosed one: it is parked beside, never used.
+            parked = target.with_name(f"{target.name}.not-github-{int(datetime.now().timestamp())}")
+            os.replace(target, parked)
+            raise ServiceError("clone_host_mismatch",
+                               f"The clone of {repository} did not come from {CLONE_HOST}.",
+                               context={"status": 409})
         return target
 
 
@@ -196,7 +253,13 @@ def repository_state(
 ) -> dict[str, Any]:
     """What the face shows: the registered repository, CLONED or not, and the
     watched repositories a Project with no registration could register."""
-    record = repositories.get(project_id)
+    try:
+        record = repositories.get(project_id)
+    except StoreNotRead:
+        # NOT READ, never "none": the face says so and offers Retry.
+        return {"project_id": project_id, "repository": None, "registered": False, "cloned": False,
+                "registered_at": None, "cloned_at": None, "watched": watched_repositories(db, project_id),
+                "host": CLONE_HOST, "store": "not_read"}
     repository = str(record["repository"]) if record else None
     cloned = bool(record) and (
         repositories.is_cloned(repository or "")
@@ -211,6 +274,7 @@ def repository_state(
         "cloned_at": (record or {}).get("cloned_at"),
         "watched": watched_repositories(db, project_id),
         "host": CLONE_HOST,
+        "store": "read",
     }
 
 
@@ -233,6 +297,8 @@ def register(db: Any, repositories: ProjectRepositories, project_id: str, reposi
 __all__ = [
     "CLONE_HOST",
     "ProjectRepositories",
+    "StoreNotRead",
+    "clone_url",
     "default_clone_root",
     "default_store_path",
     "normalize_repository",

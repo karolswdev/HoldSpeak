@@ -63,7 +63,12 @@ export function handTargetProps(key: string) {
       if (!drag) return;
       event.preventDefault();
       useDropHand.getState().endDrag();
-      void beginHand(drag.origin, { agent, host: drag.host, source: drag.source });
+      // The Conductor drawer stands for the default agent (PHILO-15 B36).
+      void beginHand(drag.origin, {
+        agent: key === "drawer:conductor" ? undefined : agent,
+        host: drag.host,
+        source: drag.source,
+      });
     },
   };
 }

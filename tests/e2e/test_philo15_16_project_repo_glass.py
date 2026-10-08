@@ -83,7 +83,7 @@ class _FakeGh:
         (target / "README.md").write_text("# rehearsal\n", encoding="utf-8")
         for args in (["init", "-b", "main"], ["config", "user.email", "t@example.test"],
                      ["config", "user.name", "T"], ["add", "-A"], ["commit", "-m", "seed"],
-                     ["remote", "add", "origin", f"https://github.com/{argv[3]}.git"]):
+                     ["remote", "add", "origin", f"{argv[3]}.git"]):
             subprocess.run(["git", "-C", str(target), *args], check=True, capture_output=True)
         return subprocess.CompletedProcess(argv, 0, "", "")
 
@@ -178,6 +178,10 @@ class TestProjectRepositoryGlass:
                 pick.wait_for(timeout=T)
                 pick.click()
                 page.get_by_test_id("door-counts-github").or_(page.locator(".door-row-status")).first.wait_for(timeout=T)
+                counts = page.get_by_test_id("door-counts-github")
+                if counts.count():
+                    # No counter of zero (Astra on #1000): the fixture has no open PR.
+                    assert counts.inner_text() == "CI —", counts.inner_text()
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"16-door-picked-{width}.png"))
                 page.get_by_test_id("door-create").click()
@@ -206,13 +210,14 @@ class TestProjectRepositoryGlass:
         )
         clone = line.get_by_test_id("hand-confirm-clone")
         assert f"CLONED · {REPO}".upper() in clone.inner_text().upper()
+        self._fits(page, line, clone.locator(".surface-token").first)
         assert line.get_by_test_id("hand-confirm-receipt").inner_text().startswith("LAUNCHED")
         _settle(page)
         page.screenshot(path=str(SHOTS / f"16-cloned-launched-{width}.png"))
         # The clone, its receipt and the launch, on the hub.
         path = self.home / ".holdspeak" / "repositories" / "karolswdev" / REPO.split("/")[1] / REPO.split("/")[1]
         assert (path / ".git").exists()
-        assert len(self.gh.calls) == 1 and self.gh.calls[0][:4] == ["gh", "repo", "clone", REPO]
+        assert len(self.gh.calls) == 1 and self.gh.calls[0][:4] == ["gh", "repo", "clone", f"https://github.com/{REPO}"]
         launches = json.loads((self.rig.repo.parent / "launches.json").read_text())["launches"]
         assert [x.get("profile_id") for x in launches] == ["codex-default"], launches
         assert (path.parent / f"hs-action-{ACTION_ID}" / ".git").exists()
@@ -222,6 +227,18 @@ class TestProjectRepositoryGlass:
             "receipt": line.get_by_test_id("hand-confirm-receipt").inner_text(),
             "launch": {k: launches[0].get(k) for k in ("launch_id", "profile_id", "source_id", "origin_ref")},
         }, indent=2))
+
+    @staticmethod
+    def _fits(page: Any, line: Any, token: Any) -> None:
+        """Astra r1 on #1000 (finding 5): the clone token's visible box is
+        inside the line and the viewport (presence alone cannot see a clip)."""
+        box, frame = token.bounding_box(), line.bounding_box()
+        vw = page.viewport_size["width"]
+        assert box and frame, (box, frame)
+        assert box["x"] >= frame["x"] - 0.5 and box["x"] + box["width"] <= frame["x"] + frame["width"] + 0.5, (box, frame)
+        assert box["x"] + box["width"] <= vw, (box, vw)
+        # The text is not cut inside the token either.
+        assert token.evaluate("el => el.scrollWidth <= el.clientWidth + 1"), token.inner_text()
 
     def _line_to_codex(self, page: Any, drawer: Any, width: int) -> Any:
         line = drawer.get_by_test_id("hand-confirm")
@@ -234,6 +251,7 @@ class TestProjectRepositoryGlass:
         assert "GITHUB.COM" in to_clone.inner_text() and f"CLONES {REPO}".upper() in to_clone.inner_text().upper()
         assert "NO REPOSITORY" not in line.inner_text()
         _settle(page)
+        self._fits(page, line, to_clone.locator(".surface-token").first)
         page.screenshot(path=str(SHOTS / f"16-confirm-claude-{width}.png"))
         line.get_by_test_id("hand-confirm-agent").click()
         page.wait_for_function(
@@ -242,6 +260,7 @@ class TestProjectRepositoryGlass:
         assert "API.OPENAI.COM" in line.inner_text()
         assert not (self.home / ".holdspeak" / "repositories").exists()  # nothing cloned before the press
         _settle(page)
+        self._fits(page, line, to_clone.locator(".surface-token").first)
         page.screenshot(path=str(SHOTS / f"16-confirm-codex-{width}.png"))
         return line
 

@@ -28,7 +28,8 @@ function useProjectFacts(member: OpenInfo["member"], setFailure: (text: string) 
   const repository = useProjectRepository(isProject ? member.id : "");
   const [busy, setBusy] = useState(false);
   if (!isProject) return { facts: member.facts, verb: null };
-  const words = repositoryWords(repository.state);
+  const notRead = repository.failed || repository.state?.store === "not_read";
+  const words = repositoryWords(repository.state, repository.failed);
   const facts: GetInfoFacts = {
     ...member.facts,
     more: [...(member.facts.more ?? []), { key: "repository", word: "Repository", value: words }],
@@ -47,7 +48,11 @@ function useProjectFacts(member: OpenInfo["member"], setFailure: (text: string) 
       setBusy(false);
     }
   };
-  const verb = name ? (
+  const verb = notRead ? (
+    <Button dense variant="ghost" onClick={() => repository.reload()} data-testid="info-repository-retry">
+      Retry
+    </Button>
+  ) : name ? (
     <Button dense variant="ghost" loading={busy} onClick={() => void register()} data-testid="info-register">
       Register
     </Button>
