@@ -12,6 +12,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from urllib.error import URLError
 
+import pytest
+
 import holdspeak.doctor as hub_doctor
 
 REPO = Path(__file__).resolve().parents[2]
@@ -175,7 +177,7 @@ def test_this_device_is_said_once(monkeypatch) -> None:
 #: not carry (Astra r1 on #986: the label fence missed the details).
 OUTPUT_JARGON = re.compile(
     r"\bMIR\b|\bLLM\b|Structured-output|telemetry|\bMesh edges\b|Runs on destinations|\+ KB\b|compilation"
-    r"|preflight|primitives|llama_cpp|openai_compatible|resolved=|Errno"
+    r"|preflight|primitives|llama_cpp|openai_compatible|resolved=|requested=|Errno"
 )
 
 
@@ -221,3 +223,29 @@ def test_the_printed_hub_list_is_plain_words(monkeypatch) -> None:
 def test_the_hub_database_row_says_notes_not_primitives() -> None:
     source = (REPO / "holdspeak" / "doctor.py").read_text(encoding="utf-8")
     assert '"database", "notes readable"' in source
+
+
+@pytest.mark.parametrize("branch", ["openai_compatible", "unresolvable"])
+def test_the_printed_dictation_model_row_is_plain_in_every_branch(branch, monkeypatch, capsys) -> None:
+    """Astra r2 on #986: the OpenAI-compatible branch printed `resolved=...`;
+    the default-state list never reached it. Each branch, printed."""
+    from holdspeak.commands import doctor as local_doctor
+    from holdspeak.config import Config
+    from holdspeak.plugins.dictation.runtime import RuntimeUnavailableError
+
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = True
+    cfg.dictation.runtime.backend = "openai_compatible" if branch == "openai_compatible" else "llama_cpp"
+
+    def resolve(requested, **_kw):
+        if branch == "unresolvable":
+            raise RuntimeUnavailableError("no backend installed")
+        return ("openai_compatible", "requested backend")
+
+    monkeypatch.setattr("holdspeak.plugins.dictation.runtime.resolve_backend", resolve)
+    check = local_doctor._check_dictation_runtime(cfg)
+    monkeypatch.setattr(local_doctor, "collect_doctor_checks", lambda **_k: [check])
+    local_doctor.run_doctor_command(SimpleNamespace(connectors=False, strict=False))
+    out = capsys.readouterr().out
+    assert "Dictation AI model" in out
+    assert OUTPUT_JARGON.findall(out) == [], out

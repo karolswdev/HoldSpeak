@@ -16,8 +16,31 @@ here as text, not deleted.
   developer calls it; the desk seed no longer calls it.
 
 Desks seeded before this change keep these notes (the seed never removes an
-object it made). To get one back on a new desk, make a note with the same
-title, tags and body.
+object it made).
+
+To get a starter-question note back on a new desk, make a note with the same
+title and body. Nothing reads these three by id.
+
+The guard notes are different: the built-in Desk and Chase modes find them
+by their fixed ids (`hs-seed-guardrail-effect-guard`,
+`hs-seed-guardrail-egress-guard`; `holdspeak/services/thread_modes.py`
+`MODE_SEEDS` and `guardrails_for_thread`). A new note with the same title,
+tags and body gets a new id, and those modes do not load it. To get the
+guards back:
+
+- **The original ids.** A developer calls `thread_modes.seed_guardrails(db)`
+  (it makes both notes with their ids). Alternatively, `POST /api/notes`
+  with `"id": "hs-seed-guardrail-effect-guard"` (or the egress id) and the
+  title, tags and body below. This works only while the id has never
+  existed on that desk; a deleted note keeps its id as a tombstone.
+- **A replacement note on a mode.** `PATCH /api/threads/{id}` with
+  `toggle_guardrail` enables any guardrail note on the thread's mode
+  (`toggle_guardrail_on_mode`). This works only for a custom mode: the
+  built-in Desk and Chase modes keep their fixed lists and ignore it.
+
+Open (recorded in the PR #986 body): no desk verb and no face restores the
+guard notes or enables one on Desk or Chase today. The way back is the API or
+code above.
 
 The notes, as they were in the seed manifest:
 

@@ -4538,6 +4538,15 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         # PHILO-10-05: a malformed seat is refused by name before anything is touched.
         raise Blocked(f"ui action 'scroll_into_view' needs a selector and a block of start, center or end; "
                       f"got selector={step.get('selector')!r} block={step.get('block')!r}; nothing was fired")
+    if action == "long_press":
+        # PHILO-15 11: a malformed long press is refused by name before anything is touched.
+        selector = step.get("selector")
+        if not isinstance(selector, str) or not selector.strip():
+            raise Blocked("ui action 'long_press' needs a selector; nothing was fired")
+        hold_ms = step.get("hold_ms", 650)
+        if not isinstance(hold_ms, int) or hold_ms < 500:
+            raise Blocked(f"ui action 'long_press' hold_ms {hold_ms!r} is below the 500 ms long press; "
+                          "nothing was fired")
     if page is None:
         raise Blocked("headless mode refuses UI/face steps: no Page is opened")
     optional, input_path = _ui_input_options(action, step, hub, action == "set_input_files")

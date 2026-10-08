@@ -772,7 +772,7 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
         return DoctorCheck(
             name="Dictation AI model",
             status="WARN",
-            detail=f"requested={requested!r}; resolution failed: {exc}{profile_note}",
+            detail=f"the {requested} engine is not installed: {exc}{profile_note}",
             fix=f"{profile_fix}{doctor_runtime_install_fix(requested)}",
         )
 
@@ -781,9 +781,11 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
             name="Dictation AI model",
             status="WARN" if effective.reason else "PASS",
             detail=(
-                f"resolved={resolved} ({reason}); endpoint="
-                f"{effective.base_url or 'unset — pick a destination in Settings → Models'}; "
-                f"model={effective.model or 'unset'}{profile_note}"
+                # The wire id stays in the data; `plain()` prints it as
+                # "OpenAI-compatible server".
+                f"uses an openai_compatible ({reason}); address: "
+                f"{effective.base_url or 'not set. Pick a destination in Settings → Models'}; "
+                f"model: {effective.model or 'not set'}{profile_note}"
             ),
             fix=profile_fix or None,
         )

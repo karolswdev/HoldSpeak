@@ -213,7 +213,7 @@ def test_dictation_runtime_check_warn_when_backend_unresolvable(monkeypatch, tmp
     monkeypatch.setattr("holdspeak.plugins.dictation.runtime.resolve_backend", _refuse)
     result = doctor._check_dictation_runtime(cfg)
     assert result.status == "WARN"
-    assert "resolution failed" in result.detail
+    assert "engine is not installed" in result.detail
     assert result.fix and "uv pip install" in result.fix
     assert "dictation-llama" in result.fix
 
@@ -262,7 +262,7 @@ def test_dictation_runtime_check_pass_for_openai_compatible(monkeypatch) -> None
     assert result.status == "PASS"
     assert "openai_compatible" in result.detail
     # HS-112-01: no assigned destination = the honest unset detail
-    assert "pick a destination" in result.detail
+    assert "Pick a destination" in result.detail
 
 
 def test_project_context_check_pass_when_pipeline_disabled() -> None:
