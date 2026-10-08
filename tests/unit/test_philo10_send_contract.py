@@ -46,7 +46,7 @@ from holdspeak.runtime import composition
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo10_send import (  # noqa: E402
     SENTINEL, DispatchSpy, Hub, _boot, destination, files, history, in_thread, op, ops, prepare, preview_digest, room,
-    send, send_body, sends, source,
+    send, send_body, sends, sent_text, source,
 )
 from test_philo9_steward_admission import AGENT_ID, _agent, _tool  # noqa: E402
 
@@ -394,8 +394,9 @@ def test_the_preview_is_the_frozen_bytes_and_the_file_is_those_bytes(
     previewed = hub.client.post("/api/channels/preview", json={"document_ref": document_ref, "destination_id": dest}).json()
     prepared = prepare(hub, document_ref, dest)["send"]
     if source_kind == "project_update":
-        assert previewed["preview"]["text"] == prepared["preview"]["text"] == body
-        payload = body
+        # PHILO-15 B53: the sent bytes are the body under its heading.
+        payload = sent_text(body)
+        assert previewed["preview"]["text"] == prepared["preview"]["text"] == payload
     else:
         payload = prepared["preview"]["text"]
         assert previewed["preview"]["text"] == payload
@@ -744,3 +745,21 @@ def test_the_words_map_his_asks_and_never_say_an_agent_sends(hub: Hub) -> None:
     assert "only the owner sends" in tools["channel.send"]["description"].lower()
     assert "document_ref" in tools["channel.prepare"]["inputSchema"]["properties"]
     assert "destination_id" in tools["channel.prepare"]["inputSchema"]["properties"]
+
+
+def test_nothing_verified_is_refused_at_preview_and_prepare(hub: Hub, tmp_path: Path) -> None:
+    """PHILO-15 17 (Astra r2 ruling): a published update whose every claim is
+    unchecked is refused NOTHING VERIFIED by the real channel service, before
+    any byte is frozen or written; the stored update keeps its claims."""
+    body = ("## Progress\n\n- **[UNVERIFIED]** The rollout is complete.\n\n"
+            "## Decisions\n\nNo decisions in this window.\n")
+    _pid, update = room(hub, body=body)
+    folder = tmp_path / "out"
+    dest = destination(hub, folder)
+    ref = f"project_update:{update}"
+    for path in ("/api/channels/preview", "/api/channels/sends"):
+        refused = hub.client.post(path, json={"document_ref": ref, "destination_id": dest})
+        assert refused.status_code == 400, refused.text
+        assert refused.json()["code"] == "nothing_verified", refused.text
+    assert not list(folder.glob("*.md"))
+    assert hub.db.project_updates.get_update(update)["body_md"] == body

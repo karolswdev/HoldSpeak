@@ -21,6 +21,17 @@ from test_philo5_the_loop import Hub, _boot  # noqa: E402,F401
 SENTINEL = "SENTINEL-7f3a-body-never-in-argv-or-receipt"
 
 
+def sent_text(body: str, name: str = "Payments ledger cutover") -> str:
+    """A published update's Markdown as it leaves the desk (PHILO-15 B53
+    ruling): the heading "<Project> · Update · <date>" leads, an unchecked
+    claim is omitted. The date is the publication's (UTC) date: today."""
+    from datetime import datetime, timezone
+
+    from holdspeak.services.channel_contract import without_desk_marks
+
+    return without_desk_marks(body, f"{name} · Update · {datetime.now(timezone.utc).date().isoformat()}")
+
+
 def room(hub: Hub, *, name: str = "Payments ledger cutover", publish: bool = True, body: Optional[str] = None) -> tuple[str, str]:
     c = hub.client
     pid = c.post("/api/projects", json={"name": name}).json()["project"]["id"]

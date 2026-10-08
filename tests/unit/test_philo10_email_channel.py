@@ -41,7 +41,7 @@ from holdspeak.runtime import composition
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo10_send import (  # noqa: E402
     SENTINEL, Hub, _boot, history, in_thread, op, ops, preview_digest, prepare, reap_past_deadline, room, send,
-    sends,
+    sends, sent_text,
 )
 
 KEY = "SG.syntheticKEY7c1e0000abcd.neverLeavesTheOpener0000"
@@ -232,10 +232,10 @@ def test_c1_one_send_is_one_egress_child_whose_wire_bytes_and_digest_are_the_fro
     assert (sent["host"], sent["url"]) == ("api.sendgrid.com", "https://api.sendgrid.com/v3/mail/send")
     assert sent["body"] == frozen and sent["headers"]["Authorization"] == f"Bearer {KEY}"
     request = json.loads(frozen)
-    assert request["content"] == [{"type": "text/plain", "value": f"Cutover is green. {SENTINEL}"}]
+    assert request["content"] == [{"type": "text/plain", "value": sent_text(f"Cutover is green. {SENTINEL}")}]
     assert body["send"]["preview"] == {"from": "Karol <karol@example.com>",
                                        "to": ["Priya Raman <priya@example.com>"], "cc": ["lead@example.com"],
-                                       "subject": request["subject"], "text": f"Cutover is green. {SENTINEL}"}
+                                       "subject": request["subject"], "text": sent_text(f"Cutover is green. {SENTINEL}")}
     # One external.egress CHILD of the send, under the send's authenticated principal.
     send_op = op(hub, body["operation_id"])
     [child] = egress_ops(hub)
@@ -786,9 +786,9 @@ def test_c6_a_materially_different_provider_plugs_in_with_one_class_and_one_row(
     result = send(hub, press(hub, "send_id", update, dest, "c6")).json()
     assert result["outcome"] == "sent" and result["send"]["proof"] == {"provider": "postmarklike",
                                                                        "message_id": "pm-0a1b"}
-    assert result["send"]["preview"]["text"] == "Through a second provider."
+    assert result["send"]["preview"]["text"] == sent_text("Through a second provider.")
     [sent] = wire.requests
-    assert sent["host"] == "api.postmark.test" and json.loads(sent["body"])["TextBody"] == "Through a second provider."
+    assert sent["host"] == "api.postmark.test" and json.loads(sent["body"])["TextBody"] == sent_text("Through a second provider.")
     # Its OWN authentication: the token header, and no Bearer Authorization at all.
     assert sent["headers"]["X-postmark-server-token"] == KEY and "Authorization" not in sent["headers"]
     [child] = egress_ops(hub)
@@ -835,7 +835,7 @@ def test_c7_resend_sends_its_exact_request_and_its_id_is_the_acceptance(hub: Hub
     assert sent["body"] == frozen
     assert frozen == json.dumps({"from": "Karol <karol@example.com>", "to": ["Priya Raman <priya@example.com>"],
                                  "cc": ["lead@example.com"], "subject": json.loads(frozen)["subject"],
-                                 "text": f"Cutover is green. {SENTINEL}"},
+                                 "text": sent_text(f"Cutover is green. {SENTINEL}")},
                                 ensure_ascii=False, separators=(",", ":")).encode()
     assert sent["headers"]["Authorization"] == f"Bearer {RESEND_KEY}"
     assert sent["headers"]["User-agent"] == "HoldSpeak"
@@ -848,7 +848,7 @@ def test_c7_resend_sends_its_exact_request_and_its_id_is_the_acceptance(hub: Hub
     assert result["send"]["preview"] == {"from": "Karol <karol@example.com>",
                                          "to": ["Priya Raman <priya@example.com>"], "cc": ["lead@example.com"],
                                          "subject": json.loads(frozen)["subject"],
-                                         "text": f"Cutover is green. {SENTINEL}"}
+                                         "text": sent_text(f"Cutover is green. {SENTINEL}")}
     # One external.egress child to the Resend host, the frozen digest admitted.
     [child] = egress_ops(hub)
     full = native(hub, child["operation_id"])["canonical"]

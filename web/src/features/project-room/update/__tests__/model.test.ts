@@ -142,7 +142,9 @@ describe("generatorLabel", () => {
   });
 
   it("labels model with assignment", () => {
-    expect(generatorLabel("model:gpt-4o")).toBe("Model (gpt-4o)");
+    // PHILO-15 B53: the model's name, never the assignment id.
+    expect(generatorLabel("model:ia_69187bba")).toBe("Model");
+    expect(generatorLabel("model:ia_69187bba", "qwen3.8-27b")).toBe("Model · qwen3.8-27b");
   });
 
   it("passes through unknown generators", () => {

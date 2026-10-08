@@ -362,7 +362,10 @@ def test_note_meeting_and_artifact_get_the_pr_linked_in_their_room(tmp_path, db,
     linked = _observations(db, "conductor.pr_linked")
     assert [o["subject_ref"] for o in linked] == [ref]
     _delta, updates = _updates(db)
-    assert f"Merged: PR #7 for {title}" in _progress(updates.draft_update(OWNER, PROJECT)["body_md"])
+    # PHILO-15 B52: the row names the PR by its own title, with its link.
+    body = updates.draft_update(OWNER, PROJECT)["body_md"]
+    assert f"Merged: Fix the login timeout (PR #7) {PR_URL}" in _progress(body)
+    assert title not in _progress(body)
 
 
 def test_project_item_takes_its_done_transition(tmp_path, db, monkeypatch) -> None:
@@ -523,7 +526,7 @@ def test_agent_pr_merge_is_one_line_with_k4s_closure(tmp_path, db, monkeypatch) 
     assert receipt["merged_prs"]["recorded"] == 1
     _delta, updates = _updates(db)
     body = updates.draft_update(OWNER, PROJECT)["body_md"]
-    assert "Closed: Fix the login timeout (PR #7) -- merged" in _progress(body)
+    assert f"Merged: Fix the login timeout (PR #7) {PR_URL}" in _progress(body)
     assert body.count("PR #7") == 1, body
 
 

@@ -137,6 +137,18 @@ def slack_destination(hub: Hub, key_ref: str, *, replaces: Optional[str] = None)
     return destination["id"]
 
 
+def _frame(api: Any, destination: str) -> tuple[str, str]:
+    """What the sent update adds around its body on Slack (PHILO-15 B53: the
+    heading "<Project> · Update · <date>"), read off a real preview."""
+    _project, probe = room(api, body="zq")
+    text = api.client.post("/api/channels/preview", json={
+        "document_ref": f"project_update:{probe}", "destination_id": destination,
+    }).json()["preview"]["text"]
+    head, _, tail = text.partition("zq")
+    assert head.startswith("*Payments ledger cutover · Update · "), text
+    return head, tail
+
+
 def test_save_check_preview_prepare_and_send_use_the_real_slack_producer(
     hub: Any, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -156,7 +168,8 @@ def test_save_check_preview_prepare_and_send_use_the_real_slack_producer(
     })
     assert preview.status_code == 200, preview.text
     preview_body = preview.json()
-    assert preview_body["preview"] == {"text": "*Heading*\n\n*bold* and <https://example.test/docs|docs>"}
+    head, tail = _frame(api, destination)
+    assert preview_body["preview"] == {"text": head + "*Heading*\n\n*bold* and <https://example.test/docs|docs>" + tail}
 
     prepared = api.client.post("/api/channels/sends", json={
         "document_ref": f"project_update:{update}", "destination_id": destination,
@@ -324,8 +337,9 @@ def test_transport_failure_records_whether_bytes_may_have_left(
 def test_size_refusal_is_real_and_carries_size_and_limit_before_wire(hub: Any) -> None:
     api, _memory, wire = hub
     key_ref = save_webhook(api)
-    _project, update = room(api, body="x" * 39_001)
     destination = slack_destination(api, key_ref)
+    head, tail = _frame(api, destination)
+    _project, update = room(api, body="x" * (39_001 - len(head) - len(tail)))
     ref = f"project_update:{update}"
 
     refused = api.client.post("/api/channels/preview", json={
@@ -359,8 +373,10 @@ def test_size_refusal_is_real_and_carries_size_and_limit_before_wire(hub: Any) -
 def test_slack_size_is_text_characters_in_preview_and_prepared_send(hub: Any) -> None:
     api, _memory, wire = hub
     key_ref = save_webhook(api)
-    _project, update = room(api, body="é" * 39_000)
     destination = slack_destination(api, key_ref)
+    head, tail = _frame(api, destination)
+    fill = "é" * (39_000 - len(head) - len(tail))
+    _project, update = room(api, body=fill)
     args = {"document_ref": f"project_update:{update}", "destination_id": destination}
     preview = api.client.post("/api/channels/preview", json=args)
     prepared = api.client.post("/api/channels/sends", json=args)
@@ -368,7 +384,7 @@ def test_slack_size_is_text_characters_in_preview_and_prepared_send(hub: Any) ->
     assert preview.json()["size"] == prepared.json()["send"]["size"] == 39_000
     frozen = bytes(api.db.channel_sends.get(prepared.json()["send"]["id"])["payload"])
     assert len(frozen) > 39_000
-    assert json.loads(frozen)["text"] == preview.json()["preview"]["text"] == "é" * 39_000
+    assert json.loads(frozen)["text"] == preview.json()["preview"]["text"] == head + fill + tail
     assert wire.requests == []
 
 
