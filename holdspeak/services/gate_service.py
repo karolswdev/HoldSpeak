@@ -183,10 +183,11 @@ class GateService:
         from ..memory.defense import redact
 
         stored_head = redact(str(payload.get("args_head") or ""))[:ARGS_HEAD_CHARS]
-        target = visible_target(raw.get("target", ""), stored_head)
+        target = raw.get("target", "")
         found = self._own_launch(principal)
         if found is None:
-            return {"launch_id": "", "scope": scope, "rule": rule, "read_rule": raw["read_rule"], "target": target}
+            return {"launch_id": "", "scope": scope, "rule": rule, "read_rule": raw["read_rule"],
+                    "target": visible_target(target, stored_head)}
         launch_id, worktree, branch = found
         if scope == INSIDE:
             cwd = os.path.realpath(str(payload.get("cwd") or "/"))
@@ -200,7 +201,9 @@ class GateService:
         return {
             "launch_id": launch_id, "scope": scope, "rule": rule,
             "read_rule": raw["read_rule"] if scope == INSIDE else "",
-            "target": target if scope != INSIDE else "",
+            # Astra r2 on #998: the filter runs AFTER every hub override (a
+            # branch or a folder past the head is omitted, never stored).
+            "target": visible_target(target, stored_head) if scope != INSIDE else "",
         }
 
     def _launch_records(self) -> tuple[Any, list[dict[str, Any]]]:

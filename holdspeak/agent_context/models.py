@@ -317,11 +317,23 @@ _PROBLEM_RE = re.compile(
 )
 
 
+#: A negated problem word is no problem (Astra r2 on #998: "all checks
+#: passed with no errors"): these phrases are read out before the match.
+_NEGATED_PROBLEM_RE = re.compile(
+    r"\b(?:no|without|zero|0|did\s+not|didn't|never)\s+(?:new\s+|further\s+)?"
+    r"(?:fail(?:s|ed|ing|ures?)?|errors?|problems?|blockers?)\b"
+    r"|\berror[- ]free\b",
+    re.IGNORECASE,
+)
+
+
 def reports_a_problem(text: Any) -> bool:
     """The agent's turn end reports a problem the owner must see (a failed
-    check, an error, a block), question or not. The responder reads it too
-    (``needsYou.ts`` ``reportsAProblem`` mirrors it)."""
-    return bool(_PROBLEM_RE.search(str(text or "")))
+    check, an error, a block), question or not; a negated one ("no errors",
+    "without failures") is not. The responder reads it too (``needsYou.ts``
+    ``reportsAProblem`` mirrors it)."""
+    body = _NEGATED_PROBLEM_RE.sub(" ", str(text or ""))
+    return bool(_PROBLEM_RE.search(body))
 
 
 def turn_end(session: Any, *, work_done: bool = False) -> str:

@@ -122,3 +122,55 @@ def test_a_target_the_head_does_not_show_is_never_stored(hub: RealHub) -> None:
     stored = _proposal(hub, "toolu_forged")
     assert secret not in json.dumps(stored), "not in the stored operation, the head or the reason"
     assert stored["hold_reason"] == "OUTSIDE THE WORKTREE"
+
+
+
+def test_a_branch_past_the_head_is_never_the_target(hub: RealHub) -> None:
+    """Astra r2 on #998 (P1-b): the hub's own override (another branch) is
+    filtered too: a branch name past char 120 is omitted, never stored."""
+    branch = "other-ExampleCredential-k3y9Q"
+    command = "PAD=" + "p" * 130 + f" git push origin {branch}"
+    held = _hook(hub, command, "toolu_push_pad", ttl=2.0)
+    assert "expired" in (held.deny or "")
+    stored = _proposal(hub, "toolu_push_pad")
+    assert stored["operation"]["tool_call"]["rule"] == "git_push_other_branch"
+    assert branch not in json.dumps(stored), "not in the stored operation, the head or the reason"
+    assert stored["hold_reason"] == "PUSH TO ANOTHER BRANCH"
+    assert stored["args_cut"] is True  # CUT: Deny + Open (Raw)
+
+
+#: Astra's probes on #998 (her lock timed out at 300 s, so none ran): three
+#: secrets of shapes redaction does not know, past char 120, and four escapes.
+PAD = "# " + "padding " * 16 + "\n"
+SECRET_PROBES = [
+    ("toolu_p_env", f"cat > /tmp/review.env <<'EOF'\n{PAD}SESSION_COOKIE=review-only.synthetic-credential\nEOF",
+     "review-only.synthetic-credential"),
+    ("toolu_p_bearer", f"cat > /tmp/review.http <<'EOF'\n{PAD}Authorization: Bearer ExampleCredentialZz9\nEOF",
+     "ExampleCredentialZz9"),
+    # Astra's shape: the head redacts it; the target must not keep it whole.
+    ("toolu_p_target", "cat > notes.md <<EOF\nsk-reviewSynthetic0123456789abcdefABCD$SUFFIX\nEOF",
+     "reviewSynthetic0123456789abcdefABCD"),
+]
+ESCAPE_PROBES = [
+    ("toolu_e_pipe", "tee local.py <<'EOF' | python3\nopen('../outside-pipe', 'w').write('review')\nEOF", "outside-pipe"),
+    ("toolu_e_cd", "cd missing || cat > ../outside-cd <<'EOF'\nx\nEOF", "outside-cd"),
+    ("toolu_e_env", "cat local.py | env python3", "outside-env"),
+    ("toolu_e_link", "cat > out/outside-link <<'EOF'\nx\nEOF", "outside-link"),
+]
+
+
+@pytest.mark.parametrize("key, command, secret", SECRET_PROBES, ids=[k for k, _c, _s in SECRET_PROBES])
+def test_astra_secret_probes(hub: RealHub, key: str, command: str, secret: str) -> None:
+    held = _hook(hub, command, key, ttl=2.0)
+    assert "expired" in (held.deny or "")
+    stored = _proposal(hub, key)
+    assert secret not in json.dumps(stored), "not in args_head, operation.tool_call.target or the reason"
+
+
+@pytest.mark.parametrize("key, command, marker", ESCAPE_PROBES, ids=[k for k, _c, _m in ESCAPE_PROBES])
+def test_astra_escape_probes(hub: RealHub, key: str, command: str, marker: str) -> None:
+    (hub.worktree / "out").symlink_to(hub.worktree.parent) if not (hub.worktree / "out").exists() else None
+    held = _hook(hub, command, key, ttl=2.0)
+    assert "expired" in (held.deny or ""), "held, never passed"
+    assert _proposal(hub, key)["operation"]["tool_call"]["scope"] in ("outside", "unparsed")
+    assert not (hub.worktree.parent / marker).exists()

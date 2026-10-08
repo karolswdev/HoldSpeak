@@ -342,8 +342,11 @@ const INTERROGATIVE_RE =
 /** PHILO-15 15 (`agent_context.models.reports_a_problem`): the turn end
  * reports a failed check, an error or a block: the owner's, question or not. */
 export function reportsAProblem(text: unknown): boolean {
-  return PROBLEM_RE.test(String(text ?? ""));
+  return PROBLEM_RE.test(String(text ?? "").replace(NEGATED_PROBLEM_RE, " "));
 }
+
+const NEGATED_PROBLEM_RE =
+  /\b(?:no|without|zero|0|did\s+not|didn't|never)\s+(?:new\s+|further\s+)?(?:fail(?:s|ed|ing|ures?)?|errors?|problems?|blockers?)\b|\berror[- ]free\b/gi;
 
 const PROBLEM_RE =
   /\b(?:fail(?:s|ed|ing|ure)?|error(?:s|ed)?|broken|blocked|cannot|can't|couldn't|unable|timed out|did not pass|didn't pass|not passing)\b/i;

@@ -290,9 +290,16 @@ class _Rig:
         self.responder._deliver = deliver
 
     def ask(self, text: str, n: int) -> dict[str, Any]:
+        """The hub's path (``web_server``): triage, then decide ONLY the keys
+        triage returns (Astra r2 on #998: the rig called decide always)."""
         self.session = _Session(text, f"w{n}")
-        self.responder.triage(["codex:s1"])  # the watcher's call: the wait's record
-        return self.responder.decide("codex:s1")
+        split = self.responder.triage(["codex:s1"])
+        if "codex:s1" in split["decide"]:
+            return self.responder.decide("codex:s1")
+        entry = self.responder._store.wait("codex:s1") or {}
+        assert entry.get("wait_id") == f"w{n}", "triage recorded the turn end"
+        return {"outcome": entry.get("state"), "draft": {"reason": entry.get("reason", "")},
+                "silent": bool(entry.get("silent")), "triage": split}
 
     def shown(self) -> bool:
         """The wait is a Needs you row (membership's own read)."""
@@ -510,3 +517,50 @@ def test_a_secret_never_rides_the_target(worktree: Path, command: str) -> None:
     verdict = body["classification"]
     assert SECRET not in json.dumps(verdict), "the verdict never carries it"
     assert SECRET not in hold_reason(verdict["scope"], verdict["rule"], verdict["target"])
+
+
+
+# ── Astra r2 on #998 ─────────────────────────────────────────────────
+
+def test_a_completion_report_is_recorded_on_the_triage_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """P1-a: the hub dispatches only what triage returns; a report that the
+    work is done must mark the launch DONE there, so a later routine
+    question is not answered by the desk."""
+    reply = ('{"verdict": "routine", "reason": "r", "answer": '
+             '"Yes. The brief says: \\"Commit your work, push the branch, and open a pull request.\\""}')
+    rig = _Rig(tmp_path, monkeypatch, [reply])
+    done = rig.ask("PR #3 is open; both tests pass.", 1)
+    assert done["outcome"] == ar.DONE_TURN and done["triage"] == {"notify": [], "decide": []}
+    assert rig.responder._store.read()["done"], "the launch is marked done"
+    later = rig.ask("Shall I commit my work and push the branch?", 2)
+    assert later["outcome"] == ar.ESCALATED and rig.typed == [] and rig.prompts == []
+    assert rig.shown() is True
+
+
+def test_a_problem_outranks_a_recorded_done(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    rig = _Rig(tmp_path, monkeypatch, [])
+    assert rig.ask("PR #3 is open; both tests pass.", 1)["outcome"] == ar.DONE_TURN
+    failed = rig.ask("CI failed on the lint step.", 2)
+    assert failed["outcome"] == ar.ESCALATED, failed
+    assert failed["draft"]["reason"] == "the agent reports a problem: the owner's"
+    assert rig.shown() is True and rig.typed == []
+
+
+@pytest.mark.parametrize("text, kind", [
+    ("Deployed successfully (no further action needed)", "done"),
+    ("PR #3 is open; all checks passed with no errors.", "done"),
+    ("All tests passed without failures; PR #3 is open.", "done"),
+    ("PR #3 is open; the lint check failed.", "problem"),
+])
+def test_completion_and_negated_problems(text: str, kind: str) -> None:
+    assert ar.message_kind(text) == kind
+
+
+@pytest.mark.parametrize("answer", [
+    'Yes. The brief says: "Commit your work, push the branch, and open a pull request." Please add a CHANGELOG too.',
+    'Yes. The brief says: "Commit your work, push the branch, and open a pull request." Just run the linter first.',
+    'Yes. The brief says: "Commit your work, push the branch, and open a pull request." Also, kindly bump the version.',
+])
+def test_a_polite_command_is_work(answer: str) -> None:
+    draft = ar.guard("Shall I open the pull request?", ar.Draft(ar.ROUTINE, "r", answer), BRIEF)
+    assert (draft.verdict, draft.reason) == (ar.REAL, "the answer gives the agent work")

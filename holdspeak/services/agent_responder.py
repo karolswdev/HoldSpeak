@@ -141,6 +141,9 @@ _DONE_PATTERNS = tuple(re.compile(p, re.IGNORECASE) for p in (
     r"\b(?:work|task|item|change|it)\s+is\s+(?:done|complete|completed|finished)\b",
     r"\b(?:all done|i(?:'m| am) (?:all )?done|i(?:'ve| have) (?:finished|completed))\b",
     r"\bmeets its acceptance\b",
+    # Astra r2 on #998: "Deployed successfully (no further action needed)".
+    r"\bno further action\b",
+    r"\b(?:deployed|merged|shipped|released|finished|completed?)\s+successfully\b",
 ))
 #: A farewell, thanks or a greeting (never answered).
 _CHITCHAT = re.compile(
@@ -256,13 +259,27 @@ def _norm(text: str) -> str:
     return " ".join(re.sub(r"[^a-z0-9 ]+", " ", str(text or "").lower()).split())
 
 
+#: Words before a command verb that keep it a command ("Please add",
+#: "Just run", "Also go ahead and add").
+_SOFTENERS = frozenset({"please", "kindly", "just", "also", "now", "then", "and", "so", "ahead", "simply"})
+
+
 def gives_work(answer: str) -> bool:
-    """A sentence of the answer, outside its quotes, opens with a command verb."""
+    """Outside its quotes, the answer holds a command to the agent: a
+    sentence whose verb is a command verb (after "please", "just", "also",
+    "go ahead and" ...), or any "please" at all (Astra r2 on #998: "Please
+    add a CHANGELOG too." passed the first-word check)."""
     bare = _QUOTED.sub(" ", str(answer or ""))
     for sentence in re.split(r"(?<=[.!?;:])\s+|\n+", bare):
         lead = _LEAD_WORDS.sub("", sentence.strip())
-        first = lead.split(" ", 1)[0].strip(",.:;!-").lower() if lead else ""
-        if first in _IMPERATIVES:
+        words = [w.strip(",.:;!-()").lower() for w in lead.split()]
+        if "please" in words or "kindly" in words:
+            return True
+        index = 0
+        while index < len(words) and (words[index] in _SOFTENERS or words[index] == "go" and
+                                      index + 1 < len(words) and words[index + 1] == "ahead"):
+            index += 1
+        if index < len(words) and words[index] in _IMPERATIVES:
             return True
     return False
 
@@ -361,6 +378,13 @@ class AnswerStore:
         self.update(put)
 
 
+def _same_words(entry: Mapping[str, Any], session: Mapping[str, Any]) -> bool:
+    """A DONE / IDLE record still reads the session's current words (a record
+    with no words is an older one: it holds)."""
+    recorded = str(entry.get("question") or "")
+    return not recorded or recorded == question_sha(str(session.get("question") or ""))
+
+
 def annotate_sessions(
     sessions: Iterable[Any], *, store: Optional[AnswerStore] = None, now: Optional[float] = None,
 ) -> list[dict[str, Any]]:
@@ -383,10 +407,13 @@ def annotate_sessions(
                 "verdict": str(entry.get("verdict") or ""),
                 "reason": str(entry.get("reason") or ""),
                 "draft": str(entry.get("draft") or ""),
-                "hidden": state == ANSWERED or state in TURN_STATES or (state == DECIDING and fresh),
+                "hidden": state == ANSWERED or (state in TURN_STATES and _same_words(entry, session))
+                or (state == DECIDING and fresh),
             }
-            if state in TURN_STATES:
+            if state in TURN_STATES and _same_words(entry, session):
                 session["answer"]["turn_end"] = state
+            elif state in TURN_STATES:
+                session["answer"]["state"] = ""  # the agent said something new
         out.append(session)
     return out
 
@@ -463,7 +490,18 @@ class AgentResponder:
             return "none"
         if turn_end(session) != TURN_ASKS:
             # PHILO-15 B48: a turn end with no question asks nothing: no
-            # Needs you row, no notification, no drafted answer.
+            # Needs you row, no notification, no drafted answer. PHILO-15 15
+            # (Astra r2 on #998): a launch's turn end is still recorded (a
+            # completion report marks the launch DONE) here, on the path the
+            # hub dispatches.
+            launch = self._launch_for(key)
+            if launch is not None:
+                entry = self._store.wait(key)
+                current = session.to_dict() if hasattr(session, "to_dict") else {
+                    "question": getattr(session, "question", "")}
+                if not (entry and entry.get("wait_id") == str(getattr(session, "wait_id", "") or "")
+                        and str(entry.get("question") or "") == question_sha(str(current.get("question") or ""))):
+                    self.record_turn(key, session, launch)
             return "none"
         launch = self._launch_for(key)
         if launch is None or wait_kind(session) == "approve" or mode == "safe":
@@ -586,6 +624,7 @@ class AgentResponder:
             self._write(key, wait_id, {
                 "state": final, "launch_id": launch_id, "mode": mode, "withheld": False,
                 "verdict": REAL, "reason": silent, "draft": "", "silent": True, "at": self._clock(),
+                "question": question_sha(question),
             })
             self._receipt(key, session, draft, "answer_drafted", mode, launch_id)
             if not turn:
@@ -682,23 +721,54 @@ class AgentResponder:
         stops the desk for the launch."""
         launch_id = str(launch.get("launch_id") or "")
         kind = message_kind(question)
-        if self._store.read()["done"].get(launch_id):
-            why = "the agent reported its work done: the desk does not answer it again"
-            # A real question after the report is the owner's; anything else is DONE.
-            return ("", why) if kind == "question" else (DONE_TURN, why)
-        if kind == "problem":
+        done = bool(self._store.read()["done"].get(launch_id))
+        # Astra r2 on #998: question, problem, done, chitchat, in that order.
+        if kind == "question":
+            if done:
+                return "", "the agent reported its work done: the desk does not answer it again"
+        elif kind == "problem":
             return "", "the agent reports a problem: the owner's"
-        if kind == "done":
-            self._mark_done(launch_id)
-            return DONE_TURN, "the agent reports its work done: the desk does not answer a report"
-        if kind == "chitchat":
-            return IDLE_TURN, "thanks or a farewell: the desk answers only a question"
-        if kind == "statement":
-            return IDLE_TURN, "a statement: the desk answers only a question"
+        elif kind == "done" or done:
+            return self._turn_end_of(launch_id, kind)
+        if kind != "question":
+            return self._turn_end_of(launch_id, kind)
         if any(row.get("question") == question_sha(question)
                for row in (self._store.read()["sent"].get(launch_id) or [])):
             return "", "the desk answered this question before"
         return "", ""
+
+    def _turn_end_of(self, launch_id: str, kind: str) -> tuple[str, str]:
+        """``(turn, why)`` for a message that is not a question nor a
+        problem: a completion report marks the launch DONE."""
+        if kind == "done":
+            self._mark_done(launch_id)
+            return DONE_TURN, "the agent reports its work done: the desk does not answer a report"
+        if self._store.read()["done"].get(launch_id):
+            return DONE_TURN, "the agent reported its work done: the desk does not answer it again"
+        if kind == "chitchat":
+            return IDLE_TURN, "thanks or a farewell: the desk answers only a question"
+        return IDLE_TURN, "a statement: the desk answers only a question"
+
+    def record_turn(self, key: str, session: Any, launch: Mapping[str, Any]) -> str:
+        """A turn end that asks nothing (lane 14's B48 early return in
+        triage): record it as DONE / IDLE through the same rules, with no
+        model, no answer and no notification (Astra r2 on #998: the hub
+        dispatches only what triage returns, so a completion report must be
+        recorded here or the launch is never marked done)."""
+        question = str(getattr(session, "question", "") or "").strip()
+        wait_id = str(getattr(session, "wait_id", "") or "")
+        launch_id = str(launch.get("launch_id") or "")
+        turn, why = self._turn_end_of(launch_id, message_kind(question))
+        # A new wait at triage: its record replaces any older one. It names
+        # the words it read, so a new question on the same wait is not hidden.
+        self._store.put_wait(key, {
+            "wait_id": wait_id, "state": turn, "launch_id": launch_id,
+            "mode": str(self._mode() or "yolo").lower(), "withheld": False, "verdict": REAL,
+            "reason": why, "draft": "", "silent": True, "at": self._clock(),
+            "question": question_sha(question),
+        })
+        self._receipt(key, session, Draft(REAL, why), "answer_drafted", str(self._mode() or "yolo").lower(), launch_id)
+        return turn
 
     def _mark_done(self, launch_id: str) -> None:
         now = self._clock()
