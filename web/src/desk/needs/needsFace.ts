@@ -38,7 +38,8 @@ export type NeedVerbs =
   | { kind: "summarize"; meetingId: string }
   | { kind: "setup"; key: string; verb: string }
   | { kind: "open"; ref: string }
-  | { kind: "repair"; verb: string; href: string; projectId: string }
+  /** PHILO-15 B61: `watchIds` are the Watches Retry re-checks. */
+  | { kind: "repair"; verb: string; href: string; projectId: string; watchIds?: string[] }
   | { kind: "arming"; scheduleId: string; refused: boolean }
   | { kind: "calendar" }
   | { kind: "none" };
@@ -68,6 +69,9 @@ export interface NeedFace {
   openRef?: string;
   /** A source row (a source not read, no calendar), not a member. */
   source?: boolean;
+  /** PHILO-15 B60: a row drawn under the head that the number does not
+   *  count (a source held by quiet hours). */
+  uncounted?: boolean;
   /** An agent's ask or held call: the session it belongs to. */
   askOf?: string;
   /** An item an agent works: that agent's session. */
@@ -167,12 +171,27 @@ function sessionName(
   return flight?.title || fallback || session?.name || "";
 }
 
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** PHILO-15 B74: a past time with its day: `21:23` today, `yesterday 21:23`,
+ *  `Tue 21:23` this week, `Oct 3 21:23` before that. */
+export function whenWord(at: Date, now: Date = new Date()): string {
+  const hhmm = `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((day(now) - day(at)) / 86_400_000);
+  if (days <= 0) return hhmm;
+  if (days === 1) return `yesterday ${hhmm}`;
+  if (days < 7) return `${WEEKDAYS[at.getDay()]} ${hhmm}`;
+  return `${MONTHS[at.getMonth()]} ${at.getDate()} ${hhmm}`;
+}
+
 /** A row kept from the last read of a source that failed since: `observed 09:00`. */
-function observedWord(item: NeedsYouRoomItem): string {
+function observedWord(item: NeedsYouRoomItem, now?: Date): string {
   if (!item.fromLastObservation) return "";
   const at = wireDate(String(item.observedAt ?? ""));
   if (!at) return "observed earlier";
-  return `observed ${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  return `observed ${whenWord(at, now)}`;
 }
 
 function agentRowName(agent: string, label: string): string {
@@ -315,7 +334,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   const rawOwner = String(item.owner ?? "").trim();
   // The owner himself is not named on his own row.
   const owner = SELF_OWNER_NAMES.includes(rawOwner.toLowerCase()) ? "" : rawOwner;
-  const fact = [owner, factProject, observedWord(item)].filter(Boolean).join(" · ");
+  const fact = [owner, factProject, observedWord(item, ctx.now)].filter(Boolean).join(" · ");
   const lamp = { label: why || "NEEDS YOU", tone: toneOf(item.severity, why) };
 
   // R4: a decision that waits for the owner's review.
@@ -482,26 +501,37 @@ export function needFaces(members: readonly NeedsYouMember[], ctx: NeedCtx): Nee
   return [...faces.filter((f) => f.group === "agents"), ...faces.filter((f) => f.group === "rest")];
 }
 
-function observedAt(at: string | null | undefined): string {
+function observedAt(at: string | null | undefined, now?: Date): string {
   const d = at ? wireDate(at) : null;
-  return d ? `observed ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}` : "";
+  return d ? `observed ${whenWord(d, now)}` : "";
 }
 
 /** A source the hub could not read, as a row after the members (UX-CANON
- *  A10: an unknown is never a clear desk). */
-export function coverageFace(gap: CoverageRecord): NeedFace {
+ *  A10: an unknown is never a clear desk). PHILO-15 B60: a source held by
+ *  HoldSpeak's own quiet hours reads `QUIET UNTIL 08:00` and is not counted. */
+export function coverageFace(gap: CoverageRecord, now?: Date): NeedFace {
   const repair = gap.repair ?? null;
+  const quiet = gap.state === "quiet";
+  // The quiet end is the lamp's word; the fact keeps only the last check.
+  const reason = quiet ? "" : String(gap.reason || gap.state);
   return {
     id: `coverage:${gap.source_id}`,
     kind: gap.kind === "project" ? "project" : "artifact",
     name: sourceLabel(gap),
-    fact: [String(gap.reason || gap.state), observedAt(gap.observed_at)].filter(Boolean).join(" · "),
-    lamp: { label: repair?.token || gap.state.toUpperCase(), tone: gap.state === "stale" ? "warn" : "fail" },
+    fact: [reason, observedAt(gap.observed_at, now)].filter(Boolean).join(" · "),
+    lamp: {
+      label: repair?.token || gap.state.toUpperCase(),
+      tone: quiet ? "info" : gap.state === "stale" ? "warn" : "fail",
+    },
     group: "rest",
     verbs: repair
-      ? { kind: "repair", verb: repair.verb, href: repair.href, projectId: String(gap.project_id ?? "") }
+      ? {
+        kind: "repair", verb: repair.verb, href: repair.href, projectId: String(gap.project_id ?? ""),
+        watchIds: (gap.watch_ids ?? []).filter(Boolean),
+      }
       : { kind: "none" },
     source: true,
+    uncounted: quiet || undefined,
   };
 }
 

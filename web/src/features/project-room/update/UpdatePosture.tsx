@@ -68,11 +68,17 @@ function generatorChipSource(generator: string): string {
   return generator;
 }
 
-function generatorChipBoundary(generator: string): string | undefined {
-  if (generator.startsWith("model:")) {
-    return generator.slice("model:".length);
-  }
-  return undefined;
+/** PHILO-15 B72: a model draft names its model and host, as the editor
+ *  does (`QWEN3.8-27B · 192.168.1.43:8080 · LAN`); never the assignment id. */
+export function generatorChipBoundary(update: {
+  generator: string; generatorModel?: string | null; generatorHost?: string | null;
+}): string | undefined {
+  if (!update.generator.startsWith("model:")) return undefined;
+  const parts = [
+    String(update.generatorModel ?? "").trim().toUpperCase(),
+    egressFor(update.generatorHost).label,
+  ].filter(Boolean);
+  return parts.length ? parts.join(" · ") : undefined;
 }
 
 /* ── Per-section source row: deduplicated ref chips (D6: CitationChips grammar) ── */
@@ -306,7 +312,7 @@ function UpdateList({
                     <ListChips update={update} />
                     <ProvenanceChip
                       source={generatorChipSource(update.generator)}
-                      boundary={generatorChipBoundary(update.generator)}
+                      boundary={generatorChipBoundary(update)}
                     />
                   </>
                 }

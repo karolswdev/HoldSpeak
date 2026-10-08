@@ -1418,7 +1418,9 @@ class MondayBriefService:
 
         items: list[BriefItem] = []
         for row in coverage:
-            if row.get("state") == "available":
+            # PHILO-15 B60: a source held by HoldSpeak's own quiet hours was
+            # not missed; it waits for the quiet end and is not a gap.
+            if row.get("state") in ("available", "quiet"):
                 continue
             repair = row.get("repair") or {}
             label = str(row.get("label") or row.get("source_id") or "source")

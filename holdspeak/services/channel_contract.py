@@ -223,10 +223,68 @@ def _slug(name: str) -> str:
 _UNVERIFIED_MARK = re.compile(r"\*\*\[UNVERIFIED\]\*\*[ \t]*")
 
 
-def _outbound(body_md: str) -> tuple[list[list[str]], int]:
+def claim_verified(claim: Mapping[str, Any]) -> bool:
+    """PHILO-15 B64 ruling: a claim counts as verified only when it has
+    evidence refs or the owner reviewed it. An inference (a model's sentence)
+    the owner did not review is not verified, whatever it cites; a claim the
+    owner rejected is not verified."""
+    if claim.get("verified") is False:
+        return False
+    acceptance = str(claim.get("acceptance") or "")
+    if acceptance == "accepted":
+        return True
+    if acceptance in ("rejected", "superseded"):
+        return False
+    record = claim.get("support_record") or {}
+    if (claim.get("support") == "supported" and isinstance(record, Mapping)
+            and record.get("method") == "reviewer" and not record.get("invalidated_at")):
+        return True
+    if str(claim.get("kind") or "") == "inference":
+        return False
+    return bool(claim.get("refs"))
+
+
+def _row_text(line: str) -> str:
+    text = " ".join(str(line).split())
+    return text[2:] if text.startswith(("- ", "* ")) else text
+
+
+def held_claim_lines(claims: Any) -> frozenset[str]:
+    """The first line of every claim that is not verified (B64), as a row
+    reads it, so the body line that carries it leaves the desk omitted."""
+    out: set[str] = set()
+    for claim in claims or ():
+        if not isinstance(claim, Mapping) or claim_verified(claim):
+            continue
+        first = str(claim.get("text") or "").split("\n", 1)[0]
+        text = " ".join(first.split())
+        if text:
+            out.add(text)
+    return frozenset(out)
+
+
+def stored_claims(row: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """A stored update's claims on the three axes (legacy rows mapped)."""
+    import json
+
+    from .project_update_service import migrate_claims_json
+
+    raw = migrate_claims_json(
+        str(row.get("claims_json") or ""), generator=str(row.get("generator") or "deterministic"),
+    )
+    try:
+        claims = json.loads(raw or "[]")
+    except (TypeError, ValueError):
+        return []
+    return [c for c in claims if isinstance(c, dict)] if isinstance(claims, list) else []
+
+
+def _outbound(body_md: str, held: frozenset[str] = frozenset()) -> tuple[list[list[str]], int]:
     """The body's sections (heading line first) with every unchecked claim
     omitted WHOLE: a marked line and its continuation lines (up to a blank
-    line, the next list item or the next heading), and the count omitted."""
+    line, the next list item or the next heading), and the count omitted.
+    PHILO-15 B64: a list row that carries a claim in ``held`` (an unreviewed
+    inference) is omitted the same way."""
     sections: list[list[str]] = [[]]
     dropped_in: list[int] = [0]
     dropped = 0
@@ -237,7 +295,9 @@ def _outbound(body_md: str) -> tuple[list[list[str]], int]:
             skipping = False
             sections.append([line])
             dropped_in.append(0)
-        elif _UNVERIFIED_MARK.search(line):
+        elif _UNVERIFIED_MARK.search(line) or (
+            held and stripped.startswith(("- ", "* ")) and _row_text(line) in held
+        ):
             if not skipping or stripped.startswith(("- ", "* ")):
                 dropped += 1
                 dropped_in[-1] += 1
@@ -255,14 +315,14 @@ def _outbound(body_md: str) -> tuple[list[list[str]], int]:
     return out, dropped
 
 
-def without_desk_marks(body_md: str, heading: str = "") -> str:
+def without_desk_marks(body_md: str, heading: str = "", claims: Any = None) -> str:
     """An update's Markdown as it leaves the desk (Send, Copy), PHILO-15 B53
     and Astra's rulings: a claim the model could not tie to evidence (the
     ``[UNVERIFIED]`` mark) is OMITTED whole, continuation lines included,
     never sent as a fact; a section left empty by that reads "Not checked.";
     the last line counts what stayed on the desk. ``heading`` (the
     document's identity) leads when given."""
-    sections, dropped = _outbound(body_md)
+    sections, dropped = _outbound(body_md, held_claim_lines(claims))
     text = "\n".join(line for lines in sections for line in lines).rstrip("\n") + "\n"
     if dropped:
         text += f"\n{dropped} claim{'' if dropped == 1 else 's'} not checked, kept on the desk.\n"
@@ -276,14 +336,15 @@ def without_desk_marks(body_md: str, heading: str = "") -> str:
 _EMPTY_WORDS = frozenset({"Not checked."})
 
 
-def nothing_verified(body_md: str) -> bool:
-    """Astra r2 ruling: True when omitting the unchecked claims leaves no
+def nothing_verified(body_md: str, claims: Any = None) -> bool:
+    """Astra r2 ruling: True when omitting the unchecked claims (PHILO-15
+    B64: unreviewed inferences included) leaves no
     substantive content (only headings, "Not checked." and the drafter's
     "nothing in this window" sentences; Source Coverage is not content). A
     verified row, a merge row for one, keeps the update sendable."""
     from .project_update_service import _HONEST_MINIMAL
 
-    sections, dropped = _outbound(body_md)
+    sections, dropped = _outbound(body_md, held_claim_lines(claims))
     if not dropped:
         return False
     empty = _EMPTY_WORDS | {str(v).strip() for v in _HONEST_MINIMAL.values()}
@@ -317,13 +378,16 @@ def render_update(db: Any, update_id: str) -> Document:
     # The document names itself (PHILO-15 B53 ruling): "<Project> · Update · <date>".
     heading = f"{name} · Update" + (f" · {published}" if published else "")
     raw = str(row.get("body_md") or "")
-    if nothing_verified(raw):
+    # PHILO-15 B64: verified means evidence refs or the owner's review; an
+    # unreviewed inference stays on the desk like an unverified claim.
+    claims = stored_claims(row)
+    if nothing_verified(raw, claims):
         # Astra r2 ruling: an update whose every claim stays on the desk is not
         # sent (its stored claims are kept; the owner checks them first).
         raise ChannelRefused("nothing_verified",
                              "NOTHING VERIFIED: every claim in this update is not checked; it stays on the desk",
                              status=400)
-    body = without_desk_marks(raw, heading)
+    body = without_desk_marks(raw, heading, claims)
     return Document(ref=f"project_update:{row['id']}", title=title, body_md=body,
                     slug=_slug(name), label=f"REV {revision}")
 

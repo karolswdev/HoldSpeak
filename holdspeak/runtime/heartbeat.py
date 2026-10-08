@@ -94,23 +94,10 @@ class HeartbeatMixin:
                 obs = get_observer()
                 hb = HeartbeatService(db, observer=obs)
                 settings = hb.get_settings()
-                sweep_interval = settings["sweep_every_minutes"] * 60
-
-                # Decide if a sweep is due
-                last_sweep = settings.get("last_sweep_at")
-                should_sweep = False
-                if last_sweep is None:
-                    should_sweep = True
-                else:
-                    try:
-                        from datetime import datetime, timezone
-                        last_dt = datetime.fromisoformat(last_sweep)
-                        if last_dt.tzinfo is None:
-                            last_dt = last_dt.replace(tzinfo=timezone.utc)
-                        elapsed = (datetime.now(timezone.utc) - last_dt).total_seconds()
-                        should_sweep = elapsed >= sweep_interval
-                    except (ValueError, TypeError):
-                        should_sweep = True
+                # Due at the earlier of the stored next sweep and the last
+                # sweep plus the interval (PHILO-15 B60: a sweep held by quiet
+                # hours stores the quiet end, so 08:00 sweeps at once).
+                should_sweep = hb.sweep_due()
 
                 # HS-174-08: check runs_on -- if a remote host is selected,
                 # the local loop holds and records a quiet receipt instead.

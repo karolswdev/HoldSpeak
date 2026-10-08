@@ -650,3 +650,90 @@ describe("NeedsDrawer one-number seed (PHILO-15-09 r3)", () => {
     expect(document.querySelectorAll("[data-testid='needs-list'] li.needs-row")).toHaveLength(ONE_NUMBER_ROWS);
   });
 });
+
+// PHILO-15 21 (B60, B61, B74): the second morning. The hub's rows from the
+// rehearsal at 07:05: a GitHub source held by quiet hours, a meeting source
+// that is stale for another reason.
+describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
+  const yesterday = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    d.setHours(21, 23, 0, 0);
+    return d.toISOString();
+  })();
+  const MORNING = {
+    ...ANSWER,
+    count: 1,
+    items: [],
+    failedMeetings: [],
+    complete: false,
+    coverage: [
+      {
+        source_id: "watch:w-gh", kind: "watch", state: "quiet", observed_at: yesterday,
+        label: "GitHub · karolswdev/holdspeak-dayone-rehearsal-1558", project_id: "p1",
+        reason: "quiet until 08:00", watch_ids: ["w-gh"],
+        repair: { token: "QUIET UNTIL 08:00", verb: "Retry", href: "/projects/p1" },
+      },
+      {
+        source_id: "watch:w-mtg", kind: "watch", state: "stale", observed_at: yesterday,
+        label: "Meetings", project_id: "p1", reason: "not checked recently", watch_ids: ["w-mtg"],
+        repair: { token: "STALE", verb: "Retry", href: "/projects/p1" },
+      },
+    ],
+  };
+  let evaluated: string[] = [];
+  let refuse = false;
+  beforeEach(() => {
+    evaluated = [];
+    refuse = false;
+    useAgentFlights.setState({ flights: [], sessions: [] } as never);
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const value = String(path);
+      if (value.startsWith("/api/desk/needs-you")) return MORNING as never;
+      if (value.startsWith("/api/watches/")) {
+        evaluated.push(value);
+        if (refuse) throw new ApiError(400, "gh is not signed in", {});
+        return { success: true, state: "no_op" } as never;
+      }
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+  });
+
+  it("B60: a quiet source reads QUIET UNTIL 08:00, is drawn, and is not counted", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("1 needs you");
+    const sources = screen.getAllByTestId("needs-source-row");
+    expect(sources).toHaveLength(2);
+    const quiet = sources.find((li) => /GitHub/.test(li.textContent ?? ""))!;
+    expect(face(quiet).lamps).toContain("QUIET UNTIL 08:00");
+    expect(quiet.getAttribute("data-counted")).toBe("false");
+    const stale = sources.find((li) => /Meetings/.test(li.textContent ?? ""))!;
+    expect(face(stale).lamps).toContain("STALE");
+    expect(stale.getAttribute("data-counted")).toBe("true");
+  });
+
+  it("B74: names, never ids, and the day on a time from yesterday", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("1 needs you");
+    const [quiet, stale] = ["GitHub", "Meetings"].map((name) =>
+      screen.getAllByTestId("needs-source-row").find((li) => li.textContent?.includes(name))!);
+    expect(quiet.querySelector(".needs-row-name")?.textContent).toBe("GitHub · karolswdev/holdspeak-dayone-rehearsal-1558");
+    expect(face(quiet).fact).toBe("observed yesterday 21:23");
+    expect(stale.querySelector(".needs-row-name")?.textContent).toBe("Meetings");
+    expect(face(stale).fact).toBe("not checked recently · observed yesterday 21:23");
+  });
+
+  it("B61: Retry re-checks THAT source through the single-Watch route and leaves a receipt", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("1 needs you");
+    const stale = screen.getAllByTestId("needs-source-row").find((li) => li.textContent?.includes("Meetings"))!;
+    fireEvent.click(within(stale).getByRole("button", { name: "Retry: Meetings" }));
+    await waitFor(() => expect(screen.getByTestId("needs-source-receipt").textContent).toMatch(/^CHECKED · Meetings · \d\d:\d\d$/));
+    expect(evaluated).toEqual(["/api/watches/w-mtg/evaluate"]);
+    // A refused check says so, by the hub's reason.
+    refuse = true;
+    fireEvent.click(within(stale).getByRole("button", { name: "Retry: Meetings" }));
+    await waitFor(() => expect(screen.getByTestId("needs-source-receipt").textContent).toBe(
+      "NOT CHECKED · Meetings · gh is not signed in"));
+  });
+});

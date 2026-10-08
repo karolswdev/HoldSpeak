@@ -10,7 +10,7 @@ Shots to phase-169-the-streamlined-door/assets/story-03-shots/.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -187,9 +187,13 @@ def _seed_changes(project_id: str) -> None:
 
 
 def _seed_quiet_project() -> str:
-    """Seed a fresh project with sources but nothing needing attention."""
+    """Seed a fresh project with sources but nothing needing attention.
+
+    PHILO-15 B69: its sources were checked a minute ago. A source last
+    checked weeks ago is STALE (Needs says so), so its Room is not clear."""
     project_id = "proj-169-quiet"
     _seed_project(project_id, "Fresh Project")
+    fresh = (datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=1)).isoformat(timespec="seconds")
 
     _seed_watch(project_id, watch_id="w-quiet-gh", connector_id="gh",
                 query_kind="pull_requests",
@@ -198,7 +202,7 @@ def _seed_quiet_project() -> str:
                     {"number": 100, "title": "Docs update",
                      "state": "OPEN", "url": None,
                      "reviewRequests": [], "updatedAt": datetime.now().isoformat()},
-                ])
+                ], last_success_at=fresh)
 
     _seed_watch(project_id, watch_id="w-quiet-jira", connector_id="jira",
                 query_kind="issues",
@@ -208,7 +212,7 @@ def _seed_quiet_project() -> str:
                     {"key": "KAN-1", "summary": "Setup task",
                      "due_at": (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%d"),
                      "url": None},
-                ])
+                ], last_success_at=fresh)
 
     return project_id
 

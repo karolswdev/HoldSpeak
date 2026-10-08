@@ -15,8 +15,9 @@
  *  carry it.
  */
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { create } from "zustand";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
 import { useAgentFlights } from "../agentFlights";
 import { commandForDoorVerb, labelFor, supportsDoorVerb, type DoorVerb } from "../chair/doorVerbs";
 import { useGate } from "../gate";
@@ -69,6 +70,32 @@ export function faceOpener(face: NeedFace): Opener | null {
 
 type Well = "owner" | "date";
 
+/** PHILO-15 B61: the receipt a source Retry leaves in the drawer. */
+type SourceReceipt = { tone: "ok" | "fail"; text: string };
+export const useSourceReceipt = create<{ receipt: SourceReceipt | null; set(r: SourceReceipt | null): void }>(
+  (setState) => ({ receipt: null, set: (receipt) => setState({ receipt }) }),
+);
+
+function hhmm(d: Date): string {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+/** PHILO-15 B61: Retry on a source re-checks THAT source (each of its
+ *  Watches, through the hub's single-Watch check) and leaves a receipt;
+ *  then the one number is read again. */
+export async function recheckSource(name: string, watchIds: readonly string[]): Promise<SourceReceipt> {
+  try {
+    for (const id of watchIds) {
+      await apiFetch(`/api/watches/${encodeURIComponent(id)}/evaluate`, { method: "POST" });
+    }
+    return { tone: "ok", text: `CHECKED · ${name} · ${hhmm(new Date())}` };
+  } catch (error) {
+    return { tone: "fail", text: `NOT CHECKED · ${name} · ${readableError(error)}` };
+  } finally {
+    void refreshNeedsYou(true);
+  }
+}
+
 function NeedVerbsView({ face, primary, onWell, well }: {
   face: NeedFace;
   primary: boolean;
@@ -76,6 +103,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
   onWell(next: Well | null): void;
 }) {
   const [busy, setBusy] = useState(false);
+  const setSourceReceipt = useSourceReceipt((st) => st.set);
   const lead = primary ? "primary" : "secondary";
   const v = face.verbs;
   const named = (verb: string) => `${verb}: ${face.name}`;
@@ -242,9 +270,13 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       );
     case "repair":
       return (
-        <Button dense variant="secondary" aria-label={named(v.verb)} data-testid="needs-row-verb" data-verb="repair"
+        <Button dense variant="secondary" disabled={busy} aria-label={named(v.verb)} data-testid="needs-row-verb" data-verb="repair"
           onClick={() => {
-            if (v.verb === "Retry") void refreshNeedsYou(true);
+            if (v.verb === "Retry" && v.watchIds?.length) {
+              const ids = v.watchIds;
+              setBusy(true);
+              void recheckSource(face.name, ids).then((r) => { setSourceReceipt(r); setBusy(false); });
+            } else if (v.verb === "Retry") void refreshNeedsYou(true);
             else if (v.href.startsWith("/settings")) openSurfaceOr("configure-settings", "/settings", "connections");
             else openProjectRoom(v.projectId);
           }}>{v.verb}</Button>
@@ -424,7 +456,9 @@ export function NeedsDrawer() {
   );
   // PHILO-15-09 (B11): the calendar is an offer, never a row: the head's
   // number is the number of rows below it. The offer is in the foot.
-  const sources = coverage.gaps.map(coverageFace);
+  // PHILO-15 B60: a source held by quiet hours is drawn after the gaps and
+  // is not counted.
+  const sources = [...coverage.gaps, ...coverage.quiet].map((gap) => coverageFace(gap, now));
   const noCalendar = Boolean(door && door.calendar_configured === false);
   const outcome = useArmingOutcome();
   const liveArming = arming && !arming.outcome ? arming : null;
@@ -477,7 +511,8 @@ export function NeedsDrawer() {
   // never filled (the quiet face has none: HS-201-01 ruling 2).
   const primaryId = faces.find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
   const all = [...faces, ...(showWaiting ? waiting : []), ...(showMuted ? muted : [])];
-  const memberRefs = new Set(faces.map((f) => f.memberRef ?? f.id));
+  const memberRefs = new Set(faces.filter((f) => !f.uncounted).map((f) => f.memberRef ?? f.id));
+  const sourceReceipt = useSourceReceipt((st) => st.receipt);
   useRowMarks(listRef, all, memberRefs);
 
   const upcoming = door?.upcoming?.[0];
@@ -510,6 +545,12 @@ export function NeedsDrawer() {
       {outcome.receipt ? (
         <p className="surface-receipt-line needs-drawer-receipt" role="status" data-testid="needs-receipt">
           {outcome.receipt}
+        </p>
+      ) : null}
+      {sourceReceipt ? (
+        <p className="surface-receipt-line needs-drawer-receipt" role="status" data-testid="needs-source-receipt"
+          data-tone={sourceReceipt.tone}>
+          {sourceReceipt.text}
         </p>
       ) : null}
       {/* A press on a row body opens it; each row's verbs carry the keyboard. */}

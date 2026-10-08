@@ -193,6 +193,20 @@ function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/** PHILO-15 B69: the Room head's one source word, from the hub's freshness
+ *  states (the rule Needs you reads): `STALE · CHECKED 10H AGO`, `QUIET UNTIL
+ *  08:00`, else `CHECKED <age>`. Null with no checked source. */
+export function sourcesWord(items: RoomSourceItem[], quietUntil?: string | null): { word: string; stale: boolean } | null {
+  const checked = maxCheckedAt(items);
+  if (items.some((i) => i.freshness === "stale")) {
+    return { word: checked ? `STALE · CHECKED ${humanTime(checked)}` : "STALE", stale: true };
+  }
+  if (quietUntil && items.some((i) => i.freshness === "quiet")) {
+    return { word: `QUIET UNTIL ${formatTimeShort(quietUntil)}`, stale: false };
+  }
+  return checked ? { word: `CHECKED ${humanTime(checked)}`, stale: false } : null;
+}
+
 function maxCheckedAt(items: RoomSourceItem[]): string | null {
   let best: string | null = null;
   for (const item of items) {
@@ -299,7 +313,7 @@ function RoomHead({
   const target = room.target.state === "ok" ? (room.target as RoomTargetData & { state: "ok" }) : null;
   const needsYouCount = room.needsYou.state === "ok" ? room.needsYou.count : 0;
   const sources = room.sources.state === "ok" ? room.sources.items : [];
-  const checked = maxCheckedAt(sources);
+  const sourceWord = sourcesWord(sources, room.sources.state === "ok" ? room.sources.quietUntil : null);
 
   const nameRef = useRef<HTMLSpanElement>(null);
   const [showOutcome, setShowOutcome] = useState(false);
@@ -325,7 +339,8 @@ function RoomHead({
       <RoomHeadline
         count={needsYouCount}
         isAccent={needsYouCount > 0}
-        unread={room.health.state === "degraded" || room.needsYou.state === "degraded"}
+        // PHILO-15 B69: a STALE source is not read: never "Clear here".
+        unread={room.health.state === "degraded" || room.needsYou.state === "degraded" || Boolean(sourceWord?.stale)}
       />
       {showOutcome ? (
         <p className="room-head-outcome surface-primary" data-testid="room-head-outcome">
@@ -363,8 +378,9 @@ function RoomHead({
             }
           </span>
         ) : null}
-        {checked ? (
-          <span className="surface-token room-chip-faint">CHECKED {humanTime(checked)}</span>
+        {sourceWord ? (
+          <span className="surface-token room-chip-faint" data-testid="room-sources-word"
+            data-tone={sourceWord.stale ? "warn" : undefined}>{sourceWord.word}</span>
         ) : null}
         {room.project.isArchived ? (
           <StateChip state="failure" label="ARCHIVED" icon={"●"} />
@@ -826,6 +842,11 @@ function NeedsYouSection({
   const { items, count } = room.needsYou;
 
   const nextCheck = room.sources.state === "ok" ? room.sources.nextCheckAt : null;
+  // PHILO-15 B69: while quiet hours hold the sweep, the next check is the quiet end.
+  const quietUntil = room.sources.state === "ok" ? room.sources.quietUntil : null;
+  const nextWords = quietUntil
+    ? ` · quiet until ${formatTimeShort(quietUntil)}`
+    : nextCheck ? ` · next check ${formatTimeShort(nextCheck)}` : "";
 
   // HS-173: build a map of relationship_id -> health person for nudge state
   const health = room.health.state === "ok"
@@ -871,7 +892,7 @@ function NeedsYouSection({
     return (
       <SurfaceSection label="OPEN HERE" actions={reviewAction}>
         <p className="room-empty-line" data-testid="needs-you-empty">
-          {room.health.state === "degraded" ? "Not all read" : "Nothing open"}{nextCheck ? ` · next check ${formatTimeShort(nextCheck)}` : ""}
+          {room.health.state === "degraded" ? "Not all read" : "Nothing open"}{nextWords}
         </p>
       </SurfaceSection>
     );
@@ -1369,6 +1390,14 @@ function SourcesSection({
                   {src.state === "paused" ? (
                     <span data-testid="source-paused"><StateChip state="idle" label="PAUSED" /></span>
                   ) : null}
+                  {/* PHILO-15 B69: the source's one state, the one Needs you shows. */}
+                  {src.freshness === "stale" ? (
+                    <span data-testid="source-freshness"><StateChip state="warning" label="STALE" /></span>
+                  ) : src.freshness === "quiet" && src.quietUntil ? (
+                    <span data-testid="source-freshness">
+                      <StateChip state="idle" label={`QUIET UNTIL ${formatTimeShort(src.quietUntil)}`} />
+                    </span>
+                  ) : null}
                   {isMeeting ? (
                     <span data-testid="source-meeting-checked">
                       {src.checkedAt ? (
@@ -1592,9 +1621,16 @@ function DecisionsCommitmentsSection({ room }: { room: RoomSnapshot }) {
                       {dueLabel ? (
                         <span className="surface-token">BY {dueLabel.toUpperCase()}</span>
                       ) : null}
-                      <span className="surface-token room-confirmed-token" data-testid="confirmed-state">
-                        CONFIRMED {confirmedTime}
-                      </span>
+                      {dec.done ? (
+                        // PHILO-15 B70: a done action reads DONE, not CONFIRMED.
+                        <span className="surface-token room-confirmed-token" data-testid="done-state">
+                          {dec.doneAt ? `DONE · ${formatTimeShort(dec.doneAt)}` : "DONE"}
+                        </span>
+                      ) : (
+                        <span className="surface-token room-confirmed-token" data-testid="confirmed-state">
+                          CONFIRMED {confirmedTime}
+                        </span>
+                      )}
                       {wasParts.map((w, wi) => (
                         <span key={wi} className="surface-token room-was-token">{w}</span>
                       ))}

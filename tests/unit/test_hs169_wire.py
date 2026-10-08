@@ -37,6 +37,20 @@ def db(tmp_path: Path) -> Database:
     reset_database()
 
 
+def _future(*, hours: int) -> str:
+    """A naive-UTC stamp ``hours`` ahead, on the minute (the column's form)."""
+    from datetime import timezone
+
+    at = datetime.now(timezone.utc).replace(tzinfo=None, second=0, microsecond=0)
+    return (at + timedelta(hours=hours)).isoformat()
+
+
+def _no_quiet(db: Database) -> None:
+    from holdspeak.services.heartbeat_service import HeartbeatService
+
+    HeartbeatService(db).update_settings({"quiet_hours": {"start": 0, "end": 0}})
+
+
 def _seed_project(
     db: Database,
     project_id: str = "proj-wire-1",
@@ -758,7 +772,10 @@ class TestSources:
     def test_source_has_next_check_at(self, db: Database) -> None:
         """Each source item carries nextCheckAt from the watch."""
         project_id = _seed_project(db)
-        next_eval = "2026-09-04T10:35:00"
+        # PHILO-15 B69: a next check is never in the past; a future one is
+        # kept (quiet hours off: they would move it to their end).
+        _no_quiet(db)
+        next_eval = _future(hours=1)
         _seed_watch(db, project_id, connector_id="gh",
                     query_kind="pull_requests",
                     query={"repository": "acme/app"},
@@ -780,6 +797,8 @@ class TestSources:
     def test_room_top_level_next_check_at(self, db: Database) -> None:
         """Room top-level nextCheckAt = soonest non-null over live sources."""
         project_id = _seed_project(db)
+        _no_quiet(db)
+        soon, later = _future(hours=1), _future(hours=2)
         _seed_watch(db, project_id, watch_id="w-a", connector_id="gh",
                     query_kind="pull_requests",
                     query={"repository": "acme/app"},
@@ -792,18 +811,19 @@ class TestSources:
         with db._connection() as conn:
             conn.execute(
                 "UPDATE connector_watches SET next_evaluation_at = ? WHERE id = ?",
-                ("2026-09-04T11:00:00", "w-a"),
+                (later, "w-a"),
             )
             conn.execute(
                 "UPDATE connector_watches SET next_evaluation_at = ? WHERE id = ?",
-                ("2026-09-04T10:35:00", "w-b"),
+                (soon, "w-b"),
             )
 
         svc = ProjectService(db)
         room = svc.room(OWNER, project_id)
         # Top-level is the soonest
         # HS-175 counsel C8: offset-carrying (the soonest, as UTC).
-        assert room["nextCheckAt"] == "2026-09-04T10:35:00+00:00"
+        from holdspeak.services.project_service import aware_iso
+        assert room["nextCheckAt"] == aware_iso(soon)
 
     def test_room_next_check_at_null_when_no_watches(self, db: Database) -> None:
         """Room top-level nextCheckAt is null when no watches exist."""

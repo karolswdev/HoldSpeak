@@ -71,7 +71,8 @@ def _readers(hub: Hub, *, brief: bool) -> dict[str, int]:
         # PHILO-15-09 (B11): the rows the desk draws under the head: the
         # members, each source not read, each recording that arms.
         "route_rows": len(route["members"]) + sum(
-            1 for c in route.get("coverage") or [] if c.get("state") != "available"
+            # PHILO-15 B60: a source held by quiet hours is listed, never counted.
+            1 for c in route.get("coverage") or [] if c.get("state") not in ("available", "quiet")
         ) + len(route.get("arming") or []),
         "route_fresh": int(fresh["count"]),
         "mcp": int(mcp["count"]),

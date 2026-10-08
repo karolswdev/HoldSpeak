@@ -697,7 +697,85 @@ def _carry_closed_rows(
         ]
         if added:
             claims_json = json.dumps(claims + added, sort_keys=True, separators=(",", ":"))
-    return body_md, claims_json
+    return _drop_repeated_merges(body_md, claims_json, closed_lines)
+
+
+#: A PR named in prose: ``PR #4``, ``pull request #4``, ``…/pull/4``.
+_PR_NAMED = _re.compile(r"(?:\bPR\s*#|\bpull request\s*#|/pull/)(\d+)\b", _re.IGNORECASE)
+
+
+def _drop_repeated_merges(
+    body_md: str, claims_json: str, closed_lines: list[str],
+) -> tuple[str, str]:
+    """PHILO-15 B71: a merge is said once, by its ``Merged:`` row. A model
+    sentence (and its continuation lines) that names a PR a ``Merged:`` row
+    already carries is dropped from the draft, with its claim; a section it
+    leaves empty reads its honest minimum."""
+    merged = {
+        m.group(1) for line in closed_lines for m in _PR_NAMED.finditer(line)
+    }
+    if not merged:
+        return body_md, claims_json
+    rows = {" ".join(line.split())[2:] for line in closed_lines}
+    out: list[str] = []
+    dropped_texts: set[str] = set()
+    skipping = False
+    for line in body_md.splitlines():
+        stripped = line.strip()
+        if line.startswith("#"):
+            skipping = False
+            out.append(line)
+            continue
+        if stripped.startswith(("- ", "* ")):
+            text = " ".join(stripped.split())[2:]
+            named = {m.group(1) for m in _PR_NAMED.finditer(text)}
+            if text not in rows and named & merged:
+                dropped_texts.add(text.replace(UNVERIFIED_MARKER, "").strip())
+                skipping = True
+                continue
+            skipping = False
+        elif skipping and stripped:
+            continue  # the rest of the dropped sentence
+        else:
+            skipping = False
+        out.append(line)
+    if not dropped_texts:
+        return body_md, claims_json
+    body = _refill_empty_sections("\n".join(out) + ("\n" if body_md.endswith("\n") else ""))
+    try:
+        claims = json.loads(claims_json or "[]")
+    except (TypeError, ValueError):
+        return body, claims_json
+    if isinstance(claims, list):
+        def _first(c: Any) -> str:
+            return " ".join(str(c.get("text") or "").split("\n", 1)[0].split())
+        kept = [
+            c for c in claims
+            if not (isinstance(c, dict) and _first(c) in dropped_texts)
+        ]
+        claims_json = json.dumps(kept, sort_keys=True, separators=(",", ":"))
+    return body, claims_json
+
+
+def _refill_empty_sections(body_md: str) -> str:
+    """A ``## <Section>`` left with no content reads its honest minimum."""
+    by_heading = {f"## {_SECTION_HEADINGS[k]}": _HONEST_MINIMAL.get(k, "") for k in _SECTION_HEADINGS}
+    lines = body_md.splitlines()
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        out.append(line)
+        if line in by_heading:
+            j = i + 1
+            while j < len(lines) and not lines[j].startswith("## "):
+                j += 1
+            if not any(ln.strip() for ln in lines[i + 1:j]) and by_heading[line]:
+                out.extend(["", by_heading[line], ""])
+                i = j
+                continue
+        i += 1
+    return "\n".join(out) + ("\n" if body_md.endswith("\n") else "")
 
 
 def _build_risks_blockers(
