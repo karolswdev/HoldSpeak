@@ -438,8 +438,9 @@ class TestTheChairAsWindows:
                     rows = page.evaluate("""() => [...document.querySelectorAll('.desk-menu-list [role="menuitemcheckbox"]')]
                         .map((e) => [e.textContent.trim(), e.getAttribute('aria-checked')])""")
                     facts["go-chair"] = rows
-                    if [t.replace("✓", "").strip() for t, _ in rows] != ["Needs you", "Brief", "The week"]:
-                        failures["phone-desk"]["C4 Go has the Chair rows, no Capture row"] = rows
+                    # PHILO-15 11 (B21, owner ruling 2026-10-07): Capture is a Go row at 393 too.
+                    if [t.replace("✓", "").strip() for t, _ in rows] != ["Needs you", "Brief", "The week", "Capture"]:
+                        failures["phone-desk"]["C4 Go has the four Chair rows"] = rows
                     self._press(page, page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')"), width)
                     shell("Brief").wait_for()
                     frame, chair = self._measure(page, width, "chair-windows", facts)
@@ -487,10 +488,12 @@ class TestTheChairAsWindows:
                     # C4b (Muad'Dib's ruling): ONLY the Dock's Speak AppIcon opens
                     # Capture; Go ▸ Speak (the verb, the menu, ⌘1) keeps opening the
                     # Speak (dictation) window, so it stays reachable from the Chair.
-                    self._press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
-                    page.locator(".desk-verbbar-menu").wait_for()
-                    go_speak = page.locator(".desk-verbbar-menu").get_by_role("menuitem", name=re.compile(r"^Speak"))
-                    go_speak.first.scroll_into_view_if_needed()
+                    # PHILO-15 11 (B21, owner ruling 2026-10-07): Speak is not in the
+                    # phone Go; at 393 the Speak verb is one Search away.
+                    self._press(page, page.locator("button[aria-controls=desk-tool-shelf]"), width)
+                    page.locator("input[aria-controls=desk-palette-listbox]").fill("Speak")
+                    go_speak = page.locator("[id='desk-palette-option-go.dictate']")
+                    go_speak.first.wait_for()
                     self._press(page, go_speak.first, width)
                     try:
                         page.locator(".desk-window-shell[aria-label='Speak']").wait_for(timeout=8_000)
@@ -501,7 +504,7 @@ class TestTheChairAsWindows:
                           "screen": page.get_by_test_id("desk-screen-title").inner_text().strip()}
                     facts["go-speak"] = go
                     if go["speak_window"] != 1 or go["screen"] != "Speak":
-                        failures["capture-from-speak"]["C4b Go ▸ Speak opens the Speak window"] = go
+                        failures["capture-from-speak"]["C4b the Speak verb opens the Speak window"] = go
                 facts["errors"] = [e for e in errors if "ResizeObserver" not in e]
                 failures = {k: v for k, v in failures.items() if v}
                 facts["failures"] = failures

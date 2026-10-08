@@ -130,7 +130,9 @@ export interface ThoughtWorkspaceProjection {
     continuation_admission: "ready" | "unavailable";
     intended_placement: { target_id: string; target_name: string; target_kind: string; boundary: string; readiness: string } | null;
   };
-  terminal_status: { code: string; category: "owner_terminal" | "integrity" | "indeterminate" | "retryable"; retryable: boolean; message?: string } | null;
+  /** `token` (PHILO-15 10): the hub's named failure, e.g.
+   *  `STRUCTURED RESULT · NOT USABLE`. The hub sends no `message`. */
+  terminal_status: { code: string; category: "owner_terminal" | "integrity" | "indeterminate" | "retryable"; retryable: boolean; token?: string; message?: string } | null;
 }
 
 export interface ThoughtAttachmentLeaf {

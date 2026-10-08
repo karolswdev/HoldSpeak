@@ -21,6 +21,61 @@ from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_ope
 DEFAULT_URL = "http://127.0.0.1:8765"
 _TIMEOUT_SECONDS = 3.0
 
+#: PHILO-15 11 (B08): the hub-health detail when nothing listens at the hub
+#: address.  ``run_doctor`` prints one plain line for it, not one connection
+#: error per network check.
+HUB_NOT_RUNNING = "not running"
+
+#: PHILO-15 11 (B08): the words a person reads for each check.  ``name`` stays
+#: the machine id (tests and scripts key on it); the printed row uses the label.
+ROW_LABELS = {
+    "hub-health": "Hub",
+    "runtime-status": "Hub status",
+    "runtime-preflight": "AI model test",
+    "websocket": "Live link",
+    "desk-bootstrap": "Desk page",
+    "auth": "Hub token",
+    "mcp-server": "Agent server",
+    "inference": "AI places",
+    "database": "Database",
+    "observer": "Event log",
+}
+
+def is_starter_model(path: str) -> bool:
+    """True only for the starter model that Set up local AI downloads.
+
+    The identity is the content-addressed artifact folder plus the file name
+    of ``DEFAULT_INTEL_MODEL_PATH`` (the signed starter preset), never a path
+    substring: a custom model under ``models/artifacts`` is not the starter
+    (Astra r1 on #986).
+    """
+    from pathlib import PurePosixPath
+
+    from .intel.models import DEFAULT_INTEL_MODEL_PATH
+
+    starter = PurePosixPath(DEFAULT_INTEL_MODEL_PATH)
+    given = PurePosixPath(str(path).strip().rstrip("."))
+    return given.name == starter.name and given.parent.name == starter.parent.name
+
+
+#: PHILO-15 11 (Astra r1 on #986): engine ids as a person reads them, on
+#: the printed line only (the check data keeps the wire ids).
+PLAIN_WORDS = (
+    ("openai_compatible", "OpenAI-compatible server"),
+    ("llama_cpp", "llama.cpp"),
+)
+
+
+def plain(text: str) -> str:
+    """The printed words for one doctor detail or fix line."""
+    for wire, words in PLAIN_WORDS:
+        text = text.replace(wire, words)
+    return text
+
+
+#: The local AI card on the first-run page downloads the product's model.
+SET_UP_LOCAL_AI = "Start HoldSpeak (`holdspeak`) and push Set up local AI on the Local AI card."
+
 
 @dataclass(frozen=True)
 class DoctorResult:
@@ -30,8 +85,12 @@ class DoctorResult:
     name: str
     detail: str
 
+    @property
+    def label(self) -> str:
+        return ROW_LABELS.get(self.name, self.name)
+
     def line(self) -> str:
-        return f"{self.status:<5} {self.name:<17} {self.detail}"
+        return f"{self.status:<5} {self.label:<14} {plain(self.detail)}"
 
 
 def _base_url(url: str) -> str:
@@ -106,13 +165,21 @@ def _failure(exc: Exception) -> str:
     return str(exc) or type(exc).__name__
 
 
+def _refused(exc: Exception) -> bool:
+    """True when nothing listens at the hub address (the hub is not running)."""
+    reason = exc.reason if isinstance(exc, URLError) and not isinstance(exc, HTTPError) else exc
+    return isinstance(reason, ConnectionRefusedError)
+
+
 def _check_hub_health(url: str, token: str) -> DoctorResult:
     try:
         status, payload = _get_json(url, "/health", token)
         if status == 200 and payload == {"status": "ok"}:
-            return DoctorResult("PASS", "hub-health", "/health → ok")
+            return DoctorResult("PASS", "hub-health", "running")
         return DoctorResult("FAIL", "hub-health", f"unexpected response: {payload!r}")
     except Exception as exc:  # each doctor check must remain independent
+        if _refused(exc):
+            return DoctorResult("FAIL", "hub-health", HUB_NOT_RUNNING)
         return DoctorResult("FAIL", "hub-health", _failure(exc))
 
 
@@ -139,6 +206,17 @@ def _check_runtime_preflight(url: str, token: str) -> DoctorResult:
         detail = str(payload.get("detail") or payload.get("error") or "no detail")
         if status == 200 and payload.get("ok") is True:
             return DoctorResult("PASS", "runtime-preflight", detail)
+        if detail.startswith("Model not found at"):
+            path = detail.removeprefix("Model not found at").strip().rstrip(".")
+            name = path.rsplit("/", 1)[-1]
+            if is_starter_model(path):
+                # PHILO-15 11 (B08): the starter model, not downloaded yet.
+                # That is a step still to do, not a failure.
+                return DoctorResult(
+                    "SKIP", "runtime-preflight", f"the local AI model {name} is not downloaded yet. {SET_UP_LOCAL_AI}"
+                )
+            # A model the owner chose, and its file is gone: a real fault.
+            return DoctorResult("FAIL", "runtime-preflight", f"model file missing: {name} ({path})")
         return DoctorResult("FAIL", "runtime-preflight", detail)
     except Exception as exc:
         return DoctorResult("FAIL", "runtime-preflight", _failure(exc))
@@ -288,7 +366,7 @@ def _check_database() -> DoctorResult:
         from .services.primitive_service import PrimitiveService
 
         PrimitiveService(get_database()).list_notes(Principal(PrincipalKind.OWNER, "doctor"))
-        return DoctorResult("PASS", "database", "primitives readable")
+        return DoctorResult("PASS", "database", "notes readable")
     except Exception as exc:
         return DoctorResult("FAIL", "database", _failure(exc))
 
@@ -392,8 +470,13 @@ def run_checks(url: str | None = None, token: str | None = None) -> list[DoctorR
         if is_loopback_url(hub_url):
             hub_url = pin_loopback_url(hub_url)
             credential = _local_owner_token()
+    hub = _check_hub_health(hub_url, credential)
+    if getattr(hub, "detail", None) == HUB_NOT_RUNNING:
+        # PHILO-15 11 (B08): no hub, so every other hub check can only say
+        # "connection refused".  One line says it.
+        return [hub]
     return [
-        _check_hub_health(hub_url, credential),
+        hub,
         _check_runtime_status(hub_url, credential),
         _check_runtime_preflight(hub_url, credential),
         _check_websocket(hub_url, credential),
@@ -412,13 +495,27 @@ def run_doctor(
     *,
     output: Callable[[str], None] = print,
 ) -> int:
-    """Print diagnostics and return 0 unless a check failed."""
+    """Print diagnostics and return 0 unless a check failed.
+
+    A hub that is not running is not a failure (before the first launch it is
+    the normal state): one line says so and how to start it.
+    """
     results = run_checks(url, token)
+    if len(results) == 1 and results[0].name == "hub-health" and results[0].detail == HUB_NOT_RUNNING:
+        output(hub_not_running_line(url))
+        return 0
     for result in results:
         output(result.line())
     counts = {status: sum(result.status == status for result in results) for status in ("PASS", "SKIP", "FAIL")}
     output(f"\n{counts['PASS']} PASS · {counts['SKIP']} SKIP · {counts['FAIL']} FAIL")
     return 1 if counts["FAIL"] else 0
+
+
+def hub_not_running_line(url: str | None = None) -> str:
+    """The one line ``holdspeak doctor`` prints when the hub is not running."""
+    if url or os.environ.get("HOLDSPEAK_URL", ""):
+        return f"HUB · NOT RUNNING · nothing answers at {resolve_hub_url(url)}"
+    return "HUB · NOT RUNNING · start it with `holdspeak`"
 
 
 def main() -> int:
