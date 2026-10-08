@@ -1,0 +1,3 @@
+deny pGEByonmFmPovB7MON3XyPUa0lpHySSD at 14:47:45
+{"id":"pGEByonmFmPovB7MON3XyPUa0lpHySSD","session_key":"pi:spike","agent":"agent","tool":"Bash","args_sha256":"66189981e0bb6d1cf3a5cd9aff9fb27efb1b328c279f7c4ba0b6a7f73eecae6e","args_head":"{\"command\":\"echo hello-from-pi\"}","cwd":"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Ntdbdeny Qihl6YyRmePrZC8sek3CpBZORPFJHaHi at 14:47:55
+{"id":"Qihl6YyRmePrZC8sek3CpBZORPFJHaHi","session_key":"pi:spike","agent":"agent","tool":"Bash","args_sha256":"66189981e0bb6d1cf3a5cd9aff9fb27efb1b328c279f7c4ba0b6a7f73eecae6e","args_head":"{\"command\":\"echo hello-from-pi\"}","cwd":"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Ntdb

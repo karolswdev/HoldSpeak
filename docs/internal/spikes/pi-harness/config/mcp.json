@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "holdspeak": {
+      "url": "http://127.0.0.1:8791/api/mcp",
+      "headers": { "Authorization": "Bearer ${HOLDSPEAK_AGENT_CREDENTIAL}" },
+      "description": "HoldSpeak hub: projects, desk, meetings",
+      "exposure": "hidden",
+      "toolExposure": { "project.list": "direct", "desk.needs_you": "direct" }
+    }
+  }
+}
