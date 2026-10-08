@@ -18,7 +18,10 @@ import "./objects.css";
 
 export interface PRCardProps {
   number: number;
+  /** The PR's own title (GitHub's). */
   title: string;
+  /** PHILO-15 B50: the desk item the PR is for, as the second line. */
+  item?: string;
   checks?: { passed: number; total: number; failed?: number; running?: number };
   /** `NONE YET`, `APPROVED`, `CHANGES ASKED`. */
   review?: string;
@@ -55,6 +58,7 @@ function checkLamps(checks: NonNullable<PRCardProps["checks"]>) {
 export function PRCard({
   number,
   title,
+  item,
   checks,
   review,
   branch,
@@ -71,6 +75,13 @@ export function PRCard({
           #{number} {title}
         </span>
       </div>
+      {item && item !== title ? (
+        <div className="pr-card-line">
+          <span className="pr-card-item" data-testid={testId ? `${testId}-item` : undefined}>
+            {item}
+          </span>
+        </div>
+      ) : null}
       {lamps.length || review ? (
         <div className="pr-card-line pr-card-facts">
           {lamps.map((lamp) => (

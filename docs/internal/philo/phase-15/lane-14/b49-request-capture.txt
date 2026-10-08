@@ -1,0 +1,60 @@
+B49 request capture, 2026-10-07, Codex 0.159, LAN qwen3.8-27b through a logging proxy.
+Startup config (CODEX_HOME/config.toml): model_catalog_json = <abs>/catalog.json, slug qwen3.8-27b,
+supports_search_tool = true (the gpt-5.5 entry of 'codex debug models' with the slug changed).
+Codex /mcp in the launched pane: holdspeak: connected (138 tools).
+Each line: time, tools offered to the model in that /v1/responses request.
+
+18:23:15 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:16 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:23 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:24 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:26 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:26 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:26 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:27 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:28 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:30 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:30 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:31 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:31 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:32 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:34 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:35 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:35 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:36 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:37 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:38 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:40 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:40 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:41 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:42 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:44 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:47 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:47 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:48 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:49 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:23:50 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:24:53 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:25:06 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:25:15 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:25:29 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:26:30 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:26:49 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:26:55 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:27:01 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:27:07 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:27:11 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:27:28 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:27:35 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:27:41 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:27:45 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:27:49 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:27:56 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:28:15 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:28:20 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:28:27 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:28:33 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+18:28:39 13 exec_command,write_stdin,list_mcp_resources,list_mcp_resource_templates,read_mcp_resource,request_user_input,apply_patch,view_image,get_goal,create_goal,update_goal,tool_search,web_search
+
+The tool_search tool as sent (execution, description head):
+client | # Tool discovery  Searches over deferred tool metadata with BM25 and exposes matching tools for the next model call.  You have access to tools from the following sources: - Multi-agent tools: Spawn and manage sub-agents. - holdspeak Some of the tools may not have been provided to you upfront, and you should use this tool (`tool_search`) to search for the required tools. For MCP tool discovery, always use `tool_search

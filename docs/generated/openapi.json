@@ -3589,6 +3589,46 @@
         "summary": "Api Agent Launch Lane"
       }
     },
+    "/api/agent/launches/{launch_id}/rebrief": {
+      "post": {
+        "description": "PHILO-15 B46: the owner's Re-brief ``{text}``. Typed into the\nlaunch's own pane now when the agent is idle or asks (``delivered``);\nmid-turn it waits for the turn end (``queued``). A refusal is 409\nwith its status.",
+        "operationId": "api_agent_rebrief_api_agent_launches__launch_id__rebrief_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Rebrief Api Agent Launches  Launch Id  Rebrief Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Rebrief"
+      }
+    },
     "/api/agents/capabilities": {
       "get": {
         "operationId": "api_agent_capabilities_api_agents_capabilities_get",

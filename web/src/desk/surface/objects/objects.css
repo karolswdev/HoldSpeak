@@ -641,6 +641,13 @@
   color: var(--text);
   overflow-wrap: anywhere;
 }
+/* PHILO-15 B50: the desk item the PR is for, under the PR's own title. */
+.pr-card-item {
+  min-width: 0;
+  font: var(--font-size-sm) / 1.35 var(--font-sans);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
 .pr-card-fact {
   font: var(--font-size-xs) / 1.3 var(--font-mono);
   letter-spacing: 0.04em;
