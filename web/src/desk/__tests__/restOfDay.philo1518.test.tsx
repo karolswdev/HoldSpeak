@@ -1,7 +1,10 @@
 /* PHILO-15 lane 18 — the rest of the first afternoon (rehearsal 1B):
  * B31 one sign-in truth (the words), B33 the Settings words read the route,
- * B36 the known-sign-in default, B56 a live aftercare card. The Conductor's B34/B35 fences live in
+ * B36 the known-sign-in default, B40 a drawer label is two lines, B56 a live
+ * aftercare card. The Conductor's B34/B35 fences live in
  * conductor/__tests__/conductor.test.tsx; B36's line in hand/__tests__/hand.test.tsx. */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,6 +15,7 @@ vi.mock("../../lib/api", async () => {
 });
 
 import { pickDefaultAgent } from "../agentHand";
+import { fitName } from "../surface/objects/fitName";
 import type { AgentsDetect } from "../firstrun/agentsStep";
 import { dismissAftercare, publishAftercare, refreshAftercare, useAftercare } from "../intelligenceAttention";
 import { PrefsFace, type SettingsHubWire } from "../../pages/cores/settingsPrefs";
@@ -82,6 +86,27 @@ describe("B33: the Settings hub reads the summary route", () => {
     face(hub({ meetings: { intelligence: true, engineSet: false, summariesOff: true, auto: "every" } }));
     expect(screen.getByText("SUMMARIES OFF")).toBeTruthy();
     expect(screen.queryByText("SUMMARY · NO ENGINE")).toBeNull();
+  });
+});
+
+describe("B40: a drawer's icon label is at most two lines, cut in the middle", () => {
+  const RULES = "contributing file to the rehearsal repository with the three rules: branch from main, one change per pull request, every pull request names its test";
+  it("the drawer (and the Conductor, a drawer window) clamps the species' label to two lines", () => {
+    const css = readFileSync(join(__dirname, "../drawer/drawer.css"), "utf8");
+    expect(css).toMatch(/\.drawer-window \.desk-icon-name \{\s*-webkit-line-clamp: 2;\s*\}/);
+    expect(css).not.toMatch(/-webkit-line-clamp: unset/);
+  });
+  it.each([
+    ["the action item", `Add a ${RULES}`, "Add a"],
+    ["the agent", `Codex: ${RULES}`, "Codex:"],
+  ])("%s's rehearsal name reads exactly two lines with its start and its end", (_what, name, start) => {
+    // 108 px label, 4 px padding each side, the mono xs face: 13 characters a line.
+    const lines = fitName(name, 13, 2);
+    expect(lines).toHaveLength(2);
+    expect(lines.every((line) => line.length <= 13)).toBe(true);
+    expect(lines[0].startsWith(start)).toBe(true);
+    expect(lines[1].endsWith("test")).toBe(true);
+    expect(lines.join(" ")).toContain("…");
   });
 });
 

@@ -32,13 +32,11 @@
 
 .drawer-info-rename { display: flex; }
 
-/* In a drawer the grid's rows grow with their names: a name is never
-   clipped or ellipsized (UX-CANON: an ellipsis counts as clipped). */
+/* PHILO-15 B40 (coordinator ruling 2026-10-07): a drawer's icon label, and
+   so the Conductor's (it is a drawer window), is at most TWO lines, as on
+   the desk. DeskIcon's fitName (#989, B30) sets it from this clamp: spaces
+   first, then joins, cut in the MIDDLE so the distinguishing end stays; the
+   full name is the title. Unclamped, a long action item read 14 lines. */
 .drawer-window .desk-icon-name {
-  display: block;
-  -webkit-line-clamp: unset;
-  overflow: visible;
-  /* B30: words break at their joins first (<wbr>); only a word longer than
-     the whole line breaks inside, since a drawer never clips a name. */
-  overflow-wrap: break-word;
+  -webkit-line-clamp: 2;
 }

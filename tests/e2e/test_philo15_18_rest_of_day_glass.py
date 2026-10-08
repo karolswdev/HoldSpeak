@@ -332,3 +332,130 @@ class TestALiveAftercareCard:
                 assert not errors, errors
             finally:
                 browser.close()
+
+
+# ── B40 ────────────────────────────────────────────────────────────────
+
+LONG_TASK = ("Add a contributing file to the rehearsal repository with the three rules: branch from main, "
+             "one change per pull request, every pull request names its test")
+B40_PROJECT = "p-b40-ledger"
+B40_ACTION = "m-b40-a1"
+
+LABELS = r"""(scope) => [...document.querySelectorAll(scope + ' .desk-icon-name')].map((e) => {
+  const cs = getComputedStyle(e);
+  const line = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.25;
+  return { title: e.title, text: e.innerText, lines: Math.round(e.getBoundingClientRect().height / line),
+           hidden: e.scrollHeight > e.clientHeight + 1 };
+})"""
+
+
+class TestTwoLineDrawerLabels:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        import holdspeak.agent_context as agent_context_pkg
+        import holdspeak.delivery.factory_launch as factory_launch
+        from holdspeak.agent_context import event_log
+
+        _ensure_build()
+        _no_owner_credentials(monkeypatch)
+        state = tmp_path / "home" / ".holdspeak"
+        state.mkdir(parents=True)
+        monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", state / "agent_launches.json")
+        monkeypatch.setattr(agent_context_pkg, "AGENT_CONTEXT_FILE", state / "agent_sessions.json")
+        monkeypatch.setattr(event_log, "default_spool_dir", lambda: state / "agent-events")
+        server, self.base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        self._seed(tmp_path / "home")
+        try:
+            yield
+        finally:
+            server.stop()
+
+    @staticmethod
+    def _seed(home: Path) -> None:
+        """The rehearsal's Project drawer and Conductor: one long action item,
+        and Codex at work on it (the hub's producers; no agent runs)."""
+        from datetime import timezone
+
+        import holdspeak.agent_context as agent_context_pkg
+        from holdspeak.agent_context import event_log, ingest_agent_hook_event
+        from holdspeak.db import get_database
+        from holdspeak.delivery.factory_launch import LaunchLedger
+        from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+        db = get_database()
+        db.projects.create_project(project_id=B40_PROJECT, name="Payments ledger cutover", description="Nov 5.",
+                                   keywords=["ledger"])
+        start = datetime.now().replace(microsecond=0) - timedelta(hours=2)
+        db.meetings.save_meeting(MeetingState(
+            id="m-b40", started_at=start, ended_at=start + timedelta(minutes=30), title="Payments ledger sync",
+            segments=[TranscriptSegment(text="Add the contributing file.", speaker="Me", start_time=1.0, end_time=4.0)],
+            intel=IntelSnapshot(timestamp=1.0, topics=["ledger"], summary="Add the contributing file.", action_items=[{
+                "id": B40_ACTION, "task": LONG_TASK, "owner": None, "due": None, "status": "pending",
+                "review_state": "accepted", "source_timestamp": None, "created_at": start.isoformat()}]),
+            intel_status="completed"))
+        db.projects.associate_meeting_project(meeting_id="m-b40", project_id=B40_PROJECT, source="manual",
+                                              confidence=1.0)
+        with db._connection() as conn:
+            item = str(conn.execute("SELECT id FROM action_items WHERE task=? LIMIT 1", (LONG_TASK,)).fetchone()[0])
+        spool = {"state_path": agent_context_pkg.AGENT_CONTEXT_FILE, "events_spool_dir": event_log.default_spool_dir()}
+        ingest_agent_hook_event(agent="codex", payload={
+            "session_id": "c0dex000-b40", "cwd": str(home / "dev" / "rehearsal"),
+            "hook_event_name": "PreToolUse", "tool_name": "Bash"}, **spool)
+        attempt = db.work_attempts.create(
+            source_id="src_b40", worktree_id="wt_b40", project="rehearsal", story_id=f"action-{item}",
+            node_id="this-node", session_id="codex:c0dex000-b40", target_id="tgt_b40", kind="launch", exact=True,
+            claimed_by="launch:codex-default", state="working", origin_ref=f"action:{item}")
+        launched = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat().replace("+00:00", "Z")
+        LaunchLedger().record({
+            "launch_schema": 1, "launch_id": "launch_b40", "state": "launched", "node_id": "this-node",
+            "profile_id": "codex-default", "gate": "gated", "branch": f"hs/action-{item}", "session": "hs-launch_b40",
+            "origin_ref": {"kind": "action", "id": item}, "attempt_id": attempt.attempt_id,
+            "launched_at": launched, "control_mode": "normal", "instruction_state": "sent",
+        })
+
+    @staticmethod
+    def _icons(page: Any, window: Any, group: str) -> None:
+        if window.locator(".desk-icon").count() == 0:
+            window.get_by_role("group", name=group).get_by_role("button", name="Icons").click()
+        window.locator(".desk-icon").first.wait_for(timeout=T)
+        page.wait_for_timeout(500)
+
+    @staticmethod
+    def _assert_two_lines(page: Any, scope: str, needle: str) -> None:
+        labels = [label for label in page.evaluate(LABELS, scope) if needle in label["title"]]
+        assert labels, page.evaluate(LABELS, scope)
+        for label in labels:
+            assert label["lines"] <= 2, label
+            assert not label["hidden"], label
+            if len(label["title"]) > 26:
+                text = label["text"].replace("\n", " ")
+                assert "…" in text and text.rstrip().endswith("test"), label
+                assert text.startswith(label["title"].split(" ")[0]), label
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_the_drawer_and_the_conductor_labels_are_two_lines(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = _page(pw, self.base, width)
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}&open=project:{B40_PROJECT}", wait_until="load")
+                _normal_chair(page)
+                drawer = page.locator(".drawer-window")
+                drawer.locator(f"[data-object-id='action:{B40_ACTION}']").first.wait_for(timeout=T)
+                self._icons(page, drawer, "Drawer view")
+                _settle(page)
+                _shot(page, "b40-project-drawer", width)
+                self._assert_two_lines(page, ".drawer-window:not(.conductor-window)", "contributing file")
+
+                page.goto(f"{self.base}/conductor?token={TOKEN}", wait_until="load")
+                _normal_chair(page)
+                conductor = page.locator(".conductor-window")
+                conductor.locator("[data-object-id='launch:launch_b40']").first.wait_for(timeout=T)
+                self._icons(page, conductor, "Conductor view")
+                _settle(page)
+                _shot(page, "b40-conductor", width)
+                self._assert_two_lines(page, ".conductor-window", "Codex:")
+                assert not errors, errors
+            finally:
+                browser.close()
