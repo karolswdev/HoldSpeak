@@ -66,7 +66,9 @@ export function MeetingSummarySlab({
       {topics.length > 0 ? (
         <span className="summary-topics" data-testid="meeting-summary-topics">
           {topics.map((topic) => (
-            <span key={topic} className="surface-token" data-chip>
+            // PHILO-15 lane 12 (B28): a long topic wraps inside the window
+            // (the chip species' wrap variant); it never runs past its edge.
+            <span key={topic} className="surface-token" data-chip data-wrap>
               {topic.toUpperCase()}
             </span>
           ))}

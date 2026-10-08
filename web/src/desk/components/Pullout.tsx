@@ -15,6 +15,7 @@ import { DeskWindowFrame } from "./DeskWindow";
 import { kindWord, primitiveName } from "../windowName";
 import { useThreadStore } from "../threads";
 import { PULLOUT_CONTENT } from "../pullouts";
+import { PULLOUT_SIZE } from "../pullouts/size";
 import { useEffect, useState, type ReactNode } from "react";
 import { thoughtForNote, type NoteThoughtStatus, type Thought } from "../thoughts";
 import { NotePullout } from "../pullouts/NotePullout";
@@ -74,7 +75,11 @@ function PulloutFrame({
       label={name}
       kindWord={kindWord(o.kind)}
       className="desk-pullout is-card"
-      fitContent
+      // B24 (Astra r1): a kind with a declared size opens AT that size; a
+      // content-fitted card would drop the height until it is arranged.
+      fitContent={!PULLOUT_SIZE[o.kind]}
+      defaultW={PULLOUT_SIZE[o.kind]?.w}
+      defaultH={PULLOUT_SIZE[o.kind]?.h}
       origin={origin}
       rootStyle={{ "--k": objGlow(o.kind) } as React.CSSProperties}
       icon={<img src={spriteUrl(o.kind, o.id, "rest", refAgent(o.ref))} alt="" width={30} height={30} className={spriteStateCssClass((o as { spriteState?: string }).spriteState ?? null) || undefined} data-sprite-variant={spriteVariantKey(o.kind, (o as { spriteState?: string }).spriteState ?? null)} />}

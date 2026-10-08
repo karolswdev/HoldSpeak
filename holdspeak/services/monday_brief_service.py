@@ -295,6 +295,62 @@ def _stored_stamp(value: datetime.datetime) -> str:
     return aware(value).isoformat()
 
 
+_LABEL_MONTHS = ("JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                 "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
+_TITLE_MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+_WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+
+def _stored_day(value: Any) -> datetime.date | None:
+    """The calendar day a stored stamp names, on the clock it was stored with."""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return datetime.datetime.fromisoformat(text.replace("Z", "+00:00")).date()
+    except ValueError:
+        return None
+
+
+def brief_period_label(period_start: Any, period_end: Any) -> str | None:
+    """PHILO-15-09 (B04, ruling 3): the brief's ONE date range.
+
+    Computed from the stored window (``compute_window``), never from the week:
+    the window head, the Chair and the sent document all say this text.
+    ``OCT 06-07``; ``SEP 30 - OCT 01`` across a month; ``OCT 07`` for one day.
+    A plain hyphen: the vocabulary guard forbids en dashes in rendered copy.
+    """
+    start, end = _stored_day(period_start), _stored_day(period_end)
+    if end is None:
+        return None
+    end_text = f"{_LABEL_MONTHS[end.month - 1]} {end.day:02d}"
+    if start is None or start == end:
+        return end_text
+    if start.year == end.year and start.month == end.month:
+        return f"{_LABEL_MONTHS[start.month - 1]} {start.day:02d}-{end.day:02d}"
+    return f"{_LABEL_MONTHS[start.month - 1]} {start.day:02d} - {end_text}"
+
+
+def brief_title(period_end: Any) -> str:
+    """PHILO-15-09 (B04, ruling 2): ``Brief · Wednesday 7 Oct 2026``.
+
+    The brief's own day (its window's end), never "Monday" unless it is."""
+    day = _stored_day(period_end)
+    if day is None:
+        return "Brief"
+    return f"Brief · {_WEEKDAYS[day.weekday()]} {day.day} {_TITLE_MONTHS[day.month - 1]} {day.year}"
+
+
+#: PHILO-15-09 (coordinator ruling): the scheduled Brief says what it skipped
+#: (a NOT READ row in lane 05's shape: ``NOT_READ_REF`` below).
+PEOPLE_NOT_READ_TEXT = "NOT READ · People (locked) · Generate for the full brief"
+
+
+#: People store states in which nothing was skipped: read, or no store at all.
+_PEOPLE_READ_STATES = frozenset({"ready", "unconfigured"})
+
+
 class _NeedsYouRows(list):
     """The Brief's WAITING rows from the one ``needs you`` rule.
 
@@ -304,9 +360,12 @@ class _NeedsYouRows(list):
 
     def __init__(
         self, rows: Any = (), *, needs_you_count: int | None, counted_decisions: set[str],
-        door_unread: bool = False,
+        door_unread: bool = False, people_unread: bool = False,
     ) -> None:
         super().__init__(rows)
+        # PHILO-15-09 (Astra r2, P1): the People store exists and was not
+        # read (its key request was refused, it is locked or broken).
+        self.people_unread = people_unread
         self.needs_you_count = needs_you_count
         self.counted_decisions = counted_decisions
         # PHILO-15 05 r2: the Door was not read; the brief adds its own
@@ -396,8 +455,12 @@ class MondayBriefService:
         *,
         observer: PipelineObserver | None = None,
         clock: Callable[[], datetime.datetime] | None = None,
+        people_store: Any = None,
     ) -> None:
         self._db = db
+        # PHILO-15-09: the People store whose metadata counts the people
+        # added (None: the production store, built when it is read).
+        self._people_store = people_store
         self._observer = observer or NullObserver()
         # PHILO-3-03: the producer's ONE clock. It is the wall clock unless the
         # composition passes another (the rig's own hub, a test); a case that
@@ -453,9 +516,54 @@ class MondayBriefService:
         return period_start, period_end
 
     def generate(
-        self, principal: Any, *, now: datetime.datetime | None = None
+        self, principal: Any, *, now: datetime.datetime | None = None,
+        regenerate: bool = True, people_reads: bool = True,
     ) -> MondayBrief:
-        """Generate or return the existing brief for the current local date."""
+        """Make the brief for the current local date from the desk as it is now.
+
+        PHILO-15-09 (B04, ruling 1): one brief per local day, and a second
+        Generate on the same day REGENERATES it from the current desk. The
+        brief keeps its id; its body, headline and ``generated_at`` are new.
+        An item that is the same as before (same section, source and text)
+        keeps its id, so its shelf state (acknowledged, deferred) stays.
+
+        ``people_reads=False`` (the scheduled job) reads nothing from the
+        People store (see below).
+        ``regenerate=False`` (the scheduled job) returns the day's brief when
+        one exists: the schedule makes one brief a day, the owner's Generate
+        makes it again.
+        """
+        # PHILO-15-09 (Astra r1, P1): the scheduled Brief (``people_reads=False``)
+        # never reads the People store: no key request with nobody at the desk.
+        # Its WAITING count then leaves out People commitments (their lanes
+        # are encrypted). The owner's own Generate (his press, at the desk)
+        # reads them, so the Brief says the bell's one number. People added
+        # are counted from plain metadata on both paths (``_people_added``);
+        # no People content is written into a brief on either path.
+        if people_reads:
+            return self._generate(principal, now=now, regenerate=regenerate)
+        from holdspeak.people.key_free import no_people_reads
+
+        with no_people_reads():
+            return self._generate(principal, now=now, regenerate=regenerate,
+                                  people_skipped=self._people_configured())
+
+    def _people_configured(self) -> bool:
+        """True when a People store exists (the key is not asked for)."""
+        try:
+            store = self._people_store
+            if store is None:
+                from holdspeak.people.store import production_people_store
+
+                store = production_people_store()
+            return bool(store.path.exists())
+        except Exception:  # noqa: BLE001 - an unreadable store is still skipped
+            return True
+
+    def _generate(
+        self, principal: Any, *, now: datetime.datetime | None, regenerate: bool,
+        people_skipped: bool = False,
+    ) -> MondayBrief:
         # PHILO-3-03: the producer's day comes from its one clock.
         period_start, period_end = self.compute_window(now or self._clock())
         date_key = period_end.date().isoformat()
@@ -477,6 +585,9 @@ class MondayBriefService:
         rule_count = getattr(member_items, "needs_you_count", None)
         needs_you_count = None if member_items is None or rule_count is None else int(rule_count)
         counted_decisions = set(getattr(member_items, "counted_decisions", ()))
+        # PHILO-15-09 (Astra r2, P1): the owner's Generate keeps the People
+        # NOT READ row when its own read of People failed.
+        people_skipped = people_skipped or bool(getattr(member_items, "people_unread", False))
         if member_items is None:
             rule_rows: list[BriefItem] = self._collect_waiting_or_unread(principal)
         elif getattr(member_items, "door_unread", False):
@@ -485,7 +596,13 @@ class MondayBriefService:
             rule_rows = list(member_items) + self._collect_waiting_or_unread(principal)
         else:
             rule_rows = list(member_items)
-        waiting_items = unread_rule + self._collect_coverage_gaps(principal) + rule_rows
+        # PHILO-15-09 (coordinator ruling): the key-free (scheduled) Brief
+        # says what it did not read: one counted NOT READ row for People.
+        skipped = [BriefItem(
+            id=f"brief-item-{uuid.uuid4().hex}", section="waiting",
+            text=PEOPLE_NOT_READ_TEXT, source_ref=f"{NOT_READ_REF}people", priority=330,
+        )] if people_skipped else []
+        waiting_items = skipped + unread_rule + self._collect_coverage_gaps(principal) + rule_rows
 
         with self._db._connection() as conn:
             row = conn.execute(
@@ -494,10 +611,16 @@ class MondayBriefService:
                    ORDER BY generated_at DESC, id DESC LIMIT 1""",
                 (date_key,),
             ).fetchone()
-            if row is not None:
-                return self._load_brief(conn, row)
+            existing = row
+            if existing is not None and not regenerate:
+                return self._load_brief(conn, existing)
 
             human_changes, ledger = self._collect_changes(
+                period_start.isoformat(), period_end.isoformat()
+            )
+            # PHILO-15-09 (B04, ruling 4): what the owner added to the desk
+            # in the window (a decision he made, a Project, a person).
+            desk_changes = self._collect_desk_additions(
                 period_start.isoformat(), period_end.isoformat()
             )
 
@@ -520,9 +643,12 @@ class MondayBriefService:
             clock_tz = local_start.tzinfo
 
             # Last brief generated_at for "since last brief" filtering
+            # PHILO-15-09: a regeneration reads "since the brief before
+            # this one", never since itself.
             last_brief_row = conn.execute(
-                "SELECT generated_at AS latest FROM monday_briefs "
-                "ORDER BY julianday(generated_at) DESC LIMIT 1"
+                "SELECT generated_at AS latest FROM monday_briefs WHERE id != ? "
+                "ORDER BY julianday(generated_at) DESC LIMIT 1",
+                (str(existing["id"]) if existing is not None else "",),
             ).fetchone()
             last_brief_at = str(last_brief_row["latest"]) if (
                 last_brief_row and last_brief_row["latest"]
@@ -551,10 +677,13 @@ class MondayBriefService:
             # PHILO-4-03: the brief id is minted before the collectors, so the
             # breakage items can carry it -- a failure selected into two briefs
             # (same event, overlapping lookbacks) gets one row per brief.
-            brief_id = f"brief-{uuid.uuid4().hex}"
+            brief_id = (
+                str(existing["id"]) if existing is not None else f"brief-{uuid.uuid4().hex}"
+            )
             sections = {
                 "this_week": calendar_items + meeting_watch_items,
                 "changed": human_changes
+                + desk_changes
                 + self._collect_meetings(
                     period_start.isoformat(), period_end.isoformat()
                 ),
@@ -580,20 +709,44 @@ class MondayBriefService:
             )
             # Never bare (Astra, #872): see _stored_stamp.
             generated_at = _stored_stamp(period_end)
-            conn.execute(
-                """INSERT INTO monday_briefs
-                   (id, period_start, period_end, headline, generated_at)
-                   VALUES (?, ?, ?, ?, ?)""",
-                (
-                    brief_id,
-                    _stored_stamp(period_start),
-                    _stored_stamp(period_end),
-                    headline,
-                    generated_at,
-                ),
-            )
             items = [item for section in _SECTIONS for item in sections[section]]
+            if existing is None:
+                conn.execute(
+                    """INSERT INTO monday_briefs
+                       (id, period_start, period_end, headline, generated_at)
+                       VALUES (?, ?, ?, ?, ?)""",
+                    (
+                        brief_id,
+                        _stored_stamp(period_start),
+                        _stored_stamp(period_end),
+                        headline,
+                        generated_at,
+                    ),
+                )
+                kept: set[str] = set()
+            else:
+                conn.execute(
+                    """UPDATE monday_briefs
+                       SET period_start = ?, period_end = ?, headline = ?, generated_at = ?
+                       WHERE id = ?""",
+                    (
+                        _stored_stamp(period_start),
+                        _stored_stamp(period_end),
+                        headline,
+                        generated_at,
+                        brief_id,
+                    ),
+                )
+                kept = self._keep_unchanged_items(conn, brief_id, items)
             for item in items:
+                if item.id in kept:
+                    conn.execute(
+                        """UPDATE monday_brief_items
+                           SET detail = ?, priority = ?, created_at = ?
+                           WHERE id = ?""",
+                        (item.detail, item.priority, item.created_at, item.id),
+                    )
+                    continue
                 conn.execute(
                     """INSERT INTO monday_brief_items
                        (id, brief_id, section, text, detail, source_ref, priority,
@@ -617,6 +770,100 @@ class MondayBriefService:
             brief = self._load_brief(conn, row)
             brief.ledger = ledger
             return brief
+
+    @staticmethod
+    def _keep_unchanged_items(conn: Any, brief_id: str, items: list[BriefItem]) -> set[str]:
+        """PHILO-15-09 (B04, ruling 1): match the new items to the brief's old ones.
+
+        An item with the same section, source and text as an old item takes
+        the old item's id, so its shelf state stays. Every old item with no
+        match leaves the brief, with its shelf row. Returns the kept ids.
+        """
+        old_rows = conn.execute(
+            "SELECT id, section, text, source_ref FROM monday_brief_items WHERE brief_id = ?",
+            (brief_id,),
+        ).fetchall()
+        by_key: dict[tuple[str, str, str], list[str]] = {}
+        for row in old_rows:
+            key = (str(row["section"]), str(row["source_ref"] or ""), str(row["text"]))
+            by_key.setdefault(key, []).append(str(row["id"]))
+        kept: set[str] = set()
+        for item in items:
+            ids = by_key.get((item.section, str(item.source_ref or ""), item.text))
+            if ids:
+                item.id = ids.pop(0)
+                kept.add(item.id)
+        gone = [str(row["id"]) for row in old_rows if str(row["id"]) not in kept]
+        for item_id in gone:
+            conn.execute("DELETE FROM monday_brief_item_shelf WHERE item_id = ?", (item_id,))
+            conn.execute("DELETE FROM monday_brief_items WHERE id = ?", (item_id,))
+        # A new item may carry an id an old row held (a breakage id is the
+        # brief id and the failure): it was matched above, or it left.
+        return kept
+
+    def _collect_desk_additions(self, window_start: str, window_end: str) -> list[BriefItem]:
+        """PHILO-15-09 (B04, ruling 4): what the owner added to the desk.
+
+        From the durable rows, as ``_collect_meetings`` does: a decision he
+        made (a desk decision that is not ``proposed``; a proposed one is a
+        DECISIONS row), a Project, and the people added. A person is counted
+        from the People store's plain metadata (kind and time): the brief is
+        sent to other places, so no People content is written into it.
+        """
+        items: list[BriefItem] = []
+        # Small tables, stamps of mixed shapes: the instant test is exact.
+        with self._db._connection() as conn:
+            decisions = conn.execute(
+                """SELECT id, title, status, created_at FROM desk_decisions
+                   WHERE deleted = 0 AND status != 'proposed'"""
+            ).fetchall()
+            projects = conn.execute(
+                "SELECT id, name, created_at FROM projects WHERE is_archived = 0"
+            ).fetchall()
+        for row in sorted(decisions, key=lambda r: (str(r["created_at"]), str(r["id"]))):
+            if not in_window(row["created_at"], window_start, window_end):
+                continue
+            title = str(row["title"] or "").strip() or "Untitled decision"
+            items.append(BriefItem(
+                id=f"brief-item-{uuid.uuid4().hex}", section="changed",
+                text=f"Decision made: {title}", source_ref=f"desk_decision:{row['id']}",
+                priority=_MEETING_PRIORITY - 1, created_at=str(row["created_at"]),
+            ))
+        for row in sorted(projects, key=lambda r: (str(r["created_at"]), str(r["id"]))):
+            if not in_window(row["created_at"], window_start, window_end):
+                continue
+            name = str(row["name"] or "").strip() or "Untitled Project"
+            items.append(BriefItem(
+                id=f"brief-item-{uuid.uuid4().hex}", section="changed",
+                text=f"Project added: {name}", source_ref=f"project:{row['id']}",
+                priority=_MEETING_PRIORITY - 2, created_at=str(row["created_at"]),
+            ))
+        people = self._people_added(window_start, window_end)
+        if people:
+            items.append(BriefItem(
+                id=f"brief-item-{uuid.uuid4().hex}", section="changed",
+                text="Person added" if people == 1 else f"{people} people added",
+                source_ref="people:added", priority=_MEETING_PRIORITY - 3,
+            ))
+        return items
+
+    def _people_added(self, window_start: str, window_end: str) -> int:
+        """The people added in the window, from the People store's metadata.
+
+        Reads only the record kind and time (never a payload, never the key).
+        A store that is absent or cannot be read adds no line.
+        """
+        try:
+            store = self._people_store
+            if store is None:
+                from holdspeak.people.store import production_people_store
+
+                store = production_people_store()
+            stamps = store.created_stamps("relationship")
+        except Exception as exc:  # noqa: BLE001 - no line, never a false count
+            log.debug("brief: the People metadata was not read: %s", exc)
+            return 0
+        return sum(1 for stamp in stamps if in_window(stamp, window_start, window_end))
 
     def _collect_needs_you(self, principal: Any) -> list[BriefItem] | None:
         """The WAITING rows, with the one number and the decisions it counts.
@@ -695,9 +942,17 @@ class MondayBriefService:
                              None, f"meeting:{meeting.get('id')}", 110))
         return _NeedsYouRows(
             rows,
-            needs_you_count=None if door_unread else int(answer.get("count", len(rows) + len(counted_decisions))),
+            # PHILO-15-09 (Astra r2, P2): the hub's one number also counts
+            # each unread source and each arming recording (the desk draws
+            # them as rows). The Brief says an unread source ONCE, as a
+            # source not read (its NOT READ / Not observed row), so its
+            # "things waiting" are the members alone.
+            needs_you_count=None if door_unread else (
+                len(answer["members"]) if isinstance(answer.get("members"), list)
+                else int(answer.get("count", len(rows) + len(counted_decisions)))),
             counted_decisions=counted_decisions,
             door_unread=door_unread,
+            people_unread=str(answer.get("peopleStoreState") or "ready") not in _PEOPLE_READ_STATES,
         )
 
     def _compose(
@@ -717,9 +972,12 @@ class MondayBriefService:
         }
         counts = {section: len(items) for section, items in finalized_sections.items()}
         # PHILO-15 05: NOT READ rows are said as such, never as things waiting.
+        # PHILO-15-09 (Astra r2, P2): a source the coverage could not observe
+        # ("Not observed: ...") is the same kind of row: said once, as a
+        # source not read.
         unread = sum(
             1 for item in finalized_sections["waiting"]
-            if str(item.source_ref or "").startswith(NOT_READ_REF)
+            if str(item.source_ref or "").startswith((NOT_READ_REF, "coverage:"))
         )
         counts["waiting"] -= unread
         total_items = sum(counts.values()) + unread

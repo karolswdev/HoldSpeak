@@ -645,7 +645,7 @@ function ShadeProjects({
 // ── HS-171-04: BRIEF section — its own section below PROJECTS ────────
 //
 // Absent when no brief exists (A.8). Per ShadeProjectsQuiet board:
-// caption `BRIEF` with one row `Monday brief . N THINGS . <date> . Open`.
+// caption `BRIEF` with one row `Daily brief . N THINGS . <date> . Open`.
 
 function ShadeBrief({
   brief,
@@ -668,7 +668,7 @@ function ShadeBrief({
           {"="}
         </span>
         <div className="desk-shade-what">
-          <strong>{brief.hasThisWeek ? "Weekly brief" : "Monday brief"}</strong>
+          <strong>{brief.hasThisWeek ? "Weekly brief" : "Daily brief"}</strong>
           <small>
             <span className="desk-shade-project-tokens">
               <span className="surface-token" data-chip>

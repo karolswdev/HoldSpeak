@@ -71,7 +71,7 @@ import type {
   NudgeLocal,
   NudgeCardAction,
 } from "./model";
-import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, initialNudgeCard, formatDays, healthReasonWords, needsYouWhyWords } from "./model";
+import { lifecycleLabel, roomHealthWord, resolveHealthRows, nudgeCardReducer, initialNudgeCard, formatDays, healthReasonWords, needsYouWhyWords } from "./model";
 import { StringGadget, CycleGadget } from "../../desk/surface/gadgets";
 import { egressFor, egressForEvent, receiptFace, receiptLabel, refusalWord } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
@@ -295,6 +295,7 @@ function RoomHead({
   updateCtrl: ReturnType<typeof useUpdateController>;
 }) {
   const health = room.health.state === "ok" ? (room.health as RoomHealthData & { state: "ok" }) : null;
+  const healthWord = roomHealthWord(room);
   const target = room.target.state === "ok" ? (room.target as RoomTargetData & { state: "ok" }) : null;
   const needsYouCount = room.needsYou.state === "ok" ? room.needsYou.count : 0;
   const sources = room.sources.state === "ok" ? room.sources.items : [];
@@ -332,11 +333,14 @@ function RoomHead({
         </p>
       ) : null}
       <div className="room-head-chips" data-testid="room-head-chips">
-        {health ? (
+        {healthWord ? (
+          // PHILO-15 lane 12 (B25): an empty Project reads NEW (no health
+          // claim with nothing to judge).
           <StateChip
-            state={health.assessment === "at_risk" ? "failure" : "success"}
-            label={health.assessment === "at_risk" ? "AT RISK" : "ON TRACK"}
-            icon={"●"}
+            state={healthWord.tone === "fail" ? "failure" : healthWord.tone === "info" ? "idle" : "success"}
+            label={healthWord.word}
+            icon={healthWord.tone === "info" ? "○" : "●"}
+            data-testid="room-health-word"
           />
         ) : null}
         {health?.reason ? (

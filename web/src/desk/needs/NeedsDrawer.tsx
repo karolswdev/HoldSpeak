@@ -32,7 +32,6 @@ import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
 import { readCoverage } from "../coverage";
 import {
-  CALENDAR_FACE,
   armingFace,
   coverageFace,
   needFace,
@@ -334,6 +333,7 @@ function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean
         fact={face.fact || undefined}
         lamp={face.lamp}
         sprite={needsRowSprite(face)}
+        kindWord={face.kindWord}
         // A2b: the Project button is a generic open: the Project's drawer.
         project={project ? { name: project.name, onOpen: () => openDrawer(project.id) } : undefined}
         verbs={(
@@ -415,17 +415,38 @@ export function NeedsDrawer() {
   const coverage = readCoverage(
     needs.room?.coverage, needs.room?.complete ?? undefined, Boolean(needs.errors.room),
   );
-  const sources = [
-    ...coverage.gaps.map(coverageFace),
-    ...(door && door.calendar_configured === false ? [CALENDAR_FACE] : []),
-  ];
+  // PHILO-15-09 (B11): the calendar is an offer, never a row: the head's
+  // number is the number of rows below it. The offer is in the foot.
+  const sources = coverage.gaps.map(coverageFace);
+  const noCalendar = Boolean(door && door.calendar_configured === false);
   const outcome = useArmingOutcome();
-  const armed = arming && !arming.outcome
-    ? [armingFace(
-      arming, (arming.fireAt - now.getTime()) / 1000,
-      outcome.refusal?.scheduleId === arming.scheduleId ? outcome.refusal.reason : null,
-    )]
-    : [];
+  const liveArming = arming && !arming.outcome ? arming : null;
+  // PHILO-15-09 (B11): the hub counts a recording that arms; the desk draws
+  // it with the live countdown when the bus has it, else from the hub's row.
+  // A countdown the bus has ended (cancelled, refused) is not drawn again.
+  const hubArming = (needs.arming ?? []).filter((row) => row.scheduleId !== arming?.scheduleId);
+  const armed = [
+    ...(liveArming
+      ? [armingFace(
+        liveArming, (liveArming.fireAt - now.getTime()) / 1000,
+        outcome.refusal?.scheduleId === liveArming.scheduleId ? outcome.refusal.reason : null,
+      )]
+      : []),
+    ...hubArming.map((row) => ({
+      ...armingFace({ scheduleId: row.scheduleId, title: row.title }, 0),
+      fact: "Arms now",
+      lamp: { label: "ARMS", tone: "ask" as const },
+    })),
+  ];
+  // The bus and the hub disagree on a countdown (one started, or ended):
+  // read the one number again.
+  const hubLists = (id: string) => (needs.arming ?? []).some((row) => row.scheduleId === id);
+  const armingStale = liveArming
+    ? !hubLists(liveArming.scheduleId)
+    : Boolean(arming?.outcome && hubLists(arming.scheduleId));
+  useEffect(() => {
+    if (armingStale) void refreshNeedsYou(true);
+  }, [armingStale]);
   // Board A-5: one list, no group heads. The sources lead (HS-200-15:
   // coverage above the answer), then a recording that arms, then the agents
   // (one object, one row), then the rest in the hub's rank order.
@@ -440,12 +461,16 @@ export function NeedsDrawer() {
   // Listed, never counted: what he waits on someone else for, and the muted.
   const waiting = needs.waitingItems.map(asFace);
   const muted = needs.mutedItems.map(asFace);
+  // PHILO-15-09 (B11, the A5 ruling): the head is the hub's one number, the
+  // number the Dock badge and the bell say, and it counts every row under
+  // it: a member, a source the hub could not read, a recording that arms.
+  // The calendar offer is in the foot.
   const head = needsHead(needs.count, needs.complete && coverage.complete);
   // One filled primary on a face with work; a SETUP, repair or offer verb is
   // never filled (the quiet face has none: HS-201-01 ruling 2).
   const primaryId = faces.find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
   const all = [...faces, ...(showWaiting ? waiting : []), ...(showMuted ? muted : [])];
-  const memberRefs = new Set(needs.members.map((m) => m.ref));
+  const memberRefs = new Set(faces.map((f) => f.memberRef ?? f.id));
   useRowMarks(listRef, all, memberRefs);
 
   const upcoming = door?.upcoming?.[0];
@@ -504,9 +529,18 @@ export function NeedsDrawer() {
           </div>
         ) : null}
       </div>
-      {next || muted.length > 0 || waiting.length > 0 ? (
+      {next || noCalendar || muted.length > 0 || waiting.length > 0 ? (
         <div className="needs-drawer-foot">
-          {next ? <span className="needs-drawer-next" data-testid="needs-next">{next}</span> : <span />}
+          <span className="needs-drawer-offer">
+            {next ? <span className="needs-drawer-next" data-testid="needs-next">{next}</span> : null}
+            {noCalendar ? (
+              <span className="needs-drawer-next needs-drawer-offer" data-testid="needs-no-calendar">
+                <span className="surface-token">NO CALENDAR</span>
+                <Button dense variant="ghost" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
+                  onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>Connect calendar</Button>
+              </span>
+            ) : null}
+          </span>
           <span className="object-verbs">
           {waiting.length > 0 ? (
             <Button dense variant="ghost" aria-expanded={showWaiting} data-testid="needs-waiting-toggle"

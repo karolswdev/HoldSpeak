@@ -15,6 +15,7 @@ import { flightForItem, isInFlight } from "../agentFlights";
 import type { ObjectTone } from "../surface/objects";
 import { sourceLabel, type CoverageRecord } from "../coverage";
 import { wireDate } from "../surface/format";
+import { needYouWords } from "../surface/count";
 import { commandForDoorVerb, supportsDoorVerb, type DoorVerb } from "../chair/doorVerbs";
 
 /** The verb set a row carries (the drawer turns it into library Buttons). */
@@ -82,6 +83,25 @@ export interface NeedFace {
   /** A proposal is an object in the Room (A2b): the row opens the Room with
    *  THIS proposal selected, never the drawer (the drawer holds no proposals). */
   proposal?: { projectId: string; proposalId: string };
+  /** PHILO-15-09 (B12): the row's kind word (`DECISION`, `ACTION`,
+   *  `PROPOSAL`, `MEETING`, `AGENT`); a source row has none. */
+  kindWord?: string;
+}
+
+/** PHILO-15-09 (B12): every member row says what it is. A proposal from a
+ *  meeting is a PROPOSAL (decision or action); an agent's row and its PR are
+ *  AGENT. A setup blocker and a source row are not objects: no word. */
+export function kindWordOf(face: Pick<NeedFace, "kind" | "verbs" | "source">): string | undefined {
+  if (face.source) return undefined;
+  if (face.verbs.kind === "confirm") return "PROPOSAL";
+  switch (face.kind) {
+    case "decision": return "DECISION";
+    case "action": return "ACTION";
+    case "meeting": return "MEETING";
+    case "agent":
+    case "pr": return "AGENT";
+    default: return undefined;
+  }
 }
 
 /** What the face builder knows of the desk. `multipleProjects`: the rows
@@ -359,6 +379,12 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
 
 /** One hub member as its object face. */
 export function needFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
+  const face = memberFace(member, ctx);
+  face.kindWord = kindWordOf(face);
+  return face;
+}
+
+function memberFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
   if (member.kind === "blocker" && member.blocker) {
     return {
       id: member.ref,
@@ -490,12 +516,14 @@ export function armingFace(
     // A refused Cancel is named here, by the hub's own reason.
     fact: refusal ? `NOT CANCELLED · ${refusal}` : `Arms in ${word.toLowerCase()}`,
     lamp: { label: `ARMS · ${word}`, tone: refusal ? "fail" : "ask" },
+    kindWord: "MEETING",
     group: "agents",
     verbs: { kind: "arming", scheduleId: arming.scheduleId, refused: Boolean(refusal) },
   };
 }
 
-/** No calendar is connected: one source row (an offer, never counted). */
+/** PARKED (PHILO-15-09, B11): the calendar offer left the rows for the
+ *  drawer foot; this row face is kept, unrendered. */
 export const CALENDAR_FACE: NeedFace = {
   id: "source:calendar",
   kind: "artifact",
@@ -518,6 +546,7 @@ export function nextWord(next: { label?: string | null; at?: string | null } | n
 
 /** The head: `N need you`, `Nothing needs you`, or an unknown said as one. */
 export function needsHead(count: number, complete: boolean): string {
-  if (count > 0) return `${count} need you`;
+  // PHILO-15-09 (B11): `1 needs you`, `3 need you`.
+  if (count > 0) return needYouWords(count);
   return complete ? "Nothing needs you" : "Coverage incomplete";
 }

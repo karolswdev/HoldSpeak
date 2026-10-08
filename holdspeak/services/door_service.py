@@ -419,7 +419,9 @@ class DoorService:
         requests.  The sidecar being unavailable silently produces no entry
         (the Door never blocks on the sidecar).
         """
-        if self._people_service is None:
+        from holdspeak.people.key_free import people_reads_allowed
+
+        if self._people_service is None or not people_reads_allowed():
             return {}
         seen: dict[str, tuple[str, str] | None] = {}
         all_cards = list(board.now) + list(board.waiting) + list(board.unassigned) + list(board.overdue)

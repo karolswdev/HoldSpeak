@@ -461,11 +461,11 @@ def test_upcoming_rail_real_hub_states_and_dimensions(
             # Empty hub with no calendar: NO CALENDAR + Connect calendar
             page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
             page.wait_for_timeout(500)
-            # PHILO-14 A5: no calendar is the drawer's `source:calendar` row
-            # (NOT CONNECTED) with its Connect calendar verb.
-            no_cal = page.locator("[data-testid=needs-source-row][data-object-id='source:calendar']")
+            # PHILO-15-09 (B11): no calendar is an offer in the drawer's foot
+            # (NO CALENDAR) with its Connect calendar verb, never a row.
+            no_cal = page.locator("[data-testid=needs-no-calendar]")
             no_cal.first.wait_for(timeout=15000)
-            assert "NOT CONNECTED" in (no_cal.first.locator(".gadget-lamp").text_content() or "")
+            assert "NO CALENDAR" in (no_cal.first.text_content() or "")
             connect_btn = no_cal.locator("[data-testid=needs-row-verb][data-verb=connect-calendar]")
             assert no_cal.count() == 1, "NO CALENDAR should show when unconfigured"
             assert connect_btn.count() == 1, "Connect calendar should be present"
