@@ -215,7 +215,10 @@ def test_failed_linked_summary_read_is_named_in_coverage(week, monkeypatch) -> N
     body = draft["body_md"]
     manifest = json.loads(draft["source_manifest_json"])
     assert "All sources consulted successfully." not in body
-    assert "meeting_summary_read_failed" in body
+    # The failed read is NAMED in coverage, in plain words (PHILO-15 B53:
+    # the update is sent; it carries no raw code); the manifest keeps the code.
+    assert "Meetings partly read: meeting summary read failed" in body
+    assert "meeting_summary_read_failed" not in body
     assert any(
         caveat["reason"] == "meeting_summary_read_failed"
         for caveat in manifest["caveats"]

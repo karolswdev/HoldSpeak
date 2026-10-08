@@ -508,7 +508,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
             <EgressChip
               label={modelEgress.label}
               scope={modelEgress.scope}
-              title="The model that drafts updates reads the project's evidence here."
+              title={`UPDATE DRAFTS · ${modelEgress.label}`}
             />
           </span>
         </SurfaceVerbs>
