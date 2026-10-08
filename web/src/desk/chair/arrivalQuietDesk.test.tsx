@@ -1,12 +1,12 @@
 // HS-201-11 — a quiet desk for the sitting: the head speaks ONE total.
 //
-// The rehearsal (audits/rehearsal-07-opus.md, step 1) read `1 need you`
+// The rehearsal (audits/rehearsal-07-opus.md, step 1) read `1 needs you`
 // while the attention list and the SETUP blocker were counted separately.
 // The head now speaks one total: the attention list plus what asks beside
 // it -- the SETUP row and a FAILED meeting.
 //
 // Owner's ruling: the calendar row is an OFFER, not a row that asks. A desk
-// with no calendar must not say `1 need you` for ever (tenet 3), so
+// with no calendar must not say `1 needs you` for ever (tenet 3), so
 // `Connect calendar` renders beside an all-clear and never moves the count.
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -45,7 +45,7 @@ describe("HS-201-11 the head speaks one total", () => {
     // the Project clause still speaks for the attention list it counts
     expect(headlineFor(2, 3, true, 1)).toBe("3 need you across 3 projects");
     // pending alone still names itself (HS-201-01 grammar, unchanged)
-    expect(headlineFor(0, 1, true, 1)).toBe("1 need you");
+    expect(headlineFor(0, 1, true, 1)).toBe("1 needs you");
     expect(headlineFor(0, 1, true, 0)).toBe("Nothing needs you");
     expect(headlineFor(0, 1, false, 0)).toBe("Coverage incomplete");
   });
@@ -106,7 +106,7 @@ describe("HS-201-11 the arrival head and its asking rows agree", () => {
     expect(screen.queryByTestId("arrival-connect-calendar")).toBeNull();
     // ...and the head still counts the SETUP row alone
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("1 need you"),
+      expect(screen.getByTestId("arrival-display").textContent).toBe("1 needs you"),
     );
   });
 

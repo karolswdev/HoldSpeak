@@ -47,3 +47,10 @@ export function countLabel(label: string, count: number | null | undefined): str
   const n = typeof count === "number" && Number.isFinite(count) ? Math.trunc(count) : 0;
   return n > 0 ? `${label} ${n}` : label;
 }
+
+/** PHILO-15-09 (B11): `1 needs you`, `3 need you`, `9+ need you`. The one
+ *  wording of the needs-you number (the drawer head, the Chair, the Dock,
+ *  the bell, the screen object). */
+export function needYouWords(count: number | string): string {
+  return `${count} ${String(count) === "1" ? "needs" : "need"} you`;
+}
