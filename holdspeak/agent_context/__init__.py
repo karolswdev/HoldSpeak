@@ -41,7 +41,12 @@ from .models import (
     STATE_VERSION,
     SUPPORTED_AGENTS,
     _SECRET_CONTEXT_RE,
+    TURN_ASKS,
+    TURN_DONE,
+    TURN_IDLE,
+    asks_a_question,
     is_blocked,
+    turn_end,
     wait_kind,
 )
 from .hs_context import (
@@ -99,7 +104,12 @@ from .sessions import (
 __all__ = [
     "AGENT_CONTEXT_FILE",
     "AgentRegistryUnreadable",
+    "TURN_ASKS",
+    "TURN_DONE",
+    "TURN_IDLE",
+    "asks_a_question",
     "is_blocked",
+    "turn_end",
     "read_agent_sessions_strict",
     "wait_kind",
     "AgentSession",

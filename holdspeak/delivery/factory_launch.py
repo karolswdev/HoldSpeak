@@ -1301,6 +1301,7 @@ class LaunchService:
             record = self._ledger.update(
                 launch_id, commands=commands,
                 instruction_state="sent" if outcome == "delivered" else (outcome or "not_delivered"),
+                **({"brief_sent_at": _brief_clock()} if outcome == "delivered" else {}),
             ) or record
             self._first.watch(launch_id)
             return {
@@ -1695,3 +1696,10 @@ __all__ = [
     "execute_worktree_remove",
     "valid_branch",
 ]
+
+
+def _brief_clock() -> str:
+    """PHILO-15 B42: the brief's delivery time (UTC, ``Z``)."""
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

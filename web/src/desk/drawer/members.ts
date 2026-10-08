@@ -386,7 +386,8 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
       const ref = `pr:${prRepo(f.pr.url) || f.projectId}#${f.pr.number}`;
       const state = { label: f.pr.state === "merged" || f.state === "merged" ? "MERGED" : "OPEN", tone: f.state === "merged" ? "ok" as const : "info" as const };
       add({
-        id: ref, ref, kind: "pr", name: `#${f.pr.number} ${f.title}`,
+        // PHILO-15 B50: the PR's own title; the item it is for stays a fact.
+        id: ref, ref, kind: "pr", name: `#${f.pr.number} ${f.pr.title || f.title}`,
         url: f.pr.url || undefined,
         state, lamp: state,
         facts: { where, from: f.title, owner: `${agentName(f.agent)} (agent)`, state },

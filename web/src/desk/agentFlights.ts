@@ -27,7 +27,8 @@ export interface AgentFlight {
   agent: AgentName;
   state: FlightState;
   sessionKey: string | null;
-  pr: { number: number | null; url: string; state: string } | null;
+  /** `title`: the PR's own title (PHILO-15 B50); empty until the hub read it. */
+  pr: { number: number | null; url: string; state: string; title?: string } | null;
   close: string | null;
   /** K4's cleanup of the agent's session (`killed`, `session_gone`,
    * `no_session`): the evidence that it left. Null while the close waits
@@ -72,7 +73,7 @@ export function fromWireFlight(body: any): AgentFlight {
     agent: body?.agent === "codex" ? "codex" : "claude",
     state: (FLIGHT_STATES.includes(body?.state) ? body.state : "starting") as FlightState,
     sessionKey: body?.session_key ? String(body.session_key) : null,
-    pr: pr ? { number: pr.number == null ? null : Number(pr.number), url: String(pr.url ?? ""), state: String(pr.state ?? "") } : null,
+    pr: pr ? { number: pr.number == null ? null : Number(pr.number), url: String(pr.url ?? ""), state: String(pr.state ?? ""), title: String(pr.title ?? "") } : null,
     close: body?.close ? String(body.close) : null,
     sessionCleanup: body?.session_cleanup ? String(body.session_cleanup) : null,
     mergedAt: body?.merged_at ? String(body.merged_at) : null,

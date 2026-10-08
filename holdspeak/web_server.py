@@ -231,7 +231,21 @@ def _coder_answer_triage(keys: list[str]) -> list[str]:
         from .db import get_database
         from .services.agent_responder import default_agent_responder
 
-        responder = default_agent_responder(get_database(), notify=_coder_awaiting_edge)
+        db = get_database()
+        # PHILO-15 B46: a Re-brief queued mid-turn is typed at this turn end;
+        # it answers the wait, so nothing else does.
+        try:
+            from .delivery.factory_launch import default_launch_service
+            from .services.launch_rebrief import flush_queued
+
+            consumed = set(flush_queued(keys, service=default_launch_service(db)))
+        except Exception as exc:
+            log.warning(f"queued re-brief flush failed: {exc}")
+            consumed = set()
+        keys = [key for key in keys if key not in consumed]
+        if not keys:
+            return []
+        responder = default_agent_responder(db, notify=_coder_awaiting_edge)
         split = responder.triage(keys)
         responder.start(split["decide"])
         return list(split["notify"])

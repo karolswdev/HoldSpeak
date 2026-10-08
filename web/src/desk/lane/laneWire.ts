@@ -23,6 +23,13 @@ export interface LaneLaunch {
   branch?: string | null;
   worktree_path?: string | null;
   launched_at?: string | null;
+  /** PHILO-15 B42: `sent` once the brief reached the agent; `pending` while
+   * the launch waits for it (a start screen, a slow start). */
+  instruction_state?: string | null;
+  /** When the delivery receipt said the brief reached the agent. */
+  brief_sent_at?: string | null;
+  /** PHILO-15 B46: a Re-brief sent mid-turn, typed at the turn end. */
+  queued_rebrief?: { text?: string; at?: string } | null;
   control_mode?: string | null;
   brief_text?: string | null;
   session_key?: string | null;
@@ -39,6 +46,8 @@ export interface LaneCheck {
 
 export interface LanePR {
   number: number | null;
+  /** PHILO-15 B50: the PR's own title (GitHub's). */
+  title?: string | null;
   url?: string | null;
   state?: string | null;
   review_decision?: string | null;
@@ -69,6 +78,9 @@ export interface LaneWait {
    * an answer to a wait that is not the current one). */
   wait_id?: string | null;
   draft?: LaneDraft | null;
+  /** PHILO-15 B48: how the turn ended: a real question (`asks`), no
+   * question (`idle`), or no question with the PR open (`done`). */
+  turn_end?: "asks" | "idle" | "done" | string | null;
 }
 
 /** How the lane may act on its session now (the route's `control`). */
@@ -79,6 +91,8 @@ export interface LaneControl {
   direct: boolean;
   expires_in_seconds?: number | null;
   pane?: boolean;
+  /** The registered pane (`%N`) the steer names (PHILO-15 B46). */
+  pane_id?: string | null;
 }
 
 export interface LaneAnswer {
@@ -347,13 +361,15 @@ export function laneEntries(lane: LaneWire, events: readonly LaneEvent[]): LaneE
   const timed: LaneEntry[] = [];
   const launch = lane.launch;
   const briefFacts = briefLine(launch.brief_text);
+  const brief = briefState(launch);
   timed.push({
     id: "brief",
-    at: at(launch.launched_at),
-    time: wireClock(launch.launched_at),
+    at: at(brief.when ?? launch.launched_at),
+    time: brief.state === "sent" ? wireClock(brief.when) : "",
     kind: "brief",
     word: "BRIEF",
-    text: briefFacts || undefined,
+    text: [brief.state === "sent" ? "" : brief.word, briefFacts].filter(Boolean).join(" · ") || undefined,
+    ...(brief.state === "sent" ? {} : { pending: true }),
   });
   timed.push(...eventEntries(events));
   const worktree = lane.worktree;
@@ -404,13 +420,14 @@ export function laneEntries(lane: LaneWire, events: readonly LaneEvent[]): LaneE
   }
   const wait = lane.wait;
   if (wait && !isNotRead(wait) && wait.question) {
+    const turn = turnWord(wait);
     ordered.push({
       id: "asks",
       at: at(wait.started),
       time: wireClock(wait.started),
       kind: "asks",
-      word: "ASKS",
-      tone: "ask",
+      word: turn.word,
+      tone: turn.tone,
       text: wait.question,
     });
   }
@@ -481,6 +498,28 @@ export function briefLine(brief: string | null | undefined): string {
 
 /* ── the station track ───────────────────────────────────────────── */
 
+/** PHILO-15 B42: the brief as it is: `sent` at its delivery time; else
+ * `waiting` (the launch holds it until the agent is ready) or `not sent`.
+ * A launch with no delivery state is an older one: its launch time. */
+export function briefState(launch: LaneLaunch): { state: "sent" | "waiting" | "not_sent"; word: string; when: string | null } {
+  const state = String(launch.instruction_state ?? "");
+  if (!state || state === "sent") {
+    return { state: "sent", word: "sent", when: launch.brief_sent_at ?? (state ? null : launch.launched_at ?? null) };
+  }
+  if (state === "pending" || state === "delivering") return { state: "waiting", word: "waiting", when: null };
+  return { state: "not_sent", word: "not sent", when: null };
+}
+
+/** PHILO-15 B48: the word of a turn end. ASKS only when a real question (or
+ * a permission prompt) waits; IDLE when the turn ended with no question;
+ * DONE when it ended with no question and the PR is open. */
+export function turnWord(wait: LaneWait): { word: "ASKS" | "IDLE" | "DONE"; tone: ObjectTone } {
+  if (wait.kind === "TO APPROVE" || wait.kind === "DECIDING") return { word: "ASKS", tone: "ask" };
+  if (wait.turn_end === "idle") return { word: "IDLE", tone: "info" };
+  if (wait.turn_end === "done") return { word: "DONE", tone: "ok" };
+  return { word: "ASKS", tone: "ask" };
+}
+
 /** BRIEF · WORK · COMMIT · PR · HELD · ASKS · MERGE from the lane: a station
  * with nothing in it is hollow and says `—`, never a zero. */
 export function laneStations(lane: LaneWire, events: readonly LaneEvent[]): Station[] {
@@ -491,11 +530,15 @@ export function laneStations(lane: LaneWire, events: readonly LaneEvent[]): Stat
   const held = Array.isArray(lane.gated) ? lane.gated.filter((g) => HELD_STATES.has(g.state)).length : 0;
   const wait = lane.wait && !isNotRead(lane.wait) ? lane.wait : null;
   const asking = Boolean(wait && (wait.kind === "TO ANSWER" || wait.kind === "TO APPROVE"));
+  const turn = wait && asking ? turnWord(wait) : null;
+  const brief = briefState(lane.launch);
   const merged = Boolean(lane.follow_through?.merged);
   const reached = (on: boolean, tone: ObjectTone = "ok"): Pick<Station, "state" | "tone"> =>
     on ? { state: "reached", tone } : { state: "ahead" };
   return [
-    { word: "BRIEF", sub: wireClock(lane.launch.launched_at) || "—", ...reached(true) },
+    brief.state === "sent"
+      ? { word: "BRIEF", sub: wireClock(brief.when) || "sent", ...reached(true) }
+      : { word: "BRIEF", sub: brief.word, state: "current" as const, tone: brief.state === "waiting" ? ("warn" as const) : ("fail" as const) },
     { word: "WORK", sub: calls > 0 ? `${calls} ${calls === 1 ? "call" : "calls"}` : "—", ...reached(calls > 0) },
     {
       word: "COMMIT",
@@ -504,7 +547,11 @@ export function laneStations(lane: LaneWire, events: readonly LaneEvent[]): Stat
     },
     { word: "PR", sub: pr?.number != null ? `#${pr.number}` : "—", ...reached(pr?.number != null, "info") },
     { word: "HELD", sub: held > 0 ? `${held} ${held === 1 ? "call" : "calls"}` : "—", ...(held > 0 ? { state: "current" as const, tone: "warn" as const } : { state: "ahead" as const }) },
-    { word: "ASKS", sub: asking ? "now" : "—", ...(asking ? { state: "current" as const, tone: "ask" as const } : { state: "ahead" as const }) },
+    !turn
+      ? { word: "ASKS", sub: "—", state: "ahead" as const }
+      : turn.word === "ASKS"
+        ? { word: "ASKS", sub: "now", state: "current" as const, tone: "ask" as const }
+        : { word: turn.word, sub: wireClock(wait?.started) || "now", state: turn.word === "DONE" ? ("reached" as const) : ("current" as const), tone: turn.tone },
     { word: "MERGE", sub: merged ? "merged" : "yours", ...reached(merged) },
   ];
 }

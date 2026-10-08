@@ -24,6 +24,7 @@ import { laneEntries, laneStations, eventEntries, type LaneWire } from "../laneW
 import { SessionPullout } from "../../components/SessionPullout";
 import { fromWireFlight, useAgentFlights } from "../../agentFlights";
 import { useSteering } from "../../steering";
+import { wireClock } from "../../surface/format";
 
 const QUESTION = "The runbook needs a rollback owner. Jordan or Avery?";
 const KEY = "claude:c1a0de00-runbook";
@@ -129,6 +130,7 @@ async function openLane(lane: LaneWire, over: Record<string, unknown> = {}, opts
 const STEER = `/api/coders/${encodeURIComponent(KEY)}/steer`;
 const ARM = `/api/coders/${encodeURIComponent(KEY)}/arm`;
 const KILL = `/api/coders/${encodeURIComponent(KEY)}/kill`;
+const REBRIEF = "/api/agent/launches/launch_f2_runbook/rebrief";
 
 beforeEach(() => {
   api.fetch.mockReset();
@@ -479,7 +481,9 @@ describe("the agent's window", () => {
     expect(field.value).toBe("Re-brief: ");
     fireEvent.change(field, { target: { value: "Re-brief: name Jordan as the owner." } });
     fireEvent.keyDown(field, { key: "Enter" });
-    await waitFor(() => expect(posts(STEER)).toEqual([{ text: "Re-brief: name Jordan as the owner.", submit: true }]));
+    // PHILO-15 B46: the Re-brief route of the launch (typed now, or queued mid-turn).
+    await waitFor(() => expect(posts(REBRIEF)).toEqual([{ text: "Re-brief: name Jordan as the owner." }]));
+    expect(posts(STEER)).toEqual([]);
     await waitFor(() => expect(screen.queryByTestId("lane-rebrief-well")).toBeNull());
     expect(screen.getByTestId("lane-receipt").textContent).toContain("SENT");
     expect(screen.getByTestId("lane-receipt").textContent).toContain("Re-brief: name Jordan as the owner.");
@@ -513,5 +517,79 @@ describe("which window a session opens", () => {
     await waitFor(() => expect(document.querySelector(".is-lane")).toBeTruthy());
     expect(document.querySelector(".is-session")).toBeNull();
     await waitFor(() => expect(useLane.getState().launchId).toBe("launch_f2_runbook"));
+  });
+});
+
+describe("PHILO-15 lane 14: the stations tell the truth", () => {
+  it("B42: BRIEF reads the delivery time, not the launch time; a held brief reads waiting", () => {
+    const sent = fixture({ launch: { ...fixture().launch, launched_at: "2026-10-07T16:26:00Z", instruction_state: "sent", brief_sent_at: "2026-10-07T16:29:00Z" } });
+    const [brief] = laneStations(sent, []);
+    const clock = (iso: string) => wireClock(iso);
+    expect(brief).toMatchObject({ word: "BRIEF", state: "reached", sub: clock("2026-10-07T16:29:00Z") });
+    expect(brief.sub).not.toBe(clock("2026-10-07T16:26:00Z"));
+    const railBrief = laneEntries(sent, []).find((e) => e.word === "BRIEF");
+    expect(railBrief?.time).toBe(clock("2026-10-07T16:29:00Z"));
+
+    const held = fixture({ launch: { ...fixture().launch, instruction_state: "pending", brief_sent_at: null } });
+    expect(laneStations(held, [])[0]).toMatchObject({ word: "BRIEF", sub: "waiting", state: "current", tone: "warn" });
+    const railHeld = laneEntries(held, []).find((e) => e.word === "BRIEF");
+    expect(railHeld).toMatchObject({ time: "", pending: true });
+    expect(railHeld?.text).toContain("waiting");
+    const refused = fixture({ launch: { ...fixture().launch, instruction_state: "expired" } });
+    expect(laneStations(refused, [])[0]).toMatchObject({ sub: "not sent", tone: "fail" });
+  });
+
+  it("B48: a turn end with no question reads IDLE, with the PR open DONE; ASKS only for a question", () => {
+    const at = (turn: string | undefined) =>
+      laneStations(fixture({ wait: { ...(fixture().wait as object), kind: "TO ANSWER", turn_end: turn } as never }), []).find((s) => s.word !== "MERGE" && ["ASKS", "IDLE", "DONE"].includes(String(s.word)));
+    expect(at("asks")).toMatchObject({ word: "ASKS", sub: "now", state: "current", tone: "ask" });
+    expect(at("idle")).toMatchObject({ word: "IDLE", state: "current", tone: "info" });
+    expect(at("done")).toMatchObject({ word: "DONE", state: "reached", tone: "ok" });
+    const approve = laneStations(fixture({ wait: { question: "Run psql?", kind: "TO APPROVE", turn_end: "asks" } }), []);
+    expect(approve.find((s) => s.word === "ASKS")).toMatchObject({ sub: "now" });
+  });
+
+  it("B48: the well of an idle turn end says IDLE, not ASKS", async () => {
+    await openLane(fixture({ wait: { ...(fixture().wait as object), turn_end: "idle", question: "Understood — stopping here." } as never }));
+    expect(screen.getByText(/^CLAUDE CODE IDLE/)).toBeTruthy();
+    expect(screen.queryByText(/^CLAUDE CODE ASKS/)).toBeNull();
+    expect(within(screen.getByTestId("lane-track")).getByText("IDLE")).toBeTruthy();
+  });
+
+  it("B50: the PR card names the PR's own title and number; the item is the second line", async () => {
+    useAgentFlights.setState({ flights: [fromWireFlight({ origin_ref: "action:a1", title: "Write the rollback runbook", agent: "claude", state: "pr_open", session_key: KEY, launch_id: "launch_f2_runbook" })] });
+    const base = fixture();
+    await openLane(fixture({ follow_through: { ...base.follow_through, pr: { ...base.follow_through.pr!, title: "Add the ledger rollback runbook" } } }));
+    const pr = screen.getByTestId("lane-pr");
+    expect(pr.querySelector(".pr-card-title")?.textContent).toBe("#413 Add the ledger rollback runbook");
+    expect(screen.getByTestId("lane-pr-item").textContent).toBe("Write the rollback runbook");
+  });
+
+  it("B50: with no PR title read yet, the card keeps the item and draws no second line", async () => {
+    useAgentFlights.setState({ flights: [fromWireFlight({ origin_ref: "action:a1", title: "Write the rollback runbook", agent: "claude", state: "pr_open", session_key: KEY, launch_id: "launch_f2_runbook" })] });
+    await openLane(fixture());
+    expect(screen.getByTestId("lane-pr").querySelector(".pr-card-title")?.textContent).toBe("#413 Write the rollback runbook");
+    expect(screen.queryByTestId("lane-pr-item")).toBeNull();
+  });
+
+  it("B46: a Re-brief mid-turn says QUEUED · AFTER THIS TURN, and the lane keeps it until the turn ends", async () => {
+    await openLane(fixture({ wait: null }));
+    answer({ [REBRIEF]: [202, { status: "queued", at: "2026-10-07T16:40:00Z" }] });
+    serve(fixture({ wait: null, launch: { ...fixture().launch, queued_rebrief: { text: "Re-brief: use the security address.", at: "2026-10-07T16:40:00Z" } } }));
+    fireEvent.click(screen.getByTestId("lane-rebrief"));
+    const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Re-brief" }) as HTMLInputElement;
+    fireEvent.change(field, { target: { value: "Re-brief: use the security address." } });
+    fireEvent.keyDown(field, { key: "Enter" });
+    await waitFor(() => expect(screen.getByTestId("lane-queued").textContent).toBe("QUEUED · AFTER THIS TURN · Re-brief: use the security address."));
+    expect(screen.queryByTestId("lane-rebrief-well")).toBeNull();
+    expect(posts(STEER)).toEqual([]);
+  });
+
+  it("B46: a YOLO answer names the registered pane, so the hub's registered-destination rule passes", async () => {
+    await openLane(fixture({ control: { mode: "yolo", armed: false, direct: true, pane_id: "%42" } }));
+    const field = within(screen.getByTestId("lane-ask")).getByRole("textbox") as HTMLInputElement;
+    fireEvent.change(field, { target: { value: "Jordan." } });
+    fireEvent.keyDown(field, { key: "Enter" });
+    await waitFor(() => expect(posts(STEER)[0]).toMatchObject({ text: "Jordan.", expected_pane_id: "%42", kind: "answer" }));
   });
 });

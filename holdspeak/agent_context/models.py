@@ -270,6 +270,47 @@ def is_blocked(session: Any) -> bool:
     return bool(_field(session, "awaiting_response"))
 
 
+#: The words of a turn end (PHILO-15 B48): a real question waits (``asks``),
+#: the agent reports its work complete (``done``), or it stopped with no
+#: question (``idle``).
+TURN_ASKS = "asks"
+TURN_IDLE = "idle"
+TURN_DONE = "done"
+
+#: A sentence that ends in a question mark (optionally closed by a quote,
+#: a bracket or markdown emphasis), at a line end or before a space.
+_QUESTION_RE = re.compile(r"\?[\"'\u2019\u201d)\]*_`]*(?:\s|$)")
+
+
+#: How much of the last paragraph a question mark must be in.
+QUESTION_TAIL_CHARS = 240
+
+
+def asks_a_question(text: Any) -> bool:
+    """The agent's last words end its turn with a question: a ``?`` that ends
+    a sentence near the end of the last paragraph. "Understood, stopping here." is not a
+    question; "Should I push the branch?" is."""
+    body = str(text or "").strip()
+    if not body:
+        return False
+    paragraphs = [p for p in re.split(r"\n\s*\n", body) if p.strip()]
+    last = paragraphs[-1] if paragraphs else body
+    # Codex's Stop text arrives with its line breaks collapsed: only the end
+    # of the turn's words counts, never a "?" deep inside a long report.
+    return bool(_QUESTION_RE.search(last[-QUESTION_TAIL_CHARS:]))
+
+
+def turn_end(session: Any, *, work_done: bool = False) -> str:
+    """How a blocked session's turn ended: ``asks`` for a permission prompt
+    or a real question, else ``done`` when the work is delivered
+    (``work_done``: the launch's PR is open) or ``idle``."""
+    if wait_kind(session) == "approve":
+        return TURN_ASKS
+    if asks_a_question(_field(session, "question")):
+        return TURN_ASKS
+    return TURN_DONE if work_done else TURN_IDLE
+
+
 def wait_kind(session: Any) -> str:
     """``approve`` for a permission prompt, else ``answer``."""
     if (

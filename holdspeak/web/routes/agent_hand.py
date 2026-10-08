@@ -61,6 +61,9 @@ def lane_control(key: str) -> dict[str, Any]:
         "direct": bool(direct),
         "expires_in_seconds": grant.get("expires_in_seconds") if grant else None,
         "pane": bool(target),
+        # PHILO-15 B46: the registered pane the steer names, so a YOLO steer
+        # from the lane passes the registered-destination rule.
+        "pane_id": pane_id,
     }
 
 
@@ -202,6 +205,42 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
         if lane is None:
             return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
         return JSONResponse(lane)
+
+    @router.post("/api/agent/launches/{launch_id}/rebrief")
+    async def api_agent_rebrief(launch_id: str, request: Request) -> Any:
+        """PHILO-15 B46: the owner's Re-brief ``{text}``. Typed into the
+        launch's own pane now when the agent is idle or asks (``delivered``);
+        mid-turn it waits for the turn end (``queued``). A refusal is 409
+        with its status."""
+        from ...db import get_database
+        from ...delivery.factory_launch import default_launch_service
+        from ...services.launch_rebrief import QUEUED, rebrief
+
+        try:
+            body = await request.json()
+        except Exception:
+            body = None
+        body = body if isinstance(body, dict) else {}
+        principal = getattr(
+            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
+        )
+
+        def run() -> Any:
+            db = get_database()
+            return rebrief(
+                launch_id, str(body.get("text") or ""), principal,
+                service=default_launch_service(db), db=db,
+            )
+
+        try:
+            result = await asyncio.to_thread(run)
+        except Exception as exc:
+            log.error(f"re-brief failed: {exc}")
+            return JSONResponse({"status": "rebrief_failed"}, status_code=500)
+        if result.get("status") == "launch_unknown":
+            return JSONResponse(result, status_code=404)
+        ok = result.get("status") in ("delivered", QUEUED)
+        return JSONResponse(result, status_code=202 if result.get("status") == QUEUED else (200 if ok else 409))
 
     @router.post("/api/agent/launches/{launch_id}/deliver")
     async def api_agent_deliver(launch_id: str, request: Request) -> Any:

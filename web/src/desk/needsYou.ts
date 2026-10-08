@@ -317,6 +317,25 @@ function coderWaitKind(session: NeedsYouCoder): "approve" | "answer" {
     : "answer";
 }
 
+/** PHILO-15 B48 (`agent_context.models.asks_a_question`): the agent's last
+ * words end its turn with a question, a `?` that ends a sentence near the
+ * end of the last paragraph. */
+export function asksAQuestion(text: unknown): boolean {
+  const body = String(text ?? "").trim();
+  if (!body) return false;
+  const paragraphs = body.split(/\n\s*\n/).filter((p) => p.trim());
+  const last = paragraphs.length ? paragraphs[paragraphs.length - 1] : body;
+  // Codex's Stop text arrives with its line breaks collapsed: only the end
+  // of the turn's words counts (`QUESTION_TAIL_CHARS`).
+  return /\?["'\u2019\u201d)\]*_`]*(?:\s|$)/.test(last.slice(-240));
+}
+
+/** How a waiting session's turn ended (`agent_context.models.turn_end`):
+ * `asks` for a permission prompt or a real question, else `idle`. */
+export function coderTurnEnd(session: NeedsYouCoder): "asks" | "idle" {
+  return coderWaitKind(session) === "approve" || asksAQuestion(session.question) ? "asks" : "idle";
+}
+
 function stampMs(value: string): number {
   return value ? new Date(value).getTime() : Number.NaN;
 }
@@ -376,6 +395,7 @@ export function coderItems(
       repoRoot: String(session.repo_root ?? ""),
       question: excerpt,
       waitKind: approve ? "approve" : "answer",
+      turnEnd: coderTurnEnd(session),
       waitStartedAt: started,
       ageSeconds: age,
     });

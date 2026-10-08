@@ -176,6 +176,8 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
             "number": pr.get("number"),
             "url": pr.get("url"),
             "state": pr_state,
+            # PHILO-15 B50: the PR's own title (the drawer's PR object).
+            "title": pr.get("title") or None,
         } if pr else None,
         "close": follow.get("close"),
         # K4's cleanup of the agent's session (killed, session_gone,

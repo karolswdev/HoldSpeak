@@ -221,14 +221,16 @@ def _find_session(sessions: Any, key: str) -> Optional[dict[str, Any]]:
     return None
 
 
-def _wait(session: Optional[Mapping[str, Any]], answers: Any) -> Optional[dict[str, Any]]:
+def _wait(
+    session: Optional[Mapping[str, Any]], answers: Any, *, work_done: bool = False,
+) -> Optional[dict[str, Any]]:
     """The session's current wait as the owner sees it, or ``None``.
 
     It honors the responder's record of the wait (``annotate_sessions``),
     as Needs you does: a wait HoldSpeak answered is not a wait (the answer
     is in ``answers``); a wait HoldSpeak is still deciding (fresh) reads
     ``DECIDING``, not TO ANSWER; a stale decision goes to the owner."""
-    from ..agent_context.models import is_blocked, wait_kind
+    from ..agent_context.models import is_blocked, turn_end, wait_kind
     from .agent_responder import ANSWERED, DECIDING, annotate_sessions
     from .needs_you_membership import TO_ANSWER, TO_APPROVE
 
@@ -254,6 +256,9 @@ def _wait(session: Optional[Mapping[str, Any]], answers: Any) -> Optional[dict[s
         "question": session.get("question"),
         "kind": DECIDING_KIND if deciding else (TO_APPROVE if approve else TO_ANSWER),
         "wait_kind": "deciding" if deciding else ("approve" if approve else "answer"),
+        # PHILO-15 B48: ``asks`` only when a real question waits; a turn end
+        # with no question is ``idle``, or ``done`` once the PR is open.
+        "turn_end": turn_end(session, work_done=work_done),
         "started": session.get("wait_started_at") or session.get("updated_at"),
         "wait_id": session.get("wait_id"),
         "answer_state": state,
@@ -401,7 +406,8 @@ def launch_lane(
         wait_part: Any = sessions
     else:
         session_part = _part("session", lambda: _session_view(session))
-        wait_part = _part("wait", lambda: _wait(session, answers))
+        work_done = isinstance(pr, Mapping) and pr.get("number") is not None
+        wait_part = _part("wait", lambda: _wait(session, answers, work_done=work_done))
     lane = {
         "launch": {
             "launch_id": record.get("launch_id"),
@@ -413,6 +419,11 @@ def launch_lane(
             "branch": record.get("branch") or None,
             "worktree_path": _home_as_tilde(path),
             "launched_at": record.get("launched_at"),
+            # PHILO-15 B42: when the brief reached the agent (its delivery
+            # receipt), not when the launch began.
+            "brief_sent_at": record.get("brief_sent_at"),
+            # PHILO-15 B46: a Re-brief sent mid-turn waits for the turn end.
+            "queued_rebrief": record.get("queued_rebrief") or None,
             "control_mode": record.get("control_mode"),
             "gate": record.get("gate"),
             "instruction_state": record.get("instruction_state"),
@@ -427,6 +438,8 @@ def launch_lane(
         "follow_through": {
             "pr": {
                 "number": pr.get("number"), "url": pr.get("url"), "state": pr.get("state"),
+                # PHILO-15 B50: the PR's own title (the item is the lane's).
+                "title": pr.get("title") or None,
                 "review_decision": pr.get("review_decision"), "ci": pr.get("ci"),
                 "checks": list(pr.get("checks") or []),
             } if isinstance(pr, Mapping) else None,

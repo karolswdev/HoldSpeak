@@ -236,6 +236,7 @@ def coder_items(
     from holdspeak.agent_context.models import (
         DEFAULT_RECENT_MAX_AGE_SECONDS,
         is_blocked,
+        turn_end,
         wait_kind,
     )
 
@@ -294,6 +295,8 @@ def coder_items(
             "repoRoot": str(session.get("repo_root") or ""),
             "question": _excerpt(question),
             "waitKind": "approve" if approve else "answer",
+            # PHILO-15 B48: a turn end with no question is IDLE, not ASKS.
+            "turnEnd": turn_end(session),
             "waitStartedAt": started,
             "ageSeconds": age,
         })
