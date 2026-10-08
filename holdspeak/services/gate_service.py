@@ -308,13 +308,21 @@ class GateService:
             raise ConflictError("the call is no longer held", code="not_held", context={"state": proposal.state})
         full = self._db.gate.full_call(proposal_id)
         command = command_view(full)["command"] if full else ""
+        shown_text = command or str(shown.get("args_shown") or "")
+        declared = _args_len((proposal.operation or {}).get("args_len"))
+        # Astra r1 on #1011 (P2-ruling): the call is WHOLE only when the text
+        # kept has exactly the length the hook declared for it; any other
+        # text is a part (Raw says ``CUT · <n> OF <m> CHARS``, Deny only).
+        whole = (not shown.get("args_cut")) or (bool(command) and declared > 0 and len(command) == declared)
         return {
             "id": proposal.id, "state": proposal.state, "session_key": proposal.session_key,
             "tool": proposal.tool, "cwd": proposal.cwd, "expires_at": proposal.expires_at,
             "hold_reason": shown.get("hold_reason") or "",
-            # The whole call when the hook sent it; else the head the hub keeps.
-            "command": command or shown.get("args_shown") or "",
-            "whole": bool(command) or not shown.get("args_cut"),
+            # The whole call when the hook sent it; else the part the hub keeps.
+            "command": shown_text,
+            "whole": whole,
+            "shown_chars": len(shown_text),
+            "declared_chars": declared or len(shown_text),
             "args_cut": bool(shown.get("args_cut")),
         }
 

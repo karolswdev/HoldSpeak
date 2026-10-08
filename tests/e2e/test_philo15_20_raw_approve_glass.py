@@ -12,6 +12,7 @@ Shots: docs/internal/philo/phase-15/20-shots/.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -114,7 +115,14 @@ def test_raw_shows_a_cut_call_whole_and_approves_it_at_1440_and_393(tmp_path: Pa
                 held.locator("[data-testid='lane-raw-approve']").click()
             assert got.value.status == 200, got.value.text()
             assert _api(page, "GET", "/api/gate/proposals/toolu_cut_1440", token=TOKEN)["state"] == "approved"
+            # Astra r1 on #1011 (P2-6): the decision's receipt is rendered on Raw.
+            receipt = page.locator("[data-testid='lane-body'] [data-testid='lane-receipt']")
+            receipt.wait_for(timeout=10000)
+            assert re.fullmatch(r"APPROVED · \d\d:\d\d", receipt.inner_text().strip()), receipt.inner_text()
+            assert page.locator("[data-testid='lane-raw-pane']").is_visible()
             page.locator("[data-testid='lane-raw-held']").wait_for(state="detached", timeout=15000)
+            page.wait_for_timeout(300)
+            page.screenshot(path=str(SHOTS / "01b-lane-raw-approved-1440.png"))
             page.close()
 
             # 393: the Needs row keeps Deny + Open; Open opens the lane on Raw.
@@ -147,6 +155,9 @@ def test_raw_shows_a_cut_call_whole_and_approves_it_at_1440_and_393(tmp_path: Pa
                 approve.click()
             assert got.value.status == 200, got.value.text()
             assert _api(page, "GET", "/api/gate/proposals/toolu_cut_393", token=TOKEN)["state"] == "approved"
+            receipt = page.locator("[data-testid='lane-body'] [data-testid='lane-receipt']")
+            receipt.wait_for(timeout=10000)
+            assert re.fullmatch(r"APPROVED · \d\d:\d\d", receipt.inner_text().strip()), receipt.inner_text()
             page.locator("[data-testid='lane-raw-held']").wait_for(state="detached", timeout=15000)
             page.wait_for_timeout(300)
             page.screenshot(path=str(SHOTS / "04-lane-raw-approved-393.png"))

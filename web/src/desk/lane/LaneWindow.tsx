@@ -16,7 +16,7 @@
  * kill route (two presses), Open PR opens the PR on GitHub. */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch } from "../../lib/api";
+import { ApiError, apiFetch } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { useAgentFlights } from "../agentFlights";
 import { DeskWindowFrame } from "../components/DeskWindow";
@@ -211,6 +211,8 @@ function LaneBody({
   if (raw) {
     return (
       <div className="desk-pullout-body lw-body" data-testid="lane-body">
+        {/* PHILO-15 20 (Astra r1 on #1011): a decision made in Raw leaves its receipt here. */}
+        {lane ? <LaneReceipts lane={lane} /> : null}
         <RawPane />
       </div>
     );
@@ -568,7 +570,10 @@ interface FullCall {
   id: string;
   state: string;
   command: string;
+  /** The text kept has the length the hook declared (Astra r1 on #1011). */
   whole: boolean;
+  shown_chars?: number;
+  declared_chars?: number;
   hold_reason?: string;
 }
 
@@ -580,7 +585,10 @@ function RawHeldCall({ call }: { call: LaneGated }) {
     let live = true;
     apiFetch<FullCall>(`/api/gate/proposals/${encodeURIComponent(call.id)}/command`)
       .then((data) => {
-        if (live) setFull(data);
+        if (!live) return;
+        // A read with no command text is said, never drawn as a call.
+        if (data && typeof data.command === "string") setFull(data);
+        else setNotRead("NO COMMAND");
       })
       .catch((err: unknown) => {
         if (live) setNotRead(err instanceof Error ? err.message : String(err));
@@ -592,14 +600,34 @@ function RawHeldCall({ call }: { call: LaneGated }) {
   const decide = async (decision: "approved" | "denied") => {
     setBusy(true);
     try {
-      await useGate.getState().decide(call.id, decision);
+      // The hub's answer is the receipt: what it decided, and when (a call
+      // decided elsewhere first answers 409 with its standing state).
+      const done = await apiFetch<{ state?: string; decided_at?: number | null }>(
+        `/api/gate/proposals/${encodeURIComponent(call.id)}/decide`,
+        { method: "POST", json: { decision, actor: "owner" } },
+      );
+      const state = String(done?.state ?? decision);
+      const at = done?.decided_at ? done.decided_at * 1000 : Date.now();
+      useLane.getState().setReceipt({
+        word: state === "approved" ? "APPROVED" : "DENIED", at, text: "", tone: state === "approved" ? "ok" : "warn",
+      });
+    } catch (err: unknown) {
+      const standing = err instanceof ApiError ? String((err.payload as { state?: string } | undefined)?.state ?? "") : "";
+      useLane.getState().setReceipt({
+        word: "NOT DECIDED", at: Date.now(), text: standing ? `ALREADY ${standing.toUpperCase()}` : "HUB UNREACHABLE", tone: "fail",
+      });
     } finally {
       setBusy(false);
+      void useGate.getState().refresh();
       void useLane.getState().load();
     }
   };
   const reason = full?.hold_reason || call.hold_reason || "";
-  const caption = ["HELD", reason].filter(Boolean).join(" · ");
+  // A part of the call is never approved: it says how much is there.
+  const part = full && !full.whole
+    ? `CUT · ${full.shown_chars ?? full.command.length} OF ${full.declared_chars ?? "?"} CHARS`
+    : "";
+  const caption = ["HELD", reason, part].filter(Boolean).join(" · ");
   return (
     <section className="lw-ask lw-raw-held" aria-label="Held call" data-testid="lane-raw-held">
       <p className="lw-caption">{caption}</p>

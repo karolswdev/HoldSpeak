@@ -71,6 +71,30 @@ def _truncate(value: Any, limit: int = 2048) -> str:
     return summary
 
 
+#: What the observer never records (PHILO-15 20, Astra r1 on #1011): a
+#: pipeline event is readable by agents (MCP ``pipeline://events``), so the
+#: whole text of a held tool call, kept for the owner's Raw read only, is
+#: withheld from every record. Fields: by name, at any depth of the
+#: arguments and the result. Results: whole, by ``(service, method)``.
+UNRECORDED_FIELDS = frozenset({"args_full"})
+UNRECORDED_RESULTS = frozenset({("GateService", "full_call")})
+WITHHELD = "<withheld>"
+
+
+def _scrub(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {k: (WITHHELD if k in UNRECORDED_FIELDS else _scrub(v)) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_scrub(v) for v in value]
+    return value
+
+
+def _summarize_result(service: str, method: str, result: Any) -> str:
+    if (service, method) in UNRECORDED_RESULTS:
+        return _truncate(WITHHELD)
+    return _truncate(_scrub(result))
+
+
 def _summarize_args(fn: Any, args: tuple[Any, ...], kwargs: dict[str, Any]) -> str:
     try:
         signature = inspect.signature(fn)
@@ -80,7 +104,7 @@ def _summarize_args(fn: Any, args: tuple[Any, ...], kwargs: dict[str, Any]) -> s
             for name, value in bound.arguments.items()
             if name != "self" and "Principal" not in str(signature.parameters[name].annotation)
         }
-        return _truncate(summary)
+        return _truncate(_scrub(summary))
     except Exception:
         return "<args-unavailable>"
 
@@ -162,7 +186,7 @@ def observed(fn: Any) -> Any:
             error_code: str | None = None
             try:
                 result = await fn(self, *args, **kwargs)
-                result_summary = _truncate(result)
+                result_summary = _summarize_result(type(self).__name__, fn.__name__, result)
                 return result
             except BaseException as exc:
                 error, error_code, result_summary = _failure(exc)
@@ -188,7 +212,7 @@ def observed(fn: Any) -> Any:
         error_code: str | None = None
         try:
             result = fn(self, *args, **kwargs)
-            result_summary = _truncate(result)
+            result_summary = _summarize_result(type(self).__name__, fn.__name__, result)
             return result
         except BaseException as exc:
             error, error_code, result_summary = _failure(exc)

@@ -56,6 +56,8 @@ def test_yolo_passes_the_agents_reads_and_its_own_test_run(hub: RealHub, command
     ("bash /tmp/hs_outside_script.sh", "OUTSIDE THE WORKTREE · /tmp/hs_outside_script.sh"),
     ('echo "HEAD=$(git rev-parse HEAD)" > /tmp/hs_head.txt', "OUTSIDE THE WORKTREE · /tmp/hs_head.txt"),
     ('cat "$(git rev-parse --show-toplevel)/../x"', "UNRESOLVED TARGET · $(git rev-parse --show-toplevel)"),
+    # Astra r1 on #1011 (P1-3): a test operand is a path.
+    ('test -f "$(git rev-parse --show-toplevel)/../outside"', "UNRESOLVED TARGET · $(git rev-parse --show-toplevel)"),
 ])
 def test_yolo_still_holds_writes_pushes_and_the_outside(hub: RealHub, command: str, reason: str) -> None:
     key = "toolu_hold_" + "".join(ch if ch.isalnum() else "_" for ch in command)[:48]
@@ -151,3 +153,86 @@ def test_take_back_discards_a_queued_rebrief_with_a_receipt(hub: RealHub) -> Non
     assert [r["state"] for r in record["rebriefs"]] == ["taken_back"]
     status, body = hub._post_with_token(route, {}, hub.owner_token)
     assert status == 409 and body["status"] == "not_queued"
+
+
+def _mcp_read(hub: RealHub, uri: str, token: str) -> tuple[int, str]:
+    req = urllib.request.Request(
+        f"{hub.base}/api/mcp",
+        data=json.dumps({"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": uri}}).encode(),
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return resp.status, resp.read().decode()
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read().decode()
+
+
+def _pipeline_rows_with(hub: RealHub, needle: str) -> int:
+    import sqlite3
+
+    found = 0
+    for db in hub.home.rglob("*.db"):
+        conn = sqlite3.connect(str(db))
+        try:
+            tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            if "pipeline_events" in tables:
+                found += conn.execute(
+                    "SELECT count(*) FROM pipeline_events WHERE args_summary LIKE ? OR result_summary LIKE ?",
+                    (f"%{needle}%", f"%{needle}%"),
+                ).fetchone()[0]
+        finally:
+            conn.close()
+    return found
+
+
+def test_the_whole_call_never_reaches_the_observer_or_an_agent(hub: RealHub) -> None:
+    """Astra r1 on #1011 (P1-1): the observer recorded GateService.propose's
+    payload and full_call's result into pipeline_events, which an agent read
+    through MCP ``pipeline://events/recent/GateService``. A synthetic secret
+    past char 120 (no known secret shape, so redaction keeps it) is in no
+    pipeline row and in no agent read, after the owner's Raw read and a Deny."""
+    secret = "SYNTH-k3y9Q-past-the-head-7Zt"
+    command = "cat > /tmp/hs_observer_probe.txt <<'EOF'\n" + "padding line of the body\n" * 6 + f"{secret}\nEOF"
+    thread, box = _held_in_thread(hub, command, "toolu_observer")
+    whole = hub.get("/api/gate/proposals/toolu_observer/command")
+    assert secret in whole["command"] and whole["whole"] is True  # the owner reads it whole
+    status, _ = hub._post_with_token("/api/gate/proposals/toolu_observer/decide", {"decision": "denied"}, hub.owner_token)
+    assert status == 200
+    thread.join(timeout=10)
+    assert box["decision"].deny
+
+    assert _pipeline_rows_with(hub, "toolu_observer") > 0, "the observer did record the calls"
+    assert _pipeline_rows_with(hub, secret) == 0
+    for uri in ("pipeline://events/recent/GateService", "pipeline://events/recent"):
+        status, body = _mcp_read(hub, uri, hub.agent_token)
+        assert secret not in body, (uri, status)
+        status, body = _mcp_read(hub, uri, hub.owner_token)
+        assert status == 200 and "GateService" in body and secret not in body, (uri, status)
+
+
+def test_a_part_is_never_whole_and_is_deny_only(hub: RealHub) -> None:
+    """Astra r1 on #1011 (P1-2): a 66,053-char command is kept as a part; the
+    hub says so (``whole: false``, n OF m) and Raw offers Deny only."""
+    command = "cat > /tmp/hs_huge.txt <<'EOF'\n" + ("x" * 99 + "\n") * 660 + "EOF"
+    assert len(command) > 65_536
+    thread, box = _held_in_thread(hub, command, "toolu_huge")
+    read = hub.get("/api/gate/proposals/toolu_huge/command")
+    assert read["whole"] is False
+    assert read["declared_chars"] == len(command)
+    assert read["shown_chars"] == len(read["command"]) < len(command)
+    status, _ = hub._post_with_token("/api/gate/proposals/toolu_huge/decide", {"decision": "denied"}, hub.owner_token)
+    assert status == 200
+    thread.join(timeout=10)
+
+
+def test_a_substitution_after_cd_is_read_where_it_runs(hub: RealHub, tmp_path) -> None:
+    """Astra r1 on #1011 (P1-4), her probe through the real hook and hub:
+    ``sub/secret`` links out of the worktree; the call waits."""
+    outside = tmp_path / "outside-secret"
+    outside.write_text("outside content\n", encoding="utf-8")
+    (hub.worktree / "sub").mkdir()
+    (hub.worktree / "sub" / "secret").symlink_to(outside)
+    held = _hook(hub, 'cd sub && echo "$(cat secret)"', "toolu_cd_subst", ttl=2.0)
+    assert held.deny and "expired" in held.deny
+    assert _proposal(hub, "toolu_cd_subst")["hold_reason"] == "UNRESOLVED TARGET · $(cat secret)"

@@ -29,7 +29,8 @@ export const LANE_PAGE = 200;
 /** The last thing the owner did on this lane, kept on the face when the
  * well that made it closes or the wait it answered clears. */
 export interface LaneReceipt {
-  word: "SENT" | "NOT SENT" | "NOT CONFIRMED" | "ARMED" | "STOPPED" | "NOT STOPPED" | "ARM FIRST" | "QUEUED" | "TAKEN BACK" | "NOT TAKEN BACK";
+  word: "SENT" | "NOT SENT" | "NOT CONFIRMED" | "ARMED" | "STOPPED" | "NOT STOPPED" | "ARM FIRST" | "QUEUED" | "TAKEN BACK" | "NOT TAKEN BACK"
+    | "APPROVED" | "DENIED" | "NOT DECIDED";
   at: number;
   text: string;
   tone: "ok" | "fail" | "warn";
@@ -61,6 +62,8 @@ interface LaneState {
   close(): void;
   setRaw(raw: boolean): void;
   setRebrief(open: boolean): void;
+  /** A receipt made outside the store's own sends (Raw's Approve / Deny). */
+  setReceipt(receipt: LaneReceipt): void;
   load(): Promise<void>;
   /** Type `text` into the lane's session. `waitId` names the wait an answer
    * answers (the hub refuses it when that wait is not the current one). */
@@ -172,6 +175,10 @@ export const useLane = create<LaneState>((set, get) => ({
 
   setRebrief(open) {
     set({ rebrief: open });
+  },
+
+  setReceipt(receipt) {
+    set({ receipt });
   },
 
   load() {

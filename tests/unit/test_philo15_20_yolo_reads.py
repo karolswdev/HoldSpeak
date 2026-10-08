@@ -88,11 +88,15 @@ def test_the_agents_reads_and_its_own_test_run_are_inside(worktree: Path, comman
     ("bash /tmp/run.sh", OUTSIDE, "OUTSIDE THE WORKTREE · /tmp/run.sh"),
     ('echo "$(git rev-parse HEAD)" > /tmp/head.txt', OUTSIDE, "OUTSIDE THE WORKTREE · /tmp/head.txt"),
     ('cat "$(git rev-parse --show-toplevel)/../x"', UNPARSED, "UNRESOLVED TARGET · $(git rev-parse --show-toplevel)"),
-    ("echo $(rm -rf ../x)", UNPARSED, "UNRESOLVED TARGET · $(rm"),
-    ('echo "$(git push origin HEAD)"', UNPARSED, "UNRESOLVED TARGET · $(git"),
-    ("echo $(cat ../secret)", UNPARSED, "UNRESOLVED TARGET · $(cat"),
-    ("echo $(bash tests/codeowners_test.sh)", UNPARSED, "UNRESOLVED TARGET · $(bash"),
-    ('echo "$(curl example.test)"', UNPARSED, "UNRESOLVED TARGET · $(curl"),
+    ("echo $(rm -rf ../x)", UNPARSED, "UNRESOLVED TARGET · $(rm -rf ../x)"),
+    ('echo "$(git push origin HEAD)"', UNPARSED, "UNRESOLVED TARGET · $(git push origin HEAD)"),
+    ("echo $(cat ../secret)", UNPARSED, "UNRESOLVED TARGET · $(cat ../secret)"),
+    ("echo $(bash tests/codeowners_test.sh)", UNPARSED, "UNRESOLVED TARGET · $(bash tests/codeowners_test.sh)"),
+    ('echo "$(curl example.test)"', UNPARSED, "UNRESOLVED TARGET · $(curl example.test)"),
+    # Astra r1 on #1011 (P1-3): a test operand can be a file test: it holds like a path.
+    ('test -f "$(git rev-parse --show-toplevel)/../outside"', UNPARSED, "UNRESOLVED TARGET · $(git rev-parse --show-toplevel)"),
+    ("[ -f $(git rev-parse --show-toplevel)/x ]", UNPARSED, "UNRESOLVED TARGET · $(git rev-parse --show-toplevel)"),
+    ('test -n "$(git rev-parse HEAD)"', UNPARSED, "UNRESOLVED TARGET · $(git rev-parse HEAD)"),
     ("X=$? ls", UNPARSED, "UNRESOLVED TARGET · $?"),
     ("echo hi > $(git rev-parse --show-toplevel)/x", UNPARSED, "UNRESOLVED TARGET · $(git rev-parse --show-toplevel)"),
     ('git push origin "$(git branch --show-current)"', UNPARSED, "UNRESOLVED TARGET · $(git branch --show-current)"),
@@ -102,6 +106,26 @@ def test_writes_pushes_and_the_outside_still_hold(worktree: Path, command: str, 
     verdict = classify_bash(command, cwd=str(worktree), root=str(worktree))
     assert verdict.scope == scope, verdict
     assert hold_reason(verdict.scope, verdict.rule, verdict.target) == reason
+
+
+def test_a_substitution_is_read_in_the_folder_after_cd(worktree: Path, tmp_path: Path) -> None:
+    """Astra r1 on #1011 (P1-4), her producer probe: ``sub/secret`` is a
+    symlink out of the worktree; ``cd sub && echo "$(cat secret)"`` printed
+    the outside file. The substitution is read where it runs (after the cd,
+    symlinks resolved): it holds. Run by bash, it would print the outside."""
+    outside = tmp_path / "outside-secret"
+    outside.write_text("outside content\n", encoding="utf-8")
+    (worktree / "sub").mkdir()
+    (worktree / "sub" / "secret").symlink_to(outside)
+    (worktree / "sub" / "inside.txt").write_text("in\n", encoding="utf-8")
+    probe = 'cd sub && echo "$(cat secret)"'
+    ran = subprocess.run(["bash", "-c", probe], cwd=worktree, capture_output=True, text=True)
+    assert ran.stdout == "outside content\n"  # what an approval would have printed
+    verdict = classify_bash(probe, cwd=str(worktree), root=str(worktree))
+    assert verdict.scope == UNPARSED
+    assert hold_reason(verdict.scope, verdict.rule, verdict.target) == "UNRESOLVED TARGET · $(cat secret)"
+    # The same read of a file inside the worktree passes.
+    assert classify_bash('cd sub && echo "$(cat inside.txt)"', cwd=str(worktree), root=str(worktree)).scope == INSIDE
 
 
 def test_a_read_in_a_substitution_keeps_the_normal_read_rule(worktree: Path) -> None:
@@ -132,6 +156,31 @@ def test_the_whole_call_is_kept_only_while_held_and_only_when_it_matches_the_hea
     gate.decide("p1", decision="denied", decided_by="owner")
     assert gate.full_call("p1") is None
     assert gate.store_full_call("p1", call.full) is False  # no longer held
+
+
+def test_a_decision_between_the_held_read_and_the_insert_has_the_last_word(db, monkeypatch) -> None:
+    """Astra r1 on #1011 (P2-7), her interleaving: storage reads HELD, the
+    decision flips the state and deletes, then storage inserts. The insert
+    is conditional on HELD in one statement: no row survives the decision."""
+    from holdspeak.coder_gate import redact_call
+
+    call = redact_call({"command": "cat > /tmp/x <<'EOF'\n" + "a long body line\n" * 12 + "EOF"})
+    gate = db.gate
+    gate.propose(proposal_id="p2", session_key="codex:s", agent="codex", tool="Bash",
+                 args_sha256=call.sha256, args_head=call.head, cwd="/w", ttl_seconds=60)
+    held = gate.get("p2")
+    real_get = gate.get
+
+    def stale_then_decide(proposal_id):
+        # The storage's HELD read, then the decision lands before its insert.
+        monkeypatch.setattr(gate, "get", real_get)
+        gate.decide("p2", decision="denied", decided_by="owner")
+        return held
+
+    monkeypatch.setattr(gate, "get", stale_then_decide)
+    assert gate.store_full_call("p2", call.full) is False
+    assert real_get("p2").state == "denied"
+    assert gate.full_call("p2") is None
 
 
 # ── B66 ───────────────────────────────────────────────────────────────
@@ -200,6 +249,13 @@ def test_the_finished_report_of_shot_49_is_done() -> None:
     ("The lint check failed on PR #3.", True),
     ("The build is blocked on a missing secret.", True),
     ("Tests failed after the write attempts were blocked.", True),
+    # Astra's ruling on #1011: by the desk / gate / owner / from the desk is a
+    # decision; blocked by anything else is a problem.
+    ("The write was blocked by the desk.", False),
+    ("The call was denied from the desk.", False),
+    ("The API call was blocked by a firewall.", True),
+    ("The push was blocked by branch protection.", True),
+    ("The merge attempts were blocked by a failing check.", True),
 ])
 def test_a_gate_decision_is_not_a_problem_but_a_failure_is(text: str, problem: bool) -> None:
     assert reports_a_problem(text) is problem

@@ -705,14 +705,36 @@ describe("PHILO-15 20: Raw approves a cut call; Take back", () => {
     fireEvent.click(within(held).getByTestId("lane-raw-approve"));
     await waitFor(() => expect(api.fetch.mock.calls.some(([url, init]) =>
       String(url) === "/api/gate/proposals/toolu_cut/decide" && (init as { json?: { decision?: string } })?.json?.decision === "approved")).toBe(true));
+    // Astra r1 on #1011 (P2-6): the decision leaves its receipt on Raw.
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^APPROVED · \d\d:\d\d$/));
+    expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
+  });
+
+  it("B63: a call decided elsewhere first says NOT DECIDED · ALREADY DENIED", async () => {
+    await openLane(cutLane());
+    serveWhole(cutLane(), { id: "toolu_cut", state: "held", command: whole, whole: true, hold_reason: "OUTSIDE THE WORKTREE" });
+    const base = api.fetch.getMockImplementation()!;
+    const { ApiError } = await import("../../../lib/api");
+    api.fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (String(url).endsWith("/decide")) throw new ApiError(409, "conflict", { error: "already_decided", state: "denied" });
+      return base(url, init);
+    });
+    act(() => useLane.getState().setRaw(true));
+    const held = await screen.findByTestId("lane-raw-held");
+    await waitFor(() => expect(within(held).getByTestId("lane-raw-approve")).toBeTruthy());
+    fireEvent.click(within(held).getByTestId("lane-raw-approve"));
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^NOT DECIDED · \d\d:\d\d · ALREADY DENIED$/));
   });
 
   it("B63: a call the hub did not keep whole is Deny only", async () => {
     await openLane(cutLane());
-    serveWhole(cutLane(), { id: "toolu_cut", state: "held", command: head, whole: false, hold_reason: "OUTSIDE THE WORKTREE" });
+    serveWhole(cutLane(), { id: "toolu_cut", state: "held", command: head, whole: false, hold_reason: "OUTSIDE THE WORKTREE",
+      shown_chars: head.length, declared_chars: whole.length });
     act(() => useLane.getState().setRaw(true));
     const held = await screen.findByTestId("lane-raw-held");
     await waitFor(() => expect(within(held).getByTestId("lane-raw-command").textContent).toBe(head));
+    // Astra r1 on #1011 (P1-2): a part says how much of the call is there.
+    expect(within(held).getByText(`HELD · OUTSIDE THE WORKTREE · CUT · ${head.length} OF ${whole.length} CHARS`)).toBeTruthy();
     expect(within(held).queryByTestId("lane-raw-approve")).toBeNull();
     expect(within(held).getByTestId("lane-raw-deny")).toBeTruthy();
   });

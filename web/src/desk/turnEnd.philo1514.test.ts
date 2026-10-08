@@ -85,6 +85,11 @@ describe("B68: a confirmation with no question reads done", () => {
     ["The lint check failed on PR #3.", true],
     ["The build is blocked on a missing secret.", true],
     ["Tests failed after the write attempts were blocked.", true],
+    ["The write was blocked by the desk.", false],
+    ["The call was denied from the desk.", false],
+    ["The API call was blocked by a firewall.", true],
+    ["The push was blocked by branch protection.", true],
+    ["The merge attempts were blocked by a failing check.", true],
   ])("%j → problem %s", (text, problem) => {
     expect(reportsAProblem(text)).toBe(problem);
   });

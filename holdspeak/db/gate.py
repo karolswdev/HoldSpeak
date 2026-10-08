@@ -328,11 +328,14 @@ class GateProposalRepository(BaseRepository):
                 (target, decided_by, self._now(), reason, proposal_id, HELD),
             )
             won = cursor.rowcount == 1
+            if won:
+                # PHILO-15 20 (B63): the whole call is kept only while it is
+                # held; the delete runs after the flip, in the same
+                # transaction, so no conditional insert can follow it.
+                conn.execute("DELETE FROM gate_full_calls WHERE proposal_id = ?", (proposal_id,))
         if not won:
             standing = self.get(proposal_id)
             raise GateStateError(proposal_id, standing.state, target)
-        # PHILO-15 20 (B63): the whole call is kept only while it is held.
-        self.drop_full_call(proposal_id)
         after = self.get(proposal_id)
         self._audit(
             proposal_id=proposal_id,
@@ -405,13 +408,18 @@ class GateProposalRepository(BaseRepository):
         text = redact(str(args_full or ""))[:FULL_CALL_MAX_CHARS]
         if len(text) <= ARGS_HEAD_CHARS or not text.startswith(proposal.args_head):
             return False
+        # Astra r1 on #1011 (P2-7): the insert is conditional on the call
+        # being HELD in the same statement, so a decision that lands between
+        # the read above and this write (its delete runs after its state
+        # flip) always has the last word: a decided call keeps no text.
         with self._connection() as conn:
-            conn.execute(
-                "INSERT INTO gate_full_calls (proposal_id, args_full, stored_at) VALUES (?, ?, ?) "
+            cursor = conn.execute(
+                "INSERT INTO gate_full_calls (proposal_id, args_full, stored_at) "
+                "SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM gate_proposals WHERE id = ? AND state = ?) "
                 "ON CONFLICT(proposal_id) DO UPDATE SET args_full = excluded.args_full, stored_at = excluded.stored_at",
-                (proposal_id, text, self._now()),
+                (proposal_id, text, self._now(), proposal_id, HELD),
             )
-        return True
+            return cursor.rowcount == 1
 
     def full_call(self, proposal_id: str) -> Optional[str]:
         """The whole redacted call kept for a held proposal, else ``None``."""

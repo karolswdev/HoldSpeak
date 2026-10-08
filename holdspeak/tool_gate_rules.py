@@ -282,7 +282,9 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
         segments = _segments(_tokens(
             command, cat_is_system=reader.identity("cat") == SYSTEM, bodies=reader.heredocs,
             stdin=reader.stdin_bodies, expansions=reader.expansions,
-            check_subst=lambda inner: _read_only_substitution(inner, cwd=real_cwd, root=real_root),
+            # Syntax only here; what the command reads is checked by the
+            # reader in the folder it runs in (Astra r1 on #1011).
+            check_subst=lambda inner: bool(inner.strip()),
         ))
         return reader.read(segments)
     except _Unparsed as exc:
@@ -379,9 +381,12 @@ _EXPANSION_WORD = re.compile("\x00EXP(\\d+)\x00")
 #: The text of a ``$( ... )`` the reading may accept: one simple command with
 #: no quote, expansion, group, operator or newline in it.
 _PLAIN_SUBST = re.compile(r"\$\((?P<inner>[^()$`'\"\\\n;&|<>]*)\)")
-#: Commands that only print or test the words they get: an accepted expansion
-#: may stand in their words only (never in a path, a program or a push).
-_EXPANSION_SINKS = frozenset({"echo", "printf", "test", "["})
+#: Commands that only print the words they get: a read in ``$( ... )`` may
+#: stand in their words only (never in a path, a program, a push, or an
+#: operand of ``test``/``[``, which can be a file test: Astra r1 on #1011).
+_EXPANSION_SINKS = frozenset({"echo", "printf"})
+#: ``$?`` (a number) may also stand in a test.
+_STATUS_SINKS = frozenset({"echo", "printf", "test", "["})
 #: The reads a ``$( ... )`` may run (the Normal-mode read rules, no test run).
 _SUBST_READS = frozenset({
     "ls", "cat", "head", "tail", "wc", "pwd", "stat", "file", "which", "echo",
@@ -393,10 +398,11 @@ def _safe_expansion(
     text: str, index: int, check_subst: Optional[Any], expansions: Optional[list[str]],
 ) -> Optional[tuple[str, int]]:
     """PHILO-15 20 (B62): ``$?`` (the last exit status, a number) and a
-    ``$( ... )`` whose one command is a read in the worktree
-    (``$(git rev-parse HEAD)``) are plain text. Return ``(mark, end)`` for
-    one of them at ``index``, else ``None`` (the call is unparsed). Where a
-    mark may stand is checked by the reader (:data:`_EXPANSION_SINKS`)."""
+    plain ``$( ... )`` (one simple command, :data:`_PLAIN_SUBST`) stand in
+    the token stream as a mark. Return ``(mark, end)`` for one of them at
+    ``index``, else ``None`` (the call is unparsed). The reader decides each
+    mark where its command runs (:meth:`_Reader._check_expansions`): in the
+    folder the call is in at that point, after every ``cd``."""
     if expansions is None:
         return None
     original = ""
@@ -668,32 +674,44 @@ class _Reader:
 
     # one simple command -----------------------------------------------------
 
-    def _expansion_in(self, word: str) -> str:
-        """The original text of the first accepted expansion in ``word``."""
-        match = _EXPANSION_WORD.search(word)
-        if match is None:
-            return ""
-        slot = int(match.group(1))
-        return self.expansions[slot] if slot < len(self.expansions) else "$"
+    def _expansions_in(self, word: str) -> list[str]:
+        """The original text of every expansion mark in ``word``."""
+        return [
+            self.expansions[int(m.group(1))] if int(m.group(1)) < len(self.expansions) else "$"
+            for m in _EXPANSION_WORD.finditer(word)
+        ]
 
-    def _segment(self, joined: str, words: list[str], redirects: list[tuple[str, str]]) -> None:
-        # PHILO-15 20 (B62): an accepted expansion (``$?``, a read in
-        # ``$( ... )``) is text only to a command that prints or tests it.
-        # Anywhere else (a path, a program, a redirect, an assignment) its
-        # value is a word the reading cannot resolve.
+    def _check_expansions(self, words: list[str], redirects: list[tuple[str, str]]) -> None:
+        """PHILO-15 20 (B62; Astra r1 on #1011). ``$?`` is text to a command
+        that prints or tests it; a ``$( ... )`` is text only to ``echo`` or
+        ``printf``, and only when its one command is a read in the worktree,
+        read in the folder the call is in NOW (after every ``cd``, symlinks
+        resolved). Anywhere else (a path, a program, a redirect, an
+        assignment, a ``test`` operand) its value is unresolved: held."""
         for _op, target in redirects:
-            found = self._expansion_in(target)
-            if found:
+            for found in self._expansions_in(target):
                 raise _Unparsed("shell_expansion", found)
         start = 0
         while start < len(words) and _ENV_ASSIGN.match(words[start]):
             start += 1
         sink = words[start] if start < len(words) else ""
-        printed = sink in _EXPANSION_SINKS and self.identity(sink) == BUILTIN
+        builtin = bool(sink) and self.identity(sink) == BUILTIN
         for position, word in enumerate(words):
-            found = self._expansion_in(word)
-            if found and (not printed or position <= start):
-                raise _Unparsed("shell_expansion", found)
+            for found in self._expansions_in(word):
+                if position <= start or not builtin:
+                    raise _Unparsed("shell_expansion", found)
+                if found == "$?":
+                    if sink not in _STATUS_SINKS:
+                        raise _Unparsed("shell_expansion", found)
+                    continue
+                if sink not in _EXPANSION_SINKS:
+                    raise _Unparsed("shell_expansion", found)
+                match = _PLAIN_SUBST.fullmatch(found)
+                if match is None or not _read_only_substitution(match.group("inner"), cwd=self.cwd, root=self.root):
+                    raise _Unparsed("shell_expansion", found)
+
+    def _segment(self, joined: str, words: list[str], redirects: list[tuple[str, str]]) -> None:
+        self._check_expansions(words, redirects)
         stdin: list[str] = []
         for op, target in redirects:
             if op == "<" and target.startswith(_STDIN_MARK):

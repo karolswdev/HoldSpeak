@@ -345,10 +345,12 @@ export function reportsAProblem(text: unknown): boolean {
   return PROBLEM_RE.test(String(text ?? "").replace(NEGATED_PROBLEM_RE, " "));
 }
 
-// PHILO-15 20 (B68): a gate hold the owner decided ("the earlier /tmp write
-// attempts were blocked") reports his decision, not a problem.
+// PHILO-15 20 (B68; Astra's ruling on #1011): blocked by the desk, the gate,
+// the owner or from the desk is his decision, and so is the agent's own
+// attempt "blocked" with nothing named; blocked BY anything else (a firewall,
+// branch protection, a failing check) stays a problem.
 const NEGATED_PROBLEM_RE =
-  /\b(?:no|without|zero|0|did\s+not|didn't|never)\s+(?:new\s+|further\s+)?(?:fail(?:s|ed|ing|ures?)?|errors?|problems?|blockers?)\b|\berror[- ]free\b|\b(?:attempts?|writes?|calls?|commands?|tries)\s+(?:were|was|got)\s+(?:blocked|denied)\b|\b(?:blocked|denied)\s+by\s+the\s+(?:gate|desk|owner|hook)\b/gi;
+  /\b(?:no|without|zero|0|did\s+not|didn't|never)\s+(?:new\s+|further\s+)?(?:fail(?:s|ed|ing|ures?)?|errors?|problems?|blockers?)\b|\berror[- ]free\b|\b(?:attempts?|writes?|calls?|commands?|tries)\s+(?:were|was|got)\s+(?:blocked|denied)\b(?!\s+(?:by|on)\b)|\b(?:blocked|denied)\s+(?:by\s+the\s+(?:gate|desk|owner|hook)|from\s+the\s+desk)\b/gi;
 
 const PROBLEM_RE =
   /\b(?:fail(?:s|ed|ing|ure)?|error(?:s|ed)?|broken|blocked|cannot|can't|couldn't|unable|timed out|did not pass|didn't pass|not passing)\b/i;
