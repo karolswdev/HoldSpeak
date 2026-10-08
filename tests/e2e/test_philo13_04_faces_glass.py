@@ -626,9 +626,10 @@ class TestMeetingsRailNamesStored:
 
     @pytest.mark.parametrize("width", list(SIZES))
     def test_the_rail_says_summary_stored(self, width: int) -> None:
-        """The list rail says SUMMARY STORED beside the stored summary, and
-        OFF only beside the meeting that stores none. Red on main 02ce9e8c
-        (the rail said OFF for both)."""
+        """The list rail says SUMMARY STORED beside the stored summary (once
+        its proposals are handled), and NOT RUN beside the meeting that stores
+        none (summaries are not OFF on this desk, PHILO-15 10). Red on main
+        02ce9e8c (the rail said OFF for both)."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -676,7 +677,11 @@ class TestMeetingsRailNamesStored:
                 TestFacesDoNotLie._shot(page, "meetings-rail-stored", width)
                 assert stored.get_by_test_id("state-token").inner_text() == "SUMMARY STORED"
                 assert not stored.get_by_text(re.compile(r"\bOFF\b")).count()
-                assert none.get_by_test_id("state-token").inner_text() == "OFF"
+                # PHILO-15 10 (#985, B14): a meeting with no summary reads OFF only
+                # when its route says summaries off; this desk never turned them
+                # off, so it reads NOT RUN (never OFF, never STORED).
+                assert none.get_by_test_id("state-token").inner_text() == "NOT RUN"
+                assert not none.get_by_text(re.compile(r"\bOFF\b")).count()
                 assert not none.get_by_text("STORED").count()
                 assert not errors, errors
             finally:
