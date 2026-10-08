@@ -380,3 +380,53 @@ def test_the_door_count_line_says_no_zero(monkeypatch) -> None:
     assert [t["count"] for t in answer["tokens"]] == [0, 0]
     monkeypatch.setattr(door, "_snapshot_for_key", lambda *a, **k: [{"number": 1}, {"number": 2}])
     assert door.count(OWNER, "github", REPO, ["open_prs"])["plain"] == "2 open PRs"
+
+
+def test_a_project_with_a_source_and_an_unreadable_store_refuses_in_the_hand_and_the_preview(
+    tmp_path, db, monkeypatch,
+) -> None:
+    """Astra r2 on PR 1000: the Project's own clone resolves (the rig's
+    `railsproj` under the Project's name) AND the store cannot be read: the
+    preview names the refusal the hand gives, never an actionable line."""
+    from holdspeak.services.agent_hand_preview import LaunchReads, preview_hand
+
+    rig = _rig(tmp_path, db, monkeypatch)  # the Project keeps its name: its source resolves
+    rig.hand.repositories = ProjectRepositories(
+        store_path=tmp_path / "project_repositories.json", clone_root=tmp_path / "clones", runner=FakeGh(),
+    )
+    _corrupt(rig.hand.repositories.store_path)
+    reads = LaunchReads(
+        profiles_path=tmp_path / "profiles.json", registry_path=tmp_path / "sources.json",
+        ledger_path=tmp_path / "launches.json", which=lambda name: f"/bin/{name}",
+        runner=lambda argv: SimpleNamespace(returncode=1),
+    )
+    preview = preview_hand(rig.hand, OWNER, "action", "ai_1", reads=reads)
+    assert preview["repo"] is not None  # a source resolved
+    assert "repository_store_unreadable" in preview["refused"]
+    with pytest.raises(AgentHandRefused) as exc:
+        rig.hand.hand(OWNER, "action", "ai_1")
+    assert exc.value.reason == "repository_store_unreadable"
+    assert rig.tmux.calls == []
+
+
+def test_the_state_and_the_hand_name_the_clone_folder(tmp_path, db, monkeypatch) -> None:
+    """Astra r2 on PR 1000: the owner finds the folder (Info, the hand's receipt)."""
+    rig = _registered_rig(tmp_path, db, monkeypatch, FakeGh())
+    clone = tmp_path / "clones" / "acme" / "railsproj" / "railsproj"
+    assert rig.hand.repository_state(OWNER, PROJECT, registry=rig.registry)["folder"] is None
+    rig.hand._max_live = 0  # the launch refuses after the clone
+    with pytest.raises(AgentHandRefused) as exc:
+        rig.hand.hand(OWNER, "action", "ai_1")
+    assert exc.value.context["clone"]["folder"] == str(clone)
+    state = rig.hand.repository_state(OWNER, PROJECT, registry=rig.registry)
+    assert state["cloned"] is True and state["folder"] in {str(clone), str(clone.resolve())}
+
+
+def test_a_zero_byte_store_is_not_read_too(hub, home) -> None:
+    _project(hub)
+    store = home / ".holdspeak" / "project_repositories.json"
+    store.parent.mkdir(parents=True, exist_ok=True)
+    store.write_bytes(b"")
+    assert hub.client.get(f"/api/projects/{PROJECT}/repository").json()["store"] == "not_read"
+    assert hub.client.post(f"/api/projects/{PROJECT}/repository", json={"repository": REPO}).status_code == 409
+    assert store.read_bytes() == b""

@@ -38,6 +38,7 @@ from .project_repository import (
     CLONE_HOST,
     ProjectRepositories,
     StoreNotRead,
+    home_label,
     register as register_repository,
     registered_source,
     repository_state,
@@ -444,6 +445,7 @@ class AgentHandService:
             "host": CLONE_HOST,
             "state": "cloned",
             "cloned_at": cloned_at,
+            "folder": home_label(str(path)),
             "operation_id": (kernel or {}).get("operation_id"),
             "receipt": (kernel or {}).get("receipt"),
         }

@@ -220,6 +220,14 @@ class ProjectRepositories:
         return target
 
 
+def home_label(path: str) -> str:
+    """A path as the face shows it: the hub's home folder is ``~``."""
+    for home in dict.fromkeys((str(Path.home()), str(Path.home().resolve()))):
+        if path == home or path.startswith(home + "/"):
+            return "~" + path[len(home):]
+    return path
+
+
 def watched_repositories(db: Any, project_id: Optional[str]) -> list[str]:
     """The GitHub repositories the Project's Room watches (the Door's watches)."""
     if not project_id:
@@ -258,13 +266,17 @@ def repository_state(
     except StoreNotRead:
         # NOT READ, never "none": the face says so and offers Retry.
         return {"project_id": project_id, "repository": None, "registered": False, "cloned": False,
-                "registered_at": None, "cloned_at": None, "watched": watched_repositories(db, project_id),
-                "host": CLONE_HOST, "store": "not_read"}
+                "registered_at": None, "cloned_at": None, "folder": None,
+                "watched": watched_repositories(db, project_id), "host": CLONE_HOST, "store": "not_read"}
     repository = str(record["repository"]) if record else None
-    cloned = bool(record) and (
-        repositories.is_cloned(repository or "")
-        or (registry is not None and registered_source(record, registry) is not None)
-    )
+    source = registered_source(record, registry) if (record and registry is not None) else None
+    cloned = bool(record) and (repositories.is_cloned(repository or "") or source is not None)
+    # Where the clone lives (Astra r2 on PR 1000): the owner finds the folder
+    # after a refused launch. The hub's home reads as `~`.
+    folder = None
+    if cloned:
+        folder = home_label(str(source.primary_path) if source is not None
+                            else str(repositories.clone_path(repository or "")))
     return {
         "project_id": project_id,
         "repository": repository,
@@ -272,6 +284,7 @@ def repository_state(
         "cloned": cloned,
         "registered_at": (record or {}).get("registered_at"),
         "cloned_at": (record or {}).get("cloned_at"),
+        "folder": folder,
         "watched": watched_repositories(db, project_id),
         "host": CLONE_HOST,
         "store": "read",

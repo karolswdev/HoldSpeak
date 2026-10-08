@@ -17,6 +17,8 @@ export interface ProjectRepository {
   cloned: boolean;
   registered_at?: string | null;
   cloned_at?: string | null;
+  /** Where the clone lives (the hub's home as `~`), once cloned. */
+  folder?: string | null;
   /** The GitHub repositories the Room watches (a Project with no registration
    *  registers the first one). */
   watched: string[];

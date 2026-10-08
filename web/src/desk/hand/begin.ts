@@ -25,11 +25,11 @@ export async function readControlMode(): Promise<string | null> {
 
 /** PHILO-15 B36: the default agent from the agents read (a local file read);
  *  an unread answer keeps Claude Code. */
-export async function readDefaultAgent(): Promise<{ agent: AgentId; skipped: AgentId | null }> {
+export async function readDefaultAgent(): Promise<{ agent: AgentId; skipped: AgentId | null; unknown: AgentId[] }> {
   try {
     return pickDefaultAgent(await apiFetch<AgentsDetect>(AGENTS_PATH));
   } catch {
-    return { agent: DEFAULT_AGENT, skipped: null };
+    return { agent: DEFAULT_AGENT, skipped: null, unknown: [] };
   }
 }
 
@@ -40,14 +40,16 @@ export async function beginHand(
   origin: HandOrigin,
   where: { agent?: AgentId; host: string; source: HandEnd },
 ): Promise<void> {
+  const [mode, read] = await Promise.all([readControlMode(), readDefaultAgent()]);
+  // A named agent (a drop on its icon) or the owner's last flip in this
+  // Project wins; the read still says whose sign-in is unknown, so the line
+  // warns for the agent it shows (lane 18, Astra r1 P2).
   const named = where.agent ?? rememberedAgent(origin.projectId);
-  const [mode, pick] = await Promise.all([
-    readControlMode(),
-    named ? Promise.resolve({ agent: named, skipped: null }) : readDefaultAgent(),
-  ]);
+  const pick = named ? { agent: named, skipped: null, unknown: read.unknown } : read;
   if (mode === "yolo") {
     useDropHand.getState().confirm({
       origin, agent: pick.agent, host: where.host, source: where.source, skipped: pick.skipped,
+      unknown: pick.unknown,
     });
     return;
   }

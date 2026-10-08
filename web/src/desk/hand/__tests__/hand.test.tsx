@@ -515,6 +515,20 @@ describe("PHILO-15 16 (Astra r1 on #1000): the default and the owner's flip", ()
     expect(within(line).getByTestId("hand-confirm-skipped")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");
   });
 
+  it("a remembered flip keeps lane 18's warning for the agent it shows", async () => {
+    world.agents = { agents: [agent("claude", "unknown"), agent("codex", "unknown")] };
+    localStorage.setItem("hs.hand.agent.p-ledger", "codex");
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("CODEX · SIGN-IN UNKNOWN");
+    fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
+    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");
+    expect(localStorage.getItem("hs.hand.agent.p-ledger")).toBe("claude");
+  });
+
   it("the owner's flip is this Project's next default (the verb and the drop)", async () => {
     await renderDesk();
     dragOnto(comms(), conductor());
@@ -541,7 +555,8 @@ describe("PHILO-15 16 B38: the first hand clones the Project's repository", () =
       throw new ApiError(409, "refused", {
         code: "launch_cap_reached",
         clone: { repository: "karolswdev/holdspeak-dayone-rehearsal-1558", host: "github.com", state: "cloned",
-                 cloned_at: "2026-10-07T18:06:00" },
+                 cloned_at: "2026-10-07T18:06:00",
+                 folder: "~/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558/holdspeak-dayone-rehearsal-1558" },
       });
     };
     await renderDesk();
@@ -554,6 +569,10 @@ describe("PHILO-15 16 B38: the first hand clones the Project's repository", () =
     expect(clone).toHaveAttribute("data-state", "cloned");
     expect(clone).toHaveTextContent("CLONED · karolswdev/holdspeak-dayone-rehearsal-1558 · 18:06");
     expect(within(line).queryByText(/^CLONES /)).toBeNull();
+    // Where the clone lives, so the owner finds it after the refusal (Astra r2).
+    expect(within(line).getByTestId("hand-confirm-clone-folder")).toHaveTextContent(
+      "~/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558/holdspeak-dayone-rehearsal-1558",
+    );
   });
 
   it("the line names the clone's egress before the press and CLONED after it; never NO REPOSITORY", async () => {

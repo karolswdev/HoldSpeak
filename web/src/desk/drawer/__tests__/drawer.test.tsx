@@ -428,12 +428,14 @@ describe("PHILO-15 16 the Project knows its repository", () => {
     );
   });
 
-  it("CLONED once the first hand cloned it", async () => {
-    repo.state = { project_id: "p-ledger", repository: REPO, registered: true, cloned: true, watched: [REPO], host: "github.com" };
+  it("CLONED once the first hand cloned it, and where the clone lives", async () => {
+    const folder = `~/.holdspeak/repositories/${REPO}/holdspeak-dayone-rehearsal-1558`;
+    repo.state = { project_id: "p-ledger", repository: REPO, registered: true, cloned: true, watched: [REPO], host: "github.com", folder };
     await renderDrawer();
     fireEvent.click(screen.getByRole("button", { name: "Get Info" }), { detail: 1 });
     render(<DrawerInfoWindow info={useDrawers.getState().infos[0]} />);
     expect(await screen.findByText(`${REPO} · CLONED`)).toBeTruthy();
+    expect(document.querySelector('.object-info-fact[data-fact="folder"] dd')?.textContent).toBe(folder);
   });
 
   it("an older Project the Room watches a repository for: Register on the drawer, one press", async () => {

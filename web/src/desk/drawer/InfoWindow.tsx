@@ -32,7 +32,12 @@ function useProjectFacts(member: OpenInfo["member"], setFailure: (text: string) 
   const words = repositoryWords(repository.state, repository.failed);
   const facts: GetInfoFacts = {
     ...member.facts,
-    more: [...(member.facts.more ?? []), { key: "repository", word: "Repository", value: words }],
+    more: [
+      ...(member.facts.more ?? []),
+      { key: "repository", word: "Repository", value: words },
+      // Where the clone lives: the owner finds it after a refused launch.
+      { key: "folder", word: "Folder", value: notRead ? "" : repository.state?.folder ?? "" },
+    ],
   };
   const name = registrable(repository.state);
   const register = async () => {

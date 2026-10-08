@@ -60,7 +60,7 @@ export function otherAgent(agent: AgentId): AgentId {
 }
 
 export function HandConfirm({ pending }: { pending: HandPending }) {
-  const { origin, source, skipped } = pending;
+  const { origin, source, skipped, unknown } = pending;
   // PHILO-15 16 (B39): the line opens on the agent the drop named (the
   // Conductor's default agent for the Conductor drawer and the verb); the
   // owner flips it on the line, CLAUDE CODE ⇄ CODEX.
@@ -211,6 +211,8 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
   const toClone = !clone && !launched && preview?.clone ? preview.clone : null;
   // PHILO-15 B36: why the line is not on Claude Code.
   const passedOver = skipped && !launched && skipped !== actual ? skipped : null;
+  // And for the agent the line shows when its own sign-in is unknown (also after a flip).
+  const selectedUnknown = !launched && (unknown ?? []).includes(actual) ? actual : null;
   const tracker = origin.kind === "issue" ? trackerToken(origin, preview, previewError) : null;
 
   const status = (
@@ -218,6 +220,11 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
       {passedOver ? (
         <span className="surface-token" data-chip data-testid="hand-confirm-skipped">
           {AGENT_NAME[passedOver].toUpperCase()} · SIGN-IN UNKNOWN
+        </span>
+      ) : null}
+      {selectedUnknown ? (
+        <span className="surface-token" data-chip data-tone="warn" data-testid="hand-confirm-selected-unknown">
+          {AGENT_NAME[selectedUnknown].toUpperCase()} · SIGN-IN UNKNOWN
         </span>
       ) : null}
       {toClone ? (
@@ -232,6 +239,11 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
           <span className="surface-token" data-tone="ok" data-chip data-wrap>
             {cloneWords(clone)}
           </span>
+          {clone.folder ? (
+            <span className="surface-token" data-chip data-wrap data-testid="hand-confirm-clone-folder">
+              {clone.folder}
+            </span>
+          ) : null}
         </span>
       ) : null}
       {tracker ? (
@@ -269,7 +281,7 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
     </>
   );
   const hasStatus = Boolean(
-    passedOver || toClone || clone || tracker || previewError || (refused.length && !launched) || delivery || launchError,
+    passedOver || selectedUnknown || toClone || clone || tracker || previewError || (refused.length && !launched) || delivery || launchError,
   );
 
   return (

@@ -295,6 +295,10 @@ class TestProjectRepositoryGlass:
                 self._assert_cloned_launch(page, line, 1440)
                 line.get_by_role("button", name="Close").click()
                 assert self._repository_fact(page, drawer) == f"{REPO} · CLONED"
+                folder = page.locator(".drawer-info-window .object-info-fact[data-fact=folder] dd")
+                folder.wait_for(timeout=T)
+                name = REPO.split("/")[1]
+                assert folder.inner_text() == f"~/.holdspeak/repositories/karolswdev/{name}/{name}", folder.inner_text()
                 page.screenshot(path=str(SHOTS / "16-getinfo-cloned-1440.png"))
                 assert not errors, errors
             finally:
@@ -384,6 +388,36 @@ class TestProjectRepositoryGlass:
                 drawer.get_by_text("Ledger rollback review").first.wait_for(timeout=T)
                 page.screenshot(path=str(SHOTS / f"16-drawer-lists-meeting-{width}.png"))
                 assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth")
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    # ── Astra r1/r2 on PR 1000: a store that cannot be read is NOT READ ──
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_an_unreadable_store_reads_not_read_with_retry(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        store = self.home / ".holdspeak" / "project_repositories.json"
+        store.parent.mkdir(parents=True, exist_ok=True)
+        store.write_text('{"schema": 1, "projects": {', encoding="utf-8")
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                drawer = self._drawer(page, PROJECT)
+                assert drawer.get_by_test_id("drawer-register").count() == 0
+                drawer.get_by_test_id("drawer-get-info").click()
+                fact = page.locator(".drawer-info-window .object-info-fact[data-fact=repository] dd")
+                fact.wait_for(timeout=T)
+                page.wait_for_function(
+                    "() => (document.querySelector('.drawer-info-window .object-info-fact[data-fact=repository] dd')"
+                    "?.textContent || '') === 'NOT READ'", timeout=T)
+                retry = page.locator(".drawer-info-window [data-testid=info-repository-retry]")
+                retry.wait_for(timeout=T)
+                _settle(page)
+                page.screenshot(path=str(SHOTS / f"16-not-read-{width}.png"))
+                assert store.read_text(encoding="utf-8") == '{"schema": 1, "projects": {'
                 assert not errors, errors
             finally:
                 browser.close()

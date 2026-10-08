@@ -86,6 +86,8 @@ export interface HandClone {
   host: string;
   state: string;
   cloned_at?: string | null;
+  /** Where the clone lives (`~/.holdspeak/repositories/...`). */
+  folder?: string | null;
   operation_id?: string | null;
 }
 
@@ -459,6 +461,9 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                   <span className="desk-hand-tokens" data-testid="hand-clone" data-state="cloned">
                     <EgressChip label={clone.host.toUpperCase()} scope="cloud" />
                     <span className="surface-token" data-tone="ok" data-chip data-wrap>{cloneWords(clone)}</span>
+                    {clone.folder ? (
+                      <span className="surface-token" data-chip data-wrap data-testid="hand-clone-folder">{clone.folder}</span>
+                    ) : null}
                   </span>
                 ) : preview.clone ? (
                   <span className="desk-hand-tokens" data-testid="hand-clone" data-state="to_clone">

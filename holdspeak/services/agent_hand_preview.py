@@ -240,8 +240,12 @@ def preview_hand(
     resume: Optional[dict[str, Any]] = None
     actual = requested
     held_text: Optional[str] = None
-    if repo is None and clone is None and store_refusal:
+    if store_refusal:
+        # The hand refuses on a store it cannot read whatever source resolves
+        # (Astra r2 on PR 1000): the preview names it the same way, always.
         refused.append(store_refusal)
+    if repo is None and clone is None and store_refusal:
+        pass
     elif repo is None and clone is None:
         # A repository the Room watches but nobody registered: the drawer's
         # Register verb fixes it; with none at all, NO REPOSITORY.
