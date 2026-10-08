@@ -6,7 +6,7 @@
  *  the hub's (`GET /api/authority/policy`, a local read). When the mode
  *  cannot be read, the sheet opens: it shows everything before the press. */
 import { apiFetch } from "../../lib/api";
-import { DEFAULT_AGENT, handRefOf, openHand, pickDefaultAgent, type HandOrigin } from "../agentHand";
+import { DEFAULT_AGENT, handRefOf, openHand, pickDefaultAgent, rememberedAgent, type HandOrigin } from "../agentHand";
 import { AGENTS_PATH, type AgentId, type AgentsDetect } from "../firstrun/agentsStep";
 import { useDropHand, type HandEnd } from "./store";
 
@@ -34,15 +34,18 @@ export async function readDefaultAgent(): Promise<{ agent: AgentId; skipped: Age
 }
 
 /** `where.agent`: the agent the owner named (a drop on that agent's icon);
- *  absent, the default agent (the first with a KNOWN sign-in). */
+ *  absent, the owner's last flip in this Project, else the default agent
+ *  (the first with a KNOWN sign-in). */
 export async function beginHand(
   origin: HandOrigin,
   where: { agent?: AgentId; host: string; source: HandEnd },
 ): Promise<void> {
   const [mode, read] = await Promise.all([readControlMode(), readDefaultAgent()]);
-  // A named agent (a drop on its icon) wins; the read still says whose
-  // sign-in is unknown, so the line can warn for it.
-  const pick = where.agent ? { agent: where.agent, skipped: null, unknown: read.unknown } : read;
+  // A named agent (a drop on its icon) or the owner's last flip in this
+  // Project wins; the read still says whose sign-in is unknown, so the line
+  // warns for the agent it shows (lane 18, Astra r1 P2).
+  const named = where.agent ?? rememberedAgent(origin.projectId);
+  const pick = named ? { agent: named, skipped: null, unknown: read.unknown } : read;
   if (mode === "yolo") {
     useDropHand.getState().confirm({
       origin, agent: pick.agent, host: where.host, source: where.source, skipped: pick.skipped,

@@ -114,12 +114,15 @@ def test_ended_and_expired_sessions_are_never_working(db, tmp_path, registry):
 def test_pr_is_the_fact_once_it_exists_even_after_the_session_ended(db, tmp_path, registry):
     hook(registry, "claude", "s1", "SessionEnd")
     ledger = LaunchLedger(tmp_path / "launches.json")
-    pr = {"number": 412, "url": "https://github.com/acme/ledger/pull/412", "state": "open"}
+    pr = {"number": 412, "url": "https://github.com/acme/ledger/pull/412", "state": "open",
+          "title": "Freeze the ledger before the cutover"}
     _launch(ledger, "l1", ("action", "ai_1"), attempt_id=_attempt(db, "claude:s1", "action:ai_1"),
             follow_through={"pr": pr, "pr_state": "pr_open"})
     [flight] = agent_flights(db, ledger=ledger)
     assert flight["state"] == "pr_open"
-    assert flight["pr"] == {"number": 412, "url": pr["url"], "state": "open"}
+    # PHILO-15 B50: the PR's own title rides with it (the drawer's PR object).
+    assert flight["pr"] == {"number": 412, "url": pr["url"], "state": "open",
+                            "title": "Freeze the ledger before the cutover"}
     # PHILO-14 C4: the launch's clock rides along (the Conductor's stale window).
     assert flight["launched_at"] == "2026-10-06T10:00:00Z"
 

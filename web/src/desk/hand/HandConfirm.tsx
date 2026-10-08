@@ -1,7 +1,8 @@
 /** PHILO-14 C3 — the YOLO hand in one line (board A-3, A-3 at 393).
  *
- *  `<item> → <agent>  Write the cutover comms · CLAUDE CODE · YOLO ·
- *  hs/write-the-cutover-comms  [Brief ▸] [Cancel] [Hand]`. The fact line is
+ *  `<item> → <agent>  Write the cutover comms · [CLAUDE CODE ⇄] · YOLO ·
+ *  hs/write-the-cutover-comms  [Brief ▸] [Cancel] [Hand]`. The agent is a
+ *  token the owner flips (PHILO-15 16, B39: CLAUDE CODE ⇄ CODEX). The fact line is
  *  the hub's preview (`POST /api/agent/hand/preview`, no side effect); Brief ▸
  *  unfolds the same brief text the launch sheet shows, read only; Hand calls
  *  `POST /api/agent/hand` and the line then reads the receipt the sheet reads
@@ -15,21 +16,24 @@ import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { ConfirmLine, EgressChip, StateChip, objectSprite } from "../surface";
 import { countToken } from "../surface/count";
-import { AGENT_PROFILE, HAND_PATH, HAND_PREVIEW_PATH } from "../agentHand";
+import { AGENT_PROFILE, HAND_PATH, HAND_PREVIEW_PATH, rememberAgent } from "../agentHand";
 import { useAgentFlights } from "../agentFlights";
 import {
   HAND_DELIVER_PATH,
   HAND_LAUNCH_PATH,
   agentOfProfile,
+  cloneOf,
+  cloneWords,
   codeOf,
   deliveryToken,
   modeWord,
   refusalToken,
   trackerToken,
+  type HandClone,
   type HandLaunch,
   type HandPreview,
 } from "../components/HandSheet";
-import { AGENT_HOST, AGENT_NAME } from "../firstrun/agentsStep";
+import { AGENT_HOST, AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
 import { useDropHand, type HandPending } from "./store";
 import "./hand.css";
 
@@ -50,8 +54,17 @@ export function agentSprite(agent: string): string {
   return objectSprite("agent", `${agent}:hand`, "rest", 64, agent);
 }
 
+/** The other agent: the flip on the line's agent token (B39). */
+export function otherAgent(agent: AgentId): AgentId {
+  return agent === "claude" ? "codex" : "claude";
+}
+
 export function HandConfirm({ pending }: { pending: HandPending }) {
-  const { origin, source, agent, skipped, unknown } = pending;
+  const { origin, source, skipped, unknown } = pending;
+  // PHILO-15 16 (B39): the line opens on the agent the drop named (the
+  // Conductor's default agent for the Conductor drawer and the verb); the
+  // owner flips it on the line, CLAUDE CODE ⇄ CODEX.
+  const [agent, setAgent] = useState<AgentId>(pending.agent);
   const cancel = useDropHand((s) => s.cancel);
   const [preview, setPreview] = useState<HandPreview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -59,6 +72,9 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [launched, setLaunched] = useState<HandLaunch | null>(null);
+  // PHILO-15 16 (Astra r1 on #1000): a clone this hand made, kept when the
+  // launch after it refuses (CLONED stands; CLONES never comes back).
+  const [cloneDone, setCloneDone] = useState<HandClone | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   // The line takes the focus: the next key acts on the hand.
@@ -124,6 +140,19 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
     };
   }, [launchId]);
 
+  const flip = useCallback(() => {
+    if (launching || launched) return;
+    setPreview(null);
+    setPreviewError(null);
+    setBriefOpen(false);
+    setAgent((now) => {
+      const next = otherAgent(now);
+      // The owner's flip is remembered for this Project's next hand.
+      rememberAgent(origin.projectId, next);
+      return next;
+    });
+  }, [launching, launched, origin.projectId]);
+
   const previewed = preview ? agentOfProfile(preview.profile, agent) : agent;
   const actual = launched ? agentOfProfile(launched.profile, previewed) : previewed;
 
@@ -133,8 +162,11 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
     setLaunchError(null);
     try {
       const answer = await apiFetch<HandLaunch>(HAND_PATH, { method: "POST", json: JSON.parse(requestKey) });
+      if (answer?.clone) setCloneDone(answer.clone);
       setLaunched({ profile: AGENT_PROFILE[previewed], ...(answer ?? {}) });
     } catch (error) {
+      const made = cloneOf(error);
+      if (made) setCloneDone(made);
       setLaunchError(codeOf(error));
       if (!(error instanceof ApiError)) console.warn("hand to agent:", readableError(error));
     } finally {
@@ -157,16 +189,32 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
 
   const refused = preview?.refused ?? [];
   const delivery = launched ? deliveryToken(launched) : null;
-  const fact = [AGENT_NAME[actual].toUpperCase(), preview ? modeWord(preview.control_mode) : "", preview?.branch ?? ""]
-    .filter(Boolean)
-    .join(" · ");
+  const fact = [preview ? modeWord(preview.control_mode) : "", preview?.branch ?? ""].filter(Boolean).join(" · ");
+  const frozen = launching || launched !== null;
+  const agentToken = (
+    <Button
+      dense
+      variant="ghost"
+      className="hand-confirm-agent"
+      disabled={frozen}
+      aria-label={`Agent: ${AGENT_NAME[actual]}. Press to hand to ${AGENT_NAME[otherAgent(actual)]}`}
+      data-testid="hand-confirm-agent"
+      data-agent={actual}
+      onClick={flip}
+    >
+      {AGENT_NAME[actual].toUpperCase()}
+    </Button>
+  );
+  // PHILO-15 16 (B38): the first hand clones the Project's repository from
+  // GitHub: the egress is named here, before the press, and the clone after.
+  const clone = cloneDone ?? launched?.clone ?? null;
+  const toClone = !clone && !launched && preview?.clone ? preview.clone : null;
+  // PHILO-15 B36: why the line is not on Claude Code.
+  const passedOver = skipped && !launched && skipped !== actual ? skipped : null;
+  // And for the agent the line shows when its own sign-in is unknown (also after a flip).
+  const selectedUnknown = !launched && (unknown ?? []).includes(actual) ? actual : null;
   const tracker = origin.kind === "issue" ? trackerToken(origin, preview, previewError) : null;
 
-  // PHILO-15 B36: why the line is not on Claude Code.
-  // Astra r1 P2: and for the agent the line selects when its own sign-in is
-  // unknown (both unknown: Claude Code, the fallback, says so too).
-  const passedOver = skipped && !launched && skipped !== actual ? skipped : null;
-  const selectedUnknown = !launched && (unknown ?? []).includes(actual) ? actual : null;
   const status = (
     <>
       {passedOver ? (
@@ -177,6 +225,25 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
       {selectedUnknown ? (
         <span className="surface-token" data-chip data-tone="warn" data-testid="hand-confirm-selected-unknown">
           {AGENT_NAME[selectedUnknown].toUpperCase()} · SIGN-IN UNKNOWN
+        </span>
+      ) : null}
+      {toClone ? (
+        <span className="desk-hand-tokens" data-testid="hand-confirm-clone" data-state="to_clone">
+          <EgressChip label={toClone.host.toUpperCase()} scope="cloud" />
+          <span className="surface-token" data-chip data-wrap>CLONES {toClone.repository}</span>
+        </span>
+      ) : null}
+      {clone ? (
+        <span className="desk-hand-tokens" data-testid="hand-confirm-clone" data-state="cloned">
+          <EgressChip label={clone.host.toUpperCase()} scope="cloud" />
+          <span className="surface-token" data-tone="ok" data-chip data-wrap>
+            {cloneWords(clone)}
+          </span>
+          {clone.folder ? (
+            <span className="surface-token" data-chip data-wrap data-testid="hand-confirm-clone-folder">
+              {clone.folder}
+            </span>
+          ) : null}
         </span>
       ) : null}
       {tracker ? (
@@ -213,7 +280,9 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
       ) : null}
     </>
   );
-  const hasStatus = Boolean(passedOver || selectedUnknown || tracker || previewError || (refused.length && !launched) || delivery || launchError);
+  const hasStatus = Boolean(
+    passedOver || selectedUnknown || toClone || clone || tracker || previewError || (refused.length && !launched) || delivery || launchError,
+  );
 
   return (
     <div
@@ -236,6 +305,7 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
         to={{ kind: "agent", id: `${actual}:hand`, sprite: agentSprite(actual) }}
         title={origin.title}
         fact={fact}
+        agentToken={agentToken}
         onBrief={preview ? () => setBriefOpen((open) => !open) : undefined}
         briefOpen={briefOpen}
         onCancel={cancel}

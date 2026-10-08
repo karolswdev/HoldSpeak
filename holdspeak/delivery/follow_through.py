@@ -525,6 +525,8 @@ class FollowThroughObserver:
         if row is not None:
             state["pr"] = {
                 "url": row.get("url"), "number": row.get("number"),
+                # PHILO-15 B50: the PR's own title, for the lane's PR card.
+                "title": " ".join(str(row.get("title") or "").split()) or None,
                 "state": row.get("state"), "review_decision": row.get("review_decision"),
                 # PHILO-14 C0: the checks rollup and each check, for the lane.
                 "ci": row.get("ci"), "checks": list(row.get("checks") or []),

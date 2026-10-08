@@ -18,6 +18,52 @@ import { objectByRef } from "../world";
 import { memberOpens, openMember } from "./open";
 import { urlHost } from "./members";
 import { infoWindowId, useDrawers, type OpenInfo } from "./store";
+import type { GetInfoFacts } from "../surface";
+import { registerProjectRepository, registrable, repositoryWords, useProjectRepository } from "../projectRepository";
+
+/** PHILO-15 16: the Project's own Info carries its REPOSITORY (read live) and,
+ *  when the Room watches a repository nobody registered, the Register verb. */
+function useProjectFacts(member: OpenInfo["member"], setFailure: (text: string) => void) {
+  const isProject = member.kind === "project";
+  const repository = useProjectRepository(isProject ? member.id : "");
+  const [busy, setBusy] = useState(false);
+  if (!isProject) return { facts: member.facts, verb: null };
+  const notRead = repository.failed || repository.state?.store === "not_read";
+  const words = repositoryWords(repository.state, repository.failed);
+  const facts: GetInfoFacts = {
+    ...member.facts,
+    more: [
+      ...(member.facts.more ?? []),
+      { key: "repository", word: "Repository", value: words },
+      // Where the clone lives: the owner finds it after a refused launch.
+      { key: "folder", word: "Folder", value: notRead ? "" : repository.state?.folder ?? "" },
+    ],
+  };
+  const name = registrable(repository.state);
+  const register = async () => {
+    if (!name) return;
+    setBusy(true);
+    setFailure("");
+    try {
+      await registerProjectRepository(member.id, name);
+      repository.reload();
+    } catch (reason) {
+      setFailure(plainFailure("NOT REGISTERED", reason));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const verb = notRead ? (
+    <Button dense variant="ghost" onClick={() => repository.reload()} data-testid="info-repository-retry">
+      Retry
+    </Button>
+  ) : name ? (
+    <Button dense variant="ghost" loading={busy} onClick={() => void register()} data-testid="info-register">
+      Register
+    </Button>
+  ) : null;
+  return { facts, verb };
+}
 
 export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
   const { member } = info;
@@ -28,6 +74,7 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState("");
   const fieldRef = useRef<HTMLDivElement>(null);
+  const project = useProjectFacts(member, setFailure);
   const name = desk?.title ?? member.name;
   const title = windowName({ kind: "info", name });
   const close = () => useDrawers.getState().closeInfo(member.ref);
@@ -96,7 +143,7 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
             name={name}
             kindWord={member.kindWord}
             sprite={member.sprite}
-            facts={member.facts}
+            facts={project.facts}
           />
         </div>
       </div>
@@ -105,6 +152,7 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
         receipt={failure ? <span className="drawer-receipt" data-tone="fail" role="status">{failure}</span> : null}
         verbs={
           <>
+            {project.verb}
             {canRename ? (
               <Button dense variant="ghost" onClick={() => setRenaming(true)}>
                 Rename

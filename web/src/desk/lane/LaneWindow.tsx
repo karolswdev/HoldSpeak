@@ -55,6 +55,7 @@ import {
   laneStations,
   laneTitle,
   reviewWord,
+  turnWord,
   unreadParts,
   waitAge,
   type LaneEntry,
@@ -230,7 +231,8 @@ function LaneBody({
     <PRCard
       data-testid="lane-pr"
       number={pr.number}
-      title={itemTitle}
+      title={pr.title || itemTitle}
+      item={pr.title ? itemTitle : undefined}
       checks={checks}
       review={reviewWord(pr.review_decision)}
       branch={branch}
@@ -265,7 +267,7 @@ function LaneBody({
       {unreadParts(lane).map(([part, reason]) => (
         <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
       ))}
-      {lane.launch.stopped ? null : rebrief ? <RebriefWell lane={lane} /> : <WaitWell lane={lane} agent={agent} />}
+      {lane.launch.stopped ? null : rebrief ? <RebriefWell /> : <WaitWell lane={lane} agent={agent} />}
       {compact ? (
         <div className="lw-col">
           {prCard}
@@ -386,6 +388,7 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
     <AskWell
       data-testid="lane-ask"
       agent={agent}
+      word={turnWord(wait).word}
       age={waitAge(wait.started)}
       question={String(wait.question)}
       value={value}
@@ -429,10 +432,24 @@ function LaneReceipts({ lane }: { lane: LaneWire }) {
   const last = [...answers].reverse().find((a) => a.outcome === "delivered" && a.text_head);
   const lastAt = last ? wireDate(last.ts)?.getTime() : undefined;
   const shown = receipt ?? (last ? { word: "SENT", at: lastAt, text: String(last.text_head), tone: "ok" as const } : null);
+  const queuedList = Array.isArray(lane.launch.queued_rebriefs)
+    ? lane.launch.queued_rebriefs.filter((q) => q?.text)
+    : lane.launch.queued_rebrief?.text ? [lane.launch.queued_rebrief] : [];
+  const queued = !stopped && queuedList.length ? queuedList : null;
   return (
     <>
       {stopped ? <ReceiptTokens testId="lane-stopped" tokens={["STOPPED", wireClock(stopped.at), "BY YOU"]} /> : null}
-      {shown && !(stopped && shown.word === "STOPPED") ? (
+      {queued
+        ? queued.map((q, i) => (
+            <ReceiptTokens
+              key={String(q.id ?? i)}
+              testId="lane-queued"
+              tone="warn"
+              tokens={["QUEUED", i === 0 ? "AFTER THIS TURN" : `AFTER ${i + 1} TURNS`, String(q.text)]}
+            />
+          ))
+        : null}
+      {shown && !(stopped && shown.word === "STOPPED") && !(queued && shown.word === "QUEUED") ? (
         <ReceiptTokens testId="lane-receipt" tone={shown.tone} tokens={[shown.word, shown.at ? wireClock(shown.at) : "", shown.text]} />
       ) : null}
     </>
@@ -476,14 +493,16 @@ function ApproveWell({ wait, agent, gated }: { wait: LaneWait; agent: string; ga
   );
 }
 
-/** Re-brief: a steer to the lane's own session, prefilled `Re-brief: `. */
-function RebriefWell({ lane }: { lane: LaneWire }) {
+/** Re-brief: the owner's new instruction to the lane's own agent,
+ * prefilled `Re-brief: `. The hub types it now when the agent is idle or
+ * asks; mid-turn it is QUEUED · AFTER THIS TURN (PHILO-15 B46). */
+function RebriefWell() {
   const sending = useLane((s) => s.sending);
   const [text, setText] = useState(REBRIEF_PREFIX);
   const ready = text.trim().length > REBRIEF_PREFIX.trim().length;
   const send = async () => {
     if (!ready) return;
-    if (await useLane.getState().send(text.trim())) useLane.getState().setRebrief(false);
+    if (await useLane.getState().sendRebrief(text.trim())) useLane.getState().setRebrief(false);
   };
   return (
     <section className="lw-ask" aria-label="Re-brief" data-testid="lane-rebrief-well">
@@ -509,7 +528,6 @@ function RebriefWell({ lane }: { lane: LaneWire }) {
           Back
         </Button>
       </div>
-      <ArmLine lane={lane} />
     </section>
   );
 }

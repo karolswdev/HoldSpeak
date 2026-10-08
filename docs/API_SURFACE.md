@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 746 (plus static mounts). iOS-consumed: 89. Web-consumed: 576.
+Routes: 749 (plus static mounts). iOS-consumed: 89. Web-consumed: 581.
 
 ## device_audio_ws
 
@@ -108,6 +108,9 @@ Routes: 746 (plus static mounts). iOS-consumed: 89. Web-consumed: 576.
 | GET | `/api/agent/launches/{launch_id}` | web |
 | POST | `/api/agent/launches/{launch_id}/deliver` | server only |
 | GET | `/api/agent/launches/{launch_id}/lane` | web |
+| POST | `/api/agent/launches/{launch_id}/rebrief` | web |
+| GET | `/api/projects/{project_id}/repository` | web |
+| POST | `/api/projects/{project_id}/repository` | web |
 
 ## web.routes.authority
 
@@ -973,8 +976,8 @@ Routes: 746 (plus static mounts). iOS-consumed: 89. Web-consumed: 576.
 | PATCH | `/api/projects/{project_id}/items/{item_id}` | server only |
 | POST | `/api/projects/{project_id}/items/{item_id}/transition` | server only |
 | GET | `/api/projects/{project_id}/meetings` | web |
-| DELETE | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
-| POST | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
+| DELETE | `/api/projects/{project_id}/meetings/{meeting_id}` | web |
+| POST | `/api/projects/{project_id}/meetings/{meeting_id}` | web |
 | GET | `/api/projects/{project_id}/people` | web |
 | GET | `/api/projects/{project_id}/resources` | web |
 | DELETE | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |

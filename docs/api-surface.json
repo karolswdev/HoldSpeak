@@ -437,6 +437,16 @@
       ]
     },
     {
+      "path": "/api/agent/launches/{launch_id}/rebrief",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agents/capabilities",
       "methods": [
         "GET"
@@ -4926,7 +4936,9 @@
         "DELETE"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/meetings/{meeting_id}",
@@ -4934,7 +4946,9 @@
         "POST"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/nudges",
@@ -4962,6 +4976,26 @@
         "GET"
       ],
       "module": "web.routes.proposals",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/repository",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/repository",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
       "consumers": [
         "web"
       ]

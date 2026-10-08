@@ -60,6 +60,27 @@ export function pickDefaultAgent(
   return { agent: known, skipped: passed?.installed ? DEFAULT_AGENT : null, unknown };
 }
 
+/** PHILO-15 16 (Astra on #1000): the owner's last flip, per Project, on this
+ *  browser (a per-viewer convenience; an unreadable store is no memory). */
+const agentKey = (projectId: string) => `hs.hand.agent.${projectId}`;
+export function rememberedAgent(projectId: string | null | undefined): AgentId | null {
+  if (!projectId) return null;
+  try {
+    const value = localStorage.getItem(agentKey(projectId));
+    return value === "claude" || value === "codex" ? value : null;
+  } catch {
+    return null;
+  }
+}
+export function rememberAgent(projectId: string | null | undefined, agent: AgentId): void {
+  if (!projectId) return;
+  try {
+    localStorage.setItem(agentKey(projectId), agent);
+  } catch {
+    /* no memory: the next hand starts on the default */
+  }
+}
+
 /** The Desk object kinds a brief can carry: the same id on both sides. */
 const DESK_HAND_KINDS: Partial<Record<PrimitiveKind, HandKind>> = {
   meeting: "meeting",

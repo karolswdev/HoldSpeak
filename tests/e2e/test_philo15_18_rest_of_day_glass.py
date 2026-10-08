@@ -274,7 +274,8 @@ class TestTheKnownSignInDefault:
                     timeout=T)
                 line.scroll_into_view_if_needed()
                 _shot(page, "b36-confirm-line", width)
-                fact = drawer.locator(".confirm-line-fact").inner_text()
+                # PHILO-15 16: the agent word is a flip button now; read the words, not the layout.
+                fact = " ".join(drawer.locator(".confirm-line-fact").inner_text().split())
 
                 assert fact.startswith("CODEX · YOLO · "), fact
                 assert line.get_by_test_id("hand-confirm-skipped").inner_text() == "CLAUDE CODE · SIGN-IN UNKNOWN"

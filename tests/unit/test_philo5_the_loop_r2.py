@@ -221,6 +221,7 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
         "meeting.import", "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install",
         "people_access.set",  # Conductor R7: only the owner sets People MCP access
         "calendar.open_settings",  # PHILO-15 04: only the owner opens the Calendars privacy pane
+        "project.repository.register",  # PHILO-15 16: only the owner names a Project's repository
         "agent.hand",  # Conductor K2: only the owner hands an item to an agent
     ]
     assert "owner_required" in operations.MEETING_IMPORT.export()["refusals"]
@@ -594,6 +595,20 @@ def _p_calendar_open_settings(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any
     return hub.root.operations.invoke(OWNER, "calendar.open_settings", {})
 
 
+def _p_project_repository_register(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    """The real service, kernel path and route; the registrations file is the test's."""
+    from holdspeak.services.project_repository import ProjectRepositories
+
+    with hub.db._connection() as conn:
+        conn.execute("INSERT INTO projects (id, name) VALUES ('proj-repo00000001', 'Repo')")
+    service = hub.root.operations.target("project.repository.register")
+    monkeypatch.setattr(service, "repositories", ProjectRepositories(
+        store_path=tmp_path / "project_repositories.json", clone_root=tmp_path / "clones"))
+    resp = hub.client.post("/api/projects/proj-repo00000001/repository", json={"repository": "acme/railsproj"})
+    assert resp.status_code == 200, resp.text
+    return resp.json()
+
+
 def _p_agent_hand(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     # The process edge only: tmux and the agent are the canned runner of the
     # launch rig (git is real); the hub's own AgentHandService and route run.
@@ -655,6 +670,8 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "people_access.set": _p_people_access_set,
     # PHILO-15 04: the Calendars privacy pane.
     "calendar.open_settings": _p_calendar_open_settings,
+    # PHILO-15 16: a Project's repository.
+    "project.repository.register": _p_project_repository_register,
     # Conductor K2: Hand to agent.
     "agent.hand": _p_agent_hand,
 }

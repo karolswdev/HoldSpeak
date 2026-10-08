@@ -614,6 +614,9 @@ class NodeCommandProcessor:
                 submit=bool(payload.get("submit", True)),
                 grounding_refs=list(payload.get("grounding_refs") or []),
                 expected_pane_id=str(payload.get("expected_pane_id") or pane_id or ""),
+                expected_wait_id=(
+                    str(payload.get("expected_wait_id") or "") if "expected_wait_id" in payload else None
+                ),
                 operation=operation,
                 policy_snapshot=policy_snapshot,
                 **kwargs,
@@ -1073,6 +1076,8 @@ class HubCommandService:
                     "submit": payload.get("submit", True),
                 }
             )
+            if "expected_wait_id" in payload:
+                arguments["expected_wait_id"] = str(payload.get("expected_wait_id") or "")
         else:
             arguments["keys"] = payload.get("keys")
         raw = {

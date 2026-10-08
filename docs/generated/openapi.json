@@ -3589,6 +3589,46 @@
         "summary": "Api Agent Launch Lane"
       }
     },
+    "/api/agent/launches/{launch_id}/rebrief": {
+      "post": {
+        "description": "PHILO-15 B46: the owner's Re-brief ``{text}``. Typed into the\nlaunch's own pane now when the agent is idle or asks (``delivered``);\nmid-turn it waits for the turn end (``queued``). A refusal is 409\nwith its status.",
+        "operationId": "api_agent_rebrief_api_agent_launches__launch_id__rebrief_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Rebrief Api Agent Launches  Launch Id  Rebrief Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Rebrief"
+      }
+    },
     "/api/agents/capabilities": {
       "get": {
         "operationId": "api_agent_capabilities_api_agents_capabilities_get",
@@ -21894,6 +21934,84 @@
         "tags": [
           "proposals"
         ]
+      }
+    },
+    "/api/projects/{project_id}/repository": {
+      "get": {
+        "description": "The Project's registered repository, CLONED or not, and the\nrepositories its Room watches (the drawer's Get Info and Register).\nOwner only (the edge default); reads only.",
+        "operationId": "api_project_repository_api_projects__project_id__repository_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Repository Api Projects  Project Id  Repository Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Repository"
+      },
+      "post": {
+        "description": "``project.repository.register``: the owner's press names the\nProject's repository (owner/name). One admitted kernel operation, one\nreceipt; nothing is cloned until the first hand.",
+        "operationId": "api_register_project_repository_api_projects__project_id__repository_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Register Project Repository Api Projects  Project Id  Repository Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Register Project Repository"
       }
     },
     "/api/projects/{project_id}/resources": {

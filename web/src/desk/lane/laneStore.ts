@@ -29,7 +29,7 @@ export const LANE_PAGE = 200;
 /** The last thing the owner did on this lane, kept on the face when the
  * well that made it closes or the wait it answered clears. */
 export interface LaneReceipt {
-  word: "SENT" | "NOT SENT" | "NOT CONFIRMED" | "ARMED" | "STOPPED" | "NOT STOPPED" | "ARM FIRST";
+  word: "SENT" | "NOT SENT" | "NOT CONFIRMED" | "ARMED" | "STOPPED" | "NOT STOPPED" | "ARM FIRST" | "QUEUED";
   at: number;
   text: string;
   tone: "ok" | "fail" | "warn";
@@ -64,6 +64,9 @@ interface LaneState {
   /** Type `text` into the lane's session. `waitId` names the wait an answer
    * answers (the hub refuses it when that wait is not the current one). */
   send(text: string, opts?: { waitId?: string | null }): Promise<boolean>;
+  /** PHILO-15 B46: the owner's Re-brief to the lane's launch: typed now
+   * when the agent is idle or asks, QUEUED · AFTER THIS TURN mid-turn. */
+  sendRebrief(text: string): Promise<boolean>;
   /** ARM the lane's session, or `bound`'s (a press bound to its launch). */
   arm(bound?: LaneBinding): Promise<boolean>;
   stop(): Promise<boolean>;
@@ -109,6 +112,9 @@ const REFUSAL_WORD: Record<string, string> = {
   pane_mismatch: "PANE CHANGED",
   no_pane: "NO PANE",
   stale_session: "SESSION STALE",
+  launch_ended: "AGENT ENDED",
+  no_session: "NO SESSION YET",
+  target_gone: "PANE GONE",
 };
 
 /** How long a send waits for the hub's answer before Answer returns. After
@@ -174,6 +180,11 @@ export const useLane = create<LaneState>((set, get) => ({
       .then((lane) => {
         if (get().launchId !== launchId || !lane || typeof lane !== "object") return;
         const patch: Partial<LaneState> = { lane, error: null };
+        // PHILO-15 B46 (Astra r1 on #996): a QUEUED press is settled by the
+        // hub. Once the lane holds no queued Re-brief, the local QUEUED
+        // receipt goes, and the lane's own newest delivery (SENT) shows.
+        const queuedNow = (lane.launch?.queued_rebriefs?.length ?? 0) > 0 || Boolean(lane.launch?.queued_rebrief);
+        if (get().receipt?.word === "QUEUED" && !queuedNow) patch.receipt = null;
         if (isNotRead(lane.events)) {
           patch.eventsNotRead = lane.events.not_read;
         } else {
@@ -223,6 +234,9 @@ export const useLane = create<LaneState>((set, get) => ({
     }, STEER_CONFIRM_MS);
     try {
       const body: Record<string, unknown> = { text: clean, submit: true };
+      // PHILO-15 B46: name the registered pane, so a YOLO steer passes the
+      // registered-destination rule without a grant.
+      if (control && !isNotRead(control) && control.pane_id) body.expected_pane_id = control.pane_id;
       // An answer says so and names its wait (the hub refuses a stale one).
       if (opts && "waitId" in opts) {
         body.kind = "answer";
@@ -253,6 +267,37 @@ export const useLane = create<LaneState>((set, get) => ({
     } finally {
       window.clearTimeout(stall);
       if (current()) set({ sending: false });
+    }
+  },
+
+  async sendRebrief(text) {
+    const launchId = get().launchId;
+    const clean = text.trim();
+    if (!launchId || !clean || get().sending) return false;
+    set({ sending: true });
+    try {
+      const res = await post(`/api/agent/launches/${encodeURIComponent(launchId)}/rebrief`, { text: clean });
+      if (get().launchId !== launchId) return false;
+      const status = String(res.body.status ?? "");
+      if (status === "delivered" || status === "queued") {
+        sfx("land");
+        set({
+          receipt: status === "queued"
+            ? { word: "QUEUED", at: Date.now(), text: "AFTER THIS TURN", tone: "warn" }
+            : { word: "SENT", at: Date.now(), text: firstWords(clean), tone: "ok" },
+        });
+        void get().load();
+        return true;
+      }
+      sfx("error");
+      set({ receipt: { word: "NOT SENT", at: Date.now(), text: REFUSAL_WORD[status] ?? String(res.body.detail ?? status ?? `HTTP ${res.status}`), tone: "fail" } });
+      void get().load();
+      return false;
+    } catch {
+      if (get().launchId === launchId) set({ receipt: { word: "NOT SENT", at: Date.now(), text: "HUB UNREACHABLE", tone: "fail" } });
+      return false;
+    } finally {
+      if (get().launchId === launchId) set({ sending: false });
     }
   },
 
