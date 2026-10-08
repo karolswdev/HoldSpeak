@@ -45,7 +45,7 @@ Status PRs #973–#1016 carry every "Open from #…" residual. `pm/STATUS.md` li
 3. **A lane's FAST reds are the lane's.** Every real red (API surface drift, fixture regeneration, a third-door write, the UX-canon ratchet) came from the lane's own change. Send the exact assertion line; the lane fixes it in minutes.
 4. **Rehearsal 2 under a fake clock.** `time-machine` in the worktree venv moved the hub's clock; GitHub, gh, Codex and SQLite stayed real, so some stamps read ten hours old. Mark those rows; do not chase them.
 5. **Bounded Astra briefs work.** Four claims, four verify items, 20–25 minutes: she returned every time, with reproductions. Her rulings (the Brief order, the quiet-hours rule, the review gesture) were better than mine and were adopted.
-6. **Lane 14's B49 is a platform limit**, not ours: Codex 0.159 offers deferred MCP tools only through tool search, which the LAN model lacks. Verified 2026-10-08 on the owner's sign-in: an OpenAI model calls `tool_search` and gets them.
+6. **Lane 14's B49 is a platform limit**, not ours: Codex 0.159 offers deferred MCP tools only through tool search, which the LAN model lacks. Verified 2026-10-08 on the owner's sign-in: an OpenAI model gets them. Cause, same day: Codex 0.161 sends the server as one `namespace` tool (`mcp__holdspeak`), which llama.cpp's Responses shim drops; the owner ordered a spike of `pi` as a third harness for the LAN model (`docs/internal/spikes/PI-HARNESS.md`).
 
 ## Open at the close (for the next phase to weigh)
 
