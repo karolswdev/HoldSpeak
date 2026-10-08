@@ -246,7 +246,10 @@ class FollowThroughService:
         # do not enter action_items, cadence_*, the audit export, or any cache.
         # A project filter has no honest People mapping in PR1, so it excludes the
         # overlay rather than implying a relationship/project association.
-        if self._people_projection is not None and project_id is None:
+        # PHILO-15-09: a key-free read (the Brief) leaves the overlay out.
+        from holdspeak.people.key_free import people_reads_allowed
+
+        if self._people_projection is not None and project_id is None and people_reads_allowed():
             try:
                 people_cards = self._people_projection.list_cards(principal, owner=owner)
             except Exception:
@@ -274,7 +277,9 @@ class FollowThroughService:
         queryable, ``None`` when no projection is composed.  Never raises --
         a locked/broken store returns its named state, never silence.
         """
-        if self._people_projection is None:
+        from holdspeak.people.key_free import people_reads_allowed
+
+        if self._people_projection is None or not people_reads_allowed():
             return None
         try:
             result = self._people_projection.readiness(principal)  # type: ignore[attr-defined]

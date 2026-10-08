@@ -80,7 +80,8 @@ def test_the_brief_goes_out_whole_and_its_slack_length_is_measured(rendered) -> 
     brief = rendered["docs"]["monday_brief"].body_md
     # The sent Brief carries no People data (#767): no section, no name.
     assert "## People" not in brief and rendered["fixture"]["person"]["display_name"] not in brief
-    assert brief.startswith("# Monday Brief\nPeriod:")
+    # PHILO-15-09 (B04): the Brief's own weekday and date, one range.
+    assert brief.startswith("# Brief · Thursday 1 Oct 2026\nPeriod: SEP 30 - OCT 01\n")
     measured = job.slack_length(brief)
     assert measured["limit"] == 39_000 and measured["within_limit"]
     assert 0 < measured["slack_text_characters"] <= len(brief)

@@ -388,7 +388,16 @@ function WorkspaceReady({
               ? { token: "ENGINE NOT REACHABLE", label: "Check", act: setupAI }
               : { token: "NO ENGINE YET", label: "Choose an engine", act: setupAI }
           : projection.workspace_state === "named_failure"
-            ? { token: "", label: projection.terminal_status?.retryable === false ? "Ask" : "Try again", act: () => void ask() }
+            /* PHILO-15 10 (Astra r2, finding 1): a named failure says what
+               failed and on which engine (STRUCTURED RESULT · NOT USABLE ·
+               192.168.1.43:8080), from the hub's own terminal token. */
+            ? {
+                token: projection.terminal_status?.token
+                  ? [projection.terminal_status.token, engine?.label].filter(Boolean).join(" · ")
+                  : "",
+                label: projection.terminal_status?.retryable === false ? "Ask" : "Try again",
+                act: () => void ask(),
+              }
             : open
               ? null
               : { token: "", label: "Ask", act: () => void ask() };

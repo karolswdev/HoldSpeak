@@ -43,6 +43,12 @@ STATE_WAITING = "WAITING"
 STATE_NOT_SET = "NOT_SET"
 STATE_UNREACHABLE = "UNREACHABLE"
 STATE_CHECKING = "CHECKING"
+#: PHILO-15 10 (B05): the engine serves some of the group's work, not all.
+STATE_LIMITED = "LIMITED"
+#: The engine serves none of the group's work.
+STATE_INCOMPATIBLE = "INCOMPATIBLE"
+#: The authority cannot say (no model record yet): never READY.
+STATE_UNKNOWN = "UNKNOWN"
 #: PHILO-15 05: a cloud provider with no execution adapter (Anthropic). A key
 #: there does nothing, so the row never reads READY.
 STATE_NOT_SUPPORTED = "NOT_SUPPORTED"
@@ -53,7 +59,10 @@ _NOT_SUPPORTED_HOSTS = frozenset({"api.anthropic.com"})
 
 ASSIGNMENT_GROUPS: tuple[tuple[str, str], ...] = (
     ("thoughts_notes", "Thoughts & notes"),
-    ("chat_practice", "Chat"),           # S-1: rename Chat practice -> Chat
+    # PHILO-15 10 (Astra r1, finding 5): "Chat" held only chat compaction and
+    # the chat guardrail, internal works an owner never calls chat (desk chat,
+    # chat.turn, is in Thoughts & notes). An internal group is not a row the
+    # owner sees; its works follow the Default for AI work.
     ("writing_dictation", "Writing & dictation"),
     ("speech_recognition", "Speech recognition"),
     ("meetings", "Meetings"),
@@ -385,6 +394,61 @@ def _detected_profile_fields(db: Any, profile_id: str) -> dict[str, Any]:
     return fields
 
 
+def _device_whisper(db: Any, home: Path) -> dict[str, Any] | None:
+    """The configured Whisper model, when it is on this device.
+
+    The same fact first run reads (``LocalAISetupService._speech``): the
+    configured name and backend, on disk.  A speech profile the product
+    already made (audio modality, an enabled binding) is attached, so the
+    row names the record the speech route uses.
+    """
+    try:
+        from ..config import Config
+        from ..transcribe import resolve_backend_or_raw
+        from ..whisper_models import whisper_on_disk
+
+        model = getattr(Config.load(), "model", None)
+        name = str(getattr(model, "name", "") or "base")
+        backend = resolve_backend_or_raw(str(getattr(model, "backend", "") or "auto"))
+        if not whisper_on_disk(name, backend, home=home):
+            return None
+    except Exception as exc:
+        log.info(f"concierge: whisper check unavailable ({exc})")
+        return None
+    row: dict[str, Any] = {
+        "id": f"local:whisper:{backend}:{name}",
+        "kind": KIND_LOCAL,
+        "name": f"Whisper {name}",
+        "quantToken": None,
+        "legacyLabel": f"whisper-{name}",
+        "host": "THIS DEVICE",
+        "runtimeToken": str(backend).upper(),
+        "state": STATE_READY,
+        "audioCapable": True,
+        "supportedModalities": ["audio"],
+    }
+    try:
+        with db._connection() as conn:
+            found = conn.execute(
+                """SELECT r.profile_id, r.revision, r.supported_modalities_json
+                     FROM model_profile_revisions r
+                     JOIN model_profile_binding_heads h ON h.profile_id=r.profile_id
+                     JOIN model_profile_binding_revisions b
+                       ON b.binding_id=h.binding_id AND b.revision=h.revision
+                    WHERE b.profile_revision=r.revision AND b.enabled=1
+                    ORDER BY r.profile_id, r.revision DESC"""
+            ).fetchall()
+        for item in found:
+            modalities = json.loads(str(item["supported_modalities_json"] or "[]"))
+            if isinstance(modalities, list) and "audio" in {str(m).lower() for m in modalities}:
+                row["profileId"] = str(item["profile_id"])
+                row["profileRevision"] = int(item["revision"])
+                break
+    except Exception:
+        pass
+    return row
+
+
 # ---- Detect -----------------------------------------------------------------
 
 def detect(
@@ -590,6 +654,13 @@ def detect(
             **_detected_profile_fields(db, str(profile.id)),
         })
 
+    # 2b. PHILO-15 10 (B06): the Whisper model on this device is the
+    # speech engine.  Without this row the proposal had no speech engine and
+    # fell back to a chat preset for Speech recognition.
+    device_whisper = _device_whisper(db, effective_home)
+    if device_whisper is not None:
+        engines.append(device_whisper)
+
     # 3. Local files (MLX dirs + GGUF files)
     from ..setup_runtime import discover_local_models
     local = discover_local_models(home=effective_home)
@@ -694,18 +765,40 @@ def detect(
 def propose(
     *,
     engines: list[dict[str, Any]],
+    fit: Optional[Callable[[dict[str, Any], str], Optional[dict[str, Any]]]] = None,
 ) -> dict[str, Any]:
     """The seven groups, each assigned by the design rule.
 
-    - Speech recognition = local Whisper ONLY (never LAN/cloud).
+    - Speech recognition = local Whisper ONLY (never LAN/cloud, never a
+      chat preset: PHILO-15 10, B06).
     - Writing & dictation = smallest reachable low-latency engine.
     - Every other group = strongest reachable LAN engine.
     - Cloud ONLY where he picks it in the picker.
     - A group with no READY engine -> WAITING with the preset it would use.
+
+    PHILO-15 10 (B05): with ``fit`` (the assignment authority's own
+    read-only check, ``InferenceAssignmentService.fit``) a reachable engine
+    reads READY only for a group it can serve in full.  Some work blocked
+    -> LIMITED, with the blocked work and the plain reason; no work served
+    -> INCOMPATIBLE; the authority cannot say -> UNKNOWN.  Without ``fit``
+    (older callers) the reachability rule stands alone.
     """
     # Index engines by kind and state
-    ready_lan = [e for e in engines if e["kind"] == KIND_LAN and e["state"] == STATE_READY]
-    ready_local = [e for e in engines if e["kind"] == KIND_LOCAL and e["state"] == STATE_READY]
+    # A speech-only engine (the device's Whisper) never serves a text group.
+    def _text_capable(engine: dict[str, Any]) -> bool:
+        modalities = engine.get("supportedModalities")
+        if isinstance(modalities, (list, tuple, set)) and modalities:
+            return bool({"text", "language"} & {str(m).lower() for m in modalities})
+        return True
+
+    ready_lan = [
+        e for e in engines
+        if e["kind"] == KIND_LAN and e["state"] == STATE_READY and _text_capable(e)
+    ]
+    ready_local = [
+        e for e in engines
+        if e["kind"] == KIND_LOCAL and e["state"] == STATE_READY and _text_capable(e)
+    ]
     ready_all = ready_lan + ready_local
     # A Whisper-shaped label is only a legacy hint.  Detection callers that
     # know the profile's modalities carry the authoritative audio fence; a
@@ -779,13 +872,14 @@ def propose(
                     **_profile_fields(best_whisper),
                 })
             else:
+                # B06: a chat model never transcribes.  No Whisper here ->
+                # the group waits for one, with no engine named.
                 rows.append({
                     "group": group_id,
                     "label": label,
-                    "engineId": best_preset["id"] if best_preset else None,
+                    "engineId": None,
                     "host": "THIS DEVICE",
                     "state": STATE_WAITING,
-                    "presetId": best_preset.get("presetId") if best_preset else None,
                 })
         elif group_id == "writing_dictation":
             # Smallest reachable low-latency engine
@@ -845,8 +939,28 @@ def propose(
                     "state": STATE_WAITING,
                 })
 
-    ready_count = sum(1 for r in rows if r["state"] == STATE_READY)
+    if fit is not None:
+        engine_by_id = {e["id"]: e for e in engines}
+        # PHILO-15 10 (Astra r1, finding 1): every READY the face can show
+        # comes from this answer, also after the owner picks another engine.
+        candidates = [
+            e for e in engines
+            if e["kind"] in (KIND_LAN, KIND_LOCAL, KIND_CLOUD)
+            and e["state"] == STATE_READY and _text_capable(e)
+        ]
+        for row in rows:
+            pool = whisper_engines if row["group"] == "speech_recognition" else candidates
+            row["fits"] = {e["id"]: group_fit_state(e, row["group"], fit) for e in pool}
+            if row["state"] != STATE_READY:
+                continue
+            engine = engine_by_id.get(row.get("engineId") or "")
+            if engine is None:
+                continue
+            row.update(row["fits"].get(engine["id"]) or group_fit_state(engine, row["group"], fit))
+
     waiting_count = sum(1 for r in rows if r["state"] == STATE_WAITING)
+    limited_count = sum(1 for r in rows if r["state"] == STATE_LIMITED)
+    unknown_count = sum(1 for r in rows if r["state"] == STATE_UNKNOWN)
     engine_ids = {r["engineId"] for r in rows if r["engineId"]}
 
     return {
@@ -855,8 +969,136 @@ def propose(
             "groups": len(rows),
             "engines": len(engine_ids),
             "waiting": waiting_count,
+            "limited": limited_count,
+            "unknown": unknown_count,
         },
     }
+
+
+def group_fit_state(
+    engine: dict[str, Any],
+    group_id: str,
+    fit: Callable[[dict[str, Any], str], Optional[dict[str, Any]]],
+) -> dict[str, Any]:
+    """The honest state of one engine for one group (PHILO-15 10, B05).
+
+    READY only when the authority serves every work in the group.
+    """
+    try:
+        answer = fit(engine, group_id)
+    except Exception as exc:  # a read never breaks the proposal
+        log.info(f"concierge fit unavailable for {group_id}: {exc}")
+        answer = None
+    if not isinstance(answer, dict):
+        return {"state": STATE_UNKNOWN}
+    blocked = [b for b in (answer.get("blocked") or []) if isinstance(b, dict)]
+    if not blocked:
+        return {"state": STATE_READY}
+    labels = owner_work_names([str(b.get("capability_id") or "") for b in blocked])
+    reason = _incompatibility_reason([str(b.get("code") or "") for b in blocked])
+    served = list(answer.get("served") or [])
+    return {
+        "state": STATE_LIMITED if served else STATE_INCOMPATIBLE,
+        "blocked": labels,
+        "servedCount": len(served),
+        "totalCount": len(served) + len(blocked),
+        "plainReason": reason,
+    }
+
+
+#: PHILO-15 10 (Astra r1): the owner's names for the works a group holds.
+#: A LIMITED row lists these, never the registry's internal labels.
+_OWNER_WORK_NAMES: tuple[tuple[str, str], ...] = (
+    ("thought.", "Thoughts"),
+    ("speech.intent_classify", "Dictation"),
+    ("speech.target_classify", "Dictation"),
+    ("speech.", "Speech"),
+    ("agent.", "Agents"),
+    ("calendar.", "Calendar"),
+    ("meeting.plugin.", "Meeting plugins"),
+    ("meeting.", "Summaries"),
+    ("memory.", "Memory"),
+    ("chat.", "Chat"),
+)
+
+
+def owner_work_names(capability_ids: list[str]) -> list[str]:
+    names: list[str] = []
+    for capability_id in capability_ids:
+        name = next(
+            (owner for prefix, owner in _OWNER_WORK_NAMES if capability_id.startswith(prefix)),
+            _capability_label(capability_id),
+        )
+        if name not in names:
+            names.append(name)
+    return names
+
+
+def _capability_label(capability_id: str) -> str:
+    try:
+        from ..inference_capabilities import process_inference_capability_registry
+
+        return str(process_inference_capability_registry().require(capability_id).label)
+    except Exception:
+        return capability_id
+
+
+def authority_fit(
+    assignment_service: Any, principal: Any, db: Any = None,
+) -> Callable[[dict[str, Any], str], Optional[dict[str, Any]]]:
+    """``fit`` for ``propose``: the assignment authority, asked per group.
+
+    Meetings asks for the whole group: "Use these" writes the summary
+    capability, and the rest of the group (the meeting plugins) follows the
+    Default for AI work it also sets, so the whole group is what runs.
+    """
+    def _fit(engine: dict[str, Any], group_id: str) -> Optional[dict[str, Any]]:
+        profile_id = str(engine.get("profileId") or "")
+        if not profile_id:
+            return None
+        revision = engine.get("profileRevision")
+        if db is not None:
+            resolved_id, resolved_revision = _engine_assignment_reference(db, engine)
+            if resolved_id and resolved_revision > 0:
+                profile_id, revision = resolved_id, resolved_revision
+        scope: dict[str, Any] = {"kind": "group", "group_id": group_id}
+        answer = assignment_service.fit(
+            principal,
+            scope=scope,
+            profile_id=profile_id,
+            profile_revision=revision if type(revision) is int and revision > 0 else None,
+        )
+        # A work with its OWN engine (meaning search's memory.embed, the
+        # device's speech.transcribe) runs there, whatever the group holds --
+        # but only when that own assignment is bound and ready NOW (Astra r2,
+        # finding 2): a head alone, unbound or not ready, serves nothing.
+        own = _capabilities_with_own_engine(db)
+        ready_check = getattr(assignment_service, "capability_override_ready", None)
+        if isinstance(answer, dict) and own and callable(ready_check):
+            served_elsewhere = {
+                str(b.get("capability_id")) for b in answer.get("blocked") or []
+                if str(b.get("capability_id")) in own
+                and ready_check(principal, str(b.get("capability_id")))
+            }
+            kept = [b for b in answer.get("blocked") or [] if str(b.get("capability_id")) not in served_elsewhere]
+            answer = {**answer, "blocked": kept, "served": [*answer.get("served", []), *sorted(served_elsewhere)]}
+        return answer
+
+    return _fit
+
+
+def _capabilities_with_own_engine(db: Any) -> set[str]:
+    if db is None:
+        return set()
+    try:
+        with db._connection() as conn:
+            rows = conn.execute(
+                "SELECT assignment_key FROM inference_assignment_heads"
+                " WHERE assignment_key LIKE 'capability:%' AND cleared=0"
+            ).fetchall()
+    except Exception:
+        return set()
+    return {str(r["assignment_key"]).removeprefix("capability:") for r in rows}
 
 
 # ---- Probe ------------------------------------------------------------------
@@ -1128,6 +1370,23 @@ def _assigned_entries(
     return out
 
 
+def _serves_some(group_id: str, blocking: list[dict[str, Any]]) -> bool:
+    """True when some owner work in the group is NOT blocked."""
+    if any(not issue.get("capability_id") for issue in blocking):
+        return False
+    try:
+        from ..inference_capabilities import process_inference_capability_registry
+
+        caps = {
+            c.id for c in process_inference_capability_registry()._capabilities.values()
+            if c.group_id == group_id and c.owner_visibility == "owner"
+        }
+    except Exception:
+        return False
+    blocked = {str(issue.get("capability_id")) for issue in blocking}
+    return bool(caps - blocked)
+
+
 def repairs(
     *,
     db: Any,
@@ -1175,6 +1434,12 @@ def repairs(
     if assignment_service is not None and principal is not None:
         for group_id, entry, blocking in _assigned_entries(assignment_service, principal):
             label = str(entry.get("label") or entry.get("profile_id") or "")
+            if blocking and _serves_some(group_id, blocking):
+                # PHILO-15 10 (B05): the engine serves part of this group.
+                # The set row says LIMITED and names the work it cannot do;
+                # a repair row for the same fact said it twice, in another
+                # word, with a verb that had nothing to choose.
+                blocking = []
             if blocking:
                 _add(
                     _repair_row(
@@ -1642,6 +1907,27 @@ def apply(
     # Build an engine lookup
     engine_map = {e["id"]: e for e in engines}
 
+    # PHILO-15 10: the server reads each engine's state itself.  A row that
+    # says READY for an engine that still waits for a download (a preset, a
+    # WAITING engine) is refused the same way a WAITING row is.
+    for row in rows:
+        engine = engine_map.get(row.get("engineId") or "")
+        if engine is None:
+            continue
+        if engine.get("kind") == KIND_PRESET or engine.get("state") == STATE_WAITING:
+            raise ConflictError(
+                f"{_GROUP_LABELS.get(str(row.get('group') or ''), 'This group')} waits for a download.",
+                code="concierge_waiting_group",
+                context={
+                    "status": 409,
+                    "group": row.get("group"),
+                    "state": STATE_WAITING,
+                },
+            )
+    group_fit = authority_fit(assignment_service, principal, db) if hasattr(
+        assignment_service, "fit"
+    ) else None
+
     # Write assignments through the existing set_assignment path
     results: list[dict[str, Any]] = []
     for row in rows:
@@ -1709,6 +1995,7 @@ def apply(
             results.append({
                 "group": group_id,
                 "state": "SKIPPED",
+                "token": "NO MODEL RECORD",
                 "plainReason": "No profile for engine",
             })
             continue
@@ -1725,6 +2012,7 @@ def apply(
                         "capabilityId": SUMMARY_CAPABILITY_ID,
                         "state": "FAILED",
                         "code": "concierge_summary_profile_revision_missing",
+                        "token": "NO MODEL RECORD",
                         "plainReason": "This engine has no immutable model profile revision.",
                     }
                 )
@@ -1750,6 +2038,8 @@ def apply(
                             "state": STATE_READY,
                             "profileId": selected_profile_id,
                             "profileRevision": selected_revision,
+                            "engineId": engine_id,
+                            **_after_write_state(engine, group_id, group_fit),
                         }
                     )
                 else:
@@ -1762,6 +2052,7 @@ def apply(
                             "profileId": selected_profile_id,
                             "profileRevision": selected_revision,
                             "code": failed.get("code"),
+                            "token": _failure_token(failed.get("code")),
                             "plainReason": failed.get("plainReason", "Summary selection failed."),
                         }
                     )
@@ -1776,6 +2067,19 @@ def apply(
                         "plainReason": str(exc),
                     }
                 )
+            continue
+
+        # A group with no owner-assignable work (Chat) is never written: its
+        # work follows the Default for AI work (set below when none exists).
+        group_ids = getattr(assignment_service, "_group_ids", None)
+        known_groups = group_ids() if callable(group_ids) else None
+        if isinstance(known_groups, (tuple, list, set, frozenset)) and group_id not in known_groups:
+            results.append({
+                "group": group_id,
+                "state": "FOLLOWS_DEFAULT",
+                "engineId": engine_id,
+                "_fit": group_fit_state(engine, group_id, group_fit) if group_fit else {"state": STATE_READY},
+            })
             continue
 
         # Use the existing set_assignment for this group
@@ -1808,23 +2112,55 @@ def apply(
                 "entries": [entry],
             }
             assignment_service.set_assignment(principal, body)
+            # PHILO-15 10 (B05): the receipt says what the authority will
+            # serve, so a LIMITED group is told here, not on the next screen.
             results.append({
                 "group": group_id,
                 "state": STATE_READY,
+                "engineId": engine_id,
+                **_after_write_state(engine, group_id, group_fit),
             })
         except Exception as exc:
             results.append({
                 "group": group_id,
                 "state": "FAILED",
-                "plainReason": str(exc),
+                "token": _failure_token(getattr(exc, "code", "")),
+                "plainReason": getattr(exc, "detail", None) or str(exc),
             })
+
+    default = _default_from_set(
+        results=results,
+        engine_map=engine_map,
+        assignment_service=assignment_service,
+        principal=principal,
+        db=db,
+    )
+    # A group that follows the default is served when a default exists.
+    has_default = default is not None or _has_global_default(assignment_service, principal)
+    for result in results:
+        if result["state"] != "FOLLOWS_DEFAULT":
+            continue
+        fitted = result.pop("_fit", None) or {"state": STATE_READY}
+        if has_default:
+            result.update(fitted)
+        else:
+            result["state"] = "SKIPPED"
+            result["token"] = "NO DEFAULT"
+            result["plainReason"] = "This group uses the Default for AI work. No default is set."
 
     # Emit a kernel receipt
     receipt_id = _write_kernel_receipt(db, results)
 
     ready_count = sum(1 for r in results if r["state"] == STATE_READY)
+    limited_count = sum(1 for r in results if r["state"] in (STATE_LIMITED, STATE_INCOMPATIBLE, STATE_UNKNOWN))
     off_count = sum(1 for r in results if r["state"] == "OFF")
+    failed_count = sum(1 for r in results if r["state"] in ("FAILED", "SKIPPED"))
     engine_ids = {row.get("engineId") for row in rows if row.get("engineId") and row.get("engineId") != "OFF"}
+    used = [
+        engine_map[r["engineId"]] for r in results
+        if r.get("engineId") in engine_map and r["state"] not in ("FAILED", "SKIPPED", "OFF")
+    ]
+    main = _main_engine(used)
 
     return {
         "receipt": receipt_id,
@@ -1832,10 +2168,158 @@ def apply(
             "groups": len(results),
             "engines": len(engine_ids),
             "ready": ready_count,
+            "limited": limited_count,
             "off": off_count,
+            "failed": failed_count,
+            # The receipt's subject: USING · <model> (PHILO-15 10, B10).
+            "engine": main.get("name") if main else None,
+            "host": main.get("host") if main else None,
+            "default": default,
         },
         "results": results,
     }
+
+
+def _after_write_state(
+    engine: dict[str, Any],
+    group_id: str,
+    fit: Optional[Callable[[dict[str, Any], str], Optional[dict[str, Any]]]],
+) -> dict[str, Any]:
+    """After a write the authority accepted: LIMITED / INCOMPATIBLE when it
+    names blocked work; otherwise the write's own READY stands."""
+    if fit is None:
+        return {}
+    fitted = group_fit_state(engine, group_id, fit)
+    return {} if fitted.get("state") == STATE_UNKNOWN else fitted
+
+
+#: PHILO-15 10 (Astra r1, finding 3): a failed group's reason as a token.
+_FAILURE_TOKENS: dict[str, str] = {
+    "inference_assignment_incompatible": "INCOMPATIBLE",
+    "inference_assignment_revision_conflict": "CHANGED · OPEN AGAIN",
+    "inference_assignment_profile_missing": "NO MODEL RECORD",
+    "inference_assignment_binding_missing": "NO MODEL RECORD",
+    "inference_assignment_chain_invalid": "NO MODEL RECORD",
+    "unknown_inference_capability_group": "NOT ASSIGNABLE",
+    "concierge_summary_profile_revision_missing": "NO MODEL RECORD",
+}
+
+
+def _failure_token(code: Any) -> str:
+    return _FAILURE_TOKENS.get(str(code or ""), "FAILED")
+
+
+def _has_global_default(assignment_service: Any, principal: Any) -> bool:
+    try:
+        assignment_service.get_assignment(principal, {"kind": "global"})
+    except Exception:
+        return False
+    return True
+
+
+def _main_engine(used: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """The engine the most groups use (speech's Whisper never leads)."""
+    counts: dict[str, int] = {}
+    by_id: dict[str, dict[str, Any]] = {}
+    for engine in used:
+        if engine.get("audioCapable") is not True:
+            counts[engine["id"]] = counts.get(engine["id"], 0) + 1
+            by_id[engine["id"]] = engine
+    if not counts:
+        return used[0] if used else None
+    return by_id[max(counts, key=lambda key: counts[key])]
+
+
+def set_default_once(
+    *, assignment_service: Any, principal: Any, profile_id: str, profile_revision: int,
+) -> bool:
+    """The Default for AI work, written only when none ever existed.
+
+    The write expects revision 0, so a default that exists, or one the owner
+    cleared, is never changed. It is the owner's press: ``made_by`` owner.
+    """
+    from .errors import ConflictError
+
+    try:
+        assignment_service.set_assignment(principal, {
+            "command_id": f"concierge-default-{uuid.uuid4().hex}",
+            "expected_revision": 0,
+            "scope": {"kind": "global"},
+            "entries": [{"profile_id": profile_id, "profile_revision": int(profile_revision)}],
+        })
+    except ConflictError:
+        return False
+    except Exception as exc:
+        log.info(f"concierge: default not set ({exc})")
+        return False
+    return True
+
+
+def _default_from_set(
+    *,
+    results: list[dict[str, Any]],
+    engine_map: dict[str, dict[str, Any]],
+    assignment_service: Any,
+    principal: Any,
+    db: Any,
+) -> dict[str, Any] | None:
+    """"Use these" also sets the Default for AI work, once (PHILO-15 10, B05).
+
+    Settings said "No default model" right after the owner chose his engine
+    for every group.  When NO default ever existed (a cleared default stays
+    cleared: the write expects revision 0), the engine the most groups now
+    use becomes the default.  It is the owner's press, so ``made_by`` is the
+    owner.  Returns what was set, or ``None``.
+    """
+    from .errors import ConflictError
+
+    used = [
+        engine_map[r["engineId"]] for r in results
+        if r.get("engineId") in engine_map and r["state"] not in ("FAILED", "SKIPPED", "OFF")
+        and r.get("group") != "speech_recognition"
+    ]
+    main = _main_engine(used)
+    if main is None:
+        return None
+    profile_id, revision = _engine_assignment_reference(db, main)
+    if not profile_id or revision < 1:
+        return None
+    if not set_default_once(
+        assignment_service=assignment_service, principal=principal,
+        profile_id=profile_id, profile_revision=revision,
+    ):
+        return None  # a default exists (or was cleared): never changed here
+    return {"engineId": main["id"], "name": main.get("name"), "host": main.get("host")}
+
+
+def last_apply(db: Any) -> dict[str, Any] | None:
+    """The newest "Use these" receipt, with its failed groups (Astra r2, 3).
+
+    ``None`` when there is none, or when the newest one failed nothing.
+    """
+    try:
+        with db._connection() as conn:
+            row = conn.execute(
+                """SELECT r.receipt_id, r.result_ref, r.created_at FROM kernel_receipts r
+                     JOIN kernel_operations o ON o.operation_id=r.operation_id
+                    WHERE o.name='concierge_apply'
+                    ORDER BY r.created_at DESC LIMIT 1"""
+            ).fetchone()
+    except Exception:
+        return None
+    if row is None or not str(row["result_ref"] or "").startswith("{"):
+        return None
+    try:
+        material = json.loads(str(row["result_ref"]))
+    except ValueError:
+        return None
+    failures = [
+        {"group": str(f.get("group") or ""), "token": str(f.get("token") or "FAILED")}
+        for f in material.get("failures") or [] if isinstance(f, dict)
+    ]
+    if not failures:
+        return None
+    return {"receipt": str(row["receipt_id"]), "failures": failures}
 
 
 def _write_kernel_receipt(
@@ -1851,9 +2335,16 @@ def _write_kernel_receipt(
     idempotency_key = f"concierge:{receipt_id}"
     now = datetime.now(timezone.utc).timestamp()
 
-    all_ready = all(r["state"] in (STATE_READY, "OFF", "SKIPPED") for r in results)
-    state = "succeeded" if all_ready else "failed"
-    outcome = f"Applied {sum(1 for r in results if r['state'] == STATE_READY)} group(s)"
+    # PHILO-15 10 (Astra r1, finding 3): a group whose assignment was
+    # WRITTEN is applied, LIMITED included; only a group not written fails.
+    applied_states = (STATE_READY, STATE_LIMITED, STATE_INCOMPATIBLE, STATE_UNKNOWN)
+    failed = [r for r in results if r["state"] in ("FAILED", "SKIPPED")]
+    state = "failed" if failed else "succeeded"
+    outcome = f"Applied {sum(1 for r in results if r['state'] in applied_states)} group(s)"
+    if failed:
+        outcome += "; not applied: " + ", ".join(
+            f"{r.get('group')} ({r.get('token') or 'FAILED'})" for r in failed
+        )
 
     try:
         with db._connection() as conn:
@@ -1885,11 +2376,23 @@ def _write_kernel_receipt(
                 ),
             )
             # Insert the kernel receipt
+            # PHILO-15 10 (Astra r2, finding 3): the failed groups ride on
+            # the receipt itself, so a reload reads the same receipt the
+            # press wrote (``last_apply``), not a page's memory.
+            failed_material = (
+                json.dumps(
+                    {"schema": "ConciergeApplyFailures@1",
+                     "failures": [{"group": str(r.get("group") or ""), "token": str(r.get("token") or "FAILED")}
+                                  for r in failed]},
+                    sort_keys=True, separators=(",", ":"),
+                )
+                if operation_kind == "concierge_apply" and failed else ""
+            )
             conn.execute(
                 """INSERT INTO kernel_receipts
                    (receipt_id, operation_id, state, outcome, result_ref, created_at)
                    VALUES (?, ?, ?, ?, ?, ?)""",
-                (receipt_id, operation_id, state, outcome, "", now),
+                (receipt_id, operation_id, state, outcome, failed_material, now),
             )
     except Exception as exc:
         log.error(f"Concierge receipt write failed: {exc}")

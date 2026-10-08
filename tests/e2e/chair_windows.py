@@ -39,8 +39,8 @@ def open_chair_window(page: Any, name: str) -> Any:
 
 
 def go_group(page: Any, group: str, press: Any = None) -> Any:
-    """PHILO-13-17 (C7, Q3; ratified 2026-10-03): at 393 Go is grouped,
-    the Chair's windows (PHILO-14 A1), `Desk ▸ Object ▸ Window ▸`, then its own rows. With Go open, open
+    """At 393 Go has one group, `New ▸` (PHILO-15 11, B21, owner ruling
+    2026-10-07; was C7 Q3 `Desk ▸ Object ▸ Window ▸`). With Go open, open
     one group (the panel is replaced, a back row first) and return the menu."""
     import re
 

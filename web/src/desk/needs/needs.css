@@ -53,6 +53,13 @@
   letter-spacing: 0.04em;
   color: var(--text-muted);
 }
+/* PHILO-15-09 (B11): the calendar offer sits in the foot, not in the rows. */
+.needs-drawer-offer {
+  flex-wrap: wrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 /* A name is never cut in the drawer (HS-172: no text clip): it wraps. */
 .needs-drawer .needs-row-name {
   white-space: normal;

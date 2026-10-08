@@ -109,7 +109,8 @@ describe("Arrival attention (HS-200-15)", () => {
     render(<ChairHome />);
     await waitFor(() => expect(needsRows().length).toBe(17), { timeout: 5000 });
 
-    expect(screen.getByTestId("arrival-display").textContent).toBe("17 need you");
+    // PHILO-15-09 (B11): every row counts, the unread source too.
+    expect(screen.getByTestId("arrival-display").textContent).toBe("18 need you");
     // The unread source leads (above every member), then the members in rank order.
     const gap = sourceRows()[0];
     expect(gap.getAttribute("data-object-id")).toBe("coverage:watch:w-kan");
@@ -163,7 +164,8 @@ describe("Arrival attention (HS-200-15)", () => {
            coverage: [AVAILABLE("p1", "Q4 Platform"), FAILED_WATCH], complete: false });
     render(<ChairHome />);
     await waitFor(() => expect(needsRows().length).toBe(3), { timeout: 5000 });
-    expect(screen.getByTestId("arrival-display").textContent).toBe("3 need you");
+    // PHILO-15-09 (B11): every row counts, the unread source too.
+    expect(screen.getByTestId("arrival-display").textContent).toBe("4 need you");
     const gap = sourceRows()[0];
     expect(gap.compareDocumentPosition(needsRows()[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(gap.querySelector(".needs-row-name")?.textContent).toBe("jira KAN");

@@ -65,7 +65,8 @@ describe("the Agents card", () => {
     state = detect([agent("claude"), agent("codex")]);
     render(<Harness />);
     const card = await screen.findByTestId("firstrun-agents");
-    await within(card).findByText("2 FOUND");
+    // PHILO-15 11 (B17): the count is of agents (two), not of rows (three).
+    await within(card).findByText("2 AGENTS FOUND");
     const claude = within(card).getAllByTestId("firstrun-agent-row").find((r) => r.dataset.agent === "claude")!;
     expect(claude.textContent).toContain("CLAUDE 2.1.4");
     expect(within(claude).getByRole("status", { name: "INSTALLED" })).toBeTruthy();
@@ -73,9 +74,18 @@ describe("the Agents card", () => {
     expect(within(claude).getByRole("status", { name: "HOOKS" }).getAttribute("data-state")).toBe("idle");
     const tmux = within(card).getAllByTestId("firstrun-agent-row").find((r) => r.dataset.agent === "tmux")!;
     expect(tmux.textContent).toContain("TMUX 3.5A");
+    expect(within(tmux).getByTestId("firstrun-tool-token").textContent).toBe("TOOL");
     expect(within(card).getByText("THIS DEVICE")).toBeTruthy();
     expect(within(card).getByRole("button", { name: "Install hooks: Claude Code and Codex" })).toBeTruthy();
     expect(within(card).queryByText("Check again")).toBeNull();
+  });
+
+  it("B17: one agent and tmux reads 1 AGENT FOUND, never 2", async () => {
+    state = detect([agent("claude"), agent("codex", { installed: false })]);
+    render(<Harness />);
+    const card = await screen.findByTestId("firstrun-agents");
+    await within(card).findByText("1 AGENT FOUND");
+    expect(within(card).queryByText("2 FOUND")).toBeNull();
   });
 
   it("unknown sign-in is its own token, never a false no; broken hooks show as broken", async () => {

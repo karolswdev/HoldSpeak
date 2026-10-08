@@ -710,6 +710,82 @@ class InferenceAssignmentService:
             "effective": value,
         }
 
+    def fit(
+        self,
+        principal: Principal,
+        *,
+        scope: Mapping[str, Any],
+        profile_id: str,
+        profile_revision: int | None = None,
+    ) -> dict[str, Any]:
+        """What one model can serve in one scope, read before any write.
+
+        PHILO-15 10 (B05): the Concierge said READY for a group and the
+        next screen said TOOL INCOMPATIBLE, because the proposal never asked
+        this authority.  This runs the SAME checks ``set_assignment`` runs
+        (``_validate_entries``, ``_compatibility_issues``) and writes
+        nothing.  ``served`` and ``blocked`` name capability ids; a blocked
+        row carries the issue code.  ``saveable`` is what a write would say.
+        """
+        self._require_owner(principal)
+        group_id = str(scope.get("group_id") or "") if isinstance(scope, Mapping) else ""
+        internal = tuple(
+            c for c in self._registry._capabilities.values() if c.group_id == group_id
+        ) if scope.get("kind") == "group" and group_id not in self._group_ids() else ()
+        if internal:
+            # A group with no owner-assignable work (Chat: compaction and the
+            # guardrail) is never written; its work follows the Default for
+            # AI work.  The fit still says whether that engine serves it.
+            parsed = {"kind": "group", "selector_kind": "group", "group_id": group_id}
+            affected = internal
+        else:
+            parsed = self._scope(scope)
+            affected = self._affected_capabilities(parsed)
+        raw_entry: dict[str, Any] = {"profile_id": profile_id}
+        if profile_revision is not None:
+            raw_entry["profile_revision"] = profile_revision
+        with self._db._connection() as conn:
+            entries = self._validate_entries(conn, [raw_entry], parsed)
+            issues = self._compatibility_issues(conn, entries, affected)
+        blocking = [issue for issue in issues if issue["severity"] == "blocking"]
+        whole = [issue for issue in blocking if not issue.get("capability_id")]
+        blocked_ids: dict[str, str] = {}
+        for issue in blocking:
+            cap = issue.get("capability_id")
+            if cap and cap not in blocked_ids:
+                blocked_ids[str(cap)] = str(issue["code"])
+        if whole:
+            blocked_ids = {c.id: str(whole[0]["code"]) for c in affected}
+        return {
+            "served": [c.id for c in affected if c.id not in blocked_ids],
+            "blocked": [
+                {"capability_id": cap, "code": code} for cap, code in blocked_ids.items()
+            ],
+            "saveable": not self._save_blockers(parsed, entries, affected, issues),
+        }
+
+    def capability_override_ready(self, principal: Principal, capability_id: str) -> bool:
+        """True when the capability's OWN assignment would serve it now.
+
+        PHILO-15 10 (Astra r2, finding 2): an uncleared head is not enough.
+        The head must resolve with no blocking issue (a missing binding is
+        blocking) and with no readiness repair (disabled, or not ready).
+        """
+        self._require_owner(principal)
+        try:
+            definition = self._registry.require(capability_id)
+        except Exception:
+            return False
+        with self._db._connection() as conn:
+            resolved = self._resolve(conn, definition, sources=("capability",))
+        if resolved.get("status") != "assigned":
+            return False
+        issues = (resolved.get("assignment") or {}).get("issues") or []
+        return not any(
+            issue.get("code") in {"binding_not_ready", "binding_disabled", "binding_missing"}
+            for issue in issues
+        )
+
     def clear_assignment(
         self, principal: Principal, body: Mapping[str, Any]
     ) -> dict[str, Any]:

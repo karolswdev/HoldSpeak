@@ -312,7 +312,7 @@ def test_inference_targets_list_reflects_mesh_liveness(env) -> None:
 def test_doctor_mesh_edges_states(env, monkeypatch) -> None:
     db, _ = env
     check = doctor._check_mesh_edges(SimpleNamespace())
-    assert check.status == "PASS" and "no node has ever served" in check.detail
+    assert check.status == "PASS" and "no other device runs AI" in check.detail
 
     db.mesh_relay.touch_worker("walk-edge")
     db.mesh_relay.touch_worker("attic-mac", now=datetime.now() - timedelta(seconds=300))

@@ -11,7 +11,7 @@ Chair and on the Floor. The one thing this rig adds is the slow read: the
 page delays its own `GET /api/roadmaps` by 4 s (the real hub still answers
 it). Every record is made by the product's own verb.
 
-* New Note / Knowledge / Agent / Thread (the Desk menu; Go > Desk at 393):
+* New Note / Knowledge / Agent / Thread (the Desk menu; Search at 393, PHILO-15 11):
   one press, one POST, and its window is on the glass, in front, inside
   1.5 s -- while the desk read is still in flight. The name typed at once
   is still there after the old read and the new read have both landed.
@@ -29,7 +29,6 @@ from typing import Any
 
 import pytest
 
-from .chair_windows import go_group
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
@@ -113,10 +112,19 @@ class TestEveryNewVerbOpensItsWindow:
             loc.click()
 
     def _menu_verb(self, page: Any, width: int, label: str) -> None:
-        menu = "desk" if width >= 720 else "go"
-        self._press(page, page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button"), width)
         if width < 720:
-            go_group(page, "Desk", lambda loc: self._press(page, loc, width))
+            # PHILO-15 11 (B21, owner ruling 2026-10-07): Go at 393 has no Desk ▸
+            # (New ▸ is Thought / Meeting / Project / Person); every New verb is
+            # one Search away: the Search tap, the words, a tap on the row.
+            self._press(page, page.locator("button[aria-controls=desk-tool-shelf]"), width)
+            box = page.locator("input[aria-controls=desk-palette-listbox]")
+            box.wait_for()
+            box.fill(label)
+            item = page.locator("#desk-palette-listbox [role=option]", has_text=label).first
+            item.wait_for()
+            self._press(page, item, width)
+            return
+        self._press(page, page.locator(".desk-verbbar-item[data-menu-id='desk'] button"), width)
         item = page.locator(f".desk-verbbar-menu [role='menuitem']:has-text('{label}')").first
         item.wait_for()
         self._press(page, item, width)

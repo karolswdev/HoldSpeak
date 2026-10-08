@@ -66,8 +66,8 @@ ATLAS_FENCE = {
         "meeting; the trigger binds {meeting_id} and the row carries it",
     ),
     "case.j10.arrival_generate_again.same_day_idempotent": (
-        "pass", "", "the clicked Generate again's OWN response is the identity, "
-        "and the face shows what it returned",
+        "pass", "", "after new work, the clicked Generate's OWN response is the "
+        "same brief made again, and the face shows the new work",
     ),
     # Astra round four, MISSED: the same-id claim lives in the protocol
     # sibling; the second POST must return the brief captured before it.
@@ -138,6 +138,12 @@ def test_the_rig_drives_the_real_atlas(case_id, tmp_path):
         chosen = record["trigger_response_capture"]["chosen"]
         assert chosen and (chosen["method"], chosen["path"]) == (
             "POST", "/api/brief/generate"), record["trigger_response_capture"]
+        # PHILO-15-09: the press's own answer is the SAME brief, made again:
+        # same id, a newer generated_at, the new work in it.
+        body = record["after"]["trigger_response"]["body"]
+        assert body["id"] == record["variables"]["first_brief_id"], body
+        assert body["generated_at"] != record["variables"]["first_generated_at"], body
+        assert "Decision made: Adopt the j10 regenerate check" in json.dumps(body), body
 
 
 @pytest.mark.parametrize("viewport", [1440, 393])

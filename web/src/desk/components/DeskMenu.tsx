@@ -168,7 +168,7 @@ export function DeskMenuItem({
     >
       {glyph}
       {children}
-      {keycap ? <kbd className="desk-menu-key">{keycap}</kbd> : null}
+      {keycap && !NARROW() ? <kbd className="desk-menu-key">{keycap}</kbd> : null}
     </Button>
   );
 }
@@ -436,7 +436,9 @@ function WorkMenuRows({
             </span>
             {/* HS-148-01: keycaps render on ghosted rows too (stippled with
                 the row) — the `&& !ghost` suppression is removed. */}
-            {entry.keycap ? <KeycapWells keycap={entry.keycap} /> : null}
+            {/* PHILO-15 11 (B21): a phone has no ⌘ key, so no menu at 393
+                draws a keycap (the window menu and its Desk ▸ too). */}
+            {entry.keycap && !NARROW() ? <KeycapWells keycap={entry.keycap} /> : null}
           </Button>
         );
       })}

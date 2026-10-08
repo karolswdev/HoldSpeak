@@ -39,6 +39,7 @@ export interface SetupStatus {
   [key: string]: unknown;
 }
 import { apiFetch } from "../lib/api";
+import { isLanAddress } from "../features/concierge/endpointDraft";
 
 export async function loadSetup(
   onError?: (cause: unknown) => void,
@@ -104,12 +105,27 @@ export function inboundLine(
   return `${open ? "yes" : "no"} \u00b7 Token: ${trust?.auth_token_set ? "set" : "not set"}`;
 }
 
+/** PHILO-15 10 (B10): is this destination a server on his own network? */
+function onLan(d: { boundary?: string; destination?: string }): boolean {
+  if ((d.boundary || "").toLowerCase() === "lan") return true;
+  const host = (d.destination || "").trim();
+  return /^[\w.-]+(:\d+)?$/.test(host) && host.includes(".") && isLanAddress(host);
+}
+
+/** `192.168.1.43:8080` -> `192.168.1.43`. */
+function bareHost(value: string): string {
+  return value.trim().replace(/^[a-z]+:\/\//i, "").split("/")[0].replace(/:\d+$/, "");
+}
+
 export function egressBadge(setup: SetupStatus | null): EgressBadge {
   const t = setup?.trust || {};
   if (t.last_egress?.name) {
+    // PHILO-15 10 (B10): a server on his network is named as LAN.
+    const name = t.last_egress.name;
+    const lan = onLan({ destination: name });
     return {
       scope: "mixed",
-      text: `→ ${t.last_egress.name}`,
+      text: lan ? `→ LAN · ${bareHost(name)}` : `→ ${name}`,
       title: `Last receipted egress: ${t.last_egress.receipt}`,
     };
   }
@@ -120,11 +136,25 @@ export function egressBadge(setup: SetupStatus | null): EgressBadge {
   // destinations = this device, on both faces.
   const enabledDestinations = (t.destinations ?? []).filter((d) => d.enabled);
   if (enabledDestinations.length > 0 && t.actuators_enabled) {
+    // PHILO-15 10 (B10): the chip names the fact, never "external reach".
+    // A server on his own network reads `LAN · <host>`; anything else
+    // names the first destination (and how many more).
+    const lan = enabledDestinations.filter(onLan);
+    const other = enabledDestinations.filter((d) => !onLan(d));
+    const names = enabledDestinations.map((d) => d.name).join(", ");
+    if (other.length === 0) {
+      const hosts = [...new Set(lan.map((d) => bareHost(d.destination)))];
+      return {
+        scope: "mixed",
+        text: `→ LAN · ${hosts.join(" · ")}`,
+        title: `Sent to a server on this network: ${names}.`,
+      };
+    }
+    const more = enabledDestinations.length - 1;
     return {
       scope: "mixed",
-      text: "→ External reach enabled",
-      title:
-        "Configured destinations can receive data after authority is granted.",
+      text: `→ ${other[0].name}${more > 0 ? ` +${more}` : ""}`,
+      title: `Configured destinations: ${names}.`,
     };
   }
   if (t.transcript_egress && t.transcript_egress !== "none") {

@@ -49,23 +49,28 @@ export type ChairDeskProps = Record<ChairWindowKey, ReactNode> & {
    * Chair; they float like every desk window. Without it the PARKED
    * Phase-13 tiles return (`data-layout="tiles"`; ChairHome never sets it). */
   screen?: ReactNode;
+  /** PHILO-15-09 (B04): a window's title from its content (the Brief's
+   *  `Brief · Wednesday 7 Oct 2026`); its name (aria, menus) stays. */
+  titles?: Partial<Record<ChairWindowKey, string>>;
 };
 
 function ChairWindow({
   spec,
   open,
   tiled,
+  title,
   children,
 }: {
   spec: ChairWindowSpec;
   open: boolean;
   tiled: boolean;
+  title?: string;
   children: ReactNode;
 }) {
   return (
     <DeskWindowFrame
       id={spec.id}
-      title={spec.title}
+      title={title || spec.title}
       label={spec.title}
       className={`chair-window chair-window--${spec.key}`}
       open={open}
@@ -93,6 +98,15 @@ function ChairWindow({
 /** The Needs-you window is the front Chair window when the Chair opens:
  * among the Chair's own planes only (a desk window above keeps its plane). */
 function raiseNeedsAmongChair() {
+  // PHILO-15-09 (B16): a Chair window the owner just opened (Window ▸ Chair,
+  // Go ▸, a reopen) is the front window, also when the Chair mounts after
+  // his gesture. The Needs-you raise never puts it behind another window.
+  const opened = useChairWindows.getState().opened;
+  if (opened) useChairWindows.setState({ opened: "" });
+  if (opened && opened !== "chair:needs") {
+    if (!useChairWindows.getState().closed[opened]) useDesk.getState().focusPanel(opened);
+    return;
+  }
   const s = useDesk.getState();
   const order = s.panelOrder;
   const chairAt = order
@@ -222,7 +236,7 @@ export function ChairDesk(props: ChairDeskProps) {
         const shown = compact ? isOpen && phone === spec.id : isOpen;
         const Body = CHAIR_WINDOW_BODY[spec.key];
         return (
-          <ChairWindow key={spec.id} spec={spec} open={shown} tiled={tiles}>
+          <ChairWindow key={spec.id} spec={spec} open={shown} tiled={tiles} title={props.titles?.[spec.key]}>
             {Body ? <Body /> : props[spec.key]}
           </ChairWindow>
         );

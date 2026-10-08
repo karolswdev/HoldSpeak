@@ -27,7 +27,7 @@ describe("checkEndpoint", () => {
     await checkEndpoint(URL_, " local ");
     expect(apiFetch).toHaveBeenCalledWith("/api/setup/discover-models", {
       method: "POST",
-      json: { base_url: URL_, api_key: "local" },
+      json: { base_url: URL_, api_key: "local", check_tools: true },
     });
   });
 
@@ -36,7 +36,7 @@ describe("checkEndpoint", () => {
     await checkEndpoint(URL_, "  ");
     expect(apiFetch.mock.calls[0][1]).toEqual({
       method: "POST",
-      json: { base_url: URL_ },
+      json: { base_url: URL_, check_tools: true },
     });
   });
 });

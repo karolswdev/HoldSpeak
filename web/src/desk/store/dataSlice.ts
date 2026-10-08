@@ -326,7 +326,9 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
         "/api/decisions",
         "decision",
         {
-          status: "proposed",
+          // PHILO-15-09 (B12): the owner's own decision is DECIDED; it is
+          // not a Needs row and not "to review".
+          status: "accepted",
           context_markdown: "",
           decision_markdown: "",
           consequences_markdown: "",

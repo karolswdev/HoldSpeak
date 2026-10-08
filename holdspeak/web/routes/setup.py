@@ -140,7 +140,19 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
     async def api_local_ai_start(request: Request) -> Any:
         """The owner's call: check the runtime, download (one egress receipt), set up."""
         try:
-            return JSONResponse(await run_in_threadpool(_local_ai().start, request.state.principal), status_code=202)
+            # PHILO-15 10: `{"only": ["whisper"]}` downloads the speech model alone.
+            try:
+                body = await request.json()
+            except Exception:
+                body = None
+            only = body.get("only") if isinstance(body, dict) else None
+            if only is not None and not isinstance(only, list):
+                raise ServiceError("local_ai_invalid", "only must be a list.", context={"status": 400})
+            start = _local_ai().start
+            return JSONResponse(
+                await run_in_threadpool(lambda: start(request.state.principal, only=only)),
+                status_code=202,
+            )
         except ServiceError as exc:
             return _inference_error(exc)
 
@@ -255,6 +267,33 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
                 str(body.get("base_url") or ""),
                 api_key=api_key,
             )
+            # PHILO-15 10 (B05): the Check asks the server once whether it
+            # takes tool calls. Only the face's Check asks (`check_tools`).
+            if result.get("ok") and result.get("models") and body.get("check_tools") is True:
+                from urllib.parse import urlparse as _urlparse
+
+                import ipaddress as _ip
+
+                from ...setup_runtime import endpoint_tool_support
+
+                base_url = str(body.get("base_url") or "")
+                # Astra r1, finding 4: the 1-token request goes only where it
+                # cannot be billed: no key, and a private or loopback address
+                # LITERAL (a name or a suffix can point anywhere) -- or the
+                # owner said "this is my server" (MY SERVER on the row).
+                try:
+                    _addr = _ip.ip_address((_urlparse(base_url).hostname or "").strip("[]"))
+                    private = _addr.is_private or _addr.is_loopback
+                except ValueError:
+                    private = False
+                own_server = body.get("my_server") is True
+                result["tools"] = endpoint_tool_support(
+                    base_url,
+                    model=str(result["models"][0]),
+                    api_key=api_key,
+                    lan=own_server or (private and not api_key),
+                    tools_claimed=bool(result.get("toolsClaimed")),
+                )
             return JSONResponse(result, status_code=200 if result.get("ok") else 422)
         except Exception as exc:
             return error_500(exc, log, "Failed to discover endpoint models")

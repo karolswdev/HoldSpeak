@@ -129,39 +129,18 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(ids).toEqual(["desk", "object", "go", "window"]);
   });
 
-  // PHILO-13-17 (C7, Q3; ratified 2026-10-03): Go is grouped at 393 —
-  // Chair ▸ Desk ▸ Object ▸ Window ▸, then its own rows. New Note is one
-  // tap deeper (Go ▸ Desk ▸ New Note), and every menu stays a menu.
-  it("carries New Note — owner job 3's door — at Go ▸ Desk at phone width", () => {
+  // PHILO-15 11 (B21, owner ruling 2026-10-07; supersedes C7 Q3): Go at 393
+  // is Needs you / Brief / The week / Capture, the Dock's places, the
+  // projects, then New ▸ Thought / Meeting / Project / Person. No ⌘ hint.
+  it("carries a new thought (owner job 3's door) at Go ▸ New ▸ Thought at phone width", () => {
     compact = true;
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
-    fireEvent.click(screen.getByRole("menuitem", { name: /^Desk\W*$/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /^New\W*$/ }));
     expect(
-      screen.getByRole("menuitem", { name: /New Note/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("carries the Desk, Object and Window menus, in that order, after the Chair's windows", () => {
-    compact = true;
-    render(<DeskMenuBar />);
-    fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
-    const heads = screen
-      .getAllByRole("menuitem")
-      .filter((el) => el.getAttribute("aria-haspopup") === "menu")
-      .map((el) => el.querySelector(".desk-menu-label")?.textContent ?? "");
-    // PHILO-14 A1 (#939): the Chair's windows are Go's first rows, not a group.
-    expect(heads).toEqual(["Desk", "Object", "Window"]);
-    expect(screen.getAllByRole("menuitemcheckbox").slice(0, 3).map((el) => el.querySelector(".desk-menu-label")?.textContent))
-      .toEqual(["Needs you", "Brief", "The week"]);
-    const open = (name: string, needle: RegExp) => {
-      fireEvent.click(screen.getByRole("menuitem", { name: new RegExp(`^${name}`) }));
-      expect(screen.getAllByRole("menuitem").some((el) => needle.test(el.textContent ?? ""))).toBe(true);
-      fireEvent.click(screen.getByRole("menuitem", { name: new RegExp(`^◂?\\s*${name}`) }));
-    };
-    open("Object", /Get Info/);
-    open("Window", /Close window/);
-    open("Window", /Cycle windows/);
+      screen.getAllByRole("menuitem").map((el) => el.querySelector(".desk-menu-label")?.textContent)
+        .slice(-4),
+    ).toEqual(["Thought", "Meeting", "Project", "Person"]);
   });
 
   it("lets the folded menu scroll, so its tail is reachable at 393", () => {

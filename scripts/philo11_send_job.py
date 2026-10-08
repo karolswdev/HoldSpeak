@@ -101,7 +101,15 @@ p5 = p9.p5
 
 
 def load_fixture(path: Path = FIXTURE_PATH) -> dict[str, Any]:
-    return json.loads(path.read_text())
+    fixture = json.loads(path.read_text())
+    # PHILO-15-09 (B04, ruling 2): the sent Brief is titled with its own day
+    # (`# Brief · Wednesday 7 Oct 2026`), never "Monday Brief". The tracked
+    # fixture is history (pm/roadmap); its signature is read as the product
+    # writes it now.
+    signatures = fixture.get("signatures") or {}
+    if signatures.get("monday_brief") == ["# Monday Brief", "Period:"]:
+        signatures["monday_brief"] = ["# Brief · ", "Period:"]
+    return fixture
 
 
 def write_run_fixture(run_dir: Path, source: Path) -> dict[str, Any]:

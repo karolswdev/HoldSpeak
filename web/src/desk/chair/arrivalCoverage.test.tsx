@@ -116,7 +116,7 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     render(<ChairHome />);
 
     await waitFor(() => expect(screen.getByText("CI red on main")).toBeTruthy());
-    expect(screen.getByTestId("arrival-display").textContent).toContain("need you");
+    expect(screen.getByTestId("arrival-display").textContent).toMatch(/needs? you/);
     expect(gapRows()).toHaveLength(1);
     const row = screen.getByText("CI red on main").closest(".needs-row")!;
     expect(row.querySelector(".needs-row-fact")?.textContent).toContain("observed 09:00");

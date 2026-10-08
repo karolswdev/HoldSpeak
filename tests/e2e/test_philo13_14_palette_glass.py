@@ -4,8 +4,8 @@ Through the real hub on an isolated HOME, at 1440x900 (mouse, keyboard) and
 393x852 (touch). The week is minted by the real producers: the Chair canvas
 week (test_philo13_11_chair_glass._seed: the projects, the decisions, the
 meetings, Avery / Jordan / Sam / Priya Nair in the People store), the fresh
-Desk seed (PUT /api/setup/onboarding applies it: the `People & vocabulary`
-note), three thoughts through the notes route (each titled `Thought`, one
+Desk seed (PUT /api/setup/onboarding applies it), a `People & vocabulary` note
+through the notes route (PHILO-15 11 parked it from the seed), three thoughts through the notes route (each titled `Thought`, one
 body names `Kafka offsets`), and a REAL FILE destination in a scratch folder.
 
 One assert per acceptance line:
@@ -83,6 +83,7 @@ class TestPaletteKnowsHisWeek:
         _canvas_seed(self.home)
         _http(base, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
         self.people = {r["display_name"]: r["id"] for r in _http(base, "GET", "/api/people/relationships")["relationships"]}
+        self.vocab = _http(base, "POST", "/api/notes", {"title": "People & vocabulary", "body_markdown": "Names and terms."})["note"]["id"]
         self.thoughts = []
         for body in ("Lunch on Friday with the team.", NEEDLE, "Book the offsite room."):
             self.thoughts.append(_http(base, "POST", "/api/notes", {"title": "Thought", "body_markdown": body})["note"]["id"])
@@ -360,7 +361,8 @@ class TestPaletteKnowsHisWeek:
         rows = self._query("People")
         ids = [r["id"] for r in rows]
         assert ids[0] == "desk.open-people" and rows[0]["selected"], rows
-        assert "note:hs-seed-people-vocabulary" in ids and ids.index("desk.open-people") < ids.index("note:hs-seed-people-vocabulary"), ids
+        vocab = f"note:{self.vocab}"
+        assert vocab in ids and ids.index("desk.open-people") < ids.index(vocab), ids
         self._glass("#desk-tool-shelf", "C4-6")
         self._shot("C4-6-people-app-first")
         page.keyboard.press("Escape")

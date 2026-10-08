@@ -38,7 +38,7 @@ const setupRow = () => setupRows()[0] ?? null;
 describe("HS-201-01 headline", () => {
   it("never says the all-clear while something is pending", () => {
     expect(headlineFor(0, 1, true, 0)).toBe("Nothing needs you");
-    expect(headlineFor(0, 1, true, 1)).toBe("1 need you");
+    expect(headlineFor(0, 1, true, 1)).toBe("1 needs you");
     expect(headlineFor(0, 1, true, 2)).toBe("2 need you");
     // an incomplete read still names the coverage, not the all-clear
     expect(headlineFor(0, 1, false, 0)).toBe("Coverage incomplete");
@@ -133,7 +133,7 @@ describe("HS-201-01 the Chair names the one thing", () => {
     // no prose: the row says a state and a verb, nothing else
     expect(section.textContent).not.toMatch(/[.!?]/);
     // and the headline does not lie over it
-    expect(screen.getByTestId("arrival-display").textContent).toBe("1 need you");
+    expect(screen.getByTestId("arrival-display").textContent).toBe("1 needs you");
   });
 
   it("is gone once the summary capability is assigned", async () => {
@@ -236,7 +236,7 @@ describe("HS-201-01 the Chair names the one thing", () => {
     const verbs = section.querySelectorAll("button");
     expect(verbs.length).toBe(1);
     expect(verbs[0].textContent).toBe("Choose an engine");
-    expect(screen.getByTestId("arrival-display").textContent).toBe("1 need you");
+    expect(screen.getByTestId("arrival-display").textContent).toBe("1 needs you");
   });
 
   // Counsel fix round, second pass (ruling 2): ONE filled primary on the
@@ -258,7 +258,7 @@ describe("HS-201-01 the Chair names the one thing", () => {
     expect(verbs[0].className).toContain("btn");
     expect(screen.queryByText("No engine for speech")).toBeNull();
     expect(screen.queryByText("No engine for summaries")).toBeNull();
-    expect(screen.getByTestId("arrival-display").textContent).toBe("1 need you");
+    expect(screen.getByTestId("arrival-display").textContent).toBe("1 needs you");
   });
 
   it("clears the speech row when the speech capability is assigned", async () => {
