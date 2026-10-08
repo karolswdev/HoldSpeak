@@ -38,6 +38,19 @@
   box-shadow: var(--bevel-raised), 0 0 0 1px var(--wb-ink);
 }
 
+/* PHILO-15 B31 (Astra r2): the wrap variant. The words break between
+   tokens and stay inside the card; the lamp keeps the first line. */
+.desk-next .surface-state-chip[data-wrap] {
+  white-space: normal;
+  align-items: flex-start;
+  max-width: 100%;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.desk-next .surface-state-chip[data-wrap] .surface-state-chip-icon {
+  margin-top: 2px;
+}
+
 /* The lamp tones: lit for a state that is true now, unlit (the wash) for
    idle and unreachable. */
 .desk-next .surface-state-chip[data-state="active"] .surface-state-chip-icon { background: var(--lamp-ask); }

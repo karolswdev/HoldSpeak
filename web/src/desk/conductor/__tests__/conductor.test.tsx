@@ -16,6 +16,12 @@ import { closeReceipt, conductorHead, conductorMembers, headWords } from "../mem
 import { __resetConductor, useConductor } from "../store";
 import { laneSessionKey as laneSessionKeyOf } from "../../lane/laneStore";
 
+/** A name the species sets word by word (#989 B30 `.name-word` spans): the
+ *  innermost element whose whole text is `text`. */
+const wholeText = (text: string) => (_: string, el: Element | null) =>
+  !!el && el.textContent === text && ![...el.children].some((c) => c.textContent === text);
+
+
 const apiFetch = vi.fn();
 const apiRequest = vi.fn();
 vi.mock("../../../lib/api", async () => {
@@ -295,7 +301,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
   it("LIST keeps the asking agent first (the group sort), whatever the name sort", async () => {
     useDesk.setState({ zoneViewPrefs: { conductor: { view: "list" } } as never });
     render(<ConductorWindow />);
-    await screen.findByText("Claude Code: rollback runbook");
+    await screen.findByText(wholeText("Claude Code: rollback runbook"));
     const names = [...document.querySelectorAll(".conductor-window [data-object-id]")].map((el) => el.getAttribute("data-object-id"));
     expect(names[0]).toBe("launch:l-runbook");
     expect(names.indexOf("agent:claude")).toBeGreaterThan(names.indexOf("launch:l-flag"));
@@ -339,6 +345,30 @@ describe("PHILO-14 C4 the Conductor window", () => {
     });
     expect(apiFetch).toHaveBeenCalledWith("/api/onboarding/agents/use", { method: "POST", json: { agent: "claude" } });
     await waitFor(() => expect(screen.queryByRole("button", { name: "Install hooks" })).toBeNull());
+  });
+
+  it("PHILO-15 B34/B35: every ready agent without hooks has its own Install hooks; a success has a receipt", async () => {
+    const both = {
+      ...DETECT,
+      agents: [
+        { ...DETECT.agents[0], hooks: "missing" },
+        { ...DETECT.agents[0], id: "codex", label: "Codex", path: "/bin/codex", hooks: "missing" },
+      ],
+    };
+    detectReply = () => both;
+    render(<ConductorWindow />);
+    // Nothing selected: one verb per agent (it was hidden until a selection).
+    const claude = await screen.findByRole("button", { name: "Install hooks · Claude Code" });
+    expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
+    detectReply = () => ({ ...both, agents: [{ ...both.agents[0], hooks: "installed" }, both.agents[1]] });
+    await act(async () => {
+      fireEvent.click(claude);
+    });
+    expect(apiFetch).toHaveBeenCalledWith("/api/onboarding/agents/use", { method: "POST", json: { agent: "claude" } });
+    const done = await screen.findByTestId("conductor-install-done");
+    expect(done.textContent).toMatch(/^HOOKS INSTALLED · CLAUDE CODE · \d\d:\d\d$/);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Install hooks · Claude Code" })).toBeNull());
+    expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
   });
 
   it("a failed sessions read is NOT READ with Retry, never an empty drawer", async () => {

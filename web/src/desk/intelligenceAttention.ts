@@ -67,6 +67,8 @@ export type AftercareSignal = {
   decidedTotal: number;
   /** PHILO-15 08 (B13): proposals still to review; 0 withholds the verb. */
   proposalTotal: number;
+  /** PHILO-15 B56 (Astra r1): the hub could not count them on the last read. */
+  countUnread?: boolean;
 };
 
 let aftercare: AftercareSignal | null = null;
@@ -104,6 +106,55 @@ export function publishAftercare(frame: unknown): AftercareSignal | null {
 
 export function dismissAftercare(): void {
   if (aftercare !== null) publish(null);
+}
+
+type AftercareRead = {
+  open_items?: { total?: unknown } | null;
+  decisions?: unknown[] | null;
+  proposal_total?: unknown;
+};
+
+/**
+ * PHILO-15 B56: the card's counts are the hub's, read again (a "2 to review"
+ * card stayed half an hour after both proposals were confirmed). A card that
+ * came with proposals to review leaves when that count reaches zero; an
+ * unread answer keeps the card as it is.
+ */
+export async function refreshAftercare(): Promise<void> {
+  const current = aftercare;
+  if (!current) return;
+  let read: AftercareRead | null = null;
+  try {
+    read = await apiFetch<AftercareRead>(`/api/meetings/${encodeURIComponent(current.meetingId)}/aftercare`);
+  } catch {
+    return;
+  }
+  if (aftercare !== current || !read) return;
+  // An unknown count never dismisses (Astra r1 P2): `Number(null)` is 0, so
+  // a null, missing or non-number total is "not read", and the card stays.
+  const raw = read.proposal_total;
+  const proposals = typeof raw === "number" ? raw : typeof raw === "string" && raw.trim() ? Number(raw) : Number.NaN;
+  if (!Number.isFinite(proposals)) {
+    if (!current.countUnread) publish({ ...current, countUnread: true });
+    return;
+  }
+  if (current.proposalTotal > 0 && proposals <= 0) {
+    publish(null);
+    return;
+  }
+  const next: AftercareSignal = {
+    ...current,
+    countUnread: false,
+    proposalTotal: Math.max(0, proposals),
+    openTotal: Number(read.open_items?.total ?? current.openTotal) || 0,
+    decidedTotal: Array.isArray(read.decisions) ? read.decisions.length : current.decidedTotal,
+  };
+  if (
+    next.proposalTotal !== current.proposalTotal ||
+    next.openTotal !== current.openTotal ||
+    next.decidedTotal !== current.decidedTotal ||
+    Boolean(current.countUnread)
+  ) publish(next);
 }
 
 function aftercareSnapshot(): AftercareSignal | null {

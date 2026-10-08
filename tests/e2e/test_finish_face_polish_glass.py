@@ -169,6 +169,20 @@ class TestFinishFacePolish:
             browser, page, errors = self._page(pw, 1440)
             try:
                 shell = page.locator(".desk-window-shell.chair-window[aria-label='Brief']")
+
+                def open_brief() -> None:
+                    page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
+                    page.locator(".desk-verbbar-menu").wait_for()
+                    page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')").hover()
+                    page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')").click()
+                    shell.wait_for()
+                    page.wait_for_timeout(600)
+                    _settle(page)
+
+                # Phase 14 A1: Chair windows start closed. Open the Brief at
+                # its tile place first; that place is what a zoom must return to.
+                if not shell.count():
+                    open_brief()
                 home = page.evaluate(rect)
                 shell.get_by_role("button", name="Zoom Brief").click()
                 page.wait_for_timeout(500)
@@ -177,13 +191,7 @@ class TestFinishFacePolish:
                 assert page.evaluate(rect) == home
                 shell.get_by_role("button", name="Close Brief").click()
                 shell.wait_for(state="detached")
-                page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
-                page.locator(".desk-verbbar-menu").wait_for()
-                page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')").hover()
-                page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')").click()
-                shell.wait_for()
-                page.wait_for_timeout(600)
-                _settle(page)
+                open_brief()
                 page.screenshot(path=str(SHOTS / "chair-reopened-1440.png"))
                 assert page.evaluate(rect) == home, (page.evaluate(rect), home)
                 assert not errors, errors

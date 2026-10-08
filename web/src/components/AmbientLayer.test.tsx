@@ -227,3 +227,27 @@ describe("meeting aftercare counts", () => {
     },
   );
 });
+
+describe("PHILO-15 B56 (Astra r1): an unread count never dismisses the card", () => {
+  afterEach(() => {
+    act(() => dismissAftercare());
+  });
+
+  it("the hub answers proposal_total: null; the card stays and says COUNT · NOT READ", async () => {
+    mocks.apiFetch.mockImplementation((path: string) => {
+      if (path === "/api/meetings/m-null/aftercare")
+        return Promise.resolve({ proposal_total: null, open_items: { total: 1 }, decisions: [] });
+      if (path === "/api/settings") return Promise.resolve({ presence: { enabled: false } });
+      return Promise.resolve({ success: true });
+    });
+    render(<AmbientLayer />);
+    act(() => {
+      publishAftercare({ meeting_id: "m-null", title: "Payments ledger sync", proposal_total: 2, open_total: 1 });
+    });
+    const card = screen.getByRole("complementary", { name: "Meeting aftercare" });
+    expect(await within(card).findByTestId("aftercare-count-unread")).toHaveTextContent("COUNT · NOT READ");
+    expect(within(card).getByText("2 to review · 1 open")).toBeInTheDocument();
+    expect(within(card).getByRole("button", { name: "Open proposals" })).toBeInTheDocument();
+  });
+});
+

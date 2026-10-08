@@ -57,7 +57,7 @@ import { TtsSettingsBlock } from "./settingsTts";
 // PARKED (HS-170-03): CapabilityAssignmentsCore — reached via Concierge Adjust.
 // import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
 import { WallpaperModule } from "./settingsWallpaper";
-import { PeopleAccessModule } from "./settingsPeople";
+import { OwnerNameGroup, PeopleAccessModule } from "./settingsPeople";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
@@ -1867,9 +1867,17 @@ function SettingsFace({ hero, scope }: CoreProps) {
         // The hub returns a host only when a model is actually assigned;
         // until the wire fix lands, fall back to defaultSet as the signal.
         const hubHost = meetingsHub?.host ? String(meetingsHub.host) : null;
-        const hasModel = Boolean(hubHost) && hubHost !== "THIS DEVICE"
-          ? true
-          : Boolean(hub.data.models?.defaultSet);
+        // PHILO-15 B33: the summary ROUTE decides (the hub's `engineSet`, the
+        // queue's answer); the host and the default are fallbacks for a hub
+        // that sends no route fact.
+        const routeEngine = typeof meetingsHub?.engineSet === "boolean" ? meetingsHub.engineSet : null;
+        // Astra r1 P2: the owner's OFF is a choice, never a missing model.
+        const summariesOff = meetingsHub?.summariesOff === true;
+        const hasModel = routeEngine !== null
+          ? routeEngine
+          : Boolean(hubHost) && hubHost !== "THIS DEVICE"
+            ? true
+            : Boolean(hub.data.models?.defaultSet);
         const intelHost = hasModel ? hubHost : null;
         const lastRunAt = meetingsHub?.lastRunAt ? String(meetingsHub.lastRunAt) : null;
         const lastRunS = meetingsHub?.lastRunS != null ? Number(meetingsHub.lastRunS) : null;
@@ -1962,7 +1970,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 options={INTELLIGENCE_AUTO_OPTIONS}
                 onChange={(next) => update(["meeting", "intelligence_auto"], next)}
               />
-              {hasModel && intelHost ? (
+              {summariesOff ? (
+                <StateChip state="idle" label="SUMMARIES OFF" data-testid="settings-summaries-off" />
+              ) : hasModel && intelHost ? (
                 <EgressChip
                   label={egressFor(intelHost).label}
                   scope={egressFor(intelHost).scope}
@@ -2379,7 +2389,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
       }
       /* ── People: People MCP access (Conductor R7, canvas K7a) ── */
       case "people":
-        return <PeopleAccessModule />;
+        return (
+          <>
+            <OwnerNameGroup />
+            <PeopleAccessModule />
+          </>
+        );
       default:
         return null;
     }

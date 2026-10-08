@@ -535,6 +535,7 @@ def _is_me(
     self_names: Iterable[str],
     personal_names: Iterable[str] = (),
     identified: Iterable[str] = (),
+    known_people: Iterable[str] | None = None,
 ) -> bool:
     """The owner himself holds this row.
 
@@ -550,7 +551,88 @@ def _is_me(
         return True
     if _person_identity(row) or str(row.get("id") or "") in set(identified):
         return False
-    return _is_self(owner, personal_names)
+    if _is_self(owner, personal_names):
+        return True
+    # PHILO-15 B57 (Astra r2 P1): his own FIRST name, exactly, is him: it
+    # never depends on the People store or on the one-edit guard below.
+    if _is_own_first_name(owner, personal_names):
+        return True
+    # PHILO-15 B57 (Astra r1 P1): a one-edit mishearing counts as him ONLY
+    # when no Person on the desk has that exact name. ``known_people`` is
+    # None when the People store could not be read: then nobody can prove
+    # there is no Carol, and the tolerance is off.
+    if known_people is None:
+        return False
+    said = " ".join(str(owner or "").split()).casefold()
+    if said in set(known_people):
+        return False
+    return sounds_like_owner(owner, personal_names)
+
+
+def _is_own_first_name(owner: Any, personal_names: Iterable[str]) -> bool:
+    """A bare one-word owner that IS the first word of his name or an alias."""
+    said = " ".join(str(owner or "").split()).casefold()
+    if not said or " " in said:
+        return False
+    for raw in personal_names:
+        name = " ".join(str(raw or "").split()).casefold()
+        if name and name.split(" ")[0] == said:
+            return True
+    return False
+
+
+#: The shortest name a one-letter mishearing may match (PHILO-15 B57): a
+#: three-letter name is one edit from too many other names.
+_SOUNDS_LIKE_MIN = 4
+
+
+def _within_one_edit(a: str, b: str) -> bool:
+    """True when ``a`` and ``b`` differ by at most one insert, delete or change."""
+    if a == b:
+        return True
+    if abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) > len(b):
+        a, b = b, a
+    i = j = edits = 0
+    while i < len(a) and j < len(b):
+        if a[i] == b[j]:
+            i += 1
+            j += 1
+            continue
+        edits += 1
+        if edits > 1:
+            return False
+        if len(a) == len(b):
+            i += 1
+        j += 1
+    return edits + (len(b) - j) + (len(a) - i) <= 1
+
+
+def sounds_like_owner(owner: Any, personal_names: Iterable[str]) -> bool:
+    """PHILO-15 B57: a bare owner string one letter from his own name is his.
+
+    Speech recognition heard "Karol" as "Carol", so his own action read
+    "OWNER CAROL" and waited on a person who does not exist. The match is
+    case-insensitive and needs at most one edit: the whole name ("Carol
+    Sane" for "Karol Sane"), or a bare first name against the first word of
+    his name or an alias ("Carol" for "Karol"). Names shorter than four
+    letters match exactly only.
+    """
+    said = " ".join(str(owner or "").split()).casefold()
+    if len(said) < _SOUNDS_LIKE_MIN:
+        return False
+    said_words = said.split(" ")
+    for raw in personal_names:
+        name = " ".join(str(raw or "").split()).casefold()
+        if len(name) < _SOUNDS_LIKE_MIN:
+            continue
+        if _within_one_edit(said, name):
+            return True
+        first = name.split(" ")[0]
+        if len(said_words) == 1 and len(first) >= _SOUNDS_LIKE_MIN and _within_one_edit(said, first):
+            return True
+    return False
 
 
 def waits_on_other(
@@ -558,6 +640,7 @@ def waits_on_other(
     self_names: Iterable[str] = SELF_OWNER_NAMES,
     personal_names: Iterable[str] = (),
     identified: Iterable[str] = (),
+    known_people: Iterable[str] | None = None,
 ) -> bool:
     """True when the owner waits on SOMEONE ELSE for this row.
 
@@ -566,7 +649,7 @@ def waits_on_other(
     Room commitment with an owner and a later due date. ``WAITING ON YOUR
     REVIEW`` names no owner and is the owner's own work.
     """
-    return _waiting_on(row) and not _is_me(row, self_names, personal_names, identified)
+    return _waiting_on(row) and not _is_me(row, self_names, personal_names, identified, known_people)
 
 
 def owner_names(extra: Iterable[Any] = ()) -> list[str]:
@@ -746,6 +829,7 @@ def compute_needs_you(
     flights: Iterable[dict[str, Any]] = (),
     self_names: Iterable[str] = SELF_OWNER_NAMES,
     personal_names: Iterable[str] = (),
+    known_people: Iterable[str] | None = None,
     now: datetime | None = None,
     dedup: Callable[[list[dict[str, Any]], datetime], list[dict[str, Any]]] = dedup_items,
 ) -> dict[str, Any]:
@@ -778,12 +862,13 @@ def compute_needs_you(
     personal = [str(n) for n in personal_names]
     # Rows that name a person explicitly: the owner's own name never claims them.
     identified = {str(row.get("id") or "") for row in combined if _person_identity(row)}
+    persons = None if known_people is None else {str(n).strip().casefold() for n in known_people}
 
     def other(row: dict[str, Any]) -> bool:
-        return waits_on_other(row, names, personal, identified)
+        return waits_on_other(row, names, personal, identified, persons)
 
     for row in combined:
-        if _waiting_on(row) and _is_me(row, names, personal, identified):
+        if _waiting_on(row) and _is_me(row, names, personal, identified, persons):
             row["why"] = YOURS
     # A People commitment never merges with another row. A merge would put
     # its text and its record ref inside another row's ``sources``, past the
@@ -880,6 +965,26 @@ def _hub_service(name: str, build: Callable[[], Any]) -> Any:
     from holdspeak.runtime import composition
 
     return build() if composition.installed() is None else composition.service(name, build)
+
+
+def _read_people_names(principal: Any) -> set[str] | None:
+    """Every Person's name on the desk (casefolded), for the B57 tolerance.
+
+    An empty set when this desk has no People store (nobody to protect);
+    ``None`` when the store exists but cannot be read now (locked, key
+    missing, a failed read): then the one-edit tolerance stays off.
+    """
+    try:
+        people = _hub_service("people_service", lambda: None)
+    except Exception:
+        return None
+    if people is None:
+        return set()
+    try:
+        return people.person_names(principal)
+    except Exception as exc:
+        log.warning("needs-you: the People names read failed: %s", exc)
+        return None
 
 
 def _read_door(db: Any, principal: Any) -> dict[str, Any]:
@@ -1173,6 +1278,9 @@ def compose(
     except Exception as exc:
         log.warning("needs-you: the owner names read failed: %s", exc)
     names = owner_names(speaker)
+    # PHILO-15 B57 (Astra r1 P1): the People on the desk, so a one-edit
+    # mishearing never takes a real colleague's work.
+    known_people = _read_people_names(principal)
 
     # PHILO-14 A5: the items agents were handed, so an ask on one is that item.
     flights: list[dict[str, Any]] = []
@@ -1196,6 +1304,7 @@ def compose(
         flights=flights,
         self_names=names,
         personal_names=personal,
+        known_people=known_people,
         now=now,
     )
     answer = dict(aggregate)
@@ -1372,6 +1481,7 @@ __all__ = [
     "decision_items",
     "meeting_decision_asks_elsewhere",
     "owner_names",
+    "sounds_like_owner",
     "SELF_OWNER_NAMES",
     "waits_on_other",
     "door_items",

@@ -289,6 +289,7 @@ def _connections(tmp_path: Path, log: list[list[str]]) -> tuple[OnboardingServic
     connections = ConnectionsService(
         github_adapter=GitHubProviderAdapter(db=db, runner=runner),
         jira_adapter=jira, confluence_adapter=confluence,
+        gh_hosts_file=lambda: home / ".config" / "gh" / "hosts.yml",
     )
     service = OnboardingService(
         connections_service=connections, jira_provider=jira, confluence_provider=confluence,
@@ -324,6 +325,29 @@ def test_detect_runs_no_process_and_lists_every_signed_in_account(tmp_path) -> N
     jira = by_id["jira:alpha.atlassian.net|karol@example.com"]
     assert jira["active"] is True and jira["connected"] is False and jira["egress_host"] == "alpha.atlassian.net"
     assert detected["tools"]["gh"]["installed"] is True
+
+
+def test_b31_first_run_and_connections_read_one_gh_sign_in(tmp_path) -> None:
+    """PHILO-15 B31: before any probe, both faces read SIGNED IN and the same time."""
+    log: list[list[str]] = []
+    service, _db = _connections(tmp_path, log)
+    github = next(t for t in service._connections.list_tools(OWNER)["tools"] if t["provider_id"] == "github")
+    assert github["state"] == "signed_in"  # was never_checked while the first run said SIGNED IN
+    assert github["account"] == {"login": "karolswdev"}
+    # A configured account is no check: no time, its source named (Astra r1).
+    assert github["last_checked_at"] is None and github["checked_age_seconds"] is None
+    assert github["checked_by"] == "gh_config"
+    by_id = {c["id"]: c for c in service.connections_detect(OWNER)["candidates"]}
+    mine = by_id["github:github.com:karolswdev"]
+    assert (mine["state"], mine["checked_at"], mine["checked_by"]) == ("signed_in", None, "gh_config")
+    assert by_id["github:github.com:karoldriven"]["state"] == ""  # not gh's active login
+    assert log == []  # a file read: no gh, no network
+    # After the probe, both read the probe's state and its stored time.
+    service.connections_use(OWNER, {"id": "github:github.com:karolswdev"})
+    github = next(t for t in service._connections.list_tools(OWNER)["tools"] if t["provider_id"] == "github")
+    mine = {c["id"]: c for c in service.connections_detect(OWNER)["candidates"]}["github:github.com:karolswdev"]
+    assert github["state"] == "connected" and "checked_by" not in github
+    assert (mine["state"], mine["checked_at"], mine["checked_by"]) == ("connected", github["last_checked_at"], "probe")
 
 
 def test_use_it_connects_github_through_its_status_probe(tmp_path) -> None:

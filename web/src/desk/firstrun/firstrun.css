@@ -269,3 +269,11 @@
 .firstrun-lan .concierge-add-engine-row {
   padding-left: 0;
 }
+
+/* PHILO-15 B31 (Astra r2): the sign-in words take their own line and wrap
+   inside the card (at 393 "· FROM GH CONFIG" was cut at FROM). */
+.firstrun-signin {
+  flex: 1 1 100%;
+  min-width: 0;
+  max-width: 100%;
+}

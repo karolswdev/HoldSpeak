@@ -346,7 +346,9 @@ export type SettingsHubWire = {
   /** `engineSet`: the group resolves to an engine (its own or the default).
    *  A switch that is on with no engine is not a working path (A.10). */
   voice: { live: boolean; target: string; engineSet?: boolean };
-  meetings: { intelligence: boolean; engineSet?: boolean; auto?: string; host?: string; lastRunAt?: string | null; lastRunS?: number | null };
+  /** PHILO-15 B33: `engineSet` is the summary ROUTE the queue takes (exact,
+   *  group, global default); `summariesOff` the owner's explicit OFF. */
+  meetings: { intelligence: boolean; engineSet?: boolean; summariesOff?: boolean; auto?: string; host?: string; lastRunAt?: string | null; lastRunS?: number | null };
   rhythm: {
     loops: number;
     sweepEveryMinutes?: number;
@@ -393,8 +395,15 @@ export const INTELLIGENCE_AUTO_OPTIONS = [
 
 /** The hub headline: the one fact that most needs him (UX-CANON C). */
 function hubHeadline(hub: SettingsHubWire): { text: string; warning: boolean } {
-  if (!hub.models.defaultSet) return { text: "No default model", warning: true };
+  if (!hub.models.defaultSet && !workHasEngine(hub)) return { text: "No default model", warning: true };
   return { text: "All set", warning: false };
+}
+
+/** PHILO-15 B33: some work runs on an engine now (the summary route, or the
+ *  voice rewrite's effective assignment). With no default, the headline and
+ *  the Assignments row said "no model" while summaries ran on the LAN box. */
+export function workHasEngine(hub: SettingsHubWire): boolean {
+  return hub.meetings?.engineSet === true || hub.voice?.engineSet === true;
 }
 
 /** Format writtenAt (epoch seconds) as HH:MM for the receipt. */
@@ -473,7 +482,7 @@ export function PrefsFace({
           trailing={openVerb("assignments")}
           cells={<>
             {!hub.models.defaultSet
-              ? <StateChip state="warning" label="NO DEFAULT" />
+              ? <StateChip state={workHasEngine(hub) ? "idle" : "warning"} label="NO DEFAULT" />
               : null}
             {hub.models.defaultSet && hub.models.groupsSet > 0
               ? <span className="surface-token" data-chip>{countToken(hub.models.groupsSet, "GROUP SET", "GROUPS SET")}</span>
@@ -529,7 +538,9 @@ export function PrefsFace({
             {/* Inventory 2026-10-03: with the switch on and no engine the row
                 said SET ON beside the headline "No default model". The row
                 names the missing engine, as the Chair does. */}
-            {hub.meetings.intelligence && hub.meetings.engineSet === false
+            {hub.meetings.intelligence && hub.meetings.summariesOff
+              ? <StateChip state="idle" label="SUMMARIES OFF" />
+              : hub.meetings.intelligence && hub.meetings.engineSet === false
               ? <StateChip state="warning" label="SUMMARY · NO ENGINE" />
               : hub.meetings.intelligence
               ? <StateChip state="idle" label={`SUMMARY SET ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`} />

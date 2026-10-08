@@ -49,6 +49,7 @@ export function StateChip({
   label,
   icon,
   wordless = false,
+  wrap = false,
   className,
   "data-testid": dataTestId,
 }: {
@@ -59,6 +60,9 @@ export function StateChip({
    *  primary or a cell), so the lamp draws no word of its own. It still
    *  carries the state word as its accessible name. */
   wordless?: boolean;
+  /** PHILO-15 B31 (Astra r2): a long state may wrap inside a narrow card
+   *  (at 393 "… · FROM GH CONFIG" was cut at FROM). */
+  wrap?: boolean;
   className?: string;
   "data-testid"?: string;
 }) {
@@ -69,6 +73,7 @@ export function StateChip({
     <span
       className={className ? `surface-state-chip ${className}` : "surface-state-chip"}
       data-state={state}
+      data-wrap={wrap ? "" : undefined}
       role="status"
       aria-label={name}
       data-testid={dataTestId}

@@ -191,7 +191,6 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 # `capability:meeting.deferred_analysis`), and said NO ENGINE
                 # after a successful selection (review of #789).
                 for wire_key, capability_id in (
-                    ("meetings", "meeting.deferred_analysis"),
                     ("voice", "speech.rewrite"),
                 ):
                     try:
@@ -200,6 +199,23 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                         group_engine[wire_key] = resolved.get("status") == "assigned"
                     except Exception:
                         pass  # unknown: the face makes no engine claim
+
+            # PHILO-15 B33: the summary engine is the ROUTE the queue takes
+            # (exact, group, global default; OFF first), the same answer
+            # doctor's "Meeting summary: profile …" line reads. It was the
+            # exact-capability resolution plus the legacy config pointer, so
+            # five faces said "no model" while summaries ran on the LAN box.
+            summary_fact: dict[str, Any] = {"engine_set": None, "off": False, "host": None}
+            try:
+                from ....db import get_database
+                from ....services.meeting_route_projection import summary_engine_fact
+
+                summary_fact = summary_engine_fact(
+                    getattr(ctx.inference_assignment_service, "_db", None) or get_database())
+            except Exception:
+                pass
+            if summary_fact.get("engine_set") is not None:
+                group_engine["meetings"] = bool(summary_fact["engine_set"])
 
             # Connections: count provider connections.
             connected = 0
@@ -293,9 +309,10 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 "meetings": {
                     "intelligence": intel_on,
                     "engineSet": group_engine.get("meetings"),
+                    "summariesOff": bool(summary_fact.get("off")),
                     "auto": config.meeting.intelligence_auto,
                     "auto_record": config.meeting.auto_record,
-                    "host": _resolve_meetings_host(config),
+                    "host": summary_fact.get("host") or _resolve_meetings_host(config),
                     "lastRunAt": last_run_at,
                     "lastRunS": last_run_s,
                 },
