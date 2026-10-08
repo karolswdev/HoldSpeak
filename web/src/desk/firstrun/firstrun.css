@@ -224,6 +224,11 @@
   gap: 6px;
 }
 
+.firstrun-tokens[data-stack] {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .firstrun .concierge-found-list .surface-ledger-row[data-wrap] .surface-ledger-primary {
   flex: 0 1 auto;
   min-width: 0;
@@ -254,4 +259,13 @@
   .firstrun .concierge-found-line2 {
     margin-left: 0;
   }
+}
+
+/* PHILO-15 10 (B09): the Concierge's add-engine row on the Local AI card.
+   The card has no lead column, so the row starts at the card's edge. */
+.firstrun-lan {
+  align-self: stretch;
+}
+.firstrun-lan .concierge-add-engine-row {
+  padding-left: 0;
 }

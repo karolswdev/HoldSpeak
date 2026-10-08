@@ -20,6 +20,7 @@ from ..hotkey import HotkeyListener
 from ..profile_key_store import ProfileKeyStoreError, resolve_profile_key
 from ..transcribe import TranscriberError, _resolve_backend
 from ..typer import TextTyper
+from ..doctor import SET_UP_LOCAL_AI, plain
 
 
 @dataclass(frozen=True)
@@ -447,7 +448,7 @@ def _check_meeting_intel_cloud_preflight(
     # HS-201: no legacy cloud probe belongs to ordinary Web Record. This
     # remains a named check so setup and doctor keep their stable shape.
     return DoctorCheck(
-        name="Cloud intel preflight",
+        name="Cloud AI check",
         status="PASS",
         detail="Live analysis is off for Record.",
     )
@@ -466,7 +467,7 @@ def _check_dictation_project_context(config: Config) -> DoctorCheck:
         return DoctorCheck(
             name="Project context",
             status="PASS",
-            detail="dictation pipeline disabled (opt-in)",
+            detail="off (dictation clean-up is disabled; it is optional)",
         )
 
     from ..plugins.dictation.project_root import detect_project_for_cwd
@@ -496,9 +497,8 @@ def _check_dictation_project_context(config: Config) -> DoctorCheck:
         name="Project context",
         status="PASS",
         detail=(
-            f"detected {project['name']} (anchor={project['anchor']}) "
-            f"at {project['root']}"
-            + (" + KB" if "kb" in project else "")
+            f"found {project['name']} at {project['root']} (marker: {project['anchor']})"
+            + (" with a knowledge base" if "kb" in project else "")
         ),
     )
 
@@ -623,7 +623,7 @@ def _check_inference_targets() -> DoctorCheck:
         targets = list_inference_targets(get_database())
     except Exception as exc:
         return DoctorCheck(
-            name="Runs on destinations",
+            name="Where AI runs",
             status="WARN",
             detail=f"destination inventory unavailable ({exc.__class__.__name__})",
             fix="Run `holdspeak doctor` after the database is available.",
@@ -650,19 +650,33 @@ def _check_inference_targets() -> DoctorCheck:
         boundary = boundaries.get(str(target.boundary), str(target.boundary).replace("_", " "))
         return kind if boundary == kind else f"{kind} · {boundary}"
 
+    from ..inference_targets import NOT_SET_UP_REASON
+
+    def head(target: Any) -> str:
+        # PHILO-15 11 (B08): "This device: this device" said the place twice.
+        place = where(target)
+        return target.name if str(target.name).strip().lower() == place else f"{target.name}: {place}"
+
+    def state(target: Any) -> str:
+        if target.ready:
+            return " · ready"
+        if target.readiness_reason == NOT_SET_UP_REASON:
+            return " · not set up yet"
+        return f" · unavailable ({target.readiness_reason})"
+
     unavailable = [target for target in targets if not target.ready]
-    lines = [
-        f"{target.name}: {where(target)}"
-        + (f" · unavailable ({target.readiness_reason})" if not target.ready else " · ready")
-        for target in targets
-    ]
+    lines = [f"{head(target)}{state(target)}" for target in targets]
+    only_not_set_up = bool(unavailable) and all(
+        target.readiness_reason == NOT_SET_UP_REASON for target in unavailable
+    )
     return DoctorCheck(
-        name="Runs on destinations",
+        name="Where AI runs",
         status="WARN" if unavailable else "PASS",
         detail="; ".join(lines),
         fix=(
-            "Choose another Runs on destination, or repair the named key, node, endpoint, or manifest."
-            if unavailable else None
+            None if not unavailable
+            else SET_UP_LOCAL_AI if only_not_set_up
+            else "Open Settings > Models and choose a place that is ready, or fix the key, device or address it names."
         ),
     )
 
@@ -684,15 +698,15 @@ def _check_mesh_edges(config: Config) -> DoctorCheck:
         workers = get_database().mesh_relay.list_workers()
     except Exception as exc:
         return DoctorCheck(
-            name="Mesh edges",
+            name="Other devices",
             status="PASS",
             detail=f"not readable ({exc.__class__.__name__}) — no mesh serving on this hub",
         )
     if not workers:
         return DoctorCheck(
-            name="Mesh edges",
+            name="Other devices",
             status="PASS",
-            detail="no node has ever served this mesh (start one: holdspeak mesh serve)",
+            detail="no other device runs AI for this desk (to add one: `holdspeak mesh serve` on that device)",
         )
     now = local_wall()
     parts: list[str] = []
@@ -700,7 +714,7 @@ def _check_mesh_edges(config: Config) -> DoctorCheck:
         age = int((now - last_seen).total_seconds())
         state = "live" if age <= DEFAULT_LIVENESS_WINDOW_SECONDS else "offline"
         parts.append(f"{node}: {state} ({age}s ago)")
-    return DoctorCheck(name="Mesh edges", status="PASS", detail="; ".join(parts))
+    return DoctorCheck(name="Other devices", status="PASS", detail="; ".join(parts))
 
 
 def _check_dictation_runtime(config: Config) -> DoctorCheck:
@@ -714,9 +728,9 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
     cfg = config.dictation
     if not cfg.pipeline.enabled:
         return DoctorCheck(
-            name="LLM runtime",
+            name="Dictation AI model",
             status="PASS",
-            detail="dictation pipeline disabled (opt-in)",
+            detail="off (dictation clean-up is disabled; it is optional)",
         )
 
     from ..intel.providers import effective_dictation_llm
@@ -734,7 +748,7 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
             else f"endpoint={effective.base_url}"
         )
         return DoctorCheck(
-            name="LLM runtime",
+            name="Dictation AI model",
             status="PASS",
             detail=(
                 f"runs on profile '{effective.profile_name}'; {where}; "
@@ -756,20 +770,22 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
         )
     except RuntimeUnavailableError as exc:
         return DoctorCheck(
-            name="LLM runtime",
+            name="Dictation AI model",
             status="WARN",
-            detail=f"requested={requested!r}; resolution failed: {exc}{profile_note}",
+            detail=f"the {requested} engine is not installed: {exc}{profile_note}",
             fix=f"{profile_fix}{doctor_runtime_install_fix(requested)}",
         )
 
     if resolved == "openai_compatible":
         return DoctorCheck(
-            name="LLM runtime",
+            name="Dictation AI model",
             status="WARN" if effective.reason else "PASS",
             detail=(
-                f"resolved={resolved} ({reason}); endpoint="
-                f"{effective.base_url or 'unset — pick a destination in Settings → Models'}; "
-                f"model={effective.model or 'unset'}{profile_note}"
+                # The wire id stays in the data; `plain()` prints it as
+                # "OpenAI-compatible server".
+                f"uses an openai_compatible ({reason}); address: "
+                f"{effective.base_url or 'not set. Pick a destination in Settings → Models'}; "
+                f"model: {effective.model or 'not set'}{profile_note}"
             ),
             fix=profile_fix or None,
         )
@@ -779,16 +795,16 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
     target = Path(raw).expanduser() if raw else Path("<not set>")
     if not raw or not target.exists():
         return DoctorCheck(
-            name="LLM runtime",
+            name="Dictation AI model",
             status="WARN",
-            detail=f"resolved={resolved} ({reason}); model missing at {target}{profile_note}",
+            detail=f"the model file {target.name} is not on this device yet ({resolved}; {reason}){profile_note}",
             fix=f"{profile_fix}{doctor_model_fix(resolved, target)}",
         )
 
     return DoctorCheck(
-        name="LLM runtime",
+        name="Dictation AI model",
         status="WARN" if effective.reason else "PASS",
-        detail=f"resolved={resolved} ({reason}); model available at {target}{profile_note}",
+        detail=f"the model file {target.name} is on this device ({resolved}; {reason}){profile_note}",
         fix=profile_fix or None,
     )
 
@@ -802,9 +818,9 @@ def _check_dictation_constraint_compile(config: Config) -> DoctorCheck:
     cfg = config.dictation
     if not cfg.pipeline.enabled:
         return DoctorCheck(
-            name="Structured-output compilation",
+            name="Dictation blocks",
             status="PASS",
-            detail="dictation pipeline disabled (opt-in)",
+            detail="off (dictation clean-up is disabled; it is optional)",
         )
 
     from ..plugins.dictation.assembly import DEFAULT_GLOBAL_BLOCKS_PATH
@@ -821,7 +837,7 @@ def _check_dictation_constraint_compile(config: Config) -> DoctorCheck:
         loaded = resolve_blocks(DEFAULT_GLOBAL_BLOCKS_PATH, None)
     except BlockConfigError as exc:
         return DoctorCheck(
-            name="Structured-output compilation",
+            name="Dictation blocks",
             status="WARN",
             detail=f"blocks.yaml failed to load: {exc}",
             fix="Run `holdspeak dictation blocks validate` for the full error.",
@@ -829,9 +845,9 @@ def _check_dictation_constraint_compile(config: Config) -> DoctorCheck:
 
     if not loaded.blocks:
         return DoctorCheck(
-            name="Structured-output compilation",
+            name="Dictation blocks",
             status="PASS",
-            detail="no blocks loaded; nothing to compile",
+            detail="no dictation blocks yet; nothing to check",
         )
 
     try:
@@ -854,16 +870,16 @@ def _check_dictation_constraint_compile(config: Config) -> DoctorCheck:
             to_gbnf(schema)
     except (GrammarCompileError, Exception) as exc:
         return DoctorCheck(
-            name="Structured-output compilation",
+            name="Dictation blocks",
             status="WARN",
             detail=f"{resolved} compile failed: {type(exc).__name__}: {exc}",
             fix="Run `holdspeak dictation blocks validate` to see the offending block.",
         )
 
     return DoctorCheck(
-        name="Structured-output compilation",
+        name="Dictation blocks",
         status="PASS",
-        detail=f"{resolved}: {len(loaded.blocks)} block(s) compiled cleanly",
+        detail=f"{len(loaded.blocks)} block(s) are correct ({resolved})",
     )
 
 
@@ -876,9 +892,9 @@ def _check_dictation_runtime_counters(config: Config) -> DoctorCheck:
     """
     if not config.dictation.pipeline.enabled:
         return DoctorCheck(
-            name="LLM runtime counters",
+            name="Dictation AI use",
             status="PASS",
-            detail="dictation pipeline disabled (opt-in)",
+            detail="off (dictation clean-up is disabled; it is optional)",
         )
 
     from ..plugins.dictation.runtime_counters import (
@@ -889,21 +905,20 @@ def _check_dictation_runtime_counters(config: Config) -> DoctorCheck:
     counters = get_counters()
     session = get_session_status()
     detail = (
-        f"model_loads={counters['model_loads']} "
-        f"classify_calls={counters['classify_calls']} "
-        f"classify_failures={counters['classify_failures']} "
-        f"constrained_retries={counters['constrained_retries']} "
-        f"llm_disabled_for_session={session['llm_disabled_for_session']}"
+        f"{counters['model_loads']} model loads, "
+        f"{counters['classify_calls']} calls, "
+        f"{counters['classify_failures']} failures, "
+        f"{counters['constrained_retries']} retries"
     )
     if session["llm_disabled_for_session"]:
         return DoctorCheck(
-            name="LLM runtime counters",
+            name="Dictation AI use",
             status="WARN",
-            detail=detail + f" — {session['disabled_reason']}",
+            detail=detail + f"; off for this session: {session['disabled_reason']}",
             fix="Restart `holdspeak` to retry. If it keeps tripping, raise `dictation.pipeline.max_total_latency_ms` or `warm_on_start: true`.",
         )
     return DoctorCheck(
-        name="LLM runtime counters",
+        name="Dictation AI use",
         status="PASS",
         detail=detail,
     )
@@ -919,16 +934,16 @@ def _check_mir_routing(config: Config) -> DoctorCheck:
     cfg = config.meeting
     if not cfg.intent_router_enabled:
         return DoctorCheck(
-            name="MIR routing",
+            name="Meeting plugins",
             status="PASS",
-            detail="MIR-01 routing pipeline disabled (opt-in)",
+            detail="off (optional; meeting.intent_router_enabled turns it on)",
         )
 
     try:
         from ..plugins.router import available_profiles
     except Exception as exc:
         return DoctorCheck(
-            name="MIR routing",
+            name="Meeting plugins",
             status="WARN",
             detail=f"router import failed: {type(exc).__name__}: {exc}",
             fix="Inspect holdspeak/plugins/router.py for import errors.",
@@ -942,7 +957,7 @@ def _check_mir_routing(config: Config) -> DoctorCheck:
     routing_profile = effective_routing_profile(cfg)
     if routing_profile not in profiles:
         return DoctorCheck(
-            name="MIR routing",
+            name="Meeting plugins",
             status="WARN",
             detail=(
                 f"routing_profile={routing_profile!r} not in available profiles "
@@ -955,7 +970,7 @@ def _check_mir_routing(config: Config) -> DoctorCheck:
         )
 
     return DoctorCheck(
-        name="MIR routing",
+        name="Meeting plugins",
         status="PASS",
         detail=(
             f"enabled; profile={routing_profile}, "
@@ -981,7 +996,7 @@ def _check_mir_telemetry() -> DoctorCheck:
         host_metrics = PluginHost().get_metrics()
     except Exception as exc:
         return DoctorCheck(
-            name="MIR telemetry",
+            name="Meeting plugin counters",
             status="WARN",
             detail=f"telemetry API failed: {type(exc).__name__}: {exc}",
             fix="Inspect holdspeak/plugins/router.py + host.py for regressions.",
@@ -990,12 +1005,9 @@ def _check_mir_telemetry() -> DoctorCheck:
     router_keys = sorted(router_counters.keys())
     host_keys = sorted(host_metrics.keys())
     return DoctorCheck(
-        name="MIR telemetry",
+        name="Meeting plugin counters",
         status="PASS",
-        detail=(
-            f"router_counters=[{', '.join(router_keys)}]; "
-            f"host_metrics=[{', '.join(host_keys)}]"
-        ),
+        detail=f"ready ({len(router_keys)} routing counters, {len(host_keys)} plugin counters)",
     )
 
 
@@ -1161,7 +1173,7 @@ def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:
         fixes.append("Press Install hooks on the Agents card: it trusts the hooks in Codex")
         unhooked = [a for a in unhooked if a["hooks"] != "untrusted"]
     if unhooked:
-        names = " ".join(a["id"] for a in unhooked)
+        names = " and ".join(a["label"] for a in unhooked)
         agent_flag = f" --agent {unhooked[0]['id']}" if len(unhooked) == 1 else ""
         fixes.append(f"Install the hooks for {names}: `holdspeak agent-hook install{agent_flag}`")
     if any(a["hooks"] == "broken" for a in installed):
@@ -1334,7 +1346,7 @@ def run_doctor_command(args) -> int:
     print("HoldSpeak Doctor")
     print("=" * 15)
     for check in checks:
-        print(f"[{check.status}] {check.name}: {check.detail}")
+        print(f"[{check.status}] {check.name}: {plain(check.detail)}")
 
     passed, warned, failed = _summarize(checks)
     print()
@@ -1344,7 +1356,7 @@ def run_doctor_command(args) -> int:
     if issues:
         print("\nSuggested fixes:")
         for check in issues:
-            print(f"- {check.name}: {check.fix}")
+            print(f"- {check.name}: {plain(check.fix)}")
 
     strict = bool(getattr(args, "strict", False))
     if failed > 0:

@@ -407,3 +407,16 @@ describe("the receipt survives the click that leaves the row (Astra r2 F1)", () 
   });
 });
 
+
+// PHILO-15-09 (Astra r1, MISSED): a same-day Generate keeps the brief's id and
+// makes a new body. The picked preview reads again when its version moves.
+describe("a regenerated brief reads its preview again (PHILO-15-09)", () => {
+  it("a new version under the same ref asks for a new preview", async () => {
+    const v1: DocRef = { ...BRIEF, version: "2026-10-07T10:50:00-06:00" };
+    const view = render(<SendWells doc={v1} />);
+    await pick("Team folder");
+    await waitFor(() => expect(previews).toEqual([REF]));
+    view.rerender(<SendWells doc={{ ...BRIEF, version: "2026-10-07T11:08:00-06:00" }} />);
+    await waitFor(() => expect(previews).toEqual([REF, REF]));
+  });
+});

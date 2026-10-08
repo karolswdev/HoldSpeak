@@ -275,7 +275,7 @@ describe("PHILO-4-01: Generate is always reachable on the Arrival", () => {
     });
     const receipt = await screen.findByTestId("arrival-brief-receipt");
     const receiptText = receipt.textContent;
-    expect(receiptText).toMatch(/^Brief ready · 2 items · /);
+    expect(receiptText).toMatch(/^GENERATED · \d\d:\d\d$/);
     expect(screen.getByTestId("arrival-brief-date").textContent).toBe("SEP 21 – 24 · GENERATED SEP 24 08:02");
     expectHeadVerbs();
 

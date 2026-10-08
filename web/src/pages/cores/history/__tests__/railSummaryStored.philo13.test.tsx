@@ -46,7 +46,9 @@ describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
   it("says SUMMARY STORED, never OFF, when the run status is disabled", () => {
     rail([row("stored", "disabled", true), row("none", "disabled", false)]);
     expect(token("stored")).toBe("SUMMARY STORED");
-    expect(token("none")).toBe("OFF");
+    // PHILO-15 10 (B14): OFF only when summaries ARE off (the row's route
+    // says "summaries off"); otherwise the summary is not run yet.
+    expect(token("none")).toBe("NOT RUN");
   });
 
   it("names the stored fact when no run is active", () => {

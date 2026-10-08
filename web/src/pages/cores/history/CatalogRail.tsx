@@ -16,6 +16,7 @@ import {
   readLastRefusal,
   readPlannedRoute,
   readRunReceipt,
+  routeOff,
   routeReady,
   type PlannedRoute,
   type SummaryRefusal,
@@ -120,6 +121,13 @@ function MeetingStreamRow({
   const token = stateToken(row);
   let displayLabel = state.label;
   let displayTone = state.tone;
+  // PHILO-15 10 (B14): `OFF` only when summaries ARE off. The row's own
+  // planned route is the hub's queue answer (PHILO-15 01, #967): its
+  // reason is "summaries off" exactly when the owner turned them off.
+  // Otherwise the summary is simply not run yet (Import does not run it).
+  if (displayLabel === "OFF" && !routeOff(readPlannedRoute(row))) {
+    displayLabel = "NOT RUN";
+  }
   if (needsYouCount > 0 && !PROCESS_LEADS.has(token.label)) {
     // PHILO-13-03: a meeting's proposed outcomes are narrower than the
     // Desk's one "needs you" number, so the token says what it counts.

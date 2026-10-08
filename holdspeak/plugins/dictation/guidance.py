@@ -209,27 +209,21 @@ def doctor_runtime_install_fix(
 
 
 def doctor_model_fix(backend: str, target: Path) -> str:
-    """Return terminal-facing model guidance for `holdspeak doctor`."""
-    guidance = runtime_guidance(
-        kind="missing_model",
-        requested_backend=backend,
-        resolved_backend=backend,
-        model_path=target,
-    )
-    download = next(
-        (
-            item["command"]
-            for item in guidance["commands"]
-            if item["label"] == "Download a suggested model"
-        ),
-        None,
-    )
-    model_name = (
-        "Qwen3.5-8B-MLX-4bit"
-        if backend == "mlx"
-        else "Qwen3.5-4B-Instruct-Q4_K_M.gguf"
-    )
+    """Return terminal-facing model guidance for `holdspeak doctor`.
+
+    PHILO-15 11 (B08): the hint named a different file
+    (``Qwen3.5-4B-Instruct-Q4_K_M.gguf`` from another repository) than the
+    one that was missing, and sent the owner to ``huggingface-cli`` when the
+    product downloads its own model.  The hint names the missing file and the
+    product's way to get it.
+    """
+    from ...doctor import SET_UP_LOCAL_AI, is_starter_model
+
+    expanded = target.expanduser()
+    if is_starter_model(str(expanded)):
+        # The starter model Set up local AI downloads (its signed artifact).
+        return f"{SET_UP_LOCAL_AI} It downloads {expanded.name}."
     return (
-        "Create the model directory and download a model "
-        f"(e.g. {model_name}): {download}"
+        f"model file missing: {expanded.name}. Put it in {expanded.parent} "
+        f"(a {backend} model), or choose another model in Settings > Models."
     )

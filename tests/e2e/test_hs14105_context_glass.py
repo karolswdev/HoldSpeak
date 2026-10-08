@@ -175,7 +175,7 @@ def test_hs14105_real_context_walk(tmp_path: Path, monkeypatch: pytest.MonkeyPat
             picker.get_by_text("Pinned").wait_for()
             assert picker.get_by_text("Everyday context").is_visible()
             assert picker.get_by_role("button", name="Browse all notes").is_visible()
-            for control in (picker.get_by_role("button", name="Everyday context, 5 notes"),
+            for control in (picker.get_by_role("button", name="Everyday context, 2 notes"),
                             picker.get_by_role("button", name="Browse all notes")):
                 assert control.evaluate("""el => {
                   const r = el.getBoundingClientRect();
@@ -185,10 +185,11 @@ def test_hs14105_real_context_walk(tmp_path: Path, monkeypatch: pytest.MonkeyPat
             if width == 393:
                 assert page.evaluate("document.activeElement?.getAttribute('type') !== 'search'")
             _shot(page, f"hs-141-05-picker-{label}.png")
-            picker.get_by_role("button", name="Everyday context, 5 notes").click()
-            page.get_by_text("Everyday context · 5 notes").wait_for()
-            page.get_by_text("Everyday context · 5 notes").click()
-            for title in ("About me", "Current priorities", "How I like help", "People & vocabulary", "Meeting preferences"):
+            # PHILO-15 11 (B20): the seed's Everyday context holds two notes now.
+            picker.get_by_role("button", name="Everyday context, 2 notes").click()
+            page.get_by_text("Everyday context · 2 notes").wait_for()
+            page.get_by_text("Everyday context · 2 notes").click()
+            for title in ("About me", "Current priorities"):
                 assert context.get_by_text(title, exact=True).is_visible()
             _shot(page, f"hs-141-05-attached-{label}.png")
 
@@ -213,7 +214,7 @@ def test_hs14105_real_context_walk(tmp_path: Path, monkeypatch: pytest.MonkeyPat
                 "continuity": dispatched["continuity"], "prompt": engine.observed[-1]
             }
             page.get_by_text("Who owns ORCHID CLOCK?").wait_for(timeout=20000)
-            page.get_by_text("Used Everyday context · 5 notes").click()
+            page.get_by_text("Used Everyday context · 2 notes").click()
             assert page.get_by_label("Refinement question").get_by_text("About me", exact=True).is_visible()
             _shot(page, f"hs-141-05-used-{label}.png")
             # Drift before the owner answer makes the returned aggregate stale,
@@ -274,7 +275,7 @@ def test_hs14105_real_context_walk(tmp_path: Path, monkeypatch: pytest.MonkeyPat
             assert engine.entered.wait(5)
             detail = context.locator("details.thought-context-chip").first
             if detail.get_attribute("open") is None:
-                context.get_by_text("Everyday context · 5 notes").click()
+                context.get_by_text("Everyday context · 2 notes").click()
             context.get_by_role("button", name="Remove from this Thought").click()
             engine.release.set()
             page.wait_for_timeout(1200)

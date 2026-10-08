@@ -64,11 +64,15 @@ describe("the built-in HoldSpeak folder in the SEND well", () => {
     const row = await screen.findByTestId("destination-row");
     expect(screen.getAllByTestId("destination-row")).toHaveLength(1);
     expect(row.textContent).toContain("HoldSpeak folder");
-    expect(row.textContent).toContain("~/Documents/HoldSpeak/Sent");
+    // PHILO-15 lane 12 (B23): the folder reads by its name; the ~ token is its hover title.
+    expect(row.textContent).toContain("HoldSpeak/Sent");
+    expect(row.textContent).not.toContain("~/");
+    expect(row.querySelector(".send-target")?.getAttribute("title")).toBe("~/Documents/HoldSpeak/Sent");
     expect(row.textContent).toContain("THIS DEVICE");
     expect(screen.queryByTestId("send-none")).toBeNull();
     const preview = await screen.findByTestId("send-preview");
-    expect(preview.textContent).toContain(SENT);
+    expect(preview.textContent).toContain("HoldSpeak/Sent");
+    expect(preview.textContent).not.toContain(SENT);
     await waitFor(() => expect((screen.getByTestId("send-verb") as HTMLButtonElement).disabled).toBe(false));
     expect(previews).toEqual(["holdspeak-folder"]);
   });

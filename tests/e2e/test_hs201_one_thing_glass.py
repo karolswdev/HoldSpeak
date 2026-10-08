@@ -697,19 +697,19 @@ class TestQuietDesk:
 
             # ONE row asks (SETUP). The calendar row is an OFFER beside it
             # and never moves the count (owner's ruling: a desk with no
-            # calendar must not say `1 need you` for ever, tenet 3).
+            # calendar must not say `1 needs you` for ever, tenet 3).
             assert page.locator("[data-testid='needs-row'][data-object-id^='blocker:']").count() == 1
             page.wait_for_function(
                 """() => {
                   const el = document.querySelector("[data-testid='arrival-display']");
-                  return el && el.textContent.trim() === "1 need you";
+                  return el && el.textContent.trim() === "1 needs you";
                 }""",
                 timeout=15_000,
             )
             headline = (
                 page.locator("[data-testid='arrival-display']").text_content() or ""
             ).strip()
-            assert headline == "1 need you", headline
+            assert headline == "1 needs you", headline
             # One all-clear per screen: this screen has none to print.
             assert page.get_by_text("Nothing needs you").count() == 0
 

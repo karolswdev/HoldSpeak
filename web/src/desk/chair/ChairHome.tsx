@@ -42,6 +42,7 @@ import {
   countLabel,
   countToken,
   StringGadget,
+  needYouWords,
 } from "../surface";
 import { openIntelligence } from "../intelligenceNavigation";
 import { calendarOpener, openProjectProposal, refOpener, resolveOwner, type Opener } from "../openObject";
@@ -176,6 +177,8 @@ interface MondayBrief {
   /* PHILO-3-03: the route's own date labels (holdspeak/web/routes/monday_brief.py). */
   period_label?: string | null;
   generated_label?: string | null;
+  /** PHILO-15-09 (B04): `Brief · Wednesday 7 Oct 2026` (the route's). */
+  title?: string | null;
 }
 
 /** PHILO-3-03: why the brief read failed — the status, or no answer at all. */
@@ -382,9 +385,10 @@ export function headlineFor(
   // The Project clause speaks only for the attention list, which is what
   // the Projects are counted over.
   if (count > 0 && projectCount > 1) {
-    return n + " need you across " + String(projectCount) + " projects";
+    return needYouWords(n) + " across " + String(projectCount) + " projects";
   }
-  return n + " need you";
+  // PHILO-15-09 (B11): `1 needs you`.
+  return needYouWords(n);
 }
 
 /** Format NEXT line from the payload. */
@@ -529,6 +533,8 @@ function Arrival() {
 
   // ── meetings ──
   const meetings = useDesk((s) => s.items.meeting);
+  // PHILO-15-09 (B07): what the desk knows for this week.
+  const deskDecisions = useDesk((s) => s.items.decision);
   const meetingDetailKey = useMemo(
     () => [...meetings]
       .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
@@ -1024,6 +1030,7 @@ function Arrival() {
   return (
     <ChairDesk
       screen={<Screen />}
+      titles={{ brief: brief?.title ?? undefined }}
       needs={
         <>
           {/* ── Headline ── */}
@@ -1388,6 +1395,22 @@ function Arrival() {
               <ThoughtsSection thoughts={thoughts} />
             </div>
           ) : null}
+
+          {/* ── PHILO-15-09 (B07): the decisions and the due action items
+              of this week, and the calendar offer. The week is never an
+              empty window. ── */}
+          <WeekDeskSection
+            decisions={deskDecisions ?? []}
+            door={door}
+            calendarConfigured={calendarConfigured}
+            othersShown={
+              (week?.has_calendar === true && week.total > 0) ||
+              calendarEvents.length > 0 ||
+              orphanRecordings.length > 0 ||
+              meetings.length > 0 ||
+              thoughts.length > 0
+            }
+          />
 
           {/* ── Agents: PARKED (PHILO-14 C4). The arrival's AGENTS section
               folded into the Conductor drawer (`desk/conductor/`): the
@@ -2125,6 +2148,129 @@ function NeedsYouRowVerbs({
   }
 
   return null;
+}
+
+/** PHILO-15-09 (B07): the local week, Monday 00:00 to the next Monday. */
+function localWeek(now = new Date()): { start: number; end: number } {
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+  return { start: start.getTime(), end: end.getTime() };
+}
+
+/** A due value as a local instant: a bare date is that local day. */
+function dueTime(due: string | null | undefined): number {
+  const text = String(due ?? "").trim();
+  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (day) return new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])).getTime();
+  const at = wireDate(text);
+  return at ? at.getTime() : NaN;
+}
+
+/** PHILO-15-09 (B07): what the desk knows for this week, beside the
+ *  calendar. The decisions made this week and the action items due by its
+ *  end (an overdue one too); with no calendar, one row offers to connect
+ *  one. A week with nothing says so: never an empty window. */
+function WeekDeskSection({
+  decisions,
+  door,
+  calendarConfigured,
+  othersShown,
+}: {
+  decisions: readonly { id: string; title: string; status: string; createdAt: string }[];
+  door: DoorProjection | null;
+  calendarConfigured: boolean;
+  othersShown: boolean;
+}) {
+  const { start, end } = localWeek();
+  const decided = decisions.filter((d) => {
+    if (d.status === "superseded" || d.status === "deprecated") return false;
+    const at = wireDate(d.createdAt)?.getTime() ?? NaN;
+    return at >= start && at < end;
+  });
+  const seen = new Set<string>();
+  const due: DoorCard[] = [];
+  for (const column of ["overdue", "now", "waiting", "unassigned"]) {
+    for (const card of door?.board?.[column] ?? []) {
+      const at = dueTime(card.due);
+      if (Number.isNaN(at) || at >= end || seen.has(card.id)) continue;
+      seen.add(card.id);
+      due.push(card);
+    }
+  }
+  due.sort((a, b) => dueTime(a.due) - dueTime(b.due));
+  const nothing = !othersShown && decided.length === 0 && due.length === 0;
+  return (
+    <>
+      {!calendarConfigured ? (
+        <p className="arrival-next" data-testid="week-no-calendar">
+          <span className="arrival-no-calendar-token">NO CALENDAR</span>
+          {" "}
+          <Button
+            variant="ghost"
+            dense
+            aria-label="Connect calendar"
+            onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}
+            data-testid="week-connect-calendar"
+          >
+            Connect
+          </Button>
+        </p>
+      ) : nothing ? (
+        <p className="arrival-next" data-testid="week-nothing">
+          <span className="arrival-no-calendar-token">NOTHING THIS WEEK</span>
+        </p>
+      ) : null}
+      {decided.length > 0 ? (
+        <div data-testid="week-decisions">
+          <SurfaceSection label={countLabel("DECISIONS", decided.length)}>
+            <SurfaceLedger count={null} cols="room">
+              {decided.map((d) => (
+                <SurfaceLedgerRow
+                  key={d.id}
+                  primary={String(d.title ?? "").trim() || "Untitled decision"}
+                  cells={
+                    <span className="arrival-thought-state">
+                      {d.status === "proposed" ? "PROPOSED" : "DECIDED"}
+                    </span>
+                  }
+                  onToggle={() => useDesk.getState().openPullout(d.id)}
+                  expands={false}
+                  data-testid="week-decision-row"
+                />
+              ))}
+            </SurfaceLedger>
+          </SurfaceSection>
+        </div>
+      ) : null}
+      {due.length > 0 ? (
+        <div data-testid="week-due">
+          <SurfaceSection label={countLabel("DUE", due.length)}>
+            <SurfaceLedger count={null} cols="room">
+              {due.map((card) => {
+                const at = dueTime(card.due);
+                const late = at < new Date(new Date().setHours(0, 0, 0, 0)).getTime();
+                const open = refOpener(card.open_ref || card.target_ref);
+                return (
+                  <SurfaceLedgerRow
+                    key={card.id}
+                    primary={String(card.title || card.text || "Untitled action")}
+                    cells={
+                      <span className="arrival-thought-state">
+                        {late ? "OVERDUE" : `DUE ${ledgerDate(new Date(at).toISOString())}`}
+                      </span>
+                    }
+                    onToggle={open ? () => open() : undefined}
+                    expands={false}
+                    data-testid="week-due-row"
+                  />
+                );
+              })}
+            </SurfaceLedger>
+          </SurfaceSection>
+        </div>
+      ) : null}
+    </>
+  );
 }
 
 function ThoughtsSection({ thoughts }: { thoughts: UnfinishedThought[] }) {

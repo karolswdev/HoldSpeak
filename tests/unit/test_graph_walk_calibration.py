@@ -292,7 +292,14 @@ def test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires():
     # `set_input_files` (a file given to a native file input).
     assert UI_ACTIONS == {"goto", "reload", "click", "click_role", "fill",
                           "select_option", "press", "wait_for", "focus", "scroll_into_view",
-                          "world_context_menu", "set_input_files"}
+                          "world_context_menu", "set_input_files",
+                          # PHILO-15 11: a DOM element's context door (touch hold / right click).
+                          "long_press"}
+    # PHILO-15 11: a malformed long press blocks by name, before any page is reached.
+    for bad in ({}, {"selector": "#a", "adapter": "ui-touch", "hold_ms": 100}):
+        with pytest.raises(Blocked) as raised:
+            run_step({"kind": "ui", "action": "long_press", **bad}, page=None, hub=None, provenance={})
+        assert "long_press" in str(raised.value) and "nothing was fired" in str(raised.value)
     # PHILO-10-05: a malformed seat blocks by name, before any page is reached.
     for bad in ({"selector": "#a", "block": "middle"}, {"block": "start"}):
         with pytest.raises(Blocked) as raised:

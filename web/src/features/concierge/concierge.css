@@ -475,11 +475,29 @@
   grid-area: verbs;
 }
 
+/* PHILO-15 10 (B27, B10): the receipt now carries the press's facts
+   (USING · <model> · N GROUPS · N LIMITED ...). It wraps inside its own
+   cell; it never runs under Cancel. */
+.desk-next .concierge-footer .surface-footer-receipt {
+  min-width: 0;
+  overflow: hidden;
+}
 .concierge-receipt {
-  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1.35 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted, #9ba2b0);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* PHILO-15 10 (B05): the work an engine cannot do, as whole tokens. */
+.concierge-set-line2.concierge-set-limit {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.concierge-set-limit .concierge-token {
   white-space: nowrap;
 }
 
@@ -578,4 +596,11 @@
 
 .concierge-probe-spacer {
   flex: 1 1 auto;
+}
+
+/* PHILO-15 10 (Astra r1): the caption before a LIMITED group's work names. */
+.concierge-limit-caption {
+  font: 600 12px/1 "JetBrains Mono", monospace;
+  letter-spacing: 0.06em;
+  color: var(--text-faint, #8b93a3);
 }

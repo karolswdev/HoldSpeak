@@ -4,6 +4,7 @@
 // HS-111-07 — the mark menu DERIVES from the one verb registry (its
 // hardcoded verb list was parallel list #2) and rides the WorkMenu
 // portal, so it draws over windows like every chrome transient.
+import { needYouWords } from "../surface/count";
 import "./chrome-menus.css";
 import { useEffect, useState, useRef } from "react";
 import { useTrustWindow } from "./TrustWindow";
@@ -50,7 +51,7 @@ function AttentionBell() {
       className={`desk-bell${attention.open ? " is-open" : ""}`}
       aria-label={
         badge
-          ? `Desk memory: ${badge} need you`
+          ? `Desk memory: ${needYouWords(badge)}`
           : "Desk memory"
       }
       title="Desk memory"

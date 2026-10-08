@@ -1,6 +1,6 @@
 /* First run — the Agents card (the Conductor canvas K1a/K1b/K1c, ratified
  * 2026-10-06). One row per coding agent (Claude Code, Codex) with the lamps
- * INSTALLED / SIGNED IN / HOOKS, a tmux row, and one verb: Install hooks
+ * INSTALLED / SIGNED IN / HOOKS, a tmux row (a TOOL, not counted as an agent), and one verb: Install hooks
  * (THIS DEVICE: the press writes the agents' settings files on this Mac).
  * Done folds the card to its receipt. Not installed: tokens + Copy install
  * per agent, and Check again. */
@@ -123,7 +123,8 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
       lit={lit}
       state={
         installed > 0 ? (
-          <StateChip state="success" label={`${installed} FOUND`} icon="●" />
+          // PHILO-15 11 (B17): count the agents only; tmux is a tool, labelled so.
+          <StateChip state="success" label={`${countToken(installed, "AGENT")} FOUND`} icon="●" />
         ) : step.loaded && !step.unread ? (
           <StateChip state="idle" label="NO AGENT FOUND" />
         ) : null
@@ -149,6 +150,7 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
               primary={<span className="concierge-group-name">tmux</span>}
               cells={
                 <span className="firstrun-agent-cells" data-testid="firstrun-agent-row" data-agent="tmux">
+                  <span className="surface-token" data-chip data-testid="firstrun-tool-token">TOOL</span>
                   {tmux.installed ? (
                     <>
                       <span className="surface-token" data-chip>{versionToken("tmux", tmux.version)}</span>

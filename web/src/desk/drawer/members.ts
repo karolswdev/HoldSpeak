@@ -14,7 +14,7 @@ import type { Items } from "../api";
 import { objectByRef } from "../world";
 import { decisionRecordSourceRef } from "../openObject";
 import { wireDate } from "../surface/format";
-import type { RoomSnapshot } from "../../features/project-room/model";
+import { roomHealthWord, type RoomSnapshot } from "../../features/project-room/model";
 
 /** One object in a drawer: a list row, plus what Get Info and Open need. */
 export interface DrawerMember extends ObjectListRow {
@@ -40,7 +40,7 @@ export interface DrawerHead {
   /** `NOV 5`: the Project's target date, when it has one. */
   target: string | null;
   targetPassed: boolean;
-  /** `ON TRACK` / `AT RISK`, when the Room read its health. */
+  /** `ON TRACK` / `AT RISK` / `NEW`, when the Room read its health. */
   status: string | null;
   statusTone: ObjectTone;
 }
@@ -174,13 +174,14 @@ export interface DrawerReads {
 export function drawerHead(room: RoomSnapshot | null): DrawerHead {
   const needsYou = room?.needsYou.state === "ok" ? room.needsYou.count : 0;
   const target = room?.target.state === "ok" && room.target.targetAt ? room.target : null;
-  const health = room?.health.state === "ok" ? room.health : null;
+  // PHILO-15 lane 12 (B25): an empty Project reads NEW, never ON TRACK.
+  const health = roomHealthWord(room);
   return {
     needsYou,
     target: target ? dayWord(target.targetAt) : null,
     targetPassed: Boolean(target?.passed),
-    status: health ? (health.assessment === "at_risk" ? "AT RISK" : "ON TRACK") : null,
-    statusTone: health?.assessment === "at_risk" ? "fail" : "ok",
+    status: health?.word ?? null,
+    statusTone: health?.tone ?? "ok",
   };
 }
 

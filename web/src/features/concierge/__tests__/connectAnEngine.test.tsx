@@ -441,11 +441,15 @@ describe("the single gesture finishes setup (counsel 1)", () => {
     }
   });
 
-  it("closes the Models window, like ordinary Apply", async () => {
+  // PHILO-15 10 (B10): the window used to close itself with no receipt.
+  // It stays, and the footer says what was set.
+  it("keeps the Models window and shows the receipt", async () => {
     await useTheEngine();
     await waitFor(() =>
-      expect(mocks.closeSurfaceWindow).toHaveBeenCalledWith("surface-concierge"),
+      expect(screen.getByTestId("concierge-receipt").textContent).toContain("SUMMARIES"),
     );
+    expect(screen.getByTestId("concierge-receipt").textContent).toMatch(/^USING · /);
+    expect(mocks.closeSurfaceWindow).not.toHaveBeenCalledWith("surface-concierge");
   });
 });
 
@@ -732,7 +736,7 @@ describe("Add an engine: the optional Key", () => {
       summaryAssignment: assigned(),
     });
     await typeAndCheck("local");
-    expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "local");
+    expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "local", false);
     fireEvent.click(screen.getByTestId("concierge-add-submit"));
     await waitFor(() => expect(mocks.summarySelection).toHaveBeenCalled());
     const [draft, key] = mocks.defineEndpoint.mock.calls[0] as [
@@ -758,7 +762,7 @@ describe("Add an engine: the optional Key", () => {
       summaryAssignment: assigned(),
     });
     await typeAndCheck("");
-    expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "");
+    expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "", false);
     fireEvent.click(screen.getByTestId("concierge-add-submit"));
     await waitFor(() => expect(mocks.summarySelection).toHaveBeenCalled());
     const [draft, key] = mocks.defineEndpoint.mock.calls[0] as [

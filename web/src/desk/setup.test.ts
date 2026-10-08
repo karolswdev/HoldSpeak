@@ -61,7 +61,33 @@ describe("egressBadge agrees with the Trust window", () => {
           ],
         },
       }).text,
-    ).toBe("→ External reach enabled");
+    ).toBe("→ Custom webhook");
+  });
+
+  // PHILO-15 10 (B10): his own LAN box is LAN, not "external reach".
+  it("names the LAN server when the only enabled destination is on this network", () => {
+    expect(
+      egressBadge({
+        trust: {
+          actuators_enabled: true,
+          transcript_egress: "configured",
+          destinations: [
+            { id: "meeting_intel", name: "Meeting summary", operation: "intel",
+              enabled: true, destination: "192.168.1.43", boundary: "lan",
+              data_class: "meeting", authority_basis: "owner",
+              background_ability: "none", revoke_action: "disable" },
+          ],
+        },
+      }).text,
+    ).toBe("→ LAN · 192.168.1.43");
+  });
+
+  it("names a LAN last egress as LAN, without the port", () => {
+    expect(
+      egressBadge({
+        trust: { last_egress: { id: "x", name: "192.168.1.43:8080", receipt: "r" } },
+      }).text,
+    ).toBe("→ LAN · 192.168.1.43");
   });
 });
 

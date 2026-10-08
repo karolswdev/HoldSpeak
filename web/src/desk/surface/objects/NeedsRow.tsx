@@ -36,22 +36,31 @@ export interface NeedsRowProps {
    *  open, so the caller opens the Project's drawer). The caller leaves it
    *  out when the desk holds one Project (UX-CANON A.7). */
   project?: { name: string; onOpen: () => void };
+  /** PHILO-15-09 (B12): what the object is, in one word at the head of
+   *  the fact line (`DECISION`, `ACTION`, `PROPOSAL`, `MEETING`, `AGENT`). */
+  kindWord?: string;
 }
 
-export function NeedsRow({ id, kind, name, fact, factCode, lamp, verbs, sprite, project }: NeedsRowProps) {
+export function NeedsRow({ id, kind, name, fact, factCode, lamp, verbs, sprite, project, kindWord }: NeedsRowProps) {
   const factClass = factCode ? "needs-row-fact is-code" : "needs-row-fact";
   return (
     <li className="needs-row" data-object-id={id} data-kind={kind}>
       <img src={listSprite(sprite ?? objectSprite(kind, id))} alt="" draggable={false} />
       <span className="needs-row-what">
         <span className="needs-row-name">{name}</span>
-        {project ? (
+        {project || kindWord ? (
           // The canvas names the Project on the fact line (README, Phase 14):
-          // here it is the Project's own Button at the line's end.
+          // here it is the Project's own Button at the line's end. The kind
+          // word leads the line (PHILO-15-09).
           <span className="needs-row-factline">
+            {kindWord ? (
+              <span className="surface-token needs-row-kind" data-testid="needs-row-kind">{kindWord}</span>
+            ) : null}
             {fact ? <span className={factClass}>{fact}</span> : null}
-            <ProjectButton name={project.name} onOpen={project.onOpen}
-              className="needs-row-project" data-testid="needs-row-project" />
+            {project ? (
+              <ProjectButton name={project.name} onOpen={project.onOpen}
+                className="needs-row-project" data-testid="needs-row-project" />
+            ) : null}
           </span>
         ) : fact ? <span className={factClass}>{fact}</span> : null}
       </span>

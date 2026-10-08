@@ -266,3 +266,69 @@ describe("FirstRun", () => {
     expect(screen.getByRole("button", { name: "Continue later" })).toBeTruthy();
   });
 });
+
+// PHILO-15 10 (B09): the Local AI card's second choice — the model server
+// he runs on his network, with no chat download. It is the Concierge's own
+// add-engine row. Astra r1 (finding 2): with no Whisper on this device the
+// card keeps the speech download beside it, and the press also sets the
+// Default for AI work.
+describe("FirstRun — Use a server on my network", () => {
+  function lanFakes(speechOnDevice: boolean) {
+    local = status({ landed: speechOnDevice });
+    const base = mocks.apiFetch.getMockImplementation()!;
+    mocks.apiFetch.mockImplementation(async (path: string, init: { method?: string; json?: unknown } = {}) => {
+      if (path === "/api/setup/discover-models") {
+        calls.push({ path, method: "POST", json: init.json });
+        return { ok: true, models: ["qwen3.8-27b"], detail: "Found 1 model.", tools: "yes" };
+      }
+      if (path === "/api/inference/model-library/define-endpoint") {
+        return { provider: { profile_id: "engine-192-168-1-43-8080", profile_revision: 1 } };
+      }
+      if (path === "/api/concierge/summary-selection") {
+        calls.push({ path, method: "POST", json: init.json });
+        return { status: "succeeded", result: { state: "READY" }, summaryAssignment: null, defaultSet: true };
+      }
+      return base(path, init);
+    });
+  }
+
+  async function useTheBox(opened = false) {
+    if (!opened) fireEvent.click(screen.getByTestId("firstrun-lan-verb"));
+    const address = await screen.findByLabelText("Server address");
+    fireEvent.change(address, { target: { value: "http://192.168.1.43:8080/v1" } });
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    expect((await screen.findByTestId("concierge-add-tools")).textContent).toBe("TOOLS");
+    fireEvent.click(screen.getByTestId("concierge-add-submit"));
+    return screen.findByTestId("firstrun-lan-receipt");
+  }
+
+  it("Whisper here: the box finishes the card, and sets the default", async () => {
+    lanFakes(true);
+    render(<FirstRun />);
+    await screen.findByRole("button", { name: /^Set up local AI · / });
+    const receipt = await useTheBox();
+    expect(receipt.textContent).toContain("USING · QWEN3.8-27B · SUMMARIES · DEFAULT SET");
+    expect(calls.find((c) => c.path === "/api/concierge/summary-selection")?.json).toMatchObject({ setDefault: true });
+    expect(calls.find((c) => c.path === "/api/setup/discover-models")?.json).toMatchObject({ check_tools: true });
+    await waitFor(() => expect(screen.getByRole("status", { name: "LAN · 192.168.1.43" })).toBeTruthy());
+    expect(screen.queryByRole("button", { name: /^Set up local AI/ })).toBeNull();
+    expect(screen.queryByTestId("firstrun-speech-verb")).toBeNull();
+  });
+
+  it("no Whisper here: the card keeps the speech download, named and sized", async () => {
+    lanFakes(false);
+    render(<FirstRun />);
+    await screen.findByRole("button", { name: /^Set up local AI · / });
+    fireEvent.click(screen.getByTestId("firstrun-lan-verb"));
+    // Beside the server row: the speech model alone (142 MB in this fake).
+    expect((await screen.findByTestId("firstrun-speech-verb")).textContent).toBe("Set up speech · 142 MB");
+    await useTheBox(true);
+    // The card is not done while speech is missing; the verb stays.
+    const verb = await screen.findByTestId("firstrun-speech-verb");
+    expect(screen.getByRole("status", { name: "WAITS FOR SPEECH" })).toBeTruthy();
+    fireEvent.click(verb);
+    await waitFor(() =>
+      expect(calls.find((c) => c.path === "/api/setup/local-ai" && c.method === "POST")?.json).toEqual({ only: ["whisper"] }),
+    );
+  });
+});

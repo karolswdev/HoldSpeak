@@ -57,11 +57,15 @@ describe("humanSize", () => {
   it("formats KB", () => {
     expect(humanSize(2048)).toBe("2 KB");
   });
+  // PHILO-15 10 (B18): decimal units, as the catalogue states sizes and
+  // as first run says them (one rule for every face).
   it("formats MB", () => {
-    expect(humanSize(532_000_000)).toBe("507 MB");
+    expect(humanSize(532_000_000)).toBe("532 MB");
+    expect(humanSize(146_146_432)).toBe("146 MB");
   });
   it("formats GB", () => {
-    expect(humanSize(26_500_000_000)).toBe("24.7 GB");
+    expect(humanSize(26_500_000_000)).toBe("26.5 GB");
+    expect(humanSize(2_740_937_888)).toBe("2.7 GB");
   });
 });
 

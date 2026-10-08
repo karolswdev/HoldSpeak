@@ -30,7 +30,7 @@ _SEVERITY = {"fail": 3, "warn": 2, "unknown": 1, "pass": 0, "info": 0}
 
 
 def _slug(name: str) -> str:
-    """Stable section id from a doctor check name ("Cloud intel preflight" → ...)."""
+    """Stable section id from a doctor check name ("Cloud AI check" → ...)."""
     s = re.sub(r"[^a-z0-9]+", "-", str(name).strip().lower())
     return s.strip("-") or "check"
 
