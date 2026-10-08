@@ -559,3 +559,80 @@ def test_the_next_mornings_scheduled_brief_carries_last_evening(tmp_path, db, mo
     assert rows["Decision confirmed: Squash merges only on the rehearsal repository"].detail == "Wed 21:14"
     assert rows["Action done: Fix the login timeout"].detail == "Wed 21:40"
     _assert_plain(latest)
+
+
+# ── Astra r2: the never-delete law on the launch file ────────────────
+
+CORRUPT = b'{"launches_schema": 1, "launches": [{"launch_id": "lost-'
+
+
+def _parked(path: Path) -> list[Path]:
+    return sorted(path.parent.glob(f"{path.name}.not-read-*"))
+
+
+def test_a_real_launch_parks_a_corrupt_ledger_byte_for_byte(tmp_path, db, monkeypatch) -> None:
+    """Astra's producer probe: corrupt file -> a real launch -> the parked
+    copy is byte-identical and the new file holds the launch."""
+    import json
+
+    from tests.unit.test_agent_hand import _rig as hand_rig
+
+    rig = hand_rig(tmp_path, db, monkeypatch)
+    path = rig.launches._path
+    path.write_bytes(CORRUPT)
+    try:
+        result = rig.hand.hand(OWNER, "action", "ai_1")
+        assert result["status"] == "launched", result
+        parked = _parked(path)
+        assert len(parked) == 1 and parked[0].read_bytes() == CORRUPT
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        assert [r["launch_id"] for r in doc["launches"]] == [result["launch_id"]]
+    finally:
+        rig.tmux.ended = True
+
+
+def test_a_poll_on_a_loaded_ledger_parks_a_corrupt_file(tmp_path, db, monkeypatch) -> None:
+    """The poll's polled_ns save on an instance that read the file before."""
+    rig = _rig(tmp_path, db, monkeypatch)
+    try:
+        path = rig.launches._path
+        path.write_bytes(CORRUPT)
+        rig.observer.poll_open_prs(OWNER)
+        parked = _parked(path)
+        assert len(parked) == 1 and parked[0].read_bytes() == CORRUPT
+        assert rig.launches.read_all(), "the file is readable again"
+    finally:
+        rig.tmux.ended = True
+
+
+def test_no_park_no_overwrite(tmp_path) -> None:
+    import os
+    import stat
+
+    from holdspeak.delivery.factory_launch import LaunchLedger, LaunchLedgerNotRead
+
+    folder = tmp_path / "ledger"
+    folder.mkdir()
+    path = folder / "agent_launches.json"
+    path.write_bytes(CORRUPT)
+    ledger = LaunchLedger(path)
+    os.chmod(folder, stat.S_IRUSR | stat.S_IXUSR)
+    try:
+        with pytest.raises(LaunchLedgerNotRead, match="could not be parked"):
+            ledger.record({"launch_id": "launch-new"})
+    finally:
+        os.chmod(folder, stat.S_IRWXU)
+    assert path.read_bytes() == CORRUPT and _parked(path) == []
+    with pytest.raises(LaunchLedgerNotRead):
+        ledger.read_all()
+
+
+def test_a_removed_file_clears_the_cached_launches(tmp_path) -> None:
+    from holdspeak.delivery.factory_launch import LaunchLedger
+
+    path = tmp_path / "agent_launches.json"
+    ledger = LaunchLedger(path)
+    ledger.record({"launch_id": "launch-a"})
+    assert [r["launch_id"] for r in ledger.list()] == ["launch-a"]
+    path.unlink()
+    assert ledger.list() == [] and ledger.read_all() == []

@@ -525,7 +525,9 @@ class LaunchLedger:
 
     def _load(self) -> None:
         if not self._path.exists():
+            # Astra r2 (2): a removed file holds no launches; the cache goes.
             self.not_read = None
+            self._records = []
             return
         try:
             raw = json.loads(self._path.read_text(encoding="utf-8"))
@@ -551,7 +553,27 @@ class LaunchLedger:
             raise LaunchLedgerNotRead(self.not_read)
         return [dict(row) for row in self._records]
 
+    def _park_unread(self) -> None:
+        """Astra r2 (1), the never-delete law: before a save replaces a file
+        that could not be read, its exact bytes are parked beside it as
+        ``<name>.not-read-<stamp>``. A park that fails stops the save."""
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        parked = self._path.with_name(f"{self._path.name}.not-read-{stamp}")
+        try:
+            original = self._path.read_bytes()
+            with open(parked, "xb") as handle:
+                handle.write(original)
+        except OSError as exc:
+            raise LaunchLedgerNotRead(
+                f"{self.not_read}; it was not replaced: the copy could not be parked "
+                f"({exc.strerror or type(exc).__name__})"
+            ) from exc
+        log.warning("launch ledger: %s; parked the original at %s", self.not_read, parked.name)
+        self.not_read = None
+
     def _save(self) -> None:
+        if self.not_read and self._path.exists():
+            self._park_unread()
         doc = {
             "launches_schema": LAUNCHES_SCHEMA,
             "launches": self._records[-LAUNCH_LEDGER_MAX_ROWS:],
