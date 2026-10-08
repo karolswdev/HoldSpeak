@@ -372,18 +372,37 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     expect(await screen.findByRole("button", { name: "Ask" })).toBeEnabled();
   });
 
-  it("says one plain reason for a failed ask and offers Try again beside Finish", async () => {
+  // PHILO-15 10 (Astra r2, finding 1): the hub's REAL terminal projection
+  // (refinement_thought_service._terminal_status) carries code, category,
+  // retryable and, for a named failure, a token. It never sends `message`;
+  // this test used to invent one.
+  it("offers Try again beside Finish for a plain failed ask", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
       workspace_state: "named_failure",
       actions: { primary: { kind: "refine" }, state: [{ kind: "refine" }], ambient: ["complete"] },
-      terminal_status: { category: "retryable", code: "engine_busy", retryable: true, message: "The engine was busy." },
+      terminal_status: { category: "retryable", code: "failed", retryable: true },
     }));
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
     expect(await screen.findByRole("button", { name: "Try again" })).toBeEnabled();
-    expect(screen.getByRole("region", { name: "One question" })).toHaveTextContent("The engine was busy.");
     expect(screen.getByRole("button", { name: "Finish" })).toBeEnabled();
     expect(screen.queryByRole("button", { name: "Ask" })).not.toBeInTheDocument();
+  });
+
+  it("names a malformed structured result and the engine it came from", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
+      workspace_state: "named_failure",
+      actions: { primary: { kind: "refine" }, state: [{ kind: "refine" }], ambient: ["complete"] },
+      terminal_status: {
+        category: "retryable", code: "structured_result_unusable", retryable: true,
+        token: "STRUCTURED RESULT · NOT USABLE",
+      },
+    }));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    expect(await screen.findByRole("button", { name: "Try again" })).toBeEnabled();
+    const region = screen.getByRole("region", { name: "One question" });
+    expect(region).toHaveTextContent(/STRUCTURED RESULT · NOT USABLE · \S/);
   });
 
   it("keeps a stale context visible in the Reads line with its repair verb", async () => {

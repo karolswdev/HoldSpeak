@@ -61,6 +61,10 @@ interface ChairWindowsState {
   /** PHILO-14 A1c: the Chair is mounted as the screen of objects (A1), not
    * the parked tiles. Set by ChairDesk; read by the aftercare card. */
   screenMounted: boolean;
+  /** PHILO-15-09 (B16): the Chair window the owner's gesture opened last
+   * (not stored). It stays the front window when the Chair mounts after
+   * the gesture: the Needs-you raise never moves it behind. */
+  opened: string;
 }
 
 // PHILO-13-07 (B2): the closed Chair windows and the phone's window come
@@ -83,6 +87,7 @@ export const useChairWindows = create<ChairWindowsState>(() => ({
       : "",
   captureInRing: storedChair?.phone === "chair:capture",
   screenMounted: false,
+  opened: "",
 }));
 
 // PHILO-13-07 (B2): a closed Chair window stays closed after a reload.
@@ -124,6 +129,9 @@ export function openChairWindow(id: string): void {
     closed: { ...s.closed, [id]: false },
     phone: id,
     captureInRing: s.captureInRing || (compact && id === "chair:capture"),
+    // A mounted Chair raises it below (focusPanel); a Chair that mounts
+    // after the gesture reads it once (ChairDesk).
+    opened: s.screenMounted ? "" : id,
   }));
   if (desk.panelMin.includes(id)) desk.restorePanel(id);
   else useDesk.getState().focusPanel(id);

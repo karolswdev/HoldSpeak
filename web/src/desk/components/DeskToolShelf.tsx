@@ -952,7 +952,8 @@ export function DeskToolShelf() {
                             <span className="desk-deck-badge">{row.badge}</span>
                           ) : null}
                           <span className="desk-deck-kind">{row.kind}</span>
-                          {row.keycap ? <kbd>{row.keycap}</kbd> : null}
+                          {/* PHILO-15 11 (B21): no ⌘ hint on a phone. */}
+                          {row.keycap && !(typeof window !== "undefined" && window.innerWidth <= 720) ? <kbd>{row.keycap}</kbd> : null}
                         </Button>
                       </li>
                     );

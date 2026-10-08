@@ -397,17 +397,17 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-by-viewport",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Desk')",
+          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('New')",
           "at_width": 393,
-          "why": "PHILO-13-17 (C7, Q3): Go is grouped at 393, Chair ▸ Desk ▸ Object ▸ Window ▸; the Desk menu's verbs are one tap in (DeskMenuBar.tsx groupGoForPhone)"
+          "why": "PHILO-15 11 (B21, owner ruling 2026-10-07; supersedes C7 Q3): at 393 Go carries New ▸ (Thought / Meeting / Project / Person); the thought verb is one tap in (DeskMenuBar.tsx phoneGo)"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-by-viewport",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Thought')",
           "at_width": 393,
-          "why": "the same verb from the menu, a touch tap"
+          "why": "the same verb (desk.new-thought) from Go ▸ New, labelled Thought on the phone, a touch tap"
         },
         {
           "kind": "ui",
@@ -671,7 +671,7 @@
       "id": "case.p13.phone.go_desk_menu",
       "job": "j11",
       "edge_ids": [
-        "edge.face.desk_new_thought"
+        "edge.face.desk_new_note"
       ],
       "state_id": "state.desk_presentation.p13_phone_go_grouped",
       "applicability": "applicable",
@@ -771,18 +771,18 @@
         },
         {
           "kind": "ui",
-          "action": "click",
+          "action": "long_press",
           "adapter": "ui-by-viewport",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "why": "393: Go, the phone's one menu door",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you'] .desk-pullout-title",
+          "why": "393: a long press on the window's title opens its window menu (DeskWindow.tsx); PHILO-15 11 (B21) took Desk ▸ out of Go",
           "at_width": 393
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-by-viewport",
-          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Desk')",
-          "why": "393: Go ▸ Desk, the Desk menu as a menu (the panel is replaced, a back row first)",
+          "selector": ".desk-work-menu [role='menuitem'][aria-haspopup='menu']:has-text('Desk')",
+          "why": "393: the window menu's Desk ▸, the Desk menu as a menu (the panel is replaced, a back row first; windowMenuAdapter.tsx WINDOW_MENU_DESK)",
           "at_width": 393
         },
         {
@@ -797,25 +797,25 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')",
-          "why": "the Desk menu's verbs are listed"
+          "selector": ".desk-work-menu [role='menuitem']:has-text('New Note')",
+          "why": "the Desk menu's verbs are listed (New Note at both widths)"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "click",
         "adapter": "ui-by-viewport",
-        "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')",
+        "selector": ".desk-work-menu [role='menuitem']:has-text('New Note')",
         "why": "a Desk menu verb, reached as a menu"
       },
       "expected": {
         "predicate": {
           "kind": "attr_equals",
           "attr": "aria-label",
-          "value": "New thought"
+          "value": "Edit New note"
         },
         "observe_at": ".desk-window-shell.is-front",
-        "words": "at 393 the Desk menu is reachable as a menu: Go ▸ Desk ▸ Write a thought opens a Thought window in front (1440: the Desk menu on the bar). Red on main 2d1d791a: Go is one flat list with no Desk ▸ row (the selector Go ▸ Desk does not exist)."
+        "words": "at 393 the Desk menu is reachable as a menu: a long press on the window's title, then its Desk ▸ New Note opens a note window in front (1440: the Desk menu on the bar). PHILO-15 11 (B21, owner ruling 2026-10-07) re-anchored this from Go ▸ Desk, which the phone Go no longer has."
       },
       "completion_bound_s": 20,
       "viewports": [
@@ -3874,14 +3874,19 @@
       "id": "state.desk_presentation.p13_phone_go_grouped",
       "family": "desk_presentation",
       "values": {
-        "go": "Chair ▸ Desk ▸ Object ▸ Window ▸, then Go's own rows"
+        "go": "the four Chair windows, the Dock's places, the projects, New ▸; Desk ▸ is in each window's own menu"
       },
       "phase1_refs": [],
       "sources": [
         {
           "path": "web/src/desk/components/DeskMenuBar.tsx",
-          "symbol": "export function groupGoForPhone(",
-          "claim": "at 393 Go leads with the four menus as submenus"
+          "symbol": "export function phoneGo(",
+          "claim": "at 393 Go is the Chair windows, the places, the projects and New ▸ (PHILO-15 11)"
+        },
+        {
+          "path": "web/src/desk/windowMenuAdapter.tsx",
+          "symbol": "export const WINDOW_MENU_DESK",
+          "claim": "the window menu carries Desk ▸ (New Note, New Decision, Search, sheet)"
         }
       ],
       "reachable_by": [

@@ -1025,6 +1025,24 @@ def _read_decisions(db: Any, principal: Any) -> list[dict[str, Any]]:
     return out
 
 
+def _read_arming(db: Any) -> list[dict[str, Any]]:
+    """PHILO-15-09 (B11, ONE NUMBER): a scheduled recording about to start.
+
+    The desk draws it as a row of Needs you (the countdown and Cancel), so
+    the one count counts it."""
+    rows = []
+    for rec in db.scheduled_recordings.list_all():
+        if str(getattr(rec, "state", "")) == "arming":
+            rows.append({"scheduleId": str(rec.id), "title": str(rec.title or ""),
+                         "armedAt": getattr(rec, "armed_at", None)})
+    return rows
+
+
+def unread_sources(coverage: Iterable[Any]) -> list[dict[str, Any]]:
+    """PHILO-15-09 (B11): the coverage records the desk draws as rows."""
+    return [row for row in coverage or () if isinstance(row, dict) and row.get("state") != "available"]
+
+
 def _read_coders() -> list[Any]:
     """The coder sessions the agent hooks recorded (``agent_context``).
 
@@ -1235,8 +1253,19 @@ def compose(
         if not (isinstance(row, dict) and row.get("kind") == "coder")
     ]
     answer["coverage"] = coverage + [coder_coverage]
+    # PHILO-15-09 (B11, the A5 ruling: headline = Dock badge = notch =
+    # counted rows): the one number counts every row the desk draws under
+    # the head: the members, each source that could not be read, and a
+    # recording that arms. An agent's ask is folded into its item above.
+    arming: list[dict[str, Any]] = []
+    try:
+        arming = _read_arming(db)
+    except Exception as exc:
+        log.warning("needs-you: the arming read failed: %s", exc)
+    unread = unread_sources(answer["coverage"])
     answer.update({
-        "count": result["count"],
+        "count": result["count"] + len(unread) + len(arming),
+        "arming": arming,
         # What the owner waits on someone else for: listed, marked
         # ``waiting`` on its row, not counted.
         "waitingCount": result["waitingCount"],
@@ -1278,7 +1307,7 @@ def compose(
 
 _MEMBERSHIP_KEYS = (
     "members", "blockers", "failedMeetings", "sourceErrors", "peopleStoreState", "peopleWithheld",
-    "waitingCount", "ownerNames", "projectCounts",
+    "waitingCount", "ownerNames", "projectCounts", "arming",
 )
 
 

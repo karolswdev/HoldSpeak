@@ -6,7 +6,7 @@ import os
 import sqlite3
 import threading
 import uuid
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -186,6 +186,21 @@ class EncryptedPeopleStore:
                     continue
                 results.append(self._record_dict(PeopleRecord(row[0], row[1], row[2], row[3], row[4], payload)))
             return results
+
+    def created_stamps(self, kind: str) -> list[str]:
+        """PHILO-15-09: the creation times of one kind's records.
+
+        Plain metadata only: no payload is read and no key is asked for, so a
+        scheduled read (the 06:00 Brief) never opens the key store.
+        """
+        if not self.path.exists():
+            return []
+        with closing(self._connect()) as conn:
+            rows = conn.execute(
+                "SELECT created_at FROM records WHERE kind=? AND lifecycle != 'archived'",
+                (kind,),
+            ).fetchall()
+        return [str(row[0]) for row in rows]
 
     def replace(self, record_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         existing = self._get_record(record_id)

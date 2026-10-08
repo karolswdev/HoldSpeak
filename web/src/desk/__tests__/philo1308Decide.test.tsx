@@ -105,6 +105,8 @@ describe("PHILO-13-08 New Decision writes nothing before it is named", () => {
     await act(async () => { fireEvent.keyDown(well, { key: "Enter" }); });
     await waitFor(() => expect(hub.posts).toHaveLength(1));
     expect(hub.posts[0].title).toBe("Adopt feature flags");
+    // PHILO-15-09 (B12): the owner's own decision is DECIDED, not to review.
+    expect(hub.posts[0].status).toBe("accepted");
     await waitFor(() => expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("decision_1"));
     expect(usePalette.getState().open).toBe(false);
   });
@@ -134,6 +136,7 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     await act(async () => { fireEvent.keyDown(title, { key: "Enter" }); });
     await waitFor(() => expect(hub.posts).toHaveLength(1));
     const body = hub.posts[0];
+    expect(body.status).toBe("accepted");
     expect(body.title).toBe("Roll back the cache change");
     expect(body.tags).toEqual(["meeting:m-42", "project:proj-1"]);
     expect(String(body.context_markdown)).toContain("Meeting: Checkout latency review · 2026-10-01");

@@ -7,7 +7,7 @@ Two legs:
      LAST chip, the summary line with honest singulars, and Generate.
      The brief detail shows THIS WEEK before SINCE FRIDAY with rows and
      source emblem chips.
-  2. No calendar: the row reads "Monday brief", no THIS WEEK section.
+  2. No calendar: the row reads "Daily brief" (PHILO-15-09: never "Monday"), no THIS WEEK section.
 
 Shots at 1440 + 393:
   rhythm-weekly-brief-1440.png, rhythm-weekly-brief-393.png,
@@ -531,7 +531,7 @@ class TestRhythmWeeklyBrief:
 class TestRhythmMondayBrief:
 
     def test_no_calendar_monday_brief(self, glass_no_calendar):
-        """Without calendar: row reads 'Monday brief', no THIS WEEK section."""
+        """Without calendar: row reads 'Daily brief', no THIS WEEK section."""
         page, errors, _ = glass_no_calendar
 
         _open_rhythm(page)
@@ -543,7 +543,7 @@ class TestRhythmMondayBrief:
 
         primary = brief_row.locator(".surface-ledger-primary, .surface-primary").first
         label_text = primary.text_content().strip() if primary.count() > 0 else ""
-        assert "Monday brief" in label_text, f"Expected 'Monday brief', got: {label_text}"
+        assert "Daily brief" in label_text, f"Expected 'Daily brief', got: {label_text}"
 
         # DAILY token (not WEEKLY)
         cadence_token = page.locator('[data-testid="rhythm-brief-cadence"]')

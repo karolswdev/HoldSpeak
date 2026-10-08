@@ -545,3 +545,22 @@ def test_missing_local_model_path_refuses_initial_and_composite_with_fresh_workb
         finally:
             await coordinator.shutdown()
     asyncio.run(exercise())
+
+
+# PHILO-15 10 (Astra r2, finding 1): a result the engine RETURNED that fails
+# the Thought schema is a named, retryable failure with a face token, not a
+# bare "failed" with no reason.
+def test_a_malformed_structured_result_is_a_named_retryable_failure():
+    assert RefinementThoughtService._terminal_status("structured_result_unusable") == {
+        "code": "structured_result_unusable", "category": "retryable", "retryable": True,
+        "token": "STRUCTURED RESULT · NOT USABLE",
+    }
+
+
+def test_the_runner_disposition_names_the_malformed_result(rig):
+    db, _service, _thought = rig
+    with db._connection() as conn:
+        assert RefinementThoughtService._structured_result_unusable(
+            conn, "op-x", {"route_execution_disposition": "invalid_typed_output"})
+        assert not RefinementThoughtService._structured_result_unusable(
+            conn, "op-x", {"route_execution_disposition": "provider_permanent"})

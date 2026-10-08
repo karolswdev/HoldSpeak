@@ -86,7 +86,7 @@ def test_mark_done_in_one_window_moves_the_other(tmp_path: Path, monkeypatch: py
                 # Window B: Needs you, and the Follow-through board beside it.
                 window_b.goto(f"{url}/?token={TOKEN}", wait_until="load")
                 _normal_chair(window_b)
-                window_b.get_by_role("button", name="Intelligence, 1 need you").click()
+                window_b.get_by_role("button", name="Intelligence, 1 needs you").click()
                 window_b.get_by_role("button", name="Follow-through", exact=True).click()
                 board = window_b.locator(".desk-pullout").filter(
                     has=window_b.get_by_role("button", name="Close Intelligence")).last
@@ -107,7 +107,7 @@ def test_mark_done_in_one_window_moves_the_other(tmp_path: Path, monkeypatch: py
                 expect(card_in_b).to_have_count(0, timeout=FOLLOW_BUDGET_S * 1000)
                 followed_in = time.monotonic() - pressed
                 expect(row_in_b).to_have_count(0, timeout=FOLLOW_BUDGET_S * 1000)
-                expect(window_b.get_by_role("button", name="Intelligence, 1 need you")).to_have_count(0)
+                expect(window_b.get_by_role("button", name="Intelligence, 1 needs you")).to_have_count(0)
 
                 assert navigations == [], f"window B reloaded or reconnected: {navigations}"
                 assert followed_in <= FOLLOW_BUDGET_S, followed_in

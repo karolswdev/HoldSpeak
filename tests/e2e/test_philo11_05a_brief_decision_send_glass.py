@@ -384,7 +384,9 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 ppath = hub_prepared["proof"]["path"]
                 assert Path(ppath).is_file() and Path(ppath).parent == ledger_dir, ppath
                 sent_text = Path(ppath).read_text()
-                assert "Monday Brief" in sent_text, sent_text[:200]
+                # PHILO-15-09 (B04): the Brief's own weekday and date, never "Monday Brief".
+                assert sent_text.startswith("# Brief · "), sent_text[:200]
+                assert "Monday Brief" not in sent_text, sent_text[:200]
                 # The sent bytes carry the readable generated time, as the preview does.
                 gen_line = next(ln for ln in sent_text.splitlines() if ln.startswith("Generated: "))
                 assert re.fullmatch(r"Generated: \d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2}", gen_line), gen_line

@@ -79,8 +79,8 @@ describe("PHILO-6-02 the brief tells one time and counts what its labels say", (
     const receipt = await screen.findByTestId("arrival-brief-receipt");
     const caption = screen.getByTestId("arrival-brief-date");
     const captionTime = caption.textContent?.match(STAMP)?.[0];
-    const receiptTime = receipt.textContent?.match(STAMP)?.[0];
-    expect(receiptTime).toBe(captionTime);
+    // PHILO-15-09: the receipt is `GENERATED · hh:mm`, the caption's time.
+    expect(receipt.textContent).toBe("GENERATED · 20:19");
     expect(captionTime).toBe("SEP 25 20:19");
   });
 
@@ -104,7 +104,7 @@ describe("PHILO-6-02 the brief tells one time and counts what its labels say", (
     const receipt = await screen.findByTestId("arrival-brief-receipt");
     // The snapshot: every row the producer generated, THIS WEEK and the
     // shelved row included. The historical snapshot is not rewritten.
-    expect(receipt.textContent).toContain(`Brief ready · ${snapshot} items`);
+    expect(receipt.textContent).toMatch(/^GENERATED · \d\d:\d\d$/);
     // The head: the hub's one number, the number the bell says.
     const section = screen.getByTestId("arrival-brief");
     await vi.waitFor(() =>

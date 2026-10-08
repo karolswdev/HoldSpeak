@@ -221,7 +221,10 @@ def test_engine_replay_serves_model_discovery_on_loopback(tmp_path: Path) -> Non
              "label": "Recorded", "model": "p11-model"}
     claim = "result_schema:" + process_inference_capability_registry().require(
         "meeting.plugin.decision_capture").output_schema_sha256
-    assert claim not in old_profile_body(draft)["capability_manifest"]["claims"]
+    # PHILO-15 10 (Astra r1, finding 5): the production profile claims the
+    # plugin schemas itself now (the plugin result is checked by the closed
+    # semantic adapter); the harness patch must still leave the claim in.
+    assert claim in old_profile_body(draft)["capability_manifest"]["claims"]
     try:
         digest, provider_url = graph_walk._install_engine_replay(reply_path)
         with urllib.request.urlopen(f"{provider_url}/models", timeout=2) as response:
