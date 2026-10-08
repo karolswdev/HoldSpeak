@@ -267,7 +267,9 @@ class ConnectionsService:
     def _github_file_sign_in(self) -> dict[str, Any] | None:
         """PHILO-15 B31: the active login in gh's ``hosts.yml`` (a file read; no ``gh``, no network).
 
-        The time is the file's own write time: when gh last stored a sign-in.
+        A configured account, not a check: it carries NO check time (Astra r1:
+        the file's write time read as a CHECKED receipt). ``checked_by:
+        gh_config`` names the source; CHECKED hh:mm comes only from a probe.
         github.com wins over other hosts, as the connector's egress host is
         github.com.
         """
@@ -283,10 +285,6 @@ class ConnectionsService:
         if not active:
             return None
         row = next((r for r in active if r["host"] == "github.com"), active[0])
-        try:
-            written = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat()
-        except OSError:
-            written = None
         return {
             "provider_id": "github",
             "state": DISPLAY_SIGNED_IN,
@@ -294,9 +292,9 @@ class ConnectionsService:
             "next_action": _next_action_for_state(DISPLAY_SIGNED_IN, "github"),
             "recovery_hint": None,
             "error_detail": None,
-            "last_checked_at": written,
-            "checked_age_seconds": _age_seconds(written),
-            "checked_by": "gh_file",
+            "last_checked_at": None,
+            "checked_age_seconds": None,
+            "checked_by": "gh_config",
             "egress_host": "github.com",
         }
 

@@ -148,11 +148,27 @@ def test_b57_carol_is_karol_when_speech_misheard_his_name(hub: Hub) -> None:
     assert row["why"] == "WAITING ON CARL" and row["waiting"] is True and carl not in members
 
 
+def test_b57_a_person_named_carol_keeps_her_work(hub: Hub) -> None:
+    """Astra r1 P1: a Person named Carol on the desk, with NO owner alias, is
+    a real colleague: her action is hers, never the owner's by a one-edit
+    match. The Person is made through the real People routes and the item
+    through the real Door producer."""
+    _ok(hub.client.post("/api/people/setup"))
+    _ok(hub.client.post("/api/people/relationships", json={"display_name": "Carol Diaz"}), 201)
+    carol = _owned_by(hub, "Carol")
+    _ok(hub.client.put("/api/settings", json={"owner": {"name": "Karol Sane", "aliases": []}}))
+
+    answer = _ok(hub.client.get("/api/desk/needs-you"))
+    row = _row(answer, carol)
+    assert row["why"] == "WAITING ON CAROL" and row["waiting"] is True, row
+    assert carol not in [member["ref"] for member in answer["members"]]
+
+
 def test_b57_sounds_like_owner_rule() -> None:
     from holdspeak.services.needs_you_membership import sounds_like_owner
 
     names = ["karol sane", "ks"]
-    assert sounds_like_owner("Carol", names)          # first name, one change
+    assert sounds_like_owner("Carol", names)          # first name, one change (no Carol on the desk)
     assert sounds_like_owner("KAROL", names)          # case-insensitive
     assert sounds_like_owner("Karl", names)           # one delete
     assert sounds_like_owner("Carol Sane", names)     # whole name, one change
@@ -160,3 +176,13 @@ def test_b57_sounds_like_owner_rule() -> None:
     assert not sounds_like_owner("Carol Smith", names)  # another surname
     assert not sounds_like_owner("KT", names)         # short names match exactly only
     assert not sounds_like_owner("Carol", [])         # no name set: nobody is him
+
+
+def test_b57_the_tolerance_needs_proof_that_no_carol_exists() -> None:
+    from holdspeak.services.needs_you_membership import SELF_OWNER_NAMES, _is_me
+
+    row = {"id": "a1", "owner": "Carol", "why": "WAITING ON CAROL"}
+    mine = ["karol sane"]
+    assert _is_me(row, SELF_OWNER_NAMES, mine, (), set())                  # no Person named Carol
+    assert not _is_me(row, SELF_OWNER_NAMES, mine, (), {"carol diaz", "carol"})  # Carol is a Person
+    assert not _is_me(row, SELF_OWNER_NAMES, mine, (), None)              # the People store is unreadable

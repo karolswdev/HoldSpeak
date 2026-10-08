@@ -43,7 +43,7 @@ export interface ConnectionTool {
   last_checked_at?: string;
   /** Seconds since that probe, computed by the hub at read time. */
   checked_age_seconds?: number;
-  /** PHILO-15 B31: "gh_file" when the time is gh's own sign-in file write. */
+  /** PHILO-15 B31: "gh_config" when the state is read from gh's config (no check, no time). */
   checked_by?: string;
   egress_host?: string;
   /** Jira: per-(site,email) connection rows. */

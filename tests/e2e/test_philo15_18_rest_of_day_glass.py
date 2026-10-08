@@ -5,8 +5,9 @@ gh, acli, claude and codex are stubs on PATH that are never run (every read
 here is a file read), and the hand runs through the C3 launch rig.
 
 - B31: gh's own ``hosts.yml`` names a login. The first-run Connections card
-  and Settings › Connections read the same entry: SIGNED IN, with gh's time
-  (main: the card said SIGNED IN, Connections said NEVER CHECKED).
+  and Settings › Connections read the same entry: SIGNED IN · karolswdev ·
+  FROM GH CONFIG, with no check time; the footer says NOT CHECKED until a
+  real probe (main: the card said SIGNED IN, Connections said NEVER CHECKED).
 - B34/B35: two ready agents without hooks. With nothing selected the
   Conductor drawer offers Install hooks for each; the press reads
   HOOKS INSTALLED · CLAUDE CODE · hh:mm (main: no verb until a selection,
@@ -24,6 +25,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -122,11 +124,15 @@ class TestOneSignInTruth:
                 github.wait_for(timeout=T)
                 github.scroll_into_view_if_needed()
                 _shot(page, "b31-settings-connections", width)
-                row = github.inner_text().upper()
+                row = " ".join(github.inner_text().upper().split())
+                foot = page.locator(".surface-footer-layout").filter(has_text=re.compile("CHECKED", re.I)).first.inner_text().upper()
 
-                assert "SIGNED IN" in card_text.upper(), card_text
+                assert "SIGNED IN · KAROLSWDEV · FROM GH CONFIG" in " ".join(card_text.upper().split()), card_text
                 assert "NEVER CHECKED" not in row, row
-                assert "SIGNED IN" in row and "KAROLSWDEV" in row, row
+                assert "SIGNED IN · KAROLSWDEV · FROM GH CONFIG" in row, row
+                # A configured account is no check: no CHECKED time anywhere (Astra r1 P2).
+                assert "NOT CHECKED" in foot and not re.search(r"CHECKED\s+\d", foot), foot
+                assert not re.search(r"CHECKED\s+\d", row), row
                 assert not errors, errors
             finally:
                 browser.close()
@@ -456,6 +462,49 @@ class TestTwoLineDrawerLabels:
                 _settle(page)
                 _shot(page, "b40-conductor", width)
                 self._assert_two_lines(page, ".conductor-window", "Codex:")
+                assert not errors, errors
+            finally:
+                browser.close()
+
+
+# ── B33 (Astra r1 P2): OFF is a choice, never a missing model ─────────
+
+
+class TestSummariesOffInSettingsMeetings:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        _ensure_build()
+        server, self.base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        from holdspeak.db import get_database
+        from holdspeak.principals import Principal, PrincipalKind
+        from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+        InferenceAssignmentService(get_database()).set_capability_off(
+            Principal(PrincipalKind.OWNER, "b33-glass"), capability_id="meeting.deferred_analysis")
+        try:
+            yield
+        finally:
+            server.stop()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_settings_meetings_says_summaries_off(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = _page(pw, self.base, width)
+            try:
+                hub = _api(page, "GET", "/api/settings/hub", token=TOKEN)
+                assert hub["meetings"]["summariesOff"] is True and hub["meetings"]["engineSet"] is False, hub
+                page.evaluate("""() => sessionStorage.setItem("hs.desk.staged-surface-open",
+                    JSON.stringify({key: "configure-settings", scope: "meetings"}))""")
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                off = page.get_by_test_id("settings-summaries-off")
+                off.wait_for(timeout=T)
+                off.scroll_into_view_if_needed()
+                _shot(page, "b33-settings-meetings-off", width)
+                assert off.inner_text().split("\n")[-1].strip().upper() == "SUMMARIES OFF"
+                assert page.get_by_test_id("settings-no-model").count() == 0
+                assert page.get_by_test_id("settings-choose-model").count() == 0
                 assert not errors, errors
             finally:
                 browser.close()

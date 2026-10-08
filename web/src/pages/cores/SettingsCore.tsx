@@ -1871,6 +1871,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
         // queue's answer); the host and the default are fallbacks for a hub
         // that sends no route fact.
         const routeEngine = typeof meetingsHub?.engineSet === "boolean" ? meetingsHub.engineSet : null;
+        // Astra r1 P2: the owner's OFF is a choice, never a missing model.
+        const summariesOff = meetingsHub?.summariesOff === true;
         const hasModel = routeEngine !== null
           ? routeEngine
           : Boolean(hubHost) && hubHost !== "THIS DEVICE"
@@ -1968,7 +1970,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 options={INTELLIGENCE_AUTO_OPTIONS}
                 onChange={(next) => update(["meeting", "intelligence_auto"], next)}
               />
-              {hasModel && intelHost ? (
+              {summariesOff ? (
+                <StateChip state="idle" label="SUMMARIES OFF" data-testid="settings-summaries-off" />
+              ) : hasModel && intelHost ? (
                 <EgressChip
                   label={egressFor(intelHost).label}
                   scope={egressFor(intelHost).scope}

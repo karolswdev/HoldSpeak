@@ -31,24 +31,28 @@ const detect = (...agents: ReturnType<typeof agent>[]): AgentsDetect => ({
 
 describe("B36: the default agent is the first KNOWN sign-in", () => {
   it("Codex when Claude Code's sign-in is unknown, naming Claude Code as passed over", () => {
-    expect(pickDefaultAgent(detect(agent("claude", "unknown"), agent("codex", "yes")))).toEqual({ agent: "codex", skipped: "claude" });
+    expect(pickDefaultAgent(detect(agent("claude", "unknown"), agent("codex", "yes"))))
+      .toEqual({ agent: "codex", skipped: "claude", unknown: ["claude"] });
   });
   it("Claude Code when it is signed in, or when nobody's sign-in is known, or with no read", () => {
-    expect(pickDefaultAgent(detect(agent("claude", "yes"), agent("codex", "yes")))).toEqual({ agent: "claude", skipped: null });
-    expect(pickDefaultAgent(detect(agent("claude", "unknown"), agent("codex", "unknown")))).toEqual({ agent: "claude", skipped: null });
-    expect(pickDefaultAgent(null)).toEqual({ agent: "claude", skipped: null });
+    expect(pickDefaultAgent(detect(agent("claude", "yes"), agent("codex", "yes"))))
+      .toEqual({ agent: "claude", skipped: null, unknown: [] });
+    expect(pickDefaultAgent(detect(agent("claude", "unknown"), agent("codex", "unknown"))))
+      .toEqual({ agent: "claude", skipped: null, unknown: ["claude", "codex"] });
+    expect(pickDefaultAgent(null)).toEqual({ agent: "claude", skipped: null, unknown: [] });
   });
   it("Codex with no Claude Code installed says nothing passed over", () => {
-    expect(pickDefaultAgent(detect(agent("claude", "unknown", false), agent("codex", "yes")))).toEqual({ agent: "codex", skipped: null });
+    expect(pickDefaultAgent(detect(agent("claude", "unknown", false), agent("codex", "yes"))))
+      .toEqual({ agent: "codex", skipped: null, unknown: [] });
   });
 });
 
-describe("B31: a gh-file sign-in reads Signed in, with gh's time", () => {
-  it("names when gh stored it, never a check", () => {
+describe("B31: a sign-in read from gh's config names its source and no time", () => {
+  it("never a check, even with a time on the wire", () => {
     const when = new Date(Date.now() - 3 * 3600_000).toISOString();
     expect(chipLabel("signed_in", "github")).toBe("Signed in");
-    expect(stateWords("signed_in", "github", { last_checked_at: when })).toBe("Signed in · gh 3 h ago");
-    expect(stateWords("signed_in", "github", {})).toBe("Signed in");
+    expect(stateWords("signed_in", "github", { last_checked_at: when })).toBe("Signed in · From gh config");
+    expect(stateWords("signed_in", "github", {})).toBe("Signed in · From gh config");
   });
 });
 
@@ -112,7 +116,11 @@ describe("B40: a drawer's icon label is at most two lines, cut in the middle", (
 
 function Probe() {
   const signal = useAftercare();
-  return <span data-testid="probe">{signal ? `${signal.proposalTotal}/${signal.openTotal}` : "none"}</span>;
+  return (
+    <span data-testid="probe">
+      {signal ? `${signal.proposalTotal}/${signal.openTotal}${signal.countUnread ? " unread" : ""}` : "none"}
+    </span>
+  );
 }
 
 describe("B56: the aftercare card's counts are the hub's", () => {
@@ -132,6 +140,20 @@ describe("B56: the aftercare card's counts are the hub's", () => {
     mocks.apiFetch.mockResolvedValueOnce({ proposal_total: 0, open_items: { total: 0 }, decisions: [] });
     await refreshAftercare();
     expect(await screen.findByText("none")).toBeTruthy();
+  });
+
+  it("a null count (the hub could not count) never dismisses: COUNT · NOT READ", async () => {
+    render(<Probe />);
+    publishAftercare(frame);
+    mocks.apiFetch.mockResolvedValueOnce({ proposal_total: null, open_items: { total: 1 }, decisions: [] });
+    await refreshAftercare();
+    expect(screen.getByTestId("probe").textContent).toBe("2/1 unread");
+    mocks.apiFetch.mockResolvedValueOnce({ open_items: { total: 1 }, decisions: [] });
+    await refreshAftercare();
+    expect(screen.getByTestId("probe").textContent).toBe("2/1 unread");
+    mocks.apiFetch.mockResolvedValueOnce({ proposal_total: 2, open_items: { total: 1 }, decisions: [] });
+    await refreshAftercare();
+    expect(await screen.findByText("2/1")).toBeTruthy();
   });
 
   it("an unread answer keeps the card as it was", async () => {

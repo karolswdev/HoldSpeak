@@ -334,10 +334,12 @@ def test_b31_first_run_and_connections_read_one_gh_sign_in(tmp_path) -> None:
     github = next(t for t in service._connections.list_tools(OWNER)["tools"] if t["provider_id"] == "github")
     assert github["state"] == "signed_in"  # was never_checked while the first run said SIGNED IN
     assert github["account"] == {"login": "karolswdev"}
-    assert github["last_checked_at"] and github["checked_by"] == "gh_file"
+    # A configured account is no check: no time, its source named (Astra r1).
+    assert github["last_checked_at"] is None and github["checked_age_seconds"] is None
+    assert github["checked_by"] == "gh_config"
     by_id = {c["id"]: c for c in service.connections_detect(OWNER)["candidates"]}
     mine = by_id["github:github.com:karolswdev"]
-    assert (mine["state"], mine["checked_at"]) == ("signed_in", github["last_checked_at"])
+    assert (mine["state"], mine["checked_at"], mine["checked_by"]) == ("signed_in", None, "gh_config")
     assert by_id["github:github.com:karoldriven"]["state"] == ""  # not gh's active login
     assert log == []  # a file read: no gh, no network
     # After the probe, both read the probe's state and its stored time.

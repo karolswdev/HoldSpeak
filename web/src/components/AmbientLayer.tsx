@@ -245,6 +245,10 @@ function AftercareNote() {
       <span className="signal-eyebrow">Meeting ready</span>
       <strong>{signal.title}</strong>
       {countLine ? <p>{countLine}</p> : null}
+      {/* PHILO-15 B56 (Astra r1): the hub could not count; the card stays. */}
+      {signal.countUnread ? (
+        <span className="surface-token" data-chip data-testid="aftercare-count-unread">COUNT · NOT READ</span>
+      ) : null}
       <div className="button-row">
         {/* PHILO-15 08 (B13): the verb opens the meeting's Review wing,
             where the proposals are; with none, it is not offered. */}

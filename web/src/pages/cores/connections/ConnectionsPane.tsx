@@ -81,13 +81,15 @@ export function checkedAgo(
 export function stateWords(
   state: ConnectionState,
   providerId: string,
-  row: { last_checked_at?: string; checked_age_seconds?: number },
+  row: { last_checked_at?: string; checked_age_seconds?: number; account?: { login?: string } | object },
 ): string {
   const label = chipLabel(state, providerId);
   if (state === "never_checked") return label;
+  // PHILO-15 B31 (Astra r1): a sign-in read from gh's config is no check:
+  // it names its source and carries no time.
+  const login = row.account && "login" in row.account ? row.account.login : undefined;
+  if (state === "signed_in") return [label, login, "From gh config"].filter(Boolean).join(" · ");
   const age = checkedAgo(row.last_checked_at, row.checked_age_seconds);
-  // PHILO-15 B31: a gh-file sign-in names when gh stored it, not a check.
-  if (state === "signed_in") return age ? `${label} · ${age.replace(/^Checked/, "gh")}` : label;
   return age ? `${label} · ${age}` : label;
 }
 
@@ -184,7 +186,7 @@ function GitHubCard({
         <span className="connections-tool-emblem">GH</span>
         <span className="connections-tool-label">GitHub</span>
       </span>
-      {(state === "connected" || state === "signed_in") && tool.account?.login ? (
+      {state === "connected" && tool.account?.login ? (
         <span className="connections-tool-summary">{tool.account.login}</span>
       ) : null}
       <div className="connections-tool-chips">

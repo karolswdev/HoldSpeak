@@ -77,6 +77,15 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
                     <span className="concierge-token">
                       {PROVIDER_TOOL[row.provider]} · {row.account}
                     </span>
+                    {/* PHILO-15 B31: the same words Settings › Connections reads. */}
+                    {row.state === "signed_in" && !row.connected ? (
+                      <span data-testid="firstrun-connection-signin">
+                        <StateChip
+                          state="success"
+                          label={stateWords("signed_in", row.provider, { account: { login: row.account } })}
+                        />
+                      </span>
+                    ) : null}
                     <span className="concierge-cloud-actions">
                       {row.connected ? (
                         <StateChip state="success" label="CONNECTED" icon="●" />

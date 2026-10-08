@@ -46,13 +46,18 @@ const DEFAULT_ORDER: readonly AgentId[] = ["claude", "codex"];
  *  Code, unless its sign-in is unknown and Codex's is known; then Codex,
  *  and `skipped` names Claude Code so the face says why (SIGN-IN UNKNOWN).
  *  With no detect read, or no known sign-in, it stays Claude Code. */
-export function pickDefaultAgent(detect: AgentsDetect | null | undefined): { agent: AgentId; skipped: AgentId | null } {
+export function pickDefaultAgent(
+  detect: AgentsDetect | null | undefined,
+): { agent: AgentId; skipped: AgentId | null; unknown: AgentId[] } {
   const rows = detect?.agents ?? [];
   const row = (id: AgentId) => rows.find((r) => r.id === id);
+  // Astra r1 P2: every installed agent whose sign-in is not known, so the
+  // line warns for the agent it SELECTS too (both unknown → Claude Code).
+  const unknown = DEFAULT_ORDER.filter((id) => row(id)?.installed && row(id)?.signed_in !== "yes");
   const known = DEFAULT_ORDER.find((id) => row(id)?.installed && row(id)?.signed_in === "yes");
-  if (!known || known === DEFAULT_AGENT) return { agent: DEFAULT_AGENT, skipped: null };
+  if (!known || known === DEFAULT_AGENT) return { agent: DEFAULT_AGENT, skipped: null, unknown };
   const passed = row(DEFAULT_AGENT);
-  return { agent: known, skipped: passed?.installed ? DEFAULT_AGENT : null };
+  return { agent: known, skipped: passed?.installed ? DEFAULT_AGENT : null, unknown };
 }
 
 /** The Desk object kinds a brief can carry: the same id on both sides. */

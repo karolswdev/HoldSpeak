@@ -312,6 +312,20 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     const line = await within(drawer()).findByTestId("hand-confirm");
     await within(line).findByText("CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     expect(within(line).queryByTestId("hand-confirm-skipped")).toBeNull();
+    expect(within(line).queryByTestId("hand-confirm-selected-unknown")).toBeNull();
+  });
+
+  it("PHILO-15 B36 (Astra r1): both sign-ins unknown: Claude Code is chosen, and the line says its sign-in is unknown", async () => {
+    const row = (id: string) => ({
+      id, label: id, installed: true, path: `/bin/${id}`, version: "1", hooks: "installed", signed_in: "unknown", ready: true, verb: null,
+    });
+    world.agents = [row("claude"), row("codex")];
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    await within(line).findByText("CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");
+    expect(within(line).queryByTestId("hand-confirm-skipped")).toBeNull();
   });
 
   it("drop on an agent icon hands to that agent's kind (Codex)", async () => {
