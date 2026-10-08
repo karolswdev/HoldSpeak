@@ -133,7 +133,7 @@ the step says so.
 2.5 **Read** a `QUIET UNTIL` row before 08:00 (after #1012).
 - See: a source row `QUIET UNTIL 08:00`. It is not counted in the one Needs number.
 - Why: the Heartbeat sleeps 22:00–08:00. The first check after 08:00 runs at once.
-- Else (before #1012): the same source reads `STALE` and is counted. Wait until 08:00, or press Retry (8.4).
+- Else (before #1012): the same source reads `STALE` and is counted. Wait until 08:00, or press Retry (8.4; a GitHub Retry carries the `GITHUB.COM` badge).
 - Paid: B60 (#1012).
 
 2.6 **Open** The week. At 393: Go ▸ The week.
@@ -296,18 +296,24 @@ the step says so.
 - See (after #1012): a model sentence that repeats a merged PR is dropped. The list chip reads `QWEN3.8-27B · 192.168.1.43:8080 · LAN`.
 - Paid: B52 (#1002), B71 B72 (#1012).
 
-7.3 **Read** what Send will leave out.
-- An `[UNVERIFIED]` claim is left out of the sent text, with its next lines.
-- (after #1012) An unreviewed model sentence is left out the same way.
-- The last line counts them: `<N> claims not checked, kept on the desk.` The stored update keeps every claim.
-- Paid: B53 (#1002), B64 (#1012).
-- Not found: an Accept or Reject verb on a claim in the editor (see §10).
+7.3 **Press** Accept or Reject on each claim row, before Publish (after #1012).
+- Do: press Accept on a sentence that is true. Press Reject on a sentence that is false.
+- See: a row that will not be sent reads `OMITTED`. Every unreviewed model sentence starts as `OMITTED`.
+- See: each press leaves `REVIEWED · hh:mm`. Accept removes `OMITTED`; Reject keeps it.
+- See: a line that you type and save counts as your own reviewed claim.
+- Else: `NOT REVIEWED · <reason>` with Retry means the review did not save. Press Retry.
+- Else (before #1012): there is no Accept or Reject. An `[UNVERIFIED]` claim is left out; model sentences go out as they are.
+- The sent file's last line counts what is left out: `<N> claims not checked, kept on the desk.` The stored update keeps every claim.
+- Paid: B64 (#1012), B53 (#1002).
 
 7.4 **Press** Publish.
 
 7.5 **Press** Send in the Send well.
 - See: the destination `HoldSpeak/Sent` (the path shows on hover), Check, the preview, then `✓ SAVED ~/Documents/HoldSpeak/Sent/<date>-<project>-rev-1-<id>.md`.
-- Else: `✗ REFUSED · NOTHING VERIFIED · NOTHING SENT`. Nothing in the update is verified. A verified `Merged:` row is enough to send.
+- Else: `✗ REFUSED · NOTHING VERIFIED · NOTHING SENT`. No claim in the update is verified. Do one of these, then Publish and Send again:
+  - press Accept on one true sentence (7.3);
+  - type one line of your own and save it (a fresh Project's empty update needs this);
+  - wait for a merge: a verified `Merged:` row is enough to send.
 - Paid: B23 (#989), NOTHING VERIFIED (#1002), B64 (#1012).
 
 7.6 **Open** the sent file. Its shape:
@@ -339,7 +345,7 @@ the step says so.
 
 8.2 **Open** the Brief (2.1).
 - See: yesterday's merged PR, sent update, opened PR, confirmed decision, done action and agent launch, each with its time.
-- Limit: the Brief covers yesterday 17:00 until now (Monday: from Friday 17:00). Work done before 17:00 yesterday is in yesterday's Brief only, after a Generate (§10).
+- Limit: the Brief covers yesterday 17:00 until now (Monday: from Friday 17:00). Work done before 17:00 yesterday is in yesterday's Brief only, after a Generate (B90, §10).
 - The open Brief window updates itself when the hub writes a new Brief, and when you come back to the page.
 - Paid: B58 B59 (#1010).
 
@@ -348,7 +354,9 @@ the step says so.
 - Paid: B74 (#1012).
 
 8.4 **Press** Retry on a source row.
+- See: Retry on a GitHub source carries the `GITHUB.COM` badge (it calls GitHub).
 - See (after #1012): `CHECKED · Meetings · hh:mm`, or `NOT CHECKED · <source> · <reason>`.
+- Else: `NOT CHECKED · <source> · no answer` means the connector did not answer. The source stays as it was. Check gh (0.2), then press Retry again.
 - Else (before #1012): Retry only reloads the list.
 - Paid: B61 (#1012).
 
@@ -404,10 +412,9 @@ From the lanes (not paid):
 - **Credentials** (#1000): the agent's worktree uses your own credentials. It is not a sandbox.
 - **Parked guard notes** (#986): no desk verb restores them.
 
-From the runbook itself (no bounce id yet):
+From the runbook itself:
 
-- **The Brief period**: the second morning's Brief starts at 17:00 yesterday. A day-one meeting, merge or update before 17:00 is not in it.
-- **Claim review**: no Accept or Reject verb on a claim was found in the update editor, on main or in #1012. How you mark a model sentence as reviewed so that it is sent is not known.
+- **B90** (new, lane 22): the second-morning Brief starts at 17:00 the day before (Friday 17:00 on a Monday), so day-one work done before 17:00 is not in it.
 
 Not rehearsed yet (the steps exist; no rehearsal pressed them):
 
