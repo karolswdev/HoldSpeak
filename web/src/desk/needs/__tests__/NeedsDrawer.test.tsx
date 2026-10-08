@@ -396,24 +396,23 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await screen.findByText("1 need you");
     const held = face(row("Codex: reconciliation"));
     expect(held.fact).toBe("psql -h staging-ledger -c 'select… +78 CHARS");
+    expect(held.lamps).toEqual(["CUT · APPROVE IN RAW"]);
     expect(held.verbs).toEqual(["Deny", "Open"]);
     expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
     fireEvent.click(within(row("Codex: reconciliation")).getByText("Open"));
     expect(openCoderSession).toHaveBeenCalledWith("codex:s-recon");
   });
 
-  it("PHILO-15 15 (B44): a long but complete held command is whole, its lines kept, with Approve and the reason", async () => {
-    const body = Array.from({ length: 30 }, (_, n) => `${n + 1}. A line of the contributing file.`).join("\n");
-    const command = `cat > CONTRIBUTING.md <<'EOF'\n${body}\nEOF`;
+  it("PHILO-15 15: a held call says why it waits; a cut one says CUT · APPROVE IN RAW, never Approve", async () => {
+    const head = "cat > /tmp/hs15_long.md <<'EOF'\n1. Rule one of three: always branch from main before mak";
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       if (String(path).startsWith("/api/desk/needs-you")) {
-        const whole = {
+        const cut = {
           ...ITEMS[1], id: "gate:prop-long", ref: "gate:prop-long",
-          // The title is the hub's 200-char excerpt; the row reads `command`.
-          title: `Approve: ${command.slice(0, 190)}…`, command, argsCut: false, argsHidden: 0,
-          holdReason: "UNRESOLVED TARGET · $OUT",
+          title: `Approve: ${head}`, command: head, argsCut: true, argsHidden: 1666,
+          holdReason: "OUTSIDE THE WORKTREE · /tmp/hs15_long.md",
         };
-        return { ...ANSWER, count: 1, items: [whole], failedMeetings: [] } as never;
+        return { ...ANSWER, count: 1, items: [cut], failedMeetings: [] } as never;
       }
       return { upcoming: [], calendar_configured: true } as never;
     });
@@ -421,9 +420,10 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await screen.findByText("1 need you");
     const item = row("Codex: reconciliation");
     const held = face(item);
-    expect(held.fact).toBe(`UNRESOLVED TARGET · $OUT\n${command}`);
+    expect(held.fact).toBe(`OUTSIDE THE WORKTREE · /tmp/hs15_long.md\n${head}… +1666 CHARS`);
     expect(item.querySelector(".needs-row-fact")?.classList.contains("is-code")).toBe(true);
-    expect(held.verbs).toEqual(["Deny", "Approve"]);
+    expect(held.lamps).toEqual(["CUT · APPROVE IN RAW"]);
+    expect(held.verbs).toEqual(["Deny", "Open"]);
   });
 
   it("P1-2: a refused Cancel is named on the row with Retry; a cancel leaves a receipt after the row goes", async () => {

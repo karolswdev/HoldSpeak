@@ -33,7 +33,7 @@ import { wireDate } from "../surface/format";
 export const STALE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export type ConductorRole = "ready" | "live" | "stale";
-export type LiveState = "ask" | "held" | "pr" | "work";
+export type LiveState = "ask" | "held" | "pr" | "work" | "done" | "idle";
 
 export interface ConductorMember extends ObjectListRow {
   role: ConductorRole;
@@ -100,6 +100,10 @@ function liveLamp(state: LiveState, pr: number | null | undefined): { tone: Obje
       return { tone: "ask", label: "HELD" };
     case "pr":
       return { tone: "ok", label: pr ? `PR #${pr}` : "PR OPEN" };
+    case "done":
+      return { tone: "ok", label: "DONE" };
+    case "idle":
+      return { tone: "info", label: "IDLE" };
     default:
       return { tone: "info", label: "WORKS" };
   }
@@ -193,12 +197,14 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
   // The agent that asks comes first (the Agents application's pinned
   // order, kept): asking or held, then the rest, each in the hub's order.
   const sessionRows = liveAgentSessions(reads.sessions);
-  const asking = (row: CoderSessionRow) => agentState(row) === "ask";
+  const asking = (row: CoderSessionRow) => agentState(row) === "ask" && !row.flight?.turnEnd;
   for (const row of [...sessionRows.filter(asking), ...sessionRows.filter((r) => !asking(r))]) {
     liveKeys.add(row.key);
     const flight = row.flight;
     const launchId = flight?.launchId ?? null;
-    const state = sessionState(row);
+    // PHILO-15 15: a turn end the responder read as DONE / IDLE is not an ask.
+    const turned = flight?.turnEnd;
+    const state: LiveState = turned && sessionState(row) === "ask" ? turned : sessionState(row);
     const lamp = liveLamp(state, flight?.pr?.number);
     const raw = (row.raw?.session ?? row.raw ?? {}) as Record<string, unknown>;
     const at = raw.updated_at;

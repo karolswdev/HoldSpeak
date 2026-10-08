@@ -245,7 +245,7 @@ def _wait(session: Optional[Mapping[str, Any]], answers: Any) -> Optional[dict[s
     is in ``answers``); a wait HoldSpeak is still deciding (fresh) reads
     ``DECIDING``, not TO ANSWER; a stale decision goes to the owner."""
     from ..agent_context.models import is_blocked, wait_kind
-    from .agent_responder import ANSWERED, DECIDING, annotate_sessions
+    from .agent_responder import ANSWERED, DECIDING, TURN_STATES, annotate_sessions
     from .needs_you_membership import TO_ANSWER, TO_APPROVE
 
     if session is None or not is_blocked(session):
@@ -255,6 +255,20 @@ def _wait(session: Optional[Mapping[str, Any]], answers: Any) -> Optional[dict[s
     state = answer.get("state")
     if state == ANSWERED:
         return None
+    if state in TURN_STATES:
+        # PHILO-15 15: the agent reported its work done (or stopped with no
+        # question): the lane says DONE / IDLE with its last words; it is
+        # not a wait for the owner (no Needs you row).
+        return {
+            "question": session.get("question"),
+            "kind": str(state).upper(),
+            "wait_kind": state,
+            "turn_end": state,
+            "started": session.get("wait_started_at") or session.get("updated_at"),
+            "wait_id": session.get("wait_id"),
+            "answer_state": state,
+            "draft": None,
+        }
     deciding = state == DECIDING and bool(answer.get("hidden"))
     if answer.get("hidden") and not deciding:
         return None

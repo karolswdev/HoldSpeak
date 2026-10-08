@@ -27,6 +27,7 @@ from holdspeak.services.inference_assignment_service import InferenceAssignmentS
 from tests.unit.test_agent_hand import db  # noqa: F401  (db is a fixture)
 from tests.unit.test_conductor_k5_supervision import (  # noqa: F401  (launched is a fixture)
     KEY,
+    ROUTINE_ANSWER,
     ROUTINE_REPLY,
     _ask,
     _Engine,
@@ -88,7 +89,8 @@ def test_yolo_answers_a_routine_question_on_the_default_alone(launched, tmp_path
     result = responder.decide(KEY)
 
     assert result["outcome"] == ANSWERED, result
-    assert launched.typed[typed_before:][-1][1] == "Yes. Run the tests, then open the pull request."
+    # PHILO-15 15: the desk types it as the desk.
+    assert launched.typed[typed_before:][-1][1] == "The desk: " + ROUTINE_ANSWER
     assert engine.prompts, "the default's engine drafted nothing"
     assert _members(launched, tmp_path) == [] and launched.notified == []
     # The receipt: the answer is in the session's steering record.

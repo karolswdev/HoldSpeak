@@ -187,7 +187,27 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         # PHILO-14 C4: the launch's clocks (the Conductor's stale window).
         "launched_at": record.get("launched_at") or None,
         "ended_at": _ended_at(record, state, session, follow.get("close")),
+        # PHILO-15 15: the responder's word on the current turn end
+        # (``done``: the agent reported its work done; ``idle``: no question).
+        "turn_end": _turn_end(session_key, session) if state in ("waiting", "pr_open") else None,
     }
+
+
+def _turn_end(session_key: str, session: Any) -> Optional[str]:
+    """``done`` / ``idle`` when the responder recorded the session's CURRENT
+    wait as a turn end that is not the owner's; else ``None``."""
+    from .agent_responder import TURN_STATES, AnswerStore
+
+    if not session_key or session is None:
+        return None
+    try:
+        entry = AnswerStore().wait(session_key)
+    except Exception:
+        return None
+    if not entry or entry.get("wait_id") != _field(session, "wait_id"):
+        return None
+    state = str(entry.get("state") or "")
+    return state if state in TURN_STATES else None
 
 
 def _registry(db: Any, sessions: Optional[Iterable[Any]], ledger: Any, now: Optional[datetime]):

@@ -1,14 +1,14 @@
 """PHILO-14 A5, Astra r1 on #935: the producer-backed fences of the Needs-you
 drawer's hub side.
 
-P1-1  A held call the hub cannot show whole. The hook sends the first
-      ARGS_HEAD_CHARS (4000 since PHILO-15 15; was 120) chars of the redacted
-      call (a design limit) and now the length of the redacted COMMAND it shows;
+P1-1  A held call the hub cannot show whole. The hook sends the first 120
+      chars of the redacted call (a design limit: the whole command never
+      leaves the agent) and now the length of the redacted COMMAND it shows;
       ``db.gate.command_view`` (one place, for the drawer, the lane and the
       shade) says the head is cut and how many command characters are
       missing (``argsCut`` / ``argsHidden``). The
       drawer offers Deny and Open on such a row, never Approve. Fenced with a
-      real command past the head through hook -> GateService -> kernel -> gate ->
+      real 198-char command through hook -> GateService -> kernel -> gate ->
       membership.
 P1-3  One object, one count. An agent's ask on the item it was handed is
       part of that item: one member, the ask listed with ``foldedInto``.
@@ -46,21 +46,18 @@ def _gate_rows(rig: Any) -> list[dict[str, Any]]:
 # ── P1-1 ──────────────────────────────────────────────────────────────
 
 
-def test_a_command_past_the_head_is_a_cut_row_that_names_what_is_missing(launched, tmp_path, monkeypatch) -> None:  # noqa: F811
-    # PHILO-15 15: the head is ARGS_HEAD_CHARS (was 120); a command 78 chars
-    # past what the head can show is cut, and the row names what is missing.
+def test_a_198_char_command_is_a_cut_row_that_names_what_is_missing(launched, tmp_path, monkeypatch) -> None:  # noqa: F811
     _mode(tmp_path, monkeypatch, "safe")
     base = "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = "
-    length = ARGS_HEAD_CHARS + 78
-    command = base + "7" * (length - len(base) - 1) + "'"
-    assert len(command) == length, len(command)
+    command = base + "7" * (198 - len(base) - 1) + "'"
+    assert len(command) == 198, len(command)
     held = _call(launched, command)
     assert held.proposal.state == HELD
     canonical = json.dumps({"command": command, "description": "x"}, separators=(",", ":"), sort_keys=True)
     # The length is the REDACTED canonical text's (never the raw call's: the
     # raw length would tell the size of a redacted secret).
     whole = len(json.loads(redact(canonical))["command"])   # the shown command form
-    assert whole == length
+    assert whole == 198
     assert redact_call({"command": command, "description": "x"}).length == whole
     # The hook's body carries the number only (the census holds no tool_input there).
     assert launched.posted[-1]["args_len"] == whole and "tool_input" not in launched.posted[-1]
@@ -69,11 +66,11 @@ def test_a_command_past_the_head_is_a_cut_row_that_names_what_is_missing(launche
     assert held.proposal.operation["args_len"] == whole
     [row] = [r for r in _gate_rows(launched) if r["ref"] == f"gate:{held.proposal.id}"]
     assert row["argsCut"] is True
-    # Counted on the text the owner sees: the head holds the command after
-    # `{"command":"`, so 90 of its chars are unseen.
-    shown = row["command"]
-    assert len(shown) == ARGS_HEAD_CHARS - len('{"command":"')
-    assert row["argsHidden"] == length - len(shown) == 90
+    # Counted on the text the owner sees: the head holds 108 chars of the
+    # command after `{"command":"`, so 90 of its 198 are unseen.
+    shown = row["title"].removeprefix("Approve: ")
+    assert len(shown) == ARGS_HEAD_CHARS - len('{"command":"') == 108
+    assert row["argsHidden"] == 198 - 108 == 90
     # The shade reads the same view (GET /api/gate/proposals): the shown
     # command and the same hidden count.
     from holdspeak.principals import Principal, PrincipalKind
@@ -82,20 +79,7 @@ def test_a_command_past_the_head_is_a_cut_row_that_names_what_is_missing(launche
     assert card["args_cut"] is True and card["args_hidden"] == 90 and command.startswith(card["args_shown"])
     # The row shows the command's own text, never the JSON around it.
     assert row["title"].startswith("Approve: psql -h staging-ledger")
-    assert command.startswith(row["command"])
-
-
-def test_a_long_but_complete_command_is_whole_and_keeps_approve(launched, tmp_path, monkeypatch) -> None:  # noqa: F811
-    """PHILO-15 15 (B44): a 1,200-character here-document is whole on the
-    desk (no cut), so the row offers Approve on exactly what the owner sees."""
-    _mode(tmp_path, monkeypatch, "safe")
-    body = "\n".join(f"{n}. A line of the contributing file, line {n}." for n in range(1, 30))
-    command = f"cat > CONTRIBUTING.md <<'EOF'\n{body}\nEOF"
-    assert 1100 < len(command) < ARGS_HEAD_CHARS
-    held = _call(launched, command)
-    [row] = [r for r in _gate_rows(launched) if r["ref"] == f"gate:{held.proposal.id}"]
-    assert row["argsCut"] is False and row["argsHidden"] == 0
-    assert row["command"] == command  # whole, its lines kept (the title is an excerpt)
+    assert command.startswith(row["title"].removeprefix("Approve: "))
 
 
 def test_a_short_command_is_whole_and_keeps_approve(launched, tmp_path, monkeypatch) -> None:  # noqa: F811
@@ -239,14 +223,14 @@ def test_with_no_ask_a_muted_or_waiting_item_keeps_its_place(hooks, monkeypatch,
 
 def test_the_lane_route_carries_the_cut_view(tmp_path, worktree, monkeypatch) -> None:  # noqa: F811
     """The lane route's `gated[]` (the lane's approval surface) carries the
-    same view for a call past the head the hook sends (the hook's own fields)."""
+    same view for the 198-char call the hook sends (the hook's own fields)."""
     from holdspeak.db import Database
     from tests.unit.test_philo14_c0_launch_lane import _lane
 
     lane_db = Database(tmp_path / "lane.db")
     client = _lane(tmp_path, lane_db, worktree, monkeypatch)
     base = "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = "
-    command = base + "7" * (ARGS_HEAD_CHARS + 78 - len(base) - 1) + "'"
+    command = base + "7" * (198 - len(base) - 1) + "'"
     call = redact_call({"command": command, "description": "x"})
     lane_db.gate.propose(
         proposal_id="toolu_cut", session_key="claude:s1", agent="claude", tool="Bash",
@@ -256,7 +240,6 @@ def test_the_lane_route_carries_the_cut_view(tmp_path, worktree, monkeypatch) ->
     body = client.get("/api/agent/launches/launch_abc/lane").json()
     gated = {g["id"]: g for g in body["gated"]}
     assert gated["toolu_cut"]["args_cut"] is True and gated["toolu_cut"]["args_hidden"] == 90
-    assert command.startswith(gated["toolu_cut"]["args_shown"])
-    assert len(gated["toolu_cut"]["args_shown"]) == ARGS_HEAD_CHARS - len('{"command":"')
+    assert command.startswith(gated["toolu_cut"]["args_shown"]) and len(gated["toolu_cut"]["args_shown"]) == 108
     assert gated["toolu_1"]["args_cut"] is False  # the short call stays whole
 

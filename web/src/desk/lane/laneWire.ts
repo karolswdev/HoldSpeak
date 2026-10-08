@@ -69,6 +69,16 @@ export interface LaneWait {
    * an answer to a wait that is not the current one). */
   wait_id?: string | null;
   draft?: LaneDraft | null;
+  /** PHILO-15 15: `done` (the agent reported its work done) or `idle` (no
+   * question): kind `DONE` / `IDLE`, not a wait for the owner. Lane 14's
+   * B48 field, the same name. */
+  turn_end?: string | null;
+}
+
+/** The turn end the lane says instead of a wait (`DONE`, `IDLE`), or null. */
+export function turnEndWord(wait: LaneWait | null | undefined): "DONE" | "IDLE" | null {
+  const kind = String(wait?.kind ?? "").toUpperCase();
+  return kind === "DONE" || kind === "IDLE" ? kind : null;
 }
 
 /** How the lane may act on its session now (the route's `control`). */
@@ -437,13 +447,15 @@ export function laneEntries(lane: LaneWire, events: readonly LaneEvent[]): LaneE
   }
   const wait = lane.wait;
   if (wait && !isNotRead(wait) && wait.question) {
+    // PHILO-15 15: a done report reads DONE with the agent's last words.
+    const turn = turnEndWord(wait);
     ordered.push({
       id: "asks",
       at: at(wait.started),
       time: wireClock(wait.started),
       kind: "asks",
-      word: "ASKS",
-      tone: "ask",
+      word: turn ?? "ASKS",
+      tone: turn === "DONE" ? "ok" : turn === "IDLE" ? "info" : "ask",
       text: wait.question,
     });
   }
@@ -525,6 +537,7 @@ export function laneStations(lane: LaneWire, events: readonly LaneEvent[]): Stat
   const everHeld = heldCalls(lane).length;
   const wait = lane.wait && !isNotRead(lane.wait) ? lane.wait : null;
   const asking = Boolean(wait && (wait.kind === "TO ANSWER" || wait.kind === "TO APPROVE"));
+  const turn = turnEndWord(wait);
   const merged = Boolean(lane.follow_through?.merged);
   const reached = (on: boolean, tone: ObjectTone = "ok"): Pick<Station, "state" | "tone"> =>
     on ? { state: "reached", tone } : { state: "ahead" };
@@ -544,7 +557,10 @@ export function laneStations(lane: LaneWire, events: readonly LaneEvent[]): Stat
         ? { state: "current" as const, tone: "warn" as const }
         : everHeld > 0 ? { state: "reached" as const, tone: "warn" as const } : { state: "ahead" as const }),
     },
-    { word: "ASKS", sub: asking ? "now" : "—", ...(asking ? { state: "current" as const, tone: "ask" as const } : { state: "ahead" as const }) },
+    turn
+      ? { word: turn, sub: wireClock(wait?.started) || "now", ...(turn === "DONE"
+        ? { state: "reached" as const, tone: "ok" as const } : { state: "current" as const, tone: "info" as const }) }
+      : { word: "ASKS", sub: asking ? "now" : "—", ...(asking ? { state: "current" as const, tone: "ask" as const } : { state: "ahead" as const }) },
     { word: "MERGE", sub: merged ? "merged" : "yours", ...reached(merged) },
   ];
 }

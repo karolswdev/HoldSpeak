@@ -177,6 +177,16 @@ describe("the station track (C-4's borrow)", () => {
     expect(rail).toHaveLength(9);
   });
 
+  it("PHILO-15 15: a done report reads DONE on the station and the rail, with the agent's last words", () => {
+    const lane = fixture({ wait: { question: "PR #413 is open; both tests pass.", kind: "DONE", turn_end: "done",
+      wait_id: "w-9", started: new Date(Date.now() - 60_000).toISOString() } });
+    const by = Object.fromEntries(laneStations(lane, lane.events as never).map((s) => [s.word, s]));
+    expect(by.DONE).toMatchObject({ state: "reached", tone: "ok" });
+    expect(by.ASKS).toBeUndefined();
+    const done = laneEntries(lane, lane.events as never).find((e) => e.word === "DONE");
+    expect(done?.text).toBe("PR #413 is open; both tests pass.");
+  });
+
   it("PHILO-15 15 (B43): a held call's rail entry says why it waits", () => {
     const lane = fixture({
       gated: [{

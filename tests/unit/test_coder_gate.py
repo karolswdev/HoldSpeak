@@ -154,9 +154,7 @@ def test_restart_invalidates_every_held(rig) -> None:
     assert db.gate.get("p2").state == INVALIDATED
 
 
-def test_args_head_bounded_to_the_head_cap(rig) -> None:
-    from holdspeak.db.gate import ARGS_HEAD_CHARS
-
+def test_args_head_bounded_to_120_chars(rig) -> None:
     db, clock = rig
     proposal = db.gate.propose(
         proposal_id="long",
@@ -164,11 +162,11 @@ def test_args_head_bounded_to_the_head_cap(rig) -> None:
         agent="claude",
         tool="Bash",
         args_sha256="d" * 64,
-        args_head="x" * (ARGS_HEAD_CHARS + 500),
+        args_head="x" * 500,
         cwd="/tmp",
         ttl_seconds=10,
     )
-    assert len(proposal.args_head) == ARGS_HEAD_CHARS
+    assert len(proposal.args_head) == 120
 
 
 # -- config + matcher ------------------------------------------------------
@@ -199,12 +197,10 @@ def test_matcher_is_a_double_opt_in(tmp_path) -> None:
 
 
 def test_redaction_hash_and_head() -> None:
-    from holdspeak.coder_gate import ARGS_HEAD_CHARS
-
-    sha, head = redact_args({"command": "rm -rf /tmp/x", "description": "y" * (ARGS_HEAD_CHARS + 300)})
+    sha, head = redact_args({"command": "rm -rf /tmp/x", "description": "y" * 300})
     assert len(sha) == 64
-    assert len(head) <= ARGS_HEAD_CHARS
-    sha2, _ = redact_args({"description": "y" * (ARGS_HEAD_CHARS + 300), "command": "rm -rf /tmp/x"})
+    assert len(head) <= 120
+    sha2, _ = redact_args({"description": "y" * 300, "command": "rm -rf /tmp/x"})
     assert sha == sha2  # canonical ordering
 
 

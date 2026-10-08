@@ -10,8 +10,9 @@ B43  The nine held calls of the rehearsal, read again. The hub log of the
      ``5.3-held-applypatch-1440.png``, ``5.3-needs-held-push-393.png``) and
      the files the agent's PR #1 holds. Every write in the worktree passes;
      the ``/tmp`` probe stays held, with its reason.
-B44  A long but complete command is whole on the hub (the Approve fences
-     are in ``test_philo14_a5_needs_drawer.py``).
+B44  A DESIGN LIMIT (owner ruling on #998): the hub keeps 120 chars; a long
+     held command is CUT and is approved in the pane (Raw); the row says
+     CUT · APPROVE IN RAW. A hold's word leaves only when it is in that head.
 B45  The lane reads a launch's holds by its launch-bound credential.
 B47  The responder answers only a routine question, as the desk, once,
      and never after the agent reported its work done. The six exchanges of
@@ -19,6 +20,7 @@ B47  The responder answers only a routine question, as the desk, once,
 """
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -182,7 +184,8 @@ def test_the_hook_and_the_hub_keep_the_same_head() -> None:
     from holdspeak import coder_gate
     from holdspeak.db import gate
 
-    assert coder_gate.ARGS_HEAD_CHARS == gate.ARGS_HEAD_CHARS == 4000
+    # Owner ruling on #998 (Astra r1): the Phase 14 head stays 120.
+    assert coder_gate.ARGS_HEAD_CHARS == gate.ARGS_HEAD_CHARS == 120
 
 
 # ── B45: the lane reads the launch's holds ───────────────────────────
@@ -225,6 +228,14 @@ SIX = [
 ]
 
 
+BRIEF = (
+    "Add CONTRIBUTING.md.\n"
+    "- Run bash tests/contributing_test.sh before you open the pull request.\n"
+    "- Commit your work, push the branch, and open a pull request."
+)
+REAL_REPLY = '{"verdict": "real", "reason": "a change of scope", "answer": ""}'
+
+
 class _Session:
     def __init__(self, question: str, wait_id: str) -> None:
         self.agent = "codex"
@@ -233,6 +244,9 @@ class _Session:
         self.wait_id = wait_id
         self.state = "awaiting_response"
         self.wait_kind = "answer"
+
+    def to_dict(self) -> dict[str, Any]:
+        return dict(vars(self))
 
 
 class _Rig:
@@ -267,7 +281,7 @@ class _Rig:
             store=ar.AnswerStore(tmp_path / "answers.json"),
             sessions=lambda: [self.session] if self.session else [],
         )
-        self.responder._launch_for = lambda key: {"launch_id": "L1", "brief_text": "Add CONTRIBUTING.md."}
+        self.responder._launch_for = lambda key: {"launch_id": "L1", "brief_text": BRIEF}
 
         def deliver(launch: Any, key: str, agent: str, text: str) -> dict[str, Any]:
             self.typed.append(text)
@@ -277,7 +291,18 @@ class _Rig:
 
     def ask(self, text: str, n: int) -> dict[str, Any]:
         self.session = _Session(text, f"w{n}")
+        self.responder.triage(["codex:s1"])  # the watcher's call: the wait's record
         return self.responder.decide("codex:s1")
+
+    def shown(self) -> bool:
+        """The wait is a Needs you row (membership's own read)."""
+        from holdspeak.services.needs_you_membership import coder_items
+
+        from datetime import datetime, timezone
+
+        session = {**self.session.to_dict(), "awaiting_response": True,
+                   "updated_at": datetime.now(timezone.utc).isoformat()}
+        return bool(coder_items(ar.annotate_sessions([session], store=self.responder._store)))
 
 
 def test_the_six_rehearsal_exchanges_get_no_answer(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -289,19 +314,58 @@ def test_the_six_rehearsal_exchanges_get_no_answer(tmp_path: Path, monkeypatch: 
     reasons = [r["draft"]["reason"] for r in results]
     assert reasons[0].startswith("the agent reports its work done")
     # After the report, nothing is answered again (the sixth is a question).
-    assert ar.message_kind(SIX[5][0]) in ("chitchat", "question")
+    assert ar.message_kind(SIX[5][0]) == "question"
     assert reasons[5].startswith("the agent reported its work done")
     # Each one is a receipt on the session (the lane's answers), as the desk's.
     assert len(rig.receipts) == 6 and {r["outcome"] for r in rig.receipts} == {"answer_drafted"}
+    # Coordinator ruling (the A5 law): a done report is not a Needs you row.
+    # The first five end DONE (hidden, nobody notified); the sixth asks a
+    # question after the report: it goes to the owner, unanswered.
+    assert [r["outcome"] for r in results] == [ar.DONE_TURN] * 5 + [ar.ESCALATED]
+    assert rig.shown() is True
+
+
+def test_a_real_question_after_done_goes_to_the_owner(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    rig = _Rig(tmp_path, monkeypatch, [])
+    assert rig.ask("PR #3 is open and the test passes.", 1)["outcome"] == ar.DONE_TURN
+    asked = rig.ask("CI failed on the lint step. Shall I fix it on this branch?", 2)
+    assert asked["outcome"] == ar.ESCALATED and rig.typed == [] and rig.prompts == []
+    assert rig.shown() is True  # the owner sees a real question
+
+
+def test_a_statement_with_no_question_is_idle_not_the_owners(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    rig = _Rig(tmp_path, monkeypatch, [])
+    assert rig.ask("I created CONTRIBUTING.md.", 1)["outcome"] == ar.IDLE_TURN
+    assert rig.typed == [] and rig.prompts == []
+
+
+def test_the_lane_says_done_with_the_agents_last_words(tmp_path: Path) -> None:
+    from holdspeak.services.launch_lane import _wait
+
+    store = ar.AnswerStore(tmp_path / "answers.json")
+    session = {"agent": "codex", "session_id": "s1", "state": "awaiting_response", "awaiting_response": True,
+               "question": "PR #3 is open; both tests pass.", "wait_id": "w1", "wait_started_at": "2026-10-07T23:30:17Z",
+               "updated_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat()}
+    store.put_wait("codex:s1", {"wait_id": "w1", "state": ar.DONE_TURN, "launch_id": "L1", "at": 1.0})
+    wait = _wait(session, store)
+    assert wait is not None and wait["kind"] == "DONE" and wait["turn_end"] == "done"
+    assert wait["question"] == "PR #3 is open; both tests pass."
+    from holdspeak.services.needs_you_membership import coder_items
+
+    assert coder_items(ar.annotate_sessions([session], store=store)) == []
+    # The same wait as the owner's (escalated) IS a row: the DONE state hides it.
+    store.put_wait("codex:s1", {"wait_id": "w1", "state": ar.ESCALATED, "launch_id": "L1", "at": 1.0})
+    assert len(coder_items(ar.annotate_sessions([session], store=store))) == 1
 
 
 def test_a_routine_question_is_answered_once_as_the_desk(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    reply = '{"verdict": "routine", "reason": "the brief names the test", "answer": "Yes. Run bash tests/contributing_test.sh, as the brief says."}'
+    reply = ('{"verdict": "routine", "reason": "the brief names the test", "answer": '
+             '"Yes. The brief says: \\"Run bash tests/contributing_test.sh before you open the pull request.\\""}')
     rig = _Rig(tmp_path, monkeypatch, [reply, reply])
     question = "Shall I run bash tests/contributing_test.sh before I open the pull request?"
     first = rig.ask(question, 1)
     assert first["outcome"] == ar.ANSWERED
-    assert rig.typed == ["The desk: Yes. Run bash tests/contributing_test.sh, as the brief says."]
+    assert rig.typed == ['The desk: Yes. The brief says: "Run bash tests/contributing_test.sh before you open the pull request."']
     assert [r["outcome"] for r in rig.receipts] == ["auto_answered"]
     # The same question again: no second answer (at most one per question).
     again = rig.ask(question, 2)
@@ -342,7 +406,12 @@ def test_the_desk_voice_is_said_once() -> None:
     ("I created CONTRIBUTING.md.", "statement"),
     ("Goodbye! 👋", "chitchat"),
     ("PR #4 is open and the checks pass.", "done"),
-    ("I opened the pull request. Anything else?", "done"),
+    # Astra r1 on #998: a question first, whatever else the message holds.
+    ("I opened the pull request. Anything else?", "question"),
+    ("Should I mark this task as done once PR #3 is merged?", "question"),
+    ("Hello! What would you like me to work on?", "question"),
+    ("Hi. Should I push the branch now", "question"),
+    ("PR #3 is open but the lint check failed.", "problem"),
 ])
 def test_the_message_kinds(text: str, kind: str) -> None:
     assert ar.message_kind(text) == kind
@@ -351,3 +420,91 @@ def test_the_message_kinds(text: str, kind: str) -> None:
 def test_conductor_doc_names_the_ruling() -> None:
     text = (Path(__file__).resolve().parents[2] / "docs/internal/CONDUCTOR.md").read_text(encoding="utf-8")
     assert "The desk: " in text and "UNRESOLVED TARGET" in text
+
+
+@pytest.mark.parametrize("message, outcome, shown", [
+    # A conditional completion is a question: the model drafts, REAL, the owner sees it.
+    ("Should I mark this task as done once PR #3 is merged?", ar.ESCALATED, True),
+    # A greeting does not swallow the question after it.
+    ("Hi! Should I squash the two commits before the review?", ar.ESCALATED, True),
+    # A failed check beside an open PR is the owner's, never DONE.
+    ("PR #3 is open, but the lint check failed on tests/notes_test.sh.", ar.ESCALATED, True),
+    # A completion report with no question: DONE, not a Needs you row.
+    ("PR #3 is open; both tests pass.", ar.DONE_TURN, False),
+])
+def test_stop_to_responder_to_needs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, message, outcome, shown) -> None:
+    rig = _Rig(tmp_path, monkeypatch, [REAL_REPLY])
+    assert rig.ask(message, 1)["outcome"] == outcome
+    assert rig.typed == [] and rig.shown() is shown
+    # Only a question reached the model; nothing was marked done but a report.
+    assert bool(rig.responder._store.read()["done"]) is (outcome == ar.DONE_TURN)
+
+
+@pytest.mark.parametrize("answer, reason", [
+    ("Yes. Run the tests, then open the pull request.", "the answer gives the agent work"),
+    ("Yes, go ahead and add a CHANGELOG too.", "the answer gives the agent work"),
+    ("Yes. The tests come first.", "the answer quotes no line of the brief"),
+    ('Yes. "The staging box comes first."', "the answer quotes no line of the brief"),
+])
+def test_a_routine_answer_cites_the_brief_and_gives_no_work(answer: str, reason: str) -> None:
+    draft = ar.guard("Shall I run the tests first?", ar.Draft(ar.ROUTINE, "r", answer), BRIEF)
+    assert (draft.verdict, draft.reason) == (ar.REAL, reason)
+    ok = ar.guard("Shall I run the tests first?", ar.Draft(
+        ar.ROUTINE, "r", 'Yes. The brief says: "Run bash tests/contributing_test.sh before you open the pull request."'), BRIEF)
+    assert ok.verdict == ar.ROUTINE
+
+
+# ── Astra r1 on #998: pipelines, folders, targets ────────────────────
+
+@pytest.mark.parametrize("command, rule, reason", [
+    ("tee local.py <<'EOF' | python3\nopen('../outside-pipe', 'w').write('review')\nEOF",
+     "pipe_to_interpreter", "RUNS CODE · python3"),
+    ("cat notes.md | node", "pipe_to_interpreter", "RUNS CODE · node"),
+    ("cat notes.md | env python3", "pipe_to_interpreter", "RUNS CODE · env"),
+    ("cd missing || cat > ../outside <<'EOF'\nx\nEOF", "cd_unresolved", "FOLDER NOT RESOLVED · missing"),
+    ("cd tests | ls", "cd_in_pipeline", "FOLDER NOT RESOLVED · tests"),
+])
+def test_pipelines_and_unresolved_folders_are_held(worktree: Path, command: str, rule: str, reason: str) -> None:
+    verdict = classify_bash(command, cwd=str(worktree), root=str(worktree))
+    assert (verdict.scope, verdict.rule) == (UNPARSED, rule), verdict
+    assert hold_reason(verdict.scope, verdict.rule, verdict.target) == reason
+
+
+def test_in_worktree_heredocs_still_pass_after_a_real_cd(worktree: Path) -> None:
+    command = "cd tests && cat > probe.txt <<'EOF'\nhello\nEOF\napply_patch <<'P'\n*** Begin Patch\n*** Add File: a.txt\n+x\n*** End Patch\nP"
+    assert classify_bash(command, cwd=str(worktree), root=str(worktree)).scope == INSIDE
+
+
+SECRET = "ExampleCredential-k3y9Q"  # an unknown shape: redaction does not know it
+
+
+def _hook_body(command: str, worktree: Path) -> dict[str, Any]:
+    """One real PreToolUse arrival through ``run_hook``; the body it posts."""
+    from holdspeak.coder_gate import GateConfig, run_hook
+
+    posted: list[dict[str, Any]] = []
+
+    def post(url: str, body: dict, timeout: float):
+        posted.append(body)
+        return 200, {"state": "approved"}
+
+    run_hook(
+        {"session_id": "s", "tool_name": "Bash", "tool_use_id": "t1", "tool_input": {"command": command},
+         "cwd": str(worktree)},
+        config=GateConfig(armed=True, repos={str(worktree): ["Bash"]}, armed_paths=[str(worktree)]),
+        http_post=post, http_get=lambda url, timeout: (200, {"state": "approved"}), agent_credential="x",
+    )
+    return posted[-1]
+
+
+@pytest.mark.parametrize("command", [
+    # The word that decides is past the 120-char head.
+    "echo " + "pad " * 40 + f"> /tmp/{SECRET}.txt",
+    # An expanding heredoc: the literal in front of ``$`` never leaves.
+    f"cat > notes.md <<EOF\nsk-{SECRET}$SUFFIX\nEOF",
+])
+def test_a_secret_never_rides_the_target(worktree: Path, command: str) -> None:
+    body = _hook_body(command, worktree)
+    verdict = body["classification"]
+    assert SECRET not in json.dumps(verdict), "the verdict never carries it"
+    assert SECRET not in hold_reason(verdict["scope"], verdict["rule"], verdict["target"])

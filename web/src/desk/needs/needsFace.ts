@@ -219,13 +219,13 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   if (source === "gate") {
     const key = String(item.sessionKey ?? "");
     const agent = key.split(":", 1)[0] || "agent";
-    // PHILO-15 15 (B44): the whole command the hub keeps (the title is an
+    // The command the hub keeps (its 120-char head; the title is an
     // excerpt); an older hub sends the title alone.
     const head = String(item.command || "") || title.replace(/^Approve:\s*/, "");
     const cut = Boolean(item.argsCut);
     const hidden = Number(item.argsHidden ?? 0);
-    // The hub keeps a head of the call (a design limit): a cut command says
-    // so, and how much is missing. A complete one is whole, and Approve is on it.
+    // The hub keeps the first 120 chars of the call (a design limit): a cut
+    // command says so, and how much is missing.
     const shown = cut ? `${head}… ${hidden > 0 ? `+${hidden} CHARS` : "CUT"}` : head;
     const reason = String(item.holdReason ?? "").trim();
     const command = reason ? `${reason}\n${shown}` : shown;
@@ -236,7 +236,9 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       name: agentRowName(agent, sessionName(key, ctx.sessions, ctx.flights, project)),
       fact: command,
       factCode: true,
-      lamp: { label: "HELD CALL", tone: "ask" },
+      // PHILO-15 15: the hub keeps 120 chars (Phase 14 law): a cut call is
+      // approved in the pane (Raw), and the row says so.
+      lamp: { label: cut ? "CUT · APPROVE IN RAW" : "HELD CALL", tone: "ask" },
       group: "agents",
       verbs: cut
         ? { kind: "gate-cut", proposalId, sessionKey: key }

@@ -36,6 +36,9 @@ export interface AgentFlight {
   mergedAt: string | null;
   /** PHILO-14 C2: the launch, the agent's lane window opens on it. */
   launchId: string | null;
+  /** PHILO-15 15: the current turn end is not the owner's: `done` (the agent
+   * reported its work done) or `idle` (no question). */
+  turnEnd?: "done" | "idle" | null;
 }
 
 export interface CoderSessionRow {
@@ -77,6 +80,7 @@ export function fromWireFlight(body: any): AgentFlight {
     sessionCleanup: body?.session_cleanup ? String(body.session_cleanup) : null,
     mergedAt: body?.merged_at ? String(body.merged_at) : null,
     launchId: body?.launch_id ? String(body.launch_id) : null,
+    turnEnd: body?.turn_end === "done" || body?.turn_end === "idle" ? body.turn_end : null,
   };
 }
 

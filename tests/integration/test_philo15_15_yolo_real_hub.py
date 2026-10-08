@@ -89,3 +89,36 @@ def test_a_heredoc_in_the_worktree_passes_and_a_tmp_write_waits_with_its_reason(
     proposal = _proposal(hub, "toolu_tmp")
     assert proposal["operation"]["tool_call"]["scope"] == "outside"
     assert proposal["hold_reason"] == "OUTSIDE THE WORKTREE · /tmp/hs_write_probe.txt"
+
+
+def test_a_heredoc_pipe_and_an_unresolved_cd_wait_with_their_reasons(hub: RealHub) -> None:
+    """Astra r1 on #998: both escapes, through the real hook and hub."""
+    pipe = "tee local.py <<'EOF' | python3\nopen('../outside-pipe', 'w').write('review')\nEOF"
+    assert "expired" in (_hook(hub, pipe, "toolu_pipe", ttl=2.0).deny or "")
+    assert _proposal(hub, "toolu_pipe")["hold_reason"] == "RUNS CODE · python3"
+    cd = "cd missing || cat > ../outside <<'EOF'\nx\nEOF"
+    assert "expired" in (_hook(hub, cd, "toolu_cd", ttl=2.0).deny or "")
+    assert _proposal(hub, "toolu_cd")["hold_reason"] == "FOLDER NOT RESOLVED · missing"
+    assert not (hub.worktree.parent / "outside-pipe").exists()
+    assert not (hub.worktree.parent / "outside").exists()
+
+
+def test_a_target_the_head_does_not_show_is_never_stored(hub: RealHub) -> None:
+    """A hook that sends a word past the 120-char head (or one redaction
+    changed): the hub drops it before the store and the shown reason."""
+    from holdspeak.coder_gate import redact_call
+
+    secret = "ExampleCredential-k3y9Q"
+    command = "echo " + "pad " * 40 + f"> /tmp/{secret}.txt"
+    call = redact_call({"command": command})
+    status, body = hub._post_with_token("/api/gate/proposals", {
+        "id": "toolu_forged", "tool": "Bash", "args_sha256": call.sha256, "args_head": call.head,
+        "args_len": call.length, "cwd": str(hub.worktree), "ttl_seconds": 60,
+        "classification": {"scope": "outside", "rule": "redirect_outside_worktree", "read_rule": "",
+                           "push_branch": "", "root": str(hub.worktree), "proposal_id": "toolu_forged",
+                           "args_sha256": call.sha256, "target": f"/tmp/{secret}.txt"},
+    }, hub.agent_token)
+    assert status == 200, body
+    stored = _proposal(hub, "toolu_forged")
+    assert secret not in json.dumps(stored), "not in the stored operation, the head or the reason"
+    assert stored["hold_reason"] == "OUTSIDE THE WORKTREE"

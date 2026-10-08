@@ -55,6 +55,7 @@ import {
   laneStations,
   laneTitle,
   reviewWord,
+  turnEndWord,
   unreadParts,
   waitAge,
   type LaneEntry,
@@ -356,6 +357,16 @@ function WaitWell({ lane, agent }: { lane: LaneWire; agent: string }) {
   if (!wait || !wait.question) return null;
   if (wait.kind === "TO ANSWER") return <AnswerWell lane={lane} wait={wait} agent={agent} />;
   if (wait.kind === "TO APPROVE") return <ApproveWell wait={wait} agent={agent} gated={lane.gated} />;
+  const turn = turnEndWord(wait);
+  if (turn) {
+    // PHILO-15 15: the agent's last words, as a fact; not a wait for you.
+    return (
+      <p className="lw-deciding" data-testid="lane-turn-end" data-turn={turn.toLowerCase()}>
+        <span className="lw-word">{turn}</span>
+        <span className="lw-ev-text">{wait.question}</span>
+      </p>
+    );
+  }
   if (wait.kind === "DECIDING") {
     return (
       <p className="lw-deciding" data-testid="lane-deciding">

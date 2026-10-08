@@ -180,6 +180,17 @@ describe("PHILO-14 C4 the Conductor members", () => {
     expect(after.map((m) => [m.id, m.lamp?.label, m.sessionKey])).toEqual([["launch:l-recon", "WORKS", "codex:x1"]]);
   });
 
+  it("PHILO-15 15: an agent whose turn ended in a done report reads DONE, not ASKS", () => {
+    const row = SESSIONS.sessions[0] as Record<string, unknown>;
+    const flight = { ...(row.flight as Record<string, unknown>), turn_end: "done" };
+    const members = conductorMembers({
+      detect: null, sessions: [fromWireSessionRow({ ...row, flight })], flights: [fromWireFlight(flight)], launchedAt: {}, now: NOW,
+    });
+    const [live] = members.filter((m) => m.role === "live");
+    expect([live.lamp?.label, live.lamp?.tone, live.live]).toEqual(["DONE", "ok", "done"]);
+    expect(conductorHead(members, { live: 1, cap: 3 }).ask).toBe(0);
+  });
+
   it("a permission prompt is HELD; the ended receipt words", () => {
     const held = conductorMembers({
       detect: null,

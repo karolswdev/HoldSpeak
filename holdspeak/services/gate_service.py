@@ -175,8 +175,15 @@ class GateService:
             # from another call (another id or another args hash) waits.
             return {"launch_id": "", "scope": UNPARSED, "rule": "verdict_not_bound", "read_rule": ""}
         scope, rule = raw["scope"], raw["rule"]
-        # PHILO-15 15: the word that decided a hold (the hold says why).
-        target = raw.get("target", "")
+        # PHILO-15 15: the word that decided a hold (the hold says why), kept
+        # only when it is in the stored, redacted head (never a new secret).
+        from ..tool_gate_rules import visible_target
+
+        from ..db.gate import ARGS_HEAD_CHARS
+        from ..memory.defense import redact
+
+        stored_head = redact(str(payload.get("args_head") or ""))[:ARGS_HEAD_CHARS]
+        target = visible_target(raw.get("target", ""), stored_head)
         found = self._own_launch(principal)
         if found is None:
             return {"launch_id": "", "scope": scope, "rule": rule, "read_rule": raw["read_rule"], "target": target}

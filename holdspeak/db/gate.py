@@ -6,9 +6,8 @@ hook waiting on a decision can proceed. Every state transition passes
 through ONE chokepoint (:meth:`GateProposalRepository._transition`),
 and every transition writes a ``gate_audit`` row in the
 ``steering_audit`` shape: who/when/session/tool/hash, decision,
-reason. Arguments are redacted at the edge — sha256 + the first
-:data:`ARGS_HEAD_CHARS` characters of the redacted call (the council's
-redaction demand: secrets are redacted before the cut).
+reason. Arguments are redacted at the edge — sha256 + first 120
+characters, never the full payload (the council's redaction demand).
 
 States: ``held | approved | denied | expired | invalidated``. Held is
 the only non-terminal state. Restart honesty: on hub startup every
@@ -24,11 +23,9 @@ from typing import Any, Callable, Optional
 
 from .base import BaseRepository
 
-#: PHILO-15 15 (B44): the hub keeps up to this many characters of the
-#: redacted call, so a long but complete command (a 1,200-character
-#: here-document) is whole on the desk and the owner can approve it. Was 120:
-#: every here-document was cut, and a cut call has no Approve.
-ARGS_HEAD_CHARS = 4000
+#: The first characters of the redacted call the hub keeps (Phase 14 law;
+#: PHILO-15 15 kept it: a long held command is CUT and approved in Raw).
+ARGS_HEAD_CHARS = 120
 
 _COMMAND_PREFIX = '{"command":"'
 _ESCAPES = {'"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t"}
