@@ -90,6 +90,7 @@ describe("B68: a confirmation with no question reads done", () => {
     ["The API call was blocked by a firewall.", true],
     ["The push was blocked by branch protection.", true],
     ["The merge attempts were blocked by a failing check.", true],
+    ["The deploy was blocked by the hook.", true],
   ])("%j → problem %s", (text, problem) => {
     expect(reportsAProblem(text)).toBe(problem);
   });

@@ -162,6 +162,35 @@ def test_raw_shows_a_cut_call_whole_and_approves_it_at_1440_and_393(tmp_path: Pa
             page.wait_for_timeout(300)
             page.screenshot(path=str(SHOTS / "04-lane-raw-approved-393.png"))
             _assert_clean(page, errors)
+            page.close()
+
+            # 1440, iteration 2 on #1011: an oversized call is kept as a part;
+            # Raw says how much is there and offers Deny only.
+            huge = "cat > /tmp/hs_huge.txt <<'EOF'\n" + ("x" * 99 + "\n") * 660 + "EOF"
+            _mint_cut(url, seed["worktree"], huge, "toolu_cut_huge")
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+            _open_lane(page)
+            page.locator("[data-testid='lane-raw']").click()
+            held = page.locator("[data-testid='lane-raw-held']").first
+            held.wait_for(timeout=15000)
+            caption = held.locator(".lw-caption")
+            caption.wait_for(timeout=10000)
+            page.wait_for_function(
+                "() => /CUT · \\d+ OF \\d+ CHARS/.test(document.querySelector(\"[data-testid='lane-raw-held'] .lw-caption\")?.textContent || '')",
+                timeout=10000,
+            )
+            said = caption.inner_text()
+            match = re.search(r"CUT · (\d+) OF (\d+) CHARS", said)
+            assert match and int(match.group(1)) < int(match.group(2)) == len(huge), said
+            assert held.locator("[data-testid='lane-raw-approve']").count() == 0
+            assert held.locator("[data-testid='lane-raw-deny']").is_visible()
+            page.wait_for_timeout(300)
+            page.screenshot(path=str(SHOTS / "05-lane-raw-part-deny-only-1440.png"))
+            _assert_clean(page, errors)
             browser.close()
     finally:
         server.stop()

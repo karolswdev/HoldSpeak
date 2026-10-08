@@ -52,6 +52,7 @@ def worktree(tmp_path: Path) -> Path:
     (root / "tests").mkdir(parents=True)
     subprocess.run(["git", "init", "-q", "-b", "hs/action-x", str(root)], check=True)
     (root / "tests" / "codeowners_test.sh").write_text("#!/bin/sh\ntest -f CODEOWNERS\n", encoding="utf-8")
+    (root / "VERSION").write_text("1.0\n", encoding="utf-8")
     return root.resolve()
 
 
@@ -71,6 +72,9 @@ def worktree(tmp_path: Path) -> Path:
     'printf "%s\\n" "$(git log -1 --format=%H)"',
     "[ $? -eq 0 ] && echo ok",
     "./tests/codeowners_test.sh",
+    # Astra's ruling on #1011: the read and the output both in the worktree.
+    'echo "$(cat VERSION)" > out.txt',
+    "printf '%s' \"$(git rev-parse HEAD)\" | tee note.txt",
 ])
 def test_the_agents_reads_and_its_own_test_run_are_inside(worktree: Path, command: str) -> None:
     verdict = classify_bash(command, cwd=str(worktree), root=str(worktree))
@@ -87,6 +91,8 @@ def test_the_agents_reads_and_its_own_test_run_are_inside(worktree: Path, comman
     ("gh api /user", OUTSIDE, "GITHUB ACTION FOR YOU"),
     ("bash /tmp/run.sh", OUTSIDE, "OUTSIDE THE WORKTREE · /tmp/run.sh"),
     ('echo "$(git rev-parse HEAD)" > /tmp/head.txt', OUTSIDE, "OUTSIDE THE WORKTREE · /tmp/head.txt"),
+    ("printf '%s' \"$(git rev-parse HEAD)\" | tee /tmp/note.txt", OUTSIDE, "OUTSIDE THE WORKTREE · /tmp/note.txt"),
+    ('echo "$(cat ../VERSION)" > out.txt', UNPARSED, "UNRESOLVED TARGET · $(cat ../VERSION)"),
     ('cat "$(git rev-parse --show-toplevel)/../x"', UNPARSED, "UNRESOLVED TARGET · $(git rev-parse --show-toplevel)"),
     ("echo $(rm -rf ../x)", UNPARSED, "UNRESOLVED TARGET · $(rm -rf ../x)"),
     ('echo "$(git push origin HEAD)"', UNPARSED, "UNRESOLVED TARGET · $(git push origin HEAD)"),
@@ -256,6 +262,7 @@ def test_the_finished_report_of_shot_49_is_done() -> None:
     ("The API call was blocked by a firewall.", True),
     ("The push was blocked by branch protection.", True),
     ("The merge attempts were blocked by a failing check.", True),
+    ("The deploy was blocked by the hook.", True),
 ])
 def test_a_gate_decision_is_not_a_problem_but_a_failure_is(text: str, problem: bool) -> None:
     assert reports_a_problem(text) is problem

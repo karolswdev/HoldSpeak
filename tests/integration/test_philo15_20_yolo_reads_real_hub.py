@@ -204,11 +204,26 @@ def test_the_whole_call_never_reaches_the_observer_or_an_agent(hub: RealHub) -> 
 
     assert _pipeline_rows_with(hub, "toolu_observer") > 0, "the observer did record the calls"
     assert _pipeline_rows_with(hub, secret) == 0
+    # Iteration 2 on #1011: each read must SUCCEED and carry GateService
+    # records (a refusal would prove nothing), for both principals and URIs.
+    # The agent here holds a session credential, which reaches /api/mcp with
+    # the Reach switch on (a launch credential reaches it from loopback with
+    # the switch off); the switch is turned on so the agent's read is real.
+    req = urllib.request.Request(
+        f"{hub.base}/api/settings/remote", method="PUT", data=json.dumps({"enabled": True}).encode(),
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {hub.owner_token}"},
+    )
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        assert resp.status == 200
     for uri in ("pipeline://events/recent/GateService", "pipeline://events/recent"):
-        status, body = _mcp_read(hub, uri, hub.agent_token)
-        assert secret not in body, (uri, status)
-        status, body = _mcp_read(hub, uri, hub.owner_token)
-        assert status == 200 and "GateService" in body and secret not in body, (uri, status)
+        for who, token in (("agent", hub.agent_token), ("owner", hub.owner_token)):
+            status, body = _mcp_read(hub, uri, token)
+            assert status == 200, (who, uri, status, body[:300])
+            reply = json.loads(body)
+            assert "error" not in reply, (who, uri, reply.get("error"))
+            text = "".join(c.get("text", "") for c in reply["result"]["contents"])
+            assert '"GateService"' in text and "toolu_observer" in text, (who, uri, text[:300])
+            assert secret not in text and secret not in body, (who, uri)
 
 
 def test_a_part_is_never_whole_and_is_deny_only(hub: RealHub) -> None:

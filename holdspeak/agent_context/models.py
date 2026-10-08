@@ -330,7 +330,7 @@ _NEGATED_PROBLEM_RE = re.compile(
     # outside"). Blocked BY anything else (a firewall, branch protection, a
     # failing check) stays a problem.
     r"|\b(?:attempts?|writes?|calls?|commands?|tries)\s+(?:were|was|got)\s+(?:blocked|denied)\b(?!\s+(?:by|on)\b)"
-    r"|\b(?:blocked|denied)\s+(?:by\s+the\s+(?:gate|desk|owner|hook)|from\s+the\s+desk)\b",
+    r"|\b(?:blocked|denied)\s+(?:by\s+the\s+(?:gate|desk|owner)|from\s+the\s+desk)\b",
     re.IGNORECASE,
 )
 
