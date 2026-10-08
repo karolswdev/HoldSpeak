@@ -33,7 +33,7 @@ import { wireDate } from "../surface/format";
 export const STALE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export type ConductorRole = "ready" | "live" | "stale";
-export type LiveState = "ask" | "held" | "pr" | "work";
+export type LiveState = "ask" | "held" | "idle" | "pr" | "work";
 
 export interface ConductorMember extends ObjectListRow {
   role: ConductorRole;
@@ -98,6 +98,9 @@ function liveLamp(state: LiveState, pr: number | null | undefined): { tone: Obje
       return { tone: "ask", label: "ASKS" };
     case "held":
       return { tone: "ask", label: "HELD" };
+    case "idle":
+      // PHILO-15 B48: the turn ended with no question.
+      return { tone: "info", label: "IDLE" };
     case "pr":
       return { tone: "ok", label: pr ? `PR #${pr}` : "PR OPEN" };
     default:
@@ -115,7 +118,7 @@ function sessionState(row: CoderSessionRow): LiveState {
 }
 
 function flightState(flight: AgentFlight): LiveState {
-  if (flight.state === "waiting") return "ask";
+  if (flight.state === "waiting") return flight.turnEnd === "idle" ? "idle" : "ask";
   if (flight.state === "pr_open" || flight.state === "merged") return "pr";
   return "work";
 }

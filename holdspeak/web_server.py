@@ -240,6 +240,17 @@ def _poll_agent_prs() -> Optional[dict[str, Any]]:
         return None
 
 
+def _expire_queued_rebriefs() -> None:
+    try:
+        from .db import get_database
+        from .delivery.factory_launch import default_launch_service
+        from .services.launch_rebrief import expire_queued
+
+        expire_queued(default_launch_service(get_database()))
+    except Exception as exc:
+        log.debug(f"queued re-brief expiry skipped: {exc}")
+
+
 def _coder_answer_triage(keys: list[str]) -> list[str]:
     """Conductor K5: the waits that began, split by Control mode. Returns
     the keys to notify now; a HoldSpeak-launched agent's wait in YOLO is
@@ -250,7 +261,21 @@ def _coder_answer_triage(keys: list[str]) -> list[str]:
         from .db import get_database
         from .services.agent_responder import default_agent_responder
 
-        responder = default_agent_responder(get_database(), notify=_coder_awaiting_edge)
+        db = get_database()
+        # PHILO-15 B46: a Re-brief queued mid-turn is typed at this turn end;
+        # it answers the wait, so nothing else does.
+        try:
+            from .delivery.factory_launch import default_launch_service
+            from .services.launch_rebrief import flush_queued
+
+            consumed = set(flush_queued(keys, service=default_launch_service(db)))
+        except Exception as exc:
+            log.warning(f"queued re-brief flush failed: {exc}")
+            consumed = set()
+        keys = [key for key in keys if key not in consumed]
+        if not keys:
+            return []
+        responder = default_agent_responder(db, notify=_coder_awaiting_edge)
         split = responder.triage(keys)
         responder.start(split["decide"])
         return list(split["notify"])
@@ -1950,8 +1975,14 @@ class MeetingWebServer:
         from .agent_context import event_log
 
         timer = _agent_spool_timer(web_ctx)
+        ticks = 0
         while True:
             await asyncio.to_thread(timer.tick)
+            ticks += 1
+            if ticks % 30 == 0:
+                # PHILO-15 (Astra r2 on #996): a queued Re-brief whose agent
+                # never ended a turn expires with a receipt (about each minute).
+                await asyncio.to_thread(_expire_queued_rebriefs)
             await asyncio.sleep(event_log.SpoolTimer.INTERVAL)
 
     async def _agent_pr_poll_loop(self) -> None:
