@@ -42,6 +42,7 @@ import {
 } from "./localAi";
 import { Found, useProposals } from "./Found";
 import { useOwnerName } from "./ownerName";
+import { OwnerAliasField } from "./OwnerAliasField";
 import { useFirstTake } from "./useFirstTake";
 import { Card } from "./Card";
 import { CalendarCard } from "./CalendarCard";
@@ -234,12 +235,6 @@ function LocalAiCard({
 }
 
 function YouCard({ owner, folded }: { owner: ReturnType<typeof useOwnerName>; folded: boolean }) {
-  const [alias, setAlias] = useState("");
-  const commit = () => {
-    if (!alias.trim()) return;
-    owner.addAliases(alias);
-    setAlias("");
-  };
   return (
     <Card
       title="You"
@@ -274,32 +269,7 @@ function YouCard({ owner, folded }: { owner: ReturnType<typeof useOwnerName>; fo
         </label>
         <label className="firstrun-field">
           <span className="firstrun-caption">ALSO CALLED</span>
-          <span className="firstrun-alias-row">
-            {owner.aliases.map((name) => (
-              <span key={name} className="surface-token" data-chip>
-                {name}
-              </span>
-            ))}
-            <StringGadget
-              label="Also called"
-              value={alias}
-              onChange={(next) => {
-                // A spoken or pasted list arrives whole: commas split it.
-                if (next.includes(",")) {
-                  owner.addAliases(next);
-                  setAlias("");
-                } else setAlias(next);
-              }}
-              placeholder="Add"
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  commit();
-                } else if (event.key === "Backspace" && !alias) owner.removeLastAlias();
-              }}
-              inputProps={{ onBlur: commit }}
-            />
-          </span>
+          <OwnerAliasField owner={owner} />
         </label>
       </div>
       )}

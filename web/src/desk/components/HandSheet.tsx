@@ -6,7 +6,7 @@
  * checks, the text), WHERE (the repository, a new worktree, the branch),
  * the Control mode, and the host the brief goes to on the Launch footer.
  * A refusal is a named token in the sheet, never prose. */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import {
@@ -29,6 +29,9 @@ import {
   HAND_PATH,
   HAND_PREVIEW_PATH,
   HAND_WINDOW_ID,
+  pickDefaultAgent,
+  rememberAgent,
+  rememberedAgent,
   useAgentHand,
   type HandOrigin,
 } from "../agentHand";
@@ -60,6 +63,9 @@ export interface HandPreview {
   profile: string;
   /** A held launch of this item that Launch resumes (its brief, its agent). */
   resume?: { launch_id: string; profile: string; instruction_state: string | null } | null;
+  /** PHILO-15 16: the Project's registered repository is not cloned yet; the
+   *  hand clones it from `host` first (egress), into `label`. */
+  clone?: { repository: string; host: string; state: string; label?: string | null } | null;
   refused: string[];
 }
 
@@ -72,6 +78,35 @@ export interface HandLaunch {
   resumed?: boolean;
   profile?: string | null;
   failure?: { stage?: string; outcome?: string } | null;
+  /** PHILO-15 16: the clone this hand made first (its own receipt). */
+  clone?: HandClone | null;
+}
+
+/** PHILO-15 16: a clone a hand made (kept on a later launch refusal too). */
+export interface HandClone {
+  repository: string;
+  host: string;
+  state: string;
+  cloned_at?: string | null;
+  /** Where the clone lives (`~/.holdspeak/repositories/...`). */
+  folder?: string | null;
+  operation_id?: string | null;
+}
+
+/** The clone a refused hand still made (the hub names it on the refusal). */
+export function cloneOf(error: unknown): HandClone | null {
+  if (!(error instanceof ApiError)) return null;
+  const clone = ((error.payload ?? {}) as Record<string, unknown>).clone as HandClone | undefined;
+  return clone && typeof clone.repository === "string" ? clone : null;
+}
+
+/** `CLONED · owner/name · 18:06`. */
+export function cloneWords(clone: HandClone): string {
+  const at = clone.cloned_at ? new Date(clone.cloned_at) : null;
+  const clock = at && !Number.isNaN(at.getTime())
+    ? `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`
+    : "";
+  return ["CLONED", clone.repository, clock].filter(Boolean).join(" · ");
 }
 
 export const HAND_LAUNCH_PATH = (id: string) => `/api/agent/launches/${encodeURIComponent(id)}`;
@@ -153,6 +188,14 @@ export function refusalToken(code: string, agent: AgentId): string {
   switch (code) {
     case "no_repository":
       return "NO REPOSITORY";
+    case "repository_not_registered":
+      return "REPOSITORY NOT REGISTERED";
+    case "clone_failed":
+      return "CLONE FAILED";
+    case "clone_timed_out":
+      return "CLONE TIMED OUT";
+    case "gh_not_installed":
+      return "GH NOT INSTALLED";
     case "item_unknown":
       return "ITEM NOT FOUND";
     case "executable_absent":
@@ -214,7 +257,15 @@ function AgentSummary({ agent, detect }: { agent: AgentId; detect: AgentsDetect 
   const words = !row.installed
     ? "NOT INSTALLED"
     : [row.hooks === "installed" ? "HOOKS IN" : "NO HOOKS", row.version].filter(Boolean).join(" · ");
-  return <span className="surface-token" data-chip>{words}</span>;
+  return (
+    <>
+      <span className="surface-token" data-chip>{words}</span>
+      {/* PHILO-15 B36: the reason the default passed this agent over. */}
+      {row.installed && row.signed_in !== "yes" ? (
+        <span className="surface-token" data-chip data-tone="warn" data-testid="hand-signin-unknown">SIGN-IN UNKNOWN</span>
+      ) : null}
+    </>
+  );
 }
 
 /** The issue-body read as the sheet shows it: the host, and READING (the
@@ -238,6 +289,14 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   const close = useAgentHand((s) => s.close);
   const detect = useDetect();
   const [agent, setAgent] = useState<AgentId>(origin.agent ?? DEFAULT_AGENT);
+  // PHILO-15 B36: opened with no agent named, the sheet takes the default
+  // (the first KNOWN sign-in) once the agents read answers, unless picked.
+  const pickedRef = useRef(Boolean(origin.agent));
+  useEffect(() => {
+    if (pickedRef.current || !detect) return;
+    // PHILO-15 16: the owner's last flip in this Project wins; else the default.
+    setAgent(rememberedAgent(origin.projectId) ?? pickDefaultAgent(detect).agent);
+  }, [detect]);
   // Each preview carries the key of the request that produced it (item, Project,
   // profile): Launch arms only when that key is the current request's.
   const [preview, setPreview] = useState<(HandPreview & { requestKey: string }) | null>(null);
@@ -246,6 +305,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [launched, setLaunched] = useState<HandLaunch | null>(null);
+  const [cloneDone, setCloneDone] = useState<HandClone | null>(null);
 
   useEffect(() => {
     useDesk.getState().focusPanel(HAND_WINDOW_ID);
@@ -304,8 +364,11 @@ function Sheet({ origin }: { origin: HandOrigin }) {
         json: { kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null },
       });
       // The receipt belongs to the launch: its agent is frozen with it.
+      if (answer?.clone) setCloneDone(answer.clone);
       setLaunched({ profile: launchProfile, ...(answer ?? {}) });
     } catch (error) {
+      const made = cloneOf(error);
+      if (made) setCloneDone(made);
       setLaunchError(codeOf(error));
       if (!(error instanceof ApiError)) console.warn("hand to agent:", readableError(error));
     } finally {
@@ -326,7 +389,13 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   const frozen = launching || launched !== null;
   const canLaunch = current && blocked.length === 0 && !launching && launched === null;
   const delivery = launched ? deliveryToken(launched) : null;
-  const pick = (value: string) => { if (!frozen) setAgent(value as AgentId); };
+  const pick = (value: string) => {
+    if (frozen) return;
+    pickedRef.current = true;
+    setAgent(value as AgentId);
+    rememberAgent(origin.projectId, value as AgentId); // PHILO-15 16: this Project's next hand
+  };
+  const clone = cloneDone ?? launched?.clone ?? null;
   const tracker = trackerToken(origin, current ? preview : null, previewError);
   return (
     <DeskWindowFrame
@@ -407,6 +476,21 @@ function Sheet({ origin }: { origin: HandOrigin }) {
             </SurfaceSection>
             <SurfaceSection label="WHERE">
               <span className="desk-hand-tokens" data-testid="hand-where">
+                {clone ? (
+                  <span className="desk-hand-tokens" data-testid="hand-clone" data-state="cloned">
+                    <EgressChip label={clone.host.toUpperCase()} scope="cloud" />
+                    <span className="surface-token" data-tone="ok" data-chip data-wrap>{cloneWords(clone)}</span>
+                    {clone.folder ? (
+                      <span className="surface-token" data-chip data-wrap data-testid="hand-clone-folder">{clone.folder}</span>
+                    ) : null}
+                  </span>
+                ) : preview.clone ? (
+                  <span className="desk-hand-tokens" data-testid="hand-clone" data-state="to_clone">
+                    <EgressChip label={preview.clone.host.toUpperCase()} scope="cloud" />
+                    <span className="surface-token" data-chip data-wrap>CLONES {preview.clone.repository}</span>
+                    <span className="surface-token" data-chip>{preview.branch}</span>
+                  </span>
+                ) : null}
                 {preview.repo ? (
                   <>
                     <span className="surface-token" data-chip>{preview.repo_label || tilde(preview.repo)}</span>

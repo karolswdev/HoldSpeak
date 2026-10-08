@@ -12,7 +12,9 @@ export type ConnectionState =
   | "degraded"
   | "not_configured"
   /** PHILO-9-02 B1: a remote row no probe has checked yet. */
-  | "never_checked";
+  | "never_checked"
+  /** PHILO-15 B31: no probe yet, but gh's sign-in file names an active login. */
+  | "signed_in";
 
 export interface ConnectionAccount {
   login?: string;
@@ -21,6 +23,8 @@ export interface ConnectionAccount {
   sources?: number;
   assigned?: number;
   total?: number;
+  /** PHILO-15 B33: where meeting summaries run (the queue's route), or null. */
+  summary_host?: string | null;
 }
 
 export interface ConnectionNextAction {
@@ -39,6 +43,8 @@ export interface ConnectionTool {
   last_checked_at?: string;
   /** Seconds since that probe, computed by the hub at read time. */
   checked_age_seconds?: number;
+  /** PHILO-15 B31: "gh_config" when the state is read from gh's config (no check, no time). */
+  checked_by?: string;
   egress_host?: string;
   /** Jira: per-(site,email) connection rows. */
   connections?: JiraSubConnection[];
@@ -69,6 +75,7 @@ const VALID_STATES = new Set<ConnectionState>([
   "degraded",
   "not_configured",
   "never_checked",
+  "signed_in",
 ]);
 
 export function decodeState(raw: unknown): ConnectionState {
@@ -88,6 +95,7 @@ function decodeAccount(raw: unknown): ConnectionAccount | undefined {
     sources: typeof obj.sources === "number" ? obj.sources : undefined,
     assigned: typeof obj.assigned === "number" ? obj.assigned : undefined,
     total: typeof obj.total === "number" ? obj.total : undefined,
+    summary_host: typeof obj.summary_host === "string" ? obj.summary_host : null,
   };
 }
 
@@ -128,6 +136,7 @@ function decodeTool(raw: unknown): ConnectionTool | undefined {
     error_detail: typeof obj.error_detail === "string" ? obj.error_detail : undefined,
     last_checked_at: typeof obj.last_checked_at === "string" ? obj.last_checked_at : undefined,
     checked_age_seconds: typeof obj.checked_age_seconds === "number" ? obj.checked_age_seconds : undefined,
+    checked_by: typeof obj.checked_by === "string" ? obj.checked_by : undefined,
     egress_host: typeof obj.egress_host === "string" ? obj.egress_host : undefined,
     connections: Array.isArray(obj.connections)
       ? (obj.connections.map(decodeSubConnection).filter(Boolean) as JiraSubConnection[])

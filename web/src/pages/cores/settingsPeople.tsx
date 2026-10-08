@@ -11,7 +11,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, apiFetch } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
-import { FilterTokens, GadgetGroup, GadgetRow, StateChip } from "../../desk/surface";
+import { FilterTokens, GadgetGroup, GadgetRow, StateChip, StringGadget } from "../../desk/surface";
+import { useOwnerName } from "../../desk/firstrun/ownerName";
+import { OwnerAliasField } from "../../desk/firstrun/OwnerAliasField";
 
 export type PeopleAccess = {
   mode: string;
@@ -61,6 +63,38 @@ export function usePeopleAccess() {
   }, []);
   useEffect(() => { void reload(); }, [reload]);
   return { access, setAccess, readError, reload };
+}
+
+/* PHILO-15 B57 (owed since 2026-10-04): his name and the other names for
+ * him, after first run. The needs-you rule reads them as "me", and a
+ * one-letter mishearing of the name ("Carol" for "Karol") still counts. */
+export function OwnerNameGroup() {
+  const owner = useOwnerName();
+  return (
+    <GadgetGroup label="You">
+      <GadgetRow label="Your name">
+        <span data-testid="settings-owner-name">
+          <StringGadget
+            label="Your name"
+            value={owner.name}
+            onChange={owner.setName}
+            placeholder="Name"
+            inputProps={{ onBlur: () => void owner.flush() }}
+          />
+        </span>
+      </GadgetRow>
+      <GadgetRow label="Also called">
+        <span data-testid="settings-owner-aliases">
+          <OwnerAliasField owner={owner} />
+        </span>
+      </GadgetRow>
+      {owner.error ? (
+        <GadgetRow label="Receipt">
+          <StateChip state="failure" label="NOT SAVED" />
+        </GadgetRow>
+      ) : null}
+    </GadgetGroup>
+  );
 }
 
 export function PeopleAccessModule() {

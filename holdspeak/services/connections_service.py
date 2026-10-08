@@ -40,6 +40,10 @@ DISPLAY_DEGRADED = "degraded"
 DISPLAY_NOT_CONFIGURED = "not_configured"
 # PHILO-9-02 B1: a remote row no probe has checked yet (no stored time).
 DISPLAY_NEVER_CHECKED = "never_checked"
+# PHILO-15 B31: no probe stored yet, but gh's own sign-in file names an
+# active login.  The first-run card and Settings › Connections both read this
+# one entry, so they say the same thing at the same time.
+DISPLAY_SIGNED_IN = "signed_in"
 
 # Map from adapter wire states to the display states (D6).
 # disconnected AND owner_action_required both carry a recovery hint;
@@ -92,6 +96,7 @@ def _split_ref(ref: str) -> tuple[str, str]:
 # Aggregate order for a provider with several rows: the best row names the card.
 _SUMMARY_ORDER = (
     DISPLAY_CONNECTED,
+    DISPLAY_SIGNED_IN,
     DISPLAY_OWNER_ACTION_REQUIRED,
     DISPLAY_DEGRADED,
     DISPLAY_UNAVAILABLE,
@@ -131,7 +136,7 @@ def _next_action_for_state(
         return {"kind": "sign_in", "label": "Sign in"}
     if state == DISPLAY_UNAVAILABLE:
         return {"kind": "install", "label": "Install"}
-    if state in (DISPLAY_NOT_CONFIGURED, DISPLAY_NEVER_CHECKED):
+    if state in (DISPLAY_NOT_CONFIGURED, DISPLAY_NEVER_CHECKED, DISPLAY_SIGNED_IN):
         return {"kind": "recheck", "label": "Recheck"}
     # degraded
     return {"kind": "recheck", "label": "Recheck"}
@@ -151,8 +156,12 @@ class ConnectionsService:
         confluence_adapter: Any | None = None,
         config_loader: Callable[[], Any] | None = None,
         inference_assignment_service: Any | None = None,
+        gh_hosts_file: Callable[[], Any] | None = None,
     ) -> None:
         self._github = github_adapter
+        # PHILO-15 B31: where gh keeps its sign-in file (a callable, read at
+        # each list; tests inject a path).  Default: gh's own lookup order.
+        self._gh_hosts_file = gh_hosts_file
         self._jira = jira_adapter
         self._confluence = confluence_adapter
         self._config_loader = config_loader
@@ -217,6 +226,9 @@ class ConnectionsService:
 
         status = self._github.stored_status(principal)
         if status is None:
+            signed_in = self._github_file_sign_in()
+            if signed_in is not None:
+                return signed_in
             return {
                 "provider_id": "github",
                 "state": DISPLAY_NEVER_CHECKED,
@@ -249,6 +261,40 @@ class ConnectionsService:
             "error_detail": status.get("error_detail") if display_state not in (DISPLAY_CONNECTED,) else None,
             "last_checked_at": checked_at,
             "checked_age_seconds": _age_seconds(checked_at),
+            "egress_host": "github.com",
+        }
+
+    def _github_file_sign_in(self) -> dict[str, Any] | None:
+        """PHILO-15 B31: the active login in gh's ``hosts.yml`` (a file read; no ``gh``, no network).
+
+        A configured account, not a check: it carries NO check time (Astra r1:
+        the file's write time read as a CHECKED receipt). ``checked_by:
+        gh_config`` names the source; CHECKED hh:mm comes only from a probe.
+        github.com wins over other hosts, as the connector's egress host is
+        github.com.
+        """
+        from .onboarding_service import _gh_account_ref, gh_hosts_path, read_gh_accounts
+
+        try:
+            path = self._gh_hosts_file() if self._gh_hosts_file is not None else gh_hosts_path()
+        except Exception:
+            return None
+        if path is None:
+            return None
+        active = [row for row in read_gh_accounts(path) if row.get("active")]
+        if not active:
+            return None
+        row = next((r for r in active if r["host"] == "github.com"), active[0])
+        return {
+            "provider_id": "github",
+            "state": DISPLAY_SIGNED_IN,
+            "account": {"login": _gh_account_ref(row["host"], row["login"])},
+            "next_action": _next_action_for_state(DISPLAY_SIGNED_IN, "github"),
+            "recovery_hint": None,
+            "error_detail": None,
+            "last_checked_at": None,
+            "checked_age_seconds": None,
+            "checked_by": "gh_config",
             "egress_host": "github.com",
         }
 
@@ -495,11 +541,24 @@ class ConnectionsService:
                 assigned = sum(1 for r in rows if r.get("status") == "assigned")
             except Exception:
                 pass
+        # PHILO-15 B33: a summary route through the default (or a capability
+        # pick) runs on an engine even with no group row "assigned"; the row
+        # said Unassigned while summaries ran on the LAN box.
+        summary_host: str | None = None
+        try:
+            from ..db import get_database
+            from .meeting_route_projection import summary_engine_fact
+
+            fact = summary_engine_fact(get_database())
+            if fact.get("engine_set"):
+                summary_host = str(fact.get("host") or "") or None
+        except Exception:
+            pass
 
         return {
             "provider_id": "models",
-            "state": DISPLAY_CONNECTED if assigned > 0 else DISPLAY_NOT_CONFIGURED,
-            "account": {"assigned": assigned, "total": total},
+            "state": DISPLAY_CONNECTED if (assigned > 0 or summary_host) else DISPLAY_NOT_CONFIGURED,
+            "account": {"assigned": assigned, "total": total, "summary_host": summary_host},
             "next_action": {"kind": "open_module", "label": "Open Models"},
             "recovery_hint": None,
             "error_detail": None,

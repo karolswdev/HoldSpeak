@@ -1170,6 +1170,41 @@ class PeopleService:
                     return {"state": "ready", "relationship": self._relationship_view(record)}
         return {"state": "ready", "relationship": None}
 
+    def person_names(self, principal: Any = None) -> set[str] | None:
+        """PHILO-15 B57: every non-archived Person's names, casefolded.
+
+        The display name, its first word, and each owner alias. Used only in
+        memory, to keep the one-edit owner tolerance off a real colleague's
+        work; never logged or persisted. An empty set when the store is not
+        set up; ``None`` when it exists but cannot be read now.
+        """
+        from holdspeak.people.key_free import people_reads_allowed
+
+        try:
+            state = str(getattr(self._store.readiness(), "value", self._store.readiness()))
+        except Exception:
+            return None
+        if state == "unconfigured":
+            return set()
+        if state != "ready" or not people_reads_allowed():
+            return None
+        try:
+            relationships = self._store.list(kind="relationship")
+        except Exception:
+            return None
+        names: set[str] = set()
+        for record in relationships:
+            if not isinstance(record, dict) or str(record.get("state") or "") == "archived":
+                continue
+            display = " ".join(str(record.get("display_name") or "").split()).casefold()
+            if display:
+                names.add(display)
+                names.add(display.split(" ")[0])
+            for alias in record.get("owner_aliases") or []:
+                if isinstance(alias, str) and alias.strip():
+                    names.add(" ".join(alias.split()).casefold())
+        return names
+
     def resolve_relationship_by_watch_identity(
         self, identity_string: str,
     ) -> dict[str, Any]:

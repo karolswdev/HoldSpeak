@@ -157,6 +157,17 @@
   .desk-next .surface-footer-receipt:empty { display: none; }
 }
 
+/* PHILO-15 17 (Astra r1) — a receipt line that asks to wrap ([data-wrap],
+   the library's wrap token) shows every part (title · PR #n · time) on as
+   many lines as it needs, instead of clipping. After the narrow-window
+   rules above, so it wins there too (a long word breaks). */
+.desk-next .surface-footer-receipt > span.surface-footer-receipt-line[data-wrap] {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
 .desk-next .copy-receipt {
   display: inline-flex;
   align-items: center;

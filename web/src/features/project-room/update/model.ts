@@ -277,13 +277,14 @@ export function decodeUpdate(raw: Record<string, unknown>): ProjectUpdate {
 /* ── Generator provenance label ── */
 
 /** Human label for the generator provenance: "deterministic" stays as
- *  "Deterministic"; "model:<assignment>" shows "Model (<assignment>)";
- *  unknown generators show verbatim. */
-export function generatorLabel(generator: string): string {
+ *  "Deterministic"; "model:<assignment>" shows "Model · <model name>" (or
+ *  "Model" when the name is not known), never the assignment id (PHILO-15
+ *  B53: names, never ids); unknown generators show verbatim. */
+export function generatorLabel(generator: string, model?: string | null): string {
   if (generator === "deterministic") return "Deterministic";
   if (generator.startsWith("model:")) {
-    const assignment = generator.slice("model:".length);
-    return `Model (${assignment})`;
+    const name = String(model ?? "").trim();
+    return name ? `Model · ${name}` : "Model";
   }
   return generator;
 }

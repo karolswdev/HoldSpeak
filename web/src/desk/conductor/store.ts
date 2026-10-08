@@ -51,6 +51,8 @@ interface ConductorState {
   /** The last install that the hub refused, as a token, and its agent. */
   installFailure: string;
   installFailedAgent: AgentId | null;
+  /** PHILO-15 B35: the last install the hub did, and when (hh:mm). */
+  installDone: { agent: AgentId; at: string } | null;
   openWindow(origin?: { x: number; y: number } | null): void;
   closeWindow(): void;
   openInfo(member: ConductorMember): void;
@@ -79,6 +81,7 @@ export const useConductor = create<ConductorState>((set, get) => ({
   installing: null,
   installFailure: "",
   installFailedAgent: null,
+  installDone: null,
   setStop(ref, receipt) {
     const next = { ...get().stops };
     if (receipt) next[ref] = receipt;
@@ -153,6 +156,8 @@ export const useConductor = create<ConductorState>((set, get) => ({
     set({ installing: agent, installFailure: "", installFailedAgent: null });
     try {
       await apiFetch(AGENTS_USE_PATH, { method: "POST", json: { agent } });
+      // PHILO-15 B35: a success has its receipt too (only a failure had one).
+      set({ installDone: { agent, at: new Date().toTimeString().slice(0, 5) } });
       await get().readDetect();
       return true;
     } catch (error) {
@@ -178,6 +183,6 @@ export function __resetConductor(): void {
   useConductor.setState({
     open: false, origin: null, infos: [], detect: null, detectState: "idle", detectFailure: "",
     flightsState: "idle", launchedAt: {}, endedAt: {}, history: [], launches: null, stops: {},
-    installing: null, installFailure: "", installFailedAgent: null,
+    installing: null, installFailure: "", installFailedAgent: null, installDone: null,
   });
 }

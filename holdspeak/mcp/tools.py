@@ -1202,8 +1202,17 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
             heartbeat_rhythm["lastSweepAt"] = None
             heartbeat_rhythm["quiet"] = {"start": 22, "end": 8, "held": False}
         meetings_host = None
+        # PHILO-15 B33: the summary engine is the queue's route (the HTTP twin
+        # reads the same fact), never the legacy config pointer alone.
+        summary_fact: dict = {"engine_set": None, "off": False, "host": None}
         try:
-            if config.meeting.intel_profile_id:
+            from holdspeak.services.meeting_route_projection import summary_engine_fact
+            summary_fact = summary_engine_fact(db)
+            meetings_host = summary_fact.get("host")
+        except Exception:
+            pass
+        try:
+            if not meetings_host and config.meeting.intel_profile_id:
                 from holdspeak.intel.providers import resolve_meeting_placement as _rmp, endpoint_host as _eh
                 _pl = _rmp(config.meeting)
                 if _pl.profile_id:
@@ -1214,7 +1223,7 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
                         meetings_host = _h if _h else (_pl.boundary or "local")
         except Exception:
             pass
-        return {"models": {"engines": engines, "groupsSet": groups_set, "defaultSet": default_set}, "connections": {"connected": connected}, "voice": {"live": config.dictation.pipeline.enabled, "target": config.dictation.pipeline.target_profile_override or "auto"}, "meetings": {"intelligence": config.meeting.intel_enabled, "auto": config.meeting.intelligence_auto, "host": meetings_host}, "rhythm": heartbeat_rhythm, "sounds": {"on": config.ui.desk_sounds}, "system": {"host": "THIS DEVICE", "mesh": bool(getattr(config.mesh, "device_name", ""))}, "posture": config.control_mode, "writtenAt": written_at}
+        return {"models": {"engines": engines, "groupsSet": groups_set, "defaultSet": default_set}, "connections": {"connected": connected}, "voice": {"live": config.dictation.pipeline.enabled, "target": config.dictation.pipeline.target_profile_override or "auto"}, "meetings": {"intelligence": config.meeting.intel_enabled, "engineSet": summary_fact.get("engine_set"), "summariesOff": bool(summary_fact.get("off")), "auto": config.meeting.intelligence_auto, "host": meetings_host}, "rhythm": heartbeat_rhythm, "sounds": {"on": config.ui.desk_sounds}, "system": {"host": "THIS DEVICE", "mesh": bool(getattr(config.mesh, "device_name", ""))}, "posture": config.control_mode, "writtenAt": written_at}
     if name == "meeting.run_intelligence":
         return ops().invoke(principal, "meeting.summary.run", {
             "meeting_id": str(args.get("meeting_id") or ""),

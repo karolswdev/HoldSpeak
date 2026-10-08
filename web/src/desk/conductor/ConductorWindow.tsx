@@ -27,7 +27,7 @@ import {
 } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { useAgentFlights } from "../agentFlights";
-import { AGENT_HOST, AGENT_INSTALL, needsHooks, type AgentId } from "../firstrun/agentsStep";
+import { AGENT_HOST, AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId, type AgentRow } from "../firstrun/agentsStep";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useDesk } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
@@ -61,8 +61,9 @@ export function MemberReceipt({ member }: { member: ConductorMember | null }) {
   const failure = useConductor((s) => s.installFailure);
   const failedFor = useConductor((s) => s.installFailedAgent);
   const installing = useConductor((s) => s.installing);
-  if (member?.detect && failure && failedFor === member.detect.id) {
-    const agent = member.detect.id;
+  const done = useConductor((s) => s.installDone);
+  if (failure && failedFor && (member?.detect ? failedFor === member.detect.id : !member)) {
+    const agent = failedFor;
     return (
       <span className="drawer-receipt cw-receipt" data-tone="fail" role="status" data-testid="conductor-install-failed">
         HOOKS NOT INSTALLED · {failure}
@@ -82,7 +83,39 @@ export function MemberReceipt({ member }: { member: ConductorMember | null }) {
   if (member?.receipt) {
     return <span className="drawer-receipt cw-receipt" data-testid="conductor-receipt">{member.receipt}</span>;
   }
+  // PHILO-15 B35: the install's receipt, beside the agent it installed (or
+  // with nothing selected, where the row verb was pressed).
+  if (done && (!member || member.detect?.id === done.agent)) {
+    return (
+      <span className="drawer-receipt cw-receipt" role="status" data-testid="conductor-install-done">
+        HOOKS INSTALLED · {AGENT_NAME[done.agent].toUpperCase()} · {done.at}
+      </span>
+    );
+  }
   return null;
+}
+
+/** PHILO-15 B34: with nothing selected, every ready agent that lacks hooks
+ *  has its own Install hooks verb (it was hidden until a selection). */
+export function InstallHooksVerbs({ agents }: { agents: AgentRow[] }) {
+  const installing = useConductor((s) => s.installing);
+  return (
+    <>
+      {agents.filter(needsHooks).map((row) => (
+        <Button
+          key={row.id}
+          dense
+          variant="primary"
+          data-testid="conductor-install-hooks"
+          loading={installing === row.id}
+          disabled={Boolean(installing) && installing !== row.id}
+          onClick={() => void useConductor.getState().installHooks(row.id)}
+        >
+          {`Install hooks · ${AGENT_NAME[row.id]}`}
+        </Button>
+      ))}
+    </>
+  );
 }
 
 /** The verbs of one selected member (every verb names what it does). The
@@ -310,7 +343,12 @@ export function ConductorWindow() {
         egress={selected?.role === "live" ? <EgressChip label={AGENT_HOST[selected.agent as AgentId] ?? AGENT_HOST.claude} scope="cloud" /> : null}
         className="cw-footer"
         receipt={<MemberReceipt member={selected} />}
-        verbs={<MemberVerbs member={selected} onInfo={() => info(selected)} />}
+        verbs={
+          <>
+            {selected ? null : <InstallHooksVerbs agents={reads.detect?.agents ?? []} />}
+            <MemberVerbs member={selected} onInfo={() => info(selected)} />
+          </>
+        }
       />
     </DeskWindowFrame>
   );

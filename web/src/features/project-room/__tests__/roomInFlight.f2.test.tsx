@@ -314,6 +314,20 @@ describe("Conductor F2 K6: the merge receipt", () => {
     expect(screen.queryByText("Write the rollback runbook", { selector: ".surface-primary" })).toBeNull();
   });
 
+  it("PHILO-15 B50/B51: names the PR by its own title, with Open PR and its egress", async () => {
+    wire([flight({ state: "merged", close: "closed", merged_at: MERGED_AT,
+      pr: { number: 1, url: "https://github.com/acme/ledger/pull/1", state: "merged",
+        title: "Add CONTRIBUTING.md with the three pull request rules" } })],
+      { state: "ok", count: 2, items: OPEN_HERE.items.slice(1) });
+    render(<WindowHarness scope="project:p1" />);
+    const receipt = await screen.findByTestId("room-merge-receipt");
+    expect(receipt.textContent).toMatch(/^DONE · Add CONTRIBUTING\.md with the three pull request rules · PR #1 MERGED · /);
+    expect(receipt.textContent).not.toContain("Write the rollback runbook");
+    const open = screen.getByTestId("flight-open-pr");
+    expect(open.getAttribute("aria-label")).toBe("Open PR #1: Add CONTRIBUTING.md with the three pull request rules");
+    expect(open.parentElement!.textContent).toContain("GITHUB.COM");
+  });
+
   it("another Project's merge, or a merge not closed, writes no receipt", async () => {
     wire([
       flight({ state: "merged", close: "closed", merged_at: MERGED_AT, project_id: "p2", pr: { number: 9, url: "u", state: "merged" } }),

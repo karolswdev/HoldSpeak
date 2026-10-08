@@ -816,6 +816,10 @@ briefOpen?, onCancel, onHand, handLabel?, busy?`. PHILO-14 C3: `disabled?`
 hand's EgressChip, on the Hand side), `status?` (a token line under the
 fact: a refusal, the tracker read, the receipt), `verbs?` (the verbs after
 the press, Close / Send again; they replace the three).
+PHILO-15 16: `agentToken?` (the agent as a library Button at the head of
+the fact line; the owner flips it, CLAUDE CODE ⇄ CODEX; `fact` then holds
+mode · branch). The ⇄ mark is drawn, so the fact line still reads
+`CLAUDE CODE · YOLO · hs/...`.
 
 ### NeedsRow / NeedsList / DropTarget / DragGhost
 

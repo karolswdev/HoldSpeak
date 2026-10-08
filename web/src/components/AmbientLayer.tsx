@@ -7,6 +7,7 @@ import {
   dismissAftercare,
   publishAftercare,
   publishAftercareHost,
+  refreshAftercare,
   useAftercare,
   type AftercareHost,
 } from "../desk/intelligenceAttention";
@@ -14,10 +15,12 @@ import { useChairWindows } from "../desk/chair/chairWindows";
 import { openSurfaceWhenReady } from "../desk/shell";
 import { humanizeWireValue } from "../lib/productLanguage";
 import { Button } from "./signal/Signal";
+import { AddToProject } from "../desk/AddToProject";
 import { LampGadget } from "../desk/surface/gadgets";
 import { SurfaceState } from "../desk/surface/Surface";
 import { useChairState } from "../desk/chairState";
 import { useCompactViewport } from "../desk/useCompactViewport";
+import { useOnDeskChanged } from "../desk/useDeskChangedRefresh";
 import {
   handleWorkbenchRunStart,
   handleWorkbenchRunComplete,
@@ -189,6 +192,13 @@ function AftercareNote() {
     () => subscribe("aftercare_ready", (frame) => void publishAftercare(frame.data)),
     [subscribe],
   );
+  // PHILO-15 B56: the counts are live. Every write on the desk re-reads them
+  // (a confirmed proposal is a write), and the card shown reads them once.
+  useOnDeskChanged(() => void refreshAftercare());
+  const signalKey = signal ? signal.meetingId : null;
+  useEffect(() => {
+    if (signalKey) void refreshAftercare();
+  }, [signalKey]);
   useEffect(() => {
     if (!signal) {
       scrolledSlot.current = null;
@@ -236,6 +246,10 @@ function AftercareNote() {
       <span className="signal-eyebrow">Meeting ready</span>
       <strong>{signal.title}</strong>
       {countLine ? <p>{countLine}</p> : null}
+      {/* PHILO-15 B56 (Astra r1): the hub could not count; the card stays. */}
+      {signal.countUnread ? (
+        <span className="surface-token" data-chip data-testid="aftercare-count-unread">COUNT · NOT READ</span>
+      ) : null}
       <div className="button-row">
         {/* PHILO-15 08 (B13): the verb opens the meeting's Review wing,
             where the proposals are; with none, it is not offered. */}
@@ -252,6 +266,8 @@ function AftercareNote() {
             Open proposals
           </Button>
         ) : null}
+        {/* PHILO-15 16 (B37): the ready meeting joins a Project here. */}
+        <AddToProject meetingId={signal.meetingId} />
         <Button dense variant="ghost" onClick={() => dismissAftercare()}>
           Dismiss
         </Button>

@@ -220,3 +220,34 @@ __all__ = [
     "selection_hash_for_route_plan", "unavailable", "SUMMARIES_OFF_REASON",
     "route_is_off", "summaries_off",
 ]
+
+
+def summary_engine_fact(db: Any) -> dict[str, Any]:
+    """PHILO-15 B33: the one "does the summary have an engine" fact for every face.
+
+    The faces that said "no model" (the Settings headline and rows, Settings ›
+    Meetings, the Connections Models row, doctor's hub check) read THIS, the
+    route the queue would take (``project_route``: exact capability, group and
+    global default, OFF first), never an exact-assignment check or the legacy
+    ``meeting.intel_profile_id`` config pointer.
+
+    ``engine_set``: True when the route is ready, False when it is not, None
+    when the route could not be read.  ``off``: the owner turned summaries
+    OFF.  ``host``: where the first leg runs (a LAN host, a node, ``local``).
+    """
+    try:
+        route = summary_route_display(db)
+    except Exception:  # pragma: no cover - a read never blocks a face
+        return {"engine_set": None, "off": False, "host": None, "profile": None}
+    if route.get("status") != "ready" or not route.get("legs"):
+        return {"engine_set": False, "off": route_is_off(route), "host": None, "profile": None}
+    leg = route["legs"][0]
+    host = str(leg.get("node") or "").strip() or str(leg.get("host") or "").strip()
+    if host == "this machine" or str(leg.get("boundary") or "") == "local":
+        host = host if leg.get("node") else "local"
+    return {
+        "engine_set": True,
+        "off": False,
+        "host": host or None,
+        "profile": str(leg.get("profile_label") or leg.get("profile_id") or "") or None,
+    }

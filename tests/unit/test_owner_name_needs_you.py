@@ -126,3 +126,105 @@ def test_a_named_other_person_is_never_claimed_by_the_owner_alias(hub: Hub) -> N
     assert row["_doorCard"].get("person_relationship_id") == other["id"], row
     assert row["why"] == "WAITING ON KAROL" and row["waiting"] is True, row
     assert ref not in [member["ref"] for member in answer["members"]]
+
+
+def _owned_by(hub: Hub, owner: str) -> str:
+    due = (date.today() + timedelta(days=7)).isoformat()
+    is_error, action = hub.mcp("door.add_item", {"task": f"Send the plan ({owner})", "owner": owner, "due": due})
+    assert not is_error, action
+    return str(action["id"])
+
+
+def test_b57_carol_is_karol_when_speech_misheard_his_name(hub: Hub) -> None:
+    """PHILO-15 B57: Whisper heard "Karol" as "Carol"; the action is his."""
+    carol = _owned_by(hub, "Carol")
+    carl = _owned_by(hub, "Carl")  # two edits from Karol: someone else
+    _ok(hub.client.put("/api/settings", json={"owner": {"name": "Karol Sane", "aliases": []}}))
+
+    answer = _ok(hub.client.get("/api/desk/needs-you"))
+    members = [member["ref"] for member in answer["members"]]
+    assert _row(answer, carol)["why"] == "YOURS" and carol in members
+    row = _row(answer, carl)
+    assert row["why"] == "WAITING ON CARL" and row["waiting"] is True and carl not in members
+
+
+def test_b57_a_person_named_carol_keeps_her_work(hub: Hub) -> None:
+    """Astra r1 P1: a Person named Carol on the desk, with NO owner alias, is
+    a real colleague: her action is hers, never the owner's by a one-edit
+    match. The Person is made through the real People routes and the item
+    through the real Door producer."""
+    _ok(hub.client.post("/api/people/setup"))
+    _ok(hub.client.post("/api/people/relationships", json={"display_name": "Carol Diaz"}), 201)
+    carol = _owned_by(hub, "Carol")
+    _ok(hub.client.put("/api/settings", json={"owner": {"name": "Karol Sane", "aliases": []}}))
+
+    answer = _ok(hub.client.get("/api/desk/needs-you"))
+    row = _row(answer, carol)
+    assert row["why"] == "WAITING ON CAROL" and row["waiting"] is True, row
+    assert carol not in [member["ref"] for member in answer["members"]]
+
+
+def test_b57_sounds_like_owner_rule() -> None:
+    from holdspeak.services.needs_you_membership import sounds_like_owner
+
+    names = ["karol sane", "ks"]
+    assert sounds_like_owner("Carol", names)          # first name, one change (no Carol on the desk)
+    assert sounds_like_owner("KAROL", names)          # case-insensitive
+    assert sounds_like_owner("Karl", names)           # one delete
+    assert sounds_like_owner("Carol Sane", names)     # whole name, one change
+    assert not sounds_like_owner("Carl", names)       # two edits
+    assert not sounds_like_owner("Carol Smith", names)  # another surname
+    assert not sounds_like_owner("KT", names)         # short names match exactly only
+    assert not sounds_like_owner("Carol", [])         # no name set: nobody is him
+
+
+def test_b57_the_tolerance_needs_proof_that_no_carol_exists() -> None:
+    from holdspeak.services.needs_you_membership import SELF_OWNER_NAMES, _is_me
+
+    row = {"id": "a1", "owner": "Carol", "why": "WAITING ON CAROL"}
+    mine = ["karol sane"]
+    assert _is_me(row, SELF_OWNER_NAMES, mine, (), set())                  # no Person named Carol
+    assert not _is_me(row, SELF_OWNER_NAMES, mine, (), {"carol diaz", "carol"})  # Carol is a Person
+    assert not _is_me(row, SELF_OWNER_NAMES, mine, (), None)              # the People store is unreadable
+
+
+def test_b57_his_exact_first_name_never_depends_on_people() -> None:
+    """Astra r2 P1: "Karol" with owner "Karol Nowak" (no alias) is him, with
+    the People store unreadable or holding a Person named Karol Nowak. Only
+    the ONE-EDIT match is gated; an explicit Person link still wins."""
+    from holdspeak.services.needs_you_membership import SELF_OWNER_NAMES, _is_me
+
+    row = {"id": "a1", "owner": "Karol", "why": "WAITING ON KAROL"}
+    mine = ["karol nowak"]
+    assert _is_me(row, SELF_OWNER_NAMES, mine, (), None)                          # locked store
+    assert _is_me(row, SELF_OWNER_NAMES, mine, (), {"karol nowak", "karol"})      # he is that Person
+    assert not _is_me({**row, "person_relationship_id": "rel-other"}, SELF_OWNER_NAMES, mine, (), set())
+    assert not _is_me({**row, "owner": "Carol"}, SELF_OWNER_NAMES, mine, (), None)  # fuzzy stays gated
+
+
+def test_b57_a_locked_people_store_keeps_his_first_name_work(hub: Hub, monkeypatch) -> None:
+    """Through the real Door producer and needs-you route, with the People
+    names read failing (a locked store): "Karol" is still YOURS."""
+    import holdspeak.services.needs_you_membership as membership
+
+    monkeypatch.setattr(membership, "_read_people_names", lambda principal: None)
+    karol = _owned_by(hub, "Karol")
+    carol = _owned_by(hub, "Carol")
+    _ok(hub.client.put("/api/settings", json={"owner": {"name": "Karol Nowak", "aliases": []}}))
+    answer = _ok(hub.client.get("/api/desk/needs-you"))
+    members = [member["ref"] for member in answer["members"]]
+    assert _row(answer, karol)["why"] == "YOURS" and karol in members
+    assert _row(answer, carol)["why"] == "WAITING ON CAROL" and carol not in members  # unreadable: no fuzzy
+
+
+def test_b57_a_person_named_like_him_does_not_take_his_first_name(hub: Hub) -> None:
+    """A Person "Karol Nowak" on the desk (no alias) and an item owned by
+    "Karol": it is his (he is that person)."""
+    _ok(hub.client.post("/api/people/setup"))
+    _ok(hub.client.post("/api/people/relationships", json={"display_name": "Karol Nowak"}), 201)
+    karol = _owned_by(hub, "Karol")
+    _ok(hub.client.put("/api/settings", json={"owner": {"name": "Karol Nowak", "aliases": []}}))
+    answer = _ok(hub.client.get("/api/desk/needs-you"))
+    assert _row(answer, karol)["why"] == "YOURS"
+    assert karol in [member["ref"] for member in answer["members"]]
+

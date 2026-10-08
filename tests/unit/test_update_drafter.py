@@ -394,7 +394,9 @@ class TestGoldenDegraded:
         body = result["body_md"]
         # The review section should show as absent in caveats
         assert "review" in body.lower()
-        assert "absent" in body.lower() or "not_yet_built" in body.lower()
+        # PHILO-15 B53: plain words, never the raw state or code.
+        assert "review not read: not yet built" in body.lower()
+        assert "not_yet_built" not in body
 
         # The source coverage section should NOT say "All sources consulted"
         assert "All sources consulted successfully." not in body

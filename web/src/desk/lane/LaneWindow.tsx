@@ -662,9 +662,9 @@ type AssignmentRoster = { task_overrides?: Array<{ id?: string; effective?: { as
 /** The drafting model's entry, read now. `effective` is the whole chain
  * (exact, group, global): with only the Default for AI work, drafts inherit
  * it (PHILO-15 05). No cache: a changed default shows at once (Astra r1). */
-function readDraftEntry(): Promise<AssignmentEntry | null> {
+function readDraftEntry(capability: string): Promise<AssignmentEntry | null> {
   return apiFetch<AssignmentRoster>("/api/inference/assignments").then((body) => {
-    const row = (body?.task_overrides ?? []).find((r) => r?.id === DRAFT_CAPABILITY);
+    const row = (body?.task_overrides ?? []).find((r) => r?.id === capability);
     return row?.effective?.assignment?.entries?.[0] ?? null;
   });
 }
@@ -675,20 +675,24 @@ function readDraftEntry(): Promise<AssignmentEntry | null> {
  * for AI work exists (drafts inherit the default, PHILO-15 05). Read on every
  * open and again after any desk write (`desk_changed`: the Settings and the
  * Concierge assign through mutating `/api` requests, which announce it). */
-export function useDraftEgress(enabled: boolean): { label: string; scope?: "local" | "mixed" | "cloud" | "remote" } {
+export function useDraftEgress(
+  enabled: boolean,
+  /** PHILO-15 B53: the Room's "Draft with model" names its own model's host. */
+  capability: string = DRAFT_CAPABILITY,
+): { label: string; scope?: "local" | "mixed" | "cloud" | "remote" } {
   const targets = useDesk((s) => s.inferenceTargets);
   const [entry, setEntry] = useState<AssignmentEntry | null | undefined>(undefined);
   const seq = useRef(0);
   const read = useCallback(() => {
     const mine = ++seq.current;
-    void readDraftEntry()
+    void readDraftEntry(capability)
       .then((e) => {
         if (seq.current === mine) setEntry(e);
       })
       .catch(() => {
         // The last read stays on the glass when a re-read fails.
       });
-  }, []);
+  }, [capability]);
   useEffect(() => {
     if (!enabled) return;
     read();

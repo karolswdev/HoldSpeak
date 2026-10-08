@@ -1,0 +1,15 @@
+/* PHILO-15 16 (B37): Add to Project ▸ and its receipt token, one row. */
+.add-to-project {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+/* The meeting record's head: the verb under the facts line. */
+.desk-pullout-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
