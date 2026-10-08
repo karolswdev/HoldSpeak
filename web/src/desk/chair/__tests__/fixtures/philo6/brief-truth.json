@@ -16,7 +16,7 @@
     "broke": [
       {
         "created_at": null,
-        "detail": "LookupError('Unknown brief item: brief-item-missing')",
+        "detail": "Unknown brief item \u00b7 11:05",
         "id": "brief-break-pipeline-brief-philo6-00-philo6-01",
         "priority": 2,
         "section": "broke",
@@ -25,7 +25,7 @@
       },
       {
         "created_at": null,
-        "detail": "route_unavailable: ConflictError('The summary route is not available.')",
+        "detail": "The summary route is not available \u00b7 11:00",
         "id": "brief-break-pipeline-brief-philo6-00-philo6-02",
         "priority": 2,
         "section": "broke",
@@ -35,8 +35,8 @@
     ],
     "changed": [
       {
-        "created_at": null,
-        "detail": "30 min",
+        "created_at": "2026-09-25T11:30:00+00:00",
+        "detail": "30 min \u00b7 05:30",
         "id": "brief-item-philo6-03",
         "priority": 50,
         "section": "changed",

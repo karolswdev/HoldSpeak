@@ -71,7 +71,7 @@ import {
   RunAttempts,
 } from "../../meetings/RouteDisclosure";
 import { egressFor } from "../surface/egress";
-import { useOnCoderFrame } from "../useDeskChangedRefresh";
+import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
 import {
   agentWord,
   flightForItem,
@@ -530,6 +530,33 @@ function Arrival() {
       .finally(() => setBriefLoading(false));
   }, []);
   useEffect(() => { readBrief(); }, [readBrief]);
+  /* PHILO-15 B59: the scheduled Brief lands while the Chair is open (the
+     07:10 write, a hub started at 07:05). A quiet re-read on the hub's
+     `desk_changed` frame and when the page comes back (a laptop that slept
+     past the frame): no loading state, and a failed re-read keeps the last
+     Brief on the glass. */
+  const rereadBrief = useCallback(() => {
+    void apiFetch<MondayBrief | null>("/api/brief/latest")
+      .then((data) => {
+        if (!data) return;
+        setBrief(data);
+        setBriefKept(briefReceipt(data));
+        setBriefLoadFailed(null);
+      })
+      .catch(() => undefined);
+  }, []);
+  useOnDeskChanged(rereadBrief);
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") rereadBrief();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", rereadBrief);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", rereadBrief);
+    };
+  }, [rereadBrief]);
 
   // ── meetings ──
   const meetings = useDesk((s) => s.items.meeting);
@@ -2354,6 +2381,13 @@ function BriefSection({
           <SurfaceLedgerRow
             key={item.id}
             primary={item.text}
+            /* PHILO-15 B58: the row's own fact (the local time, how an
+               update left, why a source was not read). */
+            cells={item.detail ? (
+              <span className="surface-receipt-line" data-testid="arrival-brief-row-detail">
+                {item.detail}
+              </span>
+            ) : undefined}
             // PHILO-13-06 (B1): the row opens the object it names.
             onToggle={refOpener(item.source_ref) ?? undefined}
             trailing={

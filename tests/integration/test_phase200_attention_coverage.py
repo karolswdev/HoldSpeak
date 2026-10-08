@@ -159,7 +159,8 @@ def test_the_brief_names_what_was_not_observed(tmp_path):
     waiting = brief.sections["waiting"]
     gaps = [item for item in waiting if item.source_ref.startswith("coverage:")]
     assert gaps, [item.text for item in waiting]
-    assert gaps[0].text == "Not observed: Governance"
+    # PHILO-15 lane 19 ruling: a thing not read says NOT READ, with the reason.
+    assert gaps[0].text == "NOT READ · Governance"
     assert "READ FAILED" in (gaps[0].detail or "")
     assert brief.headline != "No changes", brief.headline
 
