@@ -396,6 +396,17 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         "runs only inside the owner-only admitted `calendar.open_settings` "
         "operation, whose receipt covers it"
     ),
+    (
+        "holdspeak/services/project_repository.py",
+        "_gh_clone",
+        "run",
+        1,
+    ): (
+        "PHILO-15 16: `gh repo clone owner/name <HoldSpeak clone folder>` (egress "
+        "to github.com, a read); it runs only inside the owner-only admitted "
+        "`project.repository.clone` kernel operation on the owner's Hand to agent "
+        "press, whose receipt covers it, and the confirm line names GITHUB.COM first"
+    ),
     # HS-171-02/05: local desktop notification dispatch (osascript).
     # Not an effect — a local-only notification, never egress.
     (

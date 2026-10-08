@@ -50,6 +50,7 @@ from .agent_hand_service import (
     worktree_spec,
 )
 from .errors import ServiceError
+from .project_repository import CLONE_HOST, StoreNotRead, watched_repositories
 
 
 @dataclass
@@ -211,8 +212,26 @@ def preview_hand(
         refused.append(blocked)
 
     project_id = project_id or project_for_item(db, kind, item_id)
-    source = resolve_project_repository(db, project_id, reads.registry(), project_map=service._project_map)
+    registrations = getattr(service, "repositories", None)
+    store_refusal: Optional[str] = None
+    try:
+        if registrations is not None:
+            registrations.get(project_id)
+    except StoreNotRead as exc:
+        # NOT READ: named, and the registrations are left out of this read.
+        store_refusal, registrations = exc.code, None
+    source = resolve_project_repository(
+        db, project_id, reads.registry(), project_map=service._project_map, registrations=registrations,
+    )
     repo = str(source.primary_path) if source is not None else None
+    # PHILO-15 16: a registered repository with no clone yet is cloned by the
+    # hand (egress to github.com): named here, never NO REPOSITORY.
+    clone: Optional[dict[str, Any]] = None
+    record = registrations.get(project_id) if repo is None and registrations is not None else None
+    if record is not None:
+        target = str(registrations.clone_path(str(record["repository"])))
+        clone = {"repository": str(record["repository"]), "host": CLONE_HOST, "state": "to_clone",
+                 "label": _home_as_tilde(target)}
     spec = (
         free_worktree_spec(reads.registry(), repo, kind, item_id) if repo is not None
         else worktree_spec(kind, item_id)
@@ -221,9 +240,18 @@ def preview_hand(
     resume: Optional[dict[str, Any]] = None
     actual = requested
     held_text: Optional[str] = None
-    if repo is None:
-        refused.append("no_repository")
-    else:
+    if store_refusal:
+        # The hand refuses on a store it cannot read whatever source resolves
+        # (Astra r2 on PR 1000): the preview names it the same way, always.
+        refused.append(store_refusal)
+    if repo is None and clone is None and store_refusal:
+        pass
+    elif repo is None and clone is None:
+        # A repository the Room watches but nobody registered: the drawer's
+        # Register verb fixes it; with none at all, NO REPOSITORY.
+        watched = watched_repositories(db, project_id)
+        refused.append("repository_not_registered" if watched else "no_repository")
+    elif repo is not None:
         try:
             exists = derive_worktree_path(repo, spec["name"]).exists()
         except LaunchRefused as exc:
@@ -267,7 +295,8 @@ def preview_hand(
         "acceptance": brief["acceptance"],
         "tracker": brief.get("tracker"),
         "repo": repo,
-        "repo_label": _home_as_tilde(repo),
+        "repo_label": _home_as_tilde(repo) if repo is not None else (clone or {}).get("label"),
+        "clone": clone,
         "branch": spec["branch"],
         "worktree": spec["name"],
         "project_id": brief["project_id"],

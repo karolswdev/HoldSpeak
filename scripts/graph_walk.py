@@ -910,7 +910,9 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
                           "agent_hooks.install",
                           # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
-                          "calendar.open_settings"})
+                          "calendar.open_settings",
+                          # PHILO-15 16: the owner names a Project's repository (HTTP only).
+                          "project.repository.register"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {

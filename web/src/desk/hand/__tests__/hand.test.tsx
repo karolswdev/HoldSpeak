@@ -101,11 +101,12 @@ const world = {
   preview: { ...PREVIEW } as typeof PREVIEW,
   hand: null as null | (() => unknown),
   calls: [] as Array<{ url: string; init?: { method?: string; json?: unknown } }>,
+  agents: { agents: [] } as { agents: Array<Record<string, unknown>> },
 };
 
 function route(url: string, init?: { method?: string; json?: unknown }): unknown {
   world.calls.push({ url, init });
-  if (url.startsWith("/api/onboarding/agents")) return { agents: [] };
+  if (url.startsWith("/api/onboarding/agents")) return world.agents;
   if (url === "/api/authority/policy") return { control_mode: world.mode };
   if (url === "/api/agent/hand/preview") {
     const profile = String((init?.json as { profile?: string })?.profile ?? "claude-default");
@@ -187,6 +188,7 @@ beforeEach(() => {
   world.preview = { ...PREVIEW, refused: [] };
   world.hand = null;
   world.calls = [];
+  world.agents = { agents: [] };
   world.sessionReads = 0;
   world.launchedAfter = null;
   apiFetch.mockReset();
@@ -214,6 +216,11 @@ beforeEach(() => {
 afterEach(() => {
   window.matchMedia = realMatchMedia;
 });
+
+/** PHILO-15 16: the fact line reads `<AGENT> · <MODE> · <branch>`; the agent
+ *  is the line's flip token (a library Button) inside it. */
+const factIs = (root: HTMLElement, text: string) =>
+  waitFor(() => expect(root.querySelector(".confirm-line-fact")?.textContent).toBe(text));
 
 const posts = (url: string) => world.calls.filter((c) => c.url === url && c.init?.method === "POST");
 
@@ -256,7 +263,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
     const group = within(line).getByRole("group", { name: "Hand: Write the cutover comms" });
-    await within(group).findByText("CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(group, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     // The line sits under the drawer head, before the icons.
     expect(line.previousElementSibling).toHaveClass("drawer-head");
     expect(posts("/api/agent/hand/preview")[0].init?.json).toEqual({
@@ -264,7 +271,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     });
     // The launch's egress, on the Hand side.
     expect(within(group).getByText("API.ANTHROPIC.COM")).toBeTruthy();
-    expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual(["Brief ▸", "Cancel", "Hand"]);
+    expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual(["CLAUDE CODE", "Brief ▸", "Cancel", "Hand"]);
     // Nothing launched yet.
     expect(posts("/api/agent/hand")).toEqual([]);
     fireEvent.click(within(group).getByRole("button", { name: "Brief ▸" }));
@@ -276,7 +283,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     expect(posts("/api/agent/hand")[0].init?.json).toEqual({
       kind: "action", id: "a-comms", profile: "claude-default", project_id: "p-ledger",
     });
-    expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual(["Close"]);
+    expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual(["CLAUDE CODE", "Close"]);
     fireEvent.click(within(group).getByRole("button", { name: "Close" }));
     expect(screen.queryByTestId("hand-confirm")).toBeNull();
   });
@@ -285,7 +292,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     await renderDesk();
     dragOnto(comms(), screen.getByRole("button", { name: /^Codex: reconciliation job, AGENT/ }));
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await within(line).findByText("CODEX · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
     expect(within(line).getByText("API.OPENAI.COM")).toBeTruthy();
     expect((posts("/api/agent/hand/preview")[0].init?.json as { profile: string }).profile).toBe("codex-default");
   });
@@ -306,7 +313,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     await renderDesk();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await within(line).findByText("CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
     expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent(
       "NOT LAUNCHED · AGENT LIMIT REACHED",
@@ -333,7 +340,7 @@ describe("PHILO-14 C3 Astra r1 on #946", () => {
     await renderDesk();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await within(line).findByText("CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     expect(screen.queryByRole("button", { name: /^Claude Code: cutover comms, AGENT/ })).toBeNull();
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
     // The session registers on the second read after the launch: the poll waits for it.
@@ -407,6 +414,32 @@ describe("PHILO-14 C3 Secure and Normal: the sheet", () => {
   });
 });
 
+describe("PHILO-15 16 the sheet carries the clone through a launch refusal", () => {
+  it("Secure: CLONES before Launch, CLONED · owner/name · hh:mm after a refused launch", async () => {
+    world.mode = "safe";
+    world.preview = {
+      ...PREVIEW, repo: null as unknown as string,
+      clone: { repository: "acme/ledger", host: "github.com", state: "to_clone" },
+    } as typeof PREVIEW;
+    world.hand = () => {
+      throw new ApiError(409, "refused", {
+        code: "launch_cap_reached",
+        clone: { repository: "acme/ledger", host: "github.com", state: "cloned", cloned_at: "2026-10-07T09:05:00" },
+      });
+    };
+    render(<HandSheet />);
+    act(() => useAgentHand.getState().open({ kind: "action", id: "a-comms", title: "Write the cutover comms", projectId: "p-ledger" }));
+    const before = await screen.findByTestId("hand-clone");
+    expect(before).toHaveAttribute("data-state", "to_clone");
+    expect(before).toHaveTextContent("CLONES acme/ledger");
+    fireEvent.click(await screen.findByTestId("hand-launch"));
+    expect(await screen.findByTestId("hand-launch-refused")).toHaveTextContent("NOT LAUNCHED · AGENT LIMIT REACHED");
+    const after = screen.getByTestId("hand-clone");
+    expect(after).toHaveAttribute("data-state", "cloned");
+    expect(after).toHaveTextContent("CLONED · acme/ledger · 09:05");
+  });
+});
+
 describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
   it("icons do not lift; the drawer list's Hand to agent opens the confirm line over the list", async () => {
     setCompact(true);
@@ -416,16 +449,155 @@ describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
         <DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />
       </>,
     );
-    const row = await within(drawer()).findByText("Write the cutover comms");
+    const row = await within(drawer()).findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
     for (const el of document.querySelectorAll(".desk-screen .desk-icon")) expect(el).not.toHaveAttribute("draggable", "true");
     // The verb is withheld until a handable object is selected.
     expect(within(drawer()).queryByRole("button", { name: "Hand to agent" })).toBeNull();
     fireEvent.click(row);
     fireEvent.click(within(drawer()).getByRole("button", { name: "Hand to agent" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await within(line).findByText("CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     // Over the list (the line comes before it).
     expect(line.compareDocumentPosition(drawer().querySelector("table, [role='grid'], .object-list")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
+describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
+  it("1440: CLAUDE CODE ⇄ CODEX; the preview, the egress and Hand follow the flip", async () => {
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    const token = within(line).getByTestId("hand-confirm-agent");
+    expect(token).toHaveAttribute("data-agent", "claude");
+    expect(token).toHaveAccessibleName("Agent: Claude Code. Press to hand to Codex");
+    fireEvent.click(token);
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).getByTestId("hand-confirm-agent")).toHaveAttribute("data-agent", "codex");
+    expect(within(line).getByText("API.OPENAI.COM")).toBeTruthy();
+    const previews = posts("/api/agent/hand/preview").map((c) => (c.init?.json as { profile: string }).profile);
+    expect(previews).toEqual(["claude-default", "codex-default"]);
+    fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
+    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("LAUNCHED · BRIEF SENT");
+    expect(posts("/api/agent/hand")[0].init?.json).toEqual({
+      kind: "action", id: "a-comms", profile: "codex-default", project_id: "p-ledger",
+    });
+    // After the press the agent is the launch's: the token no longer flips.
+    expect(within(line).getByTestId("hand-confirm-agent")).toBeDisabled();
+  });
+
+  it("393: the drawer's Hand to agent verb reaches the same token", async () => {
+    setCompact(true);
+    render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
+    fireEvent.click(await within(drawer()).findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ }));
+    fireEvent.click(within(drawer()).getByRole("button", { name: "Hand to agent" }));
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
+    await within(line).findByTestId("hand-confirm-receipt");
+    expect((posts("/api/agent/hand")[0].init?.json as { profile: string }).profile).toBe("codex-default");
+  });
+});
+
+describe("PHILO-15 16 (Astra r1 on #1000): the default and the owner's flip", () => {
+  const agent = (id: string, signedIn: string) => ({
+    id, label: id, installed: true, path: `/bin/${id}`, version: "1", hooks: "installed", signed_in: signedIn, ready: true, verb: null,
+  });
+
+  it("the Conductor's default is the agent whose sign-in is known; the line says why", async () => {
+    world.agents = { agents: [agent("claude", "unknown"), agent("codex", "yes")] };
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).getByTestId("hand-confirm-skipped")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");
+  });
+
+  it("a remembered flip keeps lane 18's warning for the agent it shows", async () => {
+    world.agents = { agents: [agent("claude", "unknown"), agent("codex", "unknown")] };
+    localStorage.setItem("hs.hand.agent.p-ledger", "codex");
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("CODEX · SIGN-IN UNKNOWN");
+    fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
+    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");
+    expect(localStorage.getItem("hs.hand.agent.p-ledger")).toBe("claude");
+  });
+
+  it("the owner's flip is this Project's next default (the verb and the drop)", async () => {
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    let line = await within(drawer()).findByTestId("hand-confirm");
+    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    fireEvent.click(within(line).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByTestId("hand-confirm")).toBeNull();
+    dragOnto(comms(), conductor());
+    line = await within(drawer()).findByTestId("hand-confirm");
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).queryByTestId("hand-confirm-skipped")).toBeNull();
+  });
+});
+
+describe("PHILO-15 16 B38: the first hand clones the Project's repository", () => {
+  it("a clone the hand made stays CLONED when the launch after it refuses (Astra r1 on #1000)", async () => {
+    world.preview = {
+      ...PREVIEW, repo: null as unknown as string,
+      clone: { repository: "karolswdev/holdspeak-dayone-rehearsal-1558", host: "github.com", state: "to_clone" },
+    } as typeof PREVIEW;
+    world.hand = () => {
+      throw new ApiError(409, "refused", {
+        code: "launch_cap_reached",
+        clone: { repository: "karolswdev/holdspeak-dayone-rehearsal-1558", host: "github.com", state: "cloned",
+                 cloned_at: "2026-10-07T18:06:00",
+                 folder: "~/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558/holdspeak-dayone-rehearsal-1558" },
+      });
+    };
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    expect(await within(line).findByTestId("hand-confirm-clone")).toHaveAttribute("data-state", "to_clone");
+    fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
+    expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent("NOT LAUNCHED · AGENT LIMIT REACHED");
+    const clone = within(line).getByTestId("hand-confirm-clone");
+    expect(clone).toHaveAttribute("data-state", "cloned");
+    expect(clone).toHaveTextContent("CLONED · karolswdev/holdspeak-dayone-rehearsal-1558 · 18:06");
+    expect(within(line).queryByText(/^CLONES /)).toBeNull();
+    // Where the clone lives, so the owner finds it after the refusal (Astra r2).
+    expect(within(line).getByTestId("hand-confirm-clone-folder")).toHaveTextContent(
+      "~/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558/holdspeak-dayone-rehearsal-1558",
+    );
+  });
+
+  it("the line names the clone's egress before the press and CLONED after it; never NO REPOSITORY", async () => {
+    world.preview = {
+      ...PREVIEW, repo: null as unknown as string, repo_label: "~/.holdspeak/repositories/karolswdev/r/r",
+      clone: { repository: "karolswdev/holdspeak-dayone-rehearsal-1558", host: "github.com", state: "to_clone" },
+    } as typeof PREVIEW;
+    world.hand = () => ({
+      status: "launched", launch_id: "launch-1", instruction_state: "sent", profile: "codex-default",
+      clone: { repository: "karolswdev/holdspeak-dayone-rehearsal-1558", host: "github.com", state: "cloned" },
+    });
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    const before = await within(line).findByTestId("hand-confirm-clone");
+    expect(before).toHaveAttribute("data-state", "to_clone");
+    expect(within(before).getByText("GITHUB.COM")).toBeTruthy();
+    expect(within(before).getByText("CLONES karolswdev/holdspeak-dayone-rehearsal-1558")).toBeTruthy();
+    expect(within(line).queryByText("NO REPOSITORY")).toBeNull();
+    expect(within(line).getByRole("button", { name: "Hand" })).toBeEnabled();
+    fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
+    await within(line).findByTestId("hand-confirm-receipt");
+    const after = within(line).getByTestId("hand-confirm-clone");
+    expect(after).toHaveAttribute("data-state", "cloned");
+    expect(within(after).getByText("CLONED · karolswdev/holdspeak-dayone-rehearsal-1558")).toBeTruthy();
   });
 });
 

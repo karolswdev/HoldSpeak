@@ -856,3 +856,41 @@
   display: inline-flex;
   flex: none;
 }
+/* PHILO-15 16 (B39): the agent token on the fact line is a library Button the
+   owner flips (CLAUDE CODE ⇄ CODEX); it reads as the fact it replaces. The
+   flip mark is drawn over the Button's own end padding (not text, so the fact
+   line still reads `CLAUDE CODE · YOLO · hs/...`; the press passes through it). */
+.confirm-line-agent {
+  position: relative;
+  display: inline-flex;
+  vertical-align: baseline;
+}
+.confirm-line-agent > .btn {
+  min-height: 0;
+  padding: 0 18px 0 6px;
+  margin-right: 2px;
+  font: inherit;
+  letter-spacing: inherit;
+  white-space: nowrap;
+}
+.confirm-line-agent::after {
+  content: "⇄";
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-muted);
+}
+/* PHILO-15 16 (Astra r1 on PR 1000): a long token in the status line (the
+   clone's owner/name at 393) wraps inside the line; it never clips. */
+.confirm-line-status {
+  max-width: 100%;
+  min-width: 0;
+}
+.confirm-line-status .desk-hand-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
+}

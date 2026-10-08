@@ -22,6 +22,7 @@ import type { PulloutContentProps } from "./types";
 import { Button } from "../../components/signal/Signal";
 import { MeetingSendWellLazy as MeetingSendWell } from "../../meetings/MeetingSendWellLazy";
 import { MeetingDecideWell } from "../../meetings/MeetingDecideWell";
+import { AddToProject } from "../AddToProject";
 
 interface MeetingDetail {
   intel?: { summary?: string; action_items?: any[]; topics?: string[] } | null;
@@ -91,6 +92,11 @@ export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
         {meetingFacts ? (
           <p className="quiet desk-pullout-facts">{meetingFacts}</p>
         ) : null}
+        {/* PHILO-15 16 (B37): the meeting joins a Project, one press from the
+            record's head (the footer's two verbs fill its width). */}
+        <div className="desk-pullout-verbs">
+          <AddToProject meetingId={o.id} />
+        </div>
         {detail?.capture_status && detail.capture_status !== "finalized" ? (
           <section>
             <h3>Saved, incomplete</h3>

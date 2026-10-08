@@ -11,7 +11,7 @@
  */
 import { create } from "zustand";
 import type { PrimitiveKind } from "../lib/primitives";
-import type { AgentId } from "./firstrun/agentsStep";
+import type { AgentId, AgentsDetect } from "./firstrun/agentsStep";
 import { issueOriginId } from "./agentFlights";
 
 export const HAND_PATH = "/api/agent/hand";
@@ -38,6 +38,48 @@ export interface HandOrigin {
 export const AGENT_PROFILE: Record<AgentId, string> = { claude: "claude-default", codex: "codex-default" };
 /** The owner's ruling (2026-10-06): the sheet opens on Claude Code. */
 export const DEFAULT_AGENT: AgentId = "claude";
+/** The agents in the order the default is chosen. */
+const DEFAULT_ORDER: readonly AgentId[] = ["claude", "codex"];
+
+/** The default agent of a hand, and the agent it passed over (PHILO-15 B36).
+ *  The default is the first installed agent whose sign-in is KNOWN: Claude
+ *  Code, unless its sign-in is unknown and Codex's is known; then Codex,
+ *  and `skipped` names Claude Code so the face says why (SIGN-IN UNKNOWN).
+ *  With no detect read, or no known sign-in, it stays Claude Code. */
+export function pickDefaultAgent(
+  detect: AgentsDetect | null | undefined,
+): { agent: AgentId; skipped: AgentId | null; unknown: AgentId[] } {
+  const rows = detect?.agents ?? [];
+  const row = (id: AgentId) => rows.find((r) => r.id === id);
+  // Astra r1 P2: every installed agent whose sign-in is not known, so the
+  // line warns for the agent it SELECTS too (both unknown → Claude Code).
+  const unknown = DEFAULT_ORDER.filter((id) => row(id)?.installed && row(id)?.signed_in !== "yes");
+  const known = DEFAULT_ORDER.find((id) => row(id)?.installed && row(id)?.signed_in === "yes");
+  if (!known || known === DEFAULT_AGENT) return { agent: DEFAULT_AGENT, skipped: null, unknown };
+  const passed = row(DEFAULT_AGENT);
+  return { agent: known, skipped: passed?.installed ? DEFAULT_AGENT : null, unknown };
+}
+
+/** PHILO-15 16 (Astra on #1000): the owner's last flip, per Project, on this
+ *  browser (a per-viewer convenience; an unreadable store is no memory). */
+const agentKey = (projectId: string) => `hs.hand.agent.${projectId}`;
+export function rememberedAgent(projectId: string | null | undefined): AgentId | null {
+  if (!projectId) return null;
+  try {
+    const value = localStorage.getItem(agentKey(projectId));
+    return value === "claude" || value === "codex" ? value : null;
+  } catch {
+    return null;
+  }
+}
+export function rememberAgent(projectId: string | null | undefined, agent: AgentId): void {
+  if (!projectId) return;
+  try {
+    localStorage.setItem(agentKey(projectId), agent);
+  } catch {
+    /* no memory: the next hand starts on the default */
+  }
+}
 
 /** The Desk object kinds a brief can carry: the same id on both sides. */
 const DESK_HAND_KINDS: Partial<Record<PrimitiveKind, HandKind>> = {

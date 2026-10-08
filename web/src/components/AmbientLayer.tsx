@@ -14,6 +14,7 @@ import { useChairWindows } from "../desk/chair/chairWindows";
 import { openSurfaceWhenReady } from "../desk/shell";
 import { humanizeWireValue } from "../lib/productLanguage";
 import { Button } from "./signal/Signal";
+import { AddToProject } from "../desk/AddToProject";
 import { LampGadget } from "../desk/surface/gadgets";
 import { SurfaceState } from "../desk/surface/Surface";
 import { useChairState } from "../desk/chairState";
@@ -252,6 +253,8 @@ function AftercareNote() {
             Open proposals
           </Button>
         ) : null}
+        {/* PHILO-15 16 (B37): the ready meeting joins a Project here. */}
+        <AddToProject meetingId={signal.meetingId} />
         <Button dense variant="ghost" onClick={() => dismissAftercare()}>
           Dismiss
         </Button>

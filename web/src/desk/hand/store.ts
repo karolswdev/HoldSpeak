@@ -42,6 +42,10 @@ export interface HandPending {
   source: HandEnd;
   agent: AgentId;
   host: string;
+  /** PHILO-15 B36: the default agent passed over (its sign-in is unknown). */
+  skipped?: AgentId | null;
+  /** The installed agents whose sign-in is unknown (the line warns for its own). */
+  unknown?: AgentId[];
 }
 
 interface DropHandState {

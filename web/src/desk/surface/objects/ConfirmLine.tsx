@@ -24,6 +24,9 @@ export interface ConfirmLineProps {
   title: string;
   /** The facts of the hand: agent · mode · branch. */
   fact: string;
+  /** PHILO-15 16 (B39): the agent as a token the owner can flip (a library
+   *  Button), drawn first on the fact line; `fact` then holds mode · branch. */
+  agentToken?: ReactNode;
   onBrief?(): void;
   /** True while the brief is open (the Brief verb reads pressed). */
   briefOpen?: boolean;
@@ -47,6 +50,7 @@ export function ConfirmLine({
   to,
   title,
   fact,
+  agentToken,
   onBrief,
   briefOpen,
   onCancel,
@@ -67,7 +71,15 @@ export function ConfirmLine({
       </span>
       <span className="confirm-line-what">
         <span className="confirm-line-title">{title}</span>
-        <span className="confirm-line-fact">{fact}</span>
+        <span className="confirm-line-fact">
+          {agentToken ? (
+            <>
+              <span className="confirm-line-agent">{agentToken}</span>
+              {fact ? <span aria-hidden="true">{" · "}</span> : null}
+            </>
+          ) : null}
+          {fact}
+        </span>
         {status ? <span className="confirm-line-status">{status}</span> : null}
       </span>
       {egress ? <span className="confirm-line-egress">{egress}</span> : null}
