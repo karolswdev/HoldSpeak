@@ -437,6 +437,16 @@
       ]
     },
     {
+      "path": "/api/agent/launches/{launch_id}/rebrief",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agents/capabilities",
       "methods": [
         "GET"

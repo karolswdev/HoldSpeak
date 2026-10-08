@@ -18,6 +18,8 @@ _ALLOWED = frozenset(
         "keys",
         "expected_generation",
         "expected_pane_id",
+        # PHILO-15 (Astra r2 on #996): the wait episode the sender read.
+        "expected_wait_id",
         "command_id",
         "session_key",
         "agent",

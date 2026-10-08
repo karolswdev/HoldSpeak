@@ -65,7 +65,8 @@ describe("R5: a coding agent that waits for the owner", () => {
     expect(rows.map((row) => [row.ref, row.why])).toEqual([["coder:claude:s1", "TO APPROVE"]]);
     expect(attentionClass(rows[0], NOW)).toBe("due_today");
     const idle = { ...prompt, notification_type: "idle_prompt", question: "Claude is waiting for your input" };
-    expect(coderItems([idle], NOW)[0].why).toBe("TO ANSWER");
+    // PHILO-15 B48 (the A5 law): an idle prompt with no question is not a row.
+    expect(coderItems([idle], NOW)).toEqual([]);
     expect(coderItems([session()], NOW)[0].why).toBe("TO ANSWER");
     expect(coderItems([{ ...prompt, notification_type: "auth_success" }], NOW)).toEqual([]);
     expect(coderItems([{ ...prompt, lifecycle: "ended" }], NOW)).toEqual([]);

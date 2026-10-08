@@ -325,9 +325,13 @@ class AgentResponder:
             thread.join(timeout)
 
     def _triage_one(self, key: str, session: Any, mode: str) -> str:
-        from ..agent_context.models import is_blocked, wait_kind
+        from ..agent_context.models import TURN_ASKS, is_blocked, turn_end, wait_kind
 
         if session is None or not is_blocked(session):
+            return "none"
+        if turn_end(session) != TURN_ASKS:
+            # PHILO-15 B48: a turn end with no question asks nothing: no
+            # Needs you row, no notification, no drafted answer.
             return "none"
         launch = self._launch_for(key)
         if launch is None or wait_kind(session) == "approve" or mode == "safe":

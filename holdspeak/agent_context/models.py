@@ -270,6 +270,55 @@ def is_blocked(session: Any) -> bool:
     return bool(_field(session, "awaiting_response"))
 
 
+#: The words of a turn end (PHILO-15 B48): a real question waits (``asks``),
+#: the agent reports its work complete (``done``), or it stopped with no
+#: question (``idle``).
+TURN_ASKS = "asks"
+TURN_IDLE = "idle"
+TURN_DONE = "done"
+
+#: A sentence that ends in a question mark (optionally closed by a quote,
+#: a bracket or markdown emphasis), at a line end or before a space. A
+#: ``?`` inside a URL (``/?q=1``) is not one.
+_QUESTION_RE = re.compile(r"\?[\"'\u2019\u201d)\]*_`]*(?:\s|$)")
+
+#: An interrogative that asks the owner, wherever it stands: an inverted
+#: modal or auxiliary with I/we/you ("Should I deploy", "Do you want"), or an
+#: offer ("Want me to ...", "Would you like ...").
+_INTERROGATIVE_RE = re.compile(
+    r"\b(?:(?:should|shall|may|can|could|would|will|do|does|did|is|are)\s+(?:i|we|you)\b"
+    r"|want\s+me\s+to\b|would\s+you\s+like\b|do\s+you\s+want\b)",
+    re.IGNORECASE,
+)
+
+
+def asks_a_question(text: Any) -> bool:
+    """The agent's turn end asks the owner something: a ``?`` that ends a
+    sentence, or an interrogative, ANYWHERE in its words, however long the
+    report around it (the ruling shared with lane 15, Astra r2 on #996 and
+    #998). "Should I deploy to production? The change is done and all tests
+    pass." is a question; "Done. PR #2 is open." is not.
+
+    This is THE question predicate: Needs you, the lane's stations, the
+    Conductor lamp and the responder's silence rule read it (``needsYou.ts``
+    ``asksAQuestion`` mirrors it)."""
+    body = str(text or "").strip()
+    if not body:
+        return False
+    return bool(_QUESTION_RE.search(body) or _INTERROGATIVE_RE.search(body))
+
+
+def turn_end(session: Any, *, work_done: bool = False) -> str:
+    """How a blocked session's turn ended: ``asks`` for a permission prompt
+    or a real question, else ``done`` when the work is delivered
+    (``work_done``: the launch's PR is open) or ``idle``."""
+    if wait_kind(session) == "approve":
+        return TURN_ASKS
+    if asks_a_question(_field(session, "question")):
+        return TURN_ASKS
+    return TURN_DONE if work_done else TURN_IDLE
+
+
 def wait_kind(session: Any) -> str:
     """``approve`` for a permission prompt, else ``answer``."""
     if (

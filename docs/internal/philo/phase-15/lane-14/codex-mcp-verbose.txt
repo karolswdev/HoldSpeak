@@ -1,0 +1,28 @@
+  Use /mcp verbose for tools and resources.
+/mcp
+🔌  MCP Tools
+  • holdspeak: connected (138 tools)
+    • Auth: Bearer token
+    • Tools: ask.keep, ask.resolve_grounding, cadence.audit, cadence.get_loop, cadence.history, cadence.loops, cadence.status, channel.check_destination, channel.destinations, channel.prepare,
+channel.preview, channel.sends, coder.audit, coder.get, coder.list, concierge.detect, concierge.probe, connection.list, decision.supersede, decision_record.get, decision_record.list,
+decision_record.search, desk.create, desk.delete, desk.get, desk.list, desk.needs_you, desk.snapshot, desk.update, desk.verb, dictation.get, dictation.list, door.add_item, door.get, event.list,
+follow_through.board, follow_through.complete, heartbeat.status, inference_assignment.editor, inference_assignment.preview_use_default, inference_assignment.summary, interview.get, kb.add_member,
+kb.list_members, kb.remove_member, kernel.receipt, meeting.export, meeting.get, meeting.list, meeting.proposals, memory.observations, memory.page, memory.search, model_library.get, monday_brief.get,
+monday_brief.shelf, monday_brief.shelf_read, people.grounding.get, people.one_on_one.brief, people.readiness, people.relationship.get, people.relationship.list, pipeline.events, plugin_job.list,
+plugin_job.summary, practice_recipe.get, practice_recipe.list, project.get, project.get_delta, project.get_room, project.get_steward_run, project.item.create, project.item.list,
+project.item.transition, project.item.update, project.link, project.list, project.list_updates, project.open_review, project.resource.add, project.resource.list, project.resource.remove,
+project.suggested_sources, project.watch.evaluate, project.watch.inspect, provider.confluence_connections, provider.confluence_discover, provider.confluence_validate_space, provider.github_connection,
+provider.github_discover, provider.github_validate_repo, provider.jira_connection, provider.jira_connections, provider.jira_discover, provider.jira_search, provider.jira_validate_scope, provider.list,
+reaction.list, reaction.presets, recipe.get, recipe.list, scheduled_recording.cancel_armed, scheduled_recording.create, scheduled_recording.delete, scheduled_recording.list,
+scheduled_recording.update, settings.get, settings.hub, steward.nudges, thought.accept_review, thought.adopt_note, thought.answer_review, thought.attach_context, thought.complete, thought.create,
+thought.detach_context, thought.get_default_context, thought.list_context, thought.reconcile, thought.refresh_context, thought.reject_review, thought.resume, thought.stop_refinement,
+thought.update_working, watch.list, watch.preview, workbench.add_item, workbench.create, workbench.delete, workbench.delete_item, workbench.get, workbench.list, workbench.list_runs, workbench.update,
+workbench.update_item, zone.file, zone.list_members, zone.unfile
+    • Resources: Desk primitive schema (holdspeak://desk/schema), Desk verb catalog (holdspeak://desk/verbs), HoldSpeak Constitution (holdspeak://desk/constitution), Desk snapshot (holdspeak://desk/
+snapshot), Workbenches (holdspeak://workbenches), Recipes (holdspeak://recipes), Dictation journal (holdspeak://dictation/journal), Follow-Through board (holdspeak://follow-through/board), Latest
+Monday Brief (holdspeak://briefs/latest), Recent pipeline events (pipeline://events/recent), Pipeline event statistics (pipeline://events/stats), Cadence engine status (holdspeak://cadence/status),
+People MCP readiness (holdspeak://people/readiness), People relationships (holdspeak://people/relationships), Unfinished thoughts (holdspeak://thoughts/unfinished)
+    • Resource templates: (none)
+› Ask Codex to do anything
+  qwen3.8-27b default · /private/tmp/hs14.G9nv/hs-project_item-pitem_1bdeb9ff142e41fa958628c9f5fafdfb
+  ? for shortcuts
