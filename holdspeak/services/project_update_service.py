@@ -1315,7 +1315,10 @@ def _parse_model_output(
                     acceptance=ACCEPTANCE_UNREVIEWED,
                     unknowns=_typed_unknowns(text, ""),
                 ))
-                lines.append(f"- {UNVERIFIED_MARKER} {text}")
+                # The mark rides EVERY line of the claim (Astra r2): a claim
+                # with embedded newlines is omitted whole when it leaves the
+                # desk, never only its first line.
+                lines.append(f"- {UNVERIFIED_MARKER} " + text.replace("\n", f"\n  {UNVERIFIED_MARKER} "))
 
         if lines:
             sections[key] = "\n".join(lines)

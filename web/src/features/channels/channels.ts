@@ -201,6 +201,7 @@ const REFUSED: Record<string, string> = {
   invalid_arguments: "NOT VALID",
   no_summary: "NO SUMMARY",
   not_published: "NOT PUBLISHED",
+  nothing_verified: "NOTHING VERIFIED",
   validation_error: "NOT VALID",
   preview_changed: "PREVIEW CHANGED",
   payload_changed: "PREVIEW CHANGED",

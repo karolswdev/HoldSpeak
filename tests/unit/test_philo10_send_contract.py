@@ -745,3 +745,21 @@ def test_the_words_map_his_asks_and_never_say_an_agent_sends(hub: Hub) -> None:
     assert "only the owner sends" in tools["channel.send"]["description"].lower()
     assert "document_ref" in tools["channel.prepare"]["inputSchema"]["properties"]
     assert "destination_id" in tools["channel.prepare"]["inputSchema"]["properties"]
+
+
+def test_nothing_verified_is_refused_at_preview_and_prepare(hub: Hub, tmp_path: Path) -> None:
+    """PHILO-15 17 (Astra r2 ruling): a published update whose every claim is
+    unchecked is refused NOTHING VERIFIED by the real channel service, before
+    any byte is frozen or written; the stored update keeps its claims."""
+    body = ("## Progress\n\n- **[UNVERIFIED]** The rollout is complete.\n\n"
+            "## Decisions\n\nNo decisions in this window.\n")
+    _pid, update = room(hub, body=body)
+    folder = tmp_path / "out"
+    dest = destination(hub, folder)
+    ref = f"project_update:{update}"
+    for path in ("/api/channels/preview", "/api/channels/sends"):
+        refused = hub.client.post(path, json={"document_ref": ref, "destination_id": dest})
+        assert refused.status_code == 400, refused.text
+        assert refused.json()["code"] == "nothing_verified", refused.text
+    assert not list(folder.glob("*.md"))
+    assert hub.db.project_updates.get_update(update)["body_md"] == body

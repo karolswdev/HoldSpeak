@@ -336,6 +336,89 @@ def test_unchecked_model_claims_never_leave_the_desk(tmp_path, db, monkeypatch) 
         rig.tmux.ended = True
 
 
+def _model_from(monkeypatch, raw: str) -> None:
+    """The model at its boundary: ``raw`` through the REAL parser and assembler."""
+    from holdspeak.services import project_update_service as pus
+
+    def model(self, principal, det_claims, det_sections, det_body_md, known_names=(), memory=None):
+        refs = frozenset(r for c in det_claims for r in c.refs)
+        sections, claims = pus._parse_model_output(raw, refs)
+        return (pus._assemble_body(sections), json.dumps([c.to_dict() for c in claims]),
+                "model:ia_1", "192.168.1.43:8080", "qwen3.8-27b")
+
+    monkeypatch.setattr(pus.ProjectUpdateService, "_draft_with_model", model)
+
+
+def test_a_multiline_unchecked_claim_is_omitted_whole(tmp_path, db, monkeypatch) -> None:
+    """Astra r2 (P1): an uncited claim with an embedded newline leaves the
+    desk with NONE of its lines, through the real parser, Send and Copy."""
+    from holdspeak.services.channel_contract import without_desk_marks
+
+    _model_from(monkeypatch, json.dumps({"sections": [
+        {"key": "progress", "sentences": [
+            {"text": "The contributing file was merged.", "cited_refs": ["action_item:ai_1"]},
+            {"text": "Unverified.\nThe rollout is complete.", "cited_refs": []},
+        ]},
+    ]}))
+    rig = _merged(tmp_path, db, monkeypatch)
+    try:
+        _delta, updates = _updates(db)
+        draft = updates.draft_update(OWNER, PROJECT, generator="model")
+        assert "The rollout is complete." in draft["body_md"], "the desk keeps the claim"
+        updates.publish_update(OWNER, draft["id"])
+        sent = render_update(db, draft["id"]).body_md
+        copied = without_desk_marks(db.project_updates.get_update(draft["id"])["body_md"])
+        for out in (sent, copied):
+            assert "The rollout is complete." not in out and "Unverified." not in out, out
+            assert "The contributing file was merged." in out
+            assert "1 claim not checked, kept on the desk." in out
+        # A legacy body (the mark on the first line only) is omitted whole too.
+        legacy = "## Progress\n\n- **[UNVERIFIED]** Unverified.\nThe rollout is complete.\n- Kept.\n"
+        assert without_desk_marks(legacy) == "## Progress\n\n- Kept.\n\n1 claim not checked, kept on the desk.\n"
+    finally:
+        rig.tmux.ended = True
+
+
+ALL_UNCHECKED = json.dumps({"sections": [
+    {"key": "progress", "sentences": [{"text": "The rollout is complete.", "cited_refs": []}]},
+    {"key": "decisions", "sentences": [{"text": "We ship Friday.", "cited_refs": ["nope"]}]},
+]})
+
+
+def test_nothing_verified_refuses_the_send(db, monkeypatch) -> None:
+    """Astra r2 ruling (P2): when omission leaves no substantive content,
+    Send refuses NOTHING VERIFIED through the real export path; the stored
+    claims are kept."""
+    from holdspeak.services.channel_contract import ChannelRefused, render_document
+
+    _model_from(monkeypatch, ALL_UNCHECKED)
+    _delta, updates = _updates(db)
+    draft = updates.draft_update(OWNER, PROJECT, generator="model")
+    updates.publish_update(OWNER, draft["id"])
+    with pytest.raises(ChannelRefused) as refused:
+        render_document(db, f"project_update:{draft['id']}")
+    assert refused.value.code == "nothing_verified"
+    assert "NOTHING VERIFIED" in str(refused.value)
+    stored = db.project_updates.get_update(draft["id"])["body_md"]
+    assert "The rollout is complete." in stored and "We ship Friday." in stored
+
+
+def test_a_verified_merge_row_keeps_it_sendable(tmp_path, db, monkeypatch) -> None:
+    """The same all-unchecked model answer with a merge: the carried merge
+    row is a record, so the update is sent (the claims omitted)."""
+    _model_from(monkeypatch, ALL_UNCHECKED)
+    rig = _merged(tmp_path, db, monkeypatch)
+    try:
+        _delta, updates = _updates(db)
+        draft = updates.draft_update(OWNER, PROJECT, generator="model")
+        updates.publish_update(OWNER, draft["id"])
+        sent = render_update(db, draft["id"]).body_md
+        assert ROW in sent and "The rollout is complete." not in sent
+        assert "2 claims not checked, kept on the desk." in sent
+    finally:
+        rig.tmux.ended = True
+
+
 # ── B51: the open-PR poll ───────────────────────────────────────────
 
 
