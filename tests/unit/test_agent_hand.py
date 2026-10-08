@@ -461,6 +461,9 @@ class _FakeHand:
     def hand_item(self, principal, *, kind, id, **kw):  # noqa: A002
         return self.hand(principal, kind, id, **kw)
 
+    def register_project_repository(self, principal, **kw):  # PHILO-15 16: bound with agent.hand
+        raise AssertionError("not called here")
+
     def hand(self, principal, kind, item_id, **kw):
         self.calls.append((kind, item_id, kw))
         if item_id == "missing":

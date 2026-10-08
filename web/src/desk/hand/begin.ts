@@ -6,8 +6,8 @@
  *  the hub's (`GET /api/authority/policy`, a local read). When the mode
  *  cannot be read, the sheet opens: it shows everything before the press. */
 import { apiFetch } from "../../lib/api";
-import { DEFAULT_AGENT, handRefOf, openHand, type HandOrigin } from "../agentHand";
-import type { AgentId } from "../firstrun/agentsStep";
+import { DEFAULT_AGENT, handRefOf, openHand, pickDefaultAgent, rememberedAgent, type HandOrigin } from "../agentHand";
+import { AGENTS_PATH, type AgentId, type AgentsDetect } from "../firstrun/agentsStep";
 import { useDropHand, type HandEnd } from "./store";
 
 export const POLICY_PATH = "/api/authority/policy";
@@ -23,16 +23,37 @@ export async function readControlMode(): Promise<string | null> {
   }
 }
 
+/** PHILO-15 B36: the default agent from the agents read (a local file read);
+ *  an unread answer keeps Claude Code. */
+export async function readDefaultAgent(): Promise<{ agent: AgentId; skipped: AgentId | null; unknown: AgentId[] }> {
+  try {
+    return pickDefaultAgent(await apiFetch<AgentsDetect>(AGENTS_PATH));
+  } catch {
+    return { agent: DEFAULT_AGENT, skipped: null, unknown: [] };
+  }
+}
+
+/** `where.agent`: the agent the owner named (a drop on that agent's icon);
+ *  absent, the owner's last flip in this Project, else the default agent
+ *  (the first with a KNOWN sign-in). */
 export async function beginHand(
   origin: HandOrigin,
-  where: { agent: AgentId; host: string; source: HandEnd },
+  where: { agent?: AgentId; host: string; source: HandEnd },
 ): Promise<void> {
-  const mode = await readControlMode();
+  const [mode, read] = await Promise.all([readControlMode(), readDefaultAgent()]);
+  // A named agent (a drop on its icon) or the owner's last flip in this
+  // Project wins; the read still says whose sign-in is unknown, so the line
+  // warns for the agent it shows (lane 18, Astra r1 P2).
+  const named = where.agent ?? rememberedAgent(origin.projectId);
+  const pick = named ? { agent: named, skipped: null, unknown: read.unknown } : read;
   if (mode === "yolo") {
-    useDropHand.getState().confirm({ origin, agent: where.agent, host: where.host, source: where.source });
+    useDropHand.getState().confirm({
+      origin, agent: pick.agent, host: where.host, source: where.source, skipped: pick.skipped,
+      unknown: pick.unknown,
+    });
     return;
   }
-  openHand({ ...origin, agent: where.agent });
+  openHand({ ...origin, agent: pick.agent });
 }
 
 /** The item an object ref hands, or null (it is not a work item `agent.hand`

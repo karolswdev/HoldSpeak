@@ -184,6 +184,10 @@ def _broker(database: Any) -> Any:
 
 def target_for(name: str, args: Mapping[str, Any]) -> str:
     """The operation's journal-safe target: what it acts on."""
+    if name == "project.repository.clone":
+        # PHILO-15 16 (Astra r1 on #1000): the durable receipt names the egress,
+        # the host and the repository it read (repository:github.com/<owner>/<name>).
+        return target_ref("repository", f"{args.get('host')}/{args.get('repository')}")
     for key, kind in (("send_id", "channel_send"), ("document_ref", "document"), ("run_id", "steward_run"), ("update_id", "project_update"),
                       ("destination_id", "channel_destination"), ("watch_id", "watch"),
                       ("step_id", "steward_step"), ("project_id", "project")):

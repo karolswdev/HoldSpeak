@@ -150,7 +150,9 @@ class ProjectDoorService:
                 label = _count_label(key, count, entities)
                 tokens.append({"key": key, "label": label, "count": count})
 
-            plain = " · ".join(t["label"] for t in tokens)
+            # No counter of zero (UX-CANON; Astra on #1000): a zero count is
+            # left out of the line ("0 open PRs" was said); its token stays.
+            plain = " · ".join(t["label"] for t in tokens if t["key"] == "ci" or t["count"])
             return {
                 "tokens": tokens,
                 "plain": plain,

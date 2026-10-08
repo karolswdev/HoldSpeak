@@ -57,7 +57,8 @@ AGENT_HAND = OperationDescriptor(
     refusals=_CONTRACT_REFUSALS + (
         "owner_required: only the owner hands an item to an agent",
         "item_kind_unsupported", "item_unknown", "profile_unknown", "tmux_absent", "executable_absent",
-        "no_repository", "worktree_duplicate", "worktree_name_invalid", "brief_over_cap",
+        "no_repository", "repository_not_registered: the Room watches a repository nobody registered",
+        "clone_failed", "clone_timed_out", "gh_not_installed", "worktree_duplicate", "worktree_name_invalid", "brief_over_cap",
         "launch_cap_reached: 3 HoldSpeak-launched agents run now (the limit)",
         "story_ref_invalid", "process_spawn_not_gated", "kernel_unavailable",
     ),
@@ -79,6 +80,45 @@ AGENT_HAND = OperationDescriptor(
     ),
 )
 
-AGENT_OPERATIONS = (AGENT_HAND,)
+PROJECT_REPOSITORY_REGISTER = OperationDescriptor(
+    name="project.repository.register",
+    version=1,
+    description=(
+        "Register a GitHub repository (owner/name) for a Project, so Hand to agent can work in it. Nothing is "
+        "cloned now: the first hand of an item in the Project clones it from github.com into the HoldSpeak "
+        "clone folder (its own receipt). Only the owner registers."
+    ),
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": {"type": "string", "minLength": 1, "maxLength": 128},
+            "repository": {"type": "string", "minLength": 3, "maxLength": 240,
+                           "description": "owner/name (a github.com URL is read as owner/name)."},
+            "command_id": {"type": ["string", "null"], "maxLength": 128},
+        },
+        "required": ["project_id", "repository"],
+        "additionalProperties": False,
+    },
+    principal="derived by the transport (the HTTP auth middleware); owner only",
+    effect="write",
+    result="{project_id, repository, registered, cloned, registered_at, cloned_at, watched, host} and the receipt",
+    refusals=_CONTRACT_REFUSALS + (
+        "owner_required: only the owner registers a repository",
+        "repository_invalid: not owner/name", "project_unknown",
+    ),
+    completion="synchronous; GET /api/projects/{project_id}/repository shows it",
+    exposure=("http:POST /api/projects/{project_id}/repository",),
+    service="agent_hand_service",
+    method="register_project_repository",
+    owner_only=True,
+    owner_press=True,
+    admission=Admission(
+        "admitted",
+        "PHILO-15 16 (B38): the owner's press names the Project's repository (the Door's GitHub row, the "
+        "drawer's Register). HTTP only, in no palette. The clone on the first hand is its own receipt.",
+    ),
+)
 
-__all__ = ["AGENT_HAND", "AGENT_OPERATIONS"]
+AGENT_OPERATIONS = (PROJECT_REPOSITORY_REGISTER, AGENT_HAND)
+
+__all__ = ["AGENT_HAND", "AGENT_OPERATIONS", "PROJECT_REPOSITORY_REGISTER"]

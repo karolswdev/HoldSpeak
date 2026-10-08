@@ -3,6 +3,7 @@
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
+import { AddToProject } from "../../desk/AddToProject";
 import type { CoreProps, MeetingsListResponse, MeetingDetailResponse } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, apiBlob, readableError } from "../../lib/api";
@@ -829,6 +830,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         verbs={
           selected && wings.view !== "record" ? (
             <span className="surface-footer-verbs-group">
+              {/* PHILO-15 16 (B37): the meeting joins a Project. */}
+              <AddToProject meetingId={selectedId} onReceipt={(next) => setReceipt(next.tone === "danger" ? { text: next.text, tone: "danger" } : { text: next.text })} />
               <Button dense variant="ghost" onClick={() => void exportMeeting("markdown")}>
                 MD
               </Button>
