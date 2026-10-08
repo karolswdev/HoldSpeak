@@ -403,7 +403,7 @@ From rehearsal 2 (not paid):
 From the lanes (not paid):
 
 - **B32** Settings has no macOS calendar path (ICS only). Allow calendar access is on the first-run card only.
-- **B49** Codex on the LAN model gets none of HoldSpeak's tools. On an OpenAI model: not verified.
+- **B49** Codex on the LAN model gets none of HoldSpeak's tools. On an OpenAI model: verified 2026-10-08 (Codex 0.161, ChatGPT sign-in): it finds and calls them through `tool_search`. Rig-only.
 - **No Send destination from a sign-in** (#974 #1001): a GitHub sign-in adds no GitHub Send destination. Only the folder is ready.
 - **Folder chip** (#1002): the folder Send chip reads `THIS DEVICE`, not `FOLDER · <name>`.
 - **Anthropic key** (#975): reads `NOT SUPPORTED YET`. Use OpenRouter or an OpenAI-compatible server.
