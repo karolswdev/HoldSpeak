@@ -108,8 +108,17 @@ export interface LaneWait {
   wait_id?: string | null;
   draft?: LaneDraft | null;
   /** PHILO-15 B48: how the turn ended: a real question (`asks`), no
-   * question (`idle`), or no question with the PR open (`done`). */
+   * question (`idle`), or no question with the PR open (`done`). PHILO-15 15:
+   * a turn end the responder read as not the owner's comes as kind `DONE` /
+   * `IDLE` (no Needs you row). */
   turn_end?: "asks" | "idle" | "done" | string | null;
+}
+
+/** PHILO-15 15: the turn end the lane says instead of a wait (kind `DONE`,
+ * `IDLE`: the responder hid it from Needs you), or null. */
+export function turnEndWord(wait: LaneWait | null | undefined): "DONE" | "IDLE" | null {
+  const kind = String(wait?.kind ?? "").toUpperCase();
+  return kind === "DONE" || kind === "IDLE" ? kind : null;
 }
 
 /** How the lane may act on its session now (the route's `control`). */
@@ -154,6 +163,11 @@ export interface LaneGated {
   created_at?: number | string | null;
   decided_by?: string | null;
   decided_at?: number | string | null;
+  /** PHILO-15 15: why the call waits (`OUTSIDE THE WORKTREE · /tmp/x`). */
+  hold_reason?: string | null;
+  /** PHILO-15 15 (B45): the Control mode did not pass it at once. A call the
+   * mode passed is a run, not a hold (absent: an older hub; read as held). */
+  was_held?: boolean | null;
 }
 
 export interface LaneCommit {
@@ -383,6 +397,34 @@ export function eventEntries(events: readonly LaneEvent[]): LaneEntry[] {
 
 const HELD_STATES = new Set(["held", "pending"]);
 
+/** A gate proposal the Control mode held (not one it passed at once). */
+export function wasHeld(call: LaneGated): boolean {
+  return call.was_held !== false;
+}
+
+/** The held calls of the lane: the ones the Control mode held. */
+function heldCalls(lane: LaneWire): LaneGated[] {
+  return Array.isArray(lane.gated) ? lane.gated.filter(wasHeld) : [];
+}
+
+/** PHILO-15 15 (B45): the HELD station's line, `9 HELD · 3 APPROVED ·
+ * 5 DENIED · 1 EXPIRED` (a count of zero is not said); `—` with none. */
+export function heldSummary(lane: LaneWire): string {
+  const calls = heldCalls(lane);
+  if (calls.length === 0) return "—";
+  const count = (state: string) => calls.filter((c) => String(c.state).toLowerCase() === state).length;
+  const waiting = calls.filter((c) => HELD_STATES.has(c.state)).length;
+  const parts: Array<[number, string]> = [
+    [calls.length, "HELD"],
+    [waiting, "WAITING"],
+    [count("approved"), "APPROVED"],
+    [count("denied"), "DENIED"],
+    [count("expired"), "EXPIRED"],
+    [count("invalidated"), "ENDED BY A RESTART"],
+  ];
+  return parts.filter(([n]) => n > 0).map(([n, word]) => `${n} ${word}`).join(" · ");
+}
+
 /** Every rail entry of the lane, in time order: BRIEF first, the events,
  * the commits, the PR (after the last commit: the hub keeps no PR time), the
  * held calls, the wait, and the trailing MERGE. */
@@ -416,21 +458,21 @@ export function laneEntries(lane: LaneWire, events: readonly LaneEvent[]): LaneE
       });
     }
   }
-  if (Array.isArray(lane.gated)) {
-    for (const call of lane.gated) {
-      const held = HELD_STATES.has(call.state);
-      timed.push({
-        id: `held-${call.id}`,
-        at: at(call.created_at),
-        time: wireClock(call.created_at),
-        kind: "held",
-        word: "HELD",
-        tone: held ? "warn" : undefined,
-        code: gatedHead(call),
-        text: held ? undefined : decidedWord(call),
-        gated: call,
-      });
-    }
+  for (const call of heldCalls(lane)) {
+    const held = HELD_STATES.has(call.state);
+    const reason = String(call.hold_reason ?? "").trim();
+    const text = [held ? "" : decidedWord(call), reason].filter(Boolean).join(" · ");
+    timed.push({
+      id: `held-${call.id}`,
+      at: at(call.created_at),
+      time: wireClock(call.created_at),
+      kind: "held",
+      word: "HELD",
+      tone: held ? "warn" : undefined,
+      code: gatedHead(call),
+      text: text || undefined,
+      gated: call,
+    });
   }
   // A stable sort by time; an entry with no time keeps its place after the
   // one before it.
@@ -574,6 +616,9 @@ export function briefState(launch: LaneLaunch): { state: "sent" | "waiting" | "n
  * DONE when it ended with no question and the PR is open. */
 export function turnWord(wait: LaneWait): { word: "ASKS" | "IDLE" | "DONE"; tone: ObjectTone } {
   if (wait.kind === "TO APPROVE" || wait.kind === "DECIDING") return { word: "ASKS", tone: "ask" };
+  const hidden = turnEndWord(wait);  // PHILO-15 15: the responder's DONE / IDLE
+  if (hidden === "DONE") return { word: "DONE", tone: "ok" };
+  if (hidden === "IDLE") return { word: "IDLE", tone: "info" };
   if (wait.turn_end === "idle") return { word: "IDLE", tone: "info" };
   if (wait.turn_end === "done") return { word: "DONE", tone: "ok" };
   return { word: "ASKS", tone: "ask" };
@@ -586,10 +631,11 @@ export function laneStations(lane: LaneWire, events: readonly LaneEvent[]): Stat
   const worktree = lane.worktree;
   const commits = isNotRead(worktree) ? null : worktree.commits.length;
   const pr = lane.follow_through?.pr;
-  const held = Array.isArray(lane.gated) ? lane.gated.filter((g) => HELD_STATES.has(g.state)).length : 0;
+  const held = heldCalls(lane).filter((g) => HELD_STATES.has(g.state)).length;
+  const everHeld = heldCalls(lane).length;
   const wait = lane.wait && !isNotRead(lane.wait) ? lane.wait : null;
   const asking = Boolean(wait && (wait.kind === "TO ANSWER" || wait.kind === "TO APPROVE"));
-  const turn = wait && asking ? turnWord(wait) : null;
+  const turn = wait && (asking || turnEndWord(wait)) ? turnWord(wait) : null;
   const brief = briefState(lane.launch);
   const merged = Boolean(lane.follow_through?.merged);
   const reached = (on: boolean, tone: ObjectTone = "ok"): Pick<Station, "state" | "tone"> =>
@@ -605,7 +651,13 @@ export function laneStations(lane: LaneWire, events: readonly LaneEvent[]): Stat
       ...reached(Boolean(commits)),
     },
     { word: "PR", sub: pr?.number != null ? `#${pr.number}` : "—", ...reached(pr?.number != null, "info") },
-    { word: "HELD", sub: held > 0 ? `${held} ${held === 1 ? "call" : "calls"}` : "—", ...(held > 0 ? { state: "current" as const, tone: "warn" as const } : { state: "ahead" as const }) },
+    {
+      word: "HELD",
+      sub: heldSummary(lane),
+      ...(held > 0
+        ? { state: "current" as const, tone: "warn" as const }
+        : everHeld > 0 ? { state: "reached" as const, tone: "warn" as const } : { state: "ahead" as const }),
+    },
     !turn
       ? { word: "ASKS", sub: "—", state: "ahead" as const }
       : turn.word === "ASKS"

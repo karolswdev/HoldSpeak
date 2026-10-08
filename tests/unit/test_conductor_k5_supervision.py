@@ -157,7 +157,7 @@ def test_rules_name_the_escape(launched, tmp_path, monkeypatch) -> None:
     (outside / "secret.txt").write_text("x", encoding="utf-8")
     (launched.worktree / "link").symlink_to(outside)
     cases = {
-        "cat link/secret.txt": "path_outside_worktree",  # a symlink out of the worktree
+        "cat link/secret.txt": "symlink_out_of_worktree",  # a symlink out (PHILO-15 15 names it)
         "rm -rf ../x": "path_outside_worktree",
         "cd .. && ls": "cd_outside_worktree",
         "bash -c 'ls'": "shell_c",
@@ -231,6 +231,7 @@ def test_every_automatic_decision_is_receipted_and_the_command_never_leaves(laun
     assert "tool_input" not in body and "command" not in json.dumps(body["classification"])
     assert set(body["classification"]) == {
         "scope", "rule", "read_rule", "push_branch", "root", "proposal_id", "args_sha256",
+        "target",  # PHILO-15 15: the word that decided a hold (empty here)
     }
 
 
@@ -266,9 +267,11 @@ class _Engine:
         return self.output
 
 
+ROUTINE_ANSWER = 'Yes. The brief says: "Commit your work, push the branch, and open a pull request."'
 ROUTINE_REPLY = json.dumps({
     "verdict": "routine", "reason": "The brief says to run the tests first.",
-    "answer": "Yes. Run the tests, then open the pull request.",
+    # PHILO-15 15: Yes/No and a quoted brief line, no command verb outside it.
+    "answer": ROUTINE_ANSWER,
 })
 REAL_REPLY = json.dumps({
     "verdict": "real", "reason": "This changes the scope.", "answer": "Ask the owner.",
@@ -350,7 +353,7 @@ def test_yolo_answers_a_routine_question_and_no_needs_you_row_appears(launched, 
     # Typed into the launch's own pane, through process.input.
     assert launched.typed[typed_before:] == [
         (launched.launches.get(launched.launch_id)["target"]["pane_id"],
-         "Yes. Run the tests, then open the pull request.")
+         "The desk: " + ROUTINE_ANSWER)  # PHILO-15 15: as the desk
     ]
     assert result["operation_id"]
     # The model read the brief, the screen and the question.
@@ -360,7 +363,7 @@ def test_yolo_answers_a_routine_question_and_no_needs_you_row_appears(launched, 
     assert _members(launched, tmp_path) == [] and launched.notified == []
     rows = launched.db.steering.list(session_key=KEY, limit=10)
     [row] = [r for r in rows if r.outcome == "auto_answered"]
-    assert row.text_head.startswith("Yes. Run the tests")
+    assert row.text_head.startswith("The desk: Yes. The brief says")
     assert row.detail == "YOLO: routine: The brief says to run the tests first."
     from holdspeak.session_receipts import build_receipt
 
@@ -432,7 +435,7 @@ def test_normal_notifies_at_once_and_stores_the_draft_never_sends(launched, tmp_
     assert responder.decide(KEY)["outcome"] == DRAFTED
     assert launched.typed[typed_before:] == []  # the owner sends
     [row] = _members(launched, tmp_path)
-    assert row["draft"]["text"] == "Yes. Run the tests, then open the pull request."
+    assert row["draft"]["text"] == ROUTINE_ANSWER
 
 
 def test_secure_does_not_draft(launched, tmp_path, monkeypatch) -> None:
@@ -473,7 +476,8 @@ def test_rate_limit_and_the_same_question_twice_are_real(launched, tmp_path, mon
 
     assert round_trip("Shall I run the unit tests now?")["outcome"] == ANSWERED
     again = round_trip("Shall I run the unit tests now?")
-    assert again["outcome"] == ESCALATED and again["draft"]["reason"] == "the same question came again"
+    # PHILO-15 15: at most one answer per question (no model runs again).
+    assert again["outcome"] == ESCALATED and again["draft"]["reason"] == "the desk answered this question before"
     assert round_trip("Shall I run the web tests now?")["outcome"] == ANSWERED
     limited = round_trip("Shall I run the lint now?")
     assert limited["outcome"] == ESCALATED
@@ -665,7 +669,7 @@ def test_an_answered_wait_never_notifies_and_a_real_one_notifies_once(launched, 
     assert responder.decide(KEY)["outcome"] == ANSWERED
     assert edge()["outcome"] != "sent" and calls == []  # a later sweep stays silent too
 
-    _answered(launched, tmp_path, monkeypatch, "Yes. Run the tests, then open the pull request.")
+    _answered(launched, tmp_path, monkeypatch, ROUTINE_ANSWER)
     engine.output = REAL_REPLY
     _ask(launched, tmp_path, monkeypatch, "Should I also rewrite the session store?")
     responder.triage([KEY])
@@ -754,7 +758,10 @@ def test_tool_gate_policy_matrix(mode, verdict, outcome, reason) -> None:
     ("ls\nrm -rf /", "outside", "path_outside_worktree"),
     ("ls 'unclosed", "unparsed", "unbalanced_quotes"),
     ("(cd /; ls)", "unparsed", "subshell_or_group"),
-    ("cat <<EOF\nx\nEOF", "unparsed", "here_document"),
+    # PHILO-15 15 (B43): a here-document is the command's standard input.
+    ("cat <<EOF\nx\nEOF", "inside", "in_worktree"),
+    ("cat <<EOF\n$(rm -rf ..)\nEOF", "unparsed", "heredoc_expansion"),
+    ("cat > f <<EOF\nx", "unparsed", "here_document"),
     ("git push --force origin hs/x", "outside", "git_push_unbound"),
     ("git push", "outside", "git_push_unbound"),
     ("git worktree remove ../other", "outside", "git_shared_state"),
@@ -1051,7 +1058,7 @@ def test_r2_a_mode_change_after_triage_shows_the_wait_at_once(launched, tmp_path
     else:
         assert seen_when_drafting == [1]  # shown before the model ran
         [row] = _members(launched, tmp_path)
-        assert row["draft"]["text"] == "Yes. Run the tests, then open the pull request."
+        assert row["draft"]["text"] == ROUTINE_ANSWER
 
 
 def test_r2_an_old_draft_never_overwrites_a_newer_answer(launched, tmp_path, monkeypatch) -> None:

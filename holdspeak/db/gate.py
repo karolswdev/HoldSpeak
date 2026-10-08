@@ -23,6 +23,8 @@ from typing import Any, Callable, Optional
 
 from .base import BaseRepository
 
+#: The first characters of the redacted call the hub keeps (Phase 14 law;
+#: PHILO-15 15 kept it: a long held command is CUT and approved in Raw).
 ARGS_HEAD_CHARS = 120
 
 _COMMAND_PREFIX = '{"command":"'
@@ -172,8 +174,17 @@ class GateProposal:
         """PHILO-14 A5: what an approval surface shows of this call
         (``args_shown`` / ``args_cut`` / ``args_hidden``; ``command_view``).
         The owner's reads add it; the agent-facing wire contract stays as is."""
+        from ..tool_gate_rules import hold_reason
+
         view = command_view(self.args_head, (self.operation or {}).get("args_len"))
-        return {"args_shown": view["command"], "args_cut": view["args_cut"], "args_hidden": view["args_hidden"]}
+        verdict = (self.operation or {}).get("tool_call") or {}
+        return {
+            "args_shown": view["command"], "args_cut": view["args_cut"], "args_hidden": view["args_hidden"],
+            # PHILO-15 15: why the call waits, with the word that decided it.
+            "hold_reason": hold_reason(
+                str(verdict.get("scope") or ""), str(verdict.get("rule") or ""), str(verdict.get("target") or ""),
+            ) if verdict else "",
+        }
 
 
 class GateProposalRepository(BaseRepository):

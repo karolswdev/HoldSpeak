@@ -491,6 +491,8 @@
   font: var(--font-size-xs) / 18px var(--font-mono);
   color: var(--text);
   overflow-wrap: anywhere;
+  /* PHILO-15 15: a command's lines are kept (a here-document reads as one). */
+  white-space: pre-wrap;
 }
 /* The agent's own words: flat text in its curly quotes (the q element's
    own marks), no rail and no plate: a fact you read is flat. */
@@ -548,9 +550,11 @@
 .lane-station-sub {
   font: var(--font-size-xs) / 1.3 var(--font-mono);
   color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* PHILO-15 15 (B45): the HELD line names each outcome
+     (`9 HELD · 3 APPROVED · 5 DENIED · 1 EXPIRED`): it wraps, never cut. */
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: anywhere;
   max-width: 100%;
 }
 @container surface (max-width: 520px) {
@@ -772,6 +776,14 @@
   font: var(--font-size-sm) / 1.35 var(--font-sans);
   color: var(--text-muted);
   overflow-wrap: anywhere;
+}
+/* PHILO-15 15: a held call's command, whole: its lines kept, wrapped; a
+   long one scrolls inside its own box, never the drawer's width. */
+.needs-row-fact.is-code {
+  font: var(--font-size-xs) / 1.4 var(--font-mono);
+  white-space: pre-wrap;
+  max-height: 16em;
+  overflow-y: auto;
 }
 .needs-row-factline {
   display: flex;

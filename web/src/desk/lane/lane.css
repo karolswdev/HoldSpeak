@@ -34,7 +34,7 @@
 .lw-notread { margin: 0; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 .lw-word { font: 700 12px/18px var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; flex: none; }
 .lw-ev-text { font: 13px/18px var(--font-sans); color: var(--text); min-width: 0; overflow-wrap: anywhere; }
-.lw-ev-code { font: 12px/18px var(--font-mono); color: var(--text); overflow-wrap: anywhere; min-width: 0; }
+.lw-ev-code { font: 12px/18px var(--font-mono); color: var(--text); overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0; }
 .lw-more { align-self: flex-start; }
 
 /* the lane's own wells: approve, re-brief */

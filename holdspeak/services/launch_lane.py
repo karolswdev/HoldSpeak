@@ -213,6 +213,22 @@ def _session_key(db: Any, record: Mapping[str, Any]) -> str:
     return str(getattr(attempt, "session_id", "") or "")
 
 
+def _launch_proposals(db: Any, key: str, launch_id: str) -> list[Any]:
+    """The gate proposals of one launch, oldest first: those of its
+    registered session key and those of its launch-bound credential
+    (``agent:launch:<launch_id>``, Conductor R3: the hook of a launched agent
+    proposes under that identity, so a read by the session key alone found
+    none of them, PHILO-15 15, B45)."""
+    from ..coder_factory import launch_identity
+
+    keys = [k for k in (key, launch_identity(launch_id) if launch_id else "") if k]
+    found: dict[str, Any] = {}
+    for k in dict.fromkeys(keys):
+        for proposal in db.gate.proposals_for_session(k):
+            found[proposal.id] = proposal
+    return sorted(found.values(), key=lambda p: (float(p.created_at or 0), p.id))
+
+
 def _find_session(sessions: Any, key: str) -> Optional[dict[str, Any]]:
     for raw in sessions:
         session = raw.to_dict() if hasattr(raw, "to_dict") else dict(raw or {})
@@ -231,7 +247,7 @@ def _wait(
     is in ``answers``); a wait HoldSpeak is still deciding (fresh) reads
     ``DECIDING``, not TO ANSWER; a stale decision goes to the owner."""
     from ..agent_context.models import is_blocked, turn_end, wait_kind
-    from .agent_responder import ANSWERED, DECIDING, annotate_sessions
+    from .agent_responder import ANSWERED, DECIDING, TURN_STATES, annotate_sessions
     from .needs_you_membership import TO_ANSWER, TO_APPROVE
 
     if session is None or not is_blocked(session):
@@ -241,6 +257,20 @@ def _wait(
     state = answer.get("state")
     if state == ANSWERED:
         return None
+    if state in TURN_STATES:
+        # PHILO-15 15: the agent reported its work done (or stopped with no
+        # question): the lane says DONE / IDLE with its last words; it is
+        # not a wait for the owner (no Needs you row).
+        return {
+            "question": session.get("question"),
+            "kind": str(state).upper(),
+            "wait_kind": state,
+            "turn_end": state,
+            "started": session.get("wait_started_at") or session.get("updated_at"),
+            "wait_id": session.get("wait_id"),
+            "answer_state": state,
+            "draft": None,
+        }
     deciding = state == DECIDING and bool(answer.get("hidden"))
     if answer.get("hidden") and not deciding:
         return None
@@ -391,10 +421,14 @@ def launch_lane(
                 "id": p.id, "tool": p.tool, "args_head": p.args_head, "state": p.state,
                 "created_at": p.created_at, "decided_by": p.decided_by, "decided_at": p.decided_at,
                 "reason": p.reason, "policy": dict(p.policy_snapshot),
-                # PHILO-14 A5: the shown command, and whether it is whole.
+                # PHILO-14 A5: the shown command, and whether it is whole;
+                # PHILO-15 15: why it waits (``hold_reason``).
                 **p.shown(),
+                # PHILO-15 15 (B45): the Control mode did not pass it at once
+                # (a call the mode passed is a run, not a hold).
+                "was_held": (p.policy_snapshot or {}).get("outcome") != "allowed",
             }
-            for p in db.gate.proposals_for_session(key)
+            for p in _launch_proposals(db, key, str(record.get("launch_id") or launch_id))
         ]
 
     def answers_typed() -> list[dict[str, Any]]:
@@ -469,7 +503,10 @@ def launch_lane(
         "events_next_after": (
             event_rows[-1]["id"] if isinstance(event_rows, list) and len(event_rows) == limit else None
         ),
-        "gated": _part("gated", gated) if key else [],
+        # PHILO-15 15 (B45): a launch's hook authenticates with the
+        # launch-bound credential, so its holds are read by the launch id
+        # too, also before the session registers.
+        "gated": _part("gated", gated),
         "answers": _part("answers", answers_typed),
         "attempt_events": _part(
             "attempt events", lambda: db.work_attempts.events(str(record.get("attempt_id")))

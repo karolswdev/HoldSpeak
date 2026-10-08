@@ -13,12 +13,14 @@ by the current Control mode:
   are in the agent's own worktree; the rest waits.
 
 This module reads ONE command. It runs in the agent-side hook
-(:func:`holdspeak.coder_gate.run_hook`), so the full command never leaves the
-agent process: the hub receives the verdict (:class:`BashCall`), never the
-command. The reading is conservative. A construct it does not read (command
-substitution, a variable, a subshell, an unquoted here-document, ``bash -c``,
+(:func:`holdspeak.coder_gate.run_hook`): the hub receives the verdict
+(:class:`BashCall`) and a redacted head of the call, never the reading. The
+reading is conservative. A construct it does not read (command substitution, a
+variable, a subshell, a here-document body that expands, ``bash -c``,
 ``eval``, inline code) makes the call ``unparsed``, and an unparsed call waits
-in every mode. The verdict is mode-independent; the hub's policy
+in every mode. PHILO-15 15 (B43): a here-document is the standard input of its
+command, so ``cat > f <<'EOF'`` and ``apply_patch`` are read by their write
+targets; a hold names the word that decided it (:func:`hold_reason`). The verdict is mode-independent; the hub's policy
 (``operation_policy.resolve_policy``, family ``tool_gate``) applies the mode.
 """
 from __future__ import annotations
@@ -47,6 +49,20 @@ _INLINE_CODE = {
     "python": ("-c",), "python3": ("-c",), "node": ("-e", "--eval", "-p", "--print"),
     "perl": ("-e", "-E"), "ruby": ("-e",), "php": ("-r",), "deno": ("eval",),
 }
+#: Programs that run a here-document body fed to them as code (PHILO-15 15).
+_STDIN_RUNNERS = frozenset({
+    "node", "perl", "ruby", "php", "deno", "bun", "osascript", "lua", "tclsh",
+    "sqlite3", "psql", "mysql", "patch", "git-shell",
+})
+#: Programs that run code read from a pipe (PHILO-15 15; ``python*`` too).
+_PIPE_RUNNERS = frozenset({
+    "node", "perl", "ruby", "php", "deno", "bun", "lua", "osascript", "tclsh", "env",
+    "xargs", "awk", "gawk", "sqlite3", "psql", "mysql", "source", ".",
+})
+#: The paths a Codex ``apply_patch`` patch writes (PHILO-15 15).
+_PATCH_PATH = re.compile(r"^\*\*\* (?:Add File|Update File|Delete File|Move to): (?P<path>.*)$")
+#: A path whose text is in the worktree but a symlink on the way leads out.
+SYMLINK_OUT_RULE = "symlink_out_of_worktree"
 #: Commands that run another command HoldSpeak cannot read here.
 _INDIRECT = frozenset({
     "eval", "exec", "sudo", "su", "doas", "xargs", "env", "nohup", "command",
@@ -150,21 +166,36 @@ class BashCall:
     rule: str
     read_rule: str = ""
     push_branch: str = ""
+    #: PHILO-15 15: the word that decided a hold (a write target outside the
+    #: worktree, a symlink out, a word the reading cannot resolve), so the
+    #: hold says why (:func:`hold_reason`). Empty for a call that passes.
+    target: str = ""
 
     def to_dict(self) -> dict[str, str]:
         return asdict(self)
 
 
 class _Unparsed(Exception):
-    def __init__(self, rule: str) -> None:
+    def __init__(self, rule: str, target: str = "") -> None:
         super().__init__(rule)
         self.rule = rule
+        self.target = _short(target)
 
 
 class _Outside(Exception):
-    def __init__(self, rule: str) -> None:
+    def __init__(self, rule: str, target: str = "") -> None:
         super().__init__(rule)
         self.rule = rule
+        self.target = _short(target)
+
+
+#: The longest target word a verdict carries (the wire takes 512 chars).
+TARGET_MAX_CHARS = 200
+
+
+def _short(word: str) -> str:
+    text = " ".join(str(word or "").split())
+    return text if len(text) <= TARGET_MAX_CHARS else text[: TARGET_MAX_CHARS - 1] + "…"
 
 
 #: Claude Code's file-writing tools (Conductor R1). A launch's per-launch
@@ -240,12 +271,13 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
         reader = _Reader(real_root, real_cwd)
         segments = _segments(_tokens(
             command, cat_is_system=reader.identity("cat") == SYSTEM, bodies=reader.heredocs,
+            stdin=reader.stdin_bodies,
         ))
         return reader.read(segments)
     except _Unparsed as exc:
-        return BashCall(UNPARSED, exc.rule)
+        return BashCall(UNPARSED, exc.rule, target=exc.target)
     except _Outside as exc:
-        return BashCall(OUTSIDE, exc.rule)
+        return BashCall(OUTSIDE, exc.rule, target=exc.target)
     except ValueError:  # shlex: an unclosed quote
         return BashCall(UNPARSED, "unbalanced_quotes")
 
@@ -286,14 +318,59 @@ def _venv_activate(command: str, *, cwd: str, root: str) -> Optional[BashCall]:
 # ── lexing ─────────────────────────────────────────────────────────────
 
 
-def _prepare(command: str, *, cat_is_system: bool = True, bodies: Optional[list[str]] = None) -> str:
+#: A here-document's body in the token stream (PHILO-15 15): the body is the
+#: command's standard input, never words. A NUL is never in a command, so no
+#: word an agent writes reads as one.
+_STDIN_MARK = "\x00HEREDOC\x00"
+#: ``<<TAG``, ``<<-TAG``, ``<<'TAG'``, ``<<"TAG"``, ``<<\TAG`` (a space may
+#: come before the tag). Any other tag form is not read.
+_HEREDOC_TAG = re.compile(
+    r"(?P<dash>-?)[ \t]*(?:'(?P<sq>[A-Za-z0-9_.-]+)'|\"(?P<dq>[A-Za-z0-9_.-]+)\""
+    r"|\\(?P<bs>[A-Za-z0-9_.-]+)|(?P<bare>[A-Za-z0-9_.-]+))"
+)
+_WORD_END = " \t\n;&|<>"
+
+
+def _expansion_at(text: str, index: int) -> str:
+    """The expansion that starts at ``index`` (``$OUT``, ``$(rm``), never
+    the literal text in front of it (it can be a secret: Astra r1 on #998)."""
+    end = index + 1
+    while end < len(text) and text[end] not in _WORD_END and text[end] not in "\"'":
+        end += 1
+    return text[index:end]
+
+
+def _word_at(text: str, index: int) -> str:
+    """The shell word around ``index`` (for the reason a hold names)."""
+    start = index
+    while start > 0 and text[start - 1] not in _WORD_END:
+        start -= 1
+    end = index
+    while end < len(text) and text[end] not in _WORD_END:
+        end += 1
+    return text[start:end].strip("'\"") or text[index:index + 1]
+
+
+def _prepare(
+    command: str, *, cat_is_system: bool = True, bodies: Optional[list[str]] = None,
+    stdin: Optional[list[str]] = None,
+) -> str:
     """Replace quoted here-document bodies with plain text, refuse every
     construct that expands at run time, and turn unquoted newlines into
-    ``;`` (each line is its own command)."""
+    ``;`` (each line is its own command).
+
+    PHILO-15 15 (B43): a here-document (``cat > f <<'EOF'``, ``apply_patch
+    <<'EOF'``) is the standard input of its command. Its body is read off
+    the text (into ``stdin``) and the command gets a ``<`` redirect from the
+    body, so the reader checks the write targets of the command as for any
+    other call. A body with an unquoted tag expands: one with ``$`` or a
+    backquote in it is not read."""
     text = _quoted_heredocs(command, cat_is_system=cat_is_system, bodies=bodies)
+    store = stdin if stdin is not None else []
     out: list[str] = []
     quote = ""
     index = 0
+    pending: list[tuple[int, str, bool, bool]] = []
     while index < len(text):
         char = text[index]
         if quote == "'":
@@ -312,26 +389,69 @@ def _prepare(command: str, *, cat_is_system: bool = True, bodies: Optional[list[
             if char == '"':
                 quote = ""
             elif char in "$`":
-                raise _Unparsed("shell_expansion")
+                raise _Unparsed("shell_expansion", _expansion_at(text, index))
             out.append(char)
         else:
             if char in "'\"":
                 quote = char
             elif char in "$`":
-                raise _Unparsed("shell_expansion")
+                raise _Unparsed("shell_expansion", _expansion_at(text, index))
             elif char in "(){}":
-                raise _Unparsed("subshell_or_group")
+                raise _Unparsed("subshell_or_group", _word_at(text, index))
             elif char == "\n":
                 out.append(" ; ")
                 index += 1
+                if pending:
+                    index = _heredoc_bodies(text, index, pending, store)
+                    pending = []
                 continue
+            elif text.startswith("<<<", index):
+                raise _Unparsed("here_string", _word_at(text, index))
             elif text.startswith("<<", index):
-                raise _Unparsed("here_document")
+                match = _HEREDOC_TAG.match(text, index + 2)
+                end = match.end() if match else index + 2
+                if match is None or (end < len(text) and text[end] not in _WORD_END):
+                    raise _Unparsed("here_document", _word_at(text, index))
+                tag = match.group("sq") or match.group("dq") or match.group("bs") or match.group("bare")
+                slot = len(store)
+                store.append("")
+                pending.append((slot, tag, bool(match.group("dash")), bool(match.group("bare"))))
+                out.append(f" < {_STDIN_MARK}{slot} ")
+                index = end
+                continue
             out.append(char)
         index += 1
     if quote:
         raise _Unparsed("unbalanced_quotes")
+    if pending:
+        raise _Unparsed("here_document", pending[0][1])  # no body: no line after the tag
     return "".join(out)
+
+
+def _heredoc_bodies(text: str, index: int, pending: list[tuple[int, str, bool, bool]], store: list[str]) -> int:
+    """Read the bodies of the here-documents opened on the line before
+    ``index``, in order, each to the FIRST line that is exactly its tag (as
+    bash reads it). Return the index after the last tag line."""
+    for slot, tag, strip_tabs, expands in pending:
+        lines: list[str] = []
+        while True:
+            if index >= len(text):
+                raise _Unparsed("here_document", tag)  # no tag line: not read
+            newline = text.find("\n", index)
+            stop = newline if newline >= 0 else len(text)
+            line = text[index:stop]
+            index = stop + 1 if newline >= 0 else len(text)
+            if (line.lstrip("\t") if strip_tabs else line) == tag:
+                break
+            lines.append(line.lstrip("\t") if strip_tabs else line)
+        body = "\n".join(lines) + ("\n" if lines else "")
+        if expands:
+            for mark in ("$", "`"):
+                at = body.find(mark)
+                if at >= 0:
+                    raise _Unparsed("heredoc_expansion", _expansion_at(body, at))
+        store[slot] = body
+    return index
 
 
 def _quoted_heredocs(command: str, *, cat_is_system: bool = True, bodies: Optional[list[str]] = None) -> str:
@@ -376,10 +496,12 @@ def _quoted_heredocs(command: str, *, cat_is_system: bool = True, bodies: Option
 
 def _tokens(
     command: str, *, cat_is_system: bool = True, bodies: Optional[list[str]] = None,
+    stdin: Optional[list[str]] = None,
 ) -> list[tuple[str, bool]]:
     """``(token, is_operator)`` pairs. Quoted text is never an operator."""
     lexer = shlex.shlex(
-        _prepare(command, cat_is_system=cat_is_system, bodies=bodies), posix=True, punctuation_chars=";&|<>",
+        _prepare(command, cat_is_system=cat_is_system, bodies=bodies, stdin=stdin),
+        posix=True, punctuation_chars=";&|<>",
     )
     lexer.whitespace_split = True
     lexer.commenters = ""
@@ -449,9 +571,18 @@ class _Reader:
         self.push_branch = ""
         self.rules: list[str] = []
         self.heredocs: list[str] = []
+        #: PHILO-15 15: here-document bodies (standard input), by slot.
+        self.stdin_bodies: list[str] = []
+        #: A segment before ran ``git checkout``/``git switch``: HEAD may name
+        #: another branch by the time a later ``git push origin HEAD`` runs.
+        self.head_moved = False
+        self.next_op = ""
 
     def read(self, segments: list[tuple[str, list[str], list[tuple[str, str]]]]) -> BashCall:
-        for joined, words, redirects in segments:
+        for index, (joined, words, redirects) in enumerate(segments):
+            # The operator after this command (a ``cd`` piped to anything runs
+            # in a subshell: the folder does not change for what follows).
+            self.next_op = segments[index + 1][0] if index + 1 < len(segments) else ""
             self._segment(joined, words, redirects)
         rule = self.rules[-1] if self.push_branch else "in_worktree"
         read_rule = "+".join(dict.fromkeys(self.read_rules)) if self.all_read else ""
@@ -460,7 +591,11 @@ class _Reader:
     # one simple command -----------------------------------------------------
 
     def _segment(self, joined: str, words: list[str], redirects: list[tuple[str, str]]) -> None:
+        stdin: list[str] = []
         for op, target in redirects:
+            if op == "<" and target.startswith(_STDIN_MARK):
+                stdin.append(self.stdin_bodies[int(target[len(_STDIN_MARK):])])
+                continue  # a here-document body: standard input, not a path
             self._path(target, cwd=self.cwd, rule="redirect_outside_worktree")
             if op in _WRITE_REDIRECTS and os.path.realpath(
                 os.path.join(self.cwd, target)
@@ -484,21 +619,40 @@ class _Reader:
         if "/" in name:
             self._path(name, cwd=self.cwd, rule="program_outside_worktree")
         if joined in ("|", "|&") and base in _SHELLS:
-            raise _Unparsed("pipe_to_shell")
+            raise _Unparsed("pipe_to_shell", name)
+        if joined in ("|", "|&") and (base.startswith("python") or base in _PIPE_RUNNERS):
+            # PHILO-15 15 (Astra r1 on #998): ``tee f <<'EOF' | python3`` runs
+            # code the reading cannot see (it wrote outside the worktree).
+            raise _Unparsed("pipe_to_interpreter", name)
         if base in _SHELLS and any(w == "-c" or (w.startswith("-") and not w.startswith("--") and "c" in w[1:]) for w in words[1:]):
-            raise _Unparsed("shell_c")
+            raise _Unparsed("shell_c", name)
+        if stdin and (base in _SHELLS or base.startswith("python") or base in _INLINE_CODE or base in _STDIN_RUNNERS):
+            # The body is code the program runs: not read (as ``-c`` is not).
+            raise _Unparsed("heredoc_to_interpreter", name)
+        if base == "apply_patch":
+            # Codex's patch tool, run in the shell (PHILO-15 15, B43): its
+            # writes are the paths the patch names.
+            self._apply_patch(words[1:], stdin)
+            self.all_read = False
+            return
         if base == "gh":
             self._gh(words[1:])
         if base in _NETWORK_CLIENTS:
-            raise _Outside("network_client")
+            raise _Outside("network_client", name)
         if base.startswith("python") and len(words) > 2 and words[1] == "-m" and (
             words[2].split(".")[0] in _NETWORK_MODULES
         ):
-            raise _Outside("network_client")
+            raise _Outside("network_client", words[2])
+        if name == "command" and len(words) >= 2 and words[1] in ("-v", "-V") and all(
+            not w.startswith("-") for w in words[2:]
+        ):
+            # PHILO-15 15: ``command -v gh`` looks a name up; it runs nothing.
+            self.read_rules.append("command-v")
+            return
         if base in _INDIRECT:
-            raise _Unparsed(f"indirect_{base}")
+            raise _Unparsed(f"indirect_{base}", name)
         if base in _INLINE_CODE and any(w in _INLINE_CODE[base] for w in words[1:]):
-            raise _Unparsed("inline_code")
+            raise _Unparsed("inline_code", name)
         if base == "find" and any(w in _FIND_RUNS for w in words[1:]):
             raise _Unparsed("indirect_find_exec")  # it runs a command this reading cannot see
         if name in _SHELL_STATE:
@@ -508,6 +662,8 @@ class _Reader:
         # after. A path-invoked ``./cd`` cannot move the shell's cwd.
         identity = self.identity(name)
         if identity == BUILTIN and name in ("cd", "pushd"):
+            if joined in ("|", "|&") or self.next_op in ("|", "|&"):
+                raise _Unparsed("cd_in_pipeline", " ".join(words[1:]) or name)
             self._cd(words[1:])
             self.read_rules.append("cd")
             return
@@ -550,10 +706,14 @@ class _Reader:
             raise _Outside("cd_outside_worktree") if not targets else _Unparsed("cd_form")
         target = targets[0]
         if target.startswith("~"):
-            raise _Outside("cd_outside_worktree")
+            raise _Outside("cd_outside_worktree", target)
         new = os.path.realpath(os.path.join(self.cwd, target))
         if not _inside(new, self.root):
-            raise _Outside("cd_outside_worktree")
+            raise _Outside("cd_outside_worktree", target)
+        if not (os.path.isdir(new) and os.access(new, os.X_OK)):
+            # PHILO-15 15 (Astra r1 on #998): ``cd missing || cat > ../x``: a
+            # cd that can fail leaves the folder unknown for what follows.
+            raise _Unparsed("cd_unresolved", target)
         self.cwd = new
 
     def _git(self, args: list[str]) -> None:
@@ -585,9 +745,11 @@ class _Reader:
         if verb == "commit":
             self._commit_message(rest, cwd=cwd)
         if verb == "push":
-            self._push(rest)
+            self._push(rest, cwd=cwd)
             self.all_read = False
             return
+        if verb in ("checkout", "switch"):
+            self.head_moved = True
         if verb in _GIT_SHARED_ALWAYS:
             raise _Outside("git_shared_state")
         shared = _GIT_SHARED_WRITE.get(verb)
@@ -714,7 +876,7 @@ class _Reader:
         except OSError as exc:
             raise _Unparsed("message_file_unread") from exc
 
-    def _push(self, args: list[str]) -> None:
+    def _push(self, args: list[str], *, cwd: str = "") -> None:
         positional = []
         for arg in args:
             if arg.startswith("-"):
@@ -723,7 +885,7 @@ class _Reader:
                 continue
             positional.append(arg)
         if len(positional) != 2 or positional[0] != "origin":
-            raise _Outside("git_push_unbound")
+            raise _Outside("git_push_unbound", " ".join(positional) or "git push")
         spec = positional[1]
         if spec.startswith("+") or spec.startswith(":"):
             raise _Outside("git_push_unbound")
@@ -732,8 +894,12 @@ class _Reader:
         if dest and source not in ("HEAD", dest, f"refs/heads/{dest}"):
             raise _Outside("git_push_unbound")
         branch = branch.removeprefix("refs/heads/")
+        if branch == "HEAD" and not self.head_moved:
+            # PHILO-15 15 (B43): ``git push -u origin HEAD`` pushes the branch
+            # the worktree is on; the hub compares it with the launch's own.
+            branch = _current_branch(cwd or self.cwd, self.root)
         if not branch or branch == "HEAD":
-            raise _Outside("git_push_unbound")
+            raise _Outside("git_push_unbound", spec)
         if self.push_branch and self.push_branch != branch:
             raise _Outside("git_push_unbound")
         self.push_branch = branch
@@ -756,14 +922,44 @@ class _Reader:
         if not word or word == "-":
             return
         if _URL.match(word) or _REMOTE.match(word) or _HOST_PORT.match(word):
-            raise _Outside("network_target")
+            raise _Outside("network_target", word)
         if word.startswith("~"):
-            raise _Outside(rule)
-        real = os.path.realpath(os.path.join(cwd, word))
+            raise _Outside(rule, word)
+        joined = os.path.join(cwd, word)
+        real = os.path.realpath(joined)
         if real in _HARMLESS_PATHS or word in _HARMLESS_PATHS:
             return
         if not _inside(real, self.root):
-            raise _Outside(rule)
+            if _inside(os.path.normpath(joined), self.root):
+                # The text is in the worktree; a symlink on the way leads out.
+                raise _Outside(SYMLINK_OUT_RULE, word)
+            raise _Outside(rule, word)
+
+    def _apply_patch(self, args: list[str], stdin: list[str]) -> None:
+        """``apply_patch '<patch>'`` or ``apply_patch <<'EOF'`` (Codex's
+        patch format): each ``*** Add File:``, ``*** Update File:``, ``***
+        Delete File:`` and ``*** Move to:`` path must be in the worktree."""
+        if stdin and not args:
+            text = stdin[-1]
+        elif len(args) == 1 and not stdin:
+            text = args[0]
+        else:
+            raise _Unparsed("apply_patch_form", "apply_patch")
+        lines = text.strip().splitlines()
+        if not lines or lines[0].strip() != "*** Begin Patch":
+            raise _Unparsed("apply_patch_form", lines[0] if lines else "apply_patch")
+        named = 0
+        for line in lines:
+            match = _PATCH_PATH.match(line)
+            if match is None:
+                continue
+            path = match.group("path").strip()
+            if not path:
+                raise _Unparsed("apply_patch_form", line)
+            self._path(path, cwd=self.cwd, rule="patch_outside_worktree")
+            named += 1
+        if not named:
+            raise _Unparsed("apply_patch_form", lines[0])
 
 
 #: GitHub's closing keywords followed by an issue reference (``#12``,
@@ -889,6 +1085,142 @@ def _read_rule(base: str, args: list[str]) -> str:
     return ""
 
 
+def _current_branch(cwd: str, root: str) -> str:
+    """The branch the git worktree at ``cwd`` is on (its ``HEAD`` file names
+    ``refs/heads/<branch>``), read from the files, never by running git; ``""``
+    when it cannot be read or HEAD is detached. The search stops at ``root``."""
+    path = cwd
+    while True:
+        dotgit = os.path.join(path, ".git")
+        gitdir = ""
+        if os.path.isdir(dotgit):
+            gitdir = dotgit
+        elif os.path.isfile(dotgit):
+            try:
+                with open(dotgit, encoding="utf-8") as handle:
+                    content = handle.read(4096).strip()
+            except OSError:
+                return ""
+            if not content.startswith("gitdir:"):
+                return ""
+            gitdir = content[len("gitdir:"):].strip()
+            if not os.path.isabs(gitdir):
+                gitdir = os.path.join(path, gitdir)
+        if gitdir:
+            try:
+                with open(os.path.join(gitdir, "HEAD"), encoding="utf-8") as handle:
+                    head = handle.read(4096).strip()
+            except OSError:
+                return ""
+            prefix = "ref: refs/heads/"
+            return head[len(prefix):] if head.startswith(prefix) else ""
+        if path == root or not _inside(path, root):
+            return ""
+        parent = os.path.dirname(path)
+        if parent == path:
+            return ""
+        path = parent
+
+
+#: What a hold says first, by rule (PHILO-15 15, B43): the owner reads why
+#: the call waits, and the word that decided it.
+_REASON_WORDS = {
+    SYMLINK_OUT_RULE: "SYMLINK OUT OF THE WORKTREE",
+    "git_push_unbound": "PUSH TO ANOTHER BRANCH",
+    "git_push_other_branch": "PUSH TO ANOTHER BRANCH",
+    "network_client": "NETWORK",
+    "network_target": "NETWORK",
+    "gh_effect": "GITHUB ACTION FOR YOU",
+    "git_shared_state": "SHARED GIT STATE",
+    "not_own_worktree": "NOT ITS WORKTREE",
+    "cwd_outside_worktree": "OUTSIDE THE WORKTREE",
+    "cwd_outside_armed_path": "OUTSIDE THE WORKTREE",
+}
+#: Unparsed rules whose word is a folder the call may not reach.
+_FOLDER_RULES = {"cd_unresolved": "FOLDER NOT RESOLVED", "cd_in_pipeline": "FOLDER NOT RESOLVED"}
+
+
+#: Unparsed rules where the call runs code the reading cannot see.
+_CODE_RULES = frozenset({"shell_c", "inline_code", "heredoc_to_interpreter", "pipe_to_shell", "pipe_to_interpreter"})
+
+
+def visible_target(target: str, args_head: str) -> str:
+    """The target a verdict may carry: only a word the owner can already
+    read in the stored head of the call (its redacted first 120 chars).
+    Redaction knows shapes, not secrets (Astra r1 on #998): a word past the
+    head, or one the redaction changed, is dropped, never sent or stored."""
+    word = str(target or "").strip()
+    if not word:
+        return ""
+    shown = _head_text(args_head)
+    return word if word in shown else ""
+
+
+def _head_text(args_head: str) -> str:
+    """The command text of a (maybe cut) ``{"command":"..."`` head."""
+    import json
+
+    head = str(args_head or "")
+    try:
+        parsed = json.loads(head)
+    except ValueError:
+        parsed = None
+    if isinstance(parsed, Mapping):
+        return str(parsed.get("command") or head)
+    prefix = '{"command":"'
+    if not head.startswith(prefix):
+        return head
+    # A cut JSON string: decode it up to its closing quote or its cut (a cut
+    # escape at the end is dropped), as ``db.gate.command_view`` reads it.
+    escapes = {'"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t"}
+    body, out, i = head[len(prefix):], [], 0
+    while i < len(body):
+        ch = body[i]
+        if ch == '"':
+            break
+        if ch == "\\":
+            if i + 1 >= len(body):
+                break
+            code = body[i + 1]
+            if code == "u":
+                try:
+                    out.append(chr(int(body[i + 2:i + 6], 16)))
+                except ValueError:
+                    break
+                i += 6
+                continue
+            out.append(escapes.get(code, code))
+            i += 2
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+def hold_reason(scope: str, rule: str, target: str = "") -> str:
+    """The reason a held call shows: ``OUTSIDE THE WORKTREE · /tmp/x``,
+    ``SYMLINK OUT OF THE WORKTREE · link/x``, ``UNRESOLVED TARGET · $OUT``
+    (a word the reading cannot resolve), ``RUNS CODE · python3`` (code the
+    reading cannot see) or ``NOT READ · <rule>``; with no word to name, an
+    outside call says its kind alone (``OUTSIDE THE WORKTREE``). Empty for
+    a call that is inside."""
+    if scope == INSIDE or not scope:
+        return ""
+    if scope == UNPARSED:
+        runs_code = rule in _CODE_RULES or rule.startswith("indirect_")
+        word = (
+            _FOLDER_RULES[rule] if rule in _FOLDER_RULES
+            else "RUNS CODE" if runs_code else "UNRESOLVED TARGET" if target else "NOT READ"
+        )
+    else:
+        word = _REASON_WORDS.get(rule, "OUTSIDE THE WORKTREE")
+    if target:
+        return f"{word} · {target}"
+    # No word to name: the rule says what was not read; an outside call
+    # whose path the hook did not name says its kind alone.
+    return f"{word} · {rule}" if word == "NOT READ" else word
+
+
 def classification_from_wire(raw: Any) -> Optional[dict[str, str]]:
     """The verdict as the hub accepts it from the hook: known keys, known
     scope, short strings. Anything else is ``None`` (the call waits)."""
@@ -898,7 +1230,7 @@ def classification_from_wire(raw: Any) -> Optional[dict[str, str]]:
     if scope not in SCOPES:
         return None
     clean: dict[str, str] = {"scope": scope}
-    for key in ("rule", "read_rule", "push_branch", "root", "proposal_id", "args_sha256"):
+    for key in ("rule", "read_rule", "push_branch", "root", "proposal_id", "args_sha256", "target"):
         value = raw.get(key)
         if value is None:
             value = ""
@@ -920,4 +1252,5 @@ __all__ = [
     "classify_bash",
     "classify_edit",
     "classify_tool_call",
+    "hold_reason",
 ]

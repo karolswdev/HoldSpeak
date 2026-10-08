@@ -308,13 +308,42 @@ def asks_a_question(text: Any) -> bool:
     return bool(_QUESTION_RE.search(body) or _INTERROGATIVE_RE.search(body))
 
 
+#: A report of a problem: a failed check, an error, a block (PHILO-15 15,
+#: Astra r1 on #998: "PR #3 is open but the lint check failed" is never DONE).
+_PROBLEM_RE = re.compile(
+    r"\b(?:fail(?:s|ed|ing|ure)?|error(?:s|ed)?|broken|blocked|cannot|can't|couldn't|"
+    r"unable|timed out|did not pass|didn't pass|not passing)\b",
+    re.IGNORECASE,
+)
+
+
+#: A negated problem word is no problem (Astra r2 on #998: "all checks
+#: passed with no errors"): these phrases are read out before the match.
+_NEGATED_PROBLEM_RE = re.compile(
+    r"\b(?:no|without|zero|0|did\s+not|didn't|never)\s+(?:new\s+|further\s+)?"
+    r"(?:fail(?:s|ed|ing|ures?)?|errors?|problems?|blockers?)\b"
+    r"|\berror[- ]free\b",
+    re.IGNORECASE,
+)
+
+
+def reports_a_problem(text: Any) -> bool:
+    """The agent's turn end reports a problem the owner must see (a failed
+    check, an error, a block), question or not; a negated one ("no errors",
+    "without failures") is not. The responder reads it too (``needsYou.ts``
+    ``reportsAProblem`` mirrors it)."""
+    body = _NEGATED_PROBLEM_RE.sub(" ", str(text or ""))
+    return bool(_PROBLEM_RE.search(body))
+
+
 def turn_end(session: Any, *, work_done: bool = False) -> str:
-    """How a blocked session's turn ended: ``asks`` for a permission prompt
-    or a real question, else ``done`` when the work is delivered
-    (``work_done``: the launch's PR is open) or ``idle``."""
+    """How a blocked session's turn ended: ``asks`` for a permission prompt,
+    a real question or a reported problem, else ``done`` when the work is
+    delivered (``work_done``: the launch's PR is open) or ``idle``."""
     if wait_kind(session) == "approve":
         return TURN_ASKS
-    if asks_a_question(_field(session, "question")):
+    question = _field(session, "question")
+    if asks_a_question(question) or reports_a_problem(question):
         return TURN_ASKS
     return TURN_DONE if work_done else TURN_IDLE
 

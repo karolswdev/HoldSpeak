@@ -25,6 +25,8 @@ export interface NeedsRowProps {
   name: string;
   /** The one fact (the question, the held call, `Sam Rivera · 1:1`). */
   fact?: string;
+  /** The fact is a command (a held call): lines kept, mono, wraps. */
+  factCode?: boolean;
   lamp: { label: string; tone: ObjectTone };
   /** The object's verbs (library Buttons; one primary at most). */
   verbs?: ReactNode;
@@ -39,7 +41,8 @@ export interface NeedsRowProps {
   kindWord?: string;
 }
 
-export function NeedsRow({ id, kind, name, fact, lamp, verbs, sprite, project, kindWord }: NeedsRowProps) {
+export function NeedsRow({ id, kind, name, fact, factCode, lamp, verbs, sprite, project, kindWord }: NeedsRowProps) {
+  const factClass = factCode ? "needs-row-fact is-code" : "needs-row-fact";
   return (
     <li className="needs-row" data-object-id={id} data-kind={kind}>
       <img src={listSprite(sprite ?? objectSprite(kind, id))} alt="" draggable={false} />
@@ -53,13 +56,13 @@ export function NeedsRow({ id, kind, name, fact, lamp, verbs, sprite, project, k
             {kindWord ? (
               <span className="surface-token needs-row-kind" data-testid="needs-row-kind">{kindWord}</span>
             ) : null}
-            {fact ? <span className="needs-row-fact">{fact}</span> : null}
+            {fact ? <span className={factClass}>{fact}</span> : null}
             {project ? (
               <ProjectButton name={project.name} onOpen={project.onOpen}
                 className="needs-row-project" data-testid="needs-row-project" />
             ) : null}
           </span>
-        ) : fact ? <span className="needs-row-fact">{fact}</span> : null}
+        ) : fact ? <span className={factClass}>{fact}</span> : null}
       </span>
       <span className="needs-row-lamp">
         <LampGadget label={lamp.label} on tone={lampGadgetTone(lamp.tone)} />

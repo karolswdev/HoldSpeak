@@ -56,6 +56,9 @@ export interface NeedFace {
   kind: string;
   name: string;
   fact: string;
+  /** PHILO-15 15: the fact is a command (a held call): its lines are kept
+   *  and it wraps, in the mono face. */
+  factCode?: boolean;
   lamp: { label: string; tone: ObjectTone };
   /** `agents` rows lead the drawer; the rest keep the hub's rank order. */
   group: "agents" | "rest";
@@ -236,19 +239,26 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   if (source === "gate") {
     const key = String(item.sessionKey ?? "");
     const agent = key.split(":", 1)[0] || "agent";
-    const head = title.replace(/^Approve:\s*/, "");
+    // The command the hub keeps (its 120-char head; the title is an
+    // excerpt); an older hub sends the title alone.
+    const head = String(item.command || "") || title.replace(/^Approve:\s*/, "");
     const cut = Boolean(item.argsCut);
     const hidden = Number(item.argsHidden ?? 0);
     // The hub keeps the first 120 chars of the call (a design limit): a cut
     // command says so, and how much is missing.
-    const command = cut ? `${head}… ${hidden > 0 ? `+${hidden} CHARS` : "CUT"}` : head;
+    const shown = cut ? `${head}… ${hidden > 0 ? `+${hidden} CHARS` : "CUT"}` : head;
+    const reason = String(item.holdReason ?? "").trim();
+    const command = reason ? `${reason}\n${shown}` : shown;
     const proposalId = String(item.ref ?? id).replace(/^gate:/, "");
     return {
       id,
       kind: "agent",
       name: agentRowName(agent, sessionName(key, ctx.sessions, ctx.flights, project)),
       fact: command,
-      lamp: { label: "HELD CALL", tone: "ask" },
+      factCode: true,
+      // PHILO-15 15: the hub keeps 120 chars (Phase 14 law): a cut call is
+      // approved in the pane (Raw), and the row says so.
+      lamp: { label: cut ? "CUT · APPROVE IN RAW" : "HELD CALL", tone: "ask" },
       group: "agents",
       verbs: cut
         ? { kind: "gate-cut", proposalId, sessionKey: key }
@@ -451,7 +461,7 @@ export function foldAsks(faces: readonly NeedFace[]): NeedFace[] {
     // The most urgent ask leads: a held call before a question.
     const lead = [...asks].sort((a, b) => askRank(a) - askRank(b))[0];
     out.push({
-      ...face, fact: lead.fact, lamp: lead.lamp, verbs: lead.verbs, askOf: lead.askOf, agent: undefined,
+      ...face, fact: lead.fact, factCode: lead.factCode, lamp: lead.lamp, verbs: lead.verbs, askOf: lead.askOf, agent: undefined,
       moreAsks: asks.length - 1,
       // The row's Open is the agent's lane, where every ask is answered.
       openRef: lead.askOf ? `coder:${lead.askOf}` : face.openRef,

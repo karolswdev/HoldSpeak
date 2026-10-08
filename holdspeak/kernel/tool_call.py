@@ -20,7 +20,7 @@ _ALLOWED = frozenset({
     # names no argument text: launch id, scope, rule, read rule.
     "classification",
 })
-_VERDICT_KEYS = ("launch_id", "scope", "rule", "read_rule")
+_VERDICT_KEYS = ("launch_id", "scope", "rule", "read_rule", "target")
 
 
 @dataclass(frozen=True)
@@ -110,7 +110,7 @@ class ToolCallCodec:
             args_len = 0
         if args_len:
             # PHILO-14 A5: the desk reads it to say how much of the command
-            # the 120-char head cannot show.
+            # the stored head cannot show.
             operation["args_len"] = args_len
         operation["admitted_envelope_sha256"] = admission.payload_hash
         if verdict:

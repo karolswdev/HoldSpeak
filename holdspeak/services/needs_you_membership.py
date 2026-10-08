@@ -363,6 +363,11 @@ def gate_items(holds: Iterable[dict[str, Any]], now: datetime | None = None) -> 
             # Deny and Open, never Approve, on a command it cannot show whole.
             "argsCut": bool(hold.get("args_cut")),
             "argsHidden": int(hold.get("args_hidden") or 0),
+            # PHILO-15 15 (B44): the whole shown command (the title is an
+            # excerpt), so a long but complete command is approved as seen;
+            # and why it waits (B43: ``OUTSIDE THE WORKTREE · /tmp/x``).
+            "command": str(hold.get("command") or ""),
+            "holdReason": str(hold.get("hold_reason") or ""),
         })
     return rows
 
@@ -442,6 +447,7 @@ def _read_gate_holds(db: Any, *, ledger: Any = None, now: float | None = None) -
                 "session_key": str(launch.get("session_key") or ""),
                 "tool": proposal.tool,
                 **_gate_view(proposal.args_head, (proposal.operation or {}).get("args_len")),
+                "hold_reason": proposal.shown().get("hold_reason", ""),
                 "created_at": proposal.created_at,
                 "held": held,
                 "ended_at": None if held else float(ended),

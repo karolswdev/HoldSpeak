@@ -58,6 +58,10 @@ HOOK_TIMEOUT_SECONDS = 300
 DEFAULT_HUB_URL = "http://127.0.0.1:8765"
 POLL_INTERVAL_SECONDS = 1.0
 
+#: The head of the redacted call the hook sends (Phase 14 law, kept by the
+#: owner's ruling on PHILO-15 15: redaction knows shapes, not secrets, so the
+#: whole command never leaves the agent). A longer call is CUT: the owner
+#: approves it in the pane (Raw), never from a HoldSpeak face.
 ARGS_HEAD_CHARS = 120
 
 
@@ -225,7 +229,7 @@ def redact_call(tool_input: Mapping[str, Any] | None) -> RedactedCall:
 
 
 def redact_args(tool_input: Mapping[str, Any] | None) -> tuple[str, str]:
-    """(sha256, first-120-chars) over the canonical JSON of the tool
+    """(sha256, the first ARGS_HEAD_CHARS chars) over the canonical JSON of the tool
     input (:func:`redact_call` without the length)."""
     call = redact_call(tool_input)
     return call.sha256, call.head
@@ -446,6 +450,11 @@ def run_hook(
     # id and this args hash (a verdict copied from another call is unparsed).
     verdict["proposal_id"] = proposal_id
     verdict["args_sha256"] = args_sha256
+    # PHILO-15 15 (Astra r1 on #998): the hold's word leaves only when the
+    # owner can already read it in the redacted 120-char head.
+    from .tool_gate_rules import visible_target
+
+    verdict["target"] = visible_target(verdict.get("target", ""), args_head)
 
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
     if http_post is None or http_get is None:

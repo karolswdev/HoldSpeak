@@ -55,6 +55,7 @@ import {
   laneStations,
   laneTitle,
   reviewWord,
+  turnEndWord,
   turnWord,
   unreadParts,
   waitAge,
@@ -358,6 +359,16 @@ function WaitWell({ lane, agent }: { lane: LaneWire; agent: string }) {
   if (!wait || !wait.question) return null;
   if (wait.kind === "TO ANSWER") return <AnswerWell lane={lane} wait={wait} agent={agent} />;
   if (wait.kind === "TO APPROVE") return <ApproveWell wait={wait} agent={agent} gated={lane.gated} />;
+  const turn = turnEndWord(wait);
+  if (turn) {
+    // PHILO-15 15: the agent's last words, as a fact; not a wait for you.
+    return (
+      <p className="lw-deciding" data-testid="lane-turn-end" data-turn={turn.toLowerCase()}>
+        <span className="lw-word">{turn}</span>
+        <span className="lw-ev-text">{wait.question}</span>
+      </p>
+    );
+  }
   if (wait.kind === "DECIDING") {
     return (
       <p className="lw-deciding" data-testid="lane-deciding">
@@ -429,9 +440,13 @@ function LaneReceipts({ lane }: { lane: LaneWire }) {
   const receipt = useLane((s) => s.receipt);
   const stopped = lane.launch.stopped;
   const answers = Array.isArray(lane.answers) ? lane.answers : [];
-  const last = [...answers].reverse().find((a) => a.outcome === "delivered" && a.text_head);
+  // PHILO-15 15 (B47): an answer the desk typed is its own receipt, named
+  // as the desk's (never the owner's SENT).
+  const last = [...answers].reverse().find((a) => (a.outcome === "delivered" || a.outcome === "auto_answered") && a.text_head);
   const lastAt = last ? wireDate(last.ts)?.getTime() : undefined;
-  const shown = receipt ?? (last ? { word: "SENT", at: lastAt, text: String(last.text_head), tone: "ok" as const } : null);
+  // PHILO-15 15 (B47): an answer the desk typed is its own receipt.
+  const word = last?.outcome === "auto_answered" ? "THE DESK ANSWERED" : "SENT";
+  const shown = receipt ?? (last ? { word, at: lastAt, text: String(last.text_head), tone: "ok" as const } : null);
   const queuedList = Array.isArray(lane.launch.queued_rebriefs)
     ? lane.launch.queued_rebriefs.filter((q) => q?.text)
     : lane.launch.queued_rebrief?.text ? [lane.launch.queued_rebrief] : [];

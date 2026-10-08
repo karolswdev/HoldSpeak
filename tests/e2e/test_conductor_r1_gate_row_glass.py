@@ -114,7 +114,7 @@ def test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it(tmp_path
             # The row: the whole command, HELD CALL, and its own Approve.
             row = _row(page, "ls /etc")
             row.wait_for(timeout=15000)
-            assert (row.locator(".needs-row-fact").text_content() or "") == "ls /etc"
+            assert (row.locator(".needs-row-fact").text_content() or "") == "OUTSIDE THE WORKTREE\nls /etc"  # PHILO-15 15: why it waits
             assert "HELD CALL" in (row.locator(".needs-row-lamp").text_content() or "")
             row.locator("[data-verb='approve']").click()
             deadline = time.monotonic() + 10
@@ -176,7 +176,12 @@ def test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it(tmp_path
             row = _row(page, "psql -h staging-ledger")
             row.wait_for(timeout=15000)
             fact = row.locator(".needs-row-fact").text_content() or ""
+            # PHILO-15 15: the first line says why it waits; the command follows,
+            # and the lamp says where it is approved (the head stays 120).
+            reason, _, fact = fact.partition("\n")
+            assert reason == "OUTSIDE THE WORKTREE", reason
             assert fact.endswith("… +90 CHARS") and long_cmd.startswith(fact.removesuffix("… +90 CHARS")), fact
+            assert "CUT · APPROVE IN RAW" in (row.locator(".needs-row-lamp").text_content() or "")
             assert row.locator("[data-verb='approve']").count() == 0
             assert row.locator("[data-verb='deny']").count() == 1 and row.locator("[data-verb='open']").count() == 1
             # The shade: the command shown whole-or-marked, Deny only.

@@ -179,7 +179,13 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         "state": state,
         # PHILO-15 B48: how a waiting agent's turn ended (``asks`` /
         # ``idle`` / ``done``); IDLE is a lamp, never a Needs you row.
-        "turn_end": _turn_end(session, pr_state) if state == "waiting" else None,
+        # PHILO-15 B48 (lane 14) and 15: the responder's record of the
+        # current wait (done / idle: not the owner's) first, else the turn
+        # end the session's last words read as.
+        "turn_end": (
+            _responder_turn(session_key, session)
+            or (_turn_end(session, pr_state) if state == "waiting" else None)
+        ) if state in ("waiting", "pr_open") else None,
         "session_key": session_key or None,
         "pr": {
             "number": pr.get("number"),
@@ -199,6 +205,23 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         "launched_at": record.get("launched_at") or None,
         "ended_at": _ended_at(record, state, session, follow.get("close")),
     }
+
+
+def _responder_turn(session_key: str, session: Any) -> Optional[str]:
+    """``done`` / ``idle`` when the responder recorded the session's CURRENT
+    wait as a turn end that is not the owner's; else ``None``."""
+    from .agent_responder import TURN_STATES, AnswerStore
+
+    if not session_key or session is None:
+        return None
+    try:
+        entry = AnswerStore().wait(session_key)
+    except Exception:
+        return None
+    if not entry or entry.get("wait_id") != _field(session, "wait_id"):
+        return None
+    state = str(entry.get("state") or "")
+    return state if state in TURN_STATES else None
 
 
 def _registry(db: Any, sessions: Optional[Iterable[Any]], ledger: Any, now: Optional[datetime]):

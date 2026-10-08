@@ -29,7 +29,8 @@ export interface AgentFlight {
   sessionKey: string | null;
   /** `title`: the PR's own title (PHILO-15 B50); empty until the hub read it. */
   pr: { number: number | null; url: string; state: string; title?: string } | null;
-  /** PHILO-15 B48: how a waiting agent's turn ended (`asks`, `idle`, `done`). */
+  /** PHILO-15 B48: how a waiting agent's turn ended (`asks`, `idle`, `done`);
+   * PHILO-15 15: the responder's DONE / IDLE first (also with the PR open). */
   turnEnd?: "asks" | "idle" | "done" | null;
   close: string | null;
   /** K4's cleanup of the agent's session (`killed`, `session_gone`,
