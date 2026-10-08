@@ -326,19 +326,30 @@ def kill(
 
     check = coder_steering.require_grant(key, current_target, runner=runner, clock=clock)
     if check["status"] != "ok":
-        return _audited(dict(check))
+        refused = dict(check)
+        if runner is None and current_target and not _pane_exists(str(current_target)):
+            # PR #1022 r1: the pane closed with its first process, but the
+            # children the launch started (a hook that waits on a hold) can
+            # live on: the group the launch recorded at spawn is ended.
+            groups = _recorded_groups(str(current_target))
+            if groups:
+                left = _end_groups(groups)
+                refused["launch_processes"] = "survived" if left else "ended"
+        return _audited(refused)
     pane_id = check["pane_id"]
     argv = (
         ["tmux", "kill-session", "-t", pane_id] if scope == "session"
         else ["tmux", "kill-pane", "-t", pane_id]
     )
     # pi spike #1020: a hook child that waits on a gate hold outlived its
-    # agent. The pane's process groups are read first; after tmux ends the
-    # pane, each group (the agent and every child it started) gets SIGTERM,
-    # then SIGKILL for what is still there after the grace.
-    # Only against the real tmux: an injected runner (a test's fake) names
-    # no real process.
-    groups = _pane_groups(runner, pane_id, scope) if runner is None else []
+    # agent. The launch's process groups are read first: the group the launch
+    # recorded at spawn (PR #1022 r1: also when the pane's first process has
+    # already exited) and each live pane's group. After tmux ends the pane,
+    # each member of those groups that is still in the recorded session gets
+    # SIGTERM, then SIGKILL after the grace; the kill is reported only when no
+    # member is left. Only against the real tmux: an injected runner (a
+    # test's fake) names no real process.
+    groups = _kill_groups(pane_id, scope) if runner is None else []
     try:
         completed = _run(runner, argv)
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -348,24 +359,99 @@ def kill(
             {"status": "error", "detail": (completed.stderr or "").strip() or "tmux refused"},
             pane_id,
         )
-    _signal_groups(groups, signal.SIGTERM)
-    _reap_groups(groups)
+    survivors = _end_groups(groups)
     # The pane is gone: the grant and its process credential can never be
     # reused.  Respawning the name mints a distinct token.
     coder_steering.disarm(key)
     from .principals import agent_credentials
 
     agent_credentials.revoke_targets((pane_id, current_target, key))
+    if survivors:
+        return _audited({
+            "status": "error", "pane_id": pane_id, "scope": scope,
+            "detail": f"{len(survivors)} process(es) of the launch did not end",
+        }, pane_id)
     return _audited({"status": "killed", "pane_id": pane_id, "scope": scope}, pane_id)
 
 
 #: How long a killed pane's process group has to end after SIGTERM before SIGKILL.
 GROUP_KILL_GRACE_SECONDS = 2.0
 
+#: One process group to end: ``(pgid, sid)``. A member is a process in that
+#: group AND that session, so a recycled id never names another program.
+Group = tuple[int, int]
 
-def _pane_groups(runner: Optional[Runner], pane_id: str, scope: str) -> list[int]:
-    """The process groups of the pane (or of its whole session): each pane's
-    first process leads its own group. Never this process's own group."""
+
+def pane_process_group(pane_id: str, *, runner: Optional[Runner] = None) -> Optional[dict[str, int]]:
+    """``{pgid, sid, leader}`` of a live pane's first process, read at spawn
+    so Stop can end the group after that process has exited (PR #1022 r1).
+    ``None`` for a fake runner, a dead pane, or this process's own group."""
+    if runner is not None:
+        return None
+    try:
+        done = _run(None, ["tmux", "display-message", "-p", "-t", str(pane_id), "#{pane_pid}"])
+        leader = int(str(done.stdout or "").strip()) if done.returncode == 0 else 0
+        if leader <= 1:
+            return None
+        pgid, sid = os.getpgid(leader), os.getsid(leader)
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return None
+    if pgid <= 1 or pgid == os.getpgrp():
+        return None
+    return {"pgid": pgid, "sid": sid, "leader": leader}
+
+
+def _pane_exists(pane_id: str) -> bool:
+    try:
+        done = _run(None, ["tmux", "display-message", "-p", "-t", str(pane_id), "#{pane_id}"])
+    except (OSError, subprocess.TimeoutExpired):
+        return True  # not known: never reap on a guess
+    return done.returncode == 0 and str(done.stdout or "").strip() == str(pane_id)
+
+
+def _kill_groups(pane_id: str, scope: str) -> list[Group]:
+    groups = _recorded_groups(pane_id)
+    for group in _pane_groups(None, pane_id, scope):
+        if group not in groups:
+            groups.append(group)
+    return groups
+
+
+def _recorded_groups(pane_id: str) -> list[Group]:
+    """The groups launches recorded at spawn for this pane's tmux session."""
+    # The pane's session when tmux still has it; a pane that is gone is
+    # matched by its id alone (the session check on each member still holds).
+    try:
+        done = _run(None, ["tmux", "display-message", "-p", "-t", str(pane_id), "#{session_name}"])
+        session = str(done.stdout or "").strip() if done.returncode == 0 else ""
+    except (OSError, subprocess.TimeoutExpired):
+        session = ""
+    try:
+        from .delivery.factory_launch import LaunchLedger
+
+        rows = LaunchLedger().list()
+    except Exception:
+        return []
+    groups: list[Group] = []
+    own = os.getpgrp()
+    for row in rows:
+        recorded = row.get("process_group")
+        if (session and row.get("session") != session) or not isinstance(recorded, dict):
+            continue
+        if str((row.get("target") or {}).get("pane_id") or "") != str(pane_id):
+            continue
+        try:
+            group = (int(recorded["pgid"]), int(recorded["sid"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+        if group[0] > 1 and group[0] != own and group not in groups:
+            groups.append(group)
+    return groups
+
+
+def _pane_groups(runner: Optional[Runner], pane_id: str, scope: str) -> list[Group]:
+    """The process groups of the pane (or of its whole session) whose first
+    process still lives. Never this process's own group."""
     fmt = "#{pane_pid}"
     argv = (
         ["tmux", "list-panes", "-s", "-t", pane_id, "-F", fmt] if scope == "session"
@@ -377,48 +463,72 @@ def _pane_groups(runner: Optional[Runner], pane_id: str, scope: str) -> list[int
         return []
     if getattr(completed, "returncode", 1) != 0:
         return []
-    groups: list[int] = []
+    groups: list[Group] = []
     own = os.getpgrp()
     for line in str(getattr(completed, "stdout", "") or "").splitlines():
         text = line.strip()
         if not text.isdigit():
             continue
         try:
-            group = os.getpgid(int(text))
+            group = (os.getpgid(int(text)), os.getsid(int(text)))
         except (OSError, ValueError):
             continue
-        if group > 1 and group != own and group not in groups:
+        if group[0] > 1 and group[0] != own and group not in groups:
             groups.append(group)
     return groups
 
 
-def _signal_groups(groups: list[int], sig: int) -> None:
-    for group in groups:
+def _members(groups: list[Group]) -> list[int]:
+    """The live processes of ``groups``: in the group and in its session."""
+    if not groups:
+        return []
+    try:
+        done = subprocess.run(["ps", "-A", "-o", "pid=,pgid="], capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    wanted = dict(groups)
+    found: list[int] = []
+    for line in (done.stdout or "").splitlines():
+        parts = line.split()
+        if len(parts) != 2 or not all(p.isdigit() for p in parts):
+            continue
+        pid, pgid = int(parts[0]), int(parts[1])
+        if pgid not in wanted or pid == os.getpid():
+            continue
         try:
-            os.killpg(group, sig)
+            if os.getsid(pid) == wanted[pgid]:
+                found.append(pid)
+        except OSError:
+            continue
+    return found
+
+
+def _signal(pids: list[int], sig: int) -> None:
+    for pid in pids:
+        try:
+            os.kill(pid, sig)
         except OSError:
             pass
 
 
-def _reap_groups(groups: list[int]) -> None:
-    """SIGKILL to a group that is still there after the grace."""
-    if not groups:
-        return
+def _end_groups(groups: list[Group]) -> list[int]:
+    """SIGTERM every member, SIGKILL what is left after the grace; returns
+    the members still alive after that (empty: the launch's work ended)."""
+    alive = _members(groups)
+    if not alive:
+        return []
+    _signal(alive, signal.SIGTERM)
     deadline = time.monotonic() + GROUP_KILL_GRACE_SECONDS
-    alive = list(groups)
     while alive and time.monotonic() < deadline:
-        alive = [g for g in alive if _group_alive(g)]
-        if alive:
+        time.sleep(0.05)
+        alive = _members(groups)
+    if alive:
+        _signal(alive, signal.SIGKILL)
+        deadline = time.monotonic() + GROUP_KILL_GRACE_SECONDS
+        while alive and time.monotonic() < deadline:
             time.sleep(0.05)
-    _signal_groups(alive, signal.SIGKILL)
+            alive = _members(groups)
+    return alive
 
 
-def _group_alive(group: int) -> bool:
-    try:
-        os.killpg(group, 0)
-    except OSError:
-        return False
-    return True
-
-
-__all__ = ["NAME_RE", "kill", "launch_identity", "rename", "revoke_launch", "spawn", "valid_name"]
+__all__ = ["NAME_RE", "kill", "launch_identity", "pane_process_group", "rename", "revoke_launch", "spawn", "valid_name"]

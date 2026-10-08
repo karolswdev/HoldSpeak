@@ -1154,7 +1154,7 @@ class LaunchService:
                 keyed=bool(engine.key_slot), directory=self._mcp_config_dir,
             )
             argv = [*argv, *pi_launch.launch_args(engine, pi_folder)]
-            launch_env = pi_launch.launch_env(pi_folder)
+            launch_env = pi_launch.launch_env(pi_folder, mcp_hold=not agent_mcp.pre_approved(mode))
             model_key_slot = engine.key_slot
             if parent_operation_id:
                 gate_state = "gated"
@@ -1276,6 +1276,11 @@ class LaunchService:
             "target_generation": issued["target_generation"],
             "pane_id": issued["pane_id"],
         }
+        # PR #1022 r1: the launch's process group, read while its first
+        # process lives, so Stop ends its children after that process exits.
+        record["process_group"] = coder_factory.pane_process_group(
+            str(issued["pane_id"]), runner=self._runner
+        )
 
         # 4. ONE Work attempt: kind=launch, exact, session unbound until
         #    the rider reports.

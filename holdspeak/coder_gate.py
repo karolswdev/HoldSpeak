@@ -439,12 +439,8 @@ def run_hook(
     # launched under the gate (its spawn sets the parent operation) is held
     # for the gate's tools wherever its working folder is, so a working
     # folder outside its worktree cannot make a call inert.
-    from .tool_gate_rules import EDIT_TOOLS
-
-    # Conductor R1: a launch's file writes are read against the worktree its
-    # Bash is held for (the per-launch settings put them on the gate).
-    root = gate_match_root(cfg, cwd=cwd, tool="Bash" if tool in EDIT_TOOLS else tool)
-    if root is None and not (parent_operation_id and (tool in DEFAULT_TOOLS or tool in EDIT_TOOLS)):
+    root, held = _launch_match(cfg, cwd=cwd, tool=tool, agent=agent)
+    if not held:
         return HookDecision(deny=None)
 
     session_id = str(payload.get("session_id") or "").strip() or "unknown-session"
@@ -597,6 +593,79 @@ def run_hook(
     return HookDecision(
         deny=f"gate hold expired with no decision; the call was not run. {EXPIRED_CLOSE}"
     )
+
+
+#: The pi tool the gate reads a file read as (PR #1022 r1, Astra 2): pi's
+#: ``read``/``grep``/``find``/``ls`` of a path outside its worktree reach the
+#: gate as ``Read`` with ``file_path``; a read inside the worktree never does.
+READ_TOOL = "Read"
+
+#: The environment switch of a launch whose MCP tools are not pre-approved
+#: (Secure at launch; ``pi_launch.launch_env``). With it, an MCP tool that is
+#: not a read is held like a Bash call (PR #1022 r1, Astra 1).
+MCP_HOLD_ENV = "HOLDSPEAK_MCP_HOLD"
+
+#: An MCP tool as pi names it: ``mcp__<server>__<tool, dots as underscores>``.
+MCP_PREFIX = "mcp__"
+
+
+def _launch_match(cfg: GateConfig, *, cwd: str, tool: str, agent: str) -> tuple[Optional[str], bool]:
+    """``(root, held)``: the armed worktree the call is read against, and
+    whether the gate holds this call at all. One predicate for admission
+    (``run_hook``) and completion (``run_post_tool_hook``).
+
+    Conductor R1: a launch's file writes (and pi's outside reads) are read
+    against the worktree its Bash is held for. Conductor K5: a launched agent
+    (its spawn sets the parent operation) is held for the gate's tools
+    wherever its working folder is. PR #1022 r1: a pi launch with its MCP
+    tools not pre-approved holds every MCP tool that is not a read."""
+    from .tool_gate_rules import EDIT_TOOLS
+
+    path_tool = tool in EDIT_TOOLS or tool == READ_TOOL
+    root = gate_match_root(cfg, cwd=cwd, tool="Bash" if path_tool else tool)
+    parent = str(os.environ.get("HOLDSPEAK_PARENT_OPERATION_ID") or "").strip()
+    held = root is not None or bool(
+        parent and (tool in DEFAULT_TOOLS or path_tool or _mcp_write_held(tool, agent))
+    )
+    return root, held
+
+
+def _mcp_write_held(tool: str, agent: str) -> bool:
+    """A pi MCP call the launch's mode holds: the switch is on and the tool
+    is not a known read (an unknown name is a write)."""
+    if agent != "pi" or not tool.startswith(MCP_PREFIX):
+        return False
+    if str(os.environ.get(MCP_HOLD_ENV) or "").strip() != "1":
+        return False
+    return not mcp_tool_is_read(tool)
+
+
+def mcp_tool_is_read(tool: str) -> bool:
+    """True when a pi MCP tool name is a HoldSpeak read: its operation is
+    declared ``effect="read"`` (``holdspeak.operations``) or it is a People
+    read. The name is matched on the dotted names, dots as underscores."""
+    parts = tool.split("__", 2)
+    if len(parts) != 3 or parts[1] != "holdspeak":
+        return False
+    wanted = parts[2]
+    try:
+        from . import operations
+        from .mcp.families.people import READ_TOOLS as PEOPLE_READS
+
+        reads = {d.name for d in operations.DESCRIPTORS if d.effect == "read"} | set(PEOPLE_READS)
+        writes = {d.name for d in operations.DESCRIPTORS if d.effect != "read"}
+    except Exception:
+        return False
+    matched = [n for n in reads | writes if n.replace(".", "_") == wanted]
+    if matched:
+        return all(n in reads for n in matched)
+    # A tool no operation declares: a read only by its verb (``meeting.get``,
+    # ``decision_record.list``); any other undeclared tool holds.
+    return wanted.rsplit("_", 1)[-1] in _UNDECLARED_READ_VERBS
+
+
+#: The verbs that make an undeclared HoldSpeak MCP tool a read.
+_UNDECLARED_READ_VERBS = frozenset({"get", "list", "read", "search"})
 
 
 #: How long a held call waits for a hub that stopped answering (a restart)
@@ -805,7 +874,10 @@ def run_post_tool_hook(
     cwd = str(payload.get("cwd") or "").strip()
     proposal_id = str(payload.get("tool_use_id") or "").strip()
     session_id = str(payload.get("session_id") or "").strip()
-    if not proposal_id or not session_id or not gate_matches(cfg, cwd=cwd, tool=tool):
+    # PR #1022 r1 (Astra 4): completion matches the call the way admission
+    # did (a Write is held for the worktree its Bash is held for), so an
+    # approved Write reaches its terminal receipt.
+    if not proposal_id or not session_id or not _launch_match(cfg, cwd=cwd, tool=tool, agent=agent)[1]:
         return False
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
     try:

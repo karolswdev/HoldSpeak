@@ -14,12 +14,15 @@
 //
 // Each payload has the Claude Code shape the commands already read. pi's tools
 // `bash`, `edit` and `write` go to the gate as `Bash`, `Edit` and `Write`; an MCP
-// tool keeps its own name. pi's read-only tools (`read`, `grep`, `find`, `ls`) are
-// not sent. Children stay in pi's process group, so a launch Stop that kills the
+// tool keeps its own name. pi's read-only tools (`read`, `grep`, `find`, `ls`)
+// pass with no hook when the path they name resolves (symlinks too) inside the
+// launch's worktree; a path outside it goes to the gate as `Read` with
+// `file_path`, where the outside-the-worktree hold applies (PR #1022 r1). Children stay in pi's process group, so a launch Stop that kills the
 // group also kills a hook that waits on a hold (pi spike #1020).
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, realpathSync } from "node:fs";
+import { homedir } from "node:os";
+import { basename, dirname, join, resolve, sep } from "node:path";
 
 type Hook = { argv: string[]; events: string[]; timeout_seconds: number };
 type HookDocument = {
@@ -81,6 +84,28 @@ function run(argv: string[], payload: object, timeoutSeconds: number): Promise<R
   });
 }
 
+// The real path of `path` (symlinks resolved); a path that does not exist yet
+// resolves through its nearest existing folder.
+function realPath(path: string): string {
+  try {
+    return realpathSync(path);
+  } catch {
+    const parent = dirname(path);
+    return parent === path ? path : join(realPath(parent), basename(path));
+  }
+}
+
+// The absolute path a read tool names (its `path`; none: the working folder).
+function readTarget(input: Record<string, unknown>, cwd: string): string {
+  const raw = typeof input?.path === "string" && input.path.trim() ? (input.path as string) : ".";
+  const expanded = raw === "~" ? homedir() : raw.startsWith("~/") ? join(homedir(), raw.slice(2)) : raw;
+  return resolve(cwd, expanded);
+}
+
+function inside(path: string, root: string): boolean {
+  return path === root || path.startsWith(root.endsWith(sep) ? root : root + sep);
+}
+
 // A gate proposal id is a URL path segment: pi's nested call ids hold `/`.
 function callId(id: string): string {
   return String(id || "").replace(/[^A-Za-z0-9._:-]/g, "-");
@@ -115,6 +140,9 @@ function endReason(reason: string): string {
 export default function holdspeakPi(pi: any) {
   const doc = readDocument();
   let queue: Promise<unknown> = Promise.resolve();
+  // The read calls that went to the gate (outside the worktree): their
+  // completion is reported as the same `Read` call.
+  const outsideReads = new Set<string>();
 
   function session(ctx: any) {
     return {
@@ -155,15 +183,25 @@ export default function holdspeakPi(pi: any) {
 
   pi.on("tool_call", async (event: any, ctx: any) => {
     const name = String(event?.toolName ?? "");
-    if (doc && doc.read_tools.includes(name)) return undefined;
+    const readTools = doc?.read_tools ?? ["read", "grep", "find", "ls"];
+    let toolName = doc?.tools[name] ?? name;
+    let input = toolInput(name, event?.input ?? {});
+    if (readTools.includes(name)) {
+      const cwd = ctx?.cwd ?? process.cwd();
+      const target = readTarget(event?.input ?? {}, cwd);
+      if (inside(realPath(target), realPath(cwd))) return undefined; // inside the worktree
+      toolName = "Read";
+      input = { file_path: target };
+      outsideReads.add(callId(event?.toolCallId));
+    }
     const hook = doc?.gate;
     if (!hook) {
       return { block: true, reason: "HoldSpeak gate not configured for this launch; the call was not run" };
     }
     const payload = {
       hook_event_name: "PreToolUse",
-      tool_name: doc!.tools[name] ?? name,
-      tool_input: toolInput(name, event?.input ?? {}),
+      tool_name: toolName,
+      tool_input: input,
       tool_use_id: callId(event?.toolCallId),
       ...session(ctx),
     };
@@ -191,12 +229,16 @@ export default function holdspeakPi(pi: any) {
   pi.on("tool_result", async (event: any, ctx: any) => {
     const name = String(event?.toolName ?? "");
     const mapped = doc?.tools[name] ?? name;
+    const id = callId(event?.toolCallId);
     const fields = {
       tool_name: mapped,
       tool_input: toolInput(name, event?.input ?? {}),
-      tool_use_id: callId(event?.toolCallId),
+      tool_use_id: id,
     };
-    if (!event?.isError && !(doc?.read_tools ?? []).includes(name)) void gateNote("PostToolUse", ctx, fields, 15);
+    const outside = outsideReads.delete(id);
+    const gated = outside || !(doc?.read_tools ?? []).includes(name);
+    const gateFields = outside ? { ...fields, tool_name: "Read", tool_input: { file_path: readTarget(event?.input ?? {}, ctx?.cwd ?? process.cwd()) } } : fields;
+    if (!event?.isError && gated) void gateNote("PostToolUse", ctx, gateFields, 15);
     void rider("PostToolUse", ctx, fields);
     return undefined;
   });

@@ -240,9 +240,19 @@ def launch_args(engine: PiEngine, folder: Path) -> list[str]:
     ]
 
 
-def launch_env(folder: Path) -> dict[str, str]:
-    """The environment of a pi launch (no secret: the key rides the spawn's file)."""
-    return {"PI_CODING_AGENT_DIR": str(folder), **PI_ENV}
+def launch_env(folder: Path, *, mcp_hold: bool = False) -> dict[str, str]:
+    """The environment of a pi launch (no secret: the key rides the spawn's file).
+
+    ``mcp_hold``: the launch's MCP tools are not pre-approved (Secure at
+    launch, ``agent_mcp.pre_approved``). The gate hook then holds every
+    HoldSpeak MCP tool that is not a read (``coder_gate.MCP_HOLD_ENV``), as
+    Claude Code asks in its pane for a tool that is not allowed."""
+    from ..coder_gate import MCP_HOLD_ENV
+
+    env = {"PI_CODING_AGENT_DIR": str(folder), **PI_ENV}
+    if mcp_hold:
+        env[MCP_HOLD_ENV] = "1"
+    return env
 
 
 __all__ = [

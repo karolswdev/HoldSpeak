@@ -39,6 +39,11 @@ Also: Get Info for pi (`pi · AGENT · VERSION 1.1.0 · HOOKS IN · SIGN-IN SIGN
 | Turn end (ASKS) | about 15:51:40 |
 | Stop (second press) → group gone | 15:56:23.3 → by 15:56:32 (the check time; not measured closer) |
 
+## Corrected after Astra round 1
+
+- The walk's approved `Write` (`oNeSc8bU…`, operation `op_0fd0e2720…`) stayed `claimed`: completion matched the literal `Write`. Fixed in r1 (`test_an_approved_pi_write_reaches_its_terminal_receipt`).
+- The walk ran in YOLO only. Secure MCP holds, outside reads and Stop after a dead leader are fenced in `tests/unit/test_pi_harness_r1.py`, not walked on metal.
+
 ## What the walk did not do through the face
 
 - The hand itself: a Room ITEMS row (a project item) has no Hand to agent verb, so the walk sent `POST /api/agent/hand {kind: project_item, profile: pi-default}`, the body the confirm line sends. The confirm line's three-way turn to PI is proven in `web/src/desk/hand/__tests__/hand.test.tsx`, not on the live hub.
