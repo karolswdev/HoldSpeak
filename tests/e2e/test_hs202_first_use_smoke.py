@@ -373,19 +373,13 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                     folded.locator(".desk-menu-back").click()
                     return passed
 
+                # PHILO-15 11 (B21, owner ruling 2026-10-07): Go at 393 is the
+                # Chair's windows, the Dock's places, the projects and New ▸
+                # (Thought / Meeting / Project / Person). Desk ▸ Object ▸
+                # Window ▸ are not on the phone; each window has its own menu.
                 folded_item(
-                    "menu-Desk", "New Note",
-                    "New Note is visible and reachable in the folded Go menu",
-                )
-                folded_item(
-                    "menu-Object", "Open",
-                    "Open is visible and reachable as an Object entry in Go",
-                    ghosted=True,
-                )
-                folded_item(
-                    "menu-Window", "Close window",
-                    "Close window is visible and reachable as a Window entry in Go",
-                    ghosted=True,
+                    "menu-New", "Thought",
+                    "Thought is visible and reachable at Go ▸ New",
                 )
                 page.keyboard.press("Escape")
             else:
@@ -419,21 +413,19 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # The actual New Note command; no pre-seeded note can satisfy this proof.
             before_notes = {note["id"] for note in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
             desk_menu = page.locator(".desk-verbbar").get_by_role("button", name="Desk", exact=True, include_hidden=True)
-            if width <= 720 and "menu-Desk" not in failures:
-                # At 393 the actual create path is Go -> Desk -> New Note. The old
-                # keyboard recovery is allowed only after that named check
-                # records its inventory failure.
-                go_title = page.locator(".desk-verbbar").get_by_role("button", name="Go", exact=True)
-                assert _hit(go_title), "Go menu door is unreachable for New Note"
-                go_title.click()
-                folded = page.locator(".desk-verbbar-menu[role=menu]")  # its name follows the open group at 393 (C5)
-                go_group(page, "Desk")  # PHILO-13-17 (C7, Q3): Go ▸ Desk ▸ New Note
-                new_note = folded.get_by_role(
-                    "menuitem", name=re.compile(r"^New Note(?:\s|$)")
-                )
-                assert new_note.count() == 1, "Go menu does not expose New Note"
-                new_note.scroll_into_view_if_needed()
-                assert _hit(new_note), "Go -> New Note is not reachable at 393"
+            if width <= 720:
+                # PHILO-15 11 (B21): New Note left the phone Go (New ▸ is four
+                # kinds). At 393 New Note is one Search away: the Search tap,
+                # the words, a tap on the row.
+                search = page.locator("button[aria-controls=desk-tool-shelf]")
+                search.wait_for()
+                search.click()
+                box = page.locator("input[aria-controls=desk-palette-listbox]")
+                box.wait_for()
+                box.fill("New Note")
+                new_note = page.locator("[id='desk-palette-option-desk.new-note']")
+                new_note.wait_for()
+                assert _hit(new_note), "Search -> New Note is not reachable at 393"
                 new_note.click()
             elif _hit(desk_menu):
                 desk_menu.click()

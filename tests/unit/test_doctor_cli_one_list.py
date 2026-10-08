@@ -82,7 +82,7 @@ def test_cli_runs_the_hub_checks_after_the_list(monkeypatch, capsys) -> None:
     assert _cli(monkeypatch) == 0
     out = capsys.readouterr().out
     assert calls == [1]
-    assert out.index("Sentinel one-list") < out.index("Running hub") < out.index("hub-health")
+    assert out.index("Sentinel one-list") < out.index("Running hub") < out.index("PASS  Hub ")
 
 
 def test_cli_strict_fails_on_a_warning_and_plain_does_not(monkeypatch, capsys) -> None:

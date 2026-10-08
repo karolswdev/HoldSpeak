@@ -337,8 +337,8 @@ def _run_quiet_rig(
             brief_row = page.get_by_test_id("shade-brief-row")
             assert brief_row.count() == 1, "Brief row should be present"
             brief_text = brief_row.text_content() or ""
-            assert "MONDAY BRIEF" in brief_text.upper(), \
-                f"Brief row should say Monday brief: {brief_text}"
+            assert "DAILY BRIEF" in brief_text.upper(), \
+                f"Brief row should say Daily brief: {brief_text}"
             assert "THING" in brief_text.upper(), \
                 f"Brief row should have THINGS token: {brief_text}"
 
@@ -905,9 +905,9 @@ def _run_brief_row_rig(
                 "The brief row should be present in the shade"
 
             brief_text = brief_row.text_content() or ""
-            # Should contain "Monday brief".
-            assert "Monday brief" in brief_text, \
-                f"Brief row should mention 'Monday brief': {brief_text}"
+            # Should contain "Daily brief" (PHILO-15-09).
+            assert "Daily brief" in brief_text, \
+                f"Brief row should mention Daily brief: {brief_text}"
 
             # Should contain the item count.
             assert "5" in brief_text or "THING" in brief_text.upper(), \

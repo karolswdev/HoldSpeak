@@ -91,12 +91,16 @@ describe("the SEND well", () => {
   it("A1: the pick opens the preview and Send in place; the folder keeps its case", async () => {
     render(<Well />);
     const row = await screen.findByTestId("destination-row");
-    expect(row.textContent).toContain("~/Reports/Payments");
+    // PHILO-15 lane 12 (B23): the folder reads by its name; the ~ token is its hover title.
+    expect(row.textContent).toContain("Reports/Payments");
+    expect(row.textContent).not.toContain("~/");
+    expect(row.querySelector(".send-target")?.getAttribute("title")).toBe("~/Reports/Payments");
     expect(row.textContent).toContain("THIS DEVICE");
     fireEvent.click(within(row).getByText("Folder Payments"));
     const preview = await screen.findByTestId("send-preview");
     expect(preview.textContent).toContain("Folder");
-    expect(preview.textContent).toContain(FOLDER);
+    expect(preview.textContent).toContain("Reports/Payments");
+    expect(preview.textContent).not.toContain(FOLDER);
     expect(preview.textContent).not.toMatch(/[{}<]/);
     expect(screen.getByTestId("send-verb").textContent).toBe("Send");
   });

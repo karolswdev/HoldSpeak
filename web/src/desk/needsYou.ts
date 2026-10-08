@@ -151,6 +151,14 @@ export interface NeedsYouResult {
   mutedItems: NeedsYouRoomItem[];
   blockers: MeetingPathBlocker[];
   failedMeetings: Meeting[];
+  /** PHILO-15-09 (B11): the scheduled recordings that arm now (a Needs row
+   *  each, counted). */
+  arming?: NeedsYouArming[];
+}
+
+export interface NeedsYouArming {
+  scheduleId: string;
+  title: string;
 }
 
 /** Pure membership dependencies. The default is the production attention
@@ -629,6 +637,8 @@ export interface NeedsYouAnswer {
   /** Every attention row, ranked: the counted rows, then the muted rows. */
   items?: NeedsYouRoomItem[];
   blockers?: MeetingPathBlocker[];
+  /** PHILO-15-09 (B11): the recordings that arm now; each is a counted row. */
+  arming?: NeedsYouArming[];
   /** Meetings whose summary failed, as `/api/meetings` rows. */
   failedMeetings?: unknown[];
   /** The Room rows alone (the Room input of R1). */
@@ -727,15 +737,24 @@ export function readNeedsYouAnswer(answer: NeedsYouAnswer | null | undefined): N
     ...blockers.map((blocker) => ({ ref: `blocker:${blocker.key}`, kind: "blocker" as const, blocker })),
     ...failedMeetings.map((meeting) => ({ ref: meeting.id, kind: "meeting" as const, meeting })),
   ];
+  // PHILO-15-09 (B11, the A5 ruling: headline = Dock badge = notch = counted
+  // rows): the one number counts every row Needs you draws under its head:
+  // the members, each source that could not be read, and a recording that
+  // arms. The hub counts the same (`needs_you_membership.compose`).
+  const arming = (Array.isArray(value.arming) ? value.arming : [])
+    .filter((row) => row && row.scheduleId)
+    .map((row) => ({ scheduleId: String(row.scheduleId), title: String(row.title ?? "") }));
+  const unread = (Array.isArray(value.coverage) ? value.coverage : [])
+    .filter((row) => row && row.state !== "available").length;
   return {
-    members, count: members.length, waitingCount: waitingItems.length,
-    unmutedItems, waitingItems, mutedItems, blockers, failedMeetings,
+    members, count: members.length + unread + arming.length, waitingCount: waitingItems.length,
+    unmutedItems, waitingItems, mutedItems, blockers, failedMeetings, arming,
   };
 }
 
 const EMPTY_RESULT: NeedsYouResult = {
   members: [], count: 0, waitingCount: 0, unmutedItems: [], waitingItems: [], mutedItems: [],
-  blockers: [], failedMeetings: [],
+  blockers: [], failedMeetings: [], arming: [],
 };
 
 let snapshot: NeedsYouSnapshot = {

@@ -107,7 +107,8 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
           })}
         </ul>
       ) : step.loaded && !step.unread ? (
-        <span className="firstrun-tokens">
+        // PHILO-15 11 (B29): one tool per line ("NO SIGN-IN ACLI" read as one token).
+        <span className="firstrun-tokens" data-stack data-testid="firstrun-connections-tools">
           <span className="surface-token">{step.tools.gh?.installed ? "GH · NO SIGN-IN" : "GH NOT INSTALLED"}</span>
           <span className="surface-token">{step.tools.acli?.installed ? "ACLI · NO SIGN-IN" : "ACLI NOT INSTALLED"}</span>
         </span>

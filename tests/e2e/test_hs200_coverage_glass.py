@@ -16,6 +16,7 @@ Shots to phase-200-the-working-practice/assets/story-07-shots/.
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -254,10 +255,13 @@ def _run_partial_empty(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: i
             _settle(page)
 
             wire = _api(page, "GET", "/api/desk/needs-you", token=TOKEN)
-            assert wire["count"] == 0, wire["items"]
+            assert wire["members"] == [], wire["items"]
             assert wire["complete"] is False, wire["coverage"]
             failed = [c for c in wire["coverage"] if c["state"] == "failed"]
             assert failed, wire["coverage"]
+            # PHILO-15-09 (B11): the one number counts the source row.
+            unread = [c for c in wire["coverage"] if c["state"] != "available"]
+            assert wire["count"] == len(unread), wire["coverage"]
             assert failed[0]["repair"]["verb"] == "Reconnect", failed[0]
 
             headline = page.get_by_test_id("arrival-display").text_content() or ""
@@ -313,7 +317,7 @@ def _run_one_failed_among_healthy(
             assert states["watch:w-beta"] == "failed", states
 
             headline = page.get_by_test_id("arrival-display").text_content() or ""
-            assert "need you" in headline.lower(), headline
+            assert re.search(r"needs? you", headline.lower()), headline
             assert page.locator(MEMBERS).count() >= 1
             assert _gaps(page).count() == 1, \
                 "a partial result names its gap even when items exist"

@@ -6,7 +6,7 @@
 import type { ReactNode } from "react";
 
 const INLINE_RE =
-  /(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|_[^_\s][^_]*_|`[^`]+`|\[[^\]]+\]\([^)\s]+\))/g;
+  /(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|(?<![A-Za-z0-9])_[^_\s][^_]*_(?![A-Za-z0-9])|`[^`]+`|\[[^\]]+\]\([^)\s]+\))/g;
 
 function inline(text: string): ReactNode[] {
   const out: ReactNode[] = [];

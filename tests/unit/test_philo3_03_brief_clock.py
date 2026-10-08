@@ -61,8 +61,10 @@ def test_the_producer_clock_moves_the_brief_day_and_keeps_the_same_day_id(tmp_pa
     db.desk_decisions.upsert(decision_id="decision-a3", title=TITLE, status="proposed")
 
     same_day = service.generate(None)
-    assert same_day.id == empty.id, "same producer-day: generate returns the existing brief"
-    assert ITEM not in _texts(same_day)
+    # PHILO-15-09 (B04, ruling 1): the same producer-day keeps the id and
+    # makes the body again from the current desk.
+    assert same_day.id == empty.id, "same producer-day: the same brief id"
+    assert ITEM in _texts(same_day)
 
     clock.advance(days=1)
     next_day = service.generate(None)
@@ -117,7 +119,8 @@ def test_the_route_reads_the_wired_clock_across_a_producer_day(tmp_path, monkeyp
 
     again = client.post("/api/brief/generate")
     assert again.json()["id"] == first_id
-    assert ITEM not in again.text
+    # PHILO-15-09 (B04, ruling 1): Generate on the same day regenerates.
+    assert ITEM in again.text
 
     clock.advance(days=1)
     next_day = client.post("/api/brief/generate")
@@ -129,7 +132,10 @@ def test_the_route_reads_the_wired_clock_across_a_producer_day(tmp_path, monkeyp
 
     latest = client.get("/api/brief/latest").json()
     assert latest["id"] == body["id"]
-    assert latest["period_label"] == "SEP 21 – 24"
+    # PHILO-15-09 (B04, ruling 3): the label is the brief's own window
+    # (Wednesday 17:00 to Thursday), the range the sent document says too.
+    assert latest["period_label"] == "SEP 23-24"
+    assert latest["title"] == "Brief · Thursday 24 Sep 2026"
 
 
 def test_the_web_server_carries_the_clock_to_the_context():

@@ -217,11 +217,13 @@ def apply_seed(
 
     # HS-153-01: ensure mode presets exist on every hub, including pre-existing
     # DBs that were created before modes were added to the seed manifest.
-    from ..services.thread_modes import seed_modes, seed_guardrails
+    from ..services.thread_modes import seed_modes
     seed_modes(db)
 
-    # HS-153-03: ensure guardrail note presets exist.
-    seed_guardrails(db)
+    # PHILO-15 11 (B20, owner ruling 2026-10-07): the guardrail notes (Effect
+    # guard, Egress guard) are developer-facing, so a fresh desk no longer
+    # gets them. ``thread_modes.seed_guardrails`` still makes them when called;
+    # their text is parked in docs/internal/PARKED-SEED-NOTES.md.
 
     return report
 

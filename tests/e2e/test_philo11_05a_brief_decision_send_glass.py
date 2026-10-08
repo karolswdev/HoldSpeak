@@ -384,7 +384,9 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 ppath = hub_prepared["proof"]["path"]
                 assert Path(ppath).is_file() and Path(ppath).parent == ledger_dir, ppath
                 sent_text = Path(ppath).read_text()
-                assert "Monday Brief" in sent_text, sent_text[:200]
+                # PHILO-15-09 (B04): the Brief's own weekday and date, never "Monday Brief".
+                assert sent_text.startswith("# Brief · "), sent_text[:200]
+                assert "Monday Brief" not in sent_text, sent_text[:200]
                 # The sent bytes carry the readable generated time, as the preview does.
                 gen_line = next(ln for ln in sent_text.splitlines() if ln.startswith("Generated: "))
                 assert re.fullmatch(r"Generated: \d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2}", gen_line), gen_line
@@ -403,7 +405,8 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 a2 = shots.shoot(page, "A2-brief-picked-folder", IB,
                                  [row(IB, "Team folder"), f"{opened(IB, 'Team folder')} [data-testid=send-verb]"])
                 assert a2["wells"] == [ref], a2["wells"]
-                assert a2["preview_fields"] == [f"FOLDER {team_dir}"], a2["preview_fields"]
+                # PHILO-15 lane 12 (B23): the Folder field is the folder's name, never the raw path.
+                assert a2["preview_fields"] == [f"FOLDER {'/'.join(Path(team_dir).parts[-2:])}"], a2["preview_fields"]
                 # One pick with the Chair's seat of the same brief (the species' store).
                 shared_pick = page.locator(opened(CH, "Team folder")).count()
                 a2["chair_row_open"] = shared_pick

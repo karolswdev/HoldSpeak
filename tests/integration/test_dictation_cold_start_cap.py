@@ -147,6 +147,6 @@ def test_doctor_counters_warn_after_cold_start_breach(monkeypatch) -> None:
 
     result = doctor._check_dictation_runtime_counters(cfg)
     assert result.status == "WARN"
-    assert "llm_disabled_for_session=True" in result.detail
+    assert "off for this session" in result.detail
     assert "cold-start exceeded cap" in result.detail
     assert result.fix and "Restart" in result.fix

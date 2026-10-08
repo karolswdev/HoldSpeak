@@ -45,19 +45,33 @@
   height: 32px;
   image-rendering: pixelated;
 }
-/* The name: two lines, then an ellipsis. */
+/* The name: two lines, then an ellipsis. PHILO-15 lane 12 (B30): it
+   breaks between words only (DeskIcon puts a <wbr> after `_ - . /`); a
+   word longer than the line is cut with an ellipsis, never split. */
 .desk-icon-name {
   max-width: 108px;
   padding: 1px 4px;
   font: 700 var(--font-size-xs) / 1.25 var(--font-mono);
   text-align: center;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
   color: inherit;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* B30 (Astra r1): a label set by fitName (DeskIcon) carries its own line
+   breaks and already fits the clamp; nothing it holds is hidden. */
+.desk-icon-name[data-fitted] {
+  white-space: pre-line;
+}
+/* The CSS form of the break priority: a word is one block, so a line
+   breaks between words first; inside a word only after a join (<wbr>). */
+.name-word {
+  display: inline-block;
+  max-width: 100%;
 }
 /* Selected: the inverted label plate (ink on paper), the _sel sprite. */
 .desk-icon[data-selected="true"] .desk-icon-name {
@@ -245,11 +259,12 @@
   flex-direction: column;
   min-width: 0;
 }
+/* B30 (Astra r1): a list row never clips a name. It wraps, words first,
+   then at a word's joins; the row grows. */
 .object-list-name-word {
   font: 600 var(--font-size-sm) / 1.3 var(--font-sans);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 .object-list-cell {
   min-width: 0;

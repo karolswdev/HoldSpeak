@@ -1151,3 +1151,35 @@ export function needsYouWhyWords(item: { source: string; kind?: string; why: str
   }
   return item.why;
 }
+
+/* ── PHILO-15 lane 12 (B25): the health word ── */
+
+/** True when the Room has nothing to judge: no sources, no items, no
+ *  meetings, no filed resources, nothing open, no decisions, no
+ *  commitments and no target. A section that failed to read is not
+ *  "nothing": the Room cannot say it is empty. */
+export function roomIsEmpty(room: RoomSnapshot): boolean {
+  const zero = <T,>(section: RoomSection<T>, size: (s: OkSection<T>) => number): boolean =>
+    section.state === "absent" || (section.state === "ok" && size(section as OkSection<T>) === 0);
+  return (
+    zero(room.sources, (s) => Math.max(s.count, s.items.length)) &&
+    zero(room.items, (s) => s.total) &&
+    zero(room.meetings, (s) => s.count) &&
+    zero(room.resources, (s) => s.count) &&
+    zero(room.needsYou, (s) => s.count) &&
+    zero(room.decisions, (s) => s.items.length) &&
+    zero(room.commitments, (s) => s.items.length) &&
+    zero(room.target, (s) => (s.targetAt ? 1 : 0))
+  );
+}
+
+/** The one health word a Room and its drawer say. AT RISK when the hub
+ *  says so; NEW for an empty Project (no health claim with nothing to
+ *  judge); ON TRACK otherwise; null when health was not read. */
+export function roomHealthWord(room: RoomSnapshot | null): { word: "AT RISK" | "ON TRACK" | "NEW"; tone: "fail" | "ok" | "info" } | null {
+  if (!room || room.health.state !== "ok") return null;
+  const health = room.health as OkSection<RoomHealthData>;
+  if (health.assessment === "at_risk") return { word: "AT RISK", tone: "fail" };
+  if (roomIsEmpty(room)) return { word: "NEW", tone: "info" };
+  return { word: "ON TRACK", tone: "ok" };
+}

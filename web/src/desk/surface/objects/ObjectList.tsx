@@ -17,6 +17,7 @@ import { LampGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
 import { listSprite } from "../../sprites";
 import { lampGadgetTone, objectKindWord, objectSprite, type ObjectTone } from "./kinds";
+import { nameBreaks } from "./DeskIcon";
 import "./objects.css";
 
 export type ObjectSortKey = "name" | "kind" | "when" | "state";
@@ -184,7 +185,7 @@ export function ObjectList({
                     draggable={false}
                   />
                   <span className="object-list-name-text">
-                    <span className="object-list-name-word">{row.name}</span>
+                    <span className="object-list-name-word" title={row.name}>{nameBreaks(row.name)}</span>
                     <span className="object-list-fold" aria-hidden="true">
                       <span className="object-list-fold-token">{kindWord}</span>
                       {row.when ? <span className="object-list-fold-token">{row.when}</span> : null}

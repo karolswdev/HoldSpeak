@@ -240,11 +240,13 @@ class TestFinishFacePolish:
                 self._press(page, window.locator("button[aria-label^='Close ']").first, width)
                 window.wait_for(state="detached")
 
-                # The SEND well of a decision: the saved folder reads ~/...
+                # The SEND well of a decision: the saved folder reads by its name
+                # (PHILO-15 lane 12, B23); the ~/... token is its hover title.
                 self._palette(page, "freeze")
                 row = page.locator("[id^='desk-palette-option-']", has_text="Freeze the old ledger").first
                 self._press(page, row, width)
-                well = page.get_by_text("~/Documents/HoldSpeak/Team updates").first
+                well = page.locator(".send-target[title='~/Documents/HoldSpeak/Team updates']",
+                                    has_text="HoldSpeak/Team updates").first
                 well.wait_for(timeout=20_000)
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"send-well-{width}.png"))

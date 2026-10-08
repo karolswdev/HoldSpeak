@@ -122,7 +122,9 @@ class TestBuiltinSendFolderGlass:
                 line = " ".join(page.locator(ROW).first.inner_text().split())
                 assert NAME in line and "FILE" in line and chip in line, line
                 assert ("THIS DEVICE" in line) == (docs == "plain") and ("ICLOUD" in line) == (docs == "icloud"), line
-                assert "~/Documents/HoldSpeak/Sent" in line, line
+                # PHILO-15 lane 12 (B23): the folder reads by its name, the ~ token on hover.
+                assert "HoldSpeak/Sent" in line and "~/" not in line, line
+                assert page.locator(f"{ROW} .send-target").first.get_attribute("title") == "~/Documents/HoldSpeak/Sent"
                 assert not sent.exists(), "the folder is made by the first send, never before"
                 page.locator(ROW).first.scroll_into_view_if_needed()
                 page.wait_for_timeout(400)

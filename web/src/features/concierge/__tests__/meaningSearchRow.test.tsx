@@ -30,7 +30,7 @@ describe("MeaningSearchRow", () => {
     const row = await screen.findByTestId("concierge-meaning-search");
     expect(row.textContent).toContain("Meaning search");
     expect(row.textContent).toContain("OFF");
-    expect(row.textContent).toContain("139 MB");
+    expect(row.textContent).toContain("146 MB");
     expect(row.textContent).toContain("DOWNLOAD");
     expect(row.textContent).toContain("HUGGINGFACE.CO");
     expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Turn on");
