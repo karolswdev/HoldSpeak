@@ -309,11 +309,12 @@ def test_the_agents_lane_window_at_1440_and_393(tmp_path: Path, monkeypatch) -> 
                     assert stored["state"] == "approved", stored
                     held.locator("[data-testid='lane-approve']").wait_for(state="detached", timeout=10000)
 
-                    # PHILO-14 A5 (Astra r2): a 198-char call the hook cuts.
+                    # PHILO-14 A5 (Astra r2): a call past the head the hook cuts.
                     # The lane shows `<head>… +90 CHARS`, Deny and Raw (the
                     # pane holds the whole command), never Approve.
                     base = "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = "
-                    long_cmd = base + "7" * (198 - len(base) - 1) + "'"
+                    from holdspeak.coder_gate import ARGS_HEAD_CHARS  # PHILO-15 15: 4000, was 120
+                    long_cmd = base + "7" * (ARGS_HEAD_CHARS + 78 - len(base) - 1) + "'"
                     mint_held_call(url, seed["worktree"], long_cmd, "toolu_cut")
                     page.reload(wait_until="load")
                     _normal_chair(page)

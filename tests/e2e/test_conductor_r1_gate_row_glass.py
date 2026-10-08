@@ -8,7 +8,7 @@ row leaves. A second hold is denied the same way.
 PHILO-14 A5: the Needs-you window body is the smart drawer. The held call is
 a `needs-row` whose fact is the whole command and whose lamp is HELD CALL;
 its own verbs Approve and Deny (`needs-row-verb`, `data-verb`) decide the
-real proposal from the row (the shade still lists it). A 198-char call the
+real proposal from the row (the shade still lists it). A call past the head the
 hook cuts reads `… +90 CHARS` on the row and on the shade, and neither
 offers Approve.
 """
@@ -114,7 +114,7 @@ def test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it(tmp_path
             # The row: the whole command, HELD CALL, and its own Approve.
             row = _row(page, "ls /etc")
             row.wait_for(timeout=15000)
-            assert (row.locator(".needs-row-fact").text_content() or "") == "ls /etc"
+            assert (row.locator(".needs-row-fact").text_content() or "") == "OUTSIDE THE WORKTREE\nls /etc"  # PHILO-15 15: why it waits
             assert "HELD CALL" in (row.locator(".needs-row-lamp").text_content() or "")
             row.locator("[data-verb='approve']").click()
             deadline = time.monotonic() + 10
@@ -148,15 +148,16 @@ def test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it(tmp_path
                 time.sleep(0.2)
             assert read["state"] == "denied"
 
-            # PHILO-14 A5 (Astra r2): a 198-char call the hook cuts. The body
+            # PHILO-14 A5 (Astra r2): a call past the head the hook cuts. The body
             # is the hook's own (`coder_gate.redact_call`: the hash, the
-            # 120-char head, the length of the shown command), through the
+            # ARGS_HEAD_CHARS head, the length of the shown command), through the
             # real gate route. Every approval surface reads `… +90 CHARS`
             # and none offers Approve.
             from holdspeak.coder_gate import redact_call
 
             base = "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = "
-            long_cmd = base + "7" * (198 - len(base) - 1) + "'"
+            from holdspeak.coder_gate import ARGS_HEAD_CHARS  # PHILO-15 15: 4000, was 120
+            long_cmd = base + "7" * (ARGS_HEAD_CHARS + 78 - len(base) - 1) + "'"
             call = redact_call({"command": long_cmd})
             status, cut = _http(url, "POST", "/api/gate/proposals", credential, {
                 "id": "toolu_glass_cut", "tool": "Bash", "args_sha256": call.sha256, "args_head": call.head,
@@ -176,6 +177,9 @@ def test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it(tmp_path
             row = _row(page, "psql -h staging-ledger")
             row.wait_for(timeout=15000)
             fact = row.locator(".needs-row-fact").text_content() or ""
+            # PHILO-15 15: the first line says why it waits; the command follows.
+            reason, _, fact = fact.partition("\n")
+            assert reason == "OUTSIDE THE WORKTREE", reason
             assert fact.endswith("… +90 CHARS") and long_cmd.startswith(fact.removesuffix("… +90 CHARS")), fact
             assert row.locator("[data-verb='approve']").count() == 0
             assert row.locator("[data-verb='deny']").count() == 1 and row.locator("[data-verb='open']").count() == 1

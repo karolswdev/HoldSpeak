@@ -1118,7 +1118,8 @@ def hold_reason(scope: str, rule: str, target: str = "") -> str:
     """The reason a held call shows: ``OUTSIDE THE WORKTREE · /tmp/x``,
     ``SYMLINK OUT OF THE WORKTREE · link/x``, ``UNRESOLVED TARGET · $OUT``
     (a word the reading cannot resolve), ``RUNS CODE · python3`` (code the
-    reading cannot see) or ``NOT READ · <rule>``. Empty for
+    reading cannot see) or ``NOT READ · <rule>``; with no word to name, an
+    outside call says its kind alone (``OUTSIDE THE WORKTREE``). Empty for
     a call that is inside."""
     if scope == INSIDE or not scope:
         return ""
@@ -1127,7 +1128,11 @@ def hold_reason(scope: str, rule: str, target: str = "") -> str:
         word = "RUNS CODE" if runs_code else "UNRESOLVED TARGET" if target else "NOT READ"
     else:
         word = _REASON_WORDS.get(rule, "OUTSIDE THE WORKTREE")
-    return f"{word} · {target or rule or 'no rule'}"
+    if target:
+        return f"{word} · {target}"
+    # No word to name: the rule says what was not read; an outside call
+    # whose path the hook did not name says its kind alone.
+    return f"{word} · {rule}" if word == "NOT READ" else word
 
 
 def classification_from_wire(raw: Any) -> Optional[dict[str, str]]:
