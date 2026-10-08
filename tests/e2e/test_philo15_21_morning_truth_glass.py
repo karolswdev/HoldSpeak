@@ -152,6 +152,9 @@ class TestTheSecondMorning:
                 assert f"GitHub · {REPO}" in gh.inner_text()
                 assert gh.get_attribute("data-counted") == "false"
                 assert "STALE" in mtg.inner_text() and mtg.get_attribute("data-counted") == "true"
+                # Astra r1 P2-6: the GitHub Retry names where it goes; Meetings is local.
+                assert gh.locator(".egress-chip, [class*='egress']").first.inner_text().strip() == "GITHUB.COM"
+                assert mtg.locator(".egress-chip, [class*='egress']").count() == 0
                 assert "observed yesterday" in mtg.inner_text() or "observed " in mtg.inner_text()
                 head = needs.get_by_test_id("arrival-display").inner_text().strip()
                 counted = needs.locator("[data-testid='needs-list'] li.needs-row[data-counted='true']").count()
@@ -182,6 +185,109 @@ class TestTheSecondMorning:
                     assert f"quiet until {self.quiet_end}" in empty.inner_text(), empty.inner_text()
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"21-room-head-quiet-{width}.png"))
+                assert not errors, errors
+            finally:
+                browser.close()
+
+
+#: The model's two sentences at its boundary: cited inferences, unreviewed.
+MODEL_BODY = "## Progress\n\n- The ledger moved to staging.\n- Carol is to add a CODEOWNERS file by Friday.\n"
+MODEL_CLAIMS = [
+    {"span_id": "s_progress_0", "text": "The ledger moved to staging.", "refs": ["item:hygiene"],
+     "section": "progress", "kind": "inference", "support": "source_linked", "acceptance": "unreviewed"},
+    {"span_id": "s_progress_1", "text": "Carol is to add a CODEOWNERS file by Friday.", "refs": ["item:hygiene"],
+     "section": "progress", "kind": "inference", "support": "source_linked", "acceptance": "unreviewed"},
+]
+
+
+class TestTheOwnerReviewsEachClaim:
+    """Astra r1 P1-2 (B64): Accept / Reject on each claim row in the editor;
+    a rejected or unreviewed row reads OMITTED; REVIEWED · hh:mm; an accepted
+    claim makes the update sendable (the hub's preview answers 200)."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        from holdspeak.services import project_update_service as pus
+
+        def model(self, principal, det_claims, det_sections, det_body_md, known_names=(), memory=None):
+            return MODEL_BODY, json.dumps(MODEL_CLAIMS), "model:ia_1", "192.168.1.43:8080", "qwen3.8-27b"
+
+        monkeypatch.setattr(pus.ProjectUpdateService, "_draft_with_model", model)
+        keyfile = tmp_path / "people.key"
+        keyfile.write_text("{}")
+        keyfile.chmod(0o600)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
+        _ensure_build()
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        self.base, self.tmp = base, tmp_path
+        try:
+            yield
+        finally:
+            server.stop()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_accept_and_reject_in_the_editor(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                      device_scale_factor=1, has_touch=width < 720)
+            page = ctx.new_page()
+            page.set_default_timeout(20_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                pid = _api(page, "POST", "/api/projects", {"name": "Rehearsal repo hygiene"}, token=TOKEN)["project"]["id"]
+                update = _api(page, "POST", f"/api/projects/{pid}/updates/draft", {"generator": "model"},
+                              token=TOKEN)["update"]["id"]
+                page.evaluate("""([key, scope]) => sessionStorage.setItem("hs.desk.staged-surface-open",
+                    JSON.stringify({key, scope}))""", ["open-project-memory", f"project:{pid}"])
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.locator("[data-testid=room-body]").wait_for()
+                _press(page, page.get_by_test_id("updates-verb"), width)
+                _press(page, page.get_by_test_id("update-list-item"), width)
+                page.get_by_test_id("update-editor").wait_for()
+                rows = page.locator("[data-testid='update-inline-claim']")
+                rows.first.wait_for()
+                first = rows.filter(has_text="The ledger moved to staging.")
+                second = rows.filter(has_text="Carol is to add")
+                assert first.get_by_test_id("update-claim-omitted").inner_text() == "OMITTED"
+                assert second.get_by_test_id("update-claim-omitted").inner_text() == "OMITTED"
+                first.scroll_into_view_if_needed()
+                _settle(page)
+                page.screenshot(path=str(SHOTS / f"21-claims-unreviewed-{width}.png"))
+
+                _press(page, first.get_by_test_id("update-claim-accept"), width)
+                page.wait_for_function("""() => document.querySelector(
+                    "[data-testid='update-inline-claim'][data-span-id='s_progress_0']")?.dataset.sends === "true" """)
+                _press(page, second.get_by_test_id("update-claim-reject"), width)
+                receipt = page.get_by_test_id("update-claim-receipt")
+                receipt.wait_for()
+                assert receipt.inner_text().startswith("REVIEWED · "), receipt.inner_text()
+                page.wait_for_function("""() => document.querySelector(
+                    "[data-testid='update-inline-claim'][data-span-id='s_progress_1'] [data-testid='update-claim-reject']")
+                    ?.disabled === true""")
+                assert first.get_by_test_id("update-claim-omitted").count() == 0
+                assert second.get_by_test_id("update-claim-omitted").inner_text() == "OMITTED"
+                second.scroll_into_view_if_needed()
+                _settle(page)
+                page.screenshot(path=str(SHOTS / f"21-claims-reviewed-{width}.png"))
+
+                # The accepted claim makes the update sendable; the rejected one stays.
+                _api(page, "POST", f"/api/updates/{update}/publish", {}, token=TOKEN)
+                folder = self.tmp / "sent"
+                folder.mkdir(exist_ok=True)
+                dest = _api(page, "POST", "/api/channels/destinations",
+                            {"name": "Team folder", "channel": "file", "folder": str(folder)}, token=TOKEN)
+                preview = _api(page, "POST", "/api/channels/preview",
+                               {"document_ref": f"project_update:{update}",
+                                "destination_id": dest["destination"]["id"]}, token=TOKEN)
+                text = json.dumps(preview["preview"])
+                assert "The ledger moved to staging." in text and "CODEOWNERS" not in text, text
                 assert not errors, errors
             finally:
                 browser.close()

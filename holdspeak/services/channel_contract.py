@@ -225,11 +225,10 @@ _UNVERIFIED_MARK = re.compile(r"\*\*\[UNVERIFIED\]\*\*[ \t]*")
 
 def claim_verified(claim: Mapping[str, Any]) -> bool:
     """PHILO-15 B64 ruling: a claim counts as verified only when it has
-    evidence refs or the owner reviewed it. An inference (a model's sentence)
-    the owner did not review is not verified, whatever it cites; a claim the
-    owner rejected is not verified."""
-    if claim.get("verified") is False:
-        return False
+    evidence refs or the owner reviewed it. Astra r1 (P1-3): the CURRENT
+    review wins over every historical flag: an accepted claim is verified even
+    when the model once marked it ``verified: false``; a rejected one is not.
+    An inference the owner did not review is not verified, whatever it cites."""
     acceptance = str(claim.get("acceptance") or "")
     if acceptance == "accepted":
         return True
@@ -239,28 +238,25 @@ def claim_verified(claim: Mapping[str, Any]) -> bool:
     if (claim.get("support") == "supported" and isinstance(record, Mapping)
             and record.get("method") == "reviewer" and not record.get("invalidated_at")):
         return True
+    if claim.get("verified") is False:
+        return False
     if str(claim.get("kind") or "") == "inference":
         return False
     return bool(claim.get("refs"))
 
 
-def _row_text(line: str) -> str:
-    text = " ".join(str(line).split())
-    return text[2:] if text.startswith(("- ", "* ")) else text
+def _sentence(line: str) -> str:
+    """A body line as a claim's words: the list marker, the desk mark and the
+    spacing dropped (formatting is never what decides, Astra r1 P1-1)."""
+    text = _UNVERIFIED_MARK.sub("", str(line))
+    text = " ".join(text.split())
+    if text.startswith(("- ", "* ")):
+        text = text[2:]
+    return _UNVERIFIED_MARK.sub("", text).strip()
 
 
-def held_claim_lines(claims: Any) -> frozenset[str]:
-    """The first line of every claim that is not verified (B64), as a row
-    reads it, so the body line that carries it leaves the desk omitted."""
-    out: set[str] = set()
-    for claim in claims or ():
-        if not isinstance(claim, Mapping) or claim_verified(claim):
-            continue
-        first = str(claim.get("text") or "").split("\n", 1)[0]
-        text = " ".join(first.split())
-        if text:
-            out.add(text)
-    return frozenset(out)
+def _claim_lines(claim: Mapping[str, Any]) -> list[str]:
+    return [t for t in (" ".join(part.split()) for part in str(claim.get("text") or "").split("\n")) if t]
 
 
 def stored_claims(row: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -279,25 +275,66 @@ def stored_claims(row: Mapping[str, Any]) -> list[dict[str, Any]]:
     return [c for c in claims if isinstance(c, dict)] if isinstance(claims, list) else []
 
 
-def _outbound(body_md: str, held: frozenset[str] = frozenset()) -> tuple[list[list[str]], int]:
+def _outbound(body_md: str, claims: Any = None) -> tuple[list[list[str]], int]:
     """The body's sections (heading line first) with every unchecked claim
-    omitted WHOLE: a marked line and its continuation lines (up to a blank
-    line, the next list item or the next heading), and the count omitted.
-    PHILO-15 B64: a list row that carries a claim in ``held`` (an unreviewed
-    inference) is omitted the same way."""
+    omitted WHOLE, and the count omitted.
+
+    ``claims`` given (a list, even empty): PHILO-15 B64 and Astra r1 P1-1:
+    the CLAIMS SET decides. A line is sent only when its words are a verified
+    claim's words (any line of a multi-line claim); a line whose words belong
+    to no verified claim is omitted whatever its formatting (bullet, plain
+    paragraph, desk mark). The drafter's "nothing here" sentences are kept.
+    ``claims`` None (a legacy caller with no claim record): the desk mark
+    alone decides, as before."""
+    from .project_update_service import _HONEST_MINIMAL
+
     sections: list[list[str]] = [[]]
     dropped_in: list[int] = [0]
     dropped = 0
     skipping = False
+    use_claims = claims is not None
+    verified: set[str] = set()
+    firsts: set[str] = set()
+    tails: set[str] = set()
+    if use_claims:
+        for claim in claims or ():
+            if not isinstance(claim, Mapping):
+                continue
+            lines = _claim_lines(claim)
+            if claim_verified(claim):
+                verified.update(lines)
+            elif lines:
+                firsts.add(lines[0])
+                tails.update(lines[1:])
+    neutral = _EMPTY_WORDS | {str(v).strip() for v in _HONEST_MINIMAL.values()}
     for line in str(body_md or "").splitlines():
         stripped = line.strip()
-        if line.startswith("## "):
+        if line.startswith("#"):
             skipping = False
-            sections.append([line])
-            dropped_in.append(0)
-        elif _UNVERIFIED_MARK.search(line) or (
-            held and stripped.startswith(("- ", "* ")) and _row_text(line) in held
-        ):
+            if line.startswith("## "):
+                sections.append([line])
+                dropped_in.append(0)
+            else:
+                sections[-1].append(line)
+            continue
+        if use_claims:
+            words = _sentence(line)
+            # The desk mark still says "not checked" for words no verified
+            # claim carries (the review, never the formatting, clears it).
+            held = words in firsts or words in tails or bool(_UNVERIFIED_MARK.search(line))
+            if not words or words in verified or (words in neutral and not held):
+                skipping = False
+                # A desk mark never leaves the desk (the owner's review won).
+                sections[-1].append(_UNVERIFIED_MARK.sub("", line))
+                continue
+            # Omitted. A tail line of the claim omitted just above is not
+            # counted again.
+            if not (skipping and words in tails and words not in firsts):
+                dropped += 1
+                dropped_in[-1] += 1
+            skipping = True
+            continue
+        if _UNVERIFIED_MARK.search(line):
             if not skipping or stripped.startswith(("- ", "* ")):
                 dropped += 1
                 dropped_in[-1] += 1
@@ -309,7 +346,7 @@ def _outbound(body_md: str, held: frozenset[str] = frozenset()) -> tuple[list[li
             sections[-1].append(line)
     out: list[list[str]] = []
     for lines, cut in zip(sections, dropped_in):
-        if cut and not any(l.strip() for l in lines[1:]):
+        if cut and not any(ln.strip() for ln in lines[1:]):
             lines = [lines[0], "", "Not checked.", ""] if lines else ["Not checked.", ""]
         out.append(lines)
     return out, dropped
@@ -322,7 +359,7 @@ def without_desk_marks(body_md: str, heading: str = "", claims: Any = None) -> s
     never sent as a fact; a section left empty by that reads "Not checked.";
     the last line counts what stayed on the desk. ``heading`` (the
     document's identity) leads when given."""
-    sections, dropped = _outbound(body_md, held_claim_lines(claims))
+    sections, dropped = _outbound(body_md, claims)
     text = "\n".join(line for lines in sections for line in lines).rstrip("\n") + "\n"
     if dropped:
         text += f"\n{dropped} claim{'' if dropped == 1 else 's'} not checked, kept on the desk.\n"
@@ -337,14 +374,24 @@ _EMPTY_WORDS = frozenset({"Not checked."})
 
 
 def nothing_verified(body_md: str, claims: Any = None) -> bool:
-    """Astra r2 ruling: True when omitting the unchecked claims (PHILO-15
-    B64: unreviewed inferences included) leaves no
-    substantive content (only headings, "Not checked." and the drafter's
-    "nothing in this window" sentences; Source Coverage is not content). A
-    verified row, a merge row for one, keeps the update sendable."""
+    """True when the update must not leave the desk: NOTHING VERIFIED.
+
+    ``claims`` given (PHILO-15 B64, Astra r1 P1-1): decided on the CLAIMS
+    SET: no claim record is verified (a draft with no claims at all
+    included), or no verified claim's words are in the body. ``claims``
+    None (legacy): omitting the marked claims leaves no substantive content.
+    Source Coverage is never content."""
     from .project_update_service import _HONEST_MINIMAL
 
-    sections, dropped = _outbound(body_md, held_claim_lines(claims))
+    sections, dropped = _outbound(body_md, claims)
+    if claims is not None:
+        verified = {
+            line for c in claims if isinstance(c, Mapping) and claim_verified(c)
+            for line in _claim_lines(c)
+        }
+        sent = {_sentence(line) for lines in sections for line in lines}
+        # Zero verified claims (none at all included), or none left in the body.
+        return not (verified & sent)
     if not dropped:
         return False
     empty = _EMPTY_WORDS | {str(v).strip() for v in _HONEST_MINIMAL.values()}
@@ -353,7 +400,7 @@ def nothing_verified(body_md: str, claims: Any = None) -> bool:
             continue
         for line in lines[1 if lines and lines[0].startswith("## ") else 0:]:
             text = line.strip()
-            if text and text not in empty:
+            if text and not text.startswith("#") and _sentence(text) not in empty:
                 return False
     return True
 

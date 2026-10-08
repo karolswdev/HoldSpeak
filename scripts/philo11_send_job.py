@@ -189,8 +189,12 @@ def mint(db: Any, fixture: dict[str, Any], *, now: datetime, keystore: Path) -> 
     project = fixture["project"]
     db.projects.create_project(project_id="philo11-07-project", name=project["name"])
     db.project_updates.insert_update(update_id="philo11-07-update", project_id="philo11-07-project",
-                                     project_revision=1, body_md=project["update_body"])
-    ProjectUpdateService(db, project_service=ProjectService(db)).publish_update(owner, "philo11-07-update")
+                                     project_revision=1, body_md="")
+    updates = ProjectUpdateService(db, project_service=ProjectService(db))
+    # PHILO-15 B64: the owner's text, saved through the editor's path, is his
+    # reviewed words (an update with no verified claim is refused).
+    updates.save_update(owner, "philo11-07-update", body_md=project["update_body"])
+    updates.publish_update(owner, "philo11-07-update")
 
     primitives = PrimitiveService(db)
     dd = fixture["desk_decision"]

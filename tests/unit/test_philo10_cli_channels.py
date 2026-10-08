@@ -139,6 +139,8 @@ def test_gate2_the_hub_answers_a_read_during_a_slow_send(tmp_path: Path, transpo
         status, made = hub.call("POST", "/api/projects", {"name": "Payments ledger cutover"})
         pid = made["project"]["id"]
         update = hub.call("POST", f"/api/projects/{pid}/updates/draft", {})[1]["update"]["id"]
+        # PHILO-15 B64: an update with no verified claim is refused; the owner's saved line is reviewed.
+        assert hub.call("PUT", f"/api/updates/{update}", {"body_md": "## Progress\n\nThe ledger cutover is on track.\n"})[0] == 200
         assert hub.call("POST", f"/api/updates/{update}/publish", {})[0] == 200
         status, saved = hub.call("POST", "/api/channels/destinations",
                                  {"name": "Team folder", "channel": "file", "folder": str(folder)})
@@ -693,6 +695,8 @@ def test_a_real_kill_during_a_gh_create_ends_unknown_once_and_the_replay_never_r
     try:
         pid = first.call("POST", "/api/projects", {"name": "Payments ledger cutover"})[1]["project"]["id"]
         update = first.call("POST", f"/api/projects/{pid}/updates/draft", {})[1]["update"]["id"]
+        # PHILO-15 B64: an update with no verified claim is refused; the owner's saved line is reviewed.
+        assert first.call("PUT", f"/api/updates/{update}", {"body_md": "## Progress\n\nThe ledger cutover is on track.\n"})[0] == 200
         assert first.call("POST", f"/api/updates/{update}/publish", {})[0] == 200
         status, saved = first.call("POST", "/api/channels/destinations", {
             "name": "Scratch issue", "channel": "github", "repo": "acme/scratch", "kind": "issue", "number": 1})

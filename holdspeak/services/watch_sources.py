@@ -58,6 +58,16 @@ GH_ISSUE_FIELDS = "number,title,url,state,labels,updatedAt,createdAt"
 GH_BRANCH_CI_FIELDS = "conclusion,status,name,url,updatedAt,headBranch"
 
 
+def _answer(stdout: Any) -> str:
+    """PHILO-15 B61 (Astra r1 P1-4): a process that exits 0 with NO output
+    did not answer; that is a failed check, never an empty list. A valid
+    ``[]`` is a successful read that found nothing."""
+    text = str(stdout or "")
+    if not text.strip():
+        raise ServiceError("connector_no_answer", "no answer")
+    return text
+
+
 class GitHubWatchSource:
     def __init__(self, *, runner: Runner | None = None) -> None:
         self._runner = runner
@@ -97,7 +107,7 @@ class GitHubWatchSource:
             detail = str(completed.stderr or "GitHub CLI query failed").strip()[:500]
             raise ServiceError("connector_refresh_failed", detail)
         try:
-            rows = json.loads(completed.stdout or "[]")
+            rows = json.loads(_answer(completed.stdout))
         except json.JSONDecodeError as exc:
             raise ServiceError("connector_invalid_output", "GitHub CLI returned invalid JSON") from exc
         if not isinstance(rows, list):
@@ -150,7 +160,7 @@ class GitHubWatchSource:
             detail = str(completed.stderr or "GitHub CLI query failed").strip()[:500]
             raise ServiceError("connector_refresh_failed", detail)
         try:
-            rows = json.loads(completed.stdout or "[]")
+            rows = json.loads(_answer(completed.stdout))
         except json.JSONDecodeError as exc:
             raise ServiceError("connector_invalid_output", "GitHub CLI returned invalid JSON") from exc
         if not isinstance(rows, list):
@@ -198,7 +208,7 @@ class GitHubWatchSource:
             detail = str(completed.stderr or "GitHub CLI query failed").strip()[:500]
             raise ServiceError("connector_refresh_failed", detail)
         try:
-            rows = json.loads(completed.stdout or "[]")
+            rows = json.loads(_answer(completed.stdout))
         except json.JSONDecodeError as exc:
             raise ServiceError("connector_invalid_output", "GitHub CLI returned invalid JSON") from exc
         if not isinstance(rows, list):

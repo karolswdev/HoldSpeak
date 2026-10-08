@@ -270,6 +270,11 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       );
     case "repair":
       return (
+        <>
+        {/* Astra r1 P2-6: a Retry that re-checks a remote source names where it goes. */}
+        {v.verb === "Retry" && v.watchIds?.length && v.host ? (
+          <EgressChip label={v.host.toUpperCase()} scope="cloud" />
+        ) : null}
         <Button dense variant="secondary" disabled={busy} aria-label={named(v.verb)} data-testid="needs-row-verb" data-verb="repair"
           onClick={() => {
             if (v.verb === "Retry" && v.watchIds?.length) {
@@ -280,6 +285,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
             else if (v.href.startsWith("/settings")) openSurfaceOr("configure-settings", "/settings", "connections");
             else openProjectRoom(v.projectId);
           }}>{v.verb}</Button>
+        </>
       );
     case "arming":
       return (

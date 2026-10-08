@@ -771,6 +771,9 @@ def _watch_coverage(
         ids = [str(w) for w in (src.get("watchIds") or [watch_id]) if w]
         if ids:
             row["watch_ids"] = ids
+        # Astra r1 P2-6: egress where egress happens: the host Retry reaches.
+        if src.get("host"):
+            row["host"] = str(src["host"])
         out.append(row)
     return out
 

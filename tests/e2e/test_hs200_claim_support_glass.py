@@ -190,8 +190,10 @@ def test_real_draft_supported_then_edited_1440(
                 support
             )
             _show_claims(page)
+            # PHILO-15 B64 (Astra r1 P1-3): the owner's own new words are a
+            # reviewed claim of their own.
             assert _chip_labels(page, "update-claim-acceptance") == (
-                ["UNREVIEWED"] * len(claims)
+                ["UNREVIEWED"] * len(claims) + ["ACCEPTED"]
             )
 
             _shot(page, SHOTS / "build-claim-axes-real-1440.png", full_page=True)

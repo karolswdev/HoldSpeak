@@ -29,6 +29,7 @@ import { openRef } from "../../../desk/openObject";
 import { egressFor } from "../../../desk/surface/egress";
 import type { UpdateController } from "./useUpdateController";
 import type { ProjectUpdate, UpdateClaim } from "./model";
+import { claimSends } from "./model";
 import {
   claimChipTitle,
   generatorLabel,
@@ -171,16 +172,23 @@ function ClaimAxes({ claim }: { claim: UpdateClaim }) {
 function InlineClaimsView({
   claims,
   onOpen,
+  review,
 }: {
   claims: UpdateClaim[];
   onOpen: (ref: string) => void;
+  /** PHILO-15 B64: the owner's Accept / Reject (a draft only). */
+  review?: { busy: string | null; receipt: string | null; act: (spanId: string, a: "accepted" | "rejected") => void };
 }) {
   if (claims.length === 0) return null;
 
   return (
     <div className="update-inline-claims" data-testid="update-inline-claims">
+      {review?.receipt ? (
+        <span className="surface-token" role="status" data-testid="update-claim-receipt">{review.receipt}</span>
+      ) : null}
       {claims.map((claim) => (
-        <div key={claim.spanId} className="update-inline-claim" data-testid="update-inline-claim">
+        <div key={claim.spanId} className="update-inline-claim" data-testid="update-inline-claim"
+          data-span-id={claim.spanId} data-sends={claimSends(claim) ? "true" : "false"}>
           <span className="update-inline-claim-text">{claim.text}</span>
           {claim.refs.map((ref) => {
             const label = refIdentityLabel(ref);
@@ -205,6 +213,20 @@ function InlineClaimsView({
             </span>
           ) : null}
           <ClaimAxes claim={claim} />
+          {/* PHILO-15 B64: what leaves the desk: an unsent claim reads OMITTED. */}
+          {claimSends(claim) ? null : (
+            <span className="surface-token" data-tone="warn" data-testid="update-claim-omitted">OMITTED</span>
+          )}
+          {review ? (
+            <span className="update-inline-claim-verbs">
+              <Button dense variant="ghost" disabled={review.busy === claim.spanId || claim.acceptance === "rejected"}
+                aria-label={`Reject: ${claim.text}`} data-testid="update-claim-reject"
+                onClick={() => review.act(claim.spanId, "rejected")}>Reject</Button>
+              <Button dense variant="secondary" disabled={review.busy === claim.spanId || claim.acceptance === "accepted"}
+                aria-label={`Accept: ${claim.text}`} data-testid="update-claim-accept"
+                onClick={() => review.act(claim.spanId, "accepted")}>Accept</Button>
+            </span>
+          ) : null}
         </div>
       ))}
     </div>
@@ -463,7 +485,8 @@ function UpdateEditor({
 
       {/* HS-173-02: inline claims — each sentence with its chip(s) beside it */}
       {isDraft && update.claims.length > 0 ? (
-        <InlineClaimsView claims={update.claims} onOpen={onOpenRef} />
+        <InlineClaimsView claims={update.claims} onOpen={onOpenRef}
+          review={{ busy: ctrl.reviewBusy, receipt: ctrl.reviewReceipt, act: (span, a) => void ctrl.reviewClaim(span, a) }} />
       ) : null}
 
     </div>

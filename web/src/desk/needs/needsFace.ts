@@ -39,7 +39,7 @@ export type NeedVerbs =
   | { kind: "setup"; key: string; verb: string }
   | { kind: "open"; ref: string }
   /** PHILO-15 B61: `watchIds` are the Watches Retry re-checks. */
-  | { kind: "repair"; verb: string; href: string; projectId: string; watchIds?: string[] }
+  | { kind: "repair"; verb: string; href: string; projectId: string; watchIds?: string[]; host?: string }
   | { kind: "arming"; scheduleId: string; refused: boolean }
   | { kind: "calendar" }
   | { kind: "none" };
@@ -528,6 +528,7 @@ export function coverageFace(gap: CoverageRecord, now?: Date): NeedFace {
       ? {
         kind: "repair", verb: repair.verb, href: repair.href, projectId: String(gap.project_id ?? ""),
         watchIds: (gap.watch_ids ?? []).filter(Boolean),
+        ...(gap.host ? { host: String(gap.host) } : {}),
       }
       : { kind: "none" },
     source: true,

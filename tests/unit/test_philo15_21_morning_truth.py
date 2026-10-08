@@ -328,22 +328,188 @@ def test_the_drafter_drops_prose_that_repeats_a_merged_row() -> None:
         "- A pull request adding a CODEOWNERS file was merged (PR #4).\n"
         "- The CODEOWNERS action is now complete with the merge of PR #4.\n"
         "- The team agreed on squash merges.\n\n"
-        "## Decisions\n\n- See https://github.com/karolswdev/x/pull/4 for the merge.\n"
+        "## Decisions\n\n- See karolswdev/holdspeak-dayone-rehearsal-1558/pull/4 for the merge.\n\n"
+        "## Risks & Blockers\n\n- Blocked on owner/other-repo/pull/4.\n"
     )
     claims = json.dumps([
         {"text": "A pull request adding a CODEOWNERS file was merged (PR #4).", "span_id": "a"},
         {"text": "The CODEOWNERS action is now complete with the merge of PR #4.", "span_id": "b"},
         {"text": "The team agreed on squash merges.", "span_id": "c"},
-        {"text": "See https://github.com/karolswdev/x/pull/4 for the merge.", "span_id": "d"},
+        {"text": "See karolswdev/holdspeak-dayone-rehearsal-1558/pull/4 for the merge.", "span_id": "d"},
+        {"text": "Blocked on owner/other-repo/pull/4.", "span_id": "e"},
     ])
     out, kept = _drop_repeated_merges(body, claims, [row])
-    assert out.count("PR #4") == 1, out
+    assert out.count("(PR #4)") == 1, out
     assert row in out and "The team agreed on squash merges." in out
     assert "## Decisions\n\nNo decisions in this window." in out, out
-    assert [c["span_id"] for c in json.loads(kept)] == ["c"]
+    # Astra r1 P2-5: another repository's PR #4 is another PR: kept, with its claim.
+    assert "Blocked on owner/other-repo/pull/4." in out
+    assert "No risks or blockers in this window." not in out
+    assert [c["span_id"] for c in json.loads(kept)] == ["c", "e"]
     # PR #40 is another PR.
     other = "## Progress\n\n" + row + "\n- PR #40 is still open.\n"
     assert _drop_repeated_merges(other, "[]", [row])[0] == other
+
+
+# ── B64 (Astra r1): the CLAIMS SET decides; the owner's review is a verb ──
+
+
+def _model_draft(hub, raw_body: str, claims: list[dict[str, Any]], monkeypatch) -> tuple[str, str]:
+    """A model draft whose body and claims are exactly these (the boundary)."""
+    from holdspeak.services import project_update_service as pus
+
+    def model(self, principal, det_claims, det_sections, det_body_md, known_names=(), memory=None):
+        return raw_body, json.dumps(claims), "model:ia_1", "192.168.1.43:8080", "qwen3.8-27b"
+
+    monkeypatch.setattr(pus.ProjectUpdateService, "_draft_with_model", model)
+    c = hub.client
+    pid = c.post("/api/projects", json={"name": "Rehearsal repo hygiene"}).json()["project"]["id"]
+    update = c.post(f"/api/projects/{pid}/updates/draft", json={"generator": "model"}).json()["update"]
+    return pid, update["id"]
+
+
+def _inference(span: str, text: str, *, section: str = "progress", verified: bool = True) -> dict[str, Any]:
+    out = {"span_id": span, "text": text, "refs": ["item:hygiene"] if verified else [], "section": section,
+           "kind": "inference", "support": "source_linked" if verified else "unknown",
+           "acceptance": "unreviewed"}
+    if not verified:
+        out["verified"] = False
+    return out
+
+
+def _preview(hub, update: str, tmp_path) -> Any:
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _philo10_send import destination
+
+    assert hub.client.post(f"/api/updates/{update}/publish", json={}).status_code == 200
+    dest = destination(hub, tmp_path / "sent")
+    return hub.client.post("/api/channels/preview", json={
+        "document_ref": f"project_update:{update}", "destination_id": dest})
+
+
+def test_a_claim_without_its_bullet_is_still_omitted(hub, tmp_path, monkeypatch) -> None:
+    """Astra r1 P1-1 case 1: formatting never decides. The inference's line
+    with its bullet removed by the owner's edit stays an unreviewed claim."""
+    body = ("## Progress\n\n- The ledger moved to staging.\n\n"
+            "## Next Actions\n\n- Carol is to add a CODEOWNERS file by Friday.\n")
+    _pid, update = _model_draft(hub, body, [
+        _inference("s_progress_0", "The ledger moved to staging."),
+        _inference("s_next_actions_0", "Carol is to add a CODEOWNERS file by Friday.", section="next_actions"),
+    ], monkeypatch)
+    c = hub.client
+    assert c.post(f"/api/updates/{update}/claims/s_progress_0/review",
+                  json={"acceptance": "accepted"}).status_code == 200
+    unbulleted = body.replace("- Carol is to add", "Carol is to add")
+    assert c.put(f"/api/updates/{update}", json={"body_md": unbulleted}).status_code == 200
+    preview = _preview(hub, update, tmp_path)
+    assert preview.status_code == 200, preview.text
+    text = json.dumps(preview.json()["preview"])
+    assert "The ledger moved to staging." in text
+    assert "CODEOWNERS" not in text, text
+    assert "1 claim not checked, kept on the desk." in text
+
+
+def test_a_draft_with_no_claims_is_refused(hub, tmp_path, monkeypatch) -> None:
+    """Astra r1 P1-1 case 2: zero claims is zero verified claims."""
+    _pid, update = _model_draft(hub, "## Progress\n\n- The rollout is complete.\n", [], monkeypatch)
+    preview = _preview(hub, update, tmp_path)
+    assert preview.status_code == 400 and preview.json()["code"] == "nothing_verified", preview.text
+    dest = hub.client.get("/api/channels/destinations").json()["destinations"][0]["id"]
+    sent = hub.client.post("/api/channels/sends", json={
+        "document_ref": f"project_update:{update}", "destination_id": dest})
+    assert sent.status_code >= 400 and "nothing_verified" in sent.text, sent.text
+
+
+def test_the_current_review_wins_over_the_old_flag_and_mark(hub, tmp_path, monkeypatch) -> None:
+    """Astra r1 P1-3: a claim the model marked unverified (``verified: false``,
+    the desk mark) that the owner ACCEPTED is sent."""
+    from holdspeak.services.project_update_service import UNVERIFIED_MARKER
+
+    body = f"## Progress\n\n- {UNVERIFIED_MARKER} We ship Friday.\n"
+    _pid, update = _model_draft(hub, body, [_inference("s_progress_0", "We ship Friday.", verified=False)],
+                                monkeypatch)
+    r = hub.client.post(f"/api/updates/{update}/claims/s_progress_0/review", json={"acceptance": "accepted"})
+    assert r.status_code == 200 and r.json()["reviewed_at"], r.text
+    preview = _preview(hub, update, tmp_path)
+    assert preview.status_code == 200, preview.text
+    text = json.dumps(preview.json()["preview"])
+    assert "We ship Friday." in text and "UNVERIFIED" not in text
+
+
+def test_the_owners_own_words_are_reviewed_with_provenance_kept(hub, tmp_path, monkeypatch) -> None:
+    """Astra r1 P1-3: a saved owner-authored replacement counts as reviewed
+    for its exact new words; the model's claim stays with its provenance."""
+    body = "## Progress\n\n- Carol was assigned the CODEOWNERS file.\n"
+    _pid, update = _model_draft(hub, body, [_inference("s_progress_0", "Carol was assigned the CODEOWNERS file.")],
+                                monkeypatch)
+    mine = "## Progress\n\n- Karol added the CODEOWNERS file; PR #4 merged.\n"
+    saved = hub.client.put(f"/api/updates/{update}", json={"body_md": mine})
+    assert saved.status_code == 200, saved.text
+    claims = json.loads(saved.json()["update"]["claims_json"])
+    assert [cl["text"] for cl in claims] == [
+        "Carol was assigned the CODEOWNERS file.", "Karol added the CODEOWNERS file; PR #4 merged."]
+    owner = claims[1]
+    assert owner["acceptance"] == "accepted" and owner["support_record"]["method"] == "reviewer"
+    assert owner["support_record"]["fields"] == ["owner_text"]
+    preview = _preview(hub, update, tmp_path)
+    assert preview.status_code == 200, preview.text
+    assert "Karol added the CODEOWNERS file" in json.dumps(preview.json()["preview"])
+
+
+def test_reject_omits_and_accept_sends_through_the_route(hub, tmp_path, monkeypatch) -> None:
+    from holdspeak.services.channel_contract import render_update
+
+    body = "## Progress\n\n- The ledger moved to staging.\n- We ship Friday.\n"
+    _pid, update = _model_draft(hub, body, [
+        _inference("s_progress_0", "The ledger moved to staging."),
+        _inference("s_progress_1", "We ship Friday."),
+    ], monkeypatch)
+    c = hub.client
+    assert c.post(f"/api/updates/{update}/claims/s_progress_0/review", json={"acceptance": "accepted"}).status_code == 200
+    rejected = c.post(f"/api/updates/{update}/claims/s_progress_1/review", json={"acceptance": "rejected"})
+    assert rejected.status_code == 200
+    states = {cl["span_id"]: cl["acceptance"] for cl in json.loads(rejected.json()["update"]["claims_json"])}
+    assert states == {"s_progress_0": "accepted", "s_progress_1": "rejected"}
+    assert c.post(f"/api/updates/{update}/claims/s_progress_1/review", json={"acceptance": "maybe"}).status_code == 400
+    assert c.post(f"/api/updates/{update}/claims/nope/review", json={"acceptance": "accepted"}).status_code == 404
+    assert c.post(f"/api/updates/{update}/publish", json={}).status_code == 200
+    sent = render_update(hub.db, update).body_md
+    assert "The ledger moved to staging." in sent and "We ship Friday." not in sent
+
+
+# ── B61 (Astra r1 P1-4): no answer is not an answer ──────────────────
+
+
+def test_a_blank_answer_is_a_failed_check_and_an_empty_list_is_a_read(tmp_path) -> None:
+    import subprocess
+
+    from holdspeak.services.errors import ServiceError
+    from holdspeak.services.watch_service import WatchService
+    from holdspeak.services.watch_sources import default_snapshot_fetcher
+
+    db, _ps = _rig(tmp_path)
+    _seed_watch(db, "prj-hygiene", "w-gh", checked=timedelta(hours=10))
+    answer = {"stdout": ""}
+
+    def gh(command, **kwargs):
+        return subprocess.CompletedProcess(command, 0, stdout=answer["stdout"], stderr="")
+
+    svc = WatchService(db, snapshot_fetcher=default_snapshot_fetcher(github_runner=gh))
+
+    def last_success() -> str:
+        with db._connection() as conn:
+            return conn.execute("SELECT last_success_at FROM connector_watches WHERE id='w-gh'").fetchone()[0]
+
+    before = last_success()
+    with pytest.raises(ServiceError) as failed:
+        svc.evaluate_once(OWNER, "w-gh")
+    assert failed.value.code == "connector_no_answer" and failed.value.detail == "no answer"
+    assert last_success() == before, "no answer never reads as a check"
+    answer["stdout"] = "[]"
+    assert svc.evaluate_once(OWNER, "w-gh")["state"] in ("baselined", "completed", "no_op")
+    assert last_success() != before
 
 
 # ── B70: a done action says DONE on the Room's row ─────────────────

@@ -236,6 +236,26 @@ export function useUpdateController(
     }
   }, [current, editBody]);
 
+  // ── PHILO-15 B64: the owner's review of one claim ──
+  const [reviewBusy, setReviewBusy] = useState<string | null>(null);
+  const [reviewReceipt, setReviewReceipt] = useState<string | null>(null);
+  const reviewClaim = useCallback(async (spanId: string, acceptance: "accepted" | "rejected") => {
+    if (!current || current.lifecycle !== "draft") return;
+    setReviewBusy(spanId);
+    setError("");
+    try {
+      const { update, reviewedAt } = await updateApi.reviewClaim(current.id, spanId, acceptance);
+      setCurrent(update);
+      const at = reviewedAt ? new Date(reviewedAt) : new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      setReviewReceipt(`REVIEWED · ${pad(at.getHours())}:${pad(at.getMinutes())}`);
+    } catch (reason) {
+      fail("NOT REVIEWED", reason, () => void reviewClaim(spanId, acceptance));
+    } finally {
+      setReviewBusy(null);
+    }
+  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Regenerate verb ──
   const regenerate = useCallback(async (generator: "deterministic" | "model") => {
     if (!current) return;
@@ -420,6 +440,9 @@ export function useUpdateController(
     publish,
     copyMarkdown,
     markDelivered,
+    reviewClaim,
+    reviewBusy,
+    reviewReceipt,
 
     // Busy states
     draftBusy,

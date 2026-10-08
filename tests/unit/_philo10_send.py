@@ -20,6 +20,9 @@ from test_philo5_the_loop import Hub, _boot  # noqa: E402,F401
 
 SENTINEL = "SENTINEL-7f3a-body-never-in-argv-or-receipt"
 
+#: The owner's line the rig's update carries when a fence names no body.
+DEFAULT_BODY = "## Progress\n\nThe ledger cutover is on track.\n"
+
 
 def sent_text(body: str, name: str = "Payments ledger cutover") -> str:
     """A published update's Markdown as it leaves the desk (PHILO-15 B53
@@ -36,6 +39,11 @@ def room(hub: Hub, *, name: str = "Payments ledger cutover", publish: bool = Tru
     c = hub.client
     pid = c.post("/api/projects", json={"name": name}).json()["project"]["id"]
     update = c.post(f"/api/projects/{pid}/updates/draft", json={}).json()["update"]["id"]
+    if body is None:
+        # PHILO-15 B64 (Astra r1): an update with no verified claim is refused
+        # NOTHING VERIFIED; a fresh Project's draft has none. The owner's own
+        # saved words are reviewed, so the rig's update carries one line.
+        body = DEFAULT_BODY
     if body is not None:
         saved = c.put(f"/api/updates/{update}", json={"body_md": body})
         assert saved.status_code == 200, saved.text

@@ -266,6 +266,8 @@ class TestRoomFaceGlass:
     def _published(page: Any, pid: str) -> str:
         uid = _api(page, "POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"},
                    token=TOKEN)["update"]["id"]
+        # PHILO-15 B64: an update with no verified claim is refused; the owner's saved line is reviewed.
+        _api(page, "PUT", f"/api/updates/{uid}", {"body_md": "## Progress\n\nThe ledger cutover is on track.\n"}, token=TOKEN)
         _api(page, "POST", f"/api/updates/{uid}/publish", {}, token=TOKEN)
         return uid
 

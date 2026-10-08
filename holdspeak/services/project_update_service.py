@@ -700,22 +700,40 @@ def _carry_closed_rows(
     return _drop_repeated_merges(body_md, claims_json, closed_lines)
 
 
-#: A PR named in prose: ``PR #4``, ``pull request #4``, ``…/pull/4``.
-_PR_NAMED = _re.compile(r"(?:\bPR\s*#|\bpull request\s*#|/pull/)(\d+)\b", _re.IGNORECASE)
+#: A PR named with its repository: ``owner/repo/pull/4`` (a link), ``owner/repo#4``.
+_PR_IN_REPO = _re.compile(r"([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)(?:/pull/|#)(\d+)\b")
+#: A PR named by number alone: ``PR #4``, ``pull request #4``.
+_PR_BARE = _re.compile(r"\b(?:PR|pull request)\s*#(\d+)\b", _re.IGNORECASE)
+
+
+def _named_prs(text: str, default_repos: dict[str, set[str]]) -> set[tuple[str, str]]:
+    """The (repository, number) pairs a sentence names. A bare ``PR #n`` is
+    the Merged rows' repository only when exactly one of them has that
+    number (Astra r1 P2-5: never a number alone across repositories)."""
+    found = {(m.group(1).lower(), m.group(2)) for m in _PR_IN_REPO.finditer(text)}
+    for m in _PR_BARE.finditer(text):
+        repos = default_repos.get(m.group(1), set())
+        found.add((next(iter(repos)), m.group(1)) if len(repos) == 1 else ("?", m.group(1)))
+    return found
 
 
 def _drop_repeated_merges(
     body_md: str, claims_json: str, closed_lines: list[str],
 ) -> tuple[str, str]:
     """PHILO-15 B71: a merge is said once, by its ``Merged:`` row. A model
-    sentence (and its continuation lines) that names a PR a ``Merged:`` row
-    already carries is dropped from the draft, with its claim; a section it
-    leaves empty reads its honest minimum."""
-    merged = {
-        m.group(1) for line in closed_lines for m in _PR_NAMED.finditer(line)
-    }
+    sentence (and its continuation lines) whose every named PR is one a
+    ``Merged:`` row already carries (repository AND number, from the row's
+    link) is dropped from the draft, with its claim; a sentence that names any
+    other PR is kept. A section it leaves empty reads its honest minimum."""
+    merged: set[tuple[str, str]] = set()
+    for line in closed_lines:
+        for m in _PR_IN_REPO.finditer(line):
+            merged.add((m.group(1).lower(), m.group(2)))
     if not merged:
         return body_md, claims_json
+    by_number: dict[str, set[str]] = {}
+    for repo, number in merged:
+        by_number.setdefault(number, set()).add(repo)
     rows = {" ".join(line.split())[2:] for line in closed_lines}
     out: list[str] = []
     dropped_texts: set[str] = set()
@@ -728,8 +746,8 @@ def _drop_repeated_merges(
             continue
         if stripped.startswith(("- ", "* ")):
             text = " ".join(stripped.split())[2:]
-            named = {m.group(1) for m in _PR_NAMED.finditer(text)}
-            if text not in rows and named & merged:
+            named = _named_prs(text, by_number)
+            if text not in rows and named and named <= merged:
                 dropped_texts.add(text.replace(UNVERIFIED_MARKER, "").strip())
                 skipping = True
                 continue
@@ -2332,6 +2350,19 @@ class ProjectUpdateService:
                 body_md,
             )
 
+        # PHILO-15 B64 (Astra r1 P1-3): the owner's own saved words are
+        # reviewed, for those exact words; every earlier claim is kept.
+        if body_md is not None and principal.kind is PrincipalKind.OWNER:
+            authored = _owner_authored_claims(
+                next_claims if next_claims is not None else migrate_claims_json(
+                    row.get("claims_json") or "",
+                    generator=str(row.get("generator") or "deterministic"),
+                ),
+                body_md, principal,
+            )
+            if authored is not None:
+                next_claims = authored
+
         # PublishedUpdateError is raised inside the repo
         self._db.project_updates.update_draft(
             update_id, body_md=body_md, claims_json=next_claims,
@@ -2974,6 +3005,53 @@ def _append_week_sources(
         actions.append(f"- {text}")
     add_lines("next_actions", actions)
     return sections
+
+
+#: PHILO-15 B64: the provenance of a sentence the owner wrote in the editor.
+OWNER_TEXT_FIELD = "owner_text"
+
+
+def _owner_authored_claims(claims_json: str, body_md: str, principal: Principal) -> str | None:
+    """Astra r1 P1-3 ruling: a saved owner-authored replacement counts as
+    reviewed for its EXACT new words, with provenance kept. Each body line
+    whose words are no claim's words gets an accepted claim naming the owner.
+    A line that still carries the desk mark is not authored (formatting is
+    not review). Returns the new blob, or None when nothing was added."""
+    from .channel_contract import _UNVERIFIED_MARK, _claim_lines, _sentence
+
+    try:
+        claims = json.loads(claims_json or "[]")
+    except (TypeError, ValueError):
+        claims = []
+    if not isinstance(claims, list):
+        claims = []
+    known = {line for c in claims if isinstance(c, dict) for line in _claim_lines(c)}
+    neutral = {"Not checked."} | {str(v).strip() for v in _HONEST_MINIMAL.values()}
+    by_heading = {f"## {h}": k for k, h in _SECTION_HEADINGS.items()}
+    now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    section = "progress"
+    added: list[dict[str, Any]] = []
+    ordinal = sum(1 for c in claims if isinstance(c, dict) and str(c.get("span_id", "")).startswith("s_owner_"))
+    for line in str(body_md or "").splitlines():
+        if line.startswith("#"):
+            section = by_heading.get(line.strip(), section)
+            continue
+        words = _sentence(line)
+        if not words or words in neutral or words in known or _UNVERIFIED_MARK.search(line):
+            continue
+        known.add(words)
+        added.append({
+            "span_id": f"s_owner_{ordinal}", "text": words, "refs": [], "section": section,
+            "kind": KIND_OBSERVATION, "support": SUPPORT_UNKNOWN, "acceptance": ACCEPTANCE_ACCEPTED,
+            "support_record": SupportRecord(
+                method=METHOD_REVIEWER, fields=[OWNER_TEXT_FIELD],
+                reviewer_ref=f"principal:{principal.identity}", checked_at=now_iso,
+            ).to_dict(),
+        })
+        ordinal += 1
+    if not added:
+        return None
+    return json.dumps(claims + added, sort_keys=True, separators=(",", ":"))
 
 
 def _invalidate_edited_support(

@@ -71,6 +71,19 @@ export type UpdateClaim = {
   unknowns: ClaimUnknown[];
 };
 
+/** PHILO-15 B64 (the hub's `channel_contract.claim_verified`): a claim is
+ *  sent only with evidence refs or the owner's review; the current review
+ *  wins over every old flag. Anything else is OMITTED from the sent text. */
+export function claimSends(claim: UpdateClaim): boolean {
+  if (claim.acceptance === "accepted") return true;
+  if (claim.acceptance === "rejected" || claim.acceptance === "superseded") return false;
+  const rec = claim.supportRecord as { method?: string; invalidatedAt?: string | null } | null;
+  if (claim.support === "supported" && rec?.method === "reviewer" && !rec.invalidatedAt) return true;
+  if (!claim.verified) return false;
+  if (claim.kind === "inference") return false;
+  return claim.refs.length > 0;
+}
+
 export type ProjectUpdate = {
   id: string;
   projectId: string;

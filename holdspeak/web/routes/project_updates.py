@@ -252,6 +252,41 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to mark the update delivered")
 
+    # ── POST /api/updates/{update_id}/claims/{span_id}/review ──────
+    # PHILO-15 B64 (Astra r1 P1-2): the editor's Accept / Reject on one claim.
+    # The owner's judgment; the service refuses any other principal.
+
+    @router.post("/api/updates/{update_id}/claims/{span_id}/review")
+    async def api_review_claim(
+        update_id: str, span_id: str, payload: dict[str, Any], request: Request,
+    ) -> Any:
+        acceptance = str((payload or {}).get("acceptance") or "")
+        if acceptance not in ("accepted", "rejected"):
+            return JSONResponse({"success": False, "code": "claim_acceptance_unknown",
+                                 "message": "acceptance is accepted or rejected"}, status_code=400)
+        service = ctx.project_update_service
+        if service is None:
+            return JSONResponse({"success": False, "code": "unavailable",
+                                 "message": "No update service"}, status_code=503)
+        try:
+            update = service.review_claim(principal(request), update_id, span_id, acceptance=acceptance)
+            from datetime import datetime, timezone
+
+            return JSONResponse({
+                "success": True, "update": _enrich_update(update),
+                "reviewed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            })
+        except PublishedUpdateError as exc:
+            return JSONResponse({"success": False, "error_code": "published_update", "error": str(exc)},
+                                status_code=409)
+        except NotFound as exc:
+            return JSONResponse({"success": False, "code": exc.code, "message": exc.detail}, status_code=404)
+        except ValidationError as exc:
+            status = 403 if exc.code == "claim_review_forbidden" else 400
+            return JSONResponse({"success": False, "code": exc.code, "message": exc.detail}, status_code=status)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to review the claim")
+
     # ── GET /api/updates/{update_id}/markdown ──────────────────────
 
     @router.get("/api/updates/{update_id}/markdown")

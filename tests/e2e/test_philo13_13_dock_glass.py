@@ -215,6 +215,8 @@ class TestLiveDock:
     def _send_to_file(self, page: Any) -> dict[str, Any]:
         project = _api(page, "POST", "/api/projects", {"name": "Payments ledger cutover"}, token=TOKEN)["project"]["id"]
         update = _api(page, "POST", f"/api/projects/{project}/updates/draft", {}, token=TOKEN)["update"]["id"]
+        # PHILO-15 B64: an update with no verified claim is refused; the owner's saved line is reviewed.
+        _api(page, "PUT", f"/api/updates/{update}", {"body_md": "## Progress\n\nThe ledger cutover is on track.\n"}, token=TOKEN)
         _api(page, "POST", f"/api/updates/{update}/publish", {}, token=TOKEN)
         folder = self.home / "Documents" / "HoldSpeak" / "Team updates"
         folder.mkdir(parents=True, exist_ok=True)

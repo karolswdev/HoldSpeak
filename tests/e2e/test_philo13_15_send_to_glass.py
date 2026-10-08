@@ -81,9 +81,13 @@ def _seed(db: Any) -> dict[str, Any]:
     db.projects.create_project(project_id="p-ledger", name="Payments ledger cutover",
                                description="Move settlement to the new ledger by Nov 5.", keywords=["ledger"])
     db.project_updates.insert_update(
-        update_id="upd-ledger-1", project_id="p-ledger", project_revision=1,
-        body_md="## Week 40\n\n- Dual-write is live in staging.\n- Cutover date holds: Nov 5.\n")
-    ProjectUpdateService(db, project_service=ProjectService(db)).publish_update(owner, "upd-ledger-1")
+        update_id="upd-ledger-1", project_id="p-ledger", project_revision=1, body_md="")
+    updates = ProjectUpdateService(db, project_service=ProjectService(db))
+    # PHILO-15 B64: the owner's text, saved through the editor's path, is his
+    # reviewed words (an update with no verified claim is refused).
+    updates.save_update(owner, "upd-ledger-1",
+                        body_md="## Week 40\n\n- Dual-write is live in staging.\n- Cutover date holds: Nov 5.\n")
+    updates.publish_update(owner, "upd-ledger-1")
     prim = PrimitiveService(db)
     prim.create_decision(owner, decision_id="d-freeze", title="Freeze the old ledger on Nov 5", status="accepted",
                          deciders=["karol"], context_markdown="Dual-write is stable.",
@@ -469,8 +473,12 @@ class TestSendToGlass:
         post = lambda path, body=None: _api(page, "POST", path, body or {}, token=TOKEN)["update"]  # noqa: E731
         first = post("/api/projects/p-ledger/updates/draft", {"generator": "deterministic"})
         high = post(f"/api/updates/{first['id']}/regenerate", {"generator": "deterministic"})
+        # PHILO-15 B64: an update with no verified claim is refused; the owner's saved line is reviewed.
+        mine = {"body_md": "## Progress\n\nThe ledger cutover is on track.\n"}
+        _api(page, "PUT", f"/api/updates/{high['id']}", mine, token=TOKEN)
         high = post(f"/api/updates/{high['id']}/publish")
         later = post("/api/projects/p-ledger/updates/draft", {"generator": "deterministic"})
+        _api(page, "PUT", f"/api/updates/{later['id']}", mine, token=TOKEN)
         later = post(f"/api/updates/{later['id']}/publish")
         self.monkeypatch.setattr(updates_db, "datetime", real_clock)   # only the clock (undo() would also undo the rig's HOME)
         assert high["published_at"] == later["published_at"], (high["published_at"], later["published_at"])

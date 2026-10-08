@@ -671,7 +671,7 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
       {
         source_id: "watch:w-gh", kind: "watch", state: "quiet", observed_at: yesterday,
         label: "GitHub · karolswdev/holdspeak-dayone-rehearsal-1558", project_id: "p1",
-        reason: "quiet until 08:00", watch_ids: ["w-gh"],
+        reason: "quiet until 08:00", watch_ids: ["w-gh"], host: "github.com",
         repair: { token: "QUIET UNTIL 08:00", verb: "Retry", href: "/projects/p1" },
       },
       {
@@ -721,6 +721,15 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
     expect(face(quiet).fact).toBe("observed yesterday 21:23");
     expect(stale.querySelector(".needs-row-name")?.textContent).toBe("Meetings");
     expect(face(stale).fact).toBe("not checked recently · observed yesterday 21:23");
+  });
+
+  it("Astra r1 P2-6: a Retry that reaches GitHub carries its egress badge; a local one does not", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("1 needs you");
+    const [gh, mtg] = ["GitHub", "Meetings"].map((name) =>
+      screen.getAllByTestId("needs-source-row").find((li) => li.textContent?.includes(name))!);
+    expect(face(gh).egress).toBe("GITHUB.COM");
+    expect(face(mtg).egress).toBe("");
   });
 
   it("B61: Retry re-checks THAT source through the single-Watch route and leaves a receipt", async () => {

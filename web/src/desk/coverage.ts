@@ -34,6 +34,8 @@ export interface CoverageRecord {
   repair?: CoverageRepair | null;
   /** PHILO-15 B61: the Watches Retry re-checks for this source. */
   watch_ids?: string[];
+  /** The host a re-check reaches (github.com, a Jira site); none = local. */
+  host?: string | null;
 }
 
 export interface CoverageReading {
