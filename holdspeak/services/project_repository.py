@@ -24,6 +24,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
+from ..timestamps import utc_now
 from .errors import ServiceError
 
 STORE_SCHEMA = 1
@@ -212,7 +213,7 @@ class ProjectRepositories:
         origin = _origin_of(target)
         if origin != clone_url(repository).lower():
             # The clone is not the disclosed one: it is parked beside, never used.
-            parked = target.with_name(f"{target.name}.not-github-{int(datetime.now().timestamp())}")
+            parked = target.with_name(f"{target.name}.not-github-{int(utc_now().timestamp())}")
             os.replace(target, parked)
             raise ServiceError("clone_host_mismatch",
                                f"The clone of {repository} did not come from {CLONE_HOST}.",
