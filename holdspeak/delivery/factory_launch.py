@@ -1301,7 +1301,8 @@ class LaunchService:
             record = self._ledger.update(
                 launch_id, commands=commands,
                 instruction_state="sent" if outcome == "delivered" else (outcome or "not_delivered"),
-                **({"brief_sent_at": _brief_clock()} if outcome == "delivered" else {}),
+                **({"brief_sent_at": str((sent.get("receipt") or {}).get("executed_at") or "") or _brief_clock()}
+                   if outcome == "delivered" else {}),
             ) or record
             self._first.watch(launch_id)
             return {

@@ -112,17 +112,20 @@ export function agentName(row: CoderSessionRow): string {
 }
 
 /** ask (it asks you) · work (it works) · pr (a PR is open). */
-export function agentState(row: CoderSessionRow): "ask" | "work" | "pr" {
-  if (row.blocked || row.flight?.state === "waiting") return "ask";
+export function agentState(row: CoderSessionRow): "ask" | "idle" | "work" | "pr" {
+  // PHILO-15 B48: a turn that ended with no question is IDLE, not ASKS.
+  if (row.blocked) return row.idle ? "idle" : "ask";
+  if (row.flight?.state === "waiting") return row.flight.turnEnd === "idle" ? "idle" : "ask";
   if (row.flight?.state === "pr_open") return "pr";
   return "work";
 }
 
-const AGENT_LAMP: Record<"ask" | "work" | "pr", ObjectTone> = { ask: "ask", work: "info", pr: "ok" };
+const AGENT_LAMP: Record<"ask" | "idle" | "work" | "pr", ObjectTone> = { ask: "ask", idle: "info", work: "info", pr: "ok" };
 
 function agentWordFor(row: CoderSessionRow): string {
   const state = agentState(row);
   if (state === "ask") return "ASKS";
+  if (state === "idle") return "IDLE";
   if (state === "pr") return row.flight?.pr?.number ? `PR #${row.flight.pr.number}` : "PR OPEN";
   return "WORKS";
 }

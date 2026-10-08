@@ -224,10 +224,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       kind: "agent",
       name: agentRowName(agent, label),
       fact: String(item.question || item.title || ""),
-      // PHILO-15 B48: a turn end with no question reads IDLE, not ASKS.
-      lamp: approve || item.turnEnd !== "idle"
-        ? { label: `${approve ? "TO APPROVE" : "ASKS"} · ${waitAgeWord(item, ctx.now)}`, tone: "ask" }
-        : { label: `IDLE · ${waitAgeWord(item, ctx.now)}`, tone: "info" },
+      lamp: { label: `${approve ? "TO APPROVE" : "ASKS"} · ${waitAgeWord(item, ctx.now)}`, tone: "ask" },
       group: "agents",
       verbs: { kind: "answer", sessionKey: key },
       openRef: `coder:${key}`,

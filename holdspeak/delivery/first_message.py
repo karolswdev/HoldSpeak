@@ -528,11 +528,11 @@ class FirstMessage:
         commands["instruction"] = sent.get("command_id")
         outcome = str((sent.get("receipt") or {}).get("outcome") or "")
         if outcome == "delivered":
-            # PHILO-15 B42: the BRIEF station reads this time, the moment
-            # the delivery receipt said delivered (not the launch's time).
+            # PHILO-15 B42: the BRIEF station reads the delivery receipt's
+            # own time (``executed_at``), not the launch's.
             svc._ledger.update(
                 launch_id, commands=commands, instruction_state=DELIVERED, pending_brief=None,
-                brief_sent_at=_iso_now(),
+                brief_sent_at=str((sent.get("receipt") or {}).get("executed_at") or "") or _iso_now(),
             )
             if not registered:
                 self._await_registration(attempt_id, session, deadline)

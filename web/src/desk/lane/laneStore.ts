@@ -180,6 +180,10 @@ export const useLane = create<LaneState>((set, get) => ({
       .then((lane) => {
         if (get().launchId !== launchId || !lane || typeof lane !== "object") return;
         const patch: Partial<LaneState> = { lane, error: null };
+        // PHILO-15 B46 (Astra r1 on #996): a QUEUED press is settled by the
+        // hub. Once the lane holds no queued Re-brief, the local QUEUED
+        // receipt goes, and the lane's own newest delivery (SENT) shows.
+        if (get().receipt?.word === "QUEUED" && !lane.launch?.queued_rebrief) patch.receipt = null;
         if (isNotRead(lane.events)) {
           patch.eventsNotRead = lane.events.not_read;
         } else {

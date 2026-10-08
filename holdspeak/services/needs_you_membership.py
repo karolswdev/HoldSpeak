@@ -235,6 +235,7 @@ def coder_items(
     """
     from holdspeak.agent_context.models import (
         DEFAULT_RECENT_MAX_AGE_SECONDS,
+        TURN_ASKS,
         is_blocked,
         turn_end,
         wait_kind,
@@ -273,6 +274,11 @@ def coder_items(
         age = max(0, int(now_s - (started_s if started_s is not None else updated_s)))
         wait_id = str(session.get("wait_id") or "")
         approve = wait_kind(session) == "approve"
+        if turn_end(session) != TURN_ASKS:
+            # PHILO-15 B48 (the A5 law: Needs you is what needs HIM): a turn
+            # that ended with no question is IDLE, a lane station and a
+            # Conductor lamp, never a Needs you row.
+            continue
         rows.append({
             "id": ref,
             "ref": ref,
@@ -295,8 +301,6 @@ def coder_items(
             "repoRoot": str(session.get("repo_root") or ""),
             "question": _excerpt(question),
             "waitKind": "approve" if approve else "answer",
-            # PHILO-15 B48: a turn end with no question is IDLE, not ASKS.
-            "turnEnd": turn_end(session),
             "waitStartedAt": started,
             "ageSeconds": age,
         })

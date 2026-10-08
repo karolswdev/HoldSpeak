@@ -122,17 +122,18 @@ def test_a_permission_prompt_is_to_approve_and_an_input_prompt_is_to_answer(hook
     assert [(r["ref"], r["why"]) for r in rows] == [("coder:claude:s1", "TO APPROVE")]
     assert attention_class(rows[0], T0) == "due_today"
 
+    # PHILO-15 B48 (the A5 law): an idle prompt with no question asks the
+    # owner nothing; it is a lane station and a Conductor lamp, not a row.
     hooks.notify("Claude is waiting for your input", T0, kind="idle_prompt", session="s2")
     by_ref = {r["ref"]: r["why"] for r in hooks.members(T0)}
-    assert by_ref["coder:claude:s2"] == "TO ANSWER"
+    assert "coder:claude:s2" not in by_ref and by_ref["coder:claude:s1"] == "TO APPROVE"
 
 
 def test_an_older_payload_without_the_subtype_is_read_from_its_message(hooks: Hooks) -> None:
     hooks.notify("Claude needs your permission to use Bash", T0, kind=None)
     hooks.notify("Claude is waiting for your input", T0, kind=None, session="s2")
-    assert {r["ref"]: r["why"] for r in hooks.members(T0)} == {
-        "coder:claude:s1": "TO APPROVE", "coder:claude:s2": "TO ANSWER",
-    }
+    # The idle one (no question) is not a row (PHILO-15 B48).
+    assert {r["ref"]: r["why"] for r in hooks.members(T0)} == {"coder:claude:s1": "TO APPROVE"}
 
 
 def test_auth_success_does_not_block(hooks: Hooks) -> None:

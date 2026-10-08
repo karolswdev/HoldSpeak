@@ -134,7 +134,8 @@ export function urlHost(url: string | undefined): string {
 export function flightWord(flight: AgentFlight): { label: string; tone: ObjectTone } | null {
   switch (flight.state) {
     case "waiting":
-      return { label: "ASKS", tone: "ask" };
+      // PHILO-15 B48: a turn that ended with no question is IDLE, not ASKS.
+      return flight.turnEnd === "idle" ? { label: "IDLE", tone: "info" } : { label: "ASKS", tone: "ask" };
     case "working":
     case "starting":
       return { label: "WORKS", tone: "info" };

@@ -14,6 +14,7 @@ the next turn end.
 """
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable, Iterable, Mapping, Optional
 
@@ -78,7 +79,34 @@ def _registry_sessions() -> list[Any]:
     return list(list_agent_sessions())
 
 
-def deliver(service: Any, record: Mapping[str, Any], key: str, text: str, principal: Any) -> dict[str, Any]:
+def _principal_record(principal: Any) -> dict[str, str]:
+    kind = getattr(principal, "kind", None)
+    return {
+        "kind": str(getattr(kind, "value", kind) or "owner"),
+        "identity": str(getattr(principal, "identity", "") or "owner-session"),
+    }
+
+
+def _principal_from(stored: Mapping[str, Any]) -> Any:
+    from ..principals import Principal, PrincipalKind
+
+    try:
+        kind = PrincipalKind(str(stored.get("kind") or "owner"))
+    except ValueError:
+        kind = PrincipalKind.OWNER
+    return Principal(kind, str(stored.get("identity") or "owner-session"))
+
+
+def new_command_id() -> str:
+    """The id of one owner Send press. It is the ``process.input`` command
+    id, so the delivery receipt (now or after the turn) names the press."""
+    return str(uuid.uuid4())
+
+
+def deliver(
+    service: Any, record: Mapping[str, Any], key: str, text: str, principal: Any,
+    *, command_id: Optional[str] = None,
+) -> dict[str, Any]:
     """Type ``text`` into the launch's own pane (``process.input``)."""
     from .. import coder_steering
 
@@ -94,6 +122,7 @@ def deliver(service: Any, record: Mapping[str, Any], key: str, text: str, princi
     try:
         sent = service._commands.submit_process_input(
             {
+                **({"command_id": command_id} if command_id else {}),
                 "node_id": service._local_node_id,
                 "target_id": target.get("target_id"),
                 "target_generation": target.get("target_generation"),
@@ -104,9 +133,29 @@ def deliver(service: Any, record: Mapping[str, Any], key: str, text: str, princi
         )
     except Exception as exc:
         return {"status": str(getattr(exc, "reason", "") or type(exc).__name__)}
-    outcome = str((sent.get("receipt") or {}).get("outcome") or "")
-    return {"status": "delivered" if outcome == "delivered" else (outcome or "not_delivered"),
-            "command_id": sent.get("command_id")}
+    receipt = sent.get("receipt") or {}
+    outcome = str(receipt.get("outcome") or "")
+    return {
+        "status": "delivered" if outcome == "delivered" else (outcome or "not_delivered"),
+        "command_id": sent.get("command_id"),
+        "operation_id": sent.get("operation_id"),
+        "receipt_id": receipt.get("receipt_id"),
+        "executed_at": receipt.get("executed_at"),
+    }
+
+
+def _delivered_record(result: Mapping[str, Any], approval: Mapping[str, Any], how: str) -> dict[str, Any]:
+    """What the launch keeps of a delivered Re-brief: the press (its
+    principal and time) and the receipt that typed it."""
+    return {
+        "how": how,
+        "approved_by": dict(approval.get("principal") or {}),
+        "approved_at": approval.get("at"),
+        "command_id": result.get("command_id"),
+        "operation_id": result.get("operation_id"),
+        "receipt_id": result.get("receipt_id"),
+        "at": result.get("executed_at") or _now(),
+    }
 
 
 def rebrief(
@@ -129,27 +178,36 @@ def rebrief(
     if not key:
         return {"status": "no_session"}
     session = _find_session((sessions or _registry_sessions)(), key)
+    # The owner's Send press is the approval (Article XI.4): its principal,
+    # time and command id ride with the text to the receipt that types it.
+    approval = {"principal": _principal_record(principal), "at": _now(), "command_id": new_command_id()}
     if mid_turn(session):
-        ledger.update(launch_id, queued_rebrief={"text": clean, "at": _now(), "key": key})
-        return {"status": QUEUED, "at": _now()}
-    result = deliver(service, record, key, clean, principal)
+        ledger.update(launch_id, queued_rebrief={"text": clean, "at": approval["at"], "key": key, "approval": approval})
+        return {"status": QUEUED, "at": approval["at"], "command_id": approval["command_id"]}
+    result = deliver(service, record, key, clean, principal, command_id=approval["command_id"])
     if result["status"] == "delivered":
-        ledger.update(launch_id, queued_rebrief=None, last_rebrief={"at": _now(), "how": "now"})
+        ledger.update(launch_id, queued_rebrief=None, last_rebrief=_delivered_record(result, approval, "now"))
     return result
 
 
 def flush_queued(
-    keys: Iterable[str], *, service: Any, principal: Any = None,
+    keys: Iterable[str], *, service: Any, sessions: Optional[Callable[[], list[Any]]] = None,
 ) -> list[str]:
     """Type each queued Re-brief whose session's turn just ended. Returns the
     session keys whose turn end the Re-brief answered (the responder and
-    Needs you leave them alone)."""
-    from ..principals import Principal, PrincipalKind
+    Needs you leave them alone).
 
+    The session is read again first: only a genuine turn end (idle or a
+    question) takes the Re-brief. A permission wait stays the owner's, and
+    the Re-brief stays queued for the next turn end (Astra r1 on #996)."""
     wanted = {str(k) for k in keys}
     if not wanted:
         return []
-    who = principal or Principal(PrincipalKind.OWNER, "owner-session")
+    try:
+        current = list((sessions or _registry_sessions)())
+    except Exception as exc:
+        log.warning(f"re-brief flush: sessions unread: {exc}")
+        return []
     consumed: list[str] = []
     try:
         records = list(service._ledger.list())
@@ -163,11 +221,19 @@ def flush_queued(
         key = str(queued.get("key") or record.get("session_key") or "")
         if key not in wanted or key in consumed:
             continue
-        result = deliver(service, record, key, str(queued["text"]), who)
+        session = _find_session(current, key)
+        if session is None or mid_turn(session):
+            continue  # a permission prompt (or the turn goes on): not ours to type into
+        approval = dict(queued.get("approval") or {})
+        who = _principal_from(approval.get("principal") or {})
+        result = deliver(
+            service, record, key, str(queued["text"]), who,
+            command_id=str(approval.get("command_id") or "") or None,
+        )
         launch_id = str(record.get("launch_id") or "")
         if result["status"] == "delivered":
             service._ledger.update(
-                launch_id, queued_rebrief=None, last_rebrief={"at": _now(), "how": "after_turn"},
+                launch_id, queued_rebrief=None, last_rebrief=_delivered_record(result, approval, "after_turn"),
             )
             consumed.append(key)
         else:

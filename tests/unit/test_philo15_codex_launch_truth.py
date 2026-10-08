@@ -134,14 +134,17 @@ def _idle(rig, tmp_path, monkeypatch) -> None:
     )
 
 
-def test_needs_you_reads_idle_for_a_turn_end_with_no_question(launched, tmp_path, monkeypatch) -> None:
+def test_an_idle_turn_end_is_not_in_needs_you_and_draws_no_answer(launched, tmp_path, monkeypatch) -> None:
+    """The A5 law (Astra r1 on #996): Needs you is what needs HIM. A turn that
+    ended with no question is a lane station and a Conductor lamp only: no
+    Needs you row, and the responder does not draft or notify for it."""
     _idle(launched, tmp_path, monkeypatch)
-    _responder(launched, tmp_path, "safe")
-    [row] = _members(launched, tmp_path)
-    assert row["turnEnd"] == TURN_IDLE and row["waitKind"] == "answer"
+    responder = _responder(launched, tmp_path, "yolo")
+    assert _members(launched, tmp_path) == []
+    assert responder.triage([KEY]) == {"notify": [], "decide": []}
     _ask(launched, tmp_path, monkeypatch, "Shall I open the pull request now?")
     [row] = _members(launched, tmp_path)
-    assert row["turnEnd"] == TURN_ASKS
+    assert row["waitKind"] == "answer" and row["why"] == "TO ANSWER"
 
 
 # ── 3. the lane wire: B42 brief time, B48 turn end, B50 PR title ─────
@@ -159,9 +162,10 @@ def _lane(rig, tmp_path):
 def test_the_lane_carries_the_brief_time_the_turn_end_and_the_pr_title(launched, tmp_path, monkeypatch) -> None:
     _responder(launched, tmp_path, "safe")
     record = launched.launches.get(launched.launch_id)
-    # B42: the delivery receipt's time, written when the brief was sent.
+    # B42: the delivery receipt's own time (``executed_at``).
     sent_at = record["brief_sent_at"]
-    assert datetime.strptime(sent_at, "%Y-%m-%dT%H:%M:%SZ")
+    receipt = launched.db.delivery_receipts.get(record["commands"]["instruction"])["receipt"]
+    assert sent_at == receipt["executed_at"]
     lane = _lane(launched, tmp_path)
     assert lane["launch"]["brief_sent_at"] == sent_at and lane["launch"]["instruction_state"] == "sent"
 
@@ -183,14 +187,22 @@ def _sessions(tmp_path):
     return lambda: list(read_agent_sessions_strict(state_path=tmp_path / "agent_sessions.json"))
 
 
-def _working(rig, tmp_path, monkeypatch) -> None:
-    _answered(rig, tmp_path, monkeypatch, "Go on.")
+def _hook(rig, tmp_path, event: str, **payload) -> None:
+    """One hook event through the real producer (``ingest_agent_hook_event``)."""
     ingest_agent_hook_event(
         agent="claude",
-        payload={"session_id": "smoke-session", "cwd": str(rig.worktree), "hook_event_name": "PreToolUse",
-                 "tool_name": "Bash", "tool_input": {"command": "ls"}},
+        payload={"session_id": "smoke-session", "cwd": str(rig.worktree), "hook_event_name": event, **payload},
         state_path=tmp_path / "agent_sessions.json", now=datetime.now(timezone.utc), env={},
     )
+
+
+def _working(rig, tmp_path, monkeypatch) -> None:
+    _answered(rig, tmp_path, monkeypatch, "Go on.")
+    _hook(rig, tmp_path, "PreToolUse", tool_name="Bash", tool_input={"command": "ls"})
+
+
+def _permission(rig, tmp_path, message: str) -> None:
+    _hook(rig, tmp_path, "Notification", notification_type="permission_prompt", message=message)
 
 
 def test_rebrief_types_now_when_the_agent_asks_or_idles(launched, tmp_path, monkeypatch) -> None:
@@ -202,7 +214,9 @@ def test_rebrief_types_now_when_the_agent_asks_or_idles(launched, tmp_path, monk
     )
     assert result["status"] == "delivered", result
     assert [text for _pane, text in launched.typed[before:]] == ["Re-brief: also add a README line."]
-    assert launched.launches.get(launched.launch_id).get("queued_rebrief") is None
+    record = launched.launches.get(launched.launch_id)
+    assert record.get("queued_rebrief") is None
+    assert record["last_rebrief"]["how"] == "now" and record["last_rebrief"]["command_id"] == result["command_id"]
 
 
 def test_rebrief_mid_turn_is_queued_and_typed_once_at_the_turn_end(launched, tmp_path, monkeypatch) -> None:
@@ -221,12 +235,33 @@ def test_rebrief_mid_turn_is_queued_and_typed_once_at_the_turn_end(launched, tmp
 
     # Another session's turn end does not flush it.
     assert launch_rebrief.flush_queued(["codex:other"], service=launched.service) == []
-    # The turn ends: the watcher's flush types it once and consumes that wait.
-    _ask(launched, tmp_path, monkeypatch, "Wrote SECURITY.md.")
-    assert launch_rebrief.flush_queued([KEY], service=launched.service) == [KEY]
+    approval = queued["approval"]
+    assert approval["principal"] == {"kind": "owner", "identity": "owner-session"}
+
+    # A permission prompt is a wait too, but it is the owner's: the flush
+    # never types into it, and the Re-brief stays queued.
+    _permission(launched, tmp_path, "Run git push origin HEAD?")
+    assert launch_rebrief.flush_queued([KEY], service=launched.service, sessions=_sessions(tmp_path)) == []
+    assert launched.typed[before:] == []
+    assert launched.launches.get(launched.launch_id)["queued_rebrief"]["text"] == "Re-brief: use the security address."
+
+    # The owner approves; the agent works on, then its turn ends: the flush
+    # types it once and consumes that wait.
+    _hook(launched, tmp_path, "PostToolUse", tool_name="Bash", tool_input={"command": "git push"})
+    _idle(launched, tmp_path, monkeypatch)
+    assert launch_rebrief.flush_queued([KEY], service=launched.service, sessions=_sessions(tmp_path)) == [KEY]
     assert [text for _pane, text in launched.typed[before:]] == ["Re-brief: use the security address."]
-    assert launched.launches.get(launched.launch_id).get("queued_rebrief") is None
-    assert launch_rebrief.flush_queued([KEY], service=launched.service) == []
+    record = launched.launches.get(launched.launch_id)
+    assert record.get("queued_rebrief") is None
+    assert launch_rebrief.flush_queued([KEY], service=launched.service, sessions=_sessions(tmp_path)) == []
+
+    # Provenance: the delivery receipt is the owner's press, by its id.
+    done = record["last_rebrief"]
+    assert done["how"] == "after_turn" and done["command_id"] == approval["command_id"]
+    assert done["approved_by"] == approval["principal"] and done["approved_at"] == approval["at"]
+    stored = launched.db.delivery_receipts.get(approval["command_id"])
+    assert stored["receipt"]["outcome"] == "delivered"
+    assert stored["receipt"]["receipt_id"] == done["receipt_id"]
 
 
 def test_a_permission_prompt_on_the_pane_is_not_typed_over() -> None:

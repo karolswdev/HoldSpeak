@@ -380,6 +380,9 @@ export function coderItems(
     );
     const waitId = String(session.wait_id ?? "");
     const approve = coderWaitKind(session) === "approve";
+    // PHILO-15 B48 (the A5 law): a turn that ended with no question is IDLE,
+    // a lane station and a Conductor lamp, never a Needs you row.
+    if (coderTurnEnd(session) !== "asks") continue;
     const excerpt = coderExcerpt(question);
     rows.push({
       id: ref,
@@ -403,7 +406,6 @@ export function coderItems(
       repoRoot: String(session.repo_root ?? ""),
       question: excerpt,
       waitKind: approve ? "approve" : "answer",
-      turnEnd: coderTurnEnd(session),
       waitStartedAt: started,
       ageSeconds: age,
     });

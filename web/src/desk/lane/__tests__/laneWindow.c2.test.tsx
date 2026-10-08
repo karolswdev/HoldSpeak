@@ -583,6 +583,15 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
     await waitFor(() => expect(screen.getByTestId("lane-queued").textContent).toBe("QUEUED · AFTER THIS TURN · Re-brief: use the security address."));
     expect(screen.queryByTestId("lane-rebrief-well")).toBeNull();
     expect(posts(STEER)).toEqual([]);
+
+    // The turn ends; the hub types it. The same mounted lane says SENT, not QUEUED.
+    serve(fixture({ wait: null, answers: [{ id: 9, ts: "2026-10-07T16:52:00Z", outcome: "delivered", text_head: "Re-brief: use the security address." }] }));
+    await act(async () => {
+      await useLane.getState().load();
+    });
+    await waitFor(() => expect(screen.queryByTestId("lane-queued")).toBeNull());
+    expect(screen.getByTestId("lane-receipt").textContent).toBe(`SENT · ${wireClock("2026-10-07T16:52:00Z")} · Re-brief: use the security address.`);
+    expect(screen.queryByText(/QUEUED/)).toBeNull();
   });
 
   it("B46: a YOLO answer names the registered pane, so the hub's registered-destination rule passes", async () => {

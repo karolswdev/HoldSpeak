@@ -88,6 +88,12 @@ def _session_state(session: Any, now: datetime) -> str:
     return "waiting" if is_blocked(session) else "working"
 
 
+def _turn_end(session: Any, pr_state: str) -> str:
+    from ..agent_context.models import turn_end
+
+    return turn_end(session, work_done=pr_state == "open")
+
+
 def _title_of(db: Any, ref: str) -> str:
     from ..grounding import hydrate_refs_detailed
 
@@ -171,6 +177,9 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         "project_name": project_name,
         "agent": _agent_of(record),
         "state": state,
+        # PHILO-15 B48: how a waiting agent's turn ended (``asks`` /
+        # ``idle`` / ``done``); IDLE is a lamp, never a Needs you row.
+        "turn_end": _turn_end(session, pr_state) if state == "waiting" else None,
         "session_key": session_key or None,
         "pr": {
             "number": pr.get("number"),
