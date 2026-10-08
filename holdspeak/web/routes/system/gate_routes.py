@@ -100,6 +100,17 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to read gate proposal")
 
+    @router.get("/api/gate/proposals/{proposal_id}/command")
+    async def api_gate_full_call(proposal_id: str, request: Request) -> Any:
+        """PHILO-15 20 (B63): the whole command of a held cut call, for the
+        owner's Raw read only (403 for an agent; 409 once decided)."""
+        try:
+            return JSONResponse(service.full_call(request.state.principal, proposal_id))
+        except ServiceError as exc:
+            return _error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read the held call")
+
     @router.get("/api/gate/proposals")
     async def api_gate_list(request: Request, state: str = HELD) -> Any:
         try:

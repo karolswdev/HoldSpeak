@@ -447,6 +447,16 @@
       ]
     },
     {
+      "path": "/api/agent/launches/{launch_id}/rebrief/{press_id}/take-back",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agents/capabilities",
       "methods": [
         "GET"
@@ -2939,6 +2949,16 @@
       ],
       "module": "web.routes.system.gate_routes",
       "consumers": []
+    },
+    {
+      "path": "/api/gate/proposals/{proposal_id}/command",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/gate/proposals/{proposal_id}/decide",

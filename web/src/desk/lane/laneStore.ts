@@ -29,7 +29,8 @@ export const LANE_PAGE = 200;
 /** The last thing the owner did on this lane, kept on the face when the
  * well that made it closes or the wait it answered clears. */
 export interface LaneReceipt {
-  word: "SENT" | "NOT SENT" | "NOT CONFIRMED" | "ARMED" | "STOPPED" | "NOT STOPPED" | "ARM FIRST" | "QUEUED";
+  word: "SENT" | "NOT SENT" | "NOT CONFIRMED" | "ARMED" | "STOPPED" | "NOT STOPPED" | "ARM FIRST" | "QUEUED" | "TAKEN BACK" | "NOT TAKEN BACK"
+    | "APPROVED" | "DENIED" | "NOT DECIDED";
   at: number;
   text: string;
   tone: "ok" | "fail" | "warn";
@@ -56,10 +57,13 @@ interface LaneState {
   answerSeq: number;
   receipt: LaneReceipt | null;
   sending: boolean;
-  open(launchId: string, opts?: { sessionKey?: string | null; answer?: boolean }): void;
+  /** `raw`: open on Raw (PHILO-15 20, B63: a cut held call is approved there). */
+  open(launchId: string, opts?: { sessionKey?: string | null; answer?: boolean; raw?: boolean }): void;
   close(): void;
   setRaw(raw: boolean): void;
   setRebrief(open: boolean): void;
+  /** A receipt made outside the store's own sends (Raw's Approve / Deny). */
+  setReceipt(receipt: LaneReceipt): void;
   load(): Promise<void>;
   /** Type `text` into the lane's session. `waitId` names the wait an answer
    * answers (the hub refuses it when that wait is not the current one). */
@@ -67,6 +71,9 @@ interface LaneState {
   /** PHILO-15 B46: the owner's Re-brief to the lane's launch: typed now
    * when the agent is idle or asks, QUEUED · AFTER THIS TURN mid-turn. */
   sendRebrief(text: string): Promise<boolean>;
+  /** PHILO-15 20 (B67): discard one queued Re-brief (its press id) before
+   * the turn ends; the lane's receipt says TAKEN BACK. */
+  takeBack(pressId: string, text?: string): Promise<boolean>;
   /** ARM the lane's session, or `bound`'s (a press bound to its launch). */
   arm(bound?: LaneBinding): Promise<boolean>;
   stop(): Promise<boolean>;
@@ -143,6 +150,11 @@ export const useLane = create<LaneState>((set, get) => ({
   open(launchId, opts) {
     if (get().launchId !== launchId) set({ launchId, ...EMPTY });
     if (opts?.answer) set({ answerSeq: ++answerRequests });
+    if (opts?.raw) {
+      const key = opts.sessionKey ? String(opts.sessionKey) : null;
+      if (key && useSteering.getState().openKey !== key) useSteering.getState().openSession(key);
+      set({ raw: true });
+    }
     void get().load();
   },
 
@@ -163,6 +175,10 @@ export const useLane = create<LaneState>((set, get) => ({
 
   setRebrief(open) {
     set({ rebrief: open });
+  },
+
+  setReceipt(receipt) {
+    set({ receipt });
   },
 
   load() {
@@ -267,6 +283,29 @@ export const useLane = create<LaneState>((set, get) => ({
     } finally {
       window.clearTimeout(stall);
       if (current()) set({ sending: false });
+    }
+  },
+
+  async takeBack(pressId, text) {
+    const launchId = get().launchId;
+    if (!launchId || !pressId) return false;
+    try {
+      const res = await post(
+        `/api/agent/launches/${encodeURIComponent(launchId)}/rebrief/${encodeURIComponent(pressId)}/take-back`,
+        {},
+      );
+      if (get().launchId !== launchId) return false;
+      const ok = res.ok && res.body.status === "taken_back";
+      set({
+        receipt: ok
+          ? { word: "TAKEN BACK", at: Date.now(), text: firstWords(text ?? ""), tone: "ok" }
+          : { word: "NOT TAKEN BACK", at: Date.now(), text: res.body.status === "not_queued" ? "ALREADY SENT" : String(res.body.status ?? `HTTP ${res.status}`), tone: "fail" },
+      });
+      void get().load();
+      return ok;
+    } catch {
+      if (get().launchId === launchId) set({ receipt: { word: "NOT TAKEN BACK", at: Date.now(), text: "HUB UNREACHABLE", tone: "fail" } });
+      return false;
     }
   },
 

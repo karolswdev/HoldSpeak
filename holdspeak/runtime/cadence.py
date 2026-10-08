@@ -128,17 +128,13 @@ class CadenceMixin:
         """
         try:
 
-            from ..cadence.brief import should_send_daily_brief
             from ..cadence.models import CadencePolicy
             from ..db import get_database
             from ..principals import Principal, PrincipalKind
 
             db = get_database()
-            policy = db.cadence.get_policy("brief_regeneration")
-            last_regen = (policy.config.get("last_regen_date") if policy else None)
-            earliest = int(getattr(self.config.cadence, "brief_hour", 6)) % 24
             now = local_now()
-            if not should_send_daily_brief(now, last_sent_date=last_regen, earliest_hour=earliest):
+            if not self._brief_due(db, now):
                 return
 
             from ..services.monday_brief_service import MondayBriefService
@@ -188,6 +184,29 @@ class CadenceMixin:
         except Exception as exc:
             log.error("heartbeat brief regeneration failed: %s", exc)
 
+    def _brief_due(self, db, now) -> bool:
+        """True when the day's scheduled Brief is not made yet and its hour
+        (``brief_hour``) has come."""
+        from ..cadence.brief import should_send_daily_brief
+
+        policy = db.cadence.get_policy("brief_regeneration")
+        last_regen = (policy.config.get("last_regen_date") if policy else None)
+        earliest = int(getattr(self.config.cadence, "brief_hour", 6)) % 24
+        return should_send_daily_brief(now, last_sent_date=last_regen, earliest_hour=earliest)
+
+    def _brief_missing_at_start(self) -> bool:
+        """PHILO-15 B59: the hub starts after the Brief's hour and the day's
+        Brief is not made: the first tick runs now, not one interval later."""
+        if not self._brief_job_enabled():
+            return False
+        try:
+            from ..db import get_database
+
+            return bool(self._brief_due(get_database(), local_now()))
+        except Exception as exc:  # the loop still ticks on its interval
+            log.error("heartbeat: the start check of the Brief failed: %s", exc)
+            return False
+
     def _invalidate_needs_you_cache(self) -> None:
         """HS-171-03: invalidate the needs-you aggregate cache after a tick."""
         try:
@@ -222,6 +241,12 @@ class CadenceMixin:
 
     def _cadence_loop(self) -> None:
         interval = max(30, int(getattr(self.config.cadence, "tick_interval_seconds", 300)))
-        # An initial settle so startup isn't contended; then tick on the interval.
+        # PHILO-15 B59: a hub started at 07:05 with no Brief for the day makes
+        # it now; it used to show yesterday's until the first tick, one
+        # interval (5 minutes) later.
+        if self._brief_missing_at_start():
+            self._cadence_tick_once()
+        # Otherwise an initial settle so startup isn't contended; then tick
+        # on the interval.
         while not self.runtime_stop_event.wait(interval):
             self._cadence_tick_once()

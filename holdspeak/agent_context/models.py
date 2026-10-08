@@ -322,7 +322,15 @@ _PROBLEM_RE = re.compile(
 _NEGATED_PROBLEM_RE = re.compile(
     r"\b(?:no|without|zero|0|did\s+not|didn't|never)\s+(?:new\s+|further\s+)?"
     r"(?:fail(?:s|ed|ing|ures?)?|errors?|problems?|blockers?)\b"
-    r"|\berror[- ]free\b",
+    r"|\berror[- ]free\b"
+    # PHILO-15 20 (B68; Astra's ruling on #1011): blocked BY THE DESK, the
+    # gate, the owner or FROM THE DESK is the owner's decision, not a
+    # problem; so is the agent's own attempt "blocked" with nothing named
+    # ("the earlier /tmp write attempts were blocked, so nothing landed
+    # outside"). Blocked BY anything else (a firewall, branch protection, a
+    # failing check) stays a problem.
+    r"|\b(?:attempts?|writes?|calls?|commands?|tries)\s+(?:were|was|got)\s+(?:blocked|denied)\b(?!\s+(?:by|on)\b)"
+    r"|\b(?:blocked|denied)\s+(?:by\s+the\s+(?:gate|desk|owner)|from\s+the\s+desk)\b",
     re.IGNORECASE,
 )
 

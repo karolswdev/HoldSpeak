@@ -455,11 +455,14 @@ def test_the_poll_reads_each_open_pr_once_and_closes_on_merge(tmp_path, db, monk
         rig.tmux.ended = True
 
 
-def test_no_open_pr_no_gh(tmp_path, db, monkeypatch) -> None:
+def test_no_open_pr_no_gh_view(tmp_path, db, monkeypatch) -> None:
+    """No PR yet: no ``gh pr view``. PHILO-15 lane 19 (B65): the poll lists
+    the launch's branch once to find a NEW PR (one bounded ``gh pr list``)."""
     rig = _rehearsal_launch(tmp_path, db, monkeypatch)
     try:
         assert rig.observer.poll_open_prs(OWNER)["polled"] == []  # no PR yet
-        assert rig.gh.calls == []
+        assert [argv[:3] for argv in rig.gh.calls] == [["gh", "pr", "list"]]
+        assert "--head" in rig.gh.calls[0]
     finally:
         rig.tmux.ended = True
 

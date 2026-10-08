@@ -155,8 +155,8 @@ function NeedVerbsView({ face, primary, onWell, well }: {
           <Button dense variant="ghost" disabled={busy} aria-label={named("Deny")} data-testid="needs-row-verb" data-verb="deny"
             onClick={deny}>Deny</Button>
           {v.sessionKey ? (
-            <Button dense variant={lead} aria-label={named("Open the agent's lane")} data-testid="needs-row-verb" data-verb="open"
-              onClick={() => openCoderSession(v.sessionKey)}>Open</Button>
+            <Button dense variant={lead} aria-label={named("Open the agent's lane on Raw")} data-testid="needs-row-verb" data-verb="open"
+              onClick={() => openCoderSession(v.sessionKey, { raw: true })}>Open</Button>
           ) : null}
         </>
       );

@@ -793,6 +793,10 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
         return PrincipalRight.DECIDE
     if path.startswith("/api/gate/proposals/") and path.endswith("/receipt"):
         return PrincipalRight.AGENT_USAGE
+    if path.startswith("/api/gate/proposals/") and path.endswith("/command"):
+        # PHILO-15 20 (B63): the whole held call is the owner's decision
+        # surface (Raw); no agent reads it back.
+        return PrincipalRight.DECIDE
     if path.startswith("/api/gate/proposals/") and verb == "GET":
         return PrincipalRight.AGENT_READ
     if path == "/api/gate/usage" and verb == "POST":

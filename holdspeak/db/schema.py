@@ -2076,7 +2076,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_session_events_spool ON agent_sessio
 -- HS-104-02: the tool-call gate. A proposal is a RECORD, never authority --
 -- nothing in this table can cause execution; only a live hook waiting on a
 -- decision can proceed. Arguments are redacted at the edge (sha256 + first
--- 120 chars), never stored in full.
+-- 120 chars); a CUT call's whole redacted text is kept apart, in
+-- gate_full_calls, only while it is held (PHILO-15 20).
 CREATE TABLE IF NOT EXISTS gate_proposals (
     id TEXT PRIMARY KEY,
     session_key TEXT NOT NULL,
@@ -2096,6 +2097,15 @@ CREATE TABLE IF NOT EXISTS gate_proposals (
 );
 CREATE INDEX IF NOT EXISTS idx_gate_proposals_state ON gate_proposals(state);
 CREATE INDEX IF NOT EXISTS idx_gate_proposals_session ON gate_proposals(session_key);
+-- PHILO-15 20 (B63): the whole redacted call of a HELD proposal whose head
+-- is cut (over 120 chars), for the owner's Raw read only (GET
+-- /api/gate/proposals/{id}/command). Never sent to an agent. Redacted of
+-- secret shapes as the head is; removed when the proposal leaves held.
+CREATE TABLE IF NOT EXISTS gate_full_calls (
+    proposal_id TEXT PRIMARY KEY,
+    args_full TEXT NOT NULL,
+    stored_at REAL NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS gate_audit (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

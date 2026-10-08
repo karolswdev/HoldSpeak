@@ -246,6 +246,34 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
         ok = result.get("status") in ("delivered", QUEUED)
         return JSONResponse(result, status_code=202 if result.get("status") == QUEUED else (200 if ok else 409))
 
+    @router.post("/api/agent/launches/{launch_id}/rebrief/{press_id}/take-back")
+    async def api_agent_rebrief_take_back(launch_id: str, press_id: str, request: Request) -> Any:
+        """PHILO-15 20 (B67): discard one queued Re-brief before the agent's
+        turn ends; its receipt is TAKEN BACK. 409 ``not_queued`` when it was
+        typed already or is not queued."""
+        from ...db import get_database
+        from ...delivery.factory_launch import default_launch_service
+        from ...services.launch_rebrief import TAKEN_BACK, take_back
+
+        principal = getattr(
+            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
+        )
+        if principal.kind is not PrincipalKind.OWNER:
+            # The press is the owner's; only he takes it back.
+            return JSONResponse({"status": "principal_scope_required"}, status_code=403)
+
+        def run() -> Any:
+            return take_back(launch_id, press_id, principal, service=default_launch_service(get_database()))
+
+        try:
+            result = await asyncio.to_thread(run)
+        except Exception as exc:
+            log.error(f"re-brief take back failed: {exc}")
+            return JSONResponse({"status": "take_back_failed"}, status_code=500)
+        if result.get("status") == "launch_unknown":
+            return JSONResponse(result, status_code=404)
+        return JSONResponse(result, status_code=200 if result.get("status") == TAKEN_BACK else 409)
+
     @router.post("/api/agent/launches/{launch_id}/deliver")
     async def api_agent_deliver(launch_id: str, request: Request) -> Any:
         """Deliver the held brief of an existing launch (after a restart, a

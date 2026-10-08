@@ -44,10 +44,13 @@ MAX_PRS_PER_SOURCE = 50
 MAX_DIFF_BYTES = 512 * 1024
 
 #: The one batched query's fields — the row schema is exactly this.
+#: PHILO-15 B65: the PRs one head branch may list (a launch's branch has one).
+BRANCH_PR_LIMIT = 5
+
 GH_FIELDS = (
     "number,title,url,headRefName,baseRefName,headRefOid,baseRefOid,state,isDraft,"
     "statusCheckRollup,author,reviewDecision,mergedAt,mergeCommit,"
-    "isCrossRepository,headRepository,headRepositoryOwner"
+    "isCrossRepository,headRepository,headRepositoryOwner,createdAt"
 )
 
 #: The named gh states of a source (Conductor K4). ``live`` means the last
@@ -420,6 +423,8 @@ class PrReceiptsService:
                 "author": str((pr.get("author") or {}).get("login") or ""),
                 "review_decision": str(pr.get("reviewDecision") or "").lower(),
                 "merged_at": str(pr.get("mergedAt") or ""),
+                # PHILO-15 B58: when the PR was opened (the Brief's PR row).
+                "created_at": str(pr.get("createdAt") or ""),
                 "merged_sha": str((pr.get("mergeCommit") or {}).get("oid") or "")
                 if isinstance(pr.get("mergeCommit"), dict) else "",
                 # Repository identity (Conductor K4): a fork's PR is
@@ -478,6 +483,40 @@ class PrReceiptsService:
             if state is not None and state.rows is not None:
                 state.rows = [r for r in state.rows if r.get("number") != row["number"]] + [row]
         return row, "live"
+
+    def list_branch_prs(self, source_id: str, branch: str) -> tuple[list[dict[str, Any]], str]:
+        """PHILO-15 B65: the PRs of one head branch, read now: one bounded
+        ``gh pr list --head <branch>``. Returns ``(rows, gh_state)``; the
+        caller selects the launch's own PR from the rows by identity. Empty
+        rows with a named state when gh is missing, refused or failed."""
+        source = self._registry.get(source_id)
+        if source is None:
+            return [], "source_unknown"
+        if not branch:
+            return [], "branch_unknown"
+        if not self._gh_available():
+            return [], "gh_missing"
+        argv = [
+            "gh", "pr", "list", "--state", "all", "--head", str(branch),
+            "--limit", str(BRANCH_PR_LIMIT), "--json", GH_FIELDS,
+        ]
+        try:
+            proc = self._runner(argv, str(source.primary_path) if source.primary_path else None)
+        except (subprocess.TimeoutExpired, OSError):
+            return [], "gh_failed"
+        if proc.returncode != 0:
+            error = str(proc.stderr or "").lower()
+            auth = any(token in error for token in ("auth", "login", "token", "credential"))
+            return [], "gh_unauthenticated" if auth else "gh_failed"
+        try:
+            raw = json.loads(proc.stdout)
+        except (json.JSONDecodeError, ValueError):
+            return [], "gh_failed"
+        if not isinstance(raw, list):
+            return [], "gh_failed"
+        facts = self._worktree_facts(source)
+        observed = _utc_now()
+        return [self._row(source, pr, facts, [], observed) for pr in raw if isinstance(pr, dict)], "live"
 
     def _degrade(self, source_id: str, detail: str) -> None:
         """Last-known-good retained; the status names the failure."""

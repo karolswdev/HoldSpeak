@@ -791,15 +791,20 @@ class HeartbeatService:
         the origin at once; the block announces itself, so the faces re-read
         and the Room receipt lands with no press. A poll with no open PR
         runs no ``gh`` and writes nothing."""
-        from holdspeak.runtime.announce_scope import announce_writes
+        from holdspeak.runtime.announce_scope import announce_scope, announce_writes
 
         poll = getattr(self._follow_through, "poll_open_prs", None)
         if not callable(poll):
             return {"kind": "pr_poll", "polled": []}
-        with announce_writes("heartbeat", "pr_poll"):
-            receipt = poll(principal)
-            if receipt.get("closed") or receipt.get("cleaned"):
-                self.refresh_aggregate(principal)
+        with announce_scope() as announce:
+            with announce_writes("heartbeat", "pr_poll"):
+                receipt = poll(principal)
+                if receipt.get("closed") or receipt.get("cleaned") or receipt.get("found"):
+                    self.refresh_aggregate(principal)
+            # PHILO-15 B65: a NEW PR found for a launch is kept on the launch
+            # ledger (a file), so no row write announces it: name it here.
+            for launch_id in receipt.get("found") or []:
+                announce("launch", str(launch_id), "pr_found")
         return receipt
 
     def _write_receipt(self, receipt: dict[str, Any]) -> None:
