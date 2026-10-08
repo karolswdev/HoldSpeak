@@ -18,6 +18,9 @@ _LIVE_LAUNCH_STATES = frozenset({"launched", "registered"})
 #: decides only what ``resolve_policy`` (family ``tool_gate``) allowed.
 CONTROL_MODE_IDENTITY = "control-mode"
 
+#: A launched agent's MCP tool as the gate sees it (``mcp__<server>__<tool>``).
+MCP_TOOL_PREFIX = "mcp__"
+
 
 def _is_launch_caller(record: Mapping[str, Any], identity: str) -> bool:
     """True when ``identity`` is this launch's agent: its registered session
@@ -122,6 +125,8 @@ class GateService:
             raise ServiceError("proposal_not_admitted", "proposal was not admitted", context={"handle": handle, "status": 409})
         if proposal.state == HELD and (proposal.policy_snapshot or {}).get("outcome") == "allowed":
             proposal = self._decide_by_mode(proposal)
+        if proposal.state == HELD and tool.startswith(MCP_TOOL_PREFIX):
+            proposal = self._decide_mcp(principal, proposal, tool)
         args_full = payload.get("args_full")
         if proposal.state == HELD and isinstance(args_full, str) and args_full:
             # PHILO-15 20 (B63): a cut call's whole redacted text, for the
@@ -137,6 +142,37 @@ class GateService:
             except Exception:  # the edge never stops the hold
                 pass
         return proposal.to_dict()
+
+    # ── PR #1022 r2: a launch's MCP tools, decided by its launch ──────
+
+    def _decide_mcp(self, principal: Principal, proposal: Any, tool: str) -> Any:
+        """A launched agent's HoldSpeak MCP call (pi sends each one through the
+        gate hook). The hub decides from the caller's OWN launch record, never
+        from the agent's environment: a launch whose MCP tools were
+        pre-approved at launch (Normal, YOLO) passes, the palette decides;
+        a launch that was not (Secure) passes a read and holds every other
+        tool for the owner. A caller with no launch keeps the hold."""
+        from ..coder_gate import mcp_tool_is_read
+
+        found = self._own_launch_record(principal)
+        if found is None:
+            return proposal
+        record = found[1]
+        pre_approved = (record.get("mcp") or {}).get("pre_approved") is True
+        if pre_approved:
+            reason = "MCP tool pre-approved at launch; the palette decides"
+        elif mcp_tool_is_read(tool):
+            reason = "MCP read in Secure"
+        else:
+            return proposal  # Secure: the owner decides
+        try:
+            self.decide(
+                Principal(PrincipalKind.OWNER, CONTROL_MODE_IDENTITY),
+                proposal.id, {"decision": APPROVED, "reason": reason},
+            )
+        except ConflictError:
+            pass
+        return self._db.gate.get(proposal.id) or proposal
 
     # ── Conductor K5: the Control-mode decision ──────────────────────
 
@@ -230,6 +266,28 @@ class GateService:
         session credential is the launch's only once the rider registers the
         session: the parent operation id the hook names is a claim any session
         could copy."""
+        found = self._own_launch_record(principal)
+        if found is None:
+            return None
+        service, record = found
+        path = service._worktree_path(record)
+        if not path and callable(getattr(service._registry, "reload", None)):
+            service._registry.reload()
+            path = service._worktree_path(record)
+        branch = str(record.get("branch") or "")
+        if not branch:
+            # A launch made before K5 kept no branch: the registry's worktree has it.
+            source = service._registry.get(str(record.get("source_id") or ""))
+            worktree = next(
+                (wt for wt in getattr(source, "worktrees", ()) if wt.worktree_id == record.get("worktree_id")),
+                None,
+            )
+            branch = str(getattr(worktree, "branch", "") or "")
+        return str(record.get("launch_id") or ""), os.path.realpath(path) if path else "", branch
+
+    def _own_launch_record(self, principal: Principal) -> Optional[tuple[Any, dict[str, Any]]]:
+        """``(launch driver, launch record)`` of the caller's own live launch
+        (see :meth:`_own_launch`), or ``None``."""
         if principal.kind is not PrincipalKind.AGENT:
             return None
         try:
@@ -253,20 +311,7 @@ class GateService:
         )
         if record is None:
             return None
-        path = service._worktree_path(record)
-        if not path and callable(getattr(service._registry, "reload", None)):
-            service._registry.reload()
-            path = service._worktree_path(record)
-        branch = str(record.get("branch") or "")
-        if not branch:
-            # A launch made before K5 kept no branch: the registry's worktree has it.
-            source = service._registry.get(str(record.get("source_id") or ""))
-            worktree = next(
-                (wt for wt in getattr(source, "worktrees", ()) if wt.worktree_id == record.get("worktree_id")),
-                None,
-            )
-            branch = str(getattr(worktree, "branch", "") or "")
-        return str(record.get("launch_id") or ""), os.path.realpath(path) if path else "", branch
+        return service, record
 
     def get_proposal(self, principal: Principal, proposal_id: str) -> dict[str, Any]:
         from ..kernel.model import KernelRefused

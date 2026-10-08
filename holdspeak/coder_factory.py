@@ -377,13 +377,34 @@ def kill(
 #: How long a killed pane's process group has to end after SIGTERM before SIGKILL.
 GROUP_KILL_GRACE_SECONDS = 2.0
 
-#: One process group to end: ``(pgid, sid)``. A member is a process in that
-#: group AND that session, so a recycled id never names another program.
-Group = tuple[int, int]
+#: One process group to end: ``(pgid, sid, started)``. A member is a process
+#: in that group AND that session that did not start before ``started`` (the
+#: launch leader's start, epoch seconds; ``None`` for a group read at Stop
+#: from a live pane). PR #1022 r2: the leader's start time is the group's
+#: generation, so a recycled id never names another program.
+Group = tuple[int, int, Optional[float]]
+
+
+def _parse_lstart(text: str) -> Optional[float]:
+    """``ps -o lstart`` (``Thu Oct  8 17:52:06 2026``) as epoch seconds."""
+    try:
+        return time.mktime(time.strptime(" ".join(text.split()), "%a %b %d %H:%M:%S %Y"))
+    except (ValueError, OverflowError):
+        return None
+
+
+def process_start(pid: int) -> Optional[float]:
+    """When ``pid`` started (``ps -o lstart``), or ``None``."""
+    try:
+        done = subprocess.run(["ps", "-o", "lstart=", "-p", str(int(pid))],
+                              capture_output=True, text=True, timeout=10)
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return None
+    return _parse_lstart(done.stdout or "") if done.returncode == 0 else None
 
 
 def pane_process_group(pane_id: str, *, runner: Optional[Runner] = None) -> Optional[dict[str, int]]:
-    """``{pgid, sid, leader}`` of a live pane's first process, read at spawn
+    """``{pgid, sid, leader, started}`` of a live pane's first process, read at spawn
     so Stop can end the group after that process has exited (PR #1022 r1).
     ``None`` for a fake runner, a dead pane, or this process's own group."""
     if runner is not None:
@@ -398,7 +419,10 @@ def pane_process_group(pane_id: str, *, runner: Optional[Runner] = None) -> Opti
         return None
     if pgid <= 1 or pgid == os.getpgrp():
         return None
-    return {"pgid": pgid, "sid": sid, "leader": leader}
+    started = process_start(leader)
+    if started is None:
+        return None
+    return {"pgid": pgid, "sid": sid, "leader": leader, "started": started}
 
 
 def _pane_exists(pane_id: str) -> bool:
@@ -412,7 +436,7 @@ def _pane_exists(pane_id: str) -> bool:
 def _kill_groups(pane_id: str, scope: str) -> list[Group]:
     groups = _recorded_groups(pane_id)
     for group in _pane_groups(None, pane_id, scope):
-        if group not in groups:
+        if all(group[:2] != g[:2] for g in groups):
             groups.append(group)
     return groups
 
@@ -441,7 +465,9 @@ def _recorded_groups(pane_id: str) -> list[Group]:
         if str((row.get("target") or {}).get("pane_id") or "") != str(pane_id):
             continue
         try:
-            group = (int(recorded["pgid"]), int(recorded["sid"]))
+            # A record with no start time (before r2) proves no generation:
+            # it is never signalled.
+            group = (int(recorded["pgid"]), int(recorded["sid"]), float(recorded["started"]))
         except (KeyError, TypeError, ValueError):
             continue
         if group[0] > 1 and group[0] != own and group not in groups:
@@ -470,7 +496,7 @@ def _pane_groups(runner: Optional[Runner], pane_id: str, scope: str) -> list[Gro
         if not text.isdigit():
             continue
         try:
-            group = (os.getpgid(int(text)), os.getsid(int(text)))
+            group = (os.getpgid(int(text)), os.getsid(int(text)), process_start(int(text)))
         except (OSError, ValueError):
             continue
         if group[0] > 1 and group[0] != own and group not in groups:
@@ -479,27 +505,36 @@ def _pane_groups(runner: Optional[Runner], pane_id: str, scope: str) -> list[Gro
 
 
 def _members(groups: list[Group]) -> list[int]:
-    """The live processes of ``groups``: in the group and in its session."""
+    """The live processes of ``groups``: in the group, in its session, and
+    of its generation. A process that started before the group's leader is
+    skipped; a session whose leader id is alive as a process that started at
+    another time is a new generation, and all of it is skipped."""
     if not groups:
         return []
     try:
-        done = subprocess.run(["ps", "-A", "-o", "pid=,pgid="], capture_output=True, text=True, timeout=10)
+        done = subprocess.run(["ps", "-A", "-o", "pid=,pgid=,lstart="], capture_output=True, text=True, timeout=10)
     except (OSError, subprocess.TimeoutExpired):
         return []
-    wanted = dict(groups)
-    found: list[int] = []
+    table: dict[int, tuple[int, Optional[float]]] = {}
     for line in (done.stdout or "").splitlines():
-        parts = line.split()
-        if len(parts) != 2 or not all(p.isdigit() for p in parts):
+        parts = line.split(None, 2)
+        if len(parts) != 3 or not (parts[0].isdigit() and parts[1].isdigit()):
             continue
-        pid, pgid = int(parts[0]), int(parts[1])
-        if pgid not in wanted or pid == os.getpid():
-            continue
-        try:
-            if os.getsid(pid) == wanted[pgid]:
-                found.append(pid)
-        except OSError:
-            continue
+        table[int(parts[0])] = (int(parts[1]), _parse_lstart(parts[2]))
+    found: list[int] = []
+    for pgid, sid, started in groups:
+        if started is not None and sid in table and table[sid][1] != started:
+            continue  # the session id now leads another program
+        for pid, (member_pgid, member_start) in table.items():
+            if member_pgid != pgid or pid == os.getpid() or pid in found:
+                continue
+            if started is not None and (member_start is None or member_start < started):
+                continue
+            try:
+                if os.getsid(pid) == sid:
+                    found.append(pid)
+            except OSError:
+                continue
     return found
 
 

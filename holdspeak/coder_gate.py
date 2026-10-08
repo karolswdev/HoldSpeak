@@ -600,9 +600,9 @@ def run_hook(
 #: gate as ``Read`` with ``file_path``; a read inside the worktree never does.
 READ_TOOL = "Read"
 
-#: The environment switch of a launch whose MCP tools are not pre-approved
-#: (Secure at launch; ``pi_launch.launch_env``). With it, an MCP tool that is
-#: not a read is held like a Bash call (PR #1022 r1, Astra 1).
+#: The environment hint of a launch whose MCP tools are not pre-approved
+#: (Secure at launch; ``pi_launch.launch_env``). A hint only: the hub decides
+#: from the launch record (PR #1022 r2).
 MCP_HOLD_ENV = "HOLDSPEAK_MCP_HOLD"
 
 #: An MCP tool as pi names it: ``mcp__<server>__<tool, dots as underscores>``.
@@ -617,8 +617,8 @@ def _launch_match(cfg: GateConfig, *, cwd: str, tool: str, agent: str) -> tuple[
     Conductor R1: a launch's file writes (and pi's outside reads) are read
     against the worktree its Bash is held for. Conductor K5: a launched agent
     (its spawn sets the parent operation) is held for the gate's tools
-    wherever its working folder is. PR #1022 r1: a pi launch with its MCP
-    tools not pre-approved holds every MCP tool that is not a read."""
+    wherever its working folder is. PR #1022 r2: a pi launch sends every MCP
+    tool to the hub, which decides from the launch record."""
     from .tool_gate_rules import EDIT_TOOLS
 
     path_tool = tool in EDIT_TOOLS or tool == READ_TOOL
@@ -631,13 +631,11 @@ def _launch_match(cfg: GateConfig, *, cwd: str, tool: str, agent: str) -> tuple[
 
 
 def _mcp_write_held(tool: str, agent: str) -> bool:
-    """A pi MCP call the launch's mode holds: the switch is on and the tool
-    is not a known read (an unknown name is a write)."""
-    if agent != "pi" or not tool.startswith(MCP_PREFIX):
-        return False
-    if str(os.environ.get(MCP_HOLD_ENV) or "").strip() != "1":
-        return False
-    return not mcp_tool_is_read(tool)
+    """A pi MCP call inside a launch goes to the hub, which decides from the
+    launch record (PR #1022 r2: ``GateService._decide_mcp``): pre-approved
+    at launch passes, Secure holds every tool that is not a read. The
+    environment flag ``MCP_HOLD_ENV`` is a hint only, never the guard."""
+    return agent == "pi" and tool.startswith(MCP_PREFIX)
 
 
 def mcp_tool_is_read(tool: str) -> bool:

@@ -80,6 +80,9 @@ def _secure_launch(tmp_path, monkeypatch, hub, mode: str):  # noqa: F811
     monkeypatch.setattr(GateService, "_launch_records", lambda self: (rig.service, rig.service._ledger.list()))
     launched = rig.hand.hand(OWNER, "project_item", item, profile="pi-default")
     assert launched["status"] == "launched", launched
+    # The rig's own launch broker shares the hub's database: let its brief
+    # delivery finish before the hub's kernel journals the gate calls.
+    _wait_for(lambda: rig.launches.get(launched["launch_id"]), "instruction_state", "sent")
     record = rig.launches.get(launched["launch_id"])
     spawn = next(c for c in rig.tmux.calls if c[1] == "new-session")
     return rig, record, spawn, project, item
@@ -97,13 +100,18 @@ def _launch_env(monkeypatch, record, spawn) -> str:
     return token
 
 
+@pytest.mark.parametrize("flag", ["flag", "no-flag"])
 @pytest.mark.parametrize("decision", ["denied", "approved"])
-def test_secure_pi_mcp_write_holds_until_the_owner_decides(tmp_path, monkeypatch, hub, decision) -> None:  # noqa: F811
+def test_secure_pi_mcp_write_holds_until_the_owner_decides(tmp_path, monkeypatch, hub, decision, flag) -> None:  # noqa: F811
     rig, record, spawn, project, item = _secure_launch(tmp_path, monkeypatch, hub, "safe")
     try:
         assert record["mcp"]["pre_approved"] is False
         assert f"{coder_gate.MCP_HOLD_ENV}=1" in command_of(spawn)
         token = _launch_env(monkeypatch, record, spawn)
+        if flag == "no-flag":
+            # PR #1022 r2 (Astra): the hint stripped from the hook's
+            # environment; the hub decides from the launch record.
+            monkeypatch.delenv(coder_gate.MCP_HOLD_ENV, raising=False)
         agent = _client(hub, token)
         monkeypatch.setattr(coder_gate, "_send", _send_to(agent))
         args = {"project_id": project, "item_id": item, "patch": {"title": "After"}}
@@ -138,12 +146,14 @@ def test_secure_pi_mcp_write_holds_until_the_owner_decides(tmp_path, monkeypatch
             assert is_error is False
             assert hub.db.projects.get_project_item(item)["title"] == "After"
 
-        # A read passes with no proposal in Secure.
+        # A read passes in Secure: the hub approves it from the launch record.
         read = coder_gate.run_hook({**payload, "tool_name": "mcp__holdspeak__project_list", "tool_input": {},
                                     "tool_use_id": "call_read"},
                                    config=coder_gate.load_gate_config(rig.gate_path), hub_url="http://hub.test",
-                                   agent="pi")
-        assert read.deny is None and rig.db.gate.get("call_read") is None
+                                   agent="pi", sleep=lambda s: pytest.fail("a Secure read never waits"))
+        assert read.deny is None
+        passed = rig.db.gate.get("call_read")
+        assert passed.state == "approved" and passed.decided_by == "control-mode"
     finally:
         rig.tmux.ended = True
 
@@ -154,14 +164,17 @@ def test_yolo_leaves_pi_mcp_tools_to_the_palette(tmp_path, monkeypatch, hub) -> 
         assert record["mcp"]["pre_approved"] is True
         assert coder_gate.MCP_HOLD_ENV not in command_of(spawn)
         monkeypatch.delenv(coder_gate.MCP_HOLD_ENV, raising=False)
-        _launch_env(monkeypatch, record, spawn)
         payload = {"hook_event_name": "PreToolUse", "tool_name": "mcp__holdspeak__project_item_update",
                    "tool_input": {"project_id": project}, "tool_use_id": "call_y", "session_id": "s",
                    "cwd": str(rig.worktree)}
+        token = _launch_env(monkeypatch, record, spawn)
+        monkeypatch.setattr(coder_gate, "_send", _send_to(_client(hub, token)))
         verdict = coder_gate.run_hook(payload, config=coder_gate.load_gate_config(rig.gate_path),
-                                      http_post=lambda *a: pytest.fail("no proposal in YOLO"),
-                                      http_get=lambda *a: pytest.fail("no read in YOLO"), agent="pi")
+                                      hub_url="http://hub.test", agent="pi",
+                                      sleep=lambda s: pytest.fail("a pre-approved MCP tool never waits"))
         assert verdict.deny is None
+        passed = rig.db.gate.get("call_y")
+        assert passed.state == "approved" and passed.decided_by == "control-mode"
     finally:
         rig.tmux.ended = True
 
@@ -427,21 +440,62 @@ def test_a_recorded_group_with_another_session_is_not_signalled(tmp_path, privat
     """A recycled group id names another program: its session differs."""
     stranger = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"], start_new_session=True)
     try:
-        pgid = os.getpgid(stranger.pid)
-        assert coder_factory._members([(pgid, os.getsid(stranger.pid) + 1)]) == []
-        assert coder_factory._members([(pgid, os.getsid(stranger.pid))]) == [stranger.pid]
-        assert coder_factory._end_groups([(pgid, os.getsid(stranger.pid) + 1)]) == []
+        pgid, sid = os.getpgid(stranger.pid), os.getsid(stranger.pid)
+        assert coder_factory._members([(pgid, sid + 1, None)]) == []
+        assert coder_factory._members([(pgid, sid, None)]) == [stranger.pid]
+        assert coder_factory._end_groups([(pgid, sid + 1, None)]) == []
         assert _alive(stranger.pid)
     finally:
         stranger.kill()
 
 
+def _rewrite_record(name: str, pgid: int, sid: int) -> None:
+    """Simulate id reuse: the launch's record now names another program's ids."""
+    from holdspeak.delivery.factory_launch import LaunchLedger
+
+    ledger = LaunchLedger()
+    row = ledger.get(f"launch_{name}")
+    ledger.update(f"launch_{name}", process_group={**row["process_group"], "pgid": pgid, "sid": sid})
+
+
+@pytest.mark.parametrize("when", ["after", "before"])
+def test_stop_leaves_a_program_that_reuses_the_recorded_ids_alone(tmp_path, private_tmux, when) -> None:
+    """PR #1022 r2 (Astra 3): the launch's group died; a program now holds
+    its pgid/sid. ``after``: it started after the launch (real reuse: a new
+    session leader of the same id, another start time). ``before``: it
+    started before the launch (older than the recorded generation)."""
+    stranger = None
+    if when == "before":
+        stranger = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"], start_new_session=True)
+        time.sleep(1.2)  # ps start times are whole seconds
+    name = f"r2{when[0]}"
+    launch = _leader_with_child(tmp_path, name, retain=False)
+    try:
+        launch["exit"].touch()
+        _wait_dead_leader(launch["group"]["leader"])
+        os.kill(launch["child"], signal.SIGKILL)  # the launch's group is gone
+        deadline = time.monotonic() + 5
+        while _alive(launch["child"]) and time.monotonic() < deadline:
+            time.sleep(0.02)
+        if stranger is None:
+            stranger = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"],
+                                        start_new_session=True)
+        _rewrite_record(name, os.getpgid(stranger.pid), os.getsid(stranger.pid))
+        result = coder_factory.kill("pi:r2", current_target=launch["pane"], scope="session", audit=lambda **_: 1)
+        time.sleep(0.3)
+        assert _alive(stranger.pid), result
+    finally:
+        if stranger is not None:
+            stranger.kill()
+
+
 def test_the_launch_records_its_process_group(pi_rig, monkeypatch) -> None:  # noqa: F811
     rig = pi_rig
     monkeypatch.setattr(coder_factory, "pane_process_group",
-                        lambda pane, runner=None: {"pgid": 4242, "sid": 4242, "leader": 4242})
+                        lambda pane, runner=None: {"pgid": 4242, "sid": 4242, "leader": 4242, "started": 1.0})
     result = rig.hand.hand(OWNER, "action", "ai_1", profile="pi-default")
-    assert rig.launches.get(result["launch_id"])["process_group"] == {"pgid": 4242, "sid": 4242, "leader": 4242}
+    assert rig.launches.get(result["launch_id"])["process_group"] == {
+        "pgid": 4242, "sid": 4242, "leader": 4242, "started": 1.0}
 
 
 # ── 4. An approved Write reaches its terminal receipt ────────────────
