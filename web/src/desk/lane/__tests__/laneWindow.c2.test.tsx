@@ -594,6 +594,33 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
     expect(screen.queryByText(/QUEUED/)).toBeNull();
   });
 
+  it("provenance: the rail shows each Re-brief receipt with the press that approved it and the delivery's command id", async () => {
+    const rebriefs = [
+      { id: "p1", state: "sent", text_head: "Re-brief: use the security address.", approved_at: "2026-10-07T16:40:00Z",
+        at: "2026-10-07T16:52:00Z", press_id: "p1", command_id: "c0ffee00-0000-5000-8000-000000000001", how: "after_turn" },
+      { id: "p2", state: "expired", text_head: "Re-brief: late.", approved_at: "2026-10-07T14:00:00Z",
+        at: "2026-10-07T16:01:00Z", press_id: "p2", command_id: null, detail: "AGENT NEVER RETURNED" },
+      { id: "p3", state: "superseded", text_head: "Re-brief: first.", approved_at: "2026-10-07T16:41:00Z",
+        at: "2026-10-07T16:43:00Z", press_id: "p3", command_id: null, detail: "A NEWER RE-BRIEF" },
+    ];
+    await openLane(fixture({ wait: null, launch: { ...fixture().launch, rebriefs: rebriefs as never } }));
+    const rail = screen.getByTestId("lane-rail");
+    expect(within(rail).getByText(`SENT · ${wireClock("2026-10-07T16:52:00Z")} · BY YOUR PRESS ${wireClock("2026-10-07T16:40:00Z")}`)).toBeTruthy();
+    expect(within(rail).getByText("command c0ffee00-0000-5000-8000-000000000001")).toBeTruthy();
+    expect(within(rail).getByText(`EXPIRED · ${wireClock("2026-10-07T16:01:00Z")} · AGENT NEVER RETURNED · BY YOUR PRESS ${wireClock("2026-10-07T14:00:00Z")}`)).toBeTruthy();
+    expect(within(rail).getByText(/^SUPERSEDED · .* · A NEWER RE-BRIEF · BY YOUR PRESS/)).toBeTruthy();
+    expect(within(rail).getByText("press p3")).toBeTruthy();
+  });
+
+  it("two queued Re-briefs each say when they go", async () => {
+    await openLane(fixture({ wait: null, launch: { ...fixture().launch, queued_rebriefs: [
+      { id: "a", text: "Re-brief: a.", at: "2026-10-07T16:40:00Z" }, { id: "b", text: "Re-brief: b.", at: "2026-10-07T16:41:00Z" },
+    ] } }));
+    expect(screen.getAllByTestId("lane-queued").map((el) => el.textContent)).toEqual([
+      "QUEUED · AFTER THIS TURN · Re-brief: a.", "QUEUED · AFTER 2 TURNS · Re-brief: b.",
+    ]);
+  });
+
   it("B46: a YOLO answer names the registered pane, so the hub's registered-destination rule passes", async () => {
     await openLane(fixture({ control: { mode: "yolo", armed: false, direct: true, pane_id: "%42" } }));
     const field = within(screen.getByTestId("lane-ask")).getByRole("textbox") as HTMLInputElement;

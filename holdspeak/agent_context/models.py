@@ -278,26 +278,34 @@ TURN_IDLE = "idle"
 TURN_DONE = "done"
 
 #: A sentence that ends in a question mark (optionally closed by a quote,
-#: a bracket or markdown emphasis), at a line end or before a space.
+#: a bracket or markdown emphasis), at a line end or before a space. A
+#: ``?`` inside a URL (``/?q=1``) is not one.
 _QUESTION_RE = re.compile(r"\?[\"'\u2019\u201d)\]*_`]*(?:\s|$)")
 
-
-#: How much of the last paragraph a question mark must be in.
-QUESTION_TAIL_CHARS = 240
+#: An interrogative that asks the owner, wherever it stands: an inverted
+#: modal or auxiliary with I/we/you ("Should I deploy", "Do you want"), or an
+#: offer ("Want me to ...", "Would you like ...").
+_INTERROGATIVE_RE = re.compile(
+    r"\b(?:(?:should|shall|may|can|could|would|will|do|does|did|is|are)\s+(?:i|we|you)\b"
+    r"|want\s+me\s+to\b|would\s+you\s+like\b|do\s+you\s+want\b)",
+    re.IGNORECASE,
+)
 
 
 def asks_a_question(text: Any) -> bool:
-    """The agent's last words end its turn with a question: a ``?`` that ends
-    a sentence near the end of the last paragraph. "Understood, stopping here." is not a
-    question; "Should I push the branch?" is."""
+    """The agent's turn end asks the owner something: a ``?`` that ends a
+    sentence, or an interrogative, ANYWHERE in its words, however long the
+    report around it (the ruling shared with lane 15, Astra r2 on #996 and
+    #998). "Should I deploy to production? The change is done and all tests
+    pass." is a question; "Done. PR #2 is open." is not.
+
+    This is THE question predicate: Needs you, the lane's stations, the
+    Conductor lamp and the responder's silence rule read it (``needsYou.ts``
+    ``asksAQuestion`` mirrors it)."""
     body = str(text or "").strip()
     if not body:
         return False
-    paragraphs = [p for p in re.split(r"\n\s*\n", body) if p.strip()]
-    last = paragraphs[-1] if paragraphs else body
-    # Codex's Stop text arrives with its line breaks collapsed: only the end
-    # of the turn's words counts, never a "?" deep inside a long report.
-    return bool(_QUESTION_RE.search(last[-QUESTION_TAIL_CHARS:]))
+    return bool(_QUESTION_RE.search(body) or _INTERROGATIVE_RE.search(body))
 
 
 def turn_end(session: Any, *, work_done: bool = False) -> str:

@@ -28,14 +28,43 @@ export interface LaneLaunch {
   instruction_state?: string | null;
   /** When the delivery receipt said the brief reached the agent. */
   brief_sent_at?: string | null;
-  /** PHILO-15 B46: a Re-brief sent mid-turn, typed at the turn end. */
-  queued_rebrief?: { text?: string; at?: string } | null;
+  /** PHILO-15 B46: a Re-brief sent mid-turn, typed at the turn end (the first of the queue). */
+  queued_rebrief?: LaneQueuedRebrief | null;
+  /** The queued Re-briefs, oldest first (a small FIFO). */
+  queued_rebriefs?: LaneQueuedRebrief[] | null;
+  /** One terminal receipt per Re-brief press (Astra r2 on #996). */
+  rebriefs?: LaneRebriefReceipt[] | null;
   control_mode?: string | null;
   brief_text?: string | null;
   session_key?: string | null;
   tmux_session?: string | null;
   /** The owner stopped the agent (kill route): when, and the audit row. */
   stopped?: { by?: string; at?: string; audit_id?: number | null; scope?: string } | null;
+}
+
+export interface LaneQueuedRebrief {
+  id?: string | null;
+  text?: string | null;
+  at?: string | null;
+  approved_at?: string | null;
+}
+
+/** A Re-brief's receipt: what became of the owner's press (`sent`,
+ * `superseded`, `expired`), when he pressed, and the delivery's command id. */
+export interface LaneRebriefReceipt {
+  id?: string | null;
+  state: "sent" | "superseded" | "expired" | string;
+  text_head?: string | null;
+  approved_at?: string | null;
+  approved_by?: { kind?: string; identity?: string } | null;
+  /** The press's own id (its approval). */
+  press_id?: string | null;
+  /** The delivery's `process.input` command id (derived from the press). */
+  command_id?: string | null;
+  receipt_id?: string | null;
+  at?: string | null;
+  how?: string | null;
+  detail?: string | null;
 }
 
 export interface LaneCheck {
@@ -260,7 +289,7 @@ function runResult(event: LaneEvent): string {
  * Deny / Approve. `at` orders the entries; `heads` collapse repeated READs. */
 export interface LaneEntry extends Omit<TimelineEntry, "verbs"> {
   at: number | null;
-  kind: "brief" | "read" | "says" | "write" | "run" | "call" | "answer" | "end" | "commit" | "pr" | "held" | "asks" | "merge";
+  kind: "brief" | "read" | "says" | "write" | "run" | "call" | "answer" | "end" | "commit" | "pr" | "held" | "asks" | "merge" | "rebrief";
   /** HELD: the gate proposal; the face draws Deny / Approve while it is held. */
   gated?: LaneGated;
   heads?: string[];
@@ -372,6 +401,7 @@ export function laneEntries(lane: LaneWire, events: readonly LaneEvent[]): LaneE
     ...(brief.state === "sent" ? {} : { pending: true }),
   });
   timed.push(...eventEntries(events));
+  for (const receipt of Array.isArray(launch.rebriefs) ? launch.rebriefs : []) timed.push(rebriefEntry(receipt));
   const worktree = lane.worktree;
   if (!isNotRead(worktree)) {
     // git log is newest first; the rail reads oldest first.
@@ -494,6 +524,35 @@ export function briefLine(brief: string | null | undefined): string {
   const words = text.split(/\s+/).length;
   const kb = new TextEncoder().encode(text).length / 1024;
   return kb >= 1 ? `${words} words · ${kb.toFixed(1)} KB` : `${words} words`;
+}
+
+/* ── the Re-brief receipts ───────────────────────────────────────── */
+
+const REBRIEF_STATE_WORD: Record<string, string> = { sent: "SENT", superseded: "SUPERSEDED", expired: "EXPIRED" };
+
+/** `SENT · 17:22 · BY YOUR PRESS 17:13`; `SUPERSEDED · …`; `EXPIRED · AGENT
+ * NEVER RETURNED · BY YOUR PRESS …`. */
+export function rebriefWords(receipt: LaneRebriefReceipt): string {
+  const word = REBRIEF_STATE_WORD[receipt.state] ?? String(receipt.state).toUpperCase();
+  const pressed = wireClock(receipt.approved_at);
+  return [word, wireClock(receipt.at), receipt.detail || "", pressed ? `BY YOUR PRESS ${pressed}` : ""].filter(Boolean).join(" · ");
+}
+
+/** The rail entry of one Re-brief receipt; its code line names the
+ * delivery's command id (the receipt is the owner's press). */
+export function rebriefEntry(receipt: LaneRebriefReceipt): LaneEntry {
+  const sent = receipt.state === "sent";
+  return {
+    id: `rebrief-${receipt.id ?? receipt.command_id ?? receipt.at}`,
+    at: at(receipt.at),
+    time: wireClock(receipt.at),
+    kind: "rebrief",
+    word: "RE-BRIEF",
+    tone: sent ? "ok" : "warn",
+    text: rebriefWords(receipt),
+    quote: receipt.text_head ?? undefined,
+    code: receipt.command_id ? `command ${receipt.command_id}` : receipt.press_id ? `press ${receipt.press_id}` : undefined,
+  };
 }
 
 /* ── the station track ───────────────────────────────────────────── */

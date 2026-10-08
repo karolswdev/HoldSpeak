@@ -432,13 +432,23 @@ function LaneReceipts({ lane }: { lane: LaneWire }) {
   const last = [...answers].reverse().find((a) => a.outcome === "delivered" && a.text_head);
   const lastAt = last ? wireDate(last.ts)?.getTime() : undefined;
   const shown = receipt ?? (last ? { word: "SENT", at: lastAt, text: String(last.text_head), tone: "ok" as const } : null);
-  const queued = !stopped && lane.launch.queued_rebrief?.text ? lane.launch.queued_rebrief : null;
+  const queuedList = Array.isArray(lane.launch.queued_rebriefs)
+    ? lane.launch.queued_rebriefs.filter((q) => q?.text)
+    : lane.launch.queued_rebrief?.text ? [lane.launch.queued_rebrief] : [];
+  const queued = !stopped && queuedList.length ? queuedList : null;
   return (
     <>
       {stopped ? <ReceiptTokens testId="lane-stopped" tokens={["STOPPED", wireClock(stopped.at), "BY YOU"]} /> : null}
-      {queued ? (
-        <ReceiptTokens testId="lane-queued" tone="warn" tokens={["QUEUED", "AFTER THIS TURN", String(queued.text)]} />
-      ) : null}
+      {queued
+        ? queued.map((q, i) => (
+            <ReceiptTokens
+              key={String(q.id ?? i)}
+              testId="lane-queued"
+              tone="warn"
+              tokens={["QUEUED", i === 0 ? "AFTER THIS TURN" : `AFTER ${i + 1} TURNS`, String(q.text)]}
+            />
+          ))
+        : null}
       {shown && !(stopped && shown.word === "STOPPED") && !(queued && shown.word === "QUEUED") ? (
         <ReceiptTokens testId="lane-receipt" tone={shown.tone} tokens={[shown.word, shown.at ? wireClock(shown.at) : "", shown.text]} />
       ) : null}

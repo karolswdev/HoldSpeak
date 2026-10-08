@@ -679,6 +679,31 @@ def _audit_delivery_result(
     return result
 
 
+def current_wait_episode(key: str) -> str:
+    """The session's current wait episode, read from the agent session
+    registry now: ``<wait_id>|<kind>`` (``answer`` / ``approve``), ``""``
+    when it waits on nothing. The kind is part of it: a permission prompt
+    that follows a turn end keeps the episode's id (it stays blocked) but
+    is another wait."""
+    from .agent_context import list_agent_sessions
+
+    agent, _, session_id = str(key or "").partition(":")
+    for session in list_agent_sessions(agent=agent or None):
+        if str(getattr(session, "session_id", "")) == session_id:
+            return wait_episode(session)
+    return ""
+
+
+def wait_episode(session: Any) -> str:
+    """``<wait_id>|<kind>`` of a blocked session, else ``""``."""
+    from .agent_context.models import is_blocked, wait_kind
+
+    if session is None or not is_blocked(session):
+        return ""
+    wait_id = session.get("wait_id") if isinstance(session, Mapping) else getattr(session, "wait_id", "")
+    return f"{wait_id or ''}|{wait_kind(session)}"
+
+
 def deliver(
     key: str,
     text: str,
@@ -688,6 +713,7 @@ def deliver(
     submit: bool = True,
     grounding_refs: Optional[list[Any]] = None,
     expected_pane_id: Optional[str] = None,
+    expected_wait_id: Optional[str] = None,
     operation: Optional[Mapping[str, Any]] = None,
     policy_snapshot: Optional[Mapping[str, Any]] = None,
     runner: Optional[Runner] = None,
@@ -696,6 +722,11 @@ def deliver(
     audit: Optional[Callable[..., int]] = None,
 ) -> dict[str, Any]:
     """Deliver one steer into a policy-authorized, verified pane.
+
+    ``expected_wait_id`` (PHILO-15, Astra r2 on #996) binds the text to the
+    wait episode the sender read (``""``: no wait). The session is read
+    again just before the keystroke; another wait (a permission prompt that
+    began meanwhile) refuses ``wait_not_current`` and nothing is typed.
 
     Statuses: ``delivered``, ``empty_text``, the `require_grant`
     refusals verbatim (``unarmed`` / ``expired`` / ``pane_mismatch`` /
@@ -735,6 +766,14 @@ def deliver(
     if check["status"] != "ok":
         return _audited(dict(check), pane_id=None)
     pane_id = check["pane_id"]
+    if expected_wait_id is not None:
+        current = current_wait_episode(key)
+        if current != str(expected_wait_id):
+            return _audited(
+                {"status": "wait_not_current", "detail": "the agent's wait changed — nothing was typed",
+                 "wait_id": current or None},
+                pane_id=pane_id,
+            )
     send = transport
     if send is None:
         from .tmux_transport import send_text_to_pane

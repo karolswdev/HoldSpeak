@@ -102,8 +102,15 @@ def test_the_cursor_on_quit_reads_other_and_a_note_alone_is_no_path() -> None:
         ("I made the change.\n\nWhich file should hold the test (a or b)?", True),
         ("Is it **ok?**", True),
         ("See https://x.test/?q=1 for the run.", False),
-        # Codex collapses the lines: a "?" deep in a long report is not the ask.
-        ("Is the test needed? I checked: yes. " + "Then I wrote the file and ran it. " * 12, False),
+        # The ruling (Astra r2 on #996 / #998): a question anywhere is a
+        # question, whatever else the turn end says and however long it is.
+        ("Should I deploy to production?\n\nThe change is done and all tests pass.", True),
+        ("Hi! Thanks for the brief. Which branch should I push to? Everything else is done.", True),
+        # Codex collapses the lines: a question with a 300-character report after it.
+        ("Should I push the branch? " + "I wrote SECURITY.md and its test, ran both tests, and committed. " * 5, True),
+        ("Should I deploy to production. The change is done.", True),  # an interrogative, no "?"
+        ("Want me to open the PR now", True),
+        ("I can push it next. The change is done.", False),
         ("", False),
     ],
 )
@@ -257,9 +264,12 @@ def test_rebrief_mid_turn_is_queued_and_typed_once_at_the_turn_end(launched, tmp
 
     # Provenance: the delivery receipt is the owner's press, by its id.
     done = record["last_rebrief"]
-    assert done["how"] == "after_turn" and done["command_id"] == approval["command_id"]
+    # The delivery's command id is derived from the press (uuid5 of its id
+    # and the attempt), so the kernel receipt names the press that approved it.
+    assert done["how"] == "after_turn" and done["press_id"] == approval["command_id"]
+    assert done["command_id"] == launch_rebrief.attempt_command_id(approval["command_id"], 1)
     assert done["approved_by"] == approval["principal"] and done["approved_at"] == approval["at"]
-    stored = launched.db.delivery_receipts.get(approval["command_id"])
+    stored = launched.db.delivery_receipts.get(done["command_id"])
     assert stored["receipt"]["outcome"] == "delivered"
     assert stored["receipt"]["receipt_id"] == done["receipt_id"]
 
@@ -303,3 +313,126 @@ def test_the_codex_launch_mounts_the_conductor_palette_with_its_mutators() -> No
     assert {"project.item.update", "project.item.transition", "desk.create", "door.add_item",
             "follow_through.complete"} <= palette
     assert len(palette) == 138
+
+
+# ── 6. Astra r2 on #996: the wait episode, the FIFO, expiry, provenance ──
+
+
+def _press(rig, tmp_path, text: str):
+    return launch_rebrief.rebrief(
+        rig.launch_id, text, OWNER, service=rig.service, db=rig.db, sessions=_sessions(tmp_path),
+    )
+
+
+def _flush(rig, tmp_path):
+    return launch_rebrief.flush_queued([KEY], service=rig.service, sessions=_sessions(tmp_path))
+
+
+def _texts(rig, before):
+    return [text for _pane, text in rig.typed[before:]]
+
+
+def test_a_permission_prompt_that_begins_before_the_keystroke_refuses_the_delivery(launched, tmp_path, monkeypatch) -> None:
+    """The interleaving: the flush reads an idle turn end, then a permission
+    prompt arrives while it retargets and arms; the delivery is bound to the
+    episode it read, so the steering chokepoint refuses ``wait_not_current``
+    and nothing is typed. The Re-brief stays queued."""
+    _working(launched, tmp_path, monkeypatch)
+    before = len(launched.typed)
+    assert _press(launched, tmp_path, "Re-brief: one.")["status"] == launch_rebrief.QUEUED
+    _idle(launched, tmp_path, monkeypatch)
+
+    original = launched.service.first_message.retarget
+
+    def retarget_then_permission(launch_id):
+        _permission(launched, tmp_path, "Run git push origin HEAD?")
+        return original(launch_id)
+
+    monkeypatch.setattr(launched.service.first_message, "retarget", retarget_then_permission)
+    assert _flush(launched, tmp_path) == []
+    assert _texts(launched, before) == []
+    record = launched.launches.get(launched.launch_id)
+    assert [q["text"] for q in record["queued_rebriefs"]] == ["Re-brief: one."]
+    assert not record.get("rebriefs")
+
+    # An immediate press meets the same race: not typed, kept in order.
+    monkeypatch.setattr(launched.service.first_message, "retarget", original)
+    _hook(launched, tmp_path, "PostToolUse", tool_name="Bash", tool_input={"command": "git push"})
+    _idle(launched, tmp_path, monkeypatch)
+    monkeypatch.setattr(launched.service.first_message, "retarget", retarget_then_permission)
+    result = _press(launched, tmp_path, "Re-brief: two.")
+    assert result["status"] == launch_rebrief.QUEUED and result["now"] == "wait_not_current"
+    assert _texts(launched, before) == []
+
+
+def test_presses_queue_in_order_and_each_ends_in_one_receipt(launched, tmp_path, monkeypatch) -> None:
+    _working(launched, tmp_path, monkeypatch)
+    before = len(launched.typed)
+    for n in range(1, 5):  # one more than the queue holds
+        assert _press(launched, tmp_path, f"Re-brief: {n}.")["status"] == launch_rebrief.QUEUED
+    record = launched.launches.get(launched.launch_id)
+    assert [q["text"] for q in record["queued_rebriefs"]] == ["Re-brief: 2.", "Re-brief: 3.", "Re-brief: 4."]
+    [superseded] = record["rebriefs"]
+    assert superseded["state"] == launch_rebrief.SUPERSEDED and superseded["text_head"] == "Re-brief: 1."
+    assert superseded["approved_at"] and superseded["press_id"] and superseded["command_id"] is None
+
+    # Each genuine turn end takes the oldest one, and only that one.
+    _idle(launched, tmp_path, monkeypatch)
+    assert _flush(launched, tmp_path) == [KEY]
+    assert _texts(launched, before) == ["Re-brief: 2."]
+    record = launched.launches.get(launched.launch_id)
+    assert [q["text"] for q in record["queued_rebriefs"]] == ["Re-brief: 3.", "Re-brief: 4."]
+    assert record["rebriefs"][-1]["state"] == launch_rebrief.SENT
+
+    _working(launched, tmp_path, monkeypatch)
+    _idle(launched, tmp_path, monkeypatch)
+    assert _flush(launched, tmp_path) == [KEY]
+    assert _texts(launched, before) == ["Re-brief: 2.", "Re-brief: 3."]
+
+
+def test_a_delivery_clears_only_its_own_press(launched, tmp_path, monkeypatch) -> None:
+    """A press queued while an older one is being typed is kept."""
+    _working(launched, tmp_path, monkeypatch)
+    _press(launched, tmp_path, "Re-brief: older.")
+    _idle(launched, tmp_path, monkeypatch)
+    original = launched.service.first_message.retarget
+
+    def retarget_while_a_new_press_lands(launch_id):
+        record = launched.launches.get(launch_id)
+        newer = {"id": "press-newer", "text": "Re-brief: newer.", "at": record["queued_rebriefs"][0]["at"],
+                 "key": KEY, "approval": {"principal": {"kind": "owner", "identity": "owner-session"},
+                                          "at": record["queued_rebriefs"][0]["at"], "command_id": "press-newer"}}
+        launched.launches.update(launch_id, queued_rebriefs=[*record["queued_rebriefs"], newer])
+        return original(launch_id)
+
+    monkeypatch.setattr(launched.service.first_message, "retarget", retarget_while_a_new_press_lands)
+    assert _flush(launched, tmp_path) == [KEY]
+    record = launched.launches.get(launched.launch_id)
+    assert [q["text"] for q in record["queued_rebriefs"]] == ["Re-brief: newer."]
+
+
+def test_a_press_whose_agent_never_returns_expires_with_a_receipt(launched, tmp_path, monkeypatch) -> None:
+    from datetime import timedelta
+
+    _working(launched, tmp_path, monkeypatch)
+    pressed = _press(launched, tmp_path, "Re-brief: late.")
+    later = datetime.now(timezone.utc) + timedelta(seconds=launch_rebrief.QUEUE_EXPIRY_SECONDS + 60)
+    assert launch_rebrief.expire_queued(launched.service, now=later) == 1
+    record = launched.launches.get(launched.launch_id)
+    assert record["queued_rebriefs"] == [] and record.get("queued_rebrief") is None
+    [receipt] = record["rebriefs"]
+    assert receipt["state"] == launch_rebrief.EXPIRED and receipt["detail"] == "AGENT NEVER RETURNED"
+    assert receipt["press_id"] == pressed["command_id"]
+
+
+def test_the_steering_chokepoint_refuses_a_changed_wait(monkeypatch) -> None:
+    from holdspeak import coder_steering
+
+    sent: list = []
+    monkeypatch.setattr(coder_steering, "_require_delivery_authority", lambda *a, **k: {"status": "ok", "pane_id": "%7"})
+    monkeypatch.setattr(coder_steering, "current_wait_episode", lambda key: "wait-permission")
+    common = dict(current_target="%7", transport=lambda **kw: sent.append(kw), audit=lambda **kw: 1)
+    refused = coder_steering.deliver("codex:s1", "Re-brief: x", expected_wait_id="wait-idle", **common)
+    assert refused["status"] == "wait_not_current" and sent == []
+    assert coder_steering.deliver("codex:s1", "Re-brief: x", expected_wait_id="wait-permission", **common)["status"] == "delivered"
+    assert coder_steering.deliver("codex:s1", "steer", **common)["status"] == "delivered"  # unbound: as before

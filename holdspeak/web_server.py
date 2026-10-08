@@ -221,6 +221,17 @@ def _agent_spool_timer(web_ctx: Any = None, *, spool_dir: Optional[Path] = None)
     )
 
 
+def _expire_queued_rebriefs() -> None:
+    try:
+        from .db import get_database
+        from .delivery.factory_launch import default_launch_service
+        from .services.launch_rebrief import expire_queued
+
+        expire_queued(default_launch_service(get_database()))
+    except Exception as exc:
+        log.debug(f"queued re-brief expiry skipped: {exc}")
+
+
 def _coder_answer_triage(keys: list[str]) -> list[str]:
     """Conductor K5: the waits that began, split by Control mode. Returns
     the keys to notify now; a HoldSpeak-launched agent's wait in YOLO is
@@ -1940,8 +1951,14 @@ class MeetingWebServer:
         from .agent_context import event_log
 
         timer = _agent_spool_timer(web_ctx)
+        ticks = 0
         while True:
             await asyncio.to_thread(timer.tick)
+            ticks += 1
+            if ticks % 30 == 0:
+                # PHILO-15 (Astra r2 on #996): a queued Re-brief whose agent
+                # never ended a turn expires with a receipt (about each minute).
+                await asyncio.to_thread(_expire_queued_rebriefs)
             await asyncio.sleep(event_log.SpoolTimer.INTERVAL)
 
     async def _rails_observer_loop(self) -> None:

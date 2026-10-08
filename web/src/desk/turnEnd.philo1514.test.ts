@@ -16,7 +16,12 @@ describe("asksAQuestion (the hub's rule)", () => {
     ["I made the change.\n\nWhich file should hold the test (a or b)?", true],
     ["Is it **ok?**", true],
     ["See https://x.test/?q=1 for the run.", false],
-    ["Is the test needed? I checked: yes. " + "Then I wrote the file and ran it. ".repeat(12), false],
+    ["Should I deploy to production?\n\nThe change is done and all tests pass.", true],
+    ["Hi! Thanks for the brief. Which branch should I push to? Everything else is done.", true],
+    ["Should I push the branch? " + "I wrote SECURITY.md and its test, ran both tests, and committed. ".repeat(5), true],
+    ["Should I deploy to production. The change is done.", true],
+    ["Want me to open the PR now", true],
+    ["I can push it next. The change is done.", false],
     ["", false],
   ])("%j → %s", (text, asks) => {
     expect(asksAQuestion(text)).toBe(asks);

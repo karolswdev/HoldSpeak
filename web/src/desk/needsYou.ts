@@ -325,18 +325,19 @@ function coderWaitKind(session: NeedsYouCoder): "approve" | "answer" {
     : "answer";
 }
 
-/** PHILO-15 B48 (`agent_context.models.asks_a_question`): the agent's last
- * words end its turn with a question, a `?` that ends a sentence near the
- * end of the last paragraph. */
+/** PHILO-15 B48 (`agent_context.models.asks_a_question`, THE question
+ * predicate): the turn end asks the owner something when a `?` ends a
+ * sentence, or an interrogative stands, ANYWHERE in its words, however long
+ * the report around it (Astra r2 on #996 and #998). */
 export function asksAQuestion(text: unknown): boolean {
   const body = String(text ?? "").trim();
   if (!body) return false;
-  const paragraphs = body.split(/\n\s*\n/).filter((p) => p.trim());
-  const last = paragraphs.length ? paragraphs[paragraphs.length - 1] : body;
-  // Codex's Stop text arrives with its line breaks collapsed: only the end
-  // of the turn's words counts (`QUESTION_TAIL_CHARS`).
-  return /\?["'\u2019\u201d)\]*_`]*(?:\s|$)/.test(last.slice(-240));
+  return QUESTION_RE.test(body) || INTERROGATIVE_RE.test(body);
 }
+
+const QUESTION_RE = /\?["'\u2019\u201d)\]*_`]*(?:\s|$)/;
+const INTERROGATIVE_RE =
+  /\b(?:(?:should|shall|may|can|could|would|will|do|does|did|is|are)\s+(?:i|we|you)\b|want\s+me\s+to\b|would\s+you\s+like\b|do\s+you\s+want\b)/i;
 
 /** How a waiting session's turn ended (`agent_context.models.turn_end`):
  * `asks` for a permission prompt or a real question, else `idle`. */

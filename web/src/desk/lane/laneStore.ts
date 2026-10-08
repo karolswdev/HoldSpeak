@@ -183,7 +183,8 @@ export const useLane = create<LaneState>((set, get) => ({
         // PHILO-15 B46 (Astra r1 on #996): a QUEUED press is settled by the
         // hub. Once the lane holds no queued Re-brief, the local QUEUED
         // receipt goes, and the lane's own newest delivery (SENT) shows.
-        if (get().receipt?.word === "QUEUED" && !lane.launch?.queued_rebrief) patch.receipt = null;
+        const queuedNow = (lane.launch?.queued_rebriefs?.length ?? 0) > 0 || Boolean(lane.launch?.queued_rebrief);
+        if (get().receipt?.word === "QUEUED" && !queuedNow) patch.receipt = null;
         if (isNotRead(lane.events)) {
           patch.eventsNotRead = lane.events.not_read;
         } else {

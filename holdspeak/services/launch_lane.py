@@ -290,6 +290,16 @@ def _session_view(session: Optional[Mapping[str, Any]]) -> Optional[dict[str, An
     }
 
 
+def _queued_view(record: Mapping[str, Any]) -> list[dict[str, Any]]:
+    from .launch_rebrief import _queue
+
+    return [
+        {"id": q.get("id"), "text": q.get("text"), "at": q.get("at"),
+         "approved_at": (q.get("approval") or {}).get("at")}
+        for q in _queue(record)
+    ]
+
+
 def _not_read(name: str, exc: BaseException) -> dict[str, str]:
     # The reason is redacted WHOLE before it is cut (a cut secret head would
     # pass the redactor) and before it is logged.
@@ -422,8 +432,13 @@ def launch_lane(
             # PHILO-15 B42: when the brief reached the agent (its delivery
             # receipt), not when the launch began.
             "brief_sent_at": record.get("brief_sent_at"),
-            # PHILO-15 B46: a Re-brief sent mid-turn waits for the turn end.
-            "queued_rebrief": record.get("queued_rebrief") or None,
+            # PHILO-15 B46: Re-briefs sent mid-turn wait for turn ends (a
+            # small FIFO, oldest first); every press ends in one receipt
+            # (SENT / SUPERSEDED / EXPIRED) with its approval: who pressed,
+            # when, and the delivery's command id (Astra r2 on #996).
+            "queued_rebriefs": _queued_view(record),
+            "queued_rebrief": (_queued_view(record) or [None])[0],
+            "rebriefs": [dict(r) for r in (record.get("rebriefs") or []) if isinstance(r, Mapping)],
             "control_mode": record.get("control_mode"),
             "gate": record.get("gate"),
             "instruction_state": record.get("instruction_state"),
