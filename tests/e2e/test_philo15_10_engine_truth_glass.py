@@ -208,20 +208,30 @@ class TestTwoFailures:
                 row = page.locator(f"[data-testid='concierge-set-{group}']")
                 assert "UNKNOWN · TRY" in (row.text_content() or ""), row.text_content()
             page.locator("[data-testid='concierge-apply']").click()
+            # Astra r2 (finding 4): one cause, said once, with its count.
             page.wait_for_function(
-                """() => (document.querySelector("[data-testid='concierge-receipt']")?.textContent || "")
-                           .includes("AGENTS & TOOLS · NO MODEL RECORD")""",
+                """() => /GROUPS · NO MODEL RECORD/.test(
+                    document.querySelector("[data-testid='concierge-receipt']")?.textContent || "")""",
                 timeout=30_000,
             )
             receipt = _receipt(page)
-            assert "THOUGHTS & NOTES · NO MODEL RECORD" in receipt, receipt
+            assert receipt.count("NO MODEL RECORD") == 1, receipt
             page.wait_for_function(
                 """() => !!document.querySelector("[data-testid='concierge-set-fail-agents_tools']")""",
                 timeout=30_000,
             )
             assert page.locator("[data-testid='concierge-set-fail-thoughts_notes']").text_content() == "NO MODEL RECORD"
             _settle(page)
-            page.screenshot(path=str(SHOTS / f"receipt-two-failures-{width}.png"), full_page=False)
+            page.screenshot(path=str(SHOTS / f"receipt-failures-{width}.png"), full_page=False)
+            # Astra r2 (finding 3): a reload reads the hub's receipt again.
+            _open_models(page)
+            page.wait_for_function(
+                """() => !!document.querySelector("[data-testid='concierge-set-fail-thoughts_notes']")""",
+                timeout=30_000,
+            )
+            assert "NO MODEL RECORD" in _receipt(page), _receipt(page)
+            _settle(page)
+            page.screenshot(path=str(SHOTS / f"receipt-failures-reloaded-{width}.png"), full_page=False)
             browser.close()
 
 

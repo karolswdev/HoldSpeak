@@ -107,6 +107,9 @@ export interface DetectResponse {
   checkedAt: string;
   repairs: Repair[];
   summaryAssignment: SummaryAssignment | null;
+  /** PHILO-15 10 (Astra r2, finding 3): the last "Use these" press's failed
+   *  groups, read from its hub receipt; survives a reload. */
+  lastApply?: { receipt: string; failures: Array<{ group: string; token: string }> } | null;
 }
 
 export interface ProposalRow {
@@ -291,7 +294,20 @@ function decodeDetect(raw: Record<string, unknown>): DetectResponse {
       ? (raw.repairs as Record<string, unknown>[]).map(decodeRepair)
       : [],
     summaryAssignment: decodeSummaryAssignment(raw.summaryAssignment),
+    lastApply: decodeLastApply(raw.lastApply),
   };
+}
+
+function decodeLastApply(raw: unknown): DetectResponse["lastApply"] {
+  if (!raw || typeof raw !== "object") return null;
+  const value = raw as Record<string, unknown>;
+  const failures = Array.isArray(value.failures)
+    ? (value.failures as Record<string, unknown>[]).map((f) => ({
+        group: String(f.group ?? ""),
+        token: String(f.token ?? "FAILED"),
+      }))
+    : [];
+  return failures.length ? { receipt: String(value.receipt ?? ""), failures } : null;
 }
 
 function decodeFits(raw: unknown): Record<string, GroupFit> | undefined {

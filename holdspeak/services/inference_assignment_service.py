@@ -764,6 +764,28 @@ class InferenceAssignmentService:
             "saveable": not self._save_blockers(parsed, entries, affected, issues),
         }
 
+    def capability_override_ready(self, principal: Principal, capability_id: str) -> bool:
+        """True when the capability's OWN assignment would serve it now.
+
+        PHILO-15 10 (Astra r2, finding 2): an uncleared head is not enough.
+        The head must resolve with no blocking issue (a missing binding is
+        blocking) and with no readiness repair (disabled, or not ready).
+        """
+        self._require_owner(principal)
+        try:
+            definition = self._registry.require(capability_id)
+        except Exception:
+            return False
+        with self._db._connection() as conn:
+            resolved = self._resolve(conn, definition, sources=("capability",))
+        if resolved.get("status") != "assigned":
+            return False
+        issues = (resolved.get("assignment") or {}).get("issues") or []
+        return not any(
+            issue.get("code") in {"binding_not_ready", "binding_disabled", "binding_missing"}
+            for issue in issues
+        )
+
     def clear_assignment(
         self, principal: Principal, body: Mapping[str, Any]
     ) -> dict[str, Any]:

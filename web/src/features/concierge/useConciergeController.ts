@@ -159,8 +159,14 @@ export function receiptLine(receipt: ApplyReceipt): string {
     if (receipt.off > 0) parts.push(`${receipt.off} OFF`);
   }
   if (receipt.defaultSet) parts.push("DEFAULT SET");
+  // Astra r2 (finding 4): each cause ONCE. One group names itself; several
+  // with one cause read `5 GROUPS · NO MODEL RECORD`. Each row keeps its own.
+  const byToken = new Map<string, string[]>();
   for (const failure of receipt.failures) {
-    parts.push(`${failure.label.toUpperCase()} · ${failure.token}`);
+    byToken.set(failure.token, [...(byToken.get(failure.token) ?? []), failure.label]);
+  }
+  for (const [token, labels] of byToken) {
+    parts.push(labels.length === 1 ? `${labels[0].toUpperCase()} · ${token}` : `${labels.length} GROUPS · ${token}`);
   }
   return parts.join(" · ");
 }
@@ -376,6 +382,27 @@ export function useConciergeController(): ConciergeController {
         setDetection(det);
         setProposal(prop);
         setRepairs(det.repairs);
+        // Astra r2 (finding 3): the failed groups are the HUB's record of
+        // the last press (its receipt), so a reload or a reopen shows them.
+        const lastFailures = det.lastApply?.failures ?? [];
+        failedRef.current = Object.fromEntries(lastFailures.map((f) => [f.group, f.token]));
+        if (lastFailures.length) {
+          const labelOf = (group: string) =>
+            prop.rows.find((r) => r.group === group)?.label ?? group;
+          setApplyReceipt((current) =>
+            current ?? {
+              kind: "set",
+              engine: "",
+              host: "",
+              ready: 0,
+              limited: 0,
+              failed: lastFailures.length,
+              off: 0,
+              defaultSet: false,
+              failures: lastFailures.map((f) => ({ ...f, label: labelOf(f.group) })),
+            },
+          );
+        }
         // Build set rows from proposal
         const rows: SetRow[] = prop.rows.map((r) => {
           // Build alternatives: all engines compatible with this group

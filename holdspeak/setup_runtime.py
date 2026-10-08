@@ -219,8 +219,13 @@ def endpoint_tool_support(
 
     1. ``/models`` named ``tools`` among a model's capabilities -> yes.
     2. llama.cpp ``/props`` -> ``chat_template_caps.supports_tools``.
-    3. On this network only (never a paid cloud call): a 1-token chat
-       request that carries one tool.  2xx -> yes; 400 -> no.
+    3. Only when ``lan`` is true: a 1-token chat request that carries one
+       tool (fixed text "ok", one no-op tool; no owner material).
+       2xx -> yes; 400 -> no.  The route sets ``lan`` for a keyless private
+       or loopback address literal, or when the owner sets MY SERVER on
+       the add row; with MY SERVER this request can reach a keyed or paid
+       gateway, by the owner's choice.  Metadata (1, 2) answers first when
+       it can, and then no request is sent.
 
     Anything else is ``unknown``.  This is the SERVER's answer; whether
     HoldSpeak can run a work on it is the assignment authority's answer.

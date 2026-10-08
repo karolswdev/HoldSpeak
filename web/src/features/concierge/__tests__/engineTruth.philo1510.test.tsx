@@ -176,6 +176,16 @@ describe("PHILO-15 10 — receipts, not surprises (B10, Astra r1 finding 3)", ()
       ],
     });
     await open();
+    // The hub's re-read carries the failures the press recorded on its
+    // receipt (`lastApply`, concierge_service.last_apply), as the real
+    // /api/concierge/detect does.
+    mocks.detect.mockResolvedValue({
+      ...detection(),
+      lastApply: { receipt: "r1", failures: [
+        { group: "thoughts_notes", token: "NO MODEL RECORD" },
+        { group: "agents_tools", token: "INCOMPATIBLE" },
+      ] },
+    });
     fireEvent.click(screen.getByTestId("concierge-apply"));
     await waitFor(() =>
       expect(screen.getByTestId("concierge-receipt").textContent).toBe(
@@ -188,6 +198,36 @@ describe("PHILO-15 10 — receipts, not surprises (B10, Astra r1 finding 3)", ()
       expect(screen.getByTestId("concierge-set-fail-thoughts_notes").textContent).toBe("NO MODEL RECORD"),
     );
     expect(screen.getByTestId("concierge-set-fail-agents_tools").textContent).toBe("INCOMPATIBLE");
+  });
+
+  // Astra r2 (finding 4): one cause is said once, with its count.
+  it("says a repeated cause once, with the count", () => {
+    expect(
+      receiptLine({ kind: "set", engine: "", host: "", ready: 0, limited: 0, failed: 3, off: 0, defaultSet: false,
+        failures: [
+          { group: "a", label: "Thoughts & notes", token: "NO MODEL RECORD" },
+          { group: "b", label: "Meetings", token: "NO MODEL RECORD" },
+          { group: "c", label: "Agents & tools", token: "INCOMPATIBLE" },
+        ] }),
+    ).toBe("2 GROUPS · NO MODEL RECORD · AGENTS & TOOLS · INCOMPATIBLE");
+  });
+
+  // Astra r2 (finding 3): the failures are the hub's record; a fresh mount
+  // (a reload, a reopen) reads them from detection.
+  it("shows the last press's failures after a remount", async () => {
+    mocks.detect.mockResolvedValue({
+      ...detection(),
+      lastApply: { receipt: "r9", failures: [
+        { group: "thoughts_notes", token: "NO MODEL RECORD" },
+        { group: "background", token: "NO MODEL RECORD" },
+      ] },
+    });
+    mocks.propose.mockResolvedValue(proposal());
+    render(<ConciergeCore scope="" />);
+    await screen.findByTestId("concierge-set-list");
+    expect(screen.getByTestId("concierge-set-fail-thoughts_notes").textContent).toBe("NO MODEL RECORD");
+    expect(screen.getByTestId("concierge-set-fail-background").textContent).toBe("NO MODEL RECORD");
+    expect(screen.getByTestId("concierge-receipt").textContent).toBe("2 GROUPS · NO MODEL RECORD");
   });
 
   it("the waiting-group refusal is a token, not the server's sentence", async () => {

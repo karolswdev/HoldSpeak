@@ -106,6 +106,47 @@ def test_a_work_with_its_own_engine_is_not_a_limit(db: Database) -> None:
     assert rows["background"]["blocked"] == ["Calendar"]
 
 
+def _thought_override(db: Database, svc: InferenceAssignmentService, *, ready: bool = True) -> None:
+    _profile(db, "thinker", claims=("language", _result_claim("thought.interview")), ready=ready,
+             boundary="private_network")
+    svc.set_assignment(OWNER, {
+        "command_id": "thought-own", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "thought.interview"},
+        "entries": [{"profile_id": "thinker", "profile_revision": 1}],
+    })
+
+
+def _thoughts_row(db: Database, svc: InferenceAssignmentService) -> dict:
+    lan = _lan(db, enforced=False)  # an older, language-only candidate
+    return {r["group"]: r for r in cs.propose(engines=[lan], fit=cs.authority_fit(svc, OWNER, db))["rows"]}[
+        "thoughts_notes"]
+
+
+def test_a_ready_own_assignment_serves_the_work(db: Database) -> None:
+    svc = InferenceAssignmentService(db)
+    _thought_override(db, svc)
+    assert _thoughts_row(db, svc)["state"] == "READY"
+
+
+def test_an_unbound_own_assignment_serves_nothing(db: Database) -> None:
+    """Astra r2 (finding 2): an uncleared head whose profile lost its binding
+    does not make the group READY; the group stays LIMITED."""
+    svc = InferenceAssignmentService(db)
+    _thought_override(db, svc)
+    with db._connection() as conn:
+        conn.execute("DELETE FROM model_profile_binding_heads WHERE profile_id='thinker'")
+    row = _thoughts_row(db, svc)
+    assert row["state"] == "LIMITED"
+    assert row["blocked"] == ["Thoughts"]
+
+
+def test_a_not_ready_own_assignment_serves_nothing(db: Database) -> None:
+    svc = InferenceAssignmentService(db)
+    _thought_override(db, svc, ready=False)
+    row = _thoughts_row(db, svc)
+    assert row["state"] == "LIMITED"
+
+
 def test_the_library_profile_claims_what_executors_enforce() -> None:
     from holdspeak.services.model_library_service import enforced_result_claims
 
@@ -288,11 +329,39 @@ def test_a_failed_group_carries_its_token(db: Database) -> None:
     assert row["state"] == "failed"
 
 
-def test_the_speech_model_downloads_alone(tmp_path: Path) -> None:
-    """Astra r1 (finding 2): `only=["whisper"]` fetches Whisper and nothing else."""
+def test_the_speech_model_downloads_alone(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Astra r2: `{"only": ["whisper"]}` fetches the Whisper files and nothing
+    else, sets nothing up after, and needs no llama.cpp runtime."""
+    from holdspeak.services import local_ai_setup_service as las
     from holdspeak.services.errors import ServiceError
-    from holdspeak.services.local_ai_setup_service import LocalAISetupService
 
-    svc = LocalAISetupService.__new__(LocalAISetupService)
+    svc = las.LocalAISetupService.__new__(las.LocalAISetupService)
+    import threading
+    svc._lock = threading.Lock()
+    svc._thread = None
+    svc._cancel = threading.Event()
+    svc._error = ""
+    svc._home = lambda: tmp_path
+    svc._runtime = lambda: {"ready": False}  # no llama.cpp: speech must not need it
+    plan = [
+        {"key": "whisper", "model": type("M", (), {"size": 10})(), "on_device": False},
+        {"key": "embed", "model": type("M", (), {"size": 20})(), "on_device": False},
+        {"key": "starter", "model": type("M", (), {"size": 30})(), "on_device": False},
+    ]
+    svc._plan = lambda: plan
+    seen: dict = {}
+
+    def fake_download(principal, plan_, missing, set_up=True):
+        seen["missing"] = [item["key"] for item in missing]
+        seen["set_up"] = set_up
+
+    svc._download_then_set_up = fake_download
+    svc.status = lambda principal=None: {"state": "downloading"}
+    las.LocalAISetupService.start(svc, OWNER, only=["whisper"])
+    svc._thread.join(5)
+    assert seen == {"missing": ["whisper"], "set_up": False}
     with pytest.raises(ServiceError):
-        LocalAISetupService.start(svc, OWNER, only=["everything"])
+        las.LocalAISetupService.start(svc, OWNER, only=["everything"])
+    # The full press still checks the runtime first.
+    with pytest.raises(ServiceError):
+        las.LocalAISetupService.start(svc, OWNER)

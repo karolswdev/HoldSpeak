@@ -103,6 +103,11 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             except Exception as exc:  # pragma: no cover - never break detect
                 log.warning(f"concierge repairs unavailable: {exc}")
                 result["repairs"] = []
+            # PHILO-15 10 (Astra r2, finding 3): the last press's failed
+            # groups, read from its receipt, survive a reload.
+            from ...services.concierge_service import last_apply
+
+            result["lastApply"] = last_apply(db)
             return JSONResponse(result)
         except ServiceError as exc:
             return _safe_error(exc)

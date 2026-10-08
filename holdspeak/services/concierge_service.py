@@ -1069,12 +1069,19 @@ def authority_fit(
             profile_revision=revision if type(revision) is int and revision > 0 else None,
         )
         # A work with its OWN engine (meaning search's memory.embed, the
-        # device's speech.transcribe) runs there, whatever the group holds.
+        # device's speech.transcribe) runs there, whatever the group holds --
+        # but only when that own assignment is bound and ready NOW (Astra r2,
+        # finding 2): a head alone, unbound or not ready, serves nothing.
         own = _capabilities_with_own_engine(db)
-        if isinstance(answer, dict) and own:
-            kept = [b for b in answer.get("blocked") or [] if str(b.get("capability_id")) not in own]
-            moved = [str(b.get("capability_id")) for b in answer.get("blocked") or [] if str(b.get("capability_id")) in own]
-            answer = {**answer, "blocked": kept, "served": [*answer.get("served", []), *moved]}
+        ready_check = getattr(assignment_service, "capability_override_ready", None)
+        if isinstance(answer, dict) and own and callable(ready_check):
+            served_elsewhere = {
+                str(b.get("capability_id")) for b in answer.get("blocked") or []
+                if str(b.get("capability_id")) in own
+                and ready_check(principal, str(b.get("capability_id")))
+            }
+            kept = [b for b in answer.get("blocked") or [] if str(b.get("capability_id")) not in served_elsewhere]
+            answer = {**answer, "blocked": kept, "served": [*answer.get("served", []), *sorted(served_elsewhere)]}
         return answer
 
     return _fit
@@ -2285,6 +2292,36 @@ def _default_from_set(
     return {"engineId": main["id"], "name": main.get("name"), "host": main.get("host")}
 
 
+def last_apply(db: Any) -> dict[str, Any] | None:
+    """The newest "Use these" receipt, with its failed groups (Astra r2, 3).
+
+    ``None`` when there is none, or when the newest one failed nothing.
+    """
+    try:
+        with db._connection() as conn:
+            row = conn.execute(
+                """SELECT r.receipt_id, r.result_ref, r.created_at FROM kernel_receipts r
+                     JOIN kernel_operations o ON o.operation_id=r.operation_id
+                    WHERE o.name='concierge_apply'
+                    ORDER BY r.created_at DESC LIMIT 1"""
+            ).fetchone()
+    except Exception:
+        return None
+    if row is None or not str(row["result_ref"] or "").startswith("{"):
+        return None
+    try:
+        material = json.loads(str(row["result_ref"]))
+    except ValueError:
+        return None
+    failures = [
+        {"group": str(f.get("group") or ""), "token": str(f.get("token") or "FAILED")}
+        for f in material.get("failures") or [] if isinstance(f, dict)
+    ]
+    if not failures:
+        return None
+    return {"receipt": str(row["receipt_id"]), "failures": failures}
+
+
 def _write_kernel_receipt(
     db: Any,
     results: list[dict[str, Any]],
@@ -2339,11 +2376,23 @@ def _write_kernel_receipt(
                 ),
             )
             # Insert the kernel receipt
+            # PHILO-15 10 (Astra r2, finding 3): the failed groups ride on
+            # the receipt itself, so a reload reads the same receipt the
+            # press wrote (``last_apply``), not a page's memory.
+            failed_material = (
+                json.dumps(
+                    {"schema": "ConciergeApplyFailures@1",
+                     "failures": [{"group": str(r.get("group") or ""), "token": str(r.get("token") or "FAILED")}
+                                  for r in failed]},
+                    sort_keys=True, separators=(",", ":"),
+                )
+                if operation_kind == "concierge_apply" and failed else ""
+            )
             conn.execute(
                 """INSERT INTO kernel_receipts
                    (receipt_id, operation_id, state, outcome, result_ref, created_at)
                    VALUES (?, ?, ?, ?, ?, ?)""",
-                (receipt_id, operation_id, state, outcome, "", now),
+                (receipt_id, operation_id, state, outcome, failed_material, now),
             )
     except Exception as exc:
         log.error(f"Concierge receipt write failed: {exc}")
