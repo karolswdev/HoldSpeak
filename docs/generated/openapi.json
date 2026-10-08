@@ -28024,6 +28024,66 @@
         "summary": "Api Save Update"
       }
     },
+    "/api/updates/{update_id}/claims/{span_id}/review": {
+      "post": {
+        "operationId": "api_review_claim_api_updates__update_id__claims__span_id__review_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "update_id",
+            "required": true,
+            "schema": {
+              "title": "Update Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "span_id",
+            "required": true,
+            "schema": {
+              "title": "Span Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Payload",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Review Claim Api Updates  Update Id  Claims  Span Id  Review Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Review Claim"
+      }
+    },
     "/api/updates/{update_id}/delivered": {
       "post": {
         "description": "Mark it delivered: one admitted record per confirmation (R4-2).\n\nBody (optional): ``{delivered_to, command_id}``. The face mints ONE\n``command_id`` per press of Mark delivered and keeps it across its\nretries; a repeat of that key answers the original record.",

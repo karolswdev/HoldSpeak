@@ -287,7 +287,12 @@ def _source_row(item: dict[str, Any], now: datetime) -> dict[str, Any]:
         repair = dict(_REPAIRS["never_checked"])
         reason = reason or "never checked"
     else:
-        next_dt = _parse_iso(next_check)
+        # PHILO-15 B69: the Room moves a passed next check ahead for the face
+        # and keeps the missed one as ``missedCheckAt``; a missed check is
+        # STALE here (a quiet-hours hold is never a missed check).
+        next_dt = _parse_iso(item.get("missedCheckAt") or next_check)
+        if item.get("freshness") == "quiet":
+            next_dt = None
         if next_dt is not None and next_dt < now:
             state = STATE_STALE
             repair = dict(_REPAIRS[STATE_STALE])

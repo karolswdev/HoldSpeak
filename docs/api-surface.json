@@ -6580,6 +6580,16 @@
       ]
     },
     {
+      "path": "/api/updates/{update_id}/claims/{span_id}/review",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_updates",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/updates/{update_id}/delivered",
       "methods": [
         "POST"
@@ -6661,7 +6671,9 @@
         "POST"
       ],
       "module": "web.routes.providers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/watches/{watch_id}/pause",

@@ -1808,10 +1808,17 @@ class ProjectService:
             if parsed is not None and parsed.tzinfo is None:
                 parsed = parsed.replace(tzinfo=_tz.utc)
             if window is not None:
+                # A check missed BEFORE quiet hours began is still missed.
+                if parsed is not None and parsed < window[0]:
+                    src["missedCheckAt"] = when
                 # Held until the quiet end: never sooner than that.
                 if parsed is None or parsed <= window[1]:
                     src["nextCheckAt"] = quiet_iso
             elif parsed is None or parsed <= now_utc:
+                if parsed is not None:
+                    # The fact stays: this check was missed (the preparation
+                    # Brief reads it as STALE); the face shows the next one.
+                    src["missedCheckAt"] = when
                 src["nextCheckAt"] = ahead.isoformat(timespec="seconds")
         return quiet_iso
 

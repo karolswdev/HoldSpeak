@@ -46,6 +46,10 @@ def test_the_rig_reaches_the_send_and_reads_each_receipt(tmp_path: Path) -> None
         op("project.create", {"name": "Payments ledger cutover"}, capture_as="project_id", capture_path="project.id")
         drafted = op("project.draft_update", {"project_id": variables["project_id"]})
         update = drafted["update"]["id"]
+        # PHILO-15 B64: a fresh Project drafts an unreviewed NOTHING TO REPORT
+        # (refused NOTHING VERIFIED); the owner's saved line is reviewed.
+        op("project.update_draft", {"update_id": update,
+                                    "body_md": "## Progress\n\nThe ledger cutover is on track.\n"})
         op("project.publish_update", {"update_id": update})
         saved = op("channel.save_destination", {"name": "Team folder", "channel": "file", "folder": str(folder)})
         assert receipt(saved["operation_id"])["state"] == "succeeded"

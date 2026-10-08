@@ -478,19 +478,13 @@ class HeartbeatService:
 
     def _hold_sources_until(self, until: datetime) -> int:
         """PHILO-15 B60: a sweep held by quiet hours moves every armed Watch's
-        next check to the quiet end, so no source reads as late because
-        HoldSpeak slept. Returns the rows moved."""
-        stamp = until.astimezone(timezone.utc).isoformat(timespec="seconds")
+        next check to the quiet end, through WatchService (the one writer of
+        connector_watches), so no source reads as late because HoldSpeak
+        slept. Returns the rows moved."""
+        from holdspeak.services.watch_service import WatchService
+
         try:
-            with self._db._connection() as conn:
-                cur = conn.execute(
-                    """UPDATE connector_watches SET next_evaluation_at = ?
-                       WHERE enabled = 1 AND state IN ('active', 'tested')
-                         AND next_evaluation_at IS NOT NULL
-                         AND next_evaluation_at < ?""",
-                    (stamp, stamp),
-                )
-                return int(cur.rowcount or 0)
+            return WatchService(self._db).hold_armed_until(until)
         except Exception as exc:
             log.error("heartbeat quiet hold of sources failed: %s", exc)
             return 0

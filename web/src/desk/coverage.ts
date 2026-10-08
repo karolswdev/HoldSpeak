@@ -76,6 +76,8 @@ const GAP_ORDER: Record<string, number> = {
   forbidden: 1,
   unavailable: 2,
   stale: 3,
+  // PHILO-15 B60: held by quiet hours, between stale and fresh.
+  quiet: 4,
 };
 
 /**

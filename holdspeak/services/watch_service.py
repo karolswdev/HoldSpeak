@@ -652,6 +652,21 @@ class WatchService:
 
     # ── Baseline ────────────────────────────────────────────────────
 
+    def hold_armed_until(self, until: datetime) -> int:
+        """PHILO-15 B60: quiet hours held the sweep. Every armed, evaluable
+        Watch whose next check comes sooner waits for ``until`` (aware); a
+        later next check is kept. Returns the rows moved."""
+        stamp = until.astimezone(timezone.utc).isoformat(timespec="seconds")
+        with self._db._connection() as conn:
+            cur = conn.execute(
+                """UPDATE connector_watches SET next_evaluation_at = ?
+                   WHERE enabled = 1 AND state IN ('active', 'tested')
+                     AND next_evaluation_at IS NOT NULL
+                     AND next_evaluation_at < ?""",
+                (stamp, stamp),
+            )
+            return int(cur.rowcount or 0)
+
     def _mark_read(self, watch_id: str) -> None:
         """A read that found nothing new still counts as a successful check."""
         try:
