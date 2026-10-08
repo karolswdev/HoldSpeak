@@ -43,8 +43,9 @@ _UNLAUNCHED = frozenset({"failed", "admitted", "approved", "rejected", "starting
 
 
 def _agent_of(record: Mapping[str, Any]) -> str:
-    profile = str(record.get("profile_id") or "").lower()
-    return "codex" if profile.startswith("codex") else "claude"
+    from ..delivery.factory_launch import agent_of_profile
+
+    return agent_of_profile(record.get("profile_id"))
 
 
 def _session_index(sessions: Iterable[Any]) -> dict[str, Any]:

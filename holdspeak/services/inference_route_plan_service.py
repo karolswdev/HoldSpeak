@@ -239,6 +239,38 @@ class InferenceRoutePlanService:
                 conn.rollback()
                 raise
 
+    def resolve_deployments(
+        self, authority: Principal, *, capability_id: str,
+    ) -> list[tuple[DeploymentRevision, bool]]:
+        """Pure resolution, private side: each route leg's deployment and
+        whether its preflight says it can run, in route order. For an
+        executor outside the hub's own runner (a pi launch runs on the
+        engine for coding work, ``delivery.pi_launch``). No durable or
+        external effect; the deployment carries no key value."""
+        self._require_planner(authority)
+        capability = self._registry.require(capability_id)
+        policy_revision = self._operation_policy(capability, None)
+        with self._db._connection() as conn:
+            conn.execute("BEGIN")
+            try:
+                _result, revisions, preflight = self._resolve_in_conn(
+                    conn,
+                    capability=capability,
+                    operation_policy_revision=policy_revision,
+                    invocation_id=None,
+                    subject_kind=None,
+                    subject_id=None,
+                    plan_id=None,
+                )
+                conn.rollback()
+            except Exception:
+                conn.rollback()
+                raise
+        return [
+            (revision, str((leg or {}).get("eligibility") or "") == "executable")
+            for revision, leg in zip(revisions, preflight)
+        ]
+
     def resolve_route_plan_for_feature(
         self,
         authority: Principal,

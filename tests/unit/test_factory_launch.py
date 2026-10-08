@@ -262,8 +262,9 @@ def test_profile_store_seeds_fixed_executables_and_drops_a_smuggled_shell(
     assert {p["profile_id"] for p in wire["profiles"]} == {
         "claude-default",
         "codex-default",
+        "pi-default",
     }
-    assert all(p["executable"] in ("claude", "codex") for p in wire["profiles"])
+    assert all(p["executable"] in ("claude", "codex", "pi") for p in wire["profiles"])
 
     # A hand-edited smuggle (a path executable, a metachar arg, a free
     # option) is dropped WHOLE on reload — never partially accepted.

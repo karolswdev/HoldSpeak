@@ -1,0 +1,9 @@
+drwx------ .
+drwx------ sessions
+-rw------- auth.json
+-rw------- holdspeak.json
+-rw------- mcp.json
+-rw------- models-store.json
+-rw------- models.json
+-rw-r--r-- settings.json
+-rw-r--r-- sessions/2026-10-08T21-46-44-452Z_01a11d7b-a364-7536-868b-81b85a9b5e80.jsonl

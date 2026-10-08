@@ -200,7 +200,11 @@ def test_a_deny_tells_the_agent_the_reason_and_to_stop() -> None:
         "denied from the desk: OUTSIDE THE WORKTREE · /tmp/pr_body.md. "
         "The owner denied this call. Do not try it again in a different form."
     )
-    assert _deny_reason({"state": "expired"}) == "the hold expired with no decision"
+    # pi spike #1020: the expiry deny closes like the owner deny.
+    assert _deny_reason({"state": "expired"}) == (
+        "the hold expired with no decision. "
+        "This call expired with no decision. Do not try it again in a different form."
+    )
 
 
 # ── B67 ───────────────────────────────────────────────────────────────

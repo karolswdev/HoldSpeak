@@ -650,12 +650,17 @@ class NodeCommandProcessor:
             )
             basis = "armed_pane_grant"
         elif verb == "factory.spawn":
+            # A pi launch names its engine's key SLOT; the value is read here,
+            # at execution, so no key is in the command record (pi spike #1020).
+            from .pi_launch import key_for_slot
+
             result = coder_factory.spawn(
                 str(payload.get("name") or ""),
                 command=payload.get("command"),
                 launch_id=(str(payload.get("launch_id") or "") or None),
                 scope_items=tuple(str(i) for i in (payload.get("scope_items") or []) if i),
                 project_id=(str(payload.get("project_id") or "") or None),
+                model_key=key_for_slot(str(payload.get("model_key_slot") or "")),
                 **kwargs,
             )
             basis = "authenticated_owner"

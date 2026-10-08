@@ -73,7 +73,7 @@ export function handOriginOfRef(
   return hand ? { ...hand, title: name, projectId: projectId ?? null } : null;
 }
 
-const AGENTS: ReadonlySet<string> = new Set(["claude", "codex"]);
+const AGENTS: ReadonlySet<string> = new Set(["claude", "codex", "pi"]);
 
 /** The agent a drop target stands for: the Conductor drawer is the default
  *  agent (Claude Code, the owner's ruling); an agent icon (`coder:<agent>:<session>`)

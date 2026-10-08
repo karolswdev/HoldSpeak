@@ -67,6 +67,21 @@ export interface HandPreview {
    *  hand clones it from `host` first (egress), into `label`. */
   clone?: { repository: string; host: string; state: string; label?: string | null } | null;
   refused: string[];
+  /** pi: the hub's engine for coding work the launch runs on (its egress). */
+  engine?: { host: string; model: string; boundary: string } | null;
+}
+
+/** The egress of a hand-off: the agent's model host. pi's is the hub's
+ *  engine for coding work, named by the preview (`LAN · 192.168.1.43:8080`
+ *  on the owner's network, the host itself off it). */
+export function engineEgress(agent: AgentId, preview: HandPreview | null | undefined): {
+  label: string;
+  scope: "cloud" | "remote";
+} {
+  const engine = agent === "pi" ? preview?.engine : null;
+  if (!engine) return { label: AGENT_HOST[agent], scope: agent === "pi" ? "remote" : "cloud" };
+  const host = engine.host.toUpperCase();
+  return engine.boundary === "private_network" ? { label: `LAN · ${host}`, scope: "remote" } : { label: host, scope: "cloud" };
 }
 
 /** POST /api/agent/hand (202) and GET /api/agent/launches/{id}: the launch's delivery. */
@@ -115,7 +130,7 @@ export const HAND_DELIVER_PATH = (id: string) => `${HAND_LAUNCH_PATH(id)}/delive
 /** The delivery state is known once it leaves `pending` (first_message.py). */
 const DELIVERY_POLL_MS = 2000;
 
-const PROFILE_AGENT: Record<string, AgentId> = { "claude-default": "claude", "codex-default": "codex" };
+const PROFILE_AGENT: Record<string, AgentId> = { "claude-default": "claude", "codex-default": "codex", "pi-default": "pi" };
 export function agentOfProfile(profile: string | null | undefined, fallback: AgentId): AgentId {
   return PROFILE_AGENT[String(profile ?? "")] ?? fallback;
 }
@@ -132,7 +147,7 @@ export function deliveryToken(launch: HandLaunch): { label: string; tone: "ok" |
   return { label: `LAUNCHED · BRIEF NOT SENT · ${codeWords(state)} · KEPT ON THE HUB · SEND AGAIN`, tone: "danger", done: true };
 }
 
-const AGENTS: AgentId[] = ["claude", "codex"];
+const AGENTS: AgentId[] = ["claude", "codex", "pi"];
 
 /** The Control mode as the owner names it (Settings: Secure, Normal, YOLO). */
 export function modeWord(mode: string | null | undefined): string {
@@ -521,7 +536,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
       </div>
       <SurfaceFooter
         className={launched ? "desk-hand-footer is-launched" : "desk-hand-footer"}
-        egress={<EgressChip label={AGENT_HOST[actual]} scope="cloud" />}
+        egress={<EgressChip {...engineEgress(actual, preview)} />}
         receipt={
           delivery ? (
             <span className="surface-footer-receipt-line" data-tone={delivery.tone} role="status" data-testid="hand-launch-receipt">

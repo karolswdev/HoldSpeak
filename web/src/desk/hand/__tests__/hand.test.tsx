@@ -501,6 +501,40 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
   });
 });
 
+describe("pi spike #1020: pi is the third agent on the line", () => {
+  it("the flip turns CLAUDE CODE → CODEX → PI → CLAUDE CODE; pi's egress is the engine for coding", async () => {
+    world.preview = { ...PREVIEW, engine: { host: "192.168.1.43:8080", model: "qwen3.8-27b", boundary: "private_network" } };
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
+    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).getByTestId("hand-confirm-agent")).toHaveAccessibleName("Agent: Codex. Press to hand to pi");
+    fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
+    await factIs(line, "PI · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).getByTestId("hand-confirm-agent")).toHaveAttribute("data-agent", "pi");
+    expect(within(line).getByText("LAN · 192.168.1.43:8080")).toBeTruthy();
+    const previews = posts("/api/agent/hand/preview").map((c) => (c.init?.json as { profile: string }).profile);
+    expect(previews).toEqual(["claude-default", "codex-default", "pi-default"]);
+    fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
+    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("LAUNCHED · BRIEF SENT");
+    expect((posts("/api/agent/hand")[0].init?.json as { profile: string }).profile).toBe("pi-default");
+  });
+
+  it("no engine for coding: the route's own word, and Hand cannot be pressed", async () => {
+    world.preview = { ...PREVIEW, refused: ["no_assignment"], engine: null };
+    await renderDesk();
+    dragOnto(comms(), conductor());
+    const line = await within(drawer()).findByTestId("hand-confirm");
+    fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
+    fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
+    await factIs(line, "PI · YOLO · hs/write-the-cutover-comms");
+    expect(await within(line).findByText("NO ASSIGNMENT")).toBeTruthy();
+    expect(within(line).getByRole("button", { name: "Hand" })).toBeDisabled();
+  });
+});
+
 describe("PHILO-15 16 (Astra r1 on #1000): the default and the owner's flip", () => {
   const agent = (id: string, signedIn: string) => ({
     id, label: id, installed: true, path: `/bin/${id}`, version: "1", hooks: "installed", signed_in: signedIn, ready: true, verb: null,
@@ -523,6 +557,10 @@ describe("PHILO-15 16 (Astra r1 on #1000): the default and the owner's flip", ()
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
     expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("CODEX · SIGN-IN UNKNOWN");
+    // pi spike #1020: the flip turns through pi (no sign-in of its own: no warning).
+    fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
+    await factIs(line, "PI · YOLO · hs/write-the-cutover-comms");
+    expect(within(line).queryByTestId("hand-confirm-selected-unknown")).toBeNull();
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
     await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");

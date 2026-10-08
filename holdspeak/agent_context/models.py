@@ -18,7 +18,12 @@ from ._common import _optional_str
 AGENT_CONTEXT_FILE = CONFIG_DIR / "agent_sessions.json"
 
 
-SUPPORTED_AGENTS = {"claude", "codex"}
+SUPPORTED_AGENTS = {"claude", "codex", "pi"}
+
+#: The agents whose turn end (``Stop``) is their wait for input: they send no
+#: idle Notification, so the Stop payload's last message is the ask (Codex,
+#: Conductor R3; pi, through its extension's ``agent_end``).
+STOP_IS_WAIT_AGENTS = frozenset({"codex", "pi"})
 
 
 STATE_VERSION = 1

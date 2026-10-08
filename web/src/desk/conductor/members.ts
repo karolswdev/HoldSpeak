@@ -69,7 +69,7 @@ export interface ConductorReads {
   now?: Date;
 }
 
-const AGENT_IDS: readonly AgentId[] = ["claude", "codex"];
+const AGENT_IDS: readonly AgentId[] = ["claude", "codex", "pi"];
 
 /** The list's group (the Floor list's `group`): askers first in every view. */
 export const GROUP = { ask: 0, work: 1, ready: 2, stale: 3 } as const;

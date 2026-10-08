@@ -1,0 +1,55 @@
+{
+  "gate": {
+    "argv": [
+      "uv",
+      "run",
+      "--project",
+      "/Users/karol/dev/tools/HoldSpeak/wt-pi-harness",
+      "holdspeak",
+      "gate",
+      "hook",
+      "--agent",
+      "pi"
+    ],
+    "events": [
+      "SessionStart",
+      "PreToolUse",
+      "PostToolUse",
+      "SessionEnd"
+    ],
+    "timeout_seconds": 300
+  },
+  "holdspeak_pi_schema": 1,
+  "read_tools": [
+    "read",
+    "grep",
+    "find",
+    "ls"
+  ],
+  "rider": {
+    "argv": [
+      "uv",
+      "run",
+      "--project",
+      "/Users/karol/dev/tools/HoldSpeak/wt-pi-harness",
+      "holdspeak",
+      "agent-hook",
+      "ingest",
+      "--agent",
+      "pi"
+    ],
+    "events": [
+      "SessionStart",
+      "UserPromptSubmit",
+      "PostToolUse",
+      "Stop",
+      "SessionEnd"
+    ],
+    "timeout_seconds": 30
+  },
+  "tools": {
+    "bash": "Bash",
+    "edit": "Edit",
+    "write": "Write"
+  }
+}

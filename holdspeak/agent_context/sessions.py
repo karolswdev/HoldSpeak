@@ -24,6 +24,7 @@ from .models import (
     DEFAULT_RECENT_MAX_AGE_SECONDS,
     DEFAULT_STALE_AGENT_SESSION_SECONDS,
     IDLE_NOTIFICATION,
+    STOP_IS_WAIT_AGENTS,
     LIFECYCLE_ENDED,
     LIFECYCLE_IDLE,
     LIFECYCLE_WAITING,
@@ -253,10 +254,10 @@ def ingest_agent_hook_event(
     # capture) still reaches Needs you when it asks. Only the question is kept
     # (secret-filtered), never the message. Codex's Stop is read below (R3).
     stop_text: str | None = None
-    if normalized_agent != "codex" and hook_event_name == "Stop" and not assistant_text:
+    if normalized_agent not in STOP_IS_WAIT_AGENTS and hook_event_name == "Stop" and not assistant_text:
         stop_text = _optional_str(payload.get("last_assistant_message"))
     codex_last_message: str | None = None
-    if normalized_agent == "codex" and hook_event_name == "Stop":
+    if normalized_agent in STOP_IS_WAIT_AGENTS and hook_event_name == "Stop":
         text = " ".join(str(payload.get("last_assistant_message") or "").split())
         codex_last_message = text[-DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS:] or None
     tmux_context = detect_tmux_context(payload, env=env)

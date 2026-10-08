@@ -534,7 +534,7 @@ export const VERBS: Verb[] = [
     menu: "object",
     scope: "object",
     glyph: "⇥",
-    keywords: ["agent", "claude", "codex", "coder", "launch", "delegate"],
+    keywords: ["agent", "claude", "codex", "pi", "coder", "launch", "delegate"],
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";

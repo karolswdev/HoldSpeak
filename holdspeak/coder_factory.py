@@ -20,6 +20,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import signal
 import subprocess
 import time
 import uuid
@@ -52,6 +53,7 @@ def spawn(
     launch_id: Optional[str] = None,
     scope_items: tuple[str, ...] = (),
     project_id: Optional[str] = None,
+    model_key: Optional[str] = None,
     runner: Optional[Runner] = None,
     audit: Optional[Callable[..., int]] = None,
 ) -> dict[str, Any]:
@@ -117,9 +119,9 @@ def spawn(
     # shell, no rc file), which turns tracing off, reads the file with
     # ``read``, deletes it and only then execs the user's shell.
     try:
-        env_file = write_credential_env(credential.token)
-    except OSError as exc:
-        return _fail("error", f"credential file: {exc}")
+        env_file = write_credential_env(credential.token, model_key=model_key)
+    except (OSError, ValueError) as exc:
+        return _fail("error", f"credential file: {type(exc).__name__}")
     argv = [
         "tmux",
         "new-session",
@@ -171,14 +173,21 @@ START_TIMEOUT_SECONDS = 15.0
 #: After the read, how long the session's shell has to prove it stays up.
 START_SETTLE_SECONDS = 0.3
 
+#: The environment variable a pi launch reads its engine's key from (the
+#: second line of the one-shot file; ``delivery.pi_launch``).
+MODEL_KEY_ENV = "HOLDSPEAK_PI_MODEL_KEY"
+
 #: The session's first process: run by tmux directly, never by the user's
 #: shell. ``$1`` is the credential file, ``$2`` the command ("" = a login
-#: shell). /bin/sh -c reads no rc file; tracing is off before the read.
+#: shell). /bin/sh -c reads no rc file; tracing is off before the read. The
+#: file's first line is the credential; a second line, when there is one, is
+#: the launch's model key.
 BOOTSTRAP = (
     "set +xv; "
-    f'IFS= read -r {CREDENTIAL_ENV} < "$1" || exit 97; '
+    f'{{ IFS= read -r {CREDENTIAL_ENV} || exit 97; IFS= read -r {MODEL_KEY_ENV} || {MODEL_KEY_ENV}=; }} < "$1" || exit 97; '
     'rm -f "$1"; '
     f"export {CREDENTIAL_ENV}; "
+    f'if [ -n "${MODEL_KEY_ENV}" ]; then export {MODEL_KEY_ENV}; else unset {MODEL_KEY_ENV}; fi; '
     'if [ -n "$2" ]; then exec "${SHELL:-/bin/sh}" -c "$2"; fi; '
     'exec "${SHELL:-/bin/sh}" -l'
 )
@@ -189,9 +198,17 @@ def credential_env_dir() -> Path:
     return Path.home() / ".holdspeak" / "agent-env"
 
 
-def write_credential_env(token: str, directory: Optional[Path] = None) -> Path:
+def write_credential_env(
+    token: str, directory: Optional[Path] = None, *, model_key: Optional[str] = None,
+) -> Path:
     """Write ``token`` (one line, no shell syntax) to a new 0600 file the
-    session's bootstrap reads once. A partial write is removed."""
+    session's bootstrap reads once, and ``model_key`` as its second line when
+    given. A partial write is removed."""
+    lines = [token]
+    if model_key:
+        if any(ch in model_key for ch in "\r\n\0"):
+            raise ValueError("the model key is not one line")
+        lines.append(model_key)
     folder = directory or credential_env_dir()
     folder.mkdir(parents=True, exist_ok=True)
     os.chmod(folder, 0o700)
@@ -199,7 +216,7 @@ def write_credential_env(token: str, directory: Optional[Path] = None) -> Path:
     fd = os.open(str(target), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
         try:
-            os.write(fd, (token + "\n").encode("utf-8"))
+            os.write(fd, ("\n".join(lines) + "\n").encode("utf-8"))
         finally:
             os.close(fd)
     except OSError:
@@ -315,6 +332,13 @@ def kill(
         ["tmux", "kill-session", "-t", pane_id] if scope == "session"
         else ["tmux", "kill-pane", "-t", pane_id]
     )
+    # pi spike #1020: a hook child that waits on a gate hold outlived its
+    # agent. The pane's process groups are read first; after tmux ends the
+    # pane, each group (the agent and every child it started) gets SIGTERM,
+    # then SIGKILL for what is still there after the grace.
+    # Only against the real tmux: an injected runner (a test's fake) names
+    # no real process.
+    groups = _pane_groups(runner, pane_id, scope) if runner is None else []
     try:
         completed = _run(runner, argv)
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -324,6 +348,8 @@ def kill(
             {"status": "error", "detail": (completed.stderr or "").strip() or "tmux refused"},
             pane_id,
         )
+    _signal_groups(groups, signal.SIGTERM)
+    _reap_groups(groups)
     # The pane is gone: the grant and its process credential can never be
     # reused.  Respawning the name mints a distinct token.
     coder_steering.disarm(key)
@@ -331,6 +357,68 @@ def kill(
 
     agent_credentials.revoke_targets((pane_id, current_target, key))
     return _audited({"status": "killed", "pane_id": pane_id, "scope": scope}, pane_id)
+
+
+#: How long a killed pane's process group has to end after SIGTERM before SIGKILL.
+GROUP_KILL_GRACE_SECONDS = 2.0
+
+
+def _pane_groups(runner: Optional[Runner], pane_id: str, scope: str) -> list[int]:
+    """The process groups of the pane (or of its whole session): each pane's
+    first process leads its own group. Never this process's own group."""
+    fmt = "#{pane_pid}"
+    argv = (
+        ["tmux", "list-panes", "-s", "-t", pane_id, "-F", fmt] if scope == "session"
+        else ["tmux", "display-message", "-p", "-t", pane_id, fmt]
+    )
+    try:
+        completed = _run(runner, argv)
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if getattr(completed, "returncode", 1) != 0:
+        return []
+    groups: list[int] = []
+    own = os.getpgrp()
+    for line in str(getattr(completed, "stdout", "") or "").splitlines():
+        text = line.strip()
+        if not text.isdigit():
+            continue
+        try:
+            group = os.getpgid(int(text))
+        except (OSError, ValueError):
+            continue
+        if group > 1 and group != own and group not in groups:
+            groups.append(group)
+    return groups
+
+
+def _signal_groups(groups: list[int], sig: int) -> None:
+    for group in groups:
+        try:
+            os.killpg(group, sig)
+        except OSError:
+            pass
+
+
+def _reap_groups(groups: list[int]) -> None:
+    """SIGKILL to a group that is still there after the grace."""
+    if not groups:
+        return
+    deadline = time.monotonic() + GROUP_KILL_GRACE_SECONDS
+    alive = list(groups)
+    while alive and time.monotonic() < deadline:
+        alive = [g for g in alive if _group_alive(g)]
+        if alive:
+            time.sleep(0.05)
+    _signal_groups(alive, signal.SIGKILL)
+
+
+def _group_alive(group: int) -> bool:
+    try:
+        os.killpg(group, 0)
+    except OSError:
+        return False
+    return True
 
 
 __all__ = ["NAME_RE", "kill", "launch_identity", "rename", "revoke_launch", "spawn", "valid_name"]

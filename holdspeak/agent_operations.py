@@ -23,7 +23,8 @@ AGENT_HAND = OperationDescriptor(
         "Hand one desk item to a coding agent. HoldSpeak writes a brief from the item, its meeting, "
         "the Project's decisions and open commitments, memory and the repository's .hs/ facts (no People "
         "data), makes a new git worktree hs-<kind>-<id> in the Project repository and starts Claude Code "
-        "(profile claude-default) or Codex (codex-default) there. Only the owner hands; an agent is refused."
+        "(profile claude-default), Codex (codex-default) or pi (pi-default, on the hub's engine for coding "
+        "work) there. Only the owner hands; an agent is refused."
     ),
     args_schema={
         "type": "object",
@@ -37,7 +38,7 @@ AGENT_HAND = OperationDescriptor(
             "instruction": {"type": ["string", "null"], "maxLength": 4000,
                             "description": "Optional words for the agent."},
             "profile": {"type": ["string", "null"],
-                        "description": "Agent profile id: claude-default (the default) or codex-default."},
+                        "description": "Agent profile id: claude-default (the default), codex-default or pi-default."},
             "project_id": {"type": ["string", "null"],
                            "description": "Optional Project id, when the item names no Project."},
         },

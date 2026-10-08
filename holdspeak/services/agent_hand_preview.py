@@ -81,7 +81,8 @@ class LaunchReads:
             profile = factory_launch._valid_profile(entry)
             if profile is not None and profile["profile_id"] == profile_id:
                 return profile
-        return None
+        # A later seeded default (pi-default) the stored file predates.
+        return factory_launch.later_default_profile(profile_id)
 
     def preflight(self, profile: Mapping[str, Any]) -> Optional[str]:
         """The driver's preflight refusal by name (``tmux_absent``, ``executable_absent``)."""
@@ -191,7 +192,8 @@ def preview_hand(
 ) -> dict[str, Any]:
     """``{text, refs, bytes, people_cut, sources, acceptance, repo, repo_label, branch,
     worktree, project_id, control_mode, kind, id, requested_profile, profile, resume,
-    refused}``; owner only; no side effect."""
+    refused, engine}``; owner only; no side effect. ``engine`` is pi's engine
+    for coding work (``{host, model, boundary}``), ``None`` for other agents."""
     if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
         raise ServiceError("owner_required", "Only the owner previews a hand-off.", context={"status": 403})
     try:
@@ -210,6 +212,16 @@ def preview_hand(
     blocked = reads.preflight(agent)
     if blocked:
         refused.append(blocked)
+    # pi (pi spike #1020): the engine it would run on (the egress the line
+    # names), or the route's own refusal word.
+    engine: Optional[dict[str, Any]] = None
+    if str(agent.get("executable") or "") == "pi":
+        from ..delivery.pi_launch import coding_engine
+
+        try:
+            engine = coding_engine(service._db).to_wire()
+        except LaunchRefused as exc:
+            refused.append(exc.reason)
 
     project_id = project_id or project_for_item(db, kind, item_id)
     registrations = getattr(service, "repositories", None)
@@ -308,6 +320,7 @@ def preview_hand(
         "profile": actual,
         "resume": resume,
         "refused": refused,
+        "engine": engine,
     }
 
 

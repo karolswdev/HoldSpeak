@@ -1144,7 +1144,7 @@ def _check_people_mcp_access(environ: dict | None = None) -> DoctorCheck:
 
 
 def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:
-    """The Conductor, step 1: Claude Code or Codex installed with working HoldSpeak hooks, and tmux.
+    """The Conductor, step 1: Claude Code, Codex or pi installed with working HoldSpeak hooks, and tmux.
 
     Reuses the onboarding detect (PATH and files only; no process, no network).
     INFO with no fix when no agent is installed (tmux then does not matter).
@@ -1155,7 +1155,7 @@ def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:
         detected = detect_agents()
     installed = [a for a in detected["agents"] if a["installed"]]
     if not installed:
-        return DoctorCheck(name="Coding agents", status="INFO", detail="no coding agent on PATH (claude, codex)")
+        return DoctorCheck(name="Coding agents", status="INFO", detail="no coding agent on PATH (claude, codex, pi)")
     ready = [a for a in installed if a["ready"]]
     unhooked = [a for a in installed if not a["ready"]]
     status = "PASS" if ready else "WARN"
@@ -1172,6 +1172,8 @@ def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:
     if any(a["hooks"] == "untrusted" for a in unhooked):
         fixes.append("Press Install hooks on the Agents card: it trusts the hooks in Codex")
         unhooked = [a for a in unhooked if a["hooks"] != "untrusted"]
+    # pi's hooks ship with HoldSpeak (its extension): nothing to install.
+    unhooked = [a for a in unhooked if a["id"] != "pi"]
     if unhooked:
         names = " and ".join(a["label"] for a in unhooked)
         agent_flag = f" --agent {unhooked[0]['id']}" if len(unhooked) == 1 else ""

@@ -105,6 +105,8 @@ def _agent_label(agent: str) -> str:
         return "Codex"
     if normalized == "claude":
         return "Claude"
+    if normalized == "pi":
+        return "pi"
     return "Agent"
 
 

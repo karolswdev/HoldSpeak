@@ -402,8 +402,9 @@ class AgentHandService:
             "story_ref": story_ref,
             "origin_ref": {"kind": kind, "id": item_id},
         }
-        if agent.get("executable") in ("claude", "codex"):
-            # Conductor R3: Codex is gated like Claude Code (its -c hooks).
+        if agent.get("executable") in ("claude", "codex", "pi"):
+            # Conductor R3: Codex is gated like Claude Code (its -c hooks);
+            # pi through its extension (pi spike #1020).
             result = self._launch_gated(launcher, request, brief["text"], principal, worktree_path, spec["name"])
         else:
             result = self._launch_ungated(launcher, request, brief["text"], principal)

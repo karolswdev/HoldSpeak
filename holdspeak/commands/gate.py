@@ -20,6 +20,7 @@ from typing import Any, TextIO
 
 from ..coder_gate import (
     DEFAULT_TOOLS,
+    GATE_AGENTS,
     GateConfig,
     install_block,
     load_gate_config,
@@ -35,7 +36,7 @@ def build_gate_subparsers(parser) -> None:
     sub = parser.add_subparsers(dest="gate_action")
     hook = sub.add_parser("hook", help="PreToolUse forwarder (stdin JSON in, decision out)")
     hook.add_argument(
-        "--agent", choices=["claude", "codex"], default="claude",
+        "--agent", choices=list(GATE_AGENTS), default="claude",
         help="The agent whose hook runs this (its sessions are <agent>:<session_id>)",
     )
     sub.add_parser("install", help="Print the hook block to add to ~/.claude/settings.json")
@@ -140,9 +141,10 @@ def run_gate_command(args, *, stdin: TextIO | None = None, stream: TextIO | None
 
 
 def _cmd_hook(*, stdin: TextIO, out: TextIO, agent: str = "claude") -> int:
-    """Claude Code's and Codex's PreToolUse entry (both read the same deny
-    output; Codex 0.159 refuses ``permissionDecision: allow``, so an allow
-    is no output, as for Claude Code). Every failure inside an ARMED
+    """Claude Code's, Codex's and pi's PreToolUse entry (all read the same
+    deny output; Codex 0.159 refuses ``permissionDecision: allow``, so an
+    allow is no output, as for Claude Code; pi's extension blocks on a deny
+    and on any failure). Every failure inside an ARMED
     match is a deny (fail-closed); a payload we cannot even parse
     cannot be matched, so it is inert — the unarmed posture must
     never break the agent."""

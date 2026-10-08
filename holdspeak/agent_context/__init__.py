@@ -68,6 +68,7 @@ from .hooks import (
     claude_hook_template,
     codex_hook_template,
     detect_tmux_context,
+    pi_hook_template,
 )
 from .sessions import (
     _bounded_optional_str,
@@ -163,6 +164,7 @@ __all__ = [
     "clear_agent_session_response",
     "clear_stale_agent_sessions",
     "codex_hook_template",
+    "pi_hook_template",
     "effective_state",
     "compact_hs_project_context",
     "detect_repo_root",

@@ -214,6 +214,8 @@ exclude = [
 packages = ["holdspeak"]
 artifacts = [
     "holdspeak/static/_built/**",
+    # pi's HoldSpeak extension (pi spike #1020): every pi launch loads it with -e.
+    "holdspeak/agent_context/pi_extension/*.ts",
 ]
 
 [tool.hatch.build.targets.wheel.force-include]

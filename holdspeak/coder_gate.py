@@ -260,11 +260,12 @@ def _owner_token() -> str:
 
 #: The coding agents whose hooks reach the gate; a session's identity is
 #: ``<agent>:<session_id>`` (the agent registry's session key).
-GATE_AGENTS = ("claude", "codex")
+GATE_AGENTS = ("claude", "codex", "pi")
 
 
 def agent_identity(session_id: str, agent: str = "claude") -> str:
-    """The principal identity of one agent session: ``claude:<id>`` or ``codex:<id>``."""
+    """The principal identity of one agent session: ``claude:<id>``,
+    ``codex:<id>`` or ``pi:<id>``."""
     name = str(agent or "claude").strip().lower()
     if name not in GATE_AGENTS:
         raise ValueError(f"agent must be one of: {', '.join(GATE_AGENTS)}")
@@ -594,7 +595,7 @@ def run_hook(
     if unreachable:
         return stopped
     return HookDecision(
-        deny="gate hold expired with no decision; the call was not run"
+        deny=f"gate hold expired with no decision; the call was not run. {EXPIRED_CLOSE}"
     )
 
 
@@ -631,6 +632,12 @@ def _classify(
     return verdict
 
 
+#: The closing words of an expiry deny (pi spike #1020: after an expiry deny
+#: with no such sentence, the model tried the same call again). The twin of
+#: the owner deny's "The owner denied this call. ..." sentence.
+EXPIRED_CLOSE = "This call expired with no decision. Do not try it again in a different form."
+
+
 def _deny_reason(response: Mapping[str, Any]) -> str:
     state = str(response.get("state") or "denied")
     reason = str(response.get("reason") or "").strip()
@@ -645,6 +652,9 @@ def _deny_reason(response: Mapping[str, Any]) -> str:
         # so the agent stops instead of trying the call another way.
         said = f"{base_text}: {reason}" if reason else base_text
         return f"{said}. The owner denied this call. Do not try it again in a different form."
+    if state == "expired":
+        said = f"{base_text}: {reason}" if reason else base_text
+        return f"{said}. {EXPIRED_CLOSE}"
     if reason:
         return f"{base_text}: {reason}"
     return base_text
@@ -965,6 +975,20 @@ def codex_spawn_hooks(prefix: str) -> dict[str, Any]:
                 if GATE_HOOK_MARKER not in hook["command"]:
                     hook["command"] = rider_command
     return template
+
+
+def pi_spawn_hooks(prefix: str) -> dict[str, Any]:
+    """The hooks of one pi launch (pi spike #1020): the document the
+    extension ``holdspeak-pi.ts`` reads, with the gate (``gate hook --agent
+    pi``) and the rider (``agent-hook ingest --agent pi``), both run by
+    ``prefix`` (this HoldSpeak checkout, as for Claude Code and Codex)."""
+    import shlex
+
+    from .agent_context.hooks import pi_hook_template
+
+    document = pi_hook_template(gate_command=f"{prefix} gate hook --agent pi")
+    document["rider"]["argv"] = shlex.split(f"{prefix} agent-hook ingest --agent pi")
+    return document
 
 
 #: Marker of a gate hook command (``... gate hook --agent codex``).

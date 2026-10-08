@@ -26,6 +26,7 @@ import {
   cloneWords,
   codeOf,
   deliveryToken,
+  engineEgress,
   modeWord,
   refusalToken,
   trackerToken,
@@ -33,7 +34,7 @@ import {
   type HandLaunch,
   type HandPreview,
 } from "../components/HandSheet";
-import { AGENT_HOST, AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
+import { AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
 import { useDropHand, type HandPending } from "./store";
 import "./hand.css";
 
@@ -54,9 +55,10 @@ export function agentSprite(agent: string): string {
   return objectSprite("agent", `${agent}:hand`, "rest", 64, agent);
 }
 
-/** The other agent: the flip on the line's agent token (B39). */
+/** The next agent: the flip on the line's agent token (B39), now a turn of
+ *  three: CLAUDE CODE → CODEX → PI → CLAUDE CODE (pi spike #1020). */
 export function otherAgent(agent: AgentId): AgentId {
-  return agent === "claude" ? "codex" : "claude";
+  return agent === "claude" ? "codex" : agent === "codex" ? "pi" : "claude";
 }
 
 export function HandConfirm({ pending }: { pending: HandPending }) {
@@ -312,7 +314,7 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
         onHand={() => void hand()}
         busy={launching}
         disabled={!preview || refused.length > 0}
-        egress={<EgressChip label={AGENT_HOST[actual]} scope="cloud" />}
+        egress={<EgressChip {...engineEgress(actual, preview)} />}
         status={hasStatus ? status : undefined}
         verbs={
           launched ? (

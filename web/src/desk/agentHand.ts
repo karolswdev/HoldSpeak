@@ -35,10 +35,11 @@ export interface HandOrigin {
 }
 
 /** The launch profile of each agent (factory_launch `_DEFAULT_PROFILES`). */
-export const AGENT_PROFILE: Record<AgentId, string> = { claude: "claude-default", codex: "codex-default" };
+export const AGENT_PROFILE: Record<AgentId, string> = { claude: "claude-default", codex: "codex-default", pi: "pi-default" };
 /** The owner's ruling (2026-10-06): the sheet opens on Claude Code. */
 export const DEFAULT_AGENT: AgentId = "claude";
-/** The agents in the order the default is chosen. */
+/** The agents in the order the default is chosen. pi is not a default: it
+ *  signs in to nothing of its own, so the owner picks it on the line. */
 const DEFAULT_ORDER: readonly AgentId[] = ["claude", "codex"];
 
 /** The default agent of a hand, and the agent it passed over (PHILO-15 B36).
@@ -67,7 +68,7 @@ export function rememberedAgent(projectId: string | null | undefined): AgentId |
   if (!projectId) return null;
   try {
     const value = localStorage.getItem(agentKey(projectId));
-    return value === "claude" || value === "codex" ? value : null;
+    return value === "claude" || value === "codex" || value === "pi" ? value : null;
   } catch {
     return null;
   }

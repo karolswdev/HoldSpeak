@@ -63,7 +63,19 @@ DEFAULT_LAUNCHES_PATH = Path.home() / ".holdspeak" / "agent_launches.json"
 
 #: The FIXED launcher allow-list (§9): a profile's executable must be
 #: one of these bare names — never a path, never a shell.
-KNOWN_EXECUTABLES = ("claude", "codex")
+KNOWN_EXECUTABLES = ("claude", "codex", "pi")
+
+
+def agent_of_profile(profile_id: Any) -> str:
+    """The agent a launch profile runs, by its id: ``codex``, ``pi`` or
+    ``claude`` (the default). The one mapping the lane, the flights, the
+    Brief and the Hand read."""
+    text = str(profile_id or "").strip().lower()
+    if text.startswith("codex"):
+        return "codex"
+    if text.startswith("pi-") or text == "pi":
+        return "pi"
+    return "claude"
 
 #: A rider that never registers within this window is honestly
 #: ``unknown`` / ``failed_to_register`` — never a fake success.
@@ -128,7 +140,29 @@ _DEFAULT_PROFILES: list[dict[str, Any]] = [
             },
         },
     },
+    {
+        # pi (pi spike #1020): its model is the hub's engine for coding work
+        # (``pi_launch.coding_engine``), so it has no model slot.
+        "profile_id": "pi-default",
+        "label": "pi",
+        "executable": "pi",
+        "args": [],
+        "option_slots": {},
+    },
 ]
+
+
+#: Seeded profiles added after the profile file existed: a file written
+#: before them gets them at load (``AgentProfileStore``, ``LaunchReads``).
+LATER_DEFAULT_PROFILES = ("pi-default",)
+
+
+def later_default_profile(profile_id: str) -> Optional[dict[str, Any]]:
+    """The seeded profile ``profile_id`` when it is a later default."""
+    if profile_id not in LATER_DEFAULT_PROFILES:
+        return None
+    entry = next((e for e in _DEFAULT_PROFILES if e["profile_id"] == profile_id), None)
+    return _valid_profile(entry) if entry is not None else None
 
 
 class LaunchRefused(ValueError):
@@ -289,6 +323,17 @@ class AgentProfileStore:
                 profile = _valid_profile(entry)
                 if profile is not None:
                     self._profiles[profile["profile_id"]] = profile
+            # A seeded default added later (pi-default, pi spike #1020) joins a
+            # file written before it; a profile the file already names stays.
+            added = False
+            for entry in _DEFAULT_PROFILES:
+                if entry["profile_id"] in LATER_DEFAULT_PROFILES and entry["profile_id"] not in self._profiles:
+                    profile = _valid_profile(entry)
+                    if profile is not None:
+                        self._profiles[profile["profile_id"]] = profile
+                        added = True
+            if added:
+                self._save()
             return
         for entry in _DEFAULT_PROFILES:
             profile = _valid_profile(entry)
@@ -653,8 +698,12 @@ class LaunchService:
         control_mode: Optional[Callable[[], str]] = None,
         mcp_config_dir: Optional[Path] = None,
         codex_trust: Optional[Callable[[list[str]], list[str]]] = None,
+        pi_engine: Optional[Callable[[], Any]] = None,
     ) -> None:
         self._profiles = profiles
+        # pi (pi spike #1020): the hub's engine for coding work, resolved at
+        # launch (``pi_launch.coding_engine``); None: no engine is known.
+        self._pi_engine = pi_engine
         # Conductor K6: the Control mode read at launch decides whether the
         # agent's ``holdspeak`` MCP tools are pre-approved in its pane.
         from . import agent_mcp
@@ -765,10 +814,13 @@ class LaunchService:
     def _preflight(self, profile: Mapping[str, Any]) -> None:
         """Refuse before any envelope when the agent or tmux is not on
         this machine: ``executable_absent`` / ``tmux_absent``; a Codex whose
-        config does not trust the launch hooks: ``codex_hooks_untrusted``."""
+        config does not trust the launch hooks: ``codex_hooks_untrusted``; a
+        pi with no OpenAI-compatible engine for coding work:
+        ``no_assignment`` / ``no_compatible_assignment``."""
         which = self._which
         if which is None:
             self._require_codex_trust(profile)
+            self._require_pi_engine(profile)
             return
         if which("tmux") is None:
             raise LaunchRefused("tmux_absent", "tmux is not installed on this machine")
@@ -778,6 +830,17 @@ class LaunchService:
                 "executable_absent", f"{executable} is not installed on this machine"
             )
         self._require_codex_trust(profile)
+        self._require_pi_engine(profile)
+
+    def pi_engine(self) -> Any:
+        """The engine a pi launch runs on now, or the route's refusal."""
+        if self._pi_engine is None:
+            raise LaunchRefused("no_assignment", "pi has no engine for coding work")
+        return self._pi_engine()
+
+    def _require_pi_engine(self, profile: Mapping[str, Any]) -> None:
+        if str(profile.get("executable") or "") == "pi":
+            self.pi_engine()
 
     def _require_codex_trust(self, profile: Mapping[str, Any]) -> None:
         """Refuse a Codex launch whose hooks Codex would not run (untrusted:
@@ -807,9 +870,9 @@ class LaunchService:
     def _require_process_gate(profile: Mapping[str, Any], worktree_path: str) -> None:
         from .. import coder_gate
 
-        # Claude Code (``--settings``) and Codex (``-c hooks.*``, R3) carry the
-        # gate on their Bash calls.
-        if str(profile.get("executable") or "") not in ("claude", "codex"):
+        # Claude Code (``--settings``), Codex (``-c hooks.*``, R3) and pi (its
+        # extension, pi spike #1020) carry the gate on their Bash calls.
+        if str(profile.get("executable") or "") not in ("claude", "codex", "pi"):
             raise LaunchRefused("process_spawn_not_gated", "not gated")
         if not coder_gate.gate_matches(
             coder_gate.load_gate_config(), cwd=worktree_path, tool="Bash"
@@ -975,20 +1038,26 @@ class LaunchService:
     @staticmethod
     def compose_command(
         argv: list[str], worktree_path: str, story_env: str,
-        *, parent_operation_id: str = "",
+        *, parent_operation_id: str = "", env: Optional[Mapping[str, str]] = None,
     ) -> str:
         """The ONE shell string tmux receives. Every substitution is a
         pre-validated safe token or a server-side path, individually
-        quoted — a client never contributes a byte of it directly."""
+        quoted — a client never contributes a byte of it directly.
+        ``env``: server-side variables of the launch (pi's folder and its
+        offline switches); never a secret."""
         quoted = " ".join(shlex.quote(token) for token in argv)
         parent = (
             f"HOLDSPEAK_PARENT_OPERATION_ID={shlex.quote(parent_operation_id)} "
             if parent_operation_id
             else ""
         )
+        extra = "".join(
+            f"{name}={shlex.quote(str(value))} " for name, value in sorted((env or {}).items())
+            if re.match(r"^[A-Z][A-Z0-9_]{0,63}$", str(name))
+        )
         return (
             f"cd {shlex.quote(str(worktree_path))} && "
-            f"HOLDSPEAK_STORY_REF={shlex.quote(story_env)} {parent}exec {quoted}"
+            f"HOLDSPEAK_STORY_REF={shlex.quote(story_env)} {parent}{extra}exec {quoted}"
         )
 
     # the launch -------------------------------------------------------------
@@ -1038,6 +1107,8 @@ class LaunchService:
 
         mode = self._control_mode()
         executable = str(profile.get("executable") or "")
+        launch_env: dict[str, str] = {}
+        model_key_slot = ""
         if executable == "claude":
             # Every Claude launch carries HoldSpeak's spawn settings: the
             # rider hooks (so the launch registers with no manual
@@ -1065,6 +1136,26 @@ class LaunchService:
             # The approval and sandbox flags need the worktree's git folder:
             # added once the worktree exists (before the spawn below).
             codex_tail = agent_mcp.codex_args(agent_credentials.hub_url, mode)
+            if parent_operation_id:
+                gate_state = "gated"
+        elif executable == "pi":
+            from .. import coder_gate
+            from ..principals import agent_credentials
+            from . import pi_launch
+
+            # pi spike #1020: the launch's own pi folder (the engine, the
+            # HoldSpeak MCP, the gate and rider commands), the transcript
+            # folder and the extension. The engine's key rides the spawn's
+            # one-shot file (by its slot), never argv.
+            engine = self.pi_engine()
+            pi_folder = pi_launch.write_pi_dir(
+                launch_id, engine, hub_url=agent_credentials.hub_url,
+                hooks=coder_gate.pi_spawn_hooks(coder_gate.spawn_prefix()),
+                keyed=bool(engine.key_slot), directory=self._mcp_config_dir,
+            )
+            argv = [*argv, *pi_launch.launch_args(engine, pi_folder)]
+            launch_env = pi_launch.launch_env(pi_folder)
+            model_key_slot = engine.key_slot
             if parent_operation_id:
                 gate_state = "gated"
         record: dict[str, Any] = {
@@ -1126,7 +1217,7 @@ class LaunchService:
             argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path), *codex_tail]
         command = self.compose_command(
             argv, worktree_path, f"{project}/{story_id}",
-            parent_operation_id=parent_operation_id,
+            parent_operation_id=parent_operation_id, env=launch_env,
         )
         spawned = self._commands.submit(
             {
@@ -1139,6 +1230,8 @@ class LaunchService:
                     "scope_items": [f"{origin_ref['kind']}:{origin_ref['id']}"] if origin_ref else [],
                     # K6: the Project the agent may add to (a hand-off's own).
                     "project_id": project if origin_ref and project != "desk" else None,
+                    # pi: the engine key's SLOT (the value is read at spawn).
+                    **({"model_key_slot": model_key_slot} if model_key_slot else {}),
                 },
             }
         )
@@ -1712,6 +1805,8 @@ def default_launch_service(database: Any) -> LaunchService:
         processor=processor,
         local_node_id="local",
     )
+    from .pi_launch import coding_engine
+
     service = LaunchService(
         profiles=AgentProfileStore(),
         registry=DeliveryRegistry(),
@@ -1720,6 +1815,7 @@ def default_launch_service(database: Any) -> LaunchService:
         attempts=database.work_attempts,
         ledger=LaunchLedger(),
         local_node_id="local",
+        pi_engine=lambda: coding_engine(database),
     )
     _DEFAULT_SERVICES[key] = service
     return service
@@ -1736,6 +1832,7 @@ __all__ = [
     "LaunchRefused",
     "LaunchService",
     "ORIGIN_KINDS",
+    "agent_of_profile",
     "default_launch_service",
     "derive_worktree_path",
     "derived_story_ref",

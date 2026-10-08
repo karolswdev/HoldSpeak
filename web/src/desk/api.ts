@@ -585,7 +585,7 @@ export const fromCoderStatus = (data: unknown): Coder[] =>
     const sessionId = String(s.session_id || `s${i}`);
     return {
       kind: "coder" as const,
-      agent: (s.agent === "codex" ? "codex" : "claude") as Coder["agent"],
+      agent: (s.agent === "codex" || s.agent === "pi" ? s.agent : "claude") as Coder["agent"],
       id: sessionId,
       sessionId,
       title: String(s.project || s.cwd || s.project_name || ""),

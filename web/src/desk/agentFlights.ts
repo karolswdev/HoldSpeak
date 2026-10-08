@@ -15,7 +15,7 @@ import { useOnCoderFrame, useOnDeskChanged } from "./useDeskChangedRefresh";
 import { coderTurnEnd, isBlockedCoder, type NeedsYouCoder } from "./needsYou";
 
 export type FlightState = "starting" | "working" | "waiting" | "pr_open" | "merged" | "ended" | "expired";
-export type AgentName = "claude" | "codex";
+export type AgentName = "claude" | "codex" | "pi";
 
 export interface AgentFlight {
   originRef: string;
@@ -58,7 +58,7 @@ export interface CoderSessionRow {
   raw: Record<string, unknown>;
 }
 
-const AGENT_WORD: Record<AgentName, string> = { claude: "CLAUDE CODE", codex: "CODEX" };
+const AGENT_WORD: Record<AgentName, string> = { claude: "CLAUDE CODE", codex: "CODEX", pi: "PI" };
 
 export function agentWord(agent: string): string {
   return AGENT_WORD[agent as AgentName] ?? agent.toUpperCase();
@@ -75,7 +75,7 @@ export function fromWireFlight(body: any): AgentFlight {
     title: String(body?.title ?? ""),
     projectId: String(body?.project_id ?? ""),
     projectName: String(body?.project_name ?? ""),
-    agent: body?.agent === "codex" ? "codex" : "claude",
+    agent: body?.agent === "codex" || body?.agent === "pi" ? body.agent : "claude",
     state: (FLIGHT_STATES.includes(body?.state) ? body.state : "starting") as FlightState,
     sessionKey: body?.session_key ? String(body.session_key) : null,
     pr: pr ? { number: pr.number == null ? null : Number(pr.number), url: String(pr.url ?? ""), state: String(pr.state ?? ""), title: String(pr.title ?? "") } : null,

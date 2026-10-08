@@ -49,6 +49,10 @@ describe("the D1 mold (PHILO-14 A0b)", () => {
     expect(agentSpriteName("Claude Code")).toBe("agent-claude-code");
     expect(agentSpriteName(undefined)).toBe("agent-claude-code");
     expect(agentSpriteName("gemini")).toBe("agent-claude-code");
+    // pi spike #1020: pi wears its own robot (the π faceplate).
+    expect(agentSpriteName("pi")).toBe("agent-pi");
+    expect(agentSpriteName("pi:01a11d46")).toBe("agent-pi");
+    expect(agentSpriteName("pipeline")).toBe("agent-claude-code");
     expect(spriteName("coder", "c1", "codex")).toBe("agent-codex");
     expect(spriteName("coder", "c1")).toBe("agent-claude-code");
     expect(spriteUrl("coder", "c1", "sel", "codex")).toMatch(/agent-codex_sel\.png$/);
