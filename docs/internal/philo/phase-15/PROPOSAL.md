@@ -108,3 +108,21 @@ inventory's ranking; debt a first day would not hit stays in STATUS.
   isolated credentials and the receipts read right on the lane, in Needs
   you and in the weekly update.
 - The second morning carries the first day.
+
+## Phase 15 amendment to PHILO-13-17 C7 Q3 (the phone Go)
+
+Owner ruling 2026-10-07 (bounce B21, lane 11, PR #986). It supersedes C7 Q3,
+`pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-17-canvas/README.md:30`
+("Go leads with `Chair ▸ Desk ▸ Object ▸ Window ▸`"), and the story-17
+criterion "The Desk, Object and Window menus are reachable at 393"
+(`pm/roadmap/holdspeak-philo/phase-13-the-desk/story-17-c7-the-phone-desk.md:35`)
+as it applies to Go. The roadmap stays as history; it is not edited.
+
+- At 393 Go is: the four Chair windows (Needs you, Brief, The week, Capture),
+  then the Dock's places (Meetings, People, Conductor, Settings), then the
+  projects, then `New ▸` with four kinds (Thought, Meeting, Project, Person).
+- Desk, Object and Window are reached from the window's own menu (a long
+  press on the window's title): `Desk ▸` (New Note, New Decision, Search),
+  `Send to ▸`, and the window verbs. Every other verb is in Search.
+- No keycap on a phone: no menu and no Search row at 393 shows a ⌘ or ⌃ hint.
+- 1440 keeps its four menus and their keycaps.

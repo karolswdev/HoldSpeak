@@ -224,6 +224,11 @@
   gap: 6px;
 }
 
+.firstrun-tokens[data-stack] {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .firstrun .concierge-found-list .surface-ledger-row[data-wrap] .surface-ledger-primary {
   flex: 0 1 auto;
   min-width: 0;

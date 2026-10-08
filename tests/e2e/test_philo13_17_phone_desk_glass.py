@@ -15,7 +15,8 @@ and the 1440x900 control (mouse):
   S2 the swipe: 5 of 5 land where the ring says (Needs you, Brief, The week,
      Meetings, Ledger cutover sync; it wraps), and one swipe back.
   S3 the switcher: any open window in 2 taps.
-  S4 Go grouped: the Chair's windows (PHILO-14 A1), Desk ▸ Object ▸ Window ▸; Object opens as a menu.
+  S4 Go at 393 (PHILO-15 11, B21; supersedes C7 Q3): the Chair's windows, the
+     Dock's places, the projects, New ▸; New opens as a menu.
   S6 (Muad'Dib's ruling 2026-10-03): the meeting's own record in front in
      Meetings, which hosts the card's slot: the card lands there; Capture does
      not open; Meetings stays in front.
@@ -384,22 +385,20 @@ class TestThePhoneDesk:
                 if f["front"] != ["Needs you"]:
                     fails.append(f"S3: two taps landed {f['front']}")
 
-                # S4 Go grouped
+                # S4 Go at 393 (PHILO-15 11, B21, owner ruling 2026-10-07; supersedes
+                # C7 Q3): the Chair's windows, the Dock's places, the projects, New ▸.
                 self._tap(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width, 600)
                 heads = page.locator(".desk-verbbar-menu [role=menuitem][aria-haspopup=menu] .desk-menu-label").all_inner_texts()
                 facts["go_heads"] = heads
-                first = page.locator(".desk-verbbar-menu [role=menuitem] .desk-menu-label").all_inner_texts()[:4]
-                # PHILO-14 A1 (#939): the Chair's windows are Go's first rows
-                # now, so the groups are Desk, Object, Window.
-                if first[:3] != ["Desk", "Object", "Window"]:
-                    fails.append(f"S4: Go leads with {first}")
+                if heads != ["New"]:
+                    fails.append(f"S4: Go groups are {heads}")
                 self._board(page, width, "C7-5a-go-grouped", facts, fails)
-                self._tap(page, page.locator(".desk-verbbar-menu [role=menuitem][aria-haspopup=menu]", has_text="Object"), width, 500)
+                self._tap(page, page.locator(".desk-verbbar-menu [role=menuitem][aria-haspopup=menu]", has_text="New"), width, 500)
                 back_row = page.locator(".desk-verbbar-menu .desk-menu-back").inner_text().strip()
-                facts["go_object_back_row"] = back_row
-                if "Object" not in back_row:
-                    fails.append(f"S4: Object did not open as a menu ({back_row})")
-                self._board(page, width, "C7-5b-go-object", facts, fails)
+                facts["go_new_back_row"] = back_row
+                if "New" not in back_row:
+                    fails.append(f"S4: New did not open as a menu ({back_row})")
+                self._board(page, width, "C7-5b-go-new", facts, fails)
                 page.keyboard.press("Escape")
                 page.wait_for_timeout(300)
 

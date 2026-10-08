@@ -161,7 +161,7 @@ def test_hs14105a_default_context_walk(tmp_path: Path, monkeypatch: pytest.Monke
             assert picker.get_by_role("heading", name="For new Thoughts").is_visible()
             assert picker.get_by_text("Attach context to use it by default.").is_visible()
             assert picker.get_by_role("button", name="Use these by default").count() == 0
-            picker.get_by_role("button", name="Everyday context, 5 notes").click()
+            picker.get_by_role("button", name="Everyday context, 2 notes").click()
             page.get_by_text("Attached Everyday context").wait_for()
             page.get_by_role("button", name="Attach", exact=True).click()
             picker = page.get_by_role("region", name="Attach context")
@@ -187,7 +187,7 @@ def test_hs14105a_default_context_walk(tmp_path: Path, monkeypatch: pytest.Monke
             _new_thought(page, "A default-born launch thought.")
             page.get_by_text("Attached by default").wait_for()
             context = page.get_by_role("region", name="Thought context")
-            assert context.get_by_text("Everyday context · 5 notes").is_visible()
+            assert context.get_by_text("Everyday context · 2 notes").is_visible()
             assert context.get_by_text("Project launch · 1 note").is_visible()
             assert context.get_by_text("Default", exact=True).count() == 2
             _shot(page, f"hs-141-05a-born-default-{label}.png")

@@ -350,7 +350,9 @@ class TestSendToGlass:
 
     def _go_object_send_to(self) -> None:
         """393 (C7 Q3, canvas C7-10a/b): Go ▸ Object ▸ Send to ▸ -- two nested levels, each a tap;
-        Object leads with Send to; the back row names the level it climbs from."""
+        Object leads with Send to; the back row names the level it climbs from.
+
+        Parked: PHILO-15 11 (B21) took Object ▸ out of Go at 393; no leg calls this now."""
         page = self.page
         self._tap(page.locator(".desk-verbbar [data-menu-id=go] button"), 900)
         self._tap(page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Object')").first, 700)
@@ -644,10 +646,12 @@ class TestSendToGlass:
         self._shot("C5-5-sent-file")
         self._escape()
         if self.phone:
-            # C7-10a-c: Go ▸ Object ▸ Send to ▸ PAY-118 -> the meeting window's preview, whole on screen.
-            self._go_object_send_to()
+            # C7-10a-c: PHILO-15 11 (B21, owner ruling 2026-10-07) took Object ▸ out of
+            # Go at 393; Send to ▸ is in the window's own menu there. Send to ▸ PAY-118
+            # -> the meeting window's preview, whole on screen.
+            self._send_to(MEET)
             self._glass("C7-10b")
-            self._shot("C7-10b-go-object-send-to-rows")
+            self._shot("C7-10b-window-send-to-rows")
             self._pick("PAY-118")
             page.locator(f"[id='{MEET}'] [data-testid=send-open][data-destination='PAY-118'] [data-testid=send-preview]").wait_for(timeout=T)
             self._wait(900)
@@ -693,7 +697,8 @@ class TestSendToGlass:
         # C5-2: the Object menu, the same composition from the FRONT window (the artifact).
         self._open_ref("artifact:art-cutover-reqs", ART)
         if self.phone:
-            self._go_object_send_to()
+            # PHILO-15 11 (B21): no Object ▸ in Go at 393; the window's own menu.
+            self._send_to(ART)
         else:
             self._tap(page.locator(".desk-verbbar [data-menu-id=object] button"), 900)
             first = page.locator("[role=menu] [role^=menuitem]").first.inner_text()

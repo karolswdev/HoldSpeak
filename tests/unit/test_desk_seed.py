@@ -10,6 +10,7 @@ harness the sibling primitive-route tests use.
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 from fastapi import FastAPI
@@ -38,16 +39,13 @@ START_HERE = "hs-seed-start-here"
 CONTEXT_NOTES = {
     "hs-seed-about-me": "About me",
     "hs-seed-current-priorities": "Current priorities",
-    "hs-seed-how-i-like-help": "How I like help",
-    "hs-seed-people-vocabulary": "People & vocabulary",
-    "hs-seed-meeting-preferences": "Meeting preferences",
 }
 EVERYDAY_CONTEXT = "hs-seed-everyday-context"
 PROMPT_NOTE = "hs-seed-prompt-weekly-update"
+# PHILO-15 11 (B20, owner ruling 2026-10-07): the guard notes and three
+# starter-question notes are parked (docs/internal/PARKED-SEED-NOTES.md).
 PRACTICE_NOTES = {
     "hs-seed-prompt-one-on-one-prep": "1:1 prep",
-    "hs-seed-guardrail-effect-guard": "Effect guard",
-    "hs-seed-guardrail-egress-guard": "Egress guard",
 }
 # The census of mode recipes a fresh desk seeds. HS-200-03 regenerated this
 # from its authoritative source, `holdspeak.services.thread_modes.MODE_SEEDS`:
@@ -66,7 +64,7 @@ MODE_RECIPES = {
     "hs-seed-mode-chase",
     "hs-seed-mode-draft",
     "hs-seed-mode-plan", "hs-seed-mode-project"}
-SEED_COUNTS = {"directories": 6, "notes": 10, "kbs": 1, "recipes": 4}
+SEED_COUNTS = {"directories": 6, "notes": 5, "kbs": 1, "recipes": 4}
 
 
 @pytest.fixture
@@ -108,7 +106,7 @@ def test_fresh_db_seeds_exactly_the_manifest(db) -> None:
     assert report.manifest == DEFAULT_SEED
     assert report.applied == SEED_COUNTS
     assert report.profiles_seeded == report.workbenches_seeded == 0
-    assert report.filed == 6
+    assert report.filed == 3
 
     snap = _snapshot(db)
     assert dict((i, n) for i, n, _ in snap["directories"]) == ZONES
@@ -127,6 +125,37 @@ def test_fresh_db_seeds_exactly_the_manifest(db) -> None:
     assert set(snap["recipes"]) == MODE_RECIPES
     assert snap["chains"] == snap["workflows"] == []
     assert db.profiles.list() == db.workbenches.list() == []
+
+
+def test_fresh_desk_carries_at_most_five_day_one_notes(db) -> None:
+    """PHILO-15 11 (B20): the five notes a Senior Architect wants on day one,
+    and no developer-facing guard note."""
+    apply_seed(db)
+    titles = sorted(note.title for note in db.notes.list())
+    assert titles == sorted(["Start here", "About me", "1:1 prep", "Current priorities", "Weekly update"])
+    assert not [note for note in db.notes.list() if "guardrail" in note.tags or "guard" in note.title.lower()]
+    parked = (Path(__file__).resolve().parents[2] / "docs" / "internal" / "PARKED-SEED-NOTES.md").read_text()
+    for title in ("Effect guard", "Egress guard", "How I like help", "People & vocabulary", "Meeting preferences"):
+        assert title in parked
+
+
+def test_guard_notes_fresh_desk_loads_none_existing_desk_keeps_them(db) -> None:
+    """PHILO-15 11 (B20; ruling: intended for day one). A fresh desk has no
+    guard notes, so the Desk and Chase modes load no guardrail (``[]``); a desk
+    seeded before keeps its notes, and a later seed never removes them."""
+    from holdspeak.services.thread_modes import guardrails_for_thread, seed_guardrails
+
+    apply_seed(db)
+    chase = db.threads.create_thread(title="chase", recipe_id="hs-seed-mode-chase")
+    assert guardrails_for_thread(db, chase.id) == []
+
+    seed_guardrails(db)  # what the seed did before this change
+    apply_seed(db)
+    assert db.notes.get("hs-seed-guardrail-effect-guard") is not None
+    assert db.notes.get("hs-seed-guardrail-egress-guard") is not None
+    assert {g["id"] for g in guardrails_for_thread(db, chase.id)} == {
+        "hs-seed-guardrail-effect-guard", "hs-seed-guardrail-egress-guard",
+    }
 
 
 def test_mode_recipe_census_matches_its_authoritative_source() -> None:
@@ -167,13 +196,13 @@ def test_ordinary_seed_preserves_edits_tombstones_filing_and_agent_attachment(db
         primitive_id="note:hs-seed-about-me", directory_id="hs-seed-reference"
     )
     db.recipes.upsert(recipe_id="my-agent", name="My agent", kb_id=EVERYDAY_CONTEXT)
-    assert db.notes.delete("hs-seed-meeting-preferences")
+    assert db.notes.delete("hs-seed-prompt-one-on-one-prep")
 
     assert apply_seed(db).total == 0
     edited = db.notes.get("hs-seed-about-me")
     assert edited is not None and (edited.title, edited.body_markdown) == ("My name", "Edited by me")
-    assert db.notes.get("hs-seed-meeting-preferences") is None
-    assert db.notes.get("hs-seed-meeting-preferences", include_deleted=True).deleted is True
+    assert db.notes.get("hs-seed-prompt-one-on-one-prep") is None
+    assert db.notes.get("hs-seed-prompt-one-on-one-prep", include_deleted=True).deleted is True
     assert db.kbs.get(EVERYDAY_CONTEXT).name == "My context"
     assert db.kbs.get(EVERYDAY_CONTEXT).member_ids == [f"note:{START_HERE}"]
     assert db.directory_memberships.get("note:hs-seed-about-me").directory_id == "hs-seed-reference"
@@ -203,7 +232,7 @@ def test_retry_completes_new_relationships_without_mutating_partial_desk(db) -> 
 
     report = apply_seed(db)
 
-    assert report.applied == {"notes": 5, "kbs": 1, "recipes": 4}
+    assert report.applied == {"notes": 3, "kbs": 1, "recipes": 4}
     assert report.filed == 1
     kb = db.kbs.get(EVERYDAY_CONTEXT)
     assert kb is not None and set(kb.member_ids) == {
@@ -230,8 +259,8 @@ def test_seed_route_applies_the_packaged_manifest(client, db) -> None:
     assert body["success"] is True
     assert body["applied"] == SEED_COUNTS
     assert body["profiles_seeded"] == body["workbenches_seeded"] == 0
-    assert body["filed"] == 6
-    assert body["total"] == 21
+    assert body["filed"] == 3
+    assert body["total"] == 16
     assert {d.id for d in db.directories.list()} == set(ZONES)
 
 
@@ -288,13 +317,13 @@ def test_reset_tombstones_clutter_and_reseeds(db) -> None:
         START_HERE, PROMPT_NOTE, *PRACTICE_NOTES, *CONTEXT_NOTES,
     }
     assert {recipe.id for recipe in db.recipes.list()} == MODE_RECIPES
-    assert report.seed is not None and report.seed.total == 21
+    assert report.seed is not None and report.seed.total == 16
 
 
 def test_reset_force_restores_edited_and_tombstoned_packaged_objects(db) -> None:
     apply_seed(db)
     db.notes.upsert(note_id="hs-seed-about-me", title="Changed", body_markdown="Changed")
-    assert db.notes.delete("hs-seed-meeting-preferences")
+    assert db.notes.delete("hs-seed-prompt-one-on-one-prep")
     db.kbs.upsert(kb_id=EVERYDAY_CONTEXT, name="Changed context", member_ids=[])
     db.directory_memberships.upsert(
         primitive_id="note:hs-seed-about-me", directory_id="hs-seed-reference"
@@ -304,7 +333,7 @@ def test_reset_force_restores_edited_and_tombstoned_packaged_objects(db) -> None
 
     assert report.seed is not None and report.seed.applied == SEED_COUNTS
     assert db.notes.get("hs-seed-about-me").title == "About me"
-    assert db.notes.get("hs-seed-meeting-preferences") is not None
+    assert db.notes.get("hs-seed-prompt-one-on-one-prep") is not None
     assert db.kbs.get(EVERYDAY_CONTEXT).name == "Everyday context"
     assert set(db.kbs.get(EVERYDAY_CONTEXT).member_ids) == {
         f"note:{note_id}" for note_id in CONTEXT_NOTES
@@ -337,10 +366,10 @@ def test_reset_route_names_the_counts(client, db) -> None:
     assert body["tombstoned"]["directories"] == 1
     assert body["tombstoned"]["workbenches"] == 1
     assert body["seeded"] == SEED_COUNTS
-    assert body["seeded_total"] == 21
+    assert body["seeded_total"] == 16
     assert body["profiles_seeded"] == 0
     assert body["profiles_adopted"] == {}
-    assert body["filed"] == 6
+    assert body["filed"] == 3
     assert body["manifest"] == DEFAULT_SEED
 
 

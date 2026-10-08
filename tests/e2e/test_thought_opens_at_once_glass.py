@@ -102,9 +102,10 @@ class TestTheThoughtOpensAtOnce:
     def _menu_thought(self, page: Any, width: int) -> None:
         menu = "desk" if width >= 720 else "go"
         self._press(page, page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button"), width)
-        if width < 720:
-            go_group(page, "Desk", lambda loc: self._press(page, loc, width))
-        item = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')").first
+        if width < 720:  # PHILO-15 11 (B21): Go ▸ New ▸ Thought at 393
+            go_group(page, "New", lambda loc: self._press(page, loc, width))
+        label = "Write a thought" if width >= 720 else "Thought"
+        item = page.locator(f".desk-verbbar-menu [role='menuitem']:has-text('{label}')").first
         item.wait_for()
         self._press(page, item, width)
 

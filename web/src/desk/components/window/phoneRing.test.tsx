@@ -6,7 +6,8 @@
  *      the order they opened; it wraps. A Chair window iconifies the desk
  *      window in front, never closes it.
  *   Q2 the screen title is the switcher `<window> ▾`: any window in 2 taps.
- *   Q3 Go at 393: the Chair's windows (PHILO-14 A1), Desk ▸ Object ▸ Window ▸, then its own rows.
+ *   Q3 Go at 393: superseded by PHILO-15 11 (B21, owner ruling 2026-10-07):
+ *      the Chair's four windows, the Dock's places, the projects, New ▸.
  *   Q4b Capture stays in the ring until it is closed.
  * Red on main: phoneRing.ts, ScreenSwitcher.tsx and groupGoForPhone do not
  * exist there (the import fails), and Go is one flat list.
@@ -19,7 +20,7 @@ import { closeChairWindow, openChairWindow, useChairWindows } from "../../chair/
 import { announceWindow, retractWindow } from "./windowRegistry";
 import { phoneRing, phoneCurrent, stepRing, swipeDirection } from "./phoneRing";
 import { ScreenSwitcher } from "./ScreenSwitcher";
-import { DeskMenuBar, groupGoForPhone } from "../DeskMenuBar";
+import { DeskMenuBar, phoneGo } from "../DeskMenuBar";
 import type { WorkMenuEntry } from "../DeskMenu";
 import chromeMenusCss from "../chrome-menus.css?raw";
 
@@ -188,37 +189,29 @@ describe("Q2 the switcher in the screen title", () => {
   });
 });
 
-describe("Q3 Go at 393 is grouped", () => {
-  it("leads with the Chair's windows, then Desk ▸ Object ▸ Window ▸, then Go's own rows (PHILO-14 A1)", () => {
-    const item = (id: string): WorkMenuEntry => ({ type: "item", id, label: id, onSelect: () => {} });
-    const chair: WorkMenuEntry = { type: "sub", id: "sub-chair", label: "Chair", entries: [item("Needs you")] };
-    const groups: Record<string, WorkMenuEntry[]> = {
-      desk: [item("New Note")],
-      object: [item("Get Info")],
-      window: [item("Close window"), { type: "sep", id: "s" }, chair],
-    };
-    const out = groupGoForPhone([item("Meetings")], (m) => [...(groups[m] ?? [])]);
-    // PHILO-14 A1 (#939): the Chair's windows are first rows (two taps), not a group.
-    expect(out.map((e) => (e.type === "sep" ? "—" : e.label))).toEqual(
-      ["Needs you", "—", "Desk", "Object", "Window", "—", "Meetings"]);
-    const win = out[4] as Extract<WorkMenuEntry, { type: "sub" }>;
-    expect(win.entries.map((e) => (e.type === "sep" ? "—" : e.label))).toEqual(["Close window"]);
+describe("Go at 393 is the owner's short list (PHILO-15 11, B21; supersedes C7 Q3)", () => {
+  it("the pure phone Go: the Chair's four windows, the Dock's places, the projects, then New ▸", () => {
+    const row = (id: string, label?: string): WorkMenuEntry => ({ type: "item", id, label: label ?? id, onSelect: () => {} });
+    const out = phoneGo(row, [{ id: "p-1", name: "Ledger cutover" }], () => {});
+    expect(out.map((e) => (e.type === "sep" ? "—" : e.label))).toEqual([
+      "chair.window.needs", "chair.window.brief", "chair.window.week", "chair.window.capture", "—",
+      "Meetings", "People", "Conductor", "Settings", "—",
+      "Ledger cutover", "—", "New"]);
+    const nu = out[out.length - 1] as Extract<WorkMenuEntry, { type: "sub" }>;
+    expect(nu.entries.map((e) => (e.type === "sep" ? "—" : e.label))).toEqual(["Thought", "Meeting", "Project", "Person"]);
   });
 
-  it("renders the grouped Go on the real menu bar; each group opens as a menu", () => {
+  it("renders on the real menu bar: no Desk ▸ Object ▸ Window ▸, and New opens as a menu", () => {
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
-    // PHILO-14 A1 (#939): the Chair's windows lead, one tap each.
-    const rows = within(menu).getAllByRole("menuitemcheckbox").slice(0, 3);
+    const rows = within(menu).getAllByRole("menuitemcheckbox").slice(0, 4);
     expect(rows.map((h) => h.querySelector(".desk-menu-label")?.textContent?.trim())).toEqual(
-      ["Needs you", "Brief", "The week"]);
-    const heads = within(menu).getAllByRole("menuitem").slice(0, 3);
-    expect(heads.map((h) => h.querySelector(".desk-menu-label")?.textContent?.trim())).toEqual(
-      ["Desk", "Object", "Window"]);
-    expect(heads.every((h) => h.getAttribute("aria-haspopup") === "menu")).toBe(true);
+      ["Needs you", "Brief", "The week", "Capture"]);
+    const heads = within(menu).getAllByRole("menuitem").filter((h) => h.getAttribute("aria-haspopup") === "menu");
+    expect(heads.map((h) => h.querySelector(".desk-menu-label")?.textContent?.trim())).toEqual(["New"]);
     fireEvent.click(heads[0]);
-    expect(within(menu).getByRole("menuitem", { name: /New Note/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: /Thought/ })).toBeInTheDocument();
   });
 
   it("keeps all four menus flat at 1440 (the control)", () => {

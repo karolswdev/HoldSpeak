@@ -445,6 +445,10 @@ describe("Connections card", () => {
     expect(conn.textContent).toContain("GH NOT INSTALLED");
     expect(conn.textContent).toContain("ACLI NOT INSTALLED");
     expect(within(conn).queryByRole("button")).toBeNull();
+    // PHILO-15 11 (B29): one tool per line, so the tokens never read as one.
+    const tools = within(conn).getByTestId("firstrun-connections-tools");
+    expect(tools.hasAttribute("data-stack")).toBe(true);
+    expect(Array.from(tools.children, (c) => c.textContent)).toEqual(["GH NOT INSTALLED", "ACLI NOT INSTALLED"]);
     view.unmount();
 
     hub.connections = { candidates: [gh({ active: false, verb: null, id: "github:github.com:other" })], tools: { gh: { installed: true } } };
