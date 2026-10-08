@@ -444,10 +444,9 @@ CHANGE_CLASS_CLOSED = "closed"
 
 #: The source-manifest key that freezes what a draft reported as closed.
 CLOSURE_KEYS = "closure_keys"
-#: PHILO-15 B52: each closure key's row text, frozen with the draft. A
-#: published update reports a closure only when its published body carries
-#: the row (or the PR link): a model draft that dropped the row, or an owner
-#: edit that cut it, does not consume the watermark.
+#: PHILO-15 B52: each closure key's row text, frozen with the draft. Its
+#: presence also marks a manifest made since PHILO-15, when every draft (a
+#: model draft too) carries the rows word for word.
 CLOSURE_LINES = "closure_lines"
 
 
@@ -459,28 +458,39 @@ def merged_line(title: str, number: str, url: str) -> str:
 
 
 def reported_closures(published: list[dict[str, Any]]) -> set[str]:
-    """The closure keys the PUBLISHED updates reported: a key frozen into a
-    published update's manifest whose row (or PR link) is in its published
-    body. A manifest from before PHILO-15 (keys, no lines) reports its keys."""
+    """The closure keys the PUBLISHED updates reported (PHILO-15 B52, Astra
+    r1 rulings):
+
+    - a published update reports every key frozen into its manifest: its
+      draft carried every row, so a row the owner cut before he published is
+      an intentional exclusion and stays out;
+    - a draft that was discarded or superseded is never published and
+      consumes nothing;
+    - a manifest from before PHILO-15 (keys, no ``closure_lines``) consumes
+      nothing: its model draft may have dropped the row (the B52 loss), so
+      the merge is reported once more rather than never."""
     reported: set[str] = set()
     for row in published:
         try:
             frozen = json.loads(row.get("source_manifest_json") or "{}")
         except (TypeError, ValueError):
             frozen = {}
-        if not isinstance(frozen, dict):
-            continue
-        keys = [str(k) for k in frozen.get(CLOSURE_KEYS) or []]
-        lines = frozen.get(CLOSURE_LINES)
-        if not isinstance(lines, dict):
-            reported.update(keys)
-            continue
-        body = " ".join(str(row.get("body_md") or "").split())
-        for key in keys:
-            text = " ".join(str(lines.get(key) or "").split())
-            if (text and text in body) or (key.startswith("http") and key in body):
-                reported.add(key)
+        if isinstance(frozen, dict) and isinstance(frozen.get(CLOSURE_LINES), dict):
+            reported.update(str(k) for k in frozen.get(CLOSURE_KEYS) or [])
     return reported
+
+
+def _row_lines(body_md: str) -> set[str]:
+    """The body's lines as rows: list marker and spacing dropped, so a row is
+    matched whole (``(PR #1) …/pull/1`` never matches ``…/pull/10``)."""
+    out: set[str] = set()
+    for line in str(body_md or "").splitlines():
+        text = " ".join(line.split())
+        if text.startswith(("- ", "* ")):
+            text = text[2:]
+        if text:
+            out.add(text)
+    return out
 
 #: Conductor R4: a merged agent PR linked to its origin in the Room
 #: (``delivery.follow_through.LINK_OBSERVATION``).
@@ -660,7 +670,8 @@ def _carry_closed_rows(
     """PHILO-15 B52: every closed row of the deterministic inventory, in the
     model draft's Progress, word for word, with its claim. A row the model
     already wrote is not repeated."""
-    missing = [line for line in closed_lines if line not in body_md]
+    present = _row_lines(body_md)
+    missing = [line for line in closed_lines if " ".join(line.split())[2:] not in present]
     if missing:
         head = f"## {_SECTION_HEADINGS['progress']}\n\n"
         block = "\n".join(missing)
@@ -831,8 +842,10 @@ def _build_source_coverage(
         state = caveat.get("state", "unknown")
         reason = caveat.get("reason", "")
 
-        reason_str = f": {reason}" if reason else ""
-        text = f"Section '{section_name}' {state}{reason_str}"
+        # PHILO-15 B53: plain words, never a raw code (the update is sent).
+        word = {"degraded": "partly read", "absent": "not read"}.get(state, state)
+        reason_str = f": {reason.replace('_', ' ')}" if reason else ""
+        text = f"{str(section_name).capitalize()} {word}{reason_str}"
         ref = f"project:{room.get('project_id', 'unknown')}"
         claims.append(Claim(
             span_id=f"s_source_coverage_{i}",

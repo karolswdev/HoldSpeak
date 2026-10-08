@@ -46,7 +46,7 @@ from holdspeak.runtime import composition
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo10_send import (  # noqa: E402
     SENTINEL, DispatchSpy, Hub, _boot, destination, files, history, in_thread, op, ops, prepare, preview_digest, room,
-    send, send_body, sends, source,
+    send, send_body, sends, sent_text, source,
 )
 from test_philo9_steward_admission import AGENT_ID, _agent, _tool  # noqa: E402
 
@@ -394,8 +394,9 @@ def test_the_preview_is_the_frozen_bytes_and_the_file_is_those_bytes(
     previewed = hub.client.post("/api/channels/preview", json={"document_ref": document_ref, "destination_id": dest}).json()
     prepared = prepare(hub, document_ref, dest)["send"]
     if source_kind == "project_update":
-        assert previewed["preview"]["text"] == prepared["preview"]["text"] == body
-        payload = body
+        # PHILO-15 B53: the sent bytes are the body under its heading.
+        payload = sent_text(body)
+        assert previewed["preview"]["text"] == prepared["preview"]["text"] == payload
     else:
         payload = prepared["preview"]["text"]
         assert previewed["preview"]["text"] == payload

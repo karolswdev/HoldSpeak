@@ -28,7 +28,7 @@ from holdspeak.runtime import composition
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo10_cli import EMAIL, SITE, Canned, install, save  # noqa: E402
-from _philo10_send import SENTINEL, Hub, _boot, history, in_thread, prepare, room, send, sends, until  # noqa: E402
+from _philo10_send import SENTINEL, Hub, _boot, history, in_thread, prepare, room, send, sends, sent_text, until  # noqa: E402
 
 CHANNELS = ["github", "jira", "confluence"]
 
@@ -357,8 +357,10 @@ def test_an_oversize_body_is_refused_by_name_before_any_dispatch(
 ) -> None:
     canned = install(monkeypatch)
     dest = _dest(hub, channel)
-    _pid, fits = room(hub, name="Fits", body="\u00e9" * limit)  # characters, not bytes
-    assert prepare(hub, fits, dest)["send"]["size"] == 2 * limit
+    # PHILO-15 B53: the sent text is the body under "<Project> · Update · <date>".
+    frame = len(sent_text("", name="Fits"))  # heading, blank line, final newline
+    _pid, fits = room(hub, name="Fits", body="\u00e9" * (limit - frame))  # characters, not bytes
+    assert prepare(hub, fits, dest)["send"]["size"] == len(sent_text("\u00e9" * (limit - frame), name="Fits").encode())
     _pid, update = room(hub, name="Too long", body="x" * (limit + 1))
     refused = hub.client.post("/api/channels/sends", json={"document_ref": f"project_update:{update}", "destination_id": dest})
     assert refused.status_code == 400 and refused.json()["code"] == f"payload_too_large:{channel}", refused.text

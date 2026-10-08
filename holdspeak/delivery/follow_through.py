@@ -52,6 +52,7 @@ from __future__ import annotations
 
 import subprocess
 import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
@@ -107,7 +108,9 @@ TOTAL_LIMIT_SECONDS = 8 * 3600
 _LIVE_STATES = frozenset({"launched", "registered"})
 
 #: PHILO-15 B51: while a launch has an open PR, the hub reads that PR's
-#: state this often (one ``gh pr view`` per PR), at most this many PRs a poll.
+#: state this often (one ``gh pr view`` per PR), at most this many PRs a poll,
+#: in round robin. The ceiling: 3600 / 120 * 10 = 300 ``gh pr view`` an hour
+#: per hub (plus the sweeps); with no open PR, none.
 POLL_SECONDS = 120
 POLL_MAX_PRS = 10
 #: A kept PR in one of these states is polled (``pr_receipts.pr_state``).
@@ -264,14 +267,26 @@ class FollowThroughObserver:
         receipt: dict[str, Any] = {
             "kind": "pr_poll", "polled": [], "closed": [], "confirm": [], "cleaned": [],
         }
-        launches = [r for r in self._ledger.list() if self._polled(r)][:POLL_MAX_PRS]
+        # Round robin (Astra r1): the launches read longest ago go first, so
+        # with more than POLL_MAX_PRS open PRs every one is read within
+        # ceil(n / POLL_MAX_PRS) polls. A launch never polled reads as oldest.
+        eligible = [r for r in self._ledger.list() if self._polled(r)]
+        eligible.sort(key=lambda r: (int((r.get("follow_through") or {}).get("polled_ns") or 0),
+                                     str(r.get("launch_id") or "")))
+        launches = eligible[:POLL_MAX_PRS]
         if not launches:
             return receipt
         view = getattr(self._receipts, "view_pr", None)
         if not callable(view):
             return receipt
         mode = str(self._control_mode() or "yolo").lower()
+        stamp = 0
         for launch in launches:
+            # The read stamp rides the launch's own follow-through state, so
+            # the order survives the hub building a new observer per poll.
+            stamp = max(time.time_ns(), stamp + 1)
+            launch["follow_through"] = {**launch["follow_through"], "polled_ns": stamp}
+            self._save(str(launch["launch_id"]), launch["follow_through"])
             pr = launch["follow_through"]["pr"]
             source_id = str(launch.get("source_id") or "")
             row, gh = view(source_id, str(pr["url"]))

@@ -180,20 +180,90 @@ def test_a_model_draft_carries_the_row_word_for_word(tmp_path, db, monkeypatch) 
         rig.tmux.ended = True
 
 
-def test_a_published_update_without_the_row_does_not_consume_it(tmp_path, db, monkeypatch) -> None:
-    """The owner cut the row before he published: that update did not
-    report the merge, so the next one does (once)."""
+PR10_URL = "https://github.com/karolswdev/holdspeak-dayone-rehearsal-1558/pull/10"
+ROW10 = f"Merged: Add the release checklist (PR #10) {PR10_URL}"
+
+
+def _merge_pr10(rig) -> None:
+    """A second merge in the Room's repository, through the Heartbeat's own
+    producer (R4's merged-only read)."""
+    assert rig.observer._record_merge(PROJECT, REPO, {
+        "url": PR10_URL, "number": 10, "title": "Add the release checklist",
+        "state": "MERGED", "mergedAt": "2026-10-07T23:10:00Z", "headRefName": "release-checklist",
+    })
+
+
+def _cut(body: str, row: str) -> str:
+    out = body.replace(f"- {row}\n", "")
+    assert row not in out
+    return out
+
+
+def test_a_row_the_owner_cut_and_published_stays_excluded(tmp_path, db, monkeypatch) -> None:
+    """Astra r1 ruling: a row the owner cut from a draft he then published is
+    an intentional exclusion. Repeated: a second merge cut again stays out too."""
     rig = _merged(tmp_path, db, monkeypatch)
     try:
         _delta, updates = _updates(db)
         draft = updates.draft_update(OWNER, PROJECT)
-        cut = draft["body_md"].replace(f"- {ROW}\n", "")
-        assert ROW not in cut
-        updates.save_update(OWNER, draft["id"], body_md=cut)
+        updates.save_update(OWNER, draft["id"], body_md=_cut(draft["body_md"], ROW))
         updates.publish_update(OWNER, draft["id"])
         second = updates.draft_update(OWNER, PROJECT)
-        assert _progress(second["body_md"]).count(ROW) == 1
-        updates.publish_update(OWNER, second["id"])
+        assert "Merged:" not in second["body_md"], "the owner's exclusion holds"
+
+        _merge_pr10(rig)
+        third = updates.draft_update(OWNER, PROJECT)
+        assert _progress(third["body_md"]).count(ROW10) == 1 and ROW not in third["body_md"]
+        updates.save_update(OWNER, third["id"], body_md=_cut(third["body_md"], ROW10))
+        updates.publish_update(OWNER, third["id"])
+        assert "Merged:" not in updates.draft_update(OWNER, PROJECT)["body_md"]
+    finally:
+        rig.tmux.ended = True
+
+
+def test_pr_1_and_pr_10_are_two_rows(tmp_path, db, monkeypatch) -> None:
+    """A model draft that wrote only PR #10's row still gets PR #1's: the
+    row is matched whole, so ``/pull/1`` is never found inside ``/pull/10``."""
+    from holdspeak.services.project_update_service import ProjectUpdateService
+
+    def model(self, principal, det_claims, det_sections, det_body_md, known_names=(), memory=None):
+        return (f"## Progress\n\n- {ROW10}\n\n## Decisions\n\nNo decisions.\n", "[]",
+                "model:ia_1", "192.168.1.43:8080", "qwen3.8-27b")
+
+    monkeypatch.setattr(ProjectUpdateService, "_draft_with_model", model)
+    rig = _merged(tmp_path, db, monkeypatch)
+    try:
+        _merge_pr10(rig)
+        _delta, updates = _updates(db)
+        draft = updates.draft_update(OWNER, PROJECT, generator="model")
+        progress = _progress(draft["body_md"])
+        assert progress.count(ROW) == 1 and progress.count(ROW10) == 1
+        updates.publish_update(OWNER, draft["id"])
+        assert "Merged:" not in updates.draft_update(OWNER, PROJECT)["body_md"]
+    finally:
+        rig.tmux.ended = True
+
+
+def test_a_manifest_from_before_the_fix_consumes_nothing(tmp_path, db, monkeypatch) -> None:
+    """Astra r1 MISSED: the rehearsal's published model draft froze PR #1's
+    key with no row in its body. After the upgrade that manifest (no
+    ``closure_lines``) is read as unpublished, so the merge is reported once."""
+    rig = _merged(tmp_path, db, monkeypatch)
+    try:
+        _delta, updates = _updates(db)
+        legacy = updates.draft_update(OWNER, PROJECT)
+        manifest = json.loads(legacy["source_manifest_json"])
+        manifest.pop("closure_lines")
+        body = _cut(legacy["body_md"], ROW)
+        with db._connection() as conn:
+            conn.execute(
+                "UPDATE project_updates SET source_manifest_json=?, body_md=? WHERE id=?",
+                (json.dumps(manifest), body, legacy["id"]),
+            )
+        updates.publish_update(OWNER, legacy["id"])
+        current = updates.draft_update(OWNER, PROJECT)
+        assert _progress(current["body_md"]).count(ROW) == 1
+        updates.publish_update(OWNER, current["id"])
         assert "Merged:" not in updates.draft_update(OWNER, PROJECT)["body_md"]
     finally:
         rig.tmux.ended = True
@@ -212,22 +282,58 @@ def test_a_draft_never_published_consumes_nothing(tmp_path, db, monkeypatch) -> 
 # ── B53: the sent text carries no desk mark ─────────────────────────
 
 
-def test_the_sent_document_drops_the_unverified_mark(db) -> None:
-    from holdspeak.services.project_update_service import UNVERIFIED_MARKER
+#: The rehearsal's model answer, as the model returns it (the parser's
+#: input): a cited sentence, and three uncited fillers it marks [UNVERIFIED].
+MODEL_RAW = json.dumps({"sections": [
+    {"key": "progress", "sentences": [
+        {"text": "The contributing file was merged into the rehearsal repository.",
+         "cited_refs": ["action_item:ai_1"]}]},
+    {"key": "risks_blockers", "sentences": [
+        {"text": "No risks or blockers in this window.", "cited_refs": []}]},
+    {"key": "dependencies", "sentences": [
+        {"text": "No dependencies tracked.", "cited_refs": []}]},
+    {"key": "next_actions", "sentences": [
+        {"text": "Carol ships the ledger cutover on Friday.", "cited_refs": ["action_item:nope"]}]},
+]})
 
-    _delta, updates = _updates(db)
-    draft = updates.draft_update(OWNER, PROJECT)
-    body = draft["body_md"].replace(
-        "## Dependencies\n\n", f"## Dependencies\n\n- {UNVERIFIED_MARKER} No dependencies tracked.\n",
-    )
-    updates.save_update(OWNER, draft["id"], body_md=body)
-    updates.publish_update(OWNER, draft["id"])
-    sent = render_update(db, draft["id"])
-    assert "UNVERIFIED" not in sent.body_md
-    assert "- No dependencies tracked." in sent.body_md
-    assert sent.title.startswith("Railsproj"), "the document is named by the Project's name"
-    # The desk keeps the fact: the stored body still has the mark.
-    assert UNVERIFIED_MARKER in db.project_updates.get_update(draft["id"])["body_md"]
+
+def test_unchecked_model_claims_never_leave_the_desk(tmp_path, db, monkeypatch) -> None:
+    """Astra r1 ruling (P1): a claim the model could not tie to evidence is
+    OMITTED from the sent text, not sent as a fact; an emptied section says
+    "Not checked."; the footer counts what stayed on the desk. Real model
+    output through the real parser, the publication, Send and Copy."""
+    from holdspeak.services import project_update_service as pus
+    from holdspeak.services.channel_contract import without_desk_marks
+
+    def model(self, principal, det_claims, det_sections, det_body_md, known_names=(), memory=None):
+        refs = frozenset(r for c in det_claims for r in c.refs)
+        sections, claims = pus._parse_model_output(MODEL_RAW, refs)
+        return (pus._assemble_body(sections), json.dumps([c.to_dict() for c in claims]),
+                "model:ia_1", "192.168.1.43:8080", "qwen3.8-27b")
+
+    monkeypatch.setattr(pus.ProjectUpdateService, "_draft_with_model", model)
+    rig = _merged(tmp_path, db, monkeypatch)
+    try:
+        _delta, updates = _updates(db)
+        draft = updates.draft_update(OWNER, PROJECT, generator="model")
+        assert draft["body_md"].count(pus.UNVERIFIED_MARKER) == 3, draft["body_md"]
+        updates.publish_update(OWNER, draft["id"])
+        sent = render_update(db, draft["id"]).body_md
+        assert sent.startswith("# Railsproj · Update · "), sent
+        assert "UNVERIFIED" not in sent
+        assert "Carol ships the ledger cutover" not in sent, "an unchecked claim is not sent as fact"
+        assert "No dependencies tracked." not in sent
+        assert sent.count("Not checked.") == 3
+        assert sent.rstrip().endswith("3 claims not checked, kept on the desk.")
+        assert "The contributing file was merged into the rehearsal repository." in sent
+        assert ROW in sent, "the merge row is a record, not a claim"
+        assert "_" not in sent.split("## Source Coverage", 1)[1], "plain words, never a raw code"
+        # Copy leaves the desk the same way; the desk keeps every claim.
+        copied = without_desk_marks(db.project_updates.get_update(draft["id"])["body_md"])
+        assert "UNVERIFIED" not in copied and "Carol ships" not in copied
+        assert "Carol ships" in db.project_updates.get_update(draft["id"])["body_md"]
+    finally:
+        rig.tmux.ended = True
 
 
 # ── B51: the open-PR poll ───────────────────────────────────────────
@@ -284,6 +390,46 @@ def test_a_stopped_launch_is_not_polled(tmp_path, db, monkeypatch) -> None:
 def test_the_poll_is_bounded_and_every_two_minutes() -> None:
     assert follow_through.POLL_SECONDS == 120
     assert follow_through.POLL_MAX_PRS == 10
+    # The ceiling stated in the PR: 300 gh pr view an hour per hub.
+    assert 3600 // follow_through.POLL_SECONDS * follow_through.POLL_MAX_PRS == 300
+
+
+def test_more_than_ten_open_prs_are_read_in_round_robin(tmp_path, db) -> None:
+    """Astra r1 (P1): with 13 open PRs, no launch waits for the sweep: the
+    second poll reads the three the first did not, then the oldest seven."""
+    from holdspeak.delivery.attempts import WorkAttemptService
+    from holdspeak.delivery.factory_launch import LaunchLedger
+    from holdspeak.delivery.follow_through import FollowThroughObserver
+
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    for n in range(13):
+        url = f"https://github.com/{REPO}/pull/{100 + n}"
+        ledger.record({
+            "launch_id": f"launch-{n:02d}", "state": "registered", "attempt_id": f"att-{n}",
+            "worktree_id": f"wt-{n}", "source_id": "src", "origin_ref": {"kind": "action", "id": f"a{n}"},
+            "follow_through": {"pr": {"url": url, "number": 100 + n, "state": "open"}},
+        })
+    read: list[str] = []
+
+    class Receipts:
+        def view_pr(self, source_id, url):
+            read.append(url)
+            number = int(url.rsplit("/", 1)[1])
+            return {"url": url, "number": number, "state": "open", "title": f"PR {number}"}, "live"
+
+    observer = FollowThroughObserver(
+        db, ledger=ledger, registry=None, receipts=Receipts(),
+        attempts=WorkAttemptService(db.work_attempts), control_mode=lambda: "yolo",
+    )
+    url = lambda n: f"https://github.com/{REPO}/pull/{n}"  # noqa: E731
+    first = observer.poll_open_prs(OWNER)
+    assert read == [url(100 + n) for n in range(10)]
+    read.clear()
+    second = observer.poll_open_prs(OWNER)
+    assert len(first["polled"]) == len(second["polled"]) == 10
+    assert read[:3] == [url(110), url(111), url(112)], "the three never read go first"
+    assert read[3:] == [url(100 + n) for n in range(7)], "then the oldest reads"
+    assert ledger.get("launch-12")["follow_through"]["polled_ns"] > 0
 
 
 def test_the_heartbeat_poll_refreshes_needs_you_on_a_close(tmp_path, db, monkeypatch) -> None:

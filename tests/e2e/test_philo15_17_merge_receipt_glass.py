@@ -1,13 +1,15 @@
 """PHILO-15 lane 17 (B50-B53): the merged PR on the Room receipt and in the
 sent update, AS RENDERED at 1440x900 and 393x852.
 
-The merge is K4's own receipt: ``FollowThroughService.complete`` with the
-evidence the follow-through writes (the PR's url, number, title, merge
-time), and the launch's follow-through state on the launch ledger. The PR is
-the rehearsal's real PR #1 (as ``gh pr view`` read it on 2026-10-07).
+The launch's PR #1 is open on the launch ledger; GitHub is faked at the
+``gh pr view`` boundary (the rehearsal's real PR #1, as ``gh pr view`` read it
+on 2026-10-07). Everything after it is the real follow-through on the real hub.
 
+  * PR #1 is open on the Room; it is merged on the fake GitHub and the hub's
+    own poll (1 s here, 120 s in the product) closes the item: the open Room
+    shows the receipt with no press.
   * The Room receipt names the PR by its own title and number, with Open PR
-    and its GITHUB.COM egress chip.
+    and its GITHUB.COM egress chip; it wraps, so every part is visible.
   * The published update carries ``Merged: <PR title> (PR #1) <link>``; the
     sent file carries it too and has no ``[UNVERIFIED]`` mark.
   * "Draft with model" names no LOCAL + CLOUD.
@@ -15,6 +17,7 @@ the rehearsal's real PR #1 (as ``gh pr view`` read it on 2026-10-07).
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -40,14 +43,35 @@ PR_URL = "https://github.com/karolswdev/holdspeak-dayone-rehearsal-1558/pull/1"
 ROW = f"Merged: {PR_TITLE} (PR #1) {PR_URL}"
 
 
+class FakeGitHub:
+    """GitHub at the ``gh pr view`` boundary: PR #1, open until the test
+    merges it (the receipts' ``view_pr``, as the hub's poll calls it)."""
+
+    def __init__(self) -> None:
+        self.state = "open"
+        self.merged_at = ""
+
+    def view_pr(self, source_id: str, url: str):
+        merged = self.state == "merged"
+        return {
+            "url": PR_URL, "number": 1, "title": PR_TITLE, "state": self.state,
+            "merged_at": self.merged_at if merged else "", "merged_sha": "f" * 40 if merged else "",
+            "head_sha": "e" * 40, "review_decision": "", "ci": "none", "checks": [],
+        }, "live"
+
+    def merge(self) -> None:
+        self.merged_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.state = "merged"
+
+
 def _seed(launches: Path) -> None:
+    """The Project, its action item, and the agent's launch with PR #1 open
+    (kept on the launch, as K4's first sweep leaves it). Its cleanup is
+    already final, so the merge only closes the item and reads as merged."""
     from holdspeak.db import get_database
-    from holdspeak.principals import Principal, PrincipalKind
-    from holdspeak.services.follow_through_service import FollowThroughService
 
     db = get_database()
     now = datetime.now(timezone.utc)
-    merged_at = (now - timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
     with db._connection() as conn:
         conn.execute("INSERT INTO projects (id, name) VALUES (?, ?)", (PROJECT, "Payments ledger cutover"))
         conn.execute(
@@ -63,22 +87,16 @@ def _seed(launches: Path) -> None:
             (ACTION, TASK),
         )
         conn.commit()
-    evidence = {
-        "pr_url": PR_URL, "pr_number": "1", "pr_title": PR_TITLE, "merged_sha": "f" * 40,
-        "merged_at": merged_at, "attempt_id": "att-1517", "launch_id": "launch-1517",
-    }
-    FollowThroughService(db).complete(
-        Principal(PrincipalKind.OWNER, "heartbeat-conductor"), ACTION, "done", {"evidence": evidence},
-    )
     launches.parent.mkdir(parents=True, exist_ok=True)
     launches.write_text(json.dumps({"launches_schema": 1, "launches": [{
         "launch_id": "launch-1517", "state": "registered", "attempt_id": "att-1517",
         "worktree_id": "wt-1517", "source_id": "src-1517", "launched_at": (now - timedelta(minutes=40)).isoformat(),
         "origin_ref": {"kind": "action", "id": ACTION}, "profile_id": "codex-default",
         "follow_through": {
-            "pr_state": "pr_merged", "close": "closed", "evidence": evidence, "done": True,
-            "pr": {"url": PR_URL, "number": 1, "title": PR_TITLE, "state": "merged"},
-            "cleanup": {"session": "killed", "worktree": "worktree_removed"},
+            "pr_state": "pr_open",
+            "pr": {"url": PR_URL, "number": 1, "title": PR_TITLE, "state": "open"},
+            "cleanup": {"session": "killed", "worktree": "worktree_kept_not_ours", "mcp": "released",
+                        "gate": "not_armed"},
         },
     }]}), encoding="utf-8")
 
@@ -86,11 +104,21 @@ def _seed(launches: Path) -> None:
 class TestMergeReachesTheUpdate:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        from holdspeak.delivery import factory_launch
+        from holdspeak.delivery import factory_launch, follow_through
+        from holdspeak.delivery.attempts import WorkAttemptService
+        from holdspeak.delivery.factory_launch import LaunchLedger
 
         _ensure_build()
         launches = tmp_path / "home" / ".holdspeak" / "agent_launches.json"
         monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", launches)
+        # The hub's own PR poll, every 1 s instead of 120 s, reads the fake
+        # GitHub; everything after the gh boundary is the real follow-through.
+        self.github = FakeGitHub()
+        monkeypatch.setattr(follow_through, "POLL_SECONDS", 1)
+        monkeypatch.setattr(follow_through, "default_follow_through", lambda db: follow_through.FollowThroughObserver(
+            db, ledger=LaunchLedger(launches), registry=SimpleNamespace(get=lambda _id: None), receipts=self.github,
+            attempts=WorkAttemptService(db.work_attempts), control_mode=lambda: "yolo",
+        ))
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
         self.base, self.tmp = base, tmp_path
         _seed(launches)
@@ -122,9 +150,17 @@ class TestMergeReachesTheUpdate:
                 self._stage(page, "open-project-memory", f"project:{PROJECT}")
                 page.locator("[data-testid=room-body]").wait_for()
 
-                # 1. The Room receipt: the PR's title and number, Open PR, egress.
+                # 0. PR #1 is open: no receipt yet; the item shows its PR.
+                page.locator("text=PR #1 · OPEN").first.wait_for()
+                assert page.locator("[data-testid=room-merge-receipt]").count() == 0
+                _settle(page)
+                page.screenshot(path=str(SHOTS / f"17-room-pr-open-{width}.png"))
+
+                # 1. Merged on GitHub; nobody presses anything. The hub's poll
+                #    reads it, closes the item, and the open Room re-reads.
+                self.github.merge()
                 receipt = page.locator("[data-testid=room-merge-receipt]")
-                receipt.wait_for()
+                receipt.wait_for(timeout=15_000)
                 text = receipt.text_content() or ""
                 assert text.startswith(f"DONE · {PR_TITLE} · PR #1 MERGED · "), text
                 assert TASK not in text
@@ -132,6 +168,9 @@ class TestMergeReachesTheUpdate:
                 assert open_pr.get_attribute("aria-label") == f"Open PR #1: {PR_TITLE}"
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"17-room-receipt-{width}.png"))
+                # Every part is visible (wraps, never clips): title, number, time.
+                box = receipt.evaluate("e => ({sw: e.scrollWidth, cw: e.clientWidth, ws: getComputedStyle(e).whiteSpace})")
+                assert box["ws"] == "normal" and box["sw"] <= box["cw"] + 1, box
 
                 # 2. Draft, mark one line as the model does, publish (the API).
                 drafted = _api(page, "POST", f"/api/projects/{PROJECT}/updates/draft",
@@ -178,7 +217,10 @@ class TestMergeReachesTheUpdate:
                 [sent] = list(folder.glob("*.md"))
                 sent_text = sent.read_text(encoding="utf-8")
                 assert ROW in sent_text, sent_text
-                assert "UNVERIFIED" not in sent_text
+                assert sent_text.startswith("# Payments ledger cutover · Update · "), sent_text
+                assert "UNVERIFIED" not in sent_text and "No dependencies tracked." not in sent_text
+                assert sent_text.rstrip().endswith("1 claim not checked, kept on the desk.")
+                assert "meeting_summary_unavailable" not in sent_text
                 (SHOTS / f"17-sent-update-{width}.md").write_text(sent_text, encoding="utf-8")
             finally:
                 browser.close()

@@ -223,10 +223,35 @@ def _slug(name: str) -> str:
 _UNVERIFIED_MARK = re.compile(r"\*\*\[UNVERIFIED\]\*\*[ \t]*")
 
 
-def without_desk_marks(body_md: str) -> str:
-    """An update's Markdown as it leaves the desk (Send, Copy): the
-    ``[UNVERIFIED]`` mark removed (PHILO-15 B53)."""
-    return _UNVERIFIED_MARK.sub("", str(body_md or ""))
+def without_desk_marks(body_md: str, heading: str = "") -> str:
+    """An update's Markdown as it leaves the desk (Send, Copy), PHILO-15 B53
+    and Astra's r1 ruling: a claim the model could not tie to evidence (the
+    ``[UNVERIFIED]`` mark) is OMITTED, never sent as a fact; a section left
+    empty by that reads "Not checked."; the last line counts what stayed on
+    the desk. ``heading`` (the document's identity) leads when given."""
+    sections: list[list[str]] = [[]]
+    dropped_in: list[int] = [0]
+    dropped = 0
+    for line in str(body_md or "").splitlines():
+        if line.startswith("## "):
+            sections.append([line])
+            dropped_in.append(0)
+        elif _UNVERIFIED_MARK.search(line):
+            dropped += 1
+            dropped_in[-1] += 1
+        else:
+            sections[-1].append(line)
+    out: list[str] = []
+    for lines, cut in zip(sections, dropped_in):
+        if cut and not any(l.strip() for l in lines[1:]):
+            lines = [lines[0], "", "Not checked.", ""] if lines else ["Not checked.", ""]
+        out.extend(lines)
+    text = "\n".join(out).rstrip("\n") + "\n"
+    if dropped:
+        text += f"\n{dropped} claim{'' if dropped == 1 else 's'} not checked, kept on the desk.\n"
+    if heading:
+        text = f"# {heading}\n\n" + text
+    return text
 
 
 def render_update(db: Any, update_id: str) -> Document:
@@ -244,9 +269,11 @@ def render_update(db: Any, update_id: str) -> Document:
     published = str(row.get("published_at") or "")[:10]
     title = f"{name} — update r{row.get('draft_revision') or 1}" + (f" ({published})" if published else "")
     revision = int(row.get("draft_revision") or 1)
-    # PHILO-15 B53: ``[UNVERIFIED]`` is the desk's own mark (the face shows
-    # it as a lamp on the claim); it never leaves the desk.
-    body = without_desk_marks(str(row.get("body_md") or ""))
+    # PHILO-15 B53: an unchecked claim never leaves the desk as a fact (the
+    # face keeps it, with its UNVERIFIED lamp).
+    # The document names itself (PHILO-15 B53 ruling): "<Project> · Update · <date>".
+    heading = f"{name} · Update" + (f" · {published}" if published else "")
+    body = without_desk_marks(str(row.get("body_md") or ""), heading)
     return Document(ref=f"project_update:{row['id']}", title=title, body_md=body,
                     slug=_slug(name), label=f"REV {revision}")
 

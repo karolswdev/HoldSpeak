@@ -1955,13 +1955,20 @@ class MeetingWebServer:
             await asyncio.sleep(event_log.SpoolTimer.INTERVAL)
 
     async def _agent_pr_poll_loop(self) -> None:
-        """PHILO-15 B51: every ``follow_through.POLL_SECONDS`` (2 min), read
-        each followed launch's open PR (``_poll_agent_prs``). With no open PR
-        a tick reads the launch ledger and runs no ``gh``."""
+        """PHILO-15 B51: every ``follow_through.POLL_SECONDS`` (2 min, from
+        the start of one poll to the start of the next), read the followed
+        launches' open PRs (``_poll_agent_prs``, round robin, at most 10 a
+        poll). With no open PR a tick reads the launch ledger and runs no
+        ``gh``."""
         from .delivery import follow_through
 
+        loop = asyncio.get_running_loop()
+        due = loop.time() + follow_through.POLL_SECONDS
         while True:
-            await asyncio.sleep(follow_through.POLL_SECONDS)
+            # The next poll is due one period after the last one STARTED
+            # (Astra r1): a slow poll never stretches the two minutes.
+            await asyncio.sleep(max(0.0, due - loop.time()))
+            due = loop.time() + follow_through.POLL_SECONDS
             await asyncio.to_thread(_poll_agent_prs)
 
     async def _rails_observer_loop(self) -> None:
