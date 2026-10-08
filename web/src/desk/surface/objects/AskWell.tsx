@@ -18,6 +18,9 @@ export interface AskWellProps {
   agent: string;
   /** `6 min`. */
   age?: string;
+  /** The caption's word: `ASKS` (default) for a question; `IDLE` or `DONE`
+   *  for a turn that ended with no question (PHILO-15 B48). */
+  word?: string;
   question: string;
   value: string;
   onChange(next: string): void;
@@ -50,6 +53,7 @@ export interface AskWellProps {
 export function AskWell({
   agent,
   age,
+  word = "ASKS",
   question,
   value,
   onChange,
@@ -66,7 +70,7 @@ export function AskWell({
   arm,
   "data-testid": testId,
 }: AskWellProps) {
-  const caption = [`${agent.toUpperCase()} ASKS`, age?.toUpperCase()].filter(Boolean).join(" · ");
+  const caption = [`${agent.toUpperCase()} ${word}`, age?.toUpperCase()].filter(Boolean).join(" · ");
   const field = useRef<HTMLInputElement | null>(null);
   // An empty answer is never sent: the press takes you to the field.
   const send = () => {

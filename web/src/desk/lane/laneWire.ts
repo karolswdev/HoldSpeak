@@ -23,12 +23,48 @@ export interface LaneLaunch {
   branch?: string | null;
   worktree_path?: string | null;
   launched_at?: string | null;
+  /** PHILO-15 B42: `sent` once the brief reached the agent; `pending` while
+   * the launch waits for it (a start screen, a slow start). */
+  instruction_state?: string | null;
+  /** When the delivery receipt said the brief reached the agent. */
+  brief_sent_at?: string | null;
+  /** PHILO-15 B46: a Re-brief sent mid-turn, typed at the turn end (the first of the queue). */
+  queued_rebrief?: LaneQueuedRebrief | null;
+  /** The queued Re-briefs, oldest first (a small FIFO). */
+  queued_rebriefs?: LaneQueuedRebrief[] | null;
+  /** One terminal receipt per Re-brief press (Astra r2 on #996). */
+  rebriefs?: LaneRebriefReceipt[] | null;
   control_mode?: string | null;
   brief_text?: string | null;
   session_key?: string | null;
   tmux_session?: string | null;
   /** The owner stopped the agent (kill route): when, and the audit row. */
   stopped?: { by?: string; at?: string; audit_id?: number | null; scope?: string } | null;
+}
+
+export interface LaneQueuedRebrief {
+  id?: string | null;
+  text?: string | null;
+  at?: string | null;
+  approved_at?: string | null;
+}
+
+/** A Re-brief's receipt: what became of the owner's press (`sent`,
+ * `superseded`, `expired`), when he pressed, and the delivery's command id. */
+export interface LaneRebriefReceipt {
+  id?: string | null;
+  state: "sent" | "superseded" | "expired" | string;
+  text_head?: string | null;
+  approved_at?: string | null;
+  approved_by?: { kind?: string; identity?: string } | null;
+  /** The press's own id (its approval). */
+  press_id?: string | null;
+  /** The delivery's `process.input` command id (derived from the press). */
+  command_id?: string | null;
+  receipt_id?: string | null;
+  at?: string | null;
+  how?: string | null;
+  detail?: string | null;
 }
 
 export interface LaneCheck {
@@ -39,6 +75,8 @@ export interface LaneCheck {
 
 export interface LanePR {
   number: number | null;
+  /** PHILO-15 B50: the PR's own title (GitHub's). */
+  title?: string | null;
   url?: string | null;
   state?: string | null;
   review_decision?: string | null;
@@ -69,13 +107,15 @@ export interface LaneWait {
    * an answer to a wait that is not the current one). */
   wait_id?: string | null;
   draft?: LaneDraft | null;
-  /** PHILO-15 15: `done` (the agent reported its work done) or `idle` (no
-   * question): kind `DONE` / `IDLE`, not a wait for the owner. Lane 14's
-   * B48 field, the same name. */
-  turn_end?: string | null;
+  /** PHILO-15 B48: how the turn ended: a real question (`asks`), no
+   * question (`idle`), or no question with the PR open (`done`). PHILO-15 15:
+   * a turn end the responder read as not the owner's comes as kind `DONE` /
+   * `IDLE` (no Needs you row). */
+  turn_end?: "asks" | "idle" | "done" | string | null;
 }
 
-/** The turn end the lane says instead of a wait (`DONE`, `IDLE`), or null. */
+/** PHILO-15 15: the turn end the lane says instead of a wait (kind `DONE`,
+ * `IDLE`: the responder hid it from Needs you), or null. */
 export function turnEndWord(wait: LaneWait | null | undefined): "DONE" | "IDLE" | null {
   const kind = String(wait?.kind ?? "").toUpperCase();
   return kind === "DONE" || kind === "IDLE" ? kind : null;
@@ -89,6 +129,8 @@ export interface LaneControl {
   direct: boolean;
   expires_in_seconds?: number | null;
   pane?: boolean;
+  /** The registered pane (`%N`) the steer names (PHILO-15 B46). */
+  pane_id?: string | null;
 }
 
 export interface LaneAnswer {
@@ -261,7 +303,7 @@ function runResult(event: LaneEvent): string {
  * Deny / Approve. `at` orders the entries; `heads` collapse repeated READs. */
 export interface LaneEntry extends Omit<TimelineEntry, "verbs"> {
   at: number | null;
-  kind: "brief" | "read" | "says" | "write" | "run" | "call" | "answer" | "end" | "commit" | "pr" | "held" | "asks" | "merge";
+  kind: "brief" | "read" | "says" | "write" | "run" | "call" | "answer" | "end" | "commit" | "pr" | "held" | "asks" | "merge" | "rebrief";
   /** HELD: the gate proposal; the face draws Deny / Approve while it is held. */
   gated?: LaneGated;
   heads?: string[];
@@ -390,15 +432,18 @@ export function laneEntries(lane: LaneWire, events: readonly LaneEvent[]): LaneE
   const timed: LaneEntry[] = [];
   const launch = lane.launch;
   const briefFacts = briefLine(launch.brief_text);
+  const brief = briefState(launch);
   timed.push({
     id: "brief",
-    at: at(launch.launched_at),
-    time: wireClock(launch.launched_at),
+    at: at(brief.when ?? launch.launched_at),
+    time: brief.state === "sent" ? wireClock(brief.when) : "",
     kind: "brief",
     word: "BRIEF",
-    text: briefFacts || undefined,
+    text: [brief.state === "sent" ? "" : brief.word, briefFacts].filter(Boolean).join(" · ") || undefined,
+    ...(brief.state === "sent" ? {} : { pending: true }),
   });
   timed.push(...eventEntries(events));
+  for (const receipt of Array.isArray(launch.rebriefs) ? launch.rebriefs : []) timed.push(rebriefEntry(receipt));
   const worktree = lane.worktree;
   if (!isNotRead(worktree)) {
     // git log is newest first; the rail reads oldest first.
@@ -447,15 +492,14 @@ export function laneEntries(lane: LaneWire, events: readonly LaneEvent[]): LaneE
   }
   const wait = lane.wait;
   if (wait && !isNotRead(wait) && wait.question) {
-    // PHILO-15 15: a done report reads DONE with the agent's last words.
-    const turn = turnEndWord(wait);
+    const turn = turnWord(wait);
     ordered.push({
       id: "asks",
       at: at(wait.started),
       time: wireClock(wait.started),
       kind: "asks",
-      word: turn ?? "ASKS",
-      tone: turn === "DONE" ? "ok" : turn === "IDLE" ? "info" : "ask",
+      word: turn.word,
+      tone: turn.tone,
       text: wait.question,
     });
   }
@@ -524,7 +568,61 @@ export function briefLine(brief: string | null | undefined): string {
   return kb >= 1 ? `${words} words · ${kb.toFixed(1)} KB` : `${words} words`;
 }
 
+/* ── the Re-brief receipts ───────────────────────────────────────── */
+
+const REBRIEF_STATE_WORD: Record<string, string> = { sent: "SENT", superseded: "SUPERSEDED", expired: "EXPIRED" };
+
+/** `SENT · 17:22 · BY YOUR PRESS 17:13`; `SUPERSEDED · …`; `EXPIRED · AGENT
+ * NEVER RETURNED · BY YOUR PRESS …`. */
+export function rebriefWords(receipt: LaneRebriefReceipt): string {
+  const word = REBRIEF_STATE_WORD[receipt.state] ?? String(receipt.state).toUpperCase();
+  const pressed = wireClock(receipt.approved_at);
+  return [word, wireClock(receipt.at), receipt.detail || "", pressed ? `BY YOUR PRESS ${pressed}` : ""].filter(Boolean).join(" · ");
+}
+
+/** The rail entry of one Re-brief receipt; its code line names the
+ * delivery's command id (the receipt is the owner's press). */
+export function rebriefEntry(receipt: LaneRebriefReceipt): LaneEntry {
+  const sent = receipt.state === "sent";
+  return {
+    id: `rebrief-${receipt.id ?? receipt.command_id ?? receipt.at}`,
+    at: at(receipt.at),
+    time: wireClock(receipt.at),
+    kind: "rebrief",
+    word: "RE-BRIEF",
+    tone: sent ? "ok" : "warn",
+    text: rebriefWords(receipt),
+    quote: receipt.text_head ?? undefined,
+    code: receipt.command_id ? `command ${receipt.command_id}` : receipt.press_id ? `press ${receipt.press_id}` : undefined,
+  };
+}
+
 /* ── the station track ───────────────────────────────────────────── */
+
+/** PHILO-15 B42: the brief as it is: `sent` at its delivery time; else
+ * `waiting` (the launch holds it until the agent is ready) or `not sent`.
+ * A launch with no delivery state is an older one: its launch time. */
+export function briefState(launch: LaneLaunch): { state: "sent" | "waiting" | "not_sent"; word: string; when: string | null } {
+  const state = String(launch.instruction_state ?? "");
+  if (!state || state === "sent") {
+    return { state: "sent", word: "sent", when: launch.brief_sent_at ?? (state ? null : launch.launched_at ?? null) };
+  }
+  if (state === "pending" || state === "delivering") return { state: "waiting", word: "waiting", when: null };
+  return { state: "not_sent", word: "not sent", when: null };
+}
+
+/** PHILO-15 B48: the word of a turn end. ASKS only when a real question (or
+ * a permission prompt) waits; IDLE when the turn ended with no question;
+ * DONE when it ended with no question and the PR is open. */
+export function turnWord(wait: LaneWait): { word: "ASKS" | "IDLE" | "DONE"; tone: ObjectTone } {
+  if (wait.kind === "TO APPROVE" || wait.kind === "DECIDING") return { word: "ASKS", tone: "ask" };
+  const hidden = turnEndWord(wait);  // PHILO-15 15: the responder's DONE / IDLE
+  if (hidden === "DONE") return { word: "DONE", tone: "ok" };
+  if (hidden === "IDLE") return { word: "IDLE", tone: "info" };
+  if (wait.turn_end === "idle") return { word: "IDLE", tone: "info" };
+  if (wait.turn_end === "done") return { word: "DONE", tone: "ok" };
+  return { word: "ASKS", tone: "ask" };
+}
 
 /** BRIEF · WORK · COMMIT · PR · HELD · ASKS · MERGE from the lane: a station
  * with nothing in it is hollow and says `—`, never a zero. */
@@ -537,12 +635,15 @@ export function laneStations(lane: LaneWire, events: readonly LaneEvent[]): Stat
   const everHeld = heldCalls(lane).length;
   const wait = lane.wait && !isNotRead(lane.wait) ? lane.wait : null;
   const asking = Boolean(wait && (wait.kind === "TO ANSWER" || wait.kind === "TO APPROVE"));
-  const turn = turnEndWord(wait);
+  const turn = wait && (asking || turnEndWord(wait)) ? turnWord(wait) : null;
+  const brief = briefState(lane.launch);
   const merged = Boolean(lane.follow_through?.merged);
   const reached = (on: boolean, tone: ObjectTone = "ok"): Pick<Station, "state" | "tone"> =>
     on ? { state: "reached", tone } : { state: "ahead" };
   return [
-    { word: "BRIEF", sub: wireClock(lane.launch.launched_at) || "—", ...reached(true) },
+    brief.state === "sent"
+      ? { word: "BRIEF", sub: wireClock(brief.when) || "sent", ...reached(true) }
+      : { word: "BRIEF", sub: brief.word, state: "current" as const, tone: brief.state === "waiting" ? ("warn" as const) : ("fail" as const) },
     { word: "WORK", sub: calls > 0 ? `${calls} ${calls === 1 ? "call" : "calls"}` : "—", ...reached(calls > 0) },
     {
       word: "COMMIT",
@@ -557,10 +658,11 @@ export function laneStations(lane: LaneWire, events: readonly LaneEvent[]): Stat
         ? { state: "current" as const, tone: "warn" as const }
         : everHeld > 0 ? { state: "reached" as const, tone: "warn" as const } : { state: "ahead" as const }),
     },
-    turn
-      ? { word: turn, sub: wireClock(wait?.started) || "now", ...(turn === "DONE"
-        ? { state: "reached" as const, tone: "ok" as const } : { state: "current" as const, tone: "info" as const }) }
-      : { word: "ASKS", sub: asking ? "now" : "—", ...(asking ? { state: "current" as const, tone: "ask" as const } : { state: "ahead" as const }) },
+    !turn
+      ? { word: "ASKS", sub: "—", state: "ahead" as const }
+      : turn.word === "ASKS"
+        ? { word: "ASKS", sub: "now", state: "current" as const, tone: "ask" as const }
+        : { word: turn.word, sub: wireClock(wait?.started) || "now", state: turn.word === "DONE" ? ("reached" as const) : ("current" as const), tone: turn.tone },
     { word: "MERGE", sub: merged ? "merged" : "yours", ...reached(merged) },
   ];
 }

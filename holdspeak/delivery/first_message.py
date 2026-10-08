@@ -27,6 +27,7 @@ is ``failed`` (the launch state says ``ended_undelivered``).
 """
 from __future__ import annotations
 
+import os
 import threading
 import time
 from pathlib import Path
@@ -61,6 +62,11 @@ _CURSOR = "❯"  # the ❯ that marks the selected choice
 CODEX_TRUST_HEADER = "Folder access"
 CODEX_TRUST_QUESTION = "Trust this folder?"
 CODEX_TRUST_YES = "1. Trust and continue"
+#: A worktree of a repository adds a Note between the path and the question
+#: (Codex 0.159, captured 2026-10-07): "Note: You’re in a subdirectory of a
+#: Git project. Trusting will apply to the repository root:" and the root.
+CODEX_TRUST_NOTE = "Note:"
+CODEX_TRUST_ROOT_MARK = "repository root:"
 #: The footer reads "esc quit" in its own process (``--no-daemon``, the
 #: launch) and "esc back" under the shared daemon.
 CODEX_TRUST_FOOTERS = ("enter continue · esc quit", "enter continue · esc back")
@@ -121,11 +127,19 @@ def parse_trust_prompt(lines: list[str]) -> Optional[dict[str, Any]]:
 
 
 def _expected_paths(worktree_path: str) -> set[str]:
+    """The readings of ``worktree_path`` an agent may print: as given, its
+    real path (Codex prints ``/private/var/...`` for ``/var/...`` on macOS),
+    and either one under ``~``."""
     path = str(worktree_path)
     expected = {path}
-    home = str(Path.home())
-    if path.startswith(home + "/"):
-        expected.add("~" + path[len(home):])
+    try:
+        expected.add(os.path.realpath(path))
+    except (OSError, ValueError):
+        pass
+    for home in {str(Path.home()), os.path.realpath(str(Path.home()))}:
+        for item in list(expected):
+            if item.startswith(home + "/"):
+                expected.add("~" + item[len(home):])
     return expected
 
 
@@ -148,9 +162,12 @@ def parse_codex_trust_prompt(lines: list[str]) -> Optional[dict[str, Any]]:
     """Codex's LIVE folder-trust screen, or ``None``.
 
     Live: its footer (``enter continue · esc quit``) is the last non-blank
-    line. Returns ``{paths, cursor}``: the readings of the path block between
-    the header and the question, and ``"yes"`` when the › marks
-    ``1. Trust and continue``, ``"other"`` when it marks another choice."""
+    line. Returns ``{paths, root, cursor}``: the readings of the path block
+    (the rows right under the header, up to the first blank row), the
+    repository root that a "Note: You're in a subdirectory of a Git project"
+    paragraph names (``None`` when there is no Note), and ``"yes"`` when the
+    › marks ``1. Trust and continue``, ``"other"`` when it marks another
+    choice. The Note is never part of the path (B41)."""
     rows = _live_rows(lines)
     if not rows or rows[-1].strip() not in CODEX_TRUST_FOOTERS:
         return None
@@ -161,11 +178,35 @@ def parse_codex_trust_prompt(lines: list[str]) -> Optional[dict[str, Any]]:
     question = next((i for i, row in enumerate(region) if row.strip().startswith(CODEX_TRUST_QUESTION)), None)
     if question is None:
         return None
-    path_rows = [row for row in region[:question] if row.strip()]
-    if not path_rows:
+    blocks: list[list[str]] = []
+    for row in region[:question]:
+        if not row.strip():
+            if blocks and blocks[-1]:
+                blocks.append([])
+            continue
+        if not blocks:
+            blocks.append([])
+        blocks[-1].append(row)
+    blocks = [block for block in blocks if block]
+    if not blocks or blocks[0][0].strip().startswith(CODEX_TRUST_NOTE):
         return None
+    path_rows = blocks[0]
     pad = min(len(row) - len(row.lstrip(" ")) for row in path_rows)
     parts = [row[pad:] for row in path_rows]
+    root: Optional[str] = None
+    note = next((block for block in blocks[1:] if block[0].strip().startswith(CODEX_TRUST_NOTE)), None)
+    if note is not None:
+        # The root follows the marker; a wrapped root joins with nothing
+        # between its rows, like the path block.
+        tail: list[str] = []
+        seen = False
+        for row in note:
+            if seen:
+                tail.append(row.strip())
+            elif CODEX_TRUST_ROOT_MARK in row:
+                seen = True
+                tail.append(row.split(CODEX_TRUST_ROOT_MARK, 1)[1].strip())
+        root = "".join(tail) or None
     yes_row = next((row for row in region[question:] if row.strip().endswith(CODEX_TRUST_YES)), None)
     if yes_row is None:
         return None
@@ -173,7 +214,7 @@ def parse_codex_trust_prompt(lines: list[str]) -> Optional[dict[str, Any]]:
     cursor = "yes" if yes_row.lstrip().startswith(_CODEX_CURSOR) else ("other" if marked else None)
     # Codex breaks a long path at the pane width, character by character:
     # the rows join with nothing between them. A space is never guessed.
-    return {"paths": {"".join(parts)}, "cursor": cursor}
+    return {"paths": {"".join(parts)}, "root": root, "cursor": cursor}
 
 
 def codex_trust_prompt_for(lines: list[str], worktree_path: str) -> Optional[dict[str, Any]]:
@@ -487,8 +528,11 @@ class FirstMessage:
         commands["instruction"] = sent.get("command_id")
         outcome = str((sent.get("receipt") or {}).get("outcome") or "")
         if outcome == "delivered":
+            # PHILO-15 B42: the BRIEF station reads the delivery receipt's
+            # own time (``executed_at``), not the launch's.
             svc._ledger.update(
                 launch_id, commands=commands, instruction_state=DELIVERED, pending_brief=None,
+                brief_sent_at=str((sent.get("receipt") or {}).get("executed_at") or "") or _iso_now(),
             )
             if not registered:
                 self._await_registration(attempt_id, session, deadline)

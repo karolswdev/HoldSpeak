@@ -134,8 +134,6 @@ _SYSTEM = (
     "outside the JSON."
 )
 
-#: A question: a ``?`` in the message's last lines (an agent asks at its end).
-_QUESTION_TAIL_LINES = 4
 #: The agent reports its work done (PHILO-15 15): the desk stops answering.
 _DONE_PATTERNS = tuple(re.compile(p, re.IGNORECASE) for p in (
     r"\b(?:pr|pull request)\s*#?\d+\b[^.?!\n]*\b(?:is\s+)?(?:open|opened|created|up|ready|merged)\b",
@@ -159,34 +157,23 @@ _PERSON_VOICE = re.compile(
 )
 
 
-#: A sentence that opens with an interrogative is a question, "?" or not.
-_INTERROGATIVE = re.compile(
-    r"(?:^|[.!:;\n]\s*)(?:should|shall|can|could|would|will|do|does|did|is|are|am|may|"
-    r"must|what|which|how|why|when|where|who|whom|whose)\s+\S",
-    re.IGNORECASE,
-)
-#: A report of a problem (a failed check, an error, a block): the owner's,
-#: never DONE, even beside an open PR.
-_PROBLEM = re.compile(
-    r"\b(?:fail(?:s|ed|ing|ure)?|error(?:s|ed)?|broken|blocked|cannot|can't|couldn't|"
-    r"unable|red|timed out|did not pass|didn't pass|not pass(?:ing)?)\b",
-    re.IGNORECASE,
-)
-
-
 def message_kind(text: str) -> str:
-    """``question`` (a ``?`` or a sentence that opens with an interrogative:
-    a QUESTION first, whatever else the message holds; Astra r1 on #998),
+    """``question`` (``agent_context.models.asks_a_question``, the one
+    question rule: a QUESTION first, whatever else the message holds),
     ``problem`` (a failed check, an error, a block: the owner's), ``done``
     (a completion report with no question and no problem), ``chitchat``
     (thanks, a farewell, a greeting) or ``statement``. Only a ``question``
     can get an answer from the desk."""
+    from ..agent_context.models import asks_a_question, reports_a_problem
+
     body = str(text or "").strip()
     if not body:
         return "statement"
-    if "?" in body or _INTERROGATIVE.search(body):
+    # THE question rule, shared with lane 14 (Needs you, the lane's
+    # stations, the Conductor lamp): a question first, whatever else it holds.
+    if asks_a_question(body):
         return "question"
-    if _PROBLEM.search(body):
+    if reports_a_problem(body):
         return "problem"
     if any(p.search(body) for p in _DONE_PATTERNS):
         return "done"
@@ -470,9 +457,13 @@ class AgentResponder:
             thread.join(timeout)
 
     def _triage_one(self, key: str, session: Any, mode: str) -> str:
-        from ..agent_context.models import is_blocked, wait_kind
+        from ..agent_context.models import TURN_ASKS, is_blocked, turn_end, wait_kind
 
         if session is None or not is_blocked(session):
+            return "none"
+        if turn_end(session) != TURN_ASKS:
+            # PHILO-15 B48: a turn end with no question asks nothing: no
+            # Needs you row, no notification, no drafted answer.
             return "none"
         launch = self._launch_for(key)
         if launch is None or wait_kind(session) == "approve" or mode == "safe":

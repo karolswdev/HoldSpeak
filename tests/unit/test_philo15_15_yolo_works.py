@@ -353,9 +353,11 @@ def test_the_lane_says_done_with_the_agents_last_words(tmp_path: Path) -> None:
     from holdspeak.services.needs_you_membership import coder_items
 
     assert coder_items(ar.annotate_sessions([session], store=store)) == []
-    # The same wait as the owner's (escalated) IS a row: the DONE state hides it.
-    store.put_wait("codex:s1", {"wait_id": "w1", "state": ar.ESCALATED, "launch_id": "L1", "at": 1.0})
-    assert len(coder_items(ar.annotate_sessions([session], store=store))) == 1
+    # A question after it, escalated to the owner, IS a row (the DONE state
+    # and lane 14's no-question rule hide only a turn with no question).
+    store.put_wait("codex:s1", {"wait_id": "w2", "state": ar.ESCALATED, "launch_id": "L1", "at": 1.0})
+    asks = {**session, "wait_id": "w2", "question": "CI failed on lint. Shall I fix it on this branch?"}
+    assert len(coder_items(ar.annotate_sessions([asks], store=store))) == 1
 
 
 def test_a_routine_question_is_answered_once_as_the_desk(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

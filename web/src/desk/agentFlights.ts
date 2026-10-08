@@ -12,7 +12,7 @@ import { useCallback, useEffect } from "react";
 import { create } from "zustand";
 import { apiFetch } from "../lib/api";
 import { useOnCoderFrame, useOnDeskChanged } from "./useDeskChangedRefresh";
-import { isBlockedCoder, type NeedsYouCoder } from "./needsYou";
+import { coderTurnEnd, isBlockedCoder, type NeedsYouCoder } from "./needsYou";
 
 export type FlightState = "starting" | "working" | "waiting" | "pr_open" | "merged" | "ended" | "expired";
 export type AgentName = "claude" | "codex";
@@ -27,7 +27,11 @@ export interface AgentFlight {
   agent: AgentName;
   state: FlightState;
   sessionKey: string | null;
-  pr: { number: number | null; url: string; state: string } | null;
+  /** `title`: the PR's own title (PHILO-15 B50); empty until the hub read it. */
+  pr: { number: number | null; url: string; state: string; title?: string } | null;
+  /** PHILO-15 B48: how a waiting agent's turn ended (`asks`, `idle`, `done`);
+   * PHILO-15 15: the responder's DONE / IDLE first (also with the PR open). */
+  turnEnd?: "asks" | "idle" | "done" | null;
   close: string | null;
   /** K4's cleanup of the agent's session (`killed`, `session_gone`,
    * `no_session`): the evidence that it left. Null while the close waits
@@ -36,9 +40,6 @@ export interface AgentFlight {
   mergedAt: string | null;
   /** PHILO-14 C2: the launch, the agent's lane window opens on it. */
   launchId: string | null;
-  /** PHILO-15 15: the current turn end is not the owner's: `done` (the agent
-   * reported its work done) or `idle` (no question). */
-  turnEnd?: "done" | "idle" | null;
 }
 
 export interface CoderSessionRow {
@@ -49,6 +50,8 @@ export interface CoderSessionRow {
   name: string;
   state: string;
   blocked: boolean;
+  /** PHILO-15 B48: blocked, but the turn ended with no question (IDLE). */
+  idle?: boolean;
   question: string;
   flight: AgentFlight | null;
   /** The wire row as it came, for faces that read more of it. */
@@ -75,12 +78,12 @@ export function fromWireFlight(body: any): AgentFlight {
     agent: body?.agent === "codex" ? "codex" : "claude",
     state: (FLIGHT_STATES.includes(body?.state) ? body.state : "starting") as FlightState,
     sessionKey: body?.session_key ? String(body.session_key) : null,
-    pr: pr ? { number: pr.number == null ? null : Number(pr.number), url: String(pr.url ?? ""), state: String(pr.state ?? "") } : null,
+    pr: pr ? { number: pr.number == null ? null : Number(pr.number), url: String(pr.url ?? ""), state: String(pr.state ?? ""), title: String(pr.title ?? "") } : null,
+    turnEnd: ["asks", "idle", "done"].includes(body?.turn_end) ? body.turn_end : null,
     close: body?.close ? String(body.close) : null,
     sessionCleanup: body?.session_cleanup ? String(body.session_cleanup) : null,
     mergedAt: body?.merged_at ? String(body.merged_at) : null,
     launchId: body?.launch_id ? String(body.launch_id) : null,
-    turnEnd: body?.turn_end === "done" || body?.turn_end === "idle" ? body.turn_end : null,
   };
 }
 
@@ -97,6 +100,7 @@ export function fromWireSessionRow(row: any): CoderSessionRow {
     name: folder || sessionId || "session",
     state: String(session.state ?? session.lifecycle ?? ""),
     blocked: isBlockedCoder(session as NeedsYouCoder),
+    idle: isBlockedCoder(session as NeedsYouCoder) && coderTurnEnd(session as NeedsYouCoder) === "idle",
     question: String(session.question ?? ""),
     flight: row?.flight ? fromWireFlight(row.flight) : null,
     raw: row ?? {},
@@ -110,7 +114,7 @@ export function flightLabel(flight: AgentFlight): string | null {
   }
   if (flight.state === "starting") return `${agentWord(flight.agent)} · STARTING`;
   if (flight.state === "working") return `${agentWord(flight.agent)} · WORKING`;
-  if (flight.state === "waiting") return `${agentWord(flight.agent)} · WAITING`;
+  if (flight.state === "waiting") return `${agentWord(flight.agent)} · ${flight.turnEnd === "idle" ? "IDLE" : "WAITING"}`;
   return null;
 }
 

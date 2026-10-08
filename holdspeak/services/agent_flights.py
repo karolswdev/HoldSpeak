@@ -88,6 +88,12 @@ def _session_state(session: Any, now: datetime) -> str:
     return "waiting" if is_blocked(session) else "working"
 
 
+def _turn_end(session: Any, pr_state: str) -> str:
+    from ..agent_context.models import turn_end
+
+    return turn_end(session, work_done=pr_state == "open")
+
+
 def _title_of(db: Any, ref: str) -> str:
     from ..grounding import hydrate_refs_detailed
 
@@ -171,11 +177,22 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         "project_name": project_name,
         "agent": _agent_of(record),
         "state": state,
+        # PHILO-15 B48: how a waiting agent's turn ended (``asks`` /
+        # ``idle`` / ``done``); IDLE is a lamp, never a Needs you row.
+        # PHILO-15 B48 (lane 14) and 15: the responder's record of the
+        # current wait (done / idle: not the owner's) first, else the turn
+        # end the session's last words read as.
+        "turn_end": (
+            _responder_turn(session_key, session)
+            or (_turn_end(session, pr_state) if state == "waiting" else None)
+        ) if state in ("waiting", "pr_open") else None,
         "session_key": session_key or None,
         "pr": {
             "number": pr.get("number"),
             "url": pr.get("url"),
             "state": pr_state,
+            # PHILO-15 B50: the PR's own title (the drawer's PR object).
+            "title": pr.get("title") or None,
         } if pr else None,
         "close": follow.get("close"),
         # K4's cleanup of the agent's session (killed, session_gone,
@@ -187,13 +204,10 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         # PHILO-14 C4: the launch's clocks (the Conductor's stale window).
         "launched_at": record.get("launched_at") or None,
         "ended_at": _ended_at(record, state, session, follow.get("close")),
-        # PHILO-15 15: the responder's word on the current turn end
-        # (``done``: the agent reported its work done; ``idle``: no question).
-        "turn_end": _turn_end(session_key, session) if state in ("waiting", "pr_open") else None,
     }
 
 
-def _turn_end(session_key: str, session: Any) -> Optional[str]:
+def _responder_turn(session_key: str, session: Any) -> Optional[str]:
     """``done`` / ``idle`` when the responder recorded the session's CURRENT
     wait as a turn end that is not the owner's; else ``None``."""
     from .agent_responder import TURN_STATES, AnswerStore

@@ -325,6 +325,37 @@ function coderWaitKind(session: NeedsYouCoder): "approve" | "answer" {
     : "answer";
 }
 
+/** PHILO-15 B48 (`agent_context.models.asks_a_question`, THE question
+ * predicate): the turn end asks the owner something when a `?` ends a
+ * sentence, or an interrogative stands, ANYWHERE in its words, however long
+ * the report around it (Astra r2 on #996 and #998). */
+export function asksAQuestion(text: unknown): boolean {
+  const body = String(text ?? "").trim();
+  if (!body) return false;
+  return QUESTION_RE.test(body) || INTERROGATIVE_RE.test(body);
+}
+
+const QUESTION_RE = /\?["'\u2019\u201d)\]*_`]*(?:\s|$)/;
+const INTERROGATIVE_RE =
+  /\b(?:(?:should|shall|may|can|could|would|will|do|does|did|is|are)\s+(?:i|we|you)\b|want\s+me\s+to\b|would\s+you\s+like\b|do\s+you\s+want\b)/i;
+
+/** PHILO-15 15 (`agent_context.models.reports_a_problem`): the turn end
+ * reports a failed check, an error or a block: the owner's, question or not. */
+export function reportsAProblem(text: unknown): boolean {
+  return PROBLEM_RE.test(String(text ?? ""));
+}
+
+const PROBLEM_RE =
+  /\b(?:fail(?:s|ed|ing|ure)?|error(?:s|ed)?|broken|blocked|cannot|can't|couldn't|unable|timed out|did not pass|didn't pass|not passing)\b/i;
+
+/** How a waiting session's turn ended (`agent_context.models.turn_end`):
+ * `asks` for a permission prompt, a real question or a reported problem,
+ * else `idle`. */
+export function coderTurnEnd(session: NeedsYouCoder): "asks" | "idle" {
+  return coderWaitKind(session) === "approve" || asksAQuestion(session.question) || reportsAProblem(session.question)
+    ? "asks" : "idle";
+}
+
 function stampMs(value: string): number {
   return value ? new Date(value).getTime() : Number.NaN;
 }
@@ -361,6 +392,9 @@ export function coderItems(
     );
     const waitId = String(session.wait_id ?? "");
     const approve = coderWaitKind(session) === "approve";
+    // PHILO-15 B48 (the A5 law): a turn that ended with no question is IDLE,
+    // a lane station and a Conductor lamp, never a Needs you row.
+    if (coderTurnEnd(session) !== "asks") continue;
     const excerpt = coderExcerpt(question);
     rows.push({
       id: ref,

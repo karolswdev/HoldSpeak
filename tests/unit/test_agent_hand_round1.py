@@ -6,6 +6,8 @@ process edge.
 """
 from __future__ import annotations
 
+import os
+
 import asyncio
 import json
 import subprocess
@@ -155,10 +157,20 @@ def test_the_whole_outbound_brief_is_redacted(db, tmp_path) -> None:
 
 
 @pytest.mark.parametrize("shown", ["/tmp/hs-action-10", "/tmp/hs-action-1/other", "/tmp/hs-action-1 evil",
-                                   "/tmp/hs-action", "/private/tmp/hs-action-1"])
+                                   "/tmp/hs-action", "/private/tmp/hs-action-2", "/private/tmp/hs-action-10"])
 def test_trust_prompt_matches_only_the_exact_path(shown) -> None:
+    """A trust prompt for any OTHER folder is never answered: a sibling, a
+    child, a prefix, a look-alike, also through the /tmp symlink."""
     lines = _trust_screen(shown, cursor_on_yes=True).split("\n")
     assert _trust_for(lines, "/tmp/hs-action-1") is None
+
+
+@pytest.mark.skipif(os.path.realpath("/tmp") != "/private/tmp", reason="macOS /tmp symlink")
+def test_trust_prompt_matches_the_same_folder_through_its_symlink() -> None:
+    """PHILO-15 B41: the agent prints the real path (``/private/tmp/...``)
+    of the launch's ``/tmp/...`` worktree: the SAME folder, and only it."""
+    lines = _trust_screen("/private/tmp/hs-action-1", cursor_on_yes=True).split("\n")
+    assert _trust_for(lines, "/tmp/hs-action-1")["cursor"] == "yes"
 
 
 def test_trust_prompt_reads_a_wrapped_path_and_the_cursor() -> None:
