@@ -1,6 +1,6 @@
 import { useDesk } from "../../store";
 import { flashSwitcher } from "./Switcher";
-import { snapForPointer } from "./windowGeometry";
+import { tileFront } from "../../compositor/useCompositor";
 import { chairPhoneToBack, chairWindowSpec } from "../../chair/chairWindows";
 import {
   cycleWindows as cycleWindowsRaw,
@@ -19,19 +19,23 @@ export function cycleWindowsReverse(): void {
   cycleWindowsReverseRaw(flashSwitcher);
 }
 
+/** PHILO-16 — Tile left / right (⌘⌥← / ⌘⌥→): the front window takes the
+ * half, the near window the other half; they touch, so one steel divider
+ * sits between them (the compositor, `tileFront`). One window open: it takes
+ * the half alone (the old Snap). */
 export function snapFrontWindow(side: "left" | "right"): void {
-  const id = frontWindowId();
-  if (!id || typeof window === "undefined") return;
-  const state = useDesk.getState();
-  const vw = window.innerWidth || 1280;
-  const vh = window.innerHeight || 800;
-  const rect = snapForPointer(side === "left" ? 0 : vw, vh / 2, vw, vh);
-  if (!rect) return;
-  if (state.panelMax.includes(id)) state.toggleMaximizePanel(id);
-  if (state.panelMin.includes(id)) state.restorePanel(id);
-  state.setPanelRect(id, rect, true);
-  state.focusPanel(id);
+  tileFront(side);
 }
+
+export {
+  tileFront,
+  toggleStage,
+  toggleExposeMode,
+  gatherFront,
+  gatherRoom,
+  cascadeAll,
+  back as arrangeBack,
+} from "../../compositor/useCompositor";
 
 /** PHILO-13-12 (C2) — zoom one window between its two remembered rects.
  * The FIRST zoom keeps the normal rect even when the owner never arranged

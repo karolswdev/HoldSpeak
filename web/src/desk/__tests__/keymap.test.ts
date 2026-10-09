@@ -28,7 +28,11 @@ describe("parseKey / matchKey (⌘-notation is the binding truth)", () => {
       plain: false,
       key: "ArrowUp",
     });
-    expect(parseKey("Esc")).toBeNull();
+    // PHILO-16: Esc is a plain key now (Window ▸ Back); ⌥ and the arrows parse.
+    expect(parseKey("Esc")).toEqual({ meta: false, ctrl: false, plain: true, key: "escape" });
+    expect(parseKey("⌘⌥←")).toEqual({ meta: true, ctrl: false, plain: false, alt: true, key: "ArrowLeft" });
+    expect(parseKey("⌘⏎")).toEqual({ meta: true, ctrl: false, plain: false, key: "Enter" });
+    expect(parseKey("⌘⇧`")).toEqual({ meta: true, ctrl: false, plain: false, shift: true, key: "`" });
   });
 
   it("⌘ means the primary modifier (meta OR ctrl, never both)", () => {

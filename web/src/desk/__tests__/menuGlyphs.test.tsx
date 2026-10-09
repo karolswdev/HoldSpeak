@@ -286,7 +286,7 @@ describe("bound-key-set byte-identical proof (HS-148-02)", () => {
       "desk.settle": "⌘⇧F",
       "go.change-places": "⌘⇧P",
       "desk.new-decision": "⌘⇧N",
-      "desk.overview": "⌃↑",
+      "desk.overview": "⌘⇧E",
       "object.rename": "F2",
       "object.delete": "Delete",
       "go.ask": "⌘I",
@@ -296,11 +296,16 @@ describe("bound-key-set byte-identical proof (HS-148-02)", () => {
       "go.configure-settings": "⌘4",
       "window.close": "⌘W",
       "window.minimize": "⌘M",
-      // PHILO-13-12 (C2): Zoom ⌃M and To back ⌃B (board C1-2b).
-      "window.maximize": "⌃M",
-      "window.depth": "⌃B",
-      "window.cycle": "⌃`",
-      "window.cycle-reverse": "⌃⇧`",
+      // PHILO-16 §5: the compositor's keys (the C2 keys ⌃M, ⌃B, ⌃` stay
+      // bound one release as altKeys; the reverse cycle has no key now).
+      "window.maximize": "⌘⇧Z",
+      "window.depth": "⌘⇧`",
+      "window.cycle": "⌘`",
+      "window.snap-left": "⌘⌥←",
+      "window.snap-right": "⌘⌥→",
+      "window.stage": "⌘⏎",
+      "window.gather": "⌘G",
+      "window.back": "Esc",
       "system.search": "⌘K",
       "system.sheet": "⌘/",
     });

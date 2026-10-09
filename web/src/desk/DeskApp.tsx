@@ -32,6 +32,7 @@ import { DragLayer } from "./hand";
 import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
 import { Dock, Expose, SnapGhost, Switcher } from "./components/DeskWindow";
+import { CompositorLayer } from "./compositor/CompositorLayer";
 import { SurfaceWindows } from "./components/SurfaceWindows";
 import { TrustWindow } from "./components/TrustWindow";
 import { InlineEditor } from "./components/InlineEditor";
@@ -322,6 +323,8 @@ function DeskFaces() {
       {!arrivalRequired && <TrustWindow />}
       {!arrivalRequired && <Dock center={<RecordOrb />} />}
       {!arrivalRequired && <SnapGhost />}
+      {/* PHILO-16: the compositor (Esc back, stage follows, the dividers). */}
+      {!arrivalRequired && <CompositorLayer />}
       {!arrivalRequired && <Expose />}
       {!arrivalRequired && <Switcher />}
     </div>

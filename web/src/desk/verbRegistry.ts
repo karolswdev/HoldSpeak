@@ -25,7 +25,6 @@ import { useChairState } from "./chairState";
 import { deleteSeatShown } from "./deleteSeat";
 import {
   closeFrontWindow,
-  dockWindowCount,
   focusOrRestoreApp,
   minimizeFrontWindow,
   openWindowCount,
@@ -36,12 +35,17 @@ import {
   openChairWindow,
 } from "./chair/chairWindows";
 import {
+  arrangeBack,
+  cascadeAll,
   cycleWindows,
   cycleWindowsReverse,
+  gatherFront,
+  gatherRoom,
   sendFrontWindowToBack,
-  snapFrontWindow, zoomFrontWindow,
+  snapFrontWindow, toggleStage, zoomFrontWindow,
 } from "./components/window/windowCommands";
 import { toggleExpose } from "./components/window/Expose";
+import { modeNow } from "./compositor/live";
 
 export type MenuId = "desk" | "object" | "go" | "window";
 export type VerbScope = "floor" | "object" | "go" | "window" | "system" | "thread";
@@ -68,6 +72,9 @@ export interface Verb {
   group?: string;
   /** ⌘-notation shortcut - BOUND by desk/keymap.ts (the one binder). */
   key?: string;
+  /** PHILO-16 — older keys still bound for one release; never shown (the
+   * menus show `key`). */
+  altKeys?: string[];
   /** HS-148-02: unicode text-glyph for menus, deck, and palette. */
   glyph?: string;
   /** false hides the verb from the ⌘K deck (default: shown). */
@@ -166,9 +173,11 @@ function currentView(): "list" | "spatial" {
  * focus/restore instead of re-opening (the HS-101 B8 behavior). */
 const needWindow = (): string | null =>
   openWindowCount() > 0 ? null : "No window open";
-/** Overview fans the windows with a Dock chip (not the Chair's). */
-const needDockWindow = (): string | null =>
-  dockWindowCount() > 0 ? null : "No window open";
+/** PHILO-16 — at 393 every window is a sheet: nothing to arrange. */
+const wideOnly = (): string | null =>
+  typeof window !== "undefined" && window.innerWidth <= 720 ? "Fills the screen" : null;
+const needTwoWindows = (): string | null =>
+  openWindowCount() > 1 ? null : "Needs two windows";
 
 export const VERBS: Verb[] = [
   // ── Desk: NEW (the one create path - createPrimitive) ──────────────
@@ -367,9 +376,11 @@ export const VERBS: Verb[] = [
     menu: "window",
     scope: "floor",
     group: "floor",
-    key: "⌃↑",
-    keywords: ["expose", "windows"],
-    ghost: needDockWindow,
+    // PHILO-16 §5: Exposé ⌘⇧E; ⌃↑ stays bound one release.
+    key: "⌘⇧E",
+    altKeys: ["⌃↑"],
+    keywords: ["expose", "exposé", "windows", "all windows"],
+    ghost: () => needWindow() ?? wideOnly(),
     run: () => toggleExpose(),
   },
   {
@@ -739,7 +750,10 @@ export const VERBS: Verb[] = [
     label: "Cycle windows",
     menu: "window",
     scope: "window",
-    key: "⌃`",
+    // PHILO-16 §5: ⌘` (⌘ is the primary key: ctrl off the Mac, so ⌃` still
+    // reaches it there); ⌃` stays bound on the Mac one release.
+    key: "⌘`",
+    altKeys: ["⌃`"],
     palette: false,
     ghost: needWindow,
     run: () => cycleWindows(),
@@ -749,27 +763,32 @@ export const VERBS: Verb[] = [
     label: "Cycle windows (reverse)",
     menu: "window",
     scope: "window",
-    key: "⌃⇧`",
+    // PHILO-16 §5: ⌘⇧` is To back now; the reverse cycle keeps its menu row.
     palette: false,
     ghost: needWindow,
     run: () => cycleWindowsReverse(),
   },
   {
     id: "window.snap-left",
-    label: "Snap left",
+    // PHILO-16 §5 — Tile: the front window and the near one share the band.
+    label: "Tile left",
     menu: "window",
     scope: "window",
     group: "layout",
-    ghost: needWindow,
+    key: "⌘⌥←",
+    keywords: ["tile", "snap", "split", "half"],
+    ghost: () => needWindow() ?? wideOnly(),
     run: () => snapFrontWindow("left"),
   },
   {
     id: "window.snap-right",
-    label: "Snap right",
+    label: "Tile right",
     menu: "window",
     scope: "window",
     group: "layout",
-    ghost: needWindow,
+    key: "⌘⌥→",
+    keywords: ["tile", "snap", "split", "half"],
+    ghost: () => needWindow() ?? wideOnly(),
     run: () => snapFrontWindow("right"),
   },
   // PHILO-13-12 (C2) — zoom and depth (design §3, board C1-2b). ⌘ stands
@@ -780,7 +799,9 @@ export const VERBS: Verb[] = [
     menu: "window",
     scope: "window",
     group: "layout",
-    key: "⌃M",
+    // PHILO-16 §5: ⌘⇧Z; ⌃M stays bound one release.
+    key: "⌘⇧Z",
+    altKeys: ["⌃M"],
     keywords: ["maximize", "zoom", "size"],
     // At 393 a window fills the work area: zoom has nothing to change.
     ghost: () =>
@@ -794,10 +815,64 @@ export const VERBS: Verb[] = [
     menu: "window",
     scope: "window",
     group: "layout",
-    key: "⌃B",
-    keywords: ["depth", "back", "behind", "lower"],
+    // PHILO-16 §5: Send back ⌘⇧`; ⌃B stays bound one release.
+    key: "⌘⇧`",
+    altKeys: ["⌃B"],
+    keywords: ["depth", "back", "behind", "lower", "send back"],
     ghost: needWindow,
     run: () => sendFrontWindowToBack(),
+  },
+  // PHILO-16 §5 — the arrangement grammar (the compositor draws them).
+  {
+    id: "window.stage",
+    label: "Stage",
+    menu: "window",
+    scope: "window",
+    group: "arrange",
+    key: "⌘⏎",
+    keywords: ["stage", "focus", "shelf"],
+    checked: () => modeNow() === "stage",
+    ghost: () => needTwoWindows() ?? wideOnly(),
+    run: () => toggleStage(),
+  },
+  {
+    id: "window.gather",
+    label: () => {
+      const room = gatherRoom();
+      const project = room ? objectByRef(useDesk.getState().items, room) : null;
+      return project ? `Gather ${project.title}` : "Gather";
+    },
+    menu: "window",
+    scope: "window",
+    group: "arrange",
+    key: "⌘G",
+    keywords: ["gather", "room", "project", "tile"],
+    ghost: () => wideOnly() ?? (gatherRoom() ? null : "No Room has two windows"),
+    run: () => gatherFront(),
+  },
+  {
+    id: "window.cascade",
+    label: "Cascade",
+    menu: "window",
+    scope: "window",
+    group: "arrange",
+    keywords: ["cascade", "arrange", "stack"],
+    ghost: () => needWindow() ?? wideOnly(),
+    run: () => cascadeAll(),
+  },
+  {
+    id: "window.back",
+    label: "Back",
+    menu: "window",
+    scope: "window",
+    group: "arrange",
+    key: "Esc",
+    palette: false,
+    keywords: ["back", "restore", "escape"],
+    ghost: () => (modeNow() === "free" ? "Nothing arranged" : null),
+    run: () => {
+      arrangeBack();
+    },
   },
   // ── Window ▸ Chair (PHILO-13-11 C1, R1): the Chair's four windows, a
   // check on each open one; picking one opens it in front. Only on the

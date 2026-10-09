@@ -1,3 +1,4 @@
+import { depthFromOrder, orderFromDepth } from "../compositor/planes";
 import type {
   DeskState,
   PanelRect,
@@ -28,6 +29,13 @@ export interface DeskWorkspaceDocumentV1 {
     zoom?: Record<string, PanelRect>;
     /** PHILO-13-07 (B2) — minimized windows come back minimized. */
     min?: string[];
+    /** PHILO-16 (L3) — each window's depth (a raise is `++highest`). The
+     * truth of the stacking; `order` is written beside it for one release.
+     * A document without it migrates once: depth = 1 + its index in
+     * `order`. */
+    depth?: Record<string, number>;
+    /** PHILO-16 — Stage's shelf side. */
+    shelf?: "left" | "right";
   };
   zoneWindows: string[];
   zoneViewPrefs: Record<string, ZoneViewPref>;
@@ -184,16 +192,44 @@ export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
       ).filter(([id, pref]) => isPanelId(id) && isZoneViewPref(pref)),
     ) as Record<string, ZoneViewPref>;
 
+    // PHILO-16 (L3): the depths are the stacking. A document written before
+    // them migrates once from the order (depth = 1 + index); ids in the order
+    // a newer document has no depth for go under the lowest depth, in order.
+    const order = compactIds(panel.order);
+    const rawDepth = (panel as { depth?: unknown }).depth;
+    const parsedDepth = Object.fromEntries(
+      Object.entries(rawDepth && typeof rawDepth === "object" ? rawDepth : {})
+        .filter(([id, d]) => isPanelId(id) && typeof d === "number" && Number.isFinite(d)),
+    ) as Record<string, number>;
+    let depth: Record<string, number>;
+    if (rawDepth && typeof rawDepth === "object") {
+      depth = parsedDepth;
+      const missing = order.filter((id) => !(id in depth));
+      const low = Math.min(1, ...Object.values(depth));
+      missing.forEach((id, i) => {
+        depth[id] = low - (missing.length - i);
+      });
+    } else {
+      depth = depthFromOrder(order);
+    }
+    const ids = orderFromDepth(depth);
+    if (ids.length > PANEL_ORDER_LIMIT) {
+      for (const id of ids.slice(0, ids.length - PANEL_ORDER_LIMIT)) delete depth[id];
+    }
+    const shelf = (panel as { shelf?: unknown }).shelf;
+
     const chair = parseChair(candidate.chair);
     return {
       version: DESK_WORKSPACE_VERSION,
       windowsById: parseWindows(candidate.windowsById),
       panel: {
         rects,
-        order: compactIds(panel.order),
+        order: orderFromDepth(depth),
         max: compactIds(panel.max),
         ...(Object.keys(zoom).length ? { zoom } : {}),
         min: compactIds(panel.min),
+        depth,
+        ...(shelf === "left" || shelf === "right" ? { shelf } : {}),
       },
       zoneWindows: compactIds(candidate.zoneWindows),
       zoneViewPrefs,
@@ -222,6 +258,8 @@ type WorkspaceState = Pick<
 > & {
   panelZoom?: Record<string, PanelRect>;
   panelMin?: string[];
+  panelDepth?: Record<string, number>;
+  stageShelf?: "left" | "right";
   pullouts?: DeskState["pullouts"];
   infoWindows?: DeskState["infoWindows"];
   roadmapWindows?: DeskState["roadmapWindows"];
@@ -273,6 +311,11 @@ export function saveDeskWorkspace(state: WorkspaceState): void {
   for (const [id, rect] of Object.entries(state.panelZoom ?? {})) {
     if (isPanelId(id) && isPanelRect(rect)) zoom[id] = rect;
   }
+  // PHILO-16 (L3): the depths are written; a state that has none yet (a
+  // legacy caller) writes the depths of its order.
+  const depth: Record<string, number> = {};
+  const source = state.panelDepth ?? depthFromOrder(state.panelOrder);
+  for (const id of compactIds(orderFromDepth(source))) depth[id] = source[id];
   const document: DeskWorkspaceDocumentV1 = {
     version: DESK_WORKSPACE_VERSION,
     windowsById: state.windowsById,
@@ -282,6 +325,8 @@ export function saveDeskWorkspace(state: WorkspaceState): void {
       max: compactIds(state.panelMax),
       ...(Object.keys(zoom).length ? { zoom } : {}),
       min: compactIds(state.panelMin ?? []),
+      depth,
+      ...(state.stageShelf ? { shelf: state.stageShelf } : {}),
     },
     zoneWindows: state.zoneWindows.map((window) => window.id),
     zoneViewPrefs: state.zoneViewPrefs,
