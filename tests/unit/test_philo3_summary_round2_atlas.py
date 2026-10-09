@@ -26,6 +26,6 @@ def test_actual_j6_recipe_requires_plain_provider_cause(case_id, state):
     assert expected["observe_at"] == "[data-testid=arrival-summary-status]"
     assert expected["predicate"] == {
         "kind": "text_equals",
-        "value": f"{state}\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED",
+        "value": f"{state}\nLAST ATTEMPT · 192.168.77.43 · LAN\nLAST ERROR · PROVIDER FAILED",
     }
     assert {"method": "GET", "path": "/api/intel/summary"} in expected["reads"]

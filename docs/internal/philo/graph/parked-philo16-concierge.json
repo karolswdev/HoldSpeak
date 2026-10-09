@@ -1,0 +1,64 @@
+{
+  "parked": "2026-10-09, PHILO-16 (C): atlas cases that drove a retired Concierge verb. Their live ids stay in atlas.json as not_applicable with the successor named in `reason`; these are the declarations as they stood.",
+  "source_commit": "748e04963",
+  "cases": [
+    {
+      "id": "case.j3.concierge_check.engine_unreachable",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.concierge_check"
+      ],
+      "state_id": "state.engines.unreachable",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        "a found engine row whose address does not answer",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "chair-desk"
+          },
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "selector": "[data-testid^=concierge-check-]",
+        "action": "click",
+        "adapter": "ui-pointer"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "UNREACHABLE"
+        },
+        "observe_at": "[data-testid^=concierge-found-]",
+        "words": "the row's chip reads UNREACHABLE [the audit's stated observation location: face: [data-testid^=concierge-found-]]"
+      },
+      "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ]
+}
