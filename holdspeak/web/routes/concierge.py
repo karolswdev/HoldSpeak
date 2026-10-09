@@ -86,6 +86,24 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
                 principal=getattr(request.state, "principal", None),
                 scan_loopback=live_hub,
             )
+            # PHILO-16 (C): the Switchboard accepts or refuses a drop with
+            # the authority's own answer, per engine and group.  A fit read
+            # never breaks detection.
+            if ctx.inference_assignment_service is not None:
+                try:
+                    from ...services.concierge_service import authority_fit, engine_fits
+
+                    engine_fits(
+                        result["engines"],
+                        authority_fit(
+                            ctx.inference_assignment_service,
+                            getattr(request.state, "principal", None),
+                            db,
+                        ),
+                        ctx.inference_assignment_service._group_ids(),
+                    )
+                except Exception as exc:  # pragma: no cover - never break detect
+                    log.warning(f"concierge fits unavailable: {exc}")
             # A detection is an engine change the default rule must see.
             if live_hub and ctx.inference_default_service is not None:
                 ctx.inference_default_service.kick("detect")

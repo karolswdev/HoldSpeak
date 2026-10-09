@@ -33,7 +33,7 @@ export function Runtime() {
         <span className="prefs-elsewhere-fact">RUNS ON LIVES IN MODELS</span>
         <Button
           dense
-          onClick={() => openSurfaceOr("configure-runs-on", "/settings")}
+          onClick={() => openSurfaceOr("configure-runs-on", "/settings", "writing_dictation")}
         >
           Open Models
         </Button>

@@ -22,7 +22,7 @@ import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Iterable, Optional
 
 from ..logging_config import get_logger
 
@@ -71,6 +71,9 @@ ASSIGNMENT_GROUPS: tuple[tuple[str, str], ...] = (
 )
 
 SUMMARY_CAPABILITY_ID = "meeting.deferred_analysis"
+#: The one host a catalog preset download reaches (inference_acquisition_service
+#: allows only huggingface.co; local_ai_setup_service.SOURCE_HOST says the same).
+PRESET_DOWNLOAD_HOST = "huggingface.co"
 SUMMARY_ASSIGNMENT_RECEIPT_SCHEMA = "ConciergeSummaryAssignmentReceipt@1"
 SUMMARY_ASSIGNMENT_PROJECTION_SCHEMA = "ConciergeSummaryAssignmentProjection@1"
 
@@ -735,7 +738,17 @@ def detect(
             "state": STATE_WAITING,
             "installed": False,
             "presetId": preset_id,
+            # PHILO-16 (C): the file comes from the internet; the Download
+            # verb names that host, never THIS DEVICE (Article III).
+            "downloadHost": PRESET_DOWNLOAD_HOST,
         })
+
+    # PHILO-16 (C): an engine the machine has but the library does not hold
+    # (a loopback port, a model file, an unrecorded Whisper) is FOUND: the
+    # owner accepts it with one verb before any job can run on it.
+    for engine in engines:
+        if engine.get("kind") != KIND_PRESET and not engine.get("profileId"):
+            engine["found"] = True
 
     checked_at = datetime.now(timezone.utc).isoformat()
 
@@ -1085,6 +1098,29 @@ def authority_fit(
         return answer
 
     return _fit
+
+
+def engine_fits(
+    engines: list[dict[str, Any]],
+    fit: Callable[[dict[str, Any], str], Optional[dict[str, Any]]],
+    group_ids: Iterable[str],
+) -> None:
+    """PHILO-16 (C): attach the authority's answer for every group to every
+    library engine, so the Switchboard accepts or refuses a drop with the
+    same check a write runs.  ``fits[group] = {state, blocked}``; an engine
+    with no model record has no fits (it is FOUND, not wireable)."""
+    groups = tuple(group_ids)
+    for engine in engines:
+        if not engine.get("profileId"):
+            continue
+        fits: dict[str, Any] = {}
+        for group_id in groups:
+            answer = group_fit_state(engine, group_id, fit)
+            row: dict[str, Any] = {"state": answer["state"]}
+            if answer.get("blocked"):
+                row["blocked"] = list(answer["blocked"])
+            fits[group_id] = row
+        engine["fits"] = fits
 
 
 def _capabilities_with_own_engine(db: Any) -> set[str]:
@@ -2419,9 +2455,17 @@ def download(
         "catalog_revision": catalog_revision,
     }
     result = model_library_service.download(principal, body)
+    # PHILO-16 (C): the job id is the ACQUISITION's id, the one
+    # ``GET /api/inference/acquisitions/{job}`` answers; it used to be the
+    # receipt's kind ("model_library_add"), so no poll could ever find it.
+    acquisition = result.get("acquisition") if isinstance(result, dict) else None
+    acquisition = acquisition if isinstance(acquisition, dict) else {}
     return {
-        "jobId": result.get("receipt", {}).get("kind", uuid.uuid4().hex) if isinstance(result, dict) else uuid.uuid4().hex,
+        "jobId": str(acquisition.get("id") or ""),
         "presetId": preset_id,
-        "progress": {"received": 0, "total": 0},
+        "progress": {
+            "received": int(acquisition.get("verified_bytes") or acquisition.get("transport_bytes") or 0),
+            "total": int(acquisition.get("bytes_total") or 0),
+        },
         "result": result,
     }

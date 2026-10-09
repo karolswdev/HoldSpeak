@@ -1,0 +1,235 @@
+/* PHILO-16 (C) — SurfaceSwitchboard (canvas Board 2, "BOARD 2" block).
+   Material: the §11 kit tokens with the canvas values as fallbacks (lane A1
+   adds the real tokens; until then the fallbacks ARE the canvas). */
+
+.switchboard {
+  --sb-well: var(--wb-well, #eef0f3);
+  --sb-field: var(--wb-field, #cdd2db);
+  --sb-field-hi: var(--wb-field-hi, #d8dce4);
+  --sb-ink: var(--wb-ink, #0b0c10);
+  --sb-ink-dim: var(--wb-ink-dim, #2a2e36);
+  --sb-text: var(--wb-text, #0b0c10);
+  --sb-muted: var(--wb-muted, #4a5060);
+  --sb-sel: var(--wb-sel, #6688bb);
+  --sb-steel: var(--wb-steel, #9ea4b0);
+  --sb-steel-dim: var(--wb-steel-dim, #7f8591);
+  --sb-paper: var(--wb-paper, #eef0f3);
+  --sb-ok: var(--ok, #3fae6a);
+  --sb-warn: var(--warn, #d9a441);
+  --sb-danger: var(--danger, #c84a3c);
+  --sb-raised: var(--wb-raised, inset 1px 1px 0 rgba(255,255,255,.72), inset -1px -1px 0 rgba(0,0,0,.5));
+  --sb-raised-soft: var(--wb-raised-soft, inset 1px 1px 0 rgba(255,255,255,.36), inset -1px -1px 0 rgba(0,0,0,.25));
+  --sb-sunken: var(--wb-sunken, inset 1px 1px 0 rgba(0,0,0,.5), inset -1px -1px 0 rgba(255,255,255,.72));
+  --sb-mono: var(--font-mono, "JetBrains Mono", "SF Mono", Consolas, monospace);
+  --sb-sans: var(--font-sans, "Inter", system-ui, -apple-system, sans-serif);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(48px, 1fr) minmax(240px, 330px);
+  gap: 0;
+  min-height: 0;
+  color: var(--sb-text);
+  /* A drag never selects the words under it. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* A verb on the board is the library Button as a raised steel plate
+   (§11 Verb), legible on the paper well and the steel engine: the board
+   hands the Button's own material variables the steel values. */
+.switchboard {
+  --surface-2: var(--sb-steel);
+  --surface-3: var(--wb-steel-2, #b3b8c2);
+  --wash-2: var(--sb-steel);
+  --gleam-2: var(--wb-steel-2, #b3b8c2);
+  --shade-1: var(--sb-ink);
+  --border: var(--sb-ink);
+  --text: var(--sb-text);
+  --text-muted: var(--sb-muted);
+}
+
+.switchboard-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.switchboard-cap {
+  margin-top: 6px;
+  font: 500 11px var(--sb-mono);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--sb-muted);
+}
+.switchboard-col > .switchboard-cap:first-child { margin-top: 0; }
+
+/* ── the wires ── */
+.switchboard-wires { position: relative; min-width: 0; }
+.switchboard-wire-layer { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.switchboard-wire { fill: none; stroke: var(--sb-ink); stroke-width: 2; }
+.switchboard-wire.is-fallback { stroke-dasharray: 4 4; stroke-width: 1.5; stroke: var(--sb-muted); }
+.switchboard-wire.is-limited { stroke: #9a6b00; }
+.switchboard-wire.is-broken { stroke: var(--sb-danger); stroke-dasharray: 6 4; }
+.switchboard-wire.is-hot { stroke: var(--sb-sel); stroke-width: 3; }
+.switchboard-wire.is-pulse {
+  stroke: var(--sb-sel);
+  stroke-width: 3;
+  stroke-dasharray: 10 14;
+  animation: switchboard-flow .6s linear infinite;
+}
+@keyframes switchboard-flow { to { stroke-dashoffset: -24; } }
+
+/* ── the plugs ── */
+.switchboard-plug {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border: 1px solid var(--sb-ink);
+  box-sizing: border-box;
+}
+
+/* ── a job ── */
+.switchboard-job {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 8px;
+  align-items: center;
+  padding: 7px 26px 7px 10px;
+  background: var(--sb-well);
+  border: 1px solid var(--sb-ink);
+  box-shadow: var(--sb-sunken);
+  cursor: pointer;
+  text-align: left;
+}
+.switchboard-job .switchboard-plug { right: -7px; background: var(--sb-steel); box-shadow: var(--sb-raised-soft); }
+.switchboard-job.is-ready .switchboard-plug { background: var(--sb-ok); }
+.switchboard-job.is-limited .switchboard-plug { background: var(--sb-warn); }
+.switchboard-job.is-broken .switchboard-plug { background: var(--sb-danger); }
+.switchboard-job.is-waiting .switchboard-plug { background: var(--sb-steel); }
+.switchboard-job.is-off .switchboard-plug { background: var(--sb-steel-dim); }
+.switchboard-job.is-default { background: var(--sb-field-hi); }
+.switchboard-job.is-selected { outline: 2px solid var(--sb-sel); outline-offset: -2px; }
+.switchboard-job.is-over { background: #dfe6f3; outline: 2px dashed var(--sb-sel); outline-offset: -2px; }
+.switchboard-job.is-over.is-refused { outline-color: #b3261e; background: #f3dfdf; }
+.switchboard-job-name { font: 600 14px var(--sb-sans); color: var(--sb-text); min-width: 0; }
+.switchboard-job-verb { grid-column: 2; grid-row: 1; }
+.switchboard-job-tasks {
+  grid-column: 1 / -1;
+  font: 500 10px var(--sb-mono);
+  color: var(--sb-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  overflow-wrap: anywhere;
+}
+.switchboard-job-result {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font: 500 11px var(--sb-mono);
+  color: #1f6b3a;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  overflow-wrap: anywhere;
+}
+.switchboard-job-result[data-tone="danger"], .switchboard-job-result [data-tone="danger"] { color: #8f2018; }
+
+/* ── an engine ── */
+.switchboard-engine {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  align-items: center;
+  padding: 7px 10px 7px 14px;
+  background: var(--sb-steel);
+  border: 1px solid var(--sb-ink);
+  box-shadow: var(--sb-raised);
+  touch-action: none;
+}
+.switchboard-engine.is-draggable { cursor: grab; }
+.switchboard-engine.is-draggable:active { cursor: grabbing; }
+.switchboard-engine.is-dragging { opacity: .5; }
+.switchboard-engine:focus-visible { outline: 2px solid var(--sb-sel); outline-offset: 1px; }
+.switchboard-engine .switchboard-plug { left: -7px; background: var(--sb-field); }
+.switchboard-emblem {
+  grid-row: 1 / 3;
+  font: 700 9px var(--sb-mono);
+  background: var(--sb-paper);
+  border: 1px solid var(--sb-ink);
+  text-align: center;
+  padding: 6px 0;
+  letter-spacing: .04em;
+  color: var(--sb-text);
+}
+.switchboard-engine-name {
+  font: 600 13px var(--sb-sans);
+  color: var(--sb-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.switchboard-engine-tokens {
+  grid-column: 2 / 4;
+  display: flex;
+  gap: 2px 8px;
+  flex-wrap: wrap;
+  font: 500 10px var(--sb-mono);
+  color: var(--sb-ink-dim);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.switchboard-lamp { width: 9px; height: 9px; border: 1px solid var(--sb-ink); justify-self: end; box-sizing: border-box; }
+.switchboard-lamp.is-ok { background: var(--sb-ok); }
+.switchboard-lamp.is-busy { background: var(--sb-sel); animation: switchboard-lamp 1.2s ease-in-out infinite; }
+.switchboard-lamp.is-warn { background: var(--sb-warn); }
+.switchboard-lamp.is-broken { background: var(--sb-danger); }
+.switchboard-lamp.is-off { background: transparent; }
+@keyframes switchboard-lamp { 50% { opacity: .35; } }
+.switchboard-bar {
+  grid-column: 2 / 4;
+  height: 6px;
+  background: var(--sb-well);
+  border: 1px solid var(--sb-ink);
+  box-shadow: var(--sb-sunken);
+}
+.switchboard-bar i { display: block; height: 100%; background: var(--sb-sel); transition: width 220ms var(--ease, cubic-bezier(.2,.8,.2,1)); }
+.switchboard-engine-verb {
+  grid-column: 2 / 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.switchboard-engine.is-found { background: var(--sb-field); box-shadow: var(--sb-raised-soft); cursor: default; }
+
+/* ── 393: the job list ── */
+.switchboard.is-list { display: flex; flex-direction: column; gap: 6px; }
+.switchboard.is-list .switchboard-plug { display: none; }
+.switchboard.is-list .switchboard-job { padding-right: 10px; min-height: 44px; }
+.switchboard.is-list .switchboard-engine { padding-left: 10px; min-height: 44px; }
+.switchboard.is-list .switchboard-tap {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  text-align: left;
+}
+/* A whole-row tap is already 44 px tall: no halo, no halo margin. */
+.switchboard.is-list .switchboard-tap::after { display: none; }
+.switchboard.is-list .switchboard-tap.switchboard-job {
+  display: grid;
+  padding: 7px 10px;
+  border: 1px solid var(--sb-ink);
+  background: var(--sb-well);
+}
+.switchboard.is-list .switchboard-engine-verb .btn { min-height: 44px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .switchboard-wire.is-pulse, .switchboard-lamp.is-busy { animation: none; }
+  .switchboard-bar i { transition: none; }
+}

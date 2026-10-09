@@ -340,8 +340,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-concierge",
     windowId: "surface-concierge",
-    label: "Models",
-    description: "Engines found, the proposed set, Use these.",
+    // PHILO-16 (C): one name, Runs on (product-language.json); the window id
+    // and the /models href stay so every caller and saved desk still opens it.
+    label: "Runs on",
+    description: "What HoldSpeak does, wired to what you have.",
     glyph: "▣",
     href: "/models",
     // HS-200-04 (return-to-task): `configure-runs-on` had no hosted surface, so
@@ -351,12 +353,14 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     // mounted underneath and is still there when the window closes.
     aliases: [{ key: "configure-runs-on" }],
     surface: {
-      eyebrow: "Models",
-      minW: 560,
-      defaultH: 760,
+      eyebrow: "Settings",
+      // The board's three columns (canvas Board 2); a phone draws the list.
+      minW: 900,
+      defaultH: 680,
+      // PHILO-16 (C): the Switchboard replaces the Concierge (parked).
       load: () =>
-        import("../features/concierge/ConciergeCore").then((module) => ({
-          default: module.ConciergeCore,
+        import("../features/runson/RunsOnCore").then((module) => ({
+          default: module.RunsOnCore,
         })),
     },
   },
@@ -448,8 +452,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "configure-runs-on",
     windowId: "surface-concierge",
-    label: "Models",
-    description: "Engines found, the proposed set, Use these.",
+    label: "Runs on",
+    description: "What HoldSpeak does, wired to what you have.",
     glyph: "▣",
     href: "/models",
     group: "tool",

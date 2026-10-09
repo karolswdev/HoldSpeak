@@ -1,377 +1,344 @@
-"""HS-170-03 -- The Concierge glass rig.
+"""PHILO-16 (C) -- Runs on: the Models window as a Switchboard, on glass.
 
-Own surface window titled Models at 640 wide (1440 viewport) and 393.
-Shots: element-clipped full-height window screenshots.
-Asserts: display headline >= 24px, no .prefs-* chrome, no raw <button>,
-picker in place (no dialog), Adjust unfolds under set, Use these
-disabled while WAITING and enabled after OFF, no overflow at 393.
+The old Concierge rig is parked (tests/_parked/philo16-concierge/). This rig
+boots an isolated-HOME hub and a fake OpenAI-compatible server on
+127.0.0.1, defines two engines through the real Model Library route (one at
+a LAN address that the rig's network double answers from the fake server,
+one on loopback), records a speech engine, and wires them through the real
+assignment route. Detection, the fits, the probes, the writes and the CAS
+are the product's own. The doubles: the LAN address (rewritten to the fake
+server), a loopback scan that finds one more server, and a catalog download
+whose acquisition the rig advances (no byte leaves this machine).
+
+Shots (evidence_dir docs/internal/philo/phase-16/c-shots): the board with
+three engines wired, after a drag-patch, a Try it result, a FOUND row and
+after Use it, a download mid-bar; and the 393 list.
 """
 from __future__ import annotations
 
+import json
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from .glass_infra import (
-    _boot,
-    _api,
-    _assert_clean,
-    _normal_chair,
-    _settle,
-)
 from tests._evidence import evidence_dir
 
-SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-03-shots")
-SHOTS.mkdir(parents=True, exist_ok=True)
+from .glass_infra import _api, _assert_clean, _boot, _normal_chair, _settle
 
+SHOTS = evidence_dir("docs/internal/philo/phase-16/c-shots")
 TOKEN = "glass-test"
+LAN_BASE = "http://192.168.77.43:8080/v1"
+pytestmark = [pytest.mark.e2e, pytest.mark.timeout(240, method="thread")]
 
 
-# ── Helpers ────────────────────────────────────────────────────────
+class _FakeOpenAI(BaseHTTPRequestHandler):
+    """A minimal OpenAI-compatible server: /models and chat completions."""
+
+    MODEL = "qwen3.8-27b"
+
+    def _json(self, payload: dict[str, Any]) -> None:
+        body = json.dumps(payload).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self) -> None:  # noqa: N802 - http.server contract
+        if self.path.rstrip("/").endswith("/models"):
+            self._json({"object": "list", "data": [{"id": self.MODEL, "object": "model"}]})
+            return
+        self.send_response(404)
+        self.end_headers()
+
+    def do_POST(self) -> None:  # noqa: N802
+        length = int(self.headers.get("Content-Length") or 0)
+        self.rfile.read(length)
+        if "chat/completions" in self.path:
+            self._json({
+                "id": "fake", "object": "chat.completion", "model": self.MODEL,
+                "choices": [{"index": 0, "finish_reason": "stop",
+                             "message": {"role": "assistant", "content": "ready"}}],
+                "usage": {"prompt_tokens": 8, "completion_tokens": 1, "total_tokens": 9},
+            })
+            return
+        self.send_response(404)
+        self.end_headers()
+
+    def log_message(self, *_args: Any) -> None:
+        return
 
 
-def _open_concierge(page: Any) -> None:
-    """Open the Concierge surface window (its own window, not Settings)."""
+def _serve(model: str = _FakeOpenAI.MODEL) -> ThreadingHTTPServer:
+    handler = type("_Fake", (_FakeOpenAI,), {"MODEL": model})
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server
+
+
+def _doubles(monkeypatch: Any, lan_port: int, found_port: int) -> dict[str, int]:
+    """The network doubles: the LAN address answers from the fake server; the
+    loopback scan finds one more; a catalog download advances in place."""
+    import holdspeak.inference_setup_catalog as catalog
+    import holdspeak.services.concierge_service as cs
+    import holdspeak.setup_runtime as setup_runtime
+    from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
+
+    real_discover = setup_runtime.discover_endpoint_models
+
+    def discover(base_url: str, *args: Any, **kwargs: Any) -> Any:
+        return real_discover(
+            str(base_url).replace("192.168.77.43:8080", f"127.0.0.1:{lan_port}"), *args, **kwargs
+        )
+
+    monkeypatch.setattr(setup_runtime, "discover_endpoint_models", discover)
+
+    real_detect = cs.detect
+
+    def detect(**kwargs: Any) -> Any:
+        kwargs["loopback_scan"] = lambda: [{
+            "id": f"local:ollama:{found_port}:llama3.3", "model": "llama3.3",
+            "base_url": f"http://127.0.0.1:{found_port}/v1", "engine": "ollama", "port": found_port,
+        }]
+        return real_detect(**kwargs)
+
+    monkeypatch.setattr(cs, "detect", detect)
+
+    preset = {
+        "id": "preset_glass_vision", "kind": "local_artifact_preset", "activation": "download",
+        "label": "Qwen 3.5 4B vision file", "source": {"download_bytes": 890_000_000},
+    }
+    monkeypatch.setattr(catalog, "applicable_presets", lambda **_: [preset])
+
+    ticks = {"n": 0, "hold": 1}
+
+    def download(**_: Any) -> dict[str, Any]:
+        return {"jobId": "acq-glass", "presetId": preset["id"], "progress": {"received": 0, "total": 0}}
+
+    monkeypatch.setattr(cs, "download", download)
+
+    def get_acquisition(self: Any, principal: Any, job_id: str) -> dict[str, Any]:
+        ticks["n"] += 1
+        received = min(890_000_000, 890_000_000 * 0.42 if ticks["hold"] else 890_000_000)
+        return {"acquisition": {
+            "id": job_id, "preset_id": preset["id"],
+            "state": "downloading" if ticks["hold"] else "ready",
+            "verified_bytes": int(received), "transport_bytes": int(received),
+            "bytes_total": 890_000_000,
+        }}
+
+    monkeypatch.setattr(InferenceAcquisitionApplicationService, "get_acquisition", get_acquisition)
+    return ticks
+
+
+def _define(page: Any, base_url: str, model: str, profile_id: str, label: str) -> tuple[str, int]:
+    defined = _api(page, "POST", "/api/inference/model-library/define-endpoint", {
+        "draft": {
+            "request_id": f"glass-{profile_id}", "profile_id": profile_id,
+            "expected_profile_revision": 0, "label": label,
+            "provider_family": "openai_compatible", "model": model,
+            "endpoint": base_url, "requires_key": False,
+        },
+        "secret": None,
+    }, token=TOKEN)
+    provider = defined["provider"]
+    return str(provider["profile_id"]), int(provider["profile_revision"])
+
+
+def _wire(page: Any, group: str | None, entries: list[tuple[str, int]]) -> None:
+    roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
+    row = next(r for r in roster["rows"] if r["id"] == (group or "global"))
+    _api(page, "POST", "/api/inference/assignments/set", {
+        "command_id": f"glass-wire-{group or 'global'}",
+        "expected_revision": row["expected_revision"],
+        "scope": {"kind": "group", "group_id": group} if group else {"kind": "global"},
+        "entries": [{"profile_id": p, "profile_revision": r} for p, r in entries],
+    }, token=TOKEN)
+
+
+def _speech_engine() -> None:
+    from holdspeak.db import get_database
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+
+    _profile(
+        get_database(), "whisper-small",
+        claims=("language", _result_claim("speech.transcribe")),
+        modalities=("audio",),
+    )
+
+
+def _open_runs_on(page: Any) -> None:
     page.evaluate(
-        """([key]) => {
-          sessionStorage.setItem(
-            "hs.desk.staged-surface-open",
-            JSON.stringify({key})
-          );
-        }""",
+        """([key]) => sessionStorage.setItem("hs.desk.staged-surface-open", JSON.stringify({key}))""",
         ["open-concierge"],
     )
     page.reload(wait_until="load")
     _normal_chair(page)
+    page.get_by_test_id("runson-root").wait_for(timeout=15_000)
+    page.get_by_test_id("switchboard").wait_for(timeout=15_000)
 
 
 def _window(page: Any) -> Any:
-    """The Models surface window element."""
-    return page.locator(".desk-surface-window").filter(
-        has=page.locator('[data-testid="concierge-root"]')
-    ).first
+    return page.locator(".desk-surface-window").filter(has=page.get_by_test_id("runson-root")).first
 
 
 def _shot(page: Any, name: str, width: int) -> Path:
     _settle(page)
-    # Stretch the viewport tall enough to show the whole face without clipping.
-    old_size = page.viewport_size
-    page.set_viewport_size({"width": old_size["width"], "height": 2400})
-    _settle(page)
-    path = SHOTS / f"build-{name}-{width}.png"
+    path = SHOTS / f"{name}-{width}.png"
     win = _window(page)
-    if win.count() > 0:
-        win.screenshot(path=str(path))
-    else:
-        page.screenshot(path=str(path), full_page=False)
-    # Restore original viewport
-    page.set_viewport_size(old_size)
-    assert path.stat().st_size > 2_000, f"Shot {name} too small ({path.stat().st_size})"
+    (win if win.count() else page).screenshot(path=str(path), animations="disabled")
+    assert path.stat().st_size > 2_000
+    print("SHOT", path)
     return path
 
 
-# ── Monkeypatch concierge detection ──────────────────────────────
-
-def _monkeypatch_concierge(monkeypatch: Any) -> None:
-    fake_detection = {
-        "engines": [
-            {"id": "lan:test-lan", "kind": "lan", "name": "Qwen3.6 35B",
-             "host": "192.168.1.43", "state": "READY", "latencyMs": 41, "profileId": "test-lan"},
-            {"id": "local:mlx:whisper-base", "kind": "local", "name": "Whisper base",
-             "host": "THIS DEVICE", "state": "READY", "runtimeToken": "MLX"},
-            {"id": "cloud:openrouter", "kind": "cloud", "name": "OpenRouter",
-             "host": "openrouter.ai", "state": "READY", "keySet": True, "profileId": "cloud-openrouter"},
-            {"id": "preset:qwen35-08b", "kind": "preset", "name": "Qwen 3.5 0.8B",
-             "host": "THIS DEVICE", "state": "WAITING", "sizeBytes": 532000000,
-             "installed": False, "presetId": "qwen35-08b"},
-        ],
-        "hardware": {"capability": {"apple_silicon": True, "system": "darwin",
-                                     "architecture": "arm64", "ram_gb": 36}},
-        "runtimes": [{"id": "mlx_whisper_v1", "state": "available"}],
-        "checkedAt": "2026-09-05T09:41:00Z",
-    }
-    fake_proposal = {
-        "rows": [
-            {"group": "thoughts_notes", "label": "Thoughts & notes", "engineId": "lan:test-lan", "host": "192.168.1.43", "state": "READY"},
-            {"group": "chat_practice", "label": "Chat", "engineId": "lan:test-lan", "host": "192.168.1.43", "state": "READY"},
-            {"group": "writing_dictation", "label": "Writing & dictation", "engineId": "preset:qwen35-08b", "host": "THIS DEVICE", "state": "WAITING", "presetId": "qwen35-08b"},
-            {"group": "speech_recognition", "label": "Speech recognition", "engineId": "local:mlx:whisper-base", "host": "THIS DEVICE", "state": "READY"},
-            {"group": "meetings", "label": "Meetings", "engineId": "lan:test-lan", "host": "192.168.1.43", "state": "READY"},
-            {"group": "agents_tools", "label": "Agents & tools", "engineId": "lan:test-lan", "host": "192.168.1.43", "state": "READY"},
-            {"group": "background", "label": "Background", "engineId": "lan:test-lan", "host": "192.168.1.43", "state": "READY"},
-        ],
-        "receipt": {"groups": 7, "engines": 3, "waiting": 1},
-    }
-    import holdspeak.services.concierge_service as cs
-    monkeypatch.setattr(cs, "detect", lambda **_: fake_detection)
-    monkeypatch.setattr(cs, "propose", lambda **_: fake_proposal)
-    monkeypatch.setattr(cs, "probe", lambda **_: {"state": "READY", "host": "192.168.1.43", "latencyMs": 41})
+def _rig(tmp_path: Path, monkeypatch: Any) -> tuple[Any, str, list[ThreadingHTTPServer], dict[str, int]]:
+    lan, found, local = _serve(), _serve("llama3.3"), _serve("qwen3.5-4b")
+    ticks = _doubles(monkeypatch, lan.server_address[1], found.server_address[1])
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    return server, url, [lan, found, local], ticks
 
 
-def _monkeypatch_concierge_cold(monkeypatch: Any) -> None:
-    fake_detection = {
-        "engines": [
-            {"id": "preset:qwen35-08b", "kind": "preset", "name": "Qwen 3.5 0.8B",
-             "host": "THIS DEVICE", "state": "WAITING", "sizeBytes": 532000000,
-             "installed": False, "presetId": "qwen35-08b"},
-        ],
-        "hardware": {"capability": {"apple_silicon": True, "system": "darwin",
-                                     "architecture": "arm64", "ram_gb": 36}},
-        "runtimes": [],
-        "checkedAt": "2026-09-05T09:41:00Z",
-    }
-    fake_proposal = {
-        "rows": [
-            {"group": g, "label": l, "engineId": None, "host": "", "state": "WAITING"}
-            for g, l in [("thoughts_notes", "Thoughts & notes"), ("chat_practice", "Chat"),
-                         ("writing_dictation", "Writing & dictation"), ("speech_recognition", "Speech recognition"),
-                         ("meetings", "Meetings"), ("agents_tools", "Agents & tools"), ("background", "Background")]
-        ],
-        "receipt": {"groups": 7, "engines": 0, "waiting": 7},
-    }
-    import holdspeak.services.concierge_service as cs
-    monkeypatch.setattr(cs, "detect", lambda **_: fake_detection)
-    monkeypatch.setattr(cs, "propose", lambda **_: fake_proposal)
+def _seed(page: Any, local_port: int) -> None:
+    lan = _define(page, LAN_BASE, "qwen3.8-27b", "glass-lan-27b", "qwen3.8 27B")
+    local = _define(page, f"http://127.0.0.1:{local_port}/v1", "qwen3.5-4b", "glass-mac-4b", "Qwen 3.5 4B")
+    _speech_engine()
+    _wire(page, None, [lan])
+    _wire(page, "thoughts_notes", [local])
+    _wire(page, "speech_recognition", [("whisper-small", 1)])
 
 
-# ── Tests ─────────────────────────────────────────────────────────
+def _no_raw_buttons(page: Any) -> None:
+    raw = page.get_by_test_id("runson-root").locator("button:not(.btn):not(.gadget-chip-egress)")
+    assert raw.count() == 0, f"raw <button>: {raw.count()}"
 
 
 @pytest.mark.parametrize("width", [1440, 393], ids=["desktop", "phone"])
-def test_concierge_main(tmp_path, monkeypatch, width):
-    """Main face: display headline >= 24px, no prefs chrome, hosts on rows."""
-    _monkeypatch_concierge(monkeypatch)
-    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> None:
+    server, url, fakes, ticks = _rig(tmp_path, monkeypatch)
     errors: list[str] = []
     try:
         from playwright.sync_api import sync_playwright
-        height = 900 if width == 1440 else 852
+
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
-            page = browser.new_page(viewport={"width": width, "height": height})
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852})
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _api(page, "POST", "/api/desk/seed", token=TOKEN)
             _normal_chair(page)
-            _open_concierge(page)
-            page.get_by_test_id("concierge-root").wait_for(timeout=10_000)
-            _settle(page)
-
-            # Headline = display step (font-size >= 24px)
-            headline = page.get_by_test_id("concierge-headline")
-            headline.wait_for()
-            assert "found" in (headline.text_content() or "").lower()
-            font_size = headline.evaluate("el => parseFloat(getComputedStyle(el).fontSize)")
-            assert font_size >= 24, f"Headline font-size {font_size}px < 24px"
-
-            # No .prefs-* chrome inside the Models window
-            win = _window(page)
-            prefs_chrome = win.locator("[class*='prefs-']")
-            assert prefs_chrome.count() == 0, f"Prefs chrome: {prefs_chrome.count()}"
-
-            # Host chips in found list
-            found_list = page.get_by_test_id("concierge-found-list")
-            found_list.wait_for()
-            assert found_list.locator(".gadget-chip-egress").count() > 0
-
-            # HS-201-09: `Use these` applies PER GROUP. It used to be
-            # disabled while ANY group was WAITING — the rule that forced
-            # the rehearsal's stranger to switch Speech recognition OFF
-            # before he could connect a summary engine. With a READY group
-            # on the face the verb is live; the COLD face (nothing READY,
-            # nothing OFF) keeps the disabled state, and
-            # `test_concierge_cold` still asserts exactly that.
-            apply_btn = page.get_by_test_id("concierge-apply")
-            apply_btn.wait_for()
-            assert not apply_btn.is_disabled()
-
-            # No raw <button> in the Concierge face itself
-            root = page.get_by_test_id("concierge-root")
-            raw = root.locator("button:not(.btn):not(.surface-ledger-line):not(.gadget-chip-egress)")
-            assert raw.count() == 0, f"Raw <button>: {raw.count()}"
-
-            # Every state chip sits fully inside its row (not clipped)
-            clipped = page.evaluate("""() => {
-              const chips = document.querySelectorAll('.concierge-root .surface-state-chip');
-              for (const chip of chips) {
-                const row = chip.closest('.surface-ledger-row');
-                if (!row) continue;
-                const cr = chip.getBoundingClientRect();
-                const rr = row.getBoundingClientRect();
-                if (cr.right > rr.right - 4) return `${chip.textContent} right=${cr.right} row=${rr.right}`;
-              }
-              return null;
-            }""")
-            assert clipped is None, f"State chip clipped: {clipped}"
-
-            if width == 393:
-                assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-
-            _shot(page, "main", width)
-            _assert_clean(page, errors)
-            browser.close()
-    finally:
-        server.stop()
-
-
-def test_concierge_picker(tmp_path, monkeypatch):
-    """Picker opens in-world (no dialog)."""
-    _monkeypatch_concierge(monkeypatch)
-    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
-    errors: list[str] = []
-    try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as pw:
-            browser = pw.chromium.launch()
-            page = browser.new_page(viewport={"width": 1440, "height": 900})
-            page.on("pageerror", lambda e: errors.append(str(e)))
-            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-            _api(page, "POST", "/api/desk/seed", token=TOKEN)
-            _normal_chair(page)
-            _open_concierge(page)
-            page.get_by_test_id("concierge-root").wait_for(timeout=10_000)
-            _settle(page)
-            page.get_by_test_id("concierge-picker-thoughts_notes").click()
-            _settle(page)
-            page.get_by_test_id("concierge-picker-well-thoughts_notes").wait_for()
+            _seed(page, fakes[2].server_address[1])
+            _open_runs_on(page)
+            # The engines fill in once detection lands.
+            page.get_by_test_id("switchboard-found-cap").wait_for(timeout=15_000)
             assert page.locator('[role="dialog"]').count() == 0
-            _shot(page, "picker", 1440)
-            _assert_clean(page, errors)
-            browser.close()
-    finally:
-        server.stop()
-
-
-def test_concierge_adjust(tmp_path, monkeypatch):
-    """Adjust unfolds under the set."""
-    _monkeypatch_concierge(monkeypatch)
-    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
-    errors: list[str] = []
-    try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as pw:
-            browser = pw.chromium.launch()
-            page = browser.new_page(viewport={"width": 1440, "height": 900})
-            page.on("pageerror", lambda e: errors.append(str(e)))
-            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-            _api(page, "POST", "/api/desk/seed", token=TOKEN)
-            _normal_chair(page)
-            _open_concierge(page)
-            page.get_by_test_id("concierge-root").wait_for(timeout=10_000)
-            _settle(page)
-            page.get_by_test_id("concierge-adjust-trigger").click()
-            _settle(page)
-            page.get_by_test_id("concierge-adjust-well").wait_for()
-            assert page.get_by_test_id("concierge-set-list").is_visible()
-            _shot(page, "adjust", 1440)
-            _assert_clean(page, errors)
-            browser.close()
-    finally:
-        server.stop()
-
-
-def test_concierge_cold(tmp_path, monkeypatch):
-    """Cold face: No engine yet, Use these disabled."""
-    _monkeypatch_concierge_cold(monkeypatch)
-    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
-    errors: list[str] = []
-    try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as pw:
-            browser = pw.chromium.launch()
-            page = browser.new_page(viewport={"width": 1440, "height": 900})
-            page.on("pageerror", lambda e: errors.append(str(e)))
-            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-            _api(page, "POST", "/api/desk/seed", token=TOKEN)
-            _normal_chair(page)
-            _open_concierge(page)
-            page.get_by_test_id("concierge-root").wait_for(timeout=10_000)
-            _settle(page)
-            headline = page.get_by_test_id("concierge-headline")
-            headline.wait_for()
-            assert "no engine yet" in (headline.text_content() or "").lower()
-            assert page.get_by_test_id("concierge-apply").is_disabled()
-            _shot(page, "cold", 1440)
-            _assert_clean(page, errors)
-            browser.close()
-    finally:
-        server.stop()
-
-
-def test_concierge_downloading(tmp_path, monkeypatch):
-    """Mid-download: the preset row shows a progress token."""
-    _monkeypatch_concierge(monkeypatch)
-    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
-    errors: list[str] = []
-    try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as pw:
-            browser = pw.chromium.launch()
-            page = browser.new_page(viewport={"width": 1440, "height": 900})
-            page.on("pageerror", lambda e: errors.append(str(e)))
-            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-            _api(page, "POST", "/api/desk/seed", token=TOKEN)
-            _normal_chair(page)
-            _open_concierge(page)
-            page.get_by_test_id("concierge-root").wait_for(timeout=10_000)
-            _settle(page)
-
-            # Click Download on the preset row to trigger download state
-            dl_btn = page.get_by_test_id("concierge-download-preset:qwen35-08b")
-            if dl_btn.count() > 0:
-                dl_btn.click()
-                _settle(page)
-
-            _shot(page, "downloading", 1440)
-            _assert_clean(page, errors)
-            browser.close()
-    finally:
-        server.stop()
-
-
-def test_concierge_use_these_off_frees(tmp_path, monkeypatch):
-    """Use these: live per group, and still live after picking OFF.
-
-    HS-201-09 replaced the all-or-nothing gate with a per-group one, so
-    this rig now asserts the rule that replaced it: a WAITING group does
-    not disable the verb, and choosing OFF does not either.
-    """
-    _monkeypatch_concierge(monkeypatch)
-    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
-    errors: list[str] = []
-    try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as pw:
-            browser = pw.chromium.launch()
-            page = browser.new_page(viewport={"width": 1440, "height": 900})
-            page.on("pageerror", lambda e: errors.append(str(e)))
-            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-            _api(page, "POST", "/api/desk/seed", token=TOKEN)
-            _normal_chair(page)
-            _open_concierge(page)
-            page.get_by_test_id("concierge-root").wait_for(timeout=10_000)
-            _settle(page)
-            apply_btn = page.get_by_test_id("concierge-apply")
-            apply_btn.wait_for()
-            assert not apply_btn.is_disabled(), (
-                "a WAITING group must not disable the groups beside it"
+            _no_raw_buttons(page)
+            fact = page.get_by_test_id("runson-fact").inner_text()
+            assert fact.startswith("7 jobs"), fact
+            assert float(page.get_by_test_id("runson-fact").evaluate("e => parseFloat(getComputedStyle(e).fontSize)")) >= 24
+            words = page.locator("[data-testid^='switchboard-job-']").evaluate_all(
+                "els => els.map(e => e.getAttribute('data-state'))"
             )
-            page.get_by_test_id("concierge-picker-writing_dictation").click()
-            _settle(page)
-            page.get_by_test_id("concierge-pick-writing_dictation-off").click()
-            _settle(page)
-            assert not apply_btn.is_disabled(), "Use these should be enabled after OFF"
+            assert words and set(words) <= {"ready", "limited", "broken", "waiting", "off"}, words
+            for retired in ("Use these", "Use this for summaries", "Adjust"):
+                assert page.get_by_role("button", name=retired, exact=True).count() == 0
 
-            # Cancel closes the Models window (surface-concierge)
-            page.get_by_test_id("concierge-cancel").click()
-            _settle(page)
-            gone = page.evaluate(
-                """() => !document.querySelector('[data-testid="concierge-root"]')"""
-            )
-            assert gone, "Cancel did not close the Models window"
+            if width == 1440:
+                board = page.get_by_test_id("switchboard")
+                assert board.get_attribute("data-layout") == "board"
+                wires = page.get_by_test_id("switchboard-wire")
+                assert wires.count() >= 3
+                assert all(wires.nth(i).get_attribute("d") for i in range(wires.count()))
+                _shot(page, "c1-board", width)
 
+                # Drag the LAN engine onto Meetings: one write, a receipt, Undo.
+                lan_plate = page.locator("[data-testid^='switchboard-engine-']").filter(has_text="qwen3.8 27B").first
+                with page.expect_response(lambda r: r.url.endswith("/api/inference/assignments/set")) as written:
+                    lan_plate.drag_to(page.get_by_test_id("switchboard-job-meetings"))
+                assert written.value.ok, written.value.text()
+                body = written.value.request.post_data_json
+                assert body["scope"] == {"kind": "group", "group_id": "meetings"}
+                assert isinstance(body["expected_revision"], int)
+                receipt = page.get_by_test_id("runson-receipt")
+                receipt.wait_for()
+                page.wait_for_function(
+                    "() => /^PATCHED .* · Meetings → /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
+                )
+                page.get_by_test_id("runson-undo").wait_for()
+                assert "192.168.77.43" in page.get_by_test_id("runson-egress").inner_text()
+                # The meeting queue reads only the exact capability row: it is written too.
+                tasks = _api(page, "GET", "/api/inference/assignments", token=TOKEN)["task_overrides"]
+                summaries = next(t for t in tasks if t["id"] == "meeting.deferred_analysis")
+                assert summaries["has_override"] is True, summaries
+                _shot(page, "c2-patched", width)
+
+                # Try it on Meetings: off-machine, so the press names the host first.
+                page.get_by_test_id("runson-try-meetings").click()
+                confirm = page.get_by_test_id("runson-try-confirm")
+                confirm.wait_for()
+                assert "192.168.77.43" in confirm.inner_text()
+                confirm.click()
+                page.get_by_test_id("switchboard-result-meetings").wait_for()
+                page.wait_for_function(
+                    "() => /^READY · /.test(document.querySelector('[data-testid=switchboard-result-meetings]')?.textContent || '')"
+                )
+                _shot(page, "c3-try-it", width)
+
+                # FOUND → Use it: the engine joins the column with no wire.
+                found = page.locator(".switchboard-engine.is-found").first
+                found.wait_for()
+                _shot(page, "c4-found", width)
+                with page.expect_response(lambda r: r.url.endswith("/define-endpoint")) as used:
+                    found.get_by_role("button", name="Use it").click()
+                assert used.value.ok, used.value.text()
+                page.wait_for_function(
+                    "() => /^ADDED /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
+                )
+                page.locator(".switchboard-engine.is-found").first.wait_for(state="detached", timeout=15_000)
+                _shot(page, "c5-after-use-it", width)
+
+                # Download: the chip names the internet host; the bar fills on the plate.
+                plate = page.locator("[data-testid='switchboard-engine-preset:preset_glass_vision']")
+                assert "HUGGINGFACE.CO" in plate.inner_text()
+                assert "THIS DEVICE" not in plate.inner_text()
+                plate.get_by_role("button", name="Download").click()
+                bar = page.get_by_test_id("switchboard-bar-preset:preset_glass_vision")
+                bar.wait_for(timeout=10_000)
+                page.wait_for_function(
+                    "() => Number(document.querySelector(\"[data-testid='switchboard-bar-preset:preset_glass_vision']\")?.getAttribute('aria-valuenow')) >= 40"
+                )
+                _shot(page, "c6-download-mid-bar", width)
+                ticks["hold"] = 0
+                page.wait_for_function(
+                    "() => /^DOWNLOADED /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')",
+                    timeout=10_000,
+                )
+            else:
+                board = page.get_by_test_id("switchboard")
+                assert board.get_attribute("data-layout") == "list"
+                assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+                small = page.evaluate("""() => [...document.querySelectorAll('[data-testid=runson-root] .btn, [data-testid=switchboard] .switchboard-tap')]
+                    .filter(e => e.offsetParent !== null)
+                    .map(e => [e.textContent.trim().slice(0, 30), e.getBoundingClientRect().height])
+                    .filter(([, h]) => h < 44)""")
+                assert small == [], small
+                _shot(page, "c1-list", width)
+                # Open Meetings and tap an engine to patch it.
+                page.get_by_test_id("switchboard-job-meetings").click()
+                page.get_by_text("Meetings · runs on").wait_for()
+                tap = page.locator("[data-testid^='switchboard-tap-']").first
+                with page.expect_response(lambda r: r.url.endswith("/api/inference/assignments/set")) as written:
+                    tap.click()
+                assert written.value.ok, written.value.text()
+                page.get_by_test_id("runson-undo").wait_for()
+                assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+                _shot(page, "c2-list-patched", width)
             _assert_clean(page, errors)
             browser.close()
     finally:
         server.stop()
+        for fake in fakes:
+            fake.shutdown()
