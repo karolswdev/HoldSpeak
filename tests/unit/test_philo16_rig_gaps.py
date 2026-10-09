@@ -285,3 +285,182 @@ def test_every_declared_boot_boundary_in_the_active_atlases_names_its_file() -> 
             for boundary in boundaries(case):
                 if boundary.get("substitute") in {"engine_reply", "cli_runner", "import_transcriber"}:
                     assert str(boundary.get("reply") or "").strip(), (path.name, case["id"])
+
+
+# ── G3 closes: one rig env, both rigs ────────────────────────────────────
+
+RIG_VARS = ("GIT_CONFIG_NOSYSTEM", "HOLDSPEAK_TEST_NO_REAL_CLI", "GH_CONFIG_DIR", "XDG_CONFIG_HOME",
+            "HOLDSPEAK_DESKTOP_NOTIFY", "HOLDSPEAK_CHANNEL_KEYSTORE_FILE", "HOLDSPEAK_PEOPLE_KEYSTORE_FILE",
+            AGENT_STATE_ENV, "HOLDSPEAK_MACOS_CALENDAR", "TMUX_TMPDIR")
+OWNER_ENV = {"GH_CONFIG_DIR": "/Users/owner/.config/gh", "XDG_CONFIG_HOME": "/Users/owner/.config",
+             "PATH": "/usr/bin"}
+
+
+def _assert_rig_env(env: dict[str, Any], home: Path) -> None:
+    assert env["GIT_CONFIG_NOSYSTEM"] == "1"
+    assert env["HOLDSPEAK_TEST_NO_REAL_CLI"] == "1"
+    assert env["HOLDSPEAK_DESKTOP_NOTIFY"] == "0"
+    assert env[AGENT_STATE_ENV] == "off"
+    for name in ("GH_CONFIG_DIR", "XDG_CONFIG_HOME", "HOLDSPEAK_CHANNEL_KEYSTORE_FILE",
+                 "HOLDSPEAK_PEOPLE_KEYSTORE_FILE"):
+        assert Path(env[name]).is_relative_to(home), (name, env[name])
+
+
+def test_the_graph_walk_hub_env_closes_every_g3_read(tmp_path: Path) -> None:
+    env = graph_walk._isolated_hub_env(tmp_path, inherited=dict(OWNER_ENV))
+    _assert_rig_env(env, graph_walk.guard_home(tmp_path))
+
+
+def test_the_glass_boot_closes_every_g3_read(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import holdspeak.web_server as web_server
+
+    from tests.e2e import glass_infra
+
+    for key, value in OWNER_ENV.items():
+        monkeypatch.setenv(key, value)
+    seen: dict[str, Any] = {}
+
+    class _Server:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+        def start(self) -> str:
+            seen.update({name: os.environ.get(name) for name in RIG_VARS})
+            return "http://127.0.0.1:0"
+
+    monkeypatch.setattr(web_server, "MeetingWebServer", _Server)
+    glass_infra._boot(tmp_path, monkeypatch)
+    _assert_rig_env(seen, tmp_path / "home")
+
+
+# ── desktop notifications: HOLDSPEAK_DESKTOP_NOTIFY ──────────────────────
+
+
+def test_notify_posts_by_default_and_not_with_the_switch_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak import desktop_notify
+
+    posted: list[str] = []
+    fake = lambda title, body, *, click_url=None: posted.append(body) or True  # noqa: E731
+    monkeypatch.setattr(desktop_notify, "_notify_macos", fake)
+    monkeypatch.setattr(desktop_notify, "_notify_linux", fake)
+    monkeypatch.setattr(desktop_notify, "_PLATFORM", "Darwin")
+
+    monkeypatch.delenv(desktop_notify.DESKTOP_NOTIFY_ENV, raising=False)
+    assert desktop_notify.desktop_notify_enabled()
+    assert desktop_notify.notify("HoldSpeak", "default on") is True
+    monkeypatch.setenv(desktop_notify.DESKTOP_NOTIFY_ENV, "0")
+    assert not desktop_notify.desktop_notify_enabled()
+    assert desktop_notify.notify("HoldSpeak", "rig") is False
+    assert posted == ["default on"]
+
+
+def test_the_cocoa_paths_post_nothing_with_the_switch_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    import subprocess
+
+    from holdspeak import desktop_notify, desktop_presence_cocoa
+
+    monkeypatch.setenv(desktop_notify.DESKTOP_NOTIFY_ENV, "0")
+    runs: list[Any] = []
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: runs.append(a))
+    desktop_presence_cocoa._cocoa_notify({"title": "HoldSpeak", "body": "rig"})
+
+    class _Renderer:
+        class _commands:  # noqa: N801
+            put = staticmethod(lambda item: runs.append(item))
+
+    assert desktop_notify._notify_cocoa_child(_Renderer(), "HoldSpeak", "rig") is False
+    assert runs == []
+
+
+def test_the_mcp_notify_test_answers_not_posted_in_this_rig(monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak import desktop_notify
+    from holdspeak.mcp.families import heartbeat
+
+    monkeypatch.setenv(desktop_notify.DESKTOP_NOTIFY_ENV, "0")
+    monkeypatch.setattr(heartbeat, "db_or", lambda _: None)
+    monkeypatch.setattr(heartbeat, "observer_or", lambda _: None)
+    monkeypatch.setattr(heartbeat, "HeartbeatService", lambda *a, **k: None)
+    monkeypatch.setattr(desktop_notify, "_notify_macos", lambda *a, **k: pytest.fail("posted"))
+    assert heartbeat.dispatch("heartbeat.notify_test", {}, None) == {
+        "fired": False, "reason": "not posted in this rig"}
+
+
+# ── channel keys: HOLDSPEAK_CHANNEL_KEYSTORE_FILE ────────────────────────
+
+
+def test_with_the_file_named_the_channel_keys_never_reach_the_keychain(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import keyring
+
+    from holdspeak.services import channel_email, channel_slack
+    from holdspeak.services.channel_key_file import CHANNEL_KEYSTORE_ENV
+
+    path = tmp_path / "home" / "channel-keys.json"
+    monkeypatch.setenv(CHANNEL_KEYSTORE_ENV, str(path))
+    monkeypatch.setattr(keyring, "get_keyring", lambda: pytest.fail("the Keychain was reached"))
+
+    channel_email.save_key("resend", "main", "re_key")
+    assert channel_email.read_key("resend", "main") == "re_key"
+    store = channel_slack.KEY_STORE()
+    store.put("slot", "https://hooks.slack.com/services/x")
+    assert store.get("slot") == "https://hooks.slack.com/services/x"
+    assert oct(path.stat().st_mode & 0o777) == "0o600"
+    with pytest.raises(channel_email.EmailKeyError) as missing:
+        channel_email.read_key("resend", "other")
+    assert missing.value.code == "email_key_missing"
+    with pytest.raises(channel_slack.SlackKeyError) as slack_missing:
+        store.get("other")
+    assert slack_missing.value.code == "slack_webhook_missing"
+
+
+def test_unset_the_channels_use_the_keychain(monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak.services import channel_email, channel_slack
+    from holdspeak.services.channel_key_file import CHANNEL_KEYSTORE_ENV
+
+    monkeypatch.delenv(CHANNEL_KEYSTORE_ENV, raising=False)
+    monkeypatch.setattr(channel_email, "NativeEmailKeyStore", lambda: "email-keychain")
+    monkeypatch.setattr(channel_slack, "NativeSlackKeyStore", lambda: "slack-keychain")
+    assert channel_email.default_key_store() == "email-keychain"
+    assert channel_slack.default_key_store() == "slack-keychain"
+
+
+# ── nested `then` boundaries install their double before boot ────────────
+
+
+def test_a_boundary_inside_a_then_installs_its_double_at_boot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reply = "tests/fixtures/philo5_summary_reply.json"
+    runner = "tests/fixtures/philo10_atlas/gh-posted.json"
+    transcript = "tests/fixtures/philo16_import_transcript.json"
+    trigger = {"kind": "api", "method": "GET", "path": "/api/meetings", "body": None, "then": [
+        {"kind": "boundary", "substitute": "engine_reply", "label": "nested", "reply": reply},
+        {"kind": "boundary", "substitute": "cli_runner", "label": "nested", "reply": runner},
+        {"kind": "boundary", "substitute": "import_transcriber", "label": "nested", "reply": transcript},
+    ]}
+    case = {"id": "case.rig.nested", "job": "j6", "edge_ids": [], "state_id": "s", "applicability": "applicable",
+            "preconditions": [], "setup": [], "trigger": trigger,
+            "expected": {"predicate": {"kind": "protocol_field", "path": "/meetings", "value": []},
+                         "observe_at": "protocol: GET /api/meetings"},
+            "completion_bound_s": 5, "viewports": []}
+    assert graph_walk.case_engine_replay(case) == reply
+    assert graph_walk.case_cli_runner(case) == runner
+    assert graph_walk.case_import_transcriber(case) == transcript
+
+    booted: list[dict[str, Any]] = []
+
+    class _Hub:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            booted.append(kwargs)
+            raise RuntimeError("stop after the boot arguments")
+
+    monkeypatch.setattr(graph_walk, "Hub", _Hub)
+    atlas = tmp_path / "atlas.json"
+    atlas.write_text(json.dumps({"schema_version": 1, "cases": [case], "states": []}))
+    with pytest.raises(RuntimeError, match="stop after the boot arguments"):
+        graph_walk.run_case(atlas, "case.rig.nested", brain="muaddib", viewport=1440,
+                            out=tmp_path / "out", engine="replayed", build=False, headless=True)
+    assert booted and booted[0]["engine_replay"] == REPO / reply
+    assert booted[0]["cli_runner"] == REPO / runner
+    assert booted[0]["import_transcriber"] == REPO / transcript

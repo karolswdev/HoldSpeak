@@ -5097,6 +5097,19 @@ def _isolated_hub_env(
         # CODEX_HOME, ANTHROPIC_API_KEY; pi's claims): it answers `not_read`
         # (holdspeak/services/onboarding_service.py).
         "HOLDSPEAK_AGENT_STATE": "off",
+        # PHILO-16 rig gaps (G3 closes): git reads no system config (RIG LAW);
+        # no default runner starts the real gh/acli (holdspeak/cli_guard.py);
+        # gh's config resolves inside this HOME, never the owner's
+        # GH_CONFIG_DIR/XDG_CONFIG_HOME; nothing posts to the owner's
+        # Notification Center (holdspeak/desktop_notify.py); the email and
+        # Slack keys live in a file in this HOME, not the Keychain
+        # (holdspeak/services/channel_key_file.py).
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "HOLDSPEAK_TEST_NO_REAL_CLI": "1",
+        "GH_CONFIG_DIR": str(isolated_home / ".config" / "gh"),
+        "XDG_CONFIG_HOME": str(isolated_home / ".config"),
+        "HOLDSPEAK_DESKTOP_NOTIFY": "0",
+        "HOLDSPEAK_CHANNEL_KEYSTORE_FILE": str(isolated_home / "channel-keys.json"),
     })
     env.pop("TMUX", None)
     env.pop("TMUX_PANE", None)
@@ -6377,24 +6390,24 @@ def _repo_path(declared: str) -> Path:
 
 
 def case_engine_replay(case: dict[str, Any]) -> str | None:
-    """The recorded provider reply a boundary step declares, if any."""
-    for step in case_steps(case):
+    """The recorded provider reply a boundary step declares, if any (nested `then` steps too)."""
+    for step in _iter_case_steps(case):
         if step.get("kind") == "boundary" and step.get("substitute") == "engine_reply":
             return step.get("reply")
     return None
 
 
 def case_cli_runner(case: dict[str, Any]) -> str | None:
-    """PHILO-10-05: the recording runner script a boundary step declares, if any."""
-    for step in case_steps(case):
+    """PHILO-10-05: the recording runner script a boundary step declares, if any (nested too)."""
+    for step in _iter_case_steps(case):
         if step.get("kind") == "boundary" and step.get("substitute") == "cli_runner":
             return step.get("reply")
     return None
 
 
 def case_import_transcriber(case: dict[str, Any]) -> str | None:
-    """PHILO-16 R2: the recorded import transcript a boundary step declares, if any."""
-    for step in case_steps(case):
+    """PHILO-16 R2: the recorded import transcript a boundary step declares, if any (nested too)."""
+    for step in _iter_case_steps(case):
         if step.get("kind") == "boundary" and step.get("substitute") == "import_transcriber":
             return step.get("reply")
     return None

@@ -457,8 +457,18 @@ def _backend_name(backend: Any) -> str:
     return f"{kind.__module__}.{kind.__qualname__}"
 
 
+def default_key_store() -> Any:
+    """The keychain; a file store when ``HOLDSPEAK_CHANNEL_KEYSTORE_FILE`` is set (a rig hub)."""
+    from .channel_key_file import FileChannelKeyStore, channel_keystore_path
+
+    path = channel_keystore_path()
+    if path is not None:
+        return FileChannelKeyStore(path, NativeEmailKeyStore.service_name, EmailKeyError, "email_key_missing")
+    return NativeEmailKeyStore()
+
+
 #: The key store the hub uses (tests: a :class:`MemoryEmailKeyStore`).
-KEY_STORE: Callable[[], Any] = NativeEmailKeyStore
+KEY_STORE: Callable[[], Any] = default_key_store
 
 
 def key_slot(provider_name: str, key_ref: str) -> str:

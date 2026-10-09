@@ -233,7 +233,7 @@ def _notify_cocoa_child(
     a ``notify`` command that posts via osascript from inside the AppKit
     runloop.
     """
-    if renderer is None:
+    if renderer is None or not desktop_notify_enabled():
         return False
     try:
         commands = getattr(renderer, "_commands", None)
@@ -251,6 +251,20 @@ def _notify_cocoa_child(
 
 _PLATFORM = platform.system()
 
+#: PHILO-16 rig gap: ``HOLDSPEAK_DESKTOP_NOTIFY=0`` posts nothing to the
+#: desktop for this process (a rig hub never reaches the owner's Notification
+#: Center). Default: on.
+DESKTOP_NOTIFY_ENV = "HOLDSPEAK_DESKTOP_NOTIFY"
+NOT_POSTED_IN_RIG = "not posted in this rig"
+
+
+def desktop_notify_enabled() -> bool:
+    """False when the process environment turns desktop notifications off."""
+    import os
+
+    value = os.environ.get(DESKTOP_NOTIFY_ENV, "").strip().lower()
+    return value not in {"0", "off", "false", "no"}
+
 
 def notify(
     title: str,
@@ -265,6 +279,9 @@ def notify(
     """
     if _notifier is not None:
         return _notifier(title, body, click_url=click_url)
+    if not desktop_notify_enabled():
+        log.info("desktop notification %s (%s=0)", NOT_POSTED_IN_RIG, DESKTOP_NOTIFY_ENV)
+        return False
     if _PLATFORM == "Darwin":
         return _notify_macos(title, body, click_url=click_url)
     if _PLATFORM == "Linux":

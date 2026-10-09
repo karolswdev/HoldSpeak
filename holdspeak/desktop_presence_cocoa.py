@@ -254,6 +254,10 @@ def _cocoa_notify(payload: dict) -> None:
     """
     import subprocess as _sp
 
+    from .desktop_notify import desktop_notify_enabled
+
+    if not desktop_notify_enabled():
+        return
     title = str(payload.get("title", "HoldSpeak"))
     body = str(payload.get("body", ""))
     safe_title = title.replace("\\", "\\\\").replace('"', '\\"')
