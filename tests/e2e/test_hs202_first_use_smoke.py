@@ -536,11 +536,25 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             assert receipt["selection_hash"] == planned["selection_hash"]
             assert receipt["attempts"] and receipt["attempts"][0]["host"] == host
             print("RECEIPT", receipt["outcome"], receipt["selection_hash"], receipt["attempts"][0]["host"])
+            # PHILO-16 R2: this step reads the record's OWN state (the summary
+            # and the attempts drawn in the open record), not the viewport. At
+            # 393 the run's result lands under the Run button, inside the
+            # record's scroll, and where the browser leaves the scroll after
+            # the click varies run to run: measured failing at summary top
+            # 907 px in an 852 px viewport, with the right text drawn 0.43 s
+            # after the receipt. Freshness without a reload is the claim here;
+            # `drawn` is `visible` without the viewport bounds.
             refreshed = observe("record-refresh", """([summary, host]) => {
+              const drawn = el => {
+                if (!el || !el.isConnected) return false;
+                const r=el.getBoundingClientRect(), s=getComputedStyle(el);
+                return r.width>0 && r.height>0 && s.visibility==='visible' &&
+                  s.display!=='none' && Number(s.opacity)>0;
+              };
               const text=document.querySelector('[data-testid=meeting-summary-text]');
               const attempts=document.querySelector('[data-testid=summary-record-attempts]');
-              return visible(text) && text.textContent.trim()===summary &&
-                visible(attempts) && attempts.textContent.includes(host);
+              return drawn(text) && text.textContent.trim()===summary &&
+                drawn(attempts) && attempts.textContent.includes(host);
             }""", "The open record shows the completed summary and actual host without a reload",
                 [engine.result.summary, _chip_label(host)])
             # A stale/missing result is expected today; a visible lie is not.

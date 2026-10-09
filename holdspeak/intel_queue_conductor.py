@@ -31,8 +31,8 @@ Three rules it obeys:
   DESKTOP notification (``desktop_notify.heartbeat_notify``, reached from
   ``services/heartbeat_service.py``).  This conductor computes regardless of
   the hour and sends no desktop notification of its own — the only thing a
-  finished job emits from here is the in-browser ``aftercare_ready`` and
-  ``runtime_queue`` frames.
+  finished job emits from here is the in-browser ``aftercare_ready``,
+  ``runtime_queue`` and ``desk_changed`` frames.
 """
 from __future__ import annotations
 
@@ -100,6 +100,18 @@ def _on_meeting_ready(meeting_id: str) -> None:
         broadcast("runtime_queue", build_runtime_queue_frame(db))
     except Exception as exc:
         log.debug(f"aftercare_ready broadcast skipped: {exc}")
+    # PHILO-16 R2: the summary changed the meeting. `aftercare_ready` is
+    # quiet when the run left nothing open or decided (meeting_aftercare.py
+    # `build_aftercare_ready_event` returns None), and `runtime_queue` moves
+    # no record, so an open record waited for its 3 s poll. Say so on the
+    # frame the Meetings face already re-reads on, as the import does
+    # (services/meeting_service.py `notify_desk_changed`).
+    try:
+        from holdspeak.runtime.composition import notify_desk_changed
+
+        notify_desk_changed("meeting", meeting_id, "update")
+    except Exception as exc:  # pragma: no cover - a frame never fails a job
+        log.debug(f"desk_changed after summary skipped: {exc}")
 
 
 def start_intel_queue_conductor(

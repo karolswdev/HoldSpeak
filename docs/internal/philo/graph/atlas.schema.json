@@ -375,6 +375,10 @@
               "type": "string",
               "minLength": 1,
               "description": "When capture_path names a collection, take this field from the one row selected by capture_match."
+            },
+            "capture_raw": {
+              "type": "boolean",
+              "description": "PHILO-16 R2: keep the captured JSON value instead of its string, so an exact \"{name}\" fills in as that value (a route that takes an integer revision refuses the string)."
             }
           }
         },

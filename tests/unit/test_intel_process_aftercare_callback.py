@@ -55,3 +55,31 @@ def test_on_meeting_ready_broadcasts_aftercare_ready(monkeypatch, tmp_path) -> N
 
     assert res.status_code == 200, res.text
     assert ("aftercare_ready", {"meeting_id": "m-ready", "open_count": 2}) in broadcasts
+
+
+def test_drainer_announces_desk_changed_when_aftercare_is_quiet(monkeypatch, tmp_path) -> None:
+    """PHILO-16 R2: a summary that leaves nothing open still moves the record.
+
+    `aftercare_ready` is quiet for an empty digest, and `runtime_queue` moves
+    no record, so the open Meetings record waited for its 3 s poll (the
+    first-use smoke's `record-refresh` flake). The drainer's callback now says
+    `desk_changed` for the meeting, the frame the face re-reads on.
+    """
+    import holdspeak.intel_queue_conductor as conductor
+    import holdspeak.runtime.composition as composition
+
+    sent: list[tuple[str, dict]] = []
+    announced: list[tuple[str, str, str]] = []
+    monkeypatch.setattr(conductor, "_broadcast", lambda kind, data: sent.append((kind, data)))
+    monkeypatch.setattr(aftercare_module, "build_aftercare_ready_event", lambda db, meeting_id: None)
+    monkeypatch.setattr(intel_queue_module, "build_runtime_queue_frame", lambda db: {"jobs": []})
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: object())
+    monkeypatch.setattr(
+        composition, "notify_desk_changed",
+        lambda kind, obj_id, op: announced.append((kind, obj_id, op)),
+    )
+
+    conductor._on_meeting_ready("m-quiet")
+
+    assert [kind for kind, _ in sent] == ["runtime_queue"]
+    assert announced == [("meeting", "m-quiet", "update")]
