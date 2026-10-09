@@ -298,6 +298,150 @@ detect's loopback and profile scans plus the Keychain key probe; downloads
 poll `/api/inference/acquisitions/{job}` into the bar (the TODO in
 `useConciergeController.ts:624` is paid).
 
+## 13. Software design: what we take from PhreshOS (owner ask, 2026-10-09)
+
+Read: `github.com/PhreshOS/system` at 0.1.118 (the System service + its
+Desktop; TypeScript; `source/server/core/link-manager/.../process-manager/
+window.ts`, `source/client/view/components/window-manager/{window-manager,
+presentations,window-geometry,shared-resize}.ts`, `.../desktop/windows/
+window.tsx`, `window-geometry-motion.ts`, `shared/window-layers.ts`,
+`opening-manager.ts`, `system.ts`, 72 behaviour-named tests) and its docs
+(the-system, desktop, concepts). Not UI: the design underneath. Ten lessons,
+each with what it changes here.
+
+**L1. The System owns the windows; the browser shows them and holds none.**
+In PhreshOS a Window (title, position, size, depth, minimized, maximized,
+layer) is authoritative state on the server, per running Client; every
+browser is one view of the same Desktop; the `phresh` CLI and an agent reach
+the same windows. HoldSpeak keeps window rects and stacking in a zustand
+slice persisted to localStorage per browser (`store/compositorSlice.ts`,
+`workspaceStorage.ts`). So the Mac and the iPad have two different desks,
+and no agent can open, raise or arrange a window.
+→ **The hub owns the desk's windows.** A `DeskWindowService` (open · close ·
+move · resize · raise · send back · seat · zoom · arrange), one row per open
+window per desk, a `desk-changed` event the browser already listens to
+(`useOnDeskChanged`), and MCP tools `desk_window_*` so the Conductor's
+agents compose windows alongside the owner (the thing PhreshOS calls "agents
+alongside you"). The browser's compositor becomes a presentation of that
+state. The 393 sheet on the iPad is the same desk, seated windows and all.
+
+**L2. Anticipate, then follow.** `Presentations.anticipate(process, change,
+request)`: a person's action shows at once, holds while its request is in
+flight (a pending count per window; several changes hold together until the
+last settles), and then the System's truth replaces it, accepted or not. An
+anticipated front ranks above every depth the System has assigned.
+→ The compositor module's one write primitive is `anticipate(id, change,
+request)`. This retires the whole class of "stale is-front, two blue title
+bars" bugs (`windowRegistry.ts:140`) by construction.
+
+**L3. Depth is a counter the authority increments; front is derived.**
+`window.depth = ++this.highest` per layer; the front window of a layer is
+the shown one with the greatest depth; a minimized window keeps its depth
+and is simply not front; nothing reorders an array.
+→ `panelOrder` (an array we splice) becomes `depth` numbers assigned by the
+hub; the §3 planes (FRONT · NEAR · FAR) are derived from rank by depth among
+shown windows. Reload keeps planes because the numbers are the state.
+
+**L4. Layers are a type with rules, not z-index numbers.** `wallpaper ·
+under · window · over · shell`; per layer: who designs the frame (the
+Desktop for `window`, the Program for raw layers), what it is anchored to
+(the plane or the viewport), whether it can be moved. Enforced by
+`requireRawPresentation`, `requireAnchorable`, `requirePresentationMoveGesture`.
+→ Our z ladder (`--desk-z-*` tokens: canvas 0 · world-overlay 25 · chrome 30
+· window 42+ · waveform 78 · dock 80 · transient 81 · popover 82) is the same
+idea by number. The compositor names it as a type: `floor · world · window ·
+chrome · transient`, every surface declares its layer, z is derived, and the
+rules (what the compositor designs, what can move, what raises) are per layer.
+
+**L5. Geometry is shares plus pixels, resolved by each view.** A value is
+`"50% + 10"` or `-1/2`: one relative coefficient and one pixel offset,
+resolved against the view that draws it; the plane's zero is the view's
+centre; a snap "names a share of the surface rather than pixels, so every
+client resolves it in its own space"; a Window keeps its view on every
+screen. HoldSpeak stores absolute pixels and clamps them per viewport
+(`clampIntoBand`), so the same desk on 1440, 1920 and the iPad reflows by
+clamping, not by design.
+→ Window geometry is stored as share+px. Tile, stage, zoom and gather are
+written as shares (`tile left = x:-1/2, w:1/2`) and resolved at draw. The
+same arrangement is the same arrangement on every screen.
+
+**L6. One owner of the visible pixels; the record is the destination.**
+Motion values own what is on screen "from rest, through a gesture, and into
+the next target"; the System's record stays the truth; `timing("window",
+{distance, leaving, tempo})` derives a duration from how far a box travels,
+whether it leaves sight, and the person's tempo; `seenOnly`: a window moves
+visibly only when the person can see where it starts or ends, otherwise it
+is simply there.
+→ §6's fixed milliseconds become one `timing()` (distance-based, with a
+per-browser tempo in Appearance); arrangements of off-screen windows do not
+animate; and `DeskWindow.tsx`'s transform-stripping `measure()` hack goes,
+because one motion owner means the measured rect is always the destination.
+
+**L7. Departure is representation.** A closing window keeps one immutable
+visual snapshot until its exit animation reports done, while the
+authoritative collection drops it at once; windows present at mount are
+"inherited" and never replay an entrance.
+→ Seat and Close (§6 moment 3) animate a retained snapshot, never the live
+component; a reload never replays Open. Both derived in the same event so no
+render shows a window in neither list.
+
+**L8. Touching edges are one boundary.** `sharedResizeBoundaries` finds
+contacts between opposite edges of visible windows, groups them by
+connectivity, and drags the group as one boundary, preserving every far edge
+and clamping to minimum sizes.
+→ §5's "steel divider" is not a tile mode; it is derived: any two windows
+whose edges touch get the divider, and dragging it resizes both. Tile and
+Gather just produce touching windows.
+
+**L9. One row teaches one rule.** The taskbar lists windows, not processes:
+"every entry in it is a thing you can focus, minimise and restore, and a row
+whose entries do not all answer the same press is one row teaching two
+rules."
+→ The Dock is two rows in one today (launchers and open windows). The rule:
+every tile in a row answers the same press. Seats (open and seated windows)
+are one row; launchers are another strip, or the same tile only when a press
+on it always means focus-or-launch. Decide on the Dock canvas.
+
+**L10. The transport implements nothing.** "A transport may validate,
+authenticate, serialize, or stream an operation, but it does not implement
+System behavior"; handles hold no copy and every read is current; events
+only after subscribe; a ten-second deadline; failure is a rejection with a
+reason. Programs are a registry (identity, icon, what types they open, one
+Process or many) and the Desktop itself is Programs on the System.
+→ Confirms the 2026-09-23 ruling (MCP flows through services). For the
+compositor: `applications.ts` becomes the registry (layer, default geometry
+as shares, `opens: [object types]`, find-or-create vs many), the compositor
+knows no app's internals, and `openObject.ts` goes through the registry.
+
+Two things we do not take: Programs as sandboxed iframes (ours are
+first-party React; the registry and the service boundary give the
+discipline without the isolation cost), and the 5×5 plane with a Map (our
+Floor already has Places; windows stay in the view; revisit if Exposé is not
+enough).
+
+### §9 revised: the build mechanics
+
+1. **`holdspeak/services/desk_window_service.py`** (L1, L3): the desk's
+   windows: `open(app, object, geometry?)`, `close`, `move`, `resize`,
+   `raise` (depth = ++highest), `send_back`, `seat`, `zoom`, `arrange(map)`;
+   geometry as share+px (L5); one `desk-changed` event per change; MCP
+   `desk_window_list|open|close|raise|arrange`. Tests beside it.
+2. **`web/src/desk/compositor/`** (new): `planes.ts` (rank by depth →
+   plane), `anticipate.ts` (L2), `layers.ts` (the type, L4), `geometry.ts`
+   (share+px resolve, snap/tile/stage/gather as shares, L5), `timing.ts`
+   (L6), `departure.ts` (L7), `sharedResize.ts` (L8). Pure logic, no DOM;
+   `__tests__/` one file each. The DOM side is one `useCompositor()` that
+   writes `data-plane`/`data-layer` and owns the motion values.
+3. `DeskWindow.tsx` keeps the physics hook (drag, resize) and loses
+   placement, order, `is-front`, `measure()`; `window-chrome.css` becomes
+   the §3 ladder by `data-plane`.
+4. `applications.ts` = the registry (L10); `openObject.ts` resolves through it.
+5. The Dock gains seats; one rule per row (L9); the nub chips are parked.
+6. Phasing: **16a** the presentation (2–5 above, state still local) so the
+   look and the grammar land first; **16b** window authority to the hub (1),
+   the browser store becomes a cache of the hub's rows; **16c** Runs on as
+   the exemplar app on the kit. 16a and 16c can run as parallel lanes.
+
 ## 8. What this is NOT
 
 - Not glass: no `backdrop-filter`, no translucent bodies.
