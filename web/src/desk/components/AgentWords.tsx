@@ -263,6 +263,13 @@ export function cutAtWord(text: string, max: number): string {
   if (flat[end] !== " ") {
     const space = flat.lastIndexOf(" ", end);
     if (space > 0) end = space;
+    else {
+      // One token with no space (Astra r1 on #1026): cut after / _ - . when
+      // the token has one; else at the limit itself.
+      const head = flat.slice(0, end);
+      const mark = Math.max(head.lastIndexOf("/"), head.lastIndexOf("_"), head.lastIndexOf("-"), head.lastIndexOf("."));
+      if (mark > 0) end = mark + 1;
+    }
   }
   const kept = flat.slice(0, end).replace(/[\s·]+$/, "");
   return `${kept} …`;
@@ -501,7 +508,8 @@ export function fitCount(
   if (first < 0) return null;
   let n = first;
   while (n > 0 && words[n - 1].right + ellipsis > box.right + 0.5) n--;
-  return Math.max(1, n);
+  // 0: not even the first unit fits; the caller cuts that token at the width.
+  return n;
 }
 
 function wrapMarks(v: ReactNode, marks: Mark[], key: string): ReactNode {
@@ -519,6 +527,7 @@ function wrapMarks(v: ReactNode, marks: Mark[], key: string): ReactNode {
 function CompactWords({ text, lines, ask, className, testId }: { text: string; lines: number; ask: boolean; className?: string; testId?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [limit, setLimit] = useState<number | null>(null);
+  const [, setTick] = useState(0);
   const { words, cut } = compactWords(text, 600, ask);
 
   useLayoutEffect(() => {
@@ -529,10 +538,12 @@ function CompactWords({ text, lines, ask, className, testId }: { text: string; l
     const right = box.left + el.clientWidth;
     const bottom = box.top + el.clientHeight;
     const spans = Array.from(el.querySelectorAll<HTMLElement>("[data-aw-w]"));
+    // A unit fits only when ALL its boxes do: an overflowing token's wide box
+    // is not its last one (Astra r1 on #1026), so read the farthest edges.
     const rects = spans.map((s) => {
-      const all = s.getClientRects();
-      const r = all[all.length - 1] ?? s.getBoundingClientRect();
-      return { right: r.right, bottom: r.bottom };
+      const all = Array.from(s.getClientRects());
+      const list = all.length ? all : [s.getBoundingClientRect()];
+      return { right: Math.max(...list.map((r) => r.right)), bottom: Math.max(...list.map((r) => r.bottom)) };
     });
     const probe = document.createElement("span");
     probe.textContent = " …";
@@ -550,8 +561,14 @@ function CompactWords({ text, lines, ask, className, testId }: { text: string; l
     if (!el || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(() => {
       const w = el.clientWidth;
-      if (seen.current && seen.current !== w) setLimit(null);
-      seen.current = w;
+      // Any new width measures again, also the first one after a mount with
+      // no width (a drawer that opens): the tick re-renders even when the
+      // limit is already null (Astra r1 on #1026).
+      if (seen.current !== w) {
+        seen.current = w;
+        setLimit(null);
+        setTick((t) => t + 1);
+      }
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -577,14 +594,25 @@ function CompactWords({ text, lines, ask, className, testId }: { text: string; l
       title={agentWordsPlain(text, 400, false)}
       data-testid={testId}
     >
-      {shown.map((word, i) => (
-        <span key={i} data-aw-w="">
-          {word.map((piece, j) => wrapMarks(piece.v, piece.marks, `${i}.${j}`))}
-          {/* Chromium breaks at <wbr> even in nowrap: one line has none. */}
-          {kept[i].joined && lines > 1 ? <wbr /> : null}
+      {limit === 0 && units.length ? (
+        // Not even one unit fits (one unbreakable token wider than the box):
+        // the token itself is cut at the width, its ellipsis drawn in the
+        // line (Astra r1 on #1026).
+        <span className="aw-clip" data-aw-w="">
+          {units[0].word.map((piece, j) => wrapMarks(piece.v, piece.marks, `c.${j}`))}
         </span>
-      ))}
-      {ended ? <span className="aw-ell">{shown.length ? " …" : "…"}</span> : null}
+      ) : (
+        <>
+          {shown.map((word, i) => (
+            <span key={i} data-aw-w="">
+              {word.map((piece, j) => wrapMarks(piece.v, piece.marks, `${i}.${j}`))}
+              {/* Chromium breaks at <wbr> even in nowrap: one line has none. */}
+              {kept[i].joined && lines > 1 ? <wbr /> : null}
+            </span>
+          ))}
+          {ended ? <span className="aw-ell">{shown.length ? " …" : "…"}</span> : null}
+        </>
+      )}
     </span>
   );
 }

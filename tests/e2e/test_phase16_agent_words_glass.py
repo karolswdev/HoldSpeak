@@ -72,7 +72,7 @@ def _git(cwd: Path, *argv: str) -> str:
     return subprocess.run(["git", "-C", str(cwd), *argv], check=True, capture_output=True, text=True).stdout.strip()
 
 
-def _seed(home: Path) -> None:
+def _seed(home: Path, question: str = OWNER_TEXT) -> None:
     from holdspeak.agent_context import ingest_agent_hook_event
     from holdspeak.agent_context import event_log
     import holdspeak.agent_context as agent_context_pkg
@@ -119,7 +119,7 @@ def _seed(home: Path) -> None:
         {"hook_event_name": "Stop", "last_assistant_message": SAYS_TEXT},
         {"hook_event_name": "PostToolUse", "tool_name": "Write", "tool_use_id": "t2", "tool_input": {"file_path": "NOTES.md"}},
         "commit",
-        {"hook_event_name": "Notification", "message": OWNER_TEXT},
+        {"hook_event_name": "Notification", "message": question},
     ):
         if payload == "commit":
             time.sleep(1.1)
@@ -186,6 +186,107 @@ def _open_lane(page: Any) -> Any:
     window.wait_for(timeout=15000)
     page.locator("[data-testid='lane-rail']").wait_for(timeout=15000)
     return window
+
+
+def _isolate(tmp_path: Path, monkeypatch) -> None:
+    import holdspeak.agent_context as agent_context_pkg
+    import holdspeak.delivery.factory_launch as factory_launch
+    import holdspeak.delivery.registry as delivery_registry
+    from holdspeak.agent_context import event_log
+    from holdspeak.services import agent_responder
+
+    state = tmp_path / "home" / ".holdspeak"
+    state.mkdir(parents=True)
+    monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", state / "agent_launches.json")
+    monkeypatch.setattr(delivery_registry, "DEFAULT_REGISTRY_PATH", state / "delivery_sources.json")
+    monkeypatch.setattr(agent_context_pkg, "AGENT_CONTEXT_FILE", state / "agent_sessions.json")
+    monkeypatch.setattr(agent_responder, "DEFAULT_ANSWERS_PATH", state / "agent_answers.json")
+    monkeypatch.setattr(event_log, "default_spool_dir", lambda: state / "agent-events")
+
+
+#: Reads one compact line in the browser: its box, its content height, and
+#: where its ellipsis is drawn (a `…` unit, or the CSS ellipsis of a cut
+#: token), so a test can say the ellipsis is SEEN inside the box.
+_COMPACT_BOX = """(el) => {
+  const box = el.getBoundingClientRect();
+  const ell = el.querySelector('.aw-ell');
+  const clip = el.querySelector('.aw-clip');
+  const r = (ell || clip) ? (ell || clip).getBoundingClientRect() : null;
+  return {
+    text: el.textContent.slice(0, 80),
+    clientHeight: el.clientHeight, scrollHeight: el.scrollHeight,
+    box: {left: box.left, right: box.right, top: box.top, bottom: box.bottom},
+    ell: r && {left: r.left, right: r.right, top: r.top, bottom: r.bottom, text: (ell || clip).textContent},
+    clip: !!clip,
+    clipOverflow: clip ? getComputedStyle(clip).textOverflow : null,
+    clipCut: clip ? clip.scrollWidth > clip.clientWidth : null,
+  };
+}"""
+
+
+def _ellipsis_seen(read: dict) -> None:
+    """The content never exceeds the box, and the ellipsis is inside it."""
+    assert read["scrollHeight"] <= read["clientHeight"] + 1, read
+    ell, box = read["ell"], read["box"]
+    assert ell is not None, read
+    assert ell["left"] >= box["left"] - 1 and ell["right"] <= box["right"] + 1, read
+    assert ell["top"] >= box["top"] - 1 and ell["bottom"] <= box["bottom"] + 1, read
+    if read["clip"]:
+        # A token cut at the width: its own CSS ellipsis, drawn in the line.
+        assert read["clipOverflow"] == "ellipsis" and read["clipCut"], read
+
+
+#: Astra r1 on #1026 (MUST 1, 2): one unbreakable 4000-character token, and a
+#: long id after a short head. Ends with `?`: a real ask, a Needs row.
+UNBREAKABLE = "X" * 3999 + "?"
+LONG_ID = "May I merge `" + "d25d3fc020be4d8cbc90269fc17da3f7" * 6 + "`?"
+
+
+@pytest.mark.timeout(240)
+@pytest.mark.parametrize("question", [UNBREAKABLE, LONG_ID], ids=["unbreakable-4000", "long-id"])
+def test_a_compact_line_at_393_keeps_its_ellipsis_in_the_box(tmp_path: Path, monkeypatch, question: str) -> None:
+    """Rendered at 393 in a real browser: the Needs row (two lines) and the
+    rail ASKS line (one line). Not even one unit fits: the token itself is
+    cut at the width, the ellipsis seen; the content never taller than the box."""
+    _ensure_build()
+    _isolate(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+    try:
+        _seed(tmp_path / "home", question)
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 393, "height": 852})
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+            drawer = _open_needs(page)
+            row = drawer.locator("[data-testid='needs-row']").filter(has=page.locator(".needs-row-words")).first
+            row.wait_for(timeout=15000)
+            page.wait_for_timeout(300)
+            two = row.locator(".needs-row-words").evaluate(_COMPACT_BOX)
+            assert two["clientHeight"] > 0, two
+            _ellipsis_seen(two)
+            tag = "unbreakable" if question == UNBREAKABLE else "long-id"
+            row.screenshot(path=str(SHOTS / f"compact-{tag}-needs-row-393.png"))
+            page.keyboard.press("Escape")
+            _open_lane(page)
+            line = page.locator("[data-testid='lane-rail'] .lane-rail-words-line").first
+            line.scroll_into_view_if_needed()
+            page.wait_for_timeout(300)
+            one = line.evaluate(_COMPACT_BOX)
+            _ellipsis_seen(one)
+            line.locator("xpath=ancestor::li[1]").screenshot(path=str(SHOTS / f"compact-{tag}-rail-asks-393.png"))
+            assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
 
 
 @pytest.mark.timeout(240)

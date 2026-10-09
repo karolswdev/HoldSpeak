@@ -175,6 +175,13 @@ describe("AgentWords: compact", () => {
     expect(fitCount(row([20, 40, 95, 130]), box, 10)).toBe(2);
     // Two lines: a word on line 2 below the box overflows.
     expect(fitCount([{ right: 50, bottom: 18 }, { right: 30, bottom: 38 }], box, 10)).toBe(1);
+    // Not even the first unit fits: 0, and the component clips that token.
+    expect(fitCount([{ right: 4000, bottom: 18 }], box, 10)).toBe(0);
+  });
+
+  it("cutAtWord on one token with no space: after / _ - . when there is one, else at the limit", () => {
+    expect(cutAtWord("hs/project_item-pitem_d25d3fc020be4d8cbc90269fc17da3f7", 30)).toBe("hs/project_item-pitem_ …");
+    expect(cutAtWord("X".repeat(4000), 12)).toBe("XXXXXXXXXX …");
   });
 
   it("agentWordsPlain flattens and cuts for an attribute", () => {

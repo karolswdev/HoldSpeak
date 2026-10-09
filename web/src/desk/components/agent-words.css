@@ -86,6 +86,21 @@
   white-space: normal;
   max-height: calc(var(--aw-lines, 2) * 1lh);
 }
+/* A compact line never breaks inside a word: a token too wide overflows
+   (hidden) and the component cuts at a unit or, when none fits, clips the
+   token in .aw-clip with its ellipsis seen (Astra r1 on #1026). */
+.agent-words.is-compact,
+.agent-words.is-compact * {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.agent-words.is-compact .aw-clip {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 .agent-words.is-compact code {
   padding: 0;
   border-radius: 0;
