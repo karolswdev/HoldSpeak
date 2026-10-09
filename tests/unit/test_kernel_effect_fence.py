@@ -177,6 +177,26 @@ _CALL_RULES = (
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
     (
+        "holdspeak/coder_factory.py",
+        "process_start",
+        "run",
+        1,
+    ): (
+        "pi harness (#1022, Astra r2): `ps -o lstart= -p <pid>`, a read of one "
+        "process's start time recorded at spawn so Stop never signals a later "
+        "generation that reuses the launch's group id; it changes nothing"
+    ),
+    (
+        "holdspeak/coder_factory.py",
+        "_members",
+        "run",
+        1,
+    ): (
+        "pi harness (#1022, Astra r2): `ps -A -o pid=,pgid=,lstart=`, a read of "
+        "the process table to keep only the recorded group's own generation "
+        "before Stop signals it; it changes nothing"
+    ),
+    (
         "holdspeak/principals.py",
         "current_boot_id",
         "run",
