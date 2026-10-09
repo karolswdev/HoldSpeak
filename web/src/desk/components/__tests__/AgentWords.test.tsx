@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import {
   AgentWords,
   agentWordsPlain,
+  askOf,
+  compactUnits,
   compactWords,
   cutAtWord,
   fitCount,
@@ -107,18 +109,37 @@ describe("AgentWords: the subset", () => {
 });
 
 describe("AgentWords: compact", () => {
-  it("one line: blocks joined with ·, marks kept, no list markers", () => {
-    const el = draw(OWNER_TEXT, true);
+  it("one line with no ask: blocks joined with ·, marks kept, no list markers", () => {
+    const steps = "Steps done:\n\n1. **project.list** called\n2. `NOTES.md` written";
+    const el = draw(steps, true);
     expect(el.classList.contains("is-compact")).toBe(true);
     expect(el.querySelector("p,ol,ul,pre")).toBeNull();
     expect(el.querySelector("strong")?.textContent?.trim()).toBe("project.list");
-    expect(el.textContent).toContain("Steps 1–3 complete: · project.list called once");
+    expect(el.textContent).toBe("Steps done: · project.list called · NOTES.md written");
     noLiteralMarks(el.textContent ?? "");
+  });
+
+  it("the ask leads (ruling 2026-10-08): the last paragraph that ends with ? is the line", () => {
+    const el = draw(OWNER_TEXT, true);
+    expect(el.textContent?.startsWith("May I open a pull request for branch hs/project_item-")).toBe(true);
+    expect(el.textContent).toContain("(naming project_item:pitem_d25d3fc020be4d8cbc90269fc17da3f7 in the body)?");
+    expect([...el.querySelectorAll("strong")].map((s) => s.textContent).join("")).toContain("hs/project_item-");
+    expect(el.querySelector("strong code")).not.toBeNull();
+    noLiteralMarks(el.textContent ?? "");
+    // The LAST asking paragraph; a list item or a heading can be it too.
+    expect(askOf("Ready?\n\nDone.\n\nShall I push?")).toBe("Shall I push?");
+    expect(askOf("- one\n- **may I merge?**")).toBe("**may I merge?**");
+    expect(askOf("No question here.")).toBeNull();
+    // Not an agent's turn (the SENT line): the start, as before.
+    const sent = render(<AgentWords compact ask={false} text={"Brief.\n\nMay I?"} data-testid="s" />).container;
+    expect(sent.querySelector("[data-testid='s']")?.textContent).toBe("Brief. · May I?");
   });
 
   it("the plain words carry the full text on hover (title), marks removed", () => {
     const el = draw("**May** I `push`?", true);
     expect(el.getAttribute("title")).toBe("May I push?");
+    // The hover holds the whole words, not only the ask.
+    expect(draw(OWNER_TEXT, true).getAttribute("title")?.startsWith("Steps 1–3 complete: · project.list")).toBe(true);
   });
 
   it("a long text is cut at a whole word with …", () => {
@@ -137,6 +158,13 @@ describe("AgentWords: compact", () => {
     const kept = out.slice(0, -2);
     expect(OWNER_TEXT.replace(/\s+/g, " ").startsWith(kept)).toBe(true);
     expect(OWNER_TEXT.replace(/\s+/g, " ")[kept.length]).toBe(" ");
+  });
+
+  it("a long token is many cut units (after / _ - .); a short word is one", () => {
+    const { words } = compactWords("branch `hs/project_item-pitem_d25d3f` now");
+    const units = compactUnits(words).map((u) => u.word.map((p) => p.v).join(""));
+    expect(units).toEqual(["branch ", "hs/", "project_", "item-", "pitem_", "d25d3f ", "now"]);
+    expect(compactUnits(words).filter((u) => u.joined)).toHaveLength(4);
   });
 
   it("fitCount: all fit is null; else the last word that leaves room for …", () => {

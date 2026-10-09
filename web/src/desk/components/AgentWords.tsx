@@ -12,7 +12,9 @@
  *  target), `![alt](src)` as `[alt]`. Long tokens break after `/ _ - .`.
  *
  *  `compact`: for rows, lamps and titles. Inline marks kept, blocks joined
- *  into one line with ` · `, cut with `…` at the surface's width and never
+ *  into one line with ` · `; when a paragraph ends with `?` the line is the
+ *  last such paragraph (THE ASK, ruling 2026-10-08); cut with `…` at the
+ *  surface's width and never
  *  inside a word (`lines` lets a row keep two lines). `agentWordsPlain`
  *  is the same words as plain text, for an attribute (a `title`).
  */
@@ -266,10 +268,36 @@ export function cutAtWord(text: string, max: number): string {
   return `${kept} …`;
 }
 
+/* ── the ask ──────────────────────────────────────────────────────── */
+
+const ENDS_ASKING = /\?["'`*_)\]\s]*$/;
+
+/** Ruling 2026-10-08 (Muad'Dib, Phase 16): a compact line shows THE ASK.
+ *  The last paragraph (or list item, or heading) of the agent's words that
+ *  ends with `?`, as its own markdown; null when no part asks. */
+export function askOf(text: string): string | null {
+  let ask: string | null = null;
+  for (const b of parseAgentWords(text)) {
+    const parts =
+      b.kind === "p" ? [b.lines.join("\n")]
+        : b.kind === "h" ? [b.text]
+          : b.kind === "list" ? b.items.flatMap((i) => [i.text, ...(i.children?.items ?? [])])
+            : [];
+    for (const part of parts) if (ENDS_ASKING.test(part.trim())) ask = part;
+  }
+  return ask;
+}
+
+/** The words a compact line or an attribute shows: the ask, else all. */
+function compactSource(text: string, ask: boolean): string {
+  return (ask && askOf(text)) || text;
+}
+
 /** The agent's words as plain text, marks removed, blocks joined with
- *  ` · `, cut at a whole word: for an attribute (a `title`). */
-export function agentWordsPlain(text: string, max = 400): string {
-  const lines = blockLines(parseAgentWords(text)).map((l) => inlinePlain(parseInline(l)).trim()).filter(Boolean);
+ *  ` · `, cut at a whole word: for an attribute (a `title`). The ask
+ *  leads: with a paragraph that ends with `?`, that paragraph alone. */
+export function agentWordsPlain(text: string, max = 400, ask = true): string {
+  const lines = blockLines(parseAgentWords(compactSource(text, ask))).map((l) => inlinePlain(parseInline(l)).trim()).filter(Boolean);
   return cutAtWord(lines.join(" · "), max);
 }
 
@@ -393,8 +421,8 @@ function runs(nodes: Inline[], marks: Mark[], out: Array<{ v: string; marks: Mar
 }
 
 /** The compact words of the text: every block on one line, ` · ` between. */
-export function compactWords(text: string, maxChars = 600): { words: Word[]; cut: boolean } {
-  const lines = blockLines(parseAgentWords(text));
+export function compactWords(text: string, maxChars = 600, ask = true): { words: Word[]; cut: boolean } {
+  const lines = blockLines(parseAgentWords(compactSource(text, ask)));
   const all: Array<{ v: string; marks: Mark[] }> = [];
   lines.forEach((line, i) => {
     if (i) all.push({ v: " · ", marks: ["sep"] });
@@ -436,6 +464,31 @@ function trimEnd(words: Word[]): Word[] {
   return out;
 }
 
+/** A long token (a branch, an id) is many parts in a compact line: each
+ *  part after `/ _ - .` is its own unit, so the cut can keep
+ *  `hs/project_item-` and drop the rest; the cut never falls inside a part.
+ *  A unit with no space after it carries a break chance (`wbr`). */
+export function compactUnits(words: Word[]): Array<{ word: Word; joined: boolean }> {
+  const out: Array<{ word: Word; joined: boolean }> = [];
+  for (const word of words) {
+    const length = word.reduce((n, p) => n + p.v.trim().length, 0);
+    if (length <= LONG_TOKEN) {
+      out.push({ word, joined: false });
+      continue;
+    }
+    const parts: Word = [];
+    for (const piece of word) {
+      for (const bit of piece.v.split(/(?<=[/_\-.])(?=[^\s])/)) {
+        // A bare space stays with the part before it.
+        if (!bit.trim() && parts.length) parts[parts.length - 1] = { ...parts[parts.length - 1], v: parts[parts.length - 1].v + bit };
+        else parts.push({ v: bit, marks: piece.marks });
+      }
+    }
+    parts.forEach((part, i) => out.push({ word: [part], joined: i < parts.length - 1 && !part.v.endsWith(" ") }));
+  }
+  return out;
+}
+
 /** How many words fit in the box with room for the `…` after the last:
  *  null when all fit. A pure read of the word boxes (the fence tests it). */
 export function fitCount(
@@ -463,10 +516,10 @@ function wrapMarks(v: ReactNode, marks: Mark[], key: string): ReactNode {
   return node;
 }
 
-function CompactWords({ text, lines, className, testId }: { text: string; lines: number; className?: string; testId?: string }) {
+function CompactWords({ text, lines, ask, className, testId }: { text: string; lines: number; ask: boolean; className?: string; testId?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [limit, setLimit] = useState<number | null>(null);
-  const { words, cut } = compactWords(text);
+  const { words, cut } = compactWords(text, 600, ask);
 
   useLayoutEffect(() => {
     if (limit !== null) return;
@@ -504,7 +557,11 @@ function CompactWords({ text, lines, className, testId }: { text: string; lines:
     return () => ro.disconnect();
   }, []);
 
-  const shown = limit === null ? words : trimEnd(words.slice(0, limit));
+  const units = compactUnits(words);
+  const kept = limit === null ? units : units.slice(0, limit);
+  // A cut line never ends on the ` · ` mark or a bare space.
+  while (limit !== null && kept.length && kept[kept.length - 1].word.every((p) => p.marks.includes("sep") || !p.v.trim())) kept.pop();
+  const shown = kept.map((u) => u.word);
   const ended = cut || limit !== null;
   if (ended && shown.length) {
     // The last word shown loses its trailing space before the `…`.
@@ -517,13 +574,14 @@ function CompactWords({ text, lines, className, testId }: { text: string; lines:
       className={`agent-words is-compact${className ? ` ${className}` : ""}`}
       data-lines={lines > 1 ? String(lines) : undefined}
       style={lines > 1 ? ({ "--aw-lines": lines } as CSSProperties) : undefined}
-      title={agentWordsPlain(text)}
+      title={agentWordsPlain(text, 400, false)}
       data-testid={testId}
     >
       {shown.map((word, i) => (
         <span key={i} data-aw-w="">
-          {/* Two lines or more: a long token may break after / _ - . */}
-          {word.map((piece, j) => wrapMarks(lines > 1 ? breakable(piece.v, `${i}.${j}`) : piece.v, piece.marks, `${i}.${j}`))}
+          {word.map((piece, j) => wrapMarks(piece.v, piece.marks, `${i}.${j}`))}
+          {/* Chromium breaks at <wbr> even in nowrap: one line has none. */}
+          {kept[i].joined && lines > 1 ? <wbr /> : null}
         </span>
       ))}
       {ended ? <span className="aw-ell">{shown.length ? " …" : "…"}</span> : null}
@@ -540,14 +598,18 @@ export interface AgentWordsProps {
   compact?: boolean;
   /** Compact only: the lines the row keeps (default 1). */
   lines?: number;
+  /** Compact only: show the ask (the last paragraph that ends with `?`)
+   *  when there is one (default). False for words that are not an agent's
+   *  turn (the SENT line: what was typed into the agent). */
+  ask?: boolean;
   className?: string;
   "data-testid"?: string;
 }
 
-export function AgentWords({ text, compact, lines = 1, className, "data-testid": testId }: AgentWordsProps) {
+export function AgentWords({ text, compact, lines = 1, ask = true, className, "data-testid": testId }: AgentWordsProps) {
   const source = String(text ?? "");
   if (!source.trim()) return null;
-  if (compact) return <CompactWords key={source} text={source} lines={lines} className={className} testId={testId} />;
+  if (compact) return <CompactWords key={source} text={source} lines={lines} ask={ask} className={className} testId={testId} />;
   const blocks = parseAgentWords(source);
   return (
     <div className={`agent-words${className ? ` ${className}` : ""}`} data-testid={testId}>

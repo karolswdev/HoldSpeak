@@ -223,18 +223,21 @@ def test_an_agents_words_render_on_the_lane_and_the_needs_row(tmp_path: Path, mo
 
                 # The Needs ASKS row: the words in one or two lines, marks drawn.
                 drawer = _open_needs(page)
-                row = drawer.locator("[data-testid='needs-row']").filter(has_text="project.list").first
+                row = drawer.locator("[data-testid='needs-row']").filter(has_text="May I open a pull request").first
                 row.wait_for(timeout=15000)
                 words = row.locator(".needs-row-words")
                 assert words.count() == 1
                 shown = words.text_content() or ""
                 _no_marks(shown)
-                assert shown.startswith("Steps 1–3 complete: · project.list"), shown
+                # Ruling 2026-10-08: the row shows THE ASK, not the start.
+                assert shown.startswith("May I open a pull request for branch hs/project_item-"), shown
                 # A cut line ends on a whole word and `…`.
                 if shown.endswith("…"):
                     whole = set(re.sub(r"\*\*|`|^\d\. ", "", OWNER_TEXT, flags=re.M).split())
-                    assert shown[:-1].split()[-1] in whole, shown
-                assert words.locator("strong").first.text_content().strip() == "project.list"
+                    # A whole word, or a long token cut after / _ - . (a part).
+                    last = shown[:-1].split()[-1]
+                    assert last in whole or (last[-1] in "/_-." and any(w.startswith(last) for w in whole)), shown
+                assert "hs/project_item-" in shown and words.locator("strong code").count() >= 1, shown
                 page.wait_for_timeout(300)
                 row.screenshot(path=str(SHOTS / f"needs-asks-row-{width}.png"))
                 page.screenshot(path=str(SHOTS / f"needs-asks-{width}.png"))
@@ -266,6 +269,8 @@ def test_an_agents_words_render_on_the_lane_and_the_needs_row(tmp_path: Path, mo
                 says.scroll_into_view_if_needed()
                 says.screenshot(path=str(SHOTS / f"lane-rail-says-{width}.png"))
                 asks = rail.locator(".lane-rail-entry").filter(has=page.locator(".lane-rail-words-line")).first
+                assert (asks.locator(".lane-rail-words-line").text_content() or "").startswith("May I open a pull request"), \
+                    asks.text_content()
                 asks.scroll_into_view_if_needed()
                 asks.screenshot(path=str(SHOTS / f"lane-rail-asks-{width}.png"))
                 _assert_clean(page, errors)

@@ -521,7 +521,7 @@ function ReceiptTokens({ tokens, tone, testId, words }: { tokens: string[]; tone
   return (
     <div className="lw-receipt lw-receipt-words" data-tone={tone} data-testid={testId}>
       <span className="lw-receipt-head">{`${shown.join(" · ")} · `}</span>
-      <AgentWords compact lines={2} className="lw-receipt-text" text={words} />
+      <AgentWords compact lines={2} ask={false} className="lw-receipt-text" text={words} />
     </div>
   );
 }

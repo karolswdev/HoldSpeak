@@ -15,7 +15,7 @@ import { TimelineRail } from "../../surface/objects/Timeline";
 import { NeedsRow } from "../../surface/objects/NeedsRow";
 import { eventEntries } from "../../lane/laneWire";
 import { sentHead } from "../../lane/LaneWindow";
-import { cutAtWord } from "../AgentWords";
+import { agentWordsPlain, cutAtWord } from "../AgentWords";
 import { BRIEF_HEAD, OWNER_TEXT, noLiteralMarks } from "./fixtures.agentWords";
 
 const HOSTILE = 'Run **this** <img src=x onerror="alert(1)"> [here](https://evil.example/x)';
@@ -73,6 +73,26 @@ describe("the agent-words surfaces render markdown", () => {
     expect(fact.classList.contains("is-compact")).toBe(true);
     expect(fact.getAttribute("data-lines")).toBe("2");
     noLiteralMarks(fact.textContent ?? "");
+  });
+
+  it("THE ASK leads every compact row: steps then a question -> the row starts with the question", () => {
+    const steps = "Done so far:\n\n1. **Read** the plan\n2. Ran `pytest -q`\n\n**Shall I push `hs/x` now?**";
+    const { container } = render(
+      <>
+        <ul>
+          <NeedsRow id="coder:pi:2" kind="agent" name="pi" fact={steps} factWords lamp={{ label: "ASKS", tone: "ask" }} />
+        </ul>
+        <TimelineRail label="Lane" entries={[{ word: "ASKS", words: steps, wordsCompact: true }]} />
+      </>,
+    );
+    for (const sel of [".needs-row-words", ".lane-rail-words-line"]) {
+      const text = container.querySelector(sel)?.textContent ?? "";
+      expect(text.startsWith("Shall I push hs/x now?"), `${sel}: ${text}`).toBe(true);
+      noLiteralMarks(text);
+    }
+    // The tooltip (Mission Control) leads with the ask too.
+    expect(agentWordsPlain(steps)).toBe("Shall I push hs/x now?");
+    expect(agentWordsPlain(OWNER_TEXT).startsWith("May I open a pull request for branch hs/project_item-")).toBe(true);
   });
 
   it("the SENT line: a cut head ends at a whole word, never `. P`", () => {
