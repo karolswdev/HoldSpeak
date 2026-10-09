@@ -138,9 +138,23 @@ def _install_targets(args) -> list[tuple[str, Path]]:
     if override:
         if agent == "all":
             raise ValueError("--settings-path requires --agent claude or --agent codex")
+        if agent == "pi":
+            raise ValueError("pi has no hook settings file: every pi launch loads its hooks")
         return [(agent, Path(override).expanduser())]
     agents = ["claude", "codex"] if agent == "all" else [agent]
-    return [(a, agent_settings_path(a)) for a in agents]
+    return [(a, agent_settings_path(a)) for a in agents if a != "pi"]
+
+
+def _pi_hooks_line(verb: str) -> str:
+    """pi has no hook file (pi spike #1020): its hooks are the extension every
+    pi launch loads with ``-e``. The CLI says so instead of refusing the name."""
+    from ..delivery.pi_launch import EXTENSION_PATH
+
+    state = "in" if EXTENSION_PATH.is_file() else "MISSING"
+    return (
+        f"pi: nothing to {verb}; every pi launch loads its hooks from "
+        f"{EXTENSION_PATH} (extension {state})"
+    )
 
 
 def _cmd_install(args, *, out: TextIO, err: TextIO) -> int:
@@ -151,6 +165,9 @@ def _cmd_install(args, *, out: TextIO, err: TextIO) -> int:
     except ValueError as exc:
         print(f"error: {exc}", file=err)
         return _EXIT_USAGE
+    agent_arg = getattr(args, "agent", "all") or "all"
+    if agent_arg in ("pi", "all"):
+        print(_pi_hooks_line("write"), file=out)
     for agent, settings_path in targets:
         template = (
             claude_hook_template(capture_messages=capture_messages)
@@ -179,6 +196,9 @@ def _cmd_uninstall(args, *, out: TextIO, err: TextIO) -> int:
     except ValueError as exc:
         print(f"error: {exc}", file=err)
         return _EXIT_USAGE
+    agent_arg = getattr(args, "agent", "all") or "all"
+    if agent_arg in ("pi", "all"):
+        print(_pi_hooks_line("remove"), file=out)
     for agent, settings_path in targets:
         try:
             result = uninstall_agent_hooks(settings_path)
@@ -260,7 +280,7 @@ def build_argparse_subparsers(agent_hook_parser) -> None:
             "(idempotent; foreign hooks preserved; reverse with uninstall)"
         ),
     )
-    install.add_argument("--agent", choices=["claude", "codex", "all"], default="all")
+    install.add_argument("--agent", choices=["claude", "codex", "pi", "all"], default="all")
     install.add_argument(
         "--capture-messages",
         action="store_true",
@@ -278,7 +298,7 @@ def build_argparse_subparsers(agent_hook_parser) -> None:
         "uninstall",
         help="Remove the HoldSpeak hooks from your Claude Code / Codex config",
     )
-    uninstall.add_argument("--agent", choices=["claude", "codex", "all"], default="all")
+    uninstall.add_argument("--agent", choices=["claude", "codex", "pi", "all"], default="all")
     uninstall.add_argument(
         "--settings-path",
         help="Override the destination settings file (requires a single --agent)",
