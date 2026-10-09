@@ -12,7 +12,8 @@ send back, the Stage shelf) of the six tools here.
 Admission: ``exempt``. A window is the owner's view, not a record: no kernel
 operation and no receipt per drag (the owner's ledger-not-gate ruling: ceremony
 only where it buys a receipt, provenance or undo). Every write announces itself
-(one ``desk_changed`` frame, kind ``windows``).
+(one ``desk_changed`` frame, kind ``windows``); a write that changed nothing
+sends none (``announces_changes``).
 """
 from __future__ import annotations
 
@@ -30,6 +31,7 @@ _REV = {"type": ["integer", "null"], "description": "Refuse the write when the w
 _REFUSALS = _CONTRACT_REFUSALS + (
     "window_unknown: the desk does not know the window id", "window_id_invalid",
     "not_found: the window is not open", "window_stale: the revision changed (read again)",
+    "window_not_on_hub: no view can open this window from a row",
     "geometry_invalid",
 )
 _ROW = ("{id, app, object_ref, x, y, w, h (share+px values or null), depth, minimized, zoomed, zoom, "
@@ -54,6 +56,7 @@ def _row(name: str, method: str, description: str, properties: dict, required: l
         service="desk_window_service",
         method=method,
         admission=_EXEMPT,
+        announces_changes=True,
     )
 
 
@@ -61,7 +64,8 @@ WINDOWS_LIST = _row(
     "windows.list", "list_windows",
     "List the open windows on the owner's desk, back to front, with the front one marked.",
     {}, [], effect="read",
-    result="{windows: [" + _ROW + "], stage_shelf, revision, registry: {static, families}}",
+    result=("{windows: [" + _ROW + "], stage_shelf, shelf_revision, revision (the desk's), adopted, "
+            "registry: {static, families, not_on_hub}}"),
 )
 WINDOWS_OPEN = _row(
     "windows.open", "open_window",
@@ -73,7 +77,7 @@ WINDOWS_OPEN = _row(
 )
 WINDOWS_CLOSE = _row(
     "windows.close", "close_window", "Close a window on the owner's desk.",
-    {"window_id": _ID, "expected_revision": _REV}, ["window_id"], result="{id, closed: true}",
+    {"window_id": _ID, "expected_revision": _REV}, ["window_id"], result="{id, closed: true, revision}",
 )
 WINDOWS_RAISE = _row(
     "windows.raise", "raise_window", "Bring a window to the front of the owner's desk.",

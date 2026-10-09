@@ -1,7 +1,7 @@
 """PHILO-16 (16b): the hub owns the desk's windows (COMPOSITOR.md §13 L1, L3, L5).
 
 The service is the behaviour: depth is a counter the hub increments, front is
-derived, geometry is share+px, every write bumps a revision and refuses a
+derived, geometry is share+px, every write takes the desk's next revision and refuses a
 stale one, and every write announces ONE change set (kind ``windows``).
 """
 from __future__ import annotations
@@ -45,9 +45,9 @@ def _order(listed: dict[str, Any]) -> list[str]:
 
 
 def test_open_puts_each_window_on_top_and_front_is_derived(svc: Any) -> None:
-    for wid in ("chair:brief", "chair:week", "chair:needs"):
+    for n, wid in enumerate(("chair:brief", "chair:week", "chair:needs"), start=1):
         row = svc.open(wid)
-        assert row["front"] is True and row["revision"] == 1
+        assert row["front"] is True and row["revision"] == n  # one counter per desk
     listed = svc.list()
     assert _order(listed) == ["chair:brief", "chair:week", "chair:needs"]
     assert [w["depth"] for w in listed["windows"]] == [1, 2, 3]
@@ -60,11 +60,11 @@ def test_open_is_idempotent_and_raises_an_open_window(svc: Any) -> None:
     svc.open("chair:brief")
     svc.open("chair:week")
     row = svc.open("chair:brief")
-    assert row["front"] is True and row["depth"] == 3 and row["revision"] == 2
+    assert row["front"] is True and row["depth"] == 3 and row["revision"] == 3
     assert len(svc.list()["windows"]) == 2
     svc.events.clear()
     again = svc.open("chair:brief")  # already front: nothing changes, nothing announced
-    assert again["revision"] == 2 and svc.events == []
+    assert again["revision"] == 3 and svc.events == []
 
 
 def test_object_window_carries_its_app_and_object_ref(svc: Any) -> None:
@@ -154,7 +154,8 @@ def test_move_resize_and_set_geometry(svc: Any) -> None:
 
 def test_close_drops_the_row_and_an_unknown_open_window_is_not_found(svc: Any) -> None:
     svc.open("chair:brief")
-    assert svc.close("chair:brief") == {"id": "chair:brief", "closed": True}
+    closed = svc.close("chair:brief")
+    assert closed["id"] == "chair:brief" and closed["closed"] is True and closed["revision"] == 2
     assert svc.list()["windows"] == []
     with pytest.raises(NotFound):
         svc.raise_("chair:brief")
@@ -204,7 +205,8 @@ def test_a_stale_revision_is_refused_on_every_verb(svc: Any) -> None:
     for call in calls:
         with pytest.raises(WindowStale) as caught:
             call()
-        assert caught.value.code == "window_stale" and caught.value.context["revision"] == rev + 1
+        assert caught.value.code == "window_stale"
+        assert caught.value.context["revision"] == svc.get("chair:brief")["revision"] > rev
     assert svc.get("chair:brief")["x"] == 1
 
 
@@ -265,7 +267,7 @@ def test_a_rect_with_a_bad_value_writes_nothing(svc: Any) -> None:
         svc.set_geometry("chair:brief", {"x": 1, "y": 1, "w": 1})
     with pytest.raises(ValidationError):
         svc.arrange({"chair:brief": {"x": 1, "y": 1, "w": 1, "h": 1, "z": 9}})
-    assert svc.get("chair:brief")["x"] is None and svc.get("chair:brief")["revision"] == 1
+    assert svc.get("chair:brief")["x"] is None and svc.get("chair:brief")["revision"] == 1  # unchanged
 
 
 # ---- reload order: depth is the state --------------------------------------
@@ -293,10 +295,14 @@ def test_every_window_id_in_applications_ts_is_known() -> None:
     actions_by_window: dict[str, set[str]] = {}
     for action, window_id in pairs:
         actions_by_window.setdefault(window_id, set()).add(action)
+    from holdspeak.services.desk_window_service import NOT_ON_HUB
+
     for window_id, actions in actions_by_window.items():
+        if window_id in NOT_ON_HUB:
+            continue  # refused by name (window_not_on_hub), with its reason
         app, _ref = window_app(window_id)
         assert app in actions, (window_id, app, actions)
-    assert set(actions_by_window) <= set(STATIC_WINDOWS)
+    assert set(actions_by_window) <= set(STATIC_WINDOWS) | set(NOT_ON_HUB)
 
 
 def test_one_write_is_one_desk_changed_frame_on_the_bus(tmp_path: Path) -> None:
@@ -320,3 +326,58 @@ def test_one_write_is_one_desk_changed_frame_on_the_bus(tmp_path: Path) -> None:
     assert frames[0][1]["kind"] == "windows" and frames[0][1]["id"] == "chair:brief" and frames[0][1]["op"] == "open"
     assert [c["id"] for c in frames[2][1]["changes"]] == ["chair:brief", "chair:week"]
     assert {c["kind"] for c in frames[2][1]["changes"]} == {"windows"}
+
+
+# ---- Astra r1 on #16b: revisions never repeat; adoption is the hub's fact ----
+
+
+def test_a_reopened_window_never_repeats_a_revision_aba(svc: Any) -> None:
+    """M3: an old revision-1 move against a window closed and reopened is
+    refused (one revision counter per desk; a row keeps its last write's)."""
+    old = svc.open("chair:brief", geometry={"x": 1, "y": 1, "w": 100, "h": 100})
+    closed = svc.close("chair:brief")
+    reopened = svc.open("chair:brief", geometry={"x": 900, "y": 900, "w": 400, "h": 400})
+    assert closed["revision"] > old["revision"] and reopened["revision"] > closed["revision"]
+    with pytest.raises(WindowStale):
+        svc.move("chair:brief", 20, 20, expected_revision=old["revision"])
+    assert svc.get("chair:brief")["x"] == 900
+
+
+def test_every_write_takes_the_desks_next_revision(svc: Any) -> None:
+    svc.open("chair:brief")
+    svc.open("chair:week")
+    out = svc.arrange({"chair:brief": {"x": 1, "y": 1, "w": 1, "h": 1}, "chair:week": {"x": 2, "y": 2, "w": 2, "h": 2}})
+    assert {w["revision"] for w in out["windows"]} == {3}
+    shelf = svc.set_stage_shelf("right")
+    assert shelf["revision"] == 4 and svc.list()["revision"] == 4
+    assert svc.raise_("chair:brief")["revision"] == 5
+
+
+def test_adoption_is_recorded_once_and_an_empty_desk_stays_empty(svc: Any) -> None:
+    """M2: the hub records that it holds the desk's windows on the first write;
+    after that an empty list means an empty desk (no cache re-seeds it)."""
+    assert svc.list()["adopted"] is False
+    svc.open("chair:brief")
+    svc.close("chair:brief")
+    listed = svc.list()
+    assert listed["windows"] == [] and listed["adopted"] is True
+
+
+def test_windows_no_view_can_open_from_a_row_are_refused(svc: Any) -> None:
+    """M4: never a silent row: a window id whose opener needs state the row
+    does not carry is refused by name."""
+    from holdspeak.services.desk_window_service import NOT_ON_HUB
+
+    for wid in ("attention", "inspector", "lane", "ask", "drawer-info:note:n1", "conductor-info:x", "editor:note:n1"):
+        with pytest.raises(ValidationError) as caught:
+            svc.open(wid)
+        assert caught.value.code == "window_not_on_hub", wid
+    assert "lane" in NOT_ON_HUB and svc.list()["windows"] == []
+    assert svc.list()["registry"]["not_on_hub"]["lane"]
+
+
+def test_a_project_drawer_row_names_its_project(svc: Any) -> None:
+    row = svc.open("drawer:project:p-ledger")
+    assert row["app"] == "drawer" and row["object_ref"] == "project:p-ledger"
+    assert svc.open("drawer:parked")["app"] == "drawer"
+    assert svc.open("conductor")["app"] == "open-conductor"

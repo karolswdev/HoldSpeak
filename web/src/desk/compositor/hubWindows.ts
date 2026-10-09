@@ -23,6 +23,8 @@ import { ApiError, apiFetch } from "../../lib/api";
 import { SURFACE_APPLICATIONS } from "../applications";
 import { CHAIR_WINDOW_IDS, closeChairWindow, useChairWindows } from "../chair/chairWindows";
 import { workBand } from "../components/window/windowGeometry";
+import { CONDUCTOR_WINDOW_ID, useConductor } from "../conductor/store";
+import { PARKED_WINDOW_ID, drawerWindowId, useDrawers } from "../drawer/store";
 import { markRehydratedMinimized, useDesk, type PanelRect } from "../store";
 import { onWorkspaceSaved, saveDeskWorkspace } from "../store/workspaceStorage";
 import { anticipate, createPresentations, type Change, type Presentations } from "./anticipate";
@@ -61,7 +63,11 @@ export interface HubRegistry {
 export interface HubWindowList {
   windows: HubWindowRow[];
   stage_shelf: "left" | "right";
+  /** The desk's revision when the list was read (one counter per desk). */
   revision: number;
+  shelf_revision?: number;
+  /** False until the hub first held this desk's windows. */
+  adopted?: boolean;
   registry?: HubRegistry;
 }
 
@@ -69,7 +75,7 @@ type Verb = "open" | "close" | "set_geometry" | "raise" | "send_back" | "seat" |
 
 export interface HubTransport {
   list(): Promise<HubWindowList>;
-  verb(id: string, verb: Verb, body: Record<string, unknown>): Promise<HubWindowRow | { id: string; closed: true }>;
+  verb(id: string, verb: Verb, body: Record<string, unknown>): Promise<HubWindowRow | { id: string; closed: true; revision?: number }>;
   arrange(rects: Record<string, ValueRect>, expected: Record<string, number>): Promise<{ windows: HubWindowRow[] }>;
   shelf(side: "left" | "right", expected?: number): Promise<{ stage_shelf: "left" | "right"; revision: number }>;
 }
@@ -123,6 +129,30 @@ export function adapterFor(id: string): Adapter | null {
       close: () => closeChairWindow(id),
     };
   }
+  // The Project drawers and the Parked drawer (drawer/store.ts): the row's
+  // object is the Project; the drawer's own open path opens it.
+  if (id.startsWith("drawer:project:") && id.length > "drawer:project:".length) {
+    const projectId = id.slice("drawer:project:".length);
+    return {
+      isOpen: () => useDrawers.getState().drawers.some((x) => x.projectId === projectId),
+      open: () => useDrawers.getState().openDrawer(projectId),
+      close: () => useDrawers.getState().closeDrawer(projectId),
+    };
+  }
+  if (id === PARKED_WINDOW_ID) {
+    return {
+      isOpen: () => useDrawers.getState().parked !== null,
+      open: () => useDrawers.getState().openParked(),
+      close: () => useDrawers.getState().closeParked(),
+    };
+  }
+  if (id === CONDUCTOR_WINDOW_ID) {
+    return {
+      isOpen: () => useConductor.getState().open,
+      open: () => useConductor.getState().openWindow(),
+      close: () => useConductor.getState().closeWindow(),
+    };
+  }
   const surface = surfaceByWindowId.get(id);
   if (surface) {
     return {
@@ -156,6 +186,9 @@ function adapterOpenIds(): string[] {
     ...s.roadmapWindows.map((w) => `roadmap:${w.slug}`),
     ...s.repositoryWindows.map((w) => `repository:${w.id}`),
     ...s.workbenchWindows.map((w) => `workbench:${w.id}`),
+    ...useDrawers.getState().drawers.map((d) => drawerWindowId(d.projectId)),
+    ...(useDrawers.getState().parked ? [PARKED_WINDOW_ID] : []),
+    ...(useConductor.getState().open ? [CONDUCTOR_WINDOW_ID] : []),
   ];
 }
 
@@ -274,45 +307,59 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
 
   // ---- seed / follow: the hub's rows onto this desk ------------------------
 
-  /** Apply the hub's rows for `scope` (every id when "all"); ids with a
-   * request in flight are left as they show. */
+  /** The revision this view last applied per window: a row (its last
+   * write's revision) or a close (the desk's revision of the close). A read
+   * or an answer OLDER than it is dropped (L2): a delayed read never moves a
+   * window back from a settled write. */
+  const applied = new Map<string, number>();
+
+  /** Apply the hub's rows for `scope` (every id when "all"). An id with a
+   * request in flight is left as it shows; a row is applied only when it is
+   * newer than what this view applied; an id absent from the list closes here
+   * only when the list was read after what this view applied. */
   function apply(list: HubWindowList, scope: Set<string> | "all"): void {
     const byId = new Map(list.windows.map((r) => [r.id, r]));
-    const inScope = (id: string) => (scope === "all" || scope.has(id)) && presentations.pending(id) === 0;
+    const free = (id: string) => (scope === "all" || scope.has(id)) && presentations.pending(id) === 0;
+    const accepted = list.windows.filter((r) => free(r.id) && r.revision > (applied.get(r.id) ?? -1));
+    const ids = scope === "all" ? new Set([...rows.keys(), ...adapterOpenIds(), ...Object.keys(useDesk.getState().panelDepth)]) : scope;
+    const gone = [...ids].filter(
+      (id) => free(id) && known(id) && !byId.has(id) && list.revision > (applied.get(id) ?? -1),
+    );
     applying = true;
     try {
-      for (const id of [...rows.keys()]) if (inScope(id) && !byId.has(id)) rows.delete(id);
-      for (const row of list.windows) if (inScope(row.id)) rows.set(row.id, row);
+      for (const row of accepted) {
+        rows.set(row.id, row);
+        applied.set(row.id, row.revision);
+        see(row.id, row.revision);
+      }
+      for (const id of gone) {
+        rows.delete(id);
+        applied.set(id, list.revision);
+      }
 
       // Close here what the hub closed; open here what the hub opened.
-      const local = new Set([...Object.keys(useDesk.getState().panelDepth), ...adapterOpenIds()]);
       const closed: string[] = [];
-      for (const id of local) {
-        if (!inScope(id) || !known(id) || byId.has(id) || !isOpenHere(id)) continue;
+      for (const id of gone) {
+        if (!isOpenHere(id)) continue;
         adapterFor(id)?.close();
         closed.push(id);
       }
-      for (const row of list.windows) {
-        if (!inScope(row.id) || isOpenHere(row.id)) continue;
-        adapterFor(row.id)?.open();
+      for (const row of accepted) {
+        if (!isOpenHere(row.id)) adapterFor(row.id)?.open();
       }
 
       // One write of the stacking, the seats, the zooms and the rects.
       const s = useDesk.getState();
-      const depth = { ...s.panelDepth };
       const min = new Set(s.panelMin);
       const max = new Set(s.panelMax);
       const rects = { ...s.panelRects };
       const saved = new Set(s.panelSaved);
       const zoom = { ...(s.panelZoom ?? {}) };
-      for (const id of closed) {
-        delete depth[id];
+      for (const id of [...closed, ...gone]) {
         min.delete(id);
         max.delete(id);
       }
-      for (const row of list.windows) {
-        if (!inScope(row.id)) continue;
-        depth[row.id] = row.depth;
+      for (const row of accepted) {
         if (row.minimized) {
           min.add(row.id);
           markRehydratedMinimized(row.id);
@@ -330,8 +377,9 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
         const zr = row.zoom ? rectOf(row.zoom) : null;
         if (zr) zoom[row.id] = zr;
       }
+      const depth = mergeStacking(s.panelDepth, new Set(gone));
       const shelf = scope === "all" || scope.has("desk") ? list.stage_shelf : s.stageShelf;
-      if (scope === "all" || scope.has("desk")) shelfRevision = list.revision;
+      if ((scope === "all" || scope.has("desk")) && list.shelf_revision !== undefined) shelfRevision = list.shelf_revision;
       useDesk.setState({
         panelDepth: depth,
         panelOrder: orderFromDepth(depth),
@@ -349,8 +397,8 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     const band = view();
     lastBand = `${band.x},${band.y},${band.w},${band.h}`;
     synced = snapshot();
-    // A window open here that the hub does not hold (one no other view can
-    // open, e.g. the inspector): it goes to the hub on the next sync.
+    // A window open here that the hub does not hold yet: it goes to the hub
+    // on the next sync.
     const unsent = [...synced.open].filter((id) => !rows.has(id) && presentations.pending(id) === 0);
     if (unsent.length) {
       for (const id of unsent) synced.open.delete(id);
@@ -358,12 +406,40 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     }
   }
 
-  /** Follow one settled row (its request answered). */
-  function follow(row: HubWindowRow | null, id: string): void {
+  /** L3: the hub's windows stack in the hub's depth order; a window this
+   * view stacks on its own (one no row can open, or one with a request in
+   * flight) keeps its place just above the hub window it sat above. The
+   * numbers are this view's (1..n); the ORDER is the hub's. */
+  function mergeStacking(local: Record<string, number>, gone: Set<string>): Record<string, number> {
+    const governed = (id: string) => rows.has(id) && presentations.pending(id) === 0;
+    const before = orderFromDepth(local).filter((id) => !gone.has(id));
+    const anchored = new Map<string, string[]>();
+    let anchor = "";
+    for (const id of before) {
+      if (governed(id)) {
+        anchor = id;
+        continue;
+      }
+      anchored.set(anchor, [...(anchored.get(anchor) ?? []), id]);
+    }
+    const hubOrder = [...rows.values()]
+      .filter((r) => governed(r.id))
+      .sort((a, b) => a.depth - b.depth || (a.id < b.id ? -1 : 1))
+      .map((r) => r.id);
+    const order = [...(anchored.get("") ?? [])];
+    for (const id of hubOrder) order.push(id, ...(anchored.get(id) ?? []));
+    const depth: Record<string, number> = {};
+    order.forEach((id, i) => {
+      depth[id] = i + 1;
+    });
+    return depth;
+  }
+
+  /** Follow this view's own settled answer: a row, or a close. */
+  function follow(row: HubWindowRow | null, id: string, closedAt?: number): void {
     if (presentations.pending(id) > 0) return;
-    const others = [...rows.values()].filter((r) => r.id !== id);
     apply(
-      { windows: row ? [...others, row] : others, stage_shelf: useDesk.getState().stageShelf, revision: shelfRevision ?? 0 },
+      { windows: row ? [row] : [], stage_shelf: useDesk.getState().stageShelf, revision: row ? -1 : closedAt ?? -1 },
       new Set([id]),
     );
   }
@@ -413,15 +489,13 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
         // 409: the hub has another revision; 404: it closed. Re-read, follow.
         await reread(new Set(ids));
       } else if (answer && typeof answer === "object" && "windows" in answer) {
-        const list = (answer as { windows: HubWindowRow[] }).windows;
-        for (const row of list) rows.set(row.id, row);
-        for (const row of list) follow(row, row.id);
+        for (const row of (answer as { windows: HubWindowRow[] }).windows) see(row.id, row.revision);
+        for (const row of (answer as { windows: HubWindowRow[] }).windows) follow(row, row.id);
       } else if (answer && typeof answer === "object" && "closed" in answer) {
-        rows.delete(ids[0]);
-        follow(null, ids[0]);
+        follow(null, ids[0], Number((answer as { revision?: unknown }).revision ?? Infinity));
       } else if (answer && typeof answer === "object" && "id" in answer) {
         const row = answer as HubWindowRow;
-        rows.set(row.id, row);
+        see(row.id, row.revision);
         follow(row, row.id);
       }
       inflight -= 1;
@@ -433,7 +507,15 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     });
   }
 
-  const rev = (id: string) => rows.get(id)?.revision;
+  /** The newest revision this view has seen per window (its own answers
+   * included, before they are applied): the next write's expected revision,
+   * so two queued writes on one window never refuse each other. */
+  const seen = new Map<string, number>();
+  const see = (id: string, revision: unknown) => {
+    const n = Number(revision);
+    if (Number.isFinite(n) && n > (seen.get(id) ?? -1)) seen.set(id, n);
+  };
+  const rev = (id: string) => seen.get(id) ?? rows.get(id)?.revision;
   const shares = (rect: PanelRect): ValueRect => record(rect, view());
 
   function sync(): void {
@@ -623,11 +705,12 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
           if (stopped) return;
           registry = list.registry ?? { static: {}, families: {} };
           const here = snapshot();
-          if (list.windows.length === 0 && here.open.size > 0) {
-            // A hub that holds no window yet (the first run of 16b): this
-            // browser's open windows become the desk's.
+          if (list.adopted === false && list.windows.length === 0 && here.open.size > 0) {
+            // The hub has never held this desk's windows (it records the
+            // first write once, `adopted`): this view's cache seeds it. After
+            // that, an empty list is an empty desk.
             synced = { open: new Set(), depth: {}, min: new Set(), max: new Set(), rects: {}, zoom: {}, shelf: list.stage_shelf };
-            shelfRevision = list.revision;
+            shelfRevision = list.shelf_revision;
             sync();
             return;
           }

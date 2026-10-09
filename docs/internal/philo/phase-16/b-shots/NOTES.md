@@ -13,6 +13,9 @@ three browser contexts.
 - `393-C-go-chair.png`: context C at 393, a fresh load: Go lists the three
   Chair windows open. The week is seated (its cache holds `chair:week` in
   `panel.min`).
+- `1440-D-drawer.png`: A opened the Payments ledger cutover drawer; a fresh
+  view D shows it (its row: `drawer:project:p-ledger`, object
+  `project:p-ledger`).
 - `hub-writes.json`: every window write each view sent, in order. The 393 load
   sent none.
 

@@ -62,6 +62,15 @@ def test_the_tools_open_raise_seat_arrange_close_through_the_dispatcher(hub: Any
     assert {f["kind"] for f in hub} == {"windows"}
 
 
+def test_an_mcp_no_op_write_sends_no_frame(hub: Any) -> None:
+    """MAY (Astra r1): a raise of the front window changes nothing: no frame."""
+    mcp_tools.dispatch("desk_window.open", {"window_id": "chair:brief"}, OWNER)
+    hub.clear()
+    mcp_tools.dispatch("desk_window.raise", {"window_id": "chair:brief"}, OWNER)
+    mcp_tools.dispatch("desk_window.seat", {"window_id": "chair:brief", "seated": False}, OWNER)
+    assert hub == []
+
+
 def test_an_agent_open_is_announced_so_the_owner_sees_it(hub: Any) -> None:
     mcp_tools.dispatch("desk_window.open", {"window_id": "surface-people"}, LAUNCH)
     assert [(f["kind"], f["id"], f["op"]) for f in hub] == [("windows", "surface-people", "open")]

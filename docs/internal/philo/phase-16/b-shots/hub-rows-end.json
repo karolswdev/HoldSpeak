@@ -3,9 +3,9 @@
     "id": "chair:brief",
     "app": "chair",
     "object_ref": null,
-    "x": "-1/2",
-    "y": "-1/2",
-    "w": "1/2",
+    "x": "-50%",
+    "y": "-50%",
+    "w": "50%",
     "h": "100%",
     "depth": 4,
     "minimized": false,
@@ -14,8 +14,8 @@
     "arranged": true,
     "room": null,
     "front": false,
-    "revision": 4,
-    "updated_at": "2026-10-09 11:06:25"
+    "revision": 10,
+    "updated_at": "2026-10-09 11:40:55"
   },
   "chair:week": {
     "id": "chair:week",
@@ -32,16 +32,16 @@
     "arranged": false,
     "room": null,
     "front": false,
-    "revision": 3,
-    "updated_at": "2026-10-09 11:06:21"
+    "revision": 7,
+    "updated_at": "2026-10-09 11:40:47"
   },
   "chair:needs": {
     "id": "chair:needs",
     "app": "chair",
     "object_ref": null,
     "x": "0%",
-    "y": "-1/2",
-    "w": "1/2",
+    "y": "-50%",
+    "w": "50%",
     "h": "100%",
     "depth": 6,
     "minimized": false,
@@ -49,8 +49,26 @@
     "zoom": null,
     "arranged": true,
     "room": null,
+    "front": false,
+    "revision": 10,
+    "updated_at": "2026-10-09 11:40:55"
+  },
+  "drawer:project:p-ledger": {
+    "id": "drawer:project:p-ledger",
+    "app": "drawer",
+    "object_ref": "project:p-ledger",
+    "x": null,
+    "y": null,
+    "w": null,
+    "h": null,
+    "depth": 7,
+    "minimized": false,
+    "zoomed": false,
+    "zoom": null,
+    "arranged": false,
+    "room": null,
     "front": true,
-    "revision": 3,
-    "updated_at": "2026-10-09 11:06:25"
+    "revision": 11,
+    "updated_at": "2026-10-09 11:40:55"
   }
 }

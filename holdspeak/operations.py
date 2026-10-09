@@ -176,6 +176,10 @@ class OperationDescriptor:
     #: Article XI admission (PHILO-7-01 declares it for the desk slice; story
     #: 02 enforces it). ``None``: not yet declared for this operation.
     admission: Optional[Admission] = None
+    #: PHILO-16 (16b): the service announces each change itself and a write
+    #: that changed nothing sends no frame (the window writes). The registry
+    #: then adds no frame of its own (an agent's no-op raise is silent).
+    announces_changes: bool = False
 
     def __post_init__(self) -> None:
         Draft202012Validator.check_schema(dict(self.args_schema))
@@ -2262,7 +2266,8 @@ class OperationRegistry:
         frame, unless the service sent its own during the call. No operation
         wires the bus for itself, so a new write cannot be silent.
         """
-        if self._bound(name).descriptor.effect != "write":
+        descriptor = self._bound(name).descriptor
+        if descriptor.effect != "write" or descriptor.announces_changes:
             return self._run(principal, name, args, held=held)
         from holdspeak.runtime.announce_scope import announce_scope
 

@@ -2305,7 +2305,9 @@
         "POST"
       ],
       "module": "web.routes.desk_windows",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/desk/windows/stage-shelf",
@@ -2313,7 +2315,9 @@
         "POST"
       ],
       "module": "web.routes.desk_windows",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/desk/windows/{window_id}/{verb}",
@@ -2321,7 +2325,9 @@
         "POST"
       ],
       "module": "web.routes.desk_windows",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/devices/audio",

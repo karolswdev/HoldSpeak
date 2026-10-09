@@ -15,6 +15,8 @@ bundle, two browser contexts (two views, two localStorages):
      process) tiles Brief and Needs you; both contexts show the tile.
   B5 context C at 393 (a fresh load): Go lists the same three Chair windows
      open; The week is seated in its cache of the hub's rows.
+  B6 A opens the Project drawer (Payments ledger cutover); a fresh view D
+     shows it (Astra r1 M4).
 
 Shots: docs/internal/philo/phase-16/b-shots/ (``.tmp/evidence-shots/``
 unless HOLDSPEAK_EVIDENCE_WRITE=1).
@@ -274,6 +276,23 @@ class TestHubWindows:
                     fails["B5 393 Go lists the open Chair windows"] = checked
                 c.screenshot(path=str(SHOTS / "393-C-go-chair.png"))
                 c.keyboard.press("Escape")
+
+                # ── B6 (Astra r1 M4): a Project drawer follows into a fresh view ──
+                a.goto(f"{self.base}/?token={TOKEN}&open=project:p-ledger", wait_until="load")
+                _normal_chair(a)
+                a.locator(".drawer-window").first.wait_for(timeout=T)
+                drawer_row = _until(lambda: self._rows(a), lambda r: "drawer:project:p-ledger" in r)
+                if drawer_row.get("drawer:project:p-ledger", {}).get("object_ref") != "project:p-ledger":
+                    fails["B6 the hub holds A's Project drawer"] = sorted(drawer_row)
+                ctx_d, d, errors_d = self._page(browser, 1440)
+                try:
+                    d.locator(".drawer-window").first.wait_for(timeout=10_000)
+                except Exception:
+                    fails["B6 a fresh view shows A's Project drawer"] = sorted(_wins(d))
+                d.screenshot(path=str(SHOTS / "1440-D-drawer.png"))
+                if errors_d:
+                    fails["page errors D"] = errors_d
+                ctx_d.close()
 
                 (SHOTS / "hub-writes.json").write_text(json.dumps(
                     {"A": a.hub_writes, "B": b.hub_writes, "C": c.hub_writes}, indent=2) + "\n")

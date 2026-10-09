@@ -11,7 +11,8 @@ counter and Stage's shelf side.
 * L5: geometry is share+px values (``{"x","y","w","h"}``: a number of pixels
   or a string like ``"50% + 10"`` or ``"-1/2"``), resolved by each view.
   :func:`parse_value` is the browser's ``geometry.ts parseValue`` grammar.
-* L2: every write bumps the row's ``revision`` and takes an optional
+* L2: every write takes the desk's next ``revision`` (ONE counter per desk,
+  so a reopened window never repeats an old revision) and an optional
   ``expected_revision``; a stale one is refused (``window_stale``, HTTP 409),
   so a browser that anticipated a change re-reads and follows the hub.
 * One write sends ONE ``desk_changed`` frame, kind ``windows``, one change per
@@ -40,9 +41,7 @@ from .errors import ConflictError, NotFound, ValidationError
 # applications.ts is here.
 STATIC_WINDOWS: dict[str, str] = {
     "surface-places": "change-places",
-    "intelligence:desk": "open-intelligence",
     "surface-dictation": "dictate",
-    "ask:desk": "ask",
     "surface-meetings": "review-meetings",
     "conductor": "open-conductor",
     "surface-companion": "inspect-personas-and-coders",
@@ -66,34 +65,43 @@ STATIC_WINDOWS: dict[str, str] = {
     "chair:brief": "chair",
     "chair:week": "chair",
     "chair:capture": "chair",
-    # Windows with a fixed id outside the application table.
-    "ask": "ask",
-    "attention": "attention",
-    "inspector": "inspector",
-    "session": "session",
-    "trust": "trust",
-    "lane": "lane",
-    "agent-hand": "agent-hand",
-    "delivery-board": "delivery",
-    "delivery-terminal": "delivery",
-    "delivery-dossier": "delivery",
+    # The Parked drawer (drawer/store.ts).
     "drawer:parked": "drawer",
+}
+
+#: Windows no view can open from a hub row yet (their opener needs state the
+#: row does not carry: a lane's launch, a member, a draft). The hub refuses
+#: them (``window_not_on_hub``), never a silent row; each browser keeps them
+#: in its own stacking.
+NOT_ON_HUB: dict[str, str] = {
+    "intelligence:desk": "the Intelligence view opens on a route of its own",
+    "ask:desk": "Ask opens on a question",
+    "ask": "Ask opens on a question",
+    "attention": "the system shade: one per view",
+    "inspector": "the tool inspector follows the selection of its view",
+    "session": "a dictation session of this view",
+    "trust": "opens on a selected record",
+    "lane": "opens on a launch",
+    "agent-hand": "opens on a selected item",
+    "delivery-board": "opens on a delivery",
+    "delivery-terminal": "opens on a delivery",
+    "delivery-dossier": "opens on a delivery",
+    "drawer-info:": "opens on a drawer member",
+    "conductor-info:": "opens on a Conductor member",
+    "editor:": "opens on an edit in progress",
+    "schedule:": "opens on a schedule draft",
 }
 
 #: Object windows: an id prefix -> the application; the rest of the id is the
 #: object the window shows (its ``object_ref``). Longest prefix first.
 WINDOW_FAMILIES: dict[str, str] = {
     "drawer:project:": "drawer",
-    "drawer-info:": "drawer-info",
-    "conductor-info:": "conductor-info",
     "pullout:": "pullout",
     "zone:": "zone",
     "info:": "info",
     "roadmap:": "roadmap",
     "repository:": "repository",
     "workbench:": "workbench",
-    "editor:": "editor",
-    "schedule:": "schedule",
 }
 
 _WINDOW_ID = re.compile(r"^[A-Za-z0-9:_-]{1,200}$")
@@ -106,11 +114,19 @@ def window_app(window_id: str) -> tuple[str, Optional[str]]:
     wid = str(window_id or "")
     if not _WINDOW_ID.match(wid):
         raise ValidationError(f"Not a window id: {wid!r}", code="window_id_invalid")
+    for name, reason in NOT_ON_HUB.items():
+        if wid == name or (name.endswith(":") and wid.startswith(name)):
+            raise ValidationError(
+                f"The window {wid!r} is not on the hub: {reason}", code="window_not_on_hub",
+                context={"window_id": wid, "reason": reason},
+            )
     if wid in STATIC_WINDOWS:
         return STATIC_WINDOWS[wid], None
     for prefix in sorted(WINDOW_FAMILIES, key=len, reverse=True):
         if wid.startswith(prefix) and len(wid) > len(prefix):
-            return WINDOW_FAMILIES[prefix], wid[len(prefix):]
+            rest = wid[len(prefix):]
+            # A Project drawer's object is its Project (``project:<id>``).
+            return WINDOW_FAMILIES[prefix], (f"project:{rest}" if prefix == "drawer:project:" else rest)
     raise ValidationError(
         f"The desk does not know the window {wid!r}", code="window_unknown",
         context={"window_id": wid},
@@ -119,7 +135,8 @@ def window_app(window_id: str) -> tuple[str, Optional[str]]:
 
 def registry() -> dict[str, Any]:
     """The registry as data (the browser reads it with the window list)."""
-    return {"static": dict(STATIC_WINDOWS), "families": dict(WINDOW_FAMILIES)}
+    return {"static": dict(STATIC_WINDOWS), "families": dict(WINDOW_FAMILIES),
+            "not_on_hub": dict(NOT_ON_HUB)}
 
 
 # ── L5: share+px values (geometry.ts ``parseValue``, ported) ────────────────
@@ -255,7 +272,9 @@ class DeskWindowService:
         return {
             "windows": [_serialize(row, front) for row in rows],
             "stage_shelf": desk["stage_shelf"],
+            "shelf_revision": desk["shelf_revision"],
             "revision": desk["revision"],
+            "adopted": desk["adopted_at"] is not None,
             "registry": registry(),
         }
 
@@ -327,7 +346,8 @@ class DeskWindowService:
         return self._write("open", window_id, write, expected_revision, create=True)
 
     def close(self, window_id: str, *, expected_revision: Optional[int] = None) -> dict[str, Any]:
-        """Close a window: its row leaves. Answers ``{"id", "closed": True}``."""
+        """Close a window: its row leaves. Answers ``{"id", "closed": True,
+        "revision"}`` (the desk's revision of the close)."""
         window_app(window_id)
         with _WRITE_LOCK, self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
@@ -336,8 +356,9 @@ class DeskWindowService:
                 raise NotFound("window", window_id)
             _check(window_id, row, expected_revision)
             conn.execute("DELETE FROM desk_windows WHERE id = ?", (window_id,))
+            revision = self._bump(conn)
         self._on_changed("close", [window_id])
-        return {"id": window_id, "closed": True}
+        return {"id": window_id, "closed": True, "revision": revision}
 
     def move(self, window_id: str, x: Any, y: Any, *, expected_revision: Optional[int] = None) -> dict[str, Any]:
         return self._geometry("move", window_id, validate_rect({"x": x, "y": y}, keys=("x", "y")), expected_revision)
@@ -458,6 +479,7 @@ class DeskWindowService:
         changed: list[str] = []
         with _WRITE_LOCK, self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
+            revision: Optional[int] = None
             for window_id, rect in validated.items():
                 row = self._row(conn, window_id)
                 if row is None:
@@ -465,10 +487,12 @@ class DeskWindowService:
                 _check(window_id, row, expected.get(window_id))
                 if _loads(row["geometry_json"]) == rect and row["arranged"]:
                     continue
+                if revision is None:
+                    revision = self._bump(conn)
                 conn.execute(
-                    "UPDATE desk_windows SET geometry_json = ?, arranged = 1, revision = revision + 1,"
+                    "UPDATE desk_windows SET geometry_json = ?, arranged = 1, revision = ?,"
                     " updated_at = datetime('now') WHERE id = ?",
-                    (json.dumps(rect), window_id),
+                    (json.dumps(rect), revision, window_id),
                 )
                 changed.append(window_id)
             rows = self._rows(conn)
@@ -484,19 +508,19 @@ class DeskWindowService:
         with _WRITE_LOCK, self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             desk = self._desk(conn)
-            if expected_revision is not None and int(expected_revision) != desk["revision"]:
-                raise WindowStale(DESK_ID, int(expected_revision), desk["revision"])
+            if expected_revision is not None and int(expected_revision) != desk["shelf_revision"]:
+                raise WindowStale(DESK_ID, int(expected_revision), desk["shelf_revision"])
             changed = desk["stage_shelf"] != side
             if changed:
+                revision = self._bump(conn)
                 conn.execute(
-                    "UPDATE desk_window_desk SET stage_shelf = ?, revision = revision + 1,"
-                    " updated_at = datetime('now') WHERE id = ?",
-                    (side, DESK_ID),
+                    "UPDATE desk_window_desk SET stage_shelf = ?, shelf_revision = ? WHERE id = ?",
+                    (side, revision, DESK_ID),
                 )
             desk = self._desk(conn)
         if changed:
             self._on_changed("stage_shelf", [DESK_ID])
-        return {"stage_shelf": desk["stage_shelf"], "revision": desk["revision"]}
+        return {"stage_shelf": desk["stage_shelf"], "revision": desk["shelf_revision"]}
 
     # ---- the declared operations (desk_window_operations.py) -------------
     # The registry calls ``method(principal, **arguments)``; the principal is
@@ -565,9 +589,8 @@ class DeskWindowService:
             changed = write(conn, row)
             if changed:
                 conn.execute(
-                    "UPDATE desk_windows SET revision = revision + 1, updated_at = datetime('now')"
-                    " WHERE id = ?",
-                    (window_id,),
+                    "UPDATE desk_windows SET revision = ?, updated_at = datetime('now') WHERE id = ?",
+                    (self._bump(conn), window_id),
                 )
             rows = self._rows(conn)
         if changed:
@@ -590,13 +613,28 @@ class DeskWindowService:
     def _set_depth(conn: Any, window_id: str, depth: int) -> None:
         conn.execute("UPDATE desk_windows SET depth = ? WHERE id = ?", (depth, window_id))
 
+    def _bump(self, conn: Any) -> int:
+        """The desk's next revision (one counter for every window write), and
+        the desk is adopted: from now on an empty list means an empty desk."""
+        self._desk(conn)
+        conn.execute(
+            "UPDATE desk_window_desk SET revision = revision + 1,"
+            " adopted_at = COALESCE(adopted_at, datetime('now')), updated_at = datetime('now')"
+            " WHERE id = ?",
+            (DESK_ID,),
+        )
+        return int(conn.execute("SELECT revision FROM desk_window_desk WHERE id = ?", (DESK_ID,)).fetchone()[0])
+
     @staticmethod
     def _desk(conn: Any) -> dict[str, Any]:
-        conn.execute("INSERT OR IGNORE INTO desk_window_desk (id) VALUES (?)", (DESK_ID,))
+        if conn.execute("SELECT 1 FROM desk_window_desk WHERE id = ?", (DESK_ID,)).fetchone() is None:
+            conn.execute("INSERT INTO desk_window_desk (id) VALUES (?)", (DESK_ID,))
         row = conn.execute(
-            "SELECT highest_depth, stage_shelf, revision FROM desk_window_desk WHERE id = ?", (DESK_ID,)
+            "SELECT highest_depth, stage_shelf, revision, shelf_revision, adopted_at"
+            " FROM desk_window_desk WHERE id = ?", (DESK_ID,)
         ).fetchone()
-        return {"highest_depth": row[0], "stage_shelf": row[1], "revision": row[2]}
+        return {"highest_depth": row[0], "stage_shelf": row[1], "revision": row[2],
+                "shelf_revision": row[3], "adopted_at": row[4]}
 
     @staticmethod
     def _rows(conn: Any) -> list[dict[str, Any]]:
@@ -697,6 +735,7 @@ def default_desk_window_service() -> DeskWindowService:
 
 
 __all__ = [
+    "NOT_ON_HUB",
     "VERBS",
     "DeskWindowService",
     "call_verb",

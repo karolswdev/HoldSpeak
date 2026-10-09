@@ -2079,7 +2079,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_session_events_spool ON agent_sessio
 -- owner desk. Geometry is share+px values ({"x","y","w","h"}: a number of
 -- pixels or a string like "50% + 10"), resolved by each view. Depth is a
 -- counter the hub increments (desk_window_desk.highest_depth); front is
--- derived. Every write bumps the row's revision (compare-and-set).
+-- derived. A row's revision is the desk's revision at its last write
+-- (compare-and-set).
 CREATE TABLE IF NOT EXISTS desk_windows (
     id TEXT PRIMARY KEY,
     app TEXT NOT NULL,
@@ -2095,12 +2096,18 @@ CREATE TABLE IF NOT EXISTS desk_windows (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
--- The desk-level window state: the depth counter and Stage's shelf side.
+-- The desk-level window state: the depth counter, the ONE revision counter
+-- of the desk's windows (every window write takes the next; a row keeps the
+-- revision of its last write, so a reopened window never repeats one), Stage's
+-- shelf side and its revision, and when the hub first held the desk's windows
+-- (adopted_at: a browser seeds the hub from its cache only before it).
 CREATE TABLE IF NOT EXISTS desk_window_desk (
     id TEXT PRIMARY KEY,
     highest_depth INTEGER NOT NULL DEFAULT 0,
     stage_shelf TEXT NOT NULL DEFAULT 'left',
     revision INTEGER NOT NULL DEFAULT 0,
+    shelf_revision INTEGER NOT NULL DEFAULT 0,
+    adopted_at TEXT,
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

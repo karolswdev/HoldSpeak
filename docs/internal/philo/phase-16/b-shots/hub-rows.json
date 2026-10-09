@@ -15,8 +15,8 @@
       "arranged": false,
       "room": null,
       "front": false,
-      "revision": 1,
-      "updated_at": "2026-10-09 11:06:20"
+      "revision": 3,
+      "updated_at": "2026-10-09 11:40:45"
     },
     {
       "id": "chair:brief",
@@ -33,8 +33,8 @@
       "arranged": true,
       "room": null,
       "front": true,
-      "revision": 3,
-      "updated_at": "2026-10-09 11:06:20"
+      "revision": 5,
+      "updated_at": "2026-10-09 11:40:46"
     },
     {
       "id": "chair:week",
@@ -51,18 +51,18 @@
       "arranged": false,
       "room": null,
       "front": false,
-      "revision": 3,
-      "updated_at": "2026-10-09 11:06:21"
+      "revision": 7,
+      "updated_at": "2026-10-09 11:40:47"
     }
   ],
   "stage_shelf": "left",
-  "revision": 0,
+  "shelf_revision": 0,
+  "revision": 7,
+  "adopted": true,
   "registry": {
     "static": {
       "surface-places": "change-places",
-      "intelligence:desk": "open-intelligence",
       "surface-dictation": "dictate",
-      "ask:desk": "ask",
       "surface-meetings": "review-meetings",
       "conductor": "open-conductor",
       "surface-companion": "inspect-personas-and-coders",
@@ -85,30 +85,34 @@
       "chair:brief": "chair",
       "chair:week": "chair",
       "chair:capture": "chair",
-      "ask": "ask",
-      "attention": "attention",
-      "inspector": "inspector",
-      "session": "session",
-      "trust": "trust",
-      "lane": "lane",
-      "agent-hand": "agent-hand",
-      "delivery-board": "delivery",
-      "delivery-terminal": "delivery",
-      "delivery-dossier": "delivery",
       "drawer:parked": "drawer"
     },
     "families": {
       "drawer:project:": "drawer",
-      "drawer-info:": "drawer-info",
-      "conductor-info:": "conductor-info",
       "pullout:": "pullout",
       "zone:": "zone",
       "info:": "info",
       "roadmap:": "roadmap",
       "repository:": "repository",
-      "workbench:": "workbench",
-      "editor:": "editor",
-      "schedule:": "schedule"
+      "workbench:": "workbench"
+    },
+    "not_on_hub": {
+      "intelligence:desk": "the Intelligence view opens on a route of its own",
+      "ask:desk": "Ask opens on a question",
+      "ask": "Ask opens on a question",
+      "attention": "the system shade: one per view",
+      "inspector": "the tool inspector follows the selection of its view",
+      "session": "a dictation session of this view",
+      "trust": "opens on a selected record",
+      "lane": "opens on a launch",
+      "agent-hand": "opens on a selected item",
+      "delivery-board": "opens on a delivery",
+      "delivery-terminal": "opens on a delivery",
+      "delivery-dossier": "opens on a delivery",
+      "drawer-info:": "opens on a drawer member",
+      "conductor-info:": "opens on a Conductor member",
+      "editor:": "opens on an edit in progress",
+      "schedule:": "opens on a schedule draft"
     }
   }
 }
