@@ -1,0 +1,855 @@
+<title>The Compositor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;650&display=swap">
+<style>
+/* Layout: a fixed 1440×900 desk stage scaled to fit, a canvas bar above it,
+   the guideline legend beside it. Single theme by choice: this is the product. */
+:root {
+  color-scheme: dark;
+  /* the product tokens (web/src/styles/tokens.css) */
+  --bg: #0e0f13; --surface-1: #15171d; --surface-2: #1c1f27; --surface-3: #242833;
+  --text: #e6e8ee; --text-muted: #9aa0ad; --border: #2a2e38; --border-strong: #3a3f4c;
+  --accent: #a86e4a; --accent-text: #bc8058; --accent-ink: #8a5a3d; --accent-tint: rgba(168,110,74,.12);
+  --ok: #3fae6a; --warn: #d9a441; --danger: #c84a3c; --info: #5b8def; --ask: #e8955c;
+  --wb-steel: #9ea4b0; --wb-steel-2: #b3b8c2; --wb-steel-dim: #7f8591; --wb-ink: #0b0c10; --wb-ink-dim: #2a2e36;
+  --wb-paper: #eef0f3; --wb-blue: #6688bb; --wb-hi: rgba(255,255,255,.72); --wb-lo: rgba(0,0,0,.5);
+  --wb-backdrop: #3c4454; --wb-dither: #363e4d; --wb-rule: rgba(11,12,16,.45);
+  --wb-frame: 4px; --wb-bar-h: 26px; --wb-gadget-w: 26px;
+  --wb-raised: inset 1px 1px 0 var(--wb-hi), inset -1px -1px 0 var(--wb-lo);
+  --wb-sunken: inset 1px 1px 0 var(--wb-lo), inset -1px -1px 0 var(--wb-hi);
+  --wb-raised-soft: inset 1px 1px 0 rgba(255,255,255,.36), inset -1px -1px 0 rgba(0,0,0,.25);
+  --wb-drop: 4px 4px 0 rgba(0,0,0,.32);
+  --wb-stipple-fine: repeating-linear-gradient(180deg, transparent 0 2px, rgba(11,12,16,.07) 2px 3px);
+  /* Phase 16: the light */
+  --wb-umbra: 0 18px 40px rgba(0,0,0,.45);
+  --wb-umbra-near: 0 10px 22px rgba(0,0,0,.28);
+  --desk-veil-near: rgba(11,12,16,.06);
+  --desk-veil-far: rgba(11,12,16,.14);
+  /* Phase 16 v2: the interior joins the material (owner bounce: "why is it still black inside?") */
+  --wb-field: #cdd2db;        /* the window ground: slate, between paper and steel */
+  --wb-field-hi: #d8dce4;     /* the ground where the light falls (top) */
+  --wb-well: #eef0f3;         /* a sunken well: ledgers, inputs, icon grids (paper) */
+  --wb-text: #0b0c10;         /* ink */
+  --wb-muted: #4a5060;        /* secondary ink (7.0:1 on field) */
+  --wb-rule-soft: rgba(11,12,16,.18);
+  --wb-sel: #6688bb;          /* the selection: Workbench blue, paper on it */
+  --desk-window-fall: linear-gradient(180deg, var(--wb-field-hi) 0%, var(--wb-field) 100%);
+  --ease: cubic-bezier(.2,.8,.2,1);
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(--font-sans); padding-block: 0; }
+.page { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; padding: 16px; min-height: 100%; }
+@media (max-width: 1100px) { .page { grid-template-columns: minmax(0,1fr); } }
+
+/* ── the canvas bar (not product) ── */
+.bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px; border: 1px solid var(--border); background: var(--surface-1); }
+.bar h1 { margin: 0 12px 0 0; font: 650 15px var(--font-display); letter-spacing: .01em; }
+.bar .grp { display: flex; align-items: center; gap: 6px; }
+.bar .lbl { font: 500 11px var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); }
+.btn { font: 500 12px var(--font-mono); padding: 5px 10px; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text); cursor: pointer; }
+.btn:hover { background: var(--surface-3); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn.on { background: var(--accent-ink); border-color: var(--accent); color: #fff; }
+.btn.k { color: var(--text-muted); }
+.btn.k b { color: var(--text); font-weight: 500; margin-right: 6px; }
+
+/* ── the stage: scaled 1440×900 ── */
+.stagebox { position: relative; width: 100%; aspect-ratio: 1440 / 900; max-width: 100%; overflow: hidden; border: 1px solid var(--border); }
+.desk { position: absolute; top: 0; left: 0; width: 1440px; height: 900px; transform-origin: 0 0; overflow: hidden; user-select: none;
+  background: var(--wb-backdrop); }
+/* §2 the floor: the Workbench backdrop with the light's vignette */
+.desk .floor { position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1200px 700px at 8% 0%, rgba(255,255,255,.10), rgba(255,255,255,0) 60%),
+    linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,.28) 100%),
+    repeating-conic-gradient(var(--wb-dither) 0 25%, transparent 0 50%);
+  background-size: auto, auto, 8px 8px; }
+.desk.floor-void { background: #15171d; }
+.desk.floor-void .floor { background-image: none; }
+
+/* screen title bar (paper) */
+.screenbar { position: absolute; top: 0; left: 0; right: 0; height: 28px; background: var(--wb-paper); color: var(--wb-ink); display: flex; align-items: center; gap: 18px; padding: 0 12px; font: 500 12px var(--font-mono); box-shadow: inset 0 -1px 0 var(--wb-ink); z-index: 30; }
+.screenbar .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.screenbar .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.screenbar .tag { padding: 2px 8px; border: 1px solid var(--wb-ink); background: #fff; }
+.screenbar .title { font-family: var(--font-sans); font-weight: 600; }
+
+/* floor icons */
+.icon { position: absolute; width: 96px; display: grid; justify-items: center; gap: 6px; cursor: pointer; text-align: center; color: var(--wb-paper); font: 500 11px/1.2 var(--font-sans); text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+.icon svg { width: 44px; height: 44px; filter: drop-shadow(2px 2px 0 rgba(0,0,0,.45)); }
+.icon .lamp { position: absolute; top: -2px; right: 18px; width: 9px; height: 9px; border: 1px solid var(--wb-ink); }
+.icon:hover svg { filter: drop-shadow(2px 2px 0 rgba(0,0,0,.45)) brightness(1.12); }
+.icon:focus-visible { outline: 2px solid var(--wb-paper); }
+
+/* ── the window: one shell, drawn from data-plane alone (§3) ── */
+.win { position: absolute; display: flex; flex-direction: column; background: var(--desk-window-fill, #15171d);
+  border: var(--wb-frame) solid var(--wb-steel); border-top: 0;
+  box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink);
+  transition: border-color 180ms var(--ease), box-shadow 180ms var(--ease); will-change: transform; }
+.win .body { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--desk-window-fall); color: var(--wb-text); box-shadow: inset 0 1px 0 var(--wb-hi); }
+.win .body::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: transparent; transition: background 180ms var(--ease); }
+.win[data-plane="front"] { border-color: var(--wb-blue); box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), var(--wb-umbra), inset 0 0 0 1px var(--wb-ink); }
+.win[data-plane="near"] { border-color: var(--wb-steel); box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), var(--wb-umbra-near), inset 0 0 0 1px var(--wb-ink); }
+.win[data-plane="near"] .body::after { background: var(--desk-veil-near); }
+.win[data-plane="far"] { border-color: var(--wb-steel-dim); }
+.win[data-plane="far"] .body::after { background: var(--desk-veil-far); }
+.win:not([data-plane="front"]):hover { border-color: var(--wb-steel-2); }
+
+/* the title bar (B, plus icon · sans title · lamp) §4 */
+.tb { position: relative; display: flex; align-items: stretch; height: var(--wb-bar-h); background: var(--wb-steel); color: var(--wb-ink-dim); cursor: grab; box-shadow: inset 0 1px 0 var(--wb-hi), inset 0 -1px 0 var(--wb-ink); }
+.tb:active { cursor: grabbing; }
+.win[data-plane="front"] .tb { background: var(--wb-blue); background-image: var(--wb-stipple-fine); color: var(--wb-ink); }
+.win[data-plane="far"] .tb { background: var(--wb-steel-dim); }
+.gad { width: var(--wb-gadget-w); display: grid; place-items: center; border: 0; background: transparent; color: inherit; cursor: pointer; box-shadow: var(--wb-raised-soft), inset -1px 0 0 var(--wb-rule); padding: 0; }
+.gad:hover { background: rgba(255,255,255,.22); }
+.gad:active, .gad.pressed { box-shadow: var(--wb-sunken); background: rgba(0,0,0,.12); }
+.gad svg { width: 12px; height: 12px; }
+.tb .ttl { display: flex; align-items: center; gap: 8px; padding: 0 10px; min-width: 0; flex: 1; }
+.win[data-plane="front"] .tb .ttl { background: var(--wb-blue); align-self: stretch; }
+.tb .oi { width: 14px; height: 14px; flex: none; }
+.tb .name { font: 600 13px var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.desk.title-mono .tb .name { font: 700 12px var(--font-mono); }
+.tb .room { font: 500 10px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; opacity: .75; white-space: nowrap; }
+.tb .lamp { width: 8px; height: 8px; border: 1px solid var(--wb-ink); flex: none; margin-left: auto; }
+.tb .gads { display: flex; margin-left: auto; }
+.tb .gads .gad { box-shadow: var(--wb-raised-soft), inset 1px 0 0 var(--wb-rule); }
+.lamp.ask { background: var(--ask); animation: pulse 1.6s ease-in-out infinite; }
+.lamp.info { background: var(--info); } .lamp.ok { background: var(--ok); } .lamp.warn { background: var(--warn); } .lamp.none { display: none; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 3px rgba(232,149,92,.35); } }
+.grip { position: absolute; right: calc(-1 * var(--wb-frame)); bottom: calc(-1 * var(--wb-frame)); width: 18px; height: 16px; background: var(--wb-steel); border-top: 1px solid var(--wb-ink); box-shadow: inset 1px 0 0 var(--wb-ink), var(--wb-raised); cursor: nwse-resize; display: grid; place-items: center; }
+.win[data-plane="front"] .grip { background: var(--wb-blue); }
+.grip svg { width: 12px; height: 10px; }
+
+/* ── THE INTERIOR KIT: every internal app is laid out from these, nothing else ──
+   AppHead · StatusStrip · FilterBar · Ledger/LedgerRow · Section · IconGrid · AskWell · Foot */
+.body .in { padding: 12px 14px; height: 100%; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+.win[style*="--k"] .body .in { transform: scale(var(--k)); transform-origin: 0 0; width: calc(100% / var(--k)); height: calc(100% / var(--k)); overflow: hidden; }
+.win[style*="--k"] .foot { display: none; }
+/* AppHead: the one big fact + the status strip, on one row */
+.apphead { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.disp { font: 650 26px/1.1 var(--font-display); margin: 0; color: var(--wb-text); }
+.strip { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font: 500 11px var(--font-mono); color: var(--wb-muted); text-transform: uppercase; letter-spacing: .04em; }
+.strip b { color: var(--wb-text); font-weight: 700; }
+.sq { display: inline-block; width: 8px; height: 8px; vertical-align: middle; margin-right: 6px; border: 1px solid var(--wb-ink); }
+/* FilterBar: cycle gadgets on a raised steel rail; the active one is the selection blue */
+.filters { display: flex; gap: 0; flex-wrap: wrap; align-items: center; }
+.filters .sp { flex: 1; }
+.chip { font: 500 11px var(--font-mono); text-transform: uppercase; letter-spacing: .04em; padding: 4px 10px; background: var(--wb-steel); color: var(--wb-ink); border: 1px solid var(--wb-ink); margin-right: -1px; box-shadow: var(--wb-raised-soft); cursor: pointer; }
+.chip.on { background: var(--wb-sel); color: var(--wb-paper); box-shadow: var(--wb-sunken); }
+/* Ledger: a sunken paper well; rows carry a kind plate, the name, the meta */
+.ledger { background: var(--wb-well); border: 1px solid var(--wb-ink); box-shadow: var(--wb-sunken); }
+.row { display: grid; grid-template-columns: 44px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--wb-rule-soft); }
+.row:last-child { border-bottom: 0; }
+.row:hover { background: rgba(102,136,187,.12); }
+.row .k { font: 700 10px var(--font-mono); background: var(--wb-steel); color: var(--wb-ink); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised-soft); text-align: center; padding: 4px 0; }
+.row .t { font: 500 15px var(--font-sans); color: var(--wb-text); }
+.row .m { font: 500 11px var(--font-mono); color: var(--wb-muted); text-transform: uppercase; letter-spacing: .04em; }
+.row .m.ask { color: #9a4e1f; } .row .m.ok { color: #1f6b3a; }
+/* Section: caption + count, with a hairline */
+.cap { display: flex; align-items: center; gap: 8px; font: 700 11px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--wb-muted); margin: 4px 0 0; }
+.cap::after { content: ""; flex: 1; height: 1px; background: var(--wb-rule-soft); }
+.cap .verb { margin-left: 4px; }
+/* Verb: the library Button as a raised steel plate; primary = the selection blue */
+.verb { font: 500 12px var(--font-mono); padding: 4px 10px; border: 1px solid var(--wb-ink); background: var(--wb-steel); color: var(--wb-ink); box-shadow: var(--wb-raised); cursor: pointer; white-space: nowrap; }
+.verb:hover { background: var(--wb-steel-2); }
+.verb:active { box-shadow: var(--wb-sunken); }
+.verb.pri { background: var(--wb-sel); color: var(--wb-paper); }
+.verb.danger { background: #b3261e; color: var(--wb-paper); }
+/* IconGrid: objects in a sunken paper well */
+.objs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 12px 8px; background: var(--wb-well); border: 1px solid var(--wb-ink); box-shadow: var(--wb-sunken); }
+.obj { display: grid; justify-items: center; gap: 6px; text-align: center; font: 500 11px/1.2 var(--font-sans); color: var(--wb-text); cursor: pointer; padding: 4px; }
+.obj:hover { background: rgba(102,136,187,.14); }
+.obj svg { width: 40px; height: 40px; filter: drop-shadow(1px 1px 0 rgba(0,0,0,.25)); }
+/* AskWell: the voice law: a mic on every input */
+.askwell { display: grid; grid-template-columns: 1fr 32px; border: 1px solid var(--wb-ink); background: var(--wb-well); box-shadow: var(--wb-sunken); }
+.askwell span { padding: 8px 10px; font: 400 13px var(--font-sans); color: var(--wb-muted); }
+.askwell i { display: grid; place-items: center; background: var(--wb-steel); box-shadow: var(--wb-raised-soft); border-left: 1px solid var(--wb-ink); }
+.askwell i svg { width: 12px; height: 14px; }
+/* Foot: egress · receipt · verbs, on the steel */
+.foot { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--wb-steel); box-shadow: inset 0 1px 0 var(--wb-ink), inset 0 2px 0 var(--wb-hi); font: 500 11px var(--font-mono); color: var(--wb-ink); text-transform: uppercase; letter-spacing: .04em; }
+.foot .sp { flex: 1; }
+.foot .egress { padding: 2px 8px; background: var(--wb-paper); border: 1px solid var(--wb-ink); text-transform: none; letter-spacing: 0; }
+/* the dock */
+.dock { position: absolute; left: 0; right: 0; bottom: 0; height: 80px; background: var(--wb-steel); box-shadow: inset 0 1px 0 var(--wb-hi), inset 0 2px 0 var(--wb-ink); display: flex; align-items: center; gap: 2px; padding: 0 10px; z-index: 80; }
+.tile { position: relative; min-width: 72px; padding: 0 10px; height: 66px; white-space: nowrap; display: grid; justify-items: center; align-content: center; gap: 4px; color: var(--wb-ink); font: 500 11px var(--font-mono); cursor: pointer; border: 0; background: transparent; }
+.tile svg { width: 30px; height: 30px; }
+.tile.open { box-shadow: var(--wb-sunken); background: rgba(0,0,0,.08); }
+.tile .seat { position: absolute; top: 4px; right: 8px; width: 10px; height: 10px; border: 1px solid var(--wb-ink); display: none; }
+.tile.seated .seat { display: block; }
+.tile .cnt { position: absolute; top: 2px; left: 8px; min-width: 14px; padding: 0 3px; background: var(--wb-paper); border: 1px solid var(--wb-ink); font: 700 10px var(--font-mono); text-align: center; }
+.dock .sp { flex: 1; }
+.dock .verb { color: var(--wb-ink); background: var(--wb-steel-2); border-color: var(--wb-ink); }
+
+/* arrangement furniture (§5) */
+.divider { position: absolute; width: 6px; background: var(--wb-steel); box-shadow: var(--wb-raised), 0 0 0 1px var(--wb-ink); cursor: ew-resize; z-index: 60; display: none; }
+.scrim { position: absolute; inset: 28px 0 80px; background: rgba(11,12,16,.55); z-index: 70; display: none; }
+.desk.in-expose .scrim { display: block; }
+.desk.in-expose .win { z-index: 75 !important; cursor: pointer; }
+.desk.in-expose .win .body { pointer-events: none; }
+.desk.in-stage .divider { display: none; }
+
+/* ── BEFORE: today's look, for the delta ── */
+.desk.before { background: #15171d; }
+.desk.before .floor { background-image: none; }
+.desk.before .win, .desk.before .win[data-plane="front"], .desk.before .win[data-plane="near"], .desk.before .win[data-plane="far"] { box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink); border-color: var(--wb-steel); transition: none; }
+.desk.before .win[data-plane="front"] { border-color: var(--wb-blue); }
+.desk.before .win .body { background: var(--surface-1); color: var(--text); box-shadow: none; }
+.desk.before .disp, .desk.before .row .t { color: var(--text); } .desk.before .strip, .desk.before .cap, .desk.before .row .m { color: var(--text-muted); }
+.desk.before .ledger, .desk.before .objs, .desk.before .askwell { background: transparent; border-color: var(--border); box-shadow: none; } .desk.before .row { border-color: var(--border); } .desk.before .obj { color: var(--text); }
+.desk.before .chip { background: transparent; color: var(--text-muted); border-color: var(--border-strong); box-shadow: none; } .desk.before .chip.on { background: var(--wb-paper); color: var(--wb-ink); }
+.desk.before .verb { background: var(--surface-2); color: var(--text); border-color: var(--border-strong); box-shadow: none; } .desk.before .verb.pri { background: var(--accent-ink); color: #fff; }
+.desk.before .foot { background: var(--surface-1); color: var(--text-muted); box-shadow: inset 0 1px 0 var(--border); } .desk.before .row .k { background: var(--surface-2); color: var(--text-muted); border-color: var(--border-strong); box-shadow: none; }
+.desk.before .cap::after { background: var(--border); } .desk.before .askwell span { color: var(--text-muted); } .desk.before .askwell i { background: var(--surface-2); border-color: var(--border); }
+.desk.before .tile { min-width: 72px; padding: 0; width: 72px; overflow: visible; }
+.desk.before .win .body::after { background: transparent !important; }
+.desk.before .tb { background: var(--wb-steel) !important; background-image: none !important; }
+.desk.before .win[data-plane="front"] .tb { background: var(--wb-blue) !important; }
+.desk.before .tb .name { font: 700 12px var(--font-mono); }
+.desk.before .tb .oi, .desk.before .tb .lamp, .desk.before .tb .room { display: none; }
+.desk.before .tb .ttl { padding-left: 10px; }
+
+
+/* ── BOARD 2: the exemplar internal app, "Runs on" (Models) as a Switchboard ── */
+.board2 { grid-column: 1 / -1; display: grid; gap: 12px; }
+.board2 .bar h1 { font-size: 14px; }
+.exemplar { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .exemplar { grid-template-columns: minmax(0,1fr); } }
+.winbox { position: relative; width: 100%; aspect-ratio: 1120 / 680; overflow: hidden; border: 1px solid var(--border); background: var(--wb-backdrop); }
+.winbox .wb { position: absolute; top: 0; left: 0; width: 1120px; height: 680px; transform-origin: 0 0; padding: 14px; background: repeating-conic-gradient(var(--wb-dither) 0 25%, transparent 0 50%); background-size: 8px 8px; }
+.winbox .win.static { position: relative; left: 0; top: 0; width: 100%; height: 100%; }
+.winbox .win.static .tb { cursor: default; }
+/* the Switchboard species */
+.sb { position: relative; display: grid; grid-template-columns: 300px 1fr 330px; gap: 0; flex: 1; min-height: 0; }
+.sb .col { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.sb .wires { position: relative; }
+.sb svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.sb .wire { fill: none; stroke: var(--wb-ink); stroke-width: 2; }
+.sb .wire.fb { stroke-dasharray: 4 4; stroke-width: 1.5; stroke: var(--wb-muted); }
+.sb .wire.hot { stroke: var(--wb-sel); stroke-width: 3; }
+.sb .wire.limited { stroke: #9a6b00; }
+.sb .wire.pulse { stroke: var(--wb-sel); stroke-width: 3; stroke-dasharray: 10 14; animation: flow .6s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -24; } }
+.job { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; padding: 7px 26px 7px 10px; background: var(--wb-well); border: 1px solid var(--wb-ink); box-shadow: var(--wb-sunken); cursor: pointer; }
+.job .n { font: 600 14px var(--font-sans); color: var(--wb-text); }
+.job .c { font: 500 10px var(--font-mono); color: var(--wb-muted); text-transform: uppercase; letter-spacing: .04em; grid-column: 1 / -1; }
+.job .try { grid-column: 2; grid-row: 1; }
+.job .plug { position: absolute; right: -7px; top: 50%; width: 12px; height: 12px; margin-top: -6px; background: var(--wb-steel); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised-soft); }
+.job.ready .plug { background: var(--ok); } .job.limited .plug { background: var(--warn); } .job.off .plug { background: var(--wb-steel-dim); }
+.job.sel { outline: 2px solid var(--wb-sel); outline-offset: -2px; }
+.job.over { background: #dfe6f3; outline: 2px dashed var(--wb-sel); outline-offset: -2px; }
+.job.over.no { outline-color: #b3261e; background: #f3dfdf; }
+.job .res { grid-column: 1 / -1; font: 500 11px var(--font-mono); color: #1f6b3a; text-transform: uppercase; letter-spacing: .04em; display: none; }
+.job .res.on { display: block; }
+.job.default { background: var(--wb-field-hi); }
+.eng { position: relative; display: grid; grid-template-columns: 34px 1fr auto; gap: 2px 10px; align-items: center; padding: 7px 10px 7px 14px; background: var(--wb-steel); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised); cursor: grab; touch-action: none; }
+.eng:active { cursor: grabbing; }
+.eng.dragging { opacity: .5; }
+.eng .plug { position: absolute; left: -7px; top: 50%; width: 12px; height: 12px; margin-top: -6px; background: var(--wb-field); border: 1px solid var(--wb-ink); }
+.eng .em { grid-row: 1 / 3; font: 700 9px var(--font-mono); background: var(--wb-paper); border: 1px solid var(--wb-ink); text-align: center; padding: 6px 0; letter-spacing: .04em; }
+.eng .n { font: 600 13px var(--font-sans); color: var(--wb-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.eng .tk { grid-column: 2 / 4; display: flex; gap: 8px; flex-wrap: wrap; font: 500 10px var(--font-mono); color: var(--wb-ink-dim); text-transform: uppercase; letter-spacing: .04em; }
+.eng .lamp { width: 9px; height: 9px; border: 1px solid var(--wb-ink); justify-self: end; }
+.eng .lamp.busy { animation: pulse 1.2s ease-in-out infinite; }
+.eng .lamp.warn { background: var(--warn); }
+.eng .bar { grid-column: 2 / 4; height: 6px; background: var(--wb-well); border: 1px solid var(--wb-ink); box-shadow: var(--wb-sunken); display: none; }
+.eng .bar i { display: block; height: 100%; background: var(--wb-sel); width: 0; }
+.eng.downloading .bar { display: block; }
+.eng.found { background: var(--wb-field); box-shadow: var(--wb-raised-soft); cursor: default; }
+.eng.found .plug { display: none; }
+.eng .use { grid-column: 3; grid-row: 1 / 3; }
+.sb .cap { margin-top: 6px; }
+.sb .col .cap:first-child { margin-top: 0; }
+.phone { width: 393px; max-width: 100%; border: 1px solid var(--border); background: var(--wb-backdrop); padding: 10px; }
+.phone .win.static { position: relative; height: 640px; }
+.phone .tb { height: 44px; } .phone .gad { width: 44px; }
+.phone .job { padding-right: 10px; } .phone .job .plug { display: none; }
+.phone .eng { padding-left: 10px; } .phone .eng .plug { display: none; }
+.phone .sheet { display: flex; flex-direction: column; gap: 6px; }
+
+/* ── the legend ── */
+.legend { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.card { border: 1px solid var(--border); background: var(--surface-1); padding: 12px 14px; }
+.card h2 { margin: 0 0 8px; font: 650 13px var(--font-display); }
+.card p { margin: 6px 0; color: var(--text-muted); font-size: 12px; }
+.ladder { display: grid; gap: 6px; }
+.ladder .pl { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; font: 500 11px var(--font-mono); }
+.ladder .sw { height: 26px; border: 4px solid; border-top: 0; box-shadow: 0 0 0 1px var(--wb-ink); background: var(--surface-1); position: relative; }
+.ladder .sw::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 8px; }
+.ladder .front .sw { border-color: var(--wb-blue); box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), var(--wb-umbra); } .ladder .front .sw::before { background: var(--wb-blue); }
+.ladder .near .sw { border-color: var(--wb-steel); box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), var(--wb-umbra-near); } .ladder .near .sw::before { background: var(--wb-steel); }
+.ladder .far .sw { border-color: var(--wb-steel-dim); box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop); } .ladder .far .sw::before { background: var(--wb-steel-dim); }
+.ladder .seat .sw { border: 0; box-shadow: none; background: var(--wb-steel); height: 20px; }
+.kbd { font: 500 11px var(--font-mono); color: var(--text-muted); }
+.kbd b { color: var(--text); font-weight: 500; }
+.moments { display: grid; gap: 6px; font-size: 12px; color: var(--text-muted); }
+.moments b { color: var(--text); font-weight: 600; }
+.q { display: grid; gap: 8px; }
+.q .row2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+.q .sw2 { display: flex; }
+.q .sw2 .btn { padding: 3px 8px; }
+.log { font: 400 11px var(--font-mono); color: var(--text-muted); min-height: 18px; }
+@media (prefers-reduced-motion: reduce) { .win, .tb, .body::after { transition: none !important; } .lamp.ask { animation: none; } }
+</style>
+
+<div class="page">
+  <div class="bar">
+    <h1>The Compositor</h1>
+    <div class="grp"><span class="lbl">Look</span>
+      <button class="btn on" id="mAfter" type="button">After</button>
+      <button class="btn" id="mBefore" type="button">Before (today)</button>
+    </div>
+    <div class="grp"><span class="lbl">Moments</span>
+      <button class="btn k" type="button" data-do="raise"><b>⌘`</b>Raise next</button>
+      <button class="btn k" type="button" data-do="open"><b>icon</b>Open from object</button>
+      <button class="btn k" type="button" data-do="seat"><b>⌘M</b>Seat</button>
+      <button class="btn k" type="button" data-do="close"><b>⌘W</b>Close</button>
+      <button class="btn k" type="button" data-do="back"><b>⌘⇧`</b>Send back</button>
+    </div>
+    <div class="grp"><span class="lbl">Arrange</span>
+      <button class="btn k" type="button" data-do="tile"><b>⌘⌥←→</b>Tile two</button>
+      <button class="btn k" type="button" data-do="stage"><b>⌘⏎</b>Stage</button>
+      <button class="btn k" type="button" data-do="expose"><b>⌘⇧E</b>Exposé</button>
+      <button class="btn k" type="button" data-do="gather"><b>⌘G</b>Gather room</button>
+      <button class="btn k" type="button" data-do="cascade">Cascade</button>
+      <button class="btn" type="button" data-do="reset">Reset</button>
+    </div>
+    <span class="log" id="log">Click a window to raise it. Drag by its bar.</span>
+  </div>
+
+  <div class="stagebox">
+    <div class="desk" id="desk" tabindex="0">
+      <div class="floor"></div>
+      <div class="screenbar">
+        <span class="brand"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="3" width="12" height="9" fill="#0b0c10"/><rect x="3" y="5" width="3" height="3" fill="#eef0f3"/><rect x="8" y="5" width="3" height="3" fill="#eef0f3"/></svg>HoldSpeak</span>
+        <span>Desk</span><span>Object</span><span>Go</span><span>Window</span>
+        <span class="title" id="sbTitle">Payments ledger cutover</span>
+        <span class="right"><span class="tag">⌂ THIS DEVICE</span><span class="tag">🔔 7</span><span class="tag">Search ⌘K</span><span>Thu, Oct 8 09:14 AM</span></span>
+      </div>
+
+      <!-- floor icons -->
+      <div class="icon" data-icon="needs" style="left:1320px;top:52px" tabindex="0"><span class="lamp ask"></span><svg viewBox="0 0 44 44"><rect x="6" y="8" width="32" height="30" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="10" y="12" width="24" height="6" fill="#eef0f3" stroke="#0b0c10"/><rect x="10" y="22" width="24" height="6" fill="#eef0f3" stroke="#0b0c10"/><circle cx="30" cy="32" r="5" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/></svg>Needs you</div>
+      <div class="icon" data-icon="room" style="left:1200px;top:46px" tabindex="0"><span class="lamp info"></span><svg viewBox="0 0 44 44"><rect x="5" y="10" width="34" height="26" fill="#6688bb" stroke="#0b0c10" stroke-width="2"/><rect x="5" y="6" width="16" height="6" fill="#6688bb" stroke="#0b0c10" stroke-width="2"/><rect x="10" y="16" width="24" height="3" fill="#eef0f3"/><rect x="10" y="22" width="18" height="3" fill="#eef0f3"/></svg>Payments ledger cutover</div>
+      <div class="icon" data-icon="conductor" style="left:1080px;top:52px" tabindex="0"><span class="lamp ask"></span><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="16" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="22" r="8" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="22" r="3" fill="#e8955c"/></svg>Conductor</div>
+      <div class="icon" data-icon="meeting" style="left:1080px;top:150px" tabindex="0"><span class="lamp none"></span><svg viewBox="0 0 44 44"><rect x="8" y="12" width="28" height="22" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><circle cx="16" cy="22" r="5" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="28" cy="22" r="5" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/></svg>Cutover sync</div>
+      <div class="icon" data-icon="note" style="left:1200px;top:150px" tabindex="0"><span class="lamp none"></span><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><path d="M28 6v8h8" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="15" y="20" width="16" height="2" fill="#0b0c10"/><rect x="15" y="26" width="12" height="2" fill="#0b0c10"/></svg>Meeting preferences</div>
+      <div class="icon" data-icon="people" style="left:1320px;top:150px" tabindex="0"><span class="lamp none"></span><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><path d="M28 6v8h8" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="26" r="5" fill="#a86e4a" stroke="#0b0c10"/></svg>People &amp; vocabulary</div>
+
+      <!-- windows -->
+      <section class="win" id="w-needs" data-app="intel" data-icon="needs" data-room="" style="left:14px;top:44px;width:700px;height:660px">
+        <div class="tb">
+          <button class="gad" type="button" data-g="close" aria-label="Close"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="4" height="4" fill="currentColor"/></svg></button>
+          <div class="ttl"><svg class="oi" viewBox="0 0 44 44"><rect x="6" y="8" width="32" height="30" fill="#eef0f3" stroke="#0b0c10" stroke-width="3"/><rect x="10" y="12" width="24" height="6" fill="#0b0c10"/><rect x="10" y="22" width="24" height="6" fill="#0b0c10"/></svg><span class="name">Needs you</span><span class="lamp ask"></span></div>
+          <div class="gads">
+            <button class="gad" type="button" data-g="seat" aria-label="Seat"><svg viewBox="0 0 12 12"><rect x="1" y="8" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="zoom" aria-label="Zoom"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="back" aria-label="Send back"><svg viewBox="0 0 12 12"><rect x="1" y="4" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="1" width="7" height="7" fill="currentColor"/></svg></button>
+          </div>
+        </div>
+        <div class="body"><div class="in">
+          <div class="apphead"><h2 class="disp">7 need you</h2><div class="strip"><span><span class="sq" style="background:var(--ok)"></span>7 of 7 available</span><span>Checked just now</span><span>No calendar</span><span class="verb">Connect calendar</span></div></div>
+          <div class="filters"><span class="chip on">Ranked</span><span class="chip">Overdue</span><span class="chip">Due today</span><span class="chip">Not run</span><span class="chip">No due date</span><span class="chip">Waiting</span></div>
+          <div class="cap">Actions · 5 of 6</div>
+          <div class="ledger">
+            <div class="row"><span class="k">CC</span><span class="t">The runbook needs a rollback owner. Jordan or Avery?</span><span class="m ask">Claude Code · asks</span></div>
+            <div class="row"><span class="k">DEC</span><span class="t">Freeze the old ledger on Nov 5</span><span class="m">No due date · to review</span></div>
+            <div class="row"><span class="k">MTG</span><span class="t">Write the rollback runbook</span><span class="m">No due date · unassigned</span></div>
+            <div class="row"><span class="k">MTG</span><span class="t">Shard the reconciliation job</span><span class="m">No due date · unassigned</span></div>
+            <div class="row"><span class="k">MTG</span><span class="t">Add the ledger freeze flag</span><span class="m">No due date · unassigned</span></div>
+          </div>
+          <div class="cap">1 more <span class="verb">Show all</span></div>
+        </div></div>
+        <div class="foot"><span>Ranked 09:14</span><span class="sp"></span><span class="verb">Setup</span></div>
+        <div class="grip"><svg viewBox="0 0 12 10"><path d="M1 9h10V1M4 9V5h7" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></div>
+      </section>
+      <section class="win" id="w-room" data-app="room" data-icon="room" data-room="ROOM" style="left:520px;top:206px;width:900px;height:600px">
+        <div class="tb">
+          <button class="gad" type="button" data-g="close" aria-label="Close"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="4" height="4" fill="currentColor"/></svg></button>
+          <div class="ttl"><svg class="oi" viewBox="0 0 44 44"><rect x="5" y="10" width="34" height="26" fill="#eef0f3" stroke="#0b0c10" stroke-width="3"/><rect x="5" y="6" width="16" height="6" fill="#eef0f3" stroke="#0b0c10" stroke-width="3"/></svg><span class="name">Payments ledger cutover</span><span class="room">Room</span><span class="lamp info"></span></div>
+          <div class="gads">
+            <button class="gad" type="button" data-g="seat" aria-label="Seat"><svg viewBox="0 0 12 12"><rect x="1" y="8" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="zoom" aria-label="Zoom"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="back" aria-label="Send back"><svg viewBox="0 0 12 12"><rect x="1" y="4" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="1" width="7" height="7" fill="currentColor"/></svg></button>
+          </div>
+        </div>
+        <div class="body"><div class="in">
+          <div class="apphead"><h2 class="disp">Payments ledger cutover</h2><div class="strip"><span><span class="sq" style="background:var(--warn)"></span>1 need you</span><span>Status <b>On track</b></span><span>5 objects</span></div></div>
+          <div class="filters"><span class="chip on">Icons</span><span class="chip">List</span><span class="sp"></span><span class="verb">Room</span><span class="verb">History</span></div>
+          <div class="objs">
+            <div class="obj"><svg viewBox="0 0 44 44"><rect x="6" y="12" width="32" height="22" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="15" cy="23" r="6" fill="#fff" stroke="#0b0c10" stroke-width="2"/><circle cx="29" cy="23" r="6" fill="#fff" stroke="#0b0c10" stroke-width="2"/></svg>Ledger cutover sync</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#fff" stroke="#0b0c10" stroke-width="2"/><circle cx="26" cy="26" r="6" fill="#c84a3c" stroke="#0b0c10" stroke-width="2"/></svg>Freeze the old ledger on Nov 5</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#fff" stroke="#0b0c10" stroke-width="2"/><path d="M28 6v8h8" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="15" y="20" width="16" height="2" fill="#0b0c10"/><rect x="15" y="26" width="12" height="2" fill="#0b0c10"/></svg>Write the rollback runbook</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#fff" stroke="#0b0c10" stroke-width="2"/><path d="M28 6v8h8" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="15" y="20" width="16" height="2" fill="#0b0c10"/><rect x="15" y="26" width="12" height="2" fill="#0b0c10"/></svg>Cutover requirements</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#fff" stroke="#0b0c10" stroke-width="2"/><path d="M28 6v8h8" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="15" y="20" width="16" height="2" fill="#0b0c10"/><rect x="15" y="26" width="12" height="2" fill="#0b0c10"/></svg>Meeting decisions</div>
+          </div>
+          <div class="cap">Sources · 2 <span class="verb">Steward</span></div>
+          <div class="ledger">
+            <div class="row"><span class="k">GH</span><span class="t">karolswdev/payments-ledger</span><span class="m ok">Clear · checked 10m ago</span></div>
+            <div class="row"><span class="k">MTG</span><span class="t">Meetings</span><span class="m ok">Checked 09:02</span></div>
+          </div>
+          <div class="askwell"><span>Ask this project…</span><i><svg viewBox="0 0 12 14"><rect x="4" y="1" width="4" height="7" rx="2" fill="#0b0c10"/><path d="M2 7a4 4 0 0 0 8 0M6 11v2" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></i></div>
+        </div></div>
+        <div class="foot"><span>5 objects</span><span class="sp"></span><span class="verb">Get Info</span><span class="verb">Open</span></div>
+        <div class="grip"><svg viewBox="0 0 12 10"><path d="M1 9h10V1M4 9V5h7" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></div>
+      </section>
+      <section class="win" id="w-cond" data-app="conductor" data-icon="conductor" data-room="PAYMENTS" style="left:650px;top:334px;width:760px;height:480px">
+        <div class="tb">
+          <button class="gad" type="button" data-g="close" aria-label="Close"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="4" height="4" fill="currentColor"/></svg></button>
+          <div class="ttl"><svg class="oi" viewBox="0 0 44 44"><circle cx="22" cy="22" r="16" fill="#eef0f3" stroke="#0b0c10" stroke-width="3"/><circle cx="22" cy="22" r="6" fill="#0b0c10"/></svg><span class="name">Conductor</span><span class="room">Payments</span><span class="lamp ask"></span></div>
+          <div class="gads">
+            <button class="gad" type="button" data-g="seat" aria-label="Seat"><svg viewBox="0 0 12 12"><rect x="1" y="8" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="zoom" aria-label="Zoom"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="back" aria-label="Send back"><svg viewBox="0 0 12 12"><rect x="1" y="4" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="1" width="7" height="7" fill="currentColor"/></svg></button>
+          </div>
+        </div>
+        <div class="body"><div class="in">
+          <div class="apphead"><h2 class="disp">2 at work</h2><div class="strip"><span><span class="sq" style="background:var(--ask)"></span>1 ask</span><span>3 harnesses</span></div></div>
+          <div class="filters"><span class="chip on">Icons</span><span class="chip">List</span></div>
+          <div class="objs">
+            <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="23" r="7" fill="#e8955c" stroke="#0b0c10" stroke-width="2"/></svg>Claude Code: rollback runbook</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="14" y="18" width="6" height="6" fill="#5b8def"/><rect x="24" y="18" width="6" height="6" fill="#5b8def"/></svg>Codex: reconciliation job</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="23" r="7" fill="#3fae6a" stroke="#0b0c10" stroke-width="2"/></svg>Claude Code: ledger freeze flag</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="23" r="7" fill="#fff" stroke="#0b0c10" stroke-width="2"/></svg>Claude Code</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="14" y="18" width="6" height="6" fill="#fff"/><rect x="24" y="18" width="6" height="6" fill="#fff"/></svg>Codex</div>
+          </div>
+          <div class="cap">The ask</div>
+          <div class="ledger"><div class="row"><span class="k">CC</span><span class="t">The runbook needs a rollback owner. Jordan or Avery?</span><span class="m ask">asked 2m ago</span></div></div>
+        </div></div>
+        <div class="foot"><span class="egress">api.anthropic.com</span><span class="sp"></span><span class="verb">Get Info</span><span class="verb danger">Stop</span><span class="verb pri">Answer</span><span class="verb">Open</span></div>
+        <div class="grip"><svg viewBox="0 0 12 10"><path d="M1 9h10V1M4 9V5h7" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></div>
+      </section>
+      <section class="win" id="w-mtg" data-app="meetings" data-icon="meeting" data-room="PAYMENTS" style="left:760px;top:120px;width:560px;height:420px">
+        <div class="tb">
+          <button class="gad" type="button" data-g="close" aria-label="Close"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="4" height="4" fill="currentColor"/></svg></button>
+          <div class="ttl"><svg class="oi" viewBox="0 0 44 44"><rect x="8" y="12" width="28" height="22" fill="#eef0f3" stroke="#0b0c10" stroke-width="3"/><circle cx="16" cy="22" r="4" fill="#0b0c10"/><circle cx="28" cy="22" r="4" fill="#0b0c10"/></svg><span class="name">Cutover sync</span><span class="room">Payments</span><span class="lamp ok"></span></div>
+          <div class="gads">
+            <button class="gad" type="button" data-g="seat" aria-label="Seat"><svg viewBox="0 0 12 12"><rect x="1" y="8" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="zoom" aria-label="Zoom"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="back" aria-label="Send back"><svg viewBox="0 0 12 12"><rect x="1" y="4" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="1" width="7" height="7" fill="currentColor"/></svg></button>
+          </div>
+        </div>
+        <div class="body"><div class="in">
+          <div class="apphead"><h2 class="disp">Cutover sync</h2><div class="strip"><span>Tue 14:00 · 42 min</span><span><span class="sq" style="background:var(--ok)"></span>Summarised</span><span>4 people</span></div></div>
+          <div class="cap">Decisions · 2</div>
+          <div class="ledger">
+            <div class="row"><span class="k">DEC</span><span class="t">Freeze the old ledger on Nov 5</span><span class="m">Jordan</span></div>
+            <div class="row"><span class="k">DEC</span><span class="t">Reconciliation runs nightly until cutover</span><span class="m">Avery</span></div>
+          </div>
+          <div class="cap">Commitments · 3</div>
+          <div class="ledger">
+            <div class="row"><span class="k">MTG</span><span class="t">Write the rollback runbook</span><span class="m">Unassigned</span></div>
+            <div class="row"><span class="k">MTG</span><span class="t">Shard the reconciliation job</span><span class="m">Unassigned</span></div>
+          </div>
+        </div></div>
+        <div class="foot"><span>Read 09:02</span><span class="sp"></span><span class="verb">Open transcript</span><span class="verb pri">Send</span></div>
+        <div class="grip"><svg viewBox="0 0 12 10"><path d="M1 9h10V1M4 9V5h7" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></div>
+      </section>
+      <div class="divider" id="divider"></div>
+      <div class="scrim" id="scrim"></div>
+
+      <div class="dock" id="dock">
+        <button class="tile" type="button" data-app="intel"><span class="cnt">7</span><span class="seat"></span><svg viewBox="0 0 30 30"><path d="M15 3l3 9h9l-7 5 3 9-8-6-8 6 3-9-7-5h9z" fill="#eef0f3" stroke="#0b0c10" stroke-width="1.5"/></svg>Intelligence</button>
+        <button class="tile" type="button" data-app="speak"><span class="seat"></span><svg viewBox="0 0 30 30"><rect x="11" y="3" width="8" height="14" rx="4" fill="#eef0f3" stroke="#0b0c10" stroke-width="1.5"/><path d="M7 14a8 8 0 0 0 16 0M15 22v5" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg>Speak</button>
+        <button class="tile" type="button" data-app="meetings"><span class="seat"></span><svg viewBox="0 0 30 30"><rect x="4" y="8" width="22" height="16" fill="#eef0f3" stroke="#0b0c10" stroke-width="1.5"/><circle cx="11" cy="16" r="3" fill="#0b0c10"/><circle cx="19" cy="16" r="3" fill="#0b0c10"/></svg>Meetings</button>
+        <button class="tile" type="button" data-app="people"><span class="seat"></span><svg viewBox="0 0 30 30"><rect x="6" y="4" width="18" height="22" fill="#eef0f3" stroke="#0b0c10" stroke-width="1.5"/><circle cx="15" cy="13" r="4" fill="#a86e4a" stroke="#0b0c10"/></svg>People</button>
+        <button class="tile" type="button" data-app="conductor"><span class="seat"></span><svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="11" fill="#eef0f3" stroke="#0b0c10" stroke-width="1.5"/><circle cx="15" cy="15" r="4" fill="#0b0c10"/></svg>Conductor</button>
+        <button class="tile" type="button" data-app="settings"><span class="seat"></span><svg viewBox="0 0 30 30"><path d="M8 22l10-10M18 8l4 4-4 4-4-4z" fill="#eef0f3" stroke="#0b0c10" stroke-width="1.5"/></svg>Settings</button>
+        <button class="tile" type="button" data-app="room"><span class="cnt">1</span><span class="seat"></span><svg viewBox="0 0 30 30"><rect x="3" y="8" width="24" height="18" fill="#6688bb" stroke="#0b0c10" stroke-width="1.5"/><rect x="3" y="5" width="11" height="4" fill="#6688bb" stroke="#0b0c10" stroke-width="1.5"/></svg>Payments le…</button>
+        <button class="tile" type="button" data-app="floor"><span class="seat"></span><svg viewBox="0 0 30 30"><rect x="4" y="4" width="9" height="9" fill="#eef0f3" stroke="#0b0c10"/><rect x="17" y="4" width="9" height="9" fill="#eef0f3" stroke="#0b0c10"/><rect x="4" y="17" width="9" height="9" fill="#eef0f3" stroke="#0b0c10"/><rect x="17" y="17" width="9" height="9" fill="#eef0f3" stroke="#0b0c10"/></svg>Floor</button>
+        <button class="tile" type="button" data-app="memory"><span class="seat"></span><svg viewBox="0 0 30 30"><rect x="5" y="6" width="20" height="18" fill="#eef0f3" stroke="#0b0c10" stroke-width="1.5"/><rect x="9" y="11" width="12" height="2" fill="#0b0c10"/><rect x="9" y="16" width="8" height="2" fill="#0b0c10"/></svg>Desk memory</button>
+        <button class="tile" type="button" data-app="delivery"><span class="seat"></span><svg viewBox="0 0 30 30"><path d="M4 10l11-6 11 6v12l-11 6-11-6z" fill="#eef0f3" stroke="#0b0c10" stroke-width="1.5"/></svg>Delivery</button>
+        <span class="sp"></span>
+        <span class="verb">Hide the menus</span><span class="verb">Places</span>
+        <span style="width:28px;height:28px;border-radius:50%;background:#e2552a;border:2px solid #0b0c10;box-shadow:var(--wb-raised)"></span>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="board2">
+    <div class="bar"><h1>Board 2 · the exemplar internal app: Runs on (Models) as a Switchboard</h1>
+      <span class="lbl">Try</span>
+      <button class="btn k" type="button" data-sb="try"><b>press</b>Try it on Meetings</button>
+      <button class="btn k" type="button" data-sb="use"><b>press</b>Use the found Ollama</button>
+      <button class="btn k" type="button" data-sb="dl"><b>press</b>Download the vision file</button>
+      <button class="btn k" type="button" data-sb="reset">Reset board</button>
+      <span class="log" id="log2">Drag an engine onto a job to patch it. Hold ⌥ to add it as a fallback. Click a job to light its wires.</span>
+    </div>
+    <div class="exemplar">
+      <div class="winbox"><div class="wb">
+        <section class="win static" data-plane="front">
+          <div class="tb"><button class="gad" type="button" data-g="close" aria-label="Close"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="4" height="4" fill="currentColor"/></svg></button>
+            <div class="ttl"><svg class="oi" viewBox="0 0 44 44"><rect x="6" y="10" width="32" height="24" fill="#eef0f3" stroke="#0b0c10" stroke-width="3"/><circle cx="15" cy="22" r="4" fill="#0b0c10"/><circle cx="29" cy="22" r="4" fill="#0b0c10"/><rect x="15" y="21" width="14" height="2" fill="#0b0c10"/></svg><span class="name">Runs on</span><span class="room">Settings</span><span class="lamp info"></span></div>
+            <div class="gads">
+            <button class="gad" type="button" data-g="seat" aria-label="Seat"><svg viewBox="0 0 12 12"><rect x="1" y="8" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="zoom" aria-label="Zoom"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="back" aria-label="Send back"><svg viewBox="0 0 12 12"><rect x="1" y="4" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="1" width="7" height="7" fill="currentColor"/></svg></button>
+          </div>
+          </div>
+          <div class="body"><div class="in">
+            <div class="apphead"><h2 class="disp">6 jobs · 5 engines</h2><div class="strip"><span><span class="sq" style="background:var(--ok)"></span>5 ready</span><span><span class="sq" style="background:var(--warn)"></span>1 limited</span><span>This Mac · M‑series · 36 GB</span><span>Checked just now</span></div></div>
+            <div class="sb" id="sb">
+              <div class="col" id="jobs">
+                <div class="cap">What HoldSpeak does</div>
+                <div class="job ready" data-job="speech"><span class="n">Speech</span><span class="verb try" data-try="speech">Try it</span><span class="c">speech → text · this device only</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job ready" data-job="writing"><span class="n">Writing &amp; dictation</span><span class="verb try" data-try="writing">Try it</span><span class="c">rewrite · intent · 3 tasks</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job ready" data-job="thoughts"><span class="n">Thoughts &amp; notes</span><span class="verb try" data-try="thoughts">Try it</span><span class="c">interview · ask · chat</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job limited" data-job="meetings"><span class="n">Meetings</span><span class="verb try" data-try="meetings">Try it</span><span class="c">summaries · live · titles · 6 tasks</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job ready" data-job="agents"><span class="n">Agents &amp; tools</span><span class="verb try" data-try="agents">Try it</span><span class="c">plan · code · tools · 11 tasks</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job ready" data-job="background"><span class="n">Background</span><span class="verb try" data-try="background">Try it</span><span class="c">memory · drafts · meaning search</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job ready default" data-job="default"><span class="n">Default for AI work</span><span class="verb try" data-try="default">Try it</span><span class="c">every job with no wire of its own</span><span class="res"></span><span class="plug"></span></div>
+              </div>
+              <div class="wires"><svg class="wires" id="wires"></svg></div>
+              <div class="col" id="engs">
+                <div class="cap">What you have</div>
+                <div class="eng" data-eng="whisper"><span class="plug"></span><span class="em">MAC</span><span class="n">Whisper small</span><span class="lamp ok"></span><span class="tk">142 MB · MLX · speech</span><span class="bar"><i></i></span></div>
+                <div class="eng" data-eng="qwen4b"><span class="plug"></span><span class="em">MAC</span><span class="n">Qwen 3.5 4B</span><span class="lamp ok"></span><span class="tk">2.7 GB · Q4 · 8k ctx · 90 ms</span><span class="bar"><i></i></span></div>
+                <div class="eng" data-eng="q27"><span class="plug"></span><span class="em">LAN</span><span class="n">qwen3.8 27B · 192.168.1.43</span><span class="lamp ok busy"></span><span class="tk">llama.cpp · 32k ctx · tools · 410 ms</span><span class="bar"><i></i></span></div>
+                <div class="eng" data-eng="claude"><span class="plug"></span><span class="em">API</span><span class="n">Claude Opus 5.5</span><span class="lamp ok"></span><span class="tk">key set · tools · vision · $ · 1.2 s</span><span class="bar"><i></i></span></div>
+                <div class="eng" data-eng="vision"><span class="plug"></span><span class="em">MAC</span><span class="n">Qwen 3.5 4B vision file</span><span class="lamp warn"></span><span class="tk">890 MB · not downloaded</span><span class="bar"><i></i></span></div>
+                <div class="cap">Found · 2</div>
+                <div class="eng found" data-eng="ollama"><span class="plug"></span><span class="em">MAC</span><span class="n">Ollama · llama 3.3 8B</span><span class="lamp ok"></span><span class="tk">127.0.0.1:11434 · 4.9 GB</span><span class="bar"><i></i></span></div>
+                <div class="eng found" data-eng="openrouter"><span class="plug"></span><span class="em">API</span><span class="n">OpenRouter key</span><span class="lamp none"></span><span class="tk">in your Keychain · $</span><span class="bar"><i></i></span></div>
+              </div>
+            </div>
+          </div></div>
+          <div class="foot"><span id="sbfoot">Patched 09:14 · Meetings → qwen3.8 27B</span><span class="sp"></span><span class="egress" id="sbegress">192.168.1.43</span><span class="verb" id="sbundo">Undo</span></div>
+          <div class="grip"><svg viewBox="0 0 12 10"><path d="M1 9h10V1M4 9V5h7" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></div>
+        </section>
+      </div></div>
+      <div class="phone"><section class="win static" data-plane="front">
+        <div class="tb"><button class="gad" type="button" data-g="close" aria-label="Close"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="4" height="4" fill="currentColor"/></svg></button><div class="ttl"><span class="name">Runs on</span><span class="lamp info"></span></div><div class="gads"><button class="gad" type="button"><svg viewBox="0 0 12 12"><rect x="1" y="8" width="10" height="3" fill="currentColor"/></svg></button></div></div>
+        <div class="body"><div class="in sheet">
+          <div class="apphead"><h2 class="disp">6 jobs</h2><div class="strip"><span><span class="sq" style="background:var(--ok)"></span>5 ready</span><span><span class="sq" style="background:var(--warn)"></span>1 limited</span></div></div>
+          <div class="cap">Meetings · runs on</div>
+          <div class="eng" style="cursor:default"><span class="em">LAN</span><span class="n">qwen3.8 27B · 192.168.1.43</span><span class="lamp ok"></span><span class="tk">410 ms · without vision</span></div>
+          <div class="cap">Or</div>
+          <div class="eng" style="cursor:default"><span class="em">API</span><span class="n">Claude Opus 5.5</span><span class="lamp ok"></span><span class="tk">vision · $ · 1.2 s</span></div>
+          <div class="eng" style="cursor:default"><span class="em">MAC</span><span class="n">Qwen 3.5 4B</span><span class="lamp ok"></span><span class="tk">90 ms · 8k ctx · limited</span></div>
+          <div class="cap">Other jobs</div>
+          <div class="job ready"><span class="n">Speech</span><span class="c">Whisper small · this device</span></div>
+          <div class="job ready"><span class="n">Thoughts &amp; notes</span><span class="c">qwen3.8 27B</span></div>
+          <div class="job ready"><span class="n">Agents &amp; tools</span><span class="c">Claude Opus 5.5 → 27B</span></div>
+        </div></div>
+        <div class="foot"><span>Tap an engine to patch</span><span class="sp"></span><span class="verb">Try it</span></div>
+      </section></div>
+    </div>
+  </div>
+
+  <aside class="legend">
+    <div class="card">
+      <h2>The depth ladder</h2>
+      <div class="ladder">
+        <div class="pl front"><div class="sw"></div><div>FRONT · blue, lit, stripes, hard drop + umbra</div></div>
+        <div class="pl near"><div class="sw"></div><div>NEAR · steel, flat bar, veil 6 %, half umbra</div></div>
+        <div class="pl far"><div class="sw"></div><div>FAR · steel in shade, veil 14 %, drop only</div></div>
+        <div class="pl seat"><div class="sw"></div><div>SEATED · a dock seat with the lamp</div></div>
+      </div>
+      <p>One light, top-left. Every window is drawn from its plane alone. Words on a back window stay readable: it is a veil, never opacity.</p>
+    </div>
+    <div class="card">
+      <h2>The four moments · one easing</h2>
+      <div class="moments">
+        <div><b>Raise</b> 180 ms · lifts 1.2 %, umbra grows, blue; the old front settles back</div>
+        <div><b>Open</b> 240 ms · flies out of its object; the frame draws first</div>
+        <div><b>Seat / Close</b> 200 ms · shrinks into its dock seat / its object</div>
+        <div><b>Arrange</b> 220 ms · tile, stage, exposé, gather, cascade glide; never teleport</div>
+        <div class="kbd">Idle never moves. Reduced motion: instant.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>The grammar</h2>
+      <div class="moments">
+        <div class="kbd"><b>⌘`</b> raise next · <b>⌘⇧`</b> send back · <b>⌘M</b> seat · <b>⌘W</b> close · <b>⌘⇧Z</b> zoom</div>
+        <div class="kbd"><b>⌘⌥←→</b> tile · <b>⌘⏎</b> stage · <b>⌘⇧E</b> exposé · <b>⌘G</b> gather room · <b>Esc</b> back</div>
+        <div class="kbd">Seated windows live in the dock. Nowhere else.</div>
+        <div class="kbd">Open beside the object. Never cover a bar whole. The band is sacred.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>How an internal app is composed</h2>
+      <div class="moments">
+        <div><b>Show the thing, not a form about it.</b> Runs on shows the wiring; the picture IS the state.</div>
+        <div><b>Direct manipulation.</b> Drag, press, speak. It applies now, with a receipt in the foot and Undo. No Save, no "Use these".</div>
+        <div><b>Live.</b> Every object has a lamp; latency on the wire; a download fills its bar in place.</div>
+        <div><b>Try it, everywhere.</b> Every wired thing can be exercised on the spot, with the real answer and its time.</div>
+        <div><b>Found before asked.</b> The app discovers (ports, LAN, keys, files) and offers; you accept with one press.</div>
+        <div><b>Five state words.</b> READY · LIMITED · BROKEN · WAITING · OFF. Never eleven.</div>
+        <div><b>The kit, plus one species of its own</b>, added to the library (here: Switchboard).</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Open questions</h2>
+      <div class="q">
+        <div class="row2"><span>1 · Floor</span><span class="sw2"><button class="btn on" type="button" data-q="floor" data-v="backdrop">Backdrop</button><button class="btn" type="button" data-q="floor" data-v="void">Today's void</button></span></div>
+        <div class="row2"><span>2 · Title face</span><span class="sw2"><button class="btn on" type="button" data-q="title" data-v="sans">Sans</button><button class="btn" type="button" data-q="title" data-v="mono">Mono</button></span></div>
+        <div class="row2"><span>3 · Stage shelf</span><span class="sw2"><button class="btn on" type="button" data-q="shelf" data-v="left">Left</button><button class="btn" type="button" data-q="shelf" data-v="right">Right</button></span></div>
+      </div>
+      <p>Guidelines: docs/internal/philo/phase-16/COMPOSITOR.md</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+(() => {
+  const desk = document.getElementById('desk');
+  const box = desk.parentElement;
+  const log = document.getElementById('log');
+  const dock = document.getElementById('dock');
+  const divider = document.getElementById('divider');
+  const sbTitle = document.getElementById('sbTitle');
+  const EASE = 'cubic-bezier(.2,.8,.2,1)';
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const BAND = { top: 28 + 10, bottom: 80 + 10, left: 10, right: 10 };
+  const D = { raise: 180, open: 240, seat: 200, arrange: 220 };
+  const dur = (k) => (RM || desk.classList.contains('before')) ? 0 : D[k];
+
+  // scale the 1440×900 stage to the box
+  const fit = () => { const s = Math.min(1, box.clientWidth / 1440); desk.style.transform = `scale(${s})`; box.style.height = (900 * s) + 'px'; };
+  new ResizeObserver(fit).observe(box); fit();
+
+  // ── the compositor state ──
+  const wins = () => [...desk.querySelectorAll('.win:not(.static)')];
+  let order = ['w-needs', 'w-mtg', 'w-room', 'w-cond']; // back → front
+  const seated = new Set();
+  const saved = new Map(); // id → rect before an arrangement
+  let mode = 'free'; // free | tile | stage | expose
+  const rect = (el) => ({ x: parseFloat(el.style.left), y: parseFloat(el.style.top), w: parseFloat(el.style.width), h: parseFloat(el.style.height) });
+  const put = (el, r) => { el.style.left = r.x + 'px'; el.style.top = r.y + 'px'; el.style.width = r.w + 'px'; el.style.height = r.h + 'px'; };
+  const open = () => order.filter(id => !seated.has(id));
+  const front = () => open().at(-1);
+  const say = (s) => { log.textContent = s; };
+
+  // §3 assign planes from the order; CSS draws the rest
+  function compose() {
+    const o = open();
+    wins().forEach(w => {
+      const i = o.indexOf(w.id);
+      w.style.zIndex = 42 + Math.max(0, order.indexOf(w.id));
+      w.hidden = seated.has(w.id);
+      w.dataset.plane = i === -1 ? 'seated' : i === o.length - 1 ? 'front' : i === o.length - 2 ? 'near' : 'far';
+    });
+    const f = front();
+    sbTitle.textContent = f ? desk.querySelector('#' + f + ' .name').textContent : 'Desk';
+    dock.querySelectorAll('.tile').forEach(t => {
+      const app = t.dataset.app;
+      const w = wins().find(x => x.dataset.app === app);
+      t.classList.toggle('open', !!w && !seated.has(w.id));
+      t.classList.toggle('seated', !!w && seated.has(w.id));
+    });
+  }
+
+  // glide every window to a rect map (§6 moment 4)
+  function arrange(map, ms = dur('arrange')) {
+    const ps = [];
+    for (const [id, r] of Object.entries(map)) {
+      const el = document.getElementById(id); const from = rect(el);
+      put(el, r);
+      if (ms && el.animate) {
+        const dx = from.x - r.x, dy = from.y - r.y, sx = from.w / r.w, sy = from.h / r.h;
+        el.style.transformOrigin = '0 0';
+        ps.push(el.animate([{ transform: `translate(${dx}px,${dy}px) scale(${sx},${sy})` }, { transform: 'none' }], { duration: ms, easing: EASE }).finished);
+      }
+    }
+    return Promise.all(ps);
+  }
+
+  // moment 1: raise
+  function raise(id, quiet) {
+    if (mode === 'expose') return leaveExpose(id);
+    if (front() === id) return;
+    order = order.filter(x => x !== id); order.push(id);
+    if (mode === 'stage') return stage(id);
+    compose();
+    const el = document.getElementById(id); const ms = dur('raise');
+    if (ms && el.animate) el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.012)', offset: .5 }, { transform: 'scale(1)' }], { duration: ms, easing: EASE });
+    if (!quiet) say('Raise · ' + el.querySelector('.name').textContent + ' lifts; the old front settles to NEAR');
+  }
+  function sendBack(id) {
+    order = order.filter(x => x !== id); order.unshift(id); compose();
+    say('Send back · to FAR; the NEAR window comes forward');
+  }
+  function raiseNext() { const o = open(); if (o.length < 2) return; raise(o[o.length - 2]); }
+
+  // moment 3: seat (to the dock tile) and close (to the object)
+  function shrinkInto(el, target, then) {
+    const ms = dur('seat'); const r = rect(el); const t = target.getBoundingClientRect(), d = desk.getBoundingClientRect(), s = d.width / 1440;
+    const tx = (t.left - d.left) / s + t.width / s / 2 - (r.x + r.w / 2), ty = (t.top - d.top) / s + t.height / s / 2 - (r.y + r.h / 2);
+    if (!ms || !el.animate) return then();
+    el.style.transformOrigin = '50% 50%';
+    el.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${tx * .5}px,${ty * .5 - 40}px) scale(.5)`, opacity: 1, offset: .6 }, { transform: `translate(${tx}px,${ty}px) scale(.06)`, opacity: 0 }], { duration: ms, easing: EASE }).finished.then(then);
+  }
+  function seat(id) {
+    const el = document.getElementById(id); const tile = dock.querySelector(`.tile[data-app="${el.dataset.app}"]`);
+    shrinkInto(el, tile, () => { seated.add(id); compose(); say('Seat · it sits in its dock tile, lamp on. Click the tile to bring it back.'); });
+  }
+  function closeWin(id) {
+    const el = document.getElementById(id); const ic = desk.querySelector(`.icon[data-icon="${el.dataset.icon}"]`) || dock.querySelector(`.tile[data-app="${el.dataset.app}"]`);
+    shrinkInto(el, ic, () => { seated.add(id); el.dataset.closed = '1'; compose(); say('Close · it shrinks into the object it opened from. Click the icon to open it again.'); });
+  }
+  // moment 2: open from the object
+  function openFrom(id) {
+    const el = document.getElementById(id); const ic = desk.querySelector(`.icon[data-icon="${el.dataset.icon}"]`);
+    seated.delete(id); delete el.dataset.closed; order = order.filter(x => x !== id); order.push(id);
+    if (ic) { // seat beside the object: right flank if it fits, else left
+      const r = rect(el); const ix = parseFloat(ic.style.left), iy = parseFloat(ic.style.top);
+      let x = ix + 110; if (x + r.w > 1440 - BAND.right) x = Math.max(BAND.left, ix - r.w - 28);
+      let y = Math.max(BAND.top, Math.min(iy - 20, 900 - BAND.bottom - r.h)); put(el, { ...r, x, y });
+    }
+    compose();
+    const ms = dur('open');
+    if (ms && el.animate && ic) {
+      const r = rect(el); const ox = parseFloat(ic.style.left) + 48 - (r.x + r.w / 2), oy = parseFloat(ic.style.top) + 30 - (r.y + Math.min(r.h, 320) / 2);
+      el.style.transformOrigin = '50% 50%';
+      el.animate([{ transform: `translate(${ox}px,${oy}px) scale(.05)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: ms, easing: EASE });
+      const body = el.querySelector('.body'); body.animate([{ opacity: 0 }, { opacity: 0, offset: .25 }, { opacity: 1 }], { duration: ms, easing: EASE });
+    }
+    say('Open · flies out of its object and seats beside it; the frame draws first, the body follows.');
+  }
+
+  // §5 arrangements
+  const bandRect = () => ({ x: BAND.left, y: BAND.top, w: 1440 - BAND.left - BAND.right, h: 900 - BAND.top - BAND.bottom });
+  function remember() { if (mode === 'free') wins().forEach(w => saved.set(w.id, rect(w))); }
+  function restore() { wins().forEach(w => w.style.removeProperty('--k')); const m = {}; for (const [id, r] of saved) if (!seated.has(id)) m[id] = r; mode = 'free'; divider.style.display = 'none'; desk.classList.remove('in-expose', 'in-stage'); compose(); return arrange(m); }
+
+  function tile() {
+    const o = open(); if (o.length < 2) return say('Tile needs two windows.');
+    remember(); mode = 'tile'; const b = bandRect(); const a = o.at(-1), c = o.at(-2); const split = Math.round(b.w * 0.5);
+    const m = { [c]: { x: b.x, y: b.y, w: split - 4, h: b.h }, [a]: { x: b.x + split + 4, y: b.y, w: b.w - split - 4, h: b.h } };
+    divider.style.display = 'block'; divider.style.left = (b.x + split - 3) + 'px'; divider.style.top = b.y + 'px'; divider.style.height = b.h + 'px';
+    arrange(m); say('Tile · front and near share the band; drag the steel divider.');
+  }
+  function stage(fid) {
+    const o = open(); if (o.length < 2) return say('Stage needs two windows.');
+    if (mode !== 'stage') remember(); mode = 'stage'; desk.classList.add('in-stage');
+    const f = fid || o.at(-1); const rest = o.filter(x => x !== f).reverse(); const b = bandRect();
+    const shelfLeft = desk.dataset.shelf !== 'right'; const shelfW = 300; const mainW = Math.round(b.w * .76);
+    const main = { x: shelfLeft ? b.x + b.w - mainW : b.x, y: b.y, w: mainW, h: b.h };
+    const m = { [f]: main };
+    rest.forEach((id, i) => { const r = saved.get(id) || rect(document.getElementById(id)); const k = Math.min(shelfW / r.w, 170 / r.h);
+      m[id] = { x: shelfLeft ? b.x + 10 : b.x + b.w - shelfW - 10, y: b.y + 10 + i * 190, w: Math.round(r.w * k), h: Math.round(r.h * k) }; document.getElementById(id).style.setProperty('--k', k.toFixed(3)); });
+    document.getElementById(f).style.removeProperty('--k');
+    compose(); arrange(m); say('Stage · the front takes the centre; the others wait on the shelf as live plates. Click a plate to swap.');
+  }
+  function expose() {
+    const o = open(); if (!o.length) return; if (mode === 'expose') return leaveExpose();
+    remember(); mode = 'expose'; desk.classList.add('in-expose');
+    const b = bandRect(); const n = o.length, cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / cols); const cw = (b.w - 40) / cols, ch = (b.h - 40) / rows; const m = {};
+    o.forEach((id, i) => { const r = saved.get(id); const k = Math.min((cw - 40) / r.w, (ch - 40) / r.h); const w = r.w * k, h = r.h * k;
+      m[id] = { x: Math.round(b.x + 20 + (i % cols) * cw + (cw - w) / 2), y: Math.round(b.y + 20 + Math.floor(i / cols) * ch + (ch - h) / 2), w: Math.round(w), h: Math.round(h) }; document.getElementById(id).style.setProperty('--k', k.toFixed(3)); });
+    arrange(m); say('Exposé · every window as a live plate. Click one to pick it; Esc returns.');
+  }
+  function leaveExpose(pick) { restore().then(() => { if (pick) raise(pick, true); }); if (pick) { order = order.filter(x => x !== pick); order.push(pick); } say('Back from exposé.'); }
+  function gather() {
+    const grp = wins().filter(w => w.dataset.room === 'PAYMENTS' && !seated.has(w.id)).map(w => w.id); if (grp.length < 2) return say('Gather needs two windows of one Room.');
+    remember(); mode = 'tile'; const b = bandRect(); const m = {}; const n = grp.length; const cw = Math.floor((b.w - (n - 1) * 8) / n);
+    grp.forEach((id, i) => { m[id] = { x: b.x + i * (cw + 8), y: b.y, w: cw, h: b.h }; order = order.filter(x => x !== id); order.push(id); });
+    divider.style.display = 'none'; compose(); arrange(m); say('Gather · the Payments room\'s windows tile together in one move.');
+  }
+  function cascade() {
+    if (mode !== 'free') { restore(); }
+    const o = open(); const m = {}; o.forEach((id, i) => { const r = rect(document.getElementById(id)); m[id] = { ...r, x: BAND.left + 4 + i * 26, y: BAND.top + 4 + i * 26 }; });
+    mode = 'free'; arrange(m); say('Cascade · re-seated from the top-left in 26 px steps.');
+  }
+  function reset() { wins().forEach(w => w.style.removeProperty('--k')); seated.clear(); wins().forEach(w => delete w.dataset.closed); order = ['w-needs', 'w-mtg', 'w-room', 'w-cond']; mode = 'free'; divider.style.display = 'none'; desk.classList.remove('in-expose', 'in-stage');
+    put(document.getElementById('w-needs'), { x: 14, y: 44, w: 700, h: 660 }); put(document.getElementById('w-room'), { x: 520, y: 206, w: 900, h: 600 }); put(document.getElementById('w-cond'), { x: 650, y: 334, w: 760, h: 480 }); put(document.getElementById('w-mtg'), { x: 760, y: 120, w: 560, h: 420 });
+    saved.clear(); compose(); say('Reset.'); }
+
+  // ── wiring ──
+  wins().forEach(w => {
+    w.addEventListener('pointerdown', (e) => { if (e.target.closest('.gad')) return; raise(w.id, mode === 'expose'); });
+    w.querySelectorAll('.gad').forEach(g => g.addEventListener('click', (e) => { e.stopPropagation(); g.classList.add('pressed'); setTimeout(() => g.classList.remove('pressed'), 90);
+      const k = g.dataset.g; if (k === 'close') closeWin(w.id); else if (k === 'seat') seat(w.id); else if (k === 'back') sendBack(w.id); else if (k === 'zoom') { if (mode !== 'free') restore(); const r = rect(w); const b = bandRect(); if (saved.get(w.id + ':zoom')) { arrange({ [w.id]: saved.get(w.id + ':zoom') }); saved.delete(w.id + ':zoom'); } else { saved.set(w.id + ':zoom', r); arrange({ [w.id]: b }); } say('Zoom · fills the band; zoom again returns to the remembered rect.'); } }));
+    // drag by the bar
+    const tb = w.querySelector('.tb'); let drag = null;
+    tb.addEventListener('pointerdown', (e) => { if (e.target.closest('.gad') || mode !== 'free') return; const s = desk.getBoundingClientRect().width / 1440; drag = { sx: e.clientX, sy: e.clientY, r: rect(w), s }; tb.setPointerCapture(e.pointerId); });
+    tb.addEventListener('pointermove', (e) => { if (!drag) return; const r = drag.r; put(w, { ...r, x: Math.max(BAND.left, Math.min(1440 - BAND.right - r.w, r.x + (e.clientX - drag.sx) / drag.s)), y: Math.max(BAND.top, Math.min(900 - BAND.bottom - r.h, r.y + (e.clientY - drag.sy) / drag.s)) }); });
+    tb.addEventListener('pointerup', () => { if (drag && dur('raise') && w.animate) w.animate([{ transform: 'translate(0,2px)' }, { transform: 'none' }], { duration: 60, easing: EASE }); drag = null; });
+    // resize by the grip
+    const grip = w.querySelector('.grip'); let rs = null;
+    grip.addEventListener('pointerdown', (e) => { if (mode !== 'free') return; e.stopPropagation(); const s = desk.getBoundingClientRect().width / 1440; rs = { sx: e.clientX, sy: e.clientY, r: rect(w), s }; grip.setPointerCapture(e.pointerId); });
+    grip.addEventListener('pointermove', (e) => { if (!rs) return; const r = rs.r; put(w, { ...r, w: Math.max(320, r.w + (e.clientX - rs.sx) / rs.s), h: Math.max(220, r.h + (e.clientY - rs.sy) / rs.s) }); });
+    grip.addEventListener('pointerup', () => { rs = null; });
+  });
+  desk.querySelectorAll('.icon').forEach(ic => ic.addEventListener('click', () => { const w = wins().find(x => x.dataset.icon === ic.dataset.icon); if (!w) return say('That object has no window on this canvas.'); if (seated.has(w.id)) openFrom(w.id); else raise(w.id); }));
+  dock.querySelectorAll('.tile').forEach(t => t.addEventListener('click', () => { const w = wins().find(x => x.dataset.app === t.dataset.app); if (!w) return; if (seated.has(w.id)) { if (w.dataset.closed) openFrom(w.id); else { seated.delete(w.id); order = order.filter(x => x !== w.id); order.push(w.id); compose(); const ms = dur('seat'); if (ms && w.animate) { w.style.transformOrigin = '50% 100%'; w.animate([{ transform: 'translateY(60px) scale(.3)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: ms, easing: EASE }); } say('Unseat · back from the dock.'); } } else raise(w.id); }));
+
+  document.querySelectorAll('[data-do]').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.do; const f = front();
+    ({ raise: raiseNext, open: () => { const c = wins().find(w => seated.has(w.id)); if (c) openFrom(c.id); else { closeWin(f); setTimeout(() => openFrom(f), dur('seat') + 120); } },
+       seat: () => f && seat(f), close: () => f && closeWin(f), back: () => f && sendBack(f), tile, stage: () => stage(), expose, gather, cascade, reset })[k]();
+  }));
+  document.getElementById('mBefore').addEventListener('click', () => { desk.classList.add('before'); mBefore.classList.add('on'); mAfter.classList.remove('on'); say('BEFORE · today: one pen per plane, no light, no veil, mono titles, instant.'); });
+  document.getElementById('mAfter').addEventListener('click', () => { desk.classList.remove('before'); mAfter.classList.add('on'); mBefore.classList.remove('on'); say('AFTER · the compositor.'); });
+  document.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll(`[data-q="${b.dataset.q}"]`).forEach(x => x.classList.toggle('on', x === b));
+    const v = b.dataset.v; if (b.dataset.q === 'floor') desk.classList.toggle('floor-void', v === 'void'); if (b.dataset.q === 'title') desk.classList.toggle('title-mono', v === 'mono'); if (b.dataset.q === 'shelf') { desk.dataset.shelf = v; if (mode === 'stage') stage(); }
+  }));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mode !== 'free') { restore(); say('Back.'); return; }
+    if (!(e.metaKey || e.ctrlKey)) return; const f = front();
+    if (e.key === '`') { e.preventDefault(); e.shiftKey ? (f && sendBack(f)) : raiseNext(); }
+    else if (e.key === 'm') { e.preventDefault(); f && seat(f); } else if (e.key === 'w') { e.preventDefault(); f && closeWin(f); }
+    else if (e.key === 'Enter') { e.preventDefault(); stage(); } else if (e.key === 'E' || (e.shiftKey && e.key === 'e')) { e.preventDefault(); expose(); }
+    else if (e.key === 'g') { e.preventDefault(); gather(); } else if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); tile(); }
+  });
+  compose();
+})();
+</script>
+<script>
+(() => {
+  // ── Board 2: the Switchboard ──
+  const sb = document.getElementById('sb'); const svg = document.getElementById('wires'); const log2 = document.getElementById('log2');
+  const foot = document.getElementById('sbfoot'), egress = document.getElementById('sbegress');
+  const wbBox = sb.closest('.winbox'); const wb = wbBox.querySelector('.wb');
+  const fit2 = () => { const k = Math.min(1, wbBox.clientWidth / 1120); wb.style.transform = `scale(${k})`; wbBox.style.height = (680 * k) + 'px'; draw(); };
+  new ResizeObserver(fit2).observe(wbBox);
+  const HOST = { whisper: 'This device', qwen4b: 'This device', q27: '192.168.1.43', claude: 'api.anthropic.com', vision: 'This device', ollama: '127.0.0.1', openrouter: 'openrouter.ai' };
+  const NAME = { whisper: 'Whisper small', qwen4b: 'Qwen 3.5 4B', q27: 'qwen3.8 27B', claude: 'Claude Opus 5.5', vision: 'Qwen 4B vision', ollama: 'llama 3.3 8B', openrouter: 'OpenRouter' };
+  const SPEECH = new Set(['whisper']); const TEXT = new Set(['qwen4b', 'q27', 'claude', 'ollama', 'openrouter', 'vision']);
+  const init = () => ({ speech: ['whisper'], writing: ['qwen4b'], thoughts: ['q27', 'qwen4b'], meetings: ['q27'], agents: ['claude', 'q27'], background: ['q27'], default: ['q27'] });
+  let patch = init(); let history = []; let sel = null;
+  const jobEl = (j) => sb.querySelector(`.job[data-job="${j}"]`), engEl = (e) => sb.querySelector(`.eng[data-eng="${e}"]`);
+  const fits = (j, e) => j === 'speech' ? SPEECH.has(e) : TEXT.has(e);
+  const stateOf = (j) => { const c = patch[j]; if (!c.length) return 'off'; if (j === 'meetings' && !c.some(e => e === 'claude' || e === 'vision')) return 'limited'; if (j === 'thoughts' && c[0] === 'qwen4b') return 'limited'; return 'ready'; };
+  const k = () => wb.getBoundingClientRect().width / 1120;
+  function pos(el, side) { const r = el.getBoundingClientRect(), b = sb.getBoundingClientRect(); return { x: (side === 'r' ? r.right - b.left : r.left - b.left) / k(), y: (r.top - b.top + r.height / 2) / k() }; }
+  function draw() {
+    const wr = sb.querySelector('.wires').getBoundingClientRect(), b = sb.getBoundingClientRect(); const ox = (wr.left - b.left) / k(); svg.innerHTML = '';
+    for (const [j, chain] of Object.entries(patch)) {
+      const je = jobEl(j); je.className = 'job ' + stateOf(j) + (j === 'default' ? ' default' : '') + (sel === j ? ' sel' : '');
+      chain.forEach((e, i) => { const ee = engEl(e); if (!ee || ee.classList.contains('found')) return;
+        const a = pos(je, 'r'), c = pos(ee, 'l'); const x1 = a.x - ox + 6, x2 = c.x - ox - 6; const mx = (x1 + x2) / 2;
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', `M${x1},${a.y} C${mx},${a.y} ${mx},${c.y} ${x2},${c.y}`);
+        p.setAttribute('class', 'wire' + (i ? ' fb' : '') + (stateOf(j) === 'limited' && !i ? ' limited' : '') + (sel === j ? ' hot' : '')); p.dataset.job = j; p.dataset.i = i; svg.appendChild(p); });
+    }
+  }
+  function setPatch(j, e, asFallback) {
+    history.push(JSON.stringify(patch)); const prev = patch[j][0];
+    patch[j] = asFallback ? [...patch[j].filter(x => x !== e), e].slice(0, 4) : [e, ...patch[j].filter(x => x !== e)].slice(0, 4);
+    draw(); const path = svg.querySelector(`.wire[data-job="${j}"][data-i="${asFallback ? patch[j].length - 1 : 0}"]`);
+    if (path && path.getTotalLength && path.animate) { const L = path.getTotalLength(); path.animate([{ strokeDasharray: L, strokeDashoffset: L }, { strokeDasharray: L, strokeDashoffset: 0 }], { duration: 220, easing: 'cubic-bezier(.2,.8,.2,1)' }); }
+    foot.textContent = `Patched now · ${jobEl(j).querySelector('.n').textContent} → ${NAME[e]}` + (asFallback ? ' (fallback)' : ''); egress.textContent = HOST[e];
+    log2.textContent = asFallback ? 'Dropped with ⌥: a dashed fallback wire, after the first.' : (prev ? 'Re-patched. The old wire is gone; Undo brings it back.' : 'Patched.');
+  }
+  document.getElementById('sbundo').addEventListener('click', () => { const h = history.pop(); if (!h) { log2.textContent = 'Nothing to undo.'; return; } patch = JSON.parse(h); draw(); foot.textContent = 'Undone'; });
+  let drag = null;
+  sb.addEventListener('pointerdown', (e) => { const en = e.target.closest('.eng'); if (!en || en.classList.contains('found') || e.target.closest('.verb')) return; drag = { e: en.dataset.eng, el: en }; en.setPointerCapture(e.pointerId); en.classList.add('dragging'); });
+  sb.addEventListener('pointermove', (e) => { if (!drag) return; sb.querySelectorAll('.job').forEach(j => j.classList.remove('over', 'no')); const t = document.elementFromPoint(e.clientX, e.clientY)?.closest('.job'); if (t) { t.classList.add('over'); if (!fits(t.dataset.job, drag.e)) t.classList.add('no'); } });
+  sb.addEventListener('pointerup', (e) => { if (!drag) return; drag.el.classList.remove('dragging'); const t = document.elementFromPoint(e.clientX, e.clientY)?.closest('.job'); sb.querySelectorAll('.job').forEach(j => j.classList.remove('over', 'no'));
+    if (t) { if (!fits(t.dataset.job, drag.e)) log2.textContent = (t.dataset.job === 'speech' ? 'Speech takes a speech engine only.' : 'That engine does not do text.'); else setPatch(t.dataset.job, drag.e, e.altKey && patch[t.dataset.job].length > 0); } drag = null; });
+  sb.addEventListener('click', (e) => { const tr = e.target.closest('[data-try]'); if (tr) { e.stopPropagation(); tryJob(tr.dataset.try); return; } const j = e.target.closest('.job'); if (j) { sel = sel === j.dataset.job ? null : j.dataset.job; draw(); } });
+  function tryJob(j) { const e = patch[j][0]; if (!e) return; sel = j; draw(); const p = svg.querySelector(`.wire[data-job="${j}"][data-i="0"]`); if (p) p.classList.add('pulse'); const lamp = engEl(e).querySelector('.lamp'); lamp.classList.add('busy');
+    const res = jobEl(j).querySelector('.res'); res.textContent = 'Trying…'; res.classList.add('on'); const ms = { whisper: 380, qwen4b: 90, q27: 412, claude: 1180, ollama: 240, openrouter: 900, vision: 300 }[e];
+    setTimeout(() => { if (p) p.classList.remove('pulse'); lamp.classList.remove('busy'); res.textContent = j === 'speech' ? `Heard: "freeze the old ledger on nov 5" · ${ms} ms` : `Ready · ${NAME[e]} · ${ms} ms` + (stateOf(j) === 'limited' ? ' · without vision' : ''); egress.textContent = HOST[e]; setTimeout(() => res.classList.remove('on'), 4000); }, Math.min(ms, 900)); }
+  sb.querySelectorAll('.eng.found').forEach(f => { const v = document.createElement('span'); v.className = 'verb use'; v.textContent = 'Use it'; f.appendChild(v);
+    v.addEventListener('click', () => { f.classList.remove('found'); v.remove(); const engs = document.getElementById('engs'); engs.insertBefore(f, engs.querySelectorAll('.cap')[1]); draw(); log2.textContent = `${f.querySelector('.n').textContent} joined. Drag it onto a job, or onto DEFAULT.`; }); });
+  function download() { const v = engEl('vision'); if (v.classList.contains('downloading') || v.dataset.done) return; v.classList.add('downloading'); const bar = v.querySelector('.bar i'); let pct = 0; const t = setInterval(() => { pct += 7; bar.style.width = Math.min(100, pct) + '%'; v.querySelector('.tk').textContent = `890 MB · ${Math.min(100, pct)} %`; if (pct >= 100) { clearInterval(t); v.classList.remove('downloading'); v.dataset.done = '1'; v.querySelector('.tk').textContent = '890 MB · vision · ready'; v.querySelector('.lamp').className = 'lamp ok'; setPatch('meetings', 'vision', true); log2.textContent = 'Downloaded in place. Meetings now has vision through the fallback wire; the plug turned green.'; } }, 120); log2.textContent = 'Downloading: the bar fills on the engine itself. Nothing to poll, nothing to reopen.'; }
+  document.querySelectorAll('[data-sb]').forEach(b => b.addEventListener('click', () => ({ try: () => tryJob('meetings'), use: () => sb.querySelector('.eng.found .use')?.click(), dl: download, reset: () => { patch = init(); history = []; sel = null; draw(); foot.textContent = 'Reset'; } })[b.dataset.sb]()));
+  draw();
+})();
+</script>
+
