@@ -58,17 +58,27 @@ describe("DeskWindowFrame (the one chrome)", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("minimize parks the window (mounted but hidden) and the dock restores it", () => {
+  it("minimize parks the window (mounted but hidden) and its dock seat restores it", () => {
+    // PHILO-16 (A1) §5: seated windows live in the dock, on their
+    // application's tile (the window chips are parked). The Intelligence
+    // application's window is `pullout:intelligence:desk`.
     const { container } = render(
       <>
-        <Host />
+        <DeskWindowFrame
+          id="pullout:intelligence:desk"
+          title="Test window"
+          open
+          onClose={() => {}}
+        >
+          <p>window content</p>
+        </DeskWindowFrame>
         <Dock />
       </>,
     );
     fireEvent.click(
       screen.getByRole("button", { name: "Iconify Test window" }),
     );
-    expect(useDesk.getState().panelMin).toEqual(["t1"]);
+    expect(useDesk.getState().panelMin).toEqual(["pullout:intelligence:desk"]);
     // display:none removes it from the a11y tree; the mount itself parks.
     const shell = container.querySelector(
       '[aria-label="Test window"][role="region"]',
@@ -76,9 +86,11 @@ describe("DeskWindowFrame (the one chrome)", () => {
     expect(shell).toBeTruthy();
     expect(shell.style.display).toBe("none");
     expect(screen.getByText("window content")).toBeInTheDocument();
-    // The dock names it and restores it.
-    const chip = screen.getByRole("button", { name: "Restore Test window" });
-    fireEvent.click(chip);
+    // The dock names it on its tile, lights the seat and restores it.
+    const tile = screen.getByRole("button", { name: /^Intelligence.*, iconified$/ });
+    expect(tile.querySelector(".desk-dock-seat")).toBeTruthy();
+    expect(tile.classList.contains("is-seated")).toBe(true);
+    fireEvent.click(tile);
     expect(useDesk.getState().panelMin).toEqual([]);
     expect(shell.style.display).not.toBe("none");
   });
@@ -260,19 +272,21 @@ describe("HS-99-02: the title bar owns a right-click menu", () => {
   });
 });
 
+// PHILO-16 (A1) §5: the window chips are parked (Dock.tsx NUB_CHIPS); the
+// right-click menu rides the application tile that seats the window.
 describe("HS-99-04: the dock chip owns a right-click menu", () => {
   it("opens on chip contextmenu and executes Close", () => {
     const onClose = vi.fn();
     render(
       <>
-        <DeskWindowFrame id="dm" title="Chip menu" open onClose={onClose}>
+        <DeskWindowFrame id="pullout:intelligence:desk" title="Chip menu" open onClose={onClose}>
           <p>body</p>
         </DeskWindowFrame>
         <Dock />
       </>,
     );
-    fireEvent.contextMenu(screen.getByRole("button", { name: "Focus Chip menu" }));
-    const menu = screen.getByRole("menu", { name: "Chip menu dock menu" });
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Intelligence/ }));
+    const menu = screen.getByRole("menu", { name: "Intelligence dock menu" });
     expect(menu).toBeInTheDocument();
     fireEvent.click(screen.getByRole("menuitem", { name: /Close/ }));
     expect(onClose).toHaveBeenCalled();
@@ -281,14 +295,14 @@ describe("HS-99-04: the dock chip owns a right-click menu", () => {
   it("dock chip menu entries have VerbGlyph glyphs", () => {
     render(
       <>
-        <DeskWindowFrame id="dg" title="Glyph dock" open onClose={() => {}}>
+        <DeskWindowFrame id="pullout:intelligence:desk" title="Glyph dock" open onClose={() => {}}>
           <p>body</p>
         </DeskWindowFrame>
         <Dock />
       </>,
     );
-    fireEvent.contextMenu(screen.getByRole("button", { name: "Focus Glyph dock" }));
-    const menu = screen.getByRole("menu", { name: "Glyph dock dock menu" });
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Intelligence/ }));
+    const menu = screen.getByRole("menu", { name: "Intelligence dock menu" });
     // Both items must carry an SVG glyph (the lane law).
     const items = menu.querySelectorAll("[role='menuitem']");
     expect(items.length).toBe(2);
@@ -300,14 +314,14 @@ describe("HS-99-04: the dock chip owns a right-click menu", () => {
   it("dock chip menu shows keycap wells from the registry", () => {
     render(
       <>
-        <DeskWindowFrame id="dk" title="Keycap dock" open onClose={() => {}}>
+        <DeskWindowFrame id="pullout:intelligence:desk" title="Keycap dock" open onClose={() => {}}>
           <p>body</p>
         </DeskWindowFrame>
         <Dock />
       </>,
     );
-    fireEvent.contextMenu(screen.getByRole("button", { name: "Focus Keycap dock" }));
-    const menu = screen.getByRole("menu", { name: "Keycap dock dock menu" });
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Intelligence/ }));
+    const menu = screen.getByRole("menu", { name: "Intelligence dock menu" });
     // At least one keycap well should be present (window.minimize has key ⌘M).
     const wells = menu.querySelectorAll(".desk-menu-well");
     expect(wells.length).toBeGreaterThan(0);

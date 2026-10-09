@@ -55,6 +55,7 @@ import {
   focusOrRestoreApp,
 } from "./window/windowRegistry";
 import { GadgetGlyph } from "./window/GadgetGlyph";
+import { DOCK_SPRITES } from "../systemSprites";
 import {
   type DockLauncher,
   announceLauncher,
@@ -631,6 +632,10 @@ export interface DeskWindowFrameProps {
   entrance?: boolean;
   /** Inline style merged under the window geometry (e.g. CSS vars). */
   rootStyle?: React.CSSProperties;
+  /** PHILO-16 (A1) §4.3 — the lamp at the right end of the title: the
+   * window's IconLamp tone. Omitted, no lamp. `ask` pulses (static under
+   * reduced motion). */
+  lamp?: "ask" | "info" | "ok" | "warn";
   children?: ReactNode;
 }
 
@@ -663,6 +668,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     unmountOnMinimize,
     entrance = true,
     rootStyle,
+    lamp,
     children,
   } = props;
   const minimized = useDesk((s) => s.panelMin.includes(id));
@@ -937,6 +943,11 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         (maxed ? " is-max" : "") +
         (isFront ? " is-front" : "")
       }
+      // PHILO-16 (A1) §3: the plane the ladder draws from. Until the
+      // compositor (A2) writes near/far from the stacking order, the frame
+      // derives it from the one front hook, so `.is-front` and the plane
+      // never disagree.
+      data-plane={minimized ? "seated" : isFront ? "front" : "far"}
       style={style}
       // An origin window's entrance is the fly-out-of-the-object WAAPI
       // (pre-paint, in the placement effect) — never the side slide.
@@ -1022,12 +1033,23 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           </Button>
         </span>
         {leading}
-        {icon}
+        {/* PHILO-16 (A1) §4.1: the object's icon, 14 px, left of the title:
+            the host's own icon, else the sprite its Dock launcher wears. */}
+        {(icon ?? DOCK_SPRITES[id]) ? (
+          <span className="desk-window-icon">
+            {icon ?? (
+              <img src={DOCK_SPRITES[id]} alt="" width={14} height={14} draggable={false} />
+            )}
+          </span>
+        ) : null}
         {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
             title (Article VII.1); the prop survives for callers/AT. */}
         <span className="desk-pullout-title desk-window-title">
           {typeof title === "string" && name !== ownName ? name : title}
         </span>
+        {lamp ? (
+          <span className="desk-window-lamp" data-tone={lamp} aria-hidden="true" />
+        ) : null}
         {wings}
         {actions ? <span className="desk-window-actions">{actions}</span> : null}
         <span className="desk-gadgets desk-gadgets-right">

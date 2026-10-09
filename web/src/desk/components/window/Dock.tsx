@@ -159,6 +159,19 @@ const DOCK_APP_IDS = new Set<string>(
   [...DOCK_APPLICATIONS.map((application) => application.windowId), "surface-people"],
 );
 const ACTIONABLE_LAUNCHERS = new Set(["attention", "delivery-board"]);
+/** PHILO-16 (A1): parked, seats live in the dock (§5). The window chips
+ * after the separator (one per open window that is not an application) are
+ * not drawn; a seated window shows on its tile as the seat lamp instead.
+ * The code below stays behind this flag. */
+const NUB_CHIPS = false;
+/** PHILO-16 (A1) §5: a tile is the seat of its window: the minimize and
+ * restore motion flies to it (DeskWindow.tsx reads chipEls). */
+const seatRef = (windowId: string) => (el: HTMLElement | null) => {
+  if (NUB_CHIPS) return;
+  if (el) chipEls.set(windowId, el);
+  else chipEls.delete(windowId);
+};
+const seatLamp = <span className="desk-dock-seat" aria-hidden="true" />;
 const PEOPLE_APPLICATION = applicationForAction("open-people");
 const DOCK_FACE_APPLICATIONS = [
   ...DOCK_APPLICATIONS,
@@ -439,7 +452,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   }
   // A launcher whose surface is already a window folds into that chip;
   // it only renders as a launcher while its surface is closed.
-  const shown = launchers.filter((l) => !windows.some((w) => w.id === l.id));
+  // PHILO-16 (A1): with the chips parked the launcher stays; it is the
+  // window's seat.
+  const shown = NUB_CHIPS
+    ? launchers.filter((l) => !windows.some((w) => w.id === l.id))
+    : launchers;
   const activeProjects = useDesk((s) => s.projects).filter((project) => !project.is_archived);
   // PHILO-14 A1: one Project, one number: the Room's own count.
   const projectCounts = projectOpen;
@@ -493,13 +510,17 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         </span>
       ) : null}
       {DOCK_FACE_APPLICATIONS.map((application) => {
-        const win = windows.find((w) => w.id === application.windowId);
+        // PHILO-16 (A1): an application that opens as a pullout (Intelligence)
+        // has the window id `pullout:<windowId>`; its tile is that window's seat.
+        const pulloutId = `pullout:${application.windowId}`;
+        const winId = windows.some((w) => w.id === pulloutId) ? pulloutId : application.windowId;
+        const win = windows.find((w) => w.id === winId);
         // Mounted DOM refs are runtime detail; the compositor owns whether a
         // hosted application is open. Intelligence is not yet a hosted surface.
         const running = application.surface
           ? Boolean(windowsById[application.windowId])
           : Boolean(win);
-        const minimized = running && panelMin.includes(application.windowId);
+        const minimized = running && panelMin.includes(winId);
         const badge =
             application.windowId === "intelligence:desk"
             ? intelligenceBadge
@@ -508,22 +529,27 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         return (
           <Button
             key={application.windowId}
+            ref={seatRef(winId)}
             variant="chrome"
             data-app={application.windowId}
             className={
               "desk-dock-launch desk-dock-app" +
-              (running ? " is-run" : "") +
-              (running && application.windowId === front && !minimized ? " is-front" : "") +
+              (running && !minimized ? " is-run" : "") +
+              (minimized ? " is-seated" : "") +
+              (running && winId === front && !minimized ? " is-front" : "") +
               (needsYouBadge ? " is-attention" : "")
             }
-            aria-label={badge ? `${application.label}, ${needsYouBadge ? needYouWords(badge) : "brief ready"}` : application.label}
+            aria-label={
+              (badge ? `${application.label}, ${needsYouBadge ? needYouWords(badge) : "brief ready"}` : application.label) +
+              (minimized ? ", iconified" : "")
+            }
             aria-describedby={application.windowId === "intelligence:desk" && sendLabel === "SEND FAILED"
               ? "desk-dock-send-failed-desc"
               : undefined}
             onClick={() => {
               const s = useDesk.getState();
-              if (running && minimized) s.restorePanel(application.windowId);
-              else if (running) s.focusPanel(application.windowId);
+              if (running && minimized) s.restorePanel(winId);
+              else if (running) s.focusPanel(winId);
               else if (application.dock.launch === "intelligence")
                 openIntelligence({ view: "brief" });
               else
@@ -537,7 +563,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               if (!running) return;
               e.preventDefault();
               setChipMenu({
-                id: application.windowId,
+                id: winId,
                 label: application.label,
                 x: e.clientX,
                 y: e.clientY,
@@ -555,6 +581,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               <span aria-hidden="true">{application.glyph}</span>
             )}
             <span className="desk-dock-label">{application.label}</span>
+            {minimized ? seatLamp : null}
             {badge ? (
               <span className="desk-chip desk-dock-badge" data-tone={needsYouBadge ? "warn" : undefined}>
                 {badge}
@@ -598,19 +625,26 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             windowsById["surface-project-memory"]?.scope === `project:${project.id}`),
         );
         const count = !offline ? projectCounts[project.id] || 0 : 0;
+        const seated = Boolean(projectWindow && panelMin.includes(projectWindow.id));
         return (
           <Button
             key={`project:${project.id}`}
+            ref={seatRef(drawerWindowId(project.id))}
             variant="chrome"
             data-app="project"
-            className={`desk-dock-launch desk-dock-project${projectWindow ? " is-run" : ""}`}
-            aria-label={count > 0 ? `${project.name}, ${count} open here` : project.name}
+            className={`desk-dock-launch desk-dock-project${projectWindow && !seated ? " is-run" : ""}${seated ? " is-seated" : ""}`}
+            aria-label={(count > 0 ? `${project.name}, ${count} open here` : project.name) + (seated ? ", iconified" : "")}
             // PHILO-14 A2: the Dock opens a Project as its drawer.
-            onClick={() => openDrawer(project.id)}
+            // PHILO-16 (A1): a seated drawer comes back from its seat.
+            onClick={() => {
+              if (seated && projectWindow) useDesk.getState().restorePanel(projectWindow.id);
+              else openDrawer(project.id);
+            }}
           >
             {/* C1: a project is a drawer (the Workbench silhouette rule). */}
             <img src={spriteUrl("directory", project.id)} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
             <span className="desk-dock-label">{project.name}</span>
+            {seated ? seatLamp : null}
             {count > 0 ? (
               <span className="desk-chip desk-dock-badge" data-tone="warn">
                 {count}
@@ -640,13 +674,16 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       </Button>
       {shown.map((launcher) => {
         const actionable = ACTIONABLE_LAUNCHERS.has(launcher.id);
+        const seated = windows.some((w) => w.id === launcher.id) && panelMin.includes(launcher.id);
         return (
           <Button
             key={launcher.id}
+            ref={seatRef(launcher.id)}
             variant="chrome"
             className={
               "desk-dock-launch" +
-              (launcher.open ? " is-run" : "") +
+              (launcher.open && !seated ? " is-run" : "") +
+              (seated ? " is-seated" : "") +
               (launcher.badge && actionable ? " is-attention" : "")
             }
             aria-label={
@@ -654,7 +691,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 ? `${launcher.label}, ${launcher.badge} ${actionable ? "need attention" : "items"}`
                 : launcher.label
             }
-            onClick={launcher.activate}
+            onClick={() => {
+              // PHILO-16 (A1): a seated window comes back from its seat.
+              if (seated) useDesk.getState().restorePanel(launcher.id);
+              else launcher.activate();
+            }}
           >
             {DOCK_SPRITES[launcher.id] ? (
               <img src={DOCK_SPRITES[launcher.id]} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
@@ -662,6 +703,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               <span aria-hidden="true">{launcher.glyph}</span>
             )}
             <span className="desk-dock-label">{launcher.label}</span>
+            {seated ? seatLamp : null}
             {launcher.badge ? (
               <span
                 className="desk-chip desk-dock-badge"
@@ -675,10 +717,10 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       })}
       <RoomActions />
       {center}
-      {visibleWindowChips.length > 0 ? (
+      {NUB_CHIPS && visibleWindowChips.length > 0 ? (
         <span className="desk-dock-sep" aria-hidden="true" />
       ) : null}
-      {visibleWindowChips.map((c) => {
+      {(NUB_CHIPS ? visibleWindowChips : []).map((c) => {
         const minimized = panelMin.includes(c.id);
         return (
           <span

@@ -10,21 +10,63 @@
 .desk-next .desk-window.is-floating:not(.is-card) {
   max-height: none;
 }
-/* HS-97-04 — depth: the front window carries the full elevation and a
-   1px keyline ring; rest windows quiet down. One property, one ladder —
-   never per-window recipes. Sheets keep their own form. */
-/* PHILO-13-11 (C1) — Workbench Steel: every DeskWindowFrame host wears a
+/* HS-97-04 — depth: one property, one ladder, never per-window recipes.
+   PHILO-13-11 (C1) — Workbench Steel: every DeskWindowFrame host wears a
    4 px steel frame (pen 0), an ink keyline (pen 1) and a hard 4 px drop.
-   The ONE front window (DeskWindow.tsx, useFrontWindowId) wears blue (pen 3).
-   The body keeps its dark Signal well (--desk-window-fill). */
+   PHILO-16 (A1) §3 — THE DEPTH LADDER. A window is on a plane and is drawn
+   from its plane alone (`data-plane`): front (blue, lit, the umbra), near
+   (steel, the umbra at half, a 6 % veil), far (steel in shade, the drop
+   only, a 14 % veil), seated (in the dock; DeskWindow hides it). The veil
+   is an ink wash over the body (`::after`, below the title bar, pointer
+   events none); never opacity on a window. `.is-front` is an alias of
+   `data-plane="front"` for one release (DeskWindow.tsx sets both from the
+   one front hook, so they never disagree). */
 .desk-next .desk-window.desk-window-shell {
   border: var(--wb-frame) solid var(--wb-steel);
   border-top: 0;
   border-radius: 0;
-  box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink);
+  box-shadow: var(--desk-window-shadow-rest);
+  transition:
+    border-color var(--desk-raise-duration) var(--desk-ease),
+    box-shadow var(--desk-raise-duration) var(--desk-ease);
 }
-.desk-next .desk-window.desk-window-shell.is-front {
+.desk-next .desk-window.desk-window-shell::after {
+  content: "";
+  position: absolute;
+  top: var(--wb-bar-h);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--desk-z-local);
+  background: transparent;
+  pointer-events: none;
+  transition: background var(--desk-raise-duration) var(--desk-ease);
+}
+.desk-next .desk-window.desk-window-shell:is([data-plane="front"], .is-front) {
   border-color: var(--wb-blue);
+  box-shadow: var(--desk-window-shadow);
+}
+.desk-next .desk-window.desk-window-shell[data-plane="near"] {
+  border-color: var(--wb-steel);
+  box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), var(--wb-umbra-near), inset 0 0 0 1px var(--wb-ink);
+}
+.desk-next .desk-window.desk-window-shell[data-plane="near"]::after {
+  background: var(--desk-veil-near);
+}
+.desk-next .desk-window.desk-window-shell[data-plane="far"] {
+  border-color: var(--wb-steel-dim);
+}
+.desk-next .desk-window.desk-window-shell[data-plane="far"]::after {
+  background: var(--desk-veil-far);
+}
+.desk-next .desk-window.desk-window-shell:not([data-plane="front"], .is-front):hover {
+  border-color: var(--wb-steel-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-window.desk-window-shell,
+  .desk-next .desk-window.desk-window-shell::after {
+    transition: none;
+  }
 }
 .desk-next .desk-window-handle {
   cursor: grab;
@@ -163,8 +205,15 @@
   cursor: nwse-resize;
   touch-action: none;
 }
-.desk-next .desk-window-shell.is-front > .desk-window-grip {
+/* PHILO-16 (A1): the grip is frame, never under the body's veil */
+.desk-next .desk-window-shell > .desk-window-grip {
+  z-index: calc(var(--desk-z-local) + 1);
+}
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-window-grip {
   background: var(--wb-blue);
+}
+.desk-next .desk-window-shell[data-plane="far"] > .desk-window-grip {
+  background: var(--wb-steel-dim);
 }
 .desk-next .desk-window-grip svg {
   display: block;
@@ -362,12 +411,17 @@
   border-radius: 0;
   background: var(--wb-steel);
   /* the ink rule under the bar is drawn as a shadow, so a gadget owns the
-     bar's full height (44 px at 393) */
-  box-shadow: inset 0 -1px 0 var(--wb-ink);
+     bar's full height (44 px at 393). PHILO-16 (A1) §2: the plate is under
+     the one light: a shine on its top, and the body's lit edge under it. */
+  box-shadow: inset 0 1px 0 var(--wb-hi), inset 0 -1px 0 var(--wb-ink), 0 1px 0 var(--wb-hi);
   color: var(--wb-ink);
 }
-.desk-next .desk-window-shell.is-front > .desk-pullout-head {
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head {
   background: var(--wb-stipple-fine), var(--wb-blue);
+}
+/* PHILO-16 (A1) §3: a far window's bar is in shade, flat */
+.desk-next .desk-window-shell[data-plane="far"] > .desk-pullout-head {
+  background: var(--wb-steel-dim);
 }
 .desk-next .desk-window-shell > .desk-pullout-head .desk-pullout-title {
   flex: 0 1 auto;
@@ -382,11 +436,13 @@
   white-space: nowrap;
   background: transparent;
   color: var(--wb-ink);
-  font: 700 12px/calc(var(--wb-bar-h) - 2px) var(--font-mono);
-  letter-spacing: 0.02em;
+  /* PHILO-16 (A1) §4.2, §7: the window title is sans 13/600; mono stays
+     for counts, times and hosts */
+  font: 600 13px/calc(var(--wb-bar-h) - 2px) var(--font-sans);
+  letter-spacing: 0;
   text-transform: none;
 }
-.desk-next .desk-window-shell.is-front > .desk-pullout-head .desk-pullout-title {
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-pullout-title {
   background: var(--wb-blue);
 }
 /* every word a host puts in its title bar is ink on the bar (R5) */
@@ -394,8 +450,61 @@
   color: var(--wb-ink);
 }
 /* title bar B: an inactive window's title is dimmed ink (5.44:1 on steel) */
-.desk-next .desk-window-shell:not(.is-front) > .desk-pullout-head .desk-pullout-title {
+.desk-next .desk-window-shell:not([data-plane="front"], .is-front) > .desk-pullout-head .desk-pullout-title {
   color: var(--wb-ink-dim);
+}
+/* PHILO-16 (A1) §4.1 — the object's icon left of the title, 14 px: the
+   same sprite as the window's launcher. It rides the title's cut-out. */
+.desk-next .desk-window-shell > .desk-pullout-head > .desk-window-icon {
+  display: inline-flex;
+  flex: none;
+  align-self: center;
+  align-items: center;
+  margin: 0 -6px 1px 6px;
+  padding: 0 0 0 6px;
+}
+.desk-next .desk-window-shell > .desk-pullout-head > .desk-window-icon :is(img, svg) {
+  display: block;
+  width: 14px;
+  height: 14px;
+  image-rendering: pixelated;
+}
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head > .desk-window-icon {
+  background: var(--wb-blue);
+}
+/* PHILO-16 (A1) §4.3 — the lamp at the right end of the title cut-out:
+   the window's IconLamp tone. A window that needs you glows in its bar. */
+.desk-next .desk-window-shell > .desk-pullout-head > .desk-window-lamp {
+  flex: none;
+  align-self: center;
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  margin: 0 6px 1px -4px;
+  border: 1px solid var(--wb-ink);
+}
+.desk-next .desk-window-lamp[data-tone="ask"] {
+  background: var(--lamp-ask);
+  animation: desk-window-lamp-pulse var(--desk-lamp-pulse) ease-in-out infinite;
+}
+.desk-next .desk-window-lamp[data-tone="info"] {
+  background: var(--lamp-info);
+}
+.desk-next .desk-window-lamp[data-tone="ok"] {
+  background: var(--lamp-ok);
+}
+.desk-next .desk-window-lamp[data-tone="warn"] {
+  background: var(--lamp-warn);
+}
+@keyframes desk-window-lamp-pulse {
+  50% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-ask) 35%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-window-lamp[data-tone="ask"] {
+    animation: none;
+  }
 }
 .desk-next .desk-window-shell > .desk-pullout-head > img {
   align-self: center;
@@ -443,17 +552,17 @@
      no left rail) */
   box-shadow: inset 1px 0 0 var(--wb-rule), var(--wb-raised-soft);
 }
-.desk-next .desk-window-shell.is-front > .desk-pullout-head .desk-gadget {
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget {
   background: var(--wb-blue);
 }
 .desk-next .desk-pullout-head .desk-gadget:hover:not(:disabled),
-.desk-next .desk-window-shell.is-front > .desk-pullout-head .desk-gadget:hover:not(:disabled) {
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget:hover:not(:disabled) {
   background: var(--wb-steel-2);
 }
 .desk-next .desk-pullout-head .desk-gadget:active:not(:disabled),
-.desk-next .desk-window-shell.is-front > .desk-pullout-head .desk-gadget:active:not(:disabled),
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget:active:not(:disabled),
 .desk-next .desk-pullout-head .desk-gadget[aria-pressed="true"],
-.desk-next .desk-window-shell.is-front > .desk-pullout-head .desk-gadget[aria-pressed="true"] {
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget[aria-pressed="true"] {
   background: var(--wb-press);
   box-shadow: var(--wb-sunken);
   transform: none;

@@ -283,11 +283,11 @@
   --desk-z-dock-under: 40; /* the dock on compact viewports — sheets own the phone's bottom */
   --desk-z-popover: 82; /* popovers/toasts above even the transient band */
   --desk-glass: var(--surface-2); /* HS-110-01: opaque surface, no frosted glass */
-  --desk-window-fill: var(--surface-1); /* HS-110-01: opaque window body — no transparency, no vibrancy */
+  --desk-window-fill: var(--wb-field); /* PHILO-16 §2 amends HS-110-01: the light returns, the glass stays dead. The window ground is slate (--wb-field), opaque */
   --desk-panel-fill: var(--bg); /* HS-110-01: secondary panel fill, opaque */
   --desk-window-radius: 2px; /* HS-110-01: sharp Workbench corners */
-  --desk-window-shadow: none; /* HS-110-01: depth from bevels, not Gaussian shadows */
-  --desk-window-shadow-rest: none; /* HS-110-01: no shadow distinction — border color IS the distinction */
+  --desk-window-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), var(--wb-umbra), inset 0 0 0 1px var(--wb-ink); /* PHILO-16 §2 amends HS-110-01: the light returns, the glass stays dead. The front window: ink keyline, the hard drop, the umbra */
+  --desk-window-shadow-rest: 0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink); /* PHILO-16 §2 amends HS-110-01: the light returns, the glass stays dead. A window at rest: ink keyline and the hard drop, no umbra */
   --desk-window-keyline: var(--border-strong); /* HS-110-01: front window wears the strong border, not an accent-mixed ring */
   --desk-window-blur: none; /* HS-110-01: no backdrop-filter — opaque surfaces */
   --desk-window-bevel: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark); /* HS-110-01: the raised bevel (Workbench depth grammar) */
@@ -359,6 +359,28 @@
   --wb-ink-dim: #2a2e36; /* PHILO-13-11 title bar B (owner pick 2026-10-03): an inactive window's title (5.44:1 on steel) */
   --wb-rule: rgba(11, 12, 16, 0.45); /* PHILO-13-11 title bar B (owner pick 2026-10-03): the hairline between gadget cells */
   --wb-raised-soft: inset 1px 1px 0 rgba(255, 255, 255, 0.36), inset -1px -1px 0 rgba(0, 0, 0, 0.25); /* PHILO-13-11 title bar B (owner pick 2026-10-03): a gadget cell, the raised bevel at half strength */
+  --wb-steel-dim: #7f8591; /* PHILO-16 (A1) the light: a plate in shade, steel at 82 % (the far window's frame and bar) */
+  --wb-umbra: 0 18px 40px rgba(0, 0, 0, 0.45); /* PHILO-16 (A1) the light: the front window's umbra, cast down by the one top-left light */
+  --wb-umbra-near: 0 10px 22px rgba(0, 0, 0, 0.28); /* PHILO-16 (A1) the light: the near window's umbra, at half */
+  --desk-veil-near: rgba(11, 12, 16, 0.06); /* PHILO-16 (A1) the depth ladder: the ink wash over a near window's body (never opacity) */
+  --desk-veil-far: rgba(11, 12, 16, 0.14); /* PHILO-16 (A1) the depth ladder: the ink wash over a far window's body (never opacity) */
+  --wb-field: #cdd2db; /* PHILO-16 (A1) the interior: the window ground, slate between paper and steel */
+  --wb-field-hi: #d8dce4; /* PHILO-16 (A1) the interior: the ground where the light falls (the top of a window body) */
+  --wb-well: #eef0f3; /* PHILO-16 (A1) the interior: a sunken well (ledger, input, icon grid), paper */
+  --wb-text: #0b0c10; /* PHILO-16 (A1) the interior: ink, the words inside a window */
+  --wb-muted: #4a5060; /* PHILO-16 (A1) the interior: secondary ink (5.3:1 on --wb-field; the canvas said 7.0, measured 5.31) */
+  --wb-rule-soft: rgba(11, 12, 16, 0.18); /* PHILO-16 (A1) the interior: a hairline between rows on slate */
+  --wb-sel: #6688bb; /* PHILO-16 (A1) the interior: the selection, Workbench blue with paper on it */
+  --desk-window-fall: linear-gradient(180deg, var(--wb-field-hi) 0%, var(--wb-field) 100%); /* PHILO-16 (A1) the interior: the slate ground, lit at the top */
+  --desk-floor: radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 60%) 0 0 / auto, linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.28) 100%) 0 0 / auto, repeating-conic-gradient(var(--wb-dither) 0 25%, transparent 0 50%) 0 0 / 8px 8px, var(--wb-backdrop); /* PHILO-16 (A1) the floor: the Workbench backdrop (8 px checker of --wb-dither) under the light's vignette (bright top-left, falling to the foot); a `background` shorthand */
+  --desk-ease: cubic-bezier(0.2, 0.8, 0.2, 1); /* PHILO-16 (A1) the motion grammar: the one easing for every compositor moment */
+  --desk-raise-duration: 180ms; /* PHILO-16 (A1) the motion grammar: Raise, the frame and the umbra change plane */
+  --desk-lamp-pulse: 1.6s; /* PHILO-16 (A1) the title-bar lamp: an asking window pulses once every 1.6 s (reduced motion: static) */
+  --wb-ember-ink: #7a4a2c; /* PHILO-16 (A1) the interior: ember as TEXT or a filled verb on slate (4.9:1 on --wb-field; 6.6:1 under --text-on-accent); the accent remaps to it inside a window */
+  --wb-ok-ink: #1d5c2e; /* PHILO-16 (A1) the interior: an ok word on slate (5.3:1 on --wb-field; the C1 dock tag tone) */
+  --wb-warn-ink: #6b4a00; /* PHILO-16 (A1) the interior: a warn word on slate (5.3:1 on --wb-field; the C1 dock tag tone) */
+  --wb-danger-ink: #9b2219; /* PHILO-16 (A1) the interior: a danger word on slate (5.5:1 on --wb-field) */
+  --wb-info-ink: #2f4f86; /* PHILO-16 (A1) the interior: an info word on slate (5.4:1 on --wb-field) */
   --bevel-raised: inset 1px 1px 0 var(--bevel-light-strong), inset -1px -1px 0 var(--bevel-dark); /* PHILO-14 B1 (the object species): the bevel grammar: a control you click (a gadget, a sort header, a plate) LOOKS raised */
   --bevel-sunken: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light-strong); /* PHILO-14 B1 (the object species): the bevel grammar: a well you type or drop into, and a pressed gadget, sits sunken */
   --bevel-raised-soft: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark-soft); /* PHILO-14 B2 (the material pass): the light bevel of a filter token: you press it, but it is no plate and never looks like a wing */

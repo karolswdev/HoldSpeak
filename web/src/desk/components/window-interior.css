@@ -1,0 +1,87 @@
+/* PHILO-16 (A1) §2, §9, §11 — the interior joins the material.
+   Owner, 2026-10-08: "The content. Why is it still black inside?"
+   ONE block remaps the interior tokens every face reads, so every window
+   moves at once (§9); the kit is then swept face by face (§11).
+
+   Scope: the window SHELL. DeskWindowFrame renders no body element of
+   its own (the host's children follow the title bar directly:
+   .desk-pullout-body, .desk-surface-body, .chair-window-body, ...), so the
+   shell is the one element every interior sits in. The title bar draws
+   from the --wb-* pens alone (window-chrome.css), so the remap never
+   reaches it.
+
+   A custom property that aliases another (`--canvas: var(--surface-1)`)
+   is resolved where it is declared (:root), so each alias a face reads is
+   remapped here by name too, not only its source.
+
+   The two portalled transients that paint --desk-window-fill outside any
+   shell (the Thought context picker, the tool shelf) take the same
+   interior: the fill is slate everywhere now, so its words are ink. */
+.desk-next .desk-window.desk-window-shell,
+.thought-context-overlay .thought-context-picker,
+.desk-next .desk-tool-shelf {
+  /* ground: slate, wells paper, plates steel */
+  --bg: var(--wb-field);
+  --surface-1: var(--wb-field);
+  --surface-2: var(--wb-well);
+  --surface-3: var(--wb-steel-2);
+  --surface-hover: color-mix(in srgb, var(--wb-ink) 5%, transparent);
+  --surface-active: color-mix(in srgb, var(--wb-ink) 9%, transparent);
+  --canvas: var(--wb-field);
+  --canvas-raised: var(--wb-field);
+  --canvas-elevated: var(--wb-well);
+  --desk-window-well: var(--wb-well);
+  --desk-panel-fill: var(--wb-field);
+  --desk-window-rail: var(--wb-field-hi);
+  --desk-glass: var(--wb-well);
+  --desk-aerogel-fill: var(--wb-well);
+  --desk-aerogel-edge: var(--wb-rule-soft);
+  /* body strips (a foot, a rail) are steel plates (§11 Foot) */
+  --desk-window-head-fill: var(--wb-steel);
+  --desk-window-head-front: var(--wb-steel-2);
+  --gadget-fill: var(--wb-steel);
+  --gadget-fill-hover: var(--wb-steel-2);
+  /* ink */
+  --text: var(--wb-text);
+  --text-muted: var(--wb-muted);
+  --text-faint: var(--wb-muted);
+  --disabled-bg: var(--wb-field);
+  --disabled-fg: var(--wb-muted);
+  --disabled-border: var(--wb-rule-soft);
+  /* rules */
+  --border: var(--wb-rule-soft);
+  --border-strong: var(--wb-rule);
+  --border-subtle: color-mix(in srgb, var(--wb-ink) 10%, transparent);
+  --line: var(--wb-rule-soft);
+  --line-strong: var(--wb-rule);
+  --field-bg: var(--wb-well);
+  --field-border: var(--wb-rule);
+  --desk-scrollbar-thumb: color-mix(in srgb, var(--wb-ink) 22%, transparent);
+  --desk-scrollbar-thumb-hover: color-mix(in srgb, var(--wb-ink) 38%, transparent);
+  /* the selection: Workbench blue with paper on it */
+  --selected-bg: var(--wb-sel);
+  --selected-fg: var(--wb-paper);
+  --selected-soft: color-mix(in srgb, var(--wb-sel) 18%, transparent);
+  --selection-bg: var(--wb-sel);
+  --selection-ink: var(--wb-paper);
+  /* the ember and the state words, as ink a face can read on slate;
+     the lamp squares (--lamp-*) keep their bright tones (resolved at :root) */
+  --accent: var(--wb-ember-ink);
+  --accent-text: var(--wb-ember-ink);
+  --line-emphasis: var(--wb-ember-ink);
+  --field-focus-border: var(--wb-sel);
+  --ok: var(--wb-ok-ink);
+  --success: var(--wb-ok-ink);
+  --warn-signal: var(--wb-warn-ink);
+  --warn: var(--wb-warn-ink);
+  --danger-signal: var(--wb-danger-ink);
+  --danger: var(--wb-danger-ink);
+  --info: var(--wb-info-ink);
+  --local: var(--wb-info-ink);
+  color: var(--wb-text);
+}
+
+/* the ground is lit: brighter at the top where the light falls (§2) */
+.desk-next .desk-window.desk-window-shell {
+  background: var(--desk-window-fall);
+}
