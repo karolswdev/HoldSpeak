@@ -513,6 +513,76 @@ def test_download_returns_job_shape():
     mock_lib_svc.download.assert_called_once()
 
 
+def test_download_job_id_is_the_acquisition_id_the_poll_reads():
+    """PHILO-16 (C): the bar polls /api/inference/acquisitions/{jobId}; the
+    id must be the acquisition's, never the receipt's kind."""
+    from holdspeak.services.concierge_service import download
+
+    lib = MagicMock()
+    lib.download.return_value = {
+        "receipt": {"kind": "model_library_add"},
+        "acquisition": {"id": "acq-123", "verified_bytes": 10, "transport_bytes": 40, "bytes_total": 100},
+    }
+    result = download(preset_id="p", model_library_service=lib, principal=MagicMock(), catalog_revision=1)
+    assert result["jobId"] == "acq-123"
+    assert result["progress"] == {"received": 10, "total": 100}
+
+
+def test_detect_marks_found_engines_and_names_the_download_host(fake_home, lan_profile):
+    """PHILO-16 (C): an engine with no model record is FOUND; a preset names
+    the host its file comes from (never THIS DEVICE on a download)."""
+    db = FakeDB(profiles=[lan_profile])
+    with patch("holdspeak.services.inference_setup_service.inspect_hardware") as mock_hw, \
+         patch("holdspeak.services.inference_setup_service.inspect_runtimes") as mock_rt, \
+         patch("holdspeak.inference_setup_catalog.packaged_catalog_envelope_json") as mock_env, \
+         patch("holdspeak.inference_setup_catalog.verify_catalog_envelope") as mock_cat, \
+         patch("holdspeak.inference_setup_catalog.applicable_presets") as mock_presets:
+        mock_hw.return_value = {"capability": {"apple_silicon": True, "system": "darwin", "architecture": "arm64"}}
+        mock_rt.return_value = [{"id": "llama_cpp_prompt_v1", "availability": {"state": "available"}}]
+        mock_env.return_value = "{}"
+        mock_cat.return_value = {"catalog_revision": 1, "entries": []}
+        mock_presets.return_value = [{
+            "id": "qwen-0.8b-preset", "kind": "local_artifact_preset", "activation": "download",
+            "label": "Qwen 3.5 0.8B", "source": {"download_bytes": 532_000_000},
+        }]
+        from holdspeak.services.concierge_service import detect
+
+        result = detect(
+            db=db, home=fake_home,
+            http_get=lambda url, **kw: (200, b'{"data":[]}'),
+            loopback_scan=lambda: [{"id": "local:ollama:11434:llama3", "model": "llama3",
+                                    "base_url": "http://127.0.0.1:11434/v1", "engine": "ollama", "port": 11434}],
+        )
+    engines = {e["id"]: e for e in result["engines"]}
+    assert engines["local:ollama:11434:llama3"]["found"] is True
+    assert "found" not in engines["lan:lan-qwen"]  # a library engine is not found
+    preset = engines["preset:qwen-0.8b-preset"]
+    assert preset["downloadHost"] == "huggingface.co"
+    assert "found" not in preset  # a download is not a find
+    files = [e for e in result["engines"] if e.get("path")]
+    assert files and all(e["found"] is True for e in files)
+
+
+def test_engine_fits_attaches_the_authority_answer_per_group():
+    from holdspeak.services.concierge_service import engine_fits
+
+    def fit(engine, group_id):
+        if group_id == "agents_tools":
+            return {"served": [], "blocked": [{"capability_id": "agent.tool_turn", "code": "tool_incompatible"}]}
+        if group_id == "meetings":
+            return {"served": ["meeting.auto_title"],
+                    "blocked": [{"capability_id": "meeting.deferred_analysis", "code": "structured_output_unsupported"}]}
+        return {"served": ["x"], "blocked": []}
+
+    engines = [{"id": "lan:a", "profileId": "a"}, {"id": "local:file", "path": "/m.gguf"}]
+    engine_fits(engines, fit, ["thoughts_notes", "meetings", "agents_tools"])
+    assert engines[0]["fits"]["thoughts_notes"] == {"state": "READY"}
+    assert engines[0]["fits"]["meetings"]["state"] == "LIMITED"
+    assert engines[0]["fits"]["meetings"]["blocked"] == ["Summaries"]
+    assert engines[0]["fits"]["agents_tools"]["state"] == "INCOMPATIBLE"
+    assert "fits" not in engines[1]
+
+
 # ---- engine_display_name tests -----------------------------------------------
 
 

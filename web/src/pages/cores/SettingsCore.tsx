@@ -1980,7 +1980,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               ) : !hasModel ? (
                 <>
                   <StateChip state="warning" label="NO MODEL" data-testid="settings-no-model" />
-                  <Button variant="ghost" dense onClick={() => openSurface("open-concierge")} data-testid="settings-choose-model">
+                  <Button variant="ghost" dense onClick={() => openSurface("open-concierge", "meetings")} data-testid="settings-choose-model">
                     Choose model
                   </Button>
                 </>

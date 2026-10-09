@@ -1,3 +1,7 @@
+// PHILO-16 (C): these tests describe the PARKED ConciergeCore (it renders
+// nowhere now). Their live intents are ported to features/runson/__tests__
+// (state words, a drop writes the chain, 409, Try it, FOUND, the bar, the
+// add row); they stay green against the parked core until it is retired.
 /* PHILO-15 10 — the engine setup tells the truth (B05, B06, B10).
  * READY only where the whole group runs; LIMITED names the work it cannot
  * do; "Use these" keeps the window and says what it set; the Check names

@@ -27,7 +27,8 @@ export {
   SurfaceLibrary,
   SurfaceLibraryTile,
   SurfaceLibraryGhost,
-  SurfaceSwitchboard,
+  // PHILO-16 (C): the HS-101 list switchboard is parked in Surface.tsx;
+  // `SurfaceSwitchboard` is now the wired board below (Switchboard.tsx).
   SurfaceBay,
   EditInPlace,
   ConfirmVerb,
@@ -60,6 +61,20 @@ export {
 } from "./gadgets";
 
 export { SurfaceFooter } from "./SurfaceFooter";
+export {
+  SurfaceSwitchboard,
+  useSwitchboardLayout,
+  SWITCHBOARD_LIST_BELOW,
+  type SurfaceSwitchboardProps,
+  type SwitchJob,
+  type SwitchEngine,
+  type SwitchWire,
+  type SwitchAccept,
+  type SwitchState,
+  type SwitchLamp,
+  type SwitchLayout,
+} from "./Switchboard";
+export { wirePath, plugPoint, patchChain } from "./switchboardGeometry";
 export { Material } from "./Material";
 export { useRovingRows } from "./roving";
 

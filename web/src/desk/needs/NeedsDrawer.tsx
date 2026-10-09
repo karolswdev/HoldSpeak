@@ -266,7 +266,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
         <Button dense variant={lead} aria-label={named(v.verb)} data-testid="needs-row-verb" data-verb="setup"
           onClick={() => (v.key === "unknown"
             ? void refreshNeedsYou(true)
-            : openSurfaceOr("open-concierge", "/models"))}>{v.verb}</Button>
+            : openSurfaceOr("open-concierge", "/models", v.key))}>{v.verb}</Button>
       );
     case "repair":
       return (

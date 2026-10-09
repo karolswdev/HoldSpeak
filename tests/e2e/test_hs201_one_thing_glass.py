@@ -40,6 +40,7 @@ from .glass_infra import (
     assign_engine,
     engine_profile,
 )
+from .runs_on import close_runs_on, wait_board
 from tests._evidence import evidence_dir
 
 # PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
@@ -54,7 +55,8 @@ SPEECH_CAPABILITY = "speech.transcribe"
 
 
 def _quiet_concierge(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Keep the Models window off the real hardware scan (speed, not truth)."""
+    """Keep the Runs on window (the Models window) off the real hardware
+    scan (speed, not truth)."""
     import holdspeak.services.concierge_service as cs
 
     detection = {
@@ -64,7 +66,30 @@ def _quiet_concierge(monkeypatch: pytest.MonkeyPatch) -> None:
         "runtimes": [],
         "checkedAt": "2026-09-19T09:41:00Z",
     }
-    monkeypatch.setattr(cs, "detect", lambda **_: detection)
+    def detect(**kwargs: Any) -> dict[str, Any]:
+        # PHILO-16 (C): Runs on draws the engines the library holds, so the
+        # quiet scan still lists the owner's own endpoints (no hardware,
+        # runtime, file or network scan): an engine added from the face
+        # joins the column the way the real detection lists it.
+        db = kwargs.get("db")
+        engines: list[dict[str, Any]] = []
+        for profile in (db.profiles.list() if db is not None else []):
+            base = str(getattr(profile, "base_url", "") or "")
+            if getattr(profile, "deleted", False) or not base:
+                continue
+            local = "127.0.0.1" in base or "localhost" in base
+            engines.append({
+                "id": f"{'local' if local else 'lan'}:{profile.id}",
+                "kind": "local" if local else "lan",
+                "name": str(getattr(profile, "model", "") or profile.name or profile.id),
+                "host": "THIS DEVICE" if local else cs._host_for_base_url(base),
+                "state": "READY",
+                "baseUrl": base,
+                **cs._detected_profile_fields(db, str(profile.id)),
+            })
+        return {**detection, "engines": engines}
+
+    monkeypatch.setattr(cs, "detect", detect)
     monkeypatch.setattr(cs, "propose", lambda **_: {"rows": [], "receipt": {"groups": 0, "engines": 0, "waiting": 0}})
 
 
@@ -105,7 +130,7 @@ def _settings_updated(page: Any) -> None:
     (`web/src/desk/returnToTask.ts:37`); `announceTaskReturn` dispatches
     exactly this event on `window` (`:113`), and the Models face calls it
     after a successful apply
-    (`web/src/features/concierge/useConciergeController.ts:507`). Faces
+    (`web/src/features/runson/useRunsOn.ts`, `patch`). Faces
     holding an unfinished task re-read on it -- the Chair's SETUP row is
     one.
     """
@@ -234,11 +259,11 @@ class TestOneThing:
 
             page.screenshot(path=str(SHOTS / f"chair-blocker-{suffix}.png"), full_page=True)
 
-            # ── the Button opens Models ──
+            # ── the Button opens Runs on (PHILO-16 C: the Models window) ──
             page.locator("[data-object-id='blocker:engines'] [data-verb='setup']").click()
-            page.locator("[data-testid='concierge-root']").wait_for(timeout=15_000)
+            wait_board(page)
             # Close it again so the "row is gone" shot is the Chair itself.
-            page.locator("[data-testid='concierge-cancel']").click()
+            close_runs_on(page)
             _settle(page)
 
             # ── the shot of the row the repair must clear ──
@@ -256,7 +281,7 @@ class TestOneThing:
             # The product's OWN return signal, not a synthetic focus
             # (counsel round 2, condition 1): `holdspeak:settings-updated`
             # is what Models announces the moment it applies a set
-            # (`web/src/features/concierge/useConciergeController.ts:507`
+            # (`web/src/features/runson/useRunsOn.ts`, `patch`
             # -> `announceTaskReturn`, `web/src/desk/returnToTask.ts:113`,
             # the event named at `:37`). This rig stubs the Concierge scan
             # (`_quiet_concierge`), so the Models face has no row to apply;

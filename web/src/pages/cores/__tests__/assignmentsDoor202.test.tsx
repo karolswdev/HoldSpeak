@@ -8,7 +8,11 @@
  */
 import { describe, expect, it } from "vitest";
 import prefsSource from "../settingsPrefs.tsx?raw";
-import conciergeSource from "../../../features/concierge/ConciergeCore.tsx?raw";
+// PHILO-16 (C): the address row lives in Runs on now; the parked Concierge
+// keeps its own placeholder, and both are read.
+import parkedConciergeSource from "../../../features/concierge/ConciergeCore.tsx?raw";
+import runsOnSource from "../../../features/runson/RunsOnCore.tsx?raw";
+const conciergeSource = `${parkedConciergeSource}\n${runsOnSource}`;
 import { PREF_MODULES } from "../settingsPrefs";
 
 describe("every declared settings module has a ledger row (HS-202-02)", () => {
@@ -18,8 +22,11 @@ describe("every declared settings module has a ledger row (HS-202-02)", () => {
     ),
   );
 
-  it("renders a row for assignments", () => {
-    expect(rendered.has("assignments")).toBe(true);
+  // PHILO-16 (C): Assignments merged into the one Runs on row (id
+  // `models`); the `assignments` id is an alias that opens the same window.
+  it("renders the one Runs on row", () => {
+    expect(rendered.has("models")).toBe(true);
+    expect(prefsSource).toContain('primary="Runs on"');
   });
 
   it("leaves no declared module without a door", () => {

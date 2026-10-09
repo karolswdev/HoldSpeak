@@ -1,3 +1,7 @@
+// PHILO-16 (C): these tests describe the PARKED ConciergeCore (it renders
+// nowhere now). Their live intents are ported to features/runson/__tests__
+// (state words, a drop writes the chain, 409, Try it, FOUND, the bar, the
+// add row); they stay green against the parked core until it is retired.
 /* HS-201-09 — connect an engine from the face.
  *
  * The rehearsal (audits/rehearsal-07-opus.md) proved a stranger could not:

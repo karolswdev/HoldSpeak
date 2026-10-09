@@ -3078,7 +3078,9 @@
         "GET"
       ],
       "module": "web.routes.setup",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/inference/acquisitions/{job_id}/cancel",
