@@ -948,7 +948,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       ? {}
       : plate
         ? // PHILO-16: a plate (stage, exposé) is the window's own element at
-          // its own size, drawn at scale k (window-chrome.css `--k`): it
+          // its own size, drawn at scale k (window-chrome.css `--plate-k`): it
           // scales, it never reflows.
           ({
             top: plate.rect.y,
@@ -958,7 +958,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             right: "auto",
             bottom: "auto",
             maxHeight: "none",
-            ...(plate.k !== undefined && plate.k < 1 ? { "--k": plate.k.toFixed(4) } : {}),
+            ...(plate.k !== undefined && plate.k < 1 ? { "--plate-k": plate.k.toFixed(4) } : {}),
           } as React.CSSProperties)
       : maxed && zoomRect
         ? // PHILO-13-12 (C2): the zoomed rect the user sized.
@@ -994,6 +994,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       tabIndex={-1}
       data-plane={plane}
       data-layer="window"
+      data-plate={plate ? (plate.k !== undefined && plate.k < 1 ? "scaled" : "full") : undefined}
       onKeyDown={(e) => {
         if (e.key === "Escape" && !e.defaultPrevented) {
           e.stopPropagation();

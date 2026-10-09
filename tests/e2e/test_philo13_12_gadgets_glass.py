@@ -171,7 +171,8 @@ class TestTheGadgets:
             return
         # a ghosted row carries its reason after the name ("Zoom · Fills the screen")
         got = [(r["label"].split(" · ")[0], r["keycap"]) for r in menu["rows"]]
-        want = [("Iconify", "⌘M"), ("Zoom", "⌃M"), ("To back", "⌃B"), ("Close window", "⌘W"),
+        # PHILO-16 §5: Zoom ⌘⇧Z, To back ⌘⇧` (⌃M and ⌃B stay bound one release).
+        want = [("Iconify", "⌘M"), ("Zoom", "⌘⇧Z"), ("To back", "⌘⇧`"), ("Close window", "⌘W"),
                 ("Desk", None), ("Go", None)]
         if got != want:
             fails["G3 the menu bar with its key caps"] = got

@@ -220,6 +220,11 @@ export function departInto(
   clone.removeAttribute("aria-label");
   clone.setAttribute("aria-hidden", "true");
   clone.setAttribute("inert", "");
+  // The snapshot is no window: it never reads as a front (one front, by
+  // construction) and no query for windows finds it.
+  clone.classList.remove("is-front");
+  clone.removeAttribute("data-plane");
+  clone.removeAttribute("data-layer");
   clone.classList.add("desk-window-departing");
   Object.assign(clone.style, {
     left: `${r.left}px`,
