@@ -368,12 +368,12 @@ def test_windows_no_view_can_open_from_a_row_are_refused(svc: Any) -> None:
     does not carry is refused by name."""
     from holdspeak.services.desk_window_service import NOT_ON_HUB
 
-    for wid in ("attention", "inspector", "lane", "ask", "drawer-info:note:n1", "conductor-info:x", "editor:note:n1"):
+    for wid in ("attention", "inspector", "ask", "drawer-info:note:n1", "conductor-info:x", "editor:note:n1"):
         with pytest.raises(ValidationError) as caught:
             svc.open(wid)
         assert caught.value.code == "window_not_on_hub", wid
-    assert "lane" in NOT_ON_HUB and svc.list()["windows"] == []
-    assert svc.list()["registry"]["not_on_hub"]["lane"]
+    assert "inspector" in NOT_ON_HUB and svc.list()["windows"] == []
+    assert svc.list()["registry"]["not_on_hub"]["inspector"]
 
 
 def test_a_project_drawer_row_names_its_project(svc: Any) -> None:
@@ -381,3 +381,42 @@ def test_a_project_drawer_row_names_its_project(svc: Any) -> None:
     assert row["app"] == "drawer" and row["object_ref"] == "project:p-ledger"
     assert svc.open("drawer:parked")["app"] == "drawer"
     assert svc.open("conductor")["app"] == "open-conductor"
+
+
+# ---- Astra r2 on #16b: one snapshot; the lane follows ------------------------
+
+
+def test_list_rows_and_revision_are_one_snapshot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """M1 (her producer repro): a window opened between the list's two reads
+    never yields a list whose revision names a write its rows do not hold."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    db = Database(tmp_path / "race.db")
+    svc = DeskWindowService(db, on_changed=lambda *_: None)
+    svc.open("chair:brief")
+    svc.close("chair:brief")
+    real_rows = svc._rows
+    written: list[dict[str, Any]] = []
+
+    def after_rows(conn: Any) -> Any:
+        rows = real_rows(conn)
+        with ThreadPoolExecutor(1) as pool:
+            written.append(pool.submit(
+                lambda: DeskWindowService(db, on_changed=lambda *_: None).open("chair:brief")).result())
+        return rows
+
+    monkeypatch.setattr(svc, "_rows", after_rows)
+    listed = svc.list()
+    monkeypatch.setattr(svc, "_rows", real_rows)
+    assert listed["windows"] or listed["revision"] < written[0]["revision"], (listed, written)
+    assert svc.list()["revision"] == written[0]["revision"]
+
+
+def test_the_lane_is_on_the_hub_with_its_launch(svc: Any) -> None:
+    """M3: the agent lane follows to another view: its row names the launch,
+    and opening it on another launch re-targets the same window."""
+    row = svc.open("lane", object_ref="launch:L-1")
+    assert row["app"] == "lane" and row["object_ref"] == "launch:L-1"
+    again = svc.open("lane", object_ref="launch:L-2")
+    assert again["object_ref"] == "launch:L-2" and again["revision"] > row["revision"]
+    assert len(svc.list()["windows"]) == 1

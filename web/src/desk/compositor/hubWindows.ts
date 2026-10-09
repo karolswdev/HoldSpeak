@@ -24,6 +24,7 @@ import { SURFACE_APPLICATIONS } from "../applications";
 import { CHAIR_WINDOW_IDS, closeChairWindow, useChairWindows } from "../chair/chairWindows";
 import { workBand } from "../components/window/windowGeometry";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "../conductor/store";
+import { useLane } from "../lane/laneStore";
 import { PARKED_WINDOW_ID, drawerWindowId, useDrawers } from "../drawer/store";
 import { markRehydratedMinimized, useDesk, type PanelRect } from "../store";
 import { onWorkspaceSaved, saveDeskWorkspace } from "../store/workspaceStorage";
@@ -94,9 +95,17 @@ export const httpTransport: HubTransport = {
 
 interface Adapter {
   isOpen(): boolean;
-  open(): void;
+  /** Open here; `row` names the object when the window carries one. */
+  open(row?: HubWindowRow): void;
   close(): void;
+  /** The object the window shows here (the lane's `launch:<id>`), when the
+   * same window can show another object. */
+  object?(): string | null;
 }
+
+/** The lane's window id (lane/LaneWindow.tsx; kept here so this module does
+ * not import the window's component). */
+export const LANE_WINDOW_ID = "lane";
 
 const surfaceByWindowId = new Map(SURFACE_APPLICATIONS.map((a) => [a.windowId, a]));
 
@@ -146,6 +155,23 @@ export function adapterFor(id: string): Adapter | null {
       close: () => useDrawers.getState().closeParked(),
     };
   }
+  // The agent lane: one window on one launch; its row's object is
+  // `launch:<id>`, and the lane's own open path opens it on that launch.
+  if (id === LANE_WINDOW_ID) {
+    const launchOf = (row?: HubWindowRow) => (row?.object_ref ?? "").replace(/^launch:/, "");
+    return {
+      isOpen: () => useLane.getState().launchId !== null,
+      open: (row) => {
+        const launch = launchOf(row);
+        if (launch) useLane.getState().open(launch);
+      },
+      close: () => useLane.getState().close(),
+      object: () => {
+        const launch = useLane.getState().launchId;
+        return launch ? `launch:${launch}` : null;
+      },
+    };
+  }
   if (id === CONDUCTOR_WINDOW_ID) {
     return {
       isOpen: () => useConductor.getState().open,
@@ -189,6 +215,7 @@ function adapterOpenIds(): string[] {
     ...useDrawers.getState().drawers.map((d) => drawerWindowId(d.projectId)),
     ...(useDrawers.getState().parked ? [PARKED_WINDOW_ID] : []),
     ...(useConductor.getState().open ? [CONDUCTOR_WINDOW_ID] : []),
+    ...(useLane.getState().launchId ? [LANE_WINDOW_ID] : []),
   ];
 }
 
@@ -196,6 +223,8 @@ function adapterOpenIds(): string[] {
 
 interface Snapshot {
   open: Set<string>;
+  /** The object each window shows here, when it can show another. */
+  objects: Record<string, string>;
   depth: Record<string, number>;
   min: Set<string>;
   max: Set<string>;
@@ -207,12 +236,21 @@ interface Snapshot {
 const sameRect = (a?: PanelRect, b?: PanelRect) =>
   !!a && !!b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
 
+/** After a hub-opened window's mount moved it, the wait before the hub's
+ * row is applied again (the mount's writes are never sent). */
+export const SETTLE_MS = 150;
+/** At most this many re-applies per window between two gestures (a frame
+ * that re-clamps on every rect cannot loop). */
+const REAPPLY_LIMIT = 3;
+
 export interface HubWindowsOptions {
   transport?: HubTransport;
   /** The view a share resolves against: the working band (L5). */
   view?: () => Rect;
   /** At phone width the windows are sheets: no rect is sent from there. */
   compact?: () => boolean;
+  /** How long a hub-opened window has to mount (default SETTLE_MS). */
+  settleMs?: number;
 }
 
 const defaultView = (): Rect => {
@@ -285,8 +323,14 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     for (const id of s.panelSaved) if (open.has(id) && s.panelRects[id]) rects[id] = s.panelRects[id];
     const zoom: Record<string, PanelRect> = {};
     for (const [id, r] of Object.entries(s.panelZoom ?? {})) if (open.has(id)) zoom[id] = r;
+    const objects: Record<string, string> = {};
+    for (const id of open) {
+      const object = adapterFor(id)?.object?.();
+      if (object) objects[id] = object;
+    }
     return {
       open,
+      objects,
       depth: { ...s.panelDepth },
       min: new Set(s.panelMin.filter((id) => open.has(id))),
       max: new Set(s.panelMax.filter((id) => open.has(id))),
@@ -312,6 +356,10 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
    * or an answer OLDER than it is dropped (L2): a delayed read never moves a
    * window back from a settled write. */
   const applied = new Map<string, number>();
+  /** The list revision at which this view applied a window's close. */
+  const closedAt = new Map<string, number>();
+  /** Ids whose write FAILED: the next read restores the hub's row for them. */
+  const restore = new Set<string>();
 
   /** Apply the hub's rows for `scope` (every id when "all"). An id with a
    * request in flight is left as it shows; a row is applied only when it is
@@ -320,11 +368,23 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
   function apply(list: HubWindowList, scope: Set<string> | "all"): void {
     const byId = new Map(list.windows.map((r) => [r.id, r]));
     const free = (id: string) => (scope === "all" || scope.has(id)) && presentations.pending(id) === 0;
-    const accepted = list.windows.filter((r) => free(r.id) && r.revision > (applied.get(r.id) ?? -1));
+    // A row applies when it is newer than the row this view applied, and not
+    // older than a close it applied. After a FAILED write (`restore`) the
+    // hub's row applies at an equal revision too: the anticipation ends on
+    // the authoritative presentation (L2 "accepted or not").
+    const newer = (r: HubWindowRow) =>
+      (restore.has(r.id) ? r.revision >= (applied.get(r.id) ?? -1) : r.revision > (applied.get(r.id) ?? -1)) &&
+      r.revision >= (closedAt.get(r.id) ?? -1);
+    const accepted = list.windows.filter((r) => free(r.id) && newer(r));
     const ids = scope === "all" ? new Set([...rows.keys(), ...adapterOpenIds(), ...Object.keys(useDesk.getState().panelDepth)]) : scope;
+    // Missing from a list is a close only when the list is STRICTLY newer
+    // than the row this view applied (the list is one snapshot, L2).
     const gone = [...ids].filter(
-      (id) => free(id) && known(id) && !byId.has(id) && list.revision > (applied.get(id) ?? -1),
+      (id) => free(id) && known(id) && !byId.has(id) && list.revision > (applied.get(id) ?? -1)
+        && list.revision > (closedAt.get(id) ?? -1),
     );
+    for (const r of list.windows) if (free(r.id)) restore.delete(r.id);
+    for (const id of gone) restore.delete(id);
     applying = true;
     try {
       for (const row of accepted) {
@@ -334,7 +394,7 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
       }
       for (const id of gone) {
         rows.delete(id);
-        applied.set(id, list.revision);
+        closedAt.set(id, list.revision);
       }
 
       // Close here what the hub closed; open here what the hub opened.
@@ -344,8 +404,15 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
         adapterFor(id)?.close();
         closed.push(id);
       }
+      const mounted: string[] = [];
       for (const row of accepted) {
-        if (!isOpenHere(row.id)) adapterFor(row.id)?.open();
+        const adapter = adapterFor(row.id);
+        if (!isOpenHere(row.id)) {
+          adapter?.open(row);
+          mounted.push(row.id);
+        }
+        // The same window on another object (the lane on another launch).
+        else if (adapter?.object && row.object_ref && adapter.object() !== row.object_ref) adapter.open(row);
       }
 
       // One write of the stacking, the seats, the zooms and the rects.
@@ -368,6 +435,7 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
         else max.delete(row.id);
         const rect = row.arranged ? rectOf(row) : null;
         if (rect) {
+          if (!sameRect(rect, rects[row.id])) mounted.push(row.id);
           rects[row.id] = rect;
           saved.add(row.id);
         } else if (!row.arranged && saved.has(row.id)) {
@@ -391,6 +459,7 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
         stageShelf: shelf,
       });
       saveDeskWorkspace(useDesk.getState());
+      settle(mounted);
     } finally {
       applying = false;
     }
@@ -404,6 +473,63 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
       for (const id of unsent) synced.open.delete(id);
       schedule();
     }
+  }
+
+  /** A window this view opened or moved because the hub said so mounts and
+   * places itself (a drawer raises itself, a frame clamps its rect). Those
+   * writes are the mount's, not the owner's: they are never sent, and the
+   * hub's row is applied again over them. The owner's next gesture (a press,
+   * a key) ends it: from then on his writes go to the hub. A view that only
+   * LOADS or FOLLOWS writes nothing to the desk. */
+  const settling = new Set<string>();
+  const reapplied = new Map<string, number>();
+  let reapplyTimer: ReturnType<typeof setTimeout> | null = null;
+  let resettling = false;
+  function settle(ids: string[]): void {
+    if (resettling) return;
+    for (const id of ids) {
+      settling.add(id);
+      reapplied.set(id, 0);
+    }
+  }
+  /** The hub's rows again over the settling windows (a mount moved them). */
+  function reapply(ids: string[]): void {
+    const now = ids.filter((id) => (reapplied.get(id) ?? 0) < REAPPLY_LIMIT);
+    if (!now.length || stopped) return;
+    for (const id of now) {
+      reapplied.set(id, (reapplied.get(id) ?? 0) + 1);
+      restore.add(id);
+    }
+    resettling = true;
+    try {
+      apply({ windows: [...rows.values()], stage_shelf: useDesk.getState().stageShelf, revision: -1 }, new Set(now));
+    } finally {
+      resettling = false;
+    }
+  }
+  function scheduleReapply(): void {
+    if (reapplyTimer) clearTimeout(reapplyTimer);
+    reapplyTimer = setTimeout(() => {
+      reapplyTimer = null;
+      reapply([...settling]);
+    }, options.settleMs ?? SETTLE_MS);
+  }
+  /** The owner's gesture: the settling windows take the hub's rows once
+   * more, then his writes go to the hub again. */
+  const onGesture = () => {
+    if (!settling.size) return;
+    if (reapplyTimer) {
+      clearTimeout(reapplyTimer);
+      reapplyTimer = null;
+    }
+    const ids = [...settling];
+    for (const id of ids) reapplied.set(id, 0);
+    reapply(ids);
+    settling.clear();
+  };
+  if (typeof window !== "undefined") {
+    window.addEventListener("pointerdown", onGesture, true);
+    window.addEventListener("keydown", onGesture, true);
   }
 
   /** L3: the hub's windows stack in the hub's depth order; a window this
@@ -487,6 +613,7 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
       await Promise.resolve(); // the holds release (anticipate's settle) first
       if (answer instanceof ApiError || answer instanceof Error) {
         // 409: the hub has another revision; 404: it closed. Re-read, follow.
+        for (const id of ids) restore.add(id);
         await reread(new Set(ids));
       } else if (answer && typeof answer === "object" && "windows" in answer) {
         for (const row of (answer as { windows: HubWindowRow[] }).windows) see(row.id, row.revision);
@@ -527,22 +654,34 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     const sendRects = !compact();
     const geometry: Record<string, ValueRect | null> = {};
 
+    const quiet = (id: string) => settling.has(id);
+    const touched = [...settling].filter((id) =>
+      cur.open.has(id) !== prev.open.has(id) || cur.min.has(id) !== prev.min.has(id) ||
+      cur.max.has(id) !== prev.max.has(id) || cur.depth[id] !== prev.depth[id] ||
+      !sameRect(cur.rects[id], prev.rects[id]) && !!(cur.rects[id] || prev.rects[id]));
+    if (touched.length) scheduleReapply();
     const opened = [...cur.open]
-      .filter((id) => !prev.open.has(id))
+      .filter((id) => !prev.open.has(id) && !quiet(id))
       .sort((a, b) => (cur.depth[a] ?? 0) - (cur.depth[b] ?? 0));
     for (const id of opened) {
       const rect = sendRects ? cur.rects[id] : undefined;
+      const object = cur.objects[id];
       enqueue([id], { front: true }, () =>
-        transport.verb(id, "open", { ...(rect ? { geometry: shares(rect) } : {}) }),
+        transport.verb(id, "open", { ...(rect ? { geometry: shares(rect) } : {}), ...(object ? { object_ref: object } : {}) }),
       );
       if (cur.min.has(id)) enqueue([id], { minimized: true }, () => transport.verb(id, "seat", { seated: true, expected_revision: rev(id) }));
     }
     const onHub = (id: string) => rows.has(id) || presentations.pending(id) > 0;
     for (const id of prev.open) {
-      if (cur.open.has(id) || !onHub(id)) continue;
+      if (cur.open.has(id) || !onHub(id) || quiet(id)) continue;
       enqueue([id], {}, () => transport.verb(id, "close", { expected_revision: rev(id) }));
     }
-    const both = [...cur.open].filter((id) => prev.open.has(id) && onHub(id));
+    const both = [...cur.open].filter((id) => prev.open.has(id) && onHub(id) && !quiet(id));
+    for (const id of both) {
+      const object = cur.objects[id];
+      if (object && object !== prev.objects[id])
+        enqueue([id], { front: true }, () => transport.verb(id, "open", { object_ref: object, expected_revision: rev(id) }));
+    }
     const unseated = new Set<string>();
     for (const id of both) {
       const seated = cur.min.has(id);
@@ -709,7 +848,7 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
             // The hub has never held this desk's windows (it records the
             // first write once, `adopted`): this view's cache seeds it. After
             // that, an empty list is an empty desk.
-            synced = { open: new Set(), depth: {}, min: new Set(), max: new Set(), rects: {}, zoom: {}, shelf: list.stage_shelf };
+            synced = { open: new Set(), objects: {}, depth: {}, min: new Set(), max: new Set(), rects: {}, zoom: {}, shelf: list.stage_shelf };
             shelfRevision = list.shelf_revision;
             sync();
             return;
@@ -732,6 +871,11 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     idle,
     stop() {
       stopped = true;
+      if (reapplyTimer) clearTimeout(reapplyTimer);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("pointerdown", onGesture, true);
+        window.removeEventListener("keydown", onGesture, true);
+      }
       unlisten();
       observer?.disconnect();
       if (typeof window !== "undefined") window.removeEventListener("resize", onResize);

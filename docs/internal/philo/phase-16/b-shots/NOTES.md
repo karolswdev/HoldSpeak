@@ -16,8 +16,11 @@ three browser contexts.
 - `1440-D-drawer.png`: A opened the Payments ledger cutover drawer; a fresh
   view D shows it (its row: `drawer:project:p-ledger`, object
   `project:p-ledger`).
-- `hub-writes.json`: every window write each view sent, in order. The 393 load
-  sent none.
+- `1440-E-lane.png`: the agent lane opened on the hub on launch `L-glass`; a
+  fresh view E shows it in front (the rig has no real launch, so the lane
+  reads `LAUNCH_UNKNOWN`).
+- `hub-writes.json`: every window write each view sent, in order. The fresh loads
+  (C at 393, D, E) and the follows sent none.
 
 ## The hub's rows
 
@@ -41,8 +44,8 @@ three browser contexts.
       "arranged": false,
       "room": null,
       "front": false,
-      "revision": 1,
-      "updated_at": "2026-10-09 11:06:20"
+      "revision": 3,
+      "updated_at": "2026-10-09 12:06:58"
     },
     {
       "id": "chair:brief",
@@ -59,8 +62,8 @@ three browser contexts.
       "arranged": true,
       "room": null,
       "front": true,
-      "revision": 3,
-      "updated_at": "2026-10-09 11:06:20"
+      "revision": 5,
+      "updated_at": "2026-10-09 12:06:59"
     },
     {
       "id": "chair:week",
@@ -77,13 +80,15 @@ three browser contexts.
       "arranged": false,
       "room": null,
       "front": false,
-      "revision": 3,
-      "updated_at": "2026-10-09 11:06:21"
+      "revision": 7,
+      "updated_at": "2026-10-09 12:07:00"
     }
   ],
   "stage_shelf": "left",
-  "revision": 0,
-  "registry": "(the registry: static ids and families; elided here)"
+  "shelf_revision": 0,
+  "revision": 7,
+  "adopted": true,
+  "registry": "(the registry: static ids, families, not_on_hub; elided here)"
 }
 ```
 

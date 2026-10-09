@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../lib/api";
 import { useChairWindows } from "../../chair/chairWindows";
 import { useDrawers } from "../../drawer/store";
+import { useLane } from "../../lane/laneStore";
 import { useDesk } from "../../store";
 import { DESK_WORKSPACE_STORAGE_KEY } from "../../store/workspaceStorage";
 import { record, type Rect } from "../geometry";
@@ -24,8 +25,9 @@ import {
 
 const VIEW: Rect = { x: 10, y: 38, w: 1420, h: 772 };
 const REGISTRY = {
-  static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair" },
+  static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", lane: "lane" },
   families: { "zone:": "zone", "drawer:project:": "drawer" },
+  // (lane is static on the hub)
 };
 
 function row(id: string, over: Partial<HubWindowRow> = {}): HubWindowRow {
@@ -116,6 +118,7 @@ beforeEach(() => {
     phone: "",
   });
   useDrawers.setState({ drawers: [], infos: [], parked: null });
+  useLane.setState({ launchId: null });
 });
 
 afterEach(() => {
@@ -125,8 +128,16 @@ afterEach(() => {
 
 function start(rows: HubWindowRow[], adopted = true) {
   const fake = fakeHub(rows, adopted);
-  hub = createHubWindows({ transport: fake.transport, view: () => VIEW, compact: () => false });
-  return { fake, hub };
+  hub = createHubWindows({ transport: fake.transport, view: () => VIEW, compact: () => false, settleMs: 0 });
+  const seeded = hub;
+  const begin = seeded.start.bind(seeded);
+  // The windows the seed opened are quiet until the owner's first gesture;
+  // each test acts as the owner, so it starts with one.
+  (seeded as { start: () => Promise<void> }).start = async () => {
+    await begin();
+    window.dispatchEvent(new Event("pointerdown"));
+  };
+  return { fake, hub: seeded };
 }
 
 const CHAIR = ["chair:brief", "chair:week", "chair:needs"];
@@ -354,6 +365,69 @@ describe("hubWindows", () => {
     expect(sent).toEqual([["zoom", 2], ["set_geometry", 3]]);
     expect(fake.transport.list).toHaveBeenCalledTimes(1); // no 409 re-read
     expect(useDesk.getState().panelSaved).toContain("chair:brief");
+  });
+
+  it("Astra r2 M1: a raced list never hides a live window for good", async () => {
+    // Her race: the first list was read at revision 1 without Brief (written
+    // at revision 1). The service now lists one snapshot; this view still
+    // takes the real row at that revision when it arrives.
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:brief": false } }));
+    useDesk.setState({ panelDepth: { "chair:brief": 1 }, panelOrder: ["chair:brief"] });
+    const { fake, hub } = start([]);
+    (fake.transport.list as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ windows: [], stage_shelf: "left", revision: 1, adopted: true, registry: REGISTRY })
+      .mockResolvedValue({ windows: [row("chair:brief", { depth: 1, revision: 1 })], stage_shelf: "left", revision: 1, adopted: true, registry: REGISTRY });
+    await hub.start();
+    hub.onFrame({ kind: "windows", id: "chair:brief" });
+    await flush(hub);
+    expect(useChairWindows.getState().closed["chair:brief"]).toBe(false);
+    expect(hub.rows.get("chair:brief")?.revision).toBe(1);
+  });
+
+  it("Astra r2 M2: a failed write returns to the hub's row at the same revision", async () => {
+    const { fake, hub } = start([row("chair:brief", { revision: 2, arranged: true, x: "-1/2", y: "-1/2", w: "1/2", h: "100%" })]);
+    await hub.start();
+    const before = useDesk.getState().panelRects["chair:brief"];
+    fake.answers.push(async () => {
+      throw new Error("write refused");
+    });
+    useDesk.getState().setPanelRect("chair:brief", { x: 100, y: 100, w: 300, h: 300 }, true);
+    await flush(hub);
+    expect(useDesk.getState().panelRects["chair:brief"]).toEqual(before);
+    const cached = JSON.parse(localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "{}");
+    expect(cached.panel.rects["chair:brief"]).toEqual(before);
+  });
+
+  it("Astra r2 M3: the agent lane follows on its launch, and re-targets", async () => {
+    const { fake, hub } = start([row("lane", { app: "lane", object_ref: "launch:L-1", depth: 1 })]);
+    await hub.start();
+    expect(useLane.getState().launchId).toBe("L-1");
+    fake.state.windows = [row("lane", { app: "lane", object_ref: "launch:L-2", depth: 1, revision: 5 })];
+    hub.onFrame({ kind: "windows", id: "lane" });
+    await flush(hub);
+    expect(useLane.getState().launchId).toBe("L-2");
+    // This view opens the lane on another launch: the hub hears the launch.
+    useLane.getState().open("L-3");
+    useDesk.getState().focusPanel("lane");
+    await flush(hub);
+    expect(fake.calls.find((c) => c.verb === "open")?.body.object_ref).toBe("launch:L-3");
+  });
+
+  it("Astra r2 (glass B7): a window the hub opened here does not write its mount back", async () => {
+    const fake = fakeHub([row("chair:brief", { depth: 1 }), row("chair:week", { depth: 2 })]);
+    hub = createHubWindows({ transport: fake.transport, view: () => VIEW, compact: () => false, settleMs: 40 });
+    await hub.start();
+    await new Promise((r) => setTimeout(r, 60));
+    // Another view opens Needs; this view follows, and the window's mount
+    // raises it and places it: none of that is sent.
+    fake.state.windows = [...fake.state.windows, row("chair:needs", { depth: 0, revision: 4 })];
+    hub.onFrame({ kind: "windows", id: "chair:needs" });
+    await hub.idle();
+    useDesk.getState().focusPanel("chair:needs"); // the mount's own raise
+    await new Promise((r) => setTimeout(r, 60));
+    await hub.idle();
+    expect(fake.calls).toEqual([]);
+    expect(order(CHAIR)[0]).toBe("chair:needs"); // the hub's order is back
   });
 
   it("a window frame is not a desk data change", () => {

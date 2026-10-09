@@ -17,6 +17,8 @@ bundle, two browser contexts (two views, two localStorages):
      open; The week is seated in its cache of the hub's rows.
   B6 A opens the Project drawer (Payments ledger cutover); a fresh view D
      shows it (Astra r1 M4).
+  B7 the agent lane opened on the hub on launch L-glass: A follows live and a
+     fresh view E shows it (Astra r2 M3).
 
 Shots: docs/internal/philo/phase-16/b-shots/ (``.tmp/evidence-shots/``
 unless HOLDSPEAK_EVIDENCE_WRITE=1).
@@ -237,6 +239,7 @@ class TestHubWindows:
 
                 # ── B4: an agent tiles two through MCP; both views follow ───
                 owner = Principal(PrincipalKind.OWNER, "philo16-owner")
+                a_before, b_before = len(a.hub_writes), len(b.hub_writes)
                 mcp_tools.dispatch("desk_window.arrange", {"rects": {
                     "chair:brief": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"},
                     "chair:needs": {"x": "0%", "y": "-1/2", "w": "1/2", "h": "100%"},
@@ -256,6 +259,10 @@ class TestHubWindows:
                     if not tiled(seen):
                         fails[f"B4 {label} shows the agent's tile"] = {
                             n: w["rect"] for n, w in seen.items()} | {"band": band}
+                a.wait_for_timeout(800)  # a follow settles (SETTLE_MS) and must send nothing
+                echoes = a.hub_writes[a_before:] + b.hub_writes[b_before:]
+                if echoes:
+                    fails["B4 following the agent's tile writes nothing back"] = echoes
                 a.screenshot(path=str(SHOTS / "1440-A-tile.png"))
                 b.screenshot(path=str(SHOTS / "1440-B-tile.png"))
                 _side_by_side(browser, SHOTS / "1440-A-tile.png", SHOTS / "1440-B-tile.png",
@@ -289,13 +296,41 @@ class TestHubWindows:
                     d.locator(".drawer-window").first.wait_for(timeout=10_000)
                 except Exception:
                     fails["B6 a fresh view shows A's Project drawer"] = sorted(_wins(d))
+                d.wait_for_timeout(800)
+                if d.hub_writes:
+                    fails["B6 a fresh load writes nothing to the hub"] = d.hub_writes
                 d.screenshot(path=str(SHOTS / "1440-D-drawer.png"))
                 if errors_d:
                     fails["page errors D"] = errors_d
                 ctx_d.close()
 
+                # ── B7 (Astra r2 M3): the agent lane follows on its launch ──
+                # The lane is opened on the hub (as an agent or another view
+                # would): A, live, follows the frame; a fresh view E shows it.
+                # The owner's own open sending launch:<id> is fenced in vitest.
+                _api(a, "POST", "/api/desk/windows/lane/open", {"object_ref": "launch:L-glass"}, token=TOKEN)
+                lane_sel = ".desk-window-shell.is-lane"
+                try:
+                    a.locator(lane_sel).first.wait_for(timeout=10_000)
+                except Exception:
+                    fails["B7 A follows the lane opened on the hub"] = sorted(_wins(a))
+                lane_row = self._rows(a).get("lane", {})
+                if lane_row.get("object_ref") != "launch:L-glass":
+                    fails["B7 the lane's row names its launch"] = lane_row
+                ctx_e, e, errors_e = self._page(browser, 1440)
+                try:
+                    e.locator(lane_sel).first.wait_for(timeout=10_000)
+                except Exception:
+                    fails["B7 a fresh view shows the lane"] = sorted(_wins(e))
+                e.screenshot(path=str(SHOTS / "1440-E-lane.png"))
+                e.wait_for_timeout(800)
+                lane_writes_e = list(e.hub_writes)
+                if lane_writes_e:
+                    fails["B7 a fresh load writes nothing to the hub"] = lane_writes_e
+                ctx_e.close()
+
                 (SHOTS / "hub-writes.json").write_text(json.dumps(
-                    {"A": a.hub_writes, "B": b.hub_writes, "C": c.hub_writes}, indent=2) + "\n")
+                    {"A": a.hub_writes, "B": b.hub_writes, "C": c.hub_writes, "E": lane_writes_e}, indent=2) + "\n")
                 if c.hub_writes:
                     fails["B5 a 393 load writes nothing to the hub"] = c.hub_writes
                 rows_end = self._rows(a)

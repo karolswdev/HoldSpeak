@@ -67,6 +67,9 @@ STATIC_WINDOWS: dict[str, str] = {
     "chair:capture": "chair",
     # The Parked drawer (drawer/store.ts).
     "drawer:parked": "drawer",
+    # The agent lane (lane/laneStore.ts): one window, on one launch at a time;
+    # its row's object is the launch (``launch:<id>``).
+    "lane": "lane",
 }
 
 #: Windows no view can open from a hub row yet (their opener needs state the
@@ -81,7 +84,6 @@ NOT_ON_HUB: dict[str, str] = {
     "inspector": "the tool inspector follows the selection of its view",
     "session": "a dictation session of this view",
     "trust": "opens on a selected record",
-    "lane": "opens on a launch",
     "agent-hand": "opens on a selected item",
     "delivery-board": "opens on a delivery",
     "delivery-terminal": "opens on a delivery",
@@ -265,9 +267,13 @@ class DeskWindowService:
 
     def list(self) -> dict[str, Any]:
         """Every open window, back to front, the front derived; the desk row."""
+        # ONE snapshot: the rows and the desk's revision come from the same
+        # read transaction (a write between the two reads cannot make a list
+        # that names a revision without its rows).
         with self._db._connection() as conn:
+            conn.execute("BEGIN")
             rows = self._rows(conn)
-            desk = self._desk(conn)
+            desk = self._desk_read(conn)
         front = _front_id(rows)
         return {
             "windows": [_serialize(row, front) for row in rows],
@@ -330,6 +336,10 @@ class DeskWindowService:
                         "UPDATE desk_windows SET geometry_json = ?, arranged = 1 WHERE id = ?",
                         (json.dumps(rect), window_id),
                     )
+                    changed = True
+                if object_ref is not None and ref != row["object_ref"]:
+                    # The same window on another object (the lane on another launch).
+                    conn.execute("UPDATE desk_windows SET object_ref = ? WHERE id = ?", (ref, window_id))
                     changed = True
                 if room is not None and room != row["room"]:
                     conn.execute("UPDATE desk_windows SET room = ? WHERE id = ?", (room, window_id))
@@ -624,6 +634,18 @@ class DeskWindowService:
             (DESK_ID,),
         )
         return int(conn.execute("SELECT revision FROM desk_window_desk WHERE id = ?", (DESK_ID,)).fetchone()[0])
+
+    @staticmethod
+    def _desk_read(conn: Any) -> dict[str, Any]:
+        """The desk row without writing (a read inside the list's snapshot)."""
+        row = conn.execute(
+            "SELECT highest_depth, stage_shelf, revision, shelf_revision, adopted_at"
+            " FROM desk_window_desk WHERE id = ?", (DESK_ID,)
+        ).fetchone()
+        if row is None:
+            return {"highest_depth": 0, "stage_shelf": "left", "revision": 0, "shelf_revision": 0, "adopted_at": None}
+        return {"highest_depth": row[0], "stage_shelf": row[1], "revision": row[2],
+                "shelf_revision": row[3], "adopted_at": row[4]}
 
     @staticmethod
     def _desk(conn: Any) -> dict[str, Any]:

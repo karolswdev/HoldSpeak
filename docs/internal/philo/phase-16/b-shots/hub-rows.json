@@ -16,7 +16,7 @@
       "room": null,
       "front": false,
       "revision": 3,
-      "updated_at": "2026-10-09 11:40:45"
+      "updated_at": "2026-10-09 12:06:58"
     },
     {
       "id": "chair:brief",
@@ -34,7 +34,7 @@
       "room": null,
       "front": true,
       "revision": 5,
-      "updated_at": "2026-10-09 11:40:46"
+      "updated_at": "2026-10-09 12:06:59"
     },
     {
       "id": "chair:week",
@@ -52,7 +52,7 @@
       "room": null,
       "front": false,
       "revision": 7,
-      "updated_at": "2026-10-09 11:40:47"
+      "updated_at": "2026-10-09 12:07:00"
     }
   ],
   "stage_shelf": "left",
@@ -85,7 +85,8 @@
       "chair:brief": "chair",
       "chair:week": "chair",
       "chair:capture": "chair",
-      "drawer:parked": "drawer"
+      "drawer:parked": "drawer",
+      "lane": "lane"
     },
     "families": {
       "drawer:project:": "drawer",
@@ -104,7 +105,6 @@
       "inspector": "the tool inspector follows the selection of its view",
       "session": "a dictation session of this view",
       "trust": "opens on a selected record",
-      "lane": "opens on a launch",
       "agent-hand": "opens on a selected item",
       "delivery-board": "opens on a delivery",
       "delivery-terminal": "opens on a delivery",
