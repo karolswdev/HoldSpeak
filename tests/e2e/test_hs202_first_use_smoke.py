@@ -29,6 +29,8 @@ from .test_hs201_one_thing_glass import _quiet_concierge
 from .test_hs201_summary_face_glass import _FixtureImportTranscriber, _chip_label
 from tests._evidence import evidence_dir
 from .chair_windows import go_group, open_chair_window
+from .runs_on import close_runs_on, engine_key_for, patch, wait_board
+from . import runs_on
 
 TOKEN = "hs202-first-use"
 WAV = REPO / "tests/fixtures/core_path_smoke_16k.wav"
@@ -276,6 +278,10 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             _loaded(choose)
             assert _hit(choose)
             choose.click()
+            # PHILO-16 (C): the door opens Runs on, already on Meetings.
+            wait_board(page)
+            assert "is-selected" in (page.get_by_test_id("switchboard-job-meetings").get_attribute("class") or "") \
+                or page.get_by_test_id("switchboard").get_attribute("data-layout") == "list"
             _loaded(page.get_by_test_id("concierge-add-engine"))
             page.get_by_test_id("concierge-add-engine").click()
             address = page.locator("[data-testid='concierge-add-engine-row'] input").first
@@ -292,8 +298,13 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             assert defined.value.request.post_data_json["draft"]["endpoint"] == endpoint
             provider = defined.value.json()["provider"]
             assert provider["profile_id"] and provider["profile_revision"] > 0
-            page.get_by_test_id("concierge-root").wait_for(state="detached")
+            # The engine joins the column; one patch onto Meetings sets the
+            # summaries. The window stays: the receipt is in its foot.
+            patch(page, "meetings", engine_key_for(endpoint))
+            assert runs_on.receipt(page).upper().startswith("PATCHED "), runs_on.receipt(page)
+            assert page.locator("[data-testid='runson-undo']").count() == 1
             choose.wait_for(state="detached")
+            close_runs_on(page)
             _needs(page)
             print("PASS: engine setup completed visibly without a reload")
             shot("engine-set")

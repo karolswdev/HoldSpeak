@@ -203,17 +203,18 @@ class TestChairWindowComesToFront:
                         name,
                     )
 
-                # The rehearsal's desk: Needs you, Models (its SETUP row's
+                # The rehearsal's desk: Needs you, Runs on (PHILO-16 C: the
+                # Models window; its SETUP row's
                 # Choose an engine) and Settings are open.
                 drawer = page.locator(".desk-screen [data-object-id='drawer:needs']")
                 drawer.focus()
                 page.keyboard.press("Enter")
                 _shell(page, "Needs you").wait_for()
                 _shell(page, "Needs you").get_by_role("button", name="Choose an engine").first.click()
-                page.locator(".desk-window-shell[aria-label='Models']").first.wait_for()
+                page.locator(".desk-window-shell[aria-label='Runs on']").first.wait_for()
                 _settle(page)
 
-                # 1) a fresh Brief over the open Settings and Models windows
+                # 1) a fresh Brief over the open Settings and Runs on windows
                 page.locator(".desk-dock [aria-label^='Settings']").first.click()
                 page.locator(".desk-window-shell[aria-label^='Settings']").first.wait_for()
                 _settle(page)

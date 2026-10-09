@@ -563,7 +563,7 @@ function SwitchboardList({
         </>
       ) : null}
       {engines
-        .filter((engine) => engine.progress != null || (!engine.draggable && engine.verb))
+        .filter((engine) => engine.id !== first?.id && (engine.progress != null || Boolean(engine.verb)))
         .map((engine) => (
           <EnginePlate key={`more-${engine.id}`} engine={engine} />
         ))}

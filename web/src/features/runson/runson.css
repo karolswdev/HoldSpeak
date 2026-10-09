@@ -39,7 +39,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  font: 500 11px var(--font-mono, "JetBrains Mono", monospace);
+  font: 500 var(--font-size-xs, 12px) var(--font-mono, "JetBrains Mono", monospace);
   text-transform: uppercase;
   letter-spacing: .06em;
   color: var(--wb-muted, #4a5060);
@@ -68,7 +68,7 @@
 .runson-meaning { margin: 0; padding: 0; list-style: none; }
 
 .runson-receipt {
-  font: 500 11px var(--font-mono, "JetBrains Mono", monospace);
+  font: 500 var(--font-size-xs, 12px) var(--font-mono, "JetBrains Mono", monospace);
   text-transform: uppercase;
   letter-spacing: .04em;
   overflow-wrap: anywhere;

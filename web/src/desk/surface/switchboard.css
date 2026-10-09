@@ -50,7 +50,7 @@
 .switchboard-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .switchboard-cap {
   margin-top: 6px;
-  font: 500 11px var(--sb-mono);
+  font: 500 var(--font-size-xs, 12px) var(--sb-mono);
   text-transform: uppercase;
   letter-spacing: .06em;
   color: var(--sb-muted);
@@ -112,7 +112,7 @@
 .switchboard-job-verb { grid-column: 2; grid-row: 1; }
 .switchboard-job-tasks {
   grid-column: 1 / -1;
-  font: 500 10px var(--sb-mono);
+  font: 500 var(--font-size-xs, 12px) var(--sb-mono);
   color: var(--sb-muted);
   text-transform: uppercase;
   letter-spacing: .04em;
@@ -123,13 +123,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px 8px;
-  font: 500 11px var(--sb-mono);
+  font: 500 var(--font-size-xs, 12px) var(--sb-mono);
   color: #1f6b3a;
   text-transform: uppercase;
   letter-spacing: .04em;
   overflow-wrap: anywhere;
 }
 .switchboard-job-result[data-tone="danger"], .switchboard-job-result [data-tone="danger"] { color: #8f2018; }
+.switchboard-job-result [data-tone="warn"] { color: #7a5300; }
 
 /* ── an engine ── */
 .switchboard-engine {
@@ -151,7 +152,7 @@
 .switchboard-engine .switchboard-plug { left: -7px; background: var(--sb-field); }
 .switchboard-emblem {
   grid-row: 1 / 3;
-  font: 700 9px var(--sb-mono);
+  font: 700 var(--font-size-xs, 12px) var(--sb-mono);
   background: var(--sb-paper);
   border: 1px solid var(--sb-ink);
   text-align: center;
@@ -172,7 +173,7 @@
   display: flex;
   gap: 2px 8px;
   flex-wrap: wrap;
-  font: 500 10px var(--sb-mono);
+  font: 500 var(--font-size-xs, 12px) var(--sb-mono);
   color: var(--sb-ink-dim);
   text-transform: uppercase;
   letter-spacing: .04em;

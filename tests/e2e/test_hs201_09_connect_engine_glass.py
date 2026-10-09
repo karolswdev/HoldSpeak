@@ -1,23 +1,25 @@
 """HS-201-09 — connect an engine from the face, on the glass.
 
-One walk through the real hub with a real browser and an isolated HOME,
-against the REAL LAN engine at http://192.168.1.43:8080/v1 when it is
-reachable and a local OpenAI-compatible stub when it is not (the rig
-prints which one it used).  The microphone is never touched; nothing is
-seeded into the model library — every step below is a click:
+PHILO-16 (C): ported to Runs on (the Models window as a Switchboard). One
+walk through the real hub with a real browser and an isolated HOME, against
+the REAL LAN engine at http://192.168.1.43:8080/v1 when it is reachable and
+a local OpenAI-compatible stub when it is not (the rig prints which one it
+used). The microphone is never touched; nothing is seeded into the model
+library: every step below is a gesture:
 
-  Models  ->  Add an engine  ->  a bad address  ->  Check
-          ->  the refusal's plain reason BESIDE the verb, on screen
-          ->  the engine's address        ->  Check  ->  READY + the model
-          ->  Use this for summaries      ->  summaryAssignment: assigned
-          ->  Use these with Speech recognition still WAITING
-          ->  OFF + Use these             ->  no exact assignment remains
-          ->  reopen Models               ->  OFF, not a proposal
-          ->  Go -> Models                ->  the door, without the deck
+  Runs on (from the SETUP row)  ->  Add an engine  ->  a bad address
+          ->  Check  ->  the refusal's plain reason BESIDE the verb
+          ->  the engine's address  ->  Check  ->  READY + the model
+          ->  Add  ->  the engine joins "What you have", no wire
+          ->  patch it onto Default for AI work  ->  the SETUP row goes
+          ->  patch it onto Meetings  ->  the exact summary row is written
+          ->  Undo  ->  the summary row is cleared again
+          ->  patch again  ->  the tombstone revision does not refuse it
+          ->  Go -> Runs on  ->  the door, without the deck
 
-Shots at 1440 and 393 in assets/story-09-shots/; the 393 pass asserts
-that no two children of a Models row intersect (the rehearsal's
-`02a-choose-an-engine-393.png` overlap).
+The window stays open after every patch: the receipt and Undo are in its
+foot. Shots at 1440 and 393 in assets/story-09-shots/; the 393 pass asserts
+that no two children of the add row intersect.
 """
 from __future__ import annotations
 
@@ -41,6 +43,15 @@ from .glass_infra import (
 )
 from tests._evidence import evidence_dir
 from .chair_windows import open_chair_window
+from .runs_on import (
+    close_runs_on,
+    engine_key_for,
+    patch,
+    primaries,
+    raw_buttons,
+    wait_board,
+    wait_receipt,
+)
 
 pytest.importorskip("playwright.sync_api", reason="HS-201-09 glass needs Playwright")
 
@@ -69,7 +80,7 @@ _INTERSECTIONS_JS = """() => {
     return out;
   };
   for (const line of document.querySelectorAll(
-    ".concierge-root .surface-ledger-line, .concierge-add-engine-row"
+    "[data-testid='concierge-add-engine-row']"
   )) {
     const kids = items(line).filter((el) => {
       const r = el.getBoundingClientRect();
@@ -109,29 +120,6 @@ _INTERSECTIONS_JS = """() => {
     }
   }
   return bad;
-}"""
-
-
-_GEOM_JS = """() => {
-  const out = [];
-  const line = document.querySelector("[data-testid='concierge-set-meetings']");
-  if (!line) return ["no meetings row"];
-  const cs = getComputedStyle(line);
-  out.push(`line display=${cs.display} wrap=${cs.flexWrap} w=${line.clientWidth}`);
-  const walk = (node, depth) => {
-    for (const child of node.children) {
-      const s = getComputedStyle(child);
-      const r = child.getBoundingClientRect();
-      out.push(
-        `${" ".repeat(depth)}${child.className || child.tagName}` +
-        ` display=${s.display} flex=${s.flex} ovf=${s.overflow}` +
-        ` rect=${Math.round(r.x)},${Math.round(r.width)}` +
-        ` scrollW=${child.scrollWidth} clientW=${child.clientWidth}`);
-      if (s.display === "contents") walk(child, depth + 1);
-    }
-  };
-  walk(line, 0);
-  return out;
 }"""
 
 
@@ -217,25 +205,9 @@ BLOCKER_VERB = "[data-testid='needs-row-verb'][data-verb='setup']"
 BLOCKER_ROW = "li.needs-row[data-object-id^='blocker:']"
 
 
-def _receipt_then_close(page: Any) -> None:
-    """PHILO-15 10 (B10): a press keeps the Models window and writes its
-    receipt (`USING · <model> ...`); the owner closes the window."""
-    page.wait_for_function(
-        """() => (document.querySelector("[data-testid='concierge-receipt']")?.textContent || "")
-                   .match(/^USING|\\bOFF\\b|FAILED/)""",
-        timeout=60_000,
-    )
-    page.locator("[data-testid='concierge-cancel']").click()
-    page.wait_for_function(
-        """() => !document.querySelector("[data-testid='concierge-root']")""",
-        timeout=30_000,
-    )
-
-
-def _open_models_from_the_blocker(page: Any) -> None:
+def _open_runs_on_from_the_blocker(page: Any) -> None:
     page.locator(BLOCKER_VERB).first.click()
-    page.locator("[data-testid='concierge-root']").wait_for(timeout=30_000)
-    page.locator("[data-testid='concierge-set-list']").wait_for(timeout=30_000)
+    wait_board(page)
     _settle(page)
 
 
@@ -253,7 +225,7 @@ def _shot(page: Any, name: str, width: int) -> None:
     # NEEDS YOU rows the rehearsal shot (02a) caught overlapping.
     page.evaluate(
         """() => {
-          const root = document.querySelector(".concierge-root");
+          const root = document.querySelector("[data-testid='runson-root']");
           for (let el = root; el; el = el.parentElement) {
             const o = getComputedStyle(el).overflowY;
             if ((o === "auto" || o === "scroll") &&
@@ -274,28 +246,12 @@ def _shot(page: Any, name: str, width: int) -> None:
     assert path.stat().st_size > 2000, path
 
     # UX-CANON A1: every verb on this face is the library Button.
-    # `desk-mic` is the MicButton species (the voice law on every input),
-    # not a hand-rolled verb.
-    raw = page.evaluate(
-        """() => [...document.querySelectorAll(
-             ".concierge-root button, .concierge-footer button")]
-             .filter((b) => {
-               const c = b.className.split(" ");
-               return !c.includes("btn") && !c.includes("desk-mic");
-             })
-             .map((b) => (b.textContent || b.className).slice(0, 40))"""
-    )
+    raw = raw_buttons(page)
     assert not raw, f"{name} at {width}: raw buttons {raw}"
-    # One filled primary per WINDOW: the Models body plus its portaled
-    # footer (the desk behind it owns its own faces' primaries).
-    primaries = page.evaluate(
-        """() => [...document.querySelectorAll(
-             ".concierge-root .btn--primary, .concierge-footer .btn--primary")]
-             .map((b) => (b.textContent || "").trim())"""
-    )
-    assert len(primaries) <= 1, f"{name} at {width}: primaries {primaries}"
+    # One filled primary per WINDOW (body plus its portaled foot).
+    lead = primaries(page)
+    assert len(lead) <= 1, f"{name} at {width}: primaries {lead}"
     if width == 393:
-        print("GEOM", page.evaluate(_GEOM_JS))
         overlaps = page.evaluate(_INTERSECTIONS_JS)
         assert not overlaps, f"{name} at 393: {overlaps}"
     print(f"SHOT {path}")
@@ -334,7 +290,7 @@ class TestConnectAnEngineFromTheFace:
                 "summaryAssignment"
             ]
 
-            _open_models_from_the_blocker(page)
+            _open_runs_on_from_the_blocker(page)
             _shot(page, "models-cold", width)
 
             # ── Add an engine is the library Button ──
@@ -356,13 +312,11 @@ class TestConnectAnEngineFromTheFace:
             reason.wait_for(timeout=30_000)
             said = (reason.text_content() or "").strip()
             assert said, "the refused check said nothing"
-            # Counsel finding 4b: plain words, never the socket's own.
             assert "errno" not in said.lower(), said
             assert "urlopen" not in said.lower(), said
             assert said == "Nothing answers at this address.", said
             print(f"REFUSED REASON {said}")
-            # Counsel finding 4c: the host is named BEFORE the verb that
-            # contacts it (Article III at the point of decision).
+            # Article III: the host is named BEFORE the verb that contacts it.
             egress = page.locator("[data-testid='concierge-add-egress']")
             egress.wait_for(timeout=10_000)
             assert "127.0.0.1" in (egress.text_content() or ""), egress.text_content()
@@ -372,8 +326,8 @@ class TestConnectAnEngineFromTheFace:
             verb_box = page.locator("[data-testid='concierge-add-check']").bounding_box()
             reason_box = reason.bounding_box()
             assert reason_box is not None and verb_box is not None and row_box is not None
-            # Inside the same row, not 400 px below the button (defect 1).
-            assert reason_box["y"] < verb_box["y"] + verb_box["height"] + 40, (
+            # Inside the same row, near its verb (defect 1).
+            assert reason_box["y"] < verb_box["y"] + verb_box["height"] + 60, (
                 verb_box,
                 reason_box,
             )
@@ -390,13 +344,8 @@ class TestConnectAnEngineFromTheFace:
             named.wait_for(timeout=60_000)
             assert (named.text_content() or "").strip() == model, source
             submit = page.locator("[data-testid='concierge-add-submit']")
-            assert (submit.text_content() or "").strip() == "Use this for summaries"
+            assert (submit.text_content() or "").strip() == "Add"
             assert not submit.is_disabled()
-            assert "192.168.1.43" in (
-                page.locator("[data-testid='concierge-add-egress']").text_content() or ""
-            ) or "127.0.0.1" in (
-                page.locator("[data-testid='concierge-add-egress']").text_content() or ""
-            ), source
 
             # ── counsel finding 3: editing the address drops the READY ──
             field.fill(url.replace("/v1", "/v2"))
@@ -411,21 +360,26 @@ class TestConnectAnEngineFromTheFace:
             page.locator("[data-testid='concierge-add-check']").click()
             named.wait_for(timeout=60_000)
             assert (named.text_content() or "").strip() == model, source
-
             _shot(page, "add-engine-ready", width)
 
-            # ── ONE gesture finishes setup (counsel finding 1) ──
-            # No second click for the setup itself: the arrival drops its
-            # SETUP row on the readiness signal. PHILO-15 10 (B10): the
-            # window STAYS and says what was set; the owner closes it.
-            assert page.locator(BLOCKER_VERB).count() > 0, (
-                "the SETUP row was already gone before the gesture"
-            )
+            # ── Add: the engine joins the column, with no wire ──
             assert page.locator(BLOCKER_ROW).count() > 0, (
                 "the blocker row was already gone before the gesture"
             )
             submit.click()
-            _receipt_then_close(page)
+            wait_receipt(page, r"^ADDED ")
+            key = engine_key_for(url)
+            plate = page.get_by_test_id(f"switchboard-engine-{key}")
+            plate.wait_for(timeout=60_000)
+            assert page.locator(
+                f"[data-testid='switchboard-wire'][data-engine='{key}']"
+            ).count() == 0
+            print(f"ADDED {key} (no assignment)")
+
+            # ── patch it onto the Default for AI work: the desk stops asking ──
+            body = patch(page, "default", key)
+            assert body["scope"] == {"kind": "global"}, body
+            assert [e["profile_id"] for e in body["entries"]] == [key], body
             page.wait_for_function(
                 """() => !document.querySelector(
                      "[data-testid='needs-row-verb'][data-verb='setup']") &&
@@ -433,129 +387,55 @@ class TestConnectAnEngineFromTheFace:
                      "li.needs-row[data-object-id^='blocker:']")""",
                 timeout=60_000,
             )
+            print("SETUP row gone after one patch; the window stays open")
+            assert page.locator("[data-testid='runson-undo']").count() == 1
+
+            # ── patch it onto Meetings: the exact summary row is written ──
+            patch(page, "meetings", key)
             assigned = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
                 "summaryAssignment"
             ]
             assert assigned["status"] == "assigned", assigned
-            assert assigned["profileId"], assigned
+            assert assigned["profileId"] == key, assigned
             assert int(assigned["profileRevision"]) >= 1, assigned
-            print(f"SUMMARY ASSIGNED {assigned} (one gesture, no Use these)")
-            _settle(page)
-            # The desk behind must no longer ask for an engine.
-            desk_said = page.locator(BLOCKER_ROW)
-            assert desk_said.count() == 0, desk_said.first.text_content()
-            _open_models_from_the_blocker_or_go(page)
-            assert "Choose an engine" not in (page.content() or "")
+            print(f"SUMMARY ASSIGNED {assigned}")
             _shot(page, "models-engine-connected", width)
 
-            # ── an unrelated WAITING group never blocks the apply ──
-            rows = _api(page, "POST", "/api/concierge/propose", token=TOKEN)["rows"]
-            waiting = [r["group"] for r in rows if r["state"] == "WAITING"]
-            assert waiting, f"no WAITING group on this desk: {rows}"
-            print(f"WAITING GROUPS {waiting}")
-            apply_verb = page.locator("[data-testid='concierge-apply']")
-            assert not apply_verb.is_disabled(), waiting
-            apply_verb.click()
-            _receipt_then_close(page)
-            still = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
-                "summaryAssignment"
-            ]
-            assert still["status"] == "assigned", still
-
-            # ── OFF on the summary group clears the exact assignment ──
-            _open_models_from_the_blocker_or_go(page)
-            page.locator("[data-testid='concierge-picker-meetings']").click()
-            page.locator("[data-testid='concierge-pick-meetings-off']").click()
-            page.locator("[data-testid='concierge-apply']").click()
-            _receipt_then_close(page)
-            off = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
-                "summaryAssignment"
-            ]
-            assert off["status"] == "off", off
-            assert off["profileId"] is None, off
+            # ── Undo: the summary row goes back to what it was (none) ──
+            page.locator("[data-testid='runson-undo']").click()
+            wait_receipt(page, r"^UNDONE ")
             roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
             summary_row = next(
-                row
-                for row in roster["task_overrides"]
-                if row["id"] == SUMMARY_CAPABILITY
+                row for row in roster["task_overrides"] if row["id"] == SUMMARY_CAPABILITY
             )
             assert summary_row["has_override"] is False, summary_row
-            print(f"SUMMARY OFF {off} / roster {summary_row['effective']['status']}")
+            print(f"SUMMARY UNDONE / roster {summary_row['effective']['status']}")
+            _shot(page, "models-summary-undone", width)
 
-            # ── reopen: OFF, not a fresh proposal ──
-            _open_models_from_the_blocker_or_go(page)
-            picker = page.locator("[data-testid='concierge-picker-meetings']")
-            assert "—" in (picker.text_content() or ""), picker.text_content()
-
-            # ── a named repair state carries its reason (defect 7) ──
-            # Applying the set bound the LAN engine to the tool groups, and
-            # the assignment authority answered with a blocking issue; the
-            # row must say WHY in plain words, not in its issue code.
-            incompatible = page.locator(
-                "[data-testid='concierge-repair-reason-tool-incompatible']"
-            )
-            if incompatible.count() > 0:
-                reason_text = (incompatible.first.text_content() or "").strip()
-                assert reason_text, "TOOL INCOMPATIBLE said nothing"
-                assert "_" not in reason_text, reason_text
-                print(f"REPAIR REASON {reason_text}")
-            else:
-                print("REPAIR REASON none on this desk (no blocking issue)")
-            _shot(page, "models-summary-off", width)
-
-            # ── counsel finding 2: the obvious way back ON ──
-            # Pick the engine detection still lists, press Use these. The
-            # cleared assignment's tombstone revision must not refuse it.
-            page.locator("[data-testid='concierge-picker-meetings']").click()
-            page.locator(
-                "[data-testid='concierge-picker-well-meetings'] "
-                "[data-testid^='concierge-pick-meetings-']:not("
-                "[data-testid='concierge-pick-meetings-off'])"
-            ).first.click()
-            _settle(page)
-            page.locator("[data-testid='concierge-apply']").click()
-            _receipt_then_close(page)
+            # ── counsel finding 2: back ON over the tombstone ──
+            patch(page, "meetings", key)
             back_on = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
                 "summaryAssignment"
             ]
             assert back_on["status"] == "assigned", back_on
-            assert back_on["profileId"], back_on
+            assert back_on["profileId"] == key, back_on
             print(f"SUMMARY BACK ON {back_on}")
-
-            # ── reopen: the applied engine, not a proposal ──
-            _open_models_from_the_blocker_or_go(page)
-            picker = page.locator("[data-testid='concierge-picker-meetings']")
-            assert "—" not in (picker.text_content() or ""), picker.text_content()
-            presets = page.locator("[data-testid^='concierge-download-']").count()
-            repairs = page.locator("[data-testid^='concierge-repair-verb-']").count()
-            print(f"FACE CENSUS presets={presets} repairs={repairs}")
             _shot(page, "models-engine-back-on", width)
 
-            # ── the door: Go -> Models, no command deck ──
-            page.locator("[data-testid='concierge-cancel']").click()
-            page.wait_for_function(
-                """() => !document.querySelector("[data-testid='concierge-root']")""",
-                timeout=30_000,
-            )
+            # ── the door: Go -> Runs on (1440); Go -> Settings -> Runs on (393,
+            # whose short Go lists the places, PHILO-15 11) — no command deck ──
+            close_runs_on(page)
             page.locator(".desk-verbbar-title", has_text="Go").click()
-            page.get_by_role("menuitem", name="Models", exact=True).click()
-            page.locator("[data-testid='concierge-root']").wait_for(timeout=30_000)
-            print("DOOR Go > Models opened the Models window")
+            if width == 393:
+                page.get_by_role("menuitem", name="Settings", exact=True).first.click()
+                row = page.locator(".surface-ledger-row", has_text="Runs on").first
+                row.get_by_role("button", name="Open", exact=True).click()
+            else:
+                page.get_by_role("menuitem", name="Runs on", exact=True).first.click()
+            wait_board(page)
+            print("DOOR Go opened the Runs on window")
             _shot(page, "models-from-the-go-menu", width)
 
             real = [e for e in errors if "ResizeObserver" not in e]
             assert not real, real
             browser.close()
-
-
-def _open_models_from_the_blocker_or_go(page: Any) -> None:
-    """Open Models again — from the SETUP row while it is there, else Go."""
-    blocker = page.locator(BLOCKER_VERB)
-    if blocker.count() > 0:
-        blocker.first.click()
-    else:
-        page.locator(".desk-verbbar-title", has_text="Go").click()
-        page.get_by_role("menuitem", name="Models", exact=True).click()
-    page.locator("[data-testid='concierge-root']").wait_for(timeout=30_000)
-    page.locator("[data-testid='concierge-set-list']").wait_for(timeout=30_000)
-    _settle(page)

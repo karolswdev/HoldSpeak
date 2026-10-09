@@ -108,6 +108,8 @@ function engineTokens(e: RunsOnEngine): string[] {
   if (e.quantToken) tokens.push(e.quantToken);
   if (e.visionToken) tokens.push(e.visionToken);
   if (e.audioCapable) tokens.push("SPEECH");
+  // PHILO-15 05: a provider with no execution adapter says so on its plate.
+  if (e.state === "NOT_SUPPORTED") tokens.push("NOT SUPPORTED YET");
   if (e.kind === "cloud") {
     tokens.push(e.keySet ? "KEY SET" : "NO KEY");
     tokens.push("$");
@@ -206,6 +208,11 @@ export function accepts(job: string, engine: BoardEngine | undefined): Accept {
     return { ok: false, reason: engine.kind === "preset" ? "WAITS FOR DOWNLOAD" : "NO MODEL RECORD" };
   }
   if (engine.state === "NOT_SUPPORTED") return { ok: false, reason: "NOT SUPPORTED" };
+  // A pre-library endpoint record names no immutable revision: the
+  // assignment authority would refuse the write, so the board does first.
+  if (!engine.profileRevision && !engine.profileId.startsWith("legacy-")) {
+    return { ok: false, reason: "NO MODEL RECORD" };
+  }
   if (job === SPEECH_JOB) return engine.audio ? { ok: true } : { ok: false, reason: "SPEECH ENGINES ONLY" };
   if (engine.audio) return { ok: false, reason: "TEXT ENGINES ONLY" };
   if (job === DEFAULT_JOB) return { ok: true };

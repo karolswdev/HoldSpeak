@@ -1,7 +1,8 @@
 """HS-200-04 — the repair states as they are DRAWN.
 
-Four named states on the Concierge, each with ONE verb and the host named where
-the repair happens.  Shot at 1440 and 393 so the owner can see each one before
+PHILO-16 (C): ported to Runs on. Four named states, each drawn on the job it
+breaks (the token, BROKEN or WAITING) with ONE verb: on the engine plate when
+the engine is on the board, else on the first job it names.  Shot at 1440 and 393 so the owner can see each one before
 it ships.
 
 Asserts, per state: the row exists, it carries exactly one library Button, the
@@ -23,6 +24,8 @@ from .glass_infra import (
     _settle,
 )
 from tests._evidence import evidence_dir
+
+from .runs_on import open_runs_on, raw_buttons, window as runs_on_window
 
 SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-04-shots")
 SHOTS.mkdir(parents=True, exist_ok=True)
@@ -132,23 +135,11 @@ STATES: dict[str, dict[str, Any]] = {
 
 
 def _open_concierge(page: Any) -> None:
-    page.evaluate(
-        """([key]) => {
-          sessionStorage.setItem(
-            "hs.desk.staged-surface-open",
-            JSON.stringify({key})
-          );
-        }""",
-        ["open-concierge"],
-    )
-    page.reload(wait_until="load")
-    _normal_chair(page)
+    open_runs_on(page)
 
 
 def _window(page: Any) -> Any:
-    return page.locator(".desk-surface-window").filter(
-        has=page.locator('[data-testid="concierge-root"]')
-    ).first
+    return runs_on_window(page)
 
 
 def _shot(page: Any, name: str, width: int) -> Path:
@@ -200,67 +191,34 @@ def test_each_repair_state_is_drawn_with_one_verb(tmp_path, monkeypatch, state, 
             _api(page, "POST", "/api/desk/seed", token=TOKEN)
             _normal_chair(page)
             _open_concierge(page)
-            page.get_by_test_id("concierge-root").wait_for(timeout=10_000)
             _settle(page)
+            repair = STATES[state]
+            job = repair["groups"][0]
+            if page.get_by_test_id("switchboard").get_attribute("data-layout") == "list":
+                page.get_by_test_id(f"switchboard-job-{job}").click()
 
-            row = page.get_by_test_id(f"concierge-repair-{state}")
-            row.wait_for(timeout=10_000)
-
-            # The state names itself.
-            assert STATES[state]["token"] in (row.text_content() or "")
+            # The state names itself on the job it breaks.
+            said = page.get_by_test_id(f"runson-job-repair-{job}")
+            said.wait_for(timeout=10_000)
+            assert repair["token"] in (said.text_content() or "")
+            word = page.get_by_test_id(f"switchboard-job-{job}").get_attribute("data-state")
+            assert word in {"broken", "waiting"}, word
 
             # ONE verb, and it is the library Button.
-            verbs = page.get_by_test_id(f"concierge-repair-verb-{state}")
+            verbs = page.locator("button[data-testid^='runson-repair-']")
             assert verbs.count() == 1, f"{state}: {verbs.count()} verbs"
             assert "btn" in (verbs.first.get_attribute("class") or ""), (
                 "every verb is the library Button"
             )
 
-            # The section counts what is there, never zero.
-            label = page.get_by_test_id("concierge-repairs-label")
-            # PHILO-13-03: the repairs are narrower than "needs you".
-            assert (label.text_content() or "").strip() == "TO REPAIR 1"
-
             # No raw <button> anywhere in the face.
-            root = page.get_by_test_id("concierge-root")
-            raw = root.locator(
-                "button:not(.btn):not(.surface-ledger-line):not(.gadget-chip-egress)"
-            )
-            assert raw.count() == 0, f"Raw <button>: {raw.count()}"
+            raw = raw_buttons(page)
+            assert not raw, f"Raw <button>: {raw}"
 
-            # No prose: no sentence-length paragraph inside the repair row.
-            longest = page.evaluate(
-                """(id) => {
-                  const row = document.querySelector(`[data-testid="${id}"]`);
-                  if (!row) return 0;
-                  let worst = 0;
-                  for (const el of row.querySelectorAll("span,div,p")) {
-                    if (el.children.length) continue;
-                    worst = Math.max(worst, (el.textContent || "").trim().length);
-                  }
-                  return worst;
-                }""",
-                f"concierge-repair-{state}",
-            )
-            assert longest <= 40, f"{state}: a {longest}-character sentence on the row"
-
-            # Nothing clipped out of its row.
-            clipped = page.evaluate(
-                """() => {
-                  const chips = document.querySelectorAll(
-                    '.concierge-repair-list .surface-state-chip'
-                  );
-                  for (const chip of chips) {
-                    const row = chip.closest('.surface-ledger-row');
-                    if (!row) continue;
-                    const cr = chip.getBoundingClientRect();
-                    const rr = row.getBoundingClientRect();
-                    if (cr.right > rr.right - 4) return chip.textContent;
-                  }
-                  return null;
-                }"""
-            )
-            assert clipped is None, f"State chip clipped: {clipped}"
+            # No prose: the repair is a token, never the service's sentence.
+            text = (said.text_content() or "").replace(verbs.first.text_content() or "", "")
+            assert len(text.strip()) <= 40, f"{state}: {text!r}"
+            assert repair["detail"] not in (page.get_by_test_id("switchboard").text_content() or "") or not repair["detail"]
 
             if width == 393:
                 assert page.evaluate(

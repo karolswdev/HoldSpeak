@@ -1,11 +1,13 @@
 """PHILO-15 10 — the engine setup tells the truth, on the glass.
 
-A real hub over an isolated HOME and an OpenAI-compatible stub engine (it
-answers ``/models``, ``/props`` with tool support, and a 1-token chat).
-Add an engine → Check (READY · TOOLS) → Use this for summaries (the window
-stays: USING · <model> · SUMMARIES) → the set reads LIMITED, never READY,
-for groups the authority serves only in part → Use these (the window stays:
-USING · <model> · N GROUPS · N LIMITED). 1440 + 393.
+PHILO-16 (C): ported to Runs on. A real hub over an isolated HOME and an
+OpenAI-compatible stub engine (it answers ``/models``, ``/props`` with tool
+support, and a 1-token chat). Add an engine → Check (READY · TOOLS) → Add
+(the window stays: ADDED) → patch it onto the Default for AI work (the
+window stays: PATCHED, Undo) → the board reads LIMITED, never READY, for
+jobs the authority serves only in part, with the missing work as a token
+on the job. A record-less engine is refused on the drop with its token,
+and nothing is written. 1440 + 393.
 """
 from __future__ import annotations
 
@@ -18,6 +20,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .runs_on import RECEIPT, engine_key_for, open_runs_on, patch, receipt, wait_receipt
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="PHILO-15 glass needs Playwright")
@@ -64,17 +67,11 @@ def engine_url() -> Any:
 
 
 def _open_models(page: Any) -> None:
-    page.evaluate(
-        """([key]) => sessionStorage.setItem("hs.desk.staged-surface-open", JSON.stringify({key}))""",
-        ["open-concierge"],
-    )
-    page.reload(wait_until="load")
-    _normal_chair(page)
-    page.locator("[data-testid='concierge-set-list']").wait_for(timeout=30_000)
+    open_runs_on(page)
 
 
 def _receipt(page: Any) -> str:
-    return page.locator("[data-testid='concierge-receipt']").text_content() or ""
+    return receipt(page)
 
 
 class TestEngineTruth:
@@ -107,32 +104,34 @@ class TestEngineTruth:
             page.locator("[data-testid='concierge-add-check']").click()
             assert page.locator("[data-testid='concierge-add-tools']").text_content(timeout=30_000) == "TOOLS"
 
-            # Use this for summaries: the window stays and says so.
+            # Add: the engine joins the column; the window stays and says so.
             page.locator("[data-testid='concierge-add-submit']").click()
-            page.wait_for_function(
-                """() => (document.querySelector("[data-testid='concierge-receipt']")?.textContent || "")
-                           .includes("SUMMARIES")""",
-                timeout=30_000,
-            )
-            assert _receipt(page).startswith(f"USING · {MODEL.upper()}"), _receipt(page)
-            # Astra r1 (finding 2): the press also set the Default for AI work.
-            assert "DEFAULT SET" in _receipt(page), _receipt(page)
-            assert page.locator("[data-testid='concierge-root']").count() == 1
+            wait_receipt(page, "^ADDED ")
+            assert page.locator("[data-testid='runson-root']").count() == 1
+            key = engine_key_for(engine_url)
 
-            # The set: READY only where the whole group runs. The library
-            # engine claims every result an executor checks (Astra r1, 5):
-            # Thoughts READY; Agents LIMITED, named in the owner's words.
+            # One patch: the Default for AI work. The window stays.
+            body = patch(page, "default", key)
+            assert body["scope"] == {"kind": "global"}, body
+            assert page.locator("[data-testid='runson-root']").count() == 1
+            hub = _api(page, "GET", "/api/settings/hub", token=TOKEN)
+            assert hub["models"]["defaultSet"] is True, hub["models"]
+
+            # The board: READY only where the whole job runs. Agents is
+            # LIMITED, and the missing work is a token on the job, in the
+            # owner's words (Astra r1, 5).
+            agents = page.get_by_test_id("switchboard-job-agents_tools")
             page.wait_for_function(
-                """() => !!document.querySelector("[data-testid='concierge-set-limit-agents_tools']")""",
+                """() => document.querySelector("[data-testid='switchboard-job-agents_tools']")
+                           ?.getAttribute('data-state') === 'limited'""",
                 timeout=30_000,
             )
-            agents = page.locator("[data-testid='concierge-set-agents_tools']")
-            assert "LIMITED" in (agents.text_content() or "")
-            assert page.locator("[data-testid='concierge-set-limit-agents_tools']").text_content() == "WITHOUTAGENTS"
-            assert "structured result" not in (page.locator("[data-testid='concierge-set-list']").text_content() or "")
-            thoughts = page.locator("[data-testid='concierge-set-thoughts_notes']")
-            assert "READY" in (thoughts.text_content() or "")
-            assert page.locator("[data-testid='concierge-set-chat_practice']").count() == 0
+            if width == 1440:
+                assert "WITHOUT AGENTS" in (agents.text_content() or "").upper(), agents.text_content()
+                thoughts = page.get_by_test_id("switchboard-job-thoughts_notes")
+                assert thoughts.get_attribute("data-state") == "ready"
+            assert "structured result" not in (page.get_by_test_id("switchboard").text_content() or "")
+            assert page.get_by_test_id("switchboard-job-chat_practice").count() == 0
             rows = _api(page, "POST", "/api/concierge/propose", token=TOKEN)["rows"]
             assert not [
                 r for r in rows
@@ -141,30 +140,17 @@ class TestEngineTruth:
             speech = next(r for r in rows if r["group"] == "speech_recognition")
             assert not str(speech.get("engineId") or "").startswith("preset:"), speech
             _settle(page)
-            page.locator("[data-testid='concierge-set-list']").screenshot(path=str(SHOTS / f"set-{width}.png"))
+            page.screenshot(path=str(SHOTS / f"board-{width}.png"), full_page=False)
 
-            # Use these: the window stays; the receipt names what is limited.
-            page.locator("[data-testid='concierge-apply']").click()
-            page.wait_for_function(
-                """() => /LIMITED/.test(document.querySelector("[data-testid='concierge-receipt']")?.textContent || "")
-                         && /^USING/.test(document.querySelector("[data-testid='concierge-receipt']")?.textContent || "")""",
-                timeout=30_000,
-            )
-            assert page.locator("[data-testid='concierge-root']").count() == 1
-            hub = _api(page, "GET", "/api/settings/hub", token=TOKEN)
-            assert hub["models"]["defaultSet"] is True, hub["models"]
-            _settle(page)
-            page.screenshot(path=str(SHOTS / f"after-use-these-{width}.png"), full_page=False)
-
-            # The footer receipt never runs under Cancel (B27).
+            # The footer receipt never runs under Undo (B27).
             overlap = page.evaluate(
                 """() => {
-                  const r = document.querySelector("[data-testid='concierge-receipt']").getBoundingClientRect();
-                  const c = document.querySelector("[data-testid='concierge-cancel']").getBoundingClientRect();
+                  const r = document.querySelector("[data-testid='runson-receipt']").getBoundingClientRect();
+                  const c = document.querySelector("[data-testid='runson-undo']").getBoundingClientRect();
                   return r.right > c.left + 1 && r.bottom > c.top && r.top < c.bottom;
                 }"""
             )
-            assert not overlap, "the receipt runs under Cancel"
+            assert not overlap, "the receipt runs under Undo"
             browser.close()
         assert not errors, errors
 
@@ -202,36 +188,24 @@ class TestTwoFailures:
             page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
             _open_models(page)
-            for group in ("thoughts_notes", "agents_tools"):
-                page.locator(f"[data-testid='concierge-picker-{group}']").click()
-                page.locator(f"[data-testid='concierge-picker-well-{group}'] [data-testid$='old-box']").first.click()
-                row = page.locator(f"[data-testid='concierge-set-{group}']")
-                assert "UNKNOWN · TRY" in (row.text_content() or ""), row.text_content()
-            page.locator("[data-testid='concierge-apply']").click()
-            # Astra r2 (finding 4): one cause, said once, with its count.
-            page.wait_for_function(
-                """() => /GROUPS · NO MODEL RECORD/.test(
-                    document.querySelector("[data-testid='concierge-receipt']")?.textContent || "")""",
-                timeout=30_000,
-            )
-            receipt = _receipt(page)
-            assert receipt.count("NO MODEL RECORD") == 1, receipt
-            page.wait_for_function(
-                """() => !!document.querySelector("[data-testid='concierge-set-fail-agents_tools']")""",
-                timeout=30_000,
-            )
-            assert page.locator("[data-testid='concierge-set-fail-thoughts_notes']").text_content() == "NO MODEL RECORD"
+            # PHILO-16 (C): a drop of the record-less engine is refused with
+            # its token, per job, and nothing is written.
+            writes: list[str] = []
+            page.on("request", lambda r: writes.append(r.url) if r.url.endswith("/api/inference/assignments/set") else None)
+            plate = page.get_by_test_id("switchboard-engine-old-box")
+            for group, label in (("thoughts_notes", "THOUGHTS & NOTES"), ("agents_tools", "AGENTS & TOOLS")):
+                if width == 393:
+                    # The phone list never offers an engine a job refuses.
+                    page.get_by_test_id(f"switchboard-job-{group}").click()
+                    assert page.get_by_test_id("switchboard-tap-old-box").count() == 0
+                    continue
+                page.get_by_test_id(f"switchboard-job-{group}").click()
+                plate.focus()
+                page.keyboard.press("Enter")
+                wait_receipt(page, f"^REFUSED · {label} · NO MODEL RECORD$")
+            assert writes == [], writes
             _settle(page)
-            page.screenshot(path=str(SHOTS / f"receipt-failures-{width}.png"), full_page=False)
-            # Astra r2 (finding 3): a reload reads the hub's receipt again.
-            _open_models(page)
-            page.wait_for_function(
-                """() => !!document.querySelector("[data-testid='concierge-set-fail-thoughts_notes']")""",
-                timeout=30_000,
-            )
-            assert "NO MODEL RECORD" in _receipt(page), _receipt(page)
-            _settle(page)
-            page.screenshot(path=str(SHOTS / f"receipt-failures-reloaded-{width}.png"), full_page=False)
+            page.screenshot(path=str(SHOTS / f"refused-no-record-{width}.png"), full_page=False)
             browser.close()
 
 

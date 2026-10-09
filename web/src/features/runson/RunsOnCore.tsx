@@ -32,6 +32,7 @@ import {
   SPEECH_JOB,
   jobState,
   jobOf,
+  limitTokens,
   ownEntries,
   splitEngines,
   taskLine,
@@ -39,6 +40,8 @@ import {
 } from "./model";
 import { stateClass, stateWord } from "./stateWord";
 import { useRunsOn, type RunsOnController } from "./useRunsOn";
+// The Meaning search row draws with the Concierge's ledger cells.
+import "../concierge/concierge.css";
 import "./runson.css";
 
 function lampFor(engine: BoardEngine, busy: boolean): SwitchLamp {
@@ -152,6 +155,32 @@ export function RunsOnCore({ scope }: CoreProps) {
   const repairs = detection?.repairs ?? [];
   const { have, found } = useMemo(() => splitEngines(engines), [engines]);
 
+  /* ── a repair's one verb (HS-200-04), on its engine; on its first job
+     when the engine is not on the board ── */
+  const repairButton = (repair: (typeof repairs)[number], testId: string): ReactNode => {
+    const label =
+      repair.control === "model_library" ? "Download" : repair.control === "endpoint_editor" ? "Fix address" : repair.control === "connections" ? "Key" : "Choose";
+    return (
+      <Button
+        dense
+        variant="secondary"
+        data-testid={testId}
+        onClick={() => {
+          if (repair.control === "endpoint_editor") ctrl.add.openRow(repair.baseUrl);
+          else if (repair.control === "model_library" && repair.presetId) {
+            const preset = engines.find((e) => e.presetId === repair.presetId);
+            if (preset) void ctrl.download(preset.key);
+          } else if (repair.control === "connections") {
+            void import("../../desk/shell").then(({ openSurfaceOr }) => openSurfaceOr("configure-integrations", "/settings"));
+          } else if (repair.groups[0]) ctrl.select(repair.groups[0]);
+        }}
+      >
+        {label}
+      </Button>
+    );
+  };
+  const onBoard = (engineId: string) => engines.some((e) => !e.found && e.detectId === engineId);
+
   /* ── the jobs ── */
   const jobs: SwitchJob[] = [];
   const wires: SwitchWire[] = [];
@@ -163,6 +192,7 @@ export function RunsOnCore({ scope }: CoreProps) {
     words[job] = word;
     const effective = ctrl.engineForJob(job);
     const result = ctrl.results[job];
+    const jobRepair = repairs.find((r) => r.groups.includes(job));
     const listening = job === SPEECH_JOB && ctrl.listening;
     // A Try it only where something runs (no verb that does nothing).
     const canTry = Boolean(effective) && (job === SPEECH_JOB || Boolean(effective?.detectId) || job === "thoughts_notes");
@@ -185,8 +215,19 @@ export function RunsOnCore({ scope }: CoreProps) {
       isDefault: job === DEFAULT_JOB,
       verb: layout === "board" ? tryVerb : undefined,
       runsOn: effective ? effective.name : word,
+      // The limitation is a token on the job (§12 rule 6), until a Try
+      // answers in its place; a repair names itself there too.
       result: result ? (
         <span data-tone={result.tone === "danger" ? "danger" : undefined}>{result.tokens.join(" · ")}</span>
+      ) : jobRepair ? (
+        <span data-tone="danger" data-testid={`runson-job-repair-${job}`}>
+          {jobRepair.token}
+          {jobRepair.groups[0] === job && !(jobRepair.engineId && onBoard(jobRepair.engineId))
+            ? repairButton(jobRepair, `runson-repair-job-${job}`)
+            : null}
+        </span>
+      ) : word === "LIMITED" && limitTokens(job, effective).length ? (
+        <span data-tone="warn">{limitTokens(job, effective).join(" · ")}</span>
       ) : undefined,
     });
     ownEntries(row).forEach((entry, order) => {
@@ -209,27 +250,7 @@ export function RunsOnCore({ scope }: CoreProps) {
   /* ── the engines ── */
   const repairVerb = (engine: BoardEngine): ReactNode => {
     const repair = repairs.find((r) => r.engineId && r.engineId === engine.detectId);
-    if (!repair) return undefined;
-    const label =
-      repair.control === "model_library" ? "Download" : repair.control === "endpoint_editor" ? "Fix address" : repair.control === "connections" ? "Key" : "Choose";
-    return (
-      <Button
-        dense
-        variant="secondary"
-        data-testid={`runson-repair-${engine.key}`}
-        onClick={() => {
-          if (repair.control === "endpoint_editor") ctrl.add.openRow(repair.baseUrl);
-          else if (repair.control === "model_library" && repair.presetId) {
-            const preset = engines.find((e) => e.presetId === repair.presetId);
-            if (preset) void ctrl.download(preset.key);
-          } else if (repair.control === "connections") {
-            void import("../../desk/shell").then(({ openSurfaceOr }) => openSurfaceOr("configure-integrations", "/settings"));
-          } else if (repair.groups[0]) ctrl.select(repair.groups[0]);
-        }}
-      >
-        {label}
-      </Button>
-    );
+    return repair ? repairButton(repair, `runson-repair-${engine.key}`) : undefined;
   };
 
   const plate = (engine: BoardEngine): SwitchEngine => {
@@ -344,9 +365,13 @@ export function RunsOnCore({ scope }: CoreProps) {
       ) : null}
 
       {roster ? (
-        <ul className="runson-meaning">
-          <MeaningSearchRow />
-        </ul>
+        // The row keeps the ledger context it was built in (the Concierge's
+        // set list), so its cells lay out exactly as before.
+        <div className="concierge-root runson-meaning-host">
+          <ul className="concierge-set-list runson-meaning">
+            <MeaningSearchRow />
+          </ul>
+        </div>
       ) : null}
 
       <SurfaceFooter
