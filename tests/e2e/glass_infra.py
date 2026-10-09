@@ -218,6 +218,10 @@ def _boot(
     )
     monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
     monkeypatch.setenv("HOME", str(home))
+    # PHILO-16 R2: EventKit is per macOS user, not per HOME; a glass hub never
+    # reads the owner's real calendars (holdspeak/macos_calendar.py). A test
+    # that needs calendars replaces the module's calls.
+    monkeypatch.setenv("HOLDSPEAK_MACOS_CALENDAR", "0")
     monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
     monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
     reset_database()

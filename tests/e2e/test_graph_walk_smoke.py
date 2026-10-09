@@ -54,7 +54,8 @@ ATLAS_FENCE = {
     ),
     "case.j1.first_words_continue_later.idle": (
         "pass", "", "Continue later is the trigger, pressed by nothing in setup; "
-        "the desk (the arrival headline) is the promised result",
+        "the desk (the Chair screen, chair-desk; PHILO-14 A1 closed the Needs "
+        "you window that holds the arrival headline) is the promised result",
     ),
     "case.j10.arrival_generate_brief.generated_empty": (
         "pass", "", "the empty brief says so on the face",
