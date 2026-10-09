@@ -90,9 +90,13 @@ describe("the material (design-tokens.json → tokens.css, COMPONENT layer)", ()
       return chrome.slice(at, chrome.indexOf("}", at));
     };
     expect(rule(".desk-next .desk-window.desk-window-shell")).toMatch(/var\(--wb-frame\) solid var\(--wb-steel\)/);
-    expect(rule(".desk-next .desk-window.desk-window-shell.is-front")).toContain("var(--wb-blue)");
+    // PHILO-16 (A1) §3: the front is the plane `front` (`.is-front` its alias
+    // for one release); a far window is steel in shade.
+    const FRONT = ':is([data-plane="front"], .is-front)';
+    expect(rule(`.desk-next .desk-window.desk-window-shell${FRONT}`)).toContain("var(--wb-blue)");
+    expect(rule('.desk-next .desk-window.desk-window-shell[data-plane="far"]')).toContain("var(--wb-steel-dim)");
     expect(rule(".desk-next .desk-window-shell > .desk-pullout-head")).toContain("var(--wb-steel)");
-    expect(rule(".desk-next .desk-window-shell.is-front > .desk-pullout-head")).toContain("var(--wb-blue)");
+    expect(rule(`.desk-next .desk-window-shell${FRONT} > .desk-pullout-head`)).toContain("var(--wb-blue)");
     // The inherited head-tone rule that painted EVERY is-front head is gone
     // (R4): a stale is-front can no longer paint a second front bar.
     expect(chrome).not.toMatch(/\.desk-window-shell\.is-front \.desk-pullout-head \{/);

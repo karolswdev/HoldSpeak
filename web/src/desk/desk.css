@@ -9,6 +9,7 @@
 @import "./components/inline-editor.css";
 @import "./components/pullout.css";
 @import "./components/window-chrome.css";
+@import "./components/window-interior.css";
 @import "./components/dock.css";
 @import "./components/record-orb.css";
 @import "./components/speak-to-fill.css";
@@ -26,7 +27,9 @@
   z-index: var(--desk-z-stage);
   pointer-events: none;
   overflow: hidden;
-  background: var(--bg);
+  /* PHILO-16 (A1) §2: the backdrop under every atmosphere; a GL scene
+     paints over it, Quiet Desk (no scene) shows it */
+  background: var(--desk-floor);
 }
 .desk-next .desk-atmosphere-canvas {
   width: 100%;
