@@ -653,7 +653,8 @@ function EngineRow({
     // put focus back here instead of on nothing (design D2(a)).
     rememberTaskFocus();
     import("../../../desk/shell").then(({ openSurface }) =>
-      openSurface("open-concierge"),
+      // PHILO-16 (C): Runs on opens on the job this face runs.
+      openSurface("open-concierge", "writing_dictation"),
     );
   };
 

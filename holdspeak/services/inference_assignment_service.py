@@ -185,6 +185,10 @@ class InferenceAssignmentService:
                     if default_projection is None
                     else "assigned",
                     "repair": "Choose default" if default_projection is None else None,
+                    # PHILO-16 (C): the revision a write to THIS row must
+                    # present (CAS), tombstones included -- the Switchboard
+                    # writes a row it may only see through inheritance.
+                    "expected_revision": self._expected_revision(conn, "global"),
                 }
             ]
             owner_capabilities = tuple(
@@ -248,6 +252,9 @@ class InferenceAssignmentService:
                         "inherited_from": "group"
                         if group_row is not None
                         else ("global" if global_row is not None else None),
+                        "expected_revision": self._expected_revision(
+                            conn, f"group:{group_id}"
+                        ),
                         "assignment": projection,
                         "status": "no_assignment"
                         if projection is None
@@ -2216,6 +2223,16 @@ class InferenceAssignmentService:
                 WHERE h.assignment_key=? AND h.cleared=0""",
             (key,),
         ).fetchone()
+
+    @classmethod
+    def _expected_revision(cls, conn: Any, key: str) -> int:
+        """The revision ``set_assignment`` compares against for ``key``.
+
+        ``_current`` reads the head whether or not it is cleared, so a
+        cleared row answers its tombstone's revision, never 0.
+        """
+        current = cls._current(conn, key)
+        return 0 if current is None else int(current["revision"])
 
     @staticmethod
     def _current(conn: Any, key: str) -> Any:

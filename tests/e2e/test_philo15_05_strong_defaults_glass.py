@@ -172,9 +172,12 @@ def test_the_brief_generated_itself(tmp_path: Path, monkeypatch: pytest.MonkeyPa
 
 @pytest.mark.e2e
 @pytest.mark.timeout(240)
-def test_the_concierge_anthropic_row_reads_not_supported_yet(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_runs_on_anthropic_plate_reads_not_supported_yet(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """PHILO-16 (C): ported from the Concierge row to the Runs on plate. A
+    provider with no execution adapter reads NOT SUPPORTED YET, never READY,
+    carries no verb, and a job refuses it."""
     _ensure_build()
-    from .test_hs170_concierge_glass import _open_concierge, _window
+    from .runs_on import open_runs_on, window
 
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
@@ -196,17 +199,28 @@ def test_the_concierge_anthropic_row_reads_not_supported_yet(tmp_path: Path, mon
         with sync_playwright() as pw:
             for width in (1440, 393):
                 page = _page(pw, url, width, errors)
-                _open_concierge(page)
-                page.get_by_test_id("concierge-root").wait_for(timeout=15_000)
-                row = page.get_by_test_id("concierge-found-cloud:cloud-anthropic")
-                row.wait_for(timeout=15_000)
-                said = row.text_content() or ""
-                assert "NOT SUPPORTED YET" in said and "READY" not in said, said
-                assert page.get_by_test_id("concierge-check-cloud:cloud-anthropic").count() == 0
-                row.scroll_into_view_if_needed()
+                open_runs_on(page)
+                row = page.get_by_test_id("switchboard-engine-cloud-anthropic")
+                if width == 393:
+                    # The phone list offers only what a job can take: the
+                    # unsupported engine is no alternative anywhere.
+                    assert page.get_by_test_id("switchboard-tap-cloud-anthropic").count() == 0
+                else:
+                    row.wait_for(timeout=15_000)
+                    said = row.text_content() or ""
+                    assert "NOT SUPPORTED YET" in said and "READY" not in said, said
+                    assert row.locator("button").count() == 0, "an unsupported engine carries no verb"
+                    assert page.get_by_test_id("switchboard-lamp-cloud-anthropic").get_attribute("data-lamp") == "broken"
+                    page.get_by_test_id("switchboard-job-thoughts_notes").click()
+                    row.focus()
+                    page.keyboard.press("Enter")
+                    page.wait_for_function(
+                        "() => /REFUSED .* NOT SUPPORTED/.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
+                    )
+                    row.scroll_into_view_if_needed()
                 _settle(page)
-                win = _window(page)
-                (win if win.count() else page).screenshot(path=str(SHOTS / f"concierge-anthropic-{width}.png"))
+                win = window(page)
+                (win if win.count() else page).screenshot(path=str(SHOTS / f"runson-anthropic-{width}.png"))
                 _assert_clean(page, errors)
                 page.context.browser.close()
     finally:

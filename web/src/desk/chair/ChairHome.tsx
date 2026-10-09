@@ -1213,7 +1213,7 @@ function Arrival() {
                           onClick={
                             blocker.key === "unknown"
                               ? () => void readAssignments()
-                              : () => openSurfaceOr("open-concierge", "/models")
+                              : () => openSurfaceOr("open-concierge", "/models", blocker.key)
                           }
                           data-testid={`arrival-blocker-verb-${blocker.key}`}
                         >

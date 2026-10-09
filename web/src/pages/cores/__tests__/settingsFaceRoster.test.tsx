@@ -5,9 +5,11 @@ import { describe, expect, it } from "vitest";
 import { MODULE_ALIASES, PREF_MODULES } from "../settingsPrefs";
 
 describe("Settings face roster", () => {
-  it("has the Models and Assignments peer destinations", () => {
+  it("has one Runs on destination (PHILO-16 C: Models + Assignments merged)", () => {
     // Conductor R7 (canvas K7a, ratified 2026-10-07): + People.
-    expect(PREF_MODULES).toHaveLength(10);
+    expect(PREF_MODULES).toHaveLength(9);
+    expect(PREF_MODULES.find((m) => m.id === "models")?.label).toBe("Runs on");
+    expect(MODULE_ALIASES.assignments).toBe("models");
   });
 
   it("names every tile by what the owner does, not by subsystem", () => {
@@ -19,7 +21,6 @@ describe("Settings face roster", () => {
       "meetings",
       "rhythm",
       "models",
-      "assignments",
       "integrations",
       "system",
       "people",
@@ -38,6 +39,7 @@ describe("Settings face roster", () => {
       "devices",
       "delivery",
       "desk",
+      "assignments",
     ];
     const currentIds = new Set(PREF_MODULES.map((m) => m.id));
     for (const id of retired) {

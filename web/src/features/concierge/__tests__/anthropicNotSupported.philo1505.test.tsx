@@ -1,3 +1,7 @@
+// PHILO-16 (C): these tests describe the PARKED ConciergeCore (it renders
+// nowhere now). Their live intents are ported to features/runson/__tests__
+// (state words, a drop writes the chain, 409, Try it, FOUND, the bar, the
+// add row); they stay green against the parked core until it is retired.
 /* PHILO-15 05, ruling 3 (inventory gap 5): an Anthropic key does nothing
  * today (no execution adapter). The Concierge's api.anthropic.com row reads
  * NOT SUPPORTED YET, never READY, offers no paid Check, and is never offered

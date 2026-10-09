@@ -51,10 +51,10 @@ export const PREF_MODULES: PrefModule[] = [
   { id: "meetings", label: "Meetings", glyph: "meeting", sprite: "meetings", keys: ["meeting", "calendar"] },
   // Rhythm: cadence user-facing + Telegram + RAW.
   { id: "rhythm", label: "Rhythm", glyph: "cadence", sprite: "rhythm", keys: ["cadence", "cadence_telegram"] },
-  // Models stays the availability-only Model Library.
-  { id: "models", label: "Models", glyph: "models", sprite: "models", keys: ["rails_observer"] },
-  // Assignments is Models' peer: which compatible chain each job uses.
-  { id: "assignments", label: "Assignments", glyph: "models", sprite: "models", keys: [] },
+  // PHILO-16 (C): ONE tile, Runs on. The Models and Assignments tiles only
+  // redirected to the same window; both ids still open it (`assignments`
+  // is an alias below).
+  { id: "models", label: "Runs on", glyph: "models", sprite: "models", keys: ["rails_observer"] },
   // Connections: tool connections + credentials + RAW.
   { id: "integrations", label: "Connections", glyph: "secret", sprite: "integrations", keys: [] },
   // System: device name, desk reset, devices RAW.
@@ -75,6 +75,7 @@ export const MODULE_ALIASES: Record<string, string> = {
   cadence: "rhythm",
   devices: "system",
   delivery: "models",
+  assignments: "models",
   desk: "system",
 };
 
@@ -456,11 +457,11 @@ export function PrefsFace({
         {headline.text}
       </span>
       <SurfaceLedger count="" cols="hub">
-        {/* Models: N ENGINES. HS-202-02 — the DEFAULT/GROUPS facts moved
-            to the Assignments row below, where they are named; they were
-            printed on both rows before (M6, the same fact twice). */}
+        {/* PHILO-16 (C): Runs on, ONE row (the Models and Assignments rows
+            both opened the same window). Its facts: the engines, and the
+            Default for AI work when none is set. */}
         <SurfaceLedgerRow
-          primary="Models"
+          primary="Runs on"
           expands={false}
           onToggle={() => onOpen("models")}
           trailing={openVerb("models")}
@@ -468,19 +469,6 @@ export function PrefsFace({
             {hub.models.engines > 0
               ? <span className="surface-token" data-chip>{countToken(hub.models.engines, "ENGINE", "ENGINES")}</span>
               : null}
-          </>}
-        />
-        {/* Assignments: Models' peer — which compatible chain each job
-            uses. HS-202-02: PREF_MODULES declared this module and the
-            ledger rendered eight rows, so it had no door at any width
-            (SURFACE-INVENTORY-2026-09-20.md §4). The groups fact lives
-            HERE, on the row it names, and no longer beside Models. */}
-        <SurfaceLedgerRow
-          primary="Assignments"
-          expands={false}
-          onToggle={() => onOpen("assignments")}
-          trailing={openVerb("assignments")}
-          cells={<>
             {!hub.models.defaultSet
               ? <StateChip state={workHasEngine(hub) ? "idle" : "warning"} label="NO DEFAULT" />
               : null}

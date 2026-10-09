@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { readableError } from "../../lib/api";
-import { AssignmentEditor } from "./AssignmentEditor";
+import { openSurfaceOr } from "../../desk/shell";
+import { onReturnToTask } from "../../desk/returnToTask";
 import { AssignmentSummary } from "./AssignmentSummary";
 import {
   getAssignmentEditor,
@@ -21,29 +21,28 @@ function isProjection(editor: AssignmentEditorProjection | null): editor is Assi
 }
 
 /**
- * The contextual assignment atom for an open owner object. It reads and writes
- * only the canonical assignment service through the shared editor; a feature
- * never receives a raw inference-target selector or a parallel writer.
+ * The contextual assignment atom for an open owner object: a READ of what
+ * this object runs on, from the canonical assignment service.
+ *
+ * PHILO-16 (C), ruling 2026-10-09: its Change opens Runs on with this
+ * object's job selected (hot wires). The AssignmentEditor sheet it used to
+ * open is parked; a per-object wire on the board is backlog.
  */
 export function ContextualAssignment({
   label,
   capabilityId,
   scope,
-  onChanged,
 }: {
   label: string;
   capabilityId: string;
   scope: AssignmentScope;
-  /** Called after a saved change, so the owner face can read its state again. */
+  /** Kept for callers; Runs on announces its own changes. */
   onChanged?: () => void;
 }) {
   const scopeKey = JSON.stringify(scope);
   const stableScope = useMemo(() => scope, [scopeKey]);
   const [editor, setEditor] = useState<AssignmentEditorProjection | null>(null);
   const [error, setError] = useState("");
-  const [receipt, setReceipt] = useState("");
-  const [open, setOpen] = useState(false);
-  const opener = useRef<HTMLButtonElement | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -56,24 +55,12 @@ export function ContextualAssignment({
   }, [capabilityId, stableScope]);
 
   useEffect(() => { void refresh(); }, [refresh]);
+  // Runs on announces a patch with the readiness signal; read again on it.
+  useEffect(() => onReturnToTask(() => void refresh()), [refresh]);
 
-  const change = (button: HTMLButtonElement) => {
-    opener.current = button;
-    setReceipt("");
-    setOpen(true);
-    void refresh();
-  };
-  const close = () => {
-    // Restore synchronously before unmounting the sheet; some browser focus
-    // managers otherwise fall through to body during Escape's key event.
-    opener.current?.focus();
-    setOpen(false);
-  };
-  const saved = async (nextReceipt: string) => {
-    setReceipt(nextReceipt);
-    close();
-    await refresh();
-    onChanged?.();
+  const change = () => {
+    // The job is the capability's group; Runs on resolves it from the id.
+    openSurfaceOr("open-concierge", "/models", capabilityId);
   };
 
   const projection = isProjection(editor) ? editor : null;
@@ -85,19 +72,5 @@ export function ContextualAssignment({
       repair={projection.effective.repair}
       onChange={change}
     /> : error ? <p className="contextual-assignment-error" role="status">{error}</p> : editor ? <p className="contextual-assignment-error" role="status">Assignment unavailable</p> : <p className="contextual-assignment-loading">Loading assignment</p>}
-    {receipt ? <p className="contextual-assignment-receipt" role="status">{receipt}</p> : null}
-    {open && projection ? createPortal(
-      <div className="contextual-assignment-layer">
-        <AssignmentEditor
-          title={label}
-          editor={projection}
-          returnFocus={opener.current}
-          onClose={close}
-          onRefresh={refresh}
-          onSaved={saved}
-        />
-      </div>,
-      document.getElementById("desk-next") ?? document.body,
-    ) : null}
   </div>;
 }
