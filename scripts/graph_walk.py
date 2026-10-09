@@ -5110,7 +5110,18 @@ def _isolated_hub_env(
         "XDG_CONFIG_HOME": str(isolated_home / ".config"),
         "HOLDSPEAK_DESKTOP_NOTIFY": "0",
         "HOLDSPEAK_CHANNEL_KEYSTORE_FILE": str(isolated_home / "channel-keys.json"),
+        # Astra M1 on b7a29e8c6: isolate the agents at the ENV BOUNDARY, so
+        # every production path (onboarding, the Codex trust reader's
+        # `codex app-server`, launches, hooks install) reads this HOME's
+        # agent folders, never the owner's.
+        "CLAUDE_CONFIG_DIR": str(isolated_home / ".claude"),
+        "CODEX_HOME": str(isolated_home / ".codex"),
+        "PI_CODING_AGENT_DIR": str(isolated_home / ".pi" / "agent"),
+        # Astra M2: no AppleScript reads the owner's front window
+        # (holdspeak/target_profile.py).
+        "HOLDSPEAK_ACTIVE_TARGET": "off",
     })
+    env.pop("ANTHROPIC_API_KEY", None)
     env.pop("TMUX", None)
     env.pop("TMUX_PANE", None)
     return env

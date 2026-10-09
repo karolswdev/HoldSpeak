@@ -31,35 +31,56 @@ def channel_keystore_path() -> Optional[Path]:
 class FileChannelKeyStore:
     """One channel's slots in the shared key file. Errors are the channel's own codes."""
 
-    def __init__(self, path: Path, service: str, error: Callable[[str], Exception], missing_code: str) -> None:
+    def __init__(
+        self, path: Path, service: str, error: Callable[[str], Exception], missing_code: str, locked_code: str,
+    ) -> None:
         self._path = Path(path)
         self._service = service
         self._error = error
         self._missing = missing_code
+        self._locked = locked_code
 
     def _load(self) -> dict[str, dict[str, str]]:
+        """The whole file; an unreadable or malformed file is the channel's ``locked`` code."""
         try:
             data = json.loads(self._path.read_text(encoding="utf-8"))
         except FileNotFoundError:
             return {}
         except (OSError, ValueError):
-            raise self._error(self._missing) from None
-        return data if isinstance(data, dict) else {}
+            raise self._error(self._locked) from None
+        if not isinstance(data, dict):
+            raise self._error(self._locked)
+        return data
+
+    def _bucket(self, data: dict) -> dict[str, str]:
+        bucket = data.get(self._service)
+        if bucket is None:
+            return {}
+        if not isinstance(bucket, dict):
+            raise self._error(self._locked)
+        return bucket
 
     def get(self, key_ref: str) -> str:
         with _lock:
-            value = (self._load().get(self._service) or {}).get(str(key_ref))
-        if not value:
+            value = self._bucket(self._load()).get(str(key_ref))
+        if not isinstance(value, str) or not value:
             raise self._error(self._missing)
-        return str(value)
+        return value
 
     def put(self, key_ref: str, key: str) -> None:
         with _lock:
             data = self._load()
-            data.setdefault(self._service, {})[str(key_ref)] = str(key)
-            self._path.parent.mkdir(parents=True, exist_ok=True)
+            bucket = dict(self._bucket(data))
+            bucket[str(key_ref)] = str(key)
+            data[self._service] = bucket
             tmp = self._path.with_suffix(self._path.suffix + ".tmp")
-            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-            with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                json.dump(data, handle)
-            os.replace(tmp, self._path)
+            try:
+                self._path.parent.mkdir(parents=True, exist_ok=True)
+                fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+                os.fchmod(fd, 0o600)  # an existing .tmp keeps its mode through O_CREAT
+                with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                    json.dump(data, handle)
+                os.replace(tmp, self._path)
+                os.chmod(self._path, 0o600)
+            except OSError:
+                raise self._error(self._locked) from None

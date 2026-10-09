@@ -235,6 +235,13 @@ def _boot(
     monkeypatch.setenv("HOLDSPEAK_DESKTOP_NOTIFY", "0")
     monkeypatch.setenv("HOLDSPEAK_CHANNEL_KEYSTORE_FILE", str(home / "channel-keys.json"))
     monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(home / "people.key"))
+    # Astra M1/M2 on b7a29e8c6: the agents' folders inside this HOME at the
+    # env boundary; no owner API key; no AppleScript on the owner's screen.
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(home / ".claude"))
+    monkeypatch.setenv("CODEX_HOME", str(home / ".codex"))
+    monkeypatch.setenv("PI_CODING_AGENT_DIR", str(home / ".pi" / "agent"))
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("HOLDSPEAK_ACTIVE_TARGET", "off")
     monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
     monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
     reset_database()

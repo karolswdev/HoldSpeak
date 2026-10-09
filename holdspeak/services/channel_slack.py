@@ -137,7 +137,8 @@ def default_key_store() -> Any:
 
     path = channel_keystore_path()
     if path is not None:
-        return FileChannelKeyStore(path, NativeSlackKeyStore.service_name, SlackKeyError, "slack_webhook_missing")
+        return FileChannelKeyStore(path, NativeSlackKeyStore.service_name, SlackKeyError, "slack_webhook_missing",
+                                   "slack_key_store_locked")
     return NativeSlackKeyStore()
 
 

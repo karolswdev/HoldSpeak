@@ -256,6 +256,8 @@ _PLATFORM = platform.system()
 #: Center). Default: on.
 DESKTOP_NOTIFY_ENV = "HOLDSPEAK_DESKTOP_NOTIFY"
 NOT_POSTED_IN_RIG = "not posted in this rig"
+#: The heartbeat reason and receipt outcome for a suppressed notification.
+NOT_POSTED_REASON = "not_posted_in_rig"
 
 
 def desktop_notify_enabled() -> bool:
@@ -403,7 +405,13 @@ def heartbeat_notify(
         else:
             edge.mark_fired(count)  # type: ignore[union-attr]
     result["fired"] = fired
-    result["reason"] = "fired" if fired else "dispatch_failed"
+    if fired:
+        result["reason"] = "fired"
+    elif _notifier is None and not desktop_notify_enabled():
+        # A rig hub: suppressed on purpose, not a failed dispatch.
+        result["reason"] = NOT_POSTED_REASON
+    else:
+        result["reason"] = "dispatch_failed"
 
     if receipt_writer:
         receipt_writer({

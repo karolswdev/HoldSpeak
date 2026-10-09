@@ -463,7 +463,8 @@ def default_key_store() -> Any:
 
     path = channel_keystore_path()
     if path is not None:
-        return FileChannelKeyStore(path, NativeEmailKeyStore.service_name, EmailKeyError, "email_key_missing")
+        return FileChannelKeyStore(path, NativeEmailKeyStore.service_name, EmailKeyError, "email_key_missing",
+                                   "email_key_store_locked")
     return NativeEmailKeyStore()
 
 

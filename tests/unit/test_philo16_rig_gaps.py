@@ -464,3 +464,199 @@ def test_a_boundary_inside_a_then_installs_its_double_at_boot(
     assert booted and booted[0]["engine_replay"] == REPO / reply
     assert booted[0]["cli_runner"] == REPO / runner
     assert booted[0]["import_transcriber"] == REPO / transcript
+
+
+# ── Astra M1 on b7a29e8c6: the agents' folders at the env boundary ───────
+
+AGENT_DIR_OWNER = {"CLAUDE_CONFIG_DIR": "/Users/owner/.claude", "CODEX_HOME": "/Users/owner/.codex",
+                   "PI_CODING_AGENT_DIR": "/Users/owner/.pi/agent", "ANTHROPIC_API_KEY": "sk-owner",
+                   "PATH": "/usr/bin"}
+
+
+def _assert_agent_dirs(env: dict[str, Any], home: Path) -> None:
+    for name in ("CLAUDE_CONFIG_DIR", "CODEX_HOME", "PI_CODING_AGENT_DIR"):
+        assert env.get(name) and Path(env[name]).is_relative_to(home), (name, env.get(name))
+    assert not env.get("ANTHROPIC_API_KEY")
+    assert env.get("HOLDSPEAK_ACTIVE_TARGET") == "off"
+
+
+def test_the_graph_walk_hub_env_scopes_every_agent_folder(tmp_path: Path) -> None:
+    env = graph_walk._isolated_hub_env(tmp_path, inherited=dict(AGENT_DIR_OWNER))
+    _assert_agent_dirs(env, graph_walk.guard_home(tmp_path))
+
+
+def test_the_glass_boot_scopes_every_agent_folder(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import holdspeak.web_server as web_server
+
+    from tests.e2e import glass_infra
+
+    for key, value in AGENT_DIR_OWNER.items():
+        monkeypatch.setenv(key, value)
+    seen: dict[str, Any] = {}
+
+    class _Server:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+        def start(self) -> str:
+            seen.update(os.environ)
+            return "http://127.0.0.1:0"
+
+    monkeypatch.setattr(web_server, "MeetingWebServer", _Server)
+    glass_infra._boot(tmp_path, monkeypatch)
+    _assert_agent_dirs(seen, tmp_path / "home")
+
+
+def test_the_codex_trust_reader_in_the_rig_env_reads_under_home(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """factory_launch's reader (untrusted_launch_hooks, env=None) starts `codex app-server`
+    with the hub's own environment: in a rig hub that is the rig env."""
+    from holdspeak import coder_gate
+    from holdspeak.agent_context import codex_trust
+
+    seen = tmp_path / "seen.json"
+    fake = tmp_path / "bin" / "codex"
+    fake.parent.mkdir()
+    fake.write_text(
+        "#!/bin/sh\n"
+        f"printf '{{\"CODEX_HOME\": \"%s\", \"HOME\": \"%s\"}}' \"$CODEX_HOME\" \"$HOME\" > {seen}\n"
+        "exit 1\n")
+    fake.chmod(0o755)
+    home = tmp_path / "rig-home"
+    home.mkdir()  # the reader's cwd is HOME
+    rig = graph_walk._isolated_hub_env(home, inherited=dict(AGENT_DIR_OWNER))
+    for key in list(os.environ):
+        monkeypatch.delenv(key, raising=False)
+    for key, value in rig.items():
+        monkeypatch.setenv(key, value)
+
+    with pytest.raises(codex_trust.CodexTrustError):
+        codex_trust.untrusted_launch_hooks(
+            coder_gate.codex_hook_flags(coder_gate.spawn_prefix()), executable=str(fake))
+    read = json.loads(seen.read_text())
+    rig_home = graph_walk.guard_home(home)
+    assert Path(read["CODEX_HOME"]).is_relative_to(rig_home), read
+    assert Path(read["HOME"]) == rig_home
+
+
+# ── Astra M2: HOLDSPEAK_ACTIVE_TARGET ────────────────────────────────────
+
+
+def test_active_target_detection_is_on_by_default_and_reads_nothing_when_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from holdspeak import target_profile
+
+    scripts: list[Any] = []
+    monkeypatch.setattr(target_profile.subprocess, "run", lambda *a, **k: scripts.append(a) or (_ for _ in ()).throw(
+        AssertionError("AppleScript ran")))
+    monkeypatch.setattr(target_profile.platform, "system", lambda: "Darwin")
+    monkeypatch.setattr(target_profile.shutil, "which", lambda name: f"/usr/bin/{name}")
+
+    monkeypatch.delenv(target_profile.ACTIVE_TARGET_ENV, raising=False)
+    assert target_profile.active_target_read()
+    monkeypatch.setenv(target_profile.ACTIVE_TARGET_ENV, "off")
+    assert not target_profile.active_target_read()
+    assert target_profile.collect_active_target_hints() == {}
+    profile = target_profile.detect_active_target_profile("auto").to_dict()
+    assert profile["id"] == "unknown" and profile["source"] == "not_read"
+    assert profile["app_name"] is None and profile["window_title"] is None
+    assert profile["details"] == {"matched": "not_read_in_rig"}
+    # The owner's manual override is config, not the screen: it still applies.
+    assert target_profile.detect_active_target_profile("browser").to_dict()["id"] == "browser"
+    assert scripts == []
+
+
+def test_the_readiness_route_answers_without_applescript_in_a_rig(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import subprocess
+
+    from fastapi.testclient import TestClient
+
+    from holdspeak import target_profile
+    from tests.e2e import glass_infra
+
+    real_run = subprocess.run
+
+    def guarded(argv: Any, *a: Any, **k: Any) -> Any:
+        if isinstance(argv, (list, tuple)) and argv and str(argv[0]).endswith("osascript"):
+            raise AssertionError("AppleScript ran in a rig")
+        return real_run(argv, *a, **k)
+
+    monkeypatch.setattr(target_profile.subprocess, "run", guarded)
+    import holdspeak.web_server as web_server
+
+    captured: dict[str, Any] = {}
+
+    class _Server(web_server.MeetingWebServer):
+        def start(self) -> str:
+            captured["app"] = self.app
+            return "http://127.0.0.1:0"
+
+    monkeypatch.setattr(web_server, "MeetingWebServer", _Server)
+    glass_infra._boot(tmp_path, monkeypatch, token="rig")
+    client = TestClient(captured["app"])
+    response = client.get("/api/dictation/readiness", headers={"Authorization": "Bearer rig"})
+    assert response.status_code == 200, response.text
+    target = response.json()["target"] if "target" in response.json() else response.json()["target_profile"]
+    assert target["source"] == "not_read" and target["app_name"] is None
+
+
+# ── Astra MAYs ───────────────────────────────────────────────────────────
+
+
+def test_a_suppressed_heartbeat_notification_is_not_an_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak import desktop_notify
+
+    monkeypatch.setenv(desktop_notify.DESKTOP_NOTIFY_ENV, "0")
+    result = desktop_notify.heartbeat_notify(2, 1, edge=desktop_notify.EdgeDetector(),
+                                             quiet_hours_start=0, quiet_hours_end=0)
+    assert result["fired"] is False
+    assert result["reason"] == "not_posted_in_rig"
+
+
+def test_the_libnotify_notifier_posts_nothing_when_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak import desktop_notify
+    from holdspeak.desktop_presence_freedesktop import _LibnotifyNotifier
+
+    monkeypatch.setenv(desktop_notify.DESKTOP_NOTIFY_ENV, "0")
+    notifier = _LibnotifyNotifier.__new__(_LibnotifyNotifier)
+    notifier._notif = None
+    notifier._Notify = None  # any use would raise
+    notifier.notify({"summary": "s", "body": "b", "icon": "i", "urgency": 1, "transient": True})
+    assert notifier._notif is None
+
+
+def test_the_channel_key_file_names_its_failures_in_the_channels_codes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from holdspeak.services import channel_email, channel_slack
+    from holdspeak.services.channel_key_file import CHANNEL_KEYSTORE_ENV
+
+    path = tmp_path / "keys.json"
+    monkeypatch.setenv(CHANNEL_KEYSTORE_ENV, str(path))
+    path.write_text(json.dumps({"HoldSpeak Email": ["not", "a", "bucket"]}))
+    path.chmod(0o644)
+    with pytest.raises(channel_email.EmailKeyError) as bucket:
+        channel_email.read_key("resend", "main")
+    assert bucket.value.code == "email_key_store_locked"
+    path.write_text("{not json")
+    with pytest.raises(channel_slack.SlackKeyError) as malformed:
+        channel_slack.KEY_STORE().get("slot")
+    assert malformed.value.code == "slack_key_store_locked"
+    path.write_text("{}")
+    path.chmod(0o644)
+    channel_email.save_key("resend", "main", "re_key")
+    assert oct(path.stat().st_mode & 0o777) == "0o600"  # an existing file is tightened too
+    blocked = tmp_path / "ro"
+    blocked.mkdir()
+    monkeypatch.setenv(CHANNEL_KEYSTORE_ENV, str(blocked / "sub" / "keys.json"))
+    blocked.chmod(0o500)
+    try:
+        with pytest.raises(channel_email.EmailKeyError) as write:
+            channel_email.save_key("resend", "main", "re_key")
+        assert write.value.code == "email_key_store_locked"
+    finally:
+        blocked.chmod(0o700)

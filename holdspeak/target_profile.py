@@ -258,9 +258,27 @@ def _parse_target_choice(raw: str) -> str | None:
     return None
 
 
-def collect_active_target_hints() -> dict[str, Any]:
-    """Best-effort active-window hints; returns `{}` when unavailable."""
+#: PHILO-16 rig gap: ``HOLDSPEAK_ACTIVE_TARGET=off`` reads no front
+#: application or window title for this process (no AppleScript against
+#: System Events, no X11 query): a rig hub never reads the owner's screen.
+#: Detection then answers an honest unknown target, ``source: not_read``.
+#: Default: on.
+ACTIVE_TARGET_ENV = "HOLDSPEAK_ACTIVE_TARGET"
 
+
+def active_target_read() -> bool:
+    """False when the process environment turns active-target detection off."""
+    import os
+
+    value = os.environ.get(ACTIVE_TARGET_ENV, "").strip().lower()
+    return value not in {"0", "off", "false", "no"}
+
+
+def collect_active_target_hints() -> dict[str, Any]:
+    """Best-effort active-window hints; returns `{}` when unavailable or off."""
+
+    if not active_target_read():
+        return {}
     system = platform.system().lower()
     try:
         if system == "darwin":
@@ -273,6 +291,9 @@ def collect_active_target_hints() -> dict[str, Any]:
 
 
 def detect_active_target_profile(override: Any = "auto") -> TargetProfile:
+    if not active_target_read() and normalize_target_profile_override(override) == "auto":
+        # The owner's screen is not read: an honest unknown, never a fake app.
+        return _profile("unknown", 0.0, "not_read", {}, details={"matched": "not_read_in_rig"})
     return detect_target_profile_with_override(collect_active_target_hints(), override)
 
 

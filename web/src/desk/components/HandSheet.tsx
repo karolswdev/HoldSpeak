@@ -271,7 +271,7 @@ function AgentSummary({ agent, detect }: { agent: AgentId; detect: AgentsDetect 
   if (!row) return null;
   const words = !row.installed
     ? "NOT INSTALLED"
-    : [row.hooks === "installed" ? "HOOKS IN" : "NO HOOKS", row.version].filter(Boolean).join(" · ");
+    : [row.hooks === "installed" ? "HOOKS IN" : row.hooks === "not_read" ? "HOOKS UNKNOWN" : "NO HOOKS", row.version].filter(Boolean).join(" · ");
   return (
     <>
       <span className="surface-token" data-chip>{words}</span>
