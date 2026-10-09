@@ -5012,6 +5012,10 @@ def _isolated_hub_env(
         "GRAPH_WALK_REPO_ROOT": str(repo_root or ""),
         "TMUX_TMPDIR": str(isolated_home),
         "HOLDSPEAK_PEOPLE_KEYSTORE_FILE": str(isolated_home / "people.key"),
+        # PHILO-16 (C): the loopback engine scan reads no port, so no walk
+        # reaches an engine that runs on this machine (Ollama, LM Studio,
+        # llama.cpp). Engines a case needs come from its doubles.
+        "HOLDSPEAK_LOOPBACK_ENGINE_PORTS": "",
     })
     env.pop("TMUX", None)
     env.pop("TMUX_PANE", None)

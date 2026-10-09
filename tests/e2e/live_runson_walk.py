@@ -7,26 +7,33 @@ job (state, the engine it runs on, its token line), each engine plate (emblem,
 tokens, lamp), the FOUND rows, and the wires. It writes runson-facts.json and
 runson-facts.md.
 
-THE LIVE LAWS (Article IV: the walk arms nothing):
-1. READ-ONLY. It never presses a verb: no Try it, Use it, Download, Add, Undo,
-   no drag, no Enter on a plate. It never selects a job (a selection is not a
-   write, but the walk does not need one).
-2. NO TOKEN IN A FILE. The --hub URL (with its token) comes from the command
+THE LIVE LAWS (Article IV: the walk arms nothing; the owner's no-write law):
+1. NO WRITE OF ANY CLASS. It never presses a verb: no Try it, Use it,
+   Download, Add, Undo, no drag, no Enter on a plate, and not the first-run
+   card's Continue later (that press seeds the desk and writes onboarding).
+   Any non-GET request the page sends to the hub fails the walk.
+2. NO SIDE EFFECT OF A READ. Runs on's Detect (GET /api/concierge/detect)
+   kicks the batteries-included default writer on a live hub. Start the hub
+   with HOLDSPEAK_DEFAULT_ASSIGNMENT=off for the walk. The walk also reads
+   the assignment roster before and after and fails on any change.
+3. NO TOKEN IN A FILE. The --hub URL (with its token) comes from the command
    line; the token never appears in what the walk writes.
-3. FACE-DRIVEN. It opens Runs on through the staged-surface seam (the same
-   seam as tests/e2e/runs_on.py) and reads the DOM.
-4. STANDALONE. Not collected by pytest (no test_* names); run it directly:
+4. FACE-DRIVEN. It opens Runs on through the staged-surface seam (the same
+   seam as tests/e2e/runs_on.py) and reads the DOM. A desk still on its
+   first-run card shows no Runs on; the walk says so and reads nothing.
+5. STANDALONE. Not collected by pytest (no test_* names); run it directly:
 
   uv run python tests/e2e/live_runson_walk.py --hub "http://127.0.0.1:PORT/?token=TOKEN" [--out DIR]
 
-Exit 0: both widths read, no raw button, no horizontal overflow, no page
-error. Exit 1 otherwise, with the reason.
+Exit 0: both widths read, no write, an unchanged roster, no raw button, no
+horizontal overflow, no page error. Exit 1 otherwise, with the reason.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -91,19 +98,47 @@ def _settle(page: Any) -> None:
     page.wait_for_timeout(200)
 
 
+class FirstRunBlocks(RuntimeError):
+    """The desk is still on its first-run card: no board to read."""
+
+
+def _roster(base: str, token: str) -> Any:
+    """GET the assignment roster (a read): the before/after fingerprint."""
+    req = urllib.request.Request(f"{base}/api/inference/assignments?token={token}",
+                                 headers={"Authorization": f"Bearer {token}"}, method="GET")
+    with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 - the hub the owner named
+        body = json.loads(resp.read().decode())
+    return [
+        {"id": row.get("id"), "revision": row.get("expected_revision"),
+         "entries": [(e.get("profile_id"), e.get("profile_revision"))
+                     for e in ((row.get("assignment") or {}).get("entries") or [])]}
+        for row in body.get("rows", [])
+    ] + [
+        {"task": t.get("id"), "has_override": t.get("has_override"),
+         "status": (t.get("effective") or {}).get("status")}
+        for t in body.get("tasks", body.get("task_overrides", []))
+    ]
+
+
 def _open_runs_on(page: Any) -> None:
     """The staged-surface seam (tests/e2e/runs_on.py open_runs_on); read-only."""
     page.evaluate(
         """() => sessionStorage.setItem("hs.desk.staged-surface-open", JSON.stringify({key: "open-concierge"}))"""
     )
     page.reload(wait_until="load")
-    later = page.get_by_role("button", name="Continue later", exact=True)
-    try:
-        later.wait_for(timeout=3000)
-        later.click()  # the first-value gate only; not a write to the desk
-    except Exception:  # noqa: BLE001 - the gate is already past
-        pass
-    page.get_by_test_id("runson-root").wait_for(timeout=30_000)
+    # Law 1: the first-run card's Continue later writes; the walk never
+    # presses it. A desk still on that card has no Runs on to read.
+    root = page.get_by_test_id("runson-root")
+    first_run = page.get_by_test_id("chair-first-value")
+    page.wait_for_function(
+        """() => document.querySelector("[data-testid='runson-root']")
+              || document.querySelector("[data-testid='chair-first-value']")""",
+        timeout=30_000,
+    )
+    if not root.count() and first_run.count():
+        raise FirstRunBlocks("the desk is on its first-run card; Runs on opens only past it, "
+                             "and the walk does not press Continue later (it writes)")
+    root.wait_for(timeout=30_000)
     page.get_by_test_id("switchboard").wait_for(timeout=30_000)
     # The detection (LAN probes) fills the engines in after the roster paints.
     try:
@@ -156,6 +191,7 @@ def main() -> int:
 
     report: dict[str, Any] = {"generated_at": datetime.now().isoformat(timespec="seconds"),
                               "hub_host": parsed.netloc, "widths": {}, "problems": []}
+    before = _roster(base, token)
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)
         try:
@@ -165,26 +201,25 @@ def main() -> int:
                 errors: list[str] = []
                 page.on("pageerror", lambda e, errors=errors: errors.append(str(e)))
                 writes: list[str] = []
-                reading = {"on": False}
 
-                def _write(r: Any, writes: list[str] = writes, reading: dict = reading) -> None:
+                def _write(r: Any, writes: list[str] = writes) -> None:
+                    # Law 1: ANY non-GET to the hub, from load to close.
                     if r.method in ("GET", "HEAD", "OPTIONS") or urlparse(r.url).netloc != parsed.netloc:
                         return
-                    # The desk's own load (its seed, the first-value gate) is
-                    # the product's, recorded apart; only a write sent while
-                    # the walk reads the board fails law 1.
-                    writes.append(("READING " if reading["on"] else "LOAD ") + f"{r.method} {urlparse(r.url).path}")
+                    writes.append(f"{r.method} {urlparse(r.url).path}")
 
                 page.on("request", _write)
                 page.goto(f"{base}/?token={token}", wait_until="load")
                 try:
                     _open_runs_on(page)
-                    reading["on"] = True
                     facts = page.evaluate(_READ_BOARD)
                     win = page.locator(".desk-surface-window").filter(has=page.get_by_test_id("runson-root")).first
                     shot = out / f"runson-{width}.png"
                     win.screenshot(path=str(shot))
                     facts["shot"] = str(shot)
+                except FirstRunBlocks as exc:
+                    facts = {"error": str(exc)}
+                    report["problems"].append(f"{width}: not read: {exc}")
                 except Exception as exc:  # noqa: BLE001
                     facts = {"error": f"{type(exc).__name__}: {str(exc)[:300]}"}
                     report["problems"].append(f"{width}: Runs on did not read: {facts['error']}")
@@ -199,14 +234,19 @@ def main() -> int:
                 for e in errors:
                     if "ResizeObserver" not in e:
                         report["problems"].append(f"{width}: page error {e[:200]}")
-                facts["load_writes"] = [w[5:] for w in writes if w.startswith("LOAD ")]
                 for w in writes:
-                    if w.startswith("READING "):
-                        report["problems"].append(f"{width}: a write while reading: {w[8:]}")
+                    report["problems"].append(f"{width}: the page sent a write: {w}")
                 page.close()
         finally:
             browser.close()
 
+    after = _roster(base, token)
+    if after != before:
+        report["problems"].append(
+            "the assignment roster changed during the walk (start the hub with "
+            "HOLDSPEAK_DEFAULT_ASSIGNMENT=off): "
+            + json.dumps([a for a in after if a not in before])[:400])
+    report["roster_unchanged"] = after == before
     (out / "runson-facts.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
     (out / "runson-facts.md").write_text(_md(report))
     print(f"Runs on walk: {out / 'runson-facts.md'}")

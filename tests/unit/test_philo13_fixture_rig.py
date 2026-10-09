@@ -301,6 +301,8 @@ def test_hub_environment_and_teardown_never_use_inherited_tmux_socket(
     assert env["HOME"] == str(tmp_path)
     assert env["TMUX_TMPDIR"] == str(tmp_path)
     assert env["HOLDSPEAK_PEOPLE_KEYSTORE_FILE"] == str(tmp_path / "people.key")
+    # PHILO-16 (C): the loopback engine scan reads no port in a rig hub.
+    assert env["HOLDSPEAK_LOOPBACK_ENGINE_PORTS"] == ""
     assert "TMUX" not in env and "TMUX_PANE" not in env
 
     calls: list[dict[str, object]] = []

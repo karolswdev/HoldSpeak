@@ -1417,17 +1417,24 @@
       },
       "expected": {
         "predicate": {
-          "kind": "protocol_rows_gone",
+          "kind": "protocol_rows",
           "collection": "task_overrides",
-          "identity": "id",
           "match": {
             "id": "meeting.deferred_analysis",
-            "has_override": false
+            "has_override": true,
+            "effective.status": "assigned",
+            "effective.inherited_from": "capability",
+            "effective.assignment.scope.kind": "capability",
+            "effective.assignment.scope.capability_id": "meeting.deferred_analysis",
+            "effective.assignment.entries.0.profile_id": "engine-192-168-77-43-8080",
+            "effective.assignment.entries.0.readiness": "ready",
+            "queue.status": "assigned"
           },
-          "min_gone": 1
+          "min_new": 1,
+          "max_new": 1
         },
         "observe_at": "protocol: GET /api/inference/assignments",
-        "words": "Patching an engine onto Meetings (the drag, or its keyboard twin) also writes the exact meeting.deferred_analysis row: ASTRA (A): the owner's result is a NAMED disappearance - the un-overridden summary row is gone by identity - not a vanished face section. || task_overrides holds an exact capability:meeting.deferred_analysis head whose effective.status is 'assigned'; back on the Chair the SETUP row is gone. The disappearance is attributable to THIS assignment only while speech is ready - with speech missing the row stays (see case.j3.speech_missing.row_stays), so a cleared row is not evidence that the summary engine landed [the audit's stated observation location: protocol: GET /api/inference/assignments; face: the absence of [data-testid=arrival-blocker]]",
+        "words": "Patching the LAN engine onto Meetings (the keyboard twin of the drag) writes the exact meeting.deferred_analysis row: after the press, task_overrides holds exactly one new row meeting.deferred_analysis with has_override true, an own capability head (effective.assignment.scope capability:meeting.deferred_analysis), the selected engine engine-192-168-77-43-8080 first and ready, effective.status assigned, and the meeting queue's status assigned. Before the press no such row exists (the row inherits). That a summary then completes through this row is case.j3.concierge_use_for_summaries.summary_completes.",
         "reads": [
           {
             "method": "GET",
@@ -1440,6 +1447,373 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.j3.concierge_use_for_summaries.summary_completes",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.concierge_use_for_summaries",
+        "edge.timer.intel_drainer"
+      ],
+      "state_id": "state.meetings.intel.ready",
+      "applicability": "applicable",
+      "preconditions": [
+        "case.j3.concierge_use_for_summaries.assigned_ready reached -- REPRODUCED in this run by the setup steps above (the Meetings patch on Runs on), never inherited from another run",
+        "the LAN engine at 192.168.77.43:8080, answered by the rig's LAN double; the summary itself is the replayed provider reply (engine_mode: replayed). No real LAN engine is walked (PHILO-16 C rig law).",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "chair-desk"
+          },
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-14 A1 (#939): read on the Chair screen [data-testid=chair-desk], which renders only past the gate (the headline is in the Needs you window, closed on arrival)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/planned_route/status",
+            "value": "ready"
+          },
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+          "why": "the meeting's summary route is ready before the drainer runs"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/planned_route/legs/0/profile_id",
+            "value": "engine-192-168-77-43-8080"
+          },
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+          "why": "the queue plans the summary through the engine the Meetings patch wrote into meeting.deferred_analysis"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.77.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route",
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-run-intel]",
+          "adapter": "ui-pointer",
+          "why": "Wait for the disclosed Run control before the single setup click."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        }
+      ],
+      "trigger": {
+        "kind": "clock",
+        "clock": "clock.intel_drainer",
+        "how": "no clock is moved: the run polls GET /api/intel/jobs (<= the case's completion_bound_s) for the REAL drainer to move the job",
+        "adapter": "scheduler-wait",
+        "poll_s": 0.1
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "/intel_job/status",
+          "value": "succeeded"
+        },
+        "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+        "words": "After the Meetings patch on Runs on, an imported meeting's summary runs through the meeting.deferred_analysis row (its planned route's first leg is engine-192-168-77-43-8080) and the admitted job succeeds; read on the durable meeting detail, because succeeded jobs leave the active queue."
+      },
+      "completion_bound_s": 600,
+      "viewports": []
     },
     {
       "id": "case.j3.speech_missing.row_stays",
@@ -6904,7 +7278,7 @@
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "section[aria-label=\"Needs you\"] .desk-shade-item:has-text(\"Meeting intelligence\") .desk-shade-do button:has-text(\"Open\")",
+        "selector": "section[aria-label=\"Needs attention\"] .desk-shade-item:has-text(\"Meeting intelligence\") .desk-shade-do button:has-text(\"Open\")",
         "action": "click",
         "adapter": "ui-pointer"
       },
@@ -6932,16 +7306,6 @@
       "applicability": "applicable",
       "preconditions": [
         "one needs_attention projection on the shade",
-        {
-          "kind": "check",
-          "predicate": {
-            "kind": "attr_equals",
-            "attr": "data-testid",
-            "value": "arrival-run-intel"
-          },
-          "observe_at": "[data-testid=arrival-run-intel]",
-          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
-        },
         {
           "kind": "check",
           "predicate": {
@@ -6989,13 +7353,27 @@
           "optional": true
         },
         {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/settings",
+          "body": {
+            "meeting": {
+              "intel_retry_base_seconds": 1,
+              "intel_retry_max_seconds": 1,
+              "intel_retry_max_attempts": 1
+            }
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the real settings route bounds provider failure retries, so the failed job is terminal (as case.j6.run_summary.intel_failed)"
+        },
+        {
           "kind": "boundary",
           "substitutes": "the named provider endpoint",
           "substitute": "engine_reply",
-          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
-          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "label": "the provider reply is a recorded FAILURE, replayed at the product provider seam (the rig's LAN double answers /models); the failed meeting job is what gives the shade its needs_attention row (projections.py); queueing, persistence and the shade stay real",
           "adapter": "labelled-substitution",
-          "reply": "tests/fixtures/philo5_summary_reply.json"
+          "reply": "tests/fixtures/philo3_summary_failure_reply.json"
         },
         {
           "kind": "ui",
@@ -7196,6 +7574,12 @@
           }
         },
         {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "the conductor reads retry settings at startup; restart before the one Run (as case.j6.run_summary.intel_failed)"
+        },
+        {
           "kind": "ui",
           "action": "goto",
           "adapter": "ui-navigation",
@@ -7270,6 +7654,24 @@
         },
         {
           "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-summary-status]:has-text('LAST ERROR'):not(:has-text('RETRYING'))",
+          "timeout_s": 90,
+          "why": "the replayed failure is terminal (FAILED, not RETRYING; the retry line also says PROVIDER FAILED) before the shade is read"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/projections/0/source_kind",
+            "value": "intel_job"
+          },
+          "observe_at": "protocol: GET /api/desk/projections?attention_state=needs_attention",
+          "why": "the failed meeting job's needs_attention projection exists before the shade verb acts on it (projections.py _jobs: a failed intel job is needs_attention)"
+        },
+        {
+          "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[title='Desk memory']"
@@ -7283,7 +7685,7 @@
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "section[aria-label=\"Needs you\"] .desk-shade-item .desk-shade-do button:has-text(\"Acknowledge\")",
+        "selector": "section[aria-label=\"Needs attention\"] .desk-shade-item .desk-shade-do button:has-text(\"Acknowledge\")",
         "action": "click",
         "adapter": "ui-pointer"
       },
@@ -7318,16 +7720,6 @@
         {
           "kind": "check",
           "predicate": {
-            "kind": "attr_equals",
-            "attr": "data-testid",
-            "value": "arrival-run-intel"
-          },
-          "observe_at": "[data-testid=arrival-run-intel]",
-          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
-        },
-        {
-          "kind": "check",
-          "predicate": {
             "kind": "protocol_field",
             "path": "/meetings/0/id",
             "value": "{meeting_id}"
@@ -7372,13 +7764,27 @@
           "optional": true
         },
         {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/settings",
+          "body": {
+            "meeting": {
+              "intel_retry_base_seconds": 1,
+              "intel_retry_max_seconds": 1,
+              "intel_retry_max_attempts": 1
+            }
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the real settings route bounds provider failure retries, so the failed job is terminal (as case.j6.run_summary.intel_failed)"
+        },
+        {
           "kind": "boundary",
           "substitutes": "the named provider endpoint",
           "substitute": "engine_reply",
-          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
-          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "label": "the provider reply is a recorded FAILURE, replayed at the product provider seam (the rig's LAN double answers /models); the failed meeting job is what gives the shade its needs_attention row (projections.py); queueing, persistence and the shade stay real",
           "adapter": "labelled-substitution",
-          "reply": "tests/fixtures/philo5_summary_reply.json"
+          "reply": "tests/fixtures/philo3_summary_failure_reply.json"
         },
         {
           "kind": "ui",
@@ -7579,6 +7985,12 @@
           }
         },
         {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "the conductor reads retry settings at startup; restart before the one Run (as case.j6.run_summary.intel_failed)"
+        },
+        {
           "kind": "ui",
           "action": "goto",
           "adapter": "ui-navigation",
@@ -7653,6 +8065,24 @@
         },
         {
           "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-summary-status]:has-text('LAST ERROR'):not(:has-text('RETRYING'))",
+          "timeout_s": 90,
+          "why": "the replayed failure is terminal (FAILED, not RETRYING; the retry line also says PROVIDER FAILED) before the shade is read"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/projections/0/source_kind",
+            "value": "intel_job"
+          },
+          "observe_at": "protocol: GET /api/desk/projections?attention_state=needs_attention",
+          "why": "the failed meeting job's needs_attention projection exists before the shade verb acts on it (projections.py _jobs: a failed intel job is needs_attention)"
+        },
+        {
+          "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[title='Desk memory']"
@@ -7666,7 +8096,7 @@
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "section[aria-label=\"Needs you\"] .desk-shade-item .desk-shade-do button:has-text(\"Dismiss\")",
+        "selector": "section[aria-label=\"Needs attention\"] .desk-shade-item .desk-shade-do button:has-text(\"Dismiss\")",
         "action": "click",
         "adapter": "ui-pointer"
       },
@@ -7698,16 +8128,6 @@
       "applicability": "applicable",
       "preconditions": [
         "case.j9.shade_dismiss.dismissed reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
-        {
-          "kind": "check",
-          "predicate": {
-            "kind": "attr_equals",
-            "attr": "data-testid",
-            "value": "arrival-run-intel"
-          },
-          "observe_at": "[data-testid=arrival-run-intel]",
-          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
-        },
         {
           "kind": "check",
           "predicate": {
@@ -7765,13 +8185,27 @@
           "optional": true
         },
         {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/settings",
+          "body": {
+            "meeting": {
+              "intel_retry_base_seconds": 1,
+              "intel_retry_max_seconds": 1,
+              "intel_retry_max_attempts": 1
+            }
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the real settings route bounds provider failure retries, so the failed job is terminal (as case.j6.run_summary.intel_failed)"
+        },
+        {
           "kind": "boundary",
           "substitutes": "the named provider endpoint",
           "substitute": "engine_reply",
-          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
-          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "label": "the provider reply is a recorded FAILURE, replayed at the product provider seam (the rig's LAN double answers /models); the failed meeting job is what gives the shade its needs_attention row (projections.py); queueing, persistence and the shade stay real",
           "adapter": "labelled-substitution",
-          "reply": "tests/fixtures/philo5_summary_reply.json"
+          "reply": "tests/fixtures/philo3_summary_failure_reply.json"
         },
         {
           "kind": "ui",
@@ -7972,6 +8406,12 @@
           }
         },
         {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "the conductor reads retry settings at startup; restart before the one Run (as case.j6.run_summary.intel_failed)"
+        },
+        {
           "kind": "ui",
           "action": "goto",
           "adapter": "ui-navigation",
@@ -8038,6 +8478,34 @@
         },
         {
           "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-summary-status]:has-text('LAST ERROR'):not(:has-text('RETRYING'))",
+          "timeout_s": 90,
+          "why": "the replayed failure is terminal (FAILED, not RETRYING; the retry line also says PROVIDER FAILED) before the shade is read"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/projections/0/source_kind",
+            "value": "intel_job"
+          },
+          "observe_at": "protocol: GET /api/desk/projections?attention_state=needs_attention",
+          "why": "the failed meeting job's needs_attention projection exists before the shade verb acts on it (projections.py _jobs: a failed intel job is needs_attention)"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/desk/projections?attention_state=needs_attention",
+          "body": null,
+          "adapter": "http-route",
+          "capture_as": "projection_id",
+          "capture_path": "/projections/0/id",
+          "why": "the trigger restores THIS projection; its id was never bound (the trigger names {projection_id})"
+        },
+        {
+          "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[title='Desk memory']"
@@ -8052,7 +8520,7 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "section[aria-label=\"Needs you\"] .desk-shade-item:first-of-type .desk-shade-do button:last-of-type"
+          "selector": "section[aria-label=\"Needs attention\"] .desk-shade-item:first-of-type .desk-shade-do button:last-of-type"
         }
       ],
       "trigger": {
@@ -8070,12 +8538,13 @@
           "collection": "projections",
           "match": {
             "dismissed": false,
-            "source_kind": "pipeline_event"
+            "source_kind": "intel_job",
+            "attention_state": "needs_attention"
           },
           "min_new": 1
         },
         "observe_at": "protocol: GET /api/desk/projections",
-        "words": "ASTRA (E): restore CLEARS the dismissal and the row returns with the PRODUCER's own attention state (projections.py:90-95 keeps row.attention_state unless the overlay says acknowledged). The earlier claim of 'unseen' was false. || the row returns to the default list with attention_state 'unseen' and dismissed false [the audit's stated observation location: protocol: GET /api/desk/projections]"
+        "words": "restore CLEARS the dismissal and the failed meeting job's row returns to the default list with the PRODUCER's own attention state, needs_attention (projections.py keeps row.attention_state unless the overlay says acknowledged), dismissed false [the audit's stated observation location: protocol: GET /api/desk/projections]"
       },
       "completion_bound_s": 30,
       "viewports": []

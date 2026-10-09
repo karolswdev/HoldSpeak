@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import os
 import re
 import threading
 import uuid
@@ -72,6 +73,33 @@ LOOPBACK_ENGINE_PORTS: tuple[tuple[int, str], ...] = (
     (8000, "llama.cpp"),
 )
 LOOPBACK_HOST = "127.0.0.1"
+
+#: PHILO-16 (C): the ports the scan reads. ``HOLDSPEAK_LOOPBACK_ENGINE_PORTS``
+#: names them as a comma list (``11434,1234``); an empty value scans nothing.
+#: Unset, the four above. The graph-walk rig sets it empty, so no walk reaches
+#: an engine that runs on the machine.
+LOOPBACK_PORTS_ENV = "HOLDSPEAK_LOOPBACK_ENGINE_PORTS"
+#: PHILO-16 (C): ``off`` stops the batteries-included default writer (boot,
+#: Detect's kick, the re-scan). Unset or any other value: on. The live walk
+#: reads a hub started with it off, so a read writes no assignment.
+DEFAULT_WRITER_ENV = "HOLDSPEAK_DEFAULT_ASSIGNMENT"
+
+
+def loopback_engine_ports() -> tuple[tuple[int, str], ...]:
+    raw = os.environ.get(LOOPBACK_PORTS_ENV)
+    if raw is None:
+        return LOOPBACK_ENGINE_PORTS
+    names = dict(LOOPBACK_ENGINE_PORTS)
+    ports: list[tuple[int, str]] = []
+    for part in raw.split(","):
+        part = part.strip()
+        if part.isdigit() and 0 < int(part) < 65536:
+            ports.append((int(part), names.get(int(part), "local engine")))
+    return tuple(ports)
+
+
+def default_writer_on() -> bool:
+    return os.environ.get(DEFAULT_WRITER_ENV, "").strip().lower() != "off"
 SCAN_TIMEOUT_SECONDS = 0.5
 
 #: Model names that are not chat models.
@@ -160,7 +188,7 @@ def _ollama_sizes(base_root: str, getter: Callable[..., tuple[int, bytes]], time
 
 def scan_loopback_engines(
     *,
-    ports: Sequence[tuple[int, str]] = LOOPBACK_ENGINE_PORTS,
+    ports: Optional[Sequence[tuple[int, str]]] = None,
     host: str = LOOPBACK_HOST,
     timeout: float = SCAN_TIMEOUT_SECONDS,
     http_get: Optional[Callable[..., tuple[int, bytes]]] = None,
@@ -172,6 +200,8 @@ def scan_loopback_engines(
     """
     from ..setup_runtime import discover_endpoint_models
 
+    if ports is None:
+        ports = loopback_engine_ports()
     loopback = require_loopback(host)
     url_host = f"[{loopback}]" if ":" in loopback else loopback
     getter = http_get or _loopback_get
@@ -292,6 +322,8 @@ class InferenceDefaultService:
 
     def kick(self, reason: str) -> None:
         """Run ``ensure`` on a daemon thread unless one already runs."""
+        if not default_writer_on():
+            return
         thread = self._thread
         if thread is not None and thread.is_alive():
             return
@@ -334,6 +366,8 @@ class InferenceDefaultService:
 
     def ensure(self, *, reason: str = "boot") -> dict[str, Any]:
         """Assign the local default once, or record proposals.  Never overwrites."""
+        if not default_writer_on():
+            return {"reason": reason, "assigned": None, "proposals": 0, "status": "off"}
         with self._lock:
             result: dict[str, Any] = {"reason": reason, "assigned": None, "proposals": 0}
             try:
@@ -390,6 +424,8 @@ class InferenceDefaultService:
         one the scan just found answering, so an idle tick opens four
         loopback connections and probes nothing.
         """
+        if not default_writer_on():
+            return {"reason": "rescan", "status": "off"}
         if not self._lock.acquire(blocking=False):
             return {"reason": "rescan", "status": "busy"}
         try:
@@ -926,6 +962,8 @@ __all__ = [
     "DEFAULT_PRINCIPAL",
     "InferenceDefaultService",
     "LOOPBACK_ENGINE_PORTS",
+    "default_writer_on",
+    "loopback_engine_ports",
     "LoopbackOnlyError",
     "is_chat_model",
     "loopback_profile_id",

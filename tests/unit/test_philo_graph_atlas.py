@@ -227,7 +227,9 @@ def test_every_api_setup_step_exists_in_the_generated_openapi(
         for step in _acts(case):
             if step["kind"] != "api":
                 continue
-            path, method = step["path"], step["method"].lower()
+            # A query string filters the same route (PHILO-16 C: restore binds
+            # its projection from `?attention_state=needs_attention`).
+            path, method = step["path"].split("?", 1)[0], step["method"].lower()
             if path not in paths or method not in paths[path]:
                 missing.append(f"{case['id']}: {step['method']} {path}")
     assert not missing, f"setup steps name routes that do not exist: {missing}"

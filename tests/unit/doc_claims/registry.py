@@ -770,18 +770,19 @@ CLAIMS: list[Claim] = [
     ),
     Claim(
         doc="docs/internal/philo/briefs/live-pass-lane-brief.md",
-        anchor="the SET_ENGINE chain fills the atlas address `http://192.168.1.43:8080`, unchanged",
+        anchor="the SET_ENGINE chain fills the atlas address `http://192.168.77.43:8080`, the rig's LAN double",
         sentence=(
-            "the SET_ENGINE chain fills the atlas address `http://192.168.1.43:8080`, "
-            "unchanged (corrected by PHILO-2-07: this line named `…:8080/v1` when "
-            "both live passes ran ...)"
+            "the SET_ENGINE chain fills the atlas address `http://192.168.77.43:8080`, "
+            "the rig's LAN double (PHILO-16 C, 2026-10-09: the address was the real "
+            "LAN engine `http://192.168.1.43:8080` ...)"
         ),
         predicate=lambda: lane_brief_engine_address_holds(),
         state="holds",
         truth=(
             "every LAN engine address in docs/internal/philo/graph/atlas.json is "
-            "http://192.168.1.43:8080, the address the brief now names "
-            "(fnd.live.lane_brief_engine_address, corrected 2026-09-22)"
+            "http://192.168.77.43:8080 (the rig's LAN double, PHILO-16 C), the address "
+            "the brief now names (fnd.live.lane_brief_engine_address, corrected "
+            "2026-09-22; moved to the double 2026-10-09)"
         ),
         story="PHILO-2-07",
     ),
@@ -1000,7 +1001,10 @@ def model_assignment_exposure_holds() -> bool:
 
 
 def lane_brief_engine_address_holds() -> bool:
-    """The lane brief names exactly the LAN address every atlas step fills."""
+    """The lane brief names exactly the LAN address every atlas step fills.
+
+    The pattern also catches the old real-engine address (192.168.1.43), so a
+    case that falls back to it breaks the claim (PHILO-16 C)."""
     brief = _read("docs/internal/philo/briefs/live-pass-lane-brief.md")
     match = re.search(r"fills the atlas address `([^`]+)`", brief)
     if not match:
@@ -1015,7 +1019,7 @@ def lane_brief_engine_address_holds() -> bool:
         elif isinstance(node, list):
             for value in node:
                 walk(value)
-        elif isinstance(node, str) and re.match(r"https?://192\.168\.1\.43[:/]", node):
+        elif isinstance(node, str) and re.match(r"https?://192\.168\.(?:1|77)\.43[:/]", node):
             values.add(node)
 
     walk(json.loads(_read("docs/internal/philo/graph/atlas.json")))
