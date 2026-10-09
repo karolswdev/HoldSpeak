@@ -249,8 +249,13 @@ def _seed_sources(project_id: str) -> None:
         project_id, "jira", "issues",
         {"projects": ["KAN"], "connection_ref": "acme.atlassian.net|me@acme.com"},
         snapshot={"entities": {}},
-        last_success_at=(now - timedelta(hours=6)).isoformat(timespec="seconds"),
-        next_evaluation_at=(now - timedelta(hours=5)).isoformat(timespec="seconds"),
+        # Stale at any hour: PHILO-15 B60 holds a source that went late
+        # INSIDE quiet hours (22-08, heartbeat_service) as quiet, not stale.
+        # 20 h ago is past the 10 h window plus the 6 h stale limit
+        # (needs_you_aggregate.DEFAULT_SOURCE_STALE_AFTER_S), so this check
+        # was missed before any quiet window began.
+        last_success_at=(now - timedelta(hours=20)).isoformat(timespec="seconds"),
+        next_evaluation_at=(now - timedelta(hours=19)).isoformat(timespec="seconds"),
     )
     _seed_watch(
         project_id, "confluence", "pages", {"connection_ref": "acme.atlassian.net|me@acme.com"},

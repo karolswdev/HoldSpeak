@@ -574,9 +574,13 @@
   letter-spacing: 0.06em;
   white-space: nowrap;
 }
+/* On the blue plate the badge is paper on the plate itself (4.76:1), drawn
+   as a paper keyline; a white wash under it read 3.28:1 (Astra, #1039). */
 .desk-next .desk-deck-row.is-selected .desk-deck-badge,
-.desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-badge {
-  background: var(--bevel-light-hover);
+.desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-badge,
+.desk-next .desk-deck-row:focus-visible:not(.is-ghost) .desk-deck-badge {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px currentColor;
   color: var(--wb-paper);
 }
 .desk-next .desk-tool-empty {
