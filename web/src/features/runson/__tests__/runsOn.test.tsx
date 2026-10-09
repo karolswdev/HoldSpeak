@@ -316,6 +316,52 @@ describe("Runs on — a drop writes", () => {
     );
   });
 
+  it("two Meetings patches, Undo, Undo: inheritance restored, no CHANGED ELSEWHERE (M3 r2)", async () => {
+    await board();
+    fireEvent.click(screen.getByTestId("switchboard-job-meetings"));
+    // After the first patch the roster says Meetings and its summary row are
+    // its own (the real producer after a write); the patch re-reads it.
+    const owned = roster();
+    owned.rows[4] = { ...owned.rows[4], inherited_from: "group", expected_revision: 7,
+      assignment: { revision: 7, entries: [{ ...Q27, profile_id: "openrouter", label: "OpenRouter" }], issues: [] } };
+    owned.tasks = owned.tasks.map((t) => (t.id === "meeting.deferred_analysis" ? { ...t, has_override: true } : t));
+    const reads = m.readRoster.mock.calls.length;
+    m.readRoster.mockResolvedValue(owned);
+    fireEvent.keyDown(screen.getByTestId("switchboard-engine-openrouter"), { key: "Enter" });
+    await waitFor(() => expect(m.summary).toHaveBeenCalledTimes(1));
+    await screen.findByTestId("runson-undo");
+    await waitFor(() => expect(m.readRoster.mock.calls.length).toBeGreaterThan(reads));
+    await waitFor(() => expect(screen.getAllByTestId("switchboard-wire").some((w) => w.getAttribute("data-job") === "meetings")).toBe(true));
+    m.summary.mockResolvedValueOnce({
+      status: "succeeded", state: "READY", plainReason: "",
+      summaryAssignment: { ...detection().summaryAssignment!, profileId: "q27", assignmentRevision: 6 },
+    });
+    fireEvent.keyDown(screen.getByTestId("switchboard-engine-q27"), { key: "Enter" });
+    await waitFor(() => expect(m.summary).toHaveBeenCalledTimes(2));
+    expect(m.summary.mock.calls[1][0]).toMatchObject({ expectedAssignmentRevision: 5, profileId: "q27" });
+    // Undo 1: the summary row gets its own engine back (OpenRouter), CAS 6,
+    // and produces 9; Undo 2 must clear it at 9, not at the stale 5.
+    m.summary.mockResolvedValueOnce({
+      status: "succeeded", state: "READY", plainReason: "",
+      summaryAssignment: { ...detection().summaryAssignment!, profileId: "openrouter", assignmentRevision: 9 },
+    });
+    fireEvent.click(screen.getByTestId("runson-undo"));
+    await waitFor(() => expect(m.summary).toHaveBeenCalledTimes(3));
+    expect(m.summary.mock.calls[2][0]).toMatchObject({ expectedAssignmentRevision: 6, profileId: "openrouter" });
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meetings$/));
+    fireEvent.click(screen.getByTestId("runson-undo"));
+    await waitFor(() =>
+      expect(m.clearChain).toHaveBeenCalledWith({
+        scope: { kind: "capability", capability_id: "meeting.deferred_analysis" },
+        capabilityId: "meeting.deferred_analysis",
+        expectedRevision: 9,
+      }),
+    );
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meetings$/));
+    expect(screen.getByTestId("runson-receipt").textContent).not.toContain("CHANGED ELSEWHERE");
+    expect(screen.queryByTestId("runson-undo")).toBeNull();
+  });
+
   it("Undo refuses when another writer moved the row since the patch (C1: no lost update)", async () => {
     await board();
     fireEvent.click(screen.getByTestId("switchboard-job-thoughts_notes"));
@@ -382,7 +428,9 @@ describe("Runs on — Try it", () => {
   });
 
   it("a pending consent is bound to its engine: a re-patch voids it and asks for the new host (C3)", async () => {
-    m.probe.mockResolvedValue({ state: "READY", host: "openrouter.ai", latencyMs: 90 });
+    // The cloud branch's real answer (concierge_service.probe, no getter):
+    // NOT_SET, no latency; never a READY.
+    m.probe.mockResolvedValue({ state: "NOT_SET", host: "openrouter.ai", latencyMs: null, keySet: true });
     await board();
     fireEvent.click(screen.getByTestId("runson-try-meetings"));
     expect((await screen.findByTestId("runson-try-confirm")).textContent).toBe("Try on 192.168.1.43");
@@ -400,6 +448,38 @@ describe("Runs on — Try it", () => {
     await waitFor(() => expect(m.probe).toHaveBeenCalledTimes(1));
     expect(m.probe).toHaveBeenCalledWith("cloud:openrouter", true);
     expect(m.probe).not.toHaveBeenCalledWith("lan:q27", expect.anything());
+    await waitFor(() => expect(screen.getByTestId("switchboard-result-meetings").textContent).toBe("NOT CHECKED · OpenRouter"));
+  });
+
+  it("a refreshed detection that moves the SAME engine to another host voids the press (C3 r2)", async () => {
+    m.probe.mockResolvedValue({ state: "READY", host: "192.168.1.99", latencyMs: 12 });
+    m.define.mockResolvedValue({ profileId: "engine-x", profileRevision: 1 });
+    await board();
+    fireEvent.click(screen.getByTestId("runson-try-meetings"));
+    expect((await screen.findByTestId("runson-try-confirm")).textContent).toBe("Try on 192.168.1.43");
+    // The next detection answers the same engine id at another address
+    // (a re-defined endpoint); any refresh of the board reads it.
+    const moved = detection();
+    moved.engines = moved.engines.map((e) =>
+      e.id === "lan:q27" ? { ...e, host: "192.168.1.99", baseUrl: "http://192.168.1.99:8080/v1" } : e,
+    );
+    m.readDetection.mockResolvedValue(moved);
+    fireEvent.click(within(screen.getByTestId("switchboard-engine-local:ollama:11434:llama3.3")).getByRole("button", { name: "Use it" }));
+    await waitFor(() => expect(screen.getByTestId("runson-try-confirm").textContent).toBe("Try on 192.168.1.99"));
+    expect(m.probe).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("runson-try-confirm"));
+    await waitFor(() => expect(m.probe).toHaveBeenCalledTimes(1));
+  });
+
+  it("consentHolds compares the job, the engine id AND the destination", async () => {
+    const { consentHolds, consentHost } = await import("../useRunsOn");
+    const engine = { key: "q27", host: "192.168.1.43", baseUrl: "http://192.168.1.43:8080/v1" } as never;
+    const consent = { job: "meetings", engineKey: "q27", engineHost: consentHost(engine), host: "192.168.1.43", scope: "local" as const };
+    expect(consentHolds(consent, "meetings", engine)).toBe(true);
+    expect(consentHolds(consent, "meetings", { ...(engine as object), host: "192.168.1.99" } as never)).toBe(false);
+    expect(consentHolds(consent, "meetings", { ...(engine as object), baseUrl: "http://10.0.0.9/v1" } as never)).toBe(false);
+    expect(consentHolds(consent, "meetings", { ...(engine as object), key: "other" } as never)).toBe(false);
+    expect(consentHolds(consent, "agents_tools", engine)).toBe(false);
   });
 
   it("a cloud Try that probes nothing says NOT CHECKED, never READY (V2)", async () => {

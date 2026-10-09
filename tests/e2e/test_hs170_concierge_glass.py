@@ -87,12 +87,14 @@ def _doubles(monkeypatch: Any, lan_port: int, found_port: int) -> dict[str, int]
     import holdspeak.setup_runtime as setup_runtime
     from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
 
+    ticks = {"n": 0, "hold": 1, "moved": 0}
     real_discover = setup_runtime.discover_endpoint_models
 
     def discover(base_url: str, *args: Any, **kwargs: Any) -> Any:
-        return real_discover(
-            str(base_url).replace("192.168.77.43:8080", f"127.0.0.1:{lan_port}"), *args, **kwargs
-        )
+        url = str(base_url)
+        for lan in ("192.168.77.43:8080", "192.168.77.44:8080"):
+            url = url.replace(lan, f"127.0.0.1:{lan_port}")
+        return real_discover(url, *args, **kwargs)
 
     monkeypatch.setattr(setup_runtime, "discover_endpoint_models", discover)
 
@@ -103,7 +105,15 @@ def _doubles(monkeypatch: Any, lan_port: int, found_port: int) -> dict[str, int]
             "id": f"local:ollama:{found_port}:llama3.3", "model": "llama3.3",
             "base_url": f"http://127.0.0.1:{found_port}/v1", "engine": "ollama", "port": found_port,
         }]
-        return real_detect(**kwargs)
+        result = real_detect(**kwargs)
+        if ticks.get("moved"):
+            # The same engine id, answered at another LAN address (a
+            # re-defined endpoint seen by the next detection).
+            for engine in result["engines"]:
+                if engine.get("host") == "192.168.77.43":
+                    engine["host"] = "192.168.77.44"
+                    engine["baseUrl"] = str(engine.get("baseUrl", "")).replace("192.168.77.43", "192.168.77.44")
+        return result
 
     monkeypatch.setattr(cs, "detect", detect)
 
@@ -113,7 +123,6 @@ def _doubles(monkeypatch: Any, lan_port: int, found_port: int) -> dict[str, int]
     }
     monkeypatch.setattr(catalog, "applicable_presets", lambda **_: [preset])
 
-    ticks = {"n": 0, "hold": 1}
 
     def download(**_: Any) -> dict[str, Any]:
         return {"jobId": "acq-glass", "presetId": preset["id"], "progress": {"received": 0, "total": 0}}
@@ -376,7 +385,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
 
 
 @pytest.mark.parametrize(
-    "case", ["lost_update", "meeting_undo", "inherited_mobile", "stale_confirmation", "download_failure"]
+    "case", ["lost_update", "meeting_undo", "inherited_mobile", "stale_confirmation", "host_moves", "download_failure"]
 )
 def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str) -> None:
     server, url, fakes, ticks = _rig(tmp_path, monkeypatch)
@@ -421,6 +430,32 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
                 # no press for the old host survives.
                 page.wait_for_function("() => !document.querySelector('[data-testid=runson-try-confirm]')")
                 assert probes == [], probes
+                return
+
+            if case == "host_moves":
+                # Astra r2 (M1): the press names 192.168.77.43; the next
+                # detection answers the SAME engine id at .44. The press must
+                # go and a new one name .44; nothing is probed meanwhile.
+                page.get_by_test_id("runson-try-meetings").click()
+                confirm = page.get_by_test_id("runson-try-confirm")
+                confirm.wait_for()
+                assert "192.168.77.43" in confirm.inner_text()
+                probes: list[str] = []
+                page.on("request", lambda r: probes.append(r.post_data or "") if r.url.endswith("/api/concierge/probe") else None)
+                ticks["moved"] = 1
+                with page.expect_response(lambda r: r.url.endswith("/api/concierge/detect")):
+                    page.locator(".switchboard-engine.is-found").first.get_by_role("button", name="Use it").click()
+                page.wait_for_function(
+                    "() => /192\\.168\\.77\\.44/.test(document.querySelector('[data-testid=runson-try-confirm]')?.textContent || '')",
+                    timeout=15_000,
+                )
+                assert probes == [], probes
+                page.get_by_test_id("runson-try-confirm").click()
+                page.wait_for_function(
+                    "() => /^REACHED · /.test(document.querySelector('[data-testid=switchboard-result-meetings]')?.textContent || '')",
+                    timeout=15_000,
+                )
+                assert len(probes) == 1, probes
                 return
 
             if case == "download_failure":

@@ -97,6 +97,8 @@ interface UndoStep {
 export interface PendingTry {
   job: string;
   engineKey: string;
+  /** Where the engine reached when the press was shown (host + address). */
+  engineHost: string;
   host: string;
   scope: "local" | "cloud";
 }
@@ -113,6 +115,16 @@ export function msToken(ms: number | null | undefined): string[] {
 }
 
 const SUMMARY_CAPABILITY = "meeting.deferred_analysis";
+
+/** The destination a consent names: the engine's host and its address. */
+export function consentHost(engine: BoardEngine): string {
+  return `${engine.host}|${engine.baseUrl ?? ""}`;
+}
+
+/** A consent holds only for the same job, engine id AND destination. */
+export function consentHolds(consent: PendingTry, job: string, engine: BoardEngine): boolean {
+  return consent.job === job && consent.engineKey === engine.key && consent.engineHost === consentHost(engine);
+}
 
 /** A stopped download's reason as a token (`model_download_network` →
  *  `NETWORK`); a cancel is CANCELLED; no code is NO ANSWER. */
@@ -365,19 +377,9 @@ export function useRunsOn(scope?: string) {
         const cleared = await clearChain({ scope: scopeFor(step.job), capabilityId: capability, expectedRevision: step.produced });
         restored = Number(cleared.revision ?? 0);
       }
-      // The step below now describes the row as it stands again.
-      setUndoStack((stack) => {
-        const next = [...stack];
-        for (let i = next.length - 1; i >= 0; i -= 1) {
-          if (next[i].job === step.job) {
-            next[i] = { ...next[i], produced: restored };
-            break;
-          }
-        }
-        return next;
-      });
       let text = `UNDONE ${clock()} · ${label}`;
       let tone: Receipt["tone"];
+      let summaryRestored: number | null = null;
       if (step.summary) {
         // C2: an inherited summary row goes back to inheritance (cleared);
         // an own one gets its own engine back. Both CAS on our own write.
@@ -390,8 +392,31 @@ export function useRunsOn(scope?: string) {
         if ("refused" in answer) {
           text += ` · SUMMARIES ${answer.refused}`;
           tone = "danger";
+        } else {
+          summaryRestored = answer.produced;
         }
       }
+      // The entry below now describes the rows as they stand again: our own
+      // Undo moved the group (and the summary row), so the next Undo CASes on
+      // these revisions; anyone else's change still refuses it (M3, r2).
+      setUndoStack((stack) => {
+        const next = [...stack];
+        for (let i = next.length - 1; i >= 0; i -= 1) {
+          if (next[i].job === step.job) {
+            const below = next[i];
+            next[i] = {
+              ...below,
+              produced: restored,
+              summary:
+                below.summary && summaryRestored !== null
+                  ? { ...below.summary, produced: summaryRestored }
+                  : below.summary,
+            };
+            break;
+          }
+        }
+        return next;
+      });
       if (mounted.current) setReceipt({ text, tone });
     } catch (err) {
       if (mounted.current) {
@@ -421,6 +446,7 @@ export function useRunsOn(scope?: string) {
     setPending({
       job,
       engineKey: engine.key,
+      engineHost: consentHost(engine),
       host: host ?? hostLabel(engine),
       scope: scope ?? (engine.emblem === "API" ? "cloud" : "local"),
     });
@@ -435,7 +461,9 @@ export function useRunsOn(scope?: string) {
       }
       // C3: a consent authorizes exactly the engine and host it named. If the
       // job's engine changed since, the old press is void: ask again.
-      if (consent && (consent.engineKey !== engine.key || consent.job !== job)) {
+      // C3 (r2): the press is valid only for the engine id AND the host it
+      // displayed; a refreshed detection that moved the host voids it.
+      if (consent && !consentHolds(consent, job, engine)) {
         if (offMachine(engine)) askConsent(job, engine);
         else setPending(null);
         return;
@@ -512,7 +540,7 @@ export function useRunsOn(scope?: string) {
   useEffect(() => {
     if (!pending) return;
     const engine = engineForJob(pending.job);
-    if (engine && engine.key === pending.engineKey) return;
+    if (engine && consentHolds(pending, pending.job, engine)) return;
     if (engine && offMachine(engine)) askConsent(pending.job, engine);
     else setPending(null);
   }, [askConsent, engineForJob, pending]);
