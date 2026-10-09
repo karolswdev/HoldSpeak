@@ -428,6 +428,9 @@
 .desk-next .desk-deck-band {
   display: block;
   margin: 8px 0 2px;
+  padding-bottom: 2px;
+  /* PHILO-16 §11 Section: the caption sits on a hairline */
+  border-bottom: 1px solid var(--border);
   color: var(--text-muted);
   font: 600 var(--font-size-xs) var(--font-mono);
   letter-spacing: 0.06em;
@@ -488,14 +491,15 @@
   color: var(--text-muted);
   font: 600 var(--font-size-xs) var(--font-mono);
 }
-/* ⌘K canvas YDTpkaJqFs3hyrZ4g581Mx (2026-10-05), a species fix: the plate
-   under the selected row's text is --accent-ink (5.24:1 with
-   --text-on-accent). --accent read 3.79:1. */
+/* PHILO-16 §2/§11: the palette is a slate transient in the window material
+   (window-interior.css scopes the tool shelf), so its selection is the
+   material's: Workbench blue with paper on it (paper on --wb-sel 4.76:1).
+   Was the ember plate (⌘K canvas YDTpkaJqFs3hyrZ4g581Mx, 2026-10-05). */
 .desk-next .desk-deck-row.is-selected,
 .desk-next .desk-deck-row:hover:not(.is-ghost),
 .desk-next .desk-deck-row:focus-visible:not(.is-ghost) {
-  background: var(--accent-ink);
-  color: var(--text-on-accent);
+  background: var(--wb-sel);
+  color: var(--wb-paper);
   outline: 0;
 }
 .desk-next .desk-deck-row.is-selected .desk-deck-glyph,
@@ -507,7 +511,7 @@
 .desk-next .desk-deck-row:focus-visible:not(.is-ghost) .desk-deck-glyph,
 .desk-next .desk-deck-row:focus-visible:not(.is-ghost) .desk-deck-kind,
 .desk-next .desk-deck-row:focus-visible:not(.is-ghost) kbd {
-  color: var(--text-on-accent);
+  color: var(--wb-paper);
 }
 /* ⌘K memory results, option B "Two-line hit" (ratified 2026-10-05): under
    the title, the snippet (sans, wraps), then FoundBy and the day. */
@@ -544,13 +548,13 @@
 .desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-day,
 .desk-next .desk-deck-row:focus-visible:not(.is-ghost) .desk-deck-snippet,
 .desk-next .desk-deck-row:focus-visible:not(.is-ghost) .desk-deck-day {
-  color: var(--text-on-accent);
+  color: var(--wb-paper);
 }
 .desk-next .desk-deck-row.is-selected .surface-foundby,
 .desk-next .desk-deck-row:hover:not(.is-ghost) .surface-foundby,
 .desk-next .desk-deck-row:focus-visible:not(.is-ghost) .surface-foundby {
   border-color: currentColor;
-  color: var(--text-on-accent);
+  color: var(--wb-paper);
 }
 .desk-next .desk-deck-row.is-ghost {
   color: var(--text-faint);
@@ -573,7 +577,7 @@
 .desk-next .desk-deck-row.is-selected .desk-deck-badge,
 .desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-badge {
   background: var(--bevel-light-hover);
-  color: var(--text-on-accent);
+  color: var(--wb-paper);
 }
 .desk-next .desk-tool-empty {
   padding: 12px;

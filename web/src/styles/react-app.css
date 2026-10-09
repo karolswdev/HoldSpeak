@@ -477,12 +477,16 @@
   }
 }
 
+/* PHILO-16: 0ms, as tokens.css says. 0.01ms came later in the cascade and
+   won: with the default `transition-property: all` it made EVERY property
+   change a transition, so a hit chosen by the key was read (and for one
+   frame painted) in its old colours (the ⌘K glass read 2.6:1). */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: 0ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 0ms !important;
   }
 }

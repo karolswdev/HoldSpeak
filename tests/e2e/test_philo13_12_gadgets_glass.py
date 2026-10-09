@@ -174,6 +174,10 @@ class TestTheGadgets:
         # PHILO-16 §5: Zoom ⌘⇧Z, To back ⌘⇧` (⌃M and ⌃B stay bound one release).
         want = [("Iconify", "⌘M"), ("Zoom", "⌘⇧Z"), ("To back", "⌘⇧`"), ("Close window", "⌘W"),
                 ("Desk", None), ("Go", None)]
+        if width < 720:
+            # PHILO-15 11 (B21): a phone has no ⌘ key, so no row at 393 draws
+            # a keycap (DeskMenu.tsx `entry.keycap && !NARROW()`).
+            want = [(label, None) for label, _ in want]
         if got != want:
             fails["G3 the menu bar with its key caps"] = got
         zoom = menu["rows"][1] if len(menu["rows"]) > 1 else {}
