@@ -1,6 +1,8 @@
 # Lane 16c shots: Runs on (the Models window as a Switchboard)
 
-Taken by `tests/e2e/test_hs170_concierge_glass.py` on 2026-10-09 (isolated
+Taken by `tests/e2e/test_hs170_concierge_glass.py` on 2026-10-09, re-taken
+after main's A1 material merged (the slate window ground, the interior
+remap, A1's lamp and ink tokens) (isolated
 HOME hub; a fake OpenAI-compatible server on 127.0.0.1; the LAN address
 192.168.77.43 is answered by that server through the rig's network double;
 a catalog download whose acquisition the rig advances). Compare each with

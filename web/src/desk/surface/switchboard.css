@@ -1,6 +1,7 @@
 /* PHILO-16 (C) — SurfaceSwitchboard (canvas Board 2, "BOARD 2" block).
-   Material: the §11 kit tokens with the canvas values as fallbacks (lane A1
-   adds the real tokens; until then the fallbacks ARE the canvas). */
+   Material: A1's tokens (styles/tokens.css) and its window-interior remap;
+   the --sb-* names only alias them. The plugs and lamps are lamp squares
+   (--lamp-*, bright); words in a state tone are inks (--wb-*-ink). */
 
 .switchboard {
   --sb-well: var(--wb-well, #eef0f3);
@@ -14,9 +15,12 @@
   --sb-steel: var(--wb-steel, #9ea4b0);
   --sb-steel-dim: var(--wb-steel-dim, #7f8591);
   --sb-paper: var(--wb-paper, #eef0f3);
-  --sb-ok: var(--ok, #3fae6a);
-  --sb-warn: var(--warn, #d9a441);
-  --sb-danger: var(--danger, #c84a3c);
+  --sb-ok: var(--lamp-ok, #3fae6a);
+  --sb-warn: var(--lamp-warn, #d9a441);
+  --sb-danger: var(--lamp-fail, #c84a3c);
+  --sb-ok-ink: var(--wb-ok-ink, #1f6b3a);
+  --sb-warn-ink: var(--wb-warn-ink, #7a5300);
+  --sb-danger-ink: var(--wb-danger-ink, #8f2018);
   --sb-raised: var(--wb-raised, inset 1px 1px 0 rgba(255,255,255,.72), inset -1px -1px 0 rgba(0,0,0,.5));
   --sb-raised-soft: var(--wb-raised-soft, inset 1px 1px 0 rgba(255,255,255,.36), inset -1px -1px 0 rgba(0,0,0,.25));
   --sb-sunken: var(--wb-sunken, inset 1px 1px 0 rgba(0,0,0,.5), inset -1px -1px 0 rgba(255,255,255,.72));
@@ -34,17 +38,13 @@
 }
 
 /* A verb on the board is the library Button as a raised steel plate
-   (§11 Verb), legible on the paper well and the steel engine: the board
-   hands the Button's own material variables the steel values. */
+   (§11 Verb). A1's interior remap gives the window its ground, ink and
+   rules; the Button's own plate variables are lane A3's, so the board
+   hands them the steel until A3's kit lands. */
 .switchboard {
-  --surface-2: var(--sb-steel);
-  --surface-3: var(--wb-steel-2, #b3b8c2);
   --wash-2: var(--sb-steel);
-  --gleam-2: var(--wb-steel-2, #b3b8c2);
+  --gleam-2: var(--wb-steel-2);
   --shade-1: var(--sb-ink);
-  --border: var(--sb-ink);
-  --text: var(--sb-text);
-  --text-muted: var(--sb-muted);
 }
 
 .switchboard-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -62,7 +62,7 @@
 .switchboard-wire-layer { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .switchboard-wire { fill: none; stroke: var(--sb-ink); stroke-width: 2; }
 .switchboard-wire.is-fallback { stroke-dasharray: 4 4; stroke-width: 1.5; stroke: var(--sb-muted); }
-.switchboard-wire.is-limited { stroke: #9a6b00; }
+.switchboard-wire.is-limited { stroke: var(--sb-warn-ink); }
 .switchboard-wire.is-broken { stroke: var(--sb-danger); stroke-dasharray: 6 4; }
 .switchboard-wire.is-hot { stroke: var(--sb-sel); stroke-width: 3; }
 .switchboard-wire.is-pulse {
@@ -106,8 +106,8 @@
 .switchboard-job.is-off .switchboard-plug { background: var(--sb-steel-dim); }
 .switchboard-job.is-default { background: var(--sb-field-hi); }
 .switchboard-job.is-selected { outline: 2px solid var(--sb-sel); outline-offset: -2px; }
-.switchboard-job.is-over { background: #dfe6f3; outline: 2px dashed var(--sb-sel); outline-offset: -2px; }
-.switchboard-job.is-over.is-refused { outline-color: #b3261e; background: #f3dfdf; }
+.switchboard-job.is-over { background: var(--sb-field-hi); outline: 2px dashed var(--sb-sel); outline-offset: -2px; }
+.switchboard-job.is-over.is-refused { outline-color: var(--sb-danger-ink); background: color-mix(in srgb, var(--sb-danger) 14%, var(--sb-well)); }
 .switchboard-job-name { font: 600 14px var(--sb-sans); color: var(--sb-text); min-width: 0; }
 .switchboard-job-verb { grid-column: 2; grid-row: 1; }
 .switchboard-job-tasks {
@@ -124,13 +124,13 @@
   flex-wrap: wrap;
   gap: 4px 8px;
   font: 500 var(--font-size-xs, 12px) var(--sb-mono);
-  color: #1f6b3a;
+  color: var(--sb-ok-ink);
   text-transform: uppercase;
   letter-spacing: .04em;
   overflow-wrap: anywhere;
 }
-.switchboard-job-result[data-tone="danger"], .switchboard-job-result [data-tone="danger"] { color: #8f2018; }
-.switchboard-job-result [data-tone="warn"] { color: #7a5300; }
+.switchboard-job-result[data-tone="danger"], .switchboard-job-result [data-tone="danger"] { color: var(--sb-danger-ink); }
+.switchboard-job-result [data-tone="warn"] { color: var(--sb-warn-ink); }
 .switchboard-job-result [data-tone="idle"] { color: var(--sb-muted); }
 
 /* ── an engine ── */
