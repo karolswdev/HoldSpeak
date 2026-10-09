@@ -1,14 +1,73 @@
-// HS-172 — the detail header: display title + token row.
-// Board: `SEP 05 · 30 MIN · ● RAN · 41 S · 192.168.1.43 · LAN` tokens.
-// Middle dot (U+00B7) between every token, equal space both sides.
+// HS-172 — the detail header. Phase 16 (the interior kit; the canvas window
+// "Cutover sync"): the meeting's title is the window's ONE big fact (the
+// AppHead), and its facts are the StatusStrip on the same baseline:
+// `TUE 14:00 · 42 MIN` · the summary's state (a lamp + its word) · the
+// run's seconds and its egress chip · the transcript's gaps · `4 PEOPLE`.
 import type { ReactNode } from "react";
-import { StateTokenSpan } from "./StateTokenSpan";
-import { StateChip } from "../../../desk/surface";
-import { ledgerDate, durationToken, stateToken, intelDurationToken, unclearLampLabel } from "./helpers";
+import { AppHead, StatusStrip, type StatusStripItem } from "../../../desk/surface";
+import { ledgerDate, durationToken, stateToken, unclearLampLabel } from "./helpers";
 import { EgressChip } from "../../../desk/surface/gadgets";
 import { egressFor } from "../../../desk/surface/egress";
 import type { MeetingData } from "./useMeetingData";
 import { readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
+
+/** The distinct speakers the transcript names (`4 PEOPLE`); 0 when none. */
+export function peopleCount(segments: readonly Record<string, unknown>[]): number {
+  const names = new Set<string>();
+  for (const row of segments) {
+    const speaker = String(row.speaker ?? "").trim();
+    if (speaker) names.add(speaker.toLowerCase());
+  }
+  return names.size;
+}
+
+/** The meeting's strip tokens (pure; the header draws them). */
+export function meetingStripItems(
+  meeting: Record<string, unknown>,
+  data: Pick<MeetingData, "detail" | "startedAt" | "durationS" | "segments">,
+): StatusStripItem[] {
+  const { detail, startedAt, durationS, segments } = data;
+  const source = detail ?? meeting;
+  const runToken = stateToken(source);
+  // PHILO-13-04 (A3): a meeting that holds a summary says so, never "SUMMARY
+  // OFF" above its own summary (J2-02).
+  const stored = Boolean(String(readMeetingIntel(source)?.summary ?? "").trim());
+  const summarised = runToken.label === "RAN" || (runToken.label === "OFF" && stored);
+  // HS-201-10: `durationToken` says seconds under a minute; no floor.
+  const when = [ledgerDate(startedAt), durationS > 0 ? durationToken(durationS) : ""].filter(Boolean).join(" · ");
+  // HS-172: the run's seconds and host from the wire (intel_duration_s,
+  // intel_model_host), not from proposals.
+  const intelDurS = Number(source.intel_duration_s ?? 0);
+  const rawHost = String(source.intel_model_host ?? "") || null;
+  const items: StatusStripItem[] = [];
+  if (when) items.push({ key: "when", text: when });
+  if (summarised) {
+    items.push({ key: "state", lamp: "ok", text: "SUMMARISED", testId: "meeting-summary-state" });
+  } else if (runToken.label === "RUNNING") {
+    items.push({ key: "state", lamp: "info", text: "SUMMARY RUNNING", testId: "meeting-summary-state" });
+  } else {
+    const word: ReactNode = runToken.axis ? `${runToken.axis} ${runToken.label}` : runToken.label;
+    items.push({
+      key: "state",
+      lamp: runToken.tone === "danger" ? "fail" : runToken.tone === "warn" ? "warn" : undefined,
+      text: word,
+      testId: "meeting-summary-state",
+    });
+  }
+  if (runToken.label === "RAN" && intelDurS > 0) items.push({ key: "intel-dur", text: `${intelDurS} S` });
+  // PHILO-15-07 (B01): the record says when its transcript has gaps. The
+  // fresh detail is authoritative; the list row speaks only before it loads.
+  const unclear = unclearLampLabel(source);
+  if (unclear) items.push({ key: "unclear", lamp: "warn", text: unclear, testId: "unclear-lamp" });
+  // Egress where egress happened: the summary's host, for RAN, RUNNING, QUEUED.
+  if (["RAN", "RUNNING", "QUEUED"].includes(runToken.label) && rawHost) {
+    const eg = egressFor(rawHost);
+    items.push({ key: "intel-host", text: <EgressChip label={eg.label} scope={eg.scope} /> });
+  }
+  const people = peopleCount(segments ?? []);
+  if (people > 0) items.push({ key: "people", text: `${people} ${people === 1 ? "PERSON" : "PEOPLE"}` });
+  return items;
+}
 
 export function MeetingHeader({
   meeting,
@@ -19,80 +78,21 @@ export function MeetingHeader({
   data: MeetingData;
   /** HS-200-12: on the review wing the display line belongs to the
    *  review (`5 to review`) and the meeting's name is in the window title
-   *  bar (the subject, said once); the fact row keeps only the facts. */
+   *  bar (the subject, said once); the strip keeps only the facts. */
   compact?: boolean;
 }) {
-  const { detail, startedAt, durationS } = data;
-  const source = detail ?? meeting;
-  const runToken = stateToken(source);
-  // PHILO-13-04 (A3): a meeting that holds a summary says STORED, never
-  // "SUMMARY OFF" above its own summary (J2-02). OFF names the run switch;
-  // the record's fact is what it stores.
-  const stored = Boolean(String(readMeetingIntel(source)?.summary ?? "").trim());
-  const token = runToken.label === "OFF" && stored
-    ? { ...runToken, label: "STORED" }
-    : runToken;
-  const title = String(detail?.title ?? meeting.title ?? "Meeting");
-  const dateStr = ledgerDate(startedAt);
-  // HS-201-10: `|| "1 MIN"` was the floor this header put under the token,
-  // and it is what printed `1 MIN` over a 2.79 s import. `durationToken`
-  // now says seconds under a minute, so a real length always has a real
-  // token and no floor is needed.
-  const durStr = durationS > 0 ? durationToken(durationS) : "";
-  // HS-172: source from the wire's intel_model_host / intel_duration_s,
-  // not from proposals.
-  const intelDurS = Number(source.intel_duration_s ?? 0);
-  const intelDur = intelDurS > 0 ? `${intelDurS} S` : null;
-  const rawHost = String(source.intel_model_host ?? "") || null;
-
-  const parts: ReactNode[] = [];
-  if (dateStr) parts.push(<span key="date" className="meetings-stream-fact">{dateStr}</span>);
-  if (durStr) parts.push(<span key="dur" className="meetings-stream-fact">{durStr}</span>);
-  if (token.label === "RAN") {
-    parts.push(<StateChip key="state" state="success" label="RAN" icon="●" />);
-  } else if (token.label === "RUNNING") {
-    parts.push(<StateChip key="state" state="working" label="RUNNING" />);
-  } else {
-    parts.push(<StateTokenSpan key="state" token={token} />);
-  }
-  if (token.label === "RAN" && intelDur) {
-    parts.push(<span key="intel-dur" className="meetings-stream-fact">{intelDur}</span>);
-  }
-  // PHILO-15-07 (B01): the record says when its transcript has gaps.
-  // Astra r1 on #982: one source. The fresh detail is authoritative (its
-  // zero included); the list row speaks only while no detail is loaded.
-  const unclear = unclearLampLabel(source);
-  if (unclear) {
-    parts.push(<StateChip key="unclear" state="warning" label={unclear} data-testid="unclear-lamp" />);
-  }
-  // Host chip for any intel-active state: RAN, RUNNING, QUEUED.
-  const hostStates = ["RAN", "RUNNING", "QUEUED"];
-  if (hostStates.includes(token.label) && rawHost) {
-    const eg = egressFor(rawHost);
-    parts.push(<EgressChip key="intel-host" label={eg.label} scope={eg.scope} />);
-  }
-
-  const interleaved: ReactNode[] = [];
-  parts.forEach((part, i) => {
-    if (i > 0) interleaved.push(
-      <span key={`dot-${i}`} className="meetings-stream-dot" aria-hidden="true">{"·"}</span>
-    );
-    interleaved.push(part);
-  });
-
+  const title = String(data.detail?.title ?? meeting.title ?? "Meeting");
+  const strip = <StatusStrip className="meetings-detail-facts" items={meetingStripItems(meeting, data)} />;
   if (compact) {
     return (
       <div className="meetings-detail-head" data-compact>
-        <div className="meetings-detail-facts">{interleaved}</div>
+        {strip}
       </div>
     );
   }
   return (
-    <div className="meetings-detail-head">
-      <div className="surface-display">{title}</div>
-      <div className="meetings-detail-facts">
-        {interleaved}
-      </div>
-    </div>
+    <AppHead className="meetings-detail-head" fact={title} as="div">
+      {strip}
+    </AppHead>
   );
 }

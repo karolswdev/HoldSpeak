@@ -212,7 +212,9 @@ class TestFacesDoNotLie:
                 # A3-W: the rail now says SUMMARY STORED too (its hidden compact
                 # line at 393), so the record's own head is the locator.
                 head = meetings.locator(".meetings-detail-head")
-                head.get_by_text("SUMMARY STORED").first.wait_for()
+                # Phase 16 (the kit's StatusStrip; coordinator R2): a meeting
+                # holding its summary says SUMMARISED (the ok lamp + word).
+                head.get_by_text("SUMMARISED").first.wait_for()
                 assert not head.get_by_text("SUMMARY OFF").count()
                 self._shot(page, "meetings-stored", width)
                 assert not errors, errors

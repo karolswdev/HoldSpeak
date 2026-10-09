@@ -494,3 +494,62 @@ describe("PHILO-14 A2 Get Info window", () => {
     expect(updatePrimitive).toHaveBeenCalledWith("meeting", "m1", { title: "Cutover sync" }, "RENAME");
   });
 });
+
+// Phase 16 (the interior kit; the canvas window "Payments ledger cutover"):
+// AppHead → FilterBar (Icons | List + Room, History) → the IconGrid well →
+// Sources · n + Steward → the AskWell → the Foot.
+describe("Phase 16 the Room window on the interior kit", () => {
+  it("heads with the Room's name once, the strip under it, and composes in the canvas order", async () => {
+    await renderDrawer();
+    const head = screen.getByTestId("drawer-facts");
+    expect(head.querySelector(".kit-disp")?.textContent).toBe("Payments ledger cutover");
+    expect(document.querySelectorAll(".kit-disp")).toHaveLength(1);
+    const order = [
+      head,
+      screen.getByTestId("drawer-filter"),
+      document.querySelector(".desk-icon-grid[data-well]"),
+      screen.getByTestId("drawer-sources"),
+      screen.getByTestId("room-ask-well"),
+    ];
+    for (let i = 1; i < order.length; i += 1) {
+      expect(order[i - 1]!.compareDocumentPosition(order[i]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+    expect(screen.getByRole("textbox", { name: "Ask this project" })).toBeInTheDocument();
+  });
+
+  it("History and Steward open the Room at that place", async () => {
+    const { takeRoomAtRequest } = await import("../../openObject");
+    await renderDrawer();
+    fireEvent.click(screen.getByTestId("drawer-history"), { detail: 1 });
+    expect(shell.rooms).toEqual(["p-ledger"]);
+    expect(takeRoomAtRequest("p-ledger")).toBe("history");
+    fireEvent.click(screen.getByTestId("drawer-steward"), { detail: 1 });
+    expect(takeRoomAtRequest("p-ledger")).toBe("steward");
+    expect(takeRoomAtRequest("p-ledger")).toBeNull();
+  });
+
+  it("Sources: no count at zero; each accepted source is a kind-plated row with its one state word", async () => {
+    await renderDrawer();
+    expect(screen.getByTestId("drawer-sources").querySelector("h3")?.textContent).toBe("Sources");
+    const { sourceRows } = await import("../DrawerWindow");
+    const checked = new Date(Date.now() - 10 * 60_000).toISOString();
+    const rows = sourceRows({
+      sources: {
+        state: "ok",
+        count: 3,
+        nextCheckAt: null,
+        items: [
+          { watchId: "w1", watchIds: ["w1"], provider: "github", scope: "karolswdev/payments-ledger", state: "live", checkedAt: checked, tokens: [], suggested: false },
+          { watchId: "w2", watchIds: ["w2"], provider: "jira", scope: "OPS", state: "cant_check", checkedAt: null, tokens: [], suggested: false },
+          { watchId: "w3", watchIds: ["w3"], provider: "github", scope: "acme/suggested", state: "live", checkedAt: null, tokens: [], suggested: true },
+        ],
+      },
+    } as never);
+    expect(rows.map((r) => [r.plate, r.scope, r.tone])).toEqual([
+      ["GH", "karolswdev/payments-ledger", "ok"],
+      ["J", "OPS", "fail"],
+    ]);
+    expect(rows[0].meta).toMatch(/^CHECKED /);
+    expect(rows[1].meta).toBe("CAN'T CHECK");
+  });
+});

@@ -1,3 +1,7 @@
+/* Phase 16: the interior kit (AppHead, StatusStrip, FilterBar, the kind
+   plate); the existing species are restyled in place below. */
+@import "./kit.css";
+
 /* ── HS-98-01: the surface idiom (docs/internal/DESIGN_SYSTEM.md) ──
    Window interiors on the ONE material: no nested cards, no page
    grids. Density rides the --desk-surface-* component tokens; layout
@@ -43,13 +47,25 @@
   flex-direction: column;
   gap: 6px;
 }
+/* Phase 16 (the interior kit, §11 "Section"; canvas `.cap`): the caption,
+   then the section's verbs, then the hairline to the right edge (the
+   `::after` takes the rest of the line). No rule above: the hairline IS the
+   section's edge. */
 .surface-section-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
   gap: 8px;
-  border-top: 1px solid var(--wash-1);
-  padding-top: 8px;
+  margin: 4px 0 0;
+}
+.surface-section-head::after {
+  content: "";
+  flex: 1 1 12px;
+  min-width: 12px;
+  height: 1px;
+  background: var(--wb-rule-soft);
+}
+.surface-section-head > .btn {
+  margin-left: 4px;
 }
 .surface-verbs + .surface-section > .surface-section-head,
 .desk-surface-body > .surface-section:first-child > .surface-section-head {
@@ -96,10 +112,10 @@
   margin: 0;
   font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--wb-muted);
 }
 
 /* Rules 3 + 4 — dense honest rows. */
@@ -1300,23 +1316,36 @@ button.surface-edit-in-place:hover {
 /* ── HS-111-02: the machine ledger (SurfaceLedger) — the tracker's
    view. One-line mono rows, columnar, full-width hover band; the open
    row wears the sunken well fill (the cursor line). ── */
+/* Phase 16 (the interior kit, §11 "Ledger"; canvas `.ledger .row`): the
+   ledger is a SUNKEN PAPER WELL (1 px ink border, the Steel sunken bevel).
+   Inside the well the interior tokens read ink, so every species a row
+   holds (a token, a chip, a lamp word) is ink on paper. */
 .surface-ledger {
+  --text: var(--wb-text);
+  --text-muted: var(--wb-muted);
+  --text-faint: var(--wb-muted);
   display: flex;
   flex-direction: column;
+  background: var(--wb-well);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+  color: var(--wb-text);
+  min-width: 0;
 }
 .surface-ledger-head {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 2px 4px 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--wb-rule-soft);
 }
 .surface-ledger-count {
   font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text);
+  color: var(--wb-muted);
   white-space: nowrap;
 }
 .surface-ledger-controls {
@@ -1352,18 +1381,25 @@ button.surface-edit-in-place:hover {
   gap: 0 10px;
   width: 100%;
   min-height: 26px;
-  padding: 2px 6px;
+  /* Phase 16: a kit row (canvas `.row`): 8 px by 10 px, a soft hairline
+     under it (the last row has none). */
+  padding: 8px 10px;
   border: 0;
+  border-bottom: 1px solid var(--wb-rule-soft);
   border-radius: 0;
   background: none;
   text-align: left;
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--text);
+  color: var(--wb-text);
   cursor: pointer;
 }
+.surface-ledger-row:last-child > .surface-ledger-line {
+  border-bottom: 0;
+}
+/* The hover tints the row selection-blue at 12 %. */
 .surface-ledger-line:hover {
-  background: var(--wash-1);
+  background: color-mix(in srgb, var(--wb-sel) 12%, transparent);
 }
 /* PHILO-13-06 (B1): a line that opens nothing draws no open (A.11). */
 .surface-ledger-line[data-inert] {
@@ -1377,28 +1413,30 @@ button.surface-edit-in-place:hover {
    outside outline that clips in the scrolling well, never a smuggled
    left rail). */
 .surface-ledger-line:focus-visible {
-  background: var(--wash-1);
+  background: color-mix(in srgb, var(--wb-sel) 12%, transparent);
   outline: none;
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow: inset 0 0 0 1px var(--wb-sel);
 }
 /* PHILO-14 A2b: the row a request selected (the Room's proposal). */
 .surface-ledger-row[data-selected] > .surface-ledger-line {
-  background: var(--accent-tint);
+  background: color-mix(in srgb, var(--wb-sel) 22%, transparent);
 }
 .surface-ledger-row[data-open] > .surface-ledger-line {
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
+  background: color-mix(in srgb, var(--wb-sel) 8%, transparent);
 }
 .surface-ledger-time {
-  color: var(--text-faint);
+  color: var(--wb-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+/* Phase 16: the row's name is the sans 15/500 step, ink. */
 .surface-ledger-primary {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font: 500 15px / 1.3 var(--font-sans);
+  color: var(--wb-text);
 }
 .surface-ledger-cell {
   color: var(--text-muted);
@@ -1455,9 +1493,9 @@ button.surface-edit-in-place:hover {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 8px 10px 10px 68px;
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
+  padding: 8px 10px 10px 72px;
+  background: color-mix(in srgb, var(--wb-sel) 6%, transparent);
+  border-bottom: 1px solid var(--wb-rule-soft);
 }
 .surface-ledger-open .surface-row-verbs {
   opacity: 1;
@@ -4050,17 +4088,15 @@ button.surface-edit-in-place:hover {
   gap: 2px;
 }
 
-/* HS-170-04 — detail head (display title + facts) */
+/* HS-170-04 — detail head. Phase 16: the kit's AppHead (`.kit-apphead`:
+   the title and the strip on one baseline); the compact head (the review
+   wing) is the strip alone. */
 .meetings-detail-head {
+  padding: 0 0 4px;
+}
+.meetings-detail-head[data-compact] {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 0 0 10px;
-}
-.meetings-detail-facts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: 6px;
 }
 .meetings-detail-facts [data-tone="success"] { color: var(--success); }

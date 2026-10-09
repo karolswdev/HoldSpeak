@@ -311,7 +311,7 @@ def _seed_quiet(page: Any) -> str:
 # ── glass helpers ────────────────────────────────────────────────────
 
 #: The drawer's member rows (not the source rows, not the waiting or muted lists).
-MEMBERS = "[data-testid='needs-list'] > ul > [data-testid='needs-row']"
+MEMBERS = "[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row']"
 #: The drawer's source rows (a source not read, no calendar).
 SOURCES = "[data-testid='needs-source-row']"
 

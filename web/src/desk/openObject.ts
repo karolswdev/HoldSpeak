@@ -73,6 +73,33 @@ export function openProjectProposal(projectId: string, proposalId: string): void
   }
 }
 
+/** Phase 16 (the interior kit, the canvas window "Payments ledger
+ *  cutover"): the Room window's trailing verbs open the Room AT a place:
+ *  `history` (its History wing) or `steward` (the Steward posture, where
+ *  the sources are kept). The Room takes the request once (a reload does
+ *  not replay it), as with Draft update. */
+export const ROOM_AT_EVENT = "holdspeak:room-at";
+export type RoomPlace = "history" | "steward";
+const roomPlaces = new Map<string, RoomPlace>();
+
+export function openProjectRoomAt(projectId: string, place: RoomPlace): void {
+  const id = projectId.trim();
+  if (!id) return;
+  roomPlaces.set(id, place);
+  openProjectRoom(id);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent<string>(ROOM_AT_EVENT, { detail: id }));
+  }
+}
+
+/** The place to open `projectId`'s Room at, once per request. */
+export function takeRoomAtRequest(projectId: string | null | undefined): RoomPlace | null {
+  if (!projectId) return null;
+  const place = roomPlaces.get(projectId) ?? null;
+  roomPlaces.delete(projectId);
+  return place;
+}
+
 /** The proposal to select in `projectId`'s Room, once per request. */
 export function takeRoomProposalRequest(projectId: string | null | undefined): string | null {
   if (!projectId) return null;

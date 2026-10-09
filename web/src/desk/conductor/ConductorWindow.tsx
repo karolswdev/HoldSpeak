@@ -13,13 +13,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
+  AppHead,
   DeskIcon,
   EgressChip,
-  FilterTokens,
+  FilterBar,
   IconGrid,
-  LampGadget,
   ObjectList,
+  StatusStrip,
   SurfaceFooter,
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceSection,
   SurfaceState,
   objectSprite,
   type ObjectSort,
@@ -197,6 +201,29 @@ export function MemberVerbs({ member, onInfo }: { member: ConductorMember | null
   );
 }
 
+/** Phase 16: the Conductor's one big fact: `2 at work`; with none at work,
+ *  the asks; with neither, the agents ready. Never a zero. */
+export function headFact(head: { atWork: number; ask: number }, members: readonly ConductorMember[]): string {
+  if (head.atWork > 0) return `${head.atWork} at work`;
+  if (head.ask > 0) return `${head.ask} ${head.ask === 1 ? "asks" : "ask"}`;
+  const ready = members.filter((m) => m.role === "ready").length;
+  return ready > 0 ? `${ready} ready` : "No agent";
+}
+
+/** `ASKED 6 MIN AGO`, `ASKED 3 H AGO`, `ASKED OCT 5`; `ASKS` with no age. */
+export function askedWord(when: string | undefined): string {
+  if (!when) return "ASKS";
+  return /\d+ (MIN|H)$/.test(when) ? `ASKED ${when} AGO` : `ASKED ${when}`;
+}
+
+/** The kind plate of an agent: `CC` Claude Code, `CX` Codex, `PI` pi. */
+export function agentPlate(agent: string): string {
+  if (agent === "claude") return "CC";
+  if (agent === "codex") return "CX";
+  if (agent === "pi") return "PI";
+  return agent.slice(0, 3).toUpperCase() || "AGT";
+}
+
 export function ConductorWindow() {
   const reads = useConductorReads();
   const sessions = useAgentFlights((s) => s.sessions);
@@ -243,6 +270,15 @@ export function ConductorWindow() {
     setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
   const words = headWords(head);
   const byId = (id: string) => members.find((m) => m.id === id) ?? null;
+  // Phase 16: the harnesses this desk has (installed agents), and The ask:
+  // each live agent that asks (or holds a call), with its question.
+  const harnesses = (reads.detect?.agents ?? []).filter((a) => a.installed).length;
+  const asks = members
+    .filter((m) => m.role === "live" && (m.live === "ask" || m.live === "held"))
+    .map((member) => ({
+      member,
+      question: sessions.find((row) => row.key === member.sessionKey)?.question ?? "",
+    }));
 
   return (
     <DeskWindowFrame
@@ -266,48 +302,49 @@ export function ConductorWindow() {
     >
       <div className="desk-pullout-body drawer-body" data-testid="conductor-window">
         <div className="drawer-scroll">
-          <div className="drawer-head">
-            <div className="drawer-facts" data-testid="conductor-head">
-              {failed.map((f) => (
-                <span key={f.part} className="drawer-fact" data-tone="fail" data-testid="conductor-not-read">
-                  {f.part} · <b>NOT READ</b>
-                  {f.token ? ` · ${f.token}` : ""}
-                </span>
-              ))}
-              {/* `2 AT WORK · 1 ASK · 3 OF 3`: the ask is a lamp (it needs him). */}
-              {words.map((w) =>
-                w.endsWith(" ASK") ? (
-                  <LampGadget key={w} label={w} on tone="ask" />
-                ) : (
-                  <span key={w} className="drawer-fact">
-                    <b>{w}</b>
-                  </span>
-                ),
-              )}
-            </div>
-            <span className="drawer-head-verbs">
-              {failed.length ? (
-                <Button dense variant="ghost" onClick={retry}>
-                  Retry
-                </Button>
-              ) : null}
-              <FilterTokens
-                label="Conductor view"
-                value={view}
-                onChange={(next) => useDesk.getState().setZoneViewPref(PREF_KEY, { view: next as ConductorView })}
-                options={[
-                  { value: "icons", label: "Icons" },
-                  { value: "list", label: "List" },
-                ]}
-              />
-            </span>
-          </div>
+          {/* Phase 16 (the interior kit; the canvas window "Conductor"):
+              AppHead → FilterBar → the IconGrid of agents → The ask. */}
+          <AppHead fact={headFact(head, members)} data-testid="conductor-head">
+            <StatusStrip
+              items={[
+                ...failed.map((f) => ({
+                  key: `fail-${f.part}`,
+                  lamp: "fail" as const,
+                  text: `${f.part} ·`,
+                  value: `NOT READ${f.token ? ` · ${f.token}` : ""}`,
+                  testId: "conductor-not-read",
+                })),
+                // `2 AT WORK` is the fact; the ask is a lamp (it needs him).
+                ...words.filter((w) => !w.endsWith(" AT WORK")).map((w) => ({
+                  key: w,
+                  lamp: w.endsWith(" ASK") ? ("ask" as const) : undefined,
+                  text: w,
+                })),
+                harnesses > 0 ? { key: "harnesses", text: `${harnesses} ${harnesses === 1 ? "HARNESS" : "HARNESSES"}` } : null,
+              ]}
+            />
+          </AppHead>
+          <FilterBar
+            label="Conductor view"
+            data-testid="conductor-filter"
+            value={view}
+            onChange={(next) => useDesk.getState().setZoneViewPref(PREF_KEY, { view: next as ConductorView })}
+            options={[
+              { value: "icons", label: "Icons" },
+              { value: "list", label: "List" },
+            ]}
+            trailing={failed.length ? (
+              <Button dense variant="ghost" onClick={retry}>
+                Retry
+              </Button>
+            ) : null}
+          />
           {loading ? (
             <SurfaceState loading />
           ) : !members.length && failed.length ? null : !members.length ? (
             <SurfaceState empty emptyLabel="No agent found" />
           ) : view === "icons" ? (
-            <IconGrid label="Conductor" onClear={() => setSelectedId(null)}>
+            <IconGrid well label="Conductor" onClear={() => setSelectedId(null)}>
               {members.map((m) => (
                 <DeskIcon
                   key={m.id}
@@ -339,6 +376,30 @@ export function ConductorWindow() {
               }}
             />
           )}
+          {asks.length ? (
+            <SurfaceSection label="The ask" data-testid="conductor-asks">
+              <SurfaceLedger label="The ask" cols="kit">
+                <ul className="surface-ledger-rows">
+                  {asks.map(({ member, question }) => (
+                    <SurfaceLedgerRow
+                      key={member.id}
+                      data-testid="conductor-ask-row"
+                      kind={agentPlate(member.agent)}
+                      kindTitle={member.kindWord}
+                      primary={question || member.name}
+                      meta={askedWord(member.when)}
+                      metaTone="ask"
+                      wrap
+                      expands={false}
+                      selected={member.id === selectedId}
+                      lineLabel={`Select: ${member.name}`}
+                      onToggle={() => setSelectedId(member.id)}
+                    />
+                  ))}
+                </ul>
+              </SurfaceLedger>
+            </SurfaceSection>
+          ) : null}
         </div>
       </div>
       <SurfaceFooter

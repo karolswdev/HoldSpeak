@@ -12,8 +12,8 @@ and is due later; one Desk decision waits for review.
 PHILO-14 A5: the Needs-you window body is the smart drawer. Its stable
 testids: ``needs-drawer``, ``needs-list`` (the rows), ``needs-row`` (a
 member), ``needs-source-row``, ``needs-row-verb`` (``data-verb`` names it),
-``needs-waiting-toggle`` / ``needs-waiting``, ``needs-muted-toggle`` /
-``needs-muted``, ``needs-next``.
+``needs-filter`` (Phase 16: the FilterBar; its ``Waiting`` and ``Muted``
+tokens open ``needs-waiting`` / ``needs-muted``), ``needs-next``.
   * The decision row has a Review verb; Review opens the decision's window.
   * Name an owner on A4 (the Door card's delegate verb): the head says 5 and
     WAITING lists A3 and A4.
@@ -95,19 +95,29 @@ class TestNeedsYouMeansYou:
 
     @staticmethod
     def _filter(page: Any, label: str) -> None:
-        """WAITING opens the drawer's `Waiting · N` list; RANKED closes it."""
-        toggle = page.locator("[data-testid='needs-waiting-toggle']")
-        toggle.wait_for(timeout=15_000)
-        want = "true" if label == "WAITING" else "false"
-        if toggle.get_attribute("aria-expanded") != want:
-            toggle.click()
+        """Phase 16: WAITING is the FilterBar's `Waiting` token (its list is
+        `Waiting · N`); RANKED is its `Ranked` token. The pressed token is
+        asserted. At 393 a strip that does not fit is one menu Button."""
+        word = "Waiting" if label == "WAITING" else "Ranked"
+        bar = page.locator("[data-testid='needs-filter']")
+        bar.wait_for(timeout=15_000)
+        menu = bar.locator("[data-testid='surface-strip-menu']")
+        if menu.count():
+            menu.click()
+            page.locator(".desk-head-menu").get_by_text(word, exact=True).click()
+            _settle(page)
+            assert (menu.get_attribute("aria-label") or "").endswith(f": {word}"), menu.get_attribute("aria-label")
+            return
+        token = bar.get_by_role("button", name=word, exact=True)
+        token.click()
         _settle(page)
+        assert token.get_attribute("aria-pressed") == "true", word
 
     @staticmethod
     def _rows(page: Any) -> list[str]:
         """The rows on view: the waiting list when it is open, else the members."""
         waiting = page.locator("[data-testid='needs-waiting']")
-        scope = waiting if waiting.count() else page.locator("[data-testid='needs-list'] > ul")
+        scope = waiting if waiting.count() else page.locator("[data-testid='needs-list'] ul.needs-list")
         return [" ".join(text.split()) for text in scope.locator("[data-testid='needs-row']").all_inner_texts()]
 
     @pytest.mark.parametrize("width", list(SIZES))

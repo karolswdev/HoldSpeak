@@ -355,9 +355,13 @@ class TestMeetingFacesGlass:
                 row_text = " ".join(page.locator(f"[data-testid=dest-row]:has([data-destination='{SLACK}'])").inner_text().split())
                 for token in ("SLACK", "#leads", "WEBHOOK SET", "HOOKS.SLACK.COM"):
                     assert token in row_text, (token, row_text)
+                # Phase 16 (the kit's taller rows, 8 px row padding): seated on
+                # the result's CENTRE the open row's own line ran 10 px above
+                # the 393 scroll top; the board seats the row at its START, so
+                # the row and its Check result are both on the screen.
                 boards.shoot(page, "D3-slack-row-checked",
                              [f"[data-testid=dest-row]:has([data-destination='{SLACK}'])", "[data-testid=dest-check-result]"],
-                             seat=f"CENTER:[data-testid=dest-check-result]")
+                             seat=f"[data-testid=dest-row]:has([data-destination='{SLACK}'])")
                 settings_text = page.locator(".desk-window:has([data-testid=destinations])").inner_text()
                 assert "Slack webhook" not in settings_text          # with a Slack destination too
                 facts["check"] = check
