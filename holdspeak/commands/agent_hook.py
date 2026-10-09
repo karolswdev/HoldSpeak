@@ -150,11 +150,8 @@ def _pi_hooks_line(verb: str) -> str:
     pi launch loads with ``-e``. The CLI says so instead of refusing the name."""
     from ..delivery.pi_launch import EXTENSION_PATH
 
-    state = "in" if EXTENSION_PATH.is_file() else "MISSING"
-    return (
-        f"pi: nothing to {verb}; every pi launch loads its hooks from "
-        f"{EXTENSION_PATH} (extension {state})"
-    )
+    state = "IN" if EXTENSION_PATH.is_file() else "MISSING"
+    return f"pi: nothing to {verb} · HOOKS RIDE EVERY LAUNCH · EXTENSION {state} · {EXTENSION_PATH}"
 
 
 def _cmd_install(args, *, out: TextIO, err: TextIO) -> int:
@@ -182,11 +179,12 @@ def _cmd_install(args, *, out: TextIO, err: TextIO) -> int:
         verb = "created" if result["created_file"] else "updated"
         events = ", ".join(result["installed_events"])
         print(f"{agent}: {verb} {result['path']} ({events})", file=out)
-    print(
-        "Hooks take effect for NEW coder sessions. Remove them any time with "
-        "`holdspeak agent-hook uninstall`.",
-        file=out,
-    )
+    if targets:
+        print(
+            "Hooks take effect for NEW coder sessions. Remove them any time with "
+            "`holdspeak agent-hook uninstall`.",
+            file=out,
+        )
     return _EXIT_OK
 
 
