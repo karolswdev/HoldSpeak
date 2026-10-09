@@ -193,6 +193,8 @@ export function SurfaceWindowHost({
       minW={row.minW}
       defaultH={row.defaultH}
       wings={wings}
+      // PHILO-16: a window scoped to a project belongs to that Room (Gather).
+      room={scope?.startsWith("project:") ? scope : undefined}
       open
       unmountOnMinimize
       onClose={() => useDesk.getState().closeSurfaceWindow(row.key)}

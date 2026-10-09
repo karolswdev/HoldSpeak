@@ -56,7 +56,7 @@ TITLEBAR_JS = r"""(width) => {
   const hex = (c) => '#' + [c.r, c.g, c.b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
   const shown = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
     return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
-  const shells = [...document.querySelectorAll('.desk-window-shell')].filter(shown);
+  const shells = [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(shown);
   const out = {width, windows: [], small_text: [], gadgets_not_owned: [], gadgets_not_library: [], gadgets_small: []};
   for (const s of shells) {
     const head = s.querySelector(':scope > .desk-pullout-head'); if (!head) continue;

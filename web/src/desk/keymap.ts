@@ -12,29 +12,55 @@ export interface KeySpec {
   meta: boolean;
   ctrl: boolean;
   shift?: boolean;
+  /** PHILO-16 — ⌥ (the Tile keys ⌘⌥← / ⌘⌥→). */
+  alt?: boolean;
   plain: boolean;
   key: string;
 }
 
+/** Key caps that name a key by a symbol. */
+const SYMBOL_KEYS: Record<string, string> = {
+  "↑": "ArrowUp",
+  "←": "ArrowLeft",
+  "→": "ArrowRight",
+  "⏎": "Enter",
+  Esc: "escape",
+};
+
 /** ⌘-notation → matchable spec. Display strings stay ⌘-notation; only
- * this module reads them as bindings. */
+ * this module reads them as bindings. Modifiers after ⌘/⌃: ⇧ and ⌥, in
+ * either order. */
 export function parseKey(cap: string): KeySpec | null {
   const meta = cap.startsWith("⌘");
   const ctrl = cap.startsWith("⌃");
-  const plain = cap === "Delete" || /^F\d+$/.test(cap);
+  const plain = cap === "Delete" || cap === "Esc" || /^F\d+$/.test(cap);
   if (!meta && !ctrl && !plain) return null;
-  const rest = plain ? cap : cap.slice(1);
-  const shift = rest.startsWith("⇧");
-  const chord = shift ? rest.slice(1) : rest;
-  const key = chord === "↑" ? "ArrowUp" : chord.toLocaleLowerCase();
+  let chord = plain ? cap : cap.slice(1);
+  let shift = false;
+  let alt = false;
+  for (;;) {
+    if (!plain && chord.startsWith("⇧")) {
+      shift = true;
+      chord = chord.slice(1);
+    } else if (!plain && chord.startsWith("⌥")) {
+      alt = true;
+      chord = chord.slice(1);
+    } else break;
+  }
+  const key = SYMBOL_KEYS[chord] ?? chord.toLocaleLowerCase();
   if (!key) return null;
-  return { meta, ctrl, plain, ...(shift ? { shift: true } : {}), key };
+  return { meta, ctrl, plain, ...(shift ? { shift: true } : {}), ...(alt ? { alt: true } : {}), key };
 }
 
 /** Plain-letter chords stay quiet while the user is typing (the HS-101
  * rule: ⌘W/⌘M never eat a word in a field). PHILO-13-16: ⌃T too — in a
  * field it is the field's own key (on a Mac it swaps two letters). */
-const TYPING_GUARDED = new Set(["w", "m", "b", "t"]);
+const TYPING_GUARDED = new Set([
+  "w", "m", "b", "t",
+  // PHILO-16: the arrangement keys. In a field ⌘⇧Z is redo, ⌘⏎ sends a
+  // composer, ⌘⌥←/→ and ⌘` belong to the field or the system.
+  "z", "g", "e", "`", "ArrowLeft", "ArrowRight", "Enter",
+]);
 
 function typing(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;
@@ -50,12 +76,16 @@ function typing(target: EventTarget | null): boolean {
 export function matchKey(e: KeyboardEvent, spec: KeySpec): boolean {
   // ⌘ means the PRIMARY modifier: meta on a Mac, ctrl elsewhere (the
   // pre-keymap ⌘K accepted both; the grammar keeps that reach).
+  const alt = Boolean(spec.alt) === e.altKey;
   const primary =
-    (e.metaKey || e.ctrlKey) && !(e.metaKey && e.ctrlKey) && !e.altKey;
+    (e.metaKey || e.ctrlKey) && !(e.metaKey && e.ctrlKey) && alt;
   if (spec.meta && !primary) return false;
-  if (spec.ctrl && !(e.ctrlKey && !e.metaKey && !e.altKey)) return false;
+  if (spec.ctrl && !(e.ctrlKey && !e.metaKey && alt)) return false;
   if (spec.plain && (e.metaKey || e.ctrlKey || e.altKey)) return false;
   if (Boolean(spec.shift) !== e.shiftKey) return false;
+  // ⇧` reports "~" on most layouts: the backquote binds by its key code.
+  if (spec.key === "`" && e.code === "Backquote") return true;
+  if (spec.key === "escape" && (e.key === "Escape" || e.key === "Esc")) return true;
   // Mac keyboards report their Delete key as Backspace; both invoke the
   // destructive verb only after its selection guard and confirmation.
   if (spec.key === "delete" && (e.key === "Delete" || e.key === "Backspace"))
@@ -67,10 +97,13 @@ export function matchKey(e: KeyboardEvent, spec: KeySpec): boolean {
 /** PHILO-13-12 (C2) — a literal ⌃ chord binds before a ⌘ chord: ⌘ also
  * accepts ctrl off the Mac, so ⌃M (Zoom) must win over ⌘M (Iconify) for the
  * ctrl key. On a Mac ⌘M stays Iconify. */
-const BOUND_VERBS: { verb: Verb; spec: KeySpec }[] = VERBS.flatMap((verb) => {
-  const spec = verb.key ? parseKey(verb.key) : null;
-  return spec ? [{ verb, spec }] : [];
-}).sort((a, b) => Number(b.spec.ctrl) - Number(a.spec.ctrl));
+const BOUND_VERBS: { verb: Verb; spec: KeySpec }[] = VERBS.flatMap((verb) =>
+  // PHILO-16: a verb's older keys (`altKeys`) stay bound one release.
+  [verb.key, ...(verb.altKeys ?? [])].flatMap((cap) => {
+    const spec = cap ? parseKey(cap) : null;
+    return spec ? [{ verb, spec }] : [];
+  }),
+).sort((a, b) => Number(b.spec.ctrl) - Number(a.spec.ctrl));
 
 export function keyContext(): VerbContext {
   const ids = useDesk.getState().selectedIds;

@@ -94,7 +94,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       // PHILO-13-16 (C6): the pop-key, a thought from any window.
       "desk.new-thought": "⌃T",
       "desk.new-decision": "⌘⇧N",
-      "desk.overview": "⌃↑",
+      "desk.overview": "⌘⇧E",
       "desk.settle": "⌘⇧F",
       "object.rename": "F2",
       "object.delete": "Delete",
@@ -106,11 +106,16 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "go.configure-settings": "⌘4",
       "window.close": "⌘W",
       "window.minimize": "⌘M",
-      // PHILO-13-12 (C2): Zoom ⌃M and To back ⌃B (board C1-2b).
-      "window.maximize": "⌃M",
-      "window.depth": "⌃B",
-      "window.cycle": "⌃`",
-      "window.cycle-reverse": "⌃⇧`",
+      // PHILO-16 §5: the compositor's keys (the C2 keys ⌃M, ⌃B, ⌃` stay
+      // bound one release as altKeys; the reverse cycle has no key now).
+      "window.maximize": "⌘⇧Z",
+      "window.depth": "⌘⇧`",
+      "window.cycle": "⌘`",
+      "window.snap-left": "⌘⌥←",
+      "window.snap-right": "⌘⌥→",
+      "window.stage": "⌘⏎",
+      "window.gather": "⌘G",
+      "window.back": "Esc",
       "system.search": "⌘K",
       "system.sheet": "⌘/",
     });

@@ -159,7 +159,8 @@ describe("the right button: the window's menu bar with Amiga-key caps", () => {
     const caps = Array.from(menu.querySelectorAll(".desk-menu-keycaps")).map((k) =>
       k.getAttribute("aria-label"),
     );
-    expect(caps.slice(0, 4)).toEqual(["⌘M", "⌃M", "⌃B", "⌘W"]);
+    // PHILO-16 §5: Zoom ⌘⇧Z, To back ⌘⇧` (⌃M, ⌃B stay bound one release).
+    expect(caps.slice(0, 4)).toEqual(["⌘M", "⌘⇧Z", "⌘⇧`", "⌘W"]);
   });
 
   it("To back from the menu sends THIS window back", () => {
@@ -199,9 +200,9 @@ describe("the shortcut fence over the verb registry", () => {
     ),
   ];
 
-  it("the window menu carries Zoom ⌃M and To back ⌃B", () => {
-    expect(shown).toContainEqual({ id: "window.maximize", keycap: "⌃M" });
-    expect(shown).toContainEqual({ id: "window.depth", keycap: "⌃B" });
+  it("the window menu carries Zoom ⌘⇧Z and To back ⌘⇧` (PHILO-16 §5)", () => {
+    expect(shown).toContainEqual({ id: "window.maximize", keycap: "⌘⇧Z" });
+    expect(shown).toContainEqual({ id: "window.depth", keycap: "⌘⇧`" });
   });
 
   it("no verb without a key shows one; every shown key runs THAT verb", () => {
@@ -224,6 +225,7 @@ describe("the shortcut fence over the verb registry", () => {
         metaKey: spec!.meta,
         ctrlKey: spec!.ctrl,
         shiftKey: Boolean(spec!.shift),
+        altKey: Boolean(spec!.alt),
         cancelable: true,
       });
       expect(dispatchKey(ev)?.id, `${keycap} runs ${id}`).toBe(id);

@@ -44,7 +44,7 @@ STACK_JS = r"""() => {
     return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; };
   const blue = (h) => { const m = getComputedStyle(h).backgroundColor.match(/\d+/g) || [];
     return Math.abs(m[0] - 102) < 3 && Math.abs(m[1] - 136) < 3 && Math.abs(m[2] - 187) < 3; };
-  const wins = [...document.querySelectorAll('.desk-window-shell')].filter(visible).map((s) => {
+  const wins = [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(visible).map((s) => {
     const h = s.querySelector(':scope > .desk-pullout-head'); const r = s.getBoundingClientRect();
     return {name: s.getAttribute('aria-label'), z: Number(getComputedStyle(s).zIndex) || 0,
       front: s.classList.contains('is-front'), blue: Boolean(h && blue(h)),
@@ -171,7 +171,8 @@ class TestTheGadgets:
             return
         # a ghosted row carries its reason after the name ("Zoom · Fills the screen")
         got = [(r["label"].split(" · ")[0], r["keycap"]) for r in menu["rows"]]
-        want = [("Iconify", "⌘M"), ("Zoom", "⌃M"), ("To back", "⌃B"), ("Close window", "⌘W"),
+        # PHILO-16 §5: Zoom ⌘⇧Z, To back ⌘⇧` (⌃M and ⌃B stay bound one release).
+        want = [("Iconify", "⌘M"), ("Zoom", "⌘⇧Z"), ("To back", "⌘⇧`"), ("Close window", "⌘W"),
                 ("Desk", None), ("Go", None)]
         if got != want:
             fails["G3 the menu bar with its key caps"] = got

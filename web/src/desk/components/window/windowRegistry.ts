@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { useDesk } from "../../store";
 import { mruOrder } from "./windowGeometry";
 import { shownNames } from "../../windowName";
+import { computePlanes, liveVersion, subscribeLive } from "../../compositor/live";
 
 /** Dock chip elements by window id — the minimize/restore motion's
  * target (HS-97-04). Populated by the Dock's ref callbacks. */
@@ -126,9 +127,13 @@ export function frontOf(
   return shown.length ? shown[shown.length - 1].id : null;
 }
 
-/** HS-101 B8 — the front window: the last non-minimized id in the
- * stacking order that is actually open (the Cmd+W/Cmd+M target). */
+/** HS-101 B8 — the front window (the Cmd+W/Cmd+M target).
+ * PHILO-16: the compositor's ONE derivation (the shown window with the
+ * greatest depth among the mounted frames); `frontOf` remains for the
+ * open set the registry alone knows (a window without a frame). */
 export function frontWindowId(): string | null {
+  const live = computePlanes();
+  if (live.front) return live.front;
   const s = useDesk.getState();
   return frontOf(s.panelOrder, s.panelMin, registrySnapshot);
 }
@@ -140,9 +145,11 @@ export function frontWindowId(): string | null {
  * kept a stale `is-front` (two blue title bars at once). */
 export function useFrontWindowId(): string | null {
   const open = useAllOpenWindows();
+  useSyncExternalStore(subscribeLive, liveVersion);
+  const depth = useDesk((s) => s.panelDepth);
   const order = useDesk((s) => s.panelOrder);
   const minimized = useDesk((s) => s.panelMin);
-  return frontOf(order, minimized, open);
+  return computePlanes(depth, minimized).front ?? frontOf(order, minimized, open);
 }
 
 /** How many windows are open right now (ghost-reason source). */

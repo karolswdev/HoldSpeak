@@ -9,6 +9,11 @@ import {
   saveDeskWorkspace,
 } from "./workspaceStorage";
 import {
+  orderFromDepth,
+  raise as raiseDepth,
+  sendBack as sendBackDepth,
+} from "../compositor/planes";
+import {
   ZONE_WINDOW_CONFIG,
   INFO_WINDOW_CONFIG,
   ROADMAP_WINDOW_CONFIG,
@@ -22,11 +27,15 @@ import {
 
 const PANEL_ORDER_LIMIT = 100;
 
-function compactPanelOrder(order: string[]): string[] {
-  const unique = Array.from(new Set(order));
-  return unique.length > PANEL_ORDER_LIMIT
-    ? unique.slice(-PANEL_ORDER_LIMIT)
-    : unique;
+/** PHILO-16 (L3) — the depths, at most PANEL_ORDER_LIMIT (the deepest
+ * windows leave first), and the order derived from them: the two fields
+ * are always written together. */
+function stack(depth: Record<string, number>): Pick<DeskState, "panelDepth" | "panelOrder"> {
+  const ids = orderFromDepth(depth);
+  const kept = ids.length > PANEL_ORDER_LIMIT ? ids.slice(-PANEL_ORDER_LIMIT) : ids;
+  const panelDepth: Record<string, number> = {};
+  for (const id of kept) panelDepth[id] = depth[id];
+  return { panelDepth, panelOrder: kept };
 }
 
 export interface PanelLayout {
@@ -113,6 +122,9 @@ export type CompositorSlice = Pick<
   | "panelRects"
   | "panelSaved"
   | "panelOrder"
+  | "panelDepth"
+  | "stageShelf"
+  | "setStageShelf"
   | "panelMin"
   | "panelMax"
   | "panelZoom"
@@ -163,7 +175,8 @@ export type CompositorSlice = Pick<
 export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) => ({
   panelRects: initialPanelRects,
   panelSaved: Object.keys(initialPanelRects),
-  panelOrder: initialPanelLayout.order,
+  ...stack(initialPanelLayout.depth ?? {}),
+  stageShelf: initialPanelLayout.shelf ?? "left",
   panelMin: initialPanelMin,
   panelMax: initialPanelLayout.max,
   panelZoom: initialPanelLayout.zoom ?? {},
@@ -384,22 +397,20 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     saveDeskWorkspace(get());
   },
   focusPanel(id) {
-    const order = compactPanelOrder([
-      ...get().panelOrder.filter((x) => x !== id),
-      id,
-    ]);
-    set({ panelOrder: order });
+    // PHILO-16 (L3): a raise is `depth = ++highest`; nothing is spliced.
+    const depth = raiseDepth({ depth: get().panelDepth, seated: [] }, id).depth;
+    set(stack(depth));
     saveDeskWorkspace(get());
   },
   presentPanel(id) {
-    if (get().panelOrder.includes(id)) return;
+    if (id in get().panelDepth) return;
     get().focusPanel(id);
   },
   retirePanel(id) {
     rehydratedMinimized.delete(id);
-    if (!get().panelOrder.includes(id)) return;
-    const order = get().panelOrder.filter((x) => x !== id);
-    set({ panelOrder: order });
+    if (!(id in get().panelDepth)) return;
+    const { [id]: _gone, ...depth } = get().panelDepth;
+    set(stack(depth));
     saveDeskWorkspace(get());
   },
   minimizePanel(id) {
@@ -410,11 +421,8 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   restorePanel(id) {
     rehydratedMinimized.delete(id);
     const panelMin = get().panelMin.filter((x) => x !== id);
-    const order = compactPanelOrder([
-      ...get().panelOrder.filter((x) => x !== id),
-      id,
-    ]);
-    set({ panelMin, panelOrder: order });
+    const depth = raiseDepth({ depth: get().panelDepth, seated: [] }, id).depth;
+    set({ panelMin, ...stack(depth) });
     saveDeskWorkspace(get());
   },
   toggleMaximizePanel(id) {
@@ -422,11 +430,8 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     const panelMax = has
       ? get().panelMax.filter((x) => x !== id)
       : [...get().panelMax, id];
-    const order = compactPanelOrder([
-      ...get().panelOrder.filter((x) => x !== id),
-      id,
-    ]);
-    set({ panelMax, panelOrder: order });
+    const depth = raiseDepth({ depth: get().panelDepth, seated: [] }, id).depth;
+    set({ panelMax, ...stack(depth) });
     saveDeskWorkspace(get());
   },
   // PHILO-13-12 (C2) — zoom as Intuition does it: the window alternates
@@ -439,12 +444,19 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   },
   // PHILO-13-12 (C2) — depth: the window goes behind every other window;
   // the next one in the order becomes the front window.
+  // PHILO-16 (L3): the depth goes under the lowest SHOWN window (a seated
+  // window keeps its depth and is not counted).
   sendPanelToBack(id) {
-    const order = compactPanelOrder([
+    const depth = sendBackDepth(
+      { depth: get().panelDepth, seated: get().panelMin },
       id,
-      ...get().panelOrder.filter((x) => x !== id),
-    ]);
-    set({ panelOrder: order });
+    ).depth;
+    set(stack(depth));
+    saveDeskWorkspace(get());
+  },
+  setStageShelf(side) {
+    if (get().stageShelf === side) return;
+    set({ stageShelf: side });
     saveDeskWorkspace(get());
   },
   resetLayout() {
@@ -453,6 +465,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
       panelRects: {},
       panelSaved: [],
       panelOrder: [],
+      panelDepth: {},
       panelMin: [],
       panelMax: [],
     });
