@@ -86,6 +86,12 @@ export interface SwitchAccept {
 
 export type SwitchLayout = "board" | "list";
 
+/** `Found · n`, drawn only when something was found (UX-CANON A8). */
+function foundCaption(label: string | undefined, found: readonly unknown[]): string {
+  const count = found.length;
+  return count > 0 ? `${label || "Found"} · ${count}` : label || "Found";
+}
+
 /** The board needs room for three columns; below this the job list. */
 export const SWITCHBOARD_LIST_BELOW = 720;
 
@@ -153,6 +159,8 @@ function EnginePlate({
   onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void;
 }) {
   const downloading = engine.progress != null;
+  // Drawn only while a download runs: there is always a number here.
+  const pct = Math.max(0, Math.min(100, Number(engine.progress)));
   const Tag = inline ? "span" : "div";
   return (
     <Tag
@@ -190,10 +198,10 @@ function EnginePlate({
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={Math.round(engine.progress ?? 0)}
+          aria-valuenow={Math.round(pct)}
           data-testid={`switchboard-bar-${engine.id}`}
         >
-          <i style={{ width: `${Math.max(0, Math.min(100, engine.progress ?? 0))}%` }} />
+          <i style={{ width: `${pct}%` }} />
         </span>
       ) : null}
       {engine.verb || engine.egress ? (
@@ -465,7 +473,7 @@ function SwitchboardBoard({
         {found.length > 0 ? (
           <>
             <div className="switchboard-cap" data-testid="switchboard-found-cap">
-              {`${captions.found ?? "Found"} · ${found.length}`}
+              {foundCaption(captions.found, found)}
             </div>
             {found.map((engine) => (
               <EnginePlate key={engine.id} engine={engine} found />
@@ -570,7 +578,7 @@ function SwitchboardList({
       {found.length > 0 ? (
         <>
           <div className="switchboard-cap" data-testid="switchboard-found-cap">
-            {`${captions.found ?? "Found"} · ${found.length}`}
+            {foundCaption(captions.found, found)}
           </div>
           {found.map((engine) => (
             <EnginePlate key={engine.id} engine={engine} found />

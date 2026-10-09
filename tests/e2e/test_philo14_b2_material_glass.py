@@ -268,7 +268,10 @@ def test_a_held_filter_strip_is_flat(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 const s = getComputedStyle(b);
                 const probe = document.createElement('div');
                 probe.style.background = 'var(--disabled-bg)';
-                document.body.appendChild(probe);
+                // The disabled ground as the strip's own window reads it:
+                // A1's interior remap sets --disabled-bg per window, so a
+                // probe on <body> read the page's dark ground instead.
+                b.parentElement.appendChild(probe);
                 const ground = getComputedStyle(probe).backgroundColor;
                 probe.remove();
                 return {text: b.innerText.trim(), disabled: b.disabled, active: b.hasAttribute('data-filter-active'),

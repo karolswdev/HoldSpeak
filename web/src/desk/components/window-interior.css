@@ -91,3 +91,11 @@
 .desk-next .desk-window.desk-window-shell {
   background: var(--desk-window-fall) var(--wb-field);
 }
+/* PHILO-16 (C), the orchestrator's reds on 456ce3b5c: a window's foot is a
+   steel plate (§11 Foot); the slate ink for secondary words (--wb-muted)
+   reads 4.05:1 on it (the grant receipt's time). On the plate the
+   secondary words take the plate's own dim ink. */
+.desk-next .desk-window.desk-window-shell .desk-surface-foot {
+  --text-muted: var(--wb-ink-dim);
+  --text-faint: var(--wb-ink-dim);
+}
