@@ -200,7 +200,7 @@ export function adapterFor(id: string): Adapter | null {
 }
 
 /** Every window an adapter says is open here. */
-function adapterOpenIds(): string[] {
+export function adapterOpenIds(): string[] {
   const s = useDesk.getState();
   const chair = useChairWindows.getState().closed;
   return [
@@ -251,6 +251,8 @@ export interface HubWindowsOptions {
   compact?: () => boolean;
   /** How long a hub-opened window has to mount (default SETTLE_MS). */
   settleMs?: number;
+  /** The windows the cache reopened at boot (default: read at import). */
+  cacheOpen?: readonly string[];
 }
 
 const defaultView = (): Rect => {
@@ -356,6 +358,9 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
    * or an answer OLDER than it is dropped (L2): a delayed read never moves a
    * window back from a settled write. */
   const applied = new Map<string, number>();
+  /** The windows the workspace cache reopened at boot (before anything ran). */
+  const cacheOpen = new Set(options.cacheOpen ?? BOOT_OPEN);
+  let seeding = false;
   /** The list revision at which this view applied a window's close. */
   const closedAt = new Map<string, number>();
   /** Ids whose write FAILED: the next read restores the hub's row for them. */
@@ -379,9 +384,13 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     const ids = scope === "all" ? new Set([...rows.keys(), ...adapterOpenIds(), ...Object.keys(useDesk.getState().panelDepth)]) : scope;
     // Missing from a list is a close only when the list is STRICTLY newer
     // than the row this view applied (the list is one snapshot, L2).
+    // On the first seed, only a window the CACHE reopened (stale state from an
+    // earlier visit) is closed by the hub's truth; a window this load opened
+    // itself before the hub answered (the arrival's Needs you, a staged
+    // surface, a link) is this view's own open: it goes to the hub.
     const gone = [...ids].filter(
       (id) => free(id) && known(id) && !byId.has(id) && list.revision > (applied.get(id) ?? -1)
-        && list.revision > (closedAt.get(id) ?? -1),
+        && list.revision > (closedAt.get(id) ?? -1) && (!seeding || cacheOpen.has(id)),
     );
     for (const r of list.windows) if (free(r.id)) restore.delete(r.id);
     for (const id of gone) restore.delete(id);
@@ -853,7 +862,12 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
             sync();
             return;
           }
-          apply(list, "all");
+          seeding = true;
+          try {
+            apply(list, "all");
+          } finally {
+            seeding = false;
+          }
         })
         .catch(() => undefined);
       return started;
@@ -884,6 +898,16 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
 }
 
 // ---- the one instance the desk mounts ------------------------------------
+
+/** The windows the workspace cache reopened when the desk's modules loaded
+ * (read once, at import, before any face opened one of its own). */
+const BOOT_OPEN: readonly string[] = (() => {
+  try {
+    return [...adapterOpenIds(), ...Object.keys(useDesk.getState().panelDepth)];
+  } catch {
+    return [];
+  }
+})();
 
 let instance: HubWindows | null = null;
 

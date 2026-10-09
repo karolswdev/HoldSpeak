@@ -126,9 +126,9 @@ afterEach(() => {
   hub = null;
 });
 
-function start(rows: HubWindowRow[], adopted = true) {
+function start(rows: HubWindowRow[], adopted = true, cacheOpen: string[] = []) {
   const fake = fakeHub(rows, adopted);
-  hub = createHubWindows({ transport: fake.transport, view: () => VIEW, compact: () => false, settleMs: 0 });
+  hub = createHubWindows({ transport: fake.transport, view: () => VIEW, compact: () => false, settleMs: 0, cacheOpen });
   const seeded = hub;
   const begin = seeded.start.bind(seeded);
   // The windows the seed opened are quiet until the owner's first gesture;
@@ -295,7 +295,7 @@ describe("hubWindows", () => {
     // This view's cache still has Brief open; on the hub it was closed.
     useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:brief": false } }));
     useDesk.setState({ panelDepth: { "chair:brief": 3 }, panelOrder: ["chair:brief"] });
-    const { fake, hub } = start([], true);
+    const { fake, hub } = start([], true, ["chair:brief"]);
     fake.state.desk = 7;
     await hub.start();
     await flush(hub);
@@ -428,6 +428,20 @@ describe("hubWindows", () => {
     await hub.idle();
     expect(fake.calls).toEqual([]);
     expect(order(CHAIR)[0]).toBe("chair:needs"); // the hub's order is back
+  });
+
+  it("the first seed keeps a window this load opened itself before the hub answered", async () => {
+    // The arrival opened Needs you; the cache had Brief open (stale). The
+    // hub holds neither: Brief closes, Needs you stays and goes to the hub.
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:brief": false, "chair:needs": false } }));
+    useDesk.setState({ panelDepth: { "chair:brief": 1, "chair:needs": 2 }, panelOrder: ["chair:brief", "chair:needs"] });
+    const { fake, hub } = start([], true, ["chair:brief"]);
+    fake.state.desk = 3;
+    await hub.start();
+    await flush(hub);
+    expect(useChairWindows.getState().closed["chair:brief"]).toBe(true);
+    expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
+    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["open", "chair:needs"]]);
   });
 
   it("a window frame is not a desk data change", () => {

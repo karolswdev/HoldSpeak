@@ -183,6 +183,11 @@ def _api(page: Any, method: str, path: str, body: Any = None) -> Any:
 
 
 def _open_thread(page: Any, url: str, thread_id: str) -> None:
+    # PHILO-16 (16b): one hub is one desk; each case's thread opens on an
+    # empty desk (an earlier width's or case's window closed first).
+    from .glass_infra import clear_hub_windows_http
+
+    clear_hub_windows_http(url, TOKEN)
     # Seed the desk and onboarding via direct HTTP (page may be at about:blank)
     _api_direct(url, "POST", "/api/desk/seed")
     _api_direct(url, "PUT", "/api/setup/onboarding", {"disposition": "completed"})

@@ -161,6 +161,7 @@ export function openCoderSession(key: string, opts?: { answer?: boolean; raw?: b
     const launchId = lane.launchForSession(key);
     if (launchId) {
       lane.useLane.getState().open(launchId, { sessionKey: key, answer: opts?.answer, raw: opts?.raw });
+      presentLane();
       return;
     }
     if (lane.useLane.getState().launchId) lane.useLane.getState().close();
@@ -170,5 +171,19 @@ export function openCoderSession(key: string, opts?: { answer?: boolean; raw?: b
 
 /** PHILO-14 C2: open a launched agent's lane window by its launch id. */
 export function openAgentLane(launchId: string, opts?: { sessionKey?: string | null; answer?: boolean }): void {
-  void import("./lane/laneStore").then((m) => m.useLane.getState().open(launchId, opts));
+  void import("./lane/laneStore").then((m) => {
+    m.useLane.getState().open(launchId, opts);
+    presentLane();
+  });
+}
+
+/** PHILO-16 (16b): an open asks for the lane in front, also when it is
+ * already open (the hub opened it in this view) and seated on its Dock chip
+ * (393: a Chair window iconifies the desk windows). A lane not yet mounted
+ * presents itself when it mounts. The rule `openPullout` keeps (B1). */
+function presentLane(): void {
+  void import("./store").then(({ useDesk }) => {
+    const desk = useDesk.getState();
+    if (desk.panelMin.includes("lane") || "lane" in desk.panelDepth) desk.restorePanel("lane");
+  });
 }

@@ -297,6 +297,23 @@ _CLEAR_WINDOWS_JS = """async (token) => {
 }"""
 
 
+def clear_hub_windows_http(base: str, token: str = "glass-test") -> int:
+    """:func:`clear_hub_windows` with no page (a rig whose page may be blank)."""
+    import json as _json
+    import urllib.parse
+    import urllib.request
+
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    with urllib.request.urlopen(urllib.request.Request(f"{base}/api/desk/windows", headers=headers)) as resp:
+        windows = _json.loads(resp.read() or b"{}").get("windows") or []
+    for window in windows:
+        request = urllib.request.Request(
+            f"{base}/api/desk/windows/{urllib.parse.quote(window['id'], safe='')}/close",
+            data=b"{}", method="POST", headers=headers)
+        urllib.request.urlopen(request).close()
+    return len(windows)
+
+
 def clear_hub_windows(page: Any, token: str = "glass-test") -> int:
     """PHILO-16 (16b): close every window the hub holds for this desk.
 

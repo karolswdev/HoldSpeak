@@ -90,6 +90,7 @@ from typing import Any
 
 import pytest
 
+from .glass_infra import clear_hub_windows
 from .glass_infra import (
     pick_wing,
     REPO,
@@ -329,6 +330,7 @@ def _open_room(page: Any, project_id: str) -> None:
 
 def _open_desk_memory(page: Any) -> None:
     """Go -> Desk memory, staged with NO scope (13's own helper)."""
+    clear_hub_windows(page, TOKEN)  # PHILO-16 (16b): the hub holds the windows
     page.evaluate(
         """([key]) => {
           localStorage.removeItem("hs.desk.workspace.v1");
@@ -387,6 +389,7 @@ def _reload_arrival(page: Any) -> None:
     and the shot does not show the face it claims (caught by reading the
     first run's `day1-attention` shot).
     """
+    clear_hub_windows(page, TOKEN)  # PHILO-16 (16b): the hub holds the windows
     page.evaluate(
         "() => { sessionStorage.removeItem('hs.desk.staged-surface-open');"
         " localStorage.removeItem('hs.desk.workspace.v1'); }"

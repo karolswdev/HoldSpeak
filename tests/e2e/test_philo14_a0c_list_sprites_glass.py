@@ -106,6 +106,10 @@ def test_the_list_species_wear_the_32px_set(tmp_path: Path, monkeypatch: pytest.
                 page.on("pageerror", lambda e: errors.append(str(e)[:200]))
                 page.goto(f"{url}/?token={TOKEN}", wait_until="load")
                 _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                # PHILO-16 (16b): one hub is one desk; this page starts on an empty desk.
+                from .glass_infra import clear_hub_windows
+
+                clear_hub_windows(page, TOKEN)
                 _api(page, "PUT", f"/api/projects/{a2.PROJECT}/resources/note:n-risks", {}, token=TOKEN)
 
                 # 1. The drawer, icons first (the 64 stays), then its List.

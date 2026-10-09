@@ -190,6 +190,10 @@ class TestThePhoneDesk:
         page.on("pageerror", lambda e: errors.append(str(e)[:200]))
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+        # PHILO-16 (16b): one hub is one desk; this page starts on an empty desk.
+        from .glass_infra import clear_hub_windows
+
+        clear_hub_windows(page, TOKEN)
         page.reload(wait_until="load")
         _normal_chair(page)
         page.wait_for_timeout(1200)
