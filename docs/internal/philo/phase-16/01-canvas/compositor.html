@@ -24,7 +24,15 @@
   --wb-umbra-near: 0 10px 22px rgba(0,0,0,.28);
   --desk-veil-near: rgba(11,12,16,.06);
   --desk-veil-far: rgba(11,12,16,.14);
-  --desk-window-fall: linear-gradient(180deg, var(--surface-1) 0%, var(--bg) 100%);
+  /* Phase 16 v2: the interior joins the material (owner bounce: "why is it still black inside?") */
+  --wb-field: #cdd2db;        /* the window ground: slate, between paper and steel */
+  --wb-field-hi: #d8dce4;     /* the ground where the light falls (top) */
+  --wb-well: #eef0f3;         /* a sunken well: ledgers, inputs, icon grids (paper) */
+  --wb-text: #0b0c10;         /* ink */
+  --wb-muted: #4a5060;        /* secondary ink (7.0:1 on field) */
+  --wb-rule-soft: rgba(11,12,16,.18);
+  --wb-sel: #6688bb;          /* the selection: Workbench blue, paper on it */
+  --desk-window-fall: linear-gradient(180deg, var(--wb-field-hi) 0%, var(--wb-field) 100%);
   --ease: cubic-bezier(.2,.8,.2,1);
   --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
@@ -81,7 +89,7 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
   border: var(--wb-frame) solid var(--wb-steel); border-top: 0;
   box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink);
   transition: border-color 180ms var(--ease), box-shadow 180ms var(--ease); will-change: transform; }
-.win .body { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--desk-window-fall); box-shadow: inset 0 1px 0 rgba(255,255,255,.07); }
+.win .body { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--desk-window-fall); color: var(--wb-text); box-shadow: inset 0 1px 0 var(--wb-hi); }
 .win .body::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: transparent; transition: background 180ms var(--ease); }
 .win[data-plane="front"] { border-color: var(--wb-blue); box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), var(--wb-umbra), inset 0 0 0 1px var(--wb-ink); }
 .win[data-plane="near"] { border-color: var(--wb-steel); box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), var(--wb-umbra-near), inset 0 0 0 1px var(--wb-ink); }
@@ -115,34 +123,58 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
 .win[data-plane="front"] .grip { background: var(--wb-blue); }
 .grip svg { width: 12px; height: 10px; }
 
-/* interior (the surface idiom, abbreviated for the canvas) */
-.body .in { padding: 12px 14px; height: 100%; overflow: auto; }
-/* a live plate: the interior scales, it never reflows (stage, exposé) */
+/* ── THE INTERIOR KIT: every internal app is laid out from these, nothing else ──
+   AppHead · StatusStrip · FilterBar · Ledger/LedgerRow · Section · IconGrid · AskWell · Foot */
+.body .in { padding: 12px 14px; height: 100%; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
 .win[style*="--k"] .body .in { transform: scale(var(--k)); transform-origin: 0 0; width: calc(100% / var(--k)); height: calc(100% / var(--k)); overflow: hidden; }
 .win[style*="--k"] .foot { display: none; }
-.disp { font: 650 26px/1.1 var(--font-display); margin: 0 0 10px; }
-.cap { font: 500 11px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin: 14px 0 6px; }
-.row { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
-.row .k { font: 700 10px var(--font-mono); border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-muted); text-align: center; padding: 4px 0; }
-.row .t { font: 500 15px var(--font-sans); }
-.row .m { font: 400 12px var(--font-mono); color: var(--accent-text); text-transform: uppercase; }
-.chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; }
-.chip { font: 500 11px var(--font-mono); text-transform: uppercase; letter-spacing: .04em; padding: 3px 8px; border: 1px solid var(--border-strong); color: var(--text-muted); }
-.chip.on { background: var(--wb-paper); color: var(--wb-ink); border-color: var(--wb-paper); }
-.verb { font: 500 12px var(--font-mono); padding: 4px 9px; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text); box-shadow: var(--wb-raised-soft); }
-.verb.pri { background: var(--accent-ink); border-color: var(--accent); color: #fff; }
-.foot { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border); background: var(--surface-1); font: 400 11px var(--font-mono); color: var(--text-muted); }
+/* AppHead: the one big fact + the status strip, on one row */
+.apphead { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.disp { font: 650 26px/1.1 var(--font-display); margin: 0; color: var(--wb-text); }
+.strip { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font: 500 11px var(--font-mono); color: var(--wb-muted); text-transform: uppercase; letter-spacing: .04em; }
+.strip b { color: var(--wb-text); font-weight: 700; }
+.sq { display: inline-block; width: 8px; height: 8px; vertical-align: middle; margin-right: 6px; border: 1px solid var(--wb-ink); }
+/* FilterBar: cycle gadgets on a raised steel rail; the active one is the selection blue */
+.filters { display: flex; gap: 0; flex-wrap: wrap; align-items: center; }
+.filters .sp { flex: 1; }
+.chip { font: 500 11px var(--font-mono); text-transform: uppercase; letter-spacing: .04em; padding: 4px 10px; background: var(--wb-steel); color: var(--wb-ink); border: 1px solid var(--wb-ink); margin-right: -1px; box-shadow: var(--wb-raised-soft); cursor: pointer; }
+.chip.on { background: var(--wb-sel); color: var(--wb-paper); box-shadow: var(--wb-sunken); }
+/* Ledger: a sunken paper well; rows carry a kind plate, the name, the meta */
+.ledger { background: var(--wb-well); border: 1px solid var(--wb-ink); box-shadow: var(--wb-sunken); }
+.row { display: grid; grid-template-columns: 44px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--wb-rule-soft); }
+.row:last-child { border-bottom: 0; }
+.row:hover { background: rgba(102,136,187,.12); }
+.row .k { font: 700 10px var(--font-mono); background: var(--wb-steel); color: var(--wb-ink); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised-soft); text-align: center; padding: 4px 0; }
+.row .t { font: 500 15px var(--font-sans); color: var(--wb-text); }
+.row .m { font: 500 11px var(--font-mono); color: var(--wb-muted); text-transform: uppercase; letter-spacing: .04em; }
+.row .m.ask { color: #9a4e1f; } .row .m.ok { color: #1f6b3a; }
+/* Section: caption + count, with a hairline */
+.cap { display: flex; align-items: center; gap: 8px; font: 700 11px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--wb-muted); margin: 4px 0 0; }
+.cap::after { content: ""; flex: 1; height: 1px; background: var(--wb-rule-soft); }
+.cap .verb { margin-left: 4px; }
+/* Verb: the library Button as a raised steel plate; primary = the selection blue */
+.verb { font: 500 12px var(--font-mono); padding: 4px 10px; border: 1px solid var(--wb-ink); background: var(--wb-steel); color: var(--wb-ink); box-shadow: var(--wb-raised); cursor: pointer; white-space: nowrap; }
+.verb:hover { background: var(--wb-steel-2); }
+.verb:active { box-shadow: var(--wb-sunken); }
+.verb.pri { background: var(--wb-sel); color: var(--wb-paper); }
+.verb.danger { background: #b3261e; color: var(--wb-paper); }
+/* IconGrid: objects in a sunken paper well */
+.objs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 12px 8px; background: var(--wb-well); border: 1px solid var(--wb-ink); box-shadow: var(--wb-sunken); }
+.obj { display: grid; justify-items: center; gap: 6px; text-align: center; font: 500 11px/1.2 var(--font-sans); color: var(--wb-text); cursor: pointer; padding: 4px; }
+.obj:hover { background: rgba(102,136,187,.14); }
+.obj svg { width: 40px; height: 40px; filter: drop-shadow(1px 1px 0 rgba(0,0,0,.25)); }
+/* AskWell: the voice law: a mic on every input */
+.askwell { display: grid; grid-template-columns: 1fr 32px; border: 1px solid var(--wb-ink); background: var(--wb-well); box-shadow: var(--wb-sunken); }
+.askwell span { padding: 8px 10px; font: 400 13px var(--font-sans); color: var(--wb-muted); }
+.askwell i { display: grid; place-items: center; background: var(--wb-steel); box-shadow: var(--wb-raised-soft); border-left: 1px solid var(--wb-ink); }
+.askwell i svg { width: 12px; height: 14px; }
+/* Foot: egress · receipt · verbs, on the steel */
+.foot { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--wb-steel); box-shadow: inset 0 1px 0 var(--wb-ink), inset 0 2px 0 var(--wb-hi); font: 500 11px var(--font-mono); color: var(--wb-ink); text-transform: uppercase; letter-spacing: .04em; }
 .foot .sp { flex: 1; }
-.objs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 8px 0; }
-.obj { display: grid; justify-items: center; gap: 6px; text-align: center; font: 500 11px/1.2 var(--font-sans); color: var(--text); }
-.obj svg { width: 40px; height: 40px; }
-.stat { font: 500 11px var(--font-mono); color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; display: flex; gap: 14px; align-items: center; }
-.sq { display: inline-block; width: 8px; height: 8px; vertical-align: middle; margin-right: 6px; }
-.well { margin-top: 10px; padding: 10px; border: 1px solid var(--border); box-shadow: var(--wb-sunken); background: rgba(0,0,0,.28); font: 400 12px var(--font-mono); color: var(--text-muted); }
-
+.foot .egress { padding: 2px 8px; background: var(--wb-paper); border: 1px solid var(--wb-ink); text-transform: none; letter-spacing: 0; }
 /* the dock */
 .dock { position: absolute; left: 0; right: 0; bottom: 0; height: 80px; background: var(--wb-steel); box-shadow: inset 0 1px 0 var(--wb-hi), inset 0 2px 0 var(--wb-ink); display: flex; align-items: center; gap: 2px; padding: 0 10px; z-index: 80; }
-.tile { position: relative; width: 72px; height: 66px; display: grid; justify-items: center; align-content: center; gap: 4px; color: var(--wb-ink); font: 500 11px var(--font-mono); cursor: pointer; border: 0; background: transparent; }
+.tile { position: relative; min-width: 72px; padding: 0 10px; height: 66px; white-space: nowrap; display: grid; justify-items: center; align-content: center; gap: 4px; color: var(--wb-ink); font: 500 11px var(--font-mono); cursor: pointer; border: 0; background: transparent; }
 .tile svg { width: 30px; height: 30px; }
 .tile.open { box-shadow: var(--wb-sunken); background: rgba(0,0,0,.08); }
 .tile .seat { position: absolute; top: 4px; right: 8px; width: 10px; height: 10px; border: 1px solid var(--wb-ink); display: none; }
@@ -164,7 +196,14 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
 .desk.before .floor { background-image: none; }
 .desk.before .win, .desk.before .win[data-plane="front"], .desk.before .win[data-plane="near"], .desk.before .win[data-plane="far"] { box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink); border-color: var(--wb-steel); transition: none; }
 .desk.before .win[data-plane="front"] { border-color: var(--wb-blue); }
-.desk.before .win .body { background: var(--surface-1); box-shadow: none; }
+.desk.before .win .body { background: var(--surface-1); color: var(--text); box-shadow: none; }
+.desk.before .disp, .desk.before .row .t { color: var(--text); } .desk.before .strip, .desk.before .cap, .desk.before .row .m { color: var(--text-muted); }
+.desk.before .ledger, .desk.before .objs, .desk.before .askwell { background: transparent; border-color: var(--border); box-shadow: none; } .desk.before .row { border-color: var(--border); } .desk.before .obj { color: var(--text); }
+.desk.before .chip { background: transparent; color: var(--text-muted); border-color: var(--border-strong); box-shadow: none; } .desk.before .chip.on { background: var(--wb-paper); color: var(--wb-ink); }
+.desk.before .verb { background: var(--surface-2); color: var(--text); border-color: var(--border-strong); box-shadow: none; } .desk.before .verb.pri { background: var(--accent-ink); color: #fff; }
+.desk.before .foot { background: var(--surface-1); color: var(--text-muted); box-shadow: inset 0 1px 0 var(--border); } .desk.before .row .k { background: var(--surface-2); color: var(--text-muted); border-color: var(--border-strong); box-shadow: none; }
+.desk.before .cap::after { background: var(--border); } .desk.before .askwell span { color: var(--text-muted); } .desk.before .askwell i { background: var(--surface-2); border-color: var(--border); }
+.desk.before .tile { min-width: 72px; padding: 0; width: 72px; overflow: visible; }
 .desk.before .win .body::after { background: transparent !important; }
 .desk.before .tb { background: var(--wb-steel) !important; background-image: none !important; }
 .desk.before .win[data-plane="front"] .tb { background: var(--wb-blue) !important; }
@@ -234,7 +273,7 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
 
       <!-- floor icons -->
       <div class="icon" data-icon="needs" style="left:1320px;top:52px" tabindex="0"><span class="lamp ask"></span><svg viewBox="0 0 44 44"><rect x="6" y="8" width="32" height="30" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="10" y="12" width="24" height="6" fill="#eef0f3" stroke="#0b0c10"/><rect x="10" y="22" width="24" height="6" fill="#eef0f3" stroke="#0b0c10"/><circle cx="30" cy="32" r="5" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/></svg>Needs you</div>
-      <div class="icon" data-icon="room" style="left:1200px;top:52px" tabindex="0"><span class="lamp info"></span><svg viewBox="0 0 44 44"><rect x="5" y="10" width="34" height="26" fill="#6688bb" stroke="#0b0c10" stroke-width="2"/><rect x="5" y="6" width="16" height="6" fill="#6688bb" stroke="#0b0c10" stroke-width="2"/><rect x="10" y="16" width="24" height="3" fill="#eef0f3"/><rect x="10" y="22" width="18" height="3" fill="#eef0f3"/></svg>Payments ledger cutover</div>
+      <div class="icon" data-icon="room" style="left:1200px;top:46px" tabindex="0"><span class="lamp info"></span><svg viewBox="0 0 44 44"><rect x="5" y="10" width="34" height="26" fill="#6688bb" stroke="#0b0c10" stroke-width="2"/><rect x="5" y="6" width="16" height="6" fill="#6688bb" stroke="#0b0c10" stroke-width="2"/><rect x="10" y="16" width="24" height="3" fill="#eef0f3"/><rect x="10" y="22" width="18" height="3" fill="#eef0f3"/></svg>Payments ledger cutover</div>
       <div class="icon" data-icon="conductor" style="left:1080px;top:52px" tabindex="0"><span class="lamp ask"></span><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="16" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="22" r="8" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="22" r="3" fill="#e8955c"/></svg>Conductor</div>
       <div class="icon" data-icon="meeting" style="left:1080px;top:150px" tabindex="0"><span class="lamp none"></span><svg viewBox="0 0 44 44"><rect x="8" y="12" width="28" height="22" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><circle cx="16" cy="22" r="5" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="28" cy="22" r="5" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/></svg>Cutover sync</div>
       <div class="icon" data-icon="note" style="left:1200px;top:150px" tabindex="0"><span class="lamp none"></span><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><path d="M28 6v8h8" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="15" y="20" width="16" height="2" fill="#0b0c10"/><rect x="15" y="26" width="12" height="2" fill="#0b0c10"/></svg>Meeting preferences</div>
@@ -252,21 +291,22 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
           </div>
         </div>
         <div class="body"><div class="in">
-          <h2 class="disp">7 need you</h2>
-          <div class="chips"><span class="chip on">Ranked</span><span class="chip">Overdue</span><span class="chip">Due today</span><span class="chip">Not run</span><span class="chip">No due date</span><span class="chip">Waiting</span></div>
-          <div class="stat"><span><span class="sq" style="background:var(--ok)"></span>7 of 7 available</span><span>Checked just now</span><span>No calendar</span><span class="verb">Connect calendar</span></div>
-          <div class="cap">Actions 5 of 6</div>
-          <div class="row"><span class="k">CC</span><span class="t">The runbook needs a rollback owner. Jordan or Avery?</span><span class="m">Claude Code · asks</span></div>
-          <div class="row"><span class="k">DEC</span><span class="t">Freeze the old ledger on Nov 5</span><span class="m">No due date · to review</span></div>
-          <div class="row"><span class="k">MTG</span><span class="t">Write the rollback runbook</span><span class="m">No due date · unassigned</span></div>
-          <div class="row"><span class="k">MTG</span><span class="t">Shard the reconciliation job</span><span class="m">No due date · unassigned</span></div>
-          <div class="row"><span class="k">MTG</span><span class="t">Add the ledger freeze flag</span><span class="m">No due date · unassigned</span></div>
+          <div class="apphead"><h2 class="disp">7 need you</h2><div class="strip"><span><span class="sq" style="background:var(--ok)"></span>7 of 7 available</span><span>Checked just now</span><span>No calendar</span><span class="verb">Connect calendar</span></div></div>
+          <div class="filters"><span class="chip on">Ranked</span><span class="chip">Overdue</span><span class="chip">Due today</span><span class="chip">Not run</span><span class="chip">No due date</span><span class="chip">Waiting</span></div>
+          <div class="cap">Actions · 5 of 6</div>
+          <div class="ledger">
+            <div class="row"><span class="k">CC</span><span class="t">The runbook needs a rollback owner. Jordan or Avery?</span><span class="m ask">Claude Code · asks</span></div>
+            <div class="row"><span class="k">DEC</span><span class="t">Freeze the old ledger on Nov 5</span><span class="m">No due date · to review</span></div>
+            <div class="row"><span class="k">MTG</span><span class="t">Write the rollback runbook</span><span class="m">No due date · unassigned</span></div>
+            <div class="row"><span class="k">MTG</span><span class="t">Shard the reconciliation job</span><span class="m">No due date · unassigned</span></div>
+            <div class="row"><span class="k">MTG</span><span class="t">Add the ledger freeze flag</span><span class="m">No due date · unassigned</span></div>
+          </div>
           <div class="cap">1 more <span class="verb">Show all</span></div>
         </div></div>
+        <div class="foot"><span>Ranked 09:14</span><span class="sp"></span><span class="verb">Setup</span></div>
         <div class="grip"><svg viewBox="0 0 12 10"><path d="M1 9h10V1M4 9V5h7" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></div>
       </section>
-
-      <section class="win" id="w-room" data-app="room" data-icon="room" data-room="PAYMENTS" style="left:520px;top:206px;width:900px;height:600px">
+      <section class="win" id="w-room" data-app="room" data-icon="room" data-room="ROOM" style="left:520px;top:206px;width:900px;height:600px">
         <div class="tb">
           <button class="gad" type="button" data-g="close" aria-label="Close"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="4" height="4" fill="currentColor"/></svg></button>
           <div class="ttl"><svg class="oi" viewBox="0 0 44 44"><rect x="5" y="10" width="34" height="26" fill="#eef0f3" stroke="#0b0c10" stroke-width="3"/><rect x="5" y="6" width="16" height="6" fill="#eef0f3" stroke="#0b0c10" stroke-width="3"/></svg><span class="name">Payments ledger cutover</span><span class="room">Room</span><span class="lamp info"></span></div>
@@ -277,23 +317,25 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
           </div>
         </div>
         <div class="body"><div class="in">
-          <div class="stat"><span><span class="sq" style="background:var(--warn)"></span>1 need you</span><span>Status <b style="color:var(--text)">On track</b></span><span>5 objects</span><span style="margin-left:auto" class="chips"><span class="chip on">Icons</span><span class="chip">List</span><span class="verb">Room</span></span></div>
+          <div class="apphead"><h2 class="disp">Payments ledger cutover</h2><div class="strip"><span><span class="sq" style="background:var(--warn)"></span>1 need you</span><span>Status <b>On track</b></span><span>5 objects</span></div></div>
+          <div class="filters"><span class="chip on">Icons</span><span class="chip">List</span><span class="sp"></span><span class="verb">Room</span><span class="verb">History</span></div>
           <div class="objs">
-            <div class="obj"><svg viewBox="0 0 44 44"><rect x="6" y="12" width="32" height="22" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="15" cy="23" r="6" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><circle cx="29" cy="23" r="6" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/></svg>Ledger cutover sync</div>
-            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><circle cx="26" cy="26" r="6" fill="#c84a3c" stroke="#0b0c10" stroke-width="2"/></svg>Freeze the old ledger on Nov 5</div>
-            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><rect x="15" y="20" width="16" height="2" fill="#0b0c10"/><rect x="15" y="26" width="12" height="2" fill="#0b0c10"/></svg>Write the rollback runbook</div>
-            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><rect x="15" y="20" width="16" height="2" fill="#0b0c10"/></svg>Cutover requirements</div>
-            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/><rect x="15" y="20" width="16" height="2" fill="#0b0c10"/><rect x="15" y="26" width="16" height="2" fill="#0b0c10"/></svg>Meeting decisions</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><rect x="6" y="12" width="32" height="22" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="15" cy="23" r="6" fill="#fff" stroke="#0b0c10" stroke-width="2"/><circle cx="29" cy="23" r="6" fill="#fff" stroke="#0b0c10" stroke-width="2"/></svg>Ledger cutover sync</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#fff" stroke="#0b0c10" stroke-width="2"/><circle cx="26" cy="26" r="6" fill="#c84a3c" stroke="#0b0c10" stroke-width="2"/></svg>Freeze the old ledger on Nov 5</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#fff" stroke="#0b0c10" stroke-width="2"/><path d="M28 6v8h8" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="15" y="20" width="16" height="2" fill="#0b0c10"/><rect x="15" y="26" width="12" height="2" fill="#0b0c10"/></svg>Write the rollback runbook</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#fff" stroke="#0b0c10" stroke-width="2"/><path d="M28 6v8h8" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="15" y="20" width="16" height="2" fill="#0b0c10"/><rect x="15" y="26" width="12" height="2" fill="#0b0c10"/></svg>Cutover requirements</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><path d="M10 6h18l8 8v24H10z" fill="#fff" stroke="#0b0c10" stroke-width="2"/><path d="M28 6v8h8" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="15" y="20" width="16" height="2" fill="#0b0c10"/><rect x="15" y="26" width="12" height="2" fill="#0b0c10"/></svg>Meeting decisions</div>
           </div>
-          <div class="cap">Sources 2</div>
-          <div class="row"><span class="k">GH</span><span class="t">karolswdev/payments-ledger</span><span class="m">Clear · checked 10m ago</span></div>
-          <div class="row"><span class="k">MTG</span><span class="t">Meetings</span><span class="m" style="color:var(--ok)">Checked 09:02</span></div>
-          <div class="well">Ask this project…</div>
+          <div class="cap">Sources · 2 <span class="verb">Steward</span></div>
+          <div class="ledger">
+            <div class="row"><span class="k">GH</span><span class="t">karolswdev/payments-ledger</span><span class="m ok">Clear · checked 10m ago</span></div>
+            <div class="row"><span class="k">MTG</span><span class="t">Meetings</span><span class="m ok">Checked 09:02</span></div>
+          </div>
+          <div class="askwell"><span>Ask this project…</span><i><svg viewBox="0 0 12 14"><rect x="4" y="1" width="4" height="7" rx="2" fill="#0b0c10"/><path d="M2 7a4 4 0 0 0 8 0M6 11v2" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></i></div>
         </div></div>
         <div class="foot"><span>5 objects</span><span class="sp"></span><span class="verb">Get Info</span><span class="verb">Open</span></div>
         <div class="grip"><svg viewBox="0 0 12 10"><path d="M1 9h10V1M4 9V5h7" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></div>
       </section>
-
       <section class="win" id="w-cond" data-app="conductor" data-icon="conductor" data-room="PAYMENTS" style="left:650px;top:334px;width:760px;height:480px">
         <div class="tb">
           <button class="gad" type="button" data-g="close" aria-label="Close"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="4" height="4" fill="currentColor"/></svg></button>
@@ -305,21 +347,21 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
           </div>
         </div>
         <div class="body"><div class="in">
-          <div class="stat"><span>2 at work</span><span><span class="sq" style="background:var(--ask)"></span>1 ask</span><span style="margin-left:auto" class="chips"><span class="chip on">Icons</span><span class="chip">List</span></span></div>
+          <div class="apphead"><h2 class="disp">2 at work</h2><div class="strip"><span><span class="sq" style="background:var(--ask)"></span>1 ask</span><span>3 harnesses</span></div></div>
+          <div class="filters"><span class="chip on">Icons</span><span class="chip">List</span></div>
           <div class="objs">
             <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="23" r="7" fill="#e8955c" stroke="#0b0c10" stroke-width="2"/></svg>Claude Code: rollback runbook</div>
             <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="14" y="18" width="6" height="6" fill="#5b8def"/><rect x="24" y="18" width="6" height="6" fill="#5b8def"/></svg>Codex: reconciliation job</div>
             <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="23" r="7" fill="#3fae6a" stroke="#0b0c10" stroke-width="2"/></svg>Claude Code: ledger freeze flag</div>
-            <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="23" r="7" fill="#eef0f3" stroke="#0b0c10" stroke-width="2"/></svg>Claude Code</div>
-            <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="14" y="18" width="6" height="6" fill="#eef0f3"/><rect x="24" y="18" width="6" height="6" fill="#eef0f3"/></svg>Codex</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><circle cx="22" cy="23" r="7" fill="#fff" stroke="#0b0c10" stroke-width="2"/></svg>Claude Code</div>
+            <div class="obj"><svg viewBox="0 0 44 44"><rect x="8" y="10" width="28" height="26" fill="#9ea4b0" stroke="#0b0c10" stroke-width="2"/><rect x="14" y="18" width="6" height="6" fill="#fff"/><rect x="24" y="18" width="6" height="6" fill="#fff"/></svg>Codex</div>
           </div>
           <div class="cap">The ask</div>
-          <div class="row"><span class="k">CC</span><span class="t">The runbook needs a rollback owner. Jordan or Avery?</span><span class="m">asked 2m ago</span></div>
+          <div class="ledger"><div class="row"><span class="k">CC</span><span class="t">The runbook needs a rollback owner. Jordan or Avery?</span><span class="m ask">asked 2m ago</span></div></div>
         </div></div>
-        <div class="foot"><span class="chip">api.anthropic.com</span><span class="sp"></span><span class="verb">Get Info</span><span class="verb" style="color:#fff;background:var(--danger);border-color:var(--danger)">Stop</span><span class="verb pri">Answer</span><span class="verb">Open</span></div>
+        <div class="foot"><span class="egress">api.anthropic.com</span><span class="sp"></span><span class="verb">Get Info</span><span class="verb danger">Stop</span><span class="verb pri">Answer</span><span class="verb">Open</span></div>
         <div class="grip"><svg viewBox="0 0 12 10"><path d="M1 9h10V1M4 9V5h7" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></div>
       </section>
-
       <section class="win" id="w-mtg" data-app="meetings" data-icon="meeting" data-room="PAYMENTS" style="left:760px;top:120px;width:560px;height:420px">
         <div class="tb">
           <button class="gad" type="button" data-g="close" aria-label="Close"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="4" height="4" fill="currentColor"/></svg></button>
@@ -331,19 +373,21 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
           </div>
         </div>
         <div class="body"><div class="in">
-          <h2 class="disp">Cutover sync</h2>
-          <div class="stat"><span>Tue 14:00 · 42 min</span><span><span class="sq" style="background:var(--ok)"></span>Summarised</span><span>4 people</span></div>
-          <div class="cap">Decisions 2</div>
-          <div class="row"><span class="k">DEC</span><span class="t">Freeze the old ledger on Nov 5</span><span class="m">Jordan</span></div>
-          <div class="row"><span class="k">DEC</span><span class="t">Reconciliation runs nightly until cutover</span><span class="m">Avery</span></div>
-          <div class="cap">Commitments 3</div>
-          <div class="row"><span class="k">MTG</span><span class="t">Write the rollback runbook</span><span class="m">Unassigned</span></div>
-          <div class="row"><span class="k">MTG</span><span class="t">Shard the reconciliation job</span><span class="m">Unassigned</span></div>
+          <div class="apphead"><h2 class="disp">Cutover sync</h2><div class="strip"><span>Tue 14:00 · 42 min</span><span><span class="sq" style="background:var(--ok)"></span>Summarised</span><span>4 people</span></div></div>
+          <div class="cap">Decisions · 2</div>
+          <div class="ledger">
+            <div class="row"><span class="k">DEC</span><span class="t">Freeze the old ledger on Nov 5</span><span class="m">Jordan</span></div>
+            <div class="row"><span class="k">DEC</span><span class="t">Reconciliation runs nightly until cutover</span><span class="m">Avery</span></div>
+          </div>
+          <div class="cap">Commitments · 3</div>
+          <div class="ledger">
+            <div class="row"><span class="k">MTG</span><span class="t">Write the rollback runbook</span><span class="m">Unassigned</span></div>
+            <div class="row"><span class="k">MTG</span><span class="t">Shard the reconciliation job</span><span class="m">Unassigned</span></div>
+          </div>
         </div></div>
         <div class="foot"><span>Read 09:02</span><span class="sp"></span><span class="verb">Open transcript</span><span class="verb pri">Send</span></div>
         <div class="grip"><svg viewBox="0 0 12 10"><path d="M1 9h10V1M4 9V5h7" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></div>
       </section>
-
       <div class="divider" id="divider"></div>
       <div class="scrim" id="scrim"></div>
 

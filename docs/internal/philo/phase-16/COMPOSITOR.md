@@ -30,6 +30,14 @@ The light comes back. The glass stays dead.
 - Mechanically there is no compositor: every window is a DOM node with an
   inline z-index. Nothing above them owns depth, light, focus or motion.
 
+Owner, 2026-10-08, on canvas v1: "The content. Why is it still black inside? It
+causes such a weird disconnect from everything else. Intelligence flowing
+outside of the button's boundaries looks ugly af. Icons, on the other hand, a
+big, and positive, change. A lot more effort going into the design system, the
+way 'internal apps' are laid out (a lot more common components, please)."
+Canvas v2 answers: the interior joins the material (§2, §11); the dock tile
+is as wide as its word; the icons stay.
+
 ## 1. The one sentence
 
 **One compositor owns every window: it lights the front, recedes the rest,
@@ -50,10 +58,16 @@ and what makes a window a thing instead of a rectangle, is a light.
   with a 1 px shine on its top and left (`--wb-hi`) and a 1 px shade on its
   bottom and right (`--wb-lo`). It already does this. The change: the plate
   of a back window is in shade (`--wb-steel-dim`, new token, steel at 82 %).
-- **The body is a well with light falling in.** The body stays the dark
-  Signal well, opaque. It gains a 1 px inner highlight under the title bar
-  and a faint vertical fall (`--surface-1` at the top to `--bg` at the foot).
-  No blur, no vibrancy, no transparency: the glass stays dead (HS-110-01).
+- **The interior is the same material as the frame (v2, owner bounce).**
+  The dark Signal well is retired inside windows: it was the disconnect.
+  The window ground is slate (`--wb-field` #cdd2db, lit to `--wb-field-hi`
+  at the top where the light falls), ink text, and every well a window
+  holds (a ledger, an input, an icon grid) is sunken paper (`--wb-well`,
+  `--wb-sunken`). Gadgets and verbs are raised steel plates. The selection
+  is Workbench blue with paper on it. This is Workbench 2.0's own interior
+  (grey ground, black ink, white wells, blue selection), lit. No blur, no
+  vibrancy, no transparency: the glass stays dead (HS-110-01). The ember
+  accent stays for lamps, asks and the Talk key, never as a ground.
 - **The floor is a backdrop, not a void.** The desk floor is the Workbench
   backdrop (`--wb-backdrop` with the 4 px `--wb-dither` checker, already the
   Chair screen) with the light's vignette on it: brighter top-left, falling
@@ -166,6 +180,33 @@ on the desk is a lamp's pulse when an agent asks.
 | Dock labels | mono 11, ink on steel |
 | Stage and exposé plates | the window's own title bar, scaled; no extra label |
 
+## 11. The interior kit (v2): every internal app is laid out from these
+
+An "internal app" (Needs you, a Room, the Conductor, a meeting, People,
+Delivery, Settings) is a window whose interior is composed from the kit
+below and nothing else. The kit is the library's existing species in the
+new material; a face that needs a thing the kit lacks adds it to the kit.
+Every window on the canvas is built from exactly these, in this order.
+
+| Species | What it is | Rule |
+|---|---|---|
+| **AppHead** | the one big fact (display 26/650) with the **StatusStrip** on the same baseline | once per window; the strip is tokens (lamp square + word), never prose |
+| **FilterBar** | CycleGadgets on one rail; the active one is the selection blue, sunken | one per window at most; a trailing verb group sits at the rail's right |
+| **Section** | caption (mono 11 upper) + count + hairline, with an optional verb | the caption reads `Name · count`; no counters of zero |
+| **Ledger** | a sunken paper well of **LedgerRows**: kind plate (raised steel, 44 px) · name (sans 15/500) · meta (mono 11 upper, `ask` or `ok` tone) | hover tints the row selection-blue at 12 %; verbs appear on hover (existing SurfaceLedgerRow) |
+| **IconGrid** | objects in a sunken paper well, five across, icon + two-line name | the same sprites as the floor; hover tints |
+| **AskWell** | a sunken input with the MicButton on its right edge | the voice law: a mic on every input |
+| **Foot** | the steel foot: egress chip (paper plate) · receipt · verbs | egress exactly where egress happens; verbs right |
+| **Verb** | the library Button as a raised steel plate; `pri` = selection blue, `danger` = red, both with paper text | every verb; a raw button is a bounce |
+
+Spacing: the interior is a column with a 10 px gap; 12 px by 14 px padding.
+Type: display 26 · name 15 sans · body 13 · meta and captions 11 mono upper.
+Colour inside a window: ink, muted ink (`--wb-muted`, 7.0:1 on slate), the
+lamp tones, the selection blue. Nothing else.
+
+The dock: a tile is as wide as its word (minimum 72 px); a label never
+leaves its tile.
+
 ## 8. What this is NOT
 
 - Not glass: no `backdrop-filter`, no translucent bodies.
@@ -187,8 +228,12 @@ on the desk is a lamp's pulse when an agent asks.
   physics hook (drag, resize, clamp).
 - `window-chrome.css` becomes the ladder: four `data-plane` blocks.
 - Tokens: `--wb-steel-dim`, `--wb-umbra`, `--wb-umbra-near`, `--desk-floor`
-  (the backdrop with vignette), `--desk-window-fall` (the body gradient),
-  `--desk-veil-near`, `--desk-veil-far`. `--desk-window-shadow*` return.
+  (the backdrop with vignette), `--desk-window-fall` (the slate ground, lit),
+  `--desk-veil-near`, `--desk-veil-far`, `--wb-field`, `--wb-field-hi`,
+  `--wb-well`, `--wb-muted`, `--wb-sel`, `--wb-rule-soft`.
+  `--desk-window-fill` becomes the slate; the interior tokens (`--surface-*`,
+  `--text*` inside `.desk-window`) are remapped in one block, so every face
+  moves at once and the kit is then swept face by face.
 - The Dock gains seats; the top-left nub chips retire (parked).
 - Stage, Gather and Tile-with-divider are new; Exposé and Switcher are
   redrawn with scaled live plates.
@@ -199,6 +244,8 @@ on the desk is a lamp's pulse when an agent asks.
 
 ## 10. Open questions for the canvas
 
+0. Interior: slate ground with paper wells (v2 default; Workbench 2.0's
+   own interior, lit). The dark interior remains only as "Before".
 1. Floor: the Workbench backdrop as default (§2) replaces the near-black
    floor in every shot. The canvas shows both; the owner picks.
 2. Title in sans (§4.2): shown as the default on the canvas; the mono
