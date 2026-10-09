@@ -891,9 +891,8 @@
       "state_id": "state.engines.add_engine_ready",
       "applicability": "applicable",
       "preconditions": [
-        "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "the concierge open",
-        "the LAN engine address reachable from the hub",
+        "Runs on open (Needs you > Choose an engine opens it, NeedsDrawer.tsx)",
+        "the rig's LAN double: 192.168.77.43:8080 answers /models from the replay provider on loopback (engine_reply boundary); nothing leaves this machine",
         {
           "kind": "check",
           "predicate": {
@@ -921,16 +920,98 @@
           "adapter": "ui-pointer"
         },
         {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
+        },
+        {
           "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine]",
-          "action": "click"
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "the engine address",
-          "adapter": "ui-pointer"
+          "value": "http://192.168.77.43:8080"
         }
       ],
       "trigger": {
@@ -946,7 +1027,7 @@
           "value": null
         },
         "observe_at": "[data-testid=concierge-add-submit]",
-        "words": "[data-testid=concierge-add-model] names the model the address answered with, and [data-testid=concierge-add-submit] ('Use this for summaries') becomes enabled [the audit's stated observation location: face: [data-testid=concierge-add-engine-row]]"
+        "words": "[data-testid=concierge-add-model] names the model the address answered with, and [data-testid=concierge-add-submit] ('Add') becomes enabled [the audit's stated observation location: face: [data-testid=concierge-add-engine-row]]"
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -963,9 +1044,7 @@
       "state_id": "state.engines.add_engine_refused",
       "applicability": "applicable",
       "preconditions": [
-        "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "the concierge open",
-        "an address that answers nothing",
+        "Runs on open (Needs you > Choose an engine opens it, NeedsDrawer.tsx)",
         {
           "kind": "check",
           "predicate": {
@@ -994,15 +1073,91 @@
         },
         {
           "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine]",
-          "action": "click"
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "an unreachable address",
-          "adapter": "ui-pointer"
+          "value": "http://127.0.0.1:9",
+          "why": "an address that does not answer: the loopback discard port refuses at once; nothing leaves this machine"
         }
       ],
       "trigger": {
@@ -1017,8 +1172,8 @@
           "attr": "role",
           "value": "alert"
         },
-        "observe_at": "[data-testid=concierge-add-reason]",
-        "words": "[data-testid=concierge-add-reason] states a reason in an alert, and the submit Button stays disabled [the audit's stated observation location: face: [data-testid=concierge-add-reason]]"
+        "observe_at": "[data-testid=concierge-add-unreachable]",
+        "words": "the row answers UNREACHABLE with the host token in an alert ([data-testid=concierge-add-unreachable] role=alert, [data-testid=concierge-add-reason] names the host), and the Add Button stays disabled [the audit's stated observation location: face: [data-testid=concierge-add-reason]]"
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -1033,7 +1188,7 @@
         "edge.face.concierge_check"
       ],
       "state_id": "state.engines.unreachable",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         "a found engine row whose address does not answer",
@@ -1064,12 +1219,6 @@
           "adapter": "ui-pointer"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "selector": "[data-testid^=concierge-check-]",
-        "action": "click",
-        "adapter": "ui-pointer"
-      },
       "expected": {
         "predicate": {
           "kind": "text_contains",
@@ -1079,10 +1228,8 @@
         "words": "the row's chip reads UNREACHABLE [the audit's stated observation location: face: [data-testid^=concierge-found-]]"
       },
       "completion_bound_s": 60,
-      "viewports": [
-        1440,
-        393
-      ]
+      "viewports": [],
+      "reason": "PARKED 2026-10-09 (PHILO-16 C, Runs on): the found row's own Check verb is retired: Runs on draws FOUND rows with one verb, Use it (RunsOnCore.tsx foundEngines); an address that does not answer reads UNREACHABLE on the Add an engine row. Successor: case.j3.concierge_add_check.refused. The old declaration is kept in docs/internal/philo/graph/parked-philo16-concierge.json."
     },
     {
       "id": "case.j3.concierge_use_for_summaries.assigned_ready",
@@ -1095,16 +1242,7 @@
       "preconditions": [
         "case.j3.concierge_add_engine.add_ready reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
         "case.j1.speech_readiness.ready passed - the SETUP row clears ONLY because speech was already ready",
-        {
-          "kind": "check",
-          "predicate": {
-            "kind": "attr_equals",
-            "attr": "data-testid",
-            "value": "arrival-run-intel"
-          },
-          "observe_at": "[data-testid=arrival-run-intel]",
-          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
-        }
+        "Meetings selected on the board (the job the patch lands on)"
       ],
       "setup": [
         {
@@ -1169,37 +1307,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -1211,61 +1363,57 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "[data-testid=concierge-add-submit]",
-        "action": "click",
-        "adapter": "ui-pointer"
+        "action": "press",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+        "key": "Enter",
+        "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/inference/assignments/set"
+        }
       },
       "expected": {
         "predicate": {
@@ -1279,7 +1427,7 @@
           "min_gone": 1
         },
         "observe_at": "protocol: GET /api/inference/assignments",
-        "words": "ASTRA (A): the owner's result is a NAMED disappearance - the un-overridden summary row is gone by identity - not a vanished face section. || task_overrides holds an exact capability:meeting.deferred_analysis head whose effective.status is 'assigned'; back on the Chair the SETUP row is gone. The disappearance is attributable to THIS assignment only while speech is ready - with speech missing the row stays (see case.j3.speech_missing.row_stays), so a cleared row is not evidence that the summary engine landed [the audit's stated observation location: protocol: GET /api/inference/assignments; face: the absence of [data-testid=arrival-blocker]]",
+        "words": "Patching an engine onto Meetings (the drag, or its keyboard twin) also writes the exact meeting.deferred_analysis row: ASTRA (A): the owner's result is a NAMED disappearance - the un-overridden summary row is gone by identity - not a vanished face section. || task_overrides holds an exact capability:meeting.deferred_analysis head whose effective.status is 'assigned'; back on the Chair the SETUP row is gone. The disappearance is attributable to THIS assignment only while speech is ready - with speech missing the row stays (see case.j3.speech_missing.row_stays), so a cleared row is not evidence that the summary engine landed [the audit's stated observation location: protocol: GET /api/inference/assignments; face: the absence of [data-testid=arrival-blocker]]",
         "reads": [
           {
             "method": "GET",
@@ -1388,37 +1536,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -1430,13 +1592,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "api",
@@ -1648,37 +1872,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -1690,13 +1928,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "ui",
@@ -1955,37 +2255,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -1997,13 +2311,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "ui",
@@ -2510,39 +2886,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true,
-          "timeout_s": 1
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -2554,21 +2942,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -2729,7 +3171,7 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "192.168.1.43 · LAN"
+          "value": "192.168.77.43 · LAN"
         },
         "observe_at": "[data-testid=arrival-route]",
         "words": "the planned host is named on the row beside Run summary, before the click [the audit's stated observation location: face: [data-testid=arrival-route]]",
@@ -3065,39 +3507,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true,
-          "timeout_s": 1
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -3109,21 +3563,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -3265,10 +3773,10 @@
         "edge.timer.intel_drainer"
       ],
       "state_id": "state.meetings.intel.running",
-      "applicability": "applicable",
+      "applicability": "unreachable",
       "preconditions": [
         "case.j6.run_summary.intel_queued reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
-        "the real LAN engine reachable",
+        "the LAN engine at 192.168.77.43:8080, answered by the rig's LAN double; the summary itself is the replayed provider reply (engine_mode: replayed). No real LAN engine is walked (PHILO-16 C rig law).",
         {
           "kind": "check",
           "predicate": {
@@ -3354,39 +3862,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true,
-          "timeout_s": 1
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -3398,21 +3918,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -3519,13 +4093,6 @@
           "selector": "[data-testid=arrival-run-intel]"
         }
       ],
-      "trigger": {
-        "kind": "clock",
-        "clock": "clock.intel_drainer",
-        "how": "no clock is moved: the run polls GET /api/intel/jobs (<= the case's completion_bound_s) for the REAL drainer to move the job",
-        "adapter": "scheduler-wait",
-        "poll_s": 0.1
-      },
       "expected": {
         "predicate": {
           "kind": "protocol_field",
@@ -3536,7 +4103,8 @@
         "words": "The real drainer leaves the admitted job in claimed; this is a state read, not a newly inserted row claim."
       },
       "completion_bound_s": 180,
-      "viewports": []
+      "viewports": [],
+      "reason": "UNEXERCISED by the rig since PHILO-16 C: the claimed state lasts only while a real engine executes. A replayed provider reply completes before the first read (walked 2026-10-09 at 1440: /jobs/0/status absent), and the rig never walks the real LAN engine. The setup is ported to Runs on; the states either side are walked: case.j6.run_summary.intel_queued and case.j6.run_summary.intel_ready."
     },
     {
       "id": "case.j6.run_summary.intel_ready",
@@ -3548,7 +4116,7 @@
       "applicability": "applicable",
       "preconditions": [
         "case.j6.run_summary.intel_running reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
-        "the real LAN engine identity recorded",
+        "the LAN engine at 192.168.77.43:8080, answered by the rig's LAN double; the summary itself is the replayed provider reply (engine_mode: replayed). No real LAN engine is walked (PHILO-16 C rig law).",
         {
           "kind": "check",
           "predicate": {
@@ -3634,39 +4202,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true,
-          "timeout_s": 1
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -3678,21 +4258,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -3939,36 +4573,41 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 1
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -3980,21 +4619,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -4112,7 +4805,7 @@
       "expected": {
         "predicate": {
           "kind": "text_equals",
-          "value": "FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED"
+          "value": "FAILED\nLAST ATTEMPT · 192.168.77.43 · LAN\nLAST ERROR · PROVIDER FAILED"
         },
         "observe_at": "[data-testid=arrival-summary-status]",
         "words": "FAILED with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
@@ -4266,36 +4959,41 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 1
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -4307,21 +5005,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -4740,39 +5492,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true,
-          "timeout_s": 1
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -4784,21 +5548,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -5051,39 +5869,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true,
-          "timeout_s": 1
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -5095,21 +5925,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -5775,37 +6659,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -5817,21 +6715,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -6041,8 +6993,9 @@
           "substitutes": "the named provider endpoint",
           "substitute": "engine_reply",
           "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
-          "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
-          "adapter": "labelled-substitution"
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
@@ -6095,34 +7048,41 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -6134,21 +7094,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -6362,8 +7376,9 @@
           "substitutes": "the named provider endpoint",
           "substitute": "engine_reply",
           "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
-          "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
-          "adapter": "labelled-substitution"
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
@@ -6416,34 +7431,41 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -6455,21 +7477,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -6693,8 +7769,9 @@
           "substitutes": "the named provider endpoint",
           "substitute": "engine_reply",
           "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
-          "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
-          "adapter": "labelled-substitution"
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
@@ -6747,34 +7824,41 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -6786,21 +7870,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -10459,13 +11597,20 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
+        },
+        {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
           "timeout_s": 1,
-          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
@@ -10474,26 +11619,29 @@
           "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
           "timeout_s": 10,
-          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -10505,21 +11653,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -10777,39 +11979,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true,
-          "timeout_s": 1
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -10821,21 +12035,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -10953,7 +12221,7 @@
         "predicate": {
           "kind": "protocol_field",
           "path": "/run_receipt/attempts/0/host",
-          "value": "192.168.1.43"
+          "value": "192.168.77.43"
         },
         "observe_at": "protocol: GET /api/meetings/{meeting_id}",
         "words": "The executed host is read from the durable meeting run receipt, separately from the planned route. Succeeded jobs leave the active queue; completion cannot be read from its first active row."
@@ -11050,39 +12318,51 @@
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true,
-          "timeout_s": 1
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -11094,21 +12374,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -11220,7 +12554,7 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "192.168.1.43 · LAN"
+          "value": "192.168.77.43 · LAN"
         },
         "observe_at": "[data-testid=arrival-route]",
         "words": "Article III: the host this run WILL use is disclosed on the row BEFORE the click. Its text is recorded so the council can set it against the host that actually ran (case.j6.run_summary.host_named). [the audit's stated observation location: [data-testid=arrival-route]]",
@@ -11358,36 +12692,41 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
-          "timeout_s": 1
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
-          "timeout_s": 10
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -11399,21 +12738,75 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
           "adapter": "ui-pointer",
-          "why": "the Models setup window is closed before Arrival is observed"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "fixture",
@@ -11531,7 +12924,7 @@
       "expected": {
         "predicate": {
           "kind": "text_equals",
-          "value": "RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED"
+          "value": "RETRYING\nLAST ATTEMPT · 192.168.77.43 · LAN\nLAST ERROR · PROVIDER FAILED"
         },
         "observe_at": "[data-testid=arrival-summary-status]",
         "words": "RETRYING with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
@@ -12240,65 +13633,122 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-by-viewport",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
           "timeout_s": 1,
-          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-by-viewport",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
           "timeout_s": 10,
-          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-by-viewport",
-          "selector": "[data-testid=concierge-add-engine]"
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-by-viewport",
+          "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-check]"
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-by-viewport",
-          "selector": "[data-testid=concierge-add-submit]"
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "#surface-concierge .desk-window-title",
-          "state": "hidden",
-          "why": "the setup window closes before the Arrival producer path"
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
         },
         {
           "kind": "boundary",
@@ -12656,7 +14106,7 @@
           "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
           "timeout_s": 1,
-          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
@@ -12665,26 +14115,29 @@
           "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
           "timeout_s": 10,
-          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -12696,19 +14149,74 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "#surface-concierge .desk-window-title",
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
           "state": "hidden"
         },
         {
@@ -12990,7 +14498,7 @@
           "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
           "timeout_s": 1,
-          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
@@ -12999,26 +14507,29 @@
           "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
           "timeout_s": 10,
-          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -13030,19 +14541,74 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "#surface-concierge .desk-window-title",
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
           "state": "hidden"
         },
         {
@@ -13358,7 +14924,7 @@
           "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
           "optional": true,
           "timeout_s": 1,
-          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
@@ -13367,26 +14933,29 @@
           "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
           "optional": true,
           "timeout_s": 10,
-          "why": "PHILO-14 A5 (#935): the setup row is a Needs-you drawer row; its verb is needs-row-verb, named '<verb>: <row>' (NeedsDrawer.tsx)."
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-engine]"
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
         },
         {
           "kind": "ui",
           "action": "fill",
           "adapter": "ui-pointer",
           "selector": "[data-testid=concierge-add-engine-row] input",
-          "value": "http://192.168.1.43:8080"
+          "value": "http://192.168.77.43:8080"
         },
         {
           "kind": "ui",
@@ -13398,19 +14967,74 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[data-testid=concierge-add-submit]"
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "#surface-concierge .desk-window-title",
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
           "state": "hidden"
         },
         {

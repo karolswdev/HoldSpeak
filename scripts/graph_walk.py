@@ -253,7 +253,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-RIG_VERSION = "1.5.2"
+RIG_VERSION = "1.5.3"
 
 # PHILO-3-02's real engine is supplied by the LAN endpoint configured through
 # the normal Concierge field.  The URL and model are provenance inputs for a
@@ -2998,7 +2998,37 @@ def _install_engine_replay(path: Path) -> tuple[str, str]:
     provider = ThreadingHTTPServer(("127.0.0.1", 0), _ModelsHandler)
     threading.Thread(target=provider.serve_forever, daemon=True).start()
     provider_url = f"http://127.0.0.1:{provider.server_address[1]}/v1"
+    _install_lan_double(f"127.0.0.1:{provider.server_address[1]}")
     return hashlib.sha256(path.read_bytes()).hexdigest(), provider_url
+
+
+#: PHILO-16 (C): the LAN address a replayed case types into Runs on. It is
+#: the address the Runs on glass rig doubles (tests/e2e/test_hs170_concierge_glass.py
+#: `LAN_BASE`). Inside a replay hub, endpoint discovery and the Check's tool
+#: question for this host:port go to the loopback provider above; the product
+#: still sees a LAN engine (its emblem, its host on the route). No byte leaves
+#: this machine.
+LAN_DOUBLE_HOST = "192.168.77.43:8080"
+
+
+def _install_lan_double(loopback: str) -> None:
+    import holdspeak.setup_runtime as setup_runtime
+
+    def _rewrite(url: str) -> str:
+        return str(url).replace(LAN_DOUBLE_HOST, loopback)
+
+    discover = setup_runtime.discover_endpoint_models
+    tool_support = setup_runtime.endpoint_tool_support
+
+    def discover_double(base_url: str, *args: Any, **kwargs: Any) -> Any:
+        return discover(_rewrite(base_url), *args, **kwargs)
+
+    def tool_support_double(base_url: str, *args: Any, **kwargs: Any) -> Any:
+        return tool_support(_rewrite(base_url), *args, **kwargs)
+
+    setup_runtime.discover_endpoint_models = discover_double
+    setup_runtime.endpoint_tool_support = tool_support_double
+    print(f"LAN_DOUBLE {LAN_DOUBLE_HOST} -> {loopback}", flush=True)
 
 
 #: PHILO-10-05: the recording runner's call log, in the run's HOME.
