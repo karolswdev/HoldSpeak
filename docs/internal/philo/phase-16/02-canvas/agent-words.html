@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>An Agent's Words</title>
+<style>
+/* The canvas for AgentWords (phase 16, lane 02). The desk's own tokens,
+   copied here as literals so the page stands alone. */
+:root {
+  --bg:#2b313c; --dither:#262b35; --paper:#eef0f3; --ink:#0b0c10; --blue:#6688bb;
+  --surface-1:#15171d; --surface-2:#1c1f27; --text:#f2f3f5; --text-muted:#9ba2b0;
+  --wash-1:rgba(255,255,255,.035); --wash-2:rgba(255,255,255,.07); --border:#2a2e3e;
+  --ask:#d28a5c; --accent:#a86e4a;
+  --font-sans:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#3c4454; --dither:#363e4d; } }
+:root[data-theme="dark"] { --bg:#2b313c; --dither:#262b35; }
+* { box-sizing:border-box; }
+body { margin:0; background-color:var(--bg); background-image:conic-gradient(var(--dither) 25%, transparent 0 50%, var(--dither) 0 75%, transparent 0); background-size:4px 4px; color:var(--paper); font:14px/1.45 var(--font-mono); }
+header.bar { position:sticky; top:0; z-index:2; background:var(--paper); color:var(--ink); border-bottom:2px solid var(--ink); padding:6px 16px; display:flex; gap:16px; flex-wrap:wrap; font-weight:700; }
+header.bar a { color:var(--ink); text-decoration:none; }
+main { padding:16px; overflow-x:hidden; max-width:1500px; margin:0 auto; }
+h2 { background:var(--blue); color:var(--ink); border:2px solid var(--ink); margin:24px 0 8px; padding:4px 10px; font-size:15px; }
+h2 span { display:inline-block; background:var(--paper); padding:0 6px; margin-right:6px; }
+.note { background:var(--surface-1); border:1px solid var(--ink); padding:8px 12px; margin:0 0 10px; font-size:12px; color:var(--text-muted); }
+.note b { color:var(--paper); }
+.pair { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,393px); gap:16px; align-items:start; }
+@media (max-width: 1000px) { .pair { grid-template-columns:minmax(0,1fr); } }
+.frame { background:var(--surface-1); border:2px solid var(--ink); }
+.frame .tb { background:var(--blue); color:var(--ink); font:700 13px/24px var(--font-mono); padding:0 8px; border-bottom:2px solid var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.frame .body { padding:12px 14px; display:flex; flex-direction:column; gap:10px; }
+.frame.w393 { width:100%; max-width:393px; }
+.tag { font:700 11px/1 var(--font-mono); color:var(--text-muted); margin:0 0 4px; letter-spacing:.06em; }
+
+/* ── the lane pieces the words sit in ── */
+.receipt { overflow-wrap:anywhere; margin:0; font:600 12px/1.4 var(--font-mono); letter-spacing:.04em; color:var(--text-muted); }
+.ask-well { display:flex; flex-direction:column; gap:10px; padding:12px 14px; background:var(--surface-2); border:1px solid var(--ink); }
+.caption { margin:0; font:700 12px/1.2 var(--font-mono); letter-spacing:.06em; color:var(--text); }
+.answer { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.field { flex:1 1 200px; min-width:0; background:var(--surface-1); border:1px solid var(--border); color:var(--text-muted); font:12px/28px var(--font-mono); padding:0 8px; }
+.btn { background:var(--accent); color:var(--paper); border:1px solid var(--ink); font:700 12px/28px var(--font-mono); padding:0 12px; }
+.rail { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+.rail > li { display:grid; grid-template-columns:44px 14px minmax(0,1fr); gap:8px; align-items:start; }
+.rail .t { font:12px/18px var(--font-mono); color:var(--text-muted); }
+.rail .sq { width:10px; height:10px; margin-top:4px; background:#8b93a3; border:1px solid var(--ink); }
+.rail .sq.ask { background:var(--ask); }
+.rail .w { font:700 12px/18px var(--font-mono); color:var(--text-muted); letter-spacing:.06em; margin-right:8px; }
+.rail .line { display:flex; align-items:baseline; min-width:0; }
+.rail .says { margin-top:4px; }
+.needs-row { display:grid; grid-template-columns:40px minmax(0,1fr) auto; gap:10px; align-items:center; padding:8px 10px; background:var(--surface-2); border:1px solid var(--ink); }
+.needs-row .sp { width:32px; height:32px; background:var(--wash-2); border:1px solid var(--ink); }
+.needs-row .name { font:600 15px/1.3 var(--font-sans); color:var(--text); display:block; }
+.needs-row .kind { font:700 11px/1 var(--font-mono); color:var(--text-muted); border:1px solid var(--border); padding:2px 4px; margin-right:6px; }
+.needs-row .fact { display:flex; align-items:baseline; min-width:0; margin-top:2px; }
+.lamp { font:700 11px/1 var(--font-mono); color:var(--ink); background:var(--ask); padding:4px 6px; border:1px solid var(--ink); white-space:nowrap; }
+@media (max-width: 520px) { .needs-row { grid-template-columns:40px minmax(0,1fr); } .needs-row .lamp { grid-column:2; justify-self:start; } }
+.brief-row { display:grid; grid-template-columns:28px minmax(0,1fr) auto; gap:10px; align-items:center; padding:8px 10px; background:var(--surface-2); border:1px solid var(--ink); }
+.emblem { font:700 11px/22px var(--font-mono); text-align:center; background:var(--wash-2); border:1px solid var(--ink); }
+
+/* ── AgentWords: the component as it will ship ── */
+.agent-words { font:13px/1.5 var(--font-sans); color:var(--text); min-width:0; display:flex; flex-direction:column; gap:6px; }
+.agent-words p, .agent-words ol, .agent-words ul { margin:0; }
+.agent-words ol, .agent-words ul { padding-left:20px; display:flex; flex-direction:column; gap:3px; }
+.agent-words li > ol, .agent-words li > ul { margin-top:3px; }
+.agent-words strong { font-weight:700; }
+.agent-words .aw-h { font-weight:700; }
+.agent-words code { font-family:var(--font-mono); font-size:.92em; background:var(--wash-2); padding:1px 4px; border-radius:2px; }
+.agent-words pre { margin:0; padding:8px 10px; background:var(--surface-1); border:1px solid var(--ink); font:12px/1.5 var(--font-mono); white-space:pre-wrap; overflow-wrap:anywhere; }
+.agent-words pre code { background:none; padding:0; font-size:inherit; }
+.agent-words .aw-lang { display:inline-block; font:700 11px/1 var(--font-mono); color:var(--text-muted); border:1px solid var(--border); padding:2px 4px; margin-bottom:4px; letter-spacing:.06em; }
+.agent-words .aw-url { color:var(--text-muted); font-family:var(--font-mono); font-size:.92em; }
+.agent-words, .agent-words * { overflow-wrap:anywhere; }
+.agent-words.is-compact { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; color:var(--text-muted); }
+.agent-words.is-compact.l2 { white-space:normal; max-height:3em; }
+.agent-words.is-compact code { padding:0; border-radius:0; }
+.agent-words.is-compact strong { color:var(--text); }
+.agent-words .aw-sep { color:var(--text-muted); }
+.before { font:13px/1.5 var(--font-sans); color:var(--text); overflow-wrap:anywhere; }
+</style></head><body>
+<header class="bar"><span>An Agent's Words</span><a href="#s1">1 Ask well 1440</a><a href="#s2">2 Ask well 393</a><a href="#s3">3 Needs row</a><a href="#s4">4 Rail entry</a><a href="#s5">5 Compact line</a></header>
+<main>
+<div class="note"><b>Canvas for AgentWords.</b> One library component draws every word an agent wrote. The text is the owner's shot (08-lane-asks-1440.png), word for word. Kept: bold, italic, inline code, code blocks with a language token, numbered and bulleted lists (one level deep), headings as a bold line, paragraphs and line breaks. Not kept: HTML (shown as text), links as a press target (the link text, then the address as plain text), images (the alt text in brackets). Long names break at / _ - . so nothing leaves the frame at 393. Compact: one line (or two in a Needs row), marks kept, blocks joined with " · ", the cut at a whole word with "…". <b>Ruling 2026-10-08:</b> a compact row shows THE ASK: the last paragraph that ends with "?" (the Needs row, the Brief row, the rail ASKS line, the tooltip); the SENT line shows its start. A long id is cut after / _ - .; a token wider than the box with no such mark is cut at the width, its "…" inside the box.</div>
+
+<section id="s1"><h2><span>1</span> The lane's ask well at 1440</h2>
+<div class="frame"><div class="tb">pi: Write NOTES.md with the host line</div><div class="body">
+<p class="receipt">SENT · 15:46 · HoldSpeak hands you one item: project_<wbr>item:pitem_<wbr>d25d3fc020be4d8cbc90269fc17da3f7 "Write NOTES.md with the host line". …</p>
+<section class="ask-well">
+<p class="caption">PI ASKS · 1 MIN</p>
+<div class="agent-words">
+<p>Steps 1–3 complete:</p>
+<ol>
+<li><strong>project.list</strong> called once — project "pi rig: the third harness" (proj-e5abdabc568b).</li>
+<li><strong>cat /etc/hosts</strong> was denied by the desk (outside the worktree). Per the item's rule, I did not retry; NOTES.md contains the line <code>hosts: not read</code>.</li>
+<li><strong>Committed</strong> as <code>45e2b1a</code> on branch <code>hs/<wbr>project_<wbr>item-<wbr>pitem_<wbr>d25d3fc020be4d8cbc90269fc17da3f7</code>.</li>
+</ol>
+<p>Step 4 — my question to the owner:</p>
+<p><strong>May I open a pull request for branch <code>hs/<wbr>project_<wbr>item-<wbr>pitem_<wbr>d25d3fc020be4d8cbc90269fc17da3f7</code> (naming project_<wbr>item:pitem_<wbr>d25d3fc020be4d8cbc90269fc17da3f7 in the body)?</strong></p>
+</div>
+<div class="answer"><span class="field">Say or type the answer</span><span class="btn">Answer</span></div>
+</section>
+</div></div>
+<p class="tag" style="margin-top:8px">BEFORE (main): the same words as one block, with ** and ` shown as text.</p>
+</section>
+
+<section id="s2"><h2><span>2</span> The lane's ask well at 393</h2>
+<div class="pair"><div class="note"><b>At 393</b> the branch name breaks after <code>/</code>, <code>_</code> and <code>-</code>, never past the frame. <b>Tradeoff (declared after Astra r1 on #1026, ruled by Muad'Dib):</b> the SENT line keeps two lines, so at 393 it stops at <code>project_item:pitem_ …</code>; the full id and the quoted title are not on it. The window title bar names the item at 393. At 1440 the SENT line ends at a whole word ("line". …), never at "P".</div>
+<div class="frame w393"><div class="tb">pi: Write NOTES.md with the ho…</div><div class="body">
+<p class="receipt">SENT · 15:46 · HoldSpeak hands you one item: project_<wbr>item:pitem_ …</p>
+<section class="ask-well">
+<p class="caption">PI ASKS · 3 MIN</p>
+<div class="agent-words">
+<p>Steps 1–3 complete:</p>
+<ol>
+<li><strong>project.list</strong> called once — project "pi rig: the third harness" (proj-e5abdabc568b).</li>
+<li><strong>cat /etc/hosts</strong> was denied by the desk (outside the worktree). Per the item's rule, I did not retry; NOTES.md contains the line <code>hosts: not read</code>.</li>
+<li><strong>Committed</strong> as <code>45e2b1a</code> on branch <code>hs/<wbr>project_<wbr>item-<wbr>pitem_<wbr>d25d3fc020be4d8cbc90269fc17da3f7</code>.</li>
+</ol>
+<p>Step 4 — my question to the owner:</p>
+<p><strong>May I open a pull request for branch <code>hs/<wbr>project_<wbr>item-<wbr>pitem_<wbr>d25d3fc020be4d8cbc90269fc17da3f7</code> (naming project_<wbr>item:pitem_<wbr>d25d3fc020be4d8cbc90269fc17da3f7 in the body)?</strong></p>
+</div>
+<div class="answer"><span class="field">Say or type the answer</span><span class="btn">Answer</span></div>
+</section>
+</div></div></div>
+</section>
+
+<section id="s3"><h2><span>3</span> The Needs row (ASKS)</h2>
+<div class="pair">
+<div><p class="tag">1440</p><div class="needs-row"><span class="sp"></span><span><span class="name">pi: Write NOTES.md with the host line</span><span class="fact"><span class="kind">AGENT</span><span class="agent-words is-compact l2"><strong>May I open a pull request for branch <code>hs/<wbr>project_<wbr>item-<wbr>pitem_</code></strong> …</span></span></span><span class="lamp">ASKS · 1 MIN</span></div></div>
+<div><p class="tag">393</p><div class="needs-row"><span class="sp"></span><span><span class="name">pi: Write NOTES.md with the host line</span><span class="fact"><span class="kind">AGENT</span><span class="agent-words is-compact l2"><strong>May I open a pull request for branch <code>hs/<wbr>project_<wbr>item-<wbr>pitem_</code></strong> …</span></span></span><span class="lamp">ASKS · 1 MIN</span></div></div>
+</div>
+<p class="tag" style="margin-top:8px">THE ASK (ruling 2026-10-08): the last paragraph that ends with "?". Two lines at most, cut at a word or after / _ - . BEFORE (main): the first 200 characters as one flat line with ** and ` as text, cut inside a word.</p>
+</section>
+
+<section id="s4"><h2><span>4</span> The lane rail: SAYS (whole) and ASKS (one line)</h2>
+<div class="pair">
+<div class="frame"><div class="body"><ol class="rail">
+<li><span class="t">15:51</span><span class="sq"></span><span><span class="line"><span class="w">SAYS</span></span><div class="agent-words says"><p>Done. <code>NOTES.md</code> holds <code>hosts: not read</code>; commit <code>45e2b1a</code>.</p><ul><li>branch <code>hs/<wbr>project_<wbr>item-<wbr>pitem_<wbr>d25d3fc0…</code></li><li>no PR yet</li></ul></div></span></li>
+<li><span class="t">15:51</span><span class="sq ask"></span><span><span class="line"><span class="w">ASKS</span><span class="agent-words is-compact"><strong>May I open a pull request for branch <code>hs/project_</code></strong> …</span></span></span></li>
+</ol></div></div>
+<div class="frame w393"><div class="body"><ol class="rail">
+<li><span class="t">15:51</span><span class="sq ask"></span><span><span class="line"><span class="w">ASKS</span><span class="agent-words is-compact"><strong>May I open a pull request for …</strong></span></span></span></li>
+</ol></div></div>
+</div>
+<p class="tag" style="margin-top:8px">SAYS is the agent's whole message, drawn by AgentWords. ASKS repeats the ask well above it, so it is one line.</p>
+</section>
+
+<section id="s5"><h2><span>5</span> A compact line: the Brief's TO ANSWER row, a ledger cell</h2>
+<div class="pair">
+<div class="brief-row"><span class="emblem">PI</span><span class="agent-words is-compact"><strong>May I open a pull request for branch <code>hs/project_</code></strong> …</span><span class="lamp">PI · WAITING · 1 MIN</span></div>
+<div class="brief-row"><span class="emblem">PI</span><span class="agent-words is-compact"><strong>May I open a pull request for …</strong></span><span class="lamp">PI · WAITING</span></div>
+</div>
+<p class="tag" style="margin-top:8px">A tooltip (a title attribute) cannot hold marks: there the words are plain text, marks removed, cut at a whole word.</p>
+</section>
+
+<section><h2><span>+</span> The subset, at a glance</h2>
+<div class="frame"><div class="body"><div class="agent-words">
+<strong class="aw-h">A heading is a bold line</strong>
+<p>Text with <strong>bold</strong>, <em>italic</em>, <code>inline code</code>, and a link: docs <span class="aw-url">https://example.com/docs</span>. An image: [diagram]. HTML stays text: &lt;script&gt;alert(1)&lt;/script&gt;</p>
+<ul><li>a bullet<ul><li>one level in</li></ul></li><li>another</li></ul>
+<pre><span class="aw-lang">PYTHON</span>
+<code>def head(path):
+    return open(path).readline()</code></pre>
+</div></div></div>
+</section>
+</main></body></html>

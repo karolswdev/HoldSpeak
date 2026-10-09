@@ -351,7 +351,7 @@ export function eventEntries(events: readonly LaneEvent[]): LaneEntry[] {
       continue;
     }
     if ((event.event === "Stop" || event.event === "SubagentStop") && event.text) {
-      out.push({ id, at: when, time, kind: "says", word: "SAYS", quote: event.text });
+      out.push({ id, at: when, time, kind: "says", word: "SAYS", words: event.text });
       continue;
     }
     if (event.event === "SessionEnd") {
@@ -500,7 +500,9 @@ export function laneEntries(lane: LaneWire, events: readonly LaneEvent[]): LaneE
       kind: "asks",
       word: turn.word,
       tone: turn.tone,
-      text: wait.question,
+      // Phase 16: the agent's words, one line (the well above holds them whole).
+      words: wait.question,
+      wordsCompact: true,
     });
   }
   const merged = lane.follow_through?.merged;

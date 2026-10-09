@@ -11,6 +11,7 @@
 import { useRef, type ReactNode, type Ref } from "react";
 import { EgressChip, StringGadget } from "../gadgets";
 import { Button } from "../../../components/signal/Signal";
+import { AgentWords } from "../../components/AgentWords";
 import "./objects.css";
 
 export interface AskWellProps {
@@ -21,6 +22,7 @@ export interface AskWellProps {
   /** The caption's word: `ASKS` (default) for a question; `IDLE` or `DONE`
    *  for a turn that ended with no question (PHILO-15 B48). */
   word?: string;
+  /** The agent's words (markdown, untrusted): drawn by AgentWords. */
   question: string;
   value: string;
   onChange(next: string): void;
@@ -81,7 +83,8 @@ export function AskWell({
   return (
     <section className="ask-well" aria-label={`${agent} asks`} data-testid={testId}>
       <p className="ask-well-caption">{caption}</p>
-      <p className="ask-well-question">{question}</p>
+      {/* Phase 16: the agent's words, rendered (AgentWords). */}
+      <AgentWords className="ask-well-question" text={question} />
       <div className="ask-well-answer">
         <StringGadget
           label="Answer"

@@ -8,7 +8,7 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { useSteering } from "../steering";
 import { MicButton } from "../components/MicButton";
 import { humanizeWireValue } from "../../lib/productLanguage";
-import { Material } from "../surface/Material";
+import { AgentWords } from "../components/AgentWords";
 import { FoldGadget } from "../surface/gadgets";
 import {
   SurfaceCode,
@@ -55,9 +55,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
             {humanizeWireValue(String(ir.model || ""))} · {humanizeWireValue(String(ir.state || ""))}
           </p>
           {ir.question ? (
-            <Material className="desk-coder-question">
-              {String(ir.question)}
-            </Material>
+            <AgentWords className="desk-coder-question" text={String(ir.question)} />
           ) : null}
           <div className="desk-coder-answer">
             {coderWaiting ? (

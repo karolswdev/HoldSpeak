@@ -61,7 +61,9 @@ def _sources() -> list[Path]:
     return sorted(
         p
         for p in _WEB_SRC.rglob("*.ts*")
-        if ".test." not in p.name and p.suffix in {".ts", ".tsx"}
+        if ".test." not in p.name
+        and "__tests__" not in p.parts  # test fixtures are input, never glass
+        and p.suffix in {".ts", ".tsx"}
     )
 
 

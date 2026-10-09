@@ -19,6 +19,7 @@ import {
 } from "../../desk/surface/Surface";
 import { FoldGadget, LampGadget } from "../../desk/surface/gadgets";
 import { presentValue } from "../../desk/surface/format";
+import { AgentWords } from "../../desk/components/AgentWords";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { renderHeroSlot } from "./core-layout";
 import { DeliveryListSection } from "../../desk/components/DeliveryListSection";
@@ -101,7 +102,11 @@ export function CompanionCore({ hero }: CoreProps) {
         cells={
           <>
             <span className="surface-ledger-cell">
-              {presentValue(session.summary ?? session.question)}
+              {typeof (session.summary ?? session.question) === "string" ? (
+                <AgentWords compact text={String(session.summary ?? session.question)} />
+              ) : (
+                presentValue(session.summary ?? session.question)
+              )}
             </span>
             <span className="surface-ledger-cell">
               <LampGadget

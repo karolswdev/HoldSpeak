@@ -501,6 +501,14 @@
   font: italic var(--font-size-sm) / 1.45 var(--font-sans);
   color: var(--text);
 }
+/* Phase 16: the agent's words on the rail (AgentWords). */
+.lane-rail-says {
+  margin-top: 4px;
+  font-size: var(--font-size-sm);
+}
+.lane-rail-words-line {
+  flex: 1 1 12em;
+}
 .lane-rail-entry[data-pending="true"] .lane-rail-text,
 .lane-rail-entry[data-pending="true"] .lane-rail-code {
   color: var(--text-muted);
@@ -587,9 +595,11 @@
 .ask-well-draft-word {
   color: var(--text-muted);
 }
+/* Phase 16: the question is the agent's words (AgentWords): body size, the
+   marks carry the weight. */
 .ask-well-question {
   margin: 0;
-  font: var(--desk-type-primary-weight) var(--desk-type-primary-size) / 1.35 var(--font-sans);
+  font-size: var(--font-size-sm);
   color: var(--text);
 }
 .ask-well-answer {
@@ -784,6 +794,10 @@
   white-space: pre-wrap;
   max-height: 16em;
   overflow-y: auto;
+}
+/* Phase 16: an agent's words on the row take the line's room. */
+.needs-row-factline > .needs-row-words {
+  flex: 1 1 12em;
 }
 .needs-row-factline {
   display: flex;

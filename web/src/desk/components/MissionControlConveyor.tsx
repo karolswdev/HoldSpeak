@@ -28,6 +28,7 @@ import {
   useMissionControl,
 } from "../missioncontrol";
 import { useSteering } from "../steering";
+import { agentWordsPlain } from "./AgentWords";
 import { useBusSubscribe, useOnCoderFrame } from "../useDeskChangedRefresh";
 import { useProjections } from "../projections";
 import {
@@ -472,7 +473,7 @@ function OffBeltPanel({ sessions }: { sessions: McSession[] }) {
           key={s.key}
           type="button"
           className="desk-mc-needs"
-          title={`${s.key}: ${s.lastAssistantText.slice(0, 200)}`}
+          title={`${s.key}: ${agentWordsPlain(s.lastAssistantText, 200)}`}
           onClick={() => useSteering.getState().openSession(s.key)}
         >
           NEEDS YOU · {s.agent} ·{" "}

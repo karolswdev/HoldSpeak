@@ -14,6 +14,7 @@
  */
 import type { ReactNode } from "react";
 import { LampGadget } from "../gadgets";
+import { AgentWords } from "../../components/AgentWords";
 import { ProjectButton } from "../patterns/ProjectButton";
 import { listSprite } from "../../sprites";
 import { lampGadgetTone, objectSprite, type ObjectTone } from "./kinds";
@@ -27,6 +28,9 @@ export interface NeedsRowProps {
   fact?: string;
   /** The fact is a command (a held call): lines kept, mono, wraps. */
   factCode?: boolean;
+  /** Phase 16: the fact is an agent's words: AgentWords, compact, two
+   *  lines, cut at a whole word. */
+  factWords?: boolean;
   lamp: { label: string; tone: ObjectTone };
   /** The object's verbs (library Buttons; one primary at most). */
   verbs?: ReactNode;
@@ -41,8 +45,13 @@ export interface NeedsRowProps {
   kindWord?: string;
 }
 
-export function NeedsRow({ id, kind, name, fact, factCode, lamp, verbs, sprite, project, kindWord }: NeedsRowProps) {
+export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verbs, sprite, project, kindWord }: NeedsRowProps) {
   const factClass = factCode ? "needs-row-fact is-code" : "needs-row-fact";
+  const factNode = !fact ? null : factWords && !factCode ? (
+    <AgentWords compact lines={2} className="needs-row-fact needs-row-words" text={fact} />
+  ) : (
+    <span className={factClass}>{fact}</span>
+  );
   return (
     <li className="needs-row" data-object-id={id} data-kind={kind}>
       <img src={listSprite(sprite ?? objectSprite(kind, id))} alt="" draggable={false} />
@@ -56,13 +65,13 @@ export function NeedsRow({ id, kind, name, fact, factCode, lamp, verbs, sprite, 
             {kindWord ? (
               <span className="surface-token needs-row-kind" data-testid="needs-row-kind">{kindWord}</span>
             ) : null}
-            {fact ? <span className={factClass}>{fact}</span> : null}
+            {factNode}
             {project ? (
               <ProjectButton name={project.name} onOpen={project.onOpen}
                 className="needs-row-project" data-testid="needs-row-project" />
             ) : null}
           </span>
-        ) : fact ? <span className={factClass}>{fact}</span> : null}
+        ) : factNode}
       </span>
       <span className="needs-row-lamp">
         <LampGadget label={lamp.label} on tone={lampGadgetTone(lamp.tone)} />

@@ -204,6 +204,10 @@ def _epoch_seconds(stamp: Any) -> float | None:
     return parsed.timestamp()
 
 
+#: Phase 16: the most of an agent's question a Needs row carries.
+CODER_QUESTION_CHARS = 4000
+
+
 def _excerpt(text: str) -> str:
     flat = " ".join(text.split())
     if len(flat) <= CODER_EXCERPT_CHARS:
@@ -299,7 +303,10 @@ def coder_items(
             "agent": agent,
             "cwd": str(session.get("cwd") or ""),
             "repoRoot": str(session.get("repo_root") or ""),
-            "question": _excerpt(question),
+            # Phase 16: the agent's words as it wrote them (newlines and
+            # marks kept); the face draws them (AgentWords). The title stays
+            # the flat excerpt.
+            "question": question[:CODER_QUESTION_CHARS],
             "waitKind": "approve" if approve else "answer",
             "waitStartedAt": started,
             "ageSeconds": age,

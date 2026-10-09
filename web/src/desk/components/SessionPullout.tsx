@@ -44,6 +44,7 @@ import {
   retractLauncher,
 } from "./DeskWindow";
 import { spriteUrl } from "../sprites";
+import { AgentWords } from "./AgentWords";
 import { useLaneOwnsSteering } from "../lane/laneStore";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
@@ -757,9 +758,7 @@ export function SessionPullout() {
           }}
         />
         {(session?.awaitingResponse || session?.blocked) && session.question ? (
-          <pre className="desk-pullout-md desk-session-question">
-            {session.question}
-          </pre>
+          <AgentWords className="desk-session-question" text={String(session.question)} />
         ) : null}
         {/* Conductor F2 (K5b): Speak answer opens the answer well here, in
             the body under the question: the steer composer, its mic

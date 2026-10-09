@@ -25,6 +25,7 @@ import { SessionPullout } from "../../components/SessionPullout";
 import { fromWireFlight, useAgentFlights } from "../../agentFlights";
 import { useSteering } from "../../steering";
 import { wireClock } from "../../surface/format";
+import { BRIEF_HEAD, OWNER_TEXT, noLiteralMarks } from "../../components/__tests__/fixtures.agentWords";
 
 const QUESTION = "The runbook needs a rollback owner. Jordan or Avery?";
 const KEY = "claude:c1a0de00-runbook";
@@ -186,7 +187,7 @@ describe("the station track (C-4's borrow)", () => {
     expect(by.DONE).toMatchObject({ state: "reached", tone: "ok" });
     expect(by.ASKS).toBeUndefined();
     const done = laneEntries(lane, lane.events as never).find((e) => e.word === "DONE");
-    expect(done?.text).toBe("PR #413 is open; both tests pass.");
+    expect(done?.words).toBe("PR #413 is open; both tests pass.");
   });
 
   it("PHILO-15 15 (B43): a held call's rail entry says why it waits", () => {
@@ -226,7 +227,7 @@ describe("the timeline words", () => {
     const entries = eventEntries(fixture().events as never);
     expect(entries.map((e) => e.word)).toEqual(["READ", "SAYS", "WRITE", "RUN"]);
     expect(entries[0].code).toBe("ledger/freeze.py · docs/runbooks/README.md · +2");
-    expect(entries[1].quote).toBe("I will draft the runbook from the freeze decision.");
+    expect(entries[1].words).toBe("I will draft the runbook from the freeze decision.");
     expect(entries[2].code).toBe("docs/runbooks/ledger-rollback.md");
     expect(entries[3].code).toBe("pytest tests/runbooks -q");
   });
@@ -782,5 +783,38 @@ describe("PHILO-15 20: Raw approves a cut call; Take back", () => {
     expect(within(screen.getByTestId("lane-rail")).getByText(
       `TAKEN BACK · ${wireClock("2026-10-07T21:31:00Z")} · BY YOU · BY YOUR PRESS ${wireClock("2026-10-07T21:30:00Z")}`,
     )).toBeTruthy();
+  });
+});
+
+// Phase 16 (owner catch on 08-lane-asks-1440.png): the agent's words render.
+describe("Phase 16: the lane draws the agent's words with AgentWords", () => {
+  it("the ask well, the rail and the SENT line: no marks as text, the head cut at a word", async () => {
+    const lane = fixture({
+      wait: { question: OWNER_TEXT, kind: "TO ANSWER", wait_id: "w-9", started: new Date(Date.now() - 60_000).toISOString() },
+      answers: [{ id: 4, ts: T("09:42"), outcome: "delivered", text_head: BRIEF_HEAD }],
+      events: [
+        { id: 1, ts: T("09:42"), event: "UserPromptSubmit", text: "brief" },
+        { id: 2, ts: T("09:50"), event: "Stop", text: OWNER_TEXT },
+      ],
+    } as Partial<LaneWire>);
+    await openLane(lane);
+    const ask = screen.getByTestId("lane-ask");
+    noLiteralMarks(ask.querySelector(".ask-well-question")?.textContent ?? "");
+    expect(ask.querySelector(".ask-well-question ol")?.children).toHaveLength(3);
+    const rail = screen.getByTestId("lane-rail");
+    noLiteralMarks(rail.textContent ?? "");
+    expect(rail.querySelector(".lane-rail-says strong")?.textContent).toBe("project.list");
+    const receipt = screen.getByTestId("lane-receipt").textContent ?? "";
+    expect(receipt).toMatch(/^SENT · \d\d:\d\d · HoldSpeak hands you one item: /);
+    expect(receipt.endsWith('line". …')).toBe(true);
+  });
+
+  it("a turn end with no question (IDLE) draws its words too", async () => {
+    const lane = fixture({
+      wait: { question: "Done. `NOTES.md` holds **hosts: not read**.", kind: "TO ANSWER", turn_end: "idle", wait_id: "w-8", started: new Date().toISOString() },
+    } as Partial<LaneWire>);
+    await openLane(lane);
+    const end = screen.queryByTestId("lane-turn-end") ?? screen.getByTestId("lane-ask");
+    noLiteralMarks(end.textContent ?? "");
   });
 });
