@@ -22,9 +22,9 @@
   box-sizing: border-box;
   max-width: none;
   overflow: hidden;
-  background-color: var(--wb-backdrop);
-  background-image: conic-gradient(var(--wb-dither) 25%, transparent 0 50%, var(--wb-dither) 0 75%, transparent 0);
-  background-size: 4px 4px;
+  /* PHILO-16 (A1) §2: the floor is the Workbench backdrop under the one
+     light (8 px checker, bright top-left, falling to the foot) */
+  background: var(--desk-floor);
 }
 @media (min-width: 721px) {
   .chair:not(.chair-first-value) {
