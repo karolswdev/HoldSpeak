@@ -1,0 +1,4 @@
+{
+  "about": "PHILO-16 R2: the recorded transcript the graph walk's import transcription double answers for each window of tests/fixtures/philo3_architect_meeting.wav. The product still decodes and windows the WAV; no Whisper model loads.",
+  "text": "We agreed to keep the service boundary at the API gateway and move the billing adapter behind it. Dana owns the migration plan by Friday."
+}

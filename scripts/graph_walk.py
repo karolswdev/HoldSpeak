@@ -38,7 +38,8 @@ the field list does not name it. A step marked `"is_trigger": true` inside
 a contract gap to reconcile with the atlas author.
 
 VARIABLES: an `api` step may carry `capture_as` (and `capture_path`, a dotted
-or JSON-pointer path into its response; the default is `id`). The captured
+or JSON-pointer path into its response; the default is `id`; `capture_raw:
+true` keeps the JSON value instead of its string). The captured
 value fills `{name}` in every later step's `path`, `body`, `selector`, `name`,
 `value`, `url` and `key`, and in the case's own `expected.observe_at` and
 predicate fields. An unresolved `{name}` at fire time is BLOCKED, naming it —
@@ -98,6 +99,7 @@ A step is `{"kind": <one of STEP_KINDS>, ...}`:
             | {label, substitute: "http_fault", method, path, status, body?, times?}
             | {label, substitute: "http_fault_lift"}
             | {label, substitute: "cli_runner", reply}
+            | {label, substitute: "import_transcriber", reply}
             A substitution must be PERFORMED, never merely labelled:
             `engine_reply` installs a recorded provider reply at the product's
             own seam INSIDE the hub process, and the step blocks if the hub
@@ -106,6 +108,12 @@ A step is `{"kind": <one of STEP_KINDS>, ...}`:
             matching same-origin requests with `status` in the BROWSER
             (Playwright page.route); the hub never sees them. Only the
             hub's own origin matches. `http_fault_lift` removes them.
+            `import_transcriber` (PHILO-16 R2) installs a RECORDED transcript
+            (`reply`, `{"text", "delay_s"?}` under tests/fixtures/) at the
+            meeting import's transcriber seam INSIDE the hub process
+            (`meeting_import._transcriber_factory`): the WAV is still decoded
+            and windowed by the product; no Whisper model loads, and no walk
+            reads the owner's model cache.
             `cli_runner` (PHILO-10-05) installs a RECORDING runner at the CLI
             channels' process edge (`channel_cli.CLI_RUNNER`) INSIDE the hub
             process, answering `gh` / `acli` by argv prefix from the case's
@@ -2484,8 +2492,13 @@ class Hub:
                  producer_clock: bool = False,
                  record_rehearsal: bool = False,
                  transcript_path: Path | None = None,
-                 cli_runner: Path | None = None) -> None:
+                 cli_runner: Path | None = None,
+                 import_transcriber: Path | None = None) -> None:
         self.home = guard_home(home)
+        # PHILO-16 R2: the import transcription double's script, and what the
+        # hub installed (the digest it printed).
+        self.import_transcriber_path = import_transcriber
+        self.import_transcriber: str | None = None
         # PHILO-10-05: the recording runner's script, and what the hub installed.
         self.cli_runner_path = cli_runner
         self.cli_runner: str | None = None
@@ -2529,6 +2542,8 @@ class Hub:
                 self.engine_provider_url = line.split(" ", 1)[1].strip()
             elif line.startswith("CLI_RUNNER "):
                 self.cli_runner = line.split(" ", 1)[1].strip()
+            elif line.startswith("IMPORT_TRANSCRIBER "):
+                self.import_transcriber = line.split(" ", 1)[1].strip()
             elif line.startswith("WIRING "):
                 self.wiring = json.loads(line.split(" ", 1)[1])
             elif line.startswith("PRODUCER_CLOCK_READ "):
@@ -2548,6 +2563,7 @@ class Hub:
         self.engine_replay = None
         self.engine_provider_url = None
         self.cli_runner = None
+        self.import_transcriber = None
         self.producer_clock = None
         self.wiring = {}
         env = dict(os.environ)
@@ -2562,6 +2578,8 @@ class Hub:
             command += ["--engine-replay", str(self.engine_replay_path)]
         if self.cli_runner_path:
             command += ["--cli-runner", str(self.cli_runner_path)]
+        if self.import_transcriber_path:
+            command += ["--import-transcriber", str(self.import_transcriber_path)]
         if self.producer_clock_path is not None:
             command += ["--producer-clock", str(self.producer_clock_path)]
         if self.record_rehearsal:
@@ -2876,6 +2894,14 @@ class _ReplayIntel:
         self.active_provider = reply.get("provider", "replay")
         self.active_model = reply.get("model", "recorded-reply")
         self.calls: list[str] = []
+        # PHILO-16 R2: a reply may declare `delay_s`: the provider call holds
+        # that long before it answers, so a case can read the job while the
+        # real drainer holds it `claimed` (an instant reply is final first).
+        self.delay_s = float(reply.get("delay_s", 0) or 0)
+
+    def _hold(self) -> None:
+        if self.delay_s > 0:
+            time.sleep(self.delay_s)
 
     def _result(self) -> Any:
         from holdspeak.intel.models import ActionItem, IntelResult
@@ -2891,6 +2917,7 @@ class _ReplayIntel:
 
     def analyze(self, transcript: str, *, stream: bool = False) -> Any:
         self.calls.append("analyze")
+        self._hold()
         if stream:
             return iter([self.reply.get("summary", ""), self._result()])
         return self._result()
@@ -2909,15 +2936,18 @@ class _ReplayIntel:
     def run_prompt(self, *, system_prompt: str = "", user_prompt: str = "",
                    **_kwargs: Any) -> str:
         self.calls.append("run_prompt")
+        self._hold()
         return self.reply.get("raw_text", json.dumps(self.reply))
 
     def run_prompt_messages(self, *, messages: Any, **_kwargs: Any) -> str:
         self.calls.append("run_prompt_messages")
+        self._hold()
         return self.reply.get("raw_text", json.dumps(self.reply))
 
     def _chat_completion_text(self, messages: Any, **_kwargs: Any) -> str:
         # AgentTurnService.dispatch_plugin reaches this physical provider leaf.
         self.calls.append("_chat_completion_text")
+        self._hold()
         return self.reply.get("raw_text", json.dumps(self.reply))
 
     def run_prompt_stream(self, **_kwargs: Any) -> Any:
@@ -3000,6 +3030,42 @@ def _install_engine_replay(path: Path) -> tuple[str, str]:
     provider_url = f"http://127.0.0.1:{provider.server_address[1]}/v1"
     _install_lan_double(f"127.0.0.1:{provider.server_address[1]}")
     return hashlib.sha256(path.read_bytes()).hexdigest(), provider_url
+
+
+class _ReplayTranscriber:
+    """PHILO-16 R2: the import's transcriber, answering a recorded text.
+
+    The import calls ``transcribe(chunk, admission=...)`` once per window
+    (holdspeak/meeting_import.py `import_meeting`); a plain-text transcriber
+    keeps the fixed windows. `delay_s` holds each window that long, so a case
+    can read the importing state.
+    """
+
+    def __init__(self, script: dict[str, Any]) -> None:
+        self.text = str(script["text"])
+        self.delay_s = float(script.get("delay_s", 0))
+
+    def transcribe(self, _audio: Any, **_kwargs: Any) -> str:
+        if self.delay_s > 0:
+            time.sleep(self.delay_s)
+        return self.text
+
+
+def _install_import_transcriber(path: Path) -> str:
+    """Install the recorded transcript at the import route's own seam.
+
+    The seam is `holdspeak.web.routes.meeting_import._transcriber_factory`
+    (the module attribute the import tests monkeypatch, and the one the MCP
+    `meeting_import` tool reads at call time). It is assigned INSIDE the hub
+    process, so a walk never loads a Whisper model nor reads the owner's
+    model cache.
+    """
+    import holdspeak.web.routes.meeting_import as import_route
+
+    script = json.loads(path.read_text())
+    transcriber = _ReplayTranscriber(script)
+    import_route._transcriber_factory = lambda _config: transcriber
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 #: PHILO-16 (C): the LAN address a replayed case types into Runs on. It is
@@ -3208,7 +3274,8 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
            record_rehearsal: bool = False,
            transcript_path: str | None = None,
            cli_runner: str | None = None,
-           transcribe_double: str | None = None) -> None:
+           transcribe_double: str | None = None,
+           import_transcriber: str | None = None) -> None:
     """The rig's hub subprocess: a real MeetingWebServer on a fresh HOME.
 
     It takes the product's OWN database owner lock and runs the product's own
@@ -3265,6 +3332,12 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
         print(f"CLI_RUNNER {digest}", flush=True)
     else:
         lacks.append("a CLI process edge (no recording runner requested; gh and acli are never run)")
+
+    if import_transcriber:
+        digest = _install_import_transcriber(Path(import_transcriber))
+        has.append("a RECORDED transcript at the meeting import's transcriber seam "
+                   "(no Whisper model is loaded; the WAV is still decoded and windowed)")
+        print(f"IMPORT_TRANSCRIBER {digest}", flush=True)
 
     brief_clock = None
     if producer_clock:
@@ -5016,6 +5089,9 @@ def _isolated_hub_env(
         # reaches an engine that runs on this machine (Ollama, LM Studio,
         # llama.cpp). Engines a case needs come from its doubles.
         "HOLDSPEAK_LOOPBACK_ENGINE_PORTS": "",
+        # PHILO-16 R2: EventKit is per macOS user, not per HOME; a rig hub
+        # never reads the owner's real calendars (holdspeak/macos_calendar.py).
+        "HOLDSPEAK_MACOS_CALENDAR": "0",
     })
     env.pop("TMUX", None)
     env.pop("TMUX_PANE", None)
@@ -5783,8 +5859,12 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
                 raise Blocked(
                     f"capture_as {name!r}: no value at {where!r} in the response "
                     f"of {step['method']} {step['path']}")
-            variables[name] = str(value)
-            record["captured"] = {"name": name, "path": where, "value": str(value),
+            # PHILO-16 R2: `capture_raw: true` keeps the JSON value (a route
+            # that takes an integer revision refuses the string "1"); an exact
+            # `"{name}"` then fills in as that value (`substitute`).
+            kept = value if step.get("capture_raw") is True else str(value)
+            variables[name] = kept
+            record["captured"] = {"name": name, "path": where, "value": kept,
                                   **({"match": match} if match is not None else {})}
         return record
     if kind == "fixture":
@@ -6058,12 +6138,32 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
             provenance["boundary_substitutions"].append(
                 {"label": label, "substitute": substitution, "installed_sha256": hub.cli_runner})
             return record
+        if substitution == "import_transcriber":
+            # PHILO-16 R2: performed at boot (the hub process installs it);
+            # this step verifies the INSTALLED transcript is the case's.
+            if hub is None or getattr(hub, "import_transcriber", None) is None:
+                raise Blocked(
+                    "the import transcription double is NOT installed in the hub "
+                    "process. Declare `reply` on the boundary step so the hub is "
+                    "booted with it.")
+            declared = step.get("reply")
+            digest = _sha256(_repo_path(declared)) if declared else None
+            if digest != hub.import_transcriber:
+                raise Blocked(f"the hub installed transcript {hub.import_transcriber[:12]}, "
+                              f"not the case's {(digest or 'undeclared')[:12]}")
+            provenance["fixture_hashes"][declared] = digest
+            record["installed_sha256"] = hub.import_transcriber
+            record["seam"] = "holdspeak.web.routes.meeting_import._transcriber_factory"
+            provenance["boundary_substitutions"].append(
+                {"label": label, "substitute": substitution,
+                 "installed_sha256": hub.import_transcriber})
+            return record
         if substitution != "engine_reply":
             raise Blocked(
                 f"boundary substitution {substitution!r} (label {label!r}) is not "
                 "implemented; a label alone substitutes nothing. The implemented "
-                "substitutions are 'engine_reply', 'http_fault', 'http_fault_lift' "
-                "and 'cli_runner'.")
+                "substitutions are 'engine_reply', 'http_fault', 'http_fault_lift', "
+                "'cli_runner' and 'import_transcriber'.")
         if hub is None or getattr(hub, "engine_replay", None) is None:
             raise Blocked(
                 "the recorded provider reply is NOT installed in the hub "
@@ -6284,6 +6384,30 @@ def case_cli_runner(case: dict[str, Any]) -> str | None:
     for step in case_steps(case):
         if step.get("kind") == "boundary" and step.get("substitute") == "cli_runner":
             return step.get("reply")
+    return None
+
+
+def case_import_transcriber(case: dict[str, Any]) -> str | None:
+    """PHILO-16 R2: the recorded import transcript a boundary step declares, if any."""
+    for step in case_steps(case):
+        if step.get("kind") == "boundary" and step.get("substitute") == "import_transcriber":
+            return step.get("reply")
+    return None
+
+
+def import_transcriber_problem(case: dict[str, Any]) -> str | None:
+    """PHILO-16 R2 (Astra MUST): a declared import_transcriber boundary with no
+    recorded transcript. Read before the hub starts: a boundary without `reply`
+    would boot the hub with the REAL Transcriber, and an import ordered before
+    the boundary step would reach it before the step could refuse."""
+    for step in _iter_case_steps(case):
+        if (isinstance(step, dict) and step.get("kind") == "boundary"
+                and step.get("substitute") == "import_transcriber"):
+            reply = step.get("reply")
+            if not isinstance(reply, str) or not reply.strip():
+                return ("an import_transcriber boundary declares no `reply` (the "
+                        "recorded transcript under tests/fixtures/); refused before "
+                        "the hub starts, so no import reaches the real Transcriber")
     return None
 
 
@@ -7347,6 +7471,13 @@ def run_case(
             "engine_reply boundary")
         return recorder.record
 
+    transcriber_problem = import_transcriber_problem(case)
+    if transcriber_problem:
+        recorder.set(verdict="blocked", complete=True,
+                     duration_s=round(time.monotonic() - run_started, 3))
+        recorder.note(f"BLOCKED: {transcriber_problem}")
+        return recorder.record
+
     if build and not headless:
         _ensure_build()
 
@@ -7357,10 +7488,12 @@ def run_case(
     try:
         scheduler = case_needs_scheduler(case)
         cli_script = case_cli_runner(case)
+        import_script = case_import_transcriber(case)
         hub = Hub(home, token=token, scheduler=scheduler,
                   engine_replay=_repo_path(replay) if replay else None,
                   producer_clock=case_needs_producer_clock(case),
-                  cli_runner=_repo_path(cli_script) if cli_script else None).start()
+                  cli_runner=_repo_path(cli_script) if cli_script else None,
+                  import_transcriber=_repo_path(import_script) if import_script else None).start()
         provenance["hub"] = {"url": hub.url, "port": hub.port,
                              "pid": hub.proc.pid if hub.proc else None,
                              "home": str(home),
@@ -7383,6 +7516,7 @@ def run_case(
         provenance["engine_replay_sha256"] = hub.engine_replay
         provenance["engine_provider_url"] = hub.engine_provider_url
         provenance["cli_runner_sha256"] = hub.cli_runner
+        provenance["import_transcriber_sha256"] = hub.import_transcriber
         if engine == "real":
             provenance["engine_identity"] = _engine_identity()
         recorder.set(provenance=provenance)
@@ -7529,6 +7663,8 @@ def main(argv: list[str] | None = None) -> int:
                          help="opt-in rehearsal JSONL path (must be under HOME)")
     p_serve.add_argument("--cli-runner", default=None,
                          help="a recording runner script for the CLI channels' process edge")
+    p_serve.add_argument("--import-transcriber", default=None,
+                         help="a recorded transcript at the meeting import's transcriber seam")
     p_serve.add_argument("--transcribe-double", default=None,
                          help="a deterministic transcript at the hub's transcribe seam "
                               "(on_transcribe); the browser's audio still streams")
@@ -7552,7 +7688,8 @@ def main(argv: list[str] | None = None) -> int:
                record_rehearsal=bool(getattr(args, "record_rehearsal", False)),
                transcript_path=getattr(args, "transcript_path", None),
                cli_runner=getattr(args, "cli_runner", None),
-               transcribe_double=getattr(args, "transcribe_double", None))
+               transcribe_double=getattr(args, "transcribe_double", None),
+               import_transcriber=getattr(args, "import_transcriber", None))
         return 0
 
     if args.mode == "calibrate":

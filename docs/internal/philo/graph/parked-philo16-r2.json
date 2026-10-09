@@ -1,0 +1,902 @@
+{
+  "parked": "2026-10-09, PHILO-16 R2: atlas cases whose state a product ruling retired (DELETE parks a meeting and parked jobs are hidden; an assigned profile refuses deletion, 409 model_profile_referenced). Their live ids stay in atlas.json as not_applicable with the successor named in `reason`; these are the declarations as they stood, with the R2 repairs (setup ordering, captured ids and revisions, the import transcription double).",
+  "source_commit": "7da169efa",
+  "cases": [
+    {
+      "id": "case.j9.shade_open.door_stale",
+      "job": "j9",
+      "edge_ids": [
+        "edge.face.shade_receipt_open"
+      ],
+      "state_id": "state.projections.door.stale",
+      "applicability": "applicable",
+      "preconditions": [
+        "case.j6.run_summary.intel_queued reached, then the meeting deleted -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/jobs/0/meeting_id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/intel/jobs",
+          "why": "RUN_SUMMARY really queued a job against THIS meeting"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "import_transcriber",
+          "label": "the import's transcriber answers a recorded transcript at the route's own seam (meeting_import._transcriber_factory); the upload, the decode, the windows, the meeting row and its status stay real; no Whisper model loads and no model cache is read",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo16_import_transcript.json"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.77.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route",
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          }
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine || PHILO-16 R2: checked in setup BEFORE the delete; as a precondition it was read after the setup deleted the meeting, so it could not hold"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name || PHILO-16 R2: checked in setup BEFORE the delete; as a precondition it was read after the setup deleted the meeting, so it could not hold"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "api",
+          "method": "DELETE",
+          "path": "/api/meetings/{meeting_id}",
+          "body": null
+        },
+        {
+          "kind": "ui",
+          "selector": "[title='Desk memory']",
+          "action": "click",
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "selector": "section[aria-label=\"Needs attention\"] .desk-shade-item:has-text(\"Meeting intelligence\") .desk-shade-do button:has-text(\"Open\")",
+        "action": "click",
+        "adapter": "ui-pointer"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "window_titled",
+          "value": "Meetings"
+        },
+        "observe_at": ".desk-shade",
+        "words": "the job row still carries an Open verb pointing at the deleted meeting; record what the click actually reaches (an empty surface, a refusal, or nothing) - an unexplained no-op is a finding [the audit's stated observation location: face: the shade; face: whatever the Open opens]"
+      },
+      "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.j3.profile_delete.profile_missing",
+      "job": "j3",
+      "edge_ids": [
+        "edge.route.model_profile_delete"
+      ],
+      "state_id": "state.engines.profile_missing",
+      "applicability": "applicable",
+      "preconditions": [
+        "a profile assigned to meeting.deferred_analysis",
+        "PHILO-16 R2: one meeting imported in this run (the fixture WAV through the real import route, the recorded transcript at the import's transcriber seam), so the Run summary verb the check below reads exists",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "chair-desk"
+          },
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam, and the rig's LAN double answers /models for 192.168.77.43:8080 from loopback; Runs on, the Model Library, the assignment writes, import, queue and persistence remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "import_transcriber",
+          "label": "the import's transcriber answers a recorded transcript at the route's own seam (meeting_import._transcriber_factory); the upload, the decode, the windows, the meeting row and its status stay real; no Whisper model loads and no model cache is read",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo16_import_transcript.json"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.77.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/model-profiles",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "profile_id",
+          "capture_path": "profiles",
+          "capture_match": {
+            "label": "192.168.77.43:8080"
+          },
+          "capture_field": "profile_id",
+          "why": "PHILO-16 R2: the profile Runs on minted for the LAN engine (Add an engine above), found by the label the owner sees; {profile_id} was never captured, so the trigger never fired",
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/model-profiles",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "profile_revision",
+          "capture_path": "profiles",
+          "capture_match": {
+            "label": "192.168.77.43:8080"
+          },
+          "capture_field": "revision",
+          "why": "PHILO-16 R2: the route refuses without ?expected_revision= (400 'expected_revision is required', web/routes/primitives/model_profiles.py); the revision the owner's profile holds now",
+          "body": null
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route",
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "DELETE",
+        "path": "/api/model-profiles/{profile_id}?expected_revision={profile_revision}",
+        "body": null,
+        "adapter": "http-route",
+        "why": "PHILO-16 R2: sent with ?expected_revision= the route requires"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "No engine for summaries"
+        },
+        "observe_at": "[data-testid=needs-drawer]",
+        "words": "the resolved endpoint carries reason 'assigned profile missing: <id>' and falls back rather than raising; the Chair's SETUP row returns or the run refuses by name [the audit's stated observation location: protocol: GET /api/inference/assignments; face: [data-testid=arrival-blocker-row]] || PHILO-16 R2: PHILO-14 A5 (#935) moved the SETUP rows into the Needs you window (NeedsDrawer.tsx, needs-drawer); the Chair's arrival-blocker no longer draws them"
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ]
+}
