@@ -572,6 +572,19 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             expect(page.get_by_test_id("meeting-summary-text")).to_have_text(engine.result.summary)
             assert _chip_label(host) in _loaded(page.get_by_test_id("summary-record-attempts")).inner_text()
             print("PASS: the persisted summary and run receipt agree with the planned host")
+            # PHILO-16 R2 (Astra item 2): `drawn` proves layout; the owner must
+            # SEE it. After the real-signal wait, the record is scrolled to the
+            # attempts row and the summary, and both must sit in the viewport.
+            for test_id in ("summary-record-attempts", "meeting-summary-text"):
+                page.get_by_test_id(test_id).scroll_into_view_if_needed()
+            in_view = page.evaluate("""() => ['summary-record-attempts', 'meeting-summary-text'].map(id => {
+              const el=document.querySelector(`[data-testid=${id}]`);
+              if (!el) return [id, false];
+              const r=el.getBoundingClientRect();
+              return [id, r.width>0 && r.height>0 && r.top>=0 && r.left>=0 &&
+                r.bottom<=innerHeight && r.right<=innerWidth];
+            })""")
+            assert all(ok for _, ok in in_view), f"{width}: the run's result is not in view: {in_view}"
             shot("summary-reopened")
 
             # Generic Notes query: log the selected identity, then execute that row.

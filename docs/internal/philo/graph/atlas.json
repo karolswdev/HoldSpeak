@@ -2789,7 +2789,7 @@
       "edge_ids": [
         "edge.route.model_profile_delete"
       ],
-      "state_id": "state.engines.profile_delete_refused",
+      "state_id": "state.engines.assigned_ready",
       "applicability": "applicable",
       "preconditions": [
         "a profile assigned to meeting.deferred_analysis (Runs on: Add an engine, then the Default and Meetings jobs on it) -- REPRODUCED in this run by the setup steps above",
@@ -3200,7 +3200,7 @@
             "path": "/api/model-profiles"
           }
         ],
-        "words": "PHILO-16 R2 (successor of case.j3.profile_delete.profile_missing): the delete of a profile a job still runs on is refused by name -- 409 model_profile_referenced (holdspeak/services/model_profile_service.py delete_profile) -- and the roster still holds that same profile afterwards"
+        "words": "PHILO-16 R2 (successor of case.j3.profile_delete.profile_missing): the delete of a profile a job still runs on is refused by name -- 409 model_profile_referenced (holdspeak/services/model_profile_service.py delete_profile) -- and the roster still holds that same profile afterwards, still assigned (state.engines.assigned_ready: the refusal leaves the assignment in place)"
       },
       "completion_bound_s": 20,
       "viewports": []
@@ -18195,7 +18195,8 @@
       ],
       "reachable_by": [
         "case.j3.concierge_use_for_summaries.assigned_ready",
-        "case.j3.route_assignments_set.assigned_ready"
+        "case.j3.route_assignments_set.assigned_ready",
+        "case.j3.profile_delete_refused.roster_unchanged"
       ]
     },
     {
@@ -18224,30 +18225,6 @@
       ],
       "reachable_by": [
         "case.j3.profile_delete.profile_missing"
-      ]
-    },
-    {
-      "id": "state.engines.profile_delete_refused",
-      "family": "engines",
-      "values": {
-        "refusal": "model_profile_referenced",
-        "status": 409
-      },
-      "phase1_refs": [
-        {
-          "path": "docs/internal/philo/data/voice.json",
-          "record_id": "model.runtime_profile"
-        }
-      ],
-      "sources": [
-        {
-          "path": "holdspeak/services/model_profile_service.py",
-          "symbol": "code=\"model_profile_referenced\",",
-          "claim": "a profile an assignment or binding still depends on refuses deletion by name"
-        }
-      ],
-      "reachable_by": [
-        "case.j3.profile_delete_refused.roster_unchanged"
       ]
     },
     {

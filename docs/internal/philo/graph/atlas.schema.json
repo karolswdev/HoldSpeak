@@ -899,6 +899,27 @@
             "substitute",
             "label"
           ],
+          "if": {
+            "properties": {
+              "substitute": {
+                "const": "import_transcriber"
+              }
+            },
+            "required": [
+              "substitute"
+            ]
+          },
+          "then": {
+            "required": [
+              "reply"
+            ],
+            "properties": {
+              "reply": {
+                "minLength": 1
+              }
+            },
+            "description": "PHILO-16 R2 (Astra MUST on 3671b90aa): an import_transcriber boundary names its recorded transcript; without one the hub would boot with the real Transcriber."
+          },
           "properties": {
             "kind": {
               "const": "boundary"

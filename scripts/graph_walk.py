@@ -6395,6 +6395,22 @@ def case_import_transcriber(case: dict[str, Any]) -> str | None:
     return None
 
 
+def import_transcriber_problem(case: dict[str, Any]) -> str | None:
+    """PHILO-16 R2 (Astra MUST): a declared import_transcriber boundary with no
+    recorded transcript. Read before the hub starts: a boundary without `reply`
+    would boot the hub with the REAL Transcriber, and an import ordered before
+    the boundary step would reach it before the step could refuse."""
+    for step in _iter_case_steps(case):
+        if (isinstance(step, dict) and step.get("kind") == "boundary"
+                and step.get("substitute") == "import_transcriber"):
+            reply = step.get("reply")
+            if not isinstance(reply, str) or not reply.strip():
+                return ("an import_transcriber boundary declares no `reply` (the "
+                        "recorded transcript under tests/fixtures/); refused before "
+                        "the hub starts, so no import reaches the real Transcriber")
+    return None
+
+
 def case_steps(case: dict[str, Any]) -> list[dict[str, Any]]:
     steps = [s for s in (case.get("setup") or []) if isinstance(s, dict)]
     steps += [s for s in (case.get("preconditions") or [])
@@ -7453,6 +7469,13 @@ def run_case(
         recorder.note(
             "--engine replayed was requested but the case declares no "
             "engine_reply boundary")
+        return recorder.record
+
+    transcriber_problem = import_transcriber_problem(case)
+    if transcriber_problem:
+        recorder.set(verdict="blocked", complete=True,
+                     duration_s=round(time.monotonic() - run_started, 3))
+        recorder.note(f"BLOCKED: {transcriber_problem}")
         return recorder.record
 
     if build and not headless:
