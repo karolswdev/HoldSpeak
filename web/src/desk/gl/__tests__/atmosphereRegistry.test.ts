@@ -9,7 +9,8 @@ import {
 
 describe("atmosphere registry", () => {
   it("publishes lazy personalization metadata and a safe fallback", () => {
-    expect(DEFAULT_ATMOSPHERE_ID).toBe("rainy-city");
+    // PHILO-16 (A1) §2: the backdrop (Quiet Desk) is the default.
+    expect(DEFAULT_ATMOSPHERE_ID).toBe("quiet-desk");
     expect(ATMOSPHERES).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

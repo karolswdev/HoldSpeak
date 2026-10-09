@@ -95,6 +95,43 @@ describe("DeskWindowFrame (the one chrome)", () => {
     expect(shell.style.display).not.toBe("none");
   });
 
+  it("a seated window with no application tile gets its own seat tile; a press restores it and the tile goes (PHILO-16 A1 §5)", () => {
+    const { container } = render(
+      <>
+        <DeskWindowFrame
+          id="pullout:thread:t9"
+          title="Ledger questions"
+          kindWord="Thread"
+          icon={<img src="/thread.png" alt="" />}
+          open
+          onClose={() => {}}
+        >
+          <p>thread body</p>
+        </DeskWindowFrame>
+        <Dock />
+      </>,
+    );
+    const dock = screen.getByRole("toolbar", { name: "Dock" });
+    // open, the window is on the desk: no seat tile
+    expect(dock.querySelector(".desk-dock-seat-tile")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Iconify Ledger questions" }));
+    expect(useDesk.getState().panelMin).toEqual(["pullout:thread:t9"]);
+    // seated: one tile with its name, its title-bar icon and the seat lamp
+    const tile = screen.getByRole("button", { name: "Ledger questions, iconified" });
+    expect(tile.classList.contains("desk-dock-seat-tile")).toBe(true);
+    expect(tile.querySelector(".desk-dock-label")?.textContent).toBe("Ledger questions");
+    expect(tile.querySelector(".desk-dock-seat-icon img")?.getAttribute("src")).toBe("/thread.png");
+    expect(tile.querySelector(".desk-dock-seat")).toBeTruthy();
+    expect(dock.querySelectorAll(".desk-dock-seat-tile")).toHaveLength(1);
+    // the press restores it to the front; the tile goes
+    fireEvent.click(tile);
+    expect(useDesk.getState().panelMin).toEqual([]);
+    expect(useDesk.getState().panelOrder.at(-1)).toBe("pullout:thread:t9");
+    const shell = container.querySelector('[role="region"][aria-label="Ledger questions"]') as HTMLElement;
+    expect(shell.style.display).not.toBe("none");
+    expect(dock.querySelector(".desk-dock-seat-tile")).toBeNull();
+  });
+
   it("unmountOnMinimize opts heavy content out of a parked mount", () => {
     render(
       <DeskWindowFrame

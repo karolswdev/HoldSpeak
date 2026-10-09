@@ -1,7 +1,7 @@
 // Dock — the application launcher + running window toolbar.
 // Extracted from DeskWindow.tsx (HS-117-04).
 import { needYouWords } from "../../surface/count";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openIntelligence } from "../../intelligenceNavigation";
@@ -16,7 +16,8 @@ import { useShortcutSheet } from "../../chromeState";
 import { useKeymap } from "../../keymap";
 import { WorkMenu } from "../DeskMenu";
 import { dockChipMenuEntries } from "../../windowMenuAdapter";
-import { useOpenWindows, chipEls } from "./windowRegistry";
+import { useOpenWindows, useShownName, chipEls } from "./windowRegistry";
+import { windowIcons } from "./seatIcons";
 import { useLaunchers } from "./launcherRegistry";
 import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
@@ -172,6 +173,40 @@ const seatRef = (windowId: string) => (el: HTMLElement | null) => {
   else chipEls.delete(windowId);
 };
 const seatLamp = <span className="desk-dock-seat" aria-hidden="true" />;
+
+/** PHILO-16 (A1) §5: a seated window whose application has no Dock tile
+ * gets its own seat tile: its icon (the title bar's), its shown name, the
+ * seat lamp. A press restores it to the front, like every tile. The tile
+ * goes when the window closes or comes back. */
+function SeatTile({
+  window: w,
+  onMenu,
+}: {
+  window: { id: string; label: string; glyph: string; close: () => void };
+  onMenu: (e: ReactMouseEvent, name: string) => void;
+}) {
+  const name = useShownName(w.id, w.label);
+  const icon = windowIcons.get(w.id);
+  return (
+    <Button
+      ref={seatRef(w.id)}
+      variant="chrome"
+      data-seat={w.id}
+      className="desk-dock-launch desk-dock-seat-tile is-seated"
+      aria-label={`${name}, iconified`}
+      onClick={() => useDesk.getState().restorePanel(w.id)}
+      onContextMenu={(e) => onMenu(e, name)}
+    >
+      {icon != null ? (
+        <span className="desk-dock-seat-icon" aria-hidden="true">{icon}</span>
+      ) : (
+        <span aria-hidden="true">{w.glyph}</span>
+      )}
+      <span className="desk-dock-label">{name}</span>
+      {seatLamp}
+    </Button>
+  );
+}
 const PEOPLE_APPLICATION = applicationForAction("open-people");
 const DOCK_FACE_APPLICATIONS = [
   ...DOCK_APPLICATIONS,
@@ -496,6 +531,15 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       !activeDrawerIds.has(window.id) &&
       !hiddenProjectWindowIds.has(windowsById[window.id]?.scope || ""),
   );
+  // PHILO-16 (A1) §5: the seated windows no tile above seats (an application
+  // opened as a pullout, a launcher, or a project already has its tile).
+  const tiledIds = new Set<string>([
+    ...DOCK_FACE_APPLICATIONS.map((application) => `pullout:${application.windowId}`),
+    ...launchers.map((launcher) => launcher.id),
+  ]);
+  const seatedWithoutTile = NUB_CHIPS
+    ? []
+    : visibleWindowChips.filter((w) => panelMin.includes(w.id) && !tiledIds.has(w.id));
   return (
     <div
       ref={dockRef}
@@ -653,6 +697,18 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </Button>
         );
       })}
+      {/* PHILO-16 (A1) §5: a seated window always has a seat. One whose
+          application has no tile here gets its own, after the projects. */}
+      {seatedWithoutTile.map((w) => (
+        <SeatTile
+          key={`seat:${w.id}`}
+          window={w}
+          onMenu={(e, name) => {
+            e.preventDefault();
+            setChipMenu({ id: w.id, label: name, x: e.clientX, y: e.clientY, minimized: true, close: w.close });
+          }}
+        />
+      ))}
       {/* HS-135-06 + HS-135-14: Floor/Chair toggle — the floor-grid
           sprite replaces the ▦ glyph character. */}
       <Button

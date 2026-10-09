@@ -311,6 +311,25 @@
   bottom: 4px;
   left: auto;
 }
+/* PHILO-16 (A1) §5: the seat tile of a seated window that has no
+   application tile: its title-bar icon at the tile's 32 px, its name at
+   96 px at most (ellipsised inside the tile), the seat lamp */
+.desk-next .desk-dock-seat-icon {
+  display: grid;
+  place-items: center;
+  align-self: end;
+  width: 32px;
+  height: 32px;
+}
+.desk-next .desk-dock-seat-icon :is(img, svg) {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  filter: drop-shadow(1px 1px 0 var(--shadow-ink-4));
+}
+.desk-next .desk-dock-seat-tile .desk-dock-label {
+  max-width: 96px;
+}
 /* the count: the ember-ink notch at the top right */
 .desk-next .desk-dock-launch .desk-dock-badge {
   position: absolute;

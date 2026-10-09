@@ -56,6 +56,7 @@ import {
 } from "./window/windowRegistry";
 import { GadgetGlyph } from "./window/GadgetGlyph";
 import { DOCK_SPRITES } from "../systemSprites";
+import { windowIcons } from "./window/seatIcons";
 import {
   type DockLauncher,
   announceLauncher,
@@ -698,6 +699,20 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   // window has the same name, and the title bar shows that same name.
   const name = useShownName(id, ownName);
   const dock = chipMode === "always" || minimized;
+  // PHILO-16 (A1) §4.1: the object's icon: the host's own, else the sprite
+  // its Dock launcher wears. The title bar and the window's seat share it.
+  const titleIcon: ReactNode =
+    icon ??
+    (DOCK_SPRITES[id] ? (
+      <img src={DOCK_SPRITES[id]} alt="" width={14} height={14} draggable={false} />
+    ) : null);
+  useEffect(() => {
+    if (titleIcon == null) return;
+    windowIcons.set(id, titleIcon);
+    return () => {
+      windowIcons.delete(id);
+    };
+  });
 
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -1035,12 +1050,8 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         {leading}
         {/* PHILO-16 (A1) §4.1: the object's icon, 14 px, left of the title:
             the host's own icon, else the sprite its Dock launcher wears. */}
-        {(icon ?? DOCK_SPRITES[id]) ? (
-          <span className="desk-window-icon">
-            {icon ?? (
-              <img src={DOCK_SPRITES[id]} alt="" width={14} height={14} draggable={false} />
-            )}
-          </span>
+        {titleIcon != null ? (
+          <span className="desk-window-icon">{titleIcon}</span>
         ) : null}
         {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
             title (Article VII.1); the prop survives for callers/AT. */}

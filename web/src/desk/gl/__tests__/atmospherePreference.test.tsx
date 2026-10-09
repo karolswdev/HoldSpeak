@@ -11,8 +11,12 @@ beforeEach(() => localStorage.clear());
 
 describe("Desk atmosphere preference", () => {
   it("falls back safely when storage is empty or stale", () => {
-    expect(readAtmospherePreference()).toBe("rainy-city");
+    // PHILO-16 (A1) §2: a fresh HOME gets the backdrop (Quiet Desk)
+    expect(readAtmospherePreference()).toBe("quiet-desk");
     localStorage.setItem(ATMOSPHERE_STORAGE_KEY, "retired-scene");
+    expect(readAtmospherePreference()).toBe("quiet-desk");
+    // an owner who chose a scene keeps it
+    localStorage.setItem(ATMOSPHERE_STORAGE_KEY, "rainy-city");
     expect(readAtmospherePreference()).toBe("rainy-city");
   });
 
