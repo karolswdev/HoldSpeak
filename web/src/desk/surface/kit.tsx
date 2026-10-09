@@ -37,7 +37,7 @@ export type StatusStripItem = {
   testId?: string;
 };
 
-/** The status strip: tokens on one baseline (mono 11 upper), wrapping at a
+/** The status strip: tokens on one baseline (mono 12 upper), wrapping at a
  *  narrow width. An empty strip draws nothing. */
 export function StatusStrip({
   items,

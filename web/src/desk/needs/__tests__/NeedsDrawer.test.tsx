@@ -818,3 +818,43 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     expect(plates).toEqual(["CC", "CX", "PR", "ACT", "DEC", "ACT", "ACT", "MTG"]);
   });
 });
+
+// Astra r1 M4: a dated proposal carries its date as `proposalDue` (the
+// producer: needs_you_aggregate.py), never `dueAt`; it is Due today, not
+// No due date.
+describe("NeedsDrawer FilterBar reads a proposal's own date (Phase 16)", () => {
+  it("a proposal due today is under Due today, and No due date does not list it", async () => {
+    const t = new Date();
+    const today = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+    const proposals = [
+      {
+        id: "proposal:prop-dated", ref: "Ship the runbook", kind: "proposal",
+        source: "proposal", title: "Ship the runbook",
+        why: "PROPOSED · cutover sync", severity: "info", projectId: "", projectName: "",
+        proposalId: "prop-dated", proposalKind: "action", meetingId: "m-cut",
+        meetingTitle: "cutover sync", proposalDue: today,
+      },
+      {
+        id: "proposal:prop-undated", ref: "Pick the vendor", kind: "proposal",
+        source: "proposal", title: "Pick the vendor",
+        why: "PROPOSED · cutover sync", severity: "info", projectId: "", projectName: "",
+        proposalId: "prop-undated", proposalKind: "action", meetingId: "m-cut",
+        meetingTitle: "cutover sync",
+      },
+    ];
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { count: 2, items: proposals, blockers: [], failedMeetings: [], coverage: [], complete: true } as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("2 need you");
+    expect(row("Ship the runbook").querySelector(".needs-row-fact")?.textContent).toContain(`by ${today}`);
+    const bar = screen.getByTestId("needs-filter");
+    fireEvent.click(within(bar).getByRole("button", { name: "Due today" }));
+    const names = () => [...screen.getByTestId("needs-list").querySelectorAll(".needs-row-name")].map((n) => n.textContent);
+    expect(names()).toEqual(["Ship the runbook"]);
+    fireEvent.click(within(bar).getByRole("button", { name: "No due date" }));
+    expect(names()).toEqual(["Pick the vendor"]);
+  });
+});

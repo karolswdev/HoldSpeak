@@ -18,7 +18,7 @@
    full plate with its gadget; a token is a cell of a rail, so the two
    still never look alike (canon D). */
 .surface-filter-token.btn {
-  min-height: 24px;
+  min-height: var(--size-btn);
   padding: 4px 10px;
   border: 1px solid var(--wb-ink);
   border-radius: 0;
@@ -26,7 +26,7 @@
   box-shadow: var(--wb-raised-soft);
   color: var(--wb-ink);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -50,11 +50,11 @@
 .surface-filter-token.btn[data-filter-active] {
   box-shadow: var(--wb-sunken);
   border-color: var(--wb-ink);
-  background: var(--wb-sel, var(--wb-blue));
+  background: var(--wb-sel);
   color: var(--wb-paper);
 }
 .surface-filter-token.btn[data-filter-active]:hover:not(:disabled) {
-  background: var(--wb-sel, var(--wb-blue));
+  background: var(--wb-sel);
 }
 
 /* PHILO-13-11 (C1, §3a) — the folded strip (stripMenu.tsx): at the phone
@@ -84,12 +84,12 @@
 .surface-filter-token.btn:disabled,
 .surface-filter-token.btn[data-filter-active]:disabled {
   box-shadow: none;
-  background: color-mix(in srgb, var(--wb-steel) 45%, transparent);
-  color: var(--wb-muted, var(--wb-ink-dim));
+  background: var(--wb-field);
+  color: var(--wb-muted);
 }
 .surface-filter-token.btn[data-filter-active]:disabled {
-  border-color: var(--wb-sel, var(--wb-blue));
+  border-color: var(--wb-sel);
 }
 .surface-filter-token.btn:disabled:not([data-filter-active]) {
-  border-color: var(--wb-rule-soft, var(--wb-rule));
+  border-color: var(--wb-rule-soft);
 }

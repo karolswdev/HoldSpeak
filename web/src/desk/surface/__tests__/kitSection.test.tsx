@@ -33,9 +33,9 @@ describe("Section (Phase 16 kit)", () => {
     expect(screen.getByTestId("more")).toBeTruthy();
   });
 
-  it("the caption is mono 11 upper with the hairline to the right edge", () => {
+  it("the caption is mono 12 upper (UX-CANON §C floor) with the hairline to the right edge", () => {
     const css = readFileSync(resolve(__dirname, "../surface.css"), "utf8");
     expect(css).toMatch(/\.surface-section-head::after \{[^}]*flex: 1 1 12px;[^}]*height: 1px;/);
-    expect(css).toMatch(/\.surface-section-head h3 \{[^}]*font-size: 11px;[^}]*font-weight: 700;[^}]*letter-spacing: 0\.06em;[^}]*text-transform: uppercase;/);
+    expect(css).toMatch(/\.surface-section-head h3 \{[^}]*font-size: 12px;[^}]*font-weight: 700;[^}]*letter-spacing: 0\.06em;[^}]*text-transform: uppercase;/);
   });
 });

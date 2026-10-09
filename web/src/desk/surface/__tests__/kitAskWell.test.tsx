@@ -31,7 +31,7 @@ describe("AskWell (Phase 16 kit)", () => {
 
   it("the well is sunken paper; the mic plate is raised Steel on its right edge", () => {
     const css = readFileSync(resolve(__dirname, "../gadgets.css"), "utf8");
-    expect(css).toMatch(/\.gadget-string \{[^}]*border: 1px solid var\(--wb-ink\);[^}]*background: var\(--wb-well, var\(--wb-paper\)\);[^}]*box-shadow: var\(--wb-sunken\);/);
+    expect(css).toMatch(/\.gadget-string \{[^}]*border: 1px solid var\(--wb-ink\);[^}]*background: var\(--wb-well\);[^}]*box-shadow: var\(--wb-sunken\);/);
     expect(css).toMatch(/\.desk-next \.gadget-string \.desk-mic \{[^}]*align-self: stretch;[^}]*border-left: 1px solid var\(--wb-ink\);[^}]*background: var\(--wb-steel\);/);
   });
 });

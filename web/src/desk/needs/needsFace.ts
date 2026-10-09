@@ -497,7 +497,10 @@ function memberFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
   }
   const item = member.item ?? ({} as NeedsYouRoomItem);
   const face = attentionFace(item, ctx);
-  if (item.dueAt) face.due = String(item.dueAt);
+  // Astra r1 M4: a dated proposal carries its date as `proposalDue`
+  // (needs_you_aggregate.py), an item as `dueAt`.
+  const due = item.dueAt ?? item.proposalDue;
+  if (due) face.due = String(due);
   // Every row of a Project names it (an agent's ask names its session instead).
   if (!face.askOf && item.projectId && item.projectName) {
     face.project = { id: String(item.projectId), name: String(item.projectName) };

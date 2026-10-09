@@ -254,3 +254,44 @@ describe("PHILO-13-06: the Room's load failure in plain words", () => {
     await waitFor(() => expect(screen.queryByTestId("room-load-failed")).toBeNull());
   });
 });
+
+// Phase 16 (Astra r1 M3): the Room window's History and Steward verbs
+// (`openProjectRoomAt`) REVEAL their place, whatever the Room shows: every
+// other posture steps aside first, as a proposal request does.
+describe("Phase 16: a Room request reveals its place", () => {
+  it("Steward opens the Steward posture; History asked for under it shows the History wing", async () => {
+    const { openProjectRoomAt } = await import("../../../desk/openObject");
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
+      if (url.includes("/steward/runs")) return Promise.resolve({ runs: [] });
+      if (url.includes("/room")) return Promise.resolve(roomResponse({ changes: CHANGES }));
+      return Promise.resolve(detailResponse(url));
+    });
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("room-body");
+    openProjectRoomAt("p1", "steward");
+    await screen.findByTestId("steward-posture");
+    expect(screen.queryByTestId("room-body")).toBeNull();
+    openProjectRoomAt("p1", "history");
+    await screen.findByTestId("room-history");
+    expect(screen.queryByTestId("steward-posture")).toBeNull();
+    expect(await screen.findAllByTestId("history-entry")).toHaveLength(2);
+  });
+
+  it("Steward asked for from the History wing leaves History for the Steward posture", async () => {
+    const { openProjectRoomAt } = await import("../../../desk/openObject");
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
+      if (url.includes("/steward/runs")) return Promise.resolve({ runs: [] });
+      if (url.includes("/room")) return Promise.resolve(roomResponse({ changes: CHANGES }));
+      return Promise.resolve(detailResponse(url));
+    });
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("room-body");
+    openProjectRoomAt("p1", "history");
+    await screen.findByTestId("room-history");
+    openProjectRoomAt("p1", "steward");
+    await screen.findByTestId("steward-posture");
+    expect(screen.queryByTestId("room-history")).toBeNull();
+  });
+});

@@ -303,7 +303,7 @@
   bottom: 0;
   z-index: var(--desk-z-local);
   /* Phase 16: the sticky well sits on the window's own ground. */
-  background: var(--wb-field, var(--surface-1, #15171d));
+  background: var(--wb-field);
   padding-bottom: 8px;
 }
 /* PHILO-9-03 (F10, the ratified items canvas): at a narrow window the sticky

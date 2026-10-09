@@ -33,7 +33,7 @@
   gap: 8px;
   flex-wrap: wrap;
   padding: 4px 10px 10px 64px;
-  border-bottom: 1px solid var(--wb-rule-soft, var(--wb-rule));
+  border-bottom: 1px solid var(--wb-rule-soft);
 }
 @container surface (max-width: 520px) {
   .needs-drawer-well {

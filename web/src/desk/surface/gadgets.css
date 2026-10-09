@@ -326,19 +326,19 @@
    bevel), ink words in the sans body step; the mic is a raised Steel plate
    on the well's right edge (the voice law: a mic on every input). */
 .gadget-string {
-  --text: var(--wb-text, var(--wb-ink));
-  --text-muted: var(--wb-muted, var(--wb-ink-dim));
+  --text: var(--wb-text);
+  --text-muted: var(--wb-muted);
   display: flex;
   align-items: stretch;
   width: 100%;
   min-height: 26px;
   border: 1px solid var(--wb-ink);
-  background: var(--wb-well, var(--wb-paper));
+  background: var(--wb-well);
   box-shadow: var(--wb-sunken);
 }
 .gadget-string:focus-within {
   border-color: var(--wb-ink);
-  outline: 1px solid var(--wb-sel, var(--wb-blue));
+  outline: 1px solid var(--wb-sel);
   outline-offset: 0;
 }
 /* PHILO-15 02: StringGadget `caption` — the visible name above the well,
@@ -370,11 +370,11 @@
   box-shadow: none;
   padding: 4px 10px;
   font: 400 13px / 1.35 var(--font-sans);
-  color: var(--wb-text, var(--wb-ink));
+  color: var(--wb-text);
   text-align: left;
 }
 .gadget-string input::placeholder {
-  color: var(--wb-muted, var(--wb-ink-dim));
+  color: var(--wb-muted);
   opacity: 1;
 }
 .gadget-string input:focus {

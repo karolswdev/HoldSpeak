@@ -53,7 +53,7 @@ import { StandingPagesSection, useStandingPages } from "../../desk/standingPages
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
-import { ROOM_AT_EVENT, ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, refOpener, takeRoomAtRequest, takeRoomProposalRequest, takeRoomUpdatesRequest } from "../../desk/openObject";
+import { ROOM_AT_EVENT, ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, refOpener, takeRoomAtRequest, takeRoomProposalRequest, takeRoomUpdatesRequest, type RoomPlace } from "../../desk/openObject";
 import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type {
@@ -2282,22 +2282,6 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     window.addEventListener(ROOM_UPDATES_EVENT, take);
     return () => window.removeEventListener(ROOM_UPDATES_EVENT, take);
   }, [ctrl.projectId, enterUpdates]);
-  // Phase 16: the Room window's History and Steward verbs (the drawer's
-  // FilterBar and Sources section) open this Room AT that place.
-  const { enterSteward } = stewardCtrl;
-  const { setView } = ctrl;
-  useEffect(() => {
-    const projectId = ctrl.projectId;
-    if (!projectId) return;
-    const take = () => {
-      const place = takeRoomAtRequest(projectId);
-      if (place === "history") setView("history");
-      else if (place === "steward") void enterSteward();
-    };
-    take();
-    window.addEventListener(ROOM_AT_EVENT, take);
-    return () => window.removeEventListener(ROOM_AT_EVENT, take);
-  }, [ctrl.projectId, enterSteward, setView]);
   // PHILO-14 A2b: a proposal row elsewhere (Needs you) opens this Room with
   // that proposal selected in OPEN HERE. `seq` counts the requests, so the
   // same proposal asked for again is revealed again (A5b, Astra r1).
@@ -2328,19 +2312,49 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   // which steps aside with no write (a kept Update place is not restored
   // over the request), the Room goes to its ROOM wing (not History),
   // and the selected row scrolls into view.
+  // Every posture steps aside the way its own Close does; the Update posture
+  // NEVER writes (Muad'Dib's ruling on Astra r2): its text, kept draft and
+  // failure stay; Draft update brings the editor back. Always: it also
+  // forgets a kept Update place that a just-mounted Room is still restoring
+  // (393 opens a fresh Room window). `keepSteward`: the Steward request.
+  const leavePostures = (keepSteward = false) => {
+    if (reviewCtrl.posture !== "off") reviewCtrl.exitReview();
+    updateCtrl.stepAside();
+    if (!keepSteward && stewardCtrl.posture !== "off") stewardCtrl.exitSteward();
+    if (prepareCtrl.posture !== "off") prepareCtrl.exit();
+  };
   const revealProposal = useRef<(id: string) => void>(() => undefined);
   revealProposal.current = (id: string) => {
-    if (reviewCtrl.posture !== "off") reviewCtrl.exitReview();
-    // The Update posture steps aside and NEVER writes (Muad'Dib's ruling on
-    // Astra r2): its text, kept draft and failure stay; Draft update brings
-    // the editor back. Always: it also forgets a kept Update place that a
-    // just-mounted Room is still restoring (393 opens a fresh Room window).
-    updateCtrl.stepAside();
-    if (stewardCtrl.posture !== "off") stewardCtrl.exitSteward();
-    if (prepareCtrl.posture !== "off") prepareCtrl.exit();
+    leavePostures();
     if (ctrl.view !== "room") ctrl.setView("room");
     setProposalRequest((prev) => ({ id, seq: prev.seq + 1 }));
   };
+  // Phase 16 (Astra r1 M3): the Room window's History and Steward verbs
+  // (the drawer's FilterBar and Sources) REVEAL their place, as a proposal
+  // request does: every other posture steps aside first (Update without a
+  // write), then History shows its wing, or Steward its posture.
+  const revealPlace = useRef<(place: RoomPlace) => void>(() => undefined);
+  revealPlace.current = (place: RoomPlace) => {
+    if (place === "history") {
+      leavePostures();
+      if (ctrl.view !== "history") ctrl.setView("history");
+      return;
+    }
+    leavePostures(true);
+    if (ctrl.view !== "room") ctrl.setView("room");
+    if (stewardCtrl.posture === "off") void stewardCtrl.enterSteward();
+  };
+  useEffect(() => {
+    const projectId = ctrl.projectId;
+    if (!projectId) return;
+    const take = () => {
+      const place = takeRoomAtRequest(projectId);
+      if (place) revealPlace.current(place);
+    };
+    take();
+    window.addEventListener(ROOM_AT_EVENT, take);
+    return () => window.removeEventListener(ROOM_AT_EVENT, take);
+  }, [ctrl.projectId]);
   useEffect(() => {
     const projectId = ctrl.projectId;
     if (!projectId) return;

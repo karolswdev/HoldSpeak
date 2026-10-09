@@ -48,10 +48,10 @@ describe("Ledger + LedgerRow (Phase 16 kit)", () => {
 
   it("the well is sunken paper with an ink border; a row's name is sans 15/500; the hover tints at 12 %", () => {
     const css = readFileSync(resolve(__dirname, "../surface.css"), "utf8");
-    expect(css).toMatch(/\.surface-ledger \{[^}]*background: var\(--wb-well, var\(--wb-paper\)\);[^}]*border: 1px solid var\(--wb-ink\);[^}]*box-shadow: var\(--wb-sunken\);/);
+    expect(css).toMatch(/\.surface-ledger \{[^}]*background: var\(--wb-well\);[^}]*border: 1px solid var\(--wb-ink\);[^}]*box-shadow: var\(--wb-sunken\);/);
     expect(css).toMatch(/\.surface-ledger-primary \{[^}]*font: 500 15px \/ 1\.3 var\(--font-sans\);/);
     expect(css).toMatch(/\.surface-ledger-line:hover \{[^}]*12%/);
     const kit = readFileSync(resolve(__dirname, "../kit.css"), "utf8");
-    expect(kit).toMatch(/\.kit-kind \{[^}]*width: 44px;[^}]*background: var\(--wb-steel\);[^}]*box-shadow: var\(--wb-raised-soft\);[^}]*font: 700 10px/);
+    expect(kit).toMatch(/\.kit-kind \{[^}]*width: 44px;[^}]*background: var\(--wb-steel\);[^}]*box-shadow: var\(--wb-raised-soft\);[^}]*font: 700 12px/);
   });
 });

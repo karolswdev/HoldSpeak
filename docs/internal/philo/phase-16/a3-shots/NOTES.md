@@ -27,20 +27,20 @@ area).
   (one confirmed for Jordan, one to decide).
 - The script: the lane's scratchpad `a3_shots.py` (not committed).
 
-## Lane A1's material is injected
+## The material
 
-Lane A1 (the slate ground, the paper wells, the interior token remap) is on
-its own branch and not on `main`. So that the shots show the kit in the
-material it was drawn for, the rig injects A1's `:root` tokens (from
-`p16/a1-material` 86ed790cc, `tokens.css`) and A1's
-`web/src/desk/components/window-interior.css` verbatim into the page. The
-kit itself reads A1's tokens with fallbacks: without A1 the window ground
-stays dark and the kit's ground words fall back to `--text`, so a face
-stays readable; the paper wells are paper either way.
+Lane A1 is merged (main `fcb477e6c`, merged into this branch). These shots
+are on the real material: A1's tokens and `window-interior.css`, no
+injection. (An earlier set injected A1's branch CSS before it merged; this
+set replaces it.)
+
+The sentence "No engine for summaries" at the top of the Meetings window is
+the Meetings list's own status line (pre-existing, `HistoryCore.tsx`
+headline); it is left as it is.
 
 ## What the 393 run measured
 
-- Every library Button on the meeting window owns 44 px (height or the
-  narrow-desk halo): none under 44 px.
+- On each of the four windows, every library Button owns 44 px (its height
+  or the narrow-desk halo), and none sits past the window's right edge.
 - No horizontal scroll on the screen.
 - No page errors at 1440 or 393.

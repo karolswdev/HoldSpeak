@@ -41,6 +41,6 @@ describe("FilterBar (Phase 16 kit)", () => {
   it("the token is the kit cell: Steel at rest; the active one the selection blue, sunken", () => {
     const css = readFileSync(resolve(__dirname, "../filter-tokens.css"), "utf8");
     expect(css).toMatch(/\.surface-filter-token\.btn \{[^}]*background: var\(--wb-steel\)/);
-    expect(css).toMatch(/\[data-filter-active\] \{[^}]*box-shadow: var\(--wb-sunken\);[^}]*background: var\(--wb-sel, var\(--wb-blue\)\);[^}]*color: var\(--wb-paper\)/);
+    expect(css).toMatch(/\[data-filter-active\] \{[^}]*box-shadow: var\(--wb-sunken\);[^}]*background: var\(--wb-sel\);[^}]*color: var\(--wb-paper\)/);
   });
 });

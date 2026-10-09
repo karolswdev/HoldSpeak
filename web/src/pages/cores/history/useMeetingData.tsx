@@ -24,7 +24,7 @@ import {
 } from "../../../lib/productLanguage";
 
 /** HS-172: a follow-through proposal from the wire. */
-interface FollowThroughProposal {
+export interface FollowThroughProposal {
   id: string;
   meeting_id: string;
   project_id?: string | null;
@@ -36,6 +36,12 @@ interface FollowThroughProposal {
   model_host?: string | null;
   state: "proposed" | "confirmed" | "dismissed";
   created_at: string;
+  /** What the owner confirmed (the wire's `owner`, `due`). */
+  owner?: string | null;
+  due?: string | null;
+  /** Phase 16 (Astra r1 M1): the action item an action proposal names (the
+   *  producer's link, proposal_bridge_service.py): one obligation, one row. */
+  action_item_id?: string | null;
 }
 
 export interface MeetingData {
@@ -184,7 +190,9 @@ export function useMeetingData(
       await apiFetch(`/api/proposals/${encodeURIComponent(proposalId)}/confirm`, {
         method: "POST",
       });
-      setFtProposals((prev) => prev.filter((p) => p.id !== proposalId));
+      // Phase 16 (Astra r1 M2): the confirmed proposal stays on the record
+      // (Decisions · n keeps it, now decided), never vanishing until a reload.
+      setFtProposals((prev) => prev.map((p) => (p.id === proposalId ? { ...p, state: "confirmed" } : p)));
       onReceipt({ text: "CONFIRMED" });
     } catch (reason) {
       onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
@@ -199,7 +207,7 @@ export function useMeetingData(
       await apiFetch(`/api/proposals/${encodeURIComponent(proposalId)}/dismiss`, {
         method: "POST",
       });
-      setFtProposals((prev) => prev.filter((p) => p.id !== proposalId));
+      setFtProposals((prev) => prev.map((p) => (p.id === proposalId ? { ...p, state: "dismissed" } : p)));
       onReceipt({ text: "DISMISSED" });
     } catch (reason) {
       onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });

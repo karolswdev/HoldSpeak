@@ -21,7 +21,7 @@ import {
 import { apiFetch } from "../../../lib/api";
 import type { DetailView, Receipt } from "./helpers";
 import { MeetingReview } from "./MeetingReview";
-import { useMeetingData, type MeetingData } from "./useMeetingData";
+import { useMeetingData, type FollowThroughProposal, type MeetingData } from "./useMeetingData";
 import { MeetingHeader } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
 import { ArtifactsLibrary } from "./ArtifactsLibrary";
@@ -44,59 +44,70 @@ type OutcomeRow = {
 /** Phase 16 (the interior kit; the canvas window "Cutover sync"): the
  *  meeting's Decisions and Commitments, each a Section over a Ledger of
  *  kind-plated rows. A decision the meeting proposed asks to be decided
- *  (`TO DECIDE`, Confirm / Dismiss); a commitment it proposed asks to be
- *  confirmed; an open action names its owner (or `UNASSIGNED`); a settled
- *  one is `DONE`. A Section with no rows is not drawn (A.8). */
+ *  (`TO DECIDE`, Confirm / Dismiss); a confirmed one names its owner.
+ *
+ *  Commitments are OBLIGATIONS, one row each (Astra r1 M1): an action
+ *  proposal names its action item (`action_item_id`, the producer's link in
+ *  proposal_bridge_service.py), so the item and its proposal are ONE row,
+ *  `TO CONFIRM` while the proposal waits. A dismissed proposal or item is
+ *  never drawn. The items are the aftercare's rows, else the meeting's own
+ *  (`intel.action_items`). A Section with no rows is not drawn (A.8). */
 export function meetingOutcomes(
   data: Pick<MeetingData, "ftProposals" | "openActions" | "settledActions">,
-  /** The meeting's own action items (the detail's `intel.action_items`):
-   *  read when the aftercare rows hold none, so a commitment is never lost
-   *  and never drawn twice. */
   intelActions: readonly Record<string, unknown>[] = [],
 ): {
   decisions: OutcomeRow[];
   commitments: OutcomeRow[];
 } {
-  const proposed = (kind: "decision" | "action") =>
-    data.ftProposals.filter((p) => p.kind === kind && p.state === "proposed");
   const owner = (value: unknown) => presentValue(value).toUpperCase();
-  const decisions: OutcomeRow[] = [
-    ...proposed("decision").map((p) => ({
-      key: `ft-${p.id}`, plate: "DEC" as const, text: p.text, meta: "TO DECIDE", tone: "ask" as const,
-    })),
-    ...data.ftProposals
-      .filter((p) => p.kind === "decision" && p.state === "confirmed")
-      .map((p) => ({
+  const live = data.ftProposals.filter((p) => p.state !== "dismissed");
+  const decisions: OutcomeRow[] = live
+    .filter((p) => p.kind === "decision")
+    .map((p) => p.state === "proposed"
+      ? { key: `ft-${p.id}`, plate: "DEC" as const, text: p.text, meta: "TO DECIDE", tone: "ask" as const }
+      : {
         key: `ft-${p.id}`, plate: "DEC" as const, text: p.text,
-        meta: owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
-      })),
-  ];
-  const commitments: OutcomeRow[] = [
-    ...proposed("action").map((p) => ({
-      key: `ft-${p.id}`, plate: "ACT" as const, text: p.text,
-      meta: p.due_hint ? `TO CONFIRM · BY ${String(p.due_hint).toUpperCase()}` : "TO CONFIRM", tone: "ask" as const,
-    })),
-    ...data.openActions.map((row, index) => ({
-      key: `open-${String(row.id ?? index)}`, plate: "ACT" as const,
-      text: String(row.text ?? row.title ?? "Action item"),
-      meta: owner(row.owner) || "UNASSIGNED",
-    })),
-    ...data.settledActions.map((row, index) => ({
-      key: `done-${String(row.id ?? index)}`, plate: "ACT" as const,
-      text: String(row.text ?? row.title ?? "Action item"),
-      meta: owner(row.owner) ? `DONE · ${owner(row.owner)}` : "DONE", tone: "ok" as const,
-    })),
-    ...(data.openActions.length || data.settledActions.length ? [] : intelActions).map((row, index) => {
-      const done = String(row.status ?? "").toLowerCase() === "done";
-      const who = owner(row.owner);
-      return {
-        key: `intel-${String(row.id ?? index)}`, plate: "ACT" as const,
-        text: String(row.task ?? row.text ?? row.title ?? "Action item"),
-        meta: done ? (who ? `DONE · ${who}` : "DONE") : who || "UNASSIGNED",
-        tone: done ? ("ok" as const) : undefined,
-      };
-    }),
-  ];
+        meta: owner(p.owner) || owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
+      });
+
+  const actionProposals = data.ftProposals.filter((p) => p.kind === "action");
+  const proposalOf = (itemId: string) => actionProposals.find((p) => p.action_item_id && p.action_item_id === itemId);
+  const toConfirm = (p: FollowThroughProposal): OutcomeRow => ({
+    key: `ft-${p.id}`, plate: "ACT", text: p.text,
+    meta: p.due_hint ? `TO CONFIRM · BY ${String(p.due_hint).toUpperCase()}` : "TO CONFIRM", tone: "ask",
+  });
+  const items = data.openActions.length || data.settledActions.length
+    ? [...data.openActions, ...data.settledActions]
+    : [...intelActions];
+  const itemIds = new Set<string>();
+  const commitments: OutcomeRow[] = [];
+  for (const [index, row] of items.entries()) {
+    const id = String(row.id ?? "");
+    if (id) itemIds.add(id);
+    const status = String(row.status ?? "").toLowerCase();
+    if (status === "dismissed") continue;
+    const proposal = id ? proposalOf(id) : undefined;
+    if (proposal?.state === "dismissed") continue;
+    if (proposal?.state === "proposed") {
+      commitments.push(toConfirm(proposal));
+      continue;
+    }
+    const text = String(row.task ?? row.text ?? row.title ?? proposal?.text ?? "Action item");
+    const who = owner(row.owner) || owner(proposal?.owner);
+    const done = status === "done";
+    commitments.push({
+      key: `item-${id || index}`, plate: "ACT", text,
+      meta: done ? (who ? `DONE · ${who}` : "DONE") : who || "UNASSIGNED",
+      tone: done ? "ok" : undefined,
+    });
+  }
+  // An action proposal whose item this face did not read is its own row.
+  for (const p of live) {
+    if (p.kind !== "action" || (p.action_item_id && itemIds.has(p.action_item_id))) continue;
+    commitments.push(p.state === "proposed"
+      ? toConfirm(p)
+      : { key: `ft-${p.id}`, plate: "ACT", text: p.text, meta: owner(p.owner) || owner(p.owner_hint) || "UNASSIGNED" });
+  }
   return { decisions, commitments };
 }
 
@@ -126,7 +137,7 @@ function OutcomeLedger({ label, rows, testId }: { label: string; rows: OutcomeRo
   );
 }
 
-function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting: Record<string, unknown> }) {
+export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting: Record<string, unknown> }) {
   const intel = ((data.detail ?? meeting)?.intel ?? null) as { action_items?: unknown } | null;
   const intelActions = Array.isArray(intel?.action_items)
     ? (intel!.action_items as unknown[]).filter((a): a is Record<string, unknown> => Boolean(a) && typeof a === "object")

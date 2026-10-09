@@ -158,7 +158,10 @@ small {
 }
 
 :where(.btn--sm) {
-  min-height: 24px;
+  /* Phase 16 (Astra r1 M6): the kit Verb is ONE height. A dense Button is
+     the same 28 px plate as any other (--size-btn); it only packs its
+     padding. */
+  min-height: var(--size-btn);
   padding-inline: var(--space-2);
   /* HS-202-05 (the type-scale ruling, §4): the readable floor. The raw
      11px here was the last sub-floor size on the library Button. */
@@ -190,7 +193,7 @@ small {
   }
 
   :where(.btn--sm) {
-    --btn-painted-h: 24px;
+    --btn-painted-h: var(--size-btn);
   }
 
   :where(.btn)::after {
@@ -219,7 +222,7 @@ small {
    (Workbench blue) with paper on it; the ember stays for lamps and asks. */
 :where(.btn--primary, .btn.primary) {
   border-color: var(--wb-ink);
-  background: var(--wb-sel, var(--wb-blue));
+  background: var(--wb-sel);
   color: var(--wb-paper);
   box-shadow: var(--wb-raised);
 }
@@ -259,7 +262,7 @@ small {
 
 :where(.btn--primary, .btn.primary):hover:not(:disabled) {
   border-color: var(--wb-ink);
-  background: color-mix(in srgb, var(--wb-sel, var(--wb-blue)) 88%, var(--wb-paper));
+  background: color-mix(in srgb, var(--wb-sel) 88%, var(--wb-paper));
 }
 
 :where(.btn.danger, .btn--danger):hover:not(:disabled) {
@@ -276,13 +279,14 @@ small {
   outline-offset: var(--focus-outline-offset);
 }
 
-/* Phase 16: a disabled verb is no plate: flat (no bevel), the Steel faded,
-   the word in the muted ink. It still reads as the same verb, held. */
+/* Phase 16: a disabled verb is no plate: flat (no bevel) on the opaque
+   slate ground, the word in the muted ink (5.3:1 on --wb-field, on any
+   page behind it). It still reads as the same verb, held. */
 :where(.btn):disabled {
-  border-color: var(--wb-rule-soft, var(--wb-rule));
-  background: color-mix(in srgb, var(--wb-steel) 45%, transparent);
+  border-color: var(--wb-rule-soft);
+  background: var(--wb-field);
   box-shadow: none;
-  color: var(--wb-muted, var(--wb-ink-dim));
+  color: var(--wb-muted);
   cursor: not-allowed;
 }
 

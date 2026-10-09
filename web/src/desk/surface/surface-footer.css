@@ -38,10 +38,10 @@
   font-weight: 500;
 }
 .desk-next .surface-footer .gadget-chip-egress[data-scope="local"] {
-  color: var(--wb-ok-ink, #1d5c2e);
+  color: var(--wb-ok-ink);
 }
 .desk-next .surface-footer .gadget-chip-egress:is([data-scope="mixed"], [data-scope="cloud"], [data-scope="remote"]) {
-  color: var(--wb-ember-ink, #7a4a2c);
+  color: var(--wb-ember-ink);
 }
 .desk-next .surface-footer-layout {
   display: grid;
