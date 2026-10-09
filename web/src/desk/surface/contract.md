@@ -919,3 +919,47 @@ plate (dense or not), with the 44 px halo at the narrow desk.
 | **AskWell** | `gadgets.tsx` `StringGadget` (the well) and `objects/AskWell.tsx` (the question plate that holds one) | Every text well is a sunken paper well, ink words in the sans body step (13), the mic a raised Steel plate the well's full height on its right edge (`--size-icon-lg` wide; 44 px at the narrow container): the voice law. The Room's ask (`RoomAskWell`) is this well (its raw input retired). The AskWell question plate is raised Steel with ink. |
 | **Foot** | `SurfaceFooter.tsx`, `surface-footer.css` | The Steel foot: an ink line and a shine along its top (inset), ink words; the egress chip a paper plate (ink border; its scope the word's ink tone); the receipt in the middle; the verbs right. Egress exactly where egress happens (A.9). |
 | **Verb** | `components/signal/Signal.tsx` `Button`; its material in `styles/global.css` | A raised Steel plate with a 1 px ink border and ink; `primary` the selection blue with paper; `danger` the Workbench red (`--wb-rec`) with paper; `secondary` and `ghost` the same plate at the same height; pressed (`:active`, `aria-pressed`) it sinks (`--wb-sunken`); disabled is flat and faded. `chrome` is unchanged (the strip owns its ink). The 44 px narrow-desk halo stays. |
+
+## SurfaceSwitchboard (PHILO-16 C, the Runs on board)
+
+The picture of what runs on what (COMPOSITOR.md §12, canvas Board 2). It
+replaces the parked HS-101 list switchboard (`Surface.tsx`, rendered
+nowhere). It decides nothing: the app answers `accepts` and writes in
+`onPatch`.
+
+- `jobs: SwitchJob[]` — the left column. Each: `name` (sans 14/600),
+  `tasks` (one mono-10-upper token line), `state` (one of the five:
+  `ready · limited · broken · waiting · off`, drawn as the plug's colour:
+  green, amber, red, steel, dim steel), `verb` (Try it), `result` (the
+  answer on the job), `isDefault` (the Default for AI work row).
+- `engines: SwitchEngine[]` — the right column. Each: `emblem`
+  (`MAC · LAN · API` plate), `name`, `tokens`, `lamp`
+  (`ok · busy · warn · broken · off`), `progress` (0..100 fills the bar on
+  the plate; `null` draws no bar), `verb` + `egress` (the plate's one verb
+  and the host it reaches), `draggable` (only an engine with a model record).
+- `found: SwitchEngine[]` — under the engines, caption `Found · n`; a
+  found plate has no plug and carries its one verb (Use it). No row, no
+  caption (UX-CANON A8).
+- `wires: SwitchWire[]` — `order 0` is the job's engine (solid ink);
+  `1..` its fallbacks (dashed). `tone: limited` is amber, `broken` a red
+  dash. The selected job's wires are `hot`; `pulse` names the job whose
+  first wire flows while a Try it runs.
+- Drag an engine plate onto a job: `accepts(job, engine)` lights the job
+  `is-over` (accept) or `is-over is-refused`; the drop calls
+  `onPatch(job, engine, asFallback)` (⌥ on the drop, and only when the job
+  already has a wire) or `onRefuse(job, engine, reason)`. Keyboard twin:
+  with a job selected, Enter on a focused engine patches; ⌥Enter adds a
+  fallback.
+- `layout`: `board` (three columns) or `list` (the job list for a phone
+  width: the open job, its engine, `Or` the alternatives as tap verbs,
+  then the other jobs as tap verbs; every tap target is 44 px).
+  `useSwitchboardLayout(ref)` measures the container (never the viewport;
+  below 720 px it is `list`).
+- `engineFoot` — the row at the bottom of the engines column (Add an
+  engine).
+- Geometry is pure (`switchboardGeometry.ts`): `plugPoint`, `wirePath` (one
+  cubic per wire, both control points on the horizontal midpoint), and
+  `patchChain` (first moves to the head; a fallback appends; no duplicate;
+  at most four).
+- Material: the §11 tokens with the canvas values as fallbacks
+  (`var(--wb-well, #eef0f3)`); reduced motion stops the pulse and the lamp.

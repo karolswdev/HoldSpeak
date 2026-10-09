@@ -431,7 +431,7 @@ def _screens(page, base: str):
     """Yield (name, loaded-locator) for each first-use screen, in order.
 
     The doors are the ones the story-01 fence and the HS-170/HS-201 rigs
-    already walk. Models is the Concierge, NOT `/profiles`: both
+    already walk. Models is Runs on (PHILO-16 C), NOT `/profiles`: both
     `ModelLibraryCore` rigs skip at module level (HS-170-03 parked that
     face), so `/profiles` would measure a screen the owner cannot reach.
     """
@@ -492,10 +492,12 @@ def _screens(page, base: str):
         '.speak-face, [id^="editor:note:"], .thought-note-document'
     ).first
 
+    # PHILO-16 (C): the Models window is Runs on; the ledger key stays.
     _stage(page, base, "open-concierge")
-    page.get_by_test_id("concierge-root").wait_for(state="visible", timeout=20_000)
+    page.get_by_test_id("runson-root").wait_for(state="visible", timeout=20_000)
+    page.get_by_test_id("switchboard").wait_for(state="visible", timeout=20_000)
     _settle(page)
-    yield "models", page.get_by_test_id("concierge-root")
+    yield "models", page.get_by_test_id("runson-root")
 
     _stage(page, base, "configure-settings")
     page.locator(".prefs-hub-headline").wait_for(state="visible", timeout=20_000)

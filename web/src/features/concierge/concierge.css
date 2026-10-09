@@ -171,7 +171,8 @@
 
 .concierge-token {
   font: 400 12px/1 "JetBrains Mono", monospace;
-  color: var(--muted, #9ba2b0);
+  /* PHILO-16 (C, Astra r2 MAY): an ink that reads on paper (was 2.25:1). */
+  color: var(--wb-muted, var(--muted, #9ba2b0));
 }
 
 /* ── FOUND row cells: two-line grammar ──

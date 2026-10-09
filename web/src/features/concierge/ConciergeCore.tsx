@@ -1,3 +1,7 @@
+// PHILO-16 (C): parked, replaced by RunsOnCore (features/runson/RunsOnCore.tsx).
+// The Models window renders Runs on; this core renders nowhere. It stays in
+// the tree because first run's LAN row imports `AddEngineRow` from it
+// (desk/firstrun/LanServer.tsx) and its tests still describe the parked face.
 // HS-170-03 — The Concierge: one screen for engine discovery + assignment.
 // Its own surface window (not inside Settings). Every verb is the library Button.
 

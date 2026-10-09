@@ -105,20 +105,17 @@ def test_settings_hub_cold(
 
             # The hub should have SurfaceLedgerRows with the module names.
             rows_text = page.locator(".surface-ledger-primary").all_text_contents()
-            assert "Models" in rows_text
+            # PHILO-16 (C): Models and Assignments are ONE row, Runs on; the
+            # DEFAULT/GROUPS facts sit on it (once, M6).
+            assert "Runs on" in rows_text
+            assert "Models" not in rows_text and "Assignments" not in rows_text
             assert "Rhythm" in rows_text
             assert "System" in rows_text
-
-            # HS-202-02: `Assignments` is its own row now (PREF_MODULES
-            # declared it and the ledger rendered eight), and the
-            # DEFAULT/GROUPS facts moved onto it — they were printed on
-            # both rows before, which is the same fact twice (M6).
-            assert "Assignments" in rows_text
-            assignments_row = page.locator(".surface-ledger-row", has=page.locator(
-                ".surface-ledger-primary", has_text="Assignments"
+            runs_on_row = page.locator(".surface-ledger-row", has=page.locator(
+                ".surface-ledger-primary", has_text="Runs on"
             ))
-            assert assignments_row.locator(".surface-state-chip[data-state='warning']").count() > 0, (
-                "Assignments row missing NO DEFAULT warning chip"
+            assert runs_on_row.locator(".surface-state-chip[data-state='warning']").count() > 0, (
+                "Runs on row missing NO DEFAULT warning chip"
             )
 
             # HS-171: the heartbeat sweeps by default, so a cold hub's Rhythm row

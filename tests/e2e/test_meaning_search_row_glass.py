@@ -1,8 +1,8 @@
-"""Meaning search row in Models (THE SET): glass at 1440 and 393.
+"""Meaning search row in Runs on: glass at 1440 and 393.
 
-The hub and the Meaning search service are the real ones.  The Models face
-gets its engine list from the Concierge rig (as the other Concierge glass
-tests do).  States on glass:
+PHILO-16 (C): the row sits under the Switchboard (ratified 2026-10-09).
+The hub and the Meaning search service are the real ones; the window's
+detection is the quiet rig (no hardware scan).  States on glass:
 
 * OFF, the model is not on this device (the press downloads: egress chip)
 * DOWNLOADING n% (the source is a slow file server on this device)
@@ -25,7 +25,8 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _assert_clean, _boot, _normal_chair, _rendered_text_faults, _settle
-from .test_hs170_concierge_glass import _monkeypatch_concierge, _open_concierge, _window
+from .runs_on import open_runs_on, window as _window
+from .test_hs201_one_thing_glass import _quiet_concierge as _monkeypatch_concierge
 
 REPO = Path(__file__).resolve().parents[2]
 SHOTS = REPO / ".tmp" / "meaning-search-shots"
@@ -56,8 +57,7 @@ def _open(page: Any, url: str) -> Any:
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
     _api(page, "POST", "/api/desk/seed", token=TOKEN)
     _normal_chair(page)
-    _open_concierge(page)
-    page.get_by_test_id("concierge-root").wait_for(timeout=10_000)
+    open_runs_on(page)
     row = page.get_by_test_id("concierge-meaning-search")
     row.wait_for(timeout=10_000)
     return row

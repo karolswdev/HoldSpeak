@@ -270,10 +270,11 @@ def test_a_held_filter_strip_is_flat(tmp_path: Path, monkeypatch: pytest.MonkeyP
             strip.scroll_into_view_if_needed()
             tokens = strip.locator("button").evaluate_all("""bs => bs.map((b) => {
                 const s = getComputedStyle(b);
-                // Phase 16: the window remaps --disabled-bg (A1's interior),
-                // so the ground is read where the token sits, not on <body>.
                 const probe = document.createElement('div');
                 probe.style.background = 'var(--disabled-bg)';
+                // The disabled ground as the strip's own window reads it:
+                // A1's interior remap sets --disabled-bg per window, so a
+                // probe on <body> read the page's dark ground instead.
                 b.parentElement.appendChild(probe);
                 const ground = getComputedStyle(probe).backgroundColor;
                 probe.remove();

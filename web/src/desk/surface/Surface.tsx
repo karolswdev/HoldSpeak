@@ -1060,6 +1060,8 @@ export function SurfaceLibraryGhost({
  * material (Runs on). One bay per destination; the route bay leads
  * with its model at display step; lamps are never color-only; the
  * boundary badge sits ON the bay, at the point of decision. */
+/* PHILO-16 (C): PARKED. The HS-101 list switchboard rendered nowhere; the
+   barrel's `SurfaceSwitchboard` is the wired board in Switchboard.tsx. */
 export function SurfaceSwitchboard({ children }: { children: ReactNode }) {
   return <ul className="surface-switchboard">{children}</ul>;
 }

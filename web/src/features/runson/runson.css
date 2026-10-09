@@ -1,0 +1,77 @@
+/* PHILO-16 (C) — Runs on: the kit around the Switchboard (canvas Board 2).
+   AppHead · Switchboard · Foot; a 10 px column gap, 12 px by 14 px padding. */
+
+.runson-root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  min-width: 0;
+  container-type: inline-size;
+}
+
+/* A1's window-interior remap gives this window its ground, ink, rules and
+   chip well. Only the Button's plate variables are lane A3's; Meaning
+   search's verbs get the steel until A3's kit lands. */
+.runson-root {
+  --wash-2: var(--wb-steel);
+  --gleam-2: var(--wb-steel-2);
+  --shade-1: var(--wb-ink);
+}
+
+/* The AppHead: the one fact with the status strip on its baseline. */
+.runson-apphead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
+.runson-fact { margin: 0; }
+.runson-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: 500 var(--font-size-xs, 12px) var(--font-mono, "JetBrains Mono", monospace);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--wb-muted);
+}
+.runson-strip li { display: inline-flex; align-items: center; gap: 6px; }
+.runson-sq { width: 9px; height: 9px; border: 1px solid var(--wb-ink); box-sizing: border-box; }
+.runson-strip [data-tone="ok"] .runson-sq { background: var(--lamp-ok); }
+.runson-strip [data-tone="warn"] .runson-sq { background: var(--lamp-warn); }
+.runson-strip [data-tone="danger"] .runson-sq { background: var(--lamp-fail); }
+.runson-strip [data-tone="idle"] .runson-sq { background: var(--wb-steel); }
+
+/* Add an engine: the bottom of the engines column, inline. */
+.runson-add {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: var(--wb-well);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken, inset 1px 1px 0 rgba(0,0,0,.5), inset -1px -1px 0 rgba(255,255,255,.72));
+}
+.runson-add-verbs, .runson-add-answer { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.runson-add-answer .surface-token { overflow-wrap: anywhere; }
+.runson-add-open { align-self: flex-start; }
+
+.runson-meaning { margin: 0; padding: 0; list-style: none; }
+
+.runson-receipt {
+  font: 500 var(--font-size-xs, 12px) var(--font-mono, "JetBrains Mono", monospace);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  overflow-wrap: anywhere;
+}
+.runson-receipt[data-tone="danger"] { color: var(--wb-danger-ink); }
+
+@container (max-width: 719px) {
+  .runson-root .btn { min-height: 44px; }
+  .runson-add-open { align-self: stretch; }
+}
+
+/* The foot is portaled into the frame; at a phone width its verbs are
+   44 px targets too. */
+@media (max-width: 719px) {
+  .runson-foot .btn { min-height: 44px; }
+}

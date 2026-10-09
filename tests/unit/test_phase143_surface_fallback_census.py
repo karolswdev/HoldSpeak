@@ -137,6 +137,13 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/meetings/summaryRoute.ts": ("display-transport", "201-04"),
     "web/src/features/concierge/endpointDraft.ts": ("display-transport", "201-09"),
     "web/src/features/concierge/useConciergeController.ts": ("inference-route", "201-09"),
+    # PHILO-16 (C): Runs on, the Models window as a Switchboard. The board
+    # reads the roster and the detection (profile ids as engine keys) and
+    # writes one group's chain per drop through the assignment authority.
+    "web/src/features/runson/api.ts": ("inference-route", "16-03"),
+    "web/src/features/runson/model.ts": ("display-transport", "16-03"),
+    "web/src/features/runson/useRunsOn.ts": ("inference-route", "16-03"),
+    "web/src/features/runson/RunsOnCore.tsx": ("display-transport", "16-03"),
     # First run FOUND (#859): the owner's "Use it" press on a #855 proposal; the
     # server (InferenceDefaultService.use_proposal) writes the assignment.
     "web/src/desk/firstrun/Found.tsx": ("inference-route", "143-13"),
