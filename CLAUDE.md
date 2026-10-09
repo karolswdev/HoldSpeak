@@ -159,6 +159,18 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   A worker never runs FAST; a worker waits for the lock rather than running
   a smaller suite in parallel. Load above 60 means someone skipped the lock.
 
+- **THE TEST DOCTRINE (owner order 2026-10-08: "the Muad'Dib who takes over
+  is the one calling the system-level tests"; `docs/internal/HANDOVER-MUADDIB-XXXVI.md`
+  Part II).** System-level runs (FAST, the scoped glass set,
+  `check_web_baseline --run`, the ratchet over the tree, atlas, census) are the
+  ORCHESTRATOR's: serial, once per PR, on the final head after Astra's verdict.
+  A worker's test budget is written in its brief IN FILES (a backend change:
+  the two or three unit files beside it; a face change: its vitest file plus
+  ONE glass file at 1440 and 393; a copy change: one vitest file); a worker
+  that wants a wider run says so in its report. A new worktree is synced with
+  `uv sync --extra dev` ONLY: `--all-extras` exhausts an xdist worker's file
+  descriptors seven minutes into FAST, and plain `uv sync` strips pytest.
+
 Run the relevant tests with these commands and read the output before
 you open the PR. Type-check is not validation.
 
