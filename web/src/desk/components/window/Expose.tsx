@@ -1,113 +1,39 @@
-// Expose overlay — fans open windows into a pick grid.
-// Extracted from DeskWindow.tsx (HS-117-04).
+// Exposé — every shown window as a live plate (PHILO-16 §5; HS-97-06 before).
+//
+// The plates are the windows themselves: the compositor draws each window's
+// own element at its own size, scaled by `--k` into its grid cell (it
+// scales, it never reflows), with its own title bar (§7: no extra label).
+// This overlay adds only the scrim and one pick target per plate: a press or
+// Enter picks that window; Esc (the compositor) returns every window to its
+// remembered rect.
 import { useEffect, useRef } from "react";
-import { useSyncExternalStore } from "react";
-import { useReducedMotion } from "motion/react";
-import { useDesk } from "../../store";
-import { exposeLayout } from "./windowGeometry";
-import { useOpenWindows, shellEls } from "./windowRegistry";
+import { useAllOpenWindows } from "./windowRegistry";
 import { Button } from "../../../components/signal/Signal";
+import {
+  exposePick,
+  toggleExposeMode,
+  usePresentation,
+} from "../../compositor/useCompositor";
+import { plateVisual } from "../../compositor/geometry";
 
-/** HS-97-06 — expose state (module-level so the dock verb and the
- * keyboard share one truth). */
-let exposeActive = false;
-const exposeListeners = new Set<() => void>();
-
+/** The Overview verb, the Dock's button and ⌘⇧E (⌃↑) reach this one toggle. */
 export function toggleExpose(force?: boolean) {
-  const next = force ?? !exposeActive;
-  if (next === exposeActive) return;
-  exposeActive = next;
-  for (const l of exposeListeners) l();
+  toggleExposeMode(force);
 }
 
-/** The expose (HS-97-06): fans every open window into a pick grid --
- * live shells scale into their cells (compositor transforms), minimized
- * windows join as dimmed cards; click or Enter focuses, Escape cancels. */
 export function Expose() {
-  const active = useSyncExternalStore(
-    (cb) => {
-      exposeListeners.add(cb);
-      return () => exposeListeners.delete(cb);
-    },
-    () => exposeActive,
-  );
-  const windows = useOpenWindows();
-  const panelMin = useDesk((s) => s.panelMin);
-  const reducedMotion = useReducedMotion();
+  const presentation = usePresentation();
+  const windows = useAllOpenWindows();
   const firstBtnRef = useRef<HTMLButtonElement | null>(null);
-  const fannedRef = useRef<
-    { el: HTMLElement; anim: Animation }[]
-  >([]);
+  const active = presentation.mode === "expose";
 
   useEffect(() => {
-    // Ctrl+Up itself now arrives through desk/keymap.ts (the one binder,
-    // registry verb desk.overview); the expose keeps only its Escape.
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && exposeActive) {
-        e.preventDefault();
-        toggleExpose(false);
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
-
-  const entries = windows.map((w) => ({
-    ...w,
-    minimized: panelMin.includes(w.id),
-  }));
-  const vw = typeof window === "undefined" ? 1280 : window.innerWidth || 1280;
-  const vh = typeof window === "undefined" ? 800 : window.innerHeight || 800;
-  const cells = exposeLayout(Math.max(entries.length, 1), vw, vh);
-
-  useEffect(() => {
-    if (!active) return;
-    const fanned: { el: HTMLElement; anim: Animation }[] = [];
-    entries.forEach((en, i) => {
-      if (en.minimized) return;
-      const el = shellEls.get(en.id);
-      if (!el || typeof el.animate !== "function") return;
-      const r = el.getBoundingClientRect();
-      if (!r.width) return;
-      const cell = cells[i];
-      const s = Math.min(cell.w / r.width, cell.h / r.height, 1);
-      const dx = cell.x + cell.w / 2 - (r.x + r.width / 2);
-      const dy = cell.y + cell.h / 2 - (r.y + r.height / 2);
-      const anim = el.animate(
-        [
-          { transform: "translate(0, 0) scale(1)" },
-          { transform: `translate(${dx}px, ${dy}px) scale(${s})` },
-        ],
-        {
-          duration: reducedMotion ? 0 : 220,
-          easing: "cubic-bezier(.2, .8, .2, 1)",
-          fill: "forwards",
-        },
-      );
-      fanned.push({ el, anim });
-    });
-    fannedRef.current = fanned;
-    firstBtnRef.current?.focus();
-    return () => {
-      for (const { el, anim } of fannedRef.current) {
-        try {
-          const current = getComputedStyle(el).transform;
-          anim.cancel();
-          if (!reducedMotion && current && current !== "none")
-            el.animate(
-              [{ transform: current }, { transform: "none" }],
-              { duration: 180, easing: "cubic-bezier(.2, .8, .2, 1)" },
-            );
-        } catch {
-          /* jsdom or torn-down element: nothing to unwind */
-        }
-      }
-      fannedRef.current = [];
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (active) firstBtnRef.current?.focus({ preventScroll: true });
   }, [active]);
 
-  if (!active || entries.length === 0) return null;
+  if (!active) return null;
+  const entries = windows.filter((w) => presentation.plates[w.id]);
+  if (entries.length === 0) return null;
   return (
     <>
       <div className="desk-expose-scrim" aria-hidden="true" />
@@ -121,31 +47,24 @@ export function Expose() {
           if (e.target === e.currentTarget) toggleExpose(false);
         }}
       >
-        {entries.map((en, i) => (
-          <Button
-            variant="chrome"
-            key={en.id}
-            ref={i === 0 ? firstBtnRef : undefined}
-            className={"desk-expose-cell" + (en.minimized ? " is-min" : "")}
-            style={{
-              top: cells[i].y,
-              left: cells[i].x,
-              width: cells[i].w,
-              height: cells[i].h,
-            }}
-            aria-label={`Focus ${en.label}`}
-            onClick={() => {
-              toggleExpose(false);
-              const s = useDesk.getState();
-              if (s.panelMin.includes(en.id)) s.restorePanel(en.id);
-              else s.focusPanel(en.id);
-            }}
-          >
-            <span className="desk-expose-name">
-              <span aria-hidden="true">{en.glyph}</span> {en.label}
-            </span>
-          </Button>
-        ))}
+        {entries.map((en, i) => {
+          const plate = presentation.plates[en.id];
+          const v = plateVisual(plate.rect, plate.k ?? 1);
+          return (
+            <Button
+              variant="chrome"
+              key={en.id}
+              ref={i === 0 ? firstBtnRef : undefined}
+              className="desk-expose-cell is-plate"
+              style={{ top: v.y, left: v.x, width: v.w, height: v.h }}
+              aria-label={`Focus ${en.label}`}
+              title={en.label}
+              onClick={() => exposePick(en.id)}
+            >
+              <span className="sr-only">{en.label}</span>
+            </Button>
+          );
+        })}
       </div>
     </>
   );

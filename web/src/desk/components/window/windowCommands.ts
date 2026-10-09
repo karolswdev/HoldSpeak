@@ -1,6 +1,7 @@
 import { useDesk } from "../../store";
 import { flashSwitcher } from "./Switcher";
-import { snapForPointer } from "./windowGeometry";
+import { back, tileFront, userArranged } from "../../compositor/useCompositor";
+import { getPresentation, modeNow } from "../../compositor/live";
 import { chairPhoneToBack, chairWindowSpec } from "../../chair/chairWindows";
 import {
   cycleWindows as cycleWindowsRaw,
@@ -19,19 +20,23 @@ export function cycleWindowsReverse(): void {
   cycleWindowsReverseRaw(flashSwitcher);
 }
 
+/** PHILO-16 — Tile left / right (⌘⌥← / ⌘⌥→): the front window takes the
+ * half, the near window the other half; they touch, so one steel divider
+ * sits between them (the compositor, `tileFront`). One window open: it takes
+ * the half alone (the old Snap). */
 export function snapFrontWindow(side: "left" | "right"): void {
-  const id = frontWindowId();
-  if (!id || typeof window === "undefined") return;
-  const state = useDesk.getState();
-  const vw = window.innerWidth || 1280;
-  const vh = window.innerHeight || 800;
-  const rect = snapForPointer(side === "left" ? 0 : vw, vh / 2, vw, vh);
-  if (!rect) return;
-  if (state.panelMax.includes(id)) state.toggleMaximizePanel(id);
-  if (state.panelMin.includes(id)) state.restorePanel(id);
-  state.setPanelRect(id, rect, true);
-  state.focusPanel(id);
+  tileFront(side);
 }
+
+export {
+  tileFront,
+  toggleStage,
+  toggleExposeMode,
+  gatherFront,
+  gatherRoom,
+  cascadeAll,
+  back as arrangeBack,
+} from "../../compositor/useCompositor";
 
 /** PHILO-13-12 (C2) — zoom one window between its two remembered rects.
  * The FIRST zoom keeps the normal rect even when the owner never arranged
@@ -39,7 +44,23 @@ export function snapFrontWindow(side: "left" | "right"): void {
  * measured the zoomed size as the normal one (Astra, PR #731). The rect is
  * read from the glass, so a content-sized window comes back exactly. */
 export function zoomWindow(id: string): void {
+  // Astra M1: Zoom pressed during Stage or Exposé leaves it first (every
+  // window back to its remembered rects), then zooms. In a tiled
+  // arrangement, zoom is his own arrangement: Esc no longer undoes it.
+  const mode = modeNow();
+  // Astra round 2: leaving Stage or Exposé animates, so the glass shows a
+  // box in flight; the record is the destination (§13 L6). The normal rect
+  // is the remembered free rect (what Esc restores), never a measurement.
+  const remembered =
+    mode === "stage" || mode === "expose" ? getPresentation().saved[id] : undefined;
+  if (mode === "stage" || mode === "expose") back();
+  else if (mode === "tile") userArranged();
   const state = useDesk.getState();
+  if (remembered !== undefined) {
+    if (!state.panelMax.includes(id) && remembered.rect) state.setPanelRect(id, remembered.rect, true);
+    useDesk.getState().toggleMaximizePanel(id);
+    return;
+  }
   // A Chair window the owner never moved has no rect: its CSS tile place is
   // its normal rect (C1-4e). Writing the measured tile here made it an
   // arranged rect, and the next open clamped it into the shell band (54 px),

@@ -210,9 +210,18 @@ export interface DeskState {
   panelRects: Record<string, PanelRect>;
   /** Panel ids whose rect the user arranged -- the persisted subset. */
   panelSaved: string[];
-  /** Window focus order; the last id renders in front. Persisted
-   * (HS-97-03: the arrangement is sacred, stacking included). */
+  /** PHILO-16 (L3) — each window's depth, a counter: a raise sets
+   * `++highest`, a send back goes under the lowest shown window. The
+   * planes (front, near, far) are derived from it. Persisted. */
+  panelDepth: Record<string, number>;
+  /** Window focus order, back to front: DERIVED from `panelDepth` and kept
+   * in step with it for one release (its readers keep working). A direct
+   * `setState({ panelOrder })` is still honoured: the depths follow it
+   * (store/index.ts). New code reads `panelDepth`. */
   panelOrder: string[];
+  /** PHILO-16 — Stage's shelf side (Window ▸ Stage). Persisted. */
+  stageShelf: "left" | "right";
+  setStageShelf(side: "left" | "right"): void;
   /** Minimized windows (parked in the tray/dock). Persisted (PHILO-13-07
    * B2): a minimized window comes back minimized. */
   panelMin: string[];

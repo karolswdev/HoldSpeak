@@ -225,6 +225,8 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
       defaultW={900}
       defaultH={600}
       origin={drawer.origin}
+      // PHILO-16: the drawer is its project's Room (Window ▸ Gather).
+      room={`project:${projectId}`}
       open
       unmountOnMinimize
       onClose={() => useDrawers.getState().closeDrawer(projectId)}

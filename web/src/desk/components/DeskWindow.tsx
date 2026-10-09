@@ -25,7 +25,7 @@ import { WorkMenu } from "./DeskMenu";
 import { headMenuEntries } from "../windowMenuAdapter";
 import { WindowIdContext } from "./window/windowIdContext";
 import { primeSendTo, sendToEntry, useSendToTick, withSendTo } from "../windowSend";
-import { DESK_WINDOW, DESK_Z } from "../../lib/tokens.gen";
+import { DESK_WINDOW } from "../../lib/tokens.gen";
 
 // -- Extracted modules (HS-117-04) --
 import {
@@ -47,7 +47,6 @@ import {
   announceWindow,
   retractWindow,
   useOpenWindows,
-  useFrontWindowId,
   useShownName,
   openWindowCount,
   closeFrontWindow,
@@ -77,6 +76,19 @@ import {
 } from "./window/windowCommands";
 import { Dock } from "./window/Dock";
 import { Button } from "../../components/signal/Signal";
+// PHILO-16 — the compositor owns planes, z, motion and the arrangements.
+import {
+  departInto,
+  liftOnRaise,
+  plateOf,
+  presenting,
+  resizePlate,
+  stillUnderPointer,
+  usePlane,
+  usePlate,
+  userArranged,
+} from "../compositor/useCompositor";
+import { inheritance, modeNow, mountWindow, unmountWindow } from "../compositor/live";
 
 // -- Re-exports: zero consumer edits (HS-117-04) --
 export { placeWindow, clampIntoBand, snapForPointer, resizeEdge, exposeLayout };
@@ -105,9 +117,6 @@ export {
 
 /** PHILO-13-12 (C2) — a touch held this long opens the window menu (393). */
 const LONG_PRESS_MS = 500;
-
-/** The desk-window z band (see the ladder note in desk.css). */
-const Z_BASE = DESK_Z.windowBase;
 
 export interface DeskWindowOptions {
   minW?: number;
@@ -233,10 +242,15 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   const zoomedRef = useRef(zoomed);
   zoomedRef.current = zoomed;
   const writeRect = (next: PanelRect, persist: boolean) => {
+    // Astra M1: in Stage or Exposé the geometry belongs to the plate; the
+    // saved arrangement (free and zoom rects) is never written.
+    if (presenting()) {
+      resizePlate(id, next);
+      return;
+    }
     if (zoomedRef.current) useDesk.getState().setZoomRect(id, next, persist);
     else useDesk.getState().setPanelRect(id, next, persist);
   };
-  const orderIndex = useDesk((s) => s.panelOrder.indexOf(id));
   const arranged = useDesk((s) => s.panelSaved.includes(id));
   // A fit-content card pins its height DURING the first resize drag,
   // before the arrangement persists on pointer-up.
@@ -244,6 +258,8 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   const elRef = useRef<HTMLElement | null>(null);
 
   const measure = (): PanelRect => {
+    const plate = presenting() ? plateOf(id) : null;
+    if (plate) return plate.rect;
     const st = useDesk.getState();
     const cur = zoomedRef.current ? st.panelZoom?.[id] : st.panelRects[id];
     if (cur) return cur;
@@ -310,7 +326,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     } else {
       // PHILO-14 A1: back to front (the stacking order), so the cascade
       // steps off the window placed last.
-      const plane = (wid: string) => s.panelOrder.indexOf(wid);
+      const plane = (wid: string) => s.panelDepth[wid] ?? Number.MIN_SAFE_INTEGER;
       const others = registrySnapshot
         .filter((w) => w.id !== id && !s.panelMin.includes(w.id))
         .sort((a, b) => plane(a.id) - plane(b.id))
@@ -445,10 +461,17 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         const t = event?.target as HTMLElement | null;
         if (t?.closest("button, a, input, textarea, select, [role='button']"))
           return { skip: true };
+        // PHILO-16: a plate (stage, exposé) is not dragged; a press on it
+        // swaps or picks (DeskWindowFrame's pointer-down).
+        const mode = modeNow();
+        if (mode === "stage" || mode === "expose") return { skip: true };
       }
       if (memo?.skip) return memo;
       const base: PanelRect = memo?.base ?? measure();
       if (Math.abs(mx) + Math.abs(my) > 3) {
+        // Nothing animates under the pointer (the raise lift, an arrange).
+        if (!memo?.moving) stillUnderPointer(elRef.current);
+        if (last) userArranged();
         // A snap region shows its landing tile as a live ghost while
         // dragging (HS-97-05); releasing inside it lands exactly there
         // (HS-95-03); anywhere else parks the dragged rect as before.
@@ -475,19 +498,21 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       } else if (last) {
         publishGhost(null);
       }
-      return { base, skip: false };
+      return { base, skip: false, moving: Math.abs(mx) + Math.abs(my) > 3 };
     },
     { pointer: { buttons: 1 } },
   );
 
   const resizeBind = useDrag(
-    ({ movement: [mx, my], last, memo }) => {
+    ({ movement: [mx, my], first, last, memo }) => {
+      if (first) stillUnderPointer(elRef.current);
       const base: PanelRect = memo?.base ?? measure();
       setLiveResize(!last);
       writeRect(
         clampRect({ ...base, w: base.w + mx, h: base.h + my }, minW, minH),
         last,
       );
+      if (last) userArranged();
       return { base };
     },
     { pointer: { buttons: 1 } },
@@ -495,11 +520,13 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
 
   // HS-97-05 — the frame resizes from its edges, not one corner.
   const edgeBind = useDrag(
-    ({ args, movement: [mx, my], last, memo }) => {
+    ({ args, movement: [mx, my], first, last, memo }) => {
+      if (first) stillUnderPointer(elRef.current);
       const mode = String(args?.[0] ?? "br");
       const base: PanelRect = memo?.base ?? measure();
       setLiveResize(!last);
       writeRect(resizeEdge(mode, base, mx, my, minW, minH), last);
+      if (last) userArranged();
       return { base };
     },
     { pointer: { buttons: 1 } },
@@ -548,14 +575,13 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         width: rect.w,
         right: "auto",
         bottom: "auto",
-        zIndex: Z_BASE + Math.max(orderIndex, 0),
         // A content-sized card keeps its CSS height (the material
         // decides) until the user arranges it; arranged rects pin.
         ...(opts.fitContent && !arranged && !liveResize && !zoomed
           ? { maxHeight: cardBandCap }
           : { height: rect.h, maxHeight: "none" }),
       }
-    : { zIndex: Z_BASE + Math.max(orderIndex, 0) };
+    : {};
 
   return {
     /** True when the user (or the cascade) gave this window its own rect. */
@@ -633,6 +659,9 @@ export interface DeskWindowFrameProps {
   entrance?: boolean;
   /** Inline style merged under the window geometry (e.g. CSS vars). */
   rootStyle?: React.CSSProperties;
+  /** PHILO-16 — the Room (project ref) this window belongs to: Window ▸
+   * Gather tiles the front window's Room together. */
+  room?: string;
   /** PHILO-16 (A1) §4.3 — the lamp at the right end of the title: the
    * window's IconLamp tone. Omitted, no lamp. `ask` pulses (static under
    * reduced motion). */
@@ -669,16 +698,22 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     unmountOnMinimize,
     entrance = true,
     rootStyle,
+    room,
     lamp,
     children,
   } = props;
   const minimized = useDesk((s) => s.panelMin.includes(id));
   const maximized = useDesk((s) => s.panelMax.includes(id));
-  // HS-97-04 — the front window is the last id in the stacking order
-  // that is open (announced) and not minimized; it alone wears depth.
-  // PHILO-13-11 (C1, R4): derived by the ONE hook that subscribes to the
-  // order AND the registry, so exactly one frame is front (blue).
-  const isFront = useFrontWindowId() === id;
+  // PHILO-16 (L3, L4) — the plane, the layer and the z come from the
+  // compositor's ONE derivation (rank by depth among the mounted windows),
+  // so exactly one frame is front. `is-front` stays one release as an alias
+  // of data-plane="front".
+  const { plane, z } = usePlane(id);
+  const isFront = plane === "front";
+  const plate = usePlate(id);
+  // L7: a window present when the desk loaded is inherited; it never
+  // replays the entrance (read at render; idempotent under strict mode).
+  const inherited = inheritance.isInherited(id);
   const compact = useCompactViewport();
   const reducedMotion = useReducedMotion();
   const zoomRect = useDesk((s) => s.panelZoom?.[id]);
@@ -716,6 +751,18 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+
+  // PHILO-16: the frame is counted by the compositor before the first paint
+  // (a layout effect), so a new window and the old front never both read
+  // as front. Closing forgets the inheritance: a reopen is an arrival.
+  useLayoutEffect(() => {
+    if (!open) return;
+    mountWindow(id, { room, layer: "window", minW: minW ?? 320, minH: minH ?? 220 });
+    return () => {
+      unmountWindow(id);
+      inheritance.forget(id);
+    };
+  }, [open, id, room, minW, minH]);
 
   // HS-99-02 — the head's right-click menu (chrome ladder rule 2).
   const [headMenu, setHeadMenu] = useState<{ x: number; y: number } | null>(
@@ -803,6 +850,16 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       closeRef.current();
       return;
     }
+    // PHILO-16 (L7, §6 moment 3): a retained snapshot shrinks into the
+    // object it opened from (or its dock seat); the live window leaves at
+    // once.
+    const chip = !origin || compact ? dockChip() : null;
+    const c = chip?.getBoundingClientRect();
+    const target = origin && !compact ? origin : c && c.width ? { x: c.x + c.width / 2, y: c.y + c.height / 2 } : null;
+    if (departInto(id, el, plane, target)) {
+      closeRef.current();
+      return;
+    }
     leavingRef.current = true;
     // Round 9 — a window born from a desk object returns INTO it; the
     // rest keep the quiet scale-fade.
@@ -841,6 +898,13 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       done();
       return;
     }
+    // PHILO-16 (L7): the snapshot flies into the dock seat; the window is
+    // seated at once.
+    const c = chip.getBoundingClientRect();
+    if (departInto(id, el, plane, { x: c.x + c.width / 2, y: c.y + c.height / 2 })) {
+      done();
+      return;
+    }
     const anim = flyToChip(el, chip, false);
     anim.onfinish = () => {
       anim.cancel(); // release the forwards fill before display:none
@@ -859,6 +923,15 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       flyToChip(el, chip, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minimized]);
+
+  // §6 moment 1 — raise: a window that becomes front lifts. Not at mount
+  // (an open has its own moment), not as a plate.
+  const prevPlaneRef = useRef<typeof plane>(undefined);
+  useEffect(() => {
+    const was = prevPlaneRef.current;
+    prevPlaneRef.current = plane;
+    if (plane === "front" && was && was !== "front" && !plate) liftOnRaise(shellRef.current);
+  }, [plane, plate]);
 
   useEffect(() => {
     if (!open) return;
@@ -904,7 +977,21 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const style: React.CSSProperties = {
     ...rootStyle,
     ...(compact
-      ? { zIndex: (win.style.zIndex as number) ?? 42 }
+      ? {}
+      : plate
+        ? // PHILO-16: a plate (stage, exposé) is the window's own element at
+          // its own size, drawn at scale k (window-chrome.css `--plate-k`): it
+          // scales, it never reflows.
+          ({
+            top: plate.rect.y,
+            left: plate.rect.x,
+            width: plate.rect.w,
+            height: plate.rect.h,
+            right: "auto",
+            bottom: "auto",
+            maxHeight: "none",
+            ...(plate.k !== undefined && plate.k < 1 ? { "--plate-k": plate.k.toFixed(4) } : {}),
+          } as React.CSSProperties)
       : maxed && zoomRect
         ? // PHILO-13-12 (C2): the zoomed rect the user sized.
           win.style
@@ -921,9 +1008,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             width: "auto",
             height: "auto",
             maxHeight: "none",
-            zIndex: win.style.zIndex,
           }
         : win.style),
+    zIndex: z,
     ...(minimized ? { display: "none" } : null),
   };
 
@@ -937,6 +1024,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         else shellEls.delete(id);
       }}
       tabIndex={-1}
+      data-plane={plane}
+      data-layer="window"
+      data-plate={plate ? (plate.k !== undefined && plate.k < 1 ? "scaled" : "full") : undefined}
       onKeyDown={(e) => {
         if (e.key === "Escape" && !e.defaultPrevented) {
           e.stopPropagation();
@@ -958,22 +1048,19 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         (maxed ? " is-max" : "") +
         (isFront ? " is-front" : "")
       }
-      // PHILO-16 (A1) §3: the plane the ladder draws from. Until the
-      // compositor (A2) writes near/far from the stacking order, the frame
-      // derives it from the one front hook, so `.is-front` and the plane
-      // never disagree.
-      data-plane={minimized ? "seated" : isFront ? "front" : "far"}
       style={style}
       // An origin window's entrance is the fly-out-of-the-object WAAPI
       // (pre-paint, in the placement effect) — never the side slide.
       initial={
-        reducedMotion || !entrance || (origin && !compact)
+        reducedMotion || !entrance || inherited || (origin && !compact)
           ? false
           : { x: 60, opacity: 0 }
       }
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 320, damping: 30 }}
       onPointerDown={(e) => {
+        // PHILO-16: a press raises (on stage it swaps the plate onto the
+        // stage: the compositor follows the front).
         win.focus();
         e.stopPropagation();
       }}
