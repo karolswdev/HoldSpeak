@@ -46,6 +46,9 @@ function Hooks({ row }: { row: AgentRow }) {
       return <StateChip state="failure" label="HOOKS BROKEN" />;
     case "unreadable":
       return <StateChip state="failure" label="HOOKS UNREADABLE" />;
+    case "not_read":
+      // A rig hub did not read them: unknown, never a false "no hooks".
+      return <StateChip state="idle" label="HOOKS UNKNOWN" icon="?" />;
     default:
       return <Lamp on={false} label="HOOKS" />;
   }

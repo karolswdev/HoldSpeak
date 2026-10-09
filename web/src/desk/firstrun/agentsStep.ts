@@ -16,7 +16,8 @@ export const AGENTS_PATH = "/api/onboarding/agents";
 export const AGENTS_USE_PATH = "/api/onboarding/agents/use";
 
 export type AgentId = "claude" | "codex" | "pi";
-export type HooksState = "installed" | "partial" | "missing" | "unreadable" | "broken";
+/** `not_read`: a rig hub (HOLDSPEAK_AGENT_STATE=off) did not read the owner's state. */
+export type HooksState = "installed" | "partial" | "missing" | "unreadable" | "broken" | "not_read";
 
 export interface AgentRow {
   id: AgentId;
@@ -25,7 +26,7 @@ export interface AgentRow {
   path: string | null;
   version?: string | null;
   hooks: HooksState;
-  signed_in: "yes" | "unknown";
+  signed_in: "yes" | "unknown" | "not_read";
   ready: boolean;
   verb: string | null;
 }
@@ -48,9 +49,10 @@ export const AGENT_GLYPH: Record<AgentId, string> = { claude: "CC", codex: "CX",
 export const AGENT_HOST: Record<AgentId, string> = { claude: "API.ANTHROPIC.COM", codex: "API.OPENAI.COM", pi: "LAN" };
 export const AGENT_NAME: Record<AgentId, string> = { claude: "Claude Code", codex: "Codex", pi: "pi" };
 
-/** An agent whose hooks the press would install: on PATH, hooks not in. */
+/** An agent whose hooks the press would install: on PATH, hooks not in.
+ *  `not_read` (a rig hub did not read them) is unknown, not missing: no press. */
 export function needsHooks(row: AgentRow): boolean {
-  return row.installed && row.hooks !== "installed";
+  return row.installed && row.hooks !== "installed" && row.hooks !== "not_read";
 }
 
 export interface InstallReceipt {
@@ -122,7 +124,13 @@ export function useAgentsStep() {
     checking,
     // Done: at least one agent, every installed agent has its hooks in, and
     // tmux is here (every launch runs in tmux; without it none can start).
-    done: detect !== null && installed.length > 0 && pending.length === 0 && Boolean(detect?.tmux.installed),
+    // An unread hook state is never claimed as HOOKS IN.
+    done:
+      detect !== null &&
+      installed.length > 0 &&
+      pending.length === 0 &&
+      installed.every((row) => row.hooks !== "not_read") &&
+      Boolean(detect?.tmux.installed),
     read,
     install,
   };

@@ -106,7 +106,9 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return hb.update_settings(arguments)
 
     if name == "heartbeat.notify_test":
-        from holdspeak.desktop_notify import notify
+        from holdspeak.desktop_notify import NOT_POSTED_IN_RIG, desktop_notify_enabled, notify
+        if not desktop_notify_enabled():
+            return {"fired": False, "reason": NOT_POSTED_IN_RIG}
         fired = notify("HoldSpeak", "Test notification from heartbeat")
         return {"fired": fired}
 

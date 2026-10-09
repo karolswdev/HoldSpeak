@@ -186,3 +186,21 @@ describe("readiness stays honest (Astra #905)", () => {
     expect((await within(card).findByTestId("firstrun-agents-unread")).textContent).toBe("HUB OFFLINE");
   });
 });
+
+describe("a rig hub's not_read state (PHILO-16, Astra MAY b)", () => {
+  it("not_read hooks and sign-in read as unknown: no Install hooks, no READY fold, no SIGNED IN", async () => {
+    state = detect([
+      agent("claude", { signed_in: "not_read", hooks: "not_read" }),
+      agent("codex", { signed_in: "not_read", hooks: "not_read" }),
+    ]);
+    render(<Harness />);
+    const card = await screen.findByTestId("firstrun-agents");
+    await within(card).findByText("2 AGENTS FOUND");
+    expect(within(card).getAllByRole("status", { name: "HOOKS UNKNOWN" })).toHaveLength(2);
+    expect(within(card).getAllByText("SIGN-IN UNKNOWN")).toHaveLength(2);
+    expect(within(card).queryByRole("status", { name: "SIGNED IN" })).toBeNull();
+    expect(within(card).queryByRole("status", { name: "HOOKS" })).toBeNull();
+    expect(within(card).queryByRole("button", { name: /Install hooks/ })).toBeNull();
+    expect(within(card).queryByTestId("firstrun-agents-receipt")).toBeNull();
+  });
+});
