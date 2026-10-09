@@ -41,12 +41,13 @@ DEFAULT_CSS_DIR = REPO / "web/src/styles"
 SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-05-shots")
 NARROW = {"width": 393, "height": 852}
 
-# The dense row (`.btn--sm`, 24px painted) and the standard column
+# The dense row (`.btn--sm`; Phase 16, Astra r1 M6: the kit Verb is ONE
+# height, so dense paints 28px too) and the standard column
 # (`.btn`, 28px painted). Short labels first: those are the Buttons whose
 # painted face is narrower than the area they must own.
 ROW = ["\u00d7", "\u21bb", "Open", "Record"]
 COLUMN = ["Review meeting", "Run summary", "Import"]
-PAINTED = {"row": 24.0, "col": 28.0}
+PAINTED = {"row": 28.0, "col": 28.0}
 
 # The nine points, as fractions of the half-width / half-height of the
 # 44px area, inset by one device pixel so a point is never on the seam.
@@ -86,7 +87,7 @@ def _fixture_html() -> str:
   .fixture-col {{ display: grid; gap: var(--space-2); justify-items: start; }}
   /* NEGATIVE CONTROL A: a well too short for the area to fit inside, so
      an ANCESTOR answers the clipped points. */
-  .fixture-clip {{ height: 24px; overflow: hidden; }}
+  .fixture-clip {{ height: 28px; overflow: hidden; }}
   /* NEGATIVE CONTROL B: the halo suppressed outright, with nothing but
      the page behind it, so the BODY answers. Round 2 of Astra's counsel:
      the live reader filed that as "covered" and reported no miss. */
@@ -213,7 +214,7 @@ def test_button_owns_44px_at_393(tmp_path: Path) -> None:
             if abs(painted - expected) >= 0.51:
                 failures.append(
                     f"{i}: the painted height moved to {painted}px, not {expected}px; "
-                    "the ruling keeps 24/28px and grows only the transparent area"
+                    "the ruling keeps the 28px plate and grows only the transparent area"
                 )
 
         # ── OWNED: elementFromPoint + a real pointer, nine points ────
@@ -277,7 +278,7 @@ def test_button_owns_44px_at_393(tmp_path: Path) -> None:
 
         lost_kinds: set[str] = set()
         for control, why in (
-            ("clipped", "a Button inside a 24px overflow:hidden well"),
+            ("clipped", "a Button inside a 28px overflow:hidden well"),
             ("bare", "a Button whose halo is suppressed, with only the page behind it"),
         ):
             seen = controls[control]

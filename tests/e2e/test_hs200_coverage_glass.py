@@ -44,7 +44,7 @@ TOKEN = "hs200-coverage"
 # PHILO-14 A5 (#935): the Needs-you window body is the smart drawer; an
 # unread source is a source row (the no-calendar offer is one too).
 SOURCES = "[data-testid='needs-source-row']"
-MEMBERS = "[data-testid='needs-list'] > ul > [data-testid='needs-row']"
+MEMBERS = "[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row']"
 
 
 def _open_needs(page: Any) -> None:

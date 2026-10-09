@@ -1,70 +1,67 @@
-/* PHILO-14 A5 — the Needs-you drawer (board A-5). The rows are the
-   library NeedsRow (surface/objects/objects.css); this file holds only the
-   head's place and the in-place well. */
+/* PHILO-14 A5 — the Needs-you drawer (board A-5). Phase 16: composed from
+   the interior kit (AppHead, FilterBar, Section, the Ledger well of
+   NeedsRows, the Foot); this file holds only the column and the in-place
+   well. The rows are the library NeedsRow (surface/objects/objects.css). */
 .needs-drawer {
   container: surface / inline-size;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 4px 4px 12px;
+  gap: 10px;
+  padding: 2px 0 12px;
 }
-.needs-drawer-head {
-  margin: 0;
-  color: var(--text);
+/* Every row is drawn (no cap): the head, the strip and the FilterBar stay;
+   the Ledger scrolls inside the window, and ScrollHint fades the edge that
+   has more (UX-CANON §B). */
+.needs-drawer {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.needs-drawer-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.needs-drawer-list > .surface-scroll-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 .needs-drawer-well {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  padding: 4px 4px 10px 56px;
+  padding: 4px 10px 10px 64px;
+  border-bottom: 1px solid var(--wb-rule-soft);
 }
 @container surface (max-width: 520px) {
   .needs-drawer-well {
-    padding-left: 4px;
+    padding-left: 10px;
   }
   /* 393: every verb is a 44 px touch target. */
   .needs-drawer .needs-row-verbs .btn {
     min-height: 44px;
   }
 }
-.needs-drawer-headline {
-  display: contents;
-}
 .needs-drawer .needs-row[data-opens="true"] {
   cursor: pointer;
-}
-.needs-drawer .needs-row[data-opens="true"]:hover {
-  background: var(--surface-hover);
-}
-.needs-drawer-muted {
-  opacity: 0.55;
-}
-.needs-drawer-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding: 4px 4px 0;
-}
-.needs-drawer-next {
-  font: var(--font-size-sm) / 1.4 var(--font-mono);
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-}
-/* PHILO-15-09 (B11): the calendar offer sits in the foot, not in the rows. */
-.needs-drawer-offer {
-  flex-wrap: wrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
 }
 /* A name is never cut in the drawer (HS-172: no text clip): it wraps. */
 .needs-drawer .needs-row-name {
   white-space: normal;
   overflow-wrap: anywhere;
 }
-.needs-drawer-receipt {
-  margin: 0;
+/* The muted are listed dimmed (PHILO-14 A5): they ask nothing now. */
+.needs-drawer-muted.surface-section {
+  /* the section's rise animation fills opacity: 1, so it steps aside here */
+  animation: none;
+  opacity: 0.55;
+}
+/* The calendar offer: its word and its verb, one strip token. */
+.needs-calendar-offer {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
 }

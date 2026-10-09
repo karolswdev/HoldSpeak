@@ -12,7 +12,7 @@ headline + capture bar.
 PHILO-14 A5: the Needs-you window body is the smart drawer. Its stable
 testids: `needs-drawer`, `needs-list`, `needs-row` (a member),
 `needs-source-row`, `needs-row-verb` (`data-verb`), `needs-next` (the
-footer NEXT line), `needs-muted-toggle` / `needs-muted`.
+strip's NEXT token), `needs-filter` (its `Muted` token) / `needs-muted`.
 
 Shots to phase-170-the-great-pass/assets/story-04-shots/.
 """
@@ -660,20 +660,28 @@ def _run_muted_rig(
             # proj-alpha has 1 item, proj-beta has 2 items (muted).
             # PHILO-15-09 (B11): the head IS the rows of the list (the member
             # and any source the hub could not read); the muted are not rows.
-            rows = page.locator("[data-testid='needs-list'] > ul > li.needs-row")
+            rows = page.locator("[data-testid='needs-list'] ul.needs-list > li.needs-row")
             assert headline_text.strip() == f"{rows.count()} {'needs' if rows.count() == 1 else 'need'} you", \
                 f"Headline is not the row count (muted excluded): {headline_text}"
 
             # ── NEEDS YOU has 1 unmuted member row ──
-            members = page.locator("[data-testid='needs-list'] > ul > [data-testid='needs-row']")
+            members = page.locator("[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row']")
             assert members.count() == 1, members.all_inner_texts()
 
-            # ── MUTED: `Muted · 2` opens the dimmed rows (PHILO-14 A5) ──
-            toggle = page.get_by_test_id("needs-muted-toggle")
-            assert (toggle.text_content() or "").strip() == "Muted · 2", toggle.text_content()
-            toggle.click()
+            # ── MUTED: the FilterBar's `Muted` token opens the dimmed rows,
+            #    `Muted · 2` (PHILO-14 A5; Phase 16: a filter token) ──
+            bar = page.get_by_test_id("needs-filter")
+            menu = bar.locator("[data-testid='surface-strip-menu']")
+            if menu.count():
+                menu.click()
+                page.locator(".desk-head-menu").get_by_text("Muted", exact=True).click()
+            else:
+                token = bar.get_by_role("button", name="Muted", exact=True)
+                token.click()
+                assert token.get_attribute("aria-pressed") == "true"
             muted_section = page.get_by_test_id("needs-muted")
             muted_section.wait_for(timeout=5000)
+            assert (muted_section.locator("h3").text_content() or "").strip() == "Muted · 2"
             assert muted_section.locator("[data-testid='needs-row']").count() == 2
 
             # Dimmed (opacity ~.55)

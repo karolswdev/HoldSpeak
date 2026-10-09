@@ -738,7 +738,8 @@ describe("the bevel grammar", () => {
     expect(SURFACE_CSS).toMatch(/\.bevel-flat \{\s*box-shadow: none;/);
     // The species wear it: the ask well raised, the read-only PR card flat,
     // the confirm well sunken.
-    expect(CSS).toMatch(/\.ask-well \{[^}]*box-shadow: var\(--bevel-raised\);/);
+    // Phase 16 (the interior kit): the question plate is raised Steel.
+    expect(CSS).toMatch(/\.ask-well \{[^}]*box-shadow: var\(--wb-raised\);/);
     expect(CSS).toMatch(/\.pr-card \{[^}]*box-shadow: none;/);
     expect(CSS).toMatch(/\.confirm-line \{[^}]*box-shadow: var\(--bevel-sunken\);/);
   });

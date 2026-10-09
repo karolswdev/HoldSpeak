@@ -183,7 +183,7 @@ class TestOneNeedsYou:
                 assert said and all(n == 6 for n in said), before["said"]
 
                 # ── the drawer's rows are the members the head counts ──
-                rows = page.locator("[data-testid='needs-list'] > ul > [data-testid='needs-row']")
+                rows = page.locator("[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row']")
                 record["chair_rows"] = rows.count()
                 assert rows.count() == 6, rows.all_inner_texts()
                 assert not re.search(r"needs? you", page.locator("[data-testid='needs-list']").inner_text(), re.IGNORECASE)

@@ -47,9 +47,15 @@ export interface IconGridProps {
   /** A press on empty glass (clear the selection). */
   onClear?(): void;
   className?: string;
+  /** Phase 16 (the interior kit, §11 "IconGrid"): the objects INSIDE a
+   *  window sit in a sunken paper well, five across at 900 px and wider,
+   *  the icon at 40 px over a two-line sans name. The Floor's grid (the
+   *  glass itself) has no well. */
+  well?: boolean;
+  "data-testid"?: string;
 }
 
-export function IconGrid({ label, children, marquee, onMarquee, onClear, className }: IconGridProps) {
+export function IconGrid({ label, children, marquee, onMarquee, onClear, className, well, "data-testid": testId }: IconGridProps) {
   const ref = useRef<HTMLDivElement>(null);
   const origin = useRef<{ x: number; y: number } | null>(null);
   useRovingGrid(ref, { selector: ".desk-icon" });
@@ -87,6 +93,8 @@ export function IconGrid({ label, children, marquee, onMarquee, onClear, classNa
       className={`desk-icon-grid${className ? ` ${className}` : ""}`}
       role="group"
       aria-label={label}
+      data-well={well || undefined}
+      data-testid={testId}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}

@@ -7,7 +7,8 @@
 // (every row verb; `data-verb` names it: answer, open, deny, approve,
 // open-pr, review, done, name-owner, set-date, confirm, defer, decline, door-verb,
 // summarize, setup, repair, cancel, connect-calendar), `needs-well`,
-// `needs-next` (the footer line), `needs-muted-toggle`, `needs-muted`.
+// `needs-next` (a strip token), `needs-filter` (the FilterBar; its
+// `Muted` token opens `needs-muted`).
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -17,7 +18,7 @@ import { ApiError, apiFetch } from "../../../lib/api";
 import { useAgentFlights, type AgentFlight } from "../../agentFlights";
 import { openCoderSession, openSurfaceOr } from "../../shell";
 import { useDesk } from "../../store";
-import { NeedsDrawer } from "../NeedsDrawer";
+import { NeedsDrawer, useSourceReceipt } from "../NeedsDrawer";
 import { useArmingOutcome } from "../arming";
 
 vi.mock("../../../lib/api", async (original) => ({
@@ -168,7 +169,7 @@ function face(li: HTMLElement) {
     lamps: [...li.querySelectorAll(".gadget-lamp")].map((n) => n.textContent),
     verbs: [...li.querySelectorAll(".needs-row-verbs button")].map((b) => b.textContent),
     egress: li.querySelector(".needs-row-verbs .egress-chip, .needs-row-verbs [class*='egress']")?.textContent ?? "",
-    sprite: li.querySelector("img")?.getAttribute("src") ?? "",
+    plate: li.querySelector("[data-testid='kit-kind']")?.textContent ?? "",
   };
 }
 
@@ -183,7 +184,9 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     const drawer = screen.getByTestId("needs-drawer");
     expect(screen.getByTestId("arrival-display").textContent).toBe("8 need you");
     expect(drawer.querySelectorAll("h1, h2").length).toBe(1);
-    expect(drawer.textContent).not.toMatch(/AVAILABLE|RANKED|CHECKED/);
+    // Phase 16: the display step once; the strip and the foot say the
+    // facts as tokens (the canvas window "Needs you").
+    expect(drawer.querySelectorAll(".kit-disp").length).toBe(1);
   });
 
   it("draws every member as its object: icon, name, fact, one lamp, its verbs", async () => {
@@ -195,8 +198,8 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       lamps: ["ASKS · 6 MIN"],
       verbs: ["Open", "Answer"],
     });
-    // The D1 mold: each agent has its own sprite (agentSpriteName).
-    expect(agent.sprite).toMatch(/agent-claude-code\.png$/);
+    // Phase 16: the kind plate is the agent (CC = Claude Code).
+    expect(agent.plate).toBe("CC");
 
     const held = face(row("Codex: reconciliation"));
     expect(held).toMatchObject({
@@ -205,7 +208,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       lamps: ["HELD CALL"],
       verbs: ["Deny", "Approve"],
     });
-    expect(face(row("Codex: reconciliation")).sprite).toMatch(/agent-codex\.png$/);
+    expect(face(row("Codex: reconciliation")).plate).toBe("CX");
 
     const pr = face(row("#412 Add the ledger freeze flag"));
     expect(pr).toMatchObject({ kind: "pr", lamps: ["PR OPEN"], verbs: ["Open PR"] });
@@ -360,9 +363,9 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await mount();
     await waitFor(() => expect(screen.getByTestId("needs-next").textContent).toBe("NEXT · 14:00 · Ledger cutover sync"));
     const offer = await screen.findByTestId("needs-no-calendar");
-    expect(offer.textContent).toContain("NO CALENDAR");
+    expect(offer.textContent).toBe("NO CALENDARConnect calendar");
     expect(screen.queryByTestId("needs-source-row")).toBeNull();
-    fireEvent.click(offer.querySelector("[data-verb='connect-calendar']")!);
+    fireEvent.click(screen.getByTestId("needs-drawer").querySelector("[data-verb='connect-calendar']")!);
     expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
     // One count: the head says the number of rows under it.
     const rows = document.querySelectorAll("[data-testid='needs-list'] li.needs-row");
@@ -378,10 +381,11 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     });
     await mount();
     expect(screen.queryByText("A muted decision")).toBeNull();
-    const toggle = screen.getByTestId("needs-muted-toggle");
-    expect(toggle.textContent).toBe("Muted · 1");
+    // Phase 16: Muted is a FilterBar token (drawn while a muted row exists).
+    const toggle = within(screen.getByTestId("needs-filter")).getByRole("button", { name: "Muted" });
     fireEvent.click(toggle);
     expect(within(screen.getByTestId("needs-muted")).getByText("A muted decision")).toBeTruthy();
+    expect(screen.getByTestId("needs-muted").querySelector("h3")?.textContent).toBe("Muted · 1");
   });
 
   it("a press on the row body opens the item; a press on a verb does only the verb", async () => {
@@ -745,5 +749,112 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
     fireEvent.click(within(stale).getByRole("button", { name: "Retry: Meetings" }));
     await waitFor(() => expect(screen.getByTestId("needs-source-receipt").textContent).toBe(
       "NOT CHECKED · Meetings · gh is not signed in"));
+  });
+});
+
+// Phase 16 (the interior kit; the canvas window "Needs you"): AppHead and its
+// strip, the FilterBar, the Section over every row, the kind plates, the Foot.
+describe("NeedsDrawer on the interior kit (Phase 16)", () => {
+  it("every row is drawn (no cap): `Actions · 8` over eight rows, the Ledger scrolls with its ScrollHint", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("8 need you");
+    const list = screen.getByTestId("needs-list");
+    expect(list.querySelectorAll("li.needs-row")).toHaveLength(8);
+    expect(list.querySelector("h3")?.textContent).toBe("Actions · 8");
+    expect(list.querySelector(".surface-scroll-hint[data-axis='y']")).toBeTruthy();
+    expect(screen.queryByText(/more$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show all" })).toBeNull();
+  });
+
+  it("the strip says the facts as tokens; the foot says when the hub ranked", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return {
+          ...ANSWER,
+          computedAt: new Date(Date.now() - 30_000).toISOString(),
+          coverage: [
+            { source_id: "jira:ops", kind: "project", state: "available", observed_at: null, label: "Ops", project_id: "p2" },
+          ],
+        } as never;
+      return { upcoming: [], calendar_configured: false } as never;
+    });
+    useSourceReceipt.setState({ receipt: null });
+    render(<NeedsDrawer />);
+    await screen.findByText("8 need you");
+    const strip = screen.getByTestId("arrival-headline").querySelector(".kit-strip") as HTMLElement;
+    expect(strip.textContent).toContain("1 of 1 available");
+    expect(strip.textContent).toContain("Checked just now");
+    await waitFor(() => expect(strip.textContent).toContain("NO CALENDAR"));
+    expect(within(strip).getByRole("button", { name: "Connect calendar" })).toBeTruthy();
+    expect(screen.getByTestId("needs-ranked").textContent).toMatch(/^RANKED \d{2}:\d{2}$/);
+  });
+
+  it("the FilterBar narrows the ledger; a filter that matches nothing is not drawn", async () => {
+    const today = new Date();
+    const day = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, items: ITEMS.map((item) => item.id === "commitment:c-sam" ? { ...item, dueAt: day } : item) } as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("8 need you");
+    const bar = screen.getByTestId("needs-filter");
+    const tokens = within(bar).getAllByRole("button").map((b) => b.textContent);
+    // Overdue matches nothing here; Waiting and Muted hold no rows.
+    expect(tokens).toEqual(["Ranked", "Due today", "Not run", "No due date"]);
+    expect(within(bar).getByRole("button", { name: "Ranked" }).getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(within(bar).getByRole("button", { name: "Due today" }));
+    const names = [...screen.getByTestId("needs-list").querySelectorAll(".needs-row-name")].map((n) => n.textContent);
+    expect(names).toEqual(["Sam: send the status by Thursday"]);
+    fireEvent.click(within(bar).getByRole("button", { name: "Not run" }));
+    expect([...screen.getByTestId("needs-list").querySelectorAll(".needs-row-name")].map((n) => n.textContent))
+      .toEqual(["Vendor call"]);
+  });
+
+  it("every row wears its kind plate (CC, CX, PR, ACT, DEC, MTG)", async () => {
+    await mount();
+    const plates = [...document.querySelectorAll("li.needs-row [data-testid='kit-kind']")].map((n) => n.textContent);
+    expect(plates).toEqual(["CC", "CX", "PR", "ACT", "DEC", "ACT", "ACT", "MTG"]);
+  });
+});
+
+// Astra r1 M4: a dated proposal carries its date as `proposalDue` (the
+// producer: needs_you_aggregate.py), never `dueAt`; it is Due today, not
+// No due date.
+describe("NeedsDrawer FilterBar reads a proposal's own date (Phase 16)", () => {
+  it("a proposal due today is under Due today, and No due date does not list it", async () => {
+    const t = new Date();
+    const today = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+    const proposals = [
+      {
+        id: "proposal:prop-dated", ref: "Ship the runbook", kind: "proposal",
+        source: "proposal", title: "Ship the runbook",
+        why: "PROPOSED · cutover sync", severity: "info", projectId: "", projectName: "",
+        proposalId: "prop-dated", proposalKind: "action", meetingId: "m-cut",
+        meetingTitle: "cutover sync", proposalDue: today,
+      },
+      {
+        id: "proposal:prop-undated", ref: "Pick the vendor", kind: "proposal",
+        source: "proposal", title: "Pick the vendor",
+        why: "PROPOSED · cutover sync", severity: "info", projectId: "", projectName: "",
+        proposalId: "prop-undated", proposalKind: "action", meetingId: "m-cut",
+        meetingTitle: "cutover sync",
+      },
+    ];
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { count: 2, items: proposals, blockers: [], failedMeetings: [], coverage: [], complete: true } as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("2 need you");
+    expect(row("Ship the runbook").querySelector(".needs-row-fact")?.textContent).toContain(`by ${today}`);
+    const bar = screen.getByTestId("needs-filter");
+    fireEvent.click(within(bar).getByRole("button", { name: "Due today" }));
+    const names = () => [...screen.getByTestId("needs-list").querySelectorAll(".needs-row-name")].map((n) => n.textContent);
+    expect(names()).toEqual(["Ship the runbook"]);
+    fireEvent.click(within(bar).getByRole("button", { name: "No due date" }));
+    expect(names()).toEqual(["Pick the vendor"]);
   });
 });

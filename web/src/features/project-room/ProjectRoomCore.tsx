@@ -53,7 +53,7 @@ import { StandingPagesSection, useStandingPages } from "../../desk/standingPages
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
-import { ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, refOpener, takeRoomProposalRequest, takeRoomUpdatesRequest } from "../../desk/openObject";
+import { ROOM_AT_EVENT, ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, refOpener, takeRoomAtRequest, takeRoomProposalRequest, takeRoomUpdatesRequest, type RoomPlace } from "../../desk/openObject";
 import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type {
@@ -142,7 +142,7 @@ const PROVIDER_EMBLEM: Record<string, string> = {
   room: "▣",
 };
 
-function emblemFor(source: string): string {
+export function emblemFor(source: string): string {
   const key = source.toLowerCase();
   return PROVIDER_EMBLEM[key] || source.slice(0, 2).toUpperCase();
 }
@@ -1771,7 +1771,7 @@ function boundaryToLabel(boundary: string): string {
  *  composer's sticky foot — five rows and the Room was gone behind them. The
  *  state lives here so the list can sit in the body as its own section, where
  *  the design's posture-6 grammar puts it, while the well stays sticky. */
-function useRoomAsk(projectId: string, projectName: string) {
+export function useRoomAsk(projectId: string, projectName: string) {
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [busy, setBusy] = useState(false);
@@ -1877,7 +1877,7 @@ function useRoomAsk(projectId: string, projectName: string) {
   };
 }
 
-type RoomAsk = ReturnType<typeof useRoomAsk>;
+export type RoomAsk = ReturnType<typeof useRoomAsk>;
 
 /** UNFINISHED — the saved work, in the Room BODY as its own section.
  *
@@ -1963,7 +1963,10 @@ function RoomBriefsSection({ prepare }: { prepare: PrepareController }) {
   );
 }
 
-function RoomAskWell({
+/** The Room's ask (Phase 16: the kit's AskWell: the sunken paper well with
+ *  the mic on its right edge, the model's egress chip beside it). The
+ *  Room window on the desk (the Project's drawer) draws the same well. */
+export function RoomAskWell({
   ask,
   projectId,
   onOpenRef,
@@ -1996,24 +1999,24 @@ function RoomAskWell({
       ) : null}
       {error ? <p className="room-ask-error">{error}</p> : null}
       <div className="room-ask-well" data-testid="room-ask-input-well">
-        <input // UX-CANON: needs redesign (HS-170-04)
-          ref={inputRef}
-          type="text"
-          className="room-ask-input"
-          aria-label="Ask this project"
+        {/* Phase 16 (the interior kit, §11 "AskWell"): the library string
+            well (sunken paper, the mic on its right edge) replaces the raw
+            input HS-170-04 left for a redesign. */}
+        <StringGadget
+          label="Ask this project"
           value={prompt}
+          onChange={setPrompt}
           placeholder="Ask this project…"
-          onChange={(e) => setPrompt(e.target.value)}
+          micLabel="Speak to ask this project"
+          micDraftScope={`project-ask-${projectId}`}
+          inputRef={inputRef}
+          inputProps={{ className: "room-ask-input" }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               void ask.ask();
             }
           }}
-        />
-        <MicButton
-          draftScope={`project-ask-${projectId}`}
-          onText={(text) => setPrompt((v) => (v ? `${v} ${text}` : text))}
         />
         {onPrepare ? (
           <span className="room-ask-result" data-testid="room-ask-result">
@@ -2309,19 +2312,49 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   // which steps aside with no write (a kept Update place is not restored
   // over the request), the Room goes to its ROOM wing (not History),
   // and the selected row scrolls into view.
+  // Every posture steps aside the way its own Close does; the Update posture
+  // NEVER writes (Muad'Dib's ruling on Astra r2): its text, kept draft and
+  // failure stay; Draft update brings the editor back. Always: it also
+  // forgets a kept Update place that a just-mounted Room is still restoring
+  // (393 opens a fresh Room window). `keepSteward`: the Steward request.
+  const leavePostures = (keepSteward = false) => {
+    if (reviewCtrl.posture !== "off") reviewCtrl.exitReview();
+    updateCtrl.stepAside();
+    if (!keepSteward && stewardCtrl.posture !== "off") stewardCtrl.exitSteward();
+    if (prepareCtrl.posture !== "off") prepareCtrl.exit();
+  };
   const revealProposal = useRef<(id: string) => void>(() => undefined);
   revealProposal.current = (id: string) => {
-    if (reviewCtrl.posture !== "off") reviewCtrl.exitReview();
-    // The Update posture steps aside and NEVER writes (Muad'Dib's ruling on
-    // Astra r2): its text, kept draft and failure stay; Draft update brings
-    // the editor back. Always: it also forgets a kept Update place that a
-    // just-mounted Room is still restoring (393 opens a fresh Room window).
-    updateCtrl.stepAside();
-    if (stewardCtrl.posture !== "off") stewardCtrl.exitSteward();
-    if (prepareCtrl.posture !== "off") prepareCtrl.exit();
+    leavePostures();
     if (ctrl.view !== "room") ctrl.setView("room");
     setProposalRequest((prev) => ({ id, seq: prev.seq + 1 }));
   };
+  // Phase 16 (Astra r1 M3): the Room window's History and Steward verbs
+  // (the drawer's FilterBar and Sources) REVEAL their place, as a proposal
+  // request does: every other posture steps aside first (Update without a
+  // write), then History shows its wing, or Steward its posture.
+  const revealPlace = useRef<(place: RoomPlace) => void>(() => undefined);
+  revealPlace.current = (place: RoomPlace) => {
+    if (place === "history") {
+      leavePostures();
+      if (ctrl.view !== "history") ctrl.setView("history");
+      return;
+    }
+    leavePostures(true);
+    if (ctrl.view !== "room") ctrl.setView("room");
+    if (stewardCtrl.posture === "off") void stewardCtrl.enterSteward();
+  };
+  useEffect(() => {
+    const projectId = ctrl.projectId;
+    if (!projectId) return;
+    const take = () => {
+      const place = takeRoomAtRequest(projectId);
+      if (place) revealPlace.current(place);
+    };
+    take();
+    window.addEventListener(ROOM_AT_EVENT, take);
+    return () => window.removeEventListener(ROOM_AT_EVENT, take);
+  }, [ctrl.projectId]);
   useEffect(() => {
     const projectId = ctrl.projectId;
     if (!projectId) return;
