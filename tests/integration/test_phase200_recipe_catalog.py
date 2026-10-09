@@ -230,6 +230,11 @@ class TestObservedCoverageEqualsTheProducer:
         line. (An earlier version seeded an offset-aware stamp and asked
         the producer on a pinned clock; at UTC+14 the absolute assertion
         failed while the equality assertion held.)
+
+        Four times the horizon (24 h), not twice: PHILO-15 B60 reads a
+        source that went late INSIDE quiet hours (22-08, ten hours) as
+        ``quiet``. 24 h is past the window plus the horizon, so the read
+        went late before any quiet window began: stale at any hour.
         """
         from holdspeak.services.needs_you_aggregate import (
             DEFAULT_SOURCE_STALE_AFTER_S,
@@ -239,7 +244,7 @@ class TestObservedCoverageEqualsTheProducer:
             conn.execute(
                 "UPDATE connector_watches "
                 "SET last_success_at = datetime('now', ?) WHERE id = 'watch_gh_01'",
-                (f"-{int(DEFAULT_SOURCE_STALE_AFTER_S * 2)} seconds",),
+                (f"-{int(DEFAULT_SOURCE_STALE_AFTER_S * 4)} seconds",),
             )
         observed = catalog.observed_coverage(ProjectService(db), OWNER, PROJECT_ID)
         producer = self._producer_states(db, PROJECT_ID)

@@ -32,6 +32,22 @@
  *  Anything else means he chose somewhere else, and the return is dropped.
  */
 
+import { useDesk } from "./store";
+
+/** PHILO-16 (C2): a task coming back comes back to the FRONT. Runs on (the
+ *  Models window) stays open after a patch (its receipt and Undo live in its
+ *  foot), so the window holding the task is raised over it; focus alone left
+ *  the task behind a wider window. Raises the desk window holding `el`. */
+export function raiseWindowOf(el: HTMLElement | null | undefined): void {
+  const shell = el?.closest?.(".desk-window-shell") as HTMLElement | null;
+  if (!shell?.id) return;
+  try {
+    useDesk.getState().focusPanel(shell.id);
+  } catch {
+    // A page without the desk store has no windows to raise.
+  }
+}
+
 /** The one signal both halves ride. Faces holding an unfinished task
  *  re-read on it instead of reloading and losing the work. */
 export const RETURN_TO_TASK_EVENT = "holdspeak:settings-updated";
@@ -96,6 +112,7 @@ export function returnToTask(from?: HTMLElement | null): boolean {
   if (!isFocusable(owed.element)) return false;
   if (!focusIsUnclaimed(from)) return false;
   owed.element.focus();
+  raiseWindowOf(owed.element);
   return true;
 }
 

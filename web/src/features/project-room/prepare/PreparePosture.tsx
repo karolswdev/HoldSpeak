@@ -39,7 +39,7 @@ import { CycleGadget, PadGadget } from "../../../desk/surface/gadgets";
 import { egressFor } from "../../../desk/surface/egress";
 import { openSurfaceOr } from "../../../desk/shell";
 import { openDecisionRecord } from "../../../desk/openObject";
-import { rememberTaskFocus } from "../../../desk/returnToTask";
+import { raiseWindowOf, rememberTaskFocus } from "../../../desk/returnToTask";
 import type { UpdateClaim } from "../update/model";
 import type { PrepareController } from "./usePrepareController";
 import {
@@ -136,6 +136,9 @@ function PrepareWell({ ctrl, onResultChange }: { ctrl: PrepareController; onResu
   useEffect(() => {
     if (!ctrl.focusPrepareWhenReady || !canPrepare) return;
     prepareRef.current?.focus();
+    // The engine was set in Runs on, which stays open: Prepare comes back
+    // to the front with its verb.
+    raiseWindowOf(prepareRef.current);
     ctrl.setFocusPrepareWhenReady(false);
   }, [ctrl, canPrepare]);
   const onKey = (event: KeyboardEvent<HTMLTextAreaElement>) => {

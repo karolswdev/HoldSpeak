@@ -134,7 +134,7 @@ function AddEngineRow({ ctrl }: { ctrl: RunsOnController }) {
       {/* A.3: the answer is tokens (the word and the host), never the
           server's sentence. */}
       {a.state === "UNREACHABLE" ? (
-        <span className="runson-add-answer" role="alert">
+        <span className="runson-add-answer" role="alert" data-testid="concierge-add-unreachable">
           <StateChip state="failure" label="UNREACHABLE" />
           <span className="surface-token" data-testid="concierge-add-reason">{host || "NO ADDRESS"}</span>
         </span>

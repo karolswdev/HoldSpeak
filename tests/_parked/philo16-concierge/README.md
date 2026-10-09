@@ -20,5 +20,7 @@ runs (`tests/_parked/conftest.py`).
   `tests/e2e/test_hs156_front_door_glass.py`.
 - `live170_walk.py`: a standalone read-only walk of the owner's hub (never
   collected) that shot the Concierge's FOUND and SET rows. Intent (a
-  read-only walk of the Models window on a real desk) is not ported: the
-  Runs on window has no live walk yet.
+  read-only walk of the Models window on a real desk) is ported to
+  `tests/e2e/live_runson_walk.py` (Runs on: jobs, engines, FOUND, wires;
+  read-only, any write fails the walk). The atlas does not cover it: atlas
+  cases walk a fresh HOME, never a real desk.

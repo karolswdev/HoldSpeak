@@ -227,7 +227,9 @@ def test_every_api_setup_step_exists_in_the_generated_openapi(
         for step in _acts(case):
             if step["kind"] != "api":
                 continue
-            path, method = step["path"], step["method"].lower()
+            # A query string filters the same route (PHILO-16 C: restore binds
+            # its projection from `?attention_state=needs_attention`).
+            path, method = step["path"].split("?", 1)[0], step["method"].lower()
             if path not in paths or method not in paths[path]:
                 missing.append(f"{case['id']}: {step['method']} {path}")
     assert not missing, f"setup steps name routes that do not exist: {missing}"
@@ -927,7 +929,7 @@ def test_summary_planned_host_cases_check_real_text_and_control_ownership(atlas:
         case = next(c for c in _summary_cases(atlas)
                     if c["id"] == f"case.j5.meeting_open.{suffix}")
         assert case["expected"]["predicate"] == {
-            "kind": "text_contains", "value": "192.168.1.43 · LAN",
+            "kind": "text_contains", "value": "192.168.77.43 · LAN",
         }
         assert any(entry.get("observe_at") == "[data-testid=arrival-run-intel]"
                    and entry.get("predicate", {}).get("kind") == "hit_target"
@@ -1014,19 +1016,24 @@ def test_summary_arrival_observations_name_the_rendered_states(atlas: dict) -> N
 
 
 def test_summary_models_window_closes_before_arrival_steps(atlas: dict) -> None:
+    """PHILO-16 (C): Runs on stays open after a patch (no commit closes it), so
+    the case waits for the PATCHED receipt and closes it before the Chair."""
     problems: list[str] = []
     for case in _summary_cases(atlas):
         setup = case.get("setup", [])
         for index, step in enumerate(setup):
-            if (step.get("kind") != "ui" or step.get("action") != "click"
-                    or step.get("selector") != "[data-testid=concierge-add-submit]"):
+            if (step.get("kind") != "ui" or step.get("action") != "press"
+                    or "switchboard-engine-" not in step.get("selector", "")):
                 continue
-            following = setup[index + 1] if index + 1 < len(setup) else {}
-            if not (following.get("kind") == "ui"
-                    and following.get("action") == "wait_for"
-                    and following.get("state") == "hidden"
-                    and following.get("selector") == "#surface-concierge .desk-window-title"):
-                problems.append(f"{case['id']}: Models is not closed before the next Arrival step")
+            following = setup[index + 1:index + 4]
+            shape = [(s.get("action"), s.get("selector") or s.get("name"), s.get("state"))
+                     for s in following]
+            if shape != [
+                ("wait_for", "[data-testid=runson-receipt]:has-text('PATCHED')", None),
+                ("click_role", "Close Runs on", None),
+                ("wait_for", "[data-testid=runson-root]", "hidden"),
+            ]:
+                problems.append(f"{case['id']}: Runs on is not closed after the patch")
     assert not problems, problems
 
 
