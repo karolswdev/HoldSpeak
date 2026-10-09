@@ -90,6 +90,13 @@ const SEVENTEEN = Array.from({ length: 17 }, (_, i) => {
 const needsRows = () => [...document.querySelectorAll<HTMLElement>('[data-testid="needs-drawer"] [data-testid="needs-row"]')];
 const sourceRows = () => [...document.querySelectorAll<HTMLElement>('[data-testid="needs-drawer"] [data-testid="needs-source-row"]')];
 const rowNamed = (text: string) => needsRows().find((r) => r.querySelector(".needs-row-name")?.textContent === text)!;
+// Phase 16 (the interior kit; the canvas window "Needs you", owner-ratified
+// 2026-10-09): the Section draws five rows and folds the rest behind
+// `N more · Show all`; the rows are read with the fold open.
+const openFold = () => {
+  const more = screen.queryByTestId("needs-show-all");
+  if (more) fireEvent.click(more);
+};
 const lampOf = (r: HTMLElement) => r.querySelector(".gadget-lamp")?.textContent ?? "";
 const factOf = (r: HTMLElement) => r.querySelector(".needs-row-fact")?.textContent ?? "";
 
@@ -109,7 +116,7 @@ describe("Arrival attention (HS-200-15)", () => {
            coverage: [AVAILABLE("p1", "Q4 Platform"), AVAILABLE("p2", "Governance"), AVAILABLE("p3", "Payments"), FAILED_WATCH],
            complete: false });
     render(<ChairHome />);
-    await waitFor(() => expect(needsRows().length).toBe(17), { timeout: 5000 });
+    await waitFor(() => { openFold(); expect(needsRows().length).toBe(17); }, { timeout: 5000 });
 
     // PHILO-15-09 (B11): every row counts, the unread source too.
     expect(screen.getByTestId("arrival-display").textContent).toBe("18 need you");
@@ -129,7 +136,7 @@ describe("Arrival attention (HS-200-15)", () => {
     // One filled primary per face: the top member's verb.
     expect(within(rows[1]).getByRole("button", { name: /^Open: / }).className).toContain("btn--primary");
     expect(within(rows[2]).getByRole("button", { name: /^Open: / }).className).toContain("btn--secondary");
-    // No cap, no filter strip.
+    // No ranking strip (the FilterBar is the kit's; Ranked is its first token).
     expect(screen.queryByRole("group", { name: "Ranking" })).toBeNull();
     // PHILO-14 A5b (A2b ruling): over several Projects each row names its
     // Project ONCE, as the Project's Button on the fact line (a generic open:
@@ -148,7 +155,7 @@ describe("Arrival attention (HS-200-15)", () => {
     wire({ count: 17, projects: ["p1", "p2", "p3"], items: SEVENTEEN, next: null,
            coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true });
     render(<ChairHome />);
-    await waitFor(() => expect(needsRows().length).toBe(17), { timeout: 5000 });
+    await waitFor(() => { openFold(); expect(needsRows().length).toBe(17); }, { timeout: 5000 });
     expect(needsRows().filter((r) => r.textContent?.includes("Priya confirms the freeze window"))).toHaveLength(1);
     expect(screen.queryByRole("button", { name: /^Sources: / })).toBeNull();
   });
@@ -157,7 +164,7 @@ describe("Arrival attention (HS-200-15)", () => {
     wire({ count: 17, projects: ["p1", "p2", "p3"], items: SEVENTEEN, next: null,
            coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true });
     const { container } = render(<ChairHome />);
-    await waitFor(() => expect(needsRows().length).toBe(17), { timeout: 5000 });
+    await waitFor(() => { openFold(); expect(needsRows().length).toBe(17); }, { timeout: 5000 });
     expect(container.querySelectorAll("[data-testid='needs-drawer'] .btn--primary")).toHaveLength(1);
   });
 

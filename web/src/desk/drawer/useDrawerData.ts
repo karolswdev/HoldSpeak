@@ -100,6 +100,9 @@ export function useDrawerData(projectId: string) {
   };
   return {
     name: ctrl.projectName,
+    /** Phase 16: the Room's read (its sources), for the Room window's
+     *  Sources section. */
+    room: ctrl.room,
     loading: ctrl.loadStatus === "loading" && !ctrl.room,
     failed,
     retry,

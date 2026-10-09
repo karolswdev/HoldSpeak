@@ -112,8 +112,9 @@ recurring element the library lacked.
 
 Presence rules (they are the species, not the caller's business):
 
-- The active token is `Button` **secondary dense** (accent-tinted, raised),
-  the resting ones **ghost dense**; each carries `aria-pressed` and the
+- The active token is `Button` **secondary dense** (Phase 16: the selection
+  blue with paper, sunken; was accent-tinted), the resting ones **ghost
+  dense** (a raised Steel cell); each carries `aria-pressed` and the
   active one `data-filter-active`. Never **primary**: a face has one filled
   primary and it is the action the face is for, not a filter. No raw
   `<button>` (UX-CANON A.1).
@@ -858,7 +859,8 @@ grammar rides `--wb-raised` / `--wb-sunken`.
 The material pass (PHILO-14 B2) moved the existing species onto the
 grammar, in the library:
 
-- **Button** (`global.css .btn`): every plated variant (secondary,
+- **Button** (`global.css .btn`; Phase 16: the Steel plate, see "The
+  interior kit" below): every plated variant (secondary,
   primary, ghost, danger) wears `--bevel-raised`; `:active` and
   `aria-pressed="true"` sink it to `--bevel-sunken`. The glass top line
   of the materials block is gone. Disabled stays flat. A Button on the
@@ -887,3 +889,29 @@ Not moved: `EgressChip` (the egress law's own chip), the `desk-chip`
 family of the older pullouts (outside the Chair, drawer, lane, Conductor
 and Needs you faces), and the row why-token of Needs you (a flat word;
 the row's lamp is its flight's StateChip).
+
+## The interior kit (Phase 16, COMPOSITOR.md §11)
+
+Every internal app (Needs you, a Room, the Conductor, a meeting, People,
+Delivery, Settings) is composed from these, in this order: AppHead (with its
+StatusStrip) → FilterBar → Section → Ledger / IconGrid → AskWell → Foot. The
+canvas is `docs/internal/philo/phase-16/01-canvas/compositor.html` (the CSS
+block "THE INTERIOR KIT" and its four windows). Two species are new
+(`kit.tsx`, `kit.css`); the rest are the library's existing species in the
+new material. The material tokens (`--wb-well`, `--wb-text`, `--wb-muted`,
+`--wb-rule-soft`, `--wb-sel`, `--wb-field`) are lane A1's; the kit reads them
+with a fallback (on the window ground: today's `--text` / `--text-muted`;
+inside a paper well: the Workbench pens `--wb-ink` / `--wb-paper`).
+
+| Species | Where | The rule |
+|---|---|---|
+| **AppHead** | `kit.tsx` `AppHead({ fact, children, as?, className?, data-testid?, factTestId? })` | The ONE big fact (display 26/650, `--font-display`; the element carries `surface-display kit-disp`), once per window. Its child is the StatusStrip, on the same baseline; the pair wraps. `SurfaceIdentity` is not this species (its name is the 15 px primary step under a purpose fold) and is left as it is. |
+| **StatusStrip** | `kit.tsx` `StatusStrip({ items, className?, data-testid? })` | Tokens, never prose: `{ lamp?, text?, value?, verb?, testId? }`. Mono 11 upper (0.04 em), muted ink; `value` bold ink; the lamp an 8 px square with a 1 px ink border in the lamp tone (aria-hidden: the word carries it); a `verb` is a library Button. Empty items are dropped; an empty strip draws nothing. |
+| **FilterBar** | `kit.tsx` `FilterBar({ options?, value?, onChange?, label, trailing?, disabled? })` | The FilterTokens strip on one rail, a spacer, the trailing verb group at the rail's right. One per window at most. FilterTokens IS the bar's twin (restyled, not a third filter species): a resting token is a raised Steel cell (soft bevel, ink, mono 11 upper); the active token is the selection blue (`--wb-sel`) with paper ink, sunken. `LedgerFilterBar` has no caller and is left as it is. |
+| **Section** | `Surface.tsx` `SurfaceSection({ label, count?, actions?, data-testid? })` | The caption (mono 11/700 upper, 0.06 em) reads `Name · count`; a zero or null count is not said (A.8); a string count is drawn as given (`5 of 6`). The verbs follow the caption; the hairline (`::after`, flex 1) runs to the right edge. A Section may be a head alone (`1 more` + Show all). |
+| **Ledger** | `Surface.tsx` `SurfaceLedger({ count?, controls?, cols?, label?, data-testid? })` | A sunken PAPER well (1 px ink border, `--wb-sunken`); inside it `--text*` read ink. `count` is optional now: a kit ledger says its count on its Section and draws no head. `label` names the well (`role=group`). `cols="kit"` is the kit row template (kit.css): plate · name · meta · verbs on one line; under 560 px the meta and the verbs fall under the name. |
+| **LedgerRow** | `Surface.tsx` `SurfaceLedgerRow({ kind?, kindTitle?, meta?, metaTone?, … })` | A row: kind plate · name · meta · trailing verbs. `kind` draws the plate (`KindPlate`: raised Steel, 44 px, mono 10/700) in the 52 px lead slot; a given `lead` wins. The name is sans 15/500 ink; `meta` mono 11 upper, `metaTone` `ask` / `ok` / `fail` (lane A1's `--wb-ember-ink`, `--wb-ok-ink`, `--wb-danger-ink`). A soft hairline between rows; the hover tints selection-blue at 12 %. `wrap`, `trailing`, `open`, `selected` stay as they were. |
+| **IconGrid** | `objects/IconGrid.tsx` `IconGrid({ well?, data-testid?, … })` | `well`: the objects INSIDE a window in a sunken paper well, five across at 900 px and wider (auto-fit 120 px columns below), the sprite at 40 px over a two-line sans 11 name, the hover tinted, the selected name on the selection blue. The same DeskIcon sprites as the Floor; the Floor's grid has no well. |
+| **AskWell** | `gadgets.tsx` `StringGadget` (the well) and `objects/AskWell.tsx` (the question plate that holds one) | Every text well is a sunken paper well, ink words in the sans body step (13), the mic a raised Steel plate the well's full height on its right edge (`--size-icon-lg` wide; 44 px at the narrow container): the voice law. The Room's ask (`RoomAskWell`) is this well (its raw input retired). The AskWell question plate is raised Steel with ink. |
+| **Foot** | `SurfaceFooter.tsx`, `surface-footer.css` | The Steel foot: an ink line and a shine along its top (inset), ink words; the egress chip a paper plate (ink border; its scope the word's ink tone); the receipt in the middle; the verbs right. Egress exactly where egress happens (A.9). |
+| **Verb** | `components/signal/Signal.tsx` `Button`; its material in `styles/global.css` | A raised Steel plate with a 1 px ink border and ink; `primary` the selection blue with paper; `danger` the Workbench red (`--wb-rec`) with paper; `secondary` and `ghost` the same plate at the same height; pressed (`:active`, `aria-pressed`) it sinks (`--wb-sunken`); disabled is flat and faded. `chrome` is unchanged (the strip owns its ink). The 44 px narrow-desk halo stays. |

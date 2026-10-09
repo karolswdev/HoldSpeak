@@ -1,6 +1,9 @@
 // HS-170-04 — the meeting detail pane (the board's right side).
 // Display title + tokens, NEEDS YOU section, TRANSCRIPT well, settled list.
-import { SurfaceSection } from "../../../desk/surface/Surface";
+import type { ReactNode } from "react";
+import { Button } from "../../../components/signal/Signal";
+import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection } from "../../../desk/surface";
+import { presentValue } from "../../../desk/surface/format";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
 import {
@@ -18,7 +21,7 @@ import {
 import { apiFetch } from "../../../lib/api";
 import type { DetailView, Receipt } from "./helpers";
 import { MeetingReview } from "./MeetingReview";
-import { useMeetingData } from "./useMeetingData";
+import { useMeetingData, type MeetingData } from "./useMeetingData";
 import { MeetingHeader } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
 import { ArtifactsLibrary } from "./ArtifactsLibrary";
@@ -26,7 +29,136 @@ import { MeetingSendWellLazy as MeetingSendWell } from "../../../meetings/Meetin
 import { MeetingDecideWell } from "../../../meetings/MeetingDecideWell";
 import { NeedsYouTable, showsRunSummary } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
-import { SettledList } from "./SettledList";
+
+
+/** One row of the meeting's outcomes ledgers. */
+type OutcomeRow = {
+  key: string;
+  plate: "DEC" | "ACT";
+  text: string;
+  meta: string;
+  tone?: "ask" | "ok";
+  verbs?: ReactNode;
+};
+
+/** Phase 16 (the interior kit; the canvas window "Cutover sync"): the
+ *  meeting's Decisions and Commitments, each a Section over a Ledger of
+ *  kind-plated rows. A decision the meeting proposed asks to be decided
+ *  (`TO DECIDE`, Confirm / Dismiss); a commitment it proposed asks to be
+ *  confirmed; an open action names its owner (or `UNASSIGNED`); a settled
+ *  one is `DONE`. A Section with no rows is not drawn (A.8). */
+export function meetingOutcomes(
+  data: Pick<MeetingData, "ftProposals" | "openActions" | "settledActions">,
+  /** The meeting's own action items (the detail's `intel.action_items`):
+   *  read when the aftercare rows hold none, so a commitment is never lost
+   *  and never drawn twice. */
+  intelActions: readonly Record<string, unknown>[] = [],
+): {
+  decisions: OutcomeRow[];
+  commitments: OutcomeRow[];
+} {
+  const proposed = (kind: "decision" | "action") =>
+    data.ftProposals.filter((p) => p.kind === kind && p.state === "proposed");
+  const owner = (value: unknown) => presentValue(value).toUpperCase();
+  const decisions: OutcomeRow[] = [
+    ...proposed("decision").map((p) => ({
+      key: `ft-${p.id}`, plate: "DEC" as const, text: p.text, meta: "TO DECIDE", tone: "ask" as const,
+    })),
+    ...data.ftProposals
+      .filter((p) => p.kind === "decision" && p.state === "confirmed")
+      .map((p) => ({
+        key: `ft-${p.id}`, plate: "DEC" as const, text: p.text,
+        meta: owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
+      })),
+  ];
+  const commitments: OutcomeRow[] = [
+    ...proposed("action").map((p) => ({
+      key: `ft-${p.id}`, plate: "ACT" as const, text: p.text,
+      meta: p.due_hint ? `TO CONFIRM · BY ${String(p.due_hint).toUpperCase()}` : "TO CONFIRM", tone: "ask" as const,
+    })),
+    ...data.openActions.map((row, index) => ({
+      key: `open-${String(row.id ?? index)}`, plate: "ACT" as const,
+      text: String(row.text ?? row.title ?? "Action item"),
+      meta: owner(row.owner) || "UNASSIGNED",
+    })),
+    ...data.settledActions.map((row, index) => ({
+      key: `done-${String(row.id ?? index)}`, plate: "ACT" as const,
+      text: String(row.text ?? row.title ?? "Action item"),
+      meta: owner(row.owner) ? `DONE · ${owner(row.owner)}` : "DONE", tone: "ok" as const,
+    })),
+    ...(data.openActions.length || data.settledActions.length ? [] : intelActions).map((row, index) => {
+      const done = String(row.status ?? "").toLowerCase() === "done";
+      const who = owner(row.owner);
+      return {
+        key: `intel-${String(row.id ?? index)}`, plate: "ACT" as const,
+        text: String(row.task ?? row.text ?? row.title ?? "Action item"),
+        meta: done ? (who ? `DONE · ${who}` : "DONE") : who || "UNASSIGNED",
+        tone: done ? ("ok" as const) : undefined,
+      };
+    }),
+  ];
+  return { decisions, commitments };
+}
+
+function OutcomeLedger({ label, rows, testId }: { label: string; rows: OutcomeRow[]; testId: string }) {
+  if (!rows.length) return null;
+  return (
+    <SurfaceSection label={label} count={rows.length} data-testid={testId}>
+      <SurfaceLedger label={label} cols="kit">
+        <ul className="surface-ledger-rows">
+          {rows.map((row) => (
+            <SurfaceLedgerRow
+              key={row.key}
+              data-testid={`${testId}-row`}
+              kind={row.plate}
+              kindTitle={row.plate === "DEC" ? "DECISION" : "ACTION"}
+              primary={row.text}
+              meta={row.meta}
+              metaTone={row.tone}
+              trailing={row.verbs}
+              wrap
+              expands={false}
+            />
+          ))}
+        </ul>
+      </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting: Record<string, unknown> }) {
+  const intel = ((data.detail ?? meeting)?.intel ?? null) as { action_items?: unknown } | null;
+  const intelActions = Array.isArray(intel?.action_items)
+    ? (intel!.action_items as unknown[]).filter((a): a is Record<string, unknown> => Boolean(a) && typeof a === "object")
+    : [];
+  const { decisions, commitments } = meetingOutcomes(data, intelActions);
+  // The proposals' verbs: Confirm (the plate) and Dismiss. Never the filled
+  // primary: the meeting's one primary is Send (the foot).
+  const verbsFor = (row: OutcomeRow) => {
+    const id = row.key.startsWith("ft-") ? row.key.slice(3) : "";
+    const pending = id && data.ftProposals.some((p) => p.id === id && p.state === "proposed");
+    if (!pending) return undefined;
+    return (
+      <>
+        <Button dense variant="secondary" loading={data.busy} data-testid="proposal-confirm-btn"
+          aria-label={`Confirm: ${row.text}`} onClick={() => void data.confirmProposal(id)}>
+          Confirm
+        </Button>
+        <Button dense variant="ghost" loading={data.busy} data-testid="proposal-dismiss-btn"
+          aria-label={`Dismiss: ${row.text}`} onClick={() => void data.dismissProposal(id)}>
+          Dismiss
+        </Button>
+      </>
+    );
+  };
+  const withVerbs = (rows: OutcomeRow[]) => rows.map((row) => ({ ...row, verbs: verbsFor(row) }));
+  return (
+    <>
+      <OutcomeLedger label="Decisions" rows={withVerbs(decisions)} testId="meeting-decisions" />
+      <OutcomeLedger label="Commitments" rows={withVerbs(commitments)} testId="meeting-commitments" />
+    </>
+  );
+}
 
 export function MeetingDetail({
   meeting,
@@ -74,7 +206,6 @@ export function MeetingDetail({
     intelState,
     needsRows,
     needsCount,
-    settledActions,
     timelineRows,
   } = data;
 
@@ -134,6 +265,9 @@ export function MeetingDetail({
         />
       ) : (
         <>
+          {/* Phase 16: Decisions · n, Commitments · n (the kit's Sections
+              over Ledgers), right under the head. */}
+          <MeetingOutcomes data={data} meeting={meeting} />
           <NeedsYouTable
             needsRows={needsRows}
             needsCount={needsCount}
@@ -177,8 +311,10 @@ export function MeetingDetail({
               The old aftercare Slack rows are gone (R7): the digest and the
               follow-up are forms of this one well. */}
           {summaryIntel?.summary?.trim() ? (
-            <MeetingSendWell meetingId={id} title={meetingTitle}
-              startedAt={String((detail ?? meeting)?.started_at ?? "") || null} />
+            <div id={`meeting-${id}-send`} className="meetings-detail-anchor">
+              <MeetingSendWell meetingId={id} title={meetingTitle}
+                startedAt={String((detail ?? meeting)?.started_at ?? "") || null} />
+            </div>
           ) : null}
           {/* PHILO-13-08 (B3): Decide, next to SEND; with or without a summary. */}
           <MeetingDecideWell meetingId={id} title={meetingTitle}
@@ -188,11 +324,13 @@ export function MeetingDetail({
               intelOff, hasTranscript, plannedRoute: displayedRoute,
               onRunIntelligence: onRunIntelligence ? () => undefined : undefined,
             })} />
-          <TranscriptWell
-            id={id}
-            segments={segments}
-            momentSegmentIndex={momentSegmentIndex}
-          />
+          <div id={`meeting-${id}-transcript`} className="meetings-detail-anchor">
+            <TranscriptWell
+              id={id}
+              segments={segments}
+              momentSegmentIndex={momentSegmentIndex}
+            />
+          </div>
           {/* RAW · ROUTING — the intent timeline section (only when data present) */}
           {timelineRows.length > 0 ? (
             <div className="meetings-detail-routing">
@@ -204,7 +342,6 @@ export function MeetingDetail({
               </ul>
             </div>
           ) : null}
-          <SettledList settledActions={settledActions} />
         </>
       )}
     </SurfaceSection>

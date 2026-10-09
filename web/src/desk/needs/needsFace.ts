@@ -95,6 +95,56 @@ export interface NeedFace {
   /** PHILO-15-09 (B12): the row's kind word (`DECISION`, `ACTION`,
    *  `PROPOSAL`, `MEETING`, `AGENT`); a source row has none. */
   kindWord?: string;
+  /** Phase 16 (the FilterBar): the item's due date (ISO), when the hub
+   *  has one. Absent on agents, sources, meetings and setup rows. */
+  due?: string | null;
+}
+
+/** Phase 16 (the interior kit, the Ledger's kind plate): the row's kind in
+ *  at most three letters. An agent row is its agent (`CC` Claude Code,
+ *  `CX` Codex, `PI` pi); a source `SRC`; a setup blocker `SET`; a recording
+ *  that arms `REC`. */
+export function plateOf(face: Pick<NeedFace, "kind" | "verbs" | "source" | "agent">): string {
+  if (face.source) return "SRC";
+  if (face.verbs.kind === "setup" || face.kind === "conductor") return "SET";
+  if (face.verbs.kind === "arming") return "REC";
+  if (face.kind === "agent") {
+    if (face.agent === "claude") return "CC";
+    if (face.agent === "codex") return "CX";
+    if (face.agent === "pi") return "PI";
+    return "AGT";
+  }
+  switch (face.kind) {
+    case "pr": return "PR";
+    case "decision": return "DEC";
+    case "action": return "ACT";
+    case "meeting": return "MTG";
+    default: return face.kind.slice(0, 3).toUpperCase();
+  }
+}
+
+/** Phase 16 (the Needs-you FilterBar): the filter a row passes. */
+export type NeedsFilter = "ranked" | "overdue" | "today" | "not-run" | "no-due" | "waiting" | "muted";
+
+function localDay(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** True when `face` passes `filter` (`waiting` and `muted` are their own
+ *  lists, so every face of those lists passes them). Overdue and Due today
+ *  read the item's due day against the local today; No due date is an
+ *  action or decision with none; Not run is a meeting whose summary did not
+ *  run. */
+export function passesNeedsFilter(face: NeedFace, filter: NeedsFilter, now: Date = new Date()): boolean {
+  if (filter === "ranked" || filter === "waiting" || filter === "muted") return true;
+  if (filter === "not-run") return face.verbs.kind === "summarize";
+  const work = !face.source && (face.kind === "action" || face.kind === "decision");
+  if (filter === "no-due") return work && !face.due;
+  const due = face.due ? wireDate(face.due) : null;
+  if (!work || !due) return false;
+  const day = localDay(due);
+  const today = localDay(now);
+  return filter === "today" ? day === today : day < today;
 }
 
 /** PHILO-15-09 (B12): every member row says what it is. A proposal from a
@@ -447,6 +497,7 @@ function memberFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
   }
   const item = member.item ?? ({} as NeedsYouRoomItem);
   const face = attentionFace(item, ctx);
+  if (item.dueAt) face.due = String(item.dueAt);
   // Every row of a Project names it (an agent's ask names its session instead).
   if (!face.askOf && item.projectId && item.projectName) {
     face.project = { id: String(item.projectId), name: String(item.projectName) };

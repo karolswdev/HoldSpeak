@@ -1,14 +1,6 @@
-/* HS-176-03 — FilterTokens: the one-tap filter strip.
-
-   Canon D (PHILO-14 B2, #958): "Filters are lightly raised tokens (the
-   soft bevel, no plate); wings keep the full Steel bevel; the two never
-   look alike." PHILO-14 B2 (the material pass): a token is pressed,
-   so it LOOKS pressable (UX-CANON D): the LIGHT bevel of the grammar
-   (`--bevel-raised-soft`), no plate (no fill, no border at rest), and the
-   active token sinks (`--bevel-sunken-soft`) on its accent tint. A wing is
-   a Steel plate with the full Workbench bevel; a token is a light ridge on
-   the window's own ground, so the two still never look alike. The type is
-   the caption step (12 mono uppercase). */
+/* HS-176-03 — FilterTokens: the one-tap filter strip. Phase 16: the
+   tokens are the kit's FilterBar cells (the rules below, "the interior
+   kit"); the active one is the selection blue, sunken. */
 
 .surface-filter-tokens {
   display: inline-flex;
@@ -18,18 +10,30 @@
   min-width: 0;
 }
 
+/* Phase 16 (the interior kit, §11 "FilterBar"; canvas `.filters .chip`):
+   the tokens are CycleGadgets on one rail. A resting token is a raised
+   Steel cell (the soft bevel) with ink; the active token is the selection
+   (Workbench blue) with paper on it, sunken. Adjacent tokens share their
+   edge, so the strip reads as one control. A wing (SurfaceWings) keeps the
+   full plate with its gadget; a token is a cell of a rail, so the two
+   still never look alike (canon D). */
 .surface-filter-token.btn {
-  min-height: 26px;
-  padding: var(--space-1) var(--space-3);
+  min-height: 24px;
+  padding: 4px 10px;
+  border: 1px solid var(--wb-ink);
   border-radius: 0;
-  /* At rest a token is the ghost Button: no fill, no border (no plate). */
-  box-shadow: var(--bevel-raised-soft);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised-soft);
+  color: var(--wb-ink);
   font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  letter-spacing: var(--letter-spacing-eyebrow);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
+}
+.surface-filter-token.btn:hover:not(:disabled) {
+  background: var(--wb-steel-2);
 }
 
 /* The strip reads as one control: adjacent tokens share their edge. */
@@ -38,20 +42,19 @@
 }
 
 .surface-filter-token.btn:active:not(:disabled) {
-  box-shadow: var(--bevel-sunken-soft);
+  box-shadow: var(--wb-sunken);
 }
 
-/* The active token is the Button SECONDARY species, tinted with the accent
-   (never the filled primary — a face has one of those, and it is not a
-   filter). It sits sunken, at the light strength, through hover. */
+/* The active token: the selection blue, paper ink, sunken (never the
+   filled primary verb: a face has one of those, and it is not a filter). */
 .surface-filter-token.btn[data-filter-active] {
-  box-shadow: var(--bevel-sunken-soft);
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 22%, var(--surface-2));
-  color: var(--text);
+  box-shadow: var(--wb-sunken);
+  border-color: var(--wb-ink);
+  background: var(--wb-sel, var(--wb-blue));
+  color: var(--wb-paper);
 }
 .surface-filter-token.btn[data-filter-active]:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 30%, var(--surface-2));
+  background: var(--wb-sel, var(--wb-blue));
 }
 
 /* PHILO-13-11 (C1, §3a) — the folded strip (stripMenu.tsx): at the phone
@@ -81,9 +84,12 @@
 .surface-filter-token.btn:disabled,
 .surface-filter-token.btn[data-filter-active]:disabled {
   box-shadow: none;
-  background: var(--disabled-bg);
-  color: var(--disabled-fg);
+  background: color-mix(in srgb, var(--wb-steel) 45%, transparent);
+  color: var(--wb-muted, var(--wb-ink-dim));
+}
+.surface-filter-token.btn[data-filter-active]:disabled {
+  border-color: var(--wb-sel, var(--wb-blue));
 }
 .surface-filter-token.btn:disabled:not([data-filter-active]) {
-  border-color: var(--disabled-border);
+  border-color: var(--wb-rule-soft, var(--wb-rule));
 }

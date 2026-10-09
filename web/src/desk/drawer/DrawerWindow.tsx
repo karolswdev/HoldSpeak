@@ -13,21 +13,30 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
+  AppHead,
   DeskIcon,
   EgressChip,
-  FilterTokens,
+  FilterBar,
   ParkReceipt,
   restoreFailedOutcome,
   restoredOutcome,
   IconGrid,
-  LampGadget,
   ObjectList,
+  StatusStrip,
   SurfaceFooter,
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceSection,
   SurfaceState,
+  humanTime,
   objectSprite,
   type ObjectSort,
   type ObjectSortKey,
+  type StatusStripItem,
 } from "../surface";
+import { RoomAskWell, emblemFor, useRoomAsk } from "../../features/project-room/ProjectRoomCore";
+import type { RoomSnapshot } from "../../features/project-room/model";
+import { openProjectRoomAt, refOpener } from "../openObject";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { restoreMeeting } from "../api";
 import { openProjectRoom } from "../shell";
@@ -61,39 +70,52 @@ export function drawerReceipt(count: number, selected: number): string {
     .join(" · ");
 }
 
-function HeadFacts({ head, count, failed }: { head: DrawerHead; count: number; failed: readonly DrawerRead[] }) {
-  return (
-    <div className="drawer-facts" data-testid="drawer-facts">
-      {/* A failed read is named, never an empty or complete drawer (A.10). */}
-      {failed.map((read) => (
-        <span key={read} className="drawer-fact" data-tone="fail" data-testid="drawer-not-read">
-          {read} · <b>NOT READ</b>
-        </span>
-      ))}
-      {failed.length && count > 0 ? (
-        <span className="drawer-fact" data-tone="fail" data-testid="drawer-partial">
-          <b>PARTIAL</b>
-        </span>
-      ) : null}
-      {head.needsYou > 0 ? <LampGadget label={`${head.needsYou} NEED YOU`} on tone="warn" /> : null}
-      {head.target ? (
-        <span className="drawer-fact" data-tone={head.targetPassed ? "fail" : undefined}>
-          {head.targetPassed ? "OVERDUE" : "TARGET"} <b>{head.target}</b>
-        </span>
-      ) : null}
-      {/* An unread section is never spoken as ON TRACK. */}
-      {head.status && !(failed.length && head.statusTone === "ok") ? (
-        <span className="drawer-fact" data-tone={head.statusTone}>
-          STATUS <b>{head.status}</b>
-        </span>
-      ) : null}
-      {count > 0 ? (
-        <span className="drawer-fact">
-          <b>{count}</b> {count === 1 ? "OBJECT" : "OBJECTS"}
-        </span>
-      ) : null}
-    </div>
-  );
+/** Phase 16 (the interior kit): the Room window's status strip: the reads
+ *  that failed (A.10), PARTIAL, `N NEED YOU` (its lamp), the target, the
+ *  status, the object count. A zero is never said (A.8). */
+export function headItems(head: DrawerHead, count: number, failed: readonly DrawerRead[]): StatusStripItem[] {
+  const items: StatusStripItem[] = [];
+  // A failed read is named, never an empty or complete drawer (A.10).
+  for (const read of failed) {
+    items.push({ key: `fail-${read}`, lamp: "fail", text: `${read} ·`, value: "NOT READ", testId: "drawer-not-read" });
+  }
+  if (failed.length && count > 0) items.push({ key: "partial", value: "PARTIAL", testId: "drawer-partial" });
+  if (head.needsYou > 0) items.push({ key: "need", lamp: "warn", text: `${head.needsYou} NEED YOU` });
+  if (head.target) {
+    items.push({ key: "target", text: head.targetPassed ? "OVERDUE" : "TARGET", value: head.target });
+  }
+  // An unread section is never spoken as ON TRACK.
+  if (head.status && !(failed.length && head.statusTone === "ok")) {
+    items.push({ key: "status", lamp: head.statusTone, text: "STATUS", value: head.status });
+  }
+  if (count > 0) items.push({ key: "objects", text: `${count} ${count === 1 ? "OBJECT" : "OBJECTS"}` });
+  return items;
+}
+
+/** The Room window's Sources: one kit LedgerRow per accepted source (the
+ *  provider's plate, the scope, its one state word). Pause, Resume and
+ *  Remove live in the Room's Steward posture (the Section's Steward verb). */
+export function sourceRows(room: RoomSnapshot | null): Array<{
+  id: string; plate: string; scope: string; meta: string; tone?: "ok" | "fail";
+}> {
+  if (!room || room.sources.state !== "ok") return [];
+  return room.sources.items
+    .filter((src) => !src.suggested)
+    .map((src) => {
+      const checked = src.checkedAt ? humanTime(src.checkedAt) : "";
+      if (src.state === "cant_check") return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: "CAN'T CHECK", tone: "fail" as const };
+      if (src.state === "paused") return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: "PAUSED" };
+      if (src.freshness === "stale") {
+        return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: checked ? `STALE · CHECKED ${checked}` : "STALE" };
+      }
+      return {
+        id: src.watchId,
+        plate: emblemFor(src.provider),
+        scope: src.scope,
+        meta: checked ? `CHECKED ${checked}` : "NEVER CHECKED",
+        tone: checked ? ("ok" as const) : undefined,
+      };
+    });
 }
 
 /** The Project itself as a drawer member: what Get Info opens with nothing selected. */
@@ -182,6 +204,10 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
       source: { kind: selected.kind, id: selected.id, sprite: selected.sprite },
     });
   };
+  // Phase 16: the Room window's Sources and its AskWell (the Room's own
+  // ask: the same controller, the same well, the model's egress chip).
+  const sources = sourceRows(data.room);
+  const ask = useRoomAsk(projectId, data.name);
   const onSort = (key: ObjectSortKey) =>
     setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
 
@@ -205,35 +231,43 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
     >
       <div className="desk-pullout-body drawer-body">
         <div className="drawer-scroll">
-          <div className="drawer-head">
-            <HeadFacts head={data.head} count={members.length || 0} failed={data.failed} />
-            <span className="drawer-head-verbs">
-              {data.failed.length ? (
-                <Button dense variant="ghost" onClick={data.retry}>
-                  Retry
+          {/* Phase 16 (the interior kit; the canvas window "Payments ledger
+              cutover"): AppHead → FilterBar → IconGrid → Sources → AskWell. */}
+          <AppHead fact={name} data-testid="drawer-facts">
+            <StatusStrip items={headItems(data.head, members.length || 0, data.failed)} />
+          </AppHead>
+          <FilterBar
+            label="Drawer view"
+            data-testid="drawer-filter"
+            value={view}
+            onChange={(next) => useDesk.getState().setZoneViewPref(prefKey, { view: next as DrawerView })}
+            options={[
+              { value: "icons", label: "Icons" },
+              { value: "list", label: "List" },
+            ]}
+            trailing={(
+              <>
+                {data.failed.length ? (
+                  <Button dense variant="ghost" onClick={data.retry}>
+                    Retry
+                  </Button>
+                ) : null}
+                <Button dense variant="ghost" onClick={() => openProjectRoom(projectId)}>
+                  Room
                 </Button>
-              ) : null}
-              <FilterTokens
-                label="Drawer view"
-                value={view}
-                onChange={(next) => useDesk.getState().setZoneViewPref(prefKey, { view: next as DrawerView })}
-                options={[
-                  { value: "icons", label: "Icons" },
-                  { value: "list", label: "List" },
-                ]}
-              />
-              <Button dense variant="ghost" onClick={() => openProjectRoom(projectId)}>
-                Room
-              </Button>
-            </span>
-          </div>
+                <Button dense variant="ghost" data-testid="drawer-history" onClick={() => openProjectRoomAt(projectId, "history")}>
+                  History
+                </Button>
+              </>
+            )}
+          />
           <HandConfirmSlot host={host} />
           {data.loading ? (
             <SurfaceState loading />
           ) : !members.length && data.failed.length ? null : !members.length ? (
             <SurfaceState empty emptyLabel="Nothing filed here" />
           ) : view === "icons" ? (
-            <IconGrid label={name} onClear={() => setSelectedId(null)}>
+            <IconGrid well label={name} onClear={() => setSelectedId(null)}>
               {members.map((m) => {
                 // No drag gesture at 393 in any view (Astra P3 on #946): the hand
                 // there is the footer's Hand to agent.
@@ -270,6 +304,38 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
               onOpen={(id) => open(byId(id))}
             />
           )}
+          {data.room ? (
+            <SurfaceSection
+              label="Sources"
+              count={sources.length}
+              data-testid="drawer-sources"
+              actions={(
+                <Button dense variant="ghost" data-testid="drawer-steward" onClick={() => openProjectRoomAt(projectId, "steward")}>
+                  Steward
+                </Button>
+              )}
+            >
+              {sources.length ? (
+                <SurfaceLedger label="Sources" cols="kit">
+                  <ul className="surface-ledger-rows">
+                    {sources.map((src) => (
+                      <SurfaceLedgerRow
+                        key={src.id}
+                        data-testid="drawer-source-row"
+                        kind={src.plate}
+                        primary={src.scope}
+                        meta={src.meta}
+                        metaTone={src.tone}
+                      />
+                    ))}
+                  </ul>
+                </SurfaceLedger>
+              ) : null}
+            </SurfaceSection>
+          ) : null}
+          {data.room ? (
+            <RoomAskWell ask={ask} projectId={projectId} onOpenRef={(ref) => refOpener(ref)?.()} />
+          ) : null}
         </div>
       </div>
       <SurfaceFooter

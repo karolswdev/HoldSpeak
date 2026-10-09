@@ -97,6 +97,8 @@ export { TitleSlotContext, useWindowTitle } from "./title";
 export { SPARSE_THRESHOLD } from "./sparse";
 
 export { FilterTokens, type FilterTokenOption } from "./FilterTokens";
+// Phase 16: the interior kit (COMPOSITOR.md §11; contract.md "The interior kit").
+export { AppHead, StatusStrip, FilterBar, KindPlate, type StatusStripItem } from "./kit";
 
 export {
   LedgerFilterBar,

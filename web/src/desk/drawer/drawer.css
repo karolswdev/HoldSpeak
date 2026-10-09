@@ -12,10 +12,16 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* Phase 16 (the interior kit, §11): a column, 10 px gap, 12 by 14 px. */
   padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+}
+/* Phase 16: the scroll column holds several kit species now (the grid or
+   list, Sources, the AskWell); none of them shrinks, the column scrolls. */
+.drawer-scroll > * {
+  flex-shrink: 0;
 }
 .drawer-winicon { width: 20px; height: 20px; image-rendering: pixelated; display: block; }
 

@@ -139,16 +139,17 @@ small {
   justify-content: center;
   gap: var(--space-2);
   padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--border);
+  /* Phase 16 (the interior kit, COMPOSITOR.md §11 "Verb"): the library
+     Button is a raised Steel plate with ink, the Workbench verb, under the
+     one light (top-left). Every plated variant (secondary, ghost, primary,
+     danger) is the same plate at the same height; primary and danger change
+     only the fill. Pressed (`:active`, `aria-pressed`) it sinks. */
+  border: 1px solid var(--wb-ink);
   border-radius: 0;
-  background: var(--surface-2);
-  /* PHILO-14 B2 (the material pass): a plated Button is a control you
-     press, so it wears the raised bevel of the grammar (contract.md "The
-     bevel grammar"); pressed, it sinks (below). Ghost and danger inherit
-     it: every plated variant LOOKS clickable (UX-CANON D). */
-  box-shadow: var(--bevel-raised);
-  color: var(--text);
-  font: 600 12px / 1 var(--font-mono);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  color: var(--wb-ink);
+  font: 500 12px / 1 var(--font-mono);
   cursor: pointer;
   user-select: none;
   transition:
@@ -214,59 +215,56 @@ small {
  * 4.20:1 — so the label could never pass while the plate stayed. The ink
  * step is the same forge-ember ramp one stop down (5.24:1), and --accent
  * keeps every non-text duty: rails, glows, borders, tints. */
+/* Phase 16 (the interior kit, §11 "Verb"): `primary` is the selection
+   (Workbench blue) with paper on it; the ember stays for lamps and asks. */
 :where(.btn--primary, .btn.primary) {
-  border-color: var(--accent-ink);
-  background: var(--accent-ink);
-  color: var(--accent-on);
-  box-shadow: var(--bevel-raised);
+  border-color: var(--wb-ink);
+  background: var(--wb-sel, var(--wb-blue));
+  color: var(--wb-paper);
+  box-shadow: var(--wb-raised);
 }
 
-:where(.btn--secondary) {
-  border-color: var(--line-strong);
-  background: var(--canvas-raised);
-}
-
+/* Secondary and ghost are the Steel plate itself (§11: "the ghost and
+   dense variants map to the same plate at the same height"). */
+:where(.btn--secondary),
 :where(.btn--ghost) {
-  border-color: transparent;
-  background: transparent;
+  border-color: var(--wb-ink);
+  background: var(--wb-steel);
 }
 
+/* `danger` is the Workbench red with paper on it (REC, 5.73:1). */
 :where(.btn.danger, .btn--danger) {
-  border-color: var(--danger-fill);
-  background: var(--danger-fill);
-  color: var(--white);
+  border-color: var(--wb-ink);
+  background: var(--wb-rec);
+  color: var(--wb-paper);
 }
 
 :where(.btn):active:not(:disabled) {
   /* HS-96-03: one pressed grammar — a 1px settle, compositor-only.
-     PHILO-14 B2: and the bevel inverts — a pressed Button sits sunken. */
+     Phase 16: the plate sinks (the Steel sunken bevel). */
   transform: translateY(1px);
-  box-shadow: var(--bevel-sunken);
+  box-shadow: var(--wb-sunken);
 }
 
 /* PHILO-14 B2: a Button held down by its state (aria-pressed) also sits
    sunken, as the grammar's pressed gadget. */
 :where(.btn)[aria-pressed="true"]:not(:disabled) {
-  box-shadow: var(--bevel-sunken);
-}
-
-:where(.btn--primary, .btn.primary):active:not(:disabled) {
-  background: var(--accent-ink-press);
+  box-shadow: var(--wb-sunken);
 }
 
 :where(.btn):hover:not(:disabled) {
-  border-color: var(--accent);
-  background-color: var(--surface-3);
+  border-color: var(--wb-ink);
+  background-color: var(--wb-steel-2);
 }
 
 :where(.btn--primary, .btn.primary):hover:not(:disabled) {
-  border-color: var(--accent-ink-hover);
-  background: var(--accent-ink-hover);
+  border-color: var(--wb-ink);
+  background: color-mix(in srgb, var(--wb-sel, var(--wb-blue)) 88%, var(--wb-paper));
 }
 
 :where(.btn.danger, .btn--danger):hover:not(:disabled) {
-  border-color: var(--danger-strong);
-  background: var(--danger-strong);
+  border-color: var(--wb-ink);
+  background: color-mix(in srgb, var(--wb-rec) 88%, var(--wb-paper));
 }
 
 :where(.btn):active:not(:disabled) {
@@ -278,11 +276,13 @@ small {
   outline-offset: var(--focus-outline-offset);
 }
 
+/* Phase 16: a disabled verb is no plate: flat (no bevel), the Steel faded,
+   the word in the muted ink. It still reads as the same verb, held. */
 :where(.btn):disabled {
-  border-color: var(--disabled-border);
-  background: var(--disabled-bg);
+  border-color: var(--wb-rule-soft, var(--wb-rule));
+  background: color-mix(in srgb, var(--wb-steel) 45%, transparent);
   box-shadow: none;
-  color: var(--disabled-fg);
+  color: var(--wb-muted, var(--wb-ink-dim));
   cursor: not-allowed;
 }
 
@@ -699,24 +699,26 @@ input[type="file"]::file-selector-button:hover {
  * carry real specificity, so the pressed state is restated here. A filter
  * token is no plate: FilterTokens draws its own light material
  * (filter-tokens.css), so it steps out of this block. */
+/* Phase 16 (§11 "Verb"): these rules carry real specificity, so the
+   Steel plate is restated here; the old wash fill and its bottom stroke
+   are gone (the plate is lit by the one light, top-left). */
 .btn--secondary:not(:disabled):not(.surface-filter-token),
 .btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled):not(.surface-filter-token) {
-  background: var(--wash-2);
-  border: 1px solid var(--wash-2);
-  border-bottom-color: var(--shade-1);
-  box-shadow: var(--bevel-raised);
+  background: var(--wb-steel);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-raised);
 }
 .btn--secondary:not(:disabled):not(.surface-filter-token):hover,
 .btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled):not(.surface-filter-token):hover {
-  background: var(--gleam-2);
+  background: var(--wb-steel-2);
 }
 .btn--primary:not(:disabled) {
-  box-shadow: var(--bevel-raised);
+  box-shadow: var(--wb-raised);
 }
 .btn--secondary:not(:disabled):not(.surface-filter-token):is(:active, [aria-pressed="true"]),
 .btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled):not(.surface-filter-token):is(:active, [aria-pressed="true"]),
 .btn--primary:not(:disabled):is(:active, [aria-pressed="true"]) {
-  box-shadow: var(--bevel-sunken);
+  box-shadow: var(--wb-sunken);
 }
 .desk-next :where(select, textarea, input):not([type="checkbox"]):not([type="radio"]),
 :where(.input, .select, .hs-control) {

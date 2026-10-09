@@ -27,7 +27,7 @@ import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openDrawer } from "../drawer/store";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { EgressChip, StringGadget } from "../surface";
+import { AppHead, EgressChip, FilterBar, StatusStrip, StringGadget, SurfaceFooter, SurfaceSection } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
@@ -39,8 +39,11 @@ import {
   needFaces,
   needsHead,
   nextWord,
+  passesNeedsFilter,
+  plateOf,
   urlHost,
   type NeedFace,
+  type NeedsFilter,
 } from "./needsFace";
 import { cancelArming, useArmingOutcome } from "./arming";
 import { AddToProject } from "../AddToProject";
@@ -380,6 +383,7 @@ function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean
         lamp={face.lamp}
         sprite={needsRowSprite(face)}
         kindWord={face.kindWord}
+        plate={plateOf(face)}
         // A2b: the Project button is a generic open: the Project's drawer.
         project={project ? { name: project.name, onOpen: () => openDrawer(project.id) } : undefined}
         verbs={(
@@ -424,7 +428,34 @@ function useRowMarks(
   });
 }
 
-/** The Needs-you window body. */
+/** Phase 16 (the interior kit): the rows a Section draws before it folds
+ *  the rest behind `N more · Show all` (the canvas window "Needs you"). */
+export const NEEDS_SHOWN = 5;
+
+/** `Checked just now`, `Checked 4 min ago`, `Checked 09:14`. */
+export function checkedWord(at: string | null | undefined, now: Date = new Date()): string | null {
+  const d = at ? new Date(at) : null;
+  if (!d || Number.isNaN(d.getTime())) return null;
+  const minutes = Math.floor((now.getTime() - d.getTime()) / 60000);
+  if (minutes < 1) return "Checked just now";
+  if (minutes < 60) return `Checked ${minutes} min ago`;
+  return `Checked ${hhmm(d)}`;
+}
+
+const FILTERS: Array<{ value: NeedsFilter; label: string }> = [
+  { value: "ranked", label: "Ranked" },
+  { value: "overdue", label: "Overdue" },
+  { value: "today", label: "Due today" },
+  { value: "not-run", label: "Not run" },
+  { value: "no-due", label: "No due date" },
+  { value: "waiting", label: "Waiting" },
+  { value: "muted", label: "Muted" },
+];
+
+/** The Needs-you window body. Phase 16 (the interior kit; the canvas window
+ *  "Needs you"): AppHead (`N need you` + the status strip) → FilterBar →
+ *  Section `Actions · n of m` over the Ledger of kind-plated rows → Section
+ *  `N more` with Show all → the Foot (`Ranked hh:mm`). */
 export function NeedsDrawer() {
   const needs = useNeedsYou();
   const flights = useAgentFlights((s) => s.flights);
@@ -432,8 +463,8 @@ export function NeedsDrawer() {
   const arming = useDesk((s) => s.scheduledArming);
   const [, tick] = useState(0);
   const [door, setDoor] = useState<DoorRead | null>(null);
-  const [showMuted, setShowMuted] = useState(false);
-  const [showWaiting, setShowWaiting] = useState(false);
+  const [filter, setFilter] = useState<NeedsFilter>("ranked");
+  const [showAll, setShowAll] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   // The countdown ticks while a recording arms.
@@ -462,7 +493,7 @@ export function NeedsDrawer() {
     needs.room?.coverage, needs.room?.complete ?? undefined, Boolean(needs.errors.room),
   );
   // PHILO-15-09 (B11): the calendar is an offer, never a row: the head's
-  // number is the number of rows below it. The offer is in the foot.
+  // number is the number of rows below it. The offer is in the strip.
   // PHILO-15 B60: a source held by quiet hours is drawn after the gaps and
   // is not counted.
   const sources = [...coverage.gaps, ...coverage.quiet].map((gap) => coverageFace(gap, now));
@@ -512,12 +543,20 @@ export function NeedsDrawer() {
   // PHILO-15-09 (B11, the A5 ruling): the head is the hub's one number, the
   // number the Dock badge and the bell say, and it counts every row under
   // it: a member, a source the hub could not read, a recording that arms.
-  // The calendar offer is in the foot.
   const head = needsHead(needs.count, needs.complete && coverage.complete);
   // One filled primary on a face with work; a SETUP, repair or offer verb is
   // never filled (the quiet face has none: HS-201-01 ruling 2).
   const primaryId = faces.find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
-  const all = [...faces, ...(showWaiting ? waiting : []), ...(showMuted ? muted : [])];
+
+  // The FilterBar: a filter that matches nothing is not drawn (HS-201-11),
+  // except the one that is on (the way back) and Ranked (all).
+  const listOf = (f: NeedsFilter) => (f === "waiting" ? waiting : f === "muted" ? muted : faces);
+  const matching = (f: NeedsFilter) => listOf(f).filter((face) => passesNeedsFilter(face, f, now));
+  const options = FILTERS.filter((o) => o.value === "ranked" || o.value === filter || matching(o.value).length > 0);
+  const filtered = matching(filter);
+  const shown = showAll ? filtered : filtered.slice(0, NEEDS_SHOWN);
+  const more = filtered.length - shown.length;
+  const all = [...faces, ...waiting, ...muted];
   const memberRefs = new Set(faces.filter((f) => !f.uncounted).map((f) => f.memberRef ?? f.id));
   const sourceReceipt = useSourceReceipt((st) => st.receipt);
   useRowMarks(listRef, all, memberRefs);
@@ -526,12 +565,8 @@ export function NeedsDrawer() {
   const next = nextWord(upcoming
     ? { label: upcoming.title, at: upcoming.starts_at }
     : (needs.room?.next as { label?: string; at?: string } | null | undefined));
-
-  // The footer tokens are drawn only over a list that holds rows (A.8).
-  const waitingRows = waiting.length;
-  const mutedRows = muted.length;
-  const waitingWord = waitingRows > 0 ? `Waiting · ${waitingRows}` : null;
-  const mutedWord = mutedRows > 0 ? `Muted · ${mutedRows}` : null;
+  const ranked = computedAt ? new Date(computedAt) : null;
+  const rankedWord = ranked && !Number.isNaN(ranked.getTime()) ? `RANKED ${hhmm(ranked)}` : null;
 
   // The row body is the Open (the verb Open stays for the keyboard and 393).
   const onRowPress = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -542,76 +577,87 @@ export function NeedsDrawer() {
     if (face) faceOpener(face)?.();
   };
 
+  const caption = filter === "waiting" ? "Waiting" : filter === "muted" ? "Muted" : "Actions";
+  const sectionTestId = filter === "waiting" ? "needs-waiting" : filter === "muted" ? "needs-muted" : undefined;
+  const listed = filter === "waiting" || filter === "muted";
+
   return (
-    <div className="needs-drawer" data-testid="needs-drawer">
+    <div className="needs-drawer kit-face" data-testid="needs-drawer">
       {/* The Chair's head keeps its testids (the Chair-ready signal of the
           glass rigs): the drawer's head IS the Chair's display. */}
-      <div className="needs-drawer-headline" data-testid="arrival-headline">
-        <h2 className="surface-display needs-drawer-head" data-testid="arrival-display">{head}</h2>
-      </div>
-      {outcome.receipt ? (
-        <p className="surface-receipt-line needs-drawer-receipt" role="status" data-testid="needs-receipt">
-          {outcome.receipt}
-        </p>
-      ) : null}
-      {sourceReceipt ? (
-        <p className="surface-receipt-line needs-drawer-receipt" role="status" data-testid="needs-source-receipt"
-          data-tone={sourceReceipt.tone}>
-          {sourceReceipt.text}
-        </p>
+      <AppHead fact={head} data-testid="arrival-headline" factTestId="arrival-display">
+        <StatusStrip
+          items={[
+            coverage.expected > 0
+              ? { key: "coverage", lamp: coverage.complete ? "ok" : "warn", text: `${coverage.available} of ${coverage.expected} available` }
+              : null,
+            checkedWord(computedAt, now) ? { key: "checked", text: checkedWord(computedAt, now) } : null,
+            next ? { key: "next", text: <span data-testid="needs-next">{next}</span> } : null,
+            noCalendar ? { key: "no-calendar", text: <span data-testid="needs-no-calendar">No calendar</span> } : null,
+            noCalendar
+              ? {
+                key: "connect",
+                verb: (
+                  <Button dense variant="ghost" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
+                    onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>Connect calendar</Button>
+                ),
+              }
+              : null,
+          ]}
+        />
+      </AppHead>
+      {faces.length + waiting.length + muted.length > 0 ? (
+        <FilterBar
+          label="Needs you filter"
+          data-testid="needs-filter"
+          options={options}
+          value={filter}
+          onChange={(next) => { setFilter(next as NeedsFilter); setShowAll(false); }}
+        />
       ) : null}
       {/* A press on a row body opens it; each row's verbs carry the keyboard. */}
-      <div ref={listRef} onClick={onRowPress} data-testid="needs-list">
-        {faces.length > 0 ? (
-          <NeedsList label="Needs you">
-            {faces.map((face) => (
-              <NeedRow key={face.id} face={face} primary={face.id === primaryId} projects={multipleProjects} />
-            ))}
-          </NeedsList>
-        ) : null}
-        {showWaiting && waiting.length > 0 ? (
-          <div className="needs-drawer-muted" data-testid="needs-waiting">
-            <NeedsList label="Waiting">
-              {waiting.map((face) => <NeedRow key={face.id} face={face} primary={false} projects={multipleProjects} />)}
+      <div ref={listRef} onClick={onRowPress} data-testid="needs-list" className="needs-drawer-list">
+        {shown.length > 0 ? (
+          <SurfaceSection
+            label={caption}
+            count={more > 0 ? `${shown.length} of ${filtered.length}` : filtered.length}
+            data-testid={sectionTestId}
+          >
+            <NeedsList label={listed ? caption : "Needs you"}>
+              {shown.map((face) => (
+                <NeedRow key={face.id} face={face} primary={!listed && face.id === primaryId} projects={multipleProjects} />
+              ))}
             </NeedsList>
-          </div>
+          </SurfaceSection>
         ) : null}
-        {showMuted && muted.length > 0 ? (
-          <div className="needs-drawer-muted" data-testid="needs-muted">
-            <NeedsList label="Muted">
-              {muted.map((face) => <NeedRow key={face.id} face={face} primary={false} projects={multipleProjects} />)}
-            </NeedsList>
-          </div>
+        {more > 0 ? (
+          <SurfaceSection
+            label={`${more} more`}
+            data-testid="needs-more"
+            actions={(
+              <Button dense variant="ghost" data-testid="needs-show-all" onClick={() => setShowAll(true)}>
+                Show all
+              </Button>
+            )}
+          />
         ) : null}
       </div>
-      {next || noCalendar || muted.length > 0 || waiting.length > 0 ? (
-        <div className="needs-drawer-foot">
-          <span className="needs-drawer-offer">
-            {next ? <span className="needs-drawer-next" data-testid="needs-next">{next}</span> : null}
-            {noCalendar ? (
-              <span className="needs-drawer-next needs-drawer-offer" data-testid="needs-no-calendar">
-                <span className="surface-token">NO CALENDAR</span>
-                <Button dense variant="ghost" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
-                  onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>Connect calendar</Button>
-              </span>
-            ) : null}
-          </span>
-          <span className="object-verbs">
-          {waiting.length > 0 ? (
-            <Button dense variant="ghost" aria-expanded={showWaiting} data-testid="needs-waiting-toggle"
-              onClick={() => setShowWaiting((open) => !open)}>
-              {waitingWord}
-            </Button>
-          ) : null}
-          {muted.length > 0 ? (
-            <Button dense variant="ghost" aria-expanded={showMuted} data-testid="needs-muted-toggle"
-              onClick={() => setShowMuted((open) => !open)}>
-              {mutedWord}
-            </Button>
-          ) : null}
-          </span>
-        </div>
-      ) : null}
+      <SurfaceFooter
+        receipt={
+          outcome.receipt ? (
+            <span className="surface-footer-receipt-line" role="status" data-testid="needs-receipt">
+              {outcome.receipt}
+            </span>
+          ) : sourceReceipt ? (
+            <span className="surface-footer-receipt-line" role="status" data-testid="needs-source-receipt"
+              data-tone={sourceReceipt.tone === "fail" ? "danger" : undefined}>
+              {sourceReceipt.text}
+            </span>
+          ) : rankedWord ? (
+            <span className="surface-footer-receipt-line" data-testid="needs-ranked">{rankedWord}</span>
+          ) : null
+        }
+      />
     </div>
   );
 }

@@ -1,14 +1,47 @@
+/* Phase 16 (the interior kit, §11 "Foot"; canvas `.foot`): the foot is
+   STEEL, the frame's own material: an ink line and a shine along its top
+   (inset), ink words in mono 11 upper. The egress chip is a paper plate on
+   it; the receipt sits in the middle; the verbs (raised Steel plates) at
+   the right. Inside the steel the interior tokens read ink. */
 .desk-next .surface-footer {
+  --text: var(--wb-ink);
+  --text-muted: var(--wb-ink-dim);
+  --text-faint: var(--wb-ink-dim);
+  /* No tone ink reaches 4.5:1 on the steel at the 11 px step, so a
+     receipt's warn and fail words are ink here; the word (and its lamp,
+     where it has one) carries the state. */
+  --warn: var(--wb-ink);
+  --danger: var(--wb-ink);
   min-height: 36px;
   padding: 0 8px;
   /* PHILO-7-02: the window's resize grip (window-chrome.css:143, 16 px at
      right 4 / bottom 4) owns the footer's last 20 px; the last verb must not
      sit under it (elementFromPoint hit the grip at the verb's corner). */
   padding-inline-end: 24px;
-  background: var(--surface-2);
-  border-top: 1px solid var(--border);
-  box-shadow: var(--desk-window-bevel);
+  background: var(--wb-steel);
+  border-top: 0;
+  box-shadow: inset 0 1px 0 var(--wb-ink), inset 0 2px 0 var(--wb-hi);
+  color: var(--wb-ink);
   flex-shrink: 0;
+}
+/* The egress chip on the foot: a paper plate, ink-bordered; its scope is
+   the word's ink tone (local green, cloud ember), never colour alone (the
+   host is the word). */
+.desk-next .surface-footer .gadget-chip-egress {
+  padding: 1px 8px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: none;
+  color: var(--wb-ink);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+.desk-next .surface-footer .gadget-chip-egress[data-scope="local"] {
+  color: var(--wb-ok-ink, #1d5c2e);
+}
+.desk-next .surface-footer .gadget-chip-egress:is([data-scope="mixed"], [data-scope="cloud"], [data-scope="remote"]) {
+  color: var(--wb-ember-ink, #7a4a2c);
 }
 .desk-next .surface-footer-layout {
   display: grid;
@@ -31,7 +64,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--wb-ink-dim);
   /* HS-168-05: the full-host law — an egress chip never truncates.
      Long hosts wrap the slot; the footer grows (min-height below). */
   flex-wrap: wrap;
@@ -128,6 +161,22 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+/* Phase 16: at the phone width a foot that holds a group of verbs (the
+   meeting's six) gives the verbs their own row, and the group wraps inside
+   the foot, never off its right edge (the Conductor's foot does the same,
+   conductor.css). */
+@media (max-width: 420px) {
+  .desk-next .surface-footer-layout:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "egress" "receipt" "verbs";
+  }
+  .desk-next .surface-footer-verbs > .surface-footer-verbs-group {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+  }
 }
 
 @container surface (max-width: 420px) {

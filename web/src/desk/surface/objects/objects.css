@@ -149,6 +149,66 @@
   }
 }
 
+/* Phase 16 (the interior kit, §11 "IconGrid"; canvas `.objs .obj`): the
+   objects INSIDE a window sit in a sunken PAPER well: five across at 900 px
+   and wider, auto-fit 120 px columns below; the icon at 40 px over a
+   two-line sans 11 name, ink; the hover tints. The same sprites as the
+   Floor (DeskIcon). The Floor's grid has no well (no `data-well`). */
+.desk-icon-grid[data-well] {
+  --text: var(--wb-text, var(--wb-ink));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  padding: 12px 8px;
+  background: var(--wb-well, var(--wb-paper));
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+  justify-items: stretch;
+}
+@container surface (min-width: 900px) {
+  .desk-icon-grid[data-well] {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@container surface (max-width: 520px) {
+  .desk-icon-grid[data-well] {
+    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+    gap: 6px;
+  }
+  .desk-icon-grid[data-well] .desk-icon {
+    width: auto;
+  }
+}
+.desk-icon-grid[data-well] .desk-icon {
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  gap: 6px;
+  padding: 4px;
+  color: var(--wb-text, var(--wb-ink));
+}
+.desk-icon-grid[data-well] .desk-icon:hover {
+  background: color-mix(in srgb, var(--wb-sel, var(--wb-blue)) 14%, transparent);
+}
+.desk-icon-grid[data-well] .desk-icon-art,
+.desk-icon-grid[data-well] .desk-icon-art > img:first-child {
+  width: 40px;
+  height: 40px;
+}
+.desk-icon-grid[data-well] .desk-icon-badge {
+  width: 20px;
+  height: 20px;
+  right: -6px;
+  bottom: -4px;
+}
+.desk-icon-grid[data-well] .desk-icon-name {
+  max-width: 100%;
+  font: 500 11px / 1.2 var(--font-sans);
+}
+.desk-icon-grid[data-well] .desk-icon[data-selected="true"] .desk-icon-name {
+  background: var(--wb-sel, var(--wb-blue));
+  color: var(--wb-paper);
+}
+
 /* ── ObjectList: a real list (A-2L). Header = sort gadgets (raised; the
    active one sunken); rows = facts (flat); the selection is the row. ── */
 .object-list {
@@ -575,14 +635,20 @@
 }
 
 /* ── AskWell: the question well (a raised plate) ── */
+/* Phase 16 (the interior kit): the question plate is raised Steel with
+   ink words; its answer field is the kit's paper well (gadgets.css). */
 .ask-well {
+  --text: var(--wb-ink);
+  --text-muted: var(--wb-ink-dim);
+  --text-faint: var(--wb-ink-dim);
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 12px 14px;
-  background: var(--surface-2);
+  background: var(--wb-steel);
   border: 1px solid var(--wb-ink);
-  box-shadow: var(--bevel-raised);
+  box-shadow: var(--wb-raised);
+  color: var(--wb-ink);
 }
 .ask-well-caption,
 .ask-well-draft-word {
@@ -744,22 +810,42 @@
   overflow-wrap: anywhere;
 }
 
-/* ── NeedsRow: the object row of the smart drawer ── */
+/* ── NeedsRow: the object row of the smart drawer. Phase 16 (the interior
+   kit, §11 "Ledger"): the list is the Ledger's sunken PAPER well and a row
+   is a LedgerRow: the kind plate, the name (sans 15/500) over its fact
+   line, the lamp word (mono 11 upper), the verbs at the right; a soft
+   hairline between rows; the hover tints selection-blue. ── */
 .needs-list {
+  --text: var(--wb-text, var(--wb-ink));
+  --text-muted: var(--wb-muted, var(--wb-ink-dim));
+  --text-faint: var(--wb-muted, var(--wb-ink-dim));
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
+  background: var(--wb-well, var(--wb-paper));
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+  color: var(--wb-text, var(--wb-ink));
 }
 .needs-row {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 160px auto;
+  grid-template-columns: 44px minmax(0, 1fr) minmax(0, 160px) auto;
   align-items: center;
-  column-gap: 12px;
-  padding: 8px 4px;
-  min-height: 56px;
-  border-top: 1px solid var(--border-subtle);
+  column-gap: 10px;
+  padding: 8px 10px;
+  min-height: 52px;
+  border-bottom: 1px solid var(--wb-rule-soft, var(--wb-rule));
+}
+.needs-row:last-child {
+  border-bottom: 0;
+}
+.needs-row:hover {
+  background: color-mix(in srgb, var(--wb-sel, var(--wb-blue)) 12%, transparent);
+}
+.needs-row .needs-row-lamp {
+  font-size: 11px;
 }
 .needs-row > img {
   /* PHILO-14 A0c: the 32 px set at 1:1 in the 40 px cell (no rescale). */
@@ -776,8 +862,8 @@
   min-width: 0;
 }
 .needs-row-name {
-  font: var(--desk-type-primary-weight) var(--desk-type-primary-size) / 1.3 var(--font-sans);
-  color: var(--text);
+  font: 500 15px / 1.3 var(--font-sans);
+  color: var(--wb-text, var(--wb-ink));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -811,13 +897,16 @@
   min-width: 0;
   display: flex;
 }
+/* Phase 16: a row's verbs wrap in their own column (at most ~two to a
+   line), so the name keeps its room. */
 .needs-row-verbs {
   justify-content: flex-end;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  max-width: 220px;
 }
 @container surface (max-width: 520px) {
   .needs-row {
-    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-columns: 44px minmax(0, 1fr);
     row-gap: 6px;
   }
   .needs-row-lamp {

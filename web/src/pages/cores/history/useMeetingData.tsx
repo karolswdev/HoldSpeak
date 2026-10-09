@@ -229,53 +229,19 @@ export function useMeetingData(
   const captureBad =
     Boolean(detail?.capture_status) && detail?.capture_status !== "finalized";
 
-  // HS-172: follow-through proposals (proposed state) become the NEEDS YOU rows.
-  const pendingFt = ftProposals.filter((p) => p.state === "proposed");
   // Legacy actuator proposals.
   const undecided = proposalRows.filter(
     (row) =>
       row.status === "proposed" &&
       (row.policy_snapshot as Record<string, unknown> | undefined)?.outcome !== "refused",
   ).length;
-  const needsCount = pendingFt.length + undecided + openActions.length;
+  const needsCount = undecided;
 
+  // Phase 16 (the interior kit; the canvas window "Cutover sync"): the
+  // follow-through proposals and the open actions are the Decisions and
+  // Commitments ledgers (MeetingDetail `MeetingOutcomes`); NEEDS YOU keeps
+  // the legacy actuator proposals and the summary run's verbs.
   const needsRows: NeedsRow[] = [
-    // HS-172: follow-through proposals with Decide:/Confirm: prefix.
-    ...pendingFt.map((prop): NeedsRow => {
-      const prefix = prop.kind === "decision" ? "Decide:" : "Confirm:";
-      const dueText = prop.due_hint ? ` · by ${prop.due_hint}` : "";
-      return {
-        cells: [
-          <span key="what" data-proposal>
-            <span className="meetings-proposal-prefix">{prefix}</span>
-            {" "}
-            {prop.text}{dueText}
-          </span>,
-        ] as ReactNode[],
-        verbs: (
-          <>
-            <Button
-              dense
-              variant="primary"
-              loading={busy}
-              onClick={() => void confirmProposal(prop.id)}
-              data-testid="proposal-confirm-btn"
-            >
-              Confirm
-            </Button>
-            <Button
-              dense
-              variant="ghost"
-              loading={busy}
-              onClick={() => void dismissProposal(prop.id)}
-              data-testid="proposal-dismiss-btn"
-            >
-              Dismiss
-            </Button>
-          </>
-        ),
-      };
-    }),
     // Legacy actuator proposals (from the old aftercare/proposals pipeline).
     ...proposalRows.map((row) => {
       const policy = (row.policy_snapshot ?? {}) as Record<string, unknown>;
@@ -335,15 +301,6 @@ export function useMeetingData(
           ),
       };
     }),
-    ...openActions.map((row) => ({
-      cells: [
-        <span key="what">{String(row.text ?? row.title ?? "Action item")}</span>,
-        <span key="facts">
-          {presentValue(row.owner) ? `OWNER: ${presentValue(row.owner)}`.toUpperCase() : ""}
-        </span>,
-      ] as ReactNode[],
-      verbs: <span className="surface-token" data-tone="warn">OPEN</span> as ReactNode,
-    })),
   ];
 
   return {

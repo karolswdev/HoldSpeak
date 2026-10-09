@@ -232,7 +232,9 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(icon(/^Claude Code: cutover checklist, AGENT, PR #413 MERGED/)).toBeTruthy();
     await screen.findByRole("button", { name: /^Codex, AGENT, NOT INSTALLED/ });
     const head = screen.getByTestId("conductor-head").textContent ?? "";
-    expect(head).toContain("3 AT WORK");
+    // Phase 16 (the interior kit): `3 at work` is the window's one big fact;
+    // the ask (a lamp) and the cap are tokens on the strip beside it.
+    expect(screen.getByTestId("conductor-head").querySelector(".kit-disp")?.textContent).toBe("3 at work");
     expect(head).toContain("1 ASK");
     expect(head).toContain("3 OF 3");
     expect(head).not.toMatch(/\b0 /);
@@ -431,5 +433,32 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(within(info).getByText("Launched").nextSibling?.textContent).toMatch(/^(TODAY|[A-Z]{3} \d+) \d\d:\d\d$/);
     expect(screen.getByRole("button", { name: "Answer" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Open" })).toBeTruthy();
+  });
+});
+
+// Phase 16 (the interior kit; the canvas window "Conductor"): AppHead →
+// FilterBar → the IconGrid well of agents → Section "The ask" → the Foot.
+describe("Phase 16 the Conductor on the interior kit", () => {
+  it("The ask is a Section over a Ledger row: the agent's plate, its question, ASKED <age>", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: /^Claude Code: rollback runbook, AGENT, ASKS/ });
+    const asks = await screen.findByTestId("conductor-asks");
+    expect(asks.querySelector("h3")?.textContent).toBe("The ask");
+    const rows = within(asks).getAllByTestId("conductor-ask-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].querySelector("[data-testid='kit-kind']")?.textContent).toBe("CC");
+    expect(rows[0].querySelector(".surface-ledger-meta")?.getAttribute("data-tone")).toBe("ask");
+    expect(rows[0].querySelector(".surface-ledger-meta")?.textContent).toMatch(/^ASK/);
+    expect(document.querySelector(".desk-icon-grid[data-well]")).toBeTruthy();
+    expect(document.querySelectorAll(".kit-disp")).toHaveLength(1);
+  });
+
+  it("a press on the ask row selects its agent: the foot carries Answer", async () => {
+    render(<ConductorWindow />);
+    const row = await screen.findByTestId("conductor-ask-row");
+    expect(screen.queryByRole("button", { name: "Answer" })).toBeNull();
+    fireEvent.click(row);
+    fireEvent.click(screen.getByRole("button", { name: "Answer" }));
+    expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
   });
 });

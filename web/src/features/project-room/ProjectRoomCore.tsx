@@ -53,7 +53,7 @@ import { StandingPagesSection, useStandingPages } from "../../desk/standingPages
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
-import { ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, refOpener, takeRoomProposalRequest, takeRoomUpdatesRequest } from "../../desk/openObject";
+import { ROOM_AT_EVENT, ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, refOpener, takeRoomAtRequest, takeRoomProposalRequest, takeRoomUpdatesRequest } from "../../desk/openObject";
 import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type {
@@ -142,7 +142,7 @@ const PROVIDER_EMBLEM: Record<string, string> = {
   room: "▣",
 };
 
-function emblemFor(source: string): string {
+export function emblemFor(source: string): string {
   const key = source.toLowerCase();
   return PROVIDER_EMBLEM[key] || source.slice(0, 2).toUpperCase();
 }
@@ -1771,7 +1771,7 @@ function boundaryToLabel(boundary: string): string {
  *  composer's sticky foot — five rows and the Room was gone behind them. The
  *  state lives here so the list can sit in the body as its own section, where
  *  the design's posture-6 grammar puts it, while the well stays sticky. */
-function useRoomAsk(projectId: string, projectName: string) {
+export function useRoomAsk(projectId: string, projectName: string) {
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [busy, setBusy] = useState(false);
@@ -1877,7 +1877,7 @@ function useRoomAsk(projectId: string, projectName: string) {
   };
 }
 
-type RoomAsk = ReturnType<typeof useRoomAsk>;
+export type RoomAsk = ReturnType<typeof useRoomAsk>;
 
 /** UNFINISHED — the saved work, in the Room BODY as its own section.
  *
@@ -1963,7 +1963,10 @@ function RoomBriefsSection({ prepare }: { prepare: PrepareController }) {
   );
 }
 
-function RoomAskWell({
+/** The Room's ask (Phase 16: the kit's AskWell: the sunken paper well with
+ *  the mic on its right edge, the model's egress chip beside it). The
+ *  Room window on the desk (the Project's drawer) draws the same well. */
+export function RoomAskWell({
   ask,
   projectId,
   onOpenRef,
@@ -1996,24 +1999,24 @@ function RoomAskWell({
       ) : null}
       {error ? <p className="room-ask-error">{error}</p> : null}
       <div className="room-ask-well" data-testid="room-ask-input-well">
-        <input // UX-CANON: needs redesign (HS-170-04)
-          ref={inputRef}
-          type="text"
-          className="room-ask-input"
-          aria-label="Ask this project"
+        {/* Phase 16 (the interior kit, §11 "AskWell"): the library string
+            well (sunken paper, the mic on its right edge) replaces the raw
+            input HS-170-04 left for a redesign. */}
+        <StringGadget
+          label="Ask this project"
           value={prompt}
+          onChange={setPrompt}
           placeholder="Ask this project…"
-          onChange={(e) => setPrompt(e.target.value)}
+          micLabel="Speak to ask this project"
+          micDraftScope={`project-ask-${projectId}`}
+          inputRef={inputRef}
+          inputProps={{ className: "room-ask-input" }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               void ask.ask();
             }
           }}
-        />
-        <MicButton
-          draftScope={`project-ask-${projectId}`}
-          onText={(text) => setPrompt((v) => (v ? `${v} ${text}` : text))}
         />
         {onPrepare ? (
           <span className="room-ask-result" data-testid="room-ask-result">
@@ -2279,6 +2282,22 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     window.addEventListener(ROOM_UPDATES_EVENT, take);
     return () => window.removeEventListener(ROOM_UPDATES_EVENT, take);
   }, [ctrl.projectId, enterUpdates]);
+  // Phase 16: the Room window's History and Steward verbs (the drawer's
+  // FilterBar and Sources section) open this Room AT that place.
+  const { enterSteward } = stewardCtrl;
+  const { setView } = ctrl;
+  useEffect(() => {
+    const projectId = ctrl.projectId;
+    if (!projectId) return;
+    const take = () => {
+      const place = takeRoomAtRequest(projectId);
+      if (place === "history") setView("history");
+      else if (place === "steward") void enterSteward();
+    };
+    take();
+    window.addEventListener(ROOM_AT_EVENT, take);
+    return () => window.removeEventListener(ROOM_AT_EVENT, take);
+  }, [ctrl.projectId, enterSteward, setView]);
   // PHILO-14 A2b: a proposal row elsewhere (Needs you) opens this Room with
   // that proposal selected in OPEN HERE. `seq` counts the requests, so the
   // same proposal asked for again is revealed again (A5b, Astra r1).

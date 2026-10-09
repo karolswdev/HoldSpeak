@@ -415,10 +415,12 @@ describe("HS-135-03 sizing-token migration", () => {
     expect(block).toContain("height: var(--size-icon-sm)");
   });
 
-  it("in-well mic (gadget-string) 20px uses --size-icon-md", () => {
+  // Phase 16 (the interior kit, AskWell): the mic is a Steel plate the
+  // well's full height on its right edge, 32 px wide (--size-icon-lg).
+  it("in-well mic (gadget-string) is the right-edge plate: --size-icon-lg wide, the well's height", () => {
     const block = ruleBlock(gadgetsCss, ".gadget-string .desk-mic,");
-    expect(block).toContain("width: var(--size-icon-md)");
-    expect(block).toContain("height: var(--size-icon-md)");
+    expect(block).toContain("width: var(--size-icon-lg)");
+    expect(block).toContain("align-self: stretch");
   });
 
   it("surface-setting-icon 16px uses --size-icon-sm", () => {

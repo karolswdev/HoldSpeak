@@ -7,7 +7,13 @@
 // (every row verb; `data-verb` names it: answer, open, deny, approve,
 // open-pr, review, done, name-owner, set-date, confirm, defer, decline, door-verb,
 // summarize, setup, repair, cancel, connect-calendar), `needs-well`,
-// `needs-next` (the footer line), `needs-muted-toggle`, `needs-muted`.
+// `needs-next` (a strip token), `needs-filter` (the FilterBar; its
+// `Muted` token opens `needs-muted`), `needs-show-all` (the fold).
+//
+// Phase 16 (the interior kit, the canvas window "Needs you"): the Section
+// draws the first NEEDS_SHOWN rows and folds the rest behind `N more · Show
+// all`; the B11 law (the head is the number of rows) is read with the fold
+// open (`showAll`).
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -17,7 +23,7 @@ import { ApiError, apiFetch } from "../../../lib/api";
 import { useAgentFlights, type AgentFlight } from "../../agentFlights";
 import { openCoderSession, openSurfaceOr } from "../../shell";
 import { useDesk } from "../../store";
-import { NeedsDrawer } from "../NeedsDrawer";
+import { NeedsDrawer, useSourceReceipt } from "../NeedsDrawer";
 import { useArmingOutcome } from "../arming";
 
 vi.mock("../../../lib/api", async (original) => ({
@@ -168,13 +174,20 @@ function face(li: HTMLElement) {
     lamps: [...li.querySelectorAll(".gadget-lamp")].map((n) => n.textContent),
     verbs: [...li.querySelectorAll(".needs-row-verbs button")].map((b) => b.textContent),
     egress: li.querySelector(".needs-row-verbs .egress-chip, .needs-row-verbs [class*='egress']")?.textContent ?? "",
-    sprite: li.querySelector("img")?.getAttribute("src") ?? "",
+    plate: li.querySelector("[data-testid='kit-kind']")?.textContent ?? "",
   };
+}
+
+/** Open the fold (`N more · Show all`), when there is one. */
+function showAll() {
+  const more = screen.queryByTestId("needs-show-all");
+  if (more) fireEvent.click(more);
 }
 
 async function mount() {
   render(<NeedsDrawer />);
   await screen.findByText("8 need you");
+  showAll();
 }
 
 describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
@@ -183,7 +196,9 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     const drawer = screen.getByTestId("needs-drawer");
     expect(screen.getByTestId("arrival-display").textContent).toBe("8 need you");
     expect(drawer.querySelectorAll("h1, h2").length).toBe(1);
-    expect(drawer.textContent).not.toMatch(/AVAILABLE|RANKED|CHECKED/);
+    // Phase 16: the display step once; the strip and the foot say the
+    // facts as tokens (the canvas window "Needs you").
+    expect(drawer.querySelectorAll(".kit-disp").length).toBe(1);
   });
 
   it("draws every member as its object: icon, name, fact, one lamp, its verbs", async () => {
@@ -195,8 +210,8 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       lamps: ["ASKS · 6 MIN"],
       verbs: ["Open", "Answer"],
     });
-    // The D1 mold: each agent has its own sprite (agentSpriteName).
-    expect(agent.sprite).toMatch(/agent-claude-code\.png$/);
+    // Phase 16: the kind plate is the agent (CC = Claude Code).
+    expect(agent.plate).toBe("CC");
 
     const held = face(row("Codex: reconciliation"));
     expect(held).toMatchObject({
@@ -205,7 +220,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       lamps: ["HELD CALL"],
       verbs: ["Deny", "Approve"],
     });
-    expect(face(row("Codex: reconciliation")).sprite).toMatch(/agent-codex\.png$/);
+    expect(face(row("Codex: reconciliation")).plate).toBe("CX");
 
     const pr = face(row("#412 Add the ledger freeze flag"));
     expect(pr).toMatchObject({ kind: "pr", lamps: ["PR OPEN"], verbs: ["Open PR"] });
@@ -316,6 +331,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     });
     render(<NeedsDrawer />);
     await screen.findByText("7 need you");
+    showAll();
     expect(document.querySelectorAll("[data-testid='needs-list'] li.needs-row")).toHaveLength(7);
     const item = row("Write the rollback runbook");
     expect(face(item)).toMatchObject({
@@ -360,9 +376,9 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await mount();
     await waitFor(() => expect(screen.getByTestId("needs-next").textContent).toBe("NEXT · 14:00 · Ledger cutover sync"));
     const offer = await screen.findByTestId("needs-no-calendar");
-    expect(offer.textContent).toContain("NO CALENDAR");
+    expect(offer.textContent).toBe("No calendar");
     expect(screen.queryByTestId("needs-source-row")).toBeNull();
-    fireEvent.click(offer.querySelector("[data-verb='connect-calendar']")!);
+    fireEvent.click(screen.getByTestId("needs-drawer").querySelector("[data-verb='connect-calendar']")!);
     expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
     // One count: the head says the number of rows under it.
     const rows = document.querySelectorAll("[data-testid='needs-list'] li.needs-row");
@@ -378,10 +394,11 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     });
     await mount();
     expect(screen.queryByText("A muted decision")).toBeNull();
-    const toggle = screen.getByTestId("needs-muted-toggle");
-    expect(toggle.textContent).toBe("Muted · 1");
+    // Phase 16: Muted is a FilterBar token (drawn while a muted row exists).
+    const toggle = within(screen.getByTestId("needs-filter")).getByRole("button", { name: "Muted" });
     fireEvent.click(toggle);
     expect(within(screen.getByTestId("needs-muted")).getByText("A muted decision")).toBeTruthy();
+    expect(screen.getByTestId("needs-muted").querySelector("h3")?.textContent).toBe("Muted · 1");
   });
 
   it("a press on the row body opens the item; a press on a verb does only the verb", async () => {
@@ -511,6 +528,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     useAgentFlights.setState({ flights: [], sessions: [] } as never);
     render(<NeedsDrawer />);
     await screen.findByText("6 need you");
+    showAll();
     const item = row("Write the rollback runbook");
     expect(face(item)).toMatchObject({ lamps: ["HELD CALL"], verbs: ["Deny", "Approve"] });
     expect(within(item).getByTestId("needs-more-asks").textContent).toBe("+1 MORE");
@@ -575,6 +593,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
 async function mount7() {
   render(<NeedsDrawer />);
   await screen.findByText("7 need you");
+  showAll();
 }
 
 // PHILO-15-09 (B11, B12): one count, and every row says what it is.
@@ -628,6 +647,7 @@ describe("NeedsDrawer every row counts (PHILO-15-09 B11, Astra r1)", () => {
     } as never);
     render(<NeedsDrawer />);
     await screen.findByText("9 need you");
+    showAll();
     const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row");
     expect(rows).toHaveLength(9);
     // The Dock badge and the bell read the same snapshot (`useNeedsYou`).
@@ -745,5 +765,74 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
     fireEvent.click(within(stale).getByRole("button", { name: "Retry: Meetings" }));
     await waitFor(() => expect(screen.getByTestId("needs-source-receipt").textContent).toBe(
       "NOT CHECKED · Meetings · gh is not signed in"));
+  });
+});
+
+// Phase 16 (the interior kit; the canvas window "Needs you"): AppHead and its
+// strip, the FilterBar, the folded Section, the kind plates, the Foot.
+describe("NeedsDrawer on the interior kit (Phase 16)", () => {
+  it("the Section draws five rows, `Actions · 5 of 8`, and folds the rest behind `3 more · Show all`", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("8 need you");
+    const list = screen.getByTestId("needs-list");
+    expect(list.querySelectorAll("li.needs-row")).toHaveLength(5);
+    expect(list.querySelector("h3")?.textContent).toBe("Actions · 5 of 8");
+    expect(screen.getByTestId("needs-more").querySelector("h3")?.textContent).toBe("3 more");
+    fireEvent.click(screen.getByTestId("needs-show-all"));
+    expect(list.querySelectorAll("li.needs-row")).toHaveLength(8);
+    expect(list.querySelector("h3")?.textContent).toBe("Actions · 8");
+    expect(screen.queryByTestId("needs-more")).toBeNull();
+  });
+
+  it("the strip says the facts as tokens; the foot says when the hub ranked", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return {
+          ...ANSWER,
+          computedAt: new Date(Date.now() - 30_000).toISOString(),
+          coverage: [
+            { source_id: "jira:ops", kind: "project", state: "available", observed_at: null, label: "Ops", project_id: "p2" },
+          ],
+        } as never;
+      return { upcoming: [], calendar_configured: false } as never;
+    });
+    useSourceReceipt.setState({ receipt: null });
+    render(<NeedsDrawer />);
+    await screen.findByText("8 need you");
+    const strip = screen.getByTestId("arrival-headline").querySelector(".kit-strip") as HTMLElement;
+    expect(strip.textContent).toContain("1 of 1 available");
+    expect(strip.textContent).toContain("Checked just now");
+    await waitFor(() => expect(strip.textContent).toContain("No calendar"));
+    expect(within(strip).getByRole("button", { name: "Connect calendar" })).toBeTruthy();
+    expect(screen.getByTestId("needs-ranked").textContent).toMatch(/^RANKED \d{2}:\d{2}$/);
+  });
+
+  it("the FilterBar narrows the ledger; a filter that matches nothing is not drawn", async () => {
+    const today = new Date();
+    const day = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, items: ITEMS.map((item) => item.id === "commitment:c-sam" ? { ...item, dueAt: day } : item) } as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("8 need you");
+    const bar = screen.getByTestId("needs-filter");
+    const tokens = within(bar).getAllByRole("button").map((b) => b.textContent);
+    // Overdue matches nothing here; Waiting and Muted hold no rows.
+    expect(tokens).toEqual(["Ranked", "Due today", "Not run", "No due date"]);
+    expect(within(bar).getByRole("button", { name: "Ranked" }).getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(within(bar).getByRole("button", { name: "Due today" }));
+    const names = [...screen.getByTestId("needs-list").querySelectorAll(".needs-row-name")].map((n) => n.textContent);
+    expect(names).toEqual(["Sam: send the status by Thursday"]);
+    fireEvent.click(within(bar).getByRole("button", { name: "Not run" }));
+    expect([...screen.getByTestId("needs-list").querySelectorAll(".needs-row-name")].map((n) => n.textContent))
+      .toEqual(["Vendor call"]);
+  });
+
+  it("every row wears its kind plate (CC, CX, PR, ACT, DEC, MTG)", async () => {
+    await mount();
+    const plates = [...document.querySelectorAll("li.needs-row [data-testid='kit-kind']")].map((n) => n.textContent);
+    expect(plates).toEqual(["CC", "CX", "PR", "ACT", "DEC", "ACT", "ACT", "MTG"]);
   });
 });
