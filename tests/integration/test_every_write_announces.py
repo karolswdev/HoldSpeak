@@ -377,8 +377,32 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
 
     counts: dict[str, int] = {}
     failed: dict[str, str] = {}
+    # PHILO-16 16b: an operation whose SERVICE announces each change itself
+    # (``announces_changes``: the desk's windows) is walked for real on open
+    # windows: its own frame is the announcement (a no-op sends none).
+    window_service = hub.root.desk_window_service
+    for window_id in ("chair:needs", "chair:week", "chair:capture", "zone:walk"):
+        window_service.open(window_id)
+    self_announcing = {
+        "windows.open": {"window_id": "chair:brief"},
+        "windows.close": {"window_id": "chair:week"},
+        "windows.raise": {"window_id": "chair:needs"},
+        "windows.arrange": {"rects": {"zone:walk": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}}},
+        "windows.seat": {"window_id": "chair:capture", "seated": True},
+    }
     for name in writes:
         bound = registry.operations[name]
+        if bound.descriptor.announces_changes:
+            arguments = self_announcing[name]
+
+            def real_write(name: str = name, arguments: dict[str, Any] = arguments) -> None:
+                try:
+                    registry.invoke(owner, name, arguments)
+                except Exception as exc:  # noqa: BLE001 - reported by name below
+                    failed[name] = f"{type(exc).__name__}: {exc}"
+
+            counts[name] = len(hub.frames_from(real_write, wait_s=1.0))
+            continue
         # The kernel path of an admitted operation needs real rows (a project
         # revision, a watch). The root under test is the same line for both
         # paths, so the walk runs each operation as exempt; the named writes

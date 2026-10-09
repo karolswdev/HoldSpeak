@@ -341,7 +341,9 @@ class TestSliceTwoReturns(_Rig):
             writes: list[str] = []
             page.on("request", lambda r: writes.append(f"{r.method} {r.url}")
                     if r.method in ("PUT", "POST", "DELETE") and "/api/" in r.url
-                    and not any(p in r.url for p in ("/preview", "/subscriptions", "/peek", "/brief/generate")) else None)
+                    and not any(p in r.url for p in ("/preview", "/subscriptions", "/peek", "/brief/generate",
+                                                     # PHILO-16 (16b): the windows' view state, not a draft.
+                                                     "/api/desk/windows")) else None)
             try:
                 # 1. the meeting window: Digest, then Decide -> a title, not saved
                 page.goto(f"{self.base}/?token={TOKEN}&open=meeting:m-standup", wait_until="load")

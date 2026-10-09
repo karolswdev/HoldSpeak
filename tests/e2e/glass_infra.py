@@ -287,6 +287,27 @@ _FETCH_JS = """async ([method, path, body, token]) => {
 }"""
 
 
+_CLEAR_WINDOWS_JS = """async (token) => {
+  const headers = {authorization: `Bearer ${token}`, "content-type": "application/json"};
+  const listed = await (await fetch("/api/desk/windows", {headers})).json();
+  for (const w of listed.windows || []) {
+    await fetch(`/api/desk/windows/${encodeURIComponent(w.id)}/close`, {method: "POST", headers, body: "{}"});
+  }
+  return (listed.windows || []).length;
+}"""
+
+
+def clear_hub_windows(page: Any, token: str = "glass-test") -> int:
+    """PHILO-16 (16b): close every window the hub holds for this desk.
+
+    The hub owns the desk's windows; every browser context on one hub is a
+    view of the SAME desk (COMPOSITOR.md §13 L1). A rig that opens a second
+    page and wants it to start on an empty desk (the way a fresh browser
+    cache used to) clears the hub's windows first. Returns how many closed.
+    """
+    return int(page.evaluate(_CLEAR_WINDOWS_JS, token))
+
+
 def _api(
     page: Any,
     method: str,

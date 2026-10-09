@@ -86,8 +86,8 @@ WINDOWS_RAISE = _row(
 WINDOWS_ARRANGE = _row(
     "windows.arrange", "arrange_windows",
     "Set the rects of several windows in one change (a tile, a layout).",
-    {"rects": {"type": "object", "additionalProperties": _RECT, "minProperties": 1,
-               "description": "Window id to rect."},
+    {"rects": {"type": "object", "additionalProperties": _RECT,
+               "description": "Window id to rect (at least one; an empty map is refused by name)."},
      "expected_revisions": {"type": ["object", "null"], "additionalProperties": {"type": "integer"}}},
     ["rects"], result="{windows: [" + _ROW + "]}",
 )

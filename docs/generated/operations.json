@@ -6260,8 +6260,7 @@
               ],
               "additionalProperties": false
             },
-            "minProperties": 1,
-            "description": "Window id to rect."
+            "description": "Window id to rect (at least one; an empty map is refused by name)."
           },
           "expected_revisions": {
             "type": [

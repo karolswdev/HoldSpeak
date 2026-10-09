@@ -102,6 +102,11 @@ def test_mark_done_in_one_window_moves_the_other(tmp_path: Path, monkeypatch: py
                 window_b.on("framenavigated", lambda frame: navigations.append(frame.url))
                 window_b.on("websocket", lambda _socket: navigations.append("new socket"))
 
+                # PHILO-16 (16b): A and B are two views of ONE desk, so B's
+                # Intelligence window opened in A too, over its Needs you.
+                # The owner brings the window with the row forward, then
+                # presses Done (B follows the raise: a frame, no reload).
+                window_a.locator(".desk-window-shell", has=done_in_a).locator(".desk-pullout-title").first.click()
                 done_in_a.click()
                 pressed = time.monotonic()
                 expect(card_in_b).to_have_count(0, timeout=FOLLOW_BUDGET_S * 1000)
