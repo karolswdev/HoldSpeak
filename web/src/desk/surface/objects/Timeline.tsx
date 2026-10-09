@@ -15,6 +15,7 @@
  */
 import type { ReactNode } from "react";
 import type { ObjectTone } from "./kinds";
+import { AgentWords } from "../../components/AgentWords";
 import "./objects.css";
 
 export type LaneWord =
@@ -41,8 +42,12 @@ export interface TimelineEntry {
   text?: string;
   /** A path, a command, a commit (mono). */
   code?: string;
-  /** The agent's own words (SAYS), drawn as a quote. */
+  /** Words drawn as a quote (an answer, a re-brief: the owner's). */
   quote?: string;
+  /** Phase 16: the agent's own words (SAYS, ASKS), drawn by AgentWords:
+   *  whole under the line, or on the line when `wordsCompact`. */
+  words?: string;
+  wordsCompact?: boolean;
   /** The entry's verbs (library Buttons): Brief; Deny / Approve. */
   verbs?: ReactNode;
   /** The next step that waits (hollow square). */
@@ -77,7 +82,11 @@ export function TimelineRail({
               <span className="lane-word">{entry.word}</span>
               {entry.text ? <span className="lane-rail-text">{entry.text}</span> : null}
               {entry.code ? <code className="lane-rail-code">{entry.code}</code> : null}
+              {entry.words && entry.wordsCompact ? (
+                <AgentWords compact className="lane-rail-text lane-rail-words-line" text={entry.words} />
+              ) : null}
             </span>
+            {entry.words && !entry.wordsCompact ? <AgentWords className="lane-rail-says" text={entry.words} /> : null}
             {entry.quote ? <q className="lane-rail-quote">{entry.quote}</q> : null}
             {entry.verbs ? <span className="lane-verbs">{entry.verbs}</span> : null}
           </span>

@@ -51,14 +51,15 @@ describe("Speak answer: the answer well (K5b, K5c)", () => {
   it("shows the question a permission Notification set, then the well with its mic recording", () => {
     open(true);
     render(<SessionPullout />);
-    expect(screen.getByText(QUESTION, { selector: "pre" })).toBeTruthy();
+    // Phase 16: the question is the agent's words (AgentWords), not a <pre>.
+    expect(document.querySelector(".desk-session-question.agent-words")?.textContent).toBe(QUESTION);
     const well = screen.getByTestId("session-answer-well");
     expect(well.querySelector(".desk-steer-input")).toBeTruthy();
     expect(well.querySelector("[data-testid=mic]")?.getAttribute("data-auto")).toBe("true");
     // The composer moved into the body: the window draws it once.
     expect(document.querySelectorAll(".desk-steer-input")).toHaveLength(1);
     // The question sits above the well.
-    const pre = screen.getByText(QUESTION, { selector: "pre" });
+    const pre = document.querySelector(".desk-session-question") as HTMLElement;
     expect(pre.compareDocumentPosition(well) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 

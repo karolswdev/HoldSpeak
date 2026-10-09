@@ -19,6 +19,7 @@ import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { useAgentFlights } from "../agentFlights";
+import { AgentWords, cutAtWord } from "../components/AgentWords";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ArmStrip, KeyPalette, PANE_STATE_LABEL } from "../components/SessionPullout";
 import { useFrontWindowId } from "../components/window/windowRegistry";
@@ -365,18 +366,18 @@ function WaitWell({ lane, agent }: { lane: LaneWire; agent: string }) {
   if (turn) {
     // PHILO-15 15: the agent's last words, as a fact; not a wait for you.
     return (
-      <p className="lw-deciding" data-testid="lane-turn-end" data-turn={turn.toLowerCase()}>
+      <div className="lw-deciding" data-testid="lane-turn-end" data-turn={turn.toLowerCase()}>
         <span className="lw-word">{turn}</span>
-        <span className="lw-ev-text">{wait.question}</span>
-      </p>
+        <AgentWords className="lw-ev-text" text={wait.question} />
+      </div>
     );
   }
   if (wait.kind === "DECIDING") {
     return (
-      <p className="lw-deciding" data-testid="lane-deciding">
+      <div className="lw-deciding" data-testid="lane-deciding">
         <span className="lw-word">HoldSpeak decides</span>
-        <span className="lw-ev-text">{wait.question}</span>
-      </p>
+        <AgentWords className="lw-ev-text" text={wait.question} />
+      </div>
     );
   }
   return null;
@@ -453,6 +454,9 @@ function LaneReceipts({ lane }: { lane: LaneWire }) {
     ? lane.launch.queued_rebriefs.filter((q) => q?.text)
     : lane.launch.queued_rebrief?.text ? [lane.launch.queued_rebrief] : [];
   const queued = !stopped && queuedList.length ? queuedList : null;
+  // Phase 16: what was typed into the agent (the brief, an answer) is drawn
+  // by AgentWords, cut at a whole word; the other receipts are tokens.
+  const sentWords = Boolean(shown && (shown.word === "SENT" || shown.word === "THE DESK ANSWERED") && shown.text);
   return (
     <>
       {stopped ? <ReceiptTokens testId="lane-stopped" tokens={["STOPPED", wireClock(stopped.at), "BY YOU"]} /> : null}
@@ -479,19 +483,46 @@ function LaneReceipts({ lane }: { lane: LaneWire }) {
           ))
         : null}
       {shown && !(stopped && shown.word === "STOPPED") && !(queued && shown.word === "QUEUED") ? (
-        <ReceiptTokens testId="lane-receipt" tone={shown.tone} tokens={[shown.word, shown.at ? wireClock(shown.at) : "", shown.text]} />
+        <ReceiptTokens
+          testId="lane-receipt"
+          tone={shown.tone}
+          tokens={[shown.word, shown.at ? wireClock(shown.at) : "", sentWords ? "" : shown.text]}
+          words={sentWords ? (receipt ? shown.text : sentHead(shown.text)) : undefined}
+        />
       ) : null}
     </>
   );
 }
 
-/** One receipt: tokens joined by ` · ` (the word, the time, what was sent). */
-function ReceiptTokens({ tokens, tone, testId }: { tokens: string[]; tone?: string; testId: string }) {
+/** The hub keeps the first 120 characters of what was typed
+ *  (`TEXT_HEAD_CHARS`, holdspeak/db/steering.py): a head that long was cut,
+ *  maybe inside a word, so its last word goes and `…` says so (Phase 16:
+ *  the owner saw `…line". P`). */
+export const SENT_HEAD_CHARS = 120;
+export function sentHead(text: string): string {
+  const raw = String(text ?? "");
+  if (raw.length < SENT_HEAD_CHARS) return raw;
+  const flat = raw.replace(/\s+/g, " ").trim();
+  const space = flat.lastIndexOf(" ");
+  return space > 0 ? `${flat.slice(0, space).replace(/[\s·]+$/, "")} …` : cutAtWord(flat, flat.length);
+}
+
+/** One receipt: tokens joined by ` · ` (the word, the time), then what was
+ *  sent: one or two lines by AgentWords (compact). */
+function ReceiptTokens({ tokens, tone, testId, words }: { tokens: string[]; tone?: string; testId: string; words?: string }) {
   const shown = tokens.filter(Boolean);
+  if (!words?.trim()) {
+    return (
+      <p className="lw-receipt" data-tone={tone} data-testid={testId}>
+        {shown.join(" · ")}
+      </p>
+    );
+  }
   return (
-    <p className="lw-receipt" data-tone={tone} data-testid={testId}>
-      {shown.join(" · ")}
-    </p>
+    <div className="lw-receipt lw-receipt-words" data-tone={tone} data-testid={testId}>
+      <span className="lw-receipt-head">{`${shown.join(" · ")} · `}</span>
+      <AgentWords compact lines={2} className="lw-receipt-text" text={words} />
+    </div>
   );
 }
 
@@ -503,7 +534,7 @@ function ApproveWell({ wait, agent, gated }: { wait: LaneWait; agent: string; ga
   return (
     <section className="lw-ask" aria-label={`${agent} asks`} data-testid="lane-approve-well">
       <p className="lw-caption">{caption}</p>
-      <p className="lw-ask-q">{String(wait.question)}</p>
+      <AgentWords className="lw-ask-q" text={String(wait.question)} />
       {held ? (
         <div className="lw-ask-row">
           <code className="lw-ev-code">{gatedHead(held)}</code>

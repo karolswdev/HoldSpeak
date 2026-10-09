@@ -376,6 +376,7 @@ function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean
         name={face.name}
         fact={face.fact || undefined}
         factCode={face.factCode}
+        factWords={face.factWords}
         lamp={face.lamp}
         sprite={needsRowSprite(face)}
         kindWord={face.kindWord}

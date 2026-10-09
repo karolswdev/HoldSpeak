@@ -423,7 +423,10 @@ export function coderItems(
       agent,
       cwd: String(session.cwd ?? ""),
       repoRoot: String(session.repo_root ?? ""),
-      question: excerpt,
+      // Phase 16: the agent's words as it wrote them (newlines and marks
+      // kept); the face draws them with AgentWords. The title stays the
+      // flat excerpt.
+      question: question.slice(0, 4000),
       waitKind: approve ? "approve" : "answer",
       waitStartedAt: started,
       ageSeconds: age,

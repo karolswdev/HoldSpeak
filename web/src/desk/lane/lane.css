@@ -40,11 +40,11 @@
 /* the lane's own wells: approve, re-brief */
 .lw-ask,
 .desk-next .is-lane .desk-pullout-body section.lw-ask { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface-2); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised); }
-.lw-ask-q { font: 600 15px/1.35 var(--font-sans); color: var(--text); margin: 0; overflow-wrap: anywhere; }
+.lw-ask-q { font-size: var(--font-size-sm); color: var(--text); margin: 0; }
 .lw-ask-row { display: flex; gap: 8px; align-items: center; }
 .lw-ask-row > .gadget-string { flex: 1 1 auto; min-width: 0; }
 .lw-deciding { margin: 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
-.lw-deciding .lw-ev-text { font-size: 13px; }
+.lw-deciding .lw-ev-text { font-size: 13px; flex: 1 1 16em; }
 
 /* the brief, unfolded under its rail entry */
 .lw-brief { margin: 0; padding: 10px 12px; background: var(--surface-1); box-shadow: var(--wb-sunken); border: 1px solid var(--wb-ink); font: 12px/1.5 var(--font-mono); color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow-y: auto; }
@@ -71,6 +71,10 @@
 /* receipts and ARM, kept on the face */
 .lw-receipt { margin: 0; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.04em; color: var(--text-muted); overflow-wrap: anywhere; }
 .lw-receipt[data-tone="fail"] { color: var(--danger); }
+/* Phase 16: what was sent, by AgentWords (compact, two lines, cut at a word). */
+.lw-receipt-words { display: flex; align-items: baseline; gap: 0; min-width: 0; }
+.lw-receipt-head { flex: none; white-space: pre; }
+.lw-receipt-words .lw-receipt-text { flex: 1 1 auto; min-width: 0; font: inherit; letter-spacing: inherit; }
 /* PHILO-15 20 (B67): a queued Re-brief and its Take back */
 .lw-queued { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .lw-queued > .lw-receipt { flex: 1 1 auto; min-width: 0; }

@@ -1,0 +1,96 @@
+/* Phase 16 — AgentWords: an agent's words (canvas:
+   docs/internal/philo/phase-16/02-canvas/agent-words.html). The desk's
+   fonts and tokens only. The size comes from the host. */
+.agent-words {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+/* The whole words take the text color; a compact line takes its host's. */
+.agent-words:not(.is-compact) {
+  color: var(--text);
+}
+.agent-words p,
+.agent-words ol,
+.agent-words ul,
+.agent-words pre {
+  margin: 0;
+}
+.agent-words ol,
+.agent-words ul {
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.agent-words li > ol,
+.agent-words li > ul {
+  margin-top: 3px;
+}
+.agent-words strong {
+  font-weight: 700;
+}
+.agent-words .aw-h {
+  font-weight: 700;
+}
+.agent-words code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--wash-2);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.agent-words .aw-pre {
+  padding: 8px 10px;
+  background: var(--surface-1);
+  border: 1px solid var(--wb-ink);
+  font: var(--font-size-xs) / 1.5 var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.agent-words .aw-pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+.agent-words .aw-lang {
+  font: 700 var(--font-size-xs) / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 2px 4px;
+}
+.agent-words .aw-url {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  color: var(--text-muted);
+}
+
+/* compact: one line (or --aw-lines), cut at a whole word by the
+   component; the CSS ellipsis is only the last guard. */
+.agent-words.is-compact {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.agent-words.is-compact[data-lines] {
+  white-space: normal;
+  max-height: calc(var(--aw-lines, 2) * 1lh);
+}
+.agent-words.is-compact code {
+  padding: 0;
+  border-radius: 0;
+}
+.agent-words.is-compact .aw-sep,
+.agent-words.is-compact .aw-ell {
+  color: var(--text-muted);
+}

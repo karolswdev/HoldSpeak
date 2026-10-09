@@ -90,6 +90,7 @@ import {
   type SummaryRefusal,
 } from "../../meetings/summaryRoute";
 import { openDrawer } from "../drawer/store";
+import { AgentWords } from "../components/AgentWords";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -2814,7 +2815,7 @@ function CoderNeedsYouRow({ item, now, primary }: { item: NeedsYouItem; now: Dat
           {agent === "codex" ? "CX" : agent === "pi" ? "PI" : "CC"}
         </span>
       }
-      primary={<span data-testid="arrival-coder-question">{item.question || item.title}</span>}
+      primary={<AgentWords compact data-testid="arrival-coder-question" text={String(item.question || item.title || "")} />}
       cells={
         <span className="arrival-needs-you-meta">
           <span className="arrival-why-token" data-tone="warning" data-testid="arrival-why">

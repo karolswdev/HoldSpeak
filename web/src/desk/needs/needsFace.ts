@@ -60,6 +60,8 @@ export interface NeedFace {
   /** PHILO-15 15: the fact is a command (a held call): its lines are kept
    *  and it wraps, in the mono face. */
   factCode?: boolean;
+  /** Phase 16: the fact is an agent's words (AgentWords, compact). */
+  factWords?: boolean;
   lamp: { label: string; tone: ObjectTone };
   /** `agents` rows lead the drawer; the rest keep the hub's rank order. */
   group: "agents" | "rest";
@@ -247,6 +249,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       kind: "agent",
       name: agentRowName(agent, label),
       fact: String(item.question || item.title || ""),
+      factWords: true,
       lamp: { label: `${approve ? "TO APPROVE" : "ASKS"} · ${waitAgeWord(item, ctx.now)}`, tone: "ask" },
       group: "agents",
       verbs: { kind: "answer", sessionKey: key },
@@ -481,7 +484,7 @@ export function foldAsks(faces: readonly NeedFace[]): NeedFace[] {
     // The most urgent ask leads: a held call before a question.
     const lead = [...asks].sort((a, b) => askRank(a) - askRank(b))[0];
     out.push({
-      ...face, fact: lead.fact, factCode: lead.factCode, lamp: lead.lamp, verbs: lead.verbs, askOf: lead.askOf, agent: undefined,
+      ...face, fact: lead.fact, factCode: lead.factCode, factWords: lead.factWords, lamp: lead.lamp, verbs: lead.verbs, askOf: lead.askOf, agent: undefined,
       moreAsks: asks.length - 1,
       // The row's Open is the agent's lane, where every ask is answered.
       openRef: lead.askOf ? `coder:${lead.askOf}` : face.openRef,
