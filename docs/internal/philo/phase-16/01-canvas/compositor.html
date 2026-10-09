@@ -211,6 +211,64 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
 .desk.before .tb .oi, .desk.before .tb .lamp, .desk.before .tb .room { display: none; }
 .desk.before .tb .ttl { padding-left: 10px; }
 
+
+/* ── BOARD 2: the exemplar internal app, "Runs on" (Models) as a Switchboard ── */
+.board2 { grid-column: 1 / -1; display: grid; gap: 12px; }
+.board2 .bar h1 { font-size: 14px; }
+.exemplar { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .exemplar { grid-template-columns: minmax(0,1fr); } }
+.winbox { position: relative; width: 100%; aspect-ratio: 1120 / 680; overflow: hidden; border: 1px solid var(--border); background: var(--wb-backdrop); }
+.winbox .wb { position: absolute; top: 0; left: 0; width: 1120px; height: 680px; transform-origin: 0 0; padding: 14px; background: repeating-conic-gradient(var(--wb-dither) 0 25%, transparent 0 50%); background-size: 8px 8px; }
+.winbox .win.static { position: relative; left: 0; top: 0; width: 100%; height: 100%; }
+.winbox .win.static .tb { cursor: default; }
+/* the Switchboard species */
+.sb { position: relative; display: grid; grid-template-columns: 300px 1fr 330px; gap: 0; flex: 1; min-height: 0; }
+.sb .col { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.sb .wires { position: relative; }
+.sb svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.sb .wire { fill: none; stroke: var(--wb-ink); stroke-width: 2; }
+.sb .wire.fb { stroke-dasharray: 4 4; stroke-width: 1.5; stroke: var(--wb-muted); }
+.sb .wire.hot { stroke: var(--wb-sel); stroke-width: 3; }
+.sb .wire.limited { stroke: #9a6b00; }
+.sb .wire.pulse { stroke: var(--wb-sel); stroke-width: 3; stroke-dasharray: 10 14; animation: flow .6s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -24; } }
+.job { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; padding: 7px 26px 7px 10px; background: var(--wb-well); border: 1px solid var(--wb-ink); box-shadow: var(--wb-sunken); cursor: pointer; }
+.job .n { font: 600 14px var(--font-sans); color: var(--wb-text); }
+.job .c { font: 500 10px var(--font-mono); color: var(--wb-muted); text-transform: uppercase; letter-spacing: .04em; grid-column: 1 / -1; }
+.job .try { grid-column: 2; grid-row: 1; }
+.job .plug { position: absolute; right: -7px; top: 50%; width: 12px; height: 12px; margin-top: -6px; background: var(--wb-steel); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised-soft); }
+.job.ready .plug { background: var(--ok); } .job.limited .plug { background: var(--warn); } .job.off .plug { background: var(--wb-steel-dim); }
+.job.sel { outline: 2px solid var(--wb-sel); outline-offset: -2px; }
+.job.over { background: #dfe6f3; outline: 2px dashed var(--wb-sel); outline-offset: -2px; }
+.job.over.no { outline-color: #b3261e; background: #f3dfdf; }
+.job .res { grid-column: 1 / -1; font: 500 11px var(--font-mono); color: #1f6b3a; text-transform: uppercase; letter-spacing: .04em; display: none; }
+.job .res.on { display: block; }
+.job.default { background: var(--wb-field-hi); }
+.eng { position: relative; display: grid; grid-template-columns: 34px 1fr auto; gap: 2px 10px; align-items: center; padding: 7px 10px 7px 14px; background: var(--wb-steel); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised); cursor: grab; touch-action: none; }
+.eng:active { cursor: grabbing; }
+.eng.dragging { opacity: .5; }
+.eng .plug { position: absolute; left: -7px; top: 50%; width: 12px; height: 12px; margin-top: -6px; background: var(--wb-field); border: 1px solid var(--wb-ink); }
+.eng .em { grid-row: 1 / 3; font: 700 9px var(--font-mono); background: var(--wb-paper); border: 1px solid var(--wb-ink); text-align: center; padding: 6px 0; letter-spacing: .04em; }
+.eng .n { font: 600 13px var(--font-sans); color: var(--wb-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.eng .tk { grid-column: 2 / 4; display: flex; gap: 8px; flex-wrap: wrap; font: 500 10px var(--font-mono); color: var(--wb-ink-dim); text-transform: uppercase; letter-spacing: .04em; }
+.eng .lamp { width: 9px; height: 9px; border: 1px solid var(--wb-ink); justify-self: end; }
+.eng .lamp.busy { animation: pulse 1.2s ease-in-out infinite; }
+.eng .lamp.warn { background: var(--warn); }
+.eng .bar { grid-column: 2 / 4; height: 6px; background: var(--wb-well); border: 1px solid var(--wb-ink); box-shadow: var(--wb-sunken); display: none; }
+.eng .bar i { display: block; height: 100%; background: var(--wb-sel); width: 0; }
+.eng.downloading .bar { display: block; }
+.eng.found { background: var(--wb-field); box-shadow: var(--wb-raised-soft); cursor: default; }
+.eng.found .plug { display: none; }
+.eng .use { grid-column: 3; grid-row: 1 / 3; }
+.sb .cap { margin-top: 6px; }
+.sb .col .cap:first-child { margin-top: 0; }
+.phone { width: 393px; max-width: 100%; border: 1px solid var(--border); background: var(--wb-backdrop); padding: 10px; }
+.phone .win.static { position: relative; height: 640px; }
+.phone .tb { height: 44px; } .phone .gad { width: 44px; }
+.phone .job { padding-right: 10px; } .phone .job .plug { display: none; }
+.phone .eng { padding-left: 10px; } .phone .eng .plug { display: none; }
+.phone .sheet { display: flex; flex-direction: column; gap: 6px; }
+
 /* ── the legend ── */
 .legend { display: grid; gap: 12px; align-content: start; min-width: 0; }
 .card { border: 1px solid var(--border); background: var(--surface-1); padding: 12px 14px; }
@@ -409,6 +467,77 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
     </div>
   </div>
 
+
+  <div class="board2">
+    <div class="bar"><h1>Board 2 · the exemplar internal app: Runs on (Models) as a Switchboard</h1>
+      <span class="lbl">Try</span>
+      <button class="btn k" type="button" data-sb="try"><b>press</b>Try it on Meetings</button>
+      <button class="btn k" type="button" data-sb="use"><b>press</b>Use the found Ollama</button>
+      <button class="btn k" type="button" data-sb="dl"><b>press</b>Download the vision file</button>
+      <button class="btn k" type="button" data-sb="reset">Reset board</button>
+      <span class="log" id="log2">Drag an engine onto a job to patch it. Hold ⌥ to add it as a fallback. Click a job to light its wires.</span>
+    </div>
+    <div class="exemplar">
+      <div class="winbox"><div class="wb">
+        <section class="win static" data-plane="front">
+          <div class="tb"><button class="gad" type="button" data-g="close" aria-label="Close"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="4" height="4" fill="currentColor"/></svg></button>
+            <div class="ttl"><svg class="oi" viewBox="0 0 44 44"><rect x="6" y="10" width="32" height="24" fill="#eef0f3" stroke="#0b0c10" stroke-width="3"/><circle cx="15" cy="22" r="4" fill="#0b0c10"/><circle cx="29" cy="22" r="4" fill="#0b0c10"/><rect x="15" y="21" width="14" height="2" fill="#0b0c10"/></svg><span class="name">Runs on</span><span class="room">Settings</span><span class="lamp info"></span></div>
+            <div class="gads">
+            <button class="gad" type="button" data-g="seat" aria-label="Seat"><svg viewBox="0 0 12 12"><rect x="1" y="8" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="zoom" aria-label="Zoom"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="10" height="3" fill="currentColor"/></svg></button>
+            <button class="gad" type="button" data-g="back" aria-label="Send back"><svg viewBox="0 0 12 12"><rect x="1" y="4" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="1" width="7" height="7" fill="currentColor"/></svg></button>
+          </div>
+          </div>
+          <div class="body"><div class="in">
+            <div class="apphead"><h2 class="disp">6 jobs · 5 engines</h2><div class="strip"><span><span class="sq" style="background:var(--ok)"></span>5 ready</span><span><span class="sq" style="background:var(--warn)"></span>1 limited</span><span>This Mac · M‑series · 36 GB</span><span>Checked just now</span></div></div>
+            <div class="sb" id="sb">
+              <div class="col" id="jobs">
+                <div class="cap">What HoldSpeak does</div>
+                <div class="job ready" data-job="speech"><span class="n">Speech</span><span class="verb try" data-try="speech">Try it</span><span class="c">speech → text · this device only</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job ready" data-job="writing"><span class="n">Writing &amp; dictation</span><span class="verb try" data-try="writing">Try it</span><span class="c">rewrite · intent · 3 tasks</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job ready" data-job="thoughts"><span class="n">Thoughts &amp; notes</span><span class="verb try" data-try="thoughts">Try it</span><span class="c">interview · ask · chat</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job limited" data-job="meetings"><span class="n">Meetings</span><span class="verb try" data-try="meetings">Try it</span><span class="c">summaries · live · titles · 6 tasks</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job ready" data-job="agents"><span class="n">Agents &amp; tools</span><span class="verb try" data-try="agents">Try it</span><span class="c">plan · code · tools · 11 tasks</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job ready" data-job="background"><span class="n">Background</span><span class="verb try" data-try="background">Try it</span><span class="c">memory · drafts · meaning search</span><span class="res"></span><span class="plug"></span></div>
+                <div class="job ready default" data-job="default"><span class="n">Default for AI work</span><span class="verb try" data-try="default">Try it</span><span class="c">every job with no wire of its own</span><span class="res"></span><span class="plug"></span></div>
+              </div>
+              <div class="wires"><svg class="wires" id="wires"></svg></div>
+              <div class="col" id="engs">
+                <div class="cap">What you have</div>
+                <div class="eng" data-eng="whisper"><span class="plug"></span><span class="em">MAC</span><span class="n">Whisper small</span><span class="lamp ok"></span><span class="tk">142 MB · MLX · speech</span><span class="bar"><i></i></span></div>
+                <div class="eng" data-eng="qwen4b"><span class="plug"></span><span class="em">MAC</span><span class="n">Qwen 3.5 4B</span><span class="lamp ok"></span><span class="tk">2.7 GB · Q4 · 8k ctx · 90 ms</span><span class="bar"><i></i></span></div>
+                <div class="eng" data-eng="q27"><span class="plug"></span><span class="em">LAN</span><span class="n">qwen3.8 27B · 192.168.1.43</span><span class="lamp ok busy"></span><span class="tk">llama.cpp · 32k ctx · tools · 410 ms</span><span class="bar"><i></i></span></div>
+                <div class="eng" data-eng="claude"><span class="plug"></span><span class="em">API</span><span class="n">Claude Opus 5.5</span><span class="lamp ok"></span><span class="tk">key set · tools · vision · $ · 1.2 s</span><span class="bar"><i></i></span></div>
+                <div class="eng" data-eng="vision"><span class="plug"></span><span class="em">MAC</span><span class="n">Qwen 3.5 4B vision file</span><span class="lamp warn"></span><span class="tk">890 MB · not downloaded</span><span class="bar"><i></i></span></div>
+                <div class="cap">Found · 2</div>
+                <div class="eng found" data-eng="ollama"><span class="plug"></span><span class="em">MAC</span><span class="n">Ollama · llama 3.3 8B</span><span class="lamp ok"></span><span class="tk">127.0.0.1:11434 · 4.9 GB</span><span class="bar"><i></i></span></div>
+                <div class="eng found" data-eng="openrouter"><span class="plug"></span><span class="em">API</span><span class="n">OpenRouter key</span><span class="lamp none"></span><span class="tk">in your Keychain · $</span><span class="bar"><i></i></span></div>
+              </div>
+            </div>
+          </div></div>
+          <div class="foot"><span id="sbfoot">Patched 09:14 · Meetings → qwen3.8 27B</span><span class="sp"></span><span class="egress" id="sbegress">192.168.1.43</span><span class="verb" id="sbundo">Undo</span></div>
+          <div class="grip"><svg viewBox="0 0 12 10"><path d="M1 9h10V1M4 9V5h7" fill="none" stroke="#0b0c10" stroke-width="1.5"/></svg></div>
+        </section>
+      </div></div>
+      <div class="phone"><section class="win static" data-plane="front">
+        <div class="tb"><button class="gad" type="button" data-g="close" aria-label="Close"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="4" height="4" fill="currentColor"/></svg></button><div class="ttl"><span class="name">Runs on</span><span class="lamp info"></span></div><div class="gads"><button class="gad" type="button"><svg viewBox="0 0 12 12"><rect x="1" y="8" width="10" height="3" fill="currentColor"/></svg></button></div></div>
+        <div class="body"><div class="in sheet">
+          <div class="apphead"><h2 class="disp">6 jobs</h2><div class="strip"><span><span class="sq" style="background:var(--ok)"></span>5 ready</span><span><span class="sq" style="background:var(--warn)"></span>1 limited</span></div></div>
+          <div class="cap">Meetings · runs on</div>
+          <div class="eng" style="cursor:default"><span class="em">LAN</span><span class="n">qwen3.8 27B · 192.168.1.43</span><span class="lamp ok"></span><span class="tk">410 ms · without vision</span></div>
+          <div class="cap">Or</div>
+          <div class="eng" style="cursor:default"><span class="em">API</span><span class="n">Claude Opus 5.5</span><span class="lamp ok"></span><span class="tk">vision · $ · 1.2 s</span></div>
+          <div class="eng" style="cursor:default"><span class="em">MAC</span><span class="n">Qwen 3.5 4B</span><span class="lamp ok"></span><span class="tk">90 ms · 8k ctx · limited</span></div>
+          <div class="cap">Other jobs</div>
+          <div class="job ready"><span class="n">Speech</span><span class="c">Whisper small · this device</span></div>
+          <div class="job ready"><span class="n">Thoughts &amp; notes</span><span class="c">qwen3.8 27B</span></div>
+          <div class="job ready"><span class="n">Agents &amp; tools</span><span class="c">Claude Opus 5.5 → 27B</span></div>
+        </div></div>
+        <div class="foot"><span>Tap an engine to patch</span><span class="sp"></span><span class="verb">Try it</span></div>
+      </section></div>
+    </div>
+  </div>
+
   <aside class="legend">
     <div class="card">
       <h2>The depth ladder</h2>
@@ -437,6 +566,18 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
         <div class="kbd"><b>⌘⌥←→</b> tile · <b>⌘⏎</b> stage · <b>⌘⇧E</b> exposé · <b>⌘G</b> gather room · <b>Esc</b> back</div>
         <div class="kbd">Seated windows live in the dock. Nowhere else.</div>
         <div class="kbd">Open beside the object. Never cover a bar whole. The band is sacred.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>How an internal app is composed</h2>
+      <div class="moments">
+        <div><b>Show the thing, not a form about it.</b> Runs on shows the wiring; the picture IS the state.</div>
+        <div><b>Direct manipulation.</b> Drag, press, speak. It applies now, with a receipt in the foot and Undo. No Save, no "Use these".</div>
+        <div><b>Live.</b> Every object has a lamp; latency on the wire; a download fills its bar in place.</div>
+        <div><b>Try it, everywhere.</b> Every wired thing can be exercised on the spot, with the real answer and its time.</div>
+        <div><b>Found before asked.</b> The app discovers (ports, LAN, keys, files) and offers; you accept with one press.</div>
+        <div><b>Five state words.</b> READY · LIMITED · BROKEN · WAITING · OFF. Never eleven.</div>
+        <div><b>The kit, plus one species of its own</b>, added to the library (here: Switchboard).</div>
       </div>
     </div>
     <div class="card">
@@ -470,7 +611,7 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
   new ResizeObserver(fit).observe(box); fit();
 
   // ── the compositor state ──
-  const wins = () => [...desk.querySelectorAll('.win')];
+  const wins = () => [...desk.querySelectorAll('.win:not(.static)')];
   let order = ['w-needs', 'w-mtg', 'w-room', 'w-cond']; // back → front
   const seated = new Set();
   const saved = new Map(); // id → rect before an arrangement
@@ -657,3 +798,58 @@ body { margin: 0; background: #08090c; color: var(--text); font: 13px/1.45 var(-
   compose();
 })();
 </script>
+<script>
+(() => {
+  // ── Board 2: the Switchboard ──
+  const sb = document.getElementById('sb'); const svg = document.getElementById('wires'); const log2 = document.getElementById('log2');
+  const foot = document.getElementById('sbfoot'), egress = document.getElementById('sbegress');
+  const wbBox = sb.closest('.winbox'); const wb = wbBox.querySelector('.wb');
+  const fit2 = () => { const k = Math.min(1, wbBox.clientWidth / 1120); wb.style.transform = `scale(${k})`; wbBox.style.height = (680 * k) + 'px'; draw(); };
+  new ResizeObserver(fit2).observe(wbBox);
+  const HOST = { whisper: 'This device', qwen4b: 'This device', q27: '192.168.1.43', claude: 'api.anthropic.com', vision: 'This device', ollama: '127.0.0.1', openrouter: 'openrouter.ai' };
+  const NAME = { whisper: 'Whisper small', qwen4b: 'Qwen 3.5 4B', q27: 'qwen3.8 27B', claude: 'Claude Opus 5.5', vision: 'Qwen 4B vision', ollama: 'llama 3.3 8B', openrouter: 'OpenRouter' };
+  const SPEECH = new Set(['whisper']); const TEXT = new Set(['qwen4b', 'q27', 'claude', 'ollama', 'openrouter', 'vision']);
+  const init = () => ({ speech: ['whisper'], writing: ['qwen4b'], thoughts: ['q27', 'qwen4b'], meetings: ['q27'], agents: ['claude', 'q27'], background: ['q27'], default: ['q27'] });
+  let patch = init(); let history = []; let sel = null;
+  const jobEl = (j) => sb.querySelector(`.job[data-job="${j}"]`), engEl = (e) => sb.querySelector(`.eng[data-eng="${e}"]`);
+  const fits = (j, e) => j === 'speech' ? SPEECH.has(e) : TEXT.has(e);
+  const stateOf = (j) => { const c = patch[j]; if (!c.length) return 'off'; if (j === 'meetings' && !c.some(e => e === 'claude' || e === 'vision')) return 'limited'; if (j === 'thoughts' && c[0] === 'qwen4b') return 'limited'; return 'ready'; };
+  const k = () => wb.getBoundingClientRect().width / 1120;
+  function pos(el, side) { const r = el.getBoundingClientRect(), b = sb.getBoundingClientRect(); return { x: (side === 'r' ? r.right - b.left : r.left - b.left) / k(), y: (r.top - b.top + r.height / 2) / k() }; }
+  function draw() {
+    const wr = sb.querySelector('.wires').getBoundingClientRect(), b = sb.getBoundingClientRect(); const ox = (wr.left - b.left) / k(); svg.innerHTML = '';
+    for (const [j, chain] of Object.entries(patch)) {
+      const je = jobEl(j); je.className = 'job ' + stateOf(j) + (j === 'default' ? ' default' : '') + (sel === j ? ' sel' : '');
+      chain.forEach((e, i) => { const ee = engEl(e); if (!ee || ee.classList.contains('found')) return;
+        const a = pos(je, 'r'), c = pos(ee, 'l'); const x1 = a.x - ox + 6, x2 = c.x - ox - 6; const mx = (x1 + x2) / 2;
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', `M${x1},${a.y} C${mx},${a.y} ${mx},${c.y} ${x2},${c.y}`);
+        p.setAttribute('class', 'wire' + (i ? ' fb' : '') + (stateOf(j) === 'limited' && !i ? ' limited' : '') + (sel === j ? ' hot' : '')); p.dataset.job = j; p.dataset.i = i; svg.appendChild(p); });
+    }
+  }
+  function setPatch(j, e, asFallback) {
+    history.push(JSON.stringify(patch)); const prev = patch[j][0];
+    patch[j] = asFallback ? [...patch[j].filter(x => x !== e), e].slice(0, 4) : [e, ...patch[j].filter(x => x !== e)].slice(0, 4);
+    draw(); const path = svg.querySelector(`.wire[data-job="${j}"][data-i="${asFallback ? patch[j].length - 1 : 0}"]`);
+    if (path && path.getTotalLength && path.animate) { const L = path.getTotalLength(); path.animate([{ strokeDasharray: L, strokeDashoffset: L }, { strokeDasharray: L, strokeDashoffset: 0 }], { duration: 220, easing: 'cubic-bezier(.2,.8,.2,1)' }); }
+    foot.textContent = `Patched now · ${jobEl(j).querySelector('.n').textContent} → ${NAME[e]}` + (asFallback ? ' (fallback)' : ''); egress.textContent = HOST[e];
+    log2.textContent = asFallback ? 'Dropped with ⌥: a dashed fallback wire, after the first.' : (prev ? 'Re-patched. The old wire is gone; Undo brings it back.' : 'Patched.');
+  }
+  document.getElementById('sbundo').addEventListener('click', () => { const h = history.pop(); if (!h) { log2.textContent = 'Nothing to undo.'; return; } patch = JSON.parse(h); draw(); foot.textContent = 'Undone'; });
+  let drag = null;
+  sb.addEventListener('pointerdown', (e) => { const en = e.target.closest('.eng'); if (!en || en.classList.contains('found') || e.target.closest('.verb')) return; drag = { e: en.dataset.eng, el: en }; en.setPointerCapture(e.pointerId); en.classList.add('dragging'); });
+  sb.addEventListener('pointermove', (e) => { if (!drag) return; sb.querySelectorAll('.job').forEach(j => j.classList.remove('over', 'no')); const t = document.elementFromPoint(e.clientX, e.clientY)?.closest('.job'); if (t) { t.classList.add('over'); if (!fits(t.dataset.job, drag.e)) t.classList.add('no'); } });
+  sb.addEventListener('pointerup', (e) => { if (!drag) return; drag.el.classList.remove('dragging'); const t = document.elementFromPoint(e.clientX, e.clientY)?.closest('.job'); sb.querySelectorAll('.job').forEach(j => j.classList.remove('over', 'no'));
+    if (t) { if (!fits(t.dataset.job, drag.e)) log2.textContent = (t.dataset.job === 'speech' ? 'Speech takes a speech engine only.' : 'That engine does not do text.'); else setPatch(t.dataset.job, drag.e, e.altKey && patch[t.dataset.job].length > 0); } drag = null; });
+  sb.addEventListener('click', (e) => { const tr = e.target.closest('[data-try]'); if (tr) { e.stopPropagation(); tryJob(tr.dataset.try); return; } const j = e.target.closest('.job'); if (j) { sel = sel === j.dataset.job ? null : j.dataset.job; draw(); } });
+  function tryJob(j) { const e = patch[j][0]; if (!e) return; sel = j; draw(); const p = svg.querySelector(`.wire[data-job="${j}"][data-i="0"]`); if (p) p.classList.add('pulse'); const lamp = engEl(e).querySelector('.lamp'); lamp.classList.add('busy');
+    const res = jobEl(j).querySelector('.res'); res.textContent = 'Trying…'; res.classList.add('on'); const ms = { whisper: 380, qwen4b: 90, q27: 412, claude: 1180, ollama: 240, openrouter: 900, vision: 300 }[e];
+    setTimeout(() => { if (p) p.classList.remove('pulse'); lamp.classList.remove('busy'); res.textContent = j === 'speech' ? `Heard: "freeze the old ledger on nov 5" · ${ms} ms` : `Ready · ${NAME[e]} · ${ms} ms` + (stateOf(j) === 'limited' ? ' · without vision' : ''); egress.textContent = HOST[e]; setTimeout(() => res.classList.remove('on'), 4000); }, Math.min(ms, 900)); }
+  sb.querySelectorAll('.eng.found').forEach(f => { const v = document.createElement('span'); v.className = 'verb use'; v.textContent = 'Use it'; f.appendChild(v);
+    v.addEventListener('click', () => { f.classList.remove('found'); v.remove(); const engs = document.getElementById('engs'); engs.insertBefore(f, engs.querySelectorAll('.cap')[1]); draw(); log2.textContent = `${f.querySelector('.n').textContent} joined. Drag it onto a job, or onto DEFAULT.`; }); });
+  function download() { const v = engEl('vision'); if (v.classList.contains('downloading') || v.dataset.done) return; v.classList.add('downloading'); const bar = v.querySelector('.bar i'); let pct = 0; const t = setInterval(() => { pct += 7; bar.style.width = Math.min(100, pct) + '%'; v.querySelector('.tk').textContent = `890 MB · ${Math.min(100, pct)} %`; if (pct >= 100) { clearInterval(t); v.classList.remove('downloading'); v.dataset.done = '1'; v.querySelector('.tk').textContent = '890 MB · vision · ready'; v.querySelector('.lamp').className = 'lamp ok'; setPatch('meetings', 'vision', true); log2.textContent = 'Downloaded in place. Meetings now has vision through the fallback wire; the plug turned green.'; } }, 120); log2.textContent = 'Downloading: the bar fills on the engine itself. Nothing to poll, nothing to reopen.'; }
+  document.querySelectorAll('[data-sb]').forEach(b => b.addEventListener('click', () => ({ try: () => tryJob('meetings'), use: () => sb.querySelector('.eng.found .use')?.click(), dl: download, reset: () => { patch = init(); history = []; sel = null; draw(); foot.textContent = 'Reset'; } })[b.dataset.sb]()));
+  draw();
+})();
+</script>
+

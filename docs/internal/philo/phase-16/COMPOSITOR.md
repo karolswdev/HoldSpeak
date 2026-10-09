@@ -207,6 +207,97 @@ lamp tones, the selection blue. Nothing else.
 The dock: a tile is as wide as its word (minimum 72 px); a label never
 leaves its tile.
 
+## 12. How an internal app is composed (v3, owner: "consider UX really, really hard")
+
+Owner, 2026-10-08, on canvas v2: "Style? Freaking love it. But now comes the
+time to also think about how those internal apps will be composed for the
+most delightful UX. For example, I fucking hate the way we configure models,
+it's so finicky, so un-interesting, so not-dynamic and quite frankly boring."
+
+The style is ratified. This section is the composition doctrine, derived from
+the Models case and binding on every internal app (Needs you, Rooms, the
+Conductor, Meetings, People, Delivery, Settings, Runs on).
+
+### The seven rules
+
+1. **Show the thing, not a form about the thing.** Runs on shows the wiring
+   between what HoldSpeak does and what you have. People shows the people.
+   Delivery shows the destinations. The picture IS the state; there is no
+   separate "status" to read.
+2. **Direct manipulation.** Drag, press, speak. A change applies the moment
+   it is made, with a receipt in the foot and Undo. No Save, no Apply, no
+   "Use these", no review step. (A5 one screen; A4 no modals; ledger not gate.)
+3. **Live.** Every object carries a lamp (ok, busy, warn, broken, off);
+   latency sits on the wire; a download fills its bar on the object itself.
+   The app is never a snapshot that must be reopened.
+4. **Try it, everywhere.** Every configured thing can be exercised on the
+   spot, through the real route, with the real answer and its time. For
+   speech, you speak and it shows what it heard. Joy is immediate feedback.
+5. **Found before asked.** The app discovers (loopback ports, LAN servers,
+   keys in the Keychain, model files on disk) and offers each as a found row
+   with one verb. The user accepts; the user never types what the machine
+   already knows. Egress and cloud still wait for the press (Article III).
+6. **Five state words.** READY · LIMITED · BROKEN · WAITING · OFF, drawn as
+   the plug's colour and said once. Never eleven. A limitation is a token on
+   the wire (`WITHOUT VISION`), not a state.
+7. **The kit, plus one species of its own.** An app is the §11 kit and at
+   most ONE species that is the app's own picture (here the Switchboard),
+   added to the library and `contract.md`, never hand-rolled.
+
+### The exemplar: Runs on (the Models app), as a Switchboard
+
+Today (the Concierge, `web/src/features/concierge/`): eleven state words,
+two commit verbs ("Use these" and "Use this for summaries"), an Adjust that
+does nothing (A11), downloads that never report, fallback chains reachable
+only from object pullouts, cloud engines invisible until a key profile
+exists, and five faces that disagree about whether there is a model (B33).
+`DESIGN_SYSTEM.md:450` already specifies the `SurfaceSwitchboard` species;
+nothing renders it.
+
+The board (canvas Board 2):
+
+- **Left column, WHAT HOLDSPEAK DOES:** the six owner groups as jobs
+  (Speech · Writing & dictation · Thoughts & notes · Meetings · Agents &
+  tools · Background) and a seventh, **Default for AI work**, which every
+  job without a wire of its own follows. Each job: name, its tasks as a
+  token line, a plug on its right edge coloured by state, and **Try it**.
+- **Right column, WHAT YOU HAVE:** every engine as a raised steel plate with
+  an emblem (MAC · LAN · API), name, token line (size, runtime, context,
+  tools, vision, cost, latency), a live lamp, and a plug on its left. Below,
+  **FOUND**: engines the concierge detected but you have not accepted
+  (Ollama on a port, LM Studio, an OpenRouter key in the Keychain, a model
+  file on disk), each with **Use it**.
+- **Between them, the wires.** A solid wire is the job's engine; dashed
+  wires are its fallbacks, in order. An amber wire is LIMITED (the token
+  says why); a red broken wire is a repair, and the one verb to mend it sits
+  on the engine (Download · Fix address · Key).
+- **Drag an engine onto a job** to patch it (the wire draws in 220 ms, the
+  foot says `PATCHED · Meetings → qwen3.8 27B` with the host chip and Undo).
+  Hold ⌥ to add it as a fallback. A job that cannot take the engine refuses
+  on hover (Speech takes speech engines only).
+- **Try it** runs one real request down the wire: the wire pulses, the
+  engine's lamp goes busy, the result lands on the job (`READY · qwen3.8
+  27B · 412 ms · WITHOUT VISION`; for Speech, `HEARD: "…"`).
+- **Download** fills the bar on the engine's own plate; when it lands, the
+  wire that needed it mends by itself.
+- **393:** the board becomes the job list; a job opens to its engine and
+  the alternatives; tap to patch; Try it in the foot.
+
+What this retires: the picker wells, the Adjust table, "Use these", "Use
+this for summaries" (summaries get the exact capability row when Meetings
+is patched; the service principal rule stays in the backend), the
+AssignmentEditor sheet (fallbacks are dashed wires), and the two Settings
+tiles that only redirect. One name: **Runs on** (the canon term in
+`product-language.json`).
+
+Build mechanics: `SurfaceSwitchboard` in `web/src/desk/surface/`; the board
+reads `/api/concierge/detect` + `/api/inference/assignments` and writes
+through `inference_assignment_set` per drop (CAS; 409 → Undo and redraw);
+Try it is `/api/concierge/probe` with `task:true`; found rows come from
+detect's loopback and profile scans plus the Keychain key probe; downloads
+poll `/api/inference/acquisitions/{job}` into the bar (the TODO in
+`useConciergeController.ts:624` is paid).
+
 ## 8. What this is NOT
 
 - Not glass: no `backdrop-filter`, no translucent bodies.
