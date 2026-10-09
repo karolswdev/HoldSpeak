@@ -26,6 +26,7 @@ two completion-block signatures are registered here.
 """
 from __future__ import annotations
 
+import os
 import re
 import sys
 import threading
@@ -61,10 +62,22 @@ _classes: Optional[dict[str, Any]] = None
 _store: Any = None
 
 
+#: PHILO-16 R2: ``HOLDSPEAK_MACOS_CALENDAR=0`` turns the reader off for this
+#: process.  EventKit is per macOS user, not per HOME, so an isolated test hub
+#: would otherwise read the owner's real calendars.  Default: on.
+MACOS_CALENDAR_ENV = "HOLDSPEAK_MACOS_CALENDAR"
+
+
+def reader_enabled() -> bool:
+    """False when the process environment turns the macOS calendar reader off."""
+    value = os.environ.get(MACOS_CALENDAR_ENV, "").strip().lower()
+    return value not in {"0", "off", "false", "no"}
+
+
 def _eventkit() -> Optional[dict[str, Any]]:
-    """The EventKit classes, or None off macOS or without PyObjC."""
+    """The EventKit classes, or None off macOS, without PyObjC, or when off."""
     global _classes
-    if sys.platform != "darwin":
+    if sys.platform != "darwin" or not reader_enabled():
         return None
     with _lock:
         if _classes is not None:

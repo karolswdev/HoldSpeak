@@ -5089,6 +5089,9 @@ def _isolated_hub_env(
         # reaches an engine that runs on this machine (Ollama, LM Studio,
         # llama.cpp). Engines a case needs come from its doubles.
         "HOLDSPEAK_LOOPBACK_ENGINE_PORTS": "",
+        # PHILO-16 R2: EventKit is per macOS user, not per HOME; a rig hub
+        # never reads the owner's real calendars (holdspeak/macos_calendar.py).
+        "HOLDSPEAK_MACOS_CALENDAR": "0",
     })
     env.pop("TMUX", None)
     env.pop("TMUX_PANE", None)

@@ -296,8 +296,12 @@ def test_hub_environment_and_teardown_never_use_inherited_tmux_socket(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     rig = _rig()
-    inherited = {"HOME": "/owner", "TMUX": "/owner/default", "TMUX_PANE": "%9"}
+    inherited = {"HOME": "/owner", "TMUX": "/owner/default", "TMUX_PANE": "%9",
+                 "HOLDSPEAK_MACOS_CALENDAR": "1"}
     env = rig._isolated_hub_env(tmp_path, inherited=inherited)
+    # PHILO-16 R2: EventKit is per macOS user; a rig hub never reads the
+    # owner's calendars, whatever the parent environment says.
+    assert env["HOLDSPEAK_MACOS_CALENDAR"] == "0"
     assert env["HOME"] == str(tmp_path)
     assert env["TMUX_TMPDIR"] == str(tmp_path)
     assert env["HOLDSPEAK_PEOPLE_KEYSTORE_FILE"] == str(tmp_path / "people.key")
