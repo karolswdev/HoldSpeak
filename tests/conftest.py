@@ -387,6 +387,8 @@ _launch_chromium_on_the_gpu()
 # context and page it makes then starts with the four windows open (a stored
 # Chair section, as the desk remembers it after he opens them). A Chair
 # section the page already stored is kept, so a reload keeps what he closed.
+# PHILO-16 (16b): the hub owns the windows, so the seam opens the four on the
+# hub as well, the first time it writes the section in a browser.
 
 CHAIR_WINDOWS_OPEN_JS = """(() => { try {
   const key = "hs.desk.workspace.v1";
@@ -396,6 +398,19 @@ CHAIR_WINDOWS_OPEN_JS = """(() => { try {
   const next = doc && doc.version === 1 ? doc : { version: 1 };
   next.chair = { closed: [], phone: "chair:needs" };
   localStorage.setItem(key, JSON.stringify(next));
+  // PHILO-16 (16b): the hub owns the desk's windows, so the four are opened
+  // on the hub too (before the page reads it: synchronous), Needs you last
+  // (in front). A page with no token (no hub session yet) keeps the cache.
+  if (!/^https?:$/.test(location.protocol)) return;
+  const token = new URLSearchParams(location.search).get("token") || sessionStorage.getItem("hs.web.token");
+  if (!token) return;
+  for (const id of ["chair:brief", "chair:week", "chair:capture", "chair:needs"]) {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/desk/windows/" + encodeURIComponent(id) + "/open", false);
+    xhr.setRequestHeader("Authorization", "Bearer " + token);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    try { xhr.send("{}"); } catch (e) {}
+  }
 } catch (e) {} })();"""
 
 _CHAIR_WINDOWS_OPEN = {"on": False}

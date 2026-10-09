@@ -11,7 +11,10 @@ export function HubWindowsSync(): null {
     const hub = hubWindows();
     void hub.start();
     if (!subscribe) return;
-    const unsubscribe = subscribe("desk_changed", (frame) => hub.onFrame(frame.data));
+    // The bus hands a windows-only `desk_changed` frame to "*" listeners only.
+    const unsubscribe = subscribe("*", (frame) => {
+      if (frame.type === "desk_changed") hub.onFrame(frame.data);
+    });
     return () => {
       if (typeof unsubscribe === "function") unsubscribe();
     };

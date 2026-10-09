@@ -156,6 +156,10 @@ def test_the_list_species_wear_the_32px_set(tmp_path: Path, monkeypatch: pytest.
                 page.screenshot(path=str(SHOTS / f"lane-codex-{width}.png"))
                 identity.append((f"codex lane title {width}", "agent-codex",
                                  _sprites(page.locator("body"), ".is-lane .desk-session-glyph")))
+                # PHILO-16 (16b): the hub keeps the Codex lane open across the
+                # reload (the desk remembers it); this step reads the Conductor
+                # on its own, so the lane is closed first (as the owner would).
+                _api(page, "POST", "/api/desk/windows/lane/close", {}, token=TOKEN)
                 page.goto(f"{url}/conductor?token={TOKEN}", wait_until="load")
                 _normal_chair(page)
                 window = page.locator(".conductor-window")

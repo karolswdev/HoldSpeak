@@ -126,9 +126,10 @@ afterEach(() => {
   hub = null;
 });
 
-function start(rows: HubWindowRow[], adopted = true, cacheOpen: string[] = []) {
+function start(rows: HubWindowRow[], adopted = true, cacheOpen: string[] = [], bootDepth: Record<string, number> | null = null) {
   const fake = fakeHub(rows, adopted);
-  hub = createHubWindows({ transport: fake.transport, view: () => VIEW, compact: () => false, settleMs: 0, cacheOpen });
+  hub = createHubWindows({ transport: fake.transport, view: () => VIEW, compact: () => false, settleMs: 0, cacheOpen,
+    bootDepth: bootDepth ?? { ...useDesk.getState().panelDepth } });
   const seeded = hub;
   const begin = seeded.start.bind(seeded);
   // The windows the seed opened are quiet until the owner's first gesture;
@@ -442,6 +443,20 @@ describe("hubWindows", () => {
     expect(useChairWindows.getState().closed["chair:brief"]).toBe(true);
     expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
     expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["open", "chair:needs"]]);
+  });
+
+  it("a window this load raised before the hub answered stays in front", async () => {
+    // The cache had Brief over Week; a route raised Week before the seed.
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:brief": false, "chair:week": false } }));
+    useDesk.setState({ panelDepth: { "chair:week": 1, "chair:brief": 2 }, panelOrder: ["chair:week", "chair:brief"] });
+    const boot = { "chair:week": 1, "chair:brief": 2 };
+    useDesk.getState().focusPanel("chair:week"); // the route's raise (before the hub answered)
+    const { fake, hub } = start(
+      [row("chair:week", { depth: 1 }), row("chair:brief", { depth: 2 })], true, ["chair:brief", "chair:week"], boot);
+    await hub.start();
+    await flush(hub);
+    expect(order(["chair:brief", "chair:week"])).toEqual(["chair:brief", "chair:week"]);
+    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["raise", "chair:week"]]);
   });
 
   it("a window frame is not a desk data change", () => {

@@ -297,6 +297,11 @@ _CLEAR_WINDOWS_JS = """async (token) => {
   for (const w of listed.windows || []) {
     await fetch(`/api/desk/windows/${encodeURIComponent(w.id)}/close`, {method: "POST", headers, body: "{}"});
   }
+  // A fresh desk in this browser too: the cache goes with the hub's windows
+  // (the chair_windows_open seam re-opens the Chair on the next load). This
+  // page follows the closes first (and saves its cache), so wait, then drop.
+  await new Promise((r) => setTimeout(r, 800));
+  try { localStorage.removeItem("hs.desk.workspace.v1"); } catch (e) {}
   return (listed.windows || []).length;
 }"""
 
@@ -324,7 +329,8 @@ def clear_hub_windows(page: Any, token: str = "glass-test") -> int:
     The hub owns the desk's windows; every browser context on one hub is a
     view of the SAME desk (COMPOSITOR.md §13 L1). A rig that opens a second
     page and wants it to start on an empty desk (the way a fresh browser
-    cache used to) clears the hub's windows first. Returns how many closed.
+    cache used to) clears the hub's windows first, and this browser's workspace
+    cache with them (the next load starts fresh). Returns how many closed.
     """
     return int(page.evaluate(_CLEAR_WINDOWS_JS, token))
 

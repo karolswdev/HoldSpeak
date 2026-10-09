@@ -253,6 +253,8 @@ export interface HubWindowsOptions {
   settleMs?: number;
   /** The windows the cache reopened at boot (default: read at import). */
   cacheOpen?: readonly string[];
+  /** The depths the cache restored at boot (default: read at import). */
+  bootDepth?: Readonly<Record<string, number>>;
 }
 
 const defaultView = (): Rect => {
@@ -360,6 +362,8 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
   const applied = new Map<string, number>();
   /** The windows the workspace cache reopened at boot (before anything ran). */
   const cacheOpen = new Set(options.cacheOpen ?? BOOT_OPEN);
+  /** The stacking the cache restored at boot (to tell this load's raises). */
+  const bootDepth: Record<string, number> = { ...(options.bootDepth ?? BOOT_DEPTH) };
   let seeding = false;
   /** The list revision at which this view applied a window's close. */
   const closedAt = new Map<string, number>();
@@ -862,12 +866,20 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
             sync();
             return;
           }
+          // A window this load raised before the hub answered (a route that
+          // opens the Conductor, a link) keeps its place in front: the
+          // hub's order is applied, then those raises go to the hub.
+          const now = useDesk.getState().panelDepth;
+          const raised = Object.keys(now)
+            .filter((id) => now[id] > (bootDepth[id] ?? -Infinity))
+            .sort((a, b) => now[a] - now[b]);
           seeding = true;
           try {
             apply(list, "all");
           } finally {
             seeding = false;
           }
+          for (const id of raised) if (isOpenHere(id)) useDesk.getState().focusPanel(id);
         })
         .catch(() => undefined);
       return started;
@@ -906,6 +918,15 @@ const BOOT_OPEN: readonly string[] = (() => {
     return [...adapterOpenIds(), ...Object.keys(useDesk.getState().panelDepth)];
   } catch {
     return [];
+  }
+})();
+
+/** The stacking the cache restored when the desk's modules loaded. */
+const BOOT_DEPTH: Readonly<Record<string, number>> = (() => {
+  try {
+    return { ...useDesk.getState().panelDepth };
+  } catch {
+    return {};
   }
 })();
 
