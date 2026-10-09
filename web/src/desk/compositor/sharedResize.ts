@@ -15,7 +15,6 @@ const TOLERANCE = 1;
 export interface ResizeWindow {
   id: string;
   rect: Rect;
-  depth: number;
   /** The window's real minimum (its frame's minW / CSS min-width); the
    * module minimum when absent. */
   minW?: number;

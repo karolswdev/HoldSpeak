@@ -83,7 +83,7 @@ export function CompositorLayer() {
     .filter((id) => !max.includes(id) && rects[id])
     .map((id) => {
       const min = minOf(id);
-      return { id, rect: rects[id], depth: depth[id] ?? 0, minW: min.w, minH: min.h };
+      return { id, rect: rects[id], minW: min.w, minH: min.h };
     });
   const found = boundaries(wins);
   if (!found.length) return null;

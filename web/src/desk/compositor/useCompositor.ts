@@ -611,10 +611,15 @@ export function useCompositor(): void {
       if (e.key !== "Escape" || e.isComposing || e.defaultPrevented) return;
       const mode = modeNow();
       if (mode === "free") return;
-      // A field keeps its Escape while tiled; an open menu closes first.
-      if (mode === "tile" && (typing(e.target) || document.querySelector("[role='menu']"))) return;
+      // A field or a menu keeps its Escape while tiled (the key's own
+      // target, never a document query: the null-read guard).
+      const inMenu = Boolean((e.target as Element | null)?.closest?.("[role='menu']"));
+      if (mode === "tile" && (typing(e.target) || inMenu)) return;
       e.preventDefault();
-      e.stopImmediatePropagation();
+      // Stage and Exposé own the Escape (a window under them must not close
+      // on it). Tiled, the other Escape listeners (an open menu bar) still
+      // run; a window's own Escape skips a prevented key.
+      if (mode !== "tile") e.stopImmediatePropagation();
       back();
     };
     document.addEventListener("keydown", onKey, true);

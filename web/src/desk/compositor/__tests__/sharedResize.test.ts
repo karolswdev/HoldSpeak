@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { boundaries, MIN_W, resizeBoundary } from "../sharedResize";
 
-const w = (id: string, x: number, y: number, ww: number, h: number) => ({ id, rect: { x, y, w: ww, h }, depth: 1 });
+const w = (id: string, x: number, y: number, ww: number, h: number) => ({ id, rect: { x, y, w: ww, h } });
 
 describe("shared resize", () => {
   it("two tiled windows share one vertical boundary", () => {
@@ -55,8 +55,8 @@ describe("shared resize respects each window's real minimum and the band (Astra 
 
   it("a frame with min-width 420 stops at 420, not at the module 320", () => {
     const ws = [
-      { id: "people", rect: { x: 10, y: 54, w: 710, h: 700 }, depth: 1, minW: 420 },
-      { id: "meetings", rect: { x: 720, y: 54, w: 710, h: 700 }, depth: 2, minW: 420 },
+      { id: "people", rect: { x: 10, y: 54, w: 710, h: 700 }, minW: 420 },
+      { id: "meetings", rect: { x: 720, y: 54, w: 710, h: 700 }, minW: 420 },
     ];
     const [b] = boundaries(ws);
     const out = resizeBoundary(b, ws, 1000, { band });
@@ -68,8 +68,8 @@ describe("shared resize respects each window's real minimum and the band (Astra 
 
   it("no edge leaves the band", () => {
     const ws = [
-      { id: "a", rect: { x: 10, y: 54, w: 700, h: 700 }, depth: 1 },
-      { id: "b", rect: { x: 710, y: 54, w: 720, h: 700 }, depth: 2 },
+      { id: "a", rect: { x: 10, y: 54, w: 700, h: 700 } },
+      { id: "b", rect: { x: 710, y: 54, w: 720, h: 700 } },
     ];
     const [b] = boundaries(ws);
     for (const delta of [-5000, 5000]) {
@@ -82,8 +82,8 @@ describe("shared resize respects each window's real minimum and the band (Astra 
 
   it("a boundary that cannot move does not move", () => {
     const ws = [
-      { id: "a", rect: { x: 10, y: 54, w: 700, h: 700 }, depth: 1 },
-      { id: "b", rect: { x: 710, y: 54, w: 400, h: 700 }, depth: 2, minW: 420 },
+      { id: "a", rect: { x: 10, y: 54, w: 700, h: 700 } },
+      { id: "b", rect: { x: 710, y: 54, w: 400, h: 700 }, minW: 420 },
     ];
     const [b] = boundaries(ws);
     expect(resizeBoundary(b, ws, 50, { band }).size).toBe(0);

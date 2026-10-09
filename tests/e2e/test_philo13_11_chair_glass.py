@@ -391,8 +391,17 @@ class TestTheChairAsWindows:
                     page.locator(".desk-verbbar-menu").wait_for()
                     page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')").hover()
                     page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')").wait_for()
-                    rows = page.evaluate("""() => [...document.querySelectorAll('.desk-menu-list [role="menuitemcheckbox"]')]
-                        .map((e) => [e.textContent.trim(), e.getAttribute('aria-checked')])""")
+                    # PHILO-16: the Window menu's verbs (Stage carries a check)
+                    # sit above; the Chair's windows are their own list, the
+                    # Window ▸ Chair submenu. Read that list only.
+                    rows = page.evaluate("""() => {
+                        // The innermost list holding the Chair rows (a submenu
+                        // nests inside the Window list).
+                        const list = [...document.querySelectorAll('.desk-menu-list')]
+                          .filter((l) => [...l.querySelectorAll('[role="menuitemcheckbox"]')]
+                            .some((e) => e.textContent.includes('Needs you'))).pop();
+                        return [...(list ? list.querySelectorAll('[role="menuitemcheckbox"]') : [])]
+                          .map((e) => [e.textContent.trim(), e.getAttribute('aria-checked')]); }""")
                     facts["window-menu-chair"] = rows
                     want = [["Needs you", "true"], ["Brief", "false"], ["The week", "true"], ["Capture", "true"]]
                     frame, chair = self._measure(page, width, "window-menu-chair", facts)
@@ -435,8 +444,17 @@ class TestTheChairAsWindows:
                     self._press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
                     page.locator(".desk-verbbar-menu").wait_for()
                     page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')").wait_for()
-                    rows = page.evaluate("""() => [...document.querySelectorAll('.desk-menu-list [role="menuitemcheckbox"]')]
-                        .map((e) => [e.textContent.trim(), e.getAttribute('aria-checked')])""")
+                    # PHILO-16: the Window menu's verbs (Stage carries a check)
+                    # sit above; the Chair's windows are their own list, the
+                    # Window ▸ Chair submenu. Read that list only.
+                    rows = page.evaluate("""() => {
+                        // The innermost list holding the Chair rows (a submenu
+                        // nests inside the Window list).
+                        const list = [...document.querySelectorAll('.desk-menu-list')]
+                          .filter((l) => [...l.querySelectorAll('[role="menuitemcheckbox"]')]
+                            .some((e) => e.textContent.includes('Needs you'))).pop();
+                        return [...(list ? list.querySelectorAll('[role="menuitemcheckbox"]') : [])]
+                          .map((e) => [e.textContent.trim(), e.getAttribute('aria-checked')]); }""")
                     facts["go-chair"] = rows
                     # PHILO-15 11 (B21, owner ruling 2026-10-07): Capture is a Go row at 393 too.
                     if [t.replace("✓", "").strip() for t, _ in rows] != ["Needs you", "Brief", "The week", "Capture"]:
