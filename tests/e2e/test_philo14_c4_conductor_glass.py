@@ -11,7 +11,7 @@ runs; nothing leaves the machine.
 
 The Dock's Conductor (1440) and the `/conductor` address (393) open the
 Conductor window; it lists the ready agents and the three launched agents
-with their lamps, asking first; its head says `2 AT WORK · 1 ASK` (no
+with their lamps, asking first; its head says `2 at work` with `1 ASK` (no
 `N OF M`: the hub counts no running tmux session here). At 393 every verb of
 the selected asking agent and of its Stop confirmation is whole in the
 window, 44 px, the element at its centre. Open on the asking agent opens its
@@ -184,7 +184,10 @@ def test_the_conductor_drawer_at_1440_and_393(tmp_path: Path, monkeypatch) -> No
                     text = (member.get_attribute("aria-label") or "") + (member.text_content() or "")
                     assert lamp in text, (object_id, text)
                 head = window.locator("[data-testid='conductor-head']").text_content() or ""
-                assert "2 AT WORK" in head and "1 ASK" in head, head
+                # Phase 16: `2 at work` is the window's one big fact (the
+                # AppHead); the ask is a lamp token on the strip beside it.
+                fact = window.locator("[data-testid='conductor-head'] .kit-disp").text_content() or ""
+                assert fact == "2 at work" and "1 ASK" in head, (fact, head)
                 # The cap is the hub's count (`live_launches`: no tmux session
                 # runs here), never the client's: no `N OF M`.
                 assert " OF " not in head, head

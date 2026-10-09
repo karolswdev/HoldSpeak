@@ -27,7 +27,7 @@ import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openDrawer } from "../drawer/store";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { AppHead, EgressChip, FilterBar, StatusStrip, StringGadget, SurfaceFooter, SurfaceSection } from "../surface";
+import { AppHead, EgressChip, FilterBar, ScrollHint, StatusStrip, StringGadget, SurfaceFooter, SurfaceSection } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
@@ -428,10 +428,6 @@ function useRowMarks(
   });
 }
 
-/** Phase 16 (the interior kit): the rows a Section draws before it folds
- *  the rest behind `N more · Show all` (the canvas window "Needs you"). */
-export const NEEDS_SHOWN = 5;
-
 /** `Checked just now`, `Checked 4 min ago`, `Checked 09:14`. */
 export function checkedWord(at: string | null | undefined, now: Date = new Date()): string | null {
   const d = at ? new Date(at) : null;
@@ -454,8 +450,10 @@ const FILTERS: Array<{ value: NeedsFilter; label: string }> = [
 
 /** The Needs-you window body. Phase 16 (the interior kit; the canvas window
  *  "Needs you"): AppHead (`N need you` + the status strip) → FilterBar →
- *  Section `Actions · n of m` over the Ledger of kind-plated rows → Section
- *  `N more` with Show all → the Foot (`Ranked hh:mm`). */
+ *  Section `Actions · n` over the Ledger of kind-plated rows → the Foot
+ *  (`Ranked hh:mm`). Every row is drawn (HS-200-15: no cap; B11: the head
+ *  number is the rows drawn); the Ledger scrolls inside the window and
+ *  ScrollHint says so (UX-CANON §B). */
 export function NeedsDrawer() {
   const needs = useNeedsYou();
   const flights = useAgentFlights((s) => s.flights);
@@ -464,7 +462,6 @@ export function NeedsDrawer() {
   const [, tick] = useState(0);
   const [door, setDoor] = useState<DoorRead | null>(null);
   const [filter, setFilter] = useState<NeedsFilter>("ranked");
-  const [showAll, setShowAll] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   // The countdown ticks while a recording arms.
@@ -553,9 +550,7 @@ export function NeedsDrawer() {
   const listOf = (f: NeedsFilter) => (f === "waiting" ? waiting : f === "muted" ? muted : faces);
   const matching = (f: NeedsFilter) => listOf(f).filter((face) => passesNeedsFilter(face, f, now));
   const options = FILTERS.filter((o) => o.value === "ranked" || o.value === filter || matching(o.value).length > 0);
-  const filtered = matching(filter);
-  const shown = showAll ? filtered : filtered.slice(0, NEEDS_SHOWN);
-  const more = filtered.length - shown.length;
+  const shown = matching(filter);
   const all = [...faces, ...waiting, ...muted];
   const memberRefs = new Set(faces.filter((f) => !f.uncounted).map((f) => f.memberRef ?? f.id));
   const sourceReceipt = useSourceReceipt((st) => st.receipt);
@@ -612,35 +607,23 @@ export function NeedsDrawer() {
           data-testid="needs-filter"
           options={options}
           value={filter}
-          onChange={(next) => { setFilter(next as NeedsFilter); setShowAll(false); }}
+          onChange={(next) => setFilter(next as NeedsFilter)}
         />
       ) : null}
       {/* A press on a row body opens it; each row's verbs carry the keyboard. */}
       <div ref={listRef} onClick={onRowPress} data-testid="needs-list" className="needs-drawer-list">
-        {shown.length > 0 ? (
-          <SurfaceSection
-            label={caption}
-            count={more > 0 ? `${shown.length} of ${filtered.length}` : filtered.length}
-            data-testid={sectionTestId}
-          >
-            <NeedsList label={listed ? caption : "Needs you"}>
-              {shown.map((face) => (
-                <NeedRow key={face.id} face={face} primary={!listed && face.id === primaryId} projects={multipleProjects} />
-              ))}
-            </NeedsList>
-          </SurfaceSection>
-        ) : null}
-        {more > 0 ? (
-          <SurfaceSection
-            label={`${more} more`}
-            data-testid="needs-more"
-            actions={(
-              <Button dense variant="ghost" data-testid="needs-show-all" onClick={() => setShowAll(true)}>
-                Show all
-              </Button>
-            )}
-          />
-        ) : null}
+        <ScrollHint axis="y" scrollRef={listRef}>
+          {shown.length > 0 ? (
+            <SurfaceSection label={caption} count={shown.length} data-testid={sectionTestId}
+            className={filter === "muted" ? "needs-drawer-muted" : undefined}>
+              <NeedsList label={listed ? caption : "Needs you"}>
+                {shown.map((face) => (
+                  <NeedRow key={face.id} face={face} primary={!listed && face.id === primaryId} projects={multipleProjects} />
+                ))}
+              </NeedsList>
+            </SurfaceSection>
+          ) : null}
+        </ScrollHint>
       </div>
       <SurfaceFooter
         receipt={

@@ -8,12 +8,7 @@
 // open-pr, review, done, name-owner, set-date, confirm, defer, decline, door-verb,
 // summarize, setup, repair, cancel, connect-calendar), `needs-well`,
 // `needs-next` (a strip token), `needs-filter` (the FilterBar; its
-// `Muted` token opens `needs-muted`), `needs-show-all` (the fold).
-//
-// Phase 16 (the interior kit, the canvas window "Needs you"): the Section
-// draws the first NEEDS_SHOWN rows and folds the rest behind `N more · Show
-// all`; the B11 law (the head is the number of rows) is read with the fold
-// open (`showAll`).
+// `Muted` token opens `needs-muted`).
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -178,16 +173,9 @@ function face(li: HTMLElement) {
   };
 }
 
-/** Open the fold (`N more · Show all`), when there is one. */
-function showAll() {
-  const more = screen.queryByTestId("needs-show-all");
-  if (more) fireEvent.click(more);
-}
-
 async function mount() {
   render(<NeedsDrawer />);
   await screen.findByText("8 need you");
-  showAll();
 }
 
 describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
@@ -331,7 +319,6 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     });
     render(<NeedsDrawer />);
     await screen.findByText("7 need you");
-    showAll();
     expect(document.querySelectorAll("[data-testid='needs-list'] li.needs-row")).toHaveLength(7);
     const item = row("Write the rollback runbook");
     expect(face(item)).toMatchObject({
@@ -528,7 +515,6 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     useAgentFlights.setState({ flights: [], sessions: [] } as never);
     render(<NeedsDrawer />);
     await screen.findByText("6 need you");
-    showAll();
     const item = row("Write the rollback runbook");
     expect(face(item)).toMatchObject({ lamps: ["HELD CALL"], verbs: ["Deny", "Approve"] });
     expect(within(item).getByTestId("needs-more-asks").textContent).toBe("+1 MORE");
@@ -593,7 +579,6 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
 async function mount7() {
   render(<NeedsDrawer />);
   await screen.findByText("7 need you");
-  showAll();
 }
 
 // PHILO-15-09 (B11, B12): one count, and every row says what it is.
@@ -647,7 +632,6 @@ describe("NeedsDrawer every row counts (PHILO-15-09 B11, Astra r1)", () => {
     } as never);
     render(<NeedsDrawer />);
     await screen.findByText("9 need you");
-    showAll();
     const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row");
     expect(rows).toHaveLength(9);
     // The Dock badge and the bell read the same snapshot (`useNeedsYou`).
@@ -769,19 +753,17 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
 });
 
 // Phase 16 (the interior kit; the canvas window "Needs you"): AppHead and its
-// strip, the FilterBar, the folded Section, the kind plates, the Foot.
+// strip, the FilterBar, the Section over every row, the kind plates, the Foot.
 describe("NeedsDrawer on the interior kit (Phase 16)", () => {
-  it("the Section draws five rows, `Actions · 5 of 8`, and folds the rest behind `3 more · Show all`", async () => {
+  it("every row is drawn (no cap): `Actions · 8` over eight rows, the Ledger scrolls with its ScrollHint", async () => {
     render(<NeedsDrawer />);
     await screen.findByText("8 need you");
     const list = screen.getByTestId("needs-list");
-    expect(list.querySelectorAll("li.needs-row")).toHaveLength(5);
-    expect(list.querySelector("h3")?.textContent).toBe("Actions · 5 of 8");
-    expect(screen.getByTestId("needs-more").querySelector("h3")?.textContent).toBe("3 more");
-    fireEvent.click(screen.getByTestId("needs-show-all"));
     expect(list.querySelectorAll("li.needs-row")).toHaveLength(8);
     expect(list.querySelector("h3")?.textContent).toBe("Actions · 8");
-    expect(screen.queryByTestId("needs-more")).toBeNull();
+    expect(list.querySelector(".surface-scroll-hint[data-axis='y']")).toBeTruthy();
+    expect(screen.queryByText(/more$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show all" })).toBeNull();
   });
 
   it("the strip says the facts as tokens; the foot says when the hub ranked", async () => {

@@ -9,7 +9,20 @@
   gap: 10px;
   padding: 2px 0 12px;
 }
+/* Every row is drawn (no cap): the head, the strip and the FilterBar stay;
+   the Ledger scrolls inside the window, and ScrollHint fades the edge that
+   has more (UX-CANON §B). */
+.needs-drawer {
+  flex: 1 1 auto;
+  min-height: 0;
+}
 .needs-drawer-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.needs-drawer-list > .surface-scroll-hint {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -38,4 +51,10 @@
 .needs-drawer .needs-row-name {
   white-space: normal;
   overflow-wrap: anywhere;
+}
+/* The muted are listed dimmed (PHILO-14 A5): they ask nothing now. */
+.needs-drawer-muted.surface-section {
+  /* the section's rise animation fills opacity: 1, so it steps aside here */
+  animation: none;
+  opacity: 0.55;
 }

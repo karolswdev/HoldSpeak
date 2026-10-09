@@ -122,9 +122,7 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
       { timeout: 3000 },
     );
     expect(screen.getByTestId("other-reader").textContent).toBe("6");
-    // PHILO-14 A5: the drawer's rows ARE the members: six rows under `6 need you`
-    // (Phase 16: five drawn, the sixth behind `1 more · Show all`).
-    fireEvent.click(screen.getByTestId("needs-show-all"));
+    // PHILO-14 A5: the drawer's rows ARE the members: six rows under `6 need you`.
     expect(document.querySelectorAll("[data-testid='needs-drawer'] [data-testid='needs-row']")).toHaveLength(6);
     // No "need(s) you" on the face carries a number other than the one.
     const said = (document.body.textContent ?? "").match(/\d+ needs? you/gi) ?? [];

@@ -19,17 +19,17 @@ describe("Section (Phase 16 kit)", () => {
     expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("Decisions");
   });
 
-  it("a string count is drawn as given (`5 of 6`)", () => {
-    render(<SurfaceSection label="Actions" count="5 of 6"><p>x</p></SurfaceSection>);
-    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("Actions · 5 of 6");
+  it("a string count is drawn as given (`2 of 3`)", () => {
+    render(<SurfaceSection label="Checks" count="2 of 3"><p>x</p></SurfaceSection>);
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("Checks · 2 of 3");
   });
 
-  it("the verbs follow the caption; a Section may be a head alone (`1 more · Show all`)", () => {
+  it("the verbs follow the caption; a Section may be a head alone", () => {
     const { container } = render(
-      <SurfaceSection label="1 more" actions={<Button dense variant="ghost">Show all</Button>} data-testid="more" />,
+      <SurfaceSection label="Sources" count={2} actions={<Button dense variant="ghost">Steward</Button>} data-testid="more" />,
     );
     const head = container.querySelector(".surface-section-head") as HTMLElement;
-    expect([...head.children].map((c) => c.textContent)).toEqual(["1 more", "Show all"]);
+    expect([...head.children].map((c) => c.textContent)).toEqual(["Sources · 2", "Steward"]);
     expect(screen.getByTestId("more")).toBeTruthy();
   });
 
