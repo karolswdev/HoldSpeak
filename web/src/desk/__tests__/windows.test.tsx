@@ -58,7 +58,9 @@ describe("DeskWindowFrame (the one chrome)", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("minimize parks the window (mounted but hidden) and the dock restores it", () => {
+  it("minimize parks the window (mounted but hidden) and the dock restores it from its seat", () => {
+    // PHILO-16 (A1) §5: seated windows live in the dock. A window with no
+    // application tile gets its own seat tile (the window chips are parked).
     const { container } = render(
       <>
         <Host />
@@ -76,11 +78,75 @@ describe("DeskWindowFrame (the one chrome)", () => {
     expect(shell).toBeTruthy();
     expect(shell.style.display).toBe("none");
     expect(screen.getByText("window content")).toBeInTheDocument();
-    // The dock names it and restores it.
-    const chip = screen.getByRole("button", { name: "Restore Test window" });
-    fireEvent.click(chip);
+    // The dock names it on its seat tile and restores it to the front.
+    const seat = screen.getByRole("button", { name: "Test window, iconified" });
+    expect(seat.querySelector(".desk-dock-seat")).toBeTruthy();
+    fireEvent.click(seat);
     expect(useDesk.getState().panelMin).toEqual([]);
+    expect(useDesk.getState().panelOrder.at(-1)).toBe("t1");
     expect(shell.style.display).not.toBe("none");
+  });
+
+  it("an application's window seats on its application tile (PHILO-16 A1 §5)", () => {
+    // The Intelligence application's window is `pullout:intelligence:desk`.
+    render(
+      <>
+        <DeskWindowFrame
+          id="pullout:intelligence:desk"
+          title="Brief window"
+          open
+          onClose={() => {}}
+        >
+          <p>brief</p>
+        </DeskWindowFrame>
+        <Dock />
+      </>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Iconify Brief window" }));
+    const tile = screen.getByRole("button", { name: /^Intelligence.*, iconified$/ });
+    expect(tile.querySelector(".desk-dock-seat")).toBeTruthy();
+    expect(tile.classList.contains("is-seated")).toBe(true);
+    // no second seat: the application tile is the seat
+    expect(document.querySelector(".desk-dock-seat-tile")).toBeNull();
+    fireEvent.click(tile);
+    expect(useDesk.getState().panelMin).toEqual([]);
+  });
+
+  it("a seated window with no application tile gets its own seat tile; a press restores it and the tile goes (PHILO-16 A1 §5)", () => {
+    const { container } = render(
+      <>
+        <DeskWindowFrame
+          id="pullout:thread:t9"
+          title="Ledger questions"
+          kindWord="Thread"
+          icon={<img src="/thread.png" alt="" />}
+          open
+          onClose={() => {}}
+        >
+          <p>thread body</p>
+        </DeskWindowFrame>
+        <Dock />
+      </>,
+    );
+    const dock = screen.getByRole("toolbar", { name: "Dock" });
+    // open, the window is on the desk: no seat tile
+    expect(dock.querySelector(".desk-dock-seat-tile")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Iconify Ledger questions" }));
+    expect(useDesk.getState().panelMin).toEqual(["pullout:thread:t9"]);
+    // seated: one tile with its name, its title-bar icon and the seat lamp
+    const tile = screen.getByRole("button", { name: "Ledger questions, iconified" });
+    expect(tile.classList.contains("desk-dock-seat-tile")).toBe(true);
+    expect(tile.querySelector(".desk-dock-label")?.textContent).toBe("Ledger questions");
+    expect(tile.querySelector(".desk-dock-seat-icon img")?.getAttribute("src")).toBe("/thread.png");
+    expect(tile.querySelector(".desk-dock-seat")).toBeTruthy();
+    expect(dock.querySelectorAll(".desk-dock-seat-tile")).toHaveLength(1);
+    // the press restores it to the front; the tile goes
+    fireEvent.click(tile);
+    expect(useDesk.getState().panelMin).toEqual([]);
+    expect(useDesk.getState().panelOrder.at(-1)).toBe("pullout:thread:t9");
+    const shell = container.querySelector('[role="region"][aria-label="Ledger questions"]') as HTMLElement;
+    expect(shell.style.display).not.toBe("none");
+    expect(dock.querySelector(".desk-dock-seat-tile")).toBeNull();
   });
 
   it("unmountOnMinimize opts heavy content out of a parked mount", () => {
@@ -260,19 +326,21 @@ describe("HS-99-02: the title bar owns a right-click menu", () => {
   });
 });
 
+// PHILO-16 (A1) §5: the window chips are parked (Dock.tsx NUB_CHIPS); the
+// right-click menu rides the application tile that seats the window.
 describe("HS-99-04: the dock chip owns a right-click menu", () => {
   it("opens on chip contextmenu and executes Close", () => {
     const onClose = vi.fn();
     render(
       <>
-        <DeskWindowFrame id="dm" title="Chip menu" open onClose={onClose}>
+        <DeskWindowFrame id="pullout:intelligence:desk" title="Chip menu" open onClose={onClose}>
           <p>body</p>
         </DeskWindowFrame>
         <Dock />
       </>,
     );
-    fireEvent.contextMenu(screen.getByRole("button", { name: "Focus Chip menu" }));
-    const menu = screen.getByRole("menu", { name: "Chip menu dock menu" });
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Intelligence/ }));
+    const menu = screen.getByRole("menu", { name: "Intelligence dock menu" });
     expect(menu).toBeInTheDocument();
     fireEvent.click(screen.getByRole("menuitem", { name: /Close/ }));
     expect(onClose).toHaveBeenCalled();
@@ -281,14 +349,14 @@ describe("HS-99-04: the dock chip owns a right-click menu", () => {
   it("dock chip menu entries have VerbGlyph glyphs", () => {
     render(
       <>
-        <DeskWindowFrame id="dg" title="Glyph dock" open onClose={() => {}}>
+        <DeskWindowFrame id="pullout:intelligence:desk" title="Glyph dock" open onClose={() => {}}>
           <p>body</p>
         </DeskWindowFrame>
         <Dock />
       </>,
     );
-    fireEvent.contextMenu(screen.getByRole("button", { name: "Focus Glyph dock" }));
-    const menu = screen.getByRole("menu", { name: "Glyph dock dock menu" });
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Intelligence/ }));
+    const menu = screen.getByRole("menu", { name: "Intelligence dock menu" });
     // Both items must carry an SVG glyph (the lane law).
     const items = menu.querySelectorAll("[role='menuitem']");
     expect(items.length).toBe(2);
@@ -300,14 +368,14 @@ describe("HS-99-04: the dock chip owns a right-click menu", () => {
   it("dock chip menu shows keycap wells from the registry", () => {
     render(
       <>
-        <DeskWindowFrame id="dk" title="Keycap dock" open onClose={() => {}}>
+        <DeskWindowFrame id="pullout:intelligence:desk" title="Keycap dock" open onClose={() => {}}>
           <p>body</p>
         </DeskWindowFrame>
         <Dock />
       </>,
     );
-    fireEvent.contextMenu(screen.getByRole("button", { name: "Focus Keycap dock" }));
-    const menu = screen.getByRole("menu", { name: "Keycap dock dock menu" });
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Intelligence/ }));
+    const menu = screen.getByRole("menu", { name: "Intelligence dock menu" });
     // At least one keycap well should be present (window.minimize has key ⌘M).
     const wells = menu.querySelectorAll(".desk-menu-well");
     expect(wells.length).toBeGreaterThan(0);

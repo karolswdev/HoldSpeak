@@ -1050,8 +1050,8 @@
       },
       {
         "name": "--desk-window-fill",
-        "value": "var(--surface-1)",
-        "doc": "HS-110-01: opaque window body — no transparency, no vibrancy"
+        "value": "var(--wb-field)",
+        "doc": "PHILO-16 §2 amends HS-110-01: the light returns, the glass stays dead. The window ground is slate (--wb-field), opaque"
       },
       {
         "name": "--desk-panel-fill",
@@ -1065,13 +1065,13 @@
       },
       {
         "name": "--desk-window-shadow",
-        "value": "none",
-        "doc": "HS-110-01: depth from bevels, not Gaussian shadows"
+        "value": "0 0 0 1px var(--wb-ink), var(--wb-drop), var(--wb-umbra), inset 0 0 0 1px var(--wb-ink)",
+        "doc": "PHILO-16 §2 amends HS-110-01: the light returns, the glass stays dead. The front window: ink keyline, the hard drop, the umbra"
       },
       {
         "name": "--desk-window-shadow-rest",
-        "value": "none",
-        "doc": "HS-110-01: no shadow distinction — border color IS the distinction"
+        "value": "0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink)",
+        "doc": "PHILO-16 §2 amends HS-110-01: the light returns, the glass stays dead. A window at rest: ink keyline and the hard drop, no umbra"
       },
       {
         "name": "--desk-window-keyline",
@@ -1427,6 +1427,116 @@
         "name": "--wb-raised-soft",
         "value": "inset 1px 1px 0 rgba(255, 255, 255, 0.36), inset -1px -1px 0 rgba(0, 0, 0, 0.25)",
         "doc": "PHILO-13-11 title bar B (owner pick 2026-10-03): a gadget cell, the raised bevel at half strength"
+      },
+      {
+        "name": "--wb-steel-dim",
+        "value": "#7f8591",
+        "doc": "PHILO-16 (A1) the light: a plate in shade, steel at 82 % (the far window's frame and bar)"
+      },
+      {
+        "name": "--wb-umbra",
+        "value": "0 18px 40px rgba(0, 0, 0, 0.45)",
+        "doc": "PHILO-16 (A1) the light: the front window's umbra, cast down by the one top-left light"
+      },
+      {
+        "name": "--wb-umbra-near",
+        "value": "0 10px 22px rgba(0, 0, 0, 0.28)",
+        "doc": "PHILO-16 (A1) the light: the near window's umbra, at half"
+      },
+      {
+        "name": "--desk-veil-near",
+        "value": "rgba(11, 12, 16, 0.06)",
+        "doc": "PHILO-16 (A1) the depth ladder: the ink wash over a near window's body (never opacity)"
+      },
+      {
+        "name": "--desk-veil-far",
+        "value": "rgba(11, 12, 16, 0.12)",
+        "doc": "PHILO-16 (A1) the depth ladder: the ink wash over a far window's body (never opacity; 12 % per Astra M3, was 14 %)"
+      },
+      {
+        "name": "--wb-field",
+        "value": "#cdd2db",
+        "doc": "PHILO-16 (A1) the interior: the window ground, slate between paper and steel"
+      },
+      {
+        "name": "--wb-field-hi",
+        "value": "#d8dce4",
+        "doc": "PHILO-16 (A1) the interior: the ground where the light falls (the top of a window body)"
+      },
+      {
+        "name": "--wb-well",
+        "value": "#eef0f3",
+        "doc": "PHILO-16 (A1) the interior: a sunken well (ledger, input, icon grid), paper"
+      },
+      {
+        "name": "--wb-text",
+        "value": "#0b0c10",
+        "doc": "PHILO-16 (A1) the interior: ink, the words inside a window"
+      },
+      {
+        "name": "--wb-muted",
+        "value": "#4a5060",
+        "doc": "PHILO-16 (A1) the interior: secondary ink (5.3:1 on --wb-field; the canvas said 7.0, measured 5.31)"
+      },
+      {
+        "name": "--wb-rule-soft",
+        "value": "rgba(11, 12, 16, 0.18)",
+        "doc": "PHILO-16 (A1) the interior: a hairline between rows on slate"
+      },
+      {
+        "name": "--wb-sel",
+        "value": "#4a6aa0",
+        "doc": "PHILO-16 (A1) the interior: the selection, Workbench blue in shade with paper on it (paper 4.76:1; Astra M3, was #6688bb at 3.17:1)"
+      },
+      {
+        "name": "--desk-window-fall",
+        "value": "linear-gradient(180deg, var(--wb-field-hi) 0%, var(--wb-field) 100%)",
+        "doc": "PHILO-16 (A1) the interior: the slate ground, lit at the top"
+      },
+      {
+        "name": "--desk-floor",
+        "value": "radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 60%) 0 0 / auto, linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.28) 100%) 0 0 / auto, repeating-conic-gradient(var(--wb-dither) 0 25%, transparent 0 50%) 0 0 / 8px 8px, var(--wb-backdrop)",
+        "doc": "PHILO-16 (A1) the floor: the Workbench backdrop (8 px checker of --wb-dither) under the light's vignette (bright top-left, falling to the foot); a `background` shorthand"
+      },
+      {
+        "name": "--desk-ease",
+        "value": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "doc": "PHILO-16 (A1) the motion grammar: the one easing for every compositor moment"
+      },
+      {
+        "name": "--desk-raise-duration",
+        "value": "180ms",
+        "doc": "PHILO-16 (A1) the motion grammar: Raise, the frame and the umbra change plane"
+      },
+      {
+        "name": "--desk-lamp-pulse",
+        "value": "1.6s",
+        "doc": "PHILO-16 (A1) the title-bar lamp: an asking window pulses once every 1.6 s (reduced motion: static)"
+      },
+      {
+        "name": "--wb-ember-ink",
+        "value": "#7a4a2c",
+        "doc": "PHILO-16 (A1) the interior: ember as TEXT or a filled verb on slate (4.9:1 on --wb-field; 6.6:1 under --text-on-accent); the accent remaps to it inside a window"
+      },
+      {
+        "name": "--wb-ok-ink",
+        "value": "#1d5c2e",
+        "doc": "PHILO-16 (A1) the interior: an ok word on slate (5.3:1 on --wb-field; the C1 dock tag tone)"
+      },
+      {
+        "name": "--wb-warn-ink",
+        "value": "#6b4a00",
+        "doc": "PHILO-16 (A1) the interior: a warn word on slate (5.3:1 on --wb-field; the C1 dock tag tone)"
+      },
+      {
+        "name": "--wb-danger-ink",
+        "value": "#9b2219",
+        "doc": "PHILO-16 (A1) the interior: a danger word on slate (5.5:1 on --wb-field)"
+      },
+      {
+        "name": "--wb-info-ink",
+        "value": "#2f4f86",
+        "doc": "PHILO-16 (A1) the interior: an info word on slate (5.4:1 on --wb-field)"
       },
       {
         "name": "--bevel-raised",

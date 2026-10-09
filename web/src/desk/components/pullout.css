@@ -772,7 +772,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .desk-gadgets-left {
     order: 0;
   }
-  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > :is(.desk-wings, .desk-pullout-title) {
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > :is(.desk-wings, .desk-pullout-title, .desk-window-lamp) {
     order: 1;
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .desk-window-actions {
@@ -784,8 +784,11 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     order: 3;
     margin-left: auto;
   }
+  /* PHILO-16 (A1): the icon folds away with the title at 393: the screen
+     bar names the window; the lamp stays in the row */
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head.has-wings .desk-pullout-title,
-  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > img {
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > img,
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .desk-window-icon {
     display: none;
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-pullout-title {
