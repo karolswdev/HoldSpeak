@@ -162,20 +162,30 @@
   align-items: center;
   gap: 4px;
 }
-/* Phase 16: at the phone width a foot that holds a group of verbs (the
+/* Phase 16: a foot that holds a group of verbs (the meeting's six) gives
+   the receipt its whole words and lets the verbs wrap in what is left, so
+   no verb ever sits over the receipt (HS-172: no text overlaps). */
+.desk-next .surface-footer-layout:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+}
+.desk-next .surface-footer-layout:has(> .surface-footer-verbs > .surface-footer-verbs-group) > .surface-footer-verbs {
+  min-width: 0;
+}
+.desk-next .surface-footer-verbs > .surface-footer-verbs-group {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  row-gap: 4px;
+  min-width: 0;
+}
+/* Phase 16: in a narrow window a foot that holds a group of verbs (the
    meeting's six) gives the verbs their own row, and the group wraps inside
    the foot, never off its right edge (the Conductor's foot does the same,
    conductor.css). */
-@media (max-width: 420px) {
+@container surface (max-width: 420px) {
   .desk-next .surface-footer-layout:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "egress" "receipt" "verbs";
-  }
-  .desk-next .surface-footer-verbs > .surface-footer-verbs-group {
-    flex: 1 1 auto;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    min-width: 0;
   }
 }
 

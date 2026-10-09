@@ -114,7 +114,7 @@ export function meetingOutcomes(
 function OutcomeLedger({ label, rows, testId }: { label: string; rows: OutcomeRow[]; testId: string }) {
   if (!rows.length) return null;
   return (
-    <SurfaceSection label={label} count={rows.length} data-testid={testId}>
+    <SurfaceSection label={label} count={rows.length || null} data-testid={testId}>
       <SurfaceLedger label={label} cols="kit">
         <ul className="surface-ledger-rows">
           {rows.map((row) => (

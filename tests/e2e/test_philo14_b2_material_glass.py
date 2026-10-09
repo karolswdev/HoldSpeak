@@ -57,6 +57,7 @@ MATERIAL_JS = r"""(root) => {
   const softSunken = resolve('var(--bevel-sunken-soft)');
   // On the Steel plate (the title bar: Raw) the grammar rides --wb-raised.
   const wbRaised = resolve('var(--wb-raised)');
+  const wbSunken = resolve('var(--wb-sunken)');
   const seen = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const TOKEN = '.surface-filter-token, .surface-project-button';
   const btns = [...scope.querySelectorAll('.btn:not(:disabled):not([aria-pressed="true"])')]
@@ -68,7 +69,7 @@ MATERIAL_JS = r"""(root) => {
   const bodies = [...scope.querySelectorAll(BODY)].filter(seen)
     .filter((b) => !b.parentElement || !b.parentElement.closest(BODY));
   return {
-    raised, sunken, soft, softSunken, wbRaised,
+    raised, sunken, soft, softSunken, wbRaised, wbSunken,
     tokens: tokens.map((t) => ({ name: (t.textContent || '').trim().slice(0, 40),
       active: t.hasAttribute('data-filter-active'), shadow: getComputedStyle(t).boxShadow })),
     buttons: btns.map((b) => ({ name: (b.textContent || '').trim().slice(0, 40), shadow: getComputedStyle(b).boxShadow })),
@@ -223,7 +224,10 @@ def test_the_material_on_six_faces(tmp_path: Path, monkeypatch: pytest.MonkeyPat
                 pressed = verb.evaluate("(el) => getComputedStyle(el).boxShadow")
                 page.mouse.up()
                 m = page.evaluate(MATERIAL_JS, None)
-                assert pressed.startswith(m["sunken"]), (pressed, m["sunken"])
+                # Phase 16 (the kit Verb is the Steel plate): on the Steel the
+                # grammar rides --wb-raised / --wb-sunken (contract.md "The
+                # bevel grammar"), so a pressed Verb sinks to --wb-sunken.
+                assert pressed.startswith((m["sunken"], m["wbSunken"])), (pressed, m["sunken"], m["wbSunken"])
 
                 if width == 393:
                     assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")
@@ -266,9 +270,11 @@ def test_a_held_filter_strip_is_flat(tmp_path: Path, monkeypatch: pytest.MonkeyP
             strip.scroll_into_view_if_needed()
             tokens = strip.locator("button").evaluate_all("""bs => bs.map((b) => {
                 const s = getComputedStyle(b);
+                // Phase 16: the window remaps --disabled-bg (A1's interior),
+                // so the ground is read where the token sits, not on <body>.
                 const probe = document.createElement('div');
                 probe.style.background = 'var(--disabled-bg)';
-                document.body.appendChild(probe);
+                b.parentElement.appendChild(probe);
                 const ground = getComputedStyle(probe).backgroundColor;
                 probe.remove();
                 return {text: b.innerText.trim(), disabled: b.disabled, active: b.hasAttribute('data-filter-active'),

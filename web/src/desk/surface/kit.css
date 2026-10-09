@@ -154,3 +154,9 @@
   padding-left: 0;
   gap: 0;
 }
+
+/* A ledger with no rows and no head draws no well (an empty paper slab is a
+   counter of zero in another form, UX-CANON A.8). */
+.surface-ledger:not(:has(> .surface-ledger-head)):has(> ul.surface-ledger-rows:empty) {
+  display: none;
+}

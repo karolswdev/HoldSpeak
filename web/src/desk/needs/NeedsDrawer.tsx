@@ -588,13 +588,17 @@ export function NeedsDrawer() {
               : null,
             checkedWord(computedAt, now) ? { key: "checked", text: checkedWord(computedAt, now) } : null,
             next ? { key: "next", text: <span data-testid="needs-next">{next}</span> } : null,
-            noCalendar ? { key: "no-calendar", text: <span data-testid="needs-no-calendar">No calendar</span> } : null,
+            // The offer is ONE token: its word and its verb (PHILO-15-09 B11:
+            // an offer, never a row).
             noCalendar
               ? {
-                key: "connect",
+                key: "no-calendar",
                 verb: (
-                  <Button dense variant="ghost" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
-                    onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>Connect calendar</Button>
+                  <span className="needs-calendar-offer" data-testid="needs-no-calendar">
+                    NO CALENDAR
+                    <Button dense variant="ghost" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
+                      onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>Connect calendar</Button>
+                  </span>
                 ),
               }
               : null,
@@ -614,7 +618,7 @@ export function NeedsDrawer() {
       <div ref={listRef} onClick={onRowPress} data-testid="needs-list" className="needs-drawer-list">
         <ScrollHint axis="y" scrollRef={listRef}>
           {shown.length > 0 ? (
-            <SurfaceSection label={caption} count={shown.length} data-testid={sectionTestId}
+            <SurfaceSection label={caption} count={shown.length || null} data-testid={sectionTestId}
             className={filter === "muted" ? "needs-drawer-muted" : undefined}>
               <NeedsList label={listed ? caption : "Needs you"}>
                 {shown.map((face) => (

@@ -363,7 +363,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await mount();
     await waitFor(() => expect(screen.getByTestId("needs-next").textContent).toBe("NEXT · 14:00 · Ledger cutover sync"));
     const offer = await screen.findByTestId("needs-no-calendar");
-    expect(offer.textContent).toBe("No calendar");
+    expect(offer.textContent).toBe("NO CALENDARConnect calendar");
     expect(screen.queryByTestId("needs-source-row")).toBeNull();
     fireEvent.click(screen.getByTestId("needs-drawer").querySelector("[data-verb='connect-calendar']")!);
     expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
@@ -784,7 +784,7 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     const strip = screen.getByTestId("arrival-headline").querySelector(".kit-strip") as HTMLElement;
     expect(strip.textContent).toContain("1 of 1 available");
     expect(strip.textContent).toContain("Checked just now");
-    await waitFor(() => expect(strip.textContent).toContain("No calendar"));
+    await waitFor(() => expect(strip.textContent).toContain("NO CALENDAR"));
     expect(within(strip).getByRole("button", { name: "Connect calendar" })).toBeTruthy();
     expect(screen.getByTestId("needs-ranked").textContent).toMatch(/^RANKED \d{2}:\d{2}$/);
   });

@@ -309,7 +309,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
           {data.room ? (
             <SurfaceSection
               label="Sources"
-              count={sources.length}
+              count={sources.length || null}
               data-testid="drawer-sources"
               actions={(
                 <Button dense variant="ghost" data-testid="drawer-steward" onClick={() => openProjectRoomAt(projectId, "steward")}>

@@ -405,9 +405,10 @@
   margin: 0;
   border-radius: 0;
   border: 0;
-  border-left: 1px solid var(--wb-ink);
   background: var(--wb-steel);
-  box-shadow: var(--wb-raised-soft);
+  /* The ink hairline on the plate's left edge is an inset shadow, never a
+     border rail (HS-101 canon rule 6), then the soft raised bevel. */
+  box-shadow: inset 1px 0 0 var(--wb-ink), var(--wb-raised-soft);
   color: var(--wb-ink);
   font-size: 10px;
   line-height: 0;

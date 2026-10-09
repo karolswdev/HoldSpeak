@@ -58,3 +58,10 @@
   animation: none;
   opacity: 0.55;
 }
+/* The calendar offer: its word and its verb, one strip token. */
+.needs-calendar-offer {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}

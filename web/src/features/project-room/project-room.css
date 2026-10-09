@@ -126,7 +126,9 @@
    The room cols use a 16px lead, so override to ~32px (16px lead + ~16px gap) to
    align LINE 2 with the scope. */
 .surface-ledger[data-cols="room"] .surface-ledger-open {
-  padding-left: 26px;
+  /* Phase 16: the kit row's 10 px side padding (was 6) moves the scope 4 px
+     right; LINE 2 follows it. */
+  padding-left: 30px;
 }
 .room-source-line2 {
   display: flex;
@@ -305,6 +307,13 @@
   /* Phase 16: the sticky well sits on the window's own ground. */
   background: var(--wb-field);
   padding-bottom: 8px;
+}
+/* Phase 16: the kit's rows are taller, so more of the Room scrolls under the
+   sticky well. A verb brought into view (focus, scrollIntoView) stops ABOVE
+   the well: the window body keeps the well's height as its scroll padding. */
+.desk-next .desk-surface-body:has(.room-ask-container),
+.desk-next .desk-pullout-body:has(.room-ask-container) {
+  scroll-padding-bottom: 96px;
 }
 /* PHILO-9-03 (F10, the ratified items canvas): at a narrow window the sticky
    well covered the Steward verb and the SOURCES head. At the narrow

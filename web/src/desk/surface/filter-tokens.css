@@ -11,9 +11,10 @@
 }
 
 /* Phase 16 (the interior kit, §11 "FilterBar"; canvas `.filters .chip`):
-   the tokens are CycleGadgets on one rail. A resting token is a raised
-   Steel cell (the soft bevel) with ink; the active token is the selection
-   (Workbench blue) with paper on it, sunken. Adjacent tokens share their
+   the tokens are CycleGadgets on one rail. A resting token is a Steel cell
+   with ink under the LIGHT bevel (`--bevel-raised-soft`, PHILO-14 B2: a
+   token is no plate); the active token is the selection (Workbench blue)
+   with paper on it, in the light sunken bevel (`--bevel-sunken-soft`). Adjacent tokens share their
    edge, so the strip reads as one control. A wing (SurfaceWings) keeps the
    full plate with its gadget; a token is a cell of a rail, so the two
    still never look alike (canon D). */
@@ -23,7 +24,7 @@
   border: 1px solid var(--wb-ink);
   border-radius: 0;
   background: var(--wb-steel);
-  box-shadow: var(--wb-raised-soft);
+  box-shadow: var(--bevel-raised-soft);
   color: var(--wb-ink);
   font-family: var(--font-mono);
   font-size: 12px;
@@ -42,13 +43,13 @@
 }
 
 .surface-filter-token.btn:active:not(:disabled) {
-  box-shadow: var(--wb-sunken);
+  box-shadow: var(--bevel-sunken-soft);
 }
 
 /* The active token: the selection blue, paper ink, sunken (never the
    filled primary verb: a face has one of those, and it is not a filter). */
 .surface-filter-token.btn[data-filter-active] {
-  box-shadow: var(--wb-sunken);
+  box-shadow: var(--bevel-sunken-soft);
   border-color: var(--wb-ink);
   background: var(--wb-sel);
   color: var(--wb-paper);
@@ -84,7 +85,7 @@
 .surface-filter-token.btn:disabled,
 .surface-filter-token.btn[data-filter-active]:disabled {
   box-shadow: none;
-  background: var(--wb-field);
+  background: var(--disabled-bg);
   color: var(--wb-muted);
 }
 .surface-filter-token.btn[data-filter-active]:disabled {
