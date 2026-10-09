@@ -431,6 +431,48 @@ class TestCompositor:
                 browser.close()
         assert not fails, fails
 
+    def test_astra_round2_1440(self) -> None:
+        """Astra round 2 (c67c80974), her case from UNARRANGED: a fresh People
+        window -> Stage -> Zoom -> unzoom returns its pre-Stage rect, and no
+        Stage rect lands in panel.rects (Zoom never measures a box in flight)."""
+        from playwright.sync_api import sync_playwright
+
+        fails: dict[str, Any] = {}
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, 1440)
+            try:
+                open_chair_window(page, "Brief")
+                _stage(page, "open-people")
+                people = ".desk-window-shell[aria-label='People']"
+                page.locator(people).wait_for()
+                wins = _wins(page)
+                if _fronts(wins) != ["People"]:
+                    fails["People is front"] = _fronts(wins)
+                before = _by(wins, "People")["rect"]
+                doc = page.evaluate(PANEL_JS)
+                if "surface-people" in doc["rects"]:
+                    fails["People starts unarranged"] = doc["rects"]["surface-people"]
+                page.locator(f"{people} .desk-pullout-title").first.click()
+                page.keyboard.press("Meta+Enter")
+                wins = _wins(page)
+                if not any(w["k"] for w in wins):
+                    fails["Stage is on"] = wins
+                page.locator(f"{people} .desk-gadget-zoom").click()  # zoom: leaves Stage
+                _wins(page)
+                page.locator(f"{people} .desk-gadget-zoom").click()  # unzoom
+                wins = _wins(page)
+                after = _by(wins, "People")["rect"]
+                if after != before:
+                    fails["unzoom returns the pre-Stage rect"] = {"before": before, "after": after}
+                saved = page.evaluate(PANEL_JS)["rects"].get("surface-people")
+                if saved is not None and [saved["x"], saved["y"], saved["w"], saved["h"]] != before:
+                    fails["no Stage rect in panel.rects"] = {"saved": saved, "before": before}
+                if errors:
+                    fails["page errors"] = errors
+            finally:
+                browser.close()
+        assert not fails, fails
+
     def test_compositor_393(self) -> None:
         from playwright.sync_api import sync_playwright
 

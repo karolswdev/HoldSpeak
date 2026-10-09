@@ -1,7 +1,7 @@
 import { useDesk } from "../../store";
 import { flashSwitcher } from "./Switcher";
 import { back, tileFront, userArranged } from "../../compositor/useCompositor";
-import { modeNow } from "../../compositor/live";
+import { getPresentation, modeNow } from "../../compositor/live";
 import { chairPhoneToBack, chairWindowSpec } from "../../chair/chairWindows";
 import {
   cycleWindows as cycleWindowsRaw,
@@ -48,9 +48,19 @@ export function zoomWindow(id: string): void {
   // window back to its remembered rects), then zooms. In a tiled
   // arrangement, zoom is his own arrangement: Esc no longer undoes it.
   const mode = modeNow();
+  // Astra round 2: leaving Stage or Exposé animates, so the glass shows a
+  // box in flight; the record is the destination (§13 L6). The normal rect
+  // is the remembered free rect (what Esc restores), never a measurement.
+  const remembered =
+    mode === "stage" || mode === "expose" ? getPresentation().saved[id] : undefined;
   if (mode === "stage" || mode === "expose") back();
   else if (mode === "tile") userArranged();
   const state = useDesk.getState();
+  if (remembered !== undefined) {
+    if (!state.panelMax.includes(id) && remembered.rect) state.setPanelRect(id, remembered.rect, true);
+    useDesk.getState().toggleMaximizePanel(id);
+    return;
+  }
   // A Chair window the owner never moved has no rect: its CSS tile place is
   // its normal rect (C1-4e). Writing the measured tile here made it an
   // arranged rect, and the next open clamped it into the shell band (54 px),

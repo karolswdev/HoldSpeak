@@ -10,6 +10,7 @@ import { useDesk } from "../../store";
 import { getPresentation, mountWindow, modeNow, setPresentation, unmountWindow } from "../live";
 import { back, bandNow, liftOnRaise, plateOf, resizePlate, stageOn, tileFront } from "../useCompositor";
 import { zoomWindow } from "../../components/window/windowCommands";
+import { shellEls } from "../../components/window/windowRegistry";
 
 const FREE = { x: 300, y: 120, w: 600, h: 400 };
 const ZOOM = { x: 10, y: 28, w: 1420, h: 796 };
@@ -103,5 +104,34 @@ describe("Tile gives each window at least its real minimum (M2)", () => {
     expect(b.x + b.w).toBe(band.x + band.w);
     back();
     expect(useDesk.getState().panelRects).toEqual({ a: FREE, b: B });
+  });
+});
+
+describe("Zoom during Stage takes the remembered rect, never a measured one (Astra round 2)", () => {
+  it("an UNARRANGED window: Stage -> Zoom -> unzoom returns its pre-Stage rect; no Stage rect is saved", () => {
+    const placed = { x: 682, y: 54, w: 640, h: 601 };
+    useDesk.setState({
+      panelRects: { a: placed, b: B },
+      panelSaved: ["b"], // a was placed, never arranged
+      panelMax: [],
+      panelZoom: {},
+    });
+    // A box in flight on the glass: zoom must not read it.
+    const el = document.createElement("div");
+    el.getBoundingClientRect = () =>
+      ({ left: 351, top: 54, width: 1079, height: 770, right: 1430, bottom: 824, x: 351, y: 54, toJSON: () => ({}) }) as DOMRect;
+    shellEls.set("a", el);
+    stageOn(null);
+    expect(getPresentation().staged).toBe("a");
+    zoomWindow("a");
+    expect(modeNow()).toBe("free");
+    expect(useDesk.getState().panelMax).toContain("a");
+    expect(useDesk.getState().panelRects.a).toEqual(placed);
+    zoomWindow("a"); // unzoom
+    expect(useDesk.getState().panelMax).not.toContain("a");
+    expect(useDesk.getState().panelRects.a).toEqual(placed);
+    const doc = JSON.parse(localStorage.getItem("hs.desk.workspace.v1") || "{}");
+    expect(doc.panel.rects.a ?? placed).toEqual(placed);
+    shellEls.delete("a");
   });
 });
