@@ -131,9 +131,17 @@ function AddEngineRow({ ctrl }: { ctrl: RunsOnController }) {
           <span className="surface-token">BAD CHARACTERS</span>
         </span>
       ) : null}
+      {/* A.3: the answer is tokens (the word and the host), never the
+          server's sentence. */}
       {a.state === "UNREACHABLE" ? (
         <span className="runson-add-answer" role="alert">
           <StateChip state="failure" label="UNREACHABLE" />
+          <span className="surface-token" data-testid="concierge-add-reason">{host || "NO ADDRESS"}</span>
+        </span>
+      ) : null}
+      {a.state === "NOT_ADDED" ? (
+        <span className="runson-add-answer" role="alert">
+          <StateChip state="failure" label="NOT ADDED" />
           <span className="surface-token" data-testid="concierge-add-reason">{a.reason}</span>
         </span>
       ) : null}
@@ -215,10 +223,13 @@ export function RunsOnCore({ scope }: CoreProps) {
       isDefault: job === DEFAULT_JOB,
       verb: layout === "board" ? tryVerb : undefined,
       runsOn: effective ? effective.name : word,
+      // C4: the engine the job runs on now, even when it follows the default.
+      current: effective?.key,
+      currentToken: effective && row.inherited_from === "global" && job !== DEFAULT_JOB ? "FOLLOWS DEFAULT" : undefined,
       // The limitation is a token on the job (§12 rule 6), until a Try
       // answers in its place; a repair names itself there too.
       result: result ? (
-        <span data-tone={result.tone === "danger" ? "danger" : undefined}>{result.tokens.join(" · ")}</span>
+        <span data-tone={result.tone === "danger" ? "danger" : result.tone === "idle" ? "idle" : undefined}>{result.tokens.join(" · ")}</span>
       ) : jobRepair ? (
         <span data-tone="danger" data-testid={`runson-job-repair-${job}`}>
           {jobRepair.token}
@@ -259,7 +270,13 @@ export function RunsOnCore({ scope }: CoreProps) {
     let verb: ReactNode = repairVerb(engine);
     let egress: ReactNode;
     const tokens = [...engine.tokens];
+    const stopped = ctrl.failedDownloads[engine.key];
     if (engine.kind === "preset") {
+      if (stopped && !downloading) {
+        // V3: a stopped download keeps its reason on the plate until retried.
+        const at = tokens.indexOf("NOT DOWNLOADED");
+        if (at >= 0) tokens[at] = `STOPPED · ${stopped}`;
+      }
       if (downloading) {
         const at = tokens.indexOf("NOT DOWNLOADED");
         if (at >= 0) tokens[at] = `${Math.round(progress)} %`;
@@ -278,7 +295,7 @@ export function RunsOnCore({ scope }: CoreProps) {
       emblem: engine.emblem,
       name: engine.name,
       tokens,
-      lamp: lampFor(engine, ctrl.trying?.engine === engine.key || downloading),
+      lamp: stopped && !downloading ? "broken" : lampFor(engine, ctrl.trying?.engine === engine.key || downloading),
       progress: downloading ? progress : null,
       verb,
       egress,

@@ -6,6 +6,9 @@ import {
   saveAssignment,
 } from "../assignmentExperience";
 
+const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn() }));
+vi.mock("../../../desk/shell", () => ({ openSurfaceOr: shell.openSurfaceOr }));
+
 vi.mock("../assignmentExperience", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../assignmentExperience")>()),
   getAssignmentEditor: vi.fn(), saveAssignment: vi.fn(),
@@ -37,24 +40,18 @@ beforeEach(() => {
 });
 
 describe("ContextualAssignment", () => {
-  it("renders server-resolved facts and Change opens the exact pre-scoped editor", async () => {
+  // PHILO-16 (C), ruling 2026-10-09 (Astra r1 M7): the atom is a READ; its
+  // Change opens Runs on with this object's job selected, never the sheet.
+  it("renders server-resolved facts and Change opens Runs on at the object's job", async () => {
     const { container } = render(<ContextualAssignment label="Project" capabilityId="ask.answer" scope={scope} />);
     expect(await screen.findByText("Uses subject · Quick Qwen")).toBeInTheDocument();
     expect(container.querySelector("select")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Change" }));
-    await screen.findByRole("heading", { name: "Project" });
+    expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-concierge", "/models", "ask.answer");
+    expect(screen.queryByRole("heading", { name: "Project" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save assignment" })).toBeNull();
+    expect(saveAssignment).not.toHaveBeenCalled();
     expect(getAssignmentEditor).toHaveBeenLastCalledWith(scope, "ask.answer");
-  });
-
-  it("uses the shared canonical save path and reports a next-run-only receipt", async () => {
-    render(<ContextualAssignment label="Project" capabilityId="ask.answer" scope={scope} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Change" }));
-    await screen.findByRole("heading", { name: "Project" });
-    fireEvent.click(screen.getByRole("button", { name: "Save assignment" }));
-    await waitFor(() => expect(saveAssignment).toHaveBeenCalledWith(
-      scope, 11, [{ profile_id: "quick", profile_revision: 4 }], null,
-    ));
-    expect(await screen.findByRole("status")).toHaveTextContent("Assignment changed to Quick Qwen. Next run.");
   });
 
   it.each([
@@ -62,7 +59,7 @@ describe("ContextualAssignment", () => {
     ["Recipe run", "recipe.run", { kind: "subject", subject_kind: "recipe", subject_id: "recipe-17", capability_id: "recipe.run" }],
     ["Workbench item", "workbench.item", { kind: "subject", subject_kind: "workbench", subject_id: "workbench-17", capability_id: "workbench.item" }],
     ["Reference resolver", "voice.reference_resolve", { kind: "subject", subject_kind: "workbench", subject_id: "workbench-17", capability_id: "voice.reference_resolve" }],
-  ] as const)("opens %s at its exact subject/capability pair", async (label, capabilityId, subjectScope) => {
+  ] as const)("%s's Change opens Runs on at its capability's job", async (label, capabilityId, subjectScope) => {
     const scopedEditor = {
       ...editor,
       scope: subjectScope,
@@ -71,7 +68,7 @@ describe("ContextualAssignment", () => {
     vi.mocked(getAssignmentEditor).mockResolvedValue(scopedEditor);
     render(<ContextualAssignment label={label} capabilityId={capabilityId} scope={subjectScope} />);
     fireEvent.click(await screen.findByRole("button", { name: "Change" }));
-    await screen.findByRole("heading", { name: label });
+    expect(shell.openSurfaceOr).toHaveBeenLastCalledWith("open-concierge", "/models", capabilityId);
     expect(getAssignmentEditor).toHaveBeenLastCalledWith(subjectScope, capabilityId);
   });
 

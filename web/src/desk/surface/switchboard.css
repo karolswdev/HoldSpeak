@@ -131,6 +131,7 @@
 }
 .switchboard-job-result[data-tone="danger"], .switchboard-job-result [data-tone="danger"] { color: #8f2018; }
 .switchboard-job-result [data-tone="warn"] { color: #7a5300; }
+.switchboard-job-result [data-tone="idle"] { color: var(--sb-muted); }
 
 /* ── an engine ── */
 .switchboard-engine {

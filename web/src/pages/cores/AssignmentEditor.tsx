@@ -1,3 +1,6 @@
+// PHILO-16 (C), ruling 2026-10-09: PARKED. AssignmentEditor renders nowhere a
+// person can reach: the contextual atom's Change opens Runs on (the
+// Switchboard) instead. Kept for the parked CapabilityAssignmentsCore.
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, readableError } from "../../lib/api";

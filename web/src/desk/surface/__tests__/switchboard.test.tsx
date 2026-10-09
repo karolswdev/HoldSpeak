@@ -197,6 +197,15 @@ describe("SurfaceSwitchboard (list, 393)", () => {
     expect(onSelect).toHaveBeenCalledWith("agents");
   });
 
+  it("shows the EFFECTIVE engine of a job that follows the default, with its token; not as an alternative (C4)", () => {
+    const jobs = JOBS.map((j) => (j.id === "bg" ? { ...j, current: "q27", currentToken: "FOLLOWS DEFAULT" } : j));
+    render(<SurfaceSwitchboard layout="list" jobs={jobs} engines={ENGINES} wires={WIRES} selected="bg" />);
+    expect(screen.getByText("Background · runs on")).toBeTruthy();
+    const current = screen.getByTestId("switchboard-engine-q27");
+    expect(current.textContent).toContain("FOLLOWS DEFAULT");
+    expect(screen.queryByTestId("switchboard-tap-q27")).toBeNull();
+  });
+
   it("taps an alternative to patch the open job", () => {
     const onPatch = vi.fn();
     const engines = [...ENGINES, { id: "claude", emblem: "API", name: "Claude", tokens: ["$"], lamp: "ok" as const, draggable: true }];

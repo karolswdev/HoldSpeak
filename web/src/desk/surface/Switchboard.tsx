@@ -46,6 +46,11 @@ export interface SwitchJob {
   result?: ReactNode;
   /** Phone: the line under the job's name (its engine, or its tasks). */
   runsOn?: string;
+  /** The engine the job runs on now, own wire or inherited (the phone list
+   *  shows it under `<Job> · runs on`). */
+  current?: string;
+  /** A token on that engine when it is inherited (`FOLLOWS DEFAULT`). */
+  currentToken?: string;
 }
 
 export interface SwitchEngine {
@@ -492,7 +497,9 @@ function SwitchboardList({
   const chain = (wires ?? [])
     .filter((wire) => open && wire.job === open.id)
     .sort((a, b) => a.order - b.order);
-  const first = chain[0] ? engines.find((engine) => engine.id === chain[0].engine) : undefined;
+  const own = chain[0] ? engines.find((engine) => engine.id === chain[0].engine) : undefined;
+  const inherited = !own && open?.current ? engines.find((engine) => engine.id === open.current) : undefined;
+  const first = own ?? inherited;
   const alternatives = engines.filter(
     (engine) =>
       engine.draggable &&
@@ -516,7 +523,15 @@ function SwitchboardList({
               </span>
             ) : null}
           </div>
-          {first ? <EnginePlate engine={first} /> : null}
+          {first ? (
+            <EnginePlate
+              engine={
+                inherited && open?.currentToken
+                  ? { ...first, tokens: [...first.tokens, open.currentToken] }
+                  : first
+              }
+            />
+          ) : null}
           {alternatives.length > 0 ? (
             <>
               <div className="switchboard-cap">{captions.or ?? "Or"}</div>

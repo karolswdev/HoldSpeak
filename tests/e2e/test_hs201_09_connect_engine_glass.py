@@ -314,7 +314,9 @@ class TestConnectAnEngineFromTheFace:
             assert said, "the refused check said nothing"
             assert "errno" not in said.lower(), said
             assert "urlopen" not in said.lower(), said
-            assert said == "Nothing answers at this address.", said
+            # A.3 (Astra r1 M8): tokens, never the server's sentence.
+            assert said == "127.0.0.1:9", said
+            assert "UNREACHABLE" in (page.locator("[data-testid='concierge-add-engine-row']").text_content() or "")
             print(f"REFUSED REASON {said}")
             # Article III: the host is named BEFORE the verb that contacts it.
             egress = page.locator("[data-testid='concierge-add-egress']")
@@ -376,6 +378,19 @@ class TestConnectAnEngineFromTheFace:
             ).count() == 0
             print(f"ADDED {key} (no assignment)")
 
+            # ── patch it onto Meetings: the exact summary row is written ──
+            # (Meetings first: once the Default runs this engine, Meetings
+            # follows it, and the phone list never offers the engine a job
+            # already runs on.)
+            patch(page, "meetings", key)
+            assigned = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
+                "summaryAssignment"
+            ]
+            assert assigned["status"] == "assigned", assigned
+            assert assigned["profileId"] == key, assigned
+            assert int(assigned["profileRevision"]) >= 1, assigned
+            print(f"SUMMARY ASSIGNED {assigned}")
+
             # ── patch it onto the Default for AI work: the desk stops asking ──
             body = patch(page, "default", key)
             assert body["scope"] == {"kind": "global"}, body
@@ -387,23 +402,16 @@ class TestConnectAnEngineFromTheFace:
                      "li.needs-row[data-object-id^='blocker:']")""",
                 timeout=60_000,
             )
-            print("SETUP row gone after one patch; the window stays open")
+            print("SETUP row gone; the window stays open")
             assert page.locator("[data-testid='runson-undo']").count() == 1
-
-            # ── patch it onto Meetings: the exact summary row is written ──
-            patch(page, "meetings", key)
-            assigned = _api(page, "GET", "/api/concierge/detect", token=TOKEN)[
-                "summaryAssignment"
-            ]
-            assert assigned["status"] == "assigned", assigned
-            assert assigned["profileId"] == key, assigned
-            assert int(assigned["profileRevision"]) >= 1, assigned
-            print(f"SUMMARY ASSIGNED {assigned}")
             _shot(page, "models-engine-connected", width)
 
-            # ── Undo: the summary row goes back to what it was (none) ──
+            # ── Undo, twice: the Default, then Meetings and its summary row
+            #    (inherited before, so cleared back to inheritance) ──
             page.locator("[data-testid='runson-undo']").click()
-            wait_receipt(page, r"^UNDONE ")
+            wait_receipt(page, r"^UNDONE .*Default for AI work")
+            page.locator("[data-testid='runson-undo']").click()
+            wait_receipt(page, r"^UNDONE .*Meetings$")
             roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
             summary_row = next(
                 row for row in roster["task_overrides"] if row["id"] == SUMMARY_CAPABILITY

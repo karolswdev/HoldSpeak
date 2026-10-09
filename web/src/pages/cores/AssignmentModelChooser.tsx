@@ -1,3 +1,6 @@
+// PHILO-16 (C), ruling 2026-10-09: PARKED. AssignmentModelChooser renders nowhere a
+// person can reach: the contextual atom's Change opens Runs on (the
+// Switchboard) instead. Kept for the parked CapabilityAssignmentsCore.
 import { useRef, useState, type KeyboardEvent } from "react";
 import { EgressChip } from "../../desk/surface/gadgets";
 import { useRovingRows } from "../../desk/surface/roving";

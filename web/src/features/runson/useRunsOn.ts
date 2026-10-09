@@ -26,6 +26,7 @@ import { startCapture, stopAndTranscribe, cancelCapture } from "../../lib/speakT
 import { patchChain } from "../../desk/surface/switchboardGeometry";
 import {
   clearChain,
+  newCommandId,
   readAcquisition,
   readDetection,
   readRoster,
@@ -62,7 +63,8 @@ export interface Egress {
 }
 
 export interface JobResult {
-  tone: "ok" | "danger" | "busy";
+  /** idle: a press that checked nothing (NOT CHECKED). */
+  tone: "ok" | "danger" | "busy" | "idle";
   /** Tokens, joined with ` · ` on the face. */
   tokens: string[];
 }
@@ -72,13 +74,34 @@ export interface Receipt {
   tone?: "danger";
 }
 
+/** One Undo: the chain before the patch, and the revision the patch itself
+ *  produced. Undo is a CAS write against that revision (C1): if anyone moved
+ *  the row since, Undo refuses instead of overwriting them. */
 interface UndoStep {
   job: string;
   entries: Array<{ profile_id: string; profile_revision: number }>;
-  summary?: SummaryAssignment | null;
+  produced: number;
+  /** Meetings also wrote the exact summary row (C2). `own` says whether the
+   *  row had its own head before the patch (else it was inherited, and Undo
+   *  clears it back to inheritance). */
+  summary?: {
+    own: boolean;
+    profileId: string | null;
+    profileRevision: number | null;
+    produced: number;
+  };
 }
 
-export type AddState = "IDLE" | "CHECKING" | "READY" | "UNREACHABLE" | "KEY_REQUIRED" | "KEY_INVALID";
+/** A pending off-machine Try (Article III): the consent is bound to the exact
+ *  engine and host it was shown for (C3). */
+export interface PendingTry {
+  job: string;
+  engineKey: string;
+  host: string;
+  scope: "local" | "cloud";
+}
+
+export type AddState = "IDLE" | "CHECKING" | "READY" | "UNREACHABLE" | "KEY_REQUIRED" | "KEY_INVALID" | "NOT_ADDED";
 
 function clock(): string {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -87,6 +110,16 @@ function clock(): string {
 /** A.8: a latency the probe did not report (or reported as 0) is no token. */
 export function msToken(ms: number | null | undefined): string[] {
   return typeof ms === "number" && ms > 0 ? [`${ms} MS`] : [];
+}
+
+const SUMMARY_CAPABILITY = "meeting.deferred_analysis";
+
+/** A stopped download's reason as a token (`model_download_network` →
+ *  `NETWORK`); a cancel is CANCELLED; no code is NO ANSWER. */
+export function downloadReason(state: string, code: string | null): string {
+  if (state === "cancelled") return "CANCELLED";
+  if (!code) return "NO ANSWER";
+  return code.replace(/^(model_download_|model_|inference_)/, "").replace(/_/g, " ").toUpperCase();
 }
 
 function scopeFor(job: string): AssignmentScope {
@@ -123,8 +156,10 @@ export function useRunsOn(scope?: string) {
   const [results, setResults] = useState<Record<string, JobResult>>({});
   const [trying, setTrying] = useState<{ job: string; engine: string } | null>(null);
   const [listening, setListening] = useState(false);
-  const [pending, setPending] = useState<{ job: string; host: string; scope: Egress["scope"] } | null>(null);
+  const [pending, setPending] = useState<PendingTry | null>(null);
   const [downloads, setDownloads] = useState<Record<string, number>>({});
+  /** A download that stopped: its reason token, kept until retried (V3). */
+  const [failedDownloads, setFailedDownloads] = useState<Record<string, string>>({});
   const [undoStack, setUndoStack] = useState<UndoStep[]>([]);
   const [busy, setBusy] = useState(false);
   const mounted = useRef(true);
@@ -193,29 +228,40 @@ export function useRunsOn(scope?: string) {
 
   /* ── the summary row (Meetings) ── */
 
+  /** Write the exact `meeting.deferred_analysis` row through the Concierge's
+   *  summary selection (the service-principal rule): `target` sets it,
+   *  null clears it back to inheritance. CAS on `expected`. Returns the
+   *  revision it produced, or a refusal token. */
   const writeSummary = useCallback(
-    async (target: { profileId: string; profileRevision: number } | null, current: SummaryAssignment | null) => {
-      if (target) {
-        const answer = await conciergeSummarySelection({
-          commandId: `runson-summary-${Date.now()}`,
-          expectedAssignmentRevision: current?.assignmentRevision ?? 0,
-          profileId: target.profileId,
-          profileRevision: target.profileRevision,
-        });
-        if (answer.summaryAssignment && mounted.current) {
-          setDetection((prev) => (prev ? { ...prev, summaryAssignment: answer.summaryAssignment } : prev));
+    async (
+      target: { profileId: string; profileRevision: number } | null,
+      expected: number,
+    ): Promise<{ produced: number } | { refused: string }> => {
+      try {
+        if (target) {
+          const answer = await conciergeSummarySelection({
+            commandId: newCommandId("runson-summary"),
+            expectedAssignmentRevision: expected,
+            profileId: target.profileId,
+            profileRevision: target.profileRevision,
+          });
+          if (answer.summaryAssignment && mounted.current) {
+            setDetection((prev) => (prev ? { ...prev, summaryAssignment: answer.summaryAssignment } : prev));
+          }
+          if (answer.state === "READY") return { produced: answer.summaryAssignment?.assignmentRevision ?? 0 };
+          return { refused: answer.state === "CONFLICT" ? "CHANGED ELSEWHERE" : "NOT SAVED" };
         }
-        return answer.state === "READY" ? null : answer.state === "CONFLICT" ? "CHANGED ELSEWHERE" : "NOT SAVED";
-      }
-      if (current && current.status === "assigned" && current.assignmentRevision > 0) {
-        await clearChain({
-          scope: { kind: "capability", capability_id: "meeting.deferred_analysis" },
-          capabilityId: "meeting.deferred_analysis",
-          expectedRevision: current.assignmentRevision,
+        if (expected < 1) return { produced: 0 };
+        const cleared = await clearChain({
+          scope: { kind: "capability", capability_id: SUMMARY_CAPABILITY },
+          capabilityId: SUMMARY_CAPABILITY,
+          expectedRevision: expected,
         });
         void loadDetection();
+        return { produced: Number(cleared.revision ?? 0) };
+      } catch (err) {
+        return { refused: isConflict(err) ? "CHANGED ELSEWHERE" : "NOT SAVED" };
       }
-      return null;
     },
     [loadDetection],
   );
@@ -247,25 +293,37 @@ export function useRunsOn(scope?: string) {
       // Meetings writes the summary row too: it needs the detection's
       // summary revision, so it waits for the detection once.
       const det = job === MEETINGS_JOB ? (detection ?? (await detectionRef.current)) : detection;
+      // Whether the summary row had its own head BEFORE this patch (the
+      // roster says; the detection's projection cannot tell an inherited
+      // `assigned` from an own one).
+      const summaryOwn = Boolean(roster?.tasks.find((t) => t.id === SUMMARY_CAPABILITY)?.has_override);
       try {
-        await writeChain({ scope: scopeFor(job), expectedRevision: row.expected_revision, entries });
+        const written = await writeChain({ scope: scopeFor(job), expectedRevision: row.expected_revision, entries });
         if (!mounted.current) return;
         const step: UndoStep = {
           job,
           entries: own.map((e) => ({ profile_id: e.profile_id, profile_revision: e.profile_revision })),
-          summary: job === MEETINGS_JOB ? (det?.summaryAssignment ?? null) : undefined,
+          produced: Number(written.revision ?? 0),
         };
-        setUndoStack((stack) => [...stack, step]);
         const label = row.id === "global" ? "Default for AI work" : row.label;
         let text = `PATCHED ${clock()} · ${label} → ${engine.name}${asFallback ? " · FALLBACK" : ""}`;
         if (job === MEETINGS_JOB) {
+          const before = det?.summaryAssignment ?? null;
           const first = entries[0];
-          const refused = await writeSummary(
+          const answer = await writeSummary(
             first ? { profileId: first.profile_id, profileRevision: first.profile_revision } : null,
-            det?.summaryAssignment ?? null,
+            before?.assignmentRevision ?? 0,
           );
-          if (refused) text += ` · SUMMARIES ${refused}`;
+          if ("refused" in answer) text += ` · SUMMARIES ${answer.refused}`;
+          else
+            step.summary = {
+              own: summaryOwn,
+              profileId: summaryOwn ? (before?.profileId ?? null) : null,
+              profileRevision: summaryOwn ? (before?.profileRevision ?? null) : null,
+              produced: answer.produced,
+            };
         }
+        setUndoStack((stack) => [...stack, step]);
         setReceipt({ text });
         setEgress({ label: hostLabel(engine), scope: engine.emblem === "API" ? "cloud" : "local" });
         setSelected(job);
@@ -278,7 +336,7 @@ export function useRunsOn(scope?: string) {
         await loadRoster();
       }
     },
-    [detection, engineByKey, loadRoster, rowOf, writeSummary],
+    [detection, engineByKey, loadRoster, roster, rowOf, writeSummary],
   );
 
   const refuse = useCallback((job: string, _key: string, reason: string) => {
@@ -289,42 +347,62 @@ export function useRunsOn(scope?: string) {
   const undo = useCallback(async () => {
     const step = undoStack[undoStack.length - 1];
     if (!step) return;
+    const row = rowOf(step.job);
+    const label = step.job === DEFAULT_JOB ? "Default for AI work" : (row?.label ?? step.job);
     setBusy(true);
+    // The step leaves the stack whatever happens: a refused Undo is not
+    // retried against a row someone else now owns.
+    setUndoStack((stack) => stack.slice(0, -1));
     try {
-      const fresh = await readRoster();
-      if (mounted.current) setRoster(fresh);
-      const row = fresh.rows.find((r) => r.id === rosterId(step.job));
-      if (!row) return;
+      // CAS against the revision THIS patch produced (C1).
+      let restored: number;
       if (step.entries.length) {
-        await writeChain({ scope: scopeFor(step.job), expectedRevision: row.expected_revision, entries: step.entries });
-      } else if (row.expected_revision > 0 && row.editor_capability_id) {
-        await clearChain({
-          scope: scopeFor(step.job),
-          capabilityId: row.editor_capability_id,
-          expectedRevision: row.expected_revision,
-        });
+        const written = await writeChain({ scope: scopeFor(step.job), expectedRevision: step.produced, entries: step.entries });
+        restored = Number(written.revision ?? 0);
+      } else {
+        const capability = row?.editor_capability_id;
+        if (!capability) throw new Error("no capability");
+        const cleared = await clearChain({ scope: scopeFor(step.job), capabilityId: capability, expectedRevision: step.produced });
+        restored = Number(cleared.revision ?? 0);
       }
-      if (step.job === MEETINGS_JOB && step.summary !== undefined) {
-        const det = await loadDetection();
-        const prev = step.summary;
-        await writeSummary(
-          prev && prev.status === "assigned" && prev.profileId && prev.profileRevision
-            ? { profileId: prev.profileId, profileRevision: prev.profileRevision }
+      // The step below now describes the row as it stands again.
+      setUndoStack((stack) => {
+        const next = [...stack];
+        for (let i = next.length - 1; i >= 0; i -= 1) {
+          if (next[i].job === step.job) {
+            next[i] = { ...next[i], produced: restored };
+            break;
+          }
+        }
+        return next;
+      });
+      let text = `UNDONE ${clock()} · ${label}`;
+      let tone: Receipt["tone"];
+      if (step.summary) {
+        // C2: an inherited summary row goes back to inheritance (cleared);
+        // an own one gets its own engine back. Both CAS on our own write.
+        const answer = await writeSummary(
+          step.summary.own && step.summary.profileId && step.summary.profileRevision
+            ? { profileId: step.summary.profileId, profileRevision: step.summary.profileRevision }
             : null,
-          det?.summaryAssignment ?? null,
+          step.summary.produced,
         );
+        if ("refused" in answer) {
+          text += ` · SUMMARIES ${answer.refused}`;
+          tone = "danger";
+        }
       }
-      if (!mounted.current) return;
-      setUndoStack((stack) => stack.slice(0, -1));
-      setReceipt({ text: `UNDONE ${clock()} · ${row.id === "global" ? "Default for AI work" : row.label}` });
+      if (mounted.current) setReceipt({ text, tone });
     } catch (err) {
-      if (isConflict(err)) setReceipt({ text: "CHANGED ELSEWHERE", tone: "danger" });
-      else setReceipt({ text: `REFUSED · ${codeToken(err)}`, tone: "danger" });
+      if (mounted.current) {
+        if (isConflict(err)) setReceipt({ text: `CHANGED ELSEWHERE · ${label}`, tone: "danger" });
+        else setReceipt({ text: `REFUSED · ${codeToken(err)}`, tone: "danger" });
+      }
     } finally {
       if (mounted.current) setBusy(false);
       await loadRoster();
     }
-  }, [loadDetection, loadRoster, undoStack, writeSummary]);
+  }, [loadRoster, rowOf, undoStack, writeSummary]);
 
   /* ── Try it ── */
 
@@ -338,13 +416,34 @@ export function useRunsOn(scope?: string) {
     [engineByKey, rowOf],
   );
 
+  /** Ask for the owner's press before bytes leave this machine. */
+  const askConsent = useCallback((job: string, engine: BoardEngine, host?: string, scope?: Egress["scope"]) => {
+    setPending({
+      job,
+      engineKey: engine.key,
+      host: host ?? hostLabel(engine),
+      scope: scope ?? (engine.emblem === "API" ? "cloud" : "local"),
+    });
+  }, []);
+
   const runTry = useCallback(
-    async (job: string, confirmed: boolean) => {
+    async (job: string, consent: PendingTry | null) => {
       const engine = engineForJob(job);
-      if (!engine) return;
+      if (!engine) {
+        setPending(null);
+        return;
+      }
+      // C3: a consent authorizes exactly the engine and host it named. If the
+      // job's engine changed since, the old press is void: ask again.
+      if (consent && (consent.engineKey !== engine.key || consent.job !== job)) {
+        if (offMachine(engine)) askConsent(job, engine);
+        else setPending(null);
+        return;
+      }
+      const confirmed = consent !== null;
       if (offMachine(engine) && !confirmed) {
         // Article III: the bytes leave only on the press that names the host.
-        setPending({ job, host: hostLabel(engine), scope: engine.emblem === "API" ? "cloud" : "local" });
+        askConsent(job, engine);
         return;
       }
       setPending(null);
@@ -352,19 +451,19 @@ export function useRunsOn(scope?: string) {
       setResults((prev) => ({ ...prev, [job]: { tone: "busy", tokens: ["TRYING"] } }));
       try {
         let tokens: string[];
-        let ok: boolean;
+        let tone: JobResult["tone"];
         let host = hostLabel(engine);
         if (job === THOUGHTS_JOB) {
           const answer = await conciergeTaskProbe(PROBE_CAPABILITY, confirmed || undefined);
           if (answer.state === "REFUSED") {
-            // A fallback leg leaves the machine: the press first.
             // The route's boundary says a leg leaves this machine: name the
             // address the engine reaches, else say so plainly.
-            setPending({
+            askConsent(
               job,
-              host: engine.baseUrl ? endpointHostPort(engine.baseUrl).toUpperCase() : "OFF THIS MACHINE",
-              scope: answer.paid ? "cloud" : "local",
-            });
+              engine,
+              engine.baseUrl ? endpointHostPort(engine.baseUrl).toUpperCase() : "OFF THIS MACHINE",
+              answer.paid ? "cloud" : "local",
+            );
             setResults((prev) => {
               const next = { ...prev };
               delete next[job];
@@ -372,24 +471,32 @@ export function useRunsOn(scope?: string) {
             });
             return;
           }
-          ok = answer.ok;
           if (answer.host) host = answer.host.toUpperCase();
-          tokens = ok
+          // A real request through the route: the only READY a Try may say.
+          tone = answer.ok ? "ok" : "danger";
+          tokens = answer.ok
             ? ["READY", answer.model || engine.name, ...msToken(answer.latencyMs)]
             : ["BROKEN", (answer.reasonCode || "NO ANSWER").replace(/_/g, " ").toUpperCase()];
         } else {
           if (!engine.detectId) throw new Error("not detected");
           const answer = await conciergeProbe(engine.detectId, engine.kind === "cloud");
-          ok = answer.state === "READY";
-          // A.10: this probe reads the engine's model list, not a request
-          // through the route, so it says REACHED, never READY.
-          tokens = ok
-            ? ["REACHED", engine.name, ...msToken(answer.latencyMs)]
-            : ["BROKEN", answer.state === "NOT_SUPPORTED" ? "NO ADAPTER" : "NO ANSWER"];
+          // A.10 / V2: this probe reads the engine's model list (or, for a
+          // cloud engine with no probe to run, nothing at all). It says
+          // REACHED or NOT CHECKED, never READY; ms only when measured.
+          if (answer.state === "READY") {
+            tone = "ok";
+            tokens = ["REACHED", engine.name, ...msToken(answer.latencyMs)];
+          } else if (answer.state === "NOT_SET") {
+            tone = "idle";
+            tokens = ["NOT CHECKED", engine.name];
+          } else {
+            tone = "danger";
+            tokens = ["BROKEN", answer.state === "NOT_SUPPORTED" ? "NO ADAPTER" : "NO ANSWER"];
+          }
         }
-        if (ok) tokens.push(...limitTokens(job, engine));
+        if (tone === "ok") tokens.push(...limitTokens(job, engine));
         if (!mounted.current) return;
-        setResults((prev) => ({ ...prev, [job]: { tone: ok ? "ok" : "danger", tokens } }));
+        setResults((prev) => ({ ...prev, [job]: { tone, tokens } }));
         setEgress({ label: host, scope: engine.emblem === "API" ? "cloud" : "local" });
       } catch {
         if (mounted.current) setResults((prev) => ({ ...prev, [job]: { tone: "danger", tokens: ["BROKEN", "NO ANSWER"] } }));
@@ -397,8 +504,18 @@ export function useRunsOn(scope?: string) {
         if (mounted.current) setTrying(null);
       }
     },
-    [engineForJob],
+    [askConsent, engineForJob],
   );
+
+  // C3: when the job behind a pending press changes engine, the press goes
+  // and a new one, naming the new host, takes its place.
+  useEffect(() => {
+    if (!pending) return;
+    const engine = engineForJob(pending.job);
+    if (engine && engine.key === pending.engineKey) return;
+    if (engine && offMachine(engine)) askConsent(pending.job, engine);
+    else setPending(null);
+  }, [askConsent, engineForJob, pending]);
 
   /** Speech: you speak, it shows what it heard (the speak-to-fill route,
    *  `/api/dictation/transcribe`: on this device, nothing egresses). */
@@ -439,13 +556,13 @@ export function useRunsOn(scope?: string) {
     (job: string) => {
       setSelected(job);
       if (job === SPEECH_JOB) void trySpeech();
-      else void runTry(job, false);
+      else void runTry(job, null);
     },
     [runTry, trySpeech],
   );
 
   const confirmTry = useCallback(() => {
-    if (pending) void runTry(pending.job, true);
+    if (pending) void runTry(pending.job, pending);
   }, [pending, runTry]);
 
   /* ── Download: the bar fills on the engine itself ── */
@@ -454,6 +571,12 @@ export function useRunsOn(scope?: string) {
     async (key: string) => {
       const engine = engineByKey(key);
       if (!engine?.presetId || timers.current.has(key)) return;
+      // A retry clears the last failure's reason.
+      setFailedDownloads((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
       setDownloads((prev) => ({ ...prev, [key]: 0 }));
       setEgress({ label: (engine.downloadHost ?? "huggingface.co").toUpperCase(), scope: "cloud" });
       try {
@@ -472,11 +595,14 @@ export function useRunsOn(scope?: string) {
                 delete next[key];
                 return next;
               });
-              setReceipt(
-                acquisition.state === "ready"
-                  ? { text: `DOWNLOADED ${clock()} · ${engine.name}` }
-                  : { text: `DOWNLOAD STOPPED · ${engine.name}`, tone: "danger" },
-              );
+              if (acquisition.state === "ready") {
+                setReceipt({ text: `DOWNLOADED ${clock()} · ${engine.name}` });
+              } else {
+                // V3: the failure and its reason stay on the plate.
+                const reason = downloadReason(acquisition.state, acquisition.error);
+                setFailedDownloads((prev) => ({ ...prev, [key]: reason }));
+                setReceipt({ text: `DOWNLOAD STOPPED · ${engine.name} · ${reason}`, tone: "danger" });
+              }
               // The repairs say which wire it mends; read both again.
               void loadDetection();
               void loadRoster();
@@ -492,7 +618,9 @@ export function useRunsOn(scope?: string) {
           delete next[key];
           return next;
         });
-        setReceipt({ text: `DOWNLOAD STOPPED · ${codeToken(err)}`, tone: "danger" });
+        const reason = codeToken(err);
+        setFailedDownloads((prev) => ({ ...prev, [key]: reason }));
+        setReceipt({ text: `DOWNLOAD STOPPED · ${engine.name} · ${reason}`, tone: "danger" });
       }
     },
     [engineByKey, loadDetection, loadRoster],
@@ -602,8 +730,8 @@ export function useRunsOn(scope?: string) {
       resetAnswer();
       await Promise.all([loadDetection(), loadRoster()]);
     } catch (err) {
-      setAddState("UNREACHABLE");
-      setAddReason(err instanceof Error ? err.message : "Not added.");
+      setAddState("NOT_ADDED");
+      setAddReason(codeToken(err));
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -640,6 +768,7 @@ export function useRunsOn(scope?: string) {
     cancelTry: () => setPending(null),
     engineForJob,
     downloads,
+    failedDownloads,
     download,
     useFound,
     busy,

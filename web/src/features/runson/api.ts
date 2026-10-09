@@ -44,6 +44,8 @@ export interface RosterTask {
   id: string;
   label: string;
   group: { id: string; label: string };
+  /** The task has its own exact row (not inherited from its group/default). */
+  has_override: boolean;
 }
 
 export interface Roster {
@@ -95,6 +97,7 @@ export async function readRoster(): Promise<Roster> {
           id: String(task.id ?? ""),
           label: String(task.label ?? ""),
           group: { id: String(group.id ?? ""), label: String(group.label ?? "") },
+          has_override: task.has_override === true,
         };
       })
     : [];
@@ -277,6 +280,8 @@ export async function clearChain(args: {
 export interface Acquisition {
   state: string;
   percent: number;
+  /** The hub's failure code (`model_download_network`), kept, never dropped. */
+  error: string | null;
 }
 
 export async function readAcquisition(jobId: string): Promise<Acquisition> {
@@ -287,8 +292,10 @@ export async function readAcquisition(jobId: string): Promise<Acquisition> {
   const total = num(row.bytes_total) ?? 0;
   const got = Math.max(num(row.verified_bytes) ?? 0, num(row.transport_bytes) ?? 0);
   const state = String(row.state ?? "indeterminate");
+  const failure = row.error && typeof row.error === "object" ? (row.error as Record<string, unknown>) : null;
   return {
     state,
     percent: state === "ready" ? 100 : total > 0 ? Math.min(100, (got / total) * 100) : 0,
+    error: failure && typeof failure.code === "string" ? failure.code : null,
   };
 }

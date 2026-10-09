@@ -102,11 +102,11 @@ function roster(): Roster {
       row("background", "Background", { editor_capability_id: "memory.embed" }),
     ],
     tasks: [
-      { id: "ask.answer", label: "Ask answer", group: { id: "thoughts_notes", label: "Thoughts & notes" } },
-      { id: "meeting.deferred_analysis", label: "Deferred meeting analysis", group: { id: "meetings", label: "Meetings" } },
-      { id: "meeting.auto_title", label: "Meeting title", group: { id: "meetings", label: "Meetings" } },
-      { id: "meeting.live_analysis", label: "Live meeting analysis", group: { id: "meetings", label: "Meetings" } },
-      { id: "speech.transcribe", label: "Speech transcription", group: { id: "speech_recognition", label: "Speech recognition" } },
+      { id: "ask.answer", label: "Ask answer", group: { id: "thoughts_notes", label: "Thoughts & notes" }, has_override: false },
+      { id: "meeting.deferred_analysis", label: "Deferred meeting analysis", group: { id: "meetings", label: "Meetings" }, has_override: false },
+      { id: "meeting.auto_title", label: "Meeting title", group: { id: "meetings", label: "Meetings" }, has_override: false },
+      { id: "meeting.live_analysis", label: "Live meeting analysis", group: { id: "meetings", label: "Meetings" }, has_override: false },
+      { id: "speech.transcribe", label: "Speech transcription", group: { id: "speech_recognition", label: "Speech recognition" }, has_override: false },
     ],
   };
 }
@@ -148,9 +148,12 @@ function detection(): Detection {
     hardware: { capability: { apple_silicon: true, ram_gb: 36 } },
     checkedAt: "2026-10-09T09:14:00Z",
     repairs: [],
+    // The REAL producer's answer for an inherited summary row (Astra r1
+    // C2): `assigned` through the Default for AI work, at revision 0, with
+    // no own head (the roster's has_override is false).
     summaryAssignment: {
-      capabilityId: "meeting.deferred_analysis", status: "unassigned", assignmentRevision: 0,
-      profileId: null, profileRevision: null, label: null, boundary: null, readiness: null,
+      capabilityId: "meeting.deferred_analysis", status: "assigned", assignmentRevision: 0,
+      profileId: "q27", profileRevision: 1, label: "qwen3.8 27B", boundary: "lan", readiness: "ready",
     },
   };
 }
@@ -159,9 +162,12 @@ beforeEach(() => {
   for (const fn of Object.values(m)) fn.mockReset();
   m.readRoster.mockResolvedValue(roster());
   m.readDetection.mockResolvedValue(detection());
-  m.writeChain.mockResolvedValue({});
-  m.clearChain.mockResolvedValue({});
-  m.summary.mockResolvedValue({ status: "succeeded", state: "READY", plainReason: "", summaryAssignment: null });
+  m.writeChain.mockResolvedValue({ revision: 7 });
+  m.clearChain.mockResolvedValue({ revision: 8 });
+  m.summary.mockResolvedValue({
+    status: "succeeded", state: "READY", plainReason: "",
+    summaryAssignment: { ...detection().summaryAssignment!, profileId: "openrouter", assignmentRevision: 5 },
+  });
 });
 
 afterEach(() => {
@@ -235,9 +241,10 @@ describe("Runs on — a drop writes", () => {
     expect(screen.getByTestId("runson-egress").textContent).toContain("192.168.1.43");
     fireEvent.click(screen.getByTestId("runson-undo"));
     await waitFor(() => expect(m.writeChain).toHaveBeenCalledTimes(2));
+    // C1: Undo is a CAS write against the revision the patch produced (7).
     expect(m.writeChain).toHaveBeenLastCalledWith({
       scope: { kind: "group", group_id: "thoughts_notes" },
-      expectedRevision: 2,
+      expectedRevision: 7,
       entries: [{ profile_id: "q4b", profile_revision: 2 }],
     });
     await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE/));
@@ -252,7 +259,7 @@ describe("Runs on — a drop writes", () => {
     expect((await screen.findByTestId("runson-receipt")).textContent).toContain("FALLBACK");
   });
 
-  it("Meetings also writes the exact summary row the queue reads; Undo clears both", async () => {
+  it("Meetings also writes the exact summary row the queue reads; Undo restores inheritance (C2)", async () => {
     await board();
     fireEvent.click(screen.getByTestId("switchboard-job-meetings"));
     fireEvent.keyDown(screen.getByTestId("switchboard-engine-openrouter"), { key: "Enter" });
@@ -267,27 +274,62 @@ describe("Runs on — a drop writes", () => {
       profileId: "openrouter",
       profileRevision: 1,
     });
-    // Undo of a first patch: the group follows the default again (clear),
-    // and the summary row, unassigned before, is cleared too.
-    const after = roster();
-    after.rows[4] = { ...after.rows[4], inherited_from: "group", expected_revision: 1,
-      assignment: { revision: 1, entries: [{ ...Q27, profile_id: "openrouter", label: "OpenRouter" }], issues: [] } };
-    m.readRoster.mockResolvedValue(after);
-    const det = detection();
-    det.summaryAssignment = { ...det.summaryAssignment!, status: "assigned", assignmentRevision: 1, profileId: "openrouter", profileRevision: 1 };
-    m.readDetection.mockResolvedValue(det);
+    // Undo of a first patch: the group follows the default again (clear at
+    // the revision the patch produced), and the summary row, which was
+    // INHERITED before (has_override false; the producer said `assigned`),
+    // is cleared at the revision our own write produced, never re-written
+    // as an explicit override of the inherited engine.
     fireEvent.click(await screen.findByTestId("runson-undo"));
     await waitFor(() => expect(m.clearChain).toHaveBeenCalledTimes(2));
     expect(m.clearChain.mock.calls[0][0]).toEqual({
       scope: { kind: "group", group_id: "meetings" },
       capabilityId: "meeting.deferred_analysis",
-      expectedRevision: 1,
+      expectedRevision: 7,
     });
     expect(m.clearChain.mock.calls[1][0]).toEqual({
       scope: { kind: "capability", capability_id: "meeting.deferred_analysis" },
       capabilityId: "meeting.deferred_analysis",
-      expectedRevision: 1,
+      expectedRevision: 5,
     });
+    expect(m.summary).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE \d\d:\d\d · Meetings$/));
+  });
+
+  it("Meetings Undo of an OWN summary row gives it its own engine back, and says a refusal (C2, A.10)", async () => {
+    const owned = roster();
+    owned.tasks = owned.tasks.map((t) => (t.id === "meeting.deferred_analysis" ? { ...t, has_override: true } : t));
+    m.readRoster.mockResolvedValue(owned);
+    const det = detection();
+    det.summaryAssignment = { ...det.summaryAssignment!, assignmentRevision: 4, profileId: "q4b", profileRevision: 2 };
+    m.readDetection.mockResolvedValue(det);
+    await board();
+    fireEvent.click(screen.getByTestId("switchboard-job-meetings"));
+    fireEvent.keyDown(screen.getByTestId("switchboard-engine-openrouter"), { key: "Enter" });
+    await waitFor(() => expect(m.summary).toHaveBeenCalledTimes(1));
+    expect(m.summary.mock.calls[0][0]).toMatchObject({ expectedAssignmentRevision: 4 });
+    m.summary.mockResolvedValueOnce({ status: "conflict", state: "CONFLICT", plainReason: "", summaryAssignment: null });
+    fireEvent.click(await screen.findByTestId("runson-undo"));
+    await waitFor(() => expect(m.summary).toHaveBeenCalledTimes(2));
+    expect(m.summary.mock.calls[1][0]).toMatchObject({ expectedAssignmentRevision: 5, profileId: "q4b", profileRevision: 2 });
+    await waitFor(() =>
+      expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meetings · SUMMARIES CHANGED ELSEWHERE$/),
+    );
+  });
+
+  it("Undo refuses when another writer moved the row since the patch (C1: no lost update)", async () => {
+    await board();
+    fireEvent.click(screen.getByTestId("switchboard-job-thoughts_notes"));
+    fireEvent.keyDown(screen.getByTestId("switchboard-engine-q27"), { key: "Enter" });
+    await waitFor(() => expect(m.writeChain).toHaveBeenCalledTimes(1));
+    m.writeChain.mockRejectedValueOnce(
+      new ApiError(409, "Assignment changed.", { code: "inference_assignment_revision_conflict" }),
+    );
+    fireEvent.click(await screen.findByTestId("runson-undo"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("CHANGED ELSEWHERE · Thoughts & notes"));
+    expect(m.writeChain.mock.calls[1][0].expectedRevision).toBe(7);
+    // The entry is gone: no second Undo can overwrite the other writer.
+    expect(screen.queryByTestId("runson-undo")).toBeNull();
+    expect(m.writeChain).toHaveBeenCalledTimes(2);
   });
 
   it("409: re-reads, redraws, and says CHANGED ELSEWHERE (no blind retry)", async () => {
@@ -337,6 +379,42 @@ describe("Runs on — Try it", () => {
       expect(screen.getByTestId("switchboard-result-meetings").textContent).toBe("REACHED · qwen3.8 27B · 410 MS · WITHOUT CALENDAR"),
     );
     expect(screen.getByTestId("runson-egress").textContent).toContain("192.168.1.43");
+  });
+
+  it("a pending consent is bound to its engine: a re-patch voids it and asks for the new host (C3)", async () => {
+    m.probe.mockResolvedValue({ state: "READY", host: "openrouter.ai", latencyMs: 90 });
+    await board();
+    fireEvent.click(screen.getByTestId("runson-try-meetings"));
+    expect((await screen.findByTestId("runson-try-confirm")).textContent).toBe("Try on 192.168.1.43");
+    // Meetings is patched to another engine while the press is pending.
+    const moved = roster();
+    moved.rows[4] = { ...moved.rows[4], inherited_from: "group", expected_revision: 1,
+      assignment: { revision: 1, entries: [{ ...Q27, profile_id: "openrouter", label: "OpenRouter", boundary: "cloud" }], issues: [] } };
+    m.readRoster.mockResolvedValue(moved);
+    // (Try it already selected Meetings.)
+    expect(screen.getByTestId("switchboard-job-meetings").className).toContain("is-selected");
+    fireEvent.keyDown(screen.getByTestId("switchboard-engine-openrouter"), { key: "Enter" });
+    await waitFor(() => expect(screen.getByTestId("runson-try-confirm").textContent).toBe("Try on OPENROUTER.AI"));
+    expect(m.probe).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("runson-try-confirm"));
+    await waitFor(() => expect(m.probe).toHaveBeenCalledTimes(1));
+    expect(m.probe).toHaveBeenCalledWith("cloud:openrouter", true);
+    expect(m.probe).not.toHaveBeenCalledWith("lan:q27", expect.anything());
+  });
+
+  it("a cloud Try that probes nothing says NOT CHECKED, never READY (V2)", async () => {
+    m.probe.mockResolvedValue({ state: "NOT_SET", host: "openrouter.ai", latencyMs: null, keySet: true });
+    const det = detection();
+    const routed = roster();
+    routed.rows[5] = { ...routed.rows[5], inherited_from: "group",
+      assignment: { revision: 1, entries: [{ ...Q27, profile_id: "openrouter", label: "OpenRouter", boundary: "cloud" }], issues: [] } };
+    m.readRoster.mockResolvedValue(routed);
+    m.readDetection.mockResolvedValue(det);
+    await board();
+    fireEvent.click(screen.getByTestId("runson-try-agents_tools"));
+    fireEvent.click(await screen.findByTestId("runson-try-confirm"));
+    await waitFor(() => expect(screen.getByTestId("switchboard-result-agents_tools").textContent).toBe("NOT CHECKED · OpenRouter"));
+    expect(screen.getByTestId("switchboard-result-agents_tools").textContent).not.toContain("READY");
   });
 
   it("a probe with no latency shows no ms token (A.8)", async () => {
@@ -394,6 +472,37 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^DOWNLOADED/), { timeout: 4000 });
     expect(m.readAcquisition).toHaveBeenCalledWith("acq-1");
   }, 10_000);
+
+  it("a failed download keeps BROKEN and its reason until retried (V3)", async () => {
+    m.download.mockResolvedValue({ jobId: "acq-2", presetId: "vision", progress: { received: 0, total: 0 } });
+    m.readAcquisition.mockResolvedValue({ state: "failed", percent: 12, error: "model_download_network" });
+    await board();
+    const plate = screen.getByTestId("switchboard-engine-preset:vision");
+    fireEvent.click(within(plate).getByRole("button", { name: "Download" }));
+    await waitFor(
+      () => expect(screen.getByTestId("runson-receipt").textContent).toBe("DOWNLOAD STOPPED · Qwen 3.5 4B vision file · NETWORK"),
+      { timeout: 4000 },
+    );
+    expect(screen.getByTestId("switchboard-lamp-preset:vision").getAttribute("data-lamp")).toBe("broken");
+    expect(screen.getByTestId("switchboard-engine-preset:vision").textContent).toContain("STOPPED · NETWORK");
+    expect(screen.getByTestId("switchboard-engine-preset:vision").textContent).not.toContain("NOT DOWNLOADED");
+    // A retry clears the reason.
+    m.readAcquisition.mockResolvedValue({ state: "downloading", percent: 30, error: null });
+    fireEvent.click(within(screen.getByTestId("switchboard-engine-preset:vision")).getByRole("button", { name: "Download" }));
+    await waitFor(() => expect(screen.getByTestId("switchboard-engine-preset:vision").textContent).not.toContain("STOPPED"));
+  }, 10_000);
+
+  it("the Add row's refusal is tokens, never the server's sentence (A.3)", async () => {
+    m.check.mockResolvedValue({ ok: false, models: [], detail: "Nothing answers at this address." });
+    await board();
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    const row = screen.getByTestId("concierge-add-engine-row");
+    fireEvent.change(within(row).getAllByRole("textbox")[0], { target: { value: "http://127.0.0.1:9/v1" } });
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    await waitFor(() => expect(screen.getByTestId("concierge-add-reason").textContent).toBe("127.0.0.1:9"));
+    expect(row.textContent).toContain("UNREACHABLE");
+    expect(row.textContent).not.toContain("Nothing answers");
+  });
 
   it("Add an engine: address + Check inline, then Add through define-endpoint; the Check answer stays a token", async () => {
     m.check.mockResolvedValue({ ok: true, models: ["stub-model"], detail: "", tools: "no" });

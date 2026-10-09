@@ -369,3 +369,117 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
         server.stop()
         for fake in fakes:
             fake.shutdown()
+
+
+# ── Astra round 1 (08e19c07b): the five reproduced transitions, on the real
+#    producer (her assertions, ported) ──
+
+
+@pytest.mark.parametrize(
+    "case", ["lost_update", "meeting_undo", "inherited_mobile", "stale_confirmation", "download_failure"]
+)
+def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str) -> None:
+    server, url, fakes, ticks = _rig(tmp_path, monkeypatch)
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 393 if case == "inherited_mobile" else 1440, "height": 900})
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed", token=TOKEN)
+            _normal_chair(page)
+            _seed(page, fakes[2].server_address[1])
+            _open_runs_on(page)
+            page.get_by_test_id("switchboard-found-cap").wait_for(timeout=15_000)
+            receipt = "() => document.querySelector('[data-testid=runson-receipt]')?.textContent || ''"
+
+            if case == "inherited_mobile":
+                page.get_by_test_id("switchboard-job-meetings").click()
+                row = next(r for r in _api(page, "GET", "/api/inference/assignments", token=TOKEN)["rows"] if r["id"] == "meetings")
+                assert row["inherited_from"] == "global"
+                current = page.locator(".switchboard.is-list > .switchboard-engine")
+                assert current.filter(has_text="qwen3.8 27B").count() == 1, (
+                    "The inherited engine must appear under Meetings runs on, not only as an Or alternative"
+                )
+                assert "FOLLOWS DEFAULT" in (current.filter(has_text="qwen3.8 27B").first.text_content() or "")
+                assert page.get_by_test_id("switchboard-tap-glass-lan-27b").count() == 0
+                return
+
+            if case == "stale_confirmation":
+                # Press Try on Meetings (it follows the LAN default), then
+                # patch Meetings to the loopback engine; the old press must go.
+                page.get_by_test_id("runson-try-meetings").click()
+                confirm = page.get_by_test_id("runson-try-confirm")
+                confirm.wait_for()
+                assert "192.168.77.43" in confirm.inner_text()
+                probes: list[str] = []
+                page.on("request", lambda r: probes.append(r.post_data or "") if r.url.endswith("/api/concierge/probe") else None)
+                with page.expect_response(lambda r: r.url.endswith("/api/inference/assignments/set")):
+                    page.get_by_test_id("switchboard-engine-glass-mac-4b").drag_to(page.get_by_test_id("switchboard-job-meetings"))
+                # The new engine is on this machine: no press is needed, and
+                # no press for the old host survives.
+                page.wait_for_function("() => !document.querySelector('[data-testid=runson-try-confirm]')")
+                assert probes == [], probes
+                return
+
+            if case == "download_failure":
+                from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
+
+                def failed(self: Any, principal: Any, job_id: str) -> dict[str, Any]:
+                    return {"acquisition": {
+                        "id": job_id, "preset_id": "preset_glass_vision", "state": "failed",
+                        "verified_bytes": 0, "transport_bytes": 0, "bytes_total": 890_000_000,
+                        "error": {"code": "model_download_network", "message": "The network stopped."},
+                    }}
+
+                monkeypatch.setattr(InferenceAcquisitionApplicationService, "get_acquisition", failed)
+                plate = page.locator("[data-testid='switchboard-engine-preset:preset_glass_vision']")
+                plate.get_by_role("button", name="Download").click()
+                page.wait_for_function(f"() => /DOWNLOAD STOPPED .* · NETWORK$/.test(({receipt})())", timeout=15_000)
+                lamp = page.locator("[data-testid='switchboard-lamp-preset:preset_glass_vision']")
+                assert lamp.get_attribute("data-lamp") == "broken"
+                assert "STOPPED · NETWORK" in plate.inner_text()
+                assert "NOT DOWNLOADED" not in plate.inner_text()
+                return
+
+            job = "thoughts_notes" if case == "lost_update" else "meetings"
+            before = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
+            lan_plate = page.get_by_test_id("switchboard-engine-glass-lan-27b")
+            with page.expect_response(lambda r: r.url.endswith("/api/inference/assignments/set")) as patched:
+                lan_plate.drag_to(page.get_by_test_id(f"switchboard-job-{job}"))
+            assert patched.value.ok, patched.value.text()
+            page.wait_for_function(f"() => /^PATCHED /.test(({receipt})())")
+            if case == "lost_update":
+                roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
+                row = next(r for r in roster["rows"] if r["id"] == job)
+                writer_b = _api(page, "POST", "/api/inference/assignments/set", {
+                    "command_id": "astra-writer-b", "expected_revision": row["expected_revision"],
+                    "scope": {"kind": "group", "group_id": job},
+                    "entries": [{"profile_id": "glass-mac-4b", "profile_revision": 1},
+                                {"profile_id": "glass-lan-27b", "profile_revision": 1}],
+                }, token=TOKEN)
+                assert writer_b["revision"] == row["expected_revision"] + 1
+            page.get_by_test_id("runson-undo").click()
+            page.wait_for_function(f"() => /^(UNDONE|CHANGED ELSEWHERE)/.test(({receipt})())")
+            after = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
+            said = page.get_by_test_id("runson-receipt").inner_text()
+            if case == "lost_update":
+                row = next(r for r in after["rows"] if r["id"] == job)
+                observed = [e["profile_id"] for e in row["assignment"]["entries"]]
+                assert observed == ["glass-mac-4b", "glass-lan-27b"], "Undo must not overwrite the intervening writer's chain"
+                assert said.upper().startswith("CHANGED ELSEWHERE"), said
+                assert page.get_by_test_id("runson-undo").count() == 0
+            else:
+                prior = next(r for r in before["task_overrides"] if r["id"] == "meeting.deferred_analysis")
+                current = next(r for r in after["task_overrides"] if r["id"] == "meeting.deferred_analysis")
+                assert not prior["has_override"]
+                assert not current["has_override"], "Undo of first Meetings patch must remove its exact summary override"
+                meetings = next(r for r in after["rows"] if r["id"] == "meetings")
+                assert meetings["inherited_from"] == "global", meetings
+                assert said.upper().startswith("UNDONE"), said
+            browser.close()
+    finally:
+        server.stop()
+        for fake in fakes:
+            fake.shutdown()
