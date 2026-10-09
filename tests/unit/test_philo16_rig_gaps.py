@@ -388,6 +388,15 @@ def test_the_mcp_notify_test_answers_not_posted_in_this_rig(monkeypatch: pytest.
 # ── channel keys: HOLDSPEAK_CHANNEL_KEYSTORE_FILE ────────────────────────
 
 
+def _production_key_stores(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pin both channels to their production KEY_STORE: another test in the same
+    xdist worker may have left a memory store on the module (FAST 6fae68101)."""
+    from holdspeak.services import channel_email, channel_slack
+
+    monkeypatch.setattr(channel_email, "KEY_STORE", channel_email.default_key_store)
+    monkeypatch.setattr(channel_slack, "KEY_STORE", channel_slack.default_key_store)
+
+
 def test_with_the_file_named_the_channel_keys_never_reach_the_keychain(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -398,6 +407,7 @@ def test_with_the_file_named_the_channel_keys_never_reach_the_keychain(
 
     path = tmp_path / "home" / "channel-keys.json"
     monkeypatch.setenv(CHANNEL_KEYSTORE_ENV, str(path))
+    _production_key_stores(monkeypatch)
     monkeypatch.setattr(keyring, "get_keyring", lambda: pytest.fail("the Keychain was reached"))
 
     channel_email.save_key("resend", "main", "re_key")
@@ -637,6 +647,7 @@ def test_the_channel_key_file_names_its_failures_in_the_channels_codes(
 
     path = tmp_path / "keys.json"
     monkeypatch.setenv(CHANNEL_KEYSTORE_ENV, str(path))
+    _production_key_stores(monkeypatch)
     path.write_text(json.dumps({"HoldSpeak Email": ["not", "a", "bucket"]}))
     path.chmod(0o644)
     with pytest.raises(channel_email.EmailKeyError) as bucket:
