@@ -1,0 +1,22 @@
+BEFORE STOP 15:56:15
+hs-project_item-pitem_d25d3fc020be4d8cbc902-d8d72477-c5992e: 1 windows (created Thu Oct  8 15:46:44 2026)
+  PID  PGID  PPID ELAPSED COMMAND
+47870 47870 47869   09:31 pi       
+52373 47870 47870   00:26 uv run --project /Users/karol/dev/tools/HoldSpeak/wt-pi-harness holdspeak gate hook --agent pi
+52374 47870 52373   00:26 /Users/karol/dev/tools/HoldSpeak/wt-pi-harness/.venv/bin/python /Users/karol/dev/tools/HoldSpeak/wt-pi-harness/.venv/bin/holdspeak gate hook --agent pi
+shot 11-lane-held-before-stop-1440.png
+STOP1 15:56:22.556
+sure 1
+STOP2 15:56:23.280
+AFTER 15:56:27.308
+shot 12-lane-stopped-1440.png
+AFTER STOP 15:56:32
+tmux ls:
+no server running on /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-pi-rig.Pzv9aMMqnF/tmux/tmux-501/default
+ps -g 47870:
+  PID  PGID  PPID ELAPSED COMMAND
+ps -p 47870,52373,52374:
+  PID COMMAND
+any pi/gate hook procs in rig HOME:
+16:00:17 final pi folder present before hub stop:
+pi-launch_acb5cacbab4b4103

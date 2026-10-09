@@ -242,7 +242,7 @@ def classify_edit(tool_input: Optional[Mapping[str, Any]], *, cwd: str, root: st
     except (OSError, ValueError):
         return BashCall(UNPARSED, "edit_path_unreadable")
     if not _inside(real, real_root):
-        return BashCall(OUTSIDE, "edit_outside_worktree")
+        return BashCall(OUTSIDE, "edit_outside_worktree", target=target)
     return BashCall(INSIDE, EDIT_INSIDE_RULE)
 
 
@@ -253,7 +253,9 @@ def classify_tool_call(
     are read; any other tool is ``unparsed`` (it waits). ``root`` is the
     armed worktree the call's working folder is in (``None``: in no armed
     path)."""
-    if tool in EDIT_TOOLS:
+    if tool in EDIT_TOOLS or tool == "Read":
+        # PR #1022 r1: pi's outside reads arrive as Read with file_path and
+        # are read against the worktree as a write is.
         if not root:
             return BashCall(OUTSIDE, "cwd_outside_armed_path")
         return classify_edit(tool_input, cwd=cwd, root=root)

@@ -318,7 +318,7 @@ export interface CoderEvent {
   at?: string;
 }
 
-export type CoderAgent = "claude" | "codex";
+export type CoderAgent = "claude" | "codex" | "pi";
 
 export interface Coder {
   kind: "coder";

@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
+from ..delivery.factory_launch import agent_of_profile
 from ..logging_config import get_logger
 
 log = get_logger("services.launch_lane")
@@ -456,7 +457,7 @@ def launch_lane(
         "launch": {
             "launch_id": record.get("launch_id"),
             "state": record.get("state"),
-            "agent": "codex" if profile.lower().startswith("codex") else "claude",
+            "agent": agent_of_profile(profile),
             "profile_id": profile or None,
             "origin_ref": origin,
             "story_ref": record.get("story_ref"),

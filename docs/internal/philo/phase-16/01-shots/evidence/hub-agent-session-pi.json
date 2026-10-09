@@ -1,0 +1,40 @@
+{
+  "pi:01a11d7b-a364-7536-868b-81b85a9b5e80": {
+    "agent": "pi",
+    "awaiting_response": false,
+    "capture_messages": false,
+    "created_at": "2026-10-08T21:46:45.015192Z",
+    "cwd": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-pi-rig.Pzv9aMMqnF/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558/hs-project_item-pitem_d25d3fc020be4d8cbc90269fc17da3f7",
+    "event_count": 10,
+    "hook_event_name": "SessionEnd",
+    "last_assistant_text": null,
+    "last_assistant_text_at": null,
+    "last_prompt": "Not yet. First run this exact shell command and tell me its first line: head -1 /etc/shells",
+    "last_tool_name": "Bash",
+    "lifecycle": "ended",
+    "model": null,
+    "notification_type": null,
+    "pinned": false,
+    "project_name": "hs-project_item-pitem_d25d3fc020be4d8cbc90269fc17da3f7",
+    "question": null,
+    "repo_anchor": "git",
+    "repo_root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-pi-rig.Pzv9aMMqnF/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558/hs-project_item-pitem_d25d3fc020be4d8cbc90269fc17da3f7",
+    "session_id": "01a11d7b-a364-7536-868b-81b85a9b5e80",
+    "story_claim": {
+      "claimed_at": "2026-10-08T21:46:45.015192Z",
+      "claimed_by": "rider:pi",
+      "project": "proj-e5abdabc568b",
+      "story_id": "project_item-pitem_d25d3fc020be4d8cbc90269fc17da3f7"
+    },
+    "summary": null,
+    "tmux_pane": "%0",
+    "tmux_pane_current_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-pi-rig.Pzv9aMMqnF/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558/hs-project_item-pitem_d25d3fc020be4d8cbc90269fc17da3f7",
+    "tmux_pane_index": "0",
+    "tmux_session": "hs-project_item-pitem_d25d3fc020be4d8cbc902-d8d72477-c5992e",
+    "tmux_window": "0",
+    "transcript_path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-pi-rig.Pzv9aMMqnF/.holdspeak/gate-spawn-settings/mcp/pi-launch_acb5cacbab4b4103/sessions/2026-10-08T21-46-44-452Z_01a11d7b-a364-7536-868b-81b85a9b5e80.jsonl",
+    "updated_at": "2026-10-08T21:56:23.520820Z",
+    "wait_id": null,
+    "wait_started_at": null
+  }
+}

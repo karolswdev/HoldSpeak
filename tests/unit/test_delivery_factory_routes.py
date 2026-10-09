@@ -253,8 +253,8 @@ def test_profiles_route_lists_only_fixed_launchers(rig) -> None:
     assert res.status_code == 200
     doc = res.json()
     assert doc["agent_profiles_schema"] == 1
-    assert doc["known_executables"] == ["claude", "codex"]
-    assert {p["executable"] for p in doc["profiles"]} <= {"claude", "codex"}
+    assert doc["known_executables"] == ["claude", "codex", "pi"]
+    assert {p["executable"] for p in doc["profiles"]} <= {"claude", "codex", "pi"}
 
 
 def test_launch_route_launches_and_refuses_by_name(rig) -> None:

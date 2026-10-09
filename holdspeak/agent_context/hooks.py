@@ -278,6 +278,67 @@ def codex_hook_template(
     return {"hooks": hooks}
 
 
+#: The schema of the pi hook document (``holdspeak.json`` in a pi launch's
+#: ``PI_CODING_AGENT_DIR``), which the maintained extension
+#: ``pi_extension/holdspeak-pi.ts`` reads.
+PI_HOOKS_SCHEMA = 1
+
+#: The file name of that document inside the launch's pi folder.
+PI_HOOKS_FILE = "holdspeak.json"
+
+#: pi's own tool names, mapped to the names the gate rules read
+#: (``tool_gate_rules``: ``Bash`` and ``EDIT_TOOLS``). An MCP tool keeps its
+#: own name (``mcp__holdspeak__project_list``).
+PI_TOOL_NAMES: dict[str, str] = {"bash": "Bash", "edit": "Edit", "write": "Write"}
+
+#: pi's read-only built-in tools: the extension does not send them to the gate
+#: (the gate never holds them, as Claude Code's matcher never sends ``Read``).
+PI_READ_TOOLS = ("read", "grep", "find", "ls")
+
+
+def pi_hook_template(
+    *, capture_messages: bool = False, gate_command: Optional[str] = None,
+) -> dict[str, Any]:
+    """pi's hooks (pi spike #1020, gap 4): the twin of :func:`codex_hook_template`.
+
+    pi has no hook file. Its hooks are the extension ``holdspeak-pi.ts``
+    (passed with ``-e`` on every launch), which reads this document and pipes
+    a Claude-shaped payload to each command:
+
+    - ``rider`` (``holdspeak agent-hook ingest --agent pi``): ``SessionStart``
+      (pi ``session_start``), ``UserPromptSubmit`` (``before_agent_start``),
+      ``PostToolUse`` (``tool_result``, the heartbeat), ``Stop``
+      (``agent_end``, with ``last_assistant_message``) and ``SessionEnd``
+      (``session_shutdown``).
+    - ``gate`` (``holdspeak gate hook --agent pi``, when ``gate_command`` is
+      given): ``PreToolUse`` (``tool_call``; a deny blocks the call, and any
+      failure blocks it too), ``PostToolUse`` (the receipt), ``SessionStart``
+      and ``SessionEnd``.
+
+    Commands are argv lists (no shell). ``agent-hook templates --agent pi``
+    prints this document; ``agent-hook install`` has nothing to write for pi."""
+    from ..coder_gate import HOOK_TIMEOUT_SECONDS
+
+    rider = shlex.split(_agent_hook_command("pi", capture_messages=capture_messages))
+    document: dict[str, Any] = {
+        "holdspeak_pi_schema": PI_HOOKS_SCHEMA,
+        "tools": dict(PI_TOOL_NAMES),
+        "read_tools": list(PI_READ_TOOLS),
+        "rider": {
+            "argv": rider,
+            "events": ["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop", "SessionEnd"],
+            "timeout_seconds": RIDER_HOOK_TIMEOUT_SECONDS,
+        },
+    }
+    if gate_command:
+        document["gate"] = {
+            "argv": shlex.split(gate_command),
+            "events": ["SessionStart", "PreToolUse", "PostToolUse", "SessionEnd"],
+            "timeout_seconds": HOOK_TIMEOUT_SECONDS,
+        }
+    return document
+
+
 #: Substring identifying OUR hook entries inside a user's settings, so the
 #: installer can be idempotent and the uninstaller surgical (HSM-17-02).
 AGENT_HOOK_COMMAND_MARKER = "agent-hook ingest"

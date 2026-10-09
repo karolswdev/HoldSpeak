@@ -55,14 +55,18 @@ export const VARIANTS: Record<string, string[]> = {
 };
 
 /** The sprites `agentSpriteName` can return. They sit outside the pools. */
-export const AGENT_SPRITES = ["agent-claude-code", "agent-codex"] as const;
+export const AGENT_SPRITES = ["agent-claude-code", "agent-codex", "agent-pi"] as const;
 
-/** The agent sprite for an agent name: Codex wears `agent-codex`; Claude
- * Code and any unknown agent wear `agent-claude-code`. */
+/** The agent sprite for an agent name: Codex wears `agent-codex`, pi wears
+ * `agent-pi` (pi spike #1020); Claude Code and any unknown agent wear
+ * `agent-claude-code`. */
 export function agentSpriteName(
   agent: string | null | undefined,
 ): (typeof AGENT_SPRITES)[number] {
-  return /codex/i.test(String(agent ?? "")) ? "agent-codex" : "agent-claude-code";
+  const name = String(agent ?? "");
+  if (/codex/i.test(name)) return "agent-codex";
+  if (/^pi(?:$|[:\-])/i.test(name)) return "agent-pi";
+  return "agent-claude-code";
 }
 
 /** Every base sprite name `spriteName` can return: the pools plus the
@@ -103,7 +107,7 @@ export function spriteUrl(
   kind: string,
   id: string,
   state: SpriteState = "rest",
-  /** The agent name of a coder/agent object ("claude", "codex"). */
+  /** The agent name of a coder/agent object ("claude", "codex", "pi"). */
   agent?: string | null,
   size: SpriteSize = 64,
 ): string {

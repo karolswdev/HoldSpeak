@@ -432,7 +432,7 @@ class OnboardingService:
     # ── agents ────────────────────────────────────────────────────────
 
     def agents_detect(self, principal: Principal) -> dict[str, Any]:
-        """Claude Code and Codex: on PATH, hooks installed and runnable, signed in; plus tmux (files only)."""
+        """Claude Code, Codex and pi: on PATH, hooks installed and runnable, signed in; plus tmux (files only)."""
         return detect_agents(which=self._which, home=self._home(), environ=self._environ)
 
     def agent_settings_target(self, agent: str) -> Optional[str]:
@@ -443,7 +443,7 @@ class OnboardingService:
         """
         from ..agent_context.hooks import agent_settings_path
 
-        if agent not in AGENTS:
+        if agent not in HOOK_AGENTS:
             return None
         return str(agent_settings_path(agent, home=self._home(), env=self._env()))
 
@@ -512,7 +512,8 @@ class OnboardingService:
         if project_kernel.current() is None:
             raise RuntimeError("agent_hooks.install runs only as an admitted kernel operation")
         agent = str(agent or "").strip().lower()
-        if agent not in AGENTS:
+        if agent not in HOOK_AGENTS:
+            # pi has no hook file to write: every pi launch carries its hooks.
             raise ValidationError("Use it needs an agent: claude or codex.", code="agent_unknown")
         if self._which(agent) is None:
             raise ConflictError(f"{AGENTS[agent]} is not installed.", code=f"{agent}_not_installed")
@@ -545,7 +546,12 @@ def _require_owner(principal: Any) -> None:
 
 
 #: The coding agents the Conductor launches, by command name.
-AGENTS: dict[str, str] = {"claude": "Claude Code", "codex": "Codex"}
+AGENTS: dict[str, str] = {"claude": "Claude Code", "codex": "Codex", "pi": "pi"}
+
+#: The agents whose hooks one press installs in their own settings file. pi
+#: has none: every pi launch passes HoldSpeak's extension and its hook
+#: document (pi spike #1020), so its hooks are in when the extension ships.
+HOOK_AGENTS = ("claude", "codex")
 
 TMUX_INSTALL_HINT = {
     "darwin": "brew install tmux",
@@ -701,6 +707,9 @@ def detect_agents(
     rows: list[dict[str, Any]] = []
     for agent, label in AGENTS.items():
         executable = which(agent)
+        if agent not in HOOK_AGENTS:
+            rows.append(_pi_row(label, executable))
+            continue
         settings_path = agent_settings_path(agent, home=root, env=env)
         events = list(agent_hook_template(agent)["hooks"])
         hooks = _hooks_state(settings_path, events, which)
@@ -739,6 +748,29 @@ def detect_agents(
             "hook_executable": hook_executable,
             "hook_runs": hook_command_runs(command, which=which),
         },
+    }
+
+
+def _pi_row(label: str, executable: Optional[str]) -> dict[str, Any]:
+    """pi's readiness (pi spike #1020). Its hooks are the extension every pi
+    launch loads: in when the file ships with HoldSpeak. It signs in to no
+    service of its own: it runs on the hub's engine for coding work, which
+    the Hand checks at launch (``no_assignment``)."""
+    from ..delivery.pi_launch import EXTENSION_PATH
+
+    hooks = "installed" if EXTENSION_PATH.is_file() else "missing"
+    return {
+        "id": "pi",
+        "label": label,
+        "installed": executable is not None,
+        "path": executable,
+        "hooks": hooks,
+        "hooks_path": str(EXTENSION_PATH),
+        "signed_in": "yes",
+        "signed_in_from": None,
+        "version": _version_of(executable),
+        "ready": executable is not None and hooks == "installed",
+        "verb": None,
     }
 
 

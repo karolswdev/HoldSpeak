@@ -124,6 +124,7 @@ export interface NeedCtx {
 export function agentName(agent: string): string {
   if (agent === "codex") return "Codex";
   if (agent === "claude") return "Claude Code";
+  if (agent === "pi") return "pi";
   return agent ? agent.charAt(0).toUpperCase() + agent.slice(1) : "Agent";
 }
 

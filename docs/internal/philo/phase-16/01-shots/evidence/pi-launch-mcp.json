@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "holdspeak": {
+      "description": "HoldSpeak hub: the desk, Projects, decisions, meetings, notes",
+      "exposure": "deferred",
+      "headers": {
+        "Authorization": "Bearer ${HOLDSPEAK_AGENT_CREDENTIAL}"
+      },
+      "toolExposure": {
+        "decision_record.*": "direct",
+        "desk.needs_you": "direct",
+        "follow_through.*": "direct",
+        "meeting.get": "direct",
+        "note.*": "direct",
+        "project.*": "direct",
+        "zone.file": "direct",
+        "zone.unfile": "direct"
+      },
+      "url": "http://127.0.0.1:8797/api/mcp"
+    }
+  }
+}

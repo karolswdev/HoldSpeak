@@ -533,6 +533,8 @@ def _agent_word(profile_id: Any) -> str | None:
         return "Codex"
     if "claude" in text:
         return "Claude Code"
+    if text.startswith("pi-") or text == "pi":
+        return "pi"
     return None
 
 

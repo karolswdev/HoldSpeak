@@ -55,11 +55,16 @@ def _detect(home: Path, *present: str, env: Optional[dict[str, str]] = None, pla
 def test_detect_on_a_bare_home_finds_nothing_and_says_unknown_not_no(tmp_path) -> None:
     detected = _detect(tmp_path)
     rows = _rows(detected)
-    assert set(rows) == {"claude", "codex"}
-    for row in rows.values():
+    assert set(rows) == {"claude", "codex", "pi"}
+    for agent in ("claude", "codex"):
+        row = rows[agent]
         assert row["installed"] is False and row["hooks"] == "missing" and row["verb"] is None
         assert row["signed_in"] == "unknown"  # a Keychain / keyring token is not a file
         assert row["ready"] is False
+    # pi (pi spike #1020): its hooks ship with HoldSpeak (the extension); it
+    # signs in to nothing of its own (the hub's engine for coding work).
+    assert rows["pi"]["installed"] is False and rows["pi"]["hooks"] == "installed"
+    assert rows["pi"]["ready"] is False and rows["pi"]["verb"] is None
     assert rows["claude"]["hooks_path"] == str(tmp_path / ".claude" / "settings.json")
     assert rows["codex"]["hooks_path"] == str(tmp_path / ".codex" / "hooks.json")
     assert detected["tmux"] == {"installed": False, "path": None, "version": None, "install_hint": "brew install tmux"}

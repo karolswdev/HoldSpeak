@@ -17,6 +17,9 @@ module turns that into the agent's MCP server ``holdspeak``:
 * Codex: ``-c mcp_servers.holdspeak.url=...`` and
   ``-c mcp_servers.holdspeak.bearer_token_env_var=HOLDSPEAK_AGENT_CREDENTIAL``
   (Codex's streamable HTTP server reads the token from that variable).
+* pi: ``mcp.json`` in the launch's own pi folder (``pi_launch.mcp_document``):
+  the hub URL as text (pi does not expand ``${VAR}`` in ``url``) and the
+  ``Authorization: Bearer ${HOLDSPEAK_AGENT_CREDENTIAL}`` header.
 
 Pre-approval follows the Control mode read at launch: in Normal and YOLO the
 ``holdspeak`` tools are allowed without a prompt in the agent's pane; in
@@ -79,15 +82,19 @@ def write_mcp_config(launch_id: str, directory: Optional[Path] = None) -> Path:
 
 
 def remove_mcp_config(launch_id: str, directory: Optional[Path] = None) -> bool:
-    """Remove the launch's ``--mcp-config`` file (idempotent)."""
+    """Remove the launch's ``--mcp-config`` file and, for a pi launch, its pi
+    folder (``pi_launch.pi_dir``; idempotent)."""
     clean = str(launch_id or "").strip()
     if not clean:
         return False
+    from .pi_launch import remove_pi_dir
+
+    removed_pi = remove_pi_dir(clean, directory)
     try:
         mcp_config_path(clean, directory).unlink()
         return True
     except OSError:
-        return False
+        return removed_pi
 
 
 def normalized_mode(mode: Any) -> str:

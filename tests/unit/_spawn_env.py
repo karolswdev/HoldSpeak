@@ -47,12 +47,21 @@ def consume(argv: list[str]) -> None:
     path.unlink()
 
 
-def token_of(argv: list[str]) -> str:
-    """The token the spawn handed its session."""
+def _lines_of(argv: list[str]) -> list[str]:
     path = env_file_of(argv)
-    if str(path) in _RECEIVED:
-        return _RECEIVED[str(path)]
-    return path.read_text(encoding="utf-8").strip()
+    text = _RECEIVED[str(path)] if str(path) in _RECEIVED else path.read_text(encoding="utf-8").strip()
+    return text.splitlines() or [""]
+
+
+def token_of(argv: list[str]) -> str:
+    """The token the spawn handed its session (the file's first line)."""
+    return _lines_of(argv)[0]
+
+
+def model_key_of(argv: list[str]) -> str:
+    """A pi launch's model key (the file's second line), or ""."""
+    lines = _lines_of(argv)
+    return lines[1] if len(lines) > 1 else ""
 
 
 def strip_env(command: str) -> str:  # kept for older callers: commands carry no prefix now

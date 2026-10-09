@@ -18,7 +18,7 @@ export function isNotRead(value: unknown): value is NotRead {
 export interface LaneLaunch {
   launch_id: string;
   state?: string | null;
-  agent: "claude" | "codex" | string;
+  agent: "claude" | "codex" | "pi" | string;
   origin_ref?: { kind?: string; id?: string } | null;
   branch?: string | null;
   worktree_path?: string | null;
@@ -220,7 +220,7 @@ export function unreadParts(lane: LaneWire): Array<[string, string]> {
 
 /* ── words ───────────────────────────────────────────────────────── */
 
-const AGENT_NAME: Record<string, string> = { claude: "Claude Code", codex: "Codex" };
+const AGENT_NAME: Record<string, string> = { claude: "Claude Code", codex: "Codex", pi: "pi" };
 
 /** The agent's name as the face says it (`Claude Code`, `Codex`). */
 export function agentName(agent: string | null | undefined): string {

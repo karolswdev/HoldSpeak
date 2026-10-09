@@ -1,4 +1,4 @@
-"""`holdspeak agent-hook` CLI for Claude/Codex hook ingestion."""
+"""`holdspeak agent-hook` CLI for Claude/Codex/pi hook ingestion."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from ..agent_context import (
     claude_hook_template,
     codex_hook_template,
     get_recent_agent_session,
+    pi_hook_template,
     ingest_agent_hook_event,
     list_agent_sessions,
     load_hs_project_context,
@@ -105,10 +106,14 @@ def _cmd_templates(args, *, out: TextIO) -> int:
         payload = claude_hook_template(capture_messages=capture_messages)
     elif agent == "codex":
         payload = codex_hook_template(capture_messages=capture_messages)
+    elif agent == "pi":
+        # pi has no hook file: its launch passes the extension and this document.
+        payload = pi_hook_template(capture_messages=capture_messages)
     else:
         payload = {
             "claude": claude_hook_template(capture_messages=capture_messages),
             "codex": codex_hook_template(capture_messages=capture_messages),
+            "pi": pi_hook_template(capture_messages=capture_messages),
         }
     print(json.dumps(payload, indent=2, sort_keys=True), file=out)
     return _EXIT_OK
@@ -195,9 +200,9 @@ def build_argparse_subparsers(agent_hook_parser) -> None:
 
     ingest = subparsers.add_parser(
         "ingest",
-        help="Read one Claude/Codex hook JSON payload from stdin and record session context",
+        help="Read one Claude/Codex/pi hook JSON payload from stdin and record session context",
     )
-    ingest.add_argument("--agent", choices=["claude", "codex"], required=True)
+    ingest.add_argument("--agent", choices=["claude", "codex", "pi"], required=True)
     ingest.add_argument("--state-path", help="Override session registry path (test/debug)")
     ingest.add_argument(
         "--capture-messages",
@@ -217,7 +222,7 @@ def build_argparse_subparsers(agent_hook_parser) -> None:
         "latest",
         help="Show the latest recorded Claude/Codex session context",
     )
-    latest.add_argument("--agent", choices=["claude", "codex"])
+    latest.add_argument("--agent", choices=["claude", "codex", "pi"])
     latest.add_argument("--state-path", help="Override session registry path (test/debug)")
     latest.add_argument(
         "--max-age-seconds",
@@ -229,9 +234,9 @@ def build_argparse_subparsers(agent_hook_parser) -> None:
 
     templates = subparsers.add_parser(
         "templates",
-        help="Print hook configuration templates for Claude Code or Codex",
+        help="Print hook configuration templates for Claude Code, Codex or pi",
     )
-    templates.add_argument("--agent", choices=["claude", "codex", "all"], default="all")
+    templates.add_argument("--agent", choices=["claude", "codex", "pi", "all"], default="all")
     templates.add_argument(
         "--capture-messages",
         action="store_true",

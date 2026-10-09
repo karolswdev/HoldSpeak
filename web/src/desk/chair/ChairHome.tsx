@@ -2811,7 +2811,7 @@ function CoderNeedsYouRow({ item, now, primary }: { item: NeedsYouItem; now: Dat
       onToggle={() => openCoderSession(key)}
       lead={
         <span className="arrival-source-emblem" data-testid="arrival-source-emblem">
-          {agent === "codex" ? "CX" : "CC"}
+          {agent === "codex" ? "CX" : agent === "pi" ? "PI" : "CC"}
         </span>
       }
       primary={<span data-testid="arrival-coder-question">{item.question || item.title}</span>}

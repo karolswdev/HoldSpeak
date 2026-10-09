@@ -1,7 +1,7 @@
 /* First run — the Agents step (the Conductor canvas K1a/K1b/K1c, ratified
  * 2026-10-06). The onboarding routes (Conductor K1):
  *
- *   GET  /api/onboarding/agents        claude / codex / tmux readiness
+ *   GET  /api/onboarding/agents        claude / codex / pi / tmux readiness
  *                                      (PATH and files only; no process)
  *   POST /api/onboarding/agents/use    {agent}: the admitted kernel operation
  *                                      `agent_hooks.install`; answers with its
@@ -15,7 +15,7 @@ import { ApiError, apiFetch } from "../../lib/api";
 export const AGENTS_PATH = "/api/onboarding/agents";
 export const AGENTS_USE_PATH = "/api/onboarding/agents/use";
 
-export type AgentId = "claude" | "codex";
+export type AgentId = "claude" | "codex" | "pi";
 export type HooksState = "installed" | "partial" | "missing" | "unreadable" | "broken";
 
 export interface AgentRow {
@@ -39,11 +39,14 @@ export interface AgentsDetect {
 export const AGENT_INSTALL: Record<AgentId, string> = {
   claude: "npm install -g @anthropic-ai/claude-code",
   codex: "npm install -g @openai/codex",
+  pi: "npm install -g @earendil-works/pi-coding-agent",
 };
-export const AGENT_GLYPH: Record<AgentId, string> = { claude: "CC", codex: "CX" };
-/** The host each agent's model runs on (the egress of a hand-off). */
-export const AGENT_HOST: Record<AgentId, string> = { claude: "API.ANTHROPIC.COM", codex: "API.OPENAI.COM" };
-export const AGENT_NAME: Record<AgentId, string> = { claude: "Claude Code", codex: "Codex" };
+export const AGENT_GLYPH: Record<AgentId, string> = { claude: "CC", codex: "CX", pi: "PI" };
+/** The host each agent's model runs on (the egress of a hand-off). pi runs
+ *  on the hub's engine for coding work (the LAN box); the Hand line names
+ *  that engine's own host from the preview (`engineEgress`). */
+export const AGENT_HOST: Record<AgentId, string> = { claude: "API.ANTHROPIC.COM", codex: "API.OPENAI.COM", pi: "LAN" };
+export const AGENT_NAME: Record<AgentId, string> = { claude: "Claude Code", codex: "Codex", pi: "pi" };
 
 /** An agent whose hooks the press would install: on PATH, hooks not in. */
 export function needsHooks(row: AgentRow): boolean {
