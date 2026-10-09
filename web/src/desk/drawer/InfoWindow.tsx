@@ -127,6 +127,8 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
       minH={240}
       defaultW={540}
       defaultH={460}
+      // PHILO-16: Get Info opened from a drawer belongs to its project's Room.
+      room={`project:${info.projectId}`}
       open
       onClose={close}
     >

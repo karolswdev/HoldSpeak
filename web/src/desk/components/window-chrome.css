@@ -1056,3 +1056,50 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
+
+/* PHILO-16 (A2) — the compositor (web/src/desk/compositor/).
+   A plate (the Stage shelf, Exposé) is the window's own element at its own
+   size, drawn at scale --plate-k from its top-left corner: it scales, it never
+   reflows, and its own title bar is its label (COMPOSITOR.md §7). The
+   `scale` property composes with the arrange motion's transform. */
+.desk-next .desk-window-shell[data-plate="scaled"] {
+  scale: var(--plate-k);
+  transform-origin: 0 0;
+  cursor: pointer;
+}
+.desk-next .desk-window-shell[data-plate="scaled"] > * {
+  pointer-events: none;
+}
+/* Exposé: the pick target lies over the live plate; it draws only a ring. */
+.desk-next .desk-expose-cell.is-plate,
+.desk-next .desk-expose-cell.is-plate:hover {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.desk-next .desk-expose-cell.is-plate:hover,
+.desk-next .desk-expose-cell.is-plate:focus-visible {
+  box-shadow: 0 0 0 3px var(--wb-blue);
+}
+/* L8: one steel divider on the seam of two touching windows. */
+.desk-next .desk-window-divider {
+  position: fixed;
+  background: var(--wb-steel);
+  box-shadow: inset 1px 1px 0 var(--wb-hi), inset -1px -1px 0 var(--wb-lo), 0 0 0 1px var(--wb-ink);
+  touch-action: none;
+}
+.desk-next .desk-window-divider.is-v {
+  cursor: ew-resize;
+}
+.desk-next .desk-window-divider.is-h {
+  cursor: ns-resize;
+}
+.desk-next .desk-window-divider:focus-visible {
+  outline: 2px solid var(--wb-blue);
+  outline-offset: 1px;
+}
+/* L7: a departing snapshot (seat, close) is drawn, never pressed. */
+.desk-next .desk-window-departing {
+  pointer-events: none;
+}

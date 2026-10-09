@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { dispatchKey, matchKey, parseKey } from "../keymap";
 import { useDesk } from "../store";
+import { VERBS } from "../verbRegistry";
 import { usePalette, useShortcutSheet } from "../chromeState";
 
 const kd = (init: KeyboardEventInit) => new KeyboardEvent("keydown", init);
@@ -28,7 +29,28 @@ describe("parseKey / matchKey (⌘-notation is the binding truth)", () => {
       plain: false,
       key: "ArrowUp",
     });
-    expect(parseKey("Esc")).toBeNull();
+    // PHILO-16: Esc is a plain key now (Window ▸ Back); ⌥ and the arrows parse.
+    expect(parseKey("Esc")).toEqual({ meta: false, ctrl: false, plain: true, key: "escape" });
+    expect(parseKey("⌘⌥←")).toEqual({ meta: true, ctrl: false, plain: false, alt: true, key: "ArrowLeft" });
+    expect(parseKey("⌘⏎")).toEqual({ meta: true, ctrl: false, plain: false, key: "Enter" });
+    expect(parseKey("⌘⇧`")).toEqual({ meta: true, ctrl: false, plain: false, shift: true, key: "`" });
+  });
+
+  it("⌃⇧` stays the reverse cycle; ⌘⇧` is To back (Astra M5)", () => {
+    // Every verb runnable and silent: the test asks which verb the key reaches.
+    const spies = VERBS.flatMap((v) => [
+      vi.spyOn(v, "ghost").mockReturnValue(null),
+      vi.spyOn(v, "run").mockImplementation(() => {}),
+    ]);
+    const run = (init: KeyboardEventInit) =>
+      dispatchKey(new KeyboardEvent("keydown", { key: "`", code: "Backquote", cancelable: true, ...init }))?.id;
+    expect(run({ ctrlKey: true, shiftKey: true })).toBe("window.cycle-reverse");
+    expect(run({ metaKey: true, shiftKey: true })).toBe("window.depth");
+    // "~" is what most layouts report for ⇧`: the key code binds it.
+    expect(run({ ctrlKey: true, shiftKey: true, key: "~" })).toBe("window.cycle-reverse");
+    expect(run({ ctrlKey: true })).toBe("window.cycle");
+    expect(run({ metaKey: true })).toBe("window.cycle");
+    for (const spy of spies) spy.mockRestore();
   });
 
   it("⌘ means the primary modifier (meta OR ctrl, never both)", () => {
