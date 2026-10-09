@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 84  # informational; 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
+SCHEMA_VERSION = 85  # informational; 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -2072,6 +2072,37 @@ CREATE TABLE IF NOT EXISTS agent_session_events (
 );
 CREATE INDEX IF NOT EXISTS idx_agent_session_events_key ON agent_session_events(session_key, id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_session_events_spool ON agent_session_events(spool_id);
+
+-- PHILO-16 (L1, L3, L5): the desk's windows. The hub owns them; every browser
+-- is one view of the same desk and an agent reaches the same windows
+-- (services/desk_window_service.py). One row per open window of the one
+-- owner desk. Geometry is share+px values ({"x","y","w","h"}: a number of
+-- pixels or a string like "50% + 10"), resolved by each view. Depth is a
+-- counter the hub increments (desk_window_desk.highest_depth); front is
+-- derived. Every write bumps the row's revision (compare-and-set).
+CREATE TABLE IF NOT EXISTS desk_windows (
+    id TEXT PRIMARY KEY,
+    app TEXT NOT NULL,
+    object_ref TEXT,
+    geometry_json TEXT,
+    depth INTEGER NOT NULL DEFAULT 0,
+    minimized INTEGER NOT NULL DEFAULT 0,
+    zoomed INTEGER NOT NULL DEFAULT 0,
+    zoom_json TEXT,
+    arranged INTEGER NOT NULL DEFAULT 0,
+    room TEXT,
+    revision INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- The desk-level window state: the depth counter and Stage's shelf side.
+CREATE TABLE IF NOT EXISTS desk_window_desk (
+    id TEXT PRIMARY KEY,
+    highest_depth INTEGER NOT NULL DEFAULT 0,
+    stage_shelf TEXT NOT NULL DEFAULT 'left',
+    revision INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
 -- HS-104-02: the tool-call gate. A proposal is a RECORD, never authority --
 -- nothing in this table can cause execution; only a live hook waiting on a

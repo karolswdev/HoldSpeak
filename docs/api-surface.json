@@ -2290,6 +2290,40 @@
       ]
     },
     {
+      "path": "/api/desk/windows",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.desk_windows",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/desk/windows/arrange",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.desk_windows",
+      "consumers": []
+    },
+    {
+      "path": "/api/desk/windows/stage-shelf",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.desk_windows",
+      "consumers": []
+    },
+    {
+      "path": "/api/desk/windows/{window_id}/{verb}",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.desk_windows",
+      "consumers": []
+    },
+    {
       "path": "/api/devices/audio",
       "methods": [
         "WS"

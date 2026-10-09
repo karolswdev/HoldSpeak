@@ -50,6 +50,7 @@ _FAMILY_MODULE_NAMES: list[str] = [
     "interview",
     "practice_recipe",
     "agent",
+    "desk_windows",
 ]
 
 # MCP-006 isolation: import each family, record failures.

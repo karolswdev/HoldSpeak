@@ -249,9 +249,11 @@ def record_own(principal: Any, ref: str) -> None:
 #   never own: not offered (out of the palette) and refused at the call.
 # * ``composer``-- a model answer composed over desk records: the People cut
 #   cannot see a paraphrase, so it is not offered to a cloud agent.
+# * ``window``  -- the owner's desk windows (open, raise, arrange, seat,
+#   close): the view he shares with the agent; no record changes.
 
-CREATE, DESK, OWN, ITEM, PROJECT, NEVER, COMPOSER, READ = (
-    "create", "desk", "own", "item", "project", "never", "composer", "read",
+CREATE, DESK, OWN, ITEM, PROJECT, NEVER, COMPOSER, READ, WINDOW = (
+    "create", "desk", "own", "item", "project", "never", "composer", "read", "window",
 )
 
 #: tool -> (rule, ref kind, argument naming the target / the created id).
@@ -331,6 +333,15 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     "watch.refresh": (NEVER, "", ""),
     "project.watch.test": (NEVER, "", ""),
     "practice_recipe.compile": (NEVER, "", ""),
+    # window: the owner's desk windows (PHILO-16 16b). A launch composes the
+    # desk beside him (open, raise, arrange, seat, close); nothing leaves the
+    # machine and no authority changes. Its gate still holds each one in
+    # Secure (every non-read MCP tool), and every write announces itself.
+    "desk_window.open": (WINDOW, "", ""),
+    "desk_window.close": (WINDOW, "", ""),
+    "desk_window.raise": (WINDOW, "", ""),
+    "desk_window.arrange": (WINDOW, "", ""),
+    "desk_window.seat": (WINDOW, "", ""),
     "sequence.cancel": (NEVER, "", ""),
     "workflow.cancel": (NEVER, "", ""),
     "ask.cancel": (NEVER, "", ""),
@@ -450,7 +461,7 @@ def gate_call(name: str, arguments: Any, principal: Any) -> Any:
         # Held in PrimitiveService too; named here first, so the answer is
         # the launch rule, never a later kernel code.
         require_own(principal, *_desk_targets(name, args))
-    if rule[0] == READ:
+    if rule[0] in (READ, WINDOW):
         return args
     kind, key = rule[1], rule[2]
     for idem in _IDEMPOTENCY_KEYS:

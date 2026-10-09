@@ -2159,6 +2159,8 @@ from holdspeak.channel_operations import CHANNEL_OPERATIONS  # noqa: E402
 from holdspeak.onboarding_operations import ONBOARDING_OPERATIONS  # noqa: E402
 # Conductor K2: Hand to agent.
 from holdspeak.agent_operations import AGENT_OPERATIONS  # noqa: E402
+# PHILO-16 (16b): the desk's windows (the MCP rows).
+from holdspeak.desk_window_operations import DESK_WINDOW_OPERATIONS  # noqa: E402
 
 #: The whole catalogue, in export order.
 DESCRIPTORS: tuple[OperationDescriptor, ...] = (
@@ -2172,7 +2174,8 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     ZONE_FILE, ZONE_UNFILE, ZONE_MEMBERS, KB_MEMBER_ADD, KB_MEMBER_REMOVE, KB_MEMBERS,
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
-) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + AGENT_OPERATIONS
+) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + AGENT_OPERATIONS \
+    + DESK_WINDOW_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
@@ -2423,7 +2426,7 @@ class OperationRegistry:
 _ID_ARGUMENTS = (
     "item_id", "resource_ref", "meeting_id", "update_id", "watch_id", "run_id",
     "step_id", "send_id", "destination_id", "primitive_id", "directory_id",
-    "project_id", "provider_id",
+    "project_id", "provider_id", "window_id",
 )
 
 

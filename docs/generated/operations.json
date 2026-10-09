@@ -5905,6 +5905,460 @@
         "arguments": [],
         "enforced": false
       }
+    },
+    {
+      "name": "windows.list",
+      "version": 1,
+      "description": "List the open windows on the owner's desk, back to front, with the front one marked.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the MCP auth resolver); the service performs no principal check",
+      "effect": "read",
+      "result": "{windows: [{id, app, object_ref, x, y, w, h (share+px values or null), depth, minimized, zoomed, zoom, arranged, room, front, revision, updated_at}], stage_shelf, revision, registry: {static, families}}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "window_unknown: the desk does not know the window id",
+        "window_id_invalid",
+        "not_found: the window is not open",
+        "window_stale: the revision changed (read again)",
+        "geometry_invalid"
+      ],
+      "completion": "synchronous; windows.list reads the state back; a write sends one desk_changed frame (kind windows) and every open browser follows",
+      "exposure": [
+        "mcp:desk_window.list"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A window is the owner's view of his desk, not a record: no receipt.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "windows.open",
+      "version": 1,
+      "description": "Open a window on the owner's desk, in front. An open window comes to the front.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "window_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The window id (for example chair:brief, zone:<id>, surface-people)."
+          },
+          "object_ref": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 400
+          },
+          "geometry": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 64
+                      }
+                    ],
+                    "description": "Pixels (a number) or share+px (\"50% + 10\", \"-1/2\"); x and y from the view's centre."
+                  },
+                  "y": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 64
+                      }
+                    ],
+                    "description": "Pixels (a number) or share+px (\"50% + 10\", \"-1/2\"); x and y from the view's centre."
+                  },
+                  "w": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 64
+                      }
+                    ],
+                    "description": "Pixels (a number) or share+px (\"50% + 10\", \"-1/2\"); x and y from the view's centre."
+                  },
+                  "h": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 64
+                      }
+                    ],
+                    "description": "Pixels (a number) or share+px (\"50% + 10\", \"-1/2\"); x and y from the view's centre."
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "w",
+                  "h"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "room": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Refuse the write when the window's revision is another one."
+          }
+        },
+        "required": [
+          "window_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the MCP auth resolver); the service performs no principal check",
+      "effect": "write",
+      "result": "{id, app, object_ref, x, y, w, h (share+px values or null), depth, minimized, zoomed, zoom, arranged, room, front, revision, updated_at}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "window_unknown: the desk does not know the window id",
+        "window_id_invalid",
+        "not_found: the window is not open",
+        "window_stale: the revision changed (read again)",
+        "geometry_invalid"
+      ],
+      "completion": "synchronous; windows.list reads the state back; a write sends one desk_changed frame (kind windows) and every open browser follows",
+      "exposure": [
+        "mcp:desk_window.open"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A window is the owner's view of his desk, not a record: no receipt.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "windows.close",
+      "version": 1,
+      "description": "Close a window on the owner's desk.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "window_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The window id (for example chair:brief, zone:<id>, surface-people)."
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Refuse the write when the window's revision is another one."
+          }
+        },
+        "required": [
+          "window_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the MCP auth resolver); the service performs no principal check",
+      "effect": "write",
+      "result": "{id, closed: true}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "window_unknown: the desk does not know the window id",
+        "window_id_invalid",
+        "not_found: the window is not open",
+        "window_stale: the revision changed (read again)",
+        "geometry_invalid"
+      ],
+      "completion": "synchronous; windows.list reads the state back; a write sends one desk_changed frame (kind windows) and every open browser follows",
+      "exposure": [
+        "mcp:desk_window.close"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A window is the owner's view of his desk, not a record: no receipt.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "windows.raise",
+      "version": 1,
+      "description": "Bring a window to the front of the owner's desk.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "window_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The window id (for example chair:brief, zone:<id>, surface-people)."
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Refuse the write when the window's revision is another one."
+          }
+        },
+        "required": [
+          "window_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the MCP auth resolver); the service performs no principal check",
+      "effect": "write",
+      "result": "{id, app, object_ref, x, y, w, h (share+px values or null), depth, minimized, zoomed, zoom, arranged, room, front, revision, updated_at}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "window_unknown: the desk does not know the window id",
+        "window_id_invalid",
+        "not_found: the window is not open",
+        "window_stale: the revision changed (read again)",
+        "geometry_invalid"
+      ],
+      "completion": "synchronous; windows.list reads the state back; a write sends one desk_changed frame (kind windows) and every open browser follows",
+      "exposure": [
+        "mcp:desk_window.raise"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A window is the owner's view of his desk, not a record: no receipt.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "windows.arrange",
+      "version": 1,
+      "description": "Set the rects of several windows in one change (a tile, a layout).",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "rects": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "maxLength": 64
+                    }
+                  ],
+                  "description": "Pixels (a number) or share+px (\"50% + 10\", \"-1/2\"); x and y from the view's centre."
+                },
+                "y": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "maxLength": 64
+                    }
+                  ],
+                  "description": "Pixels (a number) or share+px (\"50% + 10\", \"-1/2\"); x and y from the view's centre."
+                },
+                "w": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "maxLength": 64
+                    }
+                  ],
+                  "description": "Pixels (a number) or share+px (\"50% + 10\", \"-1/2\"); x and y from the view's centre."
+                },
+                "h": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "maxLength": 64
+                    }
+                  ],
+                  "description": "Pixels (a number) or share+px (\"50% + 10\", \"-1/2\"); x and y from the view's centre."
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "w",
+                "h"
+              ],
+              "additionalProperties": false
+            },
+            "minProperties": 1,
+            "description": "Window id to rect."
+          },
+          "expected_revisions": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "rects"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the MCP auth resolver); the service performs no principal check",
+      "effect": "write",
+      "result": "{windows: [{id, app, object_ref, x, y, w, h (share+px values or null), depth, minimized, zoomed, zoom, arranged, room, front, revision, updated_at}]}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "window_unknown: the desk does not know the window id",
+        "window_id_invalid",
+        "not_found: the window is not open",
+        "window_stale: the revision changed (read again)",
+        "geometry_invalid"
+      ],
+      "completion": "synchronous; windows.list reads the state back; a write sends one desk_changed frame (kind windows) and every open browser follows",
+      "exposure": [
+        "mcp:desk_window.arrange"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A window is the owner's view of his desk, not a record: no receipt.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "windows.seat",
+      "version": 1,
+      "description": "Seat a window on the Dock (seated: true) or show it again in front (seated: false).",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "window_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The window id (for example chair:brief, zone:<id>, surface-people)."
+          },
+          "seated": {
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Refuse the write when the window's revision is another one."
+          }
+        },
+        "required": [
+          "window_id",
+          "seated"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the MCP auth resolver); the service performs no principal check",
+      "effect": "write",
+      "result": "{id, app, object_ref, x, y, w, h (share+px values or null), depth, minimized, zoomed, zoom, arranged, room, front, revision, updated_at}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "window_unknown: the desk does not know the window id",
+        "window_id_invalid",
+        "not_found: the window is not open",
+        "window_stale: the revision changed (read again)",
+        "geometry_invalid"
+      ],
+      "completion": "synchronous; windows.list reads the state back; a write sends one desk_changed frame (kind windows) and every open browser follows",
+      "exposure": [
+        "mcp:desk_window.seat"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A window is the owner's view of his desk, not a record: no receipt.",
+        "arguments": [],
+        "enforced": true
+      }
     }
   ]
 }
