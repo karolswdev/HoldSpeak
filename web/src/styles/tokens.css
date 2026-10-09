@@ -363,14 +363,14 @@
   --wb-umbra: 0 18px 40px rgba(0, 0, 0, 0.45); /* PHILO-16 (A1) the light: the front window's umbra, cast down by the one top-left light */
   --wb-umbra-near: 0 10px 22px rgba(0, 0, 0, 0.28); /* PHILO-16 (A1) the light: the near window's umbra, at half */
   --desk-veil-near: rgba(11, 12, 16, 0.06); /* PHILO-16 (A1) the depth ladder: the ink wash over a near window's body (never opacity) */
-  --desk-veil-far: rgba(11, 12, 16, 0.14); /* PHILO-16 (A1) the depth ladder: the ink wash over a far window's body (never opacity) */
+  --desk-veil-far: rgba(11, 12, 16, 0.12); /* PHILO-16 (A1) the depth ladder: the ink wash over a far window's body (never opacity; 12 % per Astra M3, was 14 %) */
   --wb-field: #cdd2db; /* PHILO-16 (A1) the interior: the window ground, slate between paper and steel */
   --wb-field-hi: #d8dce4; /* PHILO-16 (A1) the interior: the ground where the light falls (the top of a window body) */
   --wb-well: #eef0f3; /* PHILO-16 (A1) the interior: a sunken well (ledger, input, icon grid), paper */
   --wb-text: #0b0c10; /* PHILO-16 (A1) the interior: ink, the words inside a window */
   --wb-muted: #4a5060; /* PHILO-16 (A1) the interior: secondary ink (5.3:1 on --wb-field; the canvas said 7.0, measured 5.31) */
   --wb-rule-soft: rgba(11, 12, 16, 0.18); /* PHILO-16 (A1) the interior: a hairline between rows on slate */
-  --wb-sel: #6688bb; /* PHILO-16 (A1) the interior: the selection, Workbench blue with paper on it */
+  --wb-sel: #4a6aa0; /* PHILO-16 (A1) the interior: the selection, Workbench blue in shade with paper on it (paper 4.76:1; Astra M3, was #6688bb at 3.17:1) */
   --desk-window-fall: linear-gradient(180deg, var(--wb-field-hi) 0%, var(--wb-field) 100%); /* PHILO-16 (A1) the interior: the slate ground, lit at the top */
   --desk-floor: radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 60%) 0 0 / auto, linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.28) 100%) 0 0 / auto, repeating-conic-gradient(var(--wb-dither) 0 25%, transparent 0 50%) 0 0 / 8px 8px, var(--wb-backdrop); /* PHILO-16 (A1) the floor: the Workbench backdrop (8 px checker of --wb-dither) under the light's vignette (bright top-left, falling to the foot); a `background` shorthand */
   --desk-ease: cubic-bezier(0.2, 0.8, 0.2, 1); /* PHILO-16 (A1) the motion grammar: the one easing for every compositor moment */

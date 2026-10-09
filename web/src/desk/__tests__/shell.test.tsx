@@ -72,30 +72,26 @@ describe("the dock", () => {
     }
   });
 
-  // PHILO-16 (A1) §5: parked with the window chips (Dock.tsx NUB_CHIPS);
-  // the seat on an application tile restores (windows.test.tsx).
-  it.skip("tap focuses; a parked window's chip restores it", () => {
+  // PHILO-16 (A1) §5: the window chips are parked; a seated window with no
+  // application tile has its own seat tile, which restores it.
+  it("a seated window's seat tile restores it to the front", () => {
     render(<TwoWindows />);
-    fireEvent.click(screen.getByRole("button", { name: "Focus Alpha" }));
-    expect(useDesk.getState().panelOrder.at(-1)).toBe("wa");
+    useDesk.getState().focusPanel("wb");
     fireEvent.click(screen.getByRole("button", { name: "Iconify Alpha" }));
     expect(useDesk.getState().panelMin).toEqual(["wa"]);
-    fireEvent.click(screen.getByRole("button", { name: "Restore Alpha" }));
+    fireEvent.click(screen.getByRole("button", { name: "Alpha, iconified" }));
     expect(useDesk.getState().panelMin).toEqual([]);
     expect(useDesk.getState().panelOrder.at(-1)).toBe("wa");
+    expect(screen.queryByRole("button", { name: "Alpha, iconified" })).toBeNull();
   });
 
-  // PHILO-16 (A1) §5: parked with the window chips (Dock.tsx NUB_CHIPS).
-  it.skip("the dock close affordance drives the window's own close", () => {
+  it("the seat tile's menu Close drives the window's own close", () => {
     const onCloseA = vi.fn();
     render(<TwoWindows onCloseA={onCloseA} />);
-    // Two "Close Alpha" buttons exist (window verb + dock ✕); the dock's
-    // lives inside the toolbar.
-    const dock = screen.getByRole("toolbar", { name: "Dock" });
-    const x = Array.from(dock.querySelectorAll("button")).find(
-      (b) => b.getAttribute("aria-label") === "Close Alpha",
-    )!;
-    fireEvent.click(x);
+    fireEvent.click(screen.getByRole("button", { name: "Iconify Alpha" }));
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Alpha, iconified" }));
+    expect(screen.getByRole("menu", { name: "Alpha dock menu" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: /Close/ }));
     expect(onCloseA).toHaveBeenCalledTimes(1);
   });
 

@@ -453,6 +453,12 @@
 .desk-next .desk-window-shell:not([data-plane="front"], .is-front) > .desk-pullout-head .desk-pullout-title {
   color: var(--wb-ink-dim);
 }
+/* PHILO-16 (A1), Astra M2: a far bar is in shade, so its title is full ink
+   (5.27:1 on --wb-steel-dim; ink-dim read 3.67:1). Near keeps ink-dim on
+   steel (5.44:1). */
+.desk-next .desk-window-shell[data-plane="far"] > .desk-pullout-head .desk-pullout-title {
+  color: var(--wb-ink);
+}
 /* PHILO-16 (A1) §4.1 — the object's icon left of the title, 14 px: the
    same sprite as the window's launcher. It rides the title's cut-out. */
 .desk-next .desk-window-shell > .desk-pullout-head > .desk-window-icon {

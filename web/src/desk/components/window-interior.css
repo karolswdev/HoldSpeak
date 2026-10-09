@@ -68,6 +68,8 @@
      the lamp squares (--lamp-*) keep their bright tones (resolved at :root) */
   --accent: var(--wb-ember-ink);
   --accent-text: var(--wb-ember-ink);
+  /* Astra M3: the egress word (mixed, cloud) reads --accent-hover */
+  --accent-hover: var(--wb-ember-ink);
   --line-emphasis: var(--wb-ember-ink);
   --field-focus-border: var(--wb-sel);
   --ok: var(--wb-ok-ink);

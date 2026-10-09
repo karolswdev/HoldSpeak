@@ -58,27 +58,19 @@ describe("DeskWindowFrame (the one chrome)", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("minimize parks the window (mounted but hidden) and its dock seat restores it", () => {
-    // PHILO-16 (A1) §5: seated windows live in the dock, on their
-    // application's tile (the window chips are parked). The Intelligence
-    // application's window is `pullout:intelligence:desk`.
+  it("minimize parks the window (mounted but hidden) and the dock restores it from its seat", () => {
+    // PHILO-16 (A1) §5: seated windows live in the dock. A window with no
+    // application tile gets its own seat tile (the window chips are parked).
     const { container } = render(
       <>
-        <DeskWindowFrame
-          id="pullout:intelligence:desk"
-          title="Test window"
-          open
-          onClose={() => {}}
-        >
-          <p>window content</p>
-        </DeskWindowFrame>
+        <Host />
         <Dock />
       </>,
     );
     fireEvent.click(
       screen.getByRole("button", { name: "Iconify Test window" }),
     );
-    expect(useDesk.getState().panelMin).toEqual(["pullout:intelligence:desk"]);
+    expect(useDesk.getState().panelMin).toEqual(["t1"]);
     // display:none removes it from the a11y tree; the mount itself parks.
     const shell = container.querySelector(
       '[aria-label="Test window"][role="region"]',
@@ -86,13 +78,38 @@ describe("DeskWindowFrame (the one chrome)", () => {
     expect(shell).toBeTruthy();
     expect(shell.style.display).toBe("none");
     expect(screen.getByText("window content")).toBeInTheDocument();
-    // The dock names it on its tile, lights the seat and restores it.
+    // The dock names it on its seat tile and restores it to the front.
+    const seat = screen.getByRole("button", { name: "Test window, iconified" });
+    expect(seat.querySelector(".desk-dock-seat")).toBeTruthy();
+    fireEvent.click(seat);
+    expect(useDesk.getState().panelMin).toEqual([]);
+    expect(useDesk.getState().panelOrder.at(-1)).toBe("t1");
+    expect(shell.style.display).not.toBe("none");
+  });
+
+  it("an application's window seats on its application tile (PHILO-16 A1 §5)", () => {
+    // The Intelligence application's window is `pullout:intelligence:desk`.
+    render(
+      <>
+        <DeskWindowFrame
+          id="pullout:intelligence:desk"
+          title="Brief window"
+          open
+          onClose={() => {}}
+        >
+          <p>brief</p>
+        </DeskWindowFrame>
+        <Dock />
+      </>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Iconify Brief window" }));
     const tile = screen.getByRole("button", { name: /^Intelligence.*, iconified$/ });
     expect(tile.querySelector(".desk-dock-seat")).toBeTruthy();
     expect(tile.classList.contains("is-seated")).toBe(true);
+    // no second seat: the application tile is the seat
+    expect(document.querySelector(".desk-dock-seat-tile")).toBeNull();
     fireEvent.click(tile);
     expect(useDesk.getState().panelMin).toEqual([]);
-    expect(shell.style.display).not.toBe("none");
   });
 
   it("a seated window with no application tile gets its own seat tile; a press restores it and the tile goes (PHILO-16 A1 §5)", () => {

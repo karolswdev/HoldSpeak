@@ -1450,8 +1450,8 @@
       },
       {
         "name": "--desk-veil-far",
-        "value": "rgba(11, 12, 16, 0.14)",
-        "doc": "PHILO-16 (A1) the depth ladder: the ink wash over a far window's body (never opacity)"
+        "value": "rgba(11, 12, 16, 0.12)",
+        "doc": "PHILO-16 (A1) the depth ladder: the ink wash over a far window's body (never opacity; 12 % per Astra M3, was 14 %)"
       },
       {
         "name": "--wb-field",
@@ -1485,8 +1485,8 @@
       },
       {
         "name": "--wb-sel",
-        "value": "#6688bb",
-        "doc": "PHILO-16 (A1) the interior: the selection, Workbench blue with paper on it"
+        "value": "#4a6aa0",
+        "doc": "PHILO-16 (A1) the interior: the selection, Workbench blue in shade with paper on it (paper 4.76:1; Astra M3, was #6688bb at 3.17:1)"
       },
       {
         "name": "--desk-window-fall",
