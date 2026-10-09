@@ -178,10 +178,15 @@ class TestZoneNameGlass:
                 # The Chair's menu bar (1440: the Desk menu; 393: the one phone door).
                 menu = "desk" if width > 720 else "go"
                 page.locator(f".desk-verbbar-item[data-menu-id={menu}] button").first.click()
-                if width <= 720:  # PHILO-13-17 (C7, Q3): Go ▸ Desk ▸ at 393
-                    go_group(page, "Desk")
-                page.get_by_role("menuitem", name=re.compile("New Note")).first.wait_for(timeout=15_000)
-                assert page.get_by_role("menuitem", name=re.compile("New Zone")).count() == 0
+                if width <= 720:
+                    # PHILO-15 11 (B21): Go at 393 has one group, New ▸ (four
+                    # kinds: Thought, Meeting, Project, Person); no Zone in it.
+                    go_group(page, "New")
+                    page.get_by_role("menuitem", name=re.compile("Thought")).first.wait_for(timeout=15_000)
+                    assert page.get_by_role("menuitem", name=re.compile("Zone")).count() == 0
+                else:
+                    page.get_by_role("menuitem", name=re.compile("New Note")).first.wait_for(timeout=15_000)
+                    assert page.get_by_role("menuitem", name=re.compile("New Zone")).count() == 0
                 page.screenshot(path=str(SHOTS / f"chair-menu-{width}.png"))
                 page.keyboard.press("Escape")
                 # The Floor still offers it.

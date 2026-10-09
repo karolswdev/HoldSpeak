@@ -218,6 +218,22 @@ class TestPaletteTwoLineHit:
                            snip: num(getComputedStyle(r.querySelector('.desk-deck-snippet')).color) }; }""",
                     KEYWORD_ROW)
                 assert _contrast(ink["bg"], ink["snip"]) >= 4.5, ink
+                # Astra #1039: a PROJECTS row's `N OPEN` badge on the selected
+                # plate. The rig seeds no Room, so a badge of the species
+                # DeskToolShelf renders is placed in the selected row and the
+                # shelf's own CSS is measured on it (its ground is its own
+                # background when painted, else the plate under it).
+                badge = page.evaluate("""(sel) => { const r = document.querySelector(sel);
+                  const b = document.createElement('span'); b.className = 'desk-deck-badge'; b.textContent = '2 OPEN';
+                  r.querySelector('.desk-deck-kind').before(b);
+                  const num = (c) => c.match(/[\d.]+/g).map(Number);
+                  const cs = getComputedStyle(b); const bg = num(cs.backgroundColor);
+                  const out = { fg: num(cs.color).slice(0, 3), bg: bg.slice(0, 3), alpha: bg.length > 3 ? bg[3] : 1,
+                                plate: num(getComputedStyle(r).backgroundColor).slice(0, 3) };
+                  b.remove(); return out; }""", KEYWORD_ROW)
+                assert badge["alpha"] in (0, 1), badge          # no wash: the plate, or an opaque chip
+                badge_ground = badge["plate"] if badge["alpha"] == 0 else badge["bg"]
+                assert _contrast(badge_ground, badge["fg"]) >= 4.5, badge
                 page.locator("#desk-tool-shelf").screenshot(
                     path=str(SHOTS / f"palette-two-line-{width}-memory-selected.png"))
                 # #882 review 2: a hovered row and a keyboard-focused row ink every
