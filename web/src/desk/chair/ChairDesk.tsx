@@ -22,6 +22,7 @@ import { DeskWindowFrame } from "../components/DeskWindow";
 import { GadgetGlyph } from "../components/window/GadgetGlyph";
 import { useCompactViewport } from "../useCompactViewport";
 import { useDesk } from "../store";
+import { hubSeeded } from "../compositor/hubWindows";
 import { answerSurfaceFirst } from "../shell";
 import { workBand } from "../components/window/windowGeometry";
 import type { PanelRect } from "../store/types";
@@ -107,6 +108,10 @@ function raiseNeedsAmongChair() {
     if (!useChairWindows.getState().closed[opened]) useDesk.getState().focusPanel(opened);
     return;
   }
+  // PHILO-16 (16b): the hub owns the stacking. Once its rows seeded this
+  // desk, the Chair's mount does not reorder them (a reload keeps the
+  // hub's order, L3; a second view never disagrees with the first).
+  if (hubSeeded()) return;
   const s = useDesk.getState();
   const order = s.panelOrder;
   const chairAt = order

@@ -194,8 +194,11 @@ class TestCompositor:
                 # own rule (PHILO-15-09 B16, ChairDesk.raiseNeedsAmongChair)
                 # raises Needs you on the Chair's mount; every other window
                 # keeps its place.
+                # PHILO-16 (16b): the hub owns the stacking; a reload keeps its
+                # order exactly (the Chair's mount no longer raises Needs you
+                # over the hub's rows).
                 stack = [w["name"] for w in sorted(_wins(page), key=lambda w: w["z"])]
-                want = [n for n in stack if n != "Needs you"] + ["Needs you"]
+                want = stack
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 page.wait_for_timeout(1500)

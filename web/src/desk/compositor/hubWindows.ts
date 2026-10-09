@@ -201,6 +201,8 @@ export interface HubWindows {
   onFrame(data: unknown): void;
   /** Send this browser's persisted changes to the hub now. */
   sync(): void;
+  /** True once the hub's rows seeded this desk (its order is the desk's). */
+  seeded(): boolean;
   /** Resolves when every request in flight has settled (tests, the glass). */
   idle(): Promise<void>;
   readonly presentations: Presentations;
@@ -344,6 +346,8 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     } finally {
       applying = false;
     }
+    const band = view();
+    lastBand = `${band.x},${band.y},${band.w},${band.h}`;
     synced = snapshot();
     // A window open here that the hub does not hold (one no other view can
     // open, e.g. the inspector): it goes to the hub on the next sync.
@@ -470,8 +474,11 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     // one window to the top is a raise, one to the bottom a send back; any
     // other reorder raises each window from the first difference up, which
     // rebuilds the same order on the hub.
+    // A window that left the stacking here without closing (an iconified
+    // Chair window unmounts; a sheet) has no depth: not a send back.
+    const stacked = both.filter((id) => id in cur.depth && id in prev.depth);
     const ordered = (depth: Record<string, number>) =>
-      [...both].sort((a, b) => (depth[a] ?? 0) - (depth[b] ?? 0) || (a < b ? -1 : 1));
+      [...stacked].sort((a, b) => (depth[a] ?? 0) - (depth[b] ?? 0) || (a < b ? -1 : 1));
     const before = ordered(prev.depth);
     const after = ordered(cur.depth);
     const first = after.findIndex((id, i) => before[i] !== id);
@@ -486,6 +493,11 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
       else if (after.slice(1).join("|") === without(bottom))
         enqueue([bottom], {}, () => transport.verb(bottom, "send_back", { expected_revision: rev(bottom) }));
       else for (const id of after.slice(first)) raise(id);
+    }
+    // A window that rejoins the stacking here presents on top (a remount).
+    for (const id of both) {
+      if (id in cur.depth && !(id in prev.depth) && !unseated.has(id))
+        enqueue([id], { front: true }, () => transport.verb(id, "raise", { expected_revision: rev(id) }));
     }
     for (const id of both) {
       const zoomed = cur.max.has(id);
@@ -544,6 +556,53 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     queueMicrotask(sync);
   }
 
+  /** L5: a share is resolved by each view at draw. When this view's band
+   * changes (the Dock publishes its height, the window resizes), the hub's
+   * arranged rects are resolved again; nothing is sent (the shares did not
+   * change). */
+  let lastBand = "";
+  function rebase(): void {
+    if (!synced || applying || stopped) return;
+    const band = view();
+    const key = `${band.x},${band.y},${band.w},${band.h}`;
+    if (key === lastBand) return;
+    lastBand = key;
+    const s = useDesk.getState();
+    const rects = { ...s.panelRects };
+    const zoom = { ...(s.panelZoom ?? {}) };
+    let changed = false;
+    for (const row of rows.values()) {
+      if (presentations.pending(row.id) > 0) continue;
+      const rect = row.arranged ? rectOf(row) : null;
+      if (rect && !sameRect(rect, rects[row.id])) {
+        rects[row.id] = rect;
+        changed = true;
+      }
+      const zr = row.zoom ? rectOf(row.zoom) : null;
+      if (zr && !sameRect(zr, zoom[row.id])) {
+        zoom[row.id] = zr;
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    applying = true;
+    try {
+      useDesk.setState({ panelRects: rects, panelZoom: zoom });
+    } finally {
+      applying = false;
+    }
+    synced = { ...synced, rects: { ...synced.rects, ...pick(rects, Object.keys(synced.rects)) }, zoom: { ...synced.zoom, ...pick(zoom, Object.keys(synced.zoom)) } };
+  }
+  const pick = (from: Record<string, PanelRect>, keys: string[]) =>
+    Object.fromEntries(keys.filter((k) => from[k]).map((k) => [k, from[k]]));
+  let observer: MutationObserver | null = null;
+  const onResize = () => rebase();
+  if (typeof window !== "undefined" && typeof MutationObserver !== "undefined" && typeof document !== "undefined") {
+    observer = new MutationObserver(() => rebase());
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
+    window.addEventListener("resize", onResize);
+  }
+
   /** Resolves when no request is in flight and no re-read is running. */
   function idle(): Promise<void> {
     if (reading) return reading.then(idle);
@@ -586,10 +645,13 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
       void reread(ids.some((id) => !id) ? "all" : new Set(ids));
     },
     sync,
+    seeded: () => synced !== null,
     idle,
     stop() {
       stopped = true;
       unlisten();
+      observer?.disconnect();
+      if (typeof window !== "undefined") window.removeEventListener("resize", onResize);
     },
   };
 }
@@ -602,6 +664,12 @@ let instance: HubWindows | null = null;
 export function hubWindows(): HubWindows {
   if (!instance) instance = createHubWindows();
   return instance;
+}
+
+/** True once the hub seeded this desk: a local mount rule must not reorder
+ * the hub's stacking (a reload keeps the hub's order, L3). */
+export function hubSeeded(): boolean {
+  return instance?.seeded() ?? false;
 }
 
 /** Test seam. */

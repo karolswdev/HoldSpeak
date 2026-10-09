@@ -259,6 +259,16 @@ describe("hubWindows", () => {
     expect(fake.calls.map((c) => [c.verb, c.id]).at(-1)).toEqual(["close", "chair:week"]);
   });
 
+  it("a window that leaves the stacking without closing is not sent back", async () => {
+    const { fake, hub } = start([row("chair:week", { depth: 2 }), row("chair:needs", { depth: 3 }), row("chair:brief", { depth: 4 })]);
+    await hub.start();
+    useDesk.getState().minimizePanel("chair:week");
+    useDesk.getState().retirePanel("chair:week"); // an iconified Chair window unmounts
+    await flush(hub);
+    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["seat", "chair:week"]]);
+    expect(useChairWindows.getState().closed["chair:week"]).toBe(false);
+  });
+
   it("a window frame is not a desk data change", () => {
     expect(isWindowsOnlyFrame({ kind: "windows", id: "chair:brief", changes: [{ kind: "windows", id: "chair:brief" }] })).toBe(true);
     expect(isWindowsOnlyFrame({ kind: "note", id: "n1", changes: [{ kind: "note", id: "n1" }] })).toBe(false);

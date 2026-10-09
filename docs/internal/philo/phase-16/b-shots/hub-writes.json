@@ -1,0 +1,15 @@
+{
+  "A": [
+    "/chair%3Abrief/open {}",
+    "/chair%3Aweek/open {}",
+    "/chair%3Aneeds/open {}",
+    "/chair%3Abrief/raise {\"expected_revision\":1}",
+    "/chair%3Abrief/set_geometry {\"rect\":{\"x\":\"-10.7042%\",\"y\":\"-40.9091%\",\"w\":\"49.1549%\",\"h\":\"62.7942%\"},\"expected_revision\":2}",
+    "/chair%3Aweek/raise {\"expected_revision\":1}",
+    "/chair%3Aweek/seat {\"seated\":true,\"expected_revision\":2}"
+  ],
+  "B": [
+    "/chair%3Aneeds/raise {\"expected_revision\":1}"
+  ],
+  "C": []
+}
