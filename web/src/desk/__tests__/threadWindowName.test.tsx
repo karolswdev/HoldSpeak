@@ -68,7 +68,7 @@ describe("an untitled thread's window: hub wire → mapper → window and Dock c
     expect(o.title).toBe("New thread");          // the Desk list holds no messages
     await waitFor(() => expect(label()).toBe("What changed in the ledger this week?"));
     expect(titleBar()).toBe("What changed in the ledger this week?");
-    expect(chip()).toBe("What changed in the ledger this week?");
+    expect(chip()).toBeUndefined();   // PHILO-16 (A1): the window chips are parked; the Window menu names the registry label
     expect(screen.getByRole("region", { name: "What changed in the ledger this week?" })).toBeTruthy();
     expect(registrySnapshot.map((w) => w.id)).toContain(`pullout:thread:${ID}`);   // the id did not change
   });
@@ -78,7 +78,7 @@ describe("an untitled thread's window: hub wire → mapper → window and Dock c
     await waitFor(() => expect(apiFetch).toHaveBeenCalled());
     expect(label()).toBe("New thread");
     expect(titleBar()).toBe("New thread");
-    expect(chip()).toBe("New thread");
+    expect(chip()).toBeUndefined();   // PHILO-16 (A1): the window chips are parked; the Window menu names the registry label
   });
 
   it("a thread with its own title keeps it, whatever its first message says", async () => {
@@ -86,7 +86,7 @@ describe("an untitled thread's window: hub wire → mapper → window and Dock c
     await waitFor(() => expect(useThreadStore.getState().threads[ID]?.messages.length).toBe(2));
     expect(label()).toBe("Ledger questions");
     expect(titleBar()).toBe("Ledger questions");
-    expect(chip()).toBe("Ledger questions");
+    expect(chip()).toBeUndefined();   // PHILO-16 (A1): the window chips are parked; the Window menu names the registry label
   });
 
   it("a thread whose owner named it `New thread` keeps that title", async () => {

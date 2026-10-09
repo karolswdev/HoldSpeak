@@ -9,9 +9,9 @@
   top: var(--wb-screen-h, 28px);
   bottom: var(--desk-dock-h, 76px);
   z-index: 0;
-  background-color: var(--wb-backdrop);
-  background-image: conic-gradient(var(--wb-dither) 25%, transparent 0 50%, var(--wb-dither) 0 75%, transparent 0);
-  background-size: 4px 4px;
+  /* PHILO-16 (A1) §2: the floor is the Workbench backdrop under the one
+     light (8 px checker, bright top-left, falling to the foot) */
+  background: var(--desk-floor);
   overflow: hidden auto;
   overscroll-behavior: contain;
   font-family: var(--font-sans);

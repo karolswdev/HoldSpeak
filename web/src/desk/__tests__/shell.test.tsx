@@ -50,11 +50,11 @@ function TwoWindows({ onCloseA = () => {} }) {
 }
 
 describe("the dock", () => {
-  it("shows a chip per open window; the four applications ride always", () => {
+  it("draws no window chips (PHILO-16 A1: parked, seats live in the dock); the four applications ride always", () => {
     const { unmount } = render(<TwoWindows />);
     expect(screen.getByRole("toolbar", { name: "Dock" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Focus Alpha" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Focus Beta" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Focus Alpha" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Focus Beta" })).toBeNull();
     unmount();
     // HS-100-11 — the dock IS the launcher: with nothing open it still
     // carries the four applications (no window chips, no running marks).
@@ -72,27 +72,26 @@ describe("the dock", () => {
     }
   });
 
-  it("tap focuses; a parked window's chip restores it", () => {
+  // PHILO-16 (A1) §5: the window chips are parked; a seated window with no
+  // application tile has its own seat tile, which restores it.
+  it("a seated window's seat tile restores it to the front", () => {
     render(<TwoWindows />);
-    fireEvent.click(screen.getByRole("button", { name: "Focus Alpha" }));
-    expect(useDesk.getState().panelOrder.at(-1)).toBe("wa");
+    useDesk.getState().focusPanel("wb");
     fireEvent.click(screen.getByRole("button", { name: "Iconify Alpha" }));
     expect(useDesk.getState().panelMin).toEqual(["wa"]);
-    fireEvent.click(screen.getByRole("button", { name: "Restore Alpha" }));
+    fireEvent.click(screen.getByRole("button", { name: "Alpha, iconified" }));
     expect(useDesk.getState().panelMin).toEqual([]);
     expect(useDesk.getState().panelOrder.at(-1)).toBe("wa");
+    expect(screen.queryByRole("button", { name: "Alpha, iconified" })).toBeNull();
   });
 
-  it("the dock close affordance drives the window's own close", () => {
+  it("the seat tile's menu Close drives the window's own close", () => {
     const onCloseA = vi.fn();
     render(<TwoWindows onCloseA={onCloseA} />);
-    // Two "Close Alpha" buttons exist (window verb + dock ✕); the dock's
-    // lives inside the toolbar.
-    const dock = screen.getByRole("toolbar", { name: "Dock" });
-    const x = Array.from(dock.querySelectorAll("button")).find(
-      (b) => b.getAttribute("aria-label") === "Close Alpha",
-    )!;
-    fireEvent.click(x);
+    fireEvent.click(screen.getByRole("button", { name: "Iconify Alpha" }));
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Alpha, iconified" }));
+    expect(screen.getByRole("menu", { name: "Alpha dock menu" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: /Close/ }));
     expect(onCloseA).toHaveBeenCalledTimes(1);
   });
 

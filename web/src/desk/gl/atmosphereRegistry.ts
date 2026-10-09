@@ -130,7 +130,9 @@ export const ATMOSPHERES = [
 ] as const satisfies readonly AtmosphereDefinition[];
 
 export type AtmosphereId = (typeof ATMOSPHERES)[number]["id"];
-export const DEFAULT_ATMOSPHERE_ID: AtmosphereId = "rainy-city";
+/** PHILO-16 (A1) §2: the backdrop is the default (the owner's ratified
+ * pick); the scenes stay a choice on top of it. A saved preference wins. */
+export const DEFAULT_ATMOSPHERE_ID: AtmosphereId = "quiet-desk";
 
 /** Every authored world belongs in the collection. Quiet Desk remains a
  * Settings-only, no-WebGL choice rather than a numbered scene. */
@@ -145,5 +147,5 @@ export function isAtmosphereId(id: string): id is AtmosphereId {
 export function resolveAtmosphere(
   id: string = DEFAULT_ATMOSPHERE_ID,
 ): AtmosphereDefinition {
-  return ATMOSPHERES.find((atmosphere) => atmosphere.id === id) ?? rainyCity;
+  return ATMOSPHERES.find((atmosphere) => atmosphere.id === id) ?? quietDesk;
 }

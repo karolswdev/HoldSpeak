@@ -14,9 +14,11 @@ describe("Settings wallpaper picker", () => {
     const rainy = screen.getByRole("radio", { name: /Rainy City/ });
     const garden = screen.getByRole("radio", { name: /Lantern Garden/ });
     const quiet = screen.getByRole("radio", { name: /Quiet Desk/ });
-    expect(rainy).toBeChecked();
+    // PHILO-16 (A1) §2: the backdrop (Quiet Desk) is the default; the
+    // scenes stay in the picker.
+    expect(quiet).toBeChecked();
+    expect(rainy).not.toBeChecked();
     expect(garden).not.toBeChecked();
-    expect(quiet).not.toBeChecked();
     expect(rainy.querySelector("img")).toHaveAttribute(
       "src",
       expect.stringContaining("rainy-city.webp"),
@@ -29,7 +31,7 @@ describe("Settings wallpaper picker", () => {
     await user.click(garden);
 
     expect(garden).toBeChecked();
-    expect(rainy).not.toBeChecked();
+    expect(quiet).not.toBeChecked();
     expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("lantern-garden");
   });
 
@@ -37,7 +39,9 @@ describe("Settings wallpaper picker", () => {
     const user = userEvent.setup();
     render(<WallpaperModule />);
     await user.tab();
-    await user.keyboard("{ArrowRight}{ArrowRight}");
+    // the one tab stop is the checked default, Quiet Desk (PHILO-16 A1)
+    expect(screen.getByRole("radio", { name: /Quiet Desk/ })).toHaveFocus();
+    await user.keyboard("{Home}{ArrowRight}{ArrowRight}");
     expect(
       screen.getByRole("radio", { name: /After-Hours Radio/ }),
     ).toHaveFocus();

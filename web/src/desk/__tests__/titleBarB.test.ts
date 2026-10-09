@@ -24,10 +24,13 @@ const decl = (block: string, prop: string) => {
 };
 
 const BAR = ".desk-next .desk-window-shell > .desk-pullout-head";
-const FRONT_BAR = ".desk-next .desk-window-shell.is-front > .desk-pullout-head";
+// PHILO-16 (A1) §3: the bar is drawn from the window's plane; `.is-front`
+// rides as an alias of data-plane="front" for one release.
+const FRONT_BAR = '.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head';
 const TITLE = `${BAR} .desk-pullout-title`;
 const FRONT_TITLE = `${FRONT_BAR} .desk-pullout-title`;
-const INACTIVE_TITLE = ".desk-next .desk-window-shell:not(.is-front) > .desk-pullout-head .desk-pullout-title";
+const INACTIVE_TITLE = '.desk-next .desk-window-shell:not([data-plane="front"], .is-front) > .desk-pullout-head .desk-pullout-title';
+const FAR_BAR = '.desk-next .desk-window-shell[data-plane="far"] > .desk-pullout-head';
 
 describe("title bar B: the tokens", () => {
   it("defines the four B tokens once", () => {
@@ -45,10 +48,12 @@ describe("title bar B: the tokens", () => {
 });
 
 describe("title bar B: the rule", () => {
-  it("inactive bars are flat: steel, no stripes, no bevel; the ink rule under the bar stays", () => {
+  it("inactive bars are flat: steel, no stripes; the shine on top and the ink rule under the bar (PHILO-16 §2: the plate under the one light)", () => {
     const bar = rule(BAR);
     expect(decl(bar, "background")).toBe("var(--wb-steel)");
-    expect(decl(bar, "box-shadow")).toBe("inset 0 -1px 0 var(--wb-ink)");
+    expect(decl(bar, "box-shadow")).toBe("inset 0 1px 0 var(--wb-hi), inset 0 -1px 0 var(--wb-ink), 0 1px 0 var(--wb-hi)");
+    // PHILO-16 (A1) §3: a far window's bar is in shade, still flat
+    expect(decl(rule(FAR_BAR), "background")).toBe("var(--wb-steel-dim)");
   });
 
   it("only the front bar carries stripes: the fine stipple on the front pen", () => {
@@ -61,7 +66,8 @@ describe("title bar B: the rule", () => {
   it("the title sits on the bar: no plate when inactive, a cut-out in the bar's own blue in front", () => {
     const title = rule(TITLE);
     expect(decl(title, "background")).toBe("transparent");
-    expect(decl(title, "font")).toBe("700 12px/calc(var(--wb-bar-h) - 2px) var(--font-mono)");
+    // PHILO-16 (A1) §4.2: the window title is sans 13/600
+    expect(decl(title, "font")).toBe("600 13px/calc(var(--wb-bar-h) - 2px) var(--font-sans)");
     expect(decl(title, "margin")).toBe("0 6px 1px");
     expect(decl(rule(FRONT_TITLE), "background")).toBe("var(--wb-blue)");
     expect(decl(rule(INACTIVE_TITLE), "color")).toBe("var(--wb-ink-dim)");

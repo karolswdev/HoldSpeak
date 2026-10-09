@@ -296,6 +296,8 @@ export function ConductorWindow() {
       origin={reads.origin}
       open
       unmountOnMinimize
+      // PHILO-16 (A1) §4.3: an agent that asks (or holds a call) lights the bar.
+      lamp={head.ask > 0 ? "ask" : undefined}
       onClose={() => useConductor.getState().closeWindow()}
     >
       <div className="desk-pullout-body drawer-body" data-testid="conductor-window">

@@ -222,10 +222,12 @@ class TestTheDeskRemembers(_Rig):
                 room_after = next((w["rect"] for w in after_windows if w["id"] == "surface-project-memory"), None)
                 titles = [w["title"] for w in after_windows]
                 decision_drawn = any(DECISION in t for t in titles)
-                chips = page.evaluate("() => [...document.querySelectorAll('.desk-dock-chip button')].map(b => (b.getAttribute('aria-label') || b.textContent || '').trim())")
+                # PHILO-16 (A1) §5: the window chips are parked; a seated window
+                # with no application tile (a decision pullout) has its own seat tile.
+                chips = page.evaluate("() => [...document.querySelectorAll('.desk-dock .desk-dock-seat-tile')].map(b => (b.getAttribute('aria-label') || b.textContent || '').trim())")
                 proof = {"width": width, "before": before, "after_windows": after_windows,
                          "people": {"person": person, "tab": tab, "agenda": agenda},
-                         "room_rect_after": room_after, "dock_chips": chips,
+                         "room_rect_after": room_after, "dock_seats": chips,
                          "writes_after_reload": [p for p in puts if p not in before["writes"]]}
                 (SHOTS / f"B2-proof-{width}.json").write_text(json.dumps(proof, indent=1) + "\n")
 
@@ -318,11 +320,14 @@ class TestSliceTwoReturns(_Rig):
         })""")
 
     def _front(self, page: Any, width: int, title: str) -> None:
-        """The window's Dock chip brings it forward (it returned on its
-        remembered plane, so a later window may cover it)."""
-        chip = page.locator(f".desk-dock-chip button[aria-label^='Focus {title}']").first
-        if chip.count():
-            self._press(page, chip, width)
+        """Window ▸ <title> brings the window forward (it returned on its
+        remembered plane, so a later window may cover its title bar).
+        PHILO-16 (A1) §5: the Dock's window chips are parked; at 1440 the
+        Window menu lists every open window. 393 shows one window at a time."""
+        if width >= 720:
+            page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
+            page.locator(".desk-verbbar-menu").wait_for()
+            page.locator(".desk-verbbar-menu [role^='menuitem']", has_text=title).first.click()
         else:
             page.locator(f"[aria-label='{title}'] .desk-pullout-head, #trust .desk-pullout-head").first.click(position={"x": 200, "y": 10}, force=False)
         page.wait_for_timeout(500)
