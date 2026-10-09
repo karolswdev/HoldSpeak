@@ -334,9 +334,16 @@ describe("Runs on — Try it", () => {
     fireEvent.click(confirm);
     await waitFor(() => expect(m.probe).toHaveBeenCalledWith("lan:q27", false));
     await waitFor(() =>
-      expect(screen.getByTestId("switchboard-result-meetings").textContent).toBe("READY · qwen3.8 27B · 410 MS · WITHOUT CALENDAR"),
+      expect(screen.getByTestId("switchboard-result-meetings").textContent).toBe("REACHED · qwen3.8 27B · 410 MS · WITHOUT CALENDAR"),
     );
     expect(screen.getByTestId("runson-egress").textContent).toContain("192.168.1.43");
+  });
+
+  it("a probe with no latency shows no ms token (A.8)", async () => {
+    m.taskProbe.mockResolvedValue({ state: "READY", ok: true, model: "Qwen 3.5 4B", latencyMs: 0, host: "THIS DEVICE", legs: [] });
+    await board();
+    fireEvent.click(screen.getByTestId("runson-try-thoughts_notes"));
+    await waitFor(() => expect(screen.getByTestId("switchboard-result-thoughts_notes").textContent).toBe("READY · Qwen 3.5 4B"));
   });
 
   it("Speech: you speak, it shows what it heard", async () => {
@@ -347,7 +354,7 @@ describe("Runs on — Try it", () => {
     await waitFor(() => expect(screen.getByTestId("runson-try-speech_recognition").textContent).toBe("Stop"));
     fireEvent.click(screen.getByTestId("runson-try-speech_recognition"));
     await waitFor(() =>
-      expect(screen.getByTestId("switchboard-result-speech_recognition").textContent).toMatch(/^HEARD: "freeze the old ledger on nov 5" · \d+ MS$/),
+      expect(screen.getByTestId("switchboard-result-speech_recognition").textContent).toMatch(/^HEARD: "freeze the old ledger on nov 5"( · \d+ MS)?$/),
     );
     expect(m.probe).not.toHaveBeenCalled();
   });

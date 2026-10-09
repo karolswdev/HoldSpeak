@@ -84,6 +84,11 @@ function clock(): string {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
+/** A.8: a latency the probe did not report (or reported as 0) is no token. */
+export function msToken(ms: number | null | undefined): string[] {
+  return typeof ms === "number" && ms > 0 ? [`${ms} MS`] : [];
+}
+
 function scopeFor(job: string): AssignmentScope {
   return job === DEFAULT_JOB ? { kind: "global" } : { kind: "group", group_id: job };
 }
@@ -353,7 +358,13 @@ export function useRunsOn(scope?: string) {
           const answer = await conciergeTaskProbe(PROBE_CAPABILITY, confirmed || undefined);
           if (answer.state === "REFUSED") {
             // A fallback leg leaves the machine: the press first.
-            setPending({ job, host: "OFF THIS MACHINE", scope: answer.paid ? "cloud" : "local" });
+            // The route's boundary says a leg leaves this machine: name the
+            // address the engine reaches, else say so plainly.
+            setPending({
+              job,
+              host: engine.baseUrl ? endpointHostPort(engine.baseUrl).toUpperCase() : "OFF THIS MACHINE",
+              scope: answer.paid ? "cloud" : "local",
+            });
             setResults((prev) => {
               const next = { ...prev };
               delete next[job];
@@ -364,14 +375,16 @@ export function useRunsOn(scope?: string) {
           ok = answer.ok;
           if (answer.host) host = answer.host.toUpperCase();
           tokens = ok
-            ? ["READY", answer.model || engine.name, `${answer.latencyMs ?? 0} MS`]
-            : ["BROKEN", (answer.reasonCode || "UNREACHABLE").replace(/_/g, " ").toUpperCase()];
+            ? ["READY", answer.model || engine.name, ...msToken(answer.latencyMs)]
+            : ["BROKEN", (answer.reasonCode || "NO ANSWER").replace(/_/g, " ").toUpperCase()];
         } else {
           if (!engine.detectId) throw new Error("not detected");
           const answer = await conciergeProbe(engine.detectId, engine.kind === "cloud");
           ok = answer.state === "READY";
+          // A.10: this probe reads the engine's model list, not a request
+          // through the route, so it says REACHED, never READY.
           tokens = ok
-            ? ["READY", engine.name, `${answer.latencyMs ?? 0} MS`]
+            ? ["REACHED", engine.name, ...msToken(answer.latencyMs)]
             : ["BROKEN", answer.state === "NOT_SUPPORTED" ? "NO ADAPTER" : "NO ANSWER"];
         }
         if (ok) tokens.push(...limitTokens(job, engine));
@@ -410,7 +423,7 @@ export function useRunsOn(scope?: string) {
       setResults((prev) => ({
         ...prev,
         [SPEECH_JOB]: text.trim()
-          ? { tone: "ok", tokens: [`HEARD: "${text.trim()}"`, `${ms} MS`] }
+          ? { tone: "ok", tokens: [`HEARD: "${text.trim()}"`, ...msToken(ms)] }
           : { tone: "danger", tokens: ["HEARD NOTHING"] },
       }));
       setEgress({ label: "THIS DEVICE", scope: "local" });

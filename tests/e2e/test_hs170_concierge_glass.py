@@ -283,8 +283,20 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 confirm.click()
                 page.get_by_test_id("switchboard-result-meetings").wait_for()
                 page.wait_for_function(
-                    "() => /^READY · /.test(document.querySelector('[data-testid=switchboard-result-meetings]')?.textContent || '')"
+                    "() => /^REACHED · qwen3\\.8 27B$/i.test(document.querySelector('[data-testid=switchboard-result-meetings]')?.textContent || '')"
                 )
+                # Thoughts & notes runs a real request through its route (the Ask probe).
+                page.get_by_test_id("runson-try-thoughts_notes").click()
+                # An endpoint profile's route names a network boundary even on
+                # loopback, so the probe waits for the press (Article III).
+                page.get_by_test_id("runson-try-confirm").click()
+                thoughts = page.get_by_test_id("switchboard-result-thoughts_notes")
+                thoughts.wait_for()
+                page.wait_for_function(
+                    "() => !/TRYING/.test(document.querySelector('[data-testid=switchboard-result-thoughts_notes]')?.textContent || 'TRYING')",
+                    timeout=15_000,
+                )
+                assert thoughts.inner_text().upper().startswith("READY · "), thoughts.inner_text()
                 _shot(page, "c3-try-it", width)
 
                 # FOUND → Use it: the engine joins the column with no wire.
@@ -336,6 +348,21 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 page.get_by_test_id("runson-undo").wait_for()
                 assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
                 _shot(page, "c2-list-patched", width)
+            # Meaning search (ratified: a row under the board) scrolls into
+            # the body, clear of the window's foot.
+            meaning = page.locator(".runson-meaning > *").first
+            meaning.scroll_into_view_if_needed()
+            _settle(page)
+            clear = page.evaluate("""() => {
+              const row = document.querySelector('.runson-meaning > *');
+              const win = row && row.closest('.desk-surface-window');
+              const foot = win && win.querySelector('.surface-footer-layout');
+              if (!row || !foot) return 'missing';
+              const r = row.getBoundingClientRect(), f = foot.getBoundingClientRect();
+              return r.height > 0 && r.bottom <= f.top + 1 ? true : `row ${r.top}-${r.bottom} foot ${f.top}`;
+            }""")
+            assert clear is True, clear
+            _shot(page, "c7-meaning-search" if width == 1440 else "c3-meaning-search", width)
             _assert_clean(page, errors)
             browser.close()
     finally:
