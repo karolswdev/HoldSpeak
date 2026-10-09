@@ -83,7 +83,11 @@
   color: var(--wb-text);
 }
 
-/* the ground is lit: brighter at the top where the light falls (§2) */
+/* the ground is lit: brighter at the top where the light falls (§2).
+   The fall is an image over a solid slate colour, so the window's ground
+   COLOUR is slate too (a gradient alone left background-color transparent:
+   whatever reads the ground, a contrast fence or a host's own rule,
+   found the dark page under the window). */
 .desk-next .desk-window.desk-window-shell {
-  background: var(--desk-window-fall);
+  background: var(--desk-window-fall) var(--wb-field);
 }
