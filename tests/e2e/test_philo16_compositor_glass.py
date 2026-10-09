@@ -92,8 +92,17 @@ def _inside(rect: list[int], band: dict[str, float], slack: int = 2) -> bool:
 PANEL_JS = r"""() => { const d = JSON.parse(localStorage.getItem('hs.desk.workspace.v1') || 'null');
   const p = (d && d.panel) || {}; return {rects: p.rects || {}, zoom: p.zoom || {}, max: p.max || []}; }"""
 
+# The motion moving the window itself (a lift, an arrange): script
+# animations on transform / scale. A1's plane change is CSS transitions of
+# colour and shadow (the ladder), which may run while the pointer is down.
 RUNNING_JS = r"""(name) => { const el = document.querySelector(`.desk-window-shell[aria-label='${name}']`);
-  return el ? el.getAnimations().filter((a) => a.playState === 'running').length : -1; }"""
+  if (!el) return -1;
+  return el.getAnimations({subtree: false}).filter((a) => a.playState === 'running' && !(a instanceof CSSTransition))
+    .filter((a) => (a.effect.getKeyframes() || []).some((k) => 'scale' in k || 'transform' in k)).length; }"""
+
+ALL_RUNNING_JS = r"""(name) => { const el = document.querySelector(`.desk-window-shell[aria-label='${name}']`);
+  return el ? el.getAnimations().filter((a) => a.playState === 'running')
+    .map((a) => a instanceof CSSTransition ? `transition:${a.transitionProperty}` : `${a.constructor.name}:${a.animationName || ''}`) : null; }"""
 
 
 def _drag(page: Any, selector: str, dx: float, dy: float, *, hold: Any = None) -> None:
@@ -386,7 +395,7 @@ class TestCompositor:
                 _drag(page, ".desk-window-shell[aria-label='Brief'] .desk-window-grip", -40, -30,
                       hold=lambda: (page.wait_for_timeout(60), running.append(page.evaluate(RUNNING_JS, "Brief"))))
                 if running != [0]:
-                    fails["M4 no lift during a resize"] = running
+                    fails["M4 no lift during a resize"] = {"lifts": running, "all": page.evaluate(ALL_RUNNING_JS, "Brief")}
 
                 # M2: two surface windows (min-width 420) tiled; the divider
                 # dragged past both minimums.
