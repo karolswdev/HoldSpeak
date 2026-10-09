@@ -57,6 +57,7 @@ MATERIAL_JS = r"""(root) => {
   const softSunken = resolve('var(--bevel-sunken-soft)');
   // On the Steel plate (the title bar: Raw) the grammar rides --wb-raised.
   const wbRaised = resolve('var(--wb-raised)');
+  const wbSunken = resolve('var(--wb-sunken)');
   const seen = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const TOKEN = '.surface-filter-token, .surface-project-button';
   const btns = [...scope.querySelectorAll('.btn:not(:disabled):not([aria-pressed="true"])')]
@@ -68,7 +69,7 @@ MATERIAL_JS = r"""(root) => {
   const bodies = [...scope.querySelectorAll(BODY)].filter(seen)
     .filter((b) => !b.parentElement || !b.parentElement.closest(BODY));
   return {
-    raised, sunken, soft, softSunken, wbRaised,
+    raised, sunken, soft, softSunken, wbRaised, wbSunken,
     tokens: tokens.map((t) => ({ name: (t.textContent || '').trim().slice(0, 40),
       active: t.hasAttribute('data-filter-active'), shadow: getComputedStyle(t).boxShadow })),
     buttons: btns.map((b) => ({ name: (b.textContent || '').trim().slice(0, 40), shadow: getComputedStyle(b).boxShadow })),
@@ -223,7 +224,10 @@ def test_the_material_on_six_faces(tmp_path: Path, monkeypatch: pytest.MonkeyPat
                 pressed = verb.evaluate("(el) => getComputedStyle(el).boxShadow")
                 page.mouse.up()
                 m = page.evaluate(MATERIAL_JS, None)
-                assert pressed.startswith(m["sunken"]), (pressed, m["sunken"])
+                # Phase 16 (the kit Verb is the Steel plate): on the Steel the
+                # grammar rides --wb-raised / --wb-sunken (contract.md "The
+                # bevel grammar"), so a pressed Verb sinks to --wb-sunken.
+                assert pressed.startswith((m["sunken"], m["wbSunken"])), (pressed, m["sunken"], m["wbSunken"])
 
                 if width == 393:
                     assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")

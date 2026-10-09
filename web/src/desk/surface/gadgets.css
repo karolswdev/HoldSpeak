@@ -321,17 +321,25 @@
 
 /* ── StringGadget: sunken well, LEFT-aligned, fills its column; mic
    docked flush-right INSIDE the well ── */
+/* Phase 16 (the interior kit, §11 "AskWell"; canvas `.askwell`): every
+   text well is a SUNKEN PAPER well (1 px ink border, the Steel sunken
+   bevel), ink words in the sans body step; the mic is a raised Steel plate
+   on the well's right edge (the voice law: a mic on every input). */
 .gadget-string {
+  --text: var(--wb-text);
+  --text-muted: var(--wb-muted);
   display: flex;
   align-items: stretch;
   width: 100%;
-  min-height: 22px;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  box-shadow: var(--desk-window-etch);
+  min-height: 26px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-well);
+  box-shadow: var(--wb-sunken);
 }
 .gadget-string:focus-within {
-  border-color: var(--accent);
+  border-color: var(--wb-ink);
+  outline: 1px solid var(--wb-sel);
+  outline-offset: 0;
 }
 /* PHILO-15 02: StringGadget `caption` — the visible name above the well,
    the caption step (12 px mono uppercase, UX-CANON C). */
@@ -360,10 +368,14 @@
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  padding: 1px 6px;
-  font: 400 12px / 1.35 var(--font-mono);
-  color: var(--text);
+  padding: 4px 10px;
+  font: 400 13px / 1.35 var(--font-sans);
+  color: var(--wb-text);
   text-align: left;
+}
+.gadget-string input::placeholder {
+  color: var(--wb-muted);
+  opacity: 1;
 }
 .gadget-string input:focus {
   outline: none;
@@ -379,20 +391,25 @@
   -webkit-appearance: none;
   margin: 0;
 }
-/* The docked in-well mic: square, beveled, 20×20. */
+/* The mic on the well's right edge: a raised Steel plate the well's full
+   height, ink-bordered on its left (Phase 16, canvas `.askwell i`). */
 .gadget-string .desk-mic,
 .desk-next .gadget-string .desk-mic {
   display: grid;
   place-items: center;
   flex: none;
-  align-self: center;
-  width: var(--size-icon-md);
-  height: var(--size-icon-md);
-  margin-right: 1px;
+  align-self: stretch;
+  width: var(--size-icon-lg);
+  height: auto;
+  min-height: 24px;
+  margin: 0;
   border-radius: 0;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  border: 0;
+  background: var(--wb-steel);
+  /* The ink hairline on the plate's left edge is an inset shadow, never a
+     border rail (HS-101 canon rule 6), then the soft raised bevel. */
+  box-shadow: inset 1px 0 0 var(--wb-ink), var(--wb-raised-soft);
+  color: var(--wb-ink);
   font-size: 10px;
   line-height: 0;
   padding: 0;

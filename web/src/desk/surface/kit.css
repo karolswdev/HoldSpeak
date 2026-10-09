@@ -1,0 +1,162 @@
+/* Phase 16 — THE INTERIOR KIT (COMPOSITOR.md §11; the canvas block
+   "THE INTERIOR KIT"). The two species the library lacked: AppHead with its
+   StatusStrip, and the FilterBar rail; plus the LedgerRow's kind plate and
+   meta. The rest of the kit restyles the existing species in place
+   (surface.css: Section, Ledger; objects.css: IconGrid well; gadgets.css:
+   the string well; surface-footer.css: the Foot; global.css: the Verb).
+
+   Colour inside a window: ink, muted ink, the lamp tones, the selection
+   blue. Nothing else. The material tokens (`--wb-field`, `--wb-well`,
+   `--wb-text`, `--wb-muted`, `--wb-rule-soft`, `--wb-sel`, the `*-ink`
+   tones) are lane A1's (tokens.css); the kit reads them directly. */
+
+/* AppHead: the one big fact + the status strip, on one baseline. */
+.kit-apphead {
+  display: flex;
+  align-items: baseline;
+  gap: 6px 16px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.kit-apphead > .kit-disp {
+  margin: 0;
+  font: 650 26px / 1.1 var(--font-display);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--wb-text);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* StatusStrip: tokens (lamp square + word), mono 12 upper; wraps. */
+.kit-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  min-width: 0;
+  font: 500 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+}
+/* Inline (not flex), so the space between a word and its value stays. */
+.kit-strip-token {
+  display: inline-block;
+  white-space: nowrap;
+}
+.kit-strip-token b {
+  color: var(--wb-text);
+  font-weight: 700;
+}
+.kit-strip-verb {
+  display: inline-flex;
+  align-items: center;
+}
+/* The lamp square: 8 px, 1 px ink border, the lamp tone. */
+.kit-sq {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  vertical-align: 0;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+}
+.kit-sq[data-tone="ok"] { background: var(--lamp-ok); }
+.kit-sq[data-tone="warn"] { background: var(--lamp-warn); }
+.kit-sq[data-tone="fail"] { background: var(--lamp-fail); }
+.kit-sq[data-tone="info"] { background: var(--lamp-info); }
+.kit-sq[data-tone="ask"] { background: var(--lamp-ask); }
+
+/* FilterBar: the filter tokens on one rail; a trailing verb group at the
+   rail's right. Wraps (never scrolls sideways, HS-200-12). */
+.kit-filterbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 0;
+  min-width: 0;
+}
+.kit-filterbar-sp {
+  flex: 1 1 8px;
+}
+.kit-filterbar-trailing {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* The LedgerRow kind plate: raised Steel, 44 px, mono 12/700, ink. */
+.kit-kind {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 44px;
+  padding: 4px 0;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised-soft);
+  color: var(--wb-ink);
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* The LedgerRow meta: mono 12 upper; the `ask`, `ok` and `fail` tones are
+   lane A1's ink tones (readable on paper and slate). */
+.surface-ledger-meta {
+  font: 500 12px / 1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+  white-space: nowrap;
+}
+.surface-ledger-meta[data-tone="ask"] { color: var(--wb-ember-ink); }
+.surface-ledger-meta[data-tone="ok"] { color: var(--wb-ok-ink); }
+.surface-ledger-meta[data-tone="fail"] { color: var(--wb-danger-ink); }
+
+/* The kit Ledger's row template (`cols="kit"`): plate · name · meta ·
+   verbs on one line; in a narrow window the meta and the verbs fall under
+   the name (the plate keeps its column). */
+/* (Specificity above the `data-wrap` narrow rule of surface.css, which
+   this file precedes.) */
+.surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line,
+.surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 4px 10px;
+}
+.surface-ledger[data-cols="kit"] .surface-ledger-lead {
+  min-width: 0;
+}
+@container surface (max-width: 559.9px) {
+  .surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line,
+  .surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+  .surface-ledger[data-cols="kit"] .surface-ledger-line > .surface-ledger-meta,
+  .surface-ledger[data-cols="kit"] .surface-ledger-line > .surface-ledger-trailing {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}
+
+/* A window's list rule (window-chrome.css `.desk-pullout-body ul`: an 18 px
+   indent, a 4 px gap) never reaches a kit well: the rows sit flush in the
+   paper, hairline to hairline. */
+.desk-next .surface-ledger > ul.surface-ledger-rows,
+.desk-next .desk-pullout-body ul.needs-list {
+  padding-left: 0;
+  gap: 0;
+}
+
+/* A ledger with no rows and no head draws no well (an empty paper slab is a
+   counter of zero in another form, UX-CANON A.8). */
+.surface-ledger:not(:has(> .surface-ledger-head)):has(> ul.surface-ledger-rows:empty) {
+  display: none;
+}

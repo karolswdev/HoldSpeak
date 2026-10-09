@@ -41,6 +41,7 @@ import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
 import { renderHeroSlot } from "./core-layout";
+import { readMeetingIntel } from "../../meetings/MeetingSummarySlab";
 import {
   WINGS, clockTime, ledgerDate, download, needsIntelligence, summaryIsOff, meetingsHeadline,
   hasOpenMeetingActions, finishedRunReceipt, intelStateOf,
@@ -48,6 +49,15 @@ import {
   type Receipt, type DetailView,
   MeetingDetail, ImportSection, CatalogRail, DoorSection,
 } from "./history";
+
+/** Phase 16: a foot verb brings a well on the open record into view (and,
+ *  for Send, puts the focus on its first control). */
+function revealOnRecord(anchorId: string, focus = false): void {
+  const el = document.getElementById(anchorId);
+  if (!el) return;
+  el.scrollIntoView?.({ block: "start", behavior: "smooth" });
+  if (focus) el.querySelector<HTMLElement>("button:not(:disabled), input, textarea")?.focus({ preventScroll: true });
+}
 
 export function HistoryCore({ hero, scope }: CoreProps) {
   const requestedMeetingScope =
@@ -725,8 +735,12 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   ) : (
     <>
       {/* HS-170-04: the headline (display step, ONE per face) */}
-      <div className="meetings-headline" data-accent={headline.accent || undefined}>
-        <span className="surface-display" data-testid="meetings-headline">
+      {/* Phase 16 (§C: the display step once per window): while a meeting
+          is open its title is the window's one big fact (the detail's
+          AppHead); the list's headline steps down to a strip token. */}
+      <div className="meetings-headline" data-accent={headline.accent || undefined}
+        data-quiet={selected ? "true" : undefined}>
+        <span className={selected ? "kit-strip-token meetings-headline-quiet" : "surface-display"} data-testid="meetings-headline">
           {headline.text}
         </span>
       </div>
@@ -830,6 +844,23 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         verbs={
           selected && wings.view !== "record" ? (
             <span className="surface-footer-verbs-group">
+              {/* Phase 16 (the canvas window "Cutover sync"): the foot's
+                  Open transcript and Send (the meeting's one filled
+                  primary) bring their wells into view on the record. */}
+              {wings.view === "outcomes" && !wings.doorOpen ? (
+                <>
+                  <Button dense variant="ghost" data-testid="meeting-open-transcript"
+                    onClick={() => revealOnRecord(`meeting-${selectedId}-transcript`)}>
+                    Open transcript
+                  </Button>
+                  {selected.has_summary === true || String(readMeetingIntel(selected)?.summary ?? "").trim() ? (
+                    <Button dense variant="primary" data-testid="meeting-send"
+                      onClick={() => revealOnRecord(`meeting-${selectedId}-send`, true)}>
+                      Send
+                    </Button>
+                  ) : null}
+                </>
+              ) : null}
               {/* PHILO-15 16 (B37): the meeting joins a Project. */}
               <AddToProject meetingId={selectedId} onReceipt={(next) => setReceipt(next.tone === "danger" ? { text: next.text, tone: "danger" } : { text: next.text })} />
               <Button dense variant="ghost" onClick={() => void exportMeeting("markdown")}>

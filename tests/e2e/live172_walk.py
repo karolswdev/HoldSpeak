@@ -705,9 +705,9 @@ def _step_meeting_detail(page: Any, out_dir: Path, w: int, token: str,
             factTokens = facts.textContent.trim();
         }
 
-        // Check for RAN chip (StateChip with state="success" label="RAN")
-        const ranChip = facts ? facts.querySelector('.surface-state-chip') : null;
-        const hasRanChip = ranChip ? ranChip.textContent.trim().includes('RAN') : false;
+        // Phase 16: the summary's state on the strip (the ok lamp + SUMMARISED)
+        const ranChip = facts ? facts.querySelector('[data-testid="meeting-summary-state"]') : null;
+        const hasRanChip = ranChip ? ranChip.textContent.trim().includes('SUMMARISED') : false;
 
         // EgressChip in detail facts
         const egressChip = facts ? facts.querySelector('.gadget-chip-egress') : null;
@@ -774,7 +774,7 @@ def _step_meeting_detail(page: Any, out_dir: Path, w: int, token: str,
         verdict="DATA", why="real desk content",
     )))
     report.facts.append(asdict(FaceFact(
-        face=face, field="detail_facts", expected="DATE . N MIN . RAN . N S . host . LAN",
+        face=face, field="detail_facts", expected="DATE . N MIN . SUMMARISED . N S . host . LAN",
         observed=detail_data.get("factTokens", "---")[:200],
         verdict="DATA", why="real desk content",
     )))
@@ -782,7 +782,7 @@ def _step_meeting_detail(page: Any, out_dir: Path, w: int, token: str,
         face=face, field="ran_chip", expected="true",
         observed=str(detail_data.get("hasRanChip", False)),
         verdict="MATCH" if detail_data.get("hasRanChip") else "DATA",
-        why="RAN chip present" if detail_data.get("hasRanChip") else "no RAN chip",
+        why="SUMMARISED present" if detail_data.get("hasRanChip") else "no SUMMARISED",
     )))
     report.facts.append(asdict(FaceFact(
         face=face, field="egress_chip", expected="(host . LAN or THIS DEVICE)",

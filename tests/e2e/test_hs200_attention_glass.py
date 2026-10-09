@@ -311,7 +311,7 @@ def _seed_quiet(page: Any) -> str:
 # ── glass helpers ────────────────────────────────────────────────────
 
 #: The drawer's member rows (not the source rows, not the waiting or muted lists).
-MEMBERS = "[data-testid='needs-list'] > ul > [data-testid='needs-row']"
+MEMBERS = "[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row']"
 #: The drawer's source rows (a source not read, no calendar).
 SOURCES = "[data-testid='needs-source-row']"
 
@@ -515,13 +515,20 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
             wire = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
             assert len(wire["members"]) == 17, [(r["title"], r["source"]) for r in wire["items"]]
             # PHILO-15-09 (B11): the one number is the rows (members + unread sources).
-            assert wire["count"] == 17 + sum(1 for c in wire["coverage"] if c["state"] != "available")
+            # PHILO-15 B60: a source held by quiet hours is drawn as a source row
+            # but never counted (needs_you_membership.unread_sources), so the
+            # count is the same at any hour: a source late in quiet hours is
+            # `quiet`, outside them `stale`.
+            gaps = [c for c in wire["coverage"] if c["state"] != "available"]
+            unread = [c for c in gaps if c["state"] != "quiet"]
+            assert wire["count"] == 17 + len(unread), (wire["count"], gaps)
             assert len(wire["projects"]) == 3
             assert wire["complete"] is False
             available = sum(1 for c in wire["coverage"] if c["state"] == "available")
             expected = len(wire["coverage"])
-            gaps = [c for c in wire["coverage"] if c["state"] != "available"]
-            assert {c["repair"]["token"] for c in gaps} >= {"CANT CHECK", "STALE"}, gaps
+            tokens = {c["repair"]["token"] for c in gaps}
+            assert "CANT CHECK" in tokens, gaps
+            assert "STALE" in tokens or any(t.startswith("QUIET UNTIL") for t in tokens), gaps
             first = wire["items"][0]
             assert first["title"].startswith("KAN-7"), first
             assert first["rankClass"] == "overdue" and first["dedupCount"] == 2, first
@@ -534,7 +541,7 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
 
             # PHILO-15-09 (B11): the head IS the rows: 17 members + the unread sources.
             headline = (page.get_by_test_id("arrival-display").text_content() or "").strip()
-            assert headline == f"{17 + len(gaps)} need you", headline
+            assert headline == f"{17 + len(unread)} need you", headline
 
             # One source row per unread source, each with its owning verb.
             sources = page.locator(SOURCES).filter(has_not_text="No calendar")

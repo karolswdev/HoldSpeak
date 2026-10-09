@@ -126,7 +126,9 @@
    The room cols use a 16px lead, so override to ~32px (16px lead + ~16px gap) to
    align LINE 2 with the scope. */
 .surface-ledger[data-cols="room"] .surface-ledger-open {
-  padding-left: 26px;
+  /* Phase 16: the kit row's 10 px side padding (was 6) moves the scope 4 px
+     right; LINE 2 follows it. */
+  padding-left: 30px;
 }
 .room-source-line2 {
   display: flex;
@@ -264,27 +266,21 @@
 .room-ask-section {
   display: flex; flex-direction: column; gap: 8px;
 }
+/* Phase 16 (the interior kit, §11 "AskWell"): the well IS the library
+   string well (sunken paper, the mic on its right edge); this row holds it
+   and the model's egress chip beside it. */
 .room-ask-well {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: var(--surface-2, #1c1f27);
-  border: 1px solid var(--border);
-  border-radius: 2px;
+  gap: 8px;
 }
-.room-ask-input {
-  flex: 1;
+.room-ask-well > .gadget-string {
+  flex: 1 1 auto;
   min-width: 0;
-  font-size: var(--desk-type-primary-size);
-  font-weight: var(--desk-type-primary-weight);
-  font-family: var(--font-sans, Inter, sans-serif);
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text-primary);
 }
-.room-ask-input::placeholder { color: var(--text-faint); }
+.room-ask-well .gadget-string input.room-ask-input {
+  padding: 8px 10px;
+}
 .room-ask-model-chip {
   display: inline-flex; align-items: center; gap: 4px; flex: none;
 }
@@ -308,8 +304,16 @@
   position: sticky;
   bottom: 0;
   z-index: var(--desk-z-local);
-  background: var(--surface-1, #15171d);
+  /* Phase 16: the sticky well sits on the window's own ground. */
+  background: var(--wb-field);
   padding-bottom: 8px;
+}
+/* Phase 16: the kit's rows are taller, so more of the Room scrolls under the
+   sticky well. A verb brought into view (focus, scrollIntoView) stops ABOVE
+   the well: the window body keeps the well's height as its scroll padding. */
+.desk-next .desk-surface-body:has(.room-ask-container),
+.desk-next .desk-pullout-body:has(.room-ask-container) {
+  scroll-padding-bottom: 96px;
 }
 /* PHILO-9-03 (F10, the ratified items canvas): at a narrow window the sticky
    well covered the Steward verb and the SOURCES head. At the narrow
@@ -425,7 +429,7 @@
   .room-ask-well {
     flex-wrap: wrap;
   }
-  .room-ask-input {
+  .room-ask-well > .gadget-string {
     flex: 1 1 60%;
     min-width: 0;
   }

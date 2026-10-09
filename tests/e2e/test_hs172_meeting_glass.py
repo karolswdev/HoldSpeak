@@ -2,8 +2,10 @@
 
 Seed a meeting with intel_status=complete and follow_through_proposals.
 Assert at 1440 + 393:
-  - header shows RAN chip (success), duration, EgressChip
-  - NEEDS YOU section shows proposals with Confirm:/Decide: prefix
+  - header shows SUMMARISED (Phase 16: the strip's ok lamp + word), the
+    run's seconds, EgressChip
+  - Phase 16: the proposals are the `Decisions · 1` and `Commitments · 2`
+    ledgers (TO DECIDE / TO CONFIRM), each row with Confirm and Dismiss
   - Confirm and Dismiss buttons (library Button, no raw <button>)
   - no zero counters, no text clip on proposal primaries
   - meeting list row carries the RAN chip
@@ -238,19 +240,20 @@ class TestMeetingAfterRun:
                 detail.wait_for(timeout=8_000)
                 _settle(page)
 
-                # Verify RAN + 41 S + host in the header tokens
+                # Verify SUMMARISED + 41 S + host in the header strip (Phase 16)
                 facts = page.locator(".meetings-detail-facts").text_content() or ""
-                assert "RAN" in facts, f"RAN not in detail facts at {width}: {facts}"
+                assert "SUMMARISED" in facts, f"SUMMARISED not in detail facts at {width}: {facts}"
                 assert "41 S" in facts, f"41 S duration not in detail facts: {facts}"
                 assert "192.168.1.43" in facts, f"Host chip not in detail facts: {facts}"
 
-                # NEEDS YOU section with 3 proposals
-                needs = page.locator("[data-testid='meeting-needs-you']")
-                expect(needs).to_be_visible(timeout=5_000)
-                needs_text = needs.text_content() or ""
-                assert "TO REVIEW 3" in needs_text, (
-                    f"Expected TO REVIEW 3 at {width}: {needs_text[:200]}"
-                )
+                # Phase 16: the 3 proposals are the Decisions and Commitments
+                # ledgers (the kit's Sections over kind-plated rows).
+                decisions = page.locator("[data-testid='meeting-decisions']")
+                commitments = page.locator("[data-testid='meeting-commitments']")
+                expect(decisions).to_be_visible(timeout=5_000)
+                assert decisions.locator("h3").text_content() == "Decisions · 1"
+                assert commitments.locator("h3").text_content() == "Commitments · 2"
+                needs_text = (decisions.text_content() or "") + (commitments.text_content() or "")
 
                 # Confirm and Dismiss buttons
                 confirm_btns = page.locator("[data-testid='proposal-confirm-btn']")
@@ -262,13 +265,14 @@ class TestMeetingAfterRun:
                     f"Expected 3 Dismiss buttons, got {dismiss_btns.count()}"
                 )
 
-                # Decide: and Confirm: prefixes
-                assert "Decide:" in needs_text, f"Missing 'Decide:' prefix: {needs_text[:200]}"
-                assert "Confirm:" in needs_text, f"Missing 'Confirm:' prefix: {needs_text[:200]}"
+                # TO DECIDE and TO CONFIRM (the rows' meta words)
+                assert "TO DECIDE" in needs_text, f"Missing TO DECIDE: {needs_text[:200]}"
+                assert "TO CONFIRM" in needs_text, f"Missing TO CONFIRM: {needs_text[:200]}"
 
                 # No text clip on proposal primaries
                 proposals_clipped = page.evaluate("""() => {
-                    const texts = document.querySelectorAll('.meetings-detail-outcome-text');
+                    const texts = document.querySelectorAll(
+                        "[data-testid^='meeting-'] .surface-ledger-primary");
                     const clipped = [];
                     for (const t of texts) {
                         if (t.scrollWidth > t.clientWidth + 2) {

@@ -16,6 +16,7 @@ import type { ReactNode } from "react";
 import { LampGadget } from "../gadgets";
 import { AgentWords } from "../../components/AgentWords";
 import { ProjectButton } from "../patterns/ProjectButton";
+import { KindPlate } from "../kit";
 import { listSprite } from "../../sprites";
 import { lampGadgetTone, objectSprite, type ObjectTone } from "./kinds";
 import "./objects.css";
@@ -43,9 +44,13 @@ export interface NeedsRowProps {
   /** PHILO-15-09 (B12): what the object is, in one word at the head of
    *  the fact line (`DECISION`, `ACTION`, `PROPOSAL`, `MEETING`, `AGENT`). */
   kindWord?: string;
+  /** Phase 16 (the interior kit, the Ledger's kind plate): the row's kind
+   *  as a raised Steel plate (`CC`, `DEC`, `ACT`) in place of the sprite.
+   *  The kind word moves into the plate's title; the fact line keeps it. */
+  plate?: string;
 }
 
-export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verbs, sprite, project, kindWord }: NeedsRowProps) {
+export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verbs, sprite, project, kindWord, plate }: NeedsRowProps) {
   const factClass = factCode ? "needs-row-fact is-code" : "needs-row-fact";
   const factNode = !fact ? null : factWords && !factCode ? (
     <AgentWords compact lines={2} className="needs-row-fact needs-row-words" text={fact} />
@@ -53,8 +58,12 @@ export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verb
     <span className={factClass}>{fact}</span>
   );
   return (
-    <li className="needs-row" data-object-id={id} data-kind={kind}>
-      <img src={listSprite(sprite ?? objectSprite(kind, id))} alt="" draggable={false} />
+    <li className="needs-row" data-object-id={id} data-kind={kind} data-plate={plate ? "true" : undefined}>
+      {plate ? (
+        <KindPlate kind={plate} title={kindWord} />
+      ) : (
+        <img src={listSprite(sprite ?? objectSprite(kind, id))} alt="" draggable={false} />
+      )}
       <span className="needs-row-what">
         <span className="needs-row-name">{name}</span>
         {project || kindWord ? (
@@ -81,7 +90,8 @@ export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verb
   );
 }
 
-/** The list the rows sit in (an `ul` with its accessible name). */
+/** The list the rows sit in (an `ul` with its accessible name). Phase 16:
+ *  the kit's Ledger well (sunken paper; objects.css). */
 export function NeedsList({ label, children }: { label: string; children: ReactNode }) {
   return (
     <ul className="needs-list" aria-label={label}>

@@ -19,6 +19,7 @@ import { CheckGadget, StringGadget } from "./gadgets";
 import type { PaneGeometry } from "./XtermPane";
 import { humanTime, presentValue } from "./format";
 import { Disclosure } from "./patterns";
+import { KindPlate } from "./kit";
 import { useRovingRows } from "./roving";
 import { SPARSE_THRESHOLD } from "./sparse";
 import "./surface.css";
@@ -100,25 +101,36 @@ export function SurfaceIdentity({
   );
 }
 
-/** A group on the window material: hairline + quiet label, never a
- * nested card. */
+/** A group on the window material: the caption + hairline, never a
+ * nested card. Phase 16 (the interior kit, §11 "Section"): the caption
+ * (mono 11 upper) reads `Name · count`, then the optional verbs, then the
+ * hairline to the right edge. A zero count is never said (UX-CANON A.8):
+ * the caption is the name alone. */
 export function SurfaceSection({
   label,
+  count,
   actions,
   children,
   className,
+  "data-testid": testId,
 }: {
   label?: string;
-  /** Quiet section-scoped verbs, right-aligned on the label line. */
+  /** Phase 16: the section's count, drawn `Name · count`; omitted at 0
+   *  (and when null). A string is drawn as given (`5 of 6`). */
+  count?: number | string | null;
+  /** Section-scoped verbs, after the caption, before the hairline. */
   actions?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   className?: string;
+  "data-testid"?: string;
 }) {
+  const said = typeof count === "number" ? (count > 0 ? String(count) : "") : (count ?? "");
+  const caption = label && said ? `${label} · ${said}` : label;
   return (
-    <section className={className ? `surface-section ${className}` : "surface-section"}>
-      {label || actions ? (
+    <section className={className ? `surface-section ${className}` : "surface-section"} data-testid={testId}>
+      {caption || actions ? (
         <header className="surface-section-head">
-          {label ? <h3>{label}</h3> : <span />}
+          {caption ? <h3>{caption}</h3> : <span />}
           {actions}
         </header>
       ) : null}
@@ -764,9 +776,16 @@ export function SurfaceLedger({
   controls,
   cols,
   children,
+  label,
+  "data-testid": testId,
 }: {
-  /** The head's mono token line (e.g. "TODAY 2 · TAUGHT 1"). */
-  count: ReactNode;
+  /** The head's mono token line (e.g. "TODAY 2 · TAUGHT 1"). Phase 16:
+   *  optional; a kit Ledger says its count on its Section caption, and a
+   *  ledger with no count and no controls draws no head. */
+  count?: ReactNode;
+  /** Phase 16: the well's accessible name (a `group`), when it has one. */
+  label?: string;
+  "data-testid"?: string;
   controls?: ReactNode;
   /** HS-111-03 — a named column template (CSS `data-cols` hook), never
    * a second ledger component. */
@@ -778,13 +797,16 @@ export function SurfaceLedger({
   const rootRef = useRef<HTMLDivElement>(null);
   useRovingRows(rootRef, { selector: ".surface-ledger-line:not([data-inert])" });
   return (
-    <div ref={rootRef} className="surface-ledger" data-cols={cols}>
-      <div className="surface-ledger-head">
-        <span className="surface-ledger-count">{count}</span>
-        {controls ? (
-          <span className="surface-ledger-controls">{controls}</span>
-        ) : null}
-      </div>
+    <div ref={rootRef} className="surface-ledger" data-cols={cols} data-testid={testId}
+      role={label ? "group" : undefined} aria-label={label}>
+      {(count != null && count !== "" && count !== false) || controls ? (
+        <div className="surface-ledger-head">
+          <span className="surface-ledger-count">{count}</span>
+          {controls ? (
+            <span className="surface-ledger-controls">{controls}</span>
+          ) : null}
+        </div>
+      ) : null}
       {children}
     </div>
   );
@@ -793,7 +815,11 @@ export function SurfaceLedger({
 export function SurfaceLedgerRow({
   time,
   lead,
+  kind,
+  kindTitle,
   primary,
+  meta,
+  metaTone,
   cells,
   trailing,
   wrap,
@@ -812,8 +838,18 @@ export function SurfaceLedgerRow({
   /** HS-111-07 — an alternate leading token (the desk face's [x]
    * selection mark); rides the time slot's geometry. */
   lead?: ReactNode;
-  /** The one-line mono material (ellipsized, never wrapped). */
+  /** Phase 16 (the interior kit, §11 "Ledger"): the row's kind plate (a
+   *  raised Steel plate, 44 px, in the lead slot): `CC`, `DEC`, `MTG`.
+   *  Ignored when `lead` is given. */
+  kind?: string;
+  /** The kind plate's full word (its title), e.g. `DECISION`. */
+  kindTitle?: string;
+  /** The row's name (sans 15/500 in the kit; ellipsized unless `wrap`). */
   primary: ReactNode;
+  /** Phase 16: the row's meta, mono 11 upper, after the name. */
+  meta?: ReactNode;
+  /** The meta's tone: `ask` (the ember ink), `ok` (the green ink), `fail`. */
+  metaTone?: "ask" | "ok" | "fail";
   /** Trailing fact cells (destination, ms, taught chip). */
   cells?: ReactNode;
   /** HS-167-03 — a quiet verb or chevron, right-aligned after cells
@@ -892,8 +928,15 @@ export function SurfaceLedgerRow({
         ) : null}
         {lead != null ? (
           <span className="surface-ledger-lead">{lead}</span>
+        ) : kind ? (
+          <span className="surface-ledger-lead">
+            <KindPlate kind={kind} title={kindTitle} />
+          </span>
         ) : null}
         <span className="surface-ledger-primary">{primary}</span>
+        {meta != null && meta !== "" ? (
+          <span className="surface-ledger-meta" data-tone={metaTone}>{meta}</span>
+        ) : null}
         {cells}
         {trailing != null ? (
           <span
