@@ -49,3 +49,43 @@ describe("shared resize", () => {
     expect(right.get("a")!.x).toBe(0);
   });
 });
+
+describe("shared resize respects each window's real minimum and the band (Astra M2)", () => {
+  const band = { x: 10, y: 54, w: 1420, h: 700 };
+
+  it("a frame with min-width 420 stops at 420, not at the module 320", () => {
+    const ws = [
+      { id: "people", rect: { x: 10, y: 54, w: 710, h: 700 }, depth: 1, minW: 420 },
+      { id: "meetings", rect: { x: 720, y: 54, w: 710, h: 700 }, depth: 2, minW: 420 },
+    ];
+    const [b] = boundaries(ws);
+    const out = resizeBoundary(b, ws, 1000, { band });
+    const m = out.get("meetings")!;
+    expect(m.w).toBe(420);
+    expect(m.x + m.w).toBe(1430); // the far edge stays on the band's edge
+    expect(out.get("people")!.w).toBe(1000);
+  });
+
+  it("no edge leaves the band", () => {
+    const ws = [
+      { id: "a", rect: { x: 10, y: 54, w: 700, h: 700 }, depth: 1 },
+      { id: "b", rect: { x: 710, y: 54, w: 720, h: 700 }, depth: 2 },
+    ];
+    const [b] = boundaries(ws);
+    for (const delta of [-5000, 5000]) {
+      for (const r of resizeBoundary(b, ws, delta, { band }).values()) {
+        expect(r.x).toBeGreaterThanOrEqual(band.x);
+        expect(r.x + r.w).toBeLessThanOrEqual(band.x + band.w);
+      }
+    }
+  });
+
+  it("a boundary that cannot move does not move", () => {
+    const ws = [
+      { id: "a", rect: { x: 10, y: 54, w: 700, h: 700 }, depth: 1 },
+      { id: "b", rect: { x: 710, y: 54, w: 400, h: 700 }, depth: 2, minW: 420 },
+    ];
+    const [b] = boundaries(ws);
+    expect(resizeBoundary(b, ws, 50, { band }).size).toBe(0);
+  });
+});

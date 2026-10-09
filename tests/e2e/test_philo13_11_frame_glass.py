@@ -110,7 +110,7 @@ FRAME_JS = r"""(width) => {""" + FOLDED_WORD_JS + r"""
   const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
     return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && Number(cs.opacity) > 0.05; };
   const label = (e) => (e.getAttribute('aria-label') || e.textContent || e.className || '').trim().slice(0, 50);
-  const shells = [...document.querySelectorAll('.desk-window-shell')].filter(visible);
+  const shells = [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(visible);
   const heads = shells.map((s) => s.querySelector(':scope > .desk-pullout-head')).filter(Boolean);
   const menus = [...document.querySelectorAll('.desk-menu-list')].filter(visible);
   const bar = document.querySelector('.desk-menubar');

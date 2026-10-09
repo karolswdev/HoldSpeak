@@ -78,6 +78,9 @@ import { Button } from "../../components/signal/Signal";
 import {
   departInto,
   liftOnRaise,
+  plateOf,
+  presenting,
+  resizePlate,
   stillUnderPointer,
   usePlane,
   usePlate,
@@ -237,6 +240,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   const zoomedRef = useRef(zoomed);
   zoomedRef.current = zoomed;
   const writeRect = (next: PanelRect, persist: boolean) => {
+    // Astra M1: in Stage or Exposé the geometry belongs to the plate; the
+    // saved arrangement (free and zoom rects) is never written.
+    if (presenting()) {
+      resizePlate(id, next);
+      return;
+    }
     if (zoomedRef.current) useDesk.getState().setZoomRect(id, next, persist);
     else useDesk.getState().setPanelRect(id, next, persist);
   };
@@ -247,6 +256,8 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   const elRef = useRef<HTMLElement | null>(null);
 
   const measure = (): PanelRect => {
+    const plate = presenting() ? plateOf(id) : null;
+    if (plate) return plate.rect;
     const st = useDesk.getState();
     const cur = zoomedRef.current ? st.panelZoom?.[id] : st.panelRects[id];
     if (cur) return cur;
@@ -725,12 +736,12 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   // as front. Closing forgets the inheritance: a reopen is an arrival.
   useLayoutEffect(() => {
     if (!open) return;
-    mountWindow(id, { room, layer: "window" });
+    mountWindow(id, { room, layer: "window", minW: minW ?? 320, minH: minH ?? 220 });
     return () => {
       unmountWindow(id);
       inheritance.forget(id);
     };
-  }, [open, id, room]);
+  }, [open, id, room, minW, minH]);
 
   // HS-99-02 — the head's right-click menu (chrome ladder rule 2).
   const [headMenu, setHeadMenu] = useState<{ x: number; y: number } | null>(

@@ -16,6 +16,10 @@ export interface ResizeWindow {
   id: string;
   rect: Rect;
   depth: number;
+  /** The window's real minimum (its frame's minW / CSS min-width); the
+   * module minimum when absent. */
+  minW?: number;
+  minH?: number;
 }
 
 export interface Boundary {
@@ -94,37 +98,56 @@ export function boundaries(windows: readonly ResizeWindow[]): Boundary[] {
 
 /** Move a boundary by `delta` px. Every `before` window's far (left/top) edge
  * stays and its near edge moves; every `after` window's far (right/bottom)
- * edge stays and its near edge moves. The delta is clamped so no window
- * goes under MIN_W x MIN_H. Returns the new rects of the moved windows. */
+ * edge stays and its near edge moves. The delta is clamped so no window goes
+ * under ITS OWN minimum (`minW`/`minH`, else MIN_W x MIN_H) and, given a
+ * band, no edge leaves it. A boundary that cannot move (a window already at
+ * or under its minimum on the side it would shrink) does not move: the
+ * result is empty. Returns the new rects of the moved windows. */
 export function resizeBoundary(
   boundary: Boundary,
   windows: readonly ResizeWindow[],
   delta: number,
-  min = { w: MIN_W, h: MIN_H },
+  opts: { min?: { w: number; h: number }; band?: Rect } = {},
 ): Map<string, Rect> {
-  const byId = new Map(windows.map((w) => [w.id, w.rect]));
+  const min = opts.min ?? { w: MIN_W, h: MIN_H };
+  const byId = new Map(windows.map((w) => [w.id, w]));
   const v = boundary.axis === "v";
   const size = (r: Rect) => (v ? r.w : r.h);
-  const floor = v ? min.w : min.h;
+  const floorOf = (w: ResizeWindow) => (v ? Math.max(min.w, w.minW ?? 0) : Math.max(min.h, w.minH ?? 0));
+  // lo: how far the boundary may move back (before windows shrink);
+  // hi: how far forward (after windows shrink).
   let lo = -Infinity;
   let hi = Infinity;
   for (const id of boundary.before) {
-    const r = byId.get(id);
-    if (r) lo = Math.max(lo, floor - size(r));
+    const w = byId.get(id);
+    if (w) lo = Math.max(lo, floorOf(w) - size(w.rect));
   }
   for (const id of boundary.after) {
-    const r = byId.get(id);
-    if (r) hi = Math.min(hi, size(r) - floor);
+    const w = byId.get(id);
+    if (w) hi = Math.min(hi, size(w.rect) - floorOf(w));
   }
-  const d = Math.max(Math.min(lo, 0), Math.min(Math.max(hi, 0), delta));
+  const band = opts.band;
+  if (band) {
+    for (const id of boundary.before) {
+      const w = byId.get(id);
+      if (w) hi = Math.min(hi, (v ? band.x + band.w - (w.rect.x + w.rect.w) : band.y + band.h - (w.rect.y + w.rect.h)));
+    }
+    for (const id of boundary.after) {
+      const w = byId.get(id);
+      if (w) lo = Math.max(lo, (v ? band.x - w.rect.x : band.y - w.rect.y));
+    }
+  }
   const out = new Map<string, Rect>();
+  if (lo > 0 || hi < 0 || lo > hi) return out;
+  const d = Math.max(lo, Math.min(hi, delta));
+  if (d === 0) return out;
   for (const id of boundary.before) {
-    const r = byId.get(id);
-    if (r) out.set(id, v ? { ...r, w: r.w + d } : { ...r, h: r.h + d });
+    const w = byId.get(id);
+    if (w) out.set(id, v ? { ...w.rect, w: w.rect.w + d } : { ...w.rect, h: w.rect.h + d });
   }
   for (const id of boundary.after) {
-    const r = byId.get(id);
-    if (r) out.set(id, v ? { ...r, x: r.x + d, w: r.w - d } : { ...r, y: r.y + d, h: r.h - d });
+    const w = byId.get(id);
+    if (w) out.set(id, v ? { ...w.rect, x: w.rect.x + d, w: w.rect.w - d } : { ...w.rect, y: w.rect.y + d, h: w.rect.h - d });
   }
   return out;
 }

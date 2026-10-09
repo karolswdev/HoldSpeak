@@ -200,11 +200,13 @@ export function stage(
     rect: { x: left ? `${50 - STAGE_MAIN * 100}%` : "-1/2", y: "-1/2", w: `${STAGE_MAIN * 100}%`, h: "1/1" },
   });
   const rest = shownIds.filter((id) => id !== frontId).reverse(); // nearest first
-  const room = band.h - SHELF_INSET * 2 - SHELF_H;
+  // A short band (Astra MAY, 1440 x 280) shrinks the plates to fit it.
+  const shelfH = Math.max(1, Math.min(SHELF_H, band.h - SHELF_INSET * 2));
+  const room = band.h - SHELF_INSET * 2 - shelfH;
   const step = rest.length > 1 ? Math.max(0, Math.min(SHELF_STEP, room / (rest.length - 1))) : SHELF_STEP;
   rest.forEach((id, i) => {
     const r = rects[id] ?? { x: 0, y: 0, w: SHELF_W, h: SHELF_H };
-    const k = Math.min(1, SHELF_W / r.w, SHELF_H / r.h);
+    const k = Math.min(1, SHELF_W / r.w, shelfH / r.h);
     map.set(id, {
       rect: {
         x: left ? `-1/2 + ${SHELF_INSET}` : `1/2 - ${SHELF_W + SHELF_INSET}`,

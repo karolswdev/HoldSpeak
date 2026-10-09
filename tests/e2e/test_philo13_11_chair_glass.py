@@ -143,7 +143,7 @@ CHAIR_JS = r"""(width) => {
   const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
     return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && Number(cs.opacity) > 0.05; };
   const label = (e) => (e.getAttribute('aria-label') || e.textContent || e.className || '').trim().slice(0, 50);
-  const wins = [...document.querySelectorAll('.desk-window-shell.chair-window')].filter(visible);
+  const wins = [...document.querySelectorAll('.desk-window-shell.chair-window:not([data-departing])')].filter(visible);
   const chair = document.querySelector('.chair');
   const se = document.scrollingElement;
   const out = {width, windows: wins.map((w) => w.getAttribute('aria-label')),

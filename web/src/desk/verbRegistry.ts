@@ -763,7 +763,9 @@ export const VERBS: Verb[] = [
     label: "Cycle windows (reverse)",
     menu: "window",
     scope: "window",
-    // PHILO-16 §5: ⌘⇧` is To back now; the reverse cycle keeps its menu row.
+    // PHILO-16 §5: ⌘⇧` is To back; ⌃⇧` stays the reverse cycle (Astra M5:
+    // a ⌃ chord binds before a ⌘ chord, so the ctrl key keeps its verb).
+    altKeys: ["⌃⇧`"],
     palette: false,
     ghost: needWindow,
     run: () => cycleWindowsReverse(),

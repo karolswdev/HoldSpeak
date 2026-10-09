@@ -7,9 +7,9 @@ import { useRef, useSyncExternalStore } from "react";
 import { useDesk } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
 import { boundaries, resizeBoundary, type Boundary, type ResizeWindow } from "./sharedResize";
-import { computePlanes, liveVersion, subscribeLive } from "./live";
-import { zFor } from "./layers";
-import { stillUnderPointer, useCompositor, useMode } from "./useCompositor";
+import { computePlanes, liveVersion, subscribeLive, zOfWindow } from "./live";
+import { Z } from "./layers";
+import { bandNow, minOf, stillUnderPointer, useCompositor, useMode } from "./useCompositor";
 import { shellEls } from "../components/window/windowRegistry";
 
 const KEY_STEP = 16;
@@ -19,7 +19,7 @@ function Divider({ b, wins, z }: { b: Boundary; wins: ResizeWindow[]; z: number 
   const v = b.axis === "v";
   const write = (delta: number, persist: boolean, base: ResizeWindow[]) => {
     const s = useDesk.getState();
-    for (const [id, r] of resizeBoundary(b, base, delta)) s.setPanelRect(id, r, persist);
+    for (const [id, r] of resizeBoundary(b, base, delta, { band: bandNow() })) s.setPanelRect(id, r, persist);
   };
   const ids = [...b.before, ...b.after];
   return (
@@ -77,21 +77,28 @@ export function CompositorLayer() {
   const max = useDesk((s) => s.panelMax);
   if (compact || mode === "stage" || mode === "expose") return null;
   const live = computePlanes(depth, min);
+  // Astra M2: each window's real minimum, the larger of its frame's minW /
+  // minH and its CSS min-width / min-height (a surface window is 420 wide).
   const wins: ResizeWindow[] = live.shown
     .filter((id) => !max.includes(id) && rects[id])
-    .map((id) => ({ id, rect: rects[id], depth: depth[id] ?? 0 }));
+    .map((id) => {
+      const min = minOf(id);
+      return { id, rect: rects[id], depth: depth[id] ?? 0, minW: min.w, minH: min.h };
+    });
   const found = boundaries(wins);
   if (!found.length) return null;
   return (
     <>
       {found.map((b) => {
-        const rank = Math.max(...[...b.before, ...b.after].map((id) => live.ranks.get(id) ?? 0));
+        // Above both windows (Astra M3: z from the shown order); the divider
+        // renders after every window, so a tie at the band's top still paints it.
+        const z = Math.min(Z.windowTop, Math.max(...[...b.before, ...b.after].map((id) => zOfWindow(id, live))) + 1);
         return (
           <Divider
             key={`${b.axis}:${[...b.before].sort().join(",")}|${[...b.after].sort().join(",")}`}
             b={b}
             wins={wins}
-            z={zFor("window", rank + 1)}
+            z={z}
           />
         );
       })}

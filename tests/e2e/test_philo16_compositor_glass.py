@@ -32,7 +32,7 @@ import pytest
 
 from .chair_windows import open_chair_window
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
-from .test_philo13_11_frame_glass import _seed
+from .test_philo13_11_frame_glass import _seed, _stage
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the compositor glass needs Playwright")
@@ -47,7 +47,7 @@ T = 30_000
 WINS_JS = r"""() => {
   const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
     return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; };
-  return [...document.querySelectorAll('.desk-window-shell:not(.desk-window-departing)')].filter(visible).map((s) => {
+  return [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(visible).map((s) => {
     const r = s.getBoundingClientRect(); const cs = getComputedStyle(s);
     return {name: s.getAttribute('aria-label'), plane: s.dataset.plane || null, layer: s.dataset.layer || null,
       front: s.classList.contains('is-front'), z: Number(cs.zIndex) || 0,
@@ -87,6 +87,26 @@ def _inside(rect: list[int], band: dict[str, float], slack: int = 2) -> bool:
     x, y, w, h = rect
     return (x >= band["x"] - slack and y >= band["y"] - slack
             and x + w <= band["x"] + band["w"] + slack and y + h <= band["y"] + band["h"] + slack)
+
+
+PANEL_JS = r"""() => { const d = JSON.parse(localStorage.getItem('hs.desk.workspace.v1') || 'null');
+  const p = (d && d.panel) || {}; return {rects: p.rects || {}, zoom: p.zoom || {}, max: p.max || []}; }"""
+
+RUNNING_JS = r"""(name) => { const el = document.querySelector(`.desk-window-shell[aria-label='${name}']`);
+  return el ? el.getAnimations().filter((a) => a.playState === 'running').length : -1; }"""
+
+
+def _drag(page: Any, selector: str, dx: float, dy: float, *, hold: Any = None) -> None:
+    box = page.locator(selector).first.bounding_box()
+    assert box, f"nothing to drag: {selector}"
+    x, y = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    page.mouse.move(x + dx / 2, y + dy / 2, steps=4)
+    page.mouse.move(x + dx, y + dy, steps=4)
+    if hold:
+        hold()
+    page.mouse.up()
 
 
 def _window_menu(page: Any, label: str) -> None:
@@ -299,6 +319,103 @@ class TestCompositor:
                 if any(w["k"] for w in wins) or page.locator(".desk-expose").count() or {w["name"]: w["rect"] for w in wins} != rects:
                     fails["C6 the arrangement keys stay quiet in a field"] = wins
                 page.evaluate("() => document.getElementById('c6-field')?.remove()")
+                if errors:
+                    fails["page errors"] = errors
+            finally:
+                browser.close()
+        assert not fails, fails
+
+    def test_astra_round1_1440(self) -> None:
+        """Astra round 1 (5fe358d78), her repros: M1 Stage keeps the saved
+        arrangement (zoomed and not); M4 no lift under a resize; M2 the
+        divider stops at the frame's real minimum inside the band."""
+        from playwright.sync_api import sync_playwright
+
+        fails: dict[str, Any] = {}
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, 1440)
+            try:
+                band = page.evaluate(BAND_JS)
+                for name in ("Brief", "Needs you"):
+                    open_chair_window(page, name)
+                needs = ".desk-window-shell[aria-label='Needs you']"
+
+                # M1 (zoomed): Zoom -> Stage -> resize the staged front -> Esc.
+                page.get_by_role("button", name="Zoom Needs you").click()
+                rects = {w["name"]: w["rect"] for w in _wins(page)}
+                doc = page.evaluate(PANEL_JS)
+                page.locator(f"{needs} .desk-pullout-title").first.click()
+                page.keyboard.press("Meta+Enter")
+                _wins(page)
+                _drag(page, f"{needs} .desk-window-grip", -200, -100)
+                if page.evaluate(PANEL_JS) != doc:
+                    fails["M1 zoomed: a Stage resize leaves the saved arrangement"] = {"before": doc, "during": page.evaluate(PANEL_JS)}
+                page.keyboard.press("Escape")
+                back = {w["name"]: w["rect"] for w in _wins(page)}
+                if back != rects or page.evaluate(PANEL_JS) != doc:
+                    fails["M1 zoomed: Esc restores both rects and the zoom flag"] = {
+                        "before": rects, "after": back, "doc": doc, "doc_after": page.evaluate(PANEL_JS)}
+
+                # M1 (Zoom during Stage leaves Stage first).
+                page.keyboard.press("Meta+Enter")
+                _wins(page)
+                page.get_by_role("button", name="Zoom Needs you").click()  # unzoom
+                wins = _wins(page)
+                if any(w["k"] for w in wins):
+                    fails["M1 Zoom during Stage leaves Stage"] = wins
+
+                # M1 (not zoomed): Stage -> resize -> Esc.
+                rects = {w["name"]: w["rect"] for w in _wins(page)}
+                doc = page.evaluate(PANEL_JS)
+                page.locator(f"{needs} .desk-pullout-title").first.click()
+                page.keyboard.press("Meta+Enter")
+                _wins(page)
+                _drag(page, f"{needs} .desk-window-grip", -150, -80)
+                if page.evaluate(PANEL_JS) != doc:
+                    fails["M1 a Stage resize writes no free rect"] = {"before": doc, "during": page.evaluate(PANEL_JS)}
+                page.keyboard.press("Escape")
+                back = {w["name"]: w["rect"] for w in _wins(page)}
+                if back != rects:
+                    fails["M1 Esc restores the free rects"] = {"before": rects, "after": back}
+
+                # M4: resize Brief (behind Needs you) by its grip: no lift runs
+                # while the pointer is held.
+                page.locator(f"{needs} .desk-pullout-title").first.click()
+                _wins(page)
+                running: list[int] = []
+                _drag(page, ".desk-window-shell[aria-label='Brief'] .desk-window-grip", -40, -30,
+                      hold=lambda: (page.wait_for_timeout(60), running.append(page.evaluate(RUNNING_JS, "Brief"))))
+                if running != [0]:
+                    fails["M4 no lift during a resize"] = running
+
+                # M2: two surface windows (min-width 420) tiled; the divider
+                # dragged past both minimums.
+                _stage(page, "review-meetings")
+                _stage(page, "open-people")
+                wins = _wins(page)
+                front = _fronts(wins)[0]
+                near = next(w["name"] for w in wins if w["plane"] == "near")
+                _window_menu(page, "Tile left")
+                _wins(page)
+                for dx in (2000, -2000):
+                    d = page.evaluate(DIVIDERS_JS)
+                    if len(d) != 1:
+                        fails[f"M2 one divider ({dx})"] = d
+                        break
+                    _drag(page, ".desk-window-divider", dx, 0)
+                    wins = _wins(page)
+                    for name in (front, near):
+                        r = _by(wins, name)["rect"]
+                        if not _inside(r, band, slack=1) or r[2] < 419:
+                            fails.setdefault(f"M2 the band and the 420 minimum ({dx})", []).append({name: r, "band": band})
+                    # The two windows still meet at the divider: no overlap, no gap.
+                    left, right = sorted((_by(wins, front)["rect"], _by(wins, near)["rect"]), key=lambda r: r[0])
+                    seam = page.evaluate(DIVIDERS_JS)
+                    if abs(left[0] + left[2] - right[0]) > 1 or not seam or abs(seam[0][0] + 3 - right[0]) > 2:
+                        fails.setdefault(f"M2 the windows meet at the divider ({dx})", []).append(
+                            {"left": left, "right": right, "divider": seam})
+                page.screenshot(path=str(SHOTS / "1440-6-divider-minimum.png"))
+                page.keyboard.press("Escape")
                 if errors:
                     fails["page errors"] = errors
             finally:

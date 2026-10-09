@@ -12,7 +12,7 @@
  * are never written by stage or exposé, so Esc returns them exactly. */
 import { useDesk } from "../store";
 import { assignPlanes, rankOf, type Plane } from "./planes";
-import { zFor, type Layer } from "./layers";
+import { Z, type Layer } from "./layers";
 import { createDepartures, inheritedAtMount } from "./departure";
 import type { Rect } from "./geometry";
 
@@ -22,6 +22,10 @@ export interface MountedWindow {
   /** The Room (project ref) the window belongs to, for Gather. */
   room?: string;
   layer: Layer;
+  /** The frame's minimum size (DeskWindowOptions minW/minH); the divider
+   * never sizes the window under it (Astra M2). */
+  minW?: number;
+  minH?: number;
 }
 
 const mounted = new Map<string, MountedWindow>();
@@ -45,7 +49,8 @@ export function liveVersion(): number {
 /** A frame is open (its layout effect). Idempotent. */
 export function mountWindow(id: string, info: MountedWindow): void {
   const prev = mounted.get(id);
-  if (prev && prev.room === info.room && prev.layer === info.layer) return;
+  if (prev && prev.room === info.room && prev.layer === info.layer && prev.minW === info.minW && prev.minH === info.minH)
+    return;
   mounted.set(id, info);
   notify();
 }
@@ -104,9 +109,21 @@ export function frontId(): string | null {
   return computePlanes().front;
 }
 
-/** The z of a window from its rank (the window layer). */
+/** How many shown windows the window band (42..77) holds with a z each. */
+export const WINDOW_BAND_SLOTS = Z.windowTop - Z.windowBase + 1;
+
+/** The z of a window from its position in the shown order (Astra M3). The
+ * band is anchored at the TOP: the front is always `windowTop`, the near one
+ * under it, and so on; only when more than WINDOW_BAND_SLOTS windows are
+ * shown do the deepest ones share the band's floor. The front and every
+ * window above the floor have a z of their own, so DOM order never decides
+ * which of them paints on top. */
 export function zOfWindow(id: string, planes: LivePlanes = computePlanes()): number {
-  return zFor("window", planes.ranks.get(id) ?? 0);
+  const rank = planes.ranks.get(id) ?? 0;
+  const n = planes.shown.length;
+  const fromTop = n - 1 - rank;
+  if (fromTop < 0) return Z.windowBase;
+  return Math.max(Z.windowBase, Z.windowTop - fromTop - Math.max(0, WINDOW_BAND_SLOTS - n));
 }
 
 // ---- presentation (arrangement mode + plates) ------------------------------
@@ -123,6 +140,8 @@ export interface SavedRect {
   rect: Rect | null;
   arranged: boolean;
   max: boolean;
+  /** Zoom's own remembered rect (PHILO-13-12 C2), restored exactly. */
+  zoom: Rect | null;
 }
 
 interface Presentation {

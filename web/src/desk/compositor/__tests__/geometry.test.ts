@@ -148,3 +148,19 @@ describe("arrangements", () => {
     for (const r of m.values()) expect(inside(r, band)).toBe(true);
   });
 });
+
+describe("a short band (Astra MAY)", () => {
+  it("stage plates stay inside a 1440 x 280 band", () => {
+    const band = bandFor(1440, 280);
+    const rects: Record<string, Rect> = {
+      a: { x: 10, y: 38, w: 700, h: 500 },
+      b: { x: 10, y: 38, w: 900, h: 600 },
+      c: { x: 10, y: 38, w: 400, h: 300 },
+    };
+    const m = stage("a", ["c", "b", "a"], "left", rects, band);
+    for (const id of ["b", "c"]) {
+      const p = m.get(id)!;
+      expect(inside(plateVisual(resolveRect(p.rect, band), p.k), band)).toBe(true);
+    }
+  });
+});

@@ -106,6 +106,28 @@ export function useMode(): Mode {
   return usePresentation().mode;
 }
 
+// ---- the pointer ------------------------------------------------------------
+
+/** Astra M4: a pointer is held down on the desk (a press, a drag, a resize,
+ * a divider). No lift runs under a held pointer. Capture phase on the
+ * document, so no handler that stops propagation can hide the press. */
+let pointerHeld = false;
+if (typeof document !== "undefined") {
+  const up = () => {
+    pointerHeld = false;
+  };
+  document.addEventListener("pointerdown", () => {
+    pointerHeld = true;
+  }, true);
+  document.addEventListener("pointerup", up, true);
+  document.addEventListener("pointercancel", up, true);
+  if (typeof window !== "undefined") window.addEventListener("blur", up);
+}
+
+export function pointerGestureActive(): boolean {
+  return pointerHeld;
+}
+
 // ---- motion ownership -----------------------------------------------------
 
 const owned = new WeakMap<Element, Set<Animation>>();
@@ -131,7 +153,9 @@ export function stillUnderPointer(el: Element | null): void {
 /** §6 moment 1 — the window lifts (scale 1 → 1.012 → 1). The `scale`
  * property composes with any transform already running. */
 export function liftOnRaise(el: HTMLElement | null): void {
-  if (!el || typeof el.animate !== "function") return;
+  // The lift is for a raise the person watches (a key, a menu, a cycle),
+  // never one under his pointer (a press, a drag, a resize): Astra M4.
+  if (!el || typeof el.animate !== "function" || pointerHeld) return;
   const t = timing("raise", { reducedMotion: reducedMotion() });
   if (!t.duration) return;
   own(
@@ -226,6 +250,7 @@ export function departInto(
   clone.removeAttribute("data-plane");
   clone.removeAttribute("data-layer");
   clone.classList.add("desk-window-departing");
+  clone.setAttribute("data-departing", "");
   Object.assign(clone.style, {
     left: `${r.left}px`,
     top: `${r.top}px`,
@@ -268,7 +293,12 @@ function savedNow(ids: readonly string[]): Record<string, SavedRect> {
   const s = useDesk.getState();
   const out: Record<string, SavedRect> = {};
   for (const id of ids)
-    out[id] = { rect: s.panelRects[id] ?? null, arranged: s.panelSaved.includes(id), max: s.panelMax.includes(id) };
+    out[id] = {
+      rect: s.panelRects[id] ?? null,
+      arranged: s.panelSaved.includes(id),
+      max: s.panelMax.includes(id),
+      zoom: s.panelZoom?.[id] ?? null,
+    };
   return out;
 }
 
@@ -313,6 +343,61 @@ function nothing(): boolean {
 
 /** Tile (⌘⌥← / ⌘⌥→): the front window takes `side`, the near window the
  * other half; they touch, so one steel divider sits between them. */
+/** A window's real minimum: the larger of its frame's minW / minH and its
+ * rendered CSS min-width / min-height (Astra M2: a surface window is 420 px,
+ * Settings wider). */
+export function minOf(id: string): { w: number; h: number } {
+  const info = mountedWindows().get(id);
+  const el = shellEls.get(id);
+  const cs = el && typeof getComputedStyle === "function" ? getComputedStyle(el) : null;
+  const css = (v: string | undefined) => {
+    const n = v ? parseFloat(v) : NaN;
+    return Number.isFinite(n) ? n : 0;
+  };
+  return {
+    w: Math.max(info?.minW ?? 0, css(cs?.minWidth)),
+    h: Math.max(info?.minH ?? 0, css(cs?.minHeight)),
+  };
+}
+
+/** Every rect at least its window's minimum and whole inside the band: a
+ * window that would render wider than its rect (and so cover its
+ * neighbour, or leave the band) is given its real size, pulled back in. */
+function fitMinimums(map: Map<string, Rect>, band: Rect): Map<string, Rect> {
+  const out = new Map<string, Rect>();
+  for (const [id, r] of map) {
+    const min = minOf(id);
+    const w = Math.min(band.w, Math.max(r.w, min.w));
+    const h = Math.min(band.h, Math.max(r.h, min.h));
+    out.set(id, {
+      x: Math.max(band.x, Math.min(r.x, band.x + band.w - w)),
+      y: Math.max(band.y, Math.min(r.y, band.y + band.h - h)),
+      w,
+      h,
+    });
+  }
+  return out;
+}
+
+/** Tile two windows so they share the band at one seam, each at least its
+ * minimum. When their minimums do not fit side by side, each keeps its
+ * minimum inside the band (they overlap; no divider, the seam is not one). */
+function tilePair(left: string, right: string, band: Rect): Map<string, Rect> {
+  const minL = minOf(left).w;
+  const minR = minOf(right).w;
+  let split = Math.round(band.w / 2);
+  split = Math.max(split, minL);
+  split = Math.min(split, band.w - minR);
+  if (split < minL) split = minL;
+  return fitMinimums(
+    new Map([
+      [left, { x: band.x, y: band.y, w: split, h: band.h }],
+      [right, { x: band.x + split, y: band.y, w: band.w - split, h: band.h }],
+    ]),
+    band,
+  );
+}
+
 export function tileFront(side: "left" | "right"): void {
   if (nothing()) return;
   const ids = shown();
@@ -321,8 +406,14 @@ export function tileFront(side: "left" | "right"): void {
   const band = bandNow();
   const saved = remember(ids);
   const shares = tileShares(front, near, side);
-  const map = new Map<string, Rect>();
+  let map = new Map<string, Rect>();
   for (const [id, v] of shares) map.set(id, resolveRect(v, band));
+  // The shares give halves; the windows' real minimums decide the seam.
+  map = near
+    ? side === "left"
+      ? tilePair(front, near, band)
+      : tilePair(near, front, band)
+    : fitMinimums(map, band);
   transition(ids, () => {
     setPresentation({ mode: "tile", plates: {}, staged: null, saved });
     writeRects(map);
@@ -410,8 +501,9 @@ export function gatherFront(): void {
   const group = ids.filter((id) => roomOf(id) === room);
   const band = bandNow();
   const saved = remember(ids);
-  const map = new Map<string, Rect>();
+  let map = new Map<string, Rect>();
   for (const [id, v] of gatherShares(group)) map.set(id, resolveRect(v, band));
+  map = fitMinimums(map, band);
   transition(group, () => {
     setPresentation({ mode: "tile", plates: {}, staged: null, saved });
     writeRects(map);
@@ -442,25 +534,52 @@ export function back(): boolean {
     setPresentation({ mode: "free", plates: {}, saved: {}, staged: null });
     const s = useDesk.getState();
     const panelRects = { ...s.panelRects };
+    const panelZoom = { ...(s.panelZoom ?? {}) };
     let panelSaved = [...s.panelSaved];
     let panelMax = [...s.panelMax];
     let touched = false;
+    // Astra M1: BOTH remembered rects (free and zoom) and the zoom flag come
+    // back exactly.
     for (const [id, was] of Object.entries(saved)) {
       if (!mountedWindows().has(id)) continue;
       touched = true;
       if (was.rect) panelRects[id] = was.rect;
       else delete panelRects[id];
-      panelSaved = panelSaved.filter((x) => x !== id);
-      if (was.arranged) panelSaved.push(id);
-      panelMax = panelMax.filter((x) => x !== id);
-      if (was.max) panelMax.push(id);
+      if (was.zoom) panelZoom[id] = was.zoom;
+      else delete panelZoom[id];
+      // Membership only: an id already in place keeps its place.
+      if (!was.arranged) panelSaved = panelSaved.filter((x) => x !== id);
+      else if (!panelSaved.includes(id)) panelSaved.push(id);
+      if (!was.max) panelMax = panelMax.filter((x) => x !== id);
+      else if (!panelMax.includes(id)) panelMax.push(id);
     }
     if (touched) {
-      useDesk.setState({ panelRects, panelSaved, panelMax });
+      useDesk.setState({ panelRects, panelSaved, panelMax, panelZoom });
       saveDeskWorkspace(useDesk.getState());
     }
   });
   return true;
+}
+
+/** Stage and Exposé draw plates; the stored geometry is not theirs. */
+export function presenting(): boolean {
+  const mode = modeNow();
+  return mode === "stage" || mode === "expose";
+}
+
+/** The plate a window is drawn as now, or null. */
+export function plateOf(id: string): PlateState | null {
+  return getPresentation().plates[id] ?? null;
+}
+
+/** Astra M1: a resize of the staged front writes the STAGE rect only (the
+ * plate), never the free or the zoom rect. A scaled plate (the shelf, an
+ * exposé plate) is not resized at all. */
+export function resizePlate(id: string, rect: Rect): void {
+  const p = getPresentation();
+  const plate = p.plates[id];
+  if (!plate || plate.k !== undefined) return;
+  setPresentation({ plates: { ...p.plates, [id]: { ...plate, rect } } });
 }
 
 /** The user moved or sized a window by hand: a tiled arrangement is now his

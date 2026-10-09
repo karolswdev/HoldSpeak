@@ -1,6 +1,7 @@
 import { useDesk } from "../../store";
 import { flashSwitcher } from "./Switcher";
-import { tileFront } from "../../compositor/useCompositor";
+import { back, tileFront, userArranged } from "../../compositor/useCompositor";
+import { modeNow } from "../../compositor/live";
 import { chairPhoneToBack, chairWindowSpec } from "../../chair/chairWindows";
 import {
   cycleWindows as cycleWindowsRaw,
@@ -43,6 +44,12 @@ export {
  * measured the zoomed size as the normal one (Astra, PR #731). The rect is
  * read from the glass, so a content-sized window comes back exactly. */
 export function zoomWindow(id: string): void {
+  // Astra M1: Zoom pressed during Stage or Exposé leaves it first (every
+  // window back to its remembered rects), then zooms. In a tiled
+  // arrangement, zoom is his own arrangement: Esc no longer undoes it.
+  const mode = modeNow();
+  if (mode === "stage" || mode === "expose") back();
+  else if (mode === "tile") userArranged();
   const state = useDesk.getState();
   // A Chair window the owner never moved has no rect: its CSS tile place is
   // its normal rect (C1-4e). Writing the measured tile here made it an
