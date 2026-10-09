@@ -5101,7 +5101,36 @@ def _isolated_hub_env(
         # PHILO-16 R2: EventKit is per macOS user, not per HOME; a rig hub
         # never reads the owner's real calendars (holdspeak/macos_calendar.py).
         "HOLDSPEAK_MACOS_CALENDAR": "0",
+        # PHILO-16 rig gap G1: the Agents detector reads no agent sign-in or
+        # hook state from outside this HOME (the owner's CLAUDE_CONFIG_DIR,
+        # CODEX_HOME, ANTHROPIC_API_KEY; pi's claims): it answers `not_read`
+        # (holdspeak/services/onboarding_service.py).
+        "HOLDSPEAK_AGENT_STATE": "off",
+        # PHILO-16 rig gaps (G3 closes): git reads no system config (RIG LAW);
+        # no default runner starts the real gh/acli (holdspeak/cli_guard.py);
+        # gh's config resolves inside this HOME, never the owner's
+        # GH_CONFIG_DIR/XDG_CONFIG_HOME; nothing posts to the owner's
+        # Notification Center (holdspeak/desktop_notify.py); the email and
+        # Slack keys live in a file in this HOME, not the Keychain
+        # (holdspeak/services/channel_key_file.py).
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "HOLDSPEAK_TEST_NO_REAL_CLI": "1",
+        "GH_CONFIG_DIR": str(isolated_home / ".config" / "gh"),
+        "XDG_CONFIG_HOME": str(isolated_home / ".config"),
+        "HOLDSPEAK_DESKTOP_NOTIFY": "0",
+        "HOLDSPEAK_CHANNEL_KEYSTORE_FILE": str(isolated_home / "channel-keys.json"),
+        # Astra M1 on b7a29e8c6: isolate the agents at the ENV BOUNDARY, so
+        # every production path (onboarding, the Codex trust reader's
+        # `codex app-server`, launches, hooks install) reads this HOME's
+        # agent folders, never the owner's.
+        "CLAUDE_CONFIG_DIR": str(isolated_home / ".claude"),
+        "CODEX_HOME": str(isolated_home / ".codex"),
+        "PI_CODING_AGENT_DIR": str(isolated_home / ".pi" / "agent"),
+        # Astra M2: no AppleScript reads the owner's front window
+        # (holdspeak/target_profile.py).
+        "HOLDSPEAK_ACTIVE_TARGET": "off",
     })
+    env.pop("ANTHROPIC_API_KEY", None)
     env.pop("TMUX", None)
     env.pop("TMUX_PANE", None)
     return env
@@ -6381,24 +6410,24 @@ def _repo_path(declared: str) -> Path:
 
 
 def case_engine_replay(case: dict[str, Any]) -> str | None:
-    """The recorded provider reply a boundary step declares, if any."""
-    for step in case_steps(case):
+    """The recorded provider reply a boundary step declares, if any (nested `then` steps too)."""
+    for step in _iter_case_steps(case):
         if step.get("kind") == "boundary" and step.get("substitute") == "engine_reply":
             return step.get("reply")
     return None
 
 
 def case_cli_runner(case: dict[str, Any]) -> str | None:
-    """PHILO-10-05: the recording runner script a boundary step declares, if any."""
-    for step in case_steps(case):
+    """PHILO-10-05: the recording runner script a boundary step declares, if any (nested too)."""
+    for step in _iter_case_steps(case):
         if step.get("kind") == "boundary" and step.get("substitute") == "cli_runner":
             return step.get("reply")
     return None
 
 
 def case_import_transcriber(case: dict[str, Any]) -> str | None:
-    """PHILO-16 R2: the recorded import transcript a boundary step declares, if any."""
-    for step in case_steps(case):
+    """PHILO-16 R2: the recorded import transcript a boundary step declares, if any (nested too)."""
+    for step in _iter_case_steps(case):
         if step.get("kind") == "boundary" and step.get("substitute") == "import_transcriber":
             return step.get("reply")
     return None
@@ -6417,6 +6446,35 @@ def import_transcriber_problem(case: dict[str, Any]) -> str | None:
                 return ("an import_transcriber boundary declares no `reply` (the "
                         "recorded transcript under tests/fixtures/); refused before "
                         "the hub starts, so no import reaches the real Transcriber")
+    return None
+
+
+#: PHILO-16 rig gap G2: the boundaries the hub installs AT BOOT from the step's
+#: `reply`, and what a replyless one would leave real in the hub.
+_BOOT_BOUNDARY_REAL = {
+    "engine_reply": "the hub would boot with no provider double, and a summary run "
+                    "ordered before the boundary step would reach the configured engine",
+    "cli_runner": "the hub would boot with the real CLI runner, and a send ordered "
+                  "before the boundary step would run the real gh/acli/https edge",
+}
+
+
+def boot_boundary_problem(case: dict[str, Any]) -> str | None:
+    """PHILO-16 rig gap G2 (R2's guard, extended): a declared `engine_reply` or
+    `cli_runner` boundary with no `reply`. Read before the build and the hub:
+    the double is installed only at boot, so a replyless boundary would let a
+    work step ordered before it reach the real seam before the step refuses."""
+    for step in _iter_case_steps(case):
+        if not (isinstance(step, dict) and step.get("kind") == "boundary"):
+            continue
+        substitution = step.get("substitute")
+        if substitution not in _BOOT_BOUNDARY_REAL:
+            continue
+        reply = step.get("reply")
+        if not isinstance(reply, str) or not reply.strip():
+            return (f"a {substitution} boundary declares no `reply` (the recorded "
+                    f"file under tests/fixtures/); refused before the hub starts: "
+                    f"{_BOOT_BOUNDARY_REAL[substitution]}")
     return None
 
 
@@ -7461,6 +7519,13 @@ def run_case(
                      duration_s=round(time.monotonic() - run_started, 3))
         recorder.note(f"the case declares viewports {case.get('viewports')}; "
                       f"{viewport} is not one of them")
+        return recorder.record
+
+    boundary_problem = boot_boundary_problem(case)
+    if boundary_problem:
+        recorder.set(verdict="blocked", complete=True,
+                     duration_s=round(time.monotonic() - run_started, 3))
+        recorder.note(f"BLOCKED: {boundary_problem}")
         return recorder.record
 
     replay = case_engine_replay(case)

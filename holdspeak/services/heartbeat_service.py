@@ -1032,12 +1032,19 @@ class HeartbeatService:
                     body = f"{count} need you across {project_count} projects"
                 else:
                     body = f"{count} need you"
+                from holdspeak.desktop_notify import NOT_POSTED_REASON, desktop_notify_enabled
+
                 _notifier = self._notifier or _do_notify
                 fired = _notifier("HoldSpeak", body, click_url=None)
                 if fired:
                     edge.mark_fired(current_ids)
                 result["fired"] = fired
-                result["reason"] = "fired" if fired else "dispatch_failed"
+                if fired:
+                    result["reason"] = "fired"
+                elif self._notifier is None and not desktop_notify_enabled():
+                    result["reason"] = NOT_POSTED_REASON
+                else:
+                    result["reason"] = "dispatch_failed"
 
         # Map to receipt vocabulary.
         if result["fired"]:
@@ -1052,6 +1059,9 @@ class HeartbeatService:
             outcome = "held_no_edge"
         elif result["reason"] == "dispatch_failed":
             outcome = "error"
+        elif result["reason"] == "not_posted_in_rig":
+            # PHILO-16: a rig hub (HOLDSPEAK_DESKTOP_NOTIFY=0) posts nothing; not an error.
+            outcome = "not_posted_in_rig"
         else:
             outcome = "held_no_edge"
 

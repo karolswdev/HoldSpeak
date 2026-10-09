@@ -101,6 +101,11 @@ class _LibnotifyNotifier:
         self._notif: Any = None
 
     def notify(self, spec: dict[str, Any]) -> None:
+        from .desktop_notify import desktop_notify_enabled
+
+        if not desktop_notify_enabled():
+            # PHILO-16: a rig hub (HOLDSPEAK_DESKTOP_NOTIFY=0) posts nothing.
+            return
         if self._notif is None:
             self._notif = self._Notify.Notification.new(
                 spec["summary"], spec["body"], spec["icon"]

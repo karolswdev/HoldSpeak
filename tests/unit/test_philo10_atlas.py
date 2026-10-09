@@ -224,6 +224,12 @@ def test_the_email_edge_records_before_it_answers_and_never_the_key(tmp_path, mo
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(channel_email, "HTTPS_HANDLER", channel_email.HTTPS_HANDLER)
     monkeypatch.setattr(channel_email, "KEY_STORE", channel_email.KEY_STORE)
+    # The edge install also replaces the Slack seams (graph_walk._install_email_edge):
+    # restore them too, or a memory key store leaks into the next test in this worker.
+    from holdspeak.services import channel_slack
+
+    monkeypatch.setattr(channel_slack, "HTTPS_HANDLER", channel_slack.HTTPS_HANDLER)
+    monkeypatch.setattr(channel_slack, "KEY_STORE", channel_slack.KEY_STORE)
     rig._install_cli_runner(REPO / "tests/fixtures/philo10_atlas/resend-accepted.json")
     assert isinstance(channel_email.KEY_STORE(), channel_email.MemoryEmailKeyStore)
     opener = urllib.request.OpenerDirector()

@@ -222,6 +222,26 @@ def _boot(
     # reads the owner's real calendars (holdspeak/macos_calendar.py). A test
     # that needs calendars replaces the module's calls.
     monkeypatch.setenv("HOLDSPEAK_MACOS_CALENDAR", "0")
+    # PHILO-16 rig gap G1: the Agents detector reads no agent state from
+    # outside this HOME (holdspeak/services/onboarding_service.py).
+    monkeypatch.setenv("HOLDSPEAK_AGENT_STATE", "off")
+    # PHILO-16 rig gaps (G3 closes): the same env as graph_walk's
+    # `_isolated_hub_env`: no git system config, no real gh/acli, gh's config
+    # and every key store inside this HOME, no desktop notification.
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    monkeypatch.setenv("HOLDSPEAK_TEST_NO_REAL_CLI", "1")
+    monkeypatch.setenv("GH_CONFIG_DIR", str(home / ".config" / "gh"))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
+    monkeypatch.setenv("HOLDSPEAK_DESKTOP_NOTIFY", "0")
+    monkeypatch.setenv("HOLDSPEAK_CHANNEL_KEYSTORE_FILE", str(home / "channel-keys.json"))
+    monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(home / "people.key"))
+    # Astra M1/M2 on b7a29e8c6: the agents' folders inside this HOME at the
+    # env boundary; no owner API key; no AppleScript on the owner's screen.
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(home / ".claude"))
+    monkeypatch.setenv("CODEX_HOME", str(home / ".codex"))
+    monkeypatch.setenv("PI_CODING_AGENT_DIR", str(home / ".pi" / "agent"))
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("HOLDSPEAK_ACTIVE_TARGET", "off")
     monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
     monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
     reset_database()

@@ -902,7 +902,11 @@
           "if": {
             "properties": {
               "substitute": {
-                "const": "import_transcriber"
+                "enum": [
+                  "import_transcriber",
+                  "engine_reply",
+                  "cli_runner"
+                ]
               }
             },
             "required": [
@@ -918,7 +922,7 @@
                 "minLength": 1
               }
             },
-            "description": "PHILO-16 R2 (Astra MUST on 3671b90aa): an import_transcriber boundary names its recorded transcript; without one the hub would boot with the real Transcriber."
+            "description": "PHILO-16 R2 (Astra MUST on 3671b90aa) and rig gap G2: an import_transcriber, engine_reply or cli_runner boundary names its recorded file; the hub installs the double only at boot, so without one it would boot with the real seam (Transcriber, engine, CLI runner)."
           },
           "properties": {
             "kind": {

@@ -131,7 +131,18 @@ class NativeSlackKeyStore:
             raise SlackKeyError("slack_key_store_locked") from None
 
 
-KEY_STORE: Callable[[], Any] = NativeSlackKeyStore
+def default_key_store() -> Any:
+    """The keychain; a file store when ``HOLDSPEAK_CHANNEL_KEYSTORE_FILE`` is set (a rig hub)."""
+    from .channel_key_file import FileChannelKeyStore, channel_keystore_path
+
+    path = channel_keystore_path()
+    if path is not None:
+        return FileChannelKeyStore(path, NativeSlackKeyStore.service_name, SlackKeyError, "slack_webhook_missing",
+                                   "slack_key_store_locked")
+    return NativeSlackKeyStore()
+
+
+KEY_STORE: Callable[[], Any] = default_key_store
 
 
 def _backend_name(backend: Any) -> str:

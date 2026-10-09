@@ -448,7 +448,7 @@ class OnboardingService:
         return str(agent_settings_path(agent, home=self._home(), env=self._env()))
 
     def _env(self) -> dict[str, str]:
-        return dict(os.environ if self._environ is None else self._environ)
+        return home_scoped_env(dict(os.environ if self._environ is None else self._environ))
 
     # ── Conductor R7: the People MCP access (config) ─────────────────
 
@@ -531,7 +531,8 @@ class OnboardingService:
         log.info("agent hooks installed for %s at %s (%s)", agent, path, ", ".join(result["installed_events"]))
         if agent == "codex":
             result = {**result, "trust": trust_codex_hooks(
-                executable=str(self._which("codex")), env={**os.environ, **self._env()}, home=self._home(),
+                executable=str(self._which("codex")), env=home_scoped_env({**os.environ, **self._env()}),
+                home=self._home(),
                 hooks_json=path,
             )}
         return {**self.agents_detect(principal), "used": {"agent": agent, **result}}
@@ -543,6 +544,35 @@ def _require_owner(principal: Any) -> None:
     if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
         raise ServiceError("owner_required", "Only the owner reads or sets People MCP access.",
                            context={"status": 403})
+
+
+#: PHILO-16 (rig gap G1): ``HOLDSPEAK_AGENT_STATE=off`` stops every read of
+#: agent state from outside HOME for this process.  A rig hub has an isolated
+#: HOME, but it inherits the owner's environment: ``CLAUDE_CONFIG_DIR``,
+#: ``CODEX_HOME`` and ``ANTHROPIC_API_KEY`` point at the owner's real sign-in
+#: and hook files, and pi's row claims SIGNED IN and HOOKS for every machine.
+#: When off, those reads answer ``not_read`` (never ``no``: a face must not act
+#: on a negative the rig did not read).  Files under the isolated HOME stay
+#: read: they are the rig's own state.  Default: on (the owner's desk and
+#: ``holdspeak doctor`` read the real state).
+AGENT_STATE_ENV = "HOLDSPEAK_AGENT_STATE"
+NOT_READ = "not_read"
+#: The variables that move agent state outside HOME (and the API key).
+_OUTSIDE_HOME_AGENT_ENV = ("CLAUDE_CONFIG_DIR", "CODEX_HOME", "ANTHROPIC_API_KEY")
+
+
+def agent_state_read(env: Optional[dict[str, str]] = None) -> bool:
+    """False when *env* (default: the process environment) turns agent state reads off."""
+    source = os.environ if env is None else env
+    value = str(source.get(AGENT_STATE_ENV, "")).strip().lower()
+    return value not in {"0", "off", "false", "no"}
+
+
+def home_scoped_env(env: dict[str, str]) -> dict[str, str]:
+    """*env* without the variables that point agent state outside HOME, when reads are off."""
+    if agent_state_read(env):
+        return env
+    return {k: v for k, v in env.items() if k not in _OUTSIDE_HOME_AGENT_ENV}
 
 
 #: The coding agents the Conductor launches, by command name.
@@ -704,11 +734,13 @@ def detect_agents(
 
     root = home or Path.home()
     env = dict(os.environ if environ is None else environ)
+    state_read = agent_state_read(env)
+    env = home_scoped_env(env)
     rows: list[dict[str, Any]] = []
     for agent, label in AGENTS.items():
         executable = which(agent)
         if agent not in HOOK_AGENTS:
-            rows.append(_pi_row(label, executable))
+            rows.append(_pi_row(label, executable, state_read=state_read))
             continue
         settings_path = agent_settings_path(agent, home=root, env=env)
         events = list(agent_hook_template(agent)["hooks"])
@@ -717,6 +749,9 @@ def detect_agents(
             # Codex runs no hook its config does not trust: the press trusts them.
             hooks = "untrusted"
         signed_in, signed_in_from = (_claude_signed_in if agent == "claude" else _codex_signed_in)(root, env)
+        if not state_read and signed_in != "yes":
+            # The rig read only its own HOME: the owner's Keychain and env are not read.
+            signed_in = NOT_READ
         rows.append({
             "id": agent,
             "label": label,
@@ -751,14 +786,18 @@ def detect_agents(
     }
 
 
-def _pi_row(label: str, executable: Optional[str]) -> dict[str, Any]:
+def _pi_row(label: str, executable: Optional[str], *, state_read: bool = True) -> dict[str, Any]:
     """pi's readiness (pi spike #1020). Its hooks are the extension every pi
     launch loads: in when the file ships with HoldSpeak. It signs in to no
     service of its own: it runs on the hub's engine for coding work, which
-    the Hand checks at launch (``no_assignment``)."""
+    the Hand checks at launch (``no_assignment``). With agent state reads off
+    (a rig) the row claims neither: ``not_read``."""
     from ..delivery.pi_launch import EXTENSION_PATH
 
-    hooks = "installed" if EXTENSION_PATH.is_file() else "missing"
+    if state_read:
+        hooks = "installed" if EXTENSION_PATH.is_file() else "missing"
+    else:
+        hooks = NOT_READ
     return {
         "id": "pi",
         "label": label,
@@ -766,7 +805,7 @@ def _pi_row(label: str, executable: Optional[str]) -> dict[str, Any]:
         "path": executable,
         "hooks": hooks,
         "hooks_path": str(EXTENSION_PATH),
-        "signed_in": "yes",
+        "signed_in": "yes" if state_read else NOT_READ,
         "signed_in_from": None,
         "version": _version_of(executable),
         "ready": executable is not None and hooks == "installed",
