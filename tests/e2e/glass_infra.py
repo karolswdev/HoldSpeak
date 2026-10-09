@@ -222,6 +222,9 @@ def _boot(
     # reads the owner's real calendars (holdspeak/macos_calendar.py). A test
     # that needs calendars replaces the module's calls.
     monkeypatch.setenv("HOLDSPEAK_MACOS_CALENDAR", "0")
+    # PHILO-16 rig gap G1: the Agents detector reads no agent state from
+    # outside this HOME (holdspeak/services/onboarding_service.py).
+    monkeypatch.setenv("HOLDSPEAK_AGENT_STATE", "off")
     monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
     monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
     reset_database()

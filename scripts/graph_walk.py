@@ -5092,6 +5092,11 @@ def _isolated_hub_env(
         # PHILO-16 R2: EventKit is per macOS user, not per HOME; a rig hub
         # never reads the owner's real calendars (holdspeak/macos_calendar.py).
         "HOLDSPEAK_MACOS_CALENDAR": "0",
+        # PHILO-16 rig gap G1: the Agents detector reads no agent sign-in or
+        # hook state from outside this HOME (the owner's CLAUDE_CONFIG_DIR,
+        # CODEX_HOME, ANTHROPIC_API_KEY; pi's claims): it answers `not_read`
+        # (holdspeak/services/onboarding_service.py).
+        "HOLDSPEAK_AGENT_STATE": "off",
     })
     env.pop("TMUX", None)
     env.pop("TMUX_PANE", None)
@@ -6411,6 +6416,35 @@ def import_transcriber_problem(case: dict[str, Any]) -> str | None:
     return None
 
 
+#: PHILO-16 rig gap G2: the boundaries the hub installs AT BOOT from the step's
+#: `reply`, and what a replyless one would leave real in the hub.
+_BOOT_BOUNDARY_REAL = {
+    "engine_reply": "the hub would boot with no provider double, and a summary run "
+                    "ordered before the boundary step would reach the configured engine",
+    "cli_runner": "the hub would boot with the real CLI runner, and a send ordered "
+                  "before the boundary step would run the real gh/acli/https edge",
+}
+
+
+def boot_boundary_problem(case: dict[str, Any]) -> str | None:
+    """PHILO-16 rig gap G2 (R2's guard, extended): a declared `engine_reply` or
+    `cli_runner` boundary with no `reply`. Read before the build and the hub:
+    the double is installed only at boot, so a replyless boundary would let a
+    work step ordered before it reach the real seam before the step refuses."""
+    for step in _iter_case_steps(case):
+        if not (isinstance(step, dict) and step.get("kind") == "boundary"):
+            continue
+        substitution = step.get("substitute")
+        if substitution not in _BOOT_BOUNDARY_REAL:
+            continue
+        reply = step.get("reply")
+        if not isinstance(reply, str) or not reply.strip():
+            return (f"a {substitution} boundary declares no `reply` (the recorded "
+                    f"file under tests/fixtures/); refused before the hub starts: "
+                    f"{_BOOT_BOUNDARY_REAL[substitution]}")
+    return None
+
+
 def case_steps(case: dict[str, Any]) -> list[dict[str, Any]]:
     steps = [s for s in (case.get("setup") or []) if isinstance(s, dict)]
     steps += [s for s in (case.get("preconditions") or [])
@@ -7452,6 +7486,13 @@ def run_case(
                      duration_s=round(time.monotonic() - run_started, 3))
         recorder.note(f"the case declares viewports {case.get('viewports')}; "
                       f"{viewport} is not one of them")
+        return recorder.record
+
+    boundary_problem = boot_boundary_problem(case)
+    if boundary_problem:
+        recorder.set(verdict="blocked", complete=True,
+                     duration_s=round(time.monotonic() - run_started, 3))
+        recorder.note(f"BLOCKED: {boundary_problem}")
         return recorder.record
 
     replay = case_engine_replay(case)

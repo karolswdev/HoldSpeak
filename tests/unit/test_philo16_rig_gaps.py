@@ -1,0 +1,287 @@
+"""PHILO-16 lane 16-RIG (rig gaps G1, G2): two rig isolation gaps closed at their cause.
+
+G1. The Agents detector on a fresh isolated HOME read the owner's machine: the
+    hub inherits the owner's environment (``CLAUDE_CONFIG_DIR``, ``CODEX_HOME``,
+    ``ANTHROPIC_API_KEY`` point at his real sign-in and hook files) and pi's row
+    claimed SIGNED IN and HOOKS on every machine. ``HOLDSPEAK_AGENT_STATE=off``
+    makes those reads answer ``not_read`` (never ``no``); both rig envs set it;
+    the default (the owner's desk, ``holdspeak doctor``) stays on.
+
+G2. An ``engine_reply`` or ``cli_runner`` boundary without ``reply`` booted the
+    hub without its double; only the boundary step refused, after a work step
+    ordered before it could reach the real seam. The rig now refuses the case
+    before the build and the hub (R2's import_transcriber guard, extended), and
+    the schema requires ``reply`` on both.
+"""
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+from typing import Any
+
+import pytest
+from jsonschema import Draft202012Validator
+
+from holdspeak.services import onboarding_service
+from holdspeak.services.onboarding_service import (
+    AGENT_STATE_ENV,
+    NOT_READ,
+    OnboardingService,
+    agent_state_read,
+    detect_agents,
+)
+from scripts import graph_walk
+
+REPO = Path(__file__).resolve().parents[2]
+GRAPH = REPO / "docs/internal/philo/graph"
+SCHEMA = GRAPH / "atlas.schema.json"
+
+
+# ── G1: the agent state switch ──────────────────────────────────────────
+
+
+def _which(name: str) -> str | None:
+    return f"/opt/bin/{name}" if name in {"claude", "codex", "pi", "tmux", "holdspeak"} else None
+
+
+def _owner_state(root: Path) -> dict[str, str]:
+    """A stand-in for the owner's real agent state OUTSIDE the rig's HOME."""
+    claude = root / "owner-claude"
+    codex = root / "owner-codex"
+    claude.mkdir(parents=True)
+    codex.mkdir(parents=True)
+    (claude / ".credentials.json").write_text(json.dumps({"claudeAiOauth": {"accessToken": "t"}}))
+    (codex / "auth.json").write_text(json.dumps({"tokens": {"access_token": "t"}}))
+    hooks = {"hooks": {"SessionStart": [{"hooks": [{"command": "holdspeak agent-hook ingest"}]}]}}
+    (claude / "settings.json").write_text(json.dumps(hooks))
+    (codex / "hooks.json").write_text(json.dumps(hooks))
+    return {"CLAUDE_CONFIG_DIR": str(claude), "CODEX_HOME": str(codex), "ANTHROPIC_API_KEY": "sk-owner"}
+
+
+@pytest.mark.parametrize("value,expected", [
+    (None, True), ("", True), ("on", True), ("1", True),
+    ("off", False), ("OFF", False), ("0", False), ("false", False), ("no", False),
+])
+def test_the_switch_is_on_by_default_and_off_only_when_named(value: str | None, expected: bool) -> None:
+    env = {} if value is None else {AGENT_STATE_ENV: value}
+    assert agent_state_read(env) is expected
+
+
+def test_with_the_switch_off_a_fresh_home_reports_no_sign_in_and_no_hooks(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    env = {**_owner_state(tmp_path), AGENT_STATE_ENV: "off"}
+
+    rows = {row["id"]: row for row in detect_agents(which=_which, home=home, environ=env)["agents"]}
+
+    assert set(rows) == {"claude", "codex", "pi"}
+    for row in rows.values():
+        # Installed is lawful to detect (the binary on PATH).
+        assert row["installed"] is True
+        # Never "yes", and never a "no" a face could act on.
+        assert row["signed_in"] == NOT_READ, row
+        assert row["signed_in_from"] is None
+        assert row["hooks"] != "installed", row
+        assert row["ready"] is False
+    assert rows["pi"]["hooks"] == NOT_READ
+    # The owner's config dirs are not where the rig looked.
+    for agent in ("claude", "codex"):
+        assert Path(rows[agent]["hooks_path"]).is_relative_to(home), rows[agent]["hooks_path"]
+
+
+def test_the_default_still_reads_the_real_state_for_the_owner_and_doctor(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    env = _owner_state(tmp_path)  # no switch: the owner's desk
+
+    rows = {row["id"]: row for row in detect_agents(which=_which, home=home, environ=env)["agents"]}
+
+    assert rows["claude"]["signed_in"] == "yes"
+    assert rows["claude"]["signed_in_from"] == "ANTHROPIC_API_KEY"
+    assert rows["codex"]["signed_in"] == "yes"
+    assert rows["claude"]["hooks_path"].startswith(env["CLAUDE_CONFIG_DIR"])
+    assert rows["pi"]["signed_in"] == "yes"
+    assert rows["pi"]["hooks"] in {"installed", "missing"}
+
+
+def test_doctor_reads_with_the_process_environment_default_on(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``holdspeak doctor`` calls ``detect_agents()`` with no env: the process's, switch unset."""
+    from holdspeak.commands import doctor
+
+    monkeypatch.delenv(AGENT_STATE_ENV, raising=False)
+    for key, value in _owner_state(tmp_path).items():
+        monkeypatch.setenv(key, value)
+    seen: dict[str, Any] = {}
+    real = onboarding_service.detect_agents
+
+    def spy(**kwargs: Any) -> dict[str, Any]:
+        result = real(which=_which, home=tmp_path / "home", **kwargs)
+        seen.update({row["id"]: row for row in result["agents"]})
+        return result
+
+    monkeypatch.setattr(onboarding_service, "detect_agents", spy)
+    check = doctor._check_coding_agents()
+    assert check.name == "Coding agents"
+    assert seen["claude"]["signed_in"] == "yes" and seen["pi"]["signed_in"] == "yes"
+
+
+def test_a_credential_in_the_rigs_own_home_is_still_read(tmp_path: Path) -> None:
+    """Files under the isolated HOME are the rig's own state (the lane 18 glass writes them)."""
+    home = tmp_path / "home"
+    (home / ".codex").mkdir(parents=True)
+    (home / ".codex" / "auth.json").write_text(json.dumps({"OPENAI_API_KEY": "sk-placeholder"}))
+    env = {**_owner_state(tmp_path), AGENT_STATE_ENV: "off"}
+
+    rows = {row["id"]: row for row in detect_agents(which=_which, home=home, environ=env)["agents"]}
+
+    assert rows["codex"]["signed_in"] == "yes"
+    assert rows["codex"]["signed_in_from"] == str(home / ".codex" / "auth.json")
+    assert rows["claude"]["signed_in"] == NOT_READ
+
+
+def test_the_install_target_stays_in_the_rigs_home_with_the_switch_off(tmp_path: Path) -> None:
+    """Install hooks in a rig writes the rig's HOME, never the owner's CLAUDE_CONFIG_DIR."""
+    home = tmp_path / "home"
+    home.mkdir()
+    owner = _owner_state(tmp_path)
+
+    def service(env: dict[str, str]) -> OnboardingService:
+        svc = OnboardingService.__new__(OnboardingService)
+        svc._home = lambda: home
+        svc._environ = env
+        return svc
+
+    off = service({**owner, AGENT_STATE_ENV: "off"})
+    assert Path(off.agent_settings_target("claude")).is_relative_to(home)
+    assert Path(off.agent_settings_target("codex")).is_relative_to(home)
+    on = service(owner)
+    assert off.agent_settings_target("claude") != on.agent_settings_target("claude")
+    assert on.agent_settings_target("claude").startswith(owner["CLAUDE_CONFIG_DIR"])
+
+
+def test_the_graph_walk_hub_env_turns_agent_state_off_without_touching_this_process(tmp_path: Path) -> None:
+    before = os.environ.get(AGENT_STATE_ENV)
+    env = graph_walk._isolated_hub_env(tmp_path, inherited={"PATH": "/usr/bin"})
+    assert env[AGENT_STATE_ENV] == "off"
+    assert agent_state_read(env) is False
+    # The rig env is the child's: the parent (and `holdspeak web`) keep theirs.
+    assert os.environ.get(AGENT_STATE_ENV) == before
+
+
+def test_the_glass_boot_turns_agent_state_off(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import holdspeak.web_server as web_server
+
+    from tests.e2e import glass_infra
+
+    seen: dict[str, Any] = {}
+
+    class _Server:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+        def start(self) -> str:
+            seen["env"] = os.environ.get(AGENT_STATE_ENV)
+            seen["home"] = os.environ.get("HOME")
+            return "http://127.0.0.1:0"
+
+    monkeypatch.setattr(web_server, "MeetingWebServer", _Server)
+    glass_infra._boot(tmp_path, monkeypatch)
+    assert seen["env"] == "off"
+    assert seen["home"] == str(tmp_path / "home")
+
+
+# ── G2: replyless boot boundaries refuse before the build and the hub ───
+
+WORK = {
+    "engine_reply": {"kind": "api", "method": "POST", "path": "/api/meetings/m1/intel/run", "body": {}},
+    "cli_runner": {"kind": "api", "method": "POST", "path": "/api/channels/send", "body": {"id": "x"}},
+}
+
+
+def _atlas(tmp_path: Path, substitution: str, boundary: dict) -> Path:
+    case = {
+        "id": f"case.rig.{substitution}_after_work",
+        "job": "j6",
+        "edge_ids": [],
+        "state_id": "state.rig",
+        "applicability": "applicable",
+        "preconditions": [],
+        "setup": [WORK[substitution], boundary],
+        "trigger": {"kind": "api", "method": "GET", "path": "/api/meetings", "body": None},
+        "expected": {"predicate": {"kind": "protocol_field", "path": "/meetings", "value": []},
+                     "observe_at": "protocol: GET /api/meetings"},
+        "completion_bound_s": 5,
+        "viewports": [1440],
+    }
+    path = tmp_path / "atlas.json"
+    path.write_text(json.dumps({"schema_version": 1, "cases": [case], "states": []}))
+    return path
+
+
+@pytest.mark.parametrize("substitution", ["engine_reply", "cli_runner"])
+@pytest.mark.parametrize("reply", [None, "", "  "])
+@pytest.mark.parametrize("engine", ["none", "replayed"])
+def test_a_work_step_before_a_replyless_boot_boundary_is_refused_with_no_hub_and_no_request(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, substitution: str, reply: str | None, engine: str,
+) -> None:
+    boundary = {"kind": "boundary", "substitute": substitution, "label": "a double that names no file",
+                "adapter": "labelled-substitution"}
+    if reply is not None:
+        boundary["reply"] = reply
+    hubs: list[Any] = []
+    builds: list[Any] = []
+    requests: list[Any] = []
+
+    class _NoHub:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            hubs.append(kwargs)
+            raise AssertionError("a hub was started for a refused case")
+
+    monkeypatch.setattr(graph_walk, "Hub", _NoHub)
+    monkeypatch.setattr(graph_walk, "_ensure_build", lambda: builds.append(1))
+    monkeypatch.setattr(graph_walk.urllib.request, "urlopen", lambda *a, **k: requests.append(a))
+
+    record = graph_walk.run_case(
+        _atlas(tmp_path, substitution, boundary), f"case.rig.{substitution}_after_work",
+        brain="muaddib", viewport=1440, out=tmp_path / "out",
+        engine=engine, build=True, headless=False,
+    )
+
+    assert record["verdict"] == "blocked"
+    assert any(f"a {substitution} boundary declares no `reply`" in n for n in record["notes"]), record["notes"]
+    assert hubs == [] and builds == [] and requests == []
+
+
+@pytest.mark.parametrize("substitution", ["engine_reply", "cli_runner"])
+def test_the_schema_requires_a_reply_on_a_boot_boundary(substitution: str) -> None:
+    schema = json.loads(SCHEMA.read_text())
+    step = Draft202012Validator({"$defs": schema["$defs"], "$ref": "#/$defs/step"})
+    replyless = {"kind": "boundary", "substitute": substitution, "label": "a double",
+                 "adapter": "labelled-substitution"}
+    assert list(step.iter_errors(replyless))
+    assert list(step.iter_errors({**replyless, "reply": ""}))
+    assert not list(step.iter_errors({**replyless, "reply": "tests/fixtures/philo5_summary_reply.json"}))
+
+
+def test_every_declared_boot_boundary_in_the_active_atlases_names_its_file() -> None:
+    def boundaries(node: Any):
+        if isinstance(node, dict):
+            if node.get("kind") == "boundary":
+                yield node
+            for value in node.values():
+                yield from boundaries(value)
+        elif isinstance(node, list):
+            for value in node:
+                yield from boundaries(value)
+
+    for path in sorted(GRAPH.glob("atlas*.json")):
+        if path.name == "atlas.schema.json":
+            continue
+        for case in json.loads(path.read_text()).get("cases", []):
+            assert graph_walk.boot_boundary_problem(case) is None, (path.name, case["id"])
+            for boundary in boundaries(case):
+                if boundary.get("substitute") in {"engine_reply", "cli_runner", "import_transcriber"}:
+                    assert str(boundary.get("reply") or "").strip(), (path.name, case["id"])

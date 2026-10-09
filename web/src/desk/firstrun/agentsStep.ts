@@ -16,7 +16,8 @@ export const AGENTS_PATH = "/api/onboarding/agents";
 export const AGENTS_USE_PATH = "/api/onboarding/agents/use";
 
 export type AgentId = "claude" | "codex" | "pi";
-export type HooksState = "installed" | "partial" | "missing" | "unreadable" | "broken";
+/** `not_read`: a rig hub (HOLDSPEAK_AGENT_STATE=off) did not read the owner's state. */
+export type HooksState = "installed" | "partial" | "missing" | "unreadable" | "broken" | "not_read";
 
 export interface AgentRow {
   id: AgentId;
@@ -25,7 +26,7 @@ export interface AgentRow {
   path: string | null;
   version?: string | null;
   hooks: HooksState;
-  signed_in: "yes" | "unknown";
+  signed_in: "yes" | "unknown" | "not_read";
   ready: boolean;
   verb: string | null;
 }
