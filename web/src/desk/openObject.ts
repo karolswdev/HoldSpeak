@@ -8,7 +8,6 @@
  * (`openSourceRef`), a Project's drawer (`drawer/`), the People surface,
  * Intelligence. */
 import { apiFetch } from "../lib/api";
-import { openDrawer } from "./drawer/store";
 import { openIntelligence } from "./intelligenceNavigation";
 import { openAgentLane, openCoderSession, openProjectRoom, openSurfaceOr } from "./shell";
 import { openSourceRef } from "./surface";
@@ -136,11 +135,11 @@ export function refOpener(ref: string | null | undefined): Opener | null {
     if (!id || id.startsWith("project:")) return null;
     return () => openPerson(id);
   }
-  // PHILO-14 A2: a Project opens as its drawer (the Room is one press away,
-  // in the drawer's head).
+  // PHILO-17 U30: a Project opens its Room (one home; the drawer is parked
+  // as a project face).
   if (clean.startsWith("project:")) {
     const id = clean.slice("project:".length);
-    return id ? () => openDrawer(id) : null;
+    return id ? () => openProjectRoom(id) : null;
   }
   // Conductor F2: a Needs you coder row (R5) is `coder:<agent>:<session_id>`;
   // it opens the agent's session window.
@@ -233,7 +232,7 @@ export function calendarOpener(event: {
   const person = (event.person_relationship_id ?? "").trim();
   if (person) return () => openPerson(person, "prep");
   const project = (event.project_id ?? "").trim();
-  if (project) return () => openDrawer(project);
+  if (project) return () => openProjectRoom(project);
   return null;
 }
 

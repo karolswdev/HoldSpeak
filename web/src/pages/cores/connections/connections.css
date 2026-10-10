@@ -179,3 +179,12 @@
     width: 100%;
   }
 }
+
+/* PHILO-17 U29: the sign-in well inside a source row (New Project, the Room). */
+.connections-signin-well {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-1) 0;
+}

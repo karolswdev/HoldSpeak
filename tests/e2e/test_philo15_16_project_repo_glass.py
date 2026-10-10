@@ -29,7 +29,7 @@ import pytest
 
 from tests._evidence import evidence_dir
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import open_project_drawer, _api, _boot, _ensure_build, _normal_chair, _settle
 from .test_hs169_door_glass import _GH_AUTH_CONNECTED, _make_gh_runner, _open_door, _write_gh_fixture
 
 pytest.importorskip("playwright.sync_api", reason="the lane-16 glass needs Playwright")
@@ -143,7 +143,7 @@ class TestProjectRepositoryGlass:
         return browser, page, errors
 
     def _drawer(self, page: Any, project_id: str) -> Any:
-        page.goto(f"{self.base}/?token={TOKEN}&open=project:{project_id}", wait_until="load")
+        open_project_drawer(page, self.base, project_id, TOKEN)  # PHILO-17 U30: the parked drawer, by its key
         _normal_chair(page)
         drawer = page.locator(".drawer-window")
         drawer.locator("[data-testid=drawer-facts]").wait_for(timeout=T)

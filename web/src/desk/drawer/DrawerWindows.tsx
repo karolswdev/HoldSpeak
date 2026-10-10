@@ -7,8 +7,9 @@ import { DrawerWindow } from "./DrawerWindow";
 import { ParkedDrawer } from "./ParkedDrawer";
 import { openDrawer, useDrawers } from "./store";
 
-/** The surface key a Project primitive opens through (`lib/primitives.ts`):
- *  every generic open of a Project lands here, in its drawer. */
+/** PARKED (PHILO-17 U30): the drawer's surface key. A Project opens its
+ *  Room now (`lib/primitives.ts`); no product opener names this key. It
+ *  stays registered so a parked drawer still opens by its key. */
 export const PROJECT_DRAWER_KEY = "open-project-drawer";
 
 export function DrawerWindows() {

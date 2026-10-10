@@ -197,9 +197,10 @@ describe("Phase 93 Desk arrival", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /Project Orion/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("option", { name: /Project Orion/ }));
-    // PHILO-14 A2: the palette opens a Project as its drawer, never the Room.
-    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["orion"]);
-    expect(openRoom).not.toHaveBeenCalled();
+    // PHILO-17 U30: the palette opens a Project's Room (one home), never a drawer.
+    expect(openRoom).toHaveBeenCalled();
+    expect(openRoom.mock.calls[0][0]).toBe("project:orion");
+    expect(useDrawers.getState().drawers).toEqual([]);
     expect(openToolInspector).not.toHaveBeenCalledWith("project", "orion");
 
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));

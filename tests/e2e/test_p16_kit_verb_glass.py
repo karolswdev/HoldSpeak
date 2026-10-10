@@ -17,7 +17,7 @@ import pytest
 
 from tests._evidence import evidence_dir
 
-from .glass_infra import _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import open_project_drawer, _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
 
 pytest.importorskip("playwright.sync_api", reason="the kit Verb glass needs Playwright")
 
@@ -56,7 +56,7 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
             project = _api(page, "POST", "/api/projects", {
                 "name": "Payments ledger cutover", "command_id": "p16-kit-verb",
             }, token=TOKEN)["project"]["id"]
-            page.goto(f"{url}/?token={TOKEN}&open=project:{project}", wait_until="load")
+            open_project_drawer(page, url, project, TOKEN)  # PHILO-17 U30: the parked drawer, by its key
             _normal_chair(page)
             window = page.locator(".drawer-window").last
             window.wait_for(timeout=20_000)

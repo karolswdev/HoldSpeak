@@ -1541,20 +1541,23 @@ PROJECT_DOOR_CREATE = OperationDescriptor(
     name="project.door.create",
     version=1,
     description="Make a project through the Door: the outcome in your words names it, and each GitHub or Jira source "
-                "arms watches that read that provider on a schedule, then takes a baseline read.",
+                "arms watches that read that provider on a schedule, then takes a baseline read. With project_id, "
+                "the sources are added to that project (the Room's Add source) and no project is made.",
     args_schema={
         "type": "object",
         "properties": {
             "outcome": {"type": "string", "description": "The outcome you want, in your words; it names the project."},
             "sources": {"description": "Optional list of {provider: github|jira, scope, watches, adjust}."},
+            "project_id": {"type": "string", "description": "Optional: add the sources to this project "
+                                                            "(project.list returns the ids)."},
         },
-        "required": ["outcome"],
+        "required": [],
         "additionalProperties": False,
     },
     principal=_ROOM_PRINCIPAL,
     effect="write",
-    result="the new project's id as projectId",
-    refusals=_CONTRACT_REFUSALS + ("ServiceError project_service_missing",),
+    result="the project's id as projectId (the new one, or project_id)",
+    refusals=_CONTRACT_REFUSALS + ("ServiceError project_service_missing", "ValidationError validation"),
     completion="synchronous; project.get returns it; each armed watch took its baseline read (or is marked pending)",
     exposure=("http:POST /api/projects/door",),
     service="project_door_service",

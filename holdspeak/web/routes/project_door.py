@@ -103,7 +103,11 @@ def build_project_door_router(ctx: WebContext) -> APIRouter:
             return refused
         try:
             outcome = body.get("outcome", "")
-            if not outcome or not isinstance(outcome, str):
+            # PHILO-17 U10: with project_id the sources join that project (the Room's Add source).
+            project_id = body.get("project_id")
+            if project_id is not None and (not isinstance(project_id, str) or not project_id):
+                project_id = None
+            if not project_id and (not outcome or not isinstance(outcome, str)):
                 kernel = (refuse_identifiable(ops(), p, "project.door.create", "invalid_arguments")
                           if sources else None)
                 return JSONResponse(
@@ -118,7 +122,8 @@ def build_project_door_router(ctx: WebContext) -> APIRouter:
                 )
             # PHILO-9-01: the declared project.door.create, beside project.create.
             result, kernel = ops().invoke_receipted(p, "project.door.create", {
-                "outcome": outcome, "sources": sources,
+                "outcome": outcome if isinstance(outcome, str) else "", "sources": sources,
+                **({"project_id": project_id} if project_id else {}),
             })
             return JSONResponse({**result, **kernel_fields(kernel)} if isinstance(result, dict) else result)
         except OperationRefused as exc:

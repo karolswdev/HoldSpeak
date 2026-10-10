@@ -20,6 +20,8 @@ import {
   type SourceRow,
   type WatchDefault,
 } from "./useDoorController";
+import { SignInWell, notSignedIn } from "../../../pages/cores/connections/ConnectionsPane";
+import type { ConnectionState } from "../../../pages/cores/connections/api";
 import "./door.css";
 
 /* ── Default watch definitions (display only) ── */
@@ -87,11 +89,11 @@ function providerSearchPlaceholder(provider: string): string {
 function NotConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }) {
   const emblem = providerEmblem(row.provider);
   const name = providerName(row.provider);
-  const chipState = row.connectionState === "owner_action_required" ? "warning" : "idle";
-  const chipLabel =
-    row.connectionState === "owner_action_required"
-      ? "SIGN IN"
-      : "NOT SET UP";
+  const tool = ctrl.tools.find((t) => t.provider_id === row.provider);
+  // PHILO-17 U29: the cause in plain words, from the producer's state.
+  const signIn = notSignedIn(row.connectionState as ConnectionState);
+  const chipState = signIn ? "warning" : "idle";
+  const chipLabel = signIn ? "NOT SIGNED IN" : "NOT SET UP";
 
   return (
     <SurfaceLedgerRow
@@ -111,9 +113,20 @@ function NotConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }
           Connect
         </Button>
       }
-      expands={false}
+      open={row.connectOpen}
+      onToggle={() => ctrl.connect(row.provider)}
+      wrap
       data-testid={`door-row-${row.provider}`}
-    />
+    >
+      {row.connectOpen && tool ? (
+        <SignInWell
+          tool={tool}
+          busy={ctrl.busy === row.provider}
+          onRecheck={() => ctrl.recheck(row.provider)}
+          onAddAccount={(site, email) => ctrl.addAccount(row.provider, site, email)}
+        />
+      ) : null}
+    </SurfaceLedgerRow>
   );
 }
 
@@ -373,6 +386,57 @@ function SourceRowComponent({ row, ctrl }: { row: SourceRow; ctrl: DoorControlle
   return <ConnectedRow row={row} ctrl={ctrl} />;
 }
 
+/** PHILO-17 U10: the Door's source rows, for the Room's Add source. */
+export function DoorSourceRows({ ctrl }: { ctrl: DoorController }) {
+  return (
+    <ul className="door-sources-list">
+      {ctrl.sources.map((row) => (
+        <SourceRowComponent key={row.provider} row={row} ctrl={ctrl} />
+      ))}
+    </ul>
+  );
+}
+
+/** PHILO-17 U10: Add source in the Room: the same rows as New Project,
+ *  added to this project. */
+export function AddSourcesWell({
+  projectId,
+  onAdded,
+  onCancel,
+}: {
+  projectId: string;
+  onAdded: () => void;
+  onCancel: () => void;
+}) {
+  const ctrl = useDoorController({ projectId, onAdded, onCancel });
+  const picked = ctrl.sources.filter((s) => s.connected && s.scope != null).length;
+  return (
+    <div className="door-add-well" data-testid="room-add-sources">
+      <DoorSourceRows ctrl={ctrl} />
+      {ctrl.error ? (
+        <div className="door-error" role="alert">
+          {ctrl.error}
+        </div>
+      ) : null}
+      <div className="door-add-verbs">
+        <Button dense variant="ghost" onClick={ctrl.cancel} data-testid="room-add-sources-cancel">
+          Cancel
+        </Button>
+        <Button
+          dense
+          variant="primary"
+          disabled={!picked || ctrl.creating}
+          loading={ctrl.creating}
+          onClick={ctrl.create}
+          data-testid="room-add-sources-add"
+        >
+          Add
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /* ── DoorCore ── */
 
 export function DoorCore({ scope }: CoreProps) {
@@ -429,11 +493,7 @@ export function DoorCore({ scope }: CoreProps) {
         <span className="door-section-label" data-testid="door-sources-label">
           SOURCES{scopedCount > 0 ? ` ${scopedCount}` : ""}
         </span>
-        <ul className="door-sources-list">
-          {ctrl.sources.map((row) => (
-            <SourceRowComponent key={row.provider} row={row} ctrl={ctrl} />
-          ))}
-        </ul>
+        <DoorSourceRows ctrl={ctrl} />
       </div>
 
       {/* 3. Footer */}

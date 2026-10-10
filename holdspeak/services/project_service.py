@@ -378,6 +378,44 @@ class _CommandRaced(Exception):
     """
 
 
+def _source_watch_identity(spec: dict[str, Any]) -> tuple[str, str, str]:
+    """A source spec's stored identity: (connector_id, query_kind, query_json).
+
+    The shape ``_arm_source_watch_in_txn`` writes; PHILO-17 U10 compares it to
+    refuse a source the project already watches.
+    """
+    # Map provider spec IDs to connector_pack IDs
+    # (the watch table's connector_id is "gh", not "github")
+    raw_provider = spec.get("provider", {}).get("id", "native")
+    connector_id = _PROVIDER_TO_CONNECTOR.get(raw_provider, raw_provider)
+    # M-1 counsel: map singular subject kind to the plural
+    # wire form GitHubWatchSource.snapshot demands.
+    raw_kind = spec.get("subject", {}).get("kind", "")
+    query_kind = _SUBJECT_TO_QUERY_KIND.get(raw_kind, raw_kind)
+    # M-1 counsel: build the stored query in the shape
+    # GitHubWatchSource expects: repository (singular string)
+    # + query filters (state/base/search).  Mirror the shape
+    # project_setup_service._native_test_read already uses.
+    subject = spec.get("subject", {})
+    scope = subject.get("scope", {})
+    query_filters = dict(subject.get("query", {}))
+    repos = scope.get("repositories", [])
+    if repos:
+        query_filters["repository"] = repos[0]
+    # HS-166-03: flatten jira scope into the stored query
+    # the way repos[0] is flattened for gh.
+    jira_connection_ref = scope.get("connection_ref") or spec.get("provider", {}).get("connection_ref")
+    if jira_connection_ref:
+        query_filters["connection_ref"] = jira_connection_ref
+    jira_projects = scope.get("projects", [])
+    if jira_projects:
+        query_filters["projects"] = list(jira_projects)
+    jira_issue_types = scope.get("issue_types", [])
+    if jira_issue_types:
+        query_filters["issue_types"] = list(jira_issue_types)
+    return connector_id, query_kind, json.dumps(query_filters, sort_keys=True, separators=(",", ":"))
+
+
 def _serialized_command(method: Any) -> Any:
     """Answer a lost same-key race through the replay path (PHILO-9-02, law 9)."""
     import functools
@@ -3159,36 +3197,7 @@ class ProjectService:
 
         watch_id = f"watch_{uuid.uuid4().hex[:12]}"
         watch_name = spec.get("name", "Untitled watch")
-        # Map provider spec IDs to connector_pack IDs
-        # (the watch table's connector_id is "gh", not "github")
-        raw_provider = spec.get("provider", {}).get("id", "native")
-        connector_id = _PROVIDER_TO_CONNECTOR.get(raw_provider, raw_provider)
-        # M-1 counsel: map singular subject kind to the plural
-        # wire form GitHubWatchSource.snapshot demands.
-        raw_kind = spec.get("subject", {}).get("kind", "")
-        query_kind = _SUBJECT_TO_QUERY_KIND.get(raw_kind, raw_kind)
-        # M-1 counsel: build the stored query in the shape
-        # GitHubWatchSource expects: repository (singular string)
-        # + query filters (state/base/search).  Mirror the shape
-        # project_setup_service._native_test_read already uses.
-        subject = spec.get("subject", {})
-        scope = subject.get("scope", {})
-        query_filters = dict(subject.get("query", {}))
-        repos = scope.get("repositories", [])
-        if repos:
-            query_filters["repository"] = repos[0]
-        # HS-166-03: flatten jira scope into the stored query
-        # the way repos[0] is flattened for gh.
-        jira_connection_ref = scope.get("connection_ref") or spec.get("provider", {}).get("connection_ref")
-        if jira_connection_ref:
-            query_filters["connection_ref"] = jira_connection_ref
-        jira_projects = scope.get("projects", [])
-        if jira_projects:
-            query_filters["projects"] = list(jira_projects)
-        jira_issue_types = scope.get("issue_types", [])
-        if jira_issue_types:
-            query_filters["issue_types"] = list(jira_issue_types)
-        query: dict[str, Any] = query_filters
+        connector_id, query_kind, query_json = _source_watch_identity(spec)
         trigger = spec.get("trigger") or CADENCE_PRESETS.get("normal", {})
         mode = spec.get("mode", "yolo")
 
@@ -3199,7 +3208,7 @@ class ProjectService:
             connector_id=connector_id,
             query_kind=query_kind,
             name=watch_name,
-            query_json=json.dumps(query, sort_keys=True, separators=(",", ":")),
+            query_json=query_json,
             enabled=True,
             schema_version="WatchSpec@1",
             project_id=project_id,
@@ -3355,6 +3364,75 @@ class ProjectService:
                 "watch": watch,
             }
             self._record_command(conn, cmd_id, project_id, "add_source_watch", req_hash, envelope, result=result)
+        return result
+
+    @_serialized_command
+    def add_source_watches(
+        self, principal: Principal, project_id: str, specs: list[dict[str, Any]],
+        *, command_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """PHILO-17 U10: sources added to a project that exists (the Room's Add source).
+
+        The same rows ``create_from_setup`` writes for each source (the watch,
+        its rules, the ``project_sources`` binding), in ONE transaction with
+        the revision, one ``watch.created`` change per watch and its event.
+        """
+        self._require_project(project_id)
+        if not specs:
+            raise ValidationError("At least one source is required")
+        req_hash = _request_hash({"project_id": project_id, "specs": specs, "action": "add_source_watches"})
+        replay = self._check_idempotency(command_id, req_hash, "add_source_watches")
+        if replay is not None:
+            return replay
+        cmd_id = command_id or generate_pcmd_id()
+        now_iso = utc_now_iso()
+        project_ref = format_ref("project", project_id)
+        with self._command_txn(command_id) as conn:
+            # Astra r1 on #1068: a source the project already watches is never
+            # armed twice (hidden duplicate polling); all of them: refused.
+            watched = {
+                (str(r[0]), str(r[1]), str(r[2])) for r in conn.execute(
+                    "SELECT connector_id, query_kind, query_json FROM connector_watches"
+                    " WHERE project_id=? AND state != 'retired'", (project_id,)).fetchall()
+            }
+            fresh: list[dict[str, Any]] = []
+            for spec in specs:
+                identity = _source_watch_identity(spec)
+                if identity not in watched:
+                    watched.add(identity)
+                    fresh.append(spec)
+            if not fresh:
+                raise ConflictError("Already watched", code="already_watched", context={"status": 409})
+            new_revision = self._get_revision(conn, project_id) + 1
+            conn.execute("UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
+                         (new_revision, now_iso, project_id))
+            activated: list[dict[str, Any]] = []
+            for ordinal, spec in enumerate(fresh):
+                watch = self._arm_source_watch_in_txn(conn, project_id, spec, now_iso)
+                activated.append(watch)
+                watch_ref = format_ref("watch", watch["watch_id"])
+                conn.execute(
+                    """INSERT INTO project_changes (
+                        id, project_id, project_revision, change_kind, target_ref, actor_ref,
+                        command_id, before_hash, after_hash, summary_json, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (generate_pchg_id(project_id=project_id, project_revision=new_revision, ordinal=ordinal),
+                     project_id, new_revision, "watch.created", watch_ref,
+                     f"principal:{principal.identity}", cmd_id, None, None,
+                     json.dumps({"watch_id": watch["watch_id"], "name": watch["name"]}), now_iso),
+                )
+                self._ledger.append_in_transaction(
+                    conn, principal, event_type="watch.created", producer="ProjectService",
+                    subject_ref=project_ref, source_revision=str(new_revision),
+                    facts={"project_id": project_id, "watch_id": watch["watch_id"]},
+                    refs=[project_ref, watch_ref],
+                )
+            envelope = CommandResultEnvelope(
+                result_kind=ResultKind.UPDATED, project_id=project_id, project_revision=new_revision,
+                changed_refs=(parse_ref(project_ref),),
+            )
+            result = {"project_id": project_id, "activated_watches": activated, **_envelope_to_dict(envelope)}
+            self._record_command(conn, cmd_id, project_id, "add_source_watches", req_hash, envelope, result=result)
         return result
 
     def update_project(

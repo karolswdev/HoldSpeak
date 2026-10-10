@@ -238,13 +238,13 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     fireEvent.pointerUp(grid, { pointerId: 1 });
   });
 
-  it("Enter or a double press opens: the drawer, Needs you, the Conductor, People, Parked, the object, the agent", async () => {
+  it("Enter or a double press opens: the Room, Needs you, the Conductor, People, Parked, the object, the agent", async () => {
     render(<Screen />);
     await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
     fireEvent.keyDown(icon(/^Payments ledger cutover/), { key: "Enter" });
-    // PHILO-14 A2b: a Project opens as its drawer, never the Room.
-    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toContain("p-ledger");
-    expect(shell.openProjectRoom).not.toHaveBeenCalled();
+    // PHILO-17 U30: a Project opens its Room (one home), never a drawer.
+    expect(shell.openProjectRoom).toHaveBeenCalledWith("p-ledger");
+    expect(useDrawers.getState().drawers).toEqual([]);
     fireEvent.doubleClick(icon(/^Needs you/));
     expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
     fireEvent.keyDown(icon(/^Conductor/), { key: "Enter" });

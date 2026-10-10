@@ -782,17 +782,22 @@ def seed_meeting_engines() -> None:
 
 # ── PHILO-14 A2: a Project opens as its drawer; the Room is one press away ──
 
-def _room_through_drawer(page: Any, press: Any = None) -> None:
-    """A generic open of a Project lands in its drawer (the ruling: the
-    drawer is the Project's face; the Room is its intelligence, one press
-    away). Press the drawer's Room verb; ``press`` is the rig's own press
-    (a tap at 393), default a click."""
-    drawer = page.locator(".drawer-window").last
-    drawer.wait_for(timeout=30_000)
-    room = drawer.get_by_role("button", name="Room", exact=True)
-    room.wait_for(timeout=30_000)
-    if press:
-        press(room)
-    else:
-        room.click()
+def _room_opened(page: Any) -> None:
+    """PHILO-17 U30 (Astra r1 on #1068): a generic open of a Project opens its
+    Room (one home); the rig waits for the Room, never a drawer."""
     page.locator("#surface-project-memory").wait_for(timeout=30_000)
+    assert page.locator(".drawer-window").count() == 0, "a Project open drew a drawer"
+
+
+def open_project_drawer(page: Any, base: str, project: str, token: str = "glass-test") -> None:
+    """The PARKED drawer of a Project (PHILO-17 U30): no product opener names
+    it; a rig that tests the drawer's own face opens it by its surface key
+    (``open-project-drawer``), staged across a load as a deep link is."""
+    if not page.url.startswith(base):
+        page.goto(f"{base}/?token={token}", wait_until="load")
+    page.evaluate(
+        """([key, scope]) => sessionStorage.setItem(
+             "hs.desk.staged-surface-open", JSON.stringify({key, scope}))""",
+        ["open-project-drawer", f"project:{project}"],
+    )
+    page.goto(f"{base}/?token={token}", wait_until="load")

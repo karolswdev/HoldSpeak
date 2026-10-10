@@ -169,7 +169,7 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
     expect(openPrimitive).not.toHaveBeenCalled();
   });
 
-  it("a calendar row opens its person at Prep, else its Project's drawer, else nothing", async () => {
+  it("a calendar row opens its person at Prep, else its Project's Room, else nothing", async () => {
     useDrawers.setState({ drawers: [], infos: [] });
     render(<ChairHome />);
     const rows = await screen.findAllByTestId("arrival-meeting-row");
@@ -179,13 +179,14 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
 
     const sync = rows.find((r) => r.textContent?.includes("Ledger cutover sync"))!;
     fireEvent.click(sync);
-    // PHILO-14 A2: a Project opens as its drawer.
-    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["proj-ledger"]);
+    // PHILO-17 U30: a Project opens its Room (one home), never a drawer.
+    expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
+    expect(useDrawers.getState().drawers).toEqual([]);
 
     // Unlink beside the ROOM token is its own verb, never the row's open.
-    useDrawers.setState({ drawers: [] });
+    vi.mocked(openProjectRoom).mockReset();
     fireEvent.click(within(sync).getByTestId("arrival-unlink-room"));
-    expect(useDrawers.getState().drawers).toEqual([]);
+    expect(openProjectRoom).not.toHaveBeenCalled();
 
     const arch = rows.find((r) => r.textContent?.includes("Architecture review"))!;
     expect(arch.hasAttribute("data-inert")).toBe(true);
@@ -207,7 +208,7 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
   });
 });
 
-describe("PHILO-14 A2b: every generic open of a Project opens its drawer", () => {
+describe("PHILO-17 U30: every generic open of a Project opens its Room (one home)", () => {
   beforeEach(wireChair);
 
   // Two Projects, so the row names its Project (ProjectButton); a watch row
@@ -223,14 +224,14 @@ describe("PHILO-14 A2b: every generic open of a Project opens its drawer", () =>
     projects: ["proj-ledger", "proj-infra"],
   };
 
-  it("the Needs you row's Project button opens the drawer, never the Room", async () => {
+  it("the Needs you row's Project button opens the Room, never a drawer", async () => {
     chairNeeds = twoProjects;
     useDrawers.setState({ drawers: [], infos: [] });
     render(<ChairHome />);
     const button = await screen.findByRole("button", { name: "Open the Project: Payments ledger cutover" });
     fireEvent.click(button);
-    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["proj-ledger"]);
-    expect(openProjectRoom).not.toHaveBeenCalled();
+    expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
+    expect(useDrawers.getState().drawers).toEqual([]);
   });
 
   it("a proposal row opens the Room with that proposal selected; its verb says Room", async () => {
@@ -259,7 +260,7 @@ describe("PHILO-14 A2b: every generic open of a Project opens its drawer", () =>
     expect(useDrawers.getState().drawers).toEqual([]);
   });
 
-  it("a row that names only its Project opens the drawer, never the Room", async () => {
+  it("a row that names only its Project opens the Room, never a drawer", async () => {
     chairNeeds = twoProjects;
     useDrawers.setState({ drawers: [], infos: [] });
     render(<ChairHome />);
@@ -267,8 +268,8 @@ describe("PHILO-14 A2b: every generic open of a Project opens its drawer", () =>
     const row = name.closest(".needs-row") as HTMLElement;
     await waitFor(() => expect(row.getAttribute("data-opens")).toBe("true"));
     fireEvent.click(name);
-    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["proj-infra"]);
-    expect(openProjectRoom).not.toHaveBeenCalled();
+    expect(openProjectRoom).toHaveBeenCalledWith("proj-infra");
+    expect(useDrawers.getState().drawers).toEqual([]);
   });
 });
 

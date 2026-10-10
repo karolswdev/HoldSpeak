@@ -165,7 +165,7 @@ describe("RecallFace (HS-200-13)", () => {
     expect(screen.queryByText(/DISPUTED 0|MEETINGS 0|ALSO 0/)).toBeNull();
   });
 
-  it("Open source opens the transcript at the moment; the Project button opens its drawer", async () => {
+  it("Open source opens the transcript at the moment; the Project button opens its Room", async () => {
     useDrawers.setState({ drawers: [], infos: [] });
     wire(result());
     render(<RecallFace />);
@@ -173,9 +173,9 @@ describe("RecallFace (HS-200-13)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open source: MTG 09-07" }));
     expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/meetings", "meeting:m-sun?segment=2");
     fireEvent.click(screen.getAllByRole("button", { name: "Open the Project: Q4 platform" })[0]);
-    // PHILO-14 A2: a Project opens as its drawer; the Room is one press away there.
-    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["p-q4"]);
-    expect(openProjectRoom).not.toHaveBeenCalled();
+    // PHILO-17 U30: a Project opens its Room (one home), never a drawer.
+    expect(openProjectRoom).toHaveBeenCalledWith("p-q4");
+    expect(useDrawers.getState().drawers).toEqual([]);
   });
 
   it("a disputed decision is drawn under DISPUTED, never accented, never carried", async () => {

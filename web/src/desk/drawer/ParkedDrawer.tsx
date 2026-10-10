@@ -29,12 +29,12 @@ import {
 } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { restoreMeeting, restoreProject, restoreWorkbenchItem } from "../api";
-import { openSurfaceOr } from "../shell";
+import { openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { useOnDeskChanged } from "../useDeskChangedRefresh";
 import { drawerReceipt } from "./DrawerWindow";
 import { whenWord } from "./members";
-import { PARKED_WINDOW_ID, openDrawer, useDrawers } from "./store";
+import { PARKED_WINDOW_ID, useDrawers } from "./store";
 import "./drawer.css";
 
 export type ParkedKind = "meeting" | "workbench_item" | "project";
@@ -83,7 +83,7 @@ export function openParkedHome(item: ParkedItem): void {
   if (item.kind === "meeting") openSurfaceOr("review-meetings", "/history");
   else if (item.kind === "workbench_item" && item.home.workbench_id) {
     useDesk.getState().openWorkbenchWindow(item.home.workbench_id);
-  } else if (item.kind === "project") openDrawer(item.id);
+  } else if (item.kind === "project") openProjectRoom(item.id);
 }
 
 /** Restore: each kind on its own route (the existing receipts). */

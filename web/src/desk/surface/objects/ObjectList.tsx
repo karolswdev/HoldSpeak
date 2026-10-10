@@ -92,6 +92,9 @@ export interface ObjectListProps {
   selectedLabel?: string;
   onSelect?(id: string): void;
   onOpen?(id: string): void;
+  /** PHILO-17 U30: extra props for a row (the Room's FILES: a filed object
+   *  drags onto an agent, as the drawer's icons did). */
+  rowProps?(row: ObjectListRow): Record<string, unknown>;
   className?: string;
 }
 
@@ -105,6 +108,7 @@ export function ObjectList({
   selectedLabel,
   onSelect,
   onOpen,
+  rowProps,
   className,
 }: ObjectListProps) {
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -167,6 +171,7 @@ export function ObjectList({
               aria-selected={selected ? "true" : "false"}
               data-selected={selected ? "true" : undefined}
               data-object-id={row.id}
+              {...(rowProps ? rowProps(row) : {})}
             >
               <div role="gridcell" className="object-list-name" data-col="name">
                 <Button

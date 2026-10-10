@@ -32,7 +32,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, pick_wing, _room_through_drawer
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, pick_wing, _room_opened
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the Room face glass needs Playwright")
@@ -345,7 +345,7 @@ class TestRoomFaceGlass:
                 button = page.locator("[data-testid=review-project]").first
                 button.wait_for(timeout=T)
                 button.click()
-                _room_through_drawer(page)
+                _room_opened(page)
                 page.locator("[data-testid=room-body]").wait_for(timeout=10_000)
                 page.wait_for_timeout(600)
                 room = _api(page, "GET", f"/api/projects/{pid}/room", token=TOKEN)
@@ -403,7 +403,7 @@ class TestRoomFaceGlass:
                 button.click()
                 # PHILO-14 A2b: the Project button is a generic open: the
                 # drawer; the Room is its Room verb, one press away.
-                _room_through_drawer(page)
+                _room_opened(page)
                 self._room_opened_for(page, width, NAME, "f1-chair-opens-room")
                 assert not errors, errors
             finally:
@@ -426,7 +426,7 @@ class TestRoomFaceGlass:
                 row = page.locator("[data-testid=shade-project-row]", has_text=NAME).first
                 row.wait_for(timeout=T)
                 row.get_by_role("button", name="Open").click()
-                _room_through_drawer(page)
+                _room_opened(page)
                 self._room_opened_for(page, width, NAME, "f1-shade-opens-room")
                 assert not errors, errors
             finally:
