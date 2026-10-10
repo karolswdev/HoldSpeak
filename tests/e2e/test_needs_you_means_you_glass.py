@@ -86,8 +86,10 @@ class TestNeedsYouMeansYou:
         page.wait_for_function(
             """(n) => {
               const r = (s) => { const e = document.querySelector(s); const m = ((e && e.innerText) || '').match(/\\d+/); return m ? Number(m[0]) : null; };
+              // PHILO-17 (needsyou): the head and the bell; the Dock's
+              // Intelligence tile carries no copy of the number.
               return r('[data-testid=arrival-display]') === n && r('.desk-bell strong') === n
-                && r('.desk-dock [aria-label^="Intelligence"] .desk-dock-badge') === n;
+                && r('.desk-dock [aria-label^="Intelligence"] .desk-dock-badge') === null;
             }""",
             arg=n, timeout=20_000,
         )

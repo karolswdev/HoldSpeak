@@ -70,8 +70,10 @@
   .runson-add-open { align-self: stretch; }
 }
 
-/* The foot is portaled into the frame; at a phone width its verbs are
-   44 px targets too. */
-@media (max-width: 719px) {
+/* The foot is portaled into the frame's foot, itself a `surface`
+   container (window-chrome.css); in a narrow window its verbs are 44 px
+   targets too. HS-129-06: a window body queries its container, never the
+   viewport. */
+@container surface (max-width: 719px) {
   .runson-foot .btn { min-height: 44px; }
 }

@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { plainFailure } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
 import { openRef } from "../../desk/openObject";
+import { refreshNeedsYou } from "../../desk/needsYou";
 import { useCoreWings } from "../../pages/cores/core-hooks";
 import type { SinceLastMeetingResponse } from "./model";
 import type { RoomSnapshot, RoomProposalItem, RoomSuggestedSourceItem } from "./model";
@@ -239,6 +240,10 @@ export function useProjectRoomController(
       setDecisions((rows) =>
         rows.map((row) => (row.id === id ? updated : row)),
       );
+      // PHILO-17 (needsyou): a meeting decision's lifecycle write sends no
+      // desk_changed frame, so Needs you is read again here: an accepted
+      // decision leaves its TO REVIEW row at once.
+      void refreshNeedsYou(true);
     } catch (reason) {
       setError(plainFailure("NOT DONE", reason));
     } finally {

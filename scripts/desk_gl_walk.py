@@ -83,9 +83,9 @@ def launch_tool(page, label):
     """HS-100-11 — drawers launch from the BELL (Desk memory) or the
     search shelf, never the dock (the dock carries the applications)."""
     if label == "Desk memory":
-        # The bell opens the system shade (HS-101 B6); the full Desk
+        # The Dock's Desk memory launcher opens the system shade (PHILO-17); the full Desk
         # memory browser is one verb inside it.
-        page.click(".desk-bell")
+        page.click(".desk-dock [data-launcher='attention']")
         page.wait_for_selector(".desk-shade", timeout=3000)
         page.click(".desk-shade-memory")
         return

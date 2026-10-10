@@ -14,7 +14,7 @@ import {
 } from "./chair/meetingPathBlocker";
 import { intelBadge } from "./chair/intelBadge";
 import { itemOriginRefs } from "./agentFlights";
-import { readCoverage, type CoverageRecord } from "./coverage";
+import { groupGaps, readCoverage, type CoverageRecord } from "./coverage";
 import type { AssignmentSummary } from "../pages/cores/assignmentExperience";
 import type { Meeting } from "../lib/primitives";
 
@@ -789,8 +789,9 @@ export function readNeedsYouAnswer(answer: NeedsYouAnswer | null | undefined): N
     .filter((row) => row && row.scheduleId)
     .map((row) => ({ scheduleId: String(row.scheduleId), title: String(row.title ?? "") }));
   // PHILO-15 B60: a source held by quiet hours is listed, never counted.
-  const unread = (Array.isArray(value.coverage) ? value.coverage : [])
-    .filter((row) => row && row.state !== "available" && row.state !== "quiet").length;
+  // PHILO-17 (needsyou): sources of one cause are one row, counted once.
+  const unread = groupGaps((Array.isArray(value.coverage) ? value.coverage : [])
+    .filter((row) => row && row.state !== "available" && row.state !== "quiet")).length;
   return {
     members, count: members.length + unread + arming.length, waitingCount: waitingItems.length,
     unmutedItems, waitingItems, mutedItems, blockers, failedMeetings, arming,

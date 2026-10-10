@@ -792,7 +792,7 @@ def _compose_brief_overlay_mcp(result: dict[str, Any], db: Any, principal: Princ
     follow_through = _FT(db)
     brief_window = (result.get("period_start", ""), result.get("period_end", ""))
 
-    overlay = compose_person_overlay(brief_window, people_svc, follow_through, db, principal)
+    overlay = compose_person_overlay(brief_window, people_svc, follow_through, db, principal, shared_only=True)
 
     if overlay.get("state") == "ready":
         # F6: filter sections to shared_intent-only via _mcp_readable pattern.

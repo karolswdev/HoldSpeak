@@ -8,13 +8,18 @@
  *
  *  Composed of the object species only (DeskIcon, IconGrid). A press
  *  selects; the rubber band selects many; Enter or a double press opens
- *  (screen/open.ts). The screen keeps no state beyond the selection. */
+ *  (screen/open.ts). The selection is the desk's one selection (the store's
+ *  selectedIds, PHILO-17): the menu bar Object menu, F2 and the right-click
+ *  menu act on it exactly as on the Floor. */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useAgentFlights } from "../agentFlights";
 import { projectOpenHere, useNeedsYou } from "../needsYou";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { useDesk } from "../store";
+import { WorkMenu } from "../components/DeskMenu";
+import { objectMenuEntries } from "../floorMenu";
+import { objectByRef } from "../world";
 import { DeskIcon, IconGrid, iconsInRect, type GridRect } from "../surface";
 import { useCompactViewport } from "../useCompactViewport";
 import { composeScreen, screenIsBare } from "./compose";
@@ -82,16 +87,29 @@ export function Screen() {
     });
   }, [items, needs, sessions, flights, members]);
 
-  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  // PHILO-17: the one selection truth. The menu bar Object menu, the keymap
+  // (F2) and the Floor read the store's selectedIds; the screen writes there.
+  const selectedIds = useDesk((s) => s.selectedIds);
+  const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const setSelected = (keys: Iterable<string>) => useDesk.getState().setSelected([...keys]);
   const [marquee, setMarquee] = useState<GridRect | null>(null);
+  const [menu, setMenu] = useState<{ key: string; id: string; kind: string; title: string; x: number; y: number } | null>(null);
   // The selection holds only what is on the screen.
   useEffect(() => {
-    setSelected((prev) => {
-      const keys = new Set(objects.map((o) => o.key));
-      const next = new Set([...prev].filter((k) => keys.has(k)));
-      return next.size === prev.size ? prev : next;
-    });
+    const prev = useDesk.getState().selectedIds;
+    const keys = new Set(objects.map((o) => o.key));
+    const next = prev.filter((k) => keys.has(k));
+    if (next.length !== prev.length) useDesk.getState().setSelected(next);
   }, [objects]);
+  // The right-click menu: the Floor's object menu (floorMenu.ts), for an
+  // object the desk can resolve. A drawer with no object keeps no menu.
+  const openMenu = (key: string, x: number, y: number): boolean => {
+    const o = objectByRef(items, key);
+    if (!o) return false;
+    setSelected([key]);
+    setMenu({ key, id: o.id, kind: o.kind, title: o.title, x, y });
+    return true;
+  };
 
   const ref = useRef<HTMLDivElement>(null);
   const size = useSize(ref);
@@ -126,6 +144,14 @@ export function Screen() {
               key={o.key}
               className={`desk-screen-cell${at ? " desk-screen-placed" : ""}`}
               style={at ? { left: at.x, top: at.y } : undefined}
+              onContextMenu={(event) => {
+                if (openMenu(o.key, event.clientX, event.clientY)) event.preventDefault();
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== "ContextMenu" && !(event.shiftKey && event.key === "F10")) return;
+                const rect = (event.target as HTMLElement).getBoundingClientRect();
+                if (openMenu(o.key, rect.left + 24, rect.bottom)) event.preventDefault();
+              }}
             >
               <DeskIcon
                 id={o.key}
@@ -167,6 +193,18 @@ export function Screen() {
           );
         })}
       </IconGrid>
+      {menu ? (
+        <WorkMenu
+          className="desk-world-menu"
+          label={`${menu.title} menu`}
+          anchor="below"
+          x={menu.x}
+          y={menu.y}
+          autoFocus
+          entries={objectMenuEntries({ type: "object", id: menu.id, ref: menu.key, kind: menu.kind, title: menu.title })}
+          onClose={() => setMenu(null)}
+        />
+      ) : null}
       <HandConfirmSlot host={SCREEN_HOST} className="desk-screen-hand" />
       {compact ? null : (
         // Astra's P3 on #939 (ruling): TALK is one press on the Chair. The

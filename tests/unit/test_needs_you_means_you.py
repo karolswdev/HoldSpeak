@@ -61,6 +61,7 @@ def _readers(hub: Hub, *, brief: bool) -> dict[str, int]:
     state it asserts (``brief=True``).
     """
     from holdspeak.services.heartbeat_service import HeartbeatService
+    from holdspeak.services.needs_you_membership import unread_source_groups
 
     route = _ok(hub.client.get("/api/desk/needs-you"))
     fresh = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
@@ -70,9 +71,10 @@ def _readers(hub: Hub, *, brief: bool) -> dict[str, int]:
         "route": int(route["count"]),
         # PHILO-15-09 (B11): the rows the desk draws under the head: the
         # members, each source not read, each recording that arms.
-        "route_rows": len(route["members"]) + sum(
-            # PHILO-15 B60: a source held by quiet hours is listed, never counted.
-            1 for c in route.get("coverage") or [] if c.get("state") not in ("available", "quiet")
+        # PHILO-15 B60: a source held by quiet hours is listed, never counted.
+        # PHILO-17 (needsyou): the sources of one cause are one row.
+        "route_rows": len(route["members"]) + len(
+            unread_source_groups(route.get("coverage") or [])
         ) + len(route.get("arming") or []),
         "route_fresh": int(fresh["count"]),
         "mcp": int(mcp["count"]),
@@ -311,10 +313,11 @@ def test_his_own_item_is_counted_when_it_merges_with_a_row_that_waits(hub: Hub) 
     assert row["ref"] in [member["ref"] for member in after["members"]]
     # PHILO-15-09 (B11): the one number counts every row the desk draws: the
     # members and each source that could not be read (a Watch row is one).
-    from holdspeak.services.needs_you_membership import unread_sources
+    # PHILO-17 (needsyou): the sources of one cause are one row.
+    from holdspeak.services.needs_you_membership import unread_source_groups
 
     def rows_of(answer):
-        return len(answer["members"]) + len(unread_sources(answer["coverage"])) + len(answer.get("arming") or [])
+        return len(answer["members"]) + len(unread_source_groups(answer["coverage"])) + len(answer.get("arming") or [])
 
     assert after["count"] == rows_of(after) and before["count"] == rows_of(before)
     assert len(after["members"]) == len(before["members"]) + 1, (before["coverage"], after["coverage"])
@@ -421,10 +424,11 @@ def test_a_row_the_room_already_merged_is_his_when_one_projection_is(hub: Hub) -
     assert row["ref"] in [member["ref"] for member in after["members"]]
     # PHILO-15-09 (B11): the one number counts every row the desk draws: the
     # members and each source that could not be read (a Watch row is one).
-    from holdspeak.services.needs_you_membership import unread_sources
+    # PHILO-17 (needsyou): the sources of one cause are one row.
+    from holdspeak.services.needs_you_membership import unread_source_groups
 
     def rows_of(answer):
-        return len(answer["members"]) + len(unread_sources(answer["coverage"])) + len(answer.get("arming") or [])
+        return len(answer["members"]) + len(unread_source_groups(answer["coverage"])) + len(answer.get("arming") or [])
 
     assert after["count"] == rows_of(after) and before["count"] == rows_of(before)
     assert len(after["members"]) == len(before["members"]) + 1, (before["coverage"], after["coverage"])

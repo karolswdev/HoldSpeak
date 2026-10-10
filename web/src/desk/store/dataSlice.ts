@@ -321,7 +321,9 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       return;
     }
     const posts = {
-      note: ["/api/notes", "note", { title: "New note", body_markdown: "" }],
+      // PHILO-17: a new note starts with no title (the field shows its
+      // placeholder); the placeholder is never kept as its name.
+      note: ["/api/notes", "note", { title: "", body_markdown: "" }],
       decision: [
         "/api/decisions",
         "decision",

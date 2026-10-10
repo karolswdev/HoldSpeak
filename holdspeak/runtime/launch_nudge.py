@@ -35,7 +35,7 @@ class LaunchNudgeMixin:
             # printed URL in this block already goes through
             # `authenticated_browser_url`; these two now do too.
             token = ensure_web_token(self.config)
-            url = self.runtime_url
+            url = getattr(self, "printed_url", None) or self.runtime_url
             unmet = sum(
                 1 for s in setup.get("sections", []) if s.get("status") in ("fail", "warn")
             )

@@ -43,15 +43,20 @@ export const SEND_TO = {
   add: "Add destination",
 } as const;
 
+/** A pick for a window whose well is folded: the window opens its well. */
+export const SEND_OPEN = "hs:window-send-open";
+
 /* ── the window's document ───────────────────────────────────────────── */
 
 /** What a seat names for its window (the brief windows, the Meetings window). */
 export type AnnouncedDoc =
   | { kind: "brief"; id: string }
+  | { kind: "note"; id: string }
   | { kind: "meeting"; id: string; form: MeetingForm };
 
 export type WindowDoc =
   | { kind: "decision" | "artifact"; id: string }
+  | { kind: "note"; id: string }
   | { kind: "brief"; id: string }
   | { kind: "meeting"; id: string; form: MeetingForm; summary: Fact<boolean> }
   | { kind: "project"; id: string; update: Fact<string | null> };
@@ -149,6 +154,8 @@ export function readFact(kind: "meeting" | "project", id: string): Promise<void>
 export function windowDoc(winId: string | null): WindowDoc | null {
   if (!winId) return null;
   const announced = S.docs.get(winId);
+  // PHILO-17 U08: the Thought window names its working note.
+  if (announced?.kind === "note") return announced;
   const m = /^pullout:(decision|artifact|meeting):(.+)$/.exec(winId);
   if (m) {
     if (m[1] === "meeting") {
@@ -169,7 +176,7 @@ export function windowDoc(winId: string | null): WindowDoc | null {
     const p = /^project:(.+)$/.exec(scope);
     return p ? { kind: "project", id: p[1], update: factOfKey<string | null>(factKey("project", p[1])) } : null;
   }
-  return null;   // notes, knowledge, people, settings ...: nothing else sends
+  return null;   // knowledge, people, settings ...: nothing else sends
 }
 
 const docFact = (d: WindowDoc): Fact<unknown> | null =>
@@ -270,7 +277,11 @@ export function pickFor(winId: string, destinationId: string, waited = 0): void 
     return;
   }
   let ref: string;
-  if (d.kind === "meeting") {
+  if (d.kind === "note") {
+    // The Thought window opens its well on this event (PHILO-17 U08).
+    ref = `note:${d.id}`;
+    window.dispatchEvent(new CustomEvent(SEND_OPEN, { detail: { winId } }));
+  } else if (d.kind === "meeting") {
     // A failed summary read still opens the well on the window's form.
     ref = `${WELL_FORM[d.form]}:${d.id}`;
     if (d.summary.state === "known") {

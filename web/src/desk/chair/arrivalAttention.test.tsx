@@ -46,6 +46,8 @@ const FAILED_WATCH = {
   source_id: "watch:w-kan", kind: "watch", state: "failed",
   observed_at: "2026-09-07T08:41:00", label: "jira KAN", project_id: "p1",
   reason: "Jira rejected the query",
+  // PHILO-17 (needsyou): the hub names a plain reason as the cause.
+  cause: "Jira rejected the query",
   repair: { token: "CANT CHECK", verb: "Reconnect", href: "/settings" },
 };
 
@@ -113,10 +115,11 @@ describe("Arrival attention (HS-200-15)", () => {
 
     // PHILO-15-09 (B11): every row counts, the unread source too.
     expect(screen.getByTestId("arrival-display").textContent).toBe("18 need you");
-    // The unread source leads (above every member), then the members in rank order.
+    // PHILO-17 (needsyou): the members lead in rank order; the unread
+    // source (plumbing) comes last.
     const gap = sourceRows()[0];
     expect(gap.getAttribute("data-object-id")).toBe("coverage:watch:w-kan");
-    expect(gap.compareDocumentPosition(needsRows()[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(gap.compareDocumentPosition(needsRows()[needsRows().length - 1]) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
     const rows = [gap, ...needsRows()];
     expect(rows[1].textContent).toContain("KAN-7 Payments cut-over runbook");
     expect(lampOf(rows[1])).toBe("OVERDUE · 2 DAYS");
@@ -161,7 +164,7 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(container.querySelectorAll("[data-testid='needs-drawer'] .btn--primary")).toHaveLength(1);
   });
 
-  it("keeps an unreadable source ABOVE the answer as its own row: reason, token, verb", async () => {
+  it("keeps an unreadable source AFTER the answer as its own row: cause, token, verb (PHILO-17)", async () => {
     wire({ count: 3, projects: ["p1"], items: SEVENTEEN.slice(0, 3), next: null,
            coverage: [AVAILABLE("p1", "Q4 Platform"), FAILED_WATCH], complete: false });
     render(<ChairHome />);
@@ -169,7 +172,7 @@ describe("Arrival attention (HS-200-15)", () => {
     // PHILO-15-09 (B11): every row counts, the unread source too.
     expect(screen.getByTestId("arrival-display").textContent).toBe("4 need you");
     const gap = sourceRows()[0];
-    expect(gap.compareDocumentPosition(needsRows()[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(gap.compareDocumentPosition(needsRows()[needsRows().length - 1]) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
     expect(gap.querySelector(".needs-row-name")?.textContent).toBe("jira KAN");
     // PHILO-15 B74: a time from another day carries its day.
     expect(factOf(gap)).toBe(`Jira rejected the query · observed ${whenWord(wireDate("2026-09-07T08:41:00")!)}`);

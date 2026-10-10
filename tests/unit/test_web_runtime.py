@@ -143,10 +143,13 @@ def test_run_web_runtime_starts_and_stops_services(monkeypatch: pytest.MonkeyPat
     assert isinstance(egress["egress"], str) and egress["egress"]
 
 
-def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_run_web_runtime_no_open_skips_browser(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     monkeypatch.setattr(web_runtime.Config, "load", lambda: _config(auto_open=True))
 
     browser_urls: list[str] = []
+    printed_before_hotkey: list[str] = []
 
     class FakeServer:
         def __init__(self, callbacks=None, **kwargs):
@@ -165,6 +168,7 @@ def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) 
             if callbacks is not None:
                 kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
+            printed_before_hotkey.append(capsys.readouterr().out)
 
     class FakeHotkeyListener:
         def __init__(self, callbacks=None, **kwargs):
@@ -193,6 +197,52 @@ def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) 
     )
 
     assert browser_urls == []
+    # PHILO-17 wayin: with --no-open the token URL is the only way in; it is
+    # printed (and flushed) before the slower hotkey and audio set-up.
+    assert printed_before_hotkey, "the audio recorder was never built"
+    assert "running at: http://127.0.0.1:9998?token=" in printed_before_hotkey[0]
+
+
+def test_run_web_runtime_wildcard_bind_prints_reachable_urls(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """PHILO-17 wayin: http://0.0.0.0 opens on no iPad; print what does."""
+    monkeypatch.setattr(web_runtime.Config, "load", lambda: _config(auto_open=True))
+    monkeypatch.setattr("holdspeak.web_auth._lan_ipv4", lambda: "192.168.1.20")
+
+    class FakeServer:
+        def __init__(self, callbacks=None, **kwargs):
+            _ = (callbacks, kwargs)
+
+        def start(self) -> str:
+            return "http://0.0.0.0:9997"
+
+        def stop(self) -> None:
+            return None
+
+    class FakeHotkeyListener:
+        def __init__(self, *args, **kwargs):
+            _ = (args, kwargs)
+
+        def start(self) -> None:
+            return None
+
+        def stop(self) -> None:
+            return None
+
+    monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
+    monkeypatch.setattr(web_runtime, "AudioRecorder", lambda *a, **k: object())
+    monkeypatch.setattr(web_runtime, "HotkeyListener", FakeHotkeyListener)
+    monkeypatch.setattr(web_runtime.webbrowser, "open", lambda url: None)
+    stop_event = threading.Event()
+    stop_event.set()
+
+    web_runtime.run_web_runtime(no_open=True, stop_event=stop_event, register_signal_handlers=False)
+
+    out = capsys.readouterr().out
+    assert "running at: http://127.0.0.1:9997?token=" in out
+    assert "On another device (iPad): http://192.168.1.20:9997?token=" in out
+    assert "0.0.0.0" not in out
 
 
 def test_runtime_loads_projects_for_detector_via_projects_repo(

@@ -509,6 +509,12 @@ def _shared_relationship(detail: dict[str, Any]) -> dict[str, Any]:
         for item in detail.get("commitments") or []
         if isinstance(item, dict) and _mcp_readable(item)
     ]
+    # PHILO-17 (U09): what the person owes him; shared items only.
+    result["owed_to_you"] = [
+        dict(item)
+        for item in detail.get("owed_to_you") or []
+        if isinstance(item, dict) and _mcp_readable(item)
+    ]
     result["notes"] = [
         dict(item)
         for item in detail.get("notes") or []
@@ -531,6 +537,10 @@ def one_on_one_brief(principal: Principal, relationship_id: str) -> dict[str, An
     # F6: filter encrypted items to shared_intent only via _mcp_readable.
     brief["open_commitments"] = [
         item for item in brief.get("open_commitments") or []
+        if isinstance(item, dict) and _mcp_readable(item)
+    ]
+    brief["owed_to_you"] = [
+        item for item in brief.get("owed_to_you") or []
         if isinstance(item, dict) and _mcp_readable(item)
     ]
     brief["agenda_items"] = [

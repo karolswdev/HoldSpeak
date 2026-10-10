@@ -1,4 +1,4 @@
-import { authenticatedHeaders } from "./auth";
+import { authenticatedHeaders, forgetAuthToken } from "./auth";
 
 export type JsonRecord = Record<string, unknown>;
 
@@ -24,14 +24,24 @@ export class ApiError extends Error {
 }
 
 /** Authenticated low-level request for modules that must inspect headers/status. */
-export function apiRequest(
+export async function apiRequest(
   input: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  return fetch(input, { ...init, headers: authenticatedHeaders(init.headers) });
+  const headers = authenticatedHeaders(init.headers);
+  const response = await fetch(input, { ...init, headers });
+  // PHILO-17 wayin: a 401 means the hub knows no owner for this token (none,
+  // wrong, or rotated). Forget it so the next page load does not reuse it.
+  if (response.status === 401) forgetAuthToken(headers.get("X-HoldSpeak-Token") ?? "");
+  return response;
 }
 
+/** The one sentence a browser without the hub token sees (PHILO-17 wayin). */
+export const SIGN_IN_SENTENCE =
+  'To open the desk, use the address that "holdspeak web" prints on your Mac.';
+
 function messageFor(payload: unknown, status: number): string {
+  if (status === 401) return SIGN_IN_SENTENCE;
   if (payload && typeof payload === "object") {
     const row = payload as JsonRecord;
     for (const key of ["error", "detail", "message"]) {

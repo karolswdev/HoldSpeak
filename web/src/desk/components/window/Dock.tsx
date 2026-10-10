@@ -370,10 +370,10 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // PHILO-13-03 / C3: every Desk face reads the same membership snapshot.
   // The Dock opts out of the hook's minute poll; RuntimeBus invalidations
   // call the explicit refresh path in useDockLiveReads.
-  const { live, reads, offline, lastSuccessfulAt, needsYouCount, projectOpen } = useDockLiveReads();
-  const intelligenceBadge = !offline && needsYouCount > 0
-    ? String(needsYouCount)
-    : null;
+  const { live, reads, offline, lastSuccessfulAt, projectOpen } = useDockLiveReads();
+  // PHILO-17 (needsyou, walker TAXES): the one number is on the Needs-you
+  // icon and the bell only; the Intelligence tile carries no copy of it.
+  const intelligenceBadge: string | null = null;
   // HS-99-04 — the dock chip menu (one menu vocabulary).
   const [chipMenu, setChipMenu] = useState<{
     id: string;
@@ -736,6 +736,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             key={launcher.id}
             ref={seatRef(launcher.id)}
             variant="chrome"
+            data-launcher={launcher.id}
             className={
               "desk-dock-launch" +
               (launcher.open && !seated ? " is-run" : "") +

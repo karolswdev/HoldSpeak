@@ -141,7 +141,8 @@ def test_bell_reads_a_new_artifact_as_new(denver):
 
     for width, height in ((1440, 900), (393, 852)):
         page = denver(width, height)
-        page.locator(".desk-bell").first.click()
+        # PHILO-17 (needsyou): the bell opens Needs you; the Dock's Desk memory launcher opens the shade.
+        page.locator(".desk-dock [data-launcher='attention']").click(timeout=15000)
         row = page.locator(".desk-shade-item", has_text="Ledger cutover sync: notes").first
         row.wait_for(timeout=15000)
         text = row.locator("small").first.text_content() or ""

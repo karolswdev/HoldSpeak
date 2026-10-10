@@ -1,18 +1,28 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  authToken,
   authenticatedHeaders,
   bootstrapAuth,
   websocketProtocols,
   websocketUrl,
 } from "./auth";
+import { ApiError, apiFetch, apiRequest, SIGN_IN_SENTENCE } from "./api";
+
+/** A request that carried ``token`` (an old tab's copy), whatever is stored now. */
+function apiRequestWith(token: string): Promise<Response> {
+  return apiRequest("/api/meetings", { headers: { "X-HoldSpeak-Token": token } });
+}
 
 describe("auth bootstrap", () => {
   beforeEach(() => {
     sessionStorage.clear();
+    localStorage.clear();
     window.history.replaceState({}, "", "/dictation");
+    bootstrapAuth();
   });
+  afterEach(() => vi.unstubAllGlobals());
 
-  it("captures a query token for the tab and scrubs it from the visible URL", () => {
+  it("captures a query token for the hub and scrubs it from the visible URL", () => {
     window.history.replaceState(
       {},
       "",
@@ -20,19 +30,92 @@ describe("auth bootstrap", () => {
     );
     expect(bootstrapAuth()).toBe("secret-value");
     expect(window.location.search).toBe("?tab=ready");
-    expect(sessionStorage.getItem("hs.web.token")).toBe("secret-value");
+    expect(localStorage.getItem("hs.web.token")).toBe("secret-value");
     expect(authenticatedHeaders().get("X-HoldSpeak-Token")).toBe(
       "secret-value",
     );
   });
 
-  it("forwards the session token in a protocol header, never the URL", () => {
-    sessionStorage.setItem("hs.web.token", "tab-token");
+  it("keeps the token for a later page load with no token in the URL", () => {
+    window.history.replaceState({}, "", "/?token=kept-token");
+    bootstrapAuth();
+    // A new tab, a bookmark, a browser restart: no query, new page state.
+    window.history.replaceState({}, "", "/welcome");
+    expect(bootstrapAuth()).toBe("kept-token");
+    expect(authenticatedHeaders().get("X-HoldSpeak-Token")).toBe("kept-token");
+  });
+
+  it("moves an older tab-scoped token into the hub store once", () => {
+    sessionStorage.setItem("hs.web.token", "old-tab-token");
+    expect(bootstrapAuth()).toBe("old-tab-token");
+    expect(localStorage.getItem("hs.web.token")).toBe("old-tab-token");
+    expect(sessionStorage.getItem("hs.web.token")).toBeNull();
+  });
+
+  it("forwards the stored token in a protocol header, never the URL", () => {
+    localStorage.setItem("hs.web.token", "tab-token");
     bootstrapAuth();
     expect(websocketUrl()).not.toContain("tab-token");
     expect(websocketProtocols()).toEqual([
       "holdspeak.v1",
       "holdspeak.auth.v1.dGFiLXRva2Vu",
     ]);
+  });
+
+  it("forgets a refused token and says the one sign-in sentence", async () => {
+    window.history.replaceState({}, "", "/?token=rotated-token");
+    bootstrapAuth();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: "principal_right_required" }), {
+          status: 401,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+    const error = await apiFetch("/api/meetings").catch((reason) => reason);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 401, message: SIGN_IN_SENTENCE });
+    expect(authToken()).toBe("");
+    expect(localStorage.getItem("hs.web.token")).toBeNull();
+  });
+
+  it("an old tab's refusal never erases a newer token another tab stored", async () => {
+    // Tab A opened with the old token.
+    window.history.replaceState({}, "", "/?token=old-token");
+    bootstrapAuth();
+    // Tab B (same origin, shared localStorage) stores the new valid token.
+    localStorage.setItem("hs.web.token", "new-token");
+    // A's request still carried the old token; the hub refuses it.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: "principal_right_required" }), {
+          status: 401,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+    await apiRequestWith("old-token");
+    expect(localStorage.getItem("hs.web.token")).toBe("new-token");
+    // A follows B's token from now on.
+    expect(authToken()).toBe("new-token");
+  });
+
+  it("keeps the token on a refusal that is not a sign-in failure", async () => {
+    window.history.replaceState({}, "", "/?token=good-token");
+    bootstrapAuth();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: "principal_right_required" }), {
+          status: 403,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+    await apiFetch("/api/meetings").catch(() => undefined);
+    expect(authToken()).toBe("good-token");
   });
 });

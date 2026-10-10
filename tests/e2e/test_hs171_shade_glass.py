@@ -163,9 +163,11 @@ def _shot(page: Any, name: str, width: int) -> Path:
 
 def _open_shade(page: Any) -> None:
     """Open the system shade via the bell button."""
-    bell = page.locator(".desk-bell")
-    bell.wait_for(timeout=10000)
-    bell.click()
+    # PHILO-17 (needsyou): the bell opens Needs you now; the shade opens from
+    # the Dock's Desk memory launcher.
+    launcher = page.locator(".desk-dock [data-launcher='attention']")
+    launcher.wait_for(timeout=10000)
+    launcher.click()
     page.locator(".desk-shade").wait_for(timeout=5000)
     _settle(page)
 

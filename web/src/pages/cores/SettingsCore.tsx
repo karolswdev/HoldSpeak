@@ -2348,6 +2348,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             <ConnectionsPane
               onFooterUpdate={handleConnectionsFooter}
               onOpenModule={openModule}
+              focusProvider={integrationSubject}
             />
             {/* PHILO-10-04 (B1): the Destinations group, under Tools. */}
             <Destinations />

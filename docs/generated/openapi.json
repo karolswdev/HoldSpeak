@@ -19550,6 +19550,63 @@
         ]
       }
     },
+    "/api/people/relationships/{relationship_id}/owed": {
+      "post": {
+        "description": "PHILO-17 (U09): record what the person owes him.",
+        "operationId": "create_owed_to_you_api_people_relationships__relationship_id__owed_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "relationship_id",
+            "required": true,
+            "schema": {
+              "title": "Relationship Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "default": {},
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Owed To You Api People Relationships  Relationship Id  Owed Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Owed To You",
+        "tags": [
+          "people"
+        ]
+      }
+    },
     "/api/people/relationships/{relationship_id}/owner-aliases": {
       "delete": {
         "operationId": "unlink_owner_alias_api_people_relationships__relationship_id__owner_aliases_delete",

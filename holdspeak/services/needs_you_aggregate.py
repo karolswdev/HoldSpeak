@@ -766,6 +766,12 @@ def _watch_coverage(
             observed_at=str(checked_at) if checked_at else None,
             label=label, project_id=pid, reason=reason,
         )
+        # PHILO-17 (needsyou): the provider and the plain cause group the
+        # rows of one cause into ONE Needs-you row. A raw error line is no
+        # cause: it stays in ``reason`` (the row's detail).
+        provider = str(src.get("provider") or "").strip().lower()
+        row["provider"] = "github" if provider == "gh" else provider
+        row["cause"] = reason if state != "failed" or reason in _plain_reasons() else None
         # PHILO-15 B61: Retry re-checks THESE Watches (a merged source row
         # stands for every Watch of its provider and scope).
         ids = [str(w) for w in (src.get("watchIds") or [watch_id]) if w]
@@ -776,6 +782,12 @@ def _watch_coverage(
             row["host"] = str(src["host"])
         out.append(row)
     return out
+
+
+def _plain_reasons() -> frozenset[str]:
+    from .project_service import ProjectService
+
+    return ProjectService.PLAIN_REASONS
 
 
 #: PHILO-15 B74: a provider's name as a person reads it.

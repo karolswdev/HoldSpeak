@@ -264,8 +264,11 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     const line = await within(drawer()).findByTestId("hand-confirm");
     const group = within(line).getByRole("group", { name: "Hand: Write the cutover comms" });
     await factIs(group, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
-    // The line sits under the drawer head, before the icons.
-    expect(line.previousElementSibling).toHaveClass("drawer-head");
+    // The line sits under the drawer head, before the icons. Phase 16 A3
+    // (the interior kit): the head is AppHead then the FilterBar, so the
+    // line follows the FilterBar.
+    expect(line.previousElementSibling).toHaveAttribute("data-testid", "drawer-filter");
+    expect(line.previousElementSibling?.previousElementSibling).toHaveAttribute("data-testid", "drawer-facts");
     expect(posts("/api/agent/hand/preview")[0].init?.json).toEqual({
       kind: "action", id: "a-comms", profile: "claude-default", project_id: "p-ledger",
     });

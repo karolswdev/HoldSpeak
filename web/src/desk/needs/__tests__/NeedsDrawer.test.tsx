@@ -858,3 +858,106 @@ describe("NeedsDrawer FilterBar reads a proposal's own date (Phase 16)", () => {
     expect(names()).toEqual(["Pick the vendor"]);
   });
 });
+
+// PHILO-17 (needsyou, walker BLOCKS): 30 GitHub sources that cannot be
+// checked for one cause were 30 rows above the work, each with a raw runner
+// error. Sources with one cause and one repair are ONE row now, after the
+// work, counted once; raw lines stay in the row's detail; Reconnect opens
+// Settings · Connections on GitHub. The fixtures carry the words the real
+// producer writes (`ProjectService._plain_reason`: "Not signed in").
+describe("NeedsDrawer groups the sources of one cause (PHILO-17)", () => {
+  const ghSource = (n: number, extra: Record<string, unknown> = {}) => ({
+    source_id: `watch:w-gh-${n}`, kind: "watch", state: "failed", observed_at: null,
+    label: `GitHub · acme/repo-${n}`, project_id: `p${n}`, provider: "github",
+    reason: "Not signed in", cause: "Not signed in", watch_ids: [`w-gh-${n}`], host: "github.com",
+    repair: { token: "CANT CHECK", verb: "Reconnect", href: "/settings" },
+    ...extra,
+  });
+  const paused = (n: number, room: string) => ({
+    source_id: `watch:w-p-${n}`, kind: "watch", state: "unavailable", observed_at: null,
+    label: `GitHub · acme/paused-${n}`, project_id: room, provider: "github",
+    reason: "paused", cause: "paused", watch_ids: [`w-p-${n}`], host: "github.com",
+    repair: { token: "PAUSED", verb: "Open source", href: `/projects/${room}` },
+  });
+  const GROUPED = {
+    ...ANSWER,
+    // The hub's one number: 8 members + ONE grouped cause.
+    count: 9,
+    complete: false,
+    coverage: [1, 2, 3].map((n) => ghSource(n)),
+  };
+  const answerWith = (coverage: unknown[], count: number) => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) return { ...GROUPED, coverage, count } as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+  };
+  beforeEach(() => {
+    vi.mocked(openSurfaceOr).mockClear();
+    answerWith(GROUPED.coverage, 9);
+  });
+
+  it("draws ONE row for one cause and one repair, after the work", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
+    const sources = screen.getAllByTestId("needs-source-row");
+    expect(sources).toHaveLength(1);
+    const group = sources[0];
+    expect(group.querySelector(".needs-row-name")?.textContent).toBe("GitHub · 3 sources");
+    expect(face(group).fact).toBe("Not signed in");
+    expect(face(group).lamps).toEqual(["CANT CHECK"]);
+    // The work leads; the plumbing is last.
+    const members = screen.getAllByTestId("needs-row");
+    expect(group.compareDocumentPosition(members[members.length - 1]) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(group.getAttribute("data-counted")).toBe("true");
+    // The browser twin counts the cause once, as the hub does.
+    const { readNeedsYouAnswer } = await import("../../needsYou");
+    expect(readNeedsYouAnswer(GROUPED as never).count).toBe(9);
+  });
+
+  it("lists every source of the group behind Details", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
+    const group = screen.getByTestId("needs-source-row");
+    expect(screen.queryByTestId("needs-detail")).toBeNull();
+    fireEvent.click(within(group).getByRole("button", { name: "Details: GitHub · 3 sources" }));
+    const detail = screen.getByTestId("needs-detail");
+    expect(detail.querySelectorAll("li")).toHaveLength(3);
+    expect(detail.textContent).toContain("GitHub · acme/repo-2");
+  });
+
+  it("keeps two unknown failures apart, and their raw lines behind Details (Astra r1 2)", async () => {
+    answerWith([
+      ghSource(1, { cause: null, reason: "HTTP 404: Not Found (repos/acme/repo-1)" }),
+      ghSource(2, { cause: null, reason: "HTTP 429: rate limit exceeded" }),
+    ], 10);
+    render(<NeedsDrawer />);
+    await screen.findByText("10 need you");
+    const sources = screen.getAllByTestId("needs-source-row");
+    expect(sources).toHaveLength(2);
+    for (const row of sources) {
+      expect(face(row).fact).toBe("Cannot check");
+      expect(row.textContent).not.toMatch(/HTTP 4/);
+    }
+    fireEvent.click(within(sources[1]).getByRole("button", { name: /^Details: / }));
+    expect(screen.getByTestId("needs-detail").textContent).toContain("HTTP 429: rate limit exceeded");
+  });
+
+  it("keeps two Rooms' paused sources apart: each opens its own Room (Astra r1 1)", async () => {
+    answerWith([paused(1, "pA"), paused(2, "pB")], 10);
+    render(<NeedsDrawer />);
+    await screen.findByText("10 need you");
+    const sources = screen.getAllByTestId("needs-source-row");
+    expect(sources.map((r) => r.querySelector(".needs-row-name")?.textContent)).toEqual([
+      "GitHub · acme/paused-1", "GitHub · acme/paused-2",
+    ]);
+  });
+
+  it("Reconnect opens Settings · Connections with GitHub focused", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
+    const group = screen.getByTestId("needs-source-row");
+    fireEvent.click(within(group).getByRole("button", { name: "Reconnect: GitHub · 3 sources" }));
+    expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "integration:github");
+  });
+});

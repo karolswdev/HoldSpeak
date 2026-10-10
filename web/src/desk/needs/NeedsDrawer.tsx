@@ -31,10 +31,10 @@ import { AppHead, EgressChip, FilterBar, ScrollHint, StatusStrip, StringGadget, 
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
-import { readCoverage } from "../coverage";
+import { groupGaps, readCoverage } from "../coverage";
 import {
   armingFace,
-  coverageFace,
+  coverageGroupFace,
   needFace,
   needFaces,
   needsHead,
@@ -71,7 +71,7 @@ export function faceOpener(face: NeedFace): Opener | null {
   return refOpener(face.openRef);
 }
 
-type Well = "owner" | "date";
+type Well = "owner" | "date" | "detail";
 
 /** PHILO-15 B61: the receipt a source Retry leaves in the drawer. */
 type SourceReceipt = { tone: "ok" | "fail"; text: string };
@@ -274,6 +274,11 @@ function NeedVerbsView({ face, primary, onWell, well }: {
     case "repair":
       return (
         <>
+        {face.detail?.length ? (
+          <Button dense variant="ghost" aria-label={named("Details")} aria-expanded={well === "detail"}
+            data-testid="needs-row-verb" data-verb="details"
+            onClick={() => onWell(well === "detail" ? null : "detail")}>Details</Button>
+        ) : null}
         {/* Astra r1 P2-6: a Retry that re-checks a remote source names where it goes. */}
         {v.verb === "Retry" && v.watchIds?.length && v.host ? (
           <EgressChip label={v.host.toUpperCase()} scope="cloud" />
@@ -285,7 +290,8 @@ function NeedVerbsView({ face, primary, onWell, well }: {
               setBusy(true);
               void recheckSource(face.name, ids).then((r) => { setSourceReceipt(r); setBusy(false); });
             } else if (v.verb === "Retry") void refreshNeedsYou(true);
-            else if (v.href.startsWith("/settings")) openSurfaceOr("configure-settings", "/settings", "connections");
+            // PHILO-17 (needsyou): Settings · Connections, the provider focused.
+            else if (v.href.startsWith("/settings")) openSurfaceOr("configure-settings", "/settings", `integration:${v.provider ?? "connections"}`);
             else openProjectRoom(v.projectId);
           }}>{v.verb}</Button>
         </>
@@ -368,6 +374,24 @@ function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDo
   );
 }
 
+/** PHILO-17 (needsyou): a source row's detail: each source and the hub's
+ *  own reason, one line each. */
+function DetailWell({ face }: { face: NeedFace }) {
+  return (
+    <li className="needs-drawer-well needs-drawer-detail" role="region" aria-label={`Details: ${face.name}`}
+      data-testid="needs-detail">
+      <ul>
+        {(face.detail ?? []).map((line, i) => (
+          <li key={`${line.name}:${i}`}>
+            <span className="needs-detail-name">{line.name}</span>
+            <span className="needs-detail-reason">{line.reason}</span>
+          </li>
+        ))}
+      </ul>
+    </li>
+  );
+}
+
 function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean; projects: boolean }) {
   const [well, setWell] = useState<Well | null>(null);
   const project = projects && face.project ? face.project : null;
@@ -395,7 +419,7 @@ function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean
           </>
         )}
       />
-      {well ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}
+      {well === "detail" ? <DetailWell face={face} /> : well ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}
     </>
   );
 }
@@ -493,7 +517,9 @@ export function NeedsDrawer() {
   // number is the number of rows below it. The offer is in the strip.
   // PHILO-15 B60: a source held by quiet hours is drawn after the gaps and
   // is not counted.
-  const sources = [...coverage.gaps, ...coverage.quiet].map((gap) => coverageFace(gap, now));
+  // PHILO-17 (needsyou): the sources of one cause are ONE row (the hub
+  // counts the cause once); each source stays in the row's detail.
+  const sources = [...groupGaps(coverage.gaps), ...groupGaps(coverage.quiet)].map((rows) => coverageGroupFace(rows, now));
   const noCalendar = Boolean(door && door.calendar_configured === false);
   const outcome = useArmingOutcome();
   const liveArming = arming && !arming.outcome ? arming : null;
@@ -523,15 +549,16 @@ export function NeedsDrawer() {
   useEffect(() => {
     if (armingStale) void refreshNeedsYou(true);
   }, [armingStale]);
-  // Board A-5: one list, no group heads. The sources lead (HS-200-15:
-  // coverage above the answer), then a recording that arms, then the agents
-  // (one object, one row), then the rest in the hub's rank order.
+  // Board A-5: one list, no group heads. A recording that arms, then the
+  // agents (one object, one row), then the rest in the hub's rank order.
+  // PHILO-17 (needsyou, walker BLOCKS): the work leads; the sources that
+  // could not be read (plumbing) come last.
   // The asks the hub folded into an item are listed, not members: they ride
   // in so their item's row carries them (one object, one row, one count).
   const foldedAsks = needs.unmutedItems
     .filter((item) => item.foldedInto && !item.waiting)
     .map((item) => ({ ref: String(item.ref ?? item.id ?? ""), kind: "attention" as const, item }));
-  const faces = [...sources, ...armed, ...needFaces([...needs.members, ...foldedAsks], ctx)];
+  const faces = [...armed, ...needFaces([...needs.members, ...foldedAsks], ctx), ...sources];
   const asFace = (item: (typeof needs.mutedItems)[number]) =>
     needFace({ ref: String(item.id ?? item.ref ?? ""), kind: "attention", item }, ctx);
   // Listed, never counted: what he waits on someone else for, and the muted.

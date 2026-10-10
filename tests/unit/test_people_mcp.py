@@ -283,3 +283,29 @@ def test_people_mcp_catalogue_is_closed_and_does_not_offer_forbidden_operations(
         assert tool["inputSchema"]["additionalProperties"] is False
         if tool["name"] != "people.readiness":
             assert "PEOPLE DISCLOSURE" in tool["description"]
+
+
+def test_philo17_owed_to_you_reaches_agents_shared_only(
+    people_service: PeopleService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """U09: agents read what the person owes him, never a leader-private row."""
+    relationship = people_service.create_relationship(OWNER, {"display_name": "Owed Relationship"})
+    people_service.create_owed_to_you(OWNER, relationship["id"], {
+        "body": "PRIVATE OWED SENTINEL", "visibility": "leader_private",
+    })
+    people_service.create_owed_to_you(OWNER, relationship["id"], {
+        "body": "Shared owed item", "visibility": "shared_intent",
+    })
+    monkeypatch.setenv(people_family.ACCESS_ENV, "read")
+
+    failed, detail = _call("people.relationship.get", {"relationship_id": relationship["id"]})
+    assert failed is False
+    assert [item["body"] for item in detail["owed_to_you"]] == ["Shared owed item"]
+    assert detail["commitments"] == []
+    assert "PRIVATE OWED SENTINEL" not in json.dumps(detail)
+
+    failed, brief = _call("people.one_on_one.brief", {"relationship_id": relationship["id"]})
+    assert failed is False
+    assert [item["body"] for item in brief["owed_to_you"]] == ["Shared owed item"]
+    assert brief["open_commitments"] == []
+    assert "PRIVATE OWED SENTINEL" not in json.dumps(brief)

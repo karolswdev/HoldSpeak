@@ -26,7 +26,7 @@ import {
 import { MicButton } from "./MicButton";
 import { SystemShade } from "./SystemShade";
 import { OPEN_SYSTEM_SHADE_EVENT } from "../openObject";
-import { refreshNeedsYou, useNeedsYou } from "../needsYou";
+import { refreshNeedsYou } from "../needsYou";
 import { burstTimer } from "../burstTimer";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 
@@ -75,9 +75,6 @@ export function AttentionDrawer() {
   const actualDest = selected?.actual_destination;
   const effectCls = selected?.effect_class;
   const needs = Number(store.counts.needs_attention || 0);
-  // PHILO-13-03 (canvas C1-1): the Desk memory icon carries the ONE
-  // needs-you number; the window's own counts stay below.
-  const { count: needsYouCount } = useNeedsYou();
   useNeedsYouOnDeskChanged();
   const intelligence = useIntelligenceAttention();
   // HS-132-08 — a finished meeting is desk attention, not mascot business.
@@ -112,12 +109,13 @@ export function AttentionDrawer() {
       label: "Desk memory",
       glyph: "◎",
       open: store.open,
-      badge: needsYouCount > 0 ? needsYouCount : undefined,
+      // PHILO-17 (needsyou, walker TAXES): the one number is on the
+      // Needs-you icon and the bell only; Desk memory carries no copy.
       activate: () => setShadeOpen(true),
     });
     return () => retractLauncher("attention");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store.open, needsYouCount]);
+  }, [store.open]);
 
   return (
     <>

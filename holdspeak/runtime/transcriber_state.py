@@ -167,12 +167,13 @@ class TranscriberStateMixin:
         )
 
     def _whisper_model_on_disk(self) -> bool:
-        """Is the configured Whisper model already on this device? Disk only."""
-        from ..transcribe import resolve_backend_or_raw
-        from ..whisper_models import whisper_on_disk
+        """Is the configured Whisper model already on this device? Disk only.
 
-        backend = resolve_backend_or_raw(str(getattr(self.config.model, "backend", "auto") or "auto"))
-        return whisper_on_disk(str(self.config.model.name or ""), backend)
+        The one speech-readiness truth (``whisper_models.speech_readiness``).
+        """
+        from ..whisper_models import configured_speech_readiness
+
+        return bool(configured_speech_readiness(config=self.config)["ready"])
 
     def _warm_transcriber_in_background(self) -> None:
         if not self._transcription_warm_on_start_enabled():
