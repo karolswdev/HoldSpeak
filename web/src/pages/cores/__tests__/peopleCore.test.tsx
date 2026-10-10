@@ -23,7 +23,7 @@ describe("PeopleCore encrypted local plane", () => {
     expect(await screen.findByTestId("people-joy-state")).toBeTruthy();
     expect(screen.getByTestId("people-joy-action")).toHaveTextContent("Set up People");
     expect(screen.getByText("Encrypted, local-only relationship context")).toBeTruthy();
-    expect(screen.queryByLabelText("New relationship")).toBeNull();
+    expect(screen.queryByLabelText("Add person")).toBeNull();
   });
 
   it("clears roster data when a relationship read becomes locked", async () => {
@@ -37,7 +37,7 @@ describe("PeopleCore encrypted local plane", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Avery/ }));
     expect(await screen.findByTestId("people-joy-state")).toBeTruthy();
     expect(screen.queryByText("Avery")).toBeNull();
-    expect(screen.queryByLabelText("New relationship")).toBeNull();
+    expect(screen.queryByLabelText("Add person")).toBeNull();
   });
 
   it("renders local trust facts and a manual relationship", async () => {
@@ -57,7 +57,7 @@ describe("PeopleCore encrypted local plane", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
     expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();
-    expect(screen.getByLabelText("Grounding note")).toBeTruthy();
+    expect(screen.getByLabelText("Note")).toBeTruthy();
     // HS-176-04 — the voice law (Article IV.1): People's wells carry the
     // mic like every other text input.  This assertion used to require the
     // opposite; the seven mic={false} opt-outs it guarded are gone.
@@ -249,7 +249,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     render(<PeopleCore />);
     expect(await screen.findByTestId("people-empty-roster")).toBeTruthy();
-    expect(screen.getByText("Add a relationship to start")).toBeTruthy();
+    expect(screen.getByText("Add a person to start")).toBeTruthy();
   });
 
   it("suggestion ordering is case-insensitive", async () => {
@@ -445,9 +445,102 @@ describe("PeopleCore scoped to a Project (HS-200-14)", () => {
     const listener = vi.fn();
     window.addEventListener("holdspeak:settings-updated", listener);
     const view = render(<PeopleCore />);
-    await screen.findByText("Add a relationship to start");
+    await screen.findByText("Add a person to start");
     view.unmount();
     expect(listener).not.toHaveBeenCalled();
     window.removeEventListener("holdspeak:settings-updated", listener);
+  });
+});
+
+describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
+  function spy(handlers: Record<string, (opts?: { method?: string; body?: string }) => Response>) {
+    const fetchSpy = vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
+      const key = `${opts?.method ?? "GET"} ${String(input)}`;
+      const handler = handlers[key] ?? handlers[String(input)];
+      if (!handler) throw new Error(`Unexpected request: ${key}`);
+      return handler(opts);
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+    return fetchSpy;
+  }
+  const posts = (fetchSpy: ReturnType<typeof spy>, path: string) =>
+    fetchSpy.mock.calls.filter(([url, opts]) => String(url) === path && (opts as { method?: string } | undefined)?.method === "POST");
+
+  it("Now records what they owe you, marks it done, and names requests 'Asked of you'", async () => {
+    const fetchSpy = spy({
+      "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
+      "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report" }] }),
+      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Maya Chen", commitments: [], requests: [], owed_to_you: [{ id: "o1", body: "Send the rollout plan", state: "open", direction: "report_owes" }, { id: "o2", body: "Old item", state: "done", direction: "report_owes" }] } }),
+      "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      "/api/people/relationships/r1/brief": () => json({ brief: { relationship_id: "r1", open_commitments: [], agenda_items: [] } }),
+      "/api/door": () => json({ upcoming: [] }),
+      "POST /api/people/relationships/r1/owed": () => json({ commitment: { id: "o3" } }, 201),
+      "POST /api/people/commitments/o1/transition": () => json({ transition: { verb: "done" } }),
+    });
+    render(<PeopleCore scope="people:r1" />);
+    const owed = await screen.findByTestId("people-they-owe");
+    expect(within(owed).getByText("They owe you · 1")).toBeTruthy();
+    expect(within(owed).getByText("Send the rollout plan")).toBeTruthy();
+    expect(within(owed).queryByText("Old item")).toBeNull();
+    expect(screen.getByText("Asked of you")).toBeTruthy();
+    expect(screen.queryByText(/Open requests/i)).toBeNull();
+    fireEvent.change(within(owed).getByLabelText("They owe you"), { target: { value: "Send me the API migration estimate" } });
+    fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(posts(fetchSpy, "/api/people/relationships/r1/owed")).toHaveLength(1));
+    expect(JSON.parse(String(posts(fetchSpy, "/api/people/relationships/r1/owed")[0][1]?.body)).body).toBe("Send me the API migration estimate");
+    expect(posts(fetchSpy, "/api/people/relationships/r1/requests")).toHaveLength(0);
+    fireEvent.click(within(owed).getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(posts(fetchSpy, "/api/people/commitments/o1/transition")).toHaveLength(1));
+    expect(JSON.parse(String(posts(fetchSpy, "/api/people/commitments/o1/transition")[0][1]?.body)).verb).toBe("done");
+  });
+
+  it("Add person stays on the list, warns once on a name already here, then adds it", async () => {
+    let roster = [{ id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report" }];
+    const fetchSpy = spy({
+      "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
+      "/api/people/relationships": (opts) => {
+        if (opts?.method === "POST") {
+          const name = JSON.parse(String(opts.body)).display_name;
+          roster = [...roster, { id: `r${roster.length + 1}`, display_name: name, relationship_kind: "direct_report" }];
+          return json({ relationship: roster[roster.length - 1] }, 201);
+        }
+        return json({ relationships: roster });
+      },
+    });
+    render(<PeopleCore />);
+    expect(await screen.findByRole("button", { name: "Add person" })).toBeTruthy();
+    const name = screen.getByLabelText("Add person");
+    fireEvent.change(name, { target: { value: "Sam Ortiz" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await screen.findByRole("button", { name: /Sam Ortiz/ });
+    expect(screen.queryByRole("tablist")).toBeNull();
+    expect((screen.getByLabelText("Add person") as HTMLInputElement).value).toBe("");
+    expect(document.activeElement).toBe(screen.getByLabelText("Add person"));
+    fireEvent.change(screen.getByLabelText("Add person"), { target: { value: " maya chen " } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(await screen.findByTestId("people-duplicate")).toHaveTextContent("Maya Chen is already here");
+    expect(posts(fetchSpy, "/api/people/relationships")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Add again" }));
+    await waitFor(() => expect(posts(fetchSpy, "/api/people/relationships")).toHaveLength(2));
+    await waitFor(() => expect(screen.queryByTestId("people-duplicate")).toBeNull());
+  });
+
+  it("History shows no zero counters and Info hides fields that are not set", async () => {
+    spy({
+      "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
+      "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report" }] }),
+      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report", commitments: [] } }),
+      "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      "/api/people/relationships/r1/brief": () => json({ brief: { relationship_id: "r1", open_commitments: [], agenda_items: [] } }),
+      "/api/door": () => json({ upcoming: [] }),
+    });
+    render(<PeopleCore scope="people:r1" />);
+    fireEvent.click(await screen.findByRole("tab", { name: "History" }));
+    expect(screen.queryByTestId("people-history-facts")).toBeNull();
+    expect(document.body.textContent).not.toContain("—");
+    expect(screen.queryByRole("button", { name: "Add person" })).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Info" }));
+    expect(screen.queryByText("Role context")).toBeNull();
+    expect(screen.queryByText("Not set")).toBeNull();
   });
 });

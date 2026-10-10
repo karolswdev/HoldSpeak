@@ -77,6 +77,8 @@ type OneOnOneBrief = {
   relationship_id: string;
   display_name: string | null;
   open_commitments: Array<{ id: string; body: string; visibility: Visibility; state?: string; due?: string | null }>;
+  /** PHILO-17 (U09): what the person owes him, recorded by hand. */
+  owed_to_you?: Array<{ id: string; body: string; visibility: Visibility; state?: string; due?: string | null }>;
   agenda_items: Array<{ id: string; body: string; visibility: Visibility; state: string }>;
   grounding_note_count: number;
   linked_meetings: BriefMeeting[];
@@ -86,6 +88,8 @@ type OneOnOneBrief = {
 };
 type RelationshipDetail = Relationship & {
   commitments?: Commitment[];
+  /** PHILO-17 (U09): commitments the person owes him (direction report_owes). */
+  owed_to_you?: Commitment[];
   requests?: Array<{ id: string; body: string; state: string }>;
   sessions?: Session[];
   notes?: GroundingNote[];
@@ -160,6 +164,8 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const [detail, setDetail] = useState<RelationshipDetail | null>(null);
   const [newName, setNewName] = useState("");
   const [newKind, setNewKind] = useState<RelationshipKind>("direct_report");
+  // PHILO-17: a name already on the roster warns once; Add again adds it.
+  const [duplicateWarned, setDuplicateWarned] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const requestedScope = scope?.startsWith("people:") ? scope.slice("people:".length) : null;
@@ -277,13 +283,24 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     const kept = keptPlace(PEOPLE_PERSON_PLACE);
     if (kept && relationships.some((relationship) => relationship.id === kept)) void select(kept);
   }, [readiness, relationships]); // once per roster read: Back clears the place
+  const duplicate = sameName(relationships, newName);
+  const duplicateShown = duplicate && duplicateWarned === nameKey(newName) ? duplicate : null;
+  // PHILO-17: Add stays on the list with the cursor in Name, so three
+  // reports are Name, Add three times. A quiet roster re-read (no loading
+  // state) keeps the input on screen.
   const createRelationship = async () => {
     const display_name = newName.trim(); if (!display_name) return;
+    if (duplicate && duplicateWarned !== nameKey(display_name)) { setDuplicateWarned(nameKey(display_name)); return; }
     setBusy(true); setError("");
     try {
-      const created = await apiFetch<{ relationship: Relationship }>("/api/people/relationships", { method: "POST", json: { display_name, relationship_kind: newKind } });
-      setNewName(""); await load(); await select(created.relationship.id);
-    } catch (cause) { protectedFailure(cause); } finally { setBusy(false); }
+      await apiFetch<{ relationship: Relationship }>("/api/people/relationships", { method: "POST", json: { display_name, relationship_kind: newKind } });
+      setNewName(""); setDuplicateWarned("");
+      const list = await apiFetch<{ relationships?: Relationship[] }>("/api/people/relationships");
+      setRelationships(list.relationships ?? []);
+    } catch (cause) { protectedFailure(cause); } finally {
+      setBusy(false);
+      document.getElementById("people-new-relationship")?.focus();
+    }
   };
   function protectedFailure(cause: unknown) {
     if (isStoreOutage(cause) && (selectedId || relationships.length)) {
@@ -299,7 +316,8 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     setError(plainFailure("PEOPLE STORE", cause));
   }
   const selected = detail ?? relationships.find((row) => row.id === selectedId) ?? null;
-  const verbs = unavailable ? null : <Button dense variant="primary" onClick={() => document.getElementById("people-new-relationship")?.focus()}>New relationship</Button>;
+  // PHILO-17: the head verb names what it does; on a person's page it is gone.
+  const verbs = unavailable || selected ? null : <Button dense variant="primary" onClick={() => document.getElementById("people-new-relationship")?.focus()}>Add person</Button>;
 
   if (loading) return <SurfaceState loading />;
   if (unavailable) {
@@ -327,14 +345,26 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     {renderHeroSlot(hero, verbs, failureRow ?? facts())}
     <SurfaceSplit
       detailOpen={Boolean(selected)}
-      main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />}
+      main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} duplicateOf={duplicateShown?.display_name ?? null} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />}
       detail={selected ? <RelationshipPane relationship={selected} initialLens={requestedLens} lensRequest={lensRequest} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); keepPlace(PEOPLE_PERSON_PLACE, ""); }} /> : undefined}
     />
   </div>;
 }
 
-function Roster({ relationships, selectedId, newName, setNewName, newKind, setNewKind, busy, onCreate, onSelect, projectFilter = null, onClearProjectFilter }: {
+function nameKey(name: string): string {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+/** PHILO-17: the person already on the roster with this name, if any. */
+function sameName(relationships: Relationship[], name: string): Relationship | null {
+  const key = nameKey(name);
+  return key ? relationships.find((row) => nameKey(row.display_name) === key) ?? null : null;
+}
+
+function Roster({ relationships, selectedId, newName, setNewName, newKind, setNewKind, busy, duplicateOf = null, onCreate, onSelect, projectFilter = null, onClearProjectFilter }: {
   relationships: Relationship[]; selectedId: string | null; newName: string; setNewName(value: string): void; newKind: RelationshipKind; setNewKind(value: RelationshipKind): void; busy: boolean; onCreate(): void; onSelect(id: string): void;
+  /** PHILO-17: the name already on the roster; the next Add adds it again. */
+  duplicateOf?: string | null;
   /** HS-200-14: the Project the roster is scoped to (`people:project:<id>`), or null for everyone. */
   projectFilter?: string | null; onClearProjectFilter?(): void;
 }) {
@@ -349,11 +379,12 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
     actions={projectFilter && scopedOut > 0 ? <Button dense variant="ghost" aria-label="Everyone: clear the Project scope" onClick={onClearProjectFilter} data-testid="people-roster-everyone">{countToken(scopedOut, "MORE", "MORE")} · Everyone</Button> : undefined}
   >
     <div className="people-new">
-      <StringGadget label="New relationship" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") onCreate(); }} />
+      <StringGadget label="Add person" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") onCreate(); }} />
       <CycleGadget label="Relationship" value={newKind} onChange={(value) => setNewKind(value as RelationshipKind)} options={[{ value: "direct_report", label: "Direct report" }, { value: "peer", label: "Peer" }, { value: "extended", label: "Extended" }]} />
-      <Button dense disabled={!newName.trim() || busy} loading={busy} onClick={onCreate}>Add</Button>
+      <Button dense disabled={!newName.trim() || busy} loading={busy} onClick={onCreate}>{duplicateOf ? "Add again" : "Add"}</Button>
     </div>
-    {!ordered.length ? <div className="people-empty-roster" data-testid="people-empty-roster">{projectFilter ? <span className="surface-token" data-testid="people-roster-none-linked">NO ONE LINKED YET</span> : <p className="people-empty-lead">Add a relationship to start</p>}</div> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} title={relationship.display_name} detail={`${relationshipLabel(relationship.relationship_kind)}${relationship.next_one_on_one ? ` · ${shortWhen(relationship.next_one_on_one)}` : ""}`} meta={relationship.manager_commitment_count ? `You owe ${relationship.manager_commitment_count}` : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
+    {duplicateOf ? <p className="people-duplicate" role="status" data-testid="people-duplicate">{duplicateOf} is already here</p> : null}
+    {!ordered.length ? <div className="people-empty-roster" data-testid="people-empty-roster">{projectFilter ? <span className="surface-token" data-testid="people-roster-none-linked">NO ONE LINKED YET</span> : <p className="people-empty-lead">Add a person to start</p>}</div> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} title={relationship.display_name} detail={`${relationshipLabel(relationship.relationship_kind)}${relationship.next_one_on_one ? ` · ${shortWhen(relationship.next_one_on_one)}` : ""}`} meta={relationship.manager_commitment_count ? `You owe ${relationship.manager_commitment_count}` : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
   </SurfaceSection>;
 }
 
@@ -488,7 +519,10 @@ function PrepLens({ relationship, onRefresh, onProtectedFailure, onOpenConcern }
   // the calendar suggestion come through the one client contract.
   const prep = composePeoplePrep(brief);
   const agendaCount = prep.agenda.length;
-  const firstName = displayName.trim().split(/\s+/)[0] || displayName;
+  // PHILO-17 (U33): Prep is the one prep view: agenda, you owe, they owe.
+  const owedToYou = brief.owed_to_you ?? [];
+  const youOwe = brief.open_commitments ?? [];
+  const theyOweCount = owedToYou.length + prep.openMeetingActions.length;
 
   // PR reference tokens: cap at 3 then +N
   const prNumbers = (ws?.prs_waiting ?? []).map((pr) => `#${pr.pr_number}`);
@@ -567,17 +601,34 @@ function PrepLens({ relationship, onRefresh, onProtectedFailure, onOpenConcern }
     {/* AGENDA section (unchanged from existing) */}
     {agendaCount > 0 ? (
       <div data-testid="prep-agenda">
-        <SurfaceSection label={`Agenda ${agendaCount}`}>
+        <SurfaceSection label="Agenda" count={agendaCount}>
           <SurfaceRows>{prep.agenda.map((item) => <SurfaceRow key={item.id} title={item.body} />)}</SurfaceRows>
         </SurfaceSection>
       </div>
     ) : null}
 
-    {/* PHILO-13-09: what the report owes from meetings; each row opens its meeting. */}
-    {prep.openMeetingActions.length ? (
+    {youOwe.length ? (
+      <div data-testid="prep-you-owe">
+        <SurfaceSection label="You owe" count={youOwe.length}>
+          <SurfaceRows>{youOwe.map((item) => <SurfaceRow
+            key={item.id}
+            title={item.body}
+            detail={item.due ? `BY ${shortDay(item.due)}` : undefined}
+          />)}</SurfaceRows>
+        </SurfaceSection>
+      </div>
+    ) : null}
+
+    {/* PHILO-13-09 / PHILO-17: what the person owes him: the rows he recorded,
+        then the open actions from meetings (each opens its meeting). */}
+    {theyOweCount ? (
       <div data-testid="prep-owed">
-        <SurfaceSection label={`Waiting on ${firstName}`}>
-          <SurfaceRows>{prep.openMeetingActions.map((action) => <SurfaceRow
+        <SurfaceSection label="They owe you" count={theyOweCount}>
+          <SurfaceRows>{owedToYou.map((item) => <SurfaceRow
+            key={item.id}
+            title={item.body}
+            detail={item.due ? `BY ${shortDay(item.due)}` : undefined}
+          />)}{prep.openMeetingActions.map((action) => <SurfaceRow
             key={action.id}
             title={action.task}
             detail={[action.meeting_title, action.due ? `BY ${shortDay(action.due)}` : null].filter(Boolean).join(" · ") || undefined}
@@ -803,14 +854,14 @@ function OwnerAliasSection({ relationship, onRefresh, onProtectedFailure }: { re
     } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
   };
 
-  return <div data-testid="people-owner-aliases"><SurfaceSection label="Owner aliases">
+  return <div data-testid="people-owner-aliases"><SurfaceSection label="Names in meeting notes">
     {aliases.length ? <SurfaceRows>{aliases.map((alias) => <SurfaceRow
       key={alias}
       title={alias}
       verbs={<ConfirmVerb label="Remove" confirmLabel="Remove?" busy={busy} onConfirm={() => void removeAlias(alias)} />}
     />)}</SurfaceRows> : null}
     <div className="people-alias-add" data-testid="people-alias-add">
-      <StringGadget label="Owner alias" value={newAlias} onChange={setNewAlias} placeholder="Owner string" onKeyDown={(event: React.KeyboardEvent) => { if (event.key === "Enter") void addAlias(); }} />
+      <StringGadget label="Name in meeting notes" value={newAlias} onChange={setNewAlias} placeholder="Name in meeting notes" onKeyDown={(event: React.KeyboardEvent) => { if (event.key === "Enter") void addAlias(); }} />
       <Button dense disabled={!newAlias.trim() || busy} onClick={() => void addAlias()}>Add</Button>
     </div>
   </SurfaceSection></div>;
@@ -827,7 +878,7 @@ function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEven
     <CalendarLinkSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} />
     <OwnerAliasSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} />
     <SurfaceSection label="Projects"><div className="people-project-link"><CycleGadget label="Project" value={projectId} onChange={setProjectId} options={projects.map((project) => ({ value: project.id, label: project.name }))} /><Button dense disabled={!projectId || relationship.project_refs?.includes(projectId)} onClick={() => void linkProject()}>Link</Button></div>{linkedProjects.length ? <SurfaceRows>{linkedProjects.map((project) => <SurfaceRow key={project.id} title={project.name} detail={project.description} onOpen={() => openDrawer(project.id)} verbs={<Button dense variant="ghost" onClick={() => void unlinkProject(project.id)}>Unlink</Button>} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No linked projects" />}</SurfaceSection>
-    <SurfaceSection label="Grounding notes"><div className="people-context-add"><StringGadget label="Topic" value={topic} onChange={setTopic} placeholder="Topic (optional)" /><PadGadget label="Grounding note" value={body} onChange={setBody} placeholder="Context worth remembering" rows={3} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "leader_private", label: "Leader private" }, { value: "shared_intent", label: "Shared" }]} /><Button dense disabled={!body.trim() || busy} onClick={() => void add()}>Add note</Button></div>{!(relationship.notes ?? []).length ? <SurfaceState empty emptyLabel="No grounding notes" /> : <SurfaceRows>{(relationship.notes ?? []).map((note) => <SurfaceRow key={note.id} title={note.topic || note.body} detail={note.topic ? note.body : undefined} meta={note.visibility === "leader_private" ? "Leader private" : "Shared"} />)}</SurfaceRows>}</SurfaceSection>
+    <SurfaceSection label="Notes"><div className="people-context-add"><StringGadget label="Topic" value={topic} onChange={setTopic} placeholder="Topic (optional)" /><PadGadget label="Note" value={body} onChange={setBody} placeholder="Context worth remembering" rows={3} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "leader_private", label: "Leader private" }, { value: "shared_intent", label: "Shared" }]} /><Button dense disabled={!body.trim() || busy} onClick={() => void add()}>Add note</Button></div>{!(relationship.notes ?? []).length ? <SurfaceState empty emptyLabel="No notes" /> : <SurfaceRows>{(relationship.notes ?? []).map((note) => <SurfaceRow key={note.id} title={note.topic || note.body} detail={note.topic ? note.body : undefined} meta={note.visibility === "leader_private" ? "Leader private" : "Shared"} />)}</SurfaceRows>}</SurfaceSection>
   </>;
 }
 
@@ -843,6 +894,12 @@ function NowLens({ relationship, onRefresh, onProtectedFailure, concern, prepBri
   const [request, setRequest, forgetRequest] = useDeskDraft(`people/request/${relationship.id}`); const [busy, setBusy] = useState(false); const [selectedCommitment, setSelectedCommitment] = useState<Commitment | null>(null);
   const createRequest = async () => { if (!request.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/requests`, { method: "POST", json: { body: request.trim(), visibility: "shared_intent", source: { kind: "manual" } } }); forgetRequest(); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
   const accept = async (id: string) => { try { await apiFetch(`/api/people/requests/${encodeURIComponent(id)}/accept`, { method: "POST", json: {} }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
+  // PHILO-17 (U09): what the person owes him, kept per person like the request draft.
+  const [owed, setOwed, forgetOwed] = useDeskDraft(`people/owed/${relationship.id}`);
+  const createOwed = async () => { if (!owed.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/owed`, { method: "POST", json: { body: owed.trim(), visibility: "shared_intent" } }); forgetOwed(); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
+  const owedDone = async (id: string) => { try { await apiFetch(`/api/people/commitments/${encodeURIComponent(id)}/transition`, { method: "POST", json: { verb: "done" } }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
+  const owedOpen = (relationship.owed_to_you ?? []).filter((item) => (item.state ?? "open") === "open");
+  const askedOpen = (relationship.requests ?? []).filter((item) => item.state === "requested");
 
   // HS-172-05: when opened from a Prep summary row, show per-entity detail rows.
   // SurfaceLedgerRow with wrap: titles wrap to two lines, repo token below.
@@ -920,7 +977,8 @@ function NowLens({ relationship, onRefresh, onProtectedFailure, concern, prepBri
 
   return <SurfaceColumns main={<>
     <SurfaceSection label="You owe"><SurfaceRows>{(relationship.commitments ?? []).length ? (relationship.commitments ?? []).map((item) => <SurfaceRow key={item.id} selected={selectedCommitment?.id === item.id} title={item.body} detail={item.due ?? undefined} meta={item.execution_links?.length ? "Workbench linked" : "Open"} onOpen={() => setSelectedCommitment(item)} />) : <SurfaceState empty emptyLabel="No commitments" />}</SurfaceRows>{selectedCommitment ? <CommitmentInspector commitment={selectedCommitment} onClose={() => setSelectedCommitment(null)} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}</SurfaceSection>
-    <SurfaceSection label="Open requests"><div className="people-new"><StringGadget label="Request" value={request} onChange={setRequest} placeholder="Request" /><Button dense disabled={!request.trim() || busy} onClick={() => void createRequest()}>Add</Button></div><SurfaceRows>{(relationship.requests ?? []).filter((item) => item.state === "requested").map((item) => <SurfaceRow key={item.id} title={item.body} verbs={<Button dense onClick={() => void accept(item.id)}>Accept</Button>} />)}</SurfaceRows></SurfaceSection>
+    <SurfaceSection label="They owe you" count={owedOpen.length} data-testid="people-they-owe"><div className="people-new"><StringGadget label="They owe you" value={owed} onChange={setOwed} placeholder="What they owe you" onKeyDown={(event) => { if (event.key === "Enter") void createOwed(); }} /><Button dense disabled={!owed.trim() || busy} onClick={() => void createOwed()}>Add</Button></div>{owedOpen.length ? <SurfaceRows>{owedOpen.map((item) => <SurfaceRow key={item.id} title={item.body} detail={item.due ? `BY ${shortDay(item.due)}` : undefined} verbs={<Button dense onClick={() => void owedDone(item.id)}>Done</Button>} />)}</SurfaceRows> : null}</SurfaceSection>
+    <SurfaceSection label="Asked of you" count={askedOpen.length} data-testid="people-asked"><div className="people-new"><StringGadget label="Asked of you" value={request} onChange={setRequest} placeholder="What they ask of you" onKeyDown={(event) => { if (event.key === "Enter") void createRequest(); }} /><Button dense disabled={!request.trim() || busy} onClick={() => void createRequest()}>Add</Button></div>{askedOpen.length ? <SurfaceRows>{askedOpen.map((item) => <SurfaceRow key={item.id} title={item.body} verbs={<Button dense onClick={() => void accept(item.id)}>Accept</Button>} />)}</SurfaceRows> : null}</SurfaceSection>
   </>} side={<NextOneOnOneSide relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} />} />;
 }
 
@@ -948,7 +1006,14 @@ function HistoryLens({ relationship }: { relationship: RelationshipDetail }) {
   const evidence = commitments.filter((item) => item.history?.some((event) => Boolean(event.evidence?.length))).length;
   const events = commitments.flatMap((item) => (item.history ?? []).map((event) => ({ ...event, commitment: item.body }))).sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const open = commitments.filter((item) => item.state === "open").length;
-  return <><SurfaceSection label="Follow-through"><dl className="people-history-facts"><div><dt>Accepted</dt><dd>{countToken(commitments.length, "COMMITMENT") ?? "—"}</dd></div><div><dt>Satisfied</dt><dd>{countToken(satisfied, "DONE") ?? "—"}</dd></div><div><dt>Open</dt><dd>{countToken(open, "OPEN") ?? "—"}</dd></div><div><dt>With evidence</dt><dd>{countToken(evidence, "EVIDENCED") ?? "—"}</dd></div></dl></SurfaceSection><SurfaceSection label="Timeline">{events.length ? <SurfaceRows>{events.map((event, index) => <SurfaceRow key={`${event.at}-${index}`} title={event.commitment} detail={`${event.event}${event.rationale ? ` · ${event.rationale}` : ""}`} meta={event.at ? new Date(event.at).toLocaleDateString() : undefined} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No history" />}</SurfaceSection></>;
+  // PHILO-17 (UX-CANON: no counters of zero): a fact shows only with a value.
+  const facts = ([
+    ["Accepted", countToken(commitments.length, "COMMITMENT")],
+    ["Satisfied", countToken(satisfied, "DONE")],
+    ["Open", countToken(open, "OPEN")],
+    ["With evidence", countToken(evidence, "EVIDENCED")],
+  ] as Array<[string, string | null | undefined]>).filter((fact): fact is [string, string] => Boolean(fact[1]));
+  return <>{facts.length ? <SurfaceSection label="Follow-through"><dl className="people-history-facts" data-testid="people-history-facts">{facts.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></SurfaceSection> : null}<SurfaceSection label="Timeline">{events.length ? <SurfaceRows>{events.map((event, index) => <SurfaceRow key={`${event.at}-${index}`} title={event.commitment} detail={`${event.event}${event.rationale ? ` · ${event.rationale}` : ""}`} meta={event.at ? new Date(event.at).toLocaleDateString() : undefined} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No history" />}</SurfaceSection></>;
 }
 
 function OneOnOnes({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
@@ -962,5 +1027,5 @@ function OneOnOnes({ relationship, onRefresh, onProtectedFailure }: { relationsh
 
 function InfoLens({ relationship, onProtectedFailure, onArchived }: { relationship: RelationshipDetail; onProtectedFailure(cause: unknown): void; onArchived(): void }) {
   const archive = async () => { try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/archive`, { method: "POST", json: {} }); onArchived(); } catch (cause) { onProtectedFailure(cause); } };
-  return <SurfaceSection label="Info"><dl className="people-info"><div><dt>Relationship</dt><dd>{relationshipLabel(relationship.relationship_kind)}</dd></div><div><dt>Role context</dt><dd>{relationship.role_context ?? "Not set"}</dd></div><div><dt>Cadence</dt><dd>{relationship.cadence ?? "Not set"}</dd></div><div><dt>Storage</dt><dd>Encrypted</dd></div><div><dt>Sync</dt><dd>This device only</dd></div><div><dt>Capture</dt><dd>Notes only</dd></div></dl><ConfirmVerb label="Archive" confirmLabel="Archive?" onConfirm={() => void archive()} /></SurfaceSection>;
+  return <SurfaceSection label="Info"><dl className="people-info"><div><dt>Relationship</dt><dd>{relationshipLabel(relationship.relationship_kind)}</dd></div>{relationship.role_context ? <div><dt>Role</dt><dd>{relationship.role_context}</dd></div> : null}{relationship.cadence ? <div><dt>Cadence</dt><dd>{relationship.cadence}</dd></div> : null}<div><dt>Storage</dt><dd>Encrypted</dd></div><div><dt>Sync</dt><dd>This device only</dd></div><div><dt>Capture</dt><dd>Notes only</dd></div></dl><ConfirmVerb label="Archive" confirmLabel="Archive?" onConfirm={() => void archive()} /></SurfaceSection>;
 }

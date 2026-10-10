@@ -80,6 +80,8 @@ def compose_person_overlay(
         try:
             brief_data = people_service.one_on_one_brief(principal, rel_id, db=db)
             you_owe_count = len(brief_data.get("open_commitments") or [])
+            # PHILO-17 (U09): what he recorded by hand that the person owes him.
+            they_owe_count += len(brief_data.get("owed_to_you") or [])
             agenda_backlog = len(brief_data.get("agenda_items") or [])
         except Exception:
             agenda_backlog = 0

@@ -17,8 +17,10 @@ The walk, per width (the browser in America/Denver):
      `NEXT 1:1 · <formatted time>` shows.
   2. Now: the Next 1:1 side section reads as the header does; no ISO time.
   3. A fresh Chair: the 1:1 row alone -> Priya on Prep (1 gesture).
-  4. Prep: the agenda, `Waiting on Priya` with the owed action, her project;
-     nothing clipped or overlapping.
+  2b. PHILO-17 (U09): Now: `They owe you` records "Send me the API migration
+     estimate" (never under You owe); requests read `Asked of you`.
+  4. Prep: the agenda, `They owe you` with his item and the owed action, her
+     project; nothing clipped or overlapping.
   5. The owed action row -> its meeting, the front window.
 
 Shots go to pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-09-shots/
@@ -52,6 +54,7 @@ SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-
 SIZES = {1440: 900, 393: 852}
 ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}")
 OWED = "Send the dry-run report"
+THEY_OWE = "Send me the API migration estimate"
 DUE = "2026-10-06"  # a Tuesday; the desk below runs in America/Denver
 DESK_ZONE = "America/Denver"
 
@@ -251,6 +254,19 @@ class TestOneOnOneFindsItsPerson:
                 walk["now_side"] = side.inner_text()
                 walk["people_iso"] = ISO.findall(people.inner_text())
                 page.screenshot(path=str(SHOTS / f"B4-03-now-next-{width}.png"))
+
+                # 2b. PHILO-17 (U09): Now records what Priya owes him, under
+                # They owe you, never under You owe.
+                they_owe = people.get_by_test_id("people-they-owe")
+                they_owe.get_by_role("textbox", name="They owe you").fill(THEY_OWE)
+                self._press(page, they_owe.get_by_role("button", name="Add"), width)
+                they_owe.get_by_text(THEY_OWE).wait_for()
+                _settle(page)
+                walk["now_they_owe"] = they_owe.inner_text()
+                walk["now_asked"] = people.get_by_test_id("people-asked").inner_text()
+                walk["now_text"] = people.inner_text()
+                walk["now_readable"] = _rendered_text_faults(page, "#surface-people", on_glass=True)
+                page.screenshot(path=str(SHOTS / f"P17-01-now-they-owe-{width}.png"))
             finally:
                 browser.close()
 
@@ -277,6 +293,7 @@ class TestOneOnOneFindsItsPerson:
                 # 4. Prep: agenda, what Priya owes, her project; readable.
                 walk["agenda"] = people.get_by_test_id("prep-agenda").inner_text()
                 walk["owed"] = people.get_by_test_id("prep-owed").inner_text()
+                walk["prep_you_owe"] = people.get_by_test_id("prep-you-owe").count()
                 walk["projects"] = people.get_by_test_id("prep-projects").inner_text()
                 walk["prep_iso"] = ISO.findall(people.inner_text())
                 walk["prep_header"] = people.get_by_test_id("people-next-1on1").inner_text()
@@ -321,6 +338,16 @@ class TestOneOnOneFindsItsPerson:
         head = walk.get("header_after_link", "").replace("NEXT 1:1 · ", "")
         if not head or head not in walk.get("now_side", "") or "No 1:1 planned" in walk.get("now_side", ""):
             fails["Now side reads as the header"] = [walk.get("now_side"), head, label]
+        if THEY_OWE not in walk.get("now_they_owe", "") or "THEY OWE YOU · 1" not in walk.get("now_they_owe", "").upper():
+            fails["Now: They owe you records his item"] = walk.get("now_they_owe")
+        if "Open requests" in walk.get("now_text", "") or "ASKED OF YOU" not in walk.get("now_asked", "").upper():
+            fails["Now: requests read Asked of you"] = walk.get("now_asked")
+        if walk.get("now_readable", {}).get("clipped") or walk.get("now_readable", {}).get("overlaps"):
+            fails["Now: readable"] = walk.get("now_readable")
+        if THEY_OWE not in walk.get("owed", "") or OWED not in walk.get("owed", "") or "THEY OWE YOU · 2" not in walk.get("owed", "").upper():
+            fails["Prep: They owe you holds his item and the meeting action"] = walk.get("owed")
+        if walk.get("prep_you_owe"):
+            fails["Prep: his item never shows under You owe"] = walk.get("prep_you_owe")
         if walk.get("people_iso") or walk.get("prep_iso"):
             fails["no ISO time on People"] = [walk.get("people_iso"), walk.get("prep_iso")]
         if walk.get("chair_windows_fresh") != 0:
@@ -330,8 +357,6 @@ class TestOneOnOneFindsItsPerson:
             fails["Chair 1:1 row -> Priya on Prep in 1 gesture"] = [walk.get("front_after_row"), walk.get("lens_after_row")]
         if "Review the dry-run report" not in walk.get("agenda", ""):
             fails["Prep shows the agenda"] = walk.get("agenda")
-        if OWED not in walk.get("owed", "") or "WAITING ON PRIYA" not in walk.get("owed", "").upper():
-            fails["Prep shows what Priya owes"] = walk.get("owed")
         if "BY TUE" not in walk.get("owed", "").upper() or "BY MON" in walk.get("owed", "").upper():
             fails["the date-only deadline stays Tuesday in America/Denver"] = walk.get("owed")
         if "NEXT 1:1 DID NOT LOAD · NOT AVAILABLE NOW" not in walk.get("brief_failure", "") or \

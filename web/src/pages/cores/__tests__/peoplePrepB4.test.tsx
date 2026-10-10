@@ -100,13 +100,28 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     await screen.findByTestId("people-prep-lens");
     expect(within(await screen.findByTestId("prep-agenda")).getByText("Review the dry-run report")).toBeTruthy();
     const owed = await screen.findByTestId("prep-owed");
-    expect(within(owed).getByText("Waiting on Priya")).toBeTruthy();
+    expect(within(owed).getByText("They owe you · 1")).toBeTruthy();
     fireEvent.click(within(owed).getByRole("button", { name: /Send the dry-run report/ }));
     expect(opened).toEqual(["meeting:m-1"]);
     const projects = screen.getByTestId("prep-projects");
     fireEvent.click(within(projects).getByRole("button", { name: /Dry-run project/ }));
     expect(opened).toEqual(["meeting:m-1", "project:p-dry"]);
     expect(document.body.textContent).not.toMatch(ISO);
+  });
+
+  it("PHILO-17: Prep holds you owe and they owe (his rows, then the meeting actions)", async () => {
+    stub({ linked: true, brief: { ...FULL,
+      open_commitments: [{ id: "c1", body: "Review her design doc", visibility: "shared_intent", state: "open" }],
+      owed_to_you: [{ id: "o1", body: "Send the API migration estimate", visibility: "shared_intent", state: "open" }],
+    } });
+    render(<PeopleCore scope="people:r1:prep" />);
+    const youOwe = await screen.findByTestId("prep-you-owe");
+    expect(within(youOwe).getByText("You owe · 1")).toBeTruthy();
+    expect(within(youOwe).getByText("Review her design doc")).toBeTruthy();
+    const owed = screen.getByTestId("prep-owed");
+    expect(within(owed).getByText("They owe you · 2")).toBeTruthy();
+    expect(within(owed).getByText("Send the API migration estimate")).toBeTruthy();
+    expect(within(owed).getByRole("button", { name: /Send the dry-run report/ })).toBeTruthy();
   });
 
   it("withholds an empty section: no owed, no projects, no agenda heading", async () => {

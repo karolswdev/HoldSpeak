@@ -255,7 +255,7 @@ class TestFacesDoNotLie:
                 person.wait_for()
                 self._press(page, person, width)
                 self._press(page, people.get_by_role("tab", name="Context"), width)
-                field = people.get_by_role("textbox", name="Grounding note")
+                field = people.get_by_role("textbox", name="Note")
                 field.fill(NOTE)
                 notes = re.compile(r".*/api/people/relationships/[^/]+/notes$")
                 page.route(notes, lambda r: r.fulfill(
