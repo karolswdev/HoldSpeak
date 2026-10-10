@@ -35,7 +35,9 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _assert_clean, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle
+from .glass_infra import (
+    _assert_clean, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle, people_key_file,
+)
 from tests._evidence import evidence_dir
 
 # PHILO-14 A1: the Chair is the screen of objects. This walk is NOT marked
@@ -70,14 +72,15 @@ def _seed(root: Path, base: str) -> dict[str, Any]:
     and a re-ingest inside this week.
 
     ``root`` is the run's tmp directory: the hub's database
-    (``root/holdspeak.db``, glass_infra._boot) and the FILE People key
-    (``root/people.key``) both live under it, so the fixture's isolation
-    guard (the database below its HOME) holds with HOME = ``root``.
+    (``root/holdspeak.db``, glass_infra._boot) and the FILE People key the
+    hub reads (``people_key_file(root)``, set by ``_boot``) both live under
+    it, so the fixture's isolation guard (the database below its HOME) holds
+    with HOME = ``root``.
     """
     from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
     from scripts import philo13_b4_fixture as b4
 
-    seeded = b4.seed_people_prep(root / "holdspeak.db", home=root)
+    seeded = b4.seed_people_prep(root / "holdspeak.db", home=root, keyfile=people_key_file(root))
     _http(base, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
     ics = root / "philo13-b4-calendar.ics"
     b4._ics(ics, datetime.now(timezone.utc).replace(second=0, microsecond=0) + timedelta(minutes=50))
@@ -111,7 +114,6 @@ WINDOWS_JS = r"""() => [...document.querySelectorAll('.desk-window-shell, .desk-
 class TestOneOnOneFindsItsPerson:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(tmp_path / "people.key"))
         _ensure_build()
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
         self.base = base

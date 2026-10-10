@@ -59,8 +59,8 @@ def validate_isolated_db(db_path: Path, home: Path | None = None) -> tuple[Path,
 
 
 @contextmanager
-def _file_key(home: Path) -> Iterator[Path]:
-    keyfile = home / "people.key"
+def _file_key(home: Path, keyfile: Path | None = None) -> Iterator[Path]:
+    keyfile = keyfile if keyfile is not None else home / "people.key"
     before = os.environ.get("HOLDSPEAK_PEOPLE_KEYSTORE_FILE")
     os.environ["HOLDSPEAK_PEOPLE_KEYSTORE_FILE"] = str(keyfile)
     try:
@@ -157,9 +157,20 @@ def _people_client(db: Any, people: Any) -> Iterator[Any]:
         db_module.get_database = previous
 
 
-def seed_people_prep(db_path: Path, *, home: Path | None = None) -> dict[str, Any]:
-    """Create one isolated B4 oracle and return only stable producer refs."""
+def seed_people_prep(
+    db_path: Path, *, home: Path | None = None, keyfile: Path | None = None,
+) -> dict[str, Any]:
+    """Create one isolated B4 oracle and return only stable producer refs.
+
+    ``keyfile`` names the People key file the hub reads (a glass rig passes
+    its own); omitted, the key goes to ``<home>/people.key``. It must be
+    below the isolated HOME.
+    """
     db_path, isolated_home = validate_isolated_db(db_path, home)
+    if keyfile is not None:
+        keyfile = Path(keyfile).expanduser().resolve()
+        if not keyfile.is_relative_to(isolated_home):
+            raise ValueError("the People key file must be below the isolated HOME")
     from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
     from holdspeak.config import CalendarConfig, CalendarSource, Config
     from holdspeak.db import Database
@@ -168,7 +179,7 @@ def seed_people_prep(db_path: Path, *, home: Path | None = None) -> dict[str, An
     from holdspeak.services.project_service import ProjectService
     from holdspeak.principals import Principal, PrincipalKind
 
-    with _file_key(isolated_home) as keyfile:
+    with _file_key(isolated_home, keyfile) as keyfile:
         db = Database(db_path)
         ics_path = isolated_home / "philo13-b4-calendar.ics"
         starts = datetime.now(timezone.utc) + timedelta(days=2)
