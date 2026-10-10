@@ -19,6 +19,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Iterable, Optional
 
 from .base import BaseRepository
+from .decisions import confirmed_action_sql
 
 _KIND_ORDER = {
     "decision": 0,
@@ -1975,7 +1976,9 @@ class MemoryRepository(BaseRepository):
 
     @staticmethod
     def _decision_rows(conn, match, project, start, end) -> list[dict[str, Any]]:
-        clauses = ["decisions_memory_fts MATCH ?", _not_parked("d.source_meeting_id")]
+        # PHILO-17: a confirmed ACTION's decisions row is never a decision hit.
+        clauses = ["decisions_memory_fts MATCH ?", _not_parked("d.source_meeting_id"),
+                   "NOT " + confirmed_action_sql("d.id")]
         params: list[Any] = [match]
         if project:
             clauses.append(
@@ -2734,6 +2737,7 @@ class MemoryRepository(BaseRepository):
                           decided_at occurred_at,project_key project_id
                    FROM decisions
                    WHERE id=? AND deleted=0 AND source_state='linked'
+                     AND NOT """ + confirmed_action_sql("decisions.id") + """
                      AND """ + _not_parked("decisions.source_meeting_id"),
                 (resource_id,),
             ).fetchone()

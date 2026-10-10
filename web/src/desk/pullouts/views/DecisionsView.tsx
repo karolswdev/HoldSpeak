@@ -2,7 +2,9 @@ import { wireDate } from "../../surface/format";
 import { useEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
-import { qualifiedRef } from "../../api";
+import { holdObject, qualifiedRef } from "../../api";
+import { openRef } from "../../openObject";
+import { allObjects } from "../../world";
 import { useDesk } from "../../store";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
@@ -49,6 +51,57 @@ function receiptStatus(receipt: Receipt): "governing" | "superseded" | "related"
   return "related";
 }
 
+/** PHILO-17: the plain word for a record's state (was `GOVERNING`). */
+const RECEIPT_WORD = { governing: "CURRENT", superseded: "REPLACED", related: "RELATED" } as const;
+
+/** PHILO-17: one decision on the desk (`GET /api/decisions?scope=all`): a
+ *  meeting's decision names its meeting; a Desk decision names none. */
+type DeskDecision = {
+  source: "meeting" | "desk" | "record";
+  id: string;
+  text: string;
+  rationale?: string | null;
+  decided_at?: string | null;
+  lifecycle?: string | null;
+  meeting_id?: string | null;
+  meeting_title?: string | null;
+  record_id?: string | null;
+};
+
+/** The states in which a decision stands (an inclusion list: a disputed or
+ *  an unknown state is not current). The server's `current=1` uses the same. */
+const CURRENT = new Set(["recorded", "accepted", "active", "published"]);
+
+/** The state word a row shows; empty when the decision stands. Its
+ *  lifecycle is its record's when it has one (the ledger answers it). */
+function stateWord(row: DeskDecision): string {
+  const lifecycle = String(row.lifecycle ?? "").toLowerCase();
+  if (CURRENT.has(lifecycle) || !lifecycle) return "";
+  if (lifecycle === "superseded") return "REPLACED";
+  if (lifecycle === "deprecated") return "RETIRED";
+  return lifecycle.toUpperCase();
+}
+
+function fromReceipt(receipt: Receipt & { created_at?: string | null }): DeskDecision {
+  return {
+    source: "record", id: receipt.id, text: receipt.decision_text, rationale: receipt.rationale,
+    decided_at: receipt.created_at ?? null, lifecycle: receipt.lifecycle, record_id: receipt.id,
+  };
+}
+
+/** One page of the desk's decisions. */
+const PAGE = 100;
+
+/** A Desk decision opens its window; one the Desk did not load is held
+ *  (read by its id) first, so the open is never dead. */
+function openDeskDecision(id: string): void {
+  const ref = qualifiedRef("decision", id);
+  const open = () => openRef(`desk_decision:${id}`);
+  const present = allObjects(useDesk.getState().items).some((o) => qualifiedRef(o.kind, o.id) === ref);
+  if (present || !holdObject(ref)) { open(); return; }
+  void useDesk.getState().refresh().then(open, open);
+}
+
 function shortId(id: string): string {
   return id.replace(/^record-/, "").slice(0, 12);
 }
@@ -59,24 +112,35 @@ function humanDate(value: string | null | undefined): string {
   return !date ? value : date.toLocaleDateString();
 }
 
-/** Search-first, in-place decision history for the Intelligence pullout. */
+/** Every decision on the desk, with its date and its meeting; search in
+ *  place; a row opens its record, its Desk window, or the decision itself. */
 export function DecisionsView({
   initialQuery = "",
   initialWhyOnly = false,
   workRef,
   receiptId,
+  decisionId,
+  decisionNonce,
 }: {
   initialQuery?: string;
+  /** The `Current only` filter (the navigation's `whyOnly`). */
   initialWhyOnly?: boolean;
   workRef?: string;
   receiptId?: string;
+  /** PHILO-17: open this decision (a ledger row) in place, read by its id. */
+  decisionId?: string;
+  /** A new number per request: the same decision asked again opens again. */
+  decisionNonce?: number;
 }) {
   const openPullout = useDesk((state) => state.openPullout);
   const [query, setQuery] = useState(initialQuery);
   const [whyOnly, setWhyOnly] = useState(initialWhyOnly);
-  const [results, setResults] = useState<Receipt[]>([]);
+  const [results, setResults] = useState<DeskDecision[]>([]);
+  const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<Receipt | null>(null);
+  const [chosen, setChosen] = useState<DeskDecision | null>(null);
   const [loading, setLoading] = useState(true);
+  const [more, setMore] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -85,23 +149,39 @@ export function DecisionsView({
     setWhyOnly(initialWhyOnly);
   }, [initialQuery, initialWhyOnly]);
 
-  const listEndpoint = () => {
+  // A work ref lists the records linked to that work; else the desk's
+  // decisions, one page at a time, searched and filtered by the hub.
+  const read = (offset: number, limit = PAGE): Promise<{ rows: DeskDecision[]; total: number }> => {
     const [workType, ...workRefParts] = workRef?.split(":") ?? [];
     const linkedWorkRef = workRefParts.join(":");
-    return workType && linkedWorkRef
-      ? `/api/decision-records/work/${encodeURIComponent(workType)}/${encodeURIComponent(linkedWorkRef)}`
-      : query.trim()
-        ? `/api/decision-records/search?q=${encodeURIComponent(query.trim())}`
-        : "/api/decision-records";
+    if (workType && linkedWorkRef) {
+      return apiFetch<Receipt[]>(
+        `/api/decision-records/work/${encodeURIComponent(workType)}/${encodeURIComponent(linkedWorkRef)}`,
+      ).then((receipts) => {
+        const rows = (Array.isArray(receipts) ? receipts.map(fromReceipt) : [])
+          .filter((row) => !whyOnly || !stateWord(row))
+          .filter((row) => !query.trim() || row.text.toLowerCase().includes(query.trim().toLowerCase()));
+        return { rows, total: rows.length };
+      });
+    }
+    const params = new URLSearchParams({ scope: "all", limit: String(limit), offset: String(offset) });
+    if (query.trim()) params.set("q", query.trim());
+    if (whyOnly) params.set("current", "true");
+    return apiFetch<{ decisions?: DeskDecision[]; page?: { total?: number } }>(`/api/decisions?${params}`)
+      .then((body) => {
+        const rows = Array.isArray(body?.decisions) ? body.decisions : [];
+        return { rows, total: Number(body?.page?.total ?? rows.length) };
+      });
   };
   // A decision made or changed in another window shows in this list. A quiet
-  // re-read: no loading state, and the last list stays when it fails.
-  // Reads can answer out of order. Two rules decide which may land:
-  // `query` -- a read made for an older query or work ref never lands (it
-  // must not show under the new query); `order` -- of two reads for the same
-  // query, the one that started later wins, and an earlier one that answers
-  // after it is dropped.
+  // re-read of what is shown: no loading state, and the last list stays when
+  // it fails. Reads can answer out of order. Two rules decide which may land:
+  // `query` -- a read made for an older search, filter or work ref never
+  // lands; `order` -- of two reads for the same one, the one that started
+  // later wins, and an earlier one that answers after it is dropped.
   const reads = useRef({ query: 0, started: 0, landed: 0 });
+  const shown = useRef(0);
+  shown.current = results.length;
   const beginRead = () => {
     const mine = { query: reads.current.query, order: ++reads.current.started };
     return () => {
@@ -112,9 +192,9 @@ export function DecisionsView({
   };
   useOnDeskChanged(() => {
     const lands = beginRead();
-    void apiFetch<Receipt[]>(listEndpoint())
-      .then((receipts) => {
-        if (Array.isArray(receipts) && lands()) setResults(receipts);
+    void read(0, Math.min(500, Math.max(PAGE, shown.current)))
+      .then(({ rows, total: all }) => {
+        if (lands()) { setResults(rows); setTotal(all); }
       })
       .catch(() => undefined);
   });
@@ -126,13 +206,14 @@ export function DecisionsView({
       setLoading(true);
       setError("");
       const lands = beginRead();
-      void apiFetch<Receipt[]>(listEndpoint())
-        .then((receipts) => {
-          if (lands()) setResults(Array.isArray(receipts) ? receipts : []);
+      void read(0)
+        .then(({ rows, total: all }) => {
+          if (lands()) { setResults(rows); setTotal(all); }
         })
         .catch((reason) => {
           if (lands()) {
             setResults([]);
+            setTotal(0);
             setError(readableError(reason));
           }
         })
@@ -144,13 +225,21 @@ export function DecisionsView({
       active = false;
       window.clearTimeout(timer);
     };
-  }, [query, workRef]);
+  }, [query, workRef, whyOnly]);
 
-  const visibleResults = whyOnly
-    ? results.filter((receipt) => receiptStatus(receipt) === "governing")
-    : results;
+  const showMore = () => {
+    const lands = beginRead();
+    setMore(true);
+    void read(results.length)
+      .then(({ rows, total: all }) => {
+        if (lands()) { setResults((current) => [...current, ...rows]); setTotal(all); }
+      })
+      .catch((reason) => setError(readableError(reason)))
+      .finally(() => setMore(false));
+  };
 
   const openReceipt = (receiptId: string) => {
+    setChosen(null);
     setDetailLoading(true);
     setError("");
     void apiFetch<Receipt>(`/api/decision-records/${encodeURIComponent(receiptId)}`)
@@ -163,10 +252,43 @@ export function DecisionsView({
     if (receiptId) openReceipt(receiptId);
   }, [receiptId]);
 
+  const openRow = (row: DeskDecision) => {
+    if (row.record_id) openReceipt(row.record_id);
+    else if (row.source === "desk") openDeskDecision(row.id);
+    else { setSelected(null); setChosen(row); }
+  };
+
+  // PHILO-17: a decision asked for by id (a ⌘K hit, a Brief row) is read by
+  // its id, never looked up in the loaded page; each request opens it again.
+  useEffect(() => {
+    if (!decisionId) return;
+    let live = true;
+    const params = new URLSearchParams({ scope: "all", decision_id: decisionId, limit: "1" });
+    void apiFetch<{ decisions?: DeskDecision[] }>(`/api/decisions?${params}`)
+      .then((body) => {
+        if (!live) return;
+        const row = Array.isArray(body?.decisions) ? body.decisions[0] : undefined;
+        if (row) openRow(row);
+        else setError("This decision is not on the desk.");
+      })
+      .catch((reason) => { if (live) setError(readableError(reason)); });
+    return () => { live = false; };
+  }, [decisionId, decisionNonce]);
+
   const openSource = (source: ReceiptSource) => {
     const meetingId = source.meeting_id ?? (source.source_type === "meeting" ? source.source_ref : "");
-    if (meetingId) openPullout(qualifiedRef("meeting", meetingId));
+    if (meetingId) openRef(`meeting:${meetingId}`);
   };
+
+  if (chosen) {
+    return (
+      <MeetingDecisionDetail
+        decision={chosen}
+        onBack={() => setChosen(null)}
+        onOpenMeeting={(meetingId) => openRef(`meeting:${meetingId}`)}
+      />
+    );
+  }
 
   if (selected || detailLoading) {
     return (
@@ -188,7 +310,6 @@ export function DecisionsView({
   return (
     <div className="receipts-view">
       <div className="receipts-search">
-        <span className="receipts-search-prefix" aria-hidden="true">WHY</span>
         <StringGadget
           label="Search decisions"
           type="search"
@@ -206,36 +327,38 @@ export function DecisionsView({
           aria-pressed={whyOnly}
           onClick={() => setWhyOnly((value) => !value)}
         >
-          WHY ONLY
+          Current only
         </Button>
-        {whyOnly ? <span>GOVERNING DECISIONS</span> : <span>ALL DECISIONS</span>}
       </div>
       {error ? <SurfaceState error={error} /> : null}
-      <SurfaceLedger cols="facts" count={countLabel("DECISIONS", visibleResults.length)}>
+      <SurfaceLedger cols="facts" count={countLabel("DECISIONS", total)}>
         {loading ? (
           <SurfaceState loading />
-        ) : visibleResults.length ? (
+        ) : results.length ? (
           <ul className="surface-ledger-rows receipts-results">
-            {visibleResults.map((receipt) => {
-              const status = receiptStatus(receipt);
+            {results.map((row) => {
+              const word = stateWord(row);
               return (
                 <SurfaceLedgerRow
-                  key={receipt.id}
-                  primary={receipt.decision_text}
-                  lineLabel={`Open decision ${receipt.decision_text}`}
-                  onToggle={() => openReceipt(receipt.id)}
+                  key={`${row.source}-${row.id}`}
+                  data-testid="decisions-row"
+                  primary={row.text || "New decision"}
+                  lineLabel={`Open decision ${row.text || "New decision"}`}
+                  onToggle={() => openRow(row)}
+                  wrap
                   cells={
                     <>
-                      {/* Inventory 2026-10-03: the raw id cell (`D-19dbe10e895b`)
-                          took the row's width and cut the decision's own
-                          words to "F…". A row names the decision, not its
-                          key; the id stays on the receipt it opens. */}
-                      <span className="surface-ledger-cell">{receipt.owner || "UNASSIGNED"}</span>
+                      {/* PHILO-17: a row names when and where it was decided,
+                          never its key. */}
+                      <span className="surface-ledger-cell">{humanDate(row.decided_at)}</span>
                       <span className="surface-ledger-cell">
-                        <span className="surface-token" data-tone={status === "superseded" ? "muted" : "ok"}>
-                          {status.toUpperCase()}
-                        </span>
+                        {row.meeting_title || (row.source === "desk" ? "Desk" : row.meeting_id ? "Meeting" : "")}
                       </span>
+                      {word ? (
+                        <span className="surface-ledger-cell">
+                          <span className="surface-token" data-tone="muted">{word}</span>
+                        </span>
+                      ) : null}
                     </>
                   }
                 />
@@ -243,10 +366,47 @@ export function DecisionsView({
             })}
           </ul>
         ) : (
-          <SurfaceState empty emptyLabel={whyOnly ? "No governing decisions." : "No decisions match this search."} />
+          <SurfaceState empty emptyLabel={query.trim() ? "No decisions match this search." : whyOnly ? "No current decisions." : "No decisions yet."} />
         )}
       </SurfaceLedger>
+      {!loading && results.length < total ? (
+        <Button variant="secondary" dense loading={more} onClick={showMore} data-testid="decisions-more">
+          {`Show more (${results.length} of ${total})`}
+        </Button>
+      ) : null}
     </div>
+  );
+}
+
+/** PHILO-17: a decision a meeting recorded, opened in place: its words, why,
+ *  when, and its meeting (one press away). */
+function MeetingDecisionDetail({
+  decision,
+  onBack,
+  onOpenMeeting,
+}: {
+  decision: DeskDecision;
+  onBack: () => void;
+  onOpenMeeting: (meetingId: string) => void;
+}) {
+  const word = stateWord(decision);
+  const meetingId = decision.meeting_id ?? "";
+  return (
+    <article className="receipt-detail" data-testid="decision-detail">
+      <Button variant="ghost" dense className="receipt-back" onClick={onBack}>← RESULTS</Button>
+      <header className="receipt-detail-head">
+        {word ? <span className="surface-token" data-tone="muted">{word}</span> : null}
+        <h3>{decision.text}</h3>
+      </header>
+      <dl className="receipt-fields">
+        <ReceiptField label="Rationale" value={decision.rationale} />
+        <ReceiptField label="Decided" value={humanDate(decision.decided_at)} />
+        <ReceiptField label="Meeting" value={decision.meeting_title || (meetingId ? "Meeting" : null)} />
+      </dl>
+      {meetingId ? (
+        <Button variant="secondary" dense onClick={() => onOpenMeeting(meetingId)}>Open meeting</Button>
+      ) : null}
+    </article>
   );
 }
 
@@ -280,7 +440,7 @@ function ReceiptDetail({
       <header className="receipt-detail-head">
         <span className="receipts-id">D-{shortId(receipt.id)}</span>
         <span className="surface-token" data-tone={receiptStatus(receipt) === "superseded" ? "muted" : "ok"}>
-          {receiptStatus(receipt).toUpperCase()}
+          {RECEIPT_WORD[receiptStatus(receipt)]}
         </span>
         <h3>{decisionText}</h3>
       </header>

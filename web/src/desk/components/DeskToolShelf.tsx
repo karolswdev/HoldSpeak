@@ -787,7 +787,9 @@ export function DeskToolShelf() {
         run: () => {
           const present = allObjects(useDesk.getState().items)
             .some((o) => qualifiedRef(o.kind, o.id) === base);
-          if (present || !holdObject(base)) { opener(); return; }
+          // PHILO-17: memory's `decision:` is a decision a meeting recorded:
+          // it opens in Intelligence, never as a Desk object on the Floor.
+          if (present || base.startsWith("decision:") || !holdObject(base)) { opener(); return; }
           void useDesk.getState().refresh().then(opener, opener);
         },
       });

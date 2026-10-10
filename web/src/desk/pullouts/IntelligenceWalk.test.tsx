@@ -89,6 +89,12 @@ describe("HS-128-10 Desk Intelligence walk", () => {
       if (path === "/api/brief/latest") return Promise.resolve(brief);
       if (path === "/api/follow-through/board") return Promise.resolve(board);
       if (path.startsWith("/api/decision-records")) return Promise.resolve([receipt]);
+      // PHILO-17: Decisions lists the desk's decisions (the ledger).
+      if (path.startsWith("/api/decisions?")) return Promise.resolve({
+        decisions: [{ source: "meeting", id: "dec-1", text: receipt.decision_text, lifecycle: "active",
+          decided_at: "2026-10-09", meeting_id: "m-1", meeting_title: "Sync", record_id: receipt.id }],
+        page: { total: 1 },
+      });
       return Promise.resolve([]);
     });
   });
@@ -139,7 +145,7 @@ describe("HS-128-10 Desk Intelligence walk", () => {
     fireEvent.change(search, { target: { value: "Intelligence" } });
 
     await waitFor(() =>
-      expect(apiFetch).toHaveBeenCalledWith("/api/decision-records/search?q=Intelligence"),
+      expect(apiFetch).toHaveBeenCalledWith("/api/decisions?scope=all&limit=100&offset=0&q=Intelligence"),
     );
   });
 

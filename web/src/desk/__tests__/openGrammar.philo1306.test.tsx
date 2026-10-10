@@ -151,14 +151,24 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
     expect(openSurfaceOr).not.toHaveBeenCalled();
   });
 
-  it("a decision a meeting recorded opens its meeting (no Desk window exists for it)", async () => {
+  // PHILO-17: a decision a meeting recorded opens ITSELF (Intelligence →
+  // Decisions, its words, date and meeting), not the meeting that hid it.
+  it("a decision a meeting recorded opens itself in Intelligence (no Desk window exists for it)", async () => {
     const meetingBorn = { id: "bi-mdec", section: "decisions", text: "Review decision: Cursor pagination for every list endpoint", source_ref: "decision:mdec-cursor", priority: 300, created_at: "2026-10-01T07:30:00" };
     chairBrief = { ...BRIEF, sections: { ...BRIEF.sections, decisions: [meetingBorn, ...BRIEF.sections.decisions] } };
-    render(<ChairHome />);
-    const rows = await screen.findAllByTestId("arrival-brief-row");
-    fireEvent.click(rows.find((r) => r.textContent?.includes("Cursor pagination"))!);
-    await waitFor(() => expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:p13-api-review"));
-    expect(openPrimitive).not.toHaveBeenCalled();
+    const asked: unknown[] = [];
+    const hear = (e: Event) => asked.push((e as CustomEvent).detail);
+    window.addEventListener("holdspeak:intelligence-navigate", hear);
+    try {
+      render(<ChairHome />);
+      const rows = await screen.findAllByTestId("arrival-brief-row");
+      fireEvent.click(rows.find((r) => r.textContent?.includes("Cursor pagination"))!);
+      await waitFor(() => expect(asked).toEqual([expect.objectContaining({ view: "receipts", decisionId: "mdec-cursor" })]));
+      expect(openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history", "meeting:p13-api-review");
+      expect(openPrimitive).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener("holdspeak:intelligence-navigate", hear);
+    }
   });
 
   it("Ack on a brief row triages only; it does not open the row", async () => {

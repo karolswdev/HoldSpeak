@@ -21,7 +21,12 @@ import {
 import { apiFetch } from "../../../lib/api";
 import type { DetailView, Receipt } from "./helpers";
 import { MeetingReview } from "./MeetingReview";
-import { useMeetingData, type FollowThroughProposal, type MeetingData } from "./useMeetingData";
+import {
+  useMeetingData,
+  type FollowThroughProposal,
+  type MeetingData,
+  type MeetingDecision,
+} from "./useMeetingData";
 import { MeetingHeader } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
 import { ArtifactsLibrary } from "./ArtifactsLibrary";
@@ -53,7 +58,8 @@ type OutcomeRow = {
  *  never drawn. The items are the aftercare's rows, else the meeting's own
  *  (`intel.action_items`). A Section with no rows is not drawn (A.8). */
 export function meetingOutcomes(
-  data: Pick<MeetingData, "ftProposals" | "openActions" | "settledActions">,
+  data: Pick<MeetingData, "ftProposals" | "openActions" | "settledActions">
+    & { meetingDecisions?: readonly MeetingDecision[] },
   intelActions: readonly Record<string, unknown>[] = [],
 ): {
   decisions: OutcomeRow[];
@@ -61,14 +67,42 @@ export function meetingOutcomes(
 } {
   const owner = (value: unknown) => presentValue(value).toUpperCase();
   const live = data.ftProposals.filter((p) => p.state !== "dismissed");
-  const decisions: OutcomeRow[] = live
-    .filter((p) => p.kind === "decision")
-    .map((p) => p.state === "proposed"
-      ? { key: `ft-${p.id}`, plate: "DEC" as const, text: p.text, meta: "TO DECIDE", tone: "ask" as const }
-      : {
-        key: `ft-${p.id}`, plate: "DEC" as const, text: p.text,
-        meta: owner(p.owner) || owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
-      });
+  // PHILO-17 ("what did we decide yesterday?"): the decisions the meeting
+  // recorded are on its record too (the ledger: never a confirmed action).
+  // A proposal and a ledger row are the same decision only by identity: the
+  // record the proposal wrote, or its artifact with the same words. The pair
+  // is one row, and it says the RECORD's state (Astra r2: a record replaced
+  // or disputed after Confirm is not DECIDED). A rejected one is not drawn.
+  const said = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
+  const same = (p: FollowThroughProposal, d: MeetingDecision) =>
+    (Boolean(p.decision_record_id) && p.decision_record_id === d.record_id)
+    || (Boolean(p.source_artifact_id) && p.source_artifact_id === d.source_artifact_id
+      && said(p.text) === said(d.text));
+  const recorded = data.meetingDecisions ?? [];
+  const stateOf = (d: MeetingDecision | undefined) => {
+    const lifecycle = String(d?.lifecycle ?? "").toLowerCase();
+    return lifecycle === "superseded" ? "REPLACED" : lifecycle === "disputed" ? "DISPUTED" : "";
+  };
+  const decisions: OutcomeRow[] = [];
+  for (const p of live) {
+    if (p.kind !== "decision") continue;
+    if (p.state === "proposed") {
+      decisions.push({ key: `ft-${p.id}`, plate: "DEC", text: p.text, meta: "TO DECIDE", tone: "ask" });
+      continue;
+    }
+    const paired = recorded.find((d) => same(p, d));
+    if (String(paired?.lifecycle ?? "").toLowerCase() === "rejected") continue;
+    decisions.push({
+      key: `ft-${p.id}`, plate: "DEC", text: p.text,
+      meta: stateOf(paired) || owner(p.owner) || owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
+    });
+  }
+  const decisionProposals = live.filter((p) => p.kind === "decision");
+  for (const d of recorded) {
+    const lifecycle = String(d.lifecycle ?? "").toLowerCase();
+    if (lifecycle === "rejected" || !String(d.text ?? "").trim() || decisionProposals.some((p) => same(p, d))) continue;
+    decisions.push({ key: `dec-${d.id}`, plate: "DEC", text: d.text, meta: stateOf(d) || "DECIDED" });
+  }
 
   const actionProposals = data.ftProposals.filter((p) => p.kind === "action");
   const proposalOf = (itemId: string) => actionProposals.find((p) => p.action_item_id && p.action_item_id === itemId);

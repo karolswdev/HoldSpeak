@@ -363,6 +363,21 @@ def backfill_decisions(conn: sqlite3.Connection) -> dict[str, int]:
     return totals
 
 
+def confirmed_action_sql(col: str) -> str:
+    """PHILO-17: true when the ``decisions`` row ``col`` is a confirmed ACTION.
+
+    Confirming an action writes a ``decisions`` row and an action-kind record
+    (proposal_bridge_service.py); no decision list or decision search shows it.
+    A record written before the kind column reads its kind from its proposal.
+    """
+    return (
+        "EXISTS (SELECT 1 FROM decision_records r WHERE r.source_type = 'meeting'"
+        f" AND r.source_id = {col} AND (r.kind = 'action' OR EXISTS ("
+        "SELECT 1 FROM follow_through_proposals fp"
+        " WHERE fp.decision_record_id = r.id AND fp.kind = 'action')))"
+    )
+
+
 class DecisionRepository(BaseRepository):
     """Query, reconcile, and transition durable decision records."""
 
@@ -490,6 +505,88 @@ class DecisionRepository(BaseRepository):
                 params,
             ).fetchall()
         return [self._row(row) for row in rows]
+
+    def ledger(
+        self,
+        *,
+        meeting_id: Optional[str] = None,
+        decision_id: Optional[str] = None,
+        query: Optional[str] = None,
+        current: bool = False,
+        limit: int = 200,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        """PHILO-17: every decision on the desk, newest first, for one list.
+
+        A meeting's decision (this table) names its meeting and that meeting's
+        title; a Desk decision (``desk_decisions``) names none. Each row names
+        the decision record made from it, when there is one, and its
+        ``lifecycle`` is the record's when a record exists (a record is
+        superseded or disputed on ``decision_records`` only). A confirmed
+        ACTION also writes a ``decisions`` row and an action-kind record
+        (proposal_bridge_service.py): that row is an action, never listed.
+        Answers one page and the total that matches.
+        """
+        bounded = max(1, min(int(limit), 500))
+        start = max(0, int(offset))
+        record = (
+            "(SELECT r.{field} FROM decision_records r WHERE r.source_type = '{kind}'"
+            " AND r.source_id = {col} AND r.deleted = 0"
+            " AND COALESCE(r.kind, 'decision') = 'decision'"
+            " AND NOT EXISTS (SELECT 1 FROM follow_through_proposals fp"
+            " WHERE fp.decision_record_id = r.id AND fp.kind = 'action')"
+            " ORDER BY r.created_at DESC, r.id DESC LIMIT 1)"
+        )
+        an_action = confirmed_action_sql("d.id")
+        ledger = f"""WITH ledger AS (
+                SELECT 'meeting' AS source, d.id AS id, d.text AS text,
+                       d.rationale AS rationale, d.decided_at AS decided_at,
+                       COALESCE({record.format(field="lifecycle", kind="meeting", col="d.id")},
+                                d.lifecycle) AS lifecycle,
+                       d.source_meeting_id AS meeting_id,
+                       m.title AS meeting_title,
+                       d.source_artifact_id AS source_artifact_id,
+                       {record.format(field="id", kind="meeting", col="d.id")} AS record_id
+                FROM decisions d LEFT JOIN meetings m ON m.id = d.source_meeting_id
+                WHERE d.deleted = 0 AND NOT {an_action}
+                UNION ALL
+                SELECT 'desk', dd.id, dd.title, NULL,
+                       COALESCE(dd.decided_at, dd.created_at),
+                       COALESCE({record.format(field="lifecycle", kind="desk", col="dd.id")}, dd.status),
+                       NULL, NULL, NULL,
+                       {record.format(field="id", kind="desk", col="dd.id")}
+                FROM desk_decisions dd
+                WHERE dd.deleted = 0)"""
+        clauses: list[str] = []
+        params: list[Any] = []
+        if meeting_id is not None:
+            clauses.append("meeting_id = ?")
+            params.append(str(meeting_id).strip())
+        if decision_id is not None:
+            clauses.append("id = ?")
+            params.append(str(decision_id).strip())
+        if current:
+            # A decision that stands: an included state, never "not excluded"
+            # (a disputed or a new state is not current).
+            clauses.append("lifecycle IN ('recorded','accepted','active','published')")
+        for word in str(query or "").lower().split():
+            clauses.append(
+                "lower(COALESCE(text,'') || ' ' || COALESCE(rationale,'') || ' '"
+                " || COALESCE(meeting_title,'')) LIKE ? ESCAPE '\\'"
+            )
+            escaped = word.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            params.append(f"%{escaped}%")
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        with self._connection() as conn:
+            total = conn.execute(f"{ledger} SELECT COUNT(*) FROM ledger {where}", params).fetchone()[0]
+            rows = conn.execute(
+                f"{ledger} SELECT * FROM ledger {where} ORDER BY decided_at DESC, id DESC LIMIT ? OFFSET ?",
+                [*params, bounded, start],
+            ).fetchall()
+        return {
+            "decisions": [dict(row) for row in rows],
+            "page": {"offset": start, "limit": bounded, "count": len(rows), "total": int(total)},
+        }
 
     def assert_promotable(self, decision_id: str) -> DecisionRecord:
         clean_id = str(decision_id or "").strip()
