@@ -79,23 +79,25 @@ The composer runs the Thread slash commands.
 A verb `key` field is the binding.
 `⌘` means Meta on a Mac and Ctrl elsewhere. A chord that holds both is refused.
 A key handler ignores repeats and input method composition.
-The chords `⌘W`, `⌘M`, `⌃B`, and `⌃T` do nothing inside a text field.
+The chords `⌃W`, `⌃M`, `⌃N`, `⌃B`, and `⌃T` do nothing inside a text field.
+The desk runs in a browser tab. The browser keeps `⌘W`, `⌘N`, `⌘⇧N`, `⌘M`, and `⌘1` to `⌘4`, so the menus show `⌃` keys.
+The old `⌘` keys stay bound. They work where the browser sends them to the page.
 
 | Key | Verb |
 | --- | --- |
-| `⌘N` | **New Note** |
-| `⌘⇧N` | **New Decision** |
+| `⌃N` | **New Note** |
+| `⌃⇧N` | **New Decision** |
 | `⌃T` | **Write a thought** |
 | `⌘⇧F` | Settle in |
 | `⌃↑` | **Overview** |
 | `F2` | **Rename** |
 | `Delete` | **Delete** (Backspace on a Mac) |
 | `⌘I` | **Ask AI** |
-| `⌘1` to `⌘4` | Speak, Meetings, Agents, Settings |
+| `⌃1` to `⌃4` | Speak, Meetings, Agents, Settings |
 | `⌘⇧P` | Change places |
-| `⌘W` | **Close window** |
-| `⌘M` | **Iconify** |
-| `⌃M` | **Zoom** |
+| `⌃W` | **Close window** |
+| `⌃M` | **Iconify** |
+| `⌘⇧Z` | **Zoom** |
 | `⌃B` | **To back** |
 | ``⌃` `` and ``⌃⇧` `` | Cycle windows, forward and reverse |
 | `⌘K` | **Search** |

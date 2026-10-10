@@ -52,13 +52,17 @@ export function placeWindow(
   vh: number,
   minW = 320,
   minH = 220,
+  /** PHILO-17 (U28a): the left edge a new window keeps clear of (the
+   * desk's icon column); a window too wide to clear it starts at MARGIN. */
+  leftFloor: number = MARGIN,
 ): PanelRect {
   const { top, bottom } = workBand();
   const w = Math.max(minW, Math.min(seed.w, vw - MARGIN * 2));
   const h = Math.max(minH, Math.min(seed.h, Math.max(minH, vh - top - bottom)));
   const maxX = Math.max(MARGIN, vw - MARGIN - w);
   const maxY = Math.max(top, vh - bottom - h);
-  const sx = Math.min(Math.max(seed.x, MARGIN), maxX);
+  const left = Math.min(Math.max(MARGIN, leftFloor), maxX);
+  const sx = Math.min(Math.max(seed.x, left), maxX);
   const sy = Math.min(Math.max(seed.y, top), maxY);
   const overlap = (
     ax: number,
@@ -84,7 +88,7 @@ export function placeWindow(
   let best = { x: sx, y: sy, s: score(sx, sy) };
   const STEP = 32;
   for (let y = top; y <= maxY; y += STEP) {
-    for (let x = MARGIN; x <= maxX; x += STEP) {
+    for (let x = left; x <= maxX; x += STEP) {
       const s = score(x, y);
       if (s < best.s - 0.5) best = { x, y, s };
     }
@@ -100,7 +104,7 @@ export function placeWindow(
     for (let i = existing.length - 1; i >= 0; i--) {
       const r = existing[i];
       for (let m = 1; m <= 8; m++) {
-        const x = Math.min(Math.max(r.x + CASCADE_STEP * m, MARGIN), maxX);
+        const x = Math.min(Math.max(r.x + CASCADE_STEP * m, left), maxX);
         const y = Math.min(Math.max(r.y + CASCADE_STEP * m, top), maxY);
         if (!hidesAHead(x, y)) return { x, y, w, h };
       }
@@ -108,13 +112,28 @@ export function placeWindow(
     // The old cascade off the home seat, when no seat leaves every head.
     const step = CASCADE * Math.min(existing.length, 8);
     return {
-      x: Math.min(Math.max(sx + step, MARGIN), maxX),
+      x: Math.min(Math.max(sx + step, left), maxX),
       y: Math.min(Math.max(sy + step, top), maxY),
       w,
       h,
     };
   }
   return { x: best.x, y: best.y, w, h };
+}
+
+/** PHILO-17 (U28a) — the right edge of the desk's left icon column (the
+ * Chair's and the Floor's icons, not icons inside a window or the Dock), plus
+ * a gap: a new window opens to the right of it. MARGIN when there is none. */
+export function iconColumnRight(gap = 12): number {
+  if (typeof document === "undefined") return MARGIN;
+  let right = 0;
+  for (const el of Array.from(document.querySelectorAll<HTMLElement>(".desk-icon"))) {
+    if (el.closest(".desk-window, .desk-dock")) continue;
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height || r.left > 160) continue; // the left column only
+    right = Math.max(right, r.right);
+  }
+  return right ? Math.round(right + gap) : MARGIN;
 }
 
 /** HS-97-02 — clamp-on-open: a persisted rect (possibly from a larger

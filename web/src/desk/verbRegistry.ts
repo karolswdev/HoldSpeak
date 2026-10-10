@@ -187,7 +187,12 @@ export const VERBS: Verb[] = [
     menu: "desk",
     scope: "floor",
     group: "new",
-    key: "⌘N",
+    // PHILO-17 (U27): the desk runs in a browser tab, and the browser keeps
+    // ⌘N, ⌘⇧N, ⌘W, ⌘M and ⌘1-⌘4 (a page never sees them). The menus show
+    // ⌃ keys a page receives; the ⌘ keys stay bound where a browser passes
+    // them (an installed app window).
+    key: "⌃N",
+    altKeys: ["⌘N"],
     glyph: KIND_GLYPH.note,
     keywords: ["create", "write"],
     ghost: never,
@@ -216,7 +221,8 @@ export const VERBS: Verb[] = [
     menu: "desk",
     scope: "floor",
     group: "new",
-    key: "⌘⇧N",
+    key: "⌃⇧N",
+    altKeys: ["⌘⇧N"],
     glyph: KIND_GLYPH.decision,
     keywords: ["create", "adr", "architecture"],
     ghost: never,
@@ -713,6 +719,9 @@ export const VERBS: Verb[] = [
       group: tool.group,
       glyph: tool.glyph,
       key: tool.action === "ask" ? "⌘I" : binding?.key,
+      // PHILO-17 (U27): ⌃1-⌃4 are shown; ⌘1-⌘4 stay bound where a browser
+      // passes them.
+      ...(binding?.key.startsWith("⌃") ? { altKeys: [`⌘${binding.key.slice(1)}`] } : {}),
       keywords: tool.description.toLocaleLowerCase().split(/\W+/).slice(0, 6),
       ghost: never,
       run: () => {
@@ -731,7 +740,8 @@ export const VERBS: Verb[] = [
     label: "Close window",
     menu: "window",
     scope: "window",
-    key: "⌘W",
+    key: "⌃W",
+    altKeys: ["⌘W"],
     ghost: needWindow,
     run: () => closeFrontWindow(),
   },
@@ -741,7 +751,8 @@ export const VERBS: Verb[] = [
     label: "Iconify",
     menu: "window",
     scope: "window",
-    key: "⌘M",
+    key: "⌃M",
+    altKeys: ["⌘M"],
     ghost: needWindow,
     run: () => minimizeFrontWindow(),
   },
@@ -801,9 +812,9 @@ export const VERBS: Verb[] = [
     menu: "window",
     scope: "window",
     group: "layout",
-    // PHILO-16 §5: ⌘⇧Z; ⌃M stays bound one release.
+    // PHILO-16 §5: ⌘⇧Z. PHILO-17 (U27): ⌃M is Iconify now (⌘M is the
+    // browser's), so Zoom's old ⌃M is retired.
     key: "⌘⇧Z",
-    altKeys: ["⌃M"],
     keywords: ["maximize", "zoom", "size"],
     // At 393 a window fills the work area: zoom has nothing to change.
     ghost: () =>

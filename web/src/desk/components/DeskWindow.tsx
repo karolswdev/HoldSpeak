@@ -33,6 +33,7 @@ import {
   workBand,
   DOCK_HEIGHT_EVENT,
   placeWindow,
+  iconColumnRight,
   clampIntoBand,
   snapForPointer,
   resizeEdge,
@@ -89,6 +90,7 @@ import {
   userArranged,
 } from "../compositor/useCompositor";
 import { inheritance, modeNow, mountWindow, unmountWindow } from "../compositor/live";
+import { hubPlacing } from "../compositor/hubWindows";
 
 // -- Re-exports: zero consumer edits (HS-117-04) --
 export { placeWindow, clampIntoBand, snapForPointer, resizeEdge, exposeLayout };
@@ -326,11 +328,14 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     } else {
       // PHILO-14 A1: back to front (the stacking order), so the cascade
       // steps off the window placed last.
+      // PHILO-17 (U28a): every open window counts, also one placed in this
+      // same pass (a reload, the hub opening several windows at once) that
+      // the registry does not list yet; before, they all took the home seat.
       const plane = (wid: string) => s.panelDepth[wid] ?? Number.MIN_SAFE_INTEGER;
-      const others = registrySnapshot
-        .filter((w) => w.id !== id && !s.panelMin.includes(w.id))
-        .sort((a, b) => plane(a.id) - plane(b.id))
-        .map((w) => s.panelRects[w.id])
+      const others = [...new Set([...registrySnapshot.map((w) => w.id), ...Object.keys(s.panelDepth)])]
+        .filter((wid) => wid !== id && !s.panelMin.includes(wid))
+        .sort((a, b) => plane(a) - plane(b))
+        .map((wid) => s.panelRects[wid])
         .filter((r): r is PanelRect => Boolean(r));
       const seed = measure();
       // Lazy cores may still be a Suspense fallback at measure time; a
@@ -362,8 +367,13 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
           rightX + seed.w <= vw - MARGIN ? rightX : Math.max(MARGIN, leftX);
         seed.y = origin.y - 56;
       }
-      const placed = placeWindow(seed, others, vw, vh, minW, minH);
-      s.setPanelRect(id, placed);
+      const placed = placeWindow(seed, others, vw, vh, minW, minH, iconColumnRight());
+      // PHILO-17 (U28c): the first seat is kept (saved, and sent to the hub
+      // with the open), so a reload and every other view show the window
+      // where it opened. Not for a content-sized card (its height stays the
+      // material's) and not for a window the hub opened here (a view that
+      // only loads writes nothing to the desk).
+      s.setPanelRect(id, placed, !opts.fitContent && !hubPlacing(id));
       if (
         origin &&
         el &&

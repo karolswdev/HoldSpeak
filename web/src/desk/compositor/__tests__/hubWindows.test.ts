@@ -25,7 +25,8 @@ import {
 
 const VIEW: Rect = { x: 10, y: 38, w: 1420, h: 772 };
 const REGISTRY = {
-  static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", lane: "lane" },
+  static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", lane: "lane",
+    "surface-project-memory": "surface" },
   families: { "zone:": "zone", "drawer:project:": "drawer" },
   // (lane is static on the hub)
 };
@@ -412,6 +413,38 @@ describe("hubWindows", () => {
     useDesk.getState().focusPanel("lane");
     await flush(hub);
     expect(fake.calls.find((c) => c.verb === "open")?.body.object_ref).toBe("launch:L-3");
+  });
+
+  it("PHILO-17 U28c: a Room comes back as its Room, not as Desk memory", async () => {
+    // Another view (no cache) opens the hub's row: the row's object is the scope.
+    const { fake, hub } = start([row("surface-project-memory", { app: "surface", object_ref: "project:p-1", depth: 1 })]);
+    await hub.start();
+    expect(useDesk.getState().windowsById["surface-project-memory"]?.scope).toBe("project:p-1");
+    // The Room goes to another project here: the hub hears the new object.
+    useDesk.getState().openSurfaceWindow("open-project-memory", "project:p-2");
+    await flush(hub);
+    expect(fake.calls.filter((c) => c.verb === "open").map((c) => c.body.object_ref)).toEqual(["project:p-2"]);
+    // Back to Desk memory with no project: "" says "no scope" to the hub.
+    useDesk.getState().openSurfaceWindow("open-project-memory");
+    await flush(hub);
+    expect(fake.calls.filter((c) => c.verb === "open").map((c) => c.body.object_ref)).toEqual(["project:p-2", ""]);
+    // A row with no object (never sent) leaves this view's scope as is.
+    useDesk.getState().openSurfaceWindow("open-project-memory", "project:p-3");
+    fake.state.windows = [row("surface-project-memory", { app: "surface", object_ref: null, depth: 9, revision: 99 })];
+    hub.onFrame({ kind: "windows", id: "surface-project-memory" });
+    await flush(hub);
+    expect(useDesk.getState().windowsById["surface-project-memory"]?.scope).toBe("project:p-3");
+  });
+
+  it("PHILO-17 U28: a row the hub holds unarranged keeps this view's seat on the glass", async () => {
+    useChairWindows.setState((st) => ({ closed: { ...st.closed, "chair:brief": false } }));
+    useDesk.setState({ panelDepth: { "chair:brief": 1 }, panelRects: { "chair:brief": { x: 150, y: 80, w: 500, h: 400 } },
+      panelSaved: ["chair:brief"] });
+    const { hub } = start([row("chair:brief", { depth: 1 })], true, ["chair:brief"]);
+    await hub.start();
+    const s = useDesk.getState();
+    expect(s.panelSaved).not.toContain("chair:brief");
+    expect(s.panelRects["chair:brief"]).toEqual({ x: 150, y: 80, w: 500, h: 400 });
   });
 
   it("Astra r2 (glass B7): a window the hub opened here does not write its mount back", async () => {

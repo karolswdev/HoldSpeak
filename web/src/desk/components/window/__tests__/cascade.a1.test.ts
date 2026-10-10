@@ -24,3 +24,27 @@ describe("placeWindow on a saturated desk", () => {
     expect(at.x).toBe(last.x + 24);
   });
 });
+
+// PHILO-17 U28a: every app opened at its CSS home (24,72), on top of the
+// Chair's icon column, and two in a row sat exactly on each other.
+describe("placeWindow clear of the icon column", () => {
+  const home = { x: 24, y: 72, w: 640, h: 600 };
+
+  it("opens right of the icon column", () => {
+    const at = placeWindow(home, [], 1440, 900, 420, 220, 144);
+    expect(at.x).toBeGreaterThanOrEqual(144);
+  });
+
+  it("a second window does not sit on the first", () => {
+    const first = placeWindow(home, [], 1440, 900, 420, 220, 144);
+    const second = placeWindow(home, [first], 1440, 900, 420, 220, 144);
+    expect(second.x).toBeGreaterThanOrEqual(144);
+    expect([second.x, second.y]).not.toEqual([first.x, first.y]);
+  });
+
+  it("a window too wide to clear the column stays on the screen", () => {
+    const at = placeWindow({ ...home, w: 1400 }, [], 1440, 900, 420, 220, 144);
+    expect(at.x).toBeGreaterThanOrEqual(10);
+    expect(at.x + at.w).toBeLessThanOrEqual(1430);
+  });
+});
