@@ -63,15 +63,20 @@ export function bootstrapAuth(location = window.location): string {
   return sessionToken;
 }
 
+/** The stored token wins over this page's copy: another tab may have stored
+ * a newer one. The copy serves only when storage is closed (private mode). */
 export function authToken(): string {
-  return sessionToken || read();
+  return read() || sessionToken;
 }
 
 /** The hub refused this token (wrong or rotated): forget it, so the page asks
- * for the token URL again. A token that changed since the request stays. */
+ * for the token URL again. This page's copy and the stored token are each
+ * cleared only when they ARE the refused one: an old tab never erases a newer
+ * token that another tab stored. */
 export function forgetAuthToken(refused: string): void {
-  if (!refused || authToken() !== refused) return;
-  sessionToken = "";
+  if (!refused) return;
+  if (sessionToken === refused) sessionToken = "";
+  if (read() !== refused) return;
   try {
     storage()?.removeItem(TOKEN_KEY);
   } catch {

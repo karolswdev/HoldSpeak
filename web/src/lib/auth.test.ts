@@ -6,7 +6,12 @@ import {
   websocketProtocols,
   websocketUrl,
 } from "./auth";
-import { ApiError, apiFetch, SIGN_IN_SENTENCE } from "./api";
+import { ApiError, apiFetch, apiRequest, SIGN_IN_SENTENCE } from "./api";
+
+/** A request that carried ``token`` (an old tab's copy), whatever is stored now. */
+function apiRequestWith(token: string): Promise<Response> {
+  return apiRequest("/api/meetings", { headers: { "X-HoldSpeak-Token": token } });
+}
 
 describe("auth bootstrap", () => {
   beforeEach(() => {
@@ -74,6 +79,28 @@ describe("auth bootstrap", () => {
     expect(error).toMatchObject({ status: 401, message: SIGN_IN_SENTENCE });
     expect(authToken()).toBe("");
     expect(localStorage.getItem("hs.web.token")).toBeNull();
+  });
+
+  it("an old tab's refusal never erases a newer token another tab stored", async () => {
+    // Tab A opened with the old token.
+    window.history.replaceState({}, "", "/?token=old-token");
+    bootstrapAuth();
+    // Tab B (same origin, shared localStorage) stores the new valid token.
+    localStorage.setItem("hs.web.token", "new-token");
+    // A's request still carried the old token; the hub refuses it.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: "principal_right_required" }), {
+          status: 401,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+    await apiRequestWith("old-token");
+    expect(localStorage.getItem("hs.web.token")).toBe("new-token");
+    // A follows B's token from now on.
+    expect(authToken()).toBe("new-token");
   });
 
   it("keeps the token on a refusal that is not a sign-in failure", async () => {

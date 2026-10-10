@@ -6,7 +6,8 @@ and Retry. Through ONE real hub on an isolated HOME and the built bundle:
 
   W1 a browser opens the token URL; the desk loads.
   W2 the same browser opens ``/`` and ``/welcome`` with no token (a new tab,
-     a bookmark): the desk loads, no request is refused, the websocket opens.
+     a bookmark): the desk loads, no request is refused, and the page's own
+     /ws socket gets a frame the hub broadcasts.
   W3 a fresh browser with a wrong token (1440 and 393): the hub refuses it,
      the page forgets it, and the one sign-in sentence shows in place of the
      raw error code.
@@ -16,6 +17,7 @@ Shots: docs/internal/philo/phase-17/wayin-shots/ (``.tmp/evidence-shots/`` unles
 """
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import Any
 
@@ -42,7 +44,14 @@ def _watch(page: Any) -> dict[str, list[Any]]:
             if r.status == 401 else None)
     page.on("pageerror", lambda e: seen["errors"].append(str(e)[:200]))
 
-    page.on("websocket", lambda ws: seen["sockets"].append(ws))
+    def _socket(ws: Any) -> None:
+        if not ws.url.rstrip("/").endswith("/ws"):
+            return
+        frames: list[str] = []
+        seen["sockets"].append(frames)
+        ws.on("framereceived", lambda payload: frames.append(str(payload)[:120]))
+
+    page.on("websocket", _socket)
     return seen
 
 
@@ -65,6 +74,32 @@ class TestWayIn:
         finally:
             server.stop()
 
+    def _hub_frame_arrives(self, page: Any, seen: dict[str, list[Any]]) -> bool:
+        """The page's own /ws socket gets a frame the hub broadcasts.
+
+        A window write on the hub sends ``desk_changed`` to every admitted
+        socket; a refused (or still pending) socket gets nothing.
+        """
+        import urllib.request
+
+        def write(verb: str) -> None:
+            urllib.request.urlopen(urllib.request.Request(
+                f"{self.base}/api/desk/windows/chair%3Abrief/{verb}", data=b"{}", method="POST",
+                headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"},
+            )).close()
+
+        before = [len(f) for f in seen["sockets"]]
+        for verb in ("open", "close"):
+            write(verb)
+        deadline = time.monotonic() + 8.0
+        while time.monotonic() < deadline:
+            for i, frames in enumerate(seen["sockets"]):
+                start = before[i] if i < len(before) else 0
+                if any("desk_changed" in frame for frame in frames[start:]):
+                    return True
+            page.wait_for_timeout(200)
+        return False
+
     def _signed_out(self, browser: Any, width: int, query: str, name: str) -> dict[str, Any]:
         """A fresh browser (its own storage) opens ``/{query}``; what it shows."""
         ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
@@ -85,6 +120,8 @@ class TestWayIn:
             "stored": page.evaluate(STORED_JS),
             "refused": len(seen["refused"]),
             "errors": seen["errors"],
+            # The same probe as W2: a refused socket gets no hub frame.
+            "hub_frame": self._hub_frame_arrives(page, seen),
         }
         ctx.close()
         return out
@@ -126,8 +163,9 @@ class TestWayIn:
                         fails[f"{tag}: no request is refused"] = seen["refused"][:5]
                     if SENTENCE in _body(page) or "principal_right_required" in _body(page):
                         fails[f"{tag}: the desk loads signed in"] = _body(page)[:300]
-                    if path == "/" and not any(not ws.is_closed() for ws in seen["sockets"]):
-                        fails[f"{tag}: the websocket opens and stays open"] = len(seen["sockets"])
+                    if not self._hub_frame_arrives(page, seen):
+                        fails[f"{tag}: the /ws socket is admitted and gets a hub frame"] = [
+                            len(f) for f in seen["sockets"]]
                     if seen["errors"]:
                         fails[f"{tag}: no page error"] = seen["errors"]
                     page.close()
@@ -146,6 +184,8 @@ class TestWayIn:
                             fails[f"{tag}: no raw error code"] = out
                         if out["stored"]:
                             fails[f"{tag}: the refused token is forgotten"] = out
+                        if out["hub_frame"]:
+                            fails[f"{tag}: the hub refuses the socket"] = out
                         if out["errors"]:
                             fails[f"{tag}: no page error"] = out["errors"]
             finally:

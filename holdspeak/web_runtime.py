@@ -20,7 +20,7 @@ from .config import Config
 from .config.meeting import effective_routing_profile
 from .audio import AudioSource
 from .device_audio import DeviceRegistry, ensure_device_psk
-from .web_auth import authenticated_browser_url, ensure_web_token
+from .web_auth import authenticated_browser_url, ensure_web_token, reachable_urls
 from .device_recording_tick import RecordingTicker
 from .device_meeting_stats import pick_next_view
 from .device_status import (
@@ -191,6 +191,7 @@ class WebRuntime(
         self.mir_override_intents: list[str] = []
         self.last_route_preview: Optional[dict[str, object]] = None
         self.runtime_url: Optional[str] = None
+        self.printed_url: Optional[str] = None
         # HS-200-02: does THIS process own the database owner lock? Only the
         # owner runs the scheduled sweeps (C1).
         self.owns_database: bool = False
@@ -505,11 +506,19 @@ class WebRuntime(
         # `--no-open` this line is the only way in, and a piped stdout (a
         # service log, `holdspeak web --no-open | tee`) held it in its buffer
         # while the slower start-up steps below ran.
-        owner_url = authenticated_browser_url(
-            self.runtime_url, ensure_web_token(self.config)
-        )
+        # A wildcard bind (0.0.0.0) prints loopback for this Mac and the LAN
+        # address for the iPad; `printed_url` is the one this Mac opens.
+        token = ensure_web_token(self.config)
+        reachable = reachable_urls(self.runtime_url)
+        self.printed_url = reachable[0]
+        owner_url = authenticated_browser_url(self.printed_url, token)
         log.info(f"HoldSpeak web runtime active at {self.runtime_url}")
         print(f"HoldSpeak web runtime is running at: {owner_url}", flush=True)
+        for other in reachable[1:]:
+            print(
+                f"On another device (iPad): {authenticated_browser_url(other, token)}",
+                flush=True,
+            )
 
         self.plugin_queue_thread = threading.Thread(
             target=self._deferred_plugin_queue_loop,
@@ -552,9 +561,9 @@ class WebRuntime(
         self._print_setup_nudge()
         print(
             "Settings: "
-            f"{authenticated_browser_url(f'{self.runtime_url}/settings', ensure_web_token(self.config))}"
+            f"{authenticated_browser_url(f'{self.printed_url}/settings', token)}"
             " · History: "
-            f"{authenticated_browser_url(f'{self.runtime_url}/history', ensure_web_token(self.config))}"
+            f"{authenticated_browser_url(f'{self.printed_url}/history', token)}"
         )
         if self.hotkey_listener is not None:
             print(f"Voice typing hotkey is active: hold {self.config.hotkey.display}, speak, release.")
