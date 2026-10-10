@@ -10,6 +10,7 @@ import { EgressChip } from "../../../desk/surface/gadgets";
 import { egressFor } from "../../../desk/surface/egress";
 import type { MeetingData } from "./useMeetingData";
 import { readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
+import { speechWasMissing } from "../../../desk/firstrun/speechTruth";
 
 /** The distinct speakers the transcript names (`4 PEOPLE`); 0 when none. */
 export function peopleCount(segments: readonly Record<string, unknown>[]): number {
@@ -41,6 +42,11 @@ export function meetingStripItems(
   const rawHost = String(source.intel_model_host ?? "") || null;
   const items: StatusStripItem[] = [];
   if (when) items.push({ key: "when", text: when });
+  // PHILO-17 speech: the meeting has audio only because the speech model
+  // was not on this device. It says so before the summary's word.
+  if (speechWasMissing(source)) {
+    items.push({ key: "speech", lamp: "fail", text: "NO TRANSCRIPT · SPEECH NOT SET UP", testId: "meeting-speech-missing" });
+  }
   if (summarised) {
     items.push({ key: "state", lamp: "ok", text: "SUMMARISED", testId: "meeting-summary-state" });
   } else if (runToken.label === "RUNNING") {

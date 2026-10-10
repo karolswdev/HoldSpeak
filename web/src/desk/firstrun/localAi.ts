@@ -22,7 +22,7 @@ export type LocalAiState =
   | "needs_runtime";
 
 /** Is the CONFIGURED Whisper model covered (#856 `speech`)? */
-export type SpeechState = "on_device" | "on_device_unpinned" | "will_download" | "not_covered";
+export type SpeechState = "on_device" | "on_device_unpinned" | "will_download" | "not_covered" | "backend_unavailable";
 
 export interface LocalAiFile {
   key: string;
@@ -40,7 +40,9 @@ export interface LocalAiStatus {
   bytes_done: number;
   percent?: number;
   egress?: { destination: string; files?: number; bytes?: number } | null;
-  speech?: { model: string; backend: string; state: SpeechState };
+  /** PHILO-17 speech: the one speech-readiness truth (`whisper_models.
+   *  speech_readiness`); `bytes` is what "Set up speech" downloads. */
+  speech?: { model: string; backend: string; state: SpeechState; ready?: boolean; bytes?: number };
   local_engine?: { ready: boolean };
   error?: string;
   error_code?: string;
@@ -98,7 +100,7 @@ export function groupsOf(status: LocalAiStatus | null): LocalAiGroup[] {
 export function speechReady(status: LocalAiStatus | null): boolean {
   const state = status?.speech?.state;
   if (state === "on_device" || state === "on_device_unpinned") return true;
-  if (state === "not_covered") return false;
+  if (state === "not_covered" || state === "backend_unavailable") return false;
   const speech = (status?.files ?? []).filter((file) => file.key === "whisper");
   return speech.length > 0 && speech.every((file) => file.on_device);
 }

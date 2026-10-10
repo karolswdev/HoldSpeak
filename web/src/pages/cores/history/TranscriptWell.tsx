@@ -16,6 +16,7 @@ export function TranscriptWell({
   momentSegmentIndex,
   defaultOpen,
   wordCount,
+  emptyLabel = "No transcript",
 }: {
   id: string;
   segments: Record<string, unknown>[];
@@ -24,6 +25,9 @@ export function TranscriptWell({
   defaultOpen?: boolean;
   /** Durable transcript word count shown on the folded trigger. */
   wordCount?: number | null;
+  /** PHILO-17 speech: the empty line names why ("No transcript: speech is
+   *  not set up") when the record says so. */
+  emptyLabel?: string;
 }) {
   useEffect(() => {
     if (momentSegmentIndex == null || !segments.length) return;
@@ -65,7 +69,7 @@ export function TranscriptWell({
           })}
         </ol>
       ) : (
-        <SurfaceState empty emptyLabel="No transcript" emptyGlyph="¶" />
+        <SurfaceState empty emptyLabel={emptyLabel} emptyGlyph="¶" />
       )}
     </SurfaceWell>
   );

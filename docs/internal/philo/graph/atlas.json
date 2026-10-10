@@ -124,38 +124,28 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "no assignment set by hand",
-        {
-          "kind": "check",
-          "predicate": {
-            "kind": "protocol_field",
-            "path": "/task_overrides/37/id",
-            "value": "speech.transcribe"
-          },
-          "observe_at": "protocol: GET /api/inference/assignments",
-          "why": "the roster index this case reads really is speech.transcribe; a registry change moves it and must block the case, never re-point it silently"
-        }
+        "no assignment set by hand"
       ],
       "setup": [],
       "trigger": {
         "kind": "api",
         "method": "GET",
-        "path": "/api/inference/assignments",
+        "path": "/api/setup/local-ai",
         "body": null,
         "adapter": "http-route"
       },
       "expected": {
         "predicate": {
           "kind": "protocol_field",
-          "path": "/task_overrides/37/effective/status",
-          "value": "assigned"
+          "path": "/speech/ready",
+          "value": true
         },
-        "observe_at": "protocol: GET /api/inference/assignments",
-        "words": "ASTRA round 2: readiness is read from the roster, not inferred from a face row that is absent for other reasons. The row's capability key is `id` and its readiness is `effective.status` (inference_assignment_service.py:257,261); the READY value is 'assigned', not 'ready' (:1939, and meetingPathBlocker.ts:84 tests for exactly that word). The index is the owner-visible capability order; the precondition check below pins it, so a registry change BLOCKS instead of silently certifying another capability. The desk's own sentence is recorded beside the verdict. || the roster holds speech.transcribe with effective.status 'assigned' (a fresh desk's migrated profile, id speech-migrated-<sha prefix>). This case RUNS BEFORE the voice branch of J1 and before J4: if the status is anything else, both are recorded BLOCKED, never failed [the audit's stated observation location: protocol: GET /api/inference/assignments]",
+        "observe_at": "protocol: GET /api/setup/local-ai",
+        "words": "PHILO-17 speech (Astra r1 on #1066, MUST 3): readiness is the ONE speech-readiness truth, `whisper_models.speech_readiness`, served as `speech` on GET /api/setup/local-ai: the speech library can run on this device AND the loader finds the configured model's files (no load, no download). An assigned speech route with no model on disk is NOT ready: that desk said READY, recorded, and saved a meeting with no transcript. On a fresh HOME with no speech model this case FAILS by design (`speech.state` is `will_download`), and the J1 voice branch and J4 record are BLOCKED, never failed. The old reading (`/task_overrides/37/effective/status == assigned`) said nothing about the model files.",
         "reads": [
           {
             "method": "GET",
-            "path": "/api/inference/assignments"
+            "path": "/api/setup/local-ai"
           }
         ]
       },
@@ -18137,8 +18127,8 @@
       "id": "state.engines.speech_ready",
       "family": "engines",
       "values": {
-        "capability": "speech.transcribe",
-        "effective_status": "assigned"
+        "speech_ready": true,
+        "speech_state": "on_device"
       },
       "phase1_refs": [
         {
@@ -18148,19 +18138,19 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/chair/meetingPathBlocker.ts",
-          "symbol": "export const SPEECH_CAPABILITY = \"speech.transcribe\";",
-          "claim": "speech.transcribe is the capability that turns admitted audio into text"
+          "path": "holdspeak/whisper_models.py",
+          "symbol": "def speech_readiness(name: str, backend: str, *, home: Optional[Path] = None) -> dict:",
+          "claim": "the one speech-readiness truth: the backend library can run here and the loader finds the model's files; disk only"
         },
         {
-          "path": "web/src/desk/chair/meetingPathBlocker.ts",
-          "symbol": "const speechMissing = Boolean(speech) && speech!.effective?.status !== \"assigned\";",
-          "claim": "any effective assignment clears the speech row; anything else is missing"
+          "path": "holdspeak/services/local_ai_setup_service.py",
+          "symbol": "return speech_readiness(name, backend, home=self._home())",
+          "claim": "GET /api/setup/local-ai serves that truth as `speech`"
         },
         {
-          "path": "holdspeak/services/inference_adoption_service.py",
-          "symbol": "speech-migrated-",
-          "claim": "a fresh desk carries one migrated speech profile whose id is speech-migrated-<sha prefix>"
+          "path": "web/src/desk/firstrun/SpeechSetup.tsx",
+          "symbol": "export function useSpeechSetup() {",
+          "claim": "Speak, Record, Runs on and Setup read the same `speech` field"
         }
       ],
       "reachable_by": [

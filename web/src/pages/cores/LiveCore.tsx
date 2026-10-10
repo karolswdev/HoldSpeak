@@ -65,6 +65,8 @@ import { countToken } from "../../desk/surface/count";
 import { intelEgressBadge } from "./liveEgress";
 import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
+import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
+import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../../desk/firstrun/speechTruth";
 
 type Segment = Record<string, unknown>;
 
@@ -254,12 +256,20 @@ export function LiveCore({ hero }: CoreProps) {
   const active = Boolean(
     state.active ?? state.meeting_active ?? state.status === "recording",
   );
+  // PHILO-17 speech: the live `duration` frame (a "MM:SS" string, one a
+  // second) leads. `formatted_duration` arrives once with meeting_started /
+  // meeting_updated and stood in front of the live frame, so REC froze at
+  // 00:01 while the dock counter ran.
   const duration = String(
-    state.formatted_duration ??
-      (state.duration as Record<string, unknown> | undefined)?.formatted ??
-      state.duration ??
+    (typeof state.duration === "string" && state.duration) ||
+      (state.duration as Record<string, unknown> | undefined)?.formatted ||
+      state.formatted_duration ||
       "00:00",
   );
+  // PHILO-17 speech: no speech model means a meeting with audio only. The
+  // face says so before he records, and while he records.
+  const speech = useSpeechSetup();
+  const audioOnly = active ? speechWasMissing(state) : speech.notSetUp;
   const perform = async (path: string, json: unknown = {}) => {
     await action.run(async () => {
       const value = await apiFetch<Record<string, unknown>>(path, { method: "POST", json });
@@ -270,6 +280,8 @@ export function LiveCore({ hero }: CoreProps) {
         setState((current) => ({
           ...current,
           ...((value.meeting as Record<string, unknown>) ?? {}),
+          // The last meeting's clock is not this one's.
+          duration: undefined,
           active: true,
         }));
       }
@@ -602,7 +614,15 @@ export function LiveCore({ hero }: CoreProps) {
 
   return (
     <>
-      {renderHeroSlot(hero, verbs, presentValue(state.title) || (active ? "Recording" : "Ready to record"))}
+      {renderHeroSlot(
+        hero,
+        verbs,
+        presentValue(state.title) ||
+          (active
+            ? audioOnly ? "Recording audio only" : "Recording"
+            : audioOnly ? "Ready to record audio only" : "Ready to record"),
+      )}
+      <SpeechSetup setup={speech} testId="live-speech-setup" />
       {action.message ? <SurfaceState error={action.message} /> : null}
       {captureAlert ? (
         <SurfaceState
@@ -731,7 +751,9 @@ export function LiveCore({ hero }: CoreProps) {
               <SurfaceState
                 empty
                 emptyLabel={
-                  active ? "Listening for speech" : "Start a meeting to begin"
+                  active
+                    ? audioOnly ? NO_TRANSCRIPT_SPEECH : "Listening for speech"
+                    : "Start a meeting to begin"
                 }
                 emptyGlyph="●"
               />
