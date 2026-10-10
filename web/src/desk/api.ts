@@ -5,7 +5,7 @@
  *
  * HS-117-01: every entity that crosses the wire has a concrete TypeScript
  * interface. Mappers take `unknown`, return concrete types, use wireGuard. */
-import { apiFetch } from "../lib/api";
+import { ApiError, apiFetch } from "../lib/api";
 import type {
   Artifact,
   Chain,
@@ -725,6 +725,8 @@ export async function loadAll(): Promise<LoadResult> {
   const fail = (kind: PrimitiveKind | "profile" | "project", label: string, e: unknown) => {
     status[kind] = "unreachable";
     if (!failed) failed = { label, cause: e };
+    // PHILO-17 wayin: no token is no kind's fault; say the one sentence alone.
+    if (!error && e instanceof ApiError && e.status === 401) error = e.message;
     if (!error) error = `${label}: ${e && typeof e === "object" && "message" in e ? (e as Error).message : String(e)}`;
   };
 

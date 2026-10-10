@@ -4,7 +4,7 @@ The Needs-you window body is the smart drawer (board A-5, RATIFIED A),
 against a REAL booted hub on an isolated HOME, at 1440 and 393:
 
   one-project     -- his desk: ONE Project, `3 need you`, no Project
-                     button, one unreadable source as a source row above
+                     button, one unreadable source as a source row below
                      every member with its reason, token, observation and
                      verb.
   three-projects  -- `17 need you`, one source row per unread source (with
@@ -469,20 +469,21 @@ def _run_one_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
             assert headline == "4 need you", headline
             assert page.get_by_role("group", name="Project").count() == 0
 
-            # The unread source is a source row ABOVE every member, with its
-            # own reason, token, observation and verb.
+            # PHILO-17 (needsyou): the unread source is a source row AFTER
+            # every member (the work leads), with its plain cause, token,
+            # observation and verb.
             coverage = page.locator(SOURCES).filter(has_text="Jira rejected the query")
             assert coverage.count() == 1
             fact = coverage.locator(".needs-row-fact").first.text_content() or ""
             assert fact.startswith("Jira rejected the query · observed "), fact
             assert "CANT CHECK" in (coverage.locator(".needs-row-lamp").first.text_content() or "")
             assert (coverage.locator("[data-verb='repair']").first.text_content() or "").strip() == "Reconnect"
-            above = page.evaluate("""() => {
+            below = page.evaluate("""() => {
                 const src = document.querySelector('[data-testid="needs-source-row"]').getBoundingClientRect().top;
-                const row = document.querySelector('[data-testid="needs-row"]').getBoundingClientRect().top;
-                return src < row;
+                const rows = [...document.querySelectorAll('[data-testid="needs-row"]')];
+                return rows.every((row) => row.getBoundingClientRect().top < src);
             }""")
-            assert above
+            assert below
 
             rows = page.locator(MEMBERS)
             assert rows.count() == 3
@@ -520,7 +521,11 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
             # count is the same at any hour: a source late in quiet hours is
             # `quiet`, outside them `stale`.
             gaps = [c for c in wire["coverage"] if c["state"] != "available"]
-            unread = [c for c in gaps if c["state"] != "quiet"]
+            # PHILO-17 (needsyou): the sources of one cause are ONE row,
+            # counted once.
+            from holdspeak.services.needs_you_membership import source_group_key, unread_source_groups
+            unread = unread_source_groups(wire["coverage"])
+            quiet_groups = {source_group_key(c) for c in gaps if c["state"] == "quiet"}
             assert wire["count"] == 17 + len(unread), (wire["count"], gaps)
             assert len(wire["projects"]) == 3
             assert wire["complete"] is False
@@ -543,9 +548,9 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
             headline = (page.get_by_test_id("arrival-display").text_content() or "").strip()
             assert headline == f"{17 + len(unread)} need you", headline
 
-            # One source row per unread source, each with its owning verb.
+            # One source row per cause, each with its owning verb.
             sources = page.locator(SOURCES).filter(has_not_text="No calendar")
-            assert sources.count() == len(gaps), sources.all_inner_texts()
+            assert sources.count() == len(unread) + len(quiet_groups), sources.all_inner_texts()
             verbs = {(v.text_content() or "").strip()
                      for v in page.locator("[data-testid='needs-source-row'] [data-verb='repair']").all()}
             assert verbs >= {"Reconnect", "Retry"}, verbs

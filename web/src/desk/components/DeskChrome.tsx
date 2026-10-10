@@ -18,11 +18,11 @@ import { EgressChip, LampGadget } from "../surface/gadgets";
 import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
 import { DeskToolShelf } from "./DeskToolShelf";
 import { DeskMenuBar } from "./DeskMenuBar";
-import { useLaunchers } from "./DeskWindow";
 import { useFrontWindowId, useAllOpenWindows } from "./window/windowRegistry";
 import { ScreenSwitcher } from "./window/ScreenSwitcher";
 import { useChairState } from "../chairState";
 import { useNeedsYou } from "../needsYou";
+import { openNeedsYouDrawer } from "../screen/open";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { useCompactViewport } from "../useCompactViewport";
@@ -35,27 +35,20 @@ import { Button } from "../../components/signal/Signal";
  * HS-148-02: Open Intelligence / Open People join the app section. */
 const MARK_VERBS = ["desk.toggle-view", "desk.arrange", "desk.refresh"];
 
-/** HS-100-11 — the attention bell: the approve-queue's badge lives in
- * the system bar, not the dock (the dock carries the applications). */
+/** HS-100-11 — the attention bell. PHILO-17 (needsyou, walker TAXES): the
+ * bell carries the ONE needs-you number and opens Needs you, the list that
+ * number counts (not the system shade). */
 function AttentionBell() {
-  const launchers = useLaunchers();
-  // PHILO-13-03 (A2-W; canvas C1-1): the bell carries the ONE needs-you
-  // number, the same snapshot the Chair head and the Dock read.
   const { count } = useNeedsYou();
-  const attention = launchers.find((l) => l.id === "attention");
-  if (!attention) return null;
   const badge = count > 0 ? count : 0;
   return (
     <Button
       variant="chrome"
-      className={`desk-bell${attention.open ? " is-open" : ""}`}
-      aria-label={
-        badge
-          ? `Desk memory: ${needYouWords(badge)}`
-          : "Desk memory"
-      }
-      title="Desk memory"
-      onClick={() => attention.activate()}
+      className="desk-bell"
+      aria-label={badge ? `Needs you: ${needYouWords(badge)}` : "Needs you"}
+      title="Needs you"
+      data-testid="desk-bell"
+      onClick={() => openNeedsYouDrawer()}
     >
       {/* HS-111-09 — 16px source renders at 16 CSS px (integer-true). */}
       <img src={SYSTEM.menuBell} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} />

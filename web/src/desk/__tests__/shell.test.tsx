@@ -118,7 +118,10 @@ describe("the dock", () => {
     expect(s.panelMax).toEqual([]);
     expect(
       JSON.parse(localStorage.getItem("hs.desk.workspace.v1") || "{}").panel,
-    ).toEqual({ rects: {}, order: [], max: [], min: [] }); // B2: min persists, so the wipe does too
+    // B2: min persists, so the wipe does too. PHILO-16 L3: the depths are
+    // the stacking, so they are wiped as well; the shelf side is a
+    // preference, not a layout, and stays.
+    ).toEqual({ rects: {}, order: [], max: [], min: [], depth: {}, shelf: "left" });
   });
 });
 

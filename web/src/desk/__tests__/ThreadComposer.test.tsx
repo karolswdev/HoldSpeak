@@ -4,8 +4,12 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { clearThreadComposerDraft, useThreadComposerDrafts } from "../threadComposerDrafts";
+import { apiFetch } from "../../lib/api";
 import {
   ThreadComposer,
+  loadPromptNotes,
+  loadGuardrailNotes,
+  resetPromptCache,
   InlineEditor,
   filterSlashCommands,
   completeSlash,
@@ -33,7 +37,12 @@ vi.mock("../store", () => ({
       sel({
         items: {
           meeting: [{ id: "m1", title: "Standup" }],
-          note: [{ id: "n1", title: "Design notes" }],
+          note: [
+            { id: "n1", title: "Design notes" },
+            // PHILO-17: New Note posts no title; the picker names it by its words.
+            { id: "n2", title: "", bodyMarkdown: "Ask Avery about the cutover" },
+            { id: "n3", title: "", bodyMarkdown: "" },
+          ],
           artifact: [{ id: "a1", title: "RFC v2" }],
           decision: [{ id: "d1", title: "Use Vite" }],
           directory: [],
@@ -386,6 +395,28 @@ describe("directoryToItem", () => {
 describe("ThreadComposer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("PHILO-17: the @ picker names an untitled note by its first words, else New note", () => {
+    renderComposer();
+    const input = screen.getByTestId("composer-input");
+    fireEvent.change(input, { target: { value: "@Ask" } });
+    expect(screen.getByTestId("surface-row-Ask Avery about the cutover")).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: "@New" } });
+    expect(screen.getByTestId("surface-row-New note")).toBeInTheDocument();
+  });
+
+  it("PHILO-17: the prompt and guardrail pickers keep an untitled note, by its words", async () => {
+    resetPromptCache();
+    vi.mocked(apiFetch).mockResolvedValueOnce({
+      notes: [
+        { id: "p1", title: "", body_markdown: "Write in short sentences", tags: ["prompt"] },
+        { id: "p2", title: "Gone", body_markdown: "", deleted: true },
+      ],
+    } as never);
+    expect((await loadPromptNotes()).map((n) => n.title)).toEqual(["Write in short sentences"]);
+    vi.mocked(apiFetch).mockResolvedValueOnce({ notes: [{ id: "g1", title: "", body_markdown: "" }] } as never);
+    expect((await loadGuardrailNotes()).map((n) => n.title)).toEqual(["New note"]);
   });
 
   it("renders textarea, mic, and send button", () => {
