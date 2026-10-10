@@ -363,6 +363,21 @@ def backfill_decisions(conn: sqlite3.Connection) -> dict[str, int]:
     return totals
 
 
+def confirmed_action_sql(col: str) -> str:
+    """PHILO-17: true when the ``decisions`` row ``col`` is a confirmed ACTION.
+
+    Confirming an action writes a ``decisions`` row and an action-kind record
+    (proposal_bridge_service.py); no decision list or decision search shows it.
+    A record written before the kind column reads its kind from its proposal.
+    """
+    return (
+        "EXISTS (SELECT 1 FROM decision_records r WHERE r.source_type = 'meeting'"
+        f" AND r.source_id = {col} AND (r.kind = 'action' OR EXISTS ("
+        "SELECT 1 FROM follow_through_proposals fp"
+        " WHERE fp.decision_record_id = r.id AND fp.kind = 'action')))"
+    )
+
+
 class DecisionRepository(BaseRepository):
     """Query, reconcile, and transition durable decision records."""
 
@@ -522,12 +537,7 @@ class DecisionRepository(BaseRepository):
             " WHERE fp.decision_record_id = r.id AND fp.kind = 'action')"
             " ORDER BY r.created_at DESC, r.id DESC LIMIT 1)"
         )
-        an_action = (
-            "EXISTS (SELECT 1 FROM decision_records r WHERE r.source_type = 'meeting'"
-            " AND r.source_id = d.id AND (r.kind = 'action' OR EXISTS ("
-            "SELECT 1 FROM follow_through_proposals fp"
-            " WHERE fp.decision_record_id = r.id AND fp.kind = 'action')))"
-        )
+        an_action = confirmed_action_sql("d.id")
         ledger = f"""WITH ledger AS (
                 SELECT 'meeting' AS source, d.id AS id, d.text AS text,
                        d.rationale AS rationale, d.decided_at AS decided_at,

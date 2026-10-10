@@ -188,6 +188,34 @@ describe("the meeting's recorded decisions (PHILO-17)", () => {
     ]);
   });
 
+  // Astra r2 (1): a confirmed proposal and its ledger row are ONE row, and
+  // that row says the RECORD's state once the record is replaced or disputed.
+  it("a confirmed proposal paired with its record reads REPLACED / DISPUTED, never DECIDED", () => {
+    const proposal = (id: string, text: string, record: string) => ({
+      id, meeting_id: "m1", kind: "decision" as const, text, state: "confirmed" as const,
+      owner_hint: "Avery", created_at: "", decision_record_id: record,
+    });
+    const { decisions } = meetingOutcomes({
+      ftProposals: [
+        proposal("p1", "Freeze the old ledger on Nov 5", "rec-1"),
+        proposal("p2", "Run reconciliation nightly", "rec-2"),
+        proposal("p3", "Shard the ledger", "rec-3"),
+      ],
+      openActions: [],
+      settledActions: [],
+      meetingDecisions: [
+        { id: "d1", text: "Freeze the old ledger on Nov 5", lifecycle: "superseded", record_id: "rec-1" },
+        { id: "d2", text: "Run reconciliation nightly", lifecycle: "disputed", record_id: "rec-2" },
+        { id: "d3", text: "Shard the ledger", lifecycle: "active", record_id: "rec-3" },
+      ],
+    });
+    expect(decisions.map((d) => [d.key, d.text, d.meta])).toEqual([
+      ["ft-p1", "Freeze the old ledger on Nov 5", "REPLACED"],
+      ["ft-p2", "Run reconciliation nightly", "DISPUTED"],
+      ["ft-p3", "Shard the ledger", "AVERY"],
+    ]);
+  });
+
   it("the hook reads the meeting's ledger rows and the record shows them above Commitments", async () => {
     const meeting = {
       id: "m9", title: "Ledger cutover sync", intel_status: "complete",

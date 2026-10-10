@@ -67,32 +67,41 @@ export function meetingOutcomes(
 } {
   const owner = (value: unknown) => presentValue(value).toUpperCase();
   const live = data.ftProposals.filter((p) => p.state !== "dismissed");
-  const decisions: OutcomeRow[] = live
-    .filter((p) => p.kind === "decision")
-    .map((p) => p.state === "proposed"
-      ? { key: `ft-${p.id}`, plate: "DEC" as const, text: p.text, meta: "TO DECIDE", tone: "ask" as const }
-      : {
-        key: `ft-${p.id}`, plate: "DEC" as const, text: p.text,
-        meta: owner(p.owner) || owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
-      });
   // PHILO-17 ("what did we decide yesterday?"): the decisions the meeting
   // recorded are on its record too (the ledger: never a confirmed action).
-  // A row a proposal already draws is the same decision only by identity:
-  // the record the proposal wrote, or its artifact with the same words. A
-  // rejected one is not drawn.
+  // A proposal and a ledger row are the same decision only by identity: the
+  // record the proposal wrote, or its artifact with the same words. The pair
+  // is one row, and it says the RECORD's state (Astra r2: a record replaced
+  // or disputed after Confirm is not DECIDED). A rejected one is not drawn.
   const said = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
-  const decisionProposals = live.filter((p) => p.kind === "decision");
-  const drawnByProposal = (d: MeetingDecision) => decisionProposals.some((p) =>
+  const same = (p: FollowThroughProposal, d: MeetingDecision) =>
     (Boolean(p.decision_record_id) && p.decision_record_id === d.record_id)
     || (Boolean(p.source_artifact_id) && p.source_artifact_id === d.source_artifact_id
-      && said(p.text) === said(d.text)));
-  for (const d of data.meetingDecisions ?? []) {
-    const lifecycle = String(d.lifecycle ?? "").toLowerCase();
-    if (lifecycle === "rejected" || !String(d.text ?? "").trim() || drawnByProposal(d)) continue;
+      && said(p.text) === said(d.text));
+  const recorded = data.meetingDecisions ?? [];
+  const stateOf = (d: MeetingDecision | undefined) => {
+    const lifecycle = String(d?.lifecycle ?? "").toLowerCase();
+    return lifecycle === "superseded" ? "REPLACED" : lifecycle === "disputed" ? "DISPUTED" : "";
+  };
+  const decisions: OutcomeRow[] = [];
+  for (const p of live) {
+    if (p.kind !== "decision") continue;
+    if (p.state === "proposed") {
+      decisions.push({ key: `ft-${p.id}`, plate: "DEC", text: p.text, meta: "TO DECIDE", tone: "ask" });
+      continue;
+    }
+    const paired = recorded.find((d) => same(p, d));
+    if (String(paired?.lifecycle ?? "").toLowerCase() === "rejected") continue;
     decisions.push({
-      key: `dec-${d.id}`, plate: "DEC", text: d.text,
-      meta: lifecycle === "superseded" ? "REPLACED" : lifecycle === "disputed" ? "DISPUTED" : "DECIDED",
+      key: `ft-${p.id}`, plate: "DEC", text: p.text,
+      meta: stateOf(paired) || owner(p.owner) || owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
     });
+  }
+  const decisionProposals = live.filter((p) => p.kind === "decision");
+  for (const d of recorded) {
+    const lifecycle = String(d.lifecycle ?? "").toLowerCase();
+    if (lifecycle === "rejected" || !String(d.text ?? "").trim() || decisionProposals.some((p) => same(p, d))) continue;
+    decisions.push({ key: `dec-${d.id}`, plate: "DEC", text: d.text, meta: stateOf(d) || "DECIDED" });
   }
 
   const actionProposals = data.ftProposals.filter((p) => p.kind === "action");
