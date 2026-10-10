@@ -267,6 +267,27 @@ class TestOneOnOneFindsItsPerson:
                 walk["now_text"] = people.inner_text()
                 walk["now_readable"] = _rendered_text_faults(page, "#surface-people", on_glass=True)
                 page.screenshot(path=str(SHOTS / f"P17-01-now-they-owe-{width}.png"))
+
+                # 2c. Astra r1: after a reload, the stored row is still under
+                # They owe you and never under You owe.
+                page.reload(wait_until="load")
+                _settle(page)
+                people = page.locator("#surface-people")
+                # The hub-owned window comes back on Priya (her kept place);
+                # only if it does not, open People and Priya again.
+                try:
+                    people.get_by_role("tab", name="Now").wait_for(timeout=15_000)
+                except Exception:  # noqa: BLE001 -- the fallback path below
+                    if not people.count() or not people.first.is_visible():
+                        self._palette(page, "people", "desk.open-people", width)
+                        people = page.locator("#surface-people")
+                    self._press(page, people.locator("button").filter(has_text="Priya Sharma").first, width)
+                self._press(page, people.get_by_role("tab", name="Now"), width)
+                people.get_by_test_id("people-they-owe").get_by_text(THEY_OWE).wait_for()
+                _settle(page)
+                walk["reload_they_owe"] = people.get_by_test_id("people-they-owe").inner_text()
+                walk["reload_you_owe"] = people.get_by_test_id("people-you-owe").inner_text()
+                page.screenshot(path=str(SHOTS / f"P17-02-now-after-reload-{width}.png"))
             finally:
                 browser.close()
 
@@ -340,6 +361,10 @@ class TestOneOnOneFindsItsPerson:
             fails["Now side reads as the header"] = [walk.get("now_side"), head, label]
         if THEY_OWE not in walk.get("now_they_owe", "") or "THEY OWE YOU · 1" not in walk.get("now_they_owe", "").upper():
             fails["Now: They owe you records his item"] = walk.get("now_they_owe")
+        if THEY_OWE not in walk.get("reload_they_owe", "") or THEY_OWE in walk.get("reload_you_owe", "") \
+                or "YOU OWE" not in walk.get("reload_you_owe", "").upper():
+            fails["after reload: under They owe you, absent from You owe"] = [
+                walk.get("reload_they_owe"), walk.get("reload_you_owe")]
         if "Open requests" in walk.get("now_text", "") or "ASKED OF YOU" not in walk.get("now_asked", "").upper():
             fails["Now: requests read Asked of you"] = walk.get("now_asked")
         if walk.get("now_readable", {}).get("clipped") or walk.get("now_readable", {}).get("overlaps"):

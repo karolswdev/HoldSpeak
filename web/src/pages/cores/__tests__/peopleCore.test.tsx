@@ -518,7 +518,7 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     expect(document.activeElement).toBe(screen.getByLabelText("Add person"));
     fireEvent.change(screen.getByLabelText("Add person"), { target: { value: " maya chen " } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
-    expect(await screen.findByTestId("people-duplicate")).toHaveTextContent("Maya Chen is already here");
+    expect(await screen.findByTestId("people-duplicate")).toHaveTextContent("Maya Chen · Already here");
     expect(posts(fetchSpy, "/api/people/relationships")).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "Add again" }));
     await waitFor(() => expect(posts(fetchSpy, "/api/people/relationships")).toHaveLength(2));

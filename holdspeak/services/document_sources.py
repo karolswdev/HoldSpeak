@@ -241,6 +241,8 @@ def _parked_brief_person_overlay(db: Any, brief: Any) -> dict[str, Any]:
             follow_through,
             db,
             _source_read_context(),
+            # PHILO-17: a document can reach an agent or leave the machine.
+            shared_only=True,
         )
     except Exception:
         # A closed or partially composed People sidecar is honest unavailable
