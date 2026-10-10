@@ -17,15 +17,18 @@ RAW = "To get started with GitHub CLI, please run:  gh auth login"
 
 
 def _gap(n: int, *, provider: str = "github", token: str = "CANT CHECK", state: str = "failed",
-         cause: str | None = None) -> dict:
+         cause: str | None = "Not signed in", reason: str | None = None, verb: str = "Reconnect",
+         href: str = "/settings", host: str = "github.com") -> dict:
     return {
         "source_id": f"watch:w{n}", "kind": "watch", "state": state, "provider": provider,
-        "label": f"GitHub · acme/r{n}", "project_id": f"p{n}", "reason": f"{RAW} r{n}",
-        "cause": cause, "repair": {"token": token, "verb": "Reconnect", "href": "/settings"},
+        "label": f"GitHub · acme/r{n}", "project_id": f"p{n}", "host": host,
+        "reason": reason if reason is not None else (cause or RAW), "cause": cause,
+        "repair": {"token": token, "verb": verb, "href": href},
     }
 
 
-def test_thirty_sources_of_one_cause_are_one_group() -> None:
+def test_thirty_sources_of_one_cause_and_one_repair_are_one_group() -> None:
+    # Thirty Rooms; Reconnect goes to Settings for every one of them.
     coverage = [_gap(n) for n in range(30)]
     groups = unread_source_groups(coverage)
     assert len(groups) == 1
@@ -36,15 +39,39 @@ def test_a_different_provider_token_or_cause_is_its_own_group() -> None:
     coverage = [
         _gap(1), _gap(2),
         _gap(3, provider="jira"),
-        _gap(4, token="STALE", state="stale"),
-        _gap(5, cause="Not signed in"),
+        _gap(4, token="STALE", state="stale", cause="not checked recently"),
+        _gap(5, cause="Tool not installed"),
         {"source_id": "x", "kind": "watch", "state": "available", "provider": "github"},
-        {**_gap(6, state="quiet", token="QUIET UNTIL 08:00")},
+        _gap(6, state="quiet", token="QUIET UNTIL 08:00", cause="quiet until 08:00"),
     ]
     groups = unread_source_groups(coverage)
     # The available and the quiet sources are never counted.
     assert [len(g) for g in groups] == [2, 1, 1, 1]
     assert source_group_key(coverage[0]) == source_group_key(coverage[1])
+
+
+def test_a_different_repair_destination_is_its_own_group() -> None:
+    # Astra r1 (1): two paused Watches in two Rooms each open their own Room.
+    a = _gap(1, state="unavailable", token="PAUSED", cause="paused", verb="Open source", href="/projects/pA")
+    b = _gap(2, state="unavailable", token="PAUSED", cause="paused", verb="Open source", href="/projects/pB")
+    assert len(unread_source_groups([a, b])) == 2
+
+
+def test_a_different_egress_host_is_its_own_group() -> None:
+    # Astra r1 (3): Retry on two Jira sites names two hosts.
+    a = _gap(1, provider="jira", state="stale", token="STALE", cause="not checked recently",
+             verb="Retry", href="/projects/p1", host="a.atlassian.net")
+    b = {**a, "source_id": "watch:w2", "host": "b.atlassian.net"}
+    assert len(unread_source_groups([a, b])) == 2
+
+
+def test_unknown_causes_group_only_on_the_same_first_line() -> None:
+    # Astra r1 (2): a 404 and a 429 are two problems, never one row.
+    e404 = _gap(1, cause=None, reason="HTTP 404: Not Found (repos/acme/r1)")
+    e429 = _gap(2, cause=None, reason="HTTP 429: rate limit exceeded")
+    e429b = _gap(3, cause=None, reason="HTTP 429:  rate limit exceeded\nretry-after: 60")
+    groups = unread_source_groups([e404, e429, e429b])
+    assert [len(g) for g in groups] == [1, 2]
 
 
 def test_a_signed_out_cli_reads_not_signed_in() -> None:

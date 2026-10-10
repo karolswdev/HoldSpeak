@@ -638,22 +638,19 @@ export function coverageFace(gap: CoverageRecord, now?: Date): NeedFace {
   };
 }
 
-/** PHILO-17 (needsyou): the sources of one cause as ONE row: `GitHub · 30
- *  sources`, the cause, one verb that repairs them all. Every source and its
+/** PHILO-17 (needsyou): the sources of one cause and one repair as ONE row:
+ *  `GitHub · 30 sources`, the cause, one verb that repairs them all. Every source and its
  *  own reason stays in the row's detail. This is a grouping of one cause,
  *  never a cap (HS-200-15): every source is listed in the detail. */
 export function coverageGroupFace(rows: readonly CoverageRecord[], now?: Date): NeedFace {
   const first = rows[0];
   const one = coverageFace(first, now);
   if (rows.length < 2) return one;
-  const same = <T,>(values: T[]): T | undefined => (new Set(values).size === 1 ? values[0] : undefined);
+  // The group shares its repair (verb, destination) and its egress host
+  // (`gapGroupKey`), so the first source's repair stands for all; Retry
+  // re-checks every Watch of the group.
   const verbs = one.verbs.kind === "repair"
-    ? {
-      ...one.verbs,
-      projectId: same(rows.map((r) => String(r.project_id ?? ""))) ?? "",
-      watchIds: rows.flatMap((r) => r.watch_ids ?? []).filter(Boolean),
-      host: same(rows.map((r) => String(r.host ?? ""))) || undefined,
-    }
+    ? { ...one.verbs, watchIds: rows.flatMap((r) => r.watch_ids ?? []).filter(Boolean) }
     : one.verbs;
   return {
     ...one,

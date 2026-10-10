@@ -736,6 +736,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             key={launcher.id}
             ref={seatRef(launcher.id)}
             variant="chrome"
+            data-launcher={launcher.id}
             className={
               "desk-dock-launch" +
               (launcher.open && !seated ? " is-run" : "") +

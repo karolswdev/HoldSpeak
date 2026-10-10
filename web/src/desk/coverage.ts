@@ -43,11 +43,18 @@ export interface CoverageRecord {
   cause?: string | null;
 }
 
-/** PHILO-17 (needsyou): the cause of an unread source. Sources of one cause
- *  are ONE Needs-you row, counted once. The twin of `source_group_key`
- *  (holdspeak/services/needs_you_membership.py). */
+/** PHILO-17 (needsyou): the cause of an unread source and where its repair
+ *  goes. Sources with the same cause AND the same repair (verb, destination,
+ *  egress host) are ONE Needs-you row, counted once. A source with no plain
+ *  cause groups only with the same first error line. The twin of
+ *  `source_group_key` (holdspeak/services/needs_you_membership.py). */
 export function gapGroupKey(row: CoverageRecord): string {
-  return [row.provider || row.kind || "", row.state || "", row.repair?.token || "", row.cause || ""].join("|");
+  const firstLine = String(row.reason ?? "").trim().split("\n")[0].split(/\s+/).filter(Boolean).join(" ").toLowerCase();
+  const cause = String(row.cause ?? "").trim() || firstLine;
+  return [
+    row.provider || row.kind || "", row.state || "", row.repair?.token || "", cause,
+    row.repair?.verb || "", row.repair?.href || "", row.host || "",
+  ].join("|");
 }
 
 /** The gaps grouped by cause, in their order (first seen leads). */

@@ -1119,23 +1119,34 @@ def unread_sources(coverage: Iterable[Any]) -> list[dict[str, Any]]:
     ]
 
 
-def source_group_key(row: dict[str, Any]) -> tuple[str, str, str, str]:
-    """PHILO-17 (needsyou): the cause of an unread source. Sources of one
-    cause are ONE Needs-you row (``GitHub · 30 sources`` with one Reconnect),
-    so the one number counts the cause once. The twin is ``gapGroupKey`` in
+def _first_line(text: Any) -> str:
+    return " ".join(str(text or "").strip().split("\n")[0].split()).casefold()
+
+
+def source_group_key(row: dict[str, Any]) -> tuple[str, ...]:
+    """PHILO-17 (needsyou): the cause of an unread source and where its
+    repair goes. Sources with the same cause AND the same repair (verb,
+    destination, egress host) are ONE Needs-you row (``GitHub · 30 sources``
+    with one Reconnect), so the one number counts the cause once. A source
+    with no plain cause groups only with the same first error line, so two
+    different failures are never one row. The twin is ``gapGroupKey`` in
     ``web/src/desk/coverage.ts``."""
     repair = row.get("repair") if isinstance(row.get("repair"), dict) else {}
+    cause = str(row.get("cause") or "").strip() or _first_line(row.get("reason"))
     return (
         str(row.get("provider") or row.get("kind") or ""),
         str(row.get("state") or ""),
         str(repair.get("token") or ""),
-        str(row.get("cause") or ""),
+        cause,
+        str(repair.get("verb") or ""),
+        str(repair.get("href") or ""),
+        str(row.get("host") or ""),
     )
 
 
 def unread_source_groups(coverage: Iterable[Any]) -> list[list[dict[str, Any]]]:
     """The unread sources, grouped by cause, in first-seen order."""
-    groups: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
+    groups: dict[tuple[str, ...], list[dict[str, Any]]] = {}
     for row in unread_sources(coverage):
         groups.setdefault(source_group_key(row), []).append(row)
     return list(groups.values())
