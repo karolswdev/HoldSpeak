@@ -29,6 +29,8 @@ import { layoutScreen } from "./layout";
 import { retryPeople, retryProject, useScreenMembers } from "./members";
 import { openTarget } from "./open";
 import { SCREEN_HOST, HandConfirmSlot, handOriginOfRef, handSourceProps, handTargetProps, useDropHand } from "../hand";
+import { useAtmospherePreference } from "../gl/atmospherePreference";
+import { resolveAtmosphere } from "../gl/atmosphereRegistry";
 import "./screen.css";
 
 /** The A-1 screen measured at 1440 × 900 (a screen that has not laid out yet). */
@@ -123,9 +125,22 @@ export function Screen() {
   // PHILO-14 C3: drop to hand. A loose work item drags (not at 393: the
   // hand there is the verb); the Conductor drawer and the agents take it.
   const drag = useDropHand((s) => s.drag);
+  // PHILO-17 (Muad'Dib's ruling): the Screen draws the chosen place as its
+  // backdrop: the place's still picture on the A1 floor, never a GL scene.
+  // Quiet Desk has no still: the floor alone.
+  const [placeId] = useAtmospherePreference();
+  const still = resolveAtmosphere(placeId).previewUrl;
 
   return (
-    <div className="desk-screen" ref={ref} data-testid="desk-screen" data-layout={compact ? "grid" : "free"}>
+    <div
+      className="desk-screen"
+      ref={ref}
+      data-testid="desk-screen"
+      data-layout={compact ? "grid" : "free"}
+      data-place={placeId}
+      data-place-still={still ? "" : undefined}
+      style={still ? ({ "--desk-place-still": `url("${still}")` } as React.CSSProperties) : undefined}
+    >
       <IconGrid
         label="Desk"
         marquee={marquee}

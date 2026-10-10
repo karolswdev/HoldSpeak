@@ -1,0 +1,4821 @@
+{
+  "parked": "2026-10-10, PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): atlas cases that drove the Floor. A case whose subject is gone stays in its atlas file as not_applicable with the reason; a ported case is rewritten for the Screen. These are the declarations as they stood before the port.",
+  "source_commit": "dedc780b7",
+  "cases": [
+    {
+      "id": "case.p13.directory.zone",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.directory_zone_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "The Zone producer is real. Spatial's world zone is the ordinary Directory door: its native context menu should offer Open and the product verb should open the real ZoneWindow.",
+        "Every mouse/touch press uses ui-by-viewport. The real __hsWorldZoneProbe and __hsWorldHitProbe agree on the produced zone before the native context gesture; the window closes, reloads, and reopens through that same door.",
+        "On PR #757 at 1440 the complete open-close-reload-reopen lifecycle produced a late result at 33.753 s against the old 20 s bound; 40 s gives 6.247 s of measured headroom. This is a lifecycle bound, not a single-click latency target.",
+        "C7 puts the 393 title in the truncated screen title outside the Zone window. The window aria-label proves identity and readable empty-state text retains visibility, viewport and all nine hit-ownership checks. The desktop title is still checked after reopen."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/directories",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas Phase 13 Zone"
+          },
+          "expect_status": 201,
+          "capture_as": "zone_id",
+          "capture_path": "directory.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-desk.toggle-view\"]",
+          "at_width": 393
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "world_context_menu",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-world-canvas",
+        "world_target": "zone",
+        "world_ref": "{zone_id}",
+        "hold_ms": 650,
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "menuitem",
+            "name": "Open"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-zone-window",
+            "state": "visible",
+            "timeout_s": 10,
+            "capture_shot": true
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-zone-window button[aria-label^=\"Close \"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-zone-window",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "[data-testid=\"chair-floor-toggle\"]",
+            "state": "visible",
+            "timeout_s": 15
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "button",
+            "name": "Floor",
+            "optional": true,
+            "timeout_s": 2
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-world-canvas",
+            "state": "visible",
+            "timeout_s": 15
+          },
+          {
+            "kind": "ui",
+            "action": "world_context_menu",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-world-canvas",
+            "world_target": "zone",
+            "world_ref": "{zone_id}",
+            "hold_ms": 650
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "menuitem",
+            "name": "Open"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-zone-window",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "at_width": 1440,
+            "selector": ".desk-zone-window :text(\"Atlas Phase 13 Zone\")",
+            "state": "visible",
+            "timeout_s": 10
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "attr_equals",
+              "attr": "aria-label",
+              "value": "Atlas Phase 13 Zone"
+            },
+            {
+              "kind": "readable_text",
+              "value": "Drop items here"
+            }
+          ]
+        },
+        "observe_at": ".desk-zone-window",
+        "words": "The native Zone context menu should open its real ZoneWindow, close it and reopen the same named Zone after reload. Its accessible identity and readable empty face must agree; this face path is B0-F7 when Open stays disabled."
+      },
+      "completion_bound_s": 40,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.info.window",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.info_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "A real Sequence object supplies Spatial's object context menu and Get Info verb; the object is located by the product's read-only __hsWorldProbe and confirmed by __hsWorldHitProbe.",
+        "Every mouse/touch press uses ui-by-viewport. Desktop uses a native right click; 393 uses Chromium's native touchStart/touchEnd with a 500 ms hold.",
+        "A 1440 rerun showed IDENTITY at 52.465 s with a 40 s bound; 75 s allows 22.535 s of observed headroom without changing the expected result."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/chains",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas B0 Info Sequence",
+            "steps": []
+          },
+          "expect_status": 201,
+          "capture_as": "info_chain_id",
+          "capture_path": "chain.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-desk.toggle-view\"]",
+          "at_width": 393
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "world_context_menu",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-world-canvas",
+        "world_target": "object",
+        "world_ref": "sequence:{info_chain_id}",
+        "hold_ms": 650,
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "menuitem",
+            "name": "Get Info"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-info-window .desk-info-body",
+            "state": "visible",
+            "timeout_s": 10,
+            "capture_shot": true
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-info-window button[aria-label^=\"Close \"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-info-window",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "[data-testid=\"chair-floor-toggle\"]",
+            "state": "visible",
+            "timeout_s": 15
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "button",
+            "name": "Floor",
+            "optional": true,
+            "timeout_s": 2
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-world-canvas",
+            "state": "visible",
+            "timeout_s": 15
+          },
+          {
+            "kind": "ui",
+            "action": "world_context_menu",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-world-canvas",
+            "world_target": "object",
+            "world_ref": "sequence:{info_chain_id}",
+            "hold_ms": 650
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "menuitem",
+            "name": "Get Info"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-info-window .desk-info-body",
+            "state": "visible",
+            "timeout_s": 10
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "IDENTITY"
+        },
+        "observe_at": ".desk-info-window",
+        "words": "The produced Sequence opens Get Info through Spatial's ordinary object context door, closes before reload, and opens again through the same door."
+      },
+      "completion_bound_s": 75,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p7.zone_create.visible",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.zone_create"
+      ],
+      "state_id": "state.desk_presentation.p7_zone_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "chair-desk"
+          },
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx:201-216): the zone rename field and the delete receipt live in WorldStage only (DeskApp.tsx:199-203)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 393,
+          "why": "at 393 the Floor opens as a list (store/types.ts:65-72 defaultViewFor); the zone rename field and the delete verb's listener live in the spatial WorldStage only (WorldStage.tsx:137-152)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Zone"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.new-zone']",
+          "why": "the face create verb desk.new-zone (verbRegistry.ts:203) -> POST /api/directories {name: 'New zone'} -> the rename overlay (dataSlice.ts:370)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "input.desk-zone-rename"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input.desk-zone-rename",
+          "value": "Atlas zone"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Enter",
+          "why": "Enter commits the name: PUT /api/directories/{id} (WorldStage.tsx rename overlay)"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/directories",
+          "body": null,
+          "adapter": "http-route",
+          "capture_match": {
+            "name": "Atlas zone"
+          },
+          "capture_as": "zone_id",
+          "capture_path": "directories",
+          "why": "the id the face create minted, found by the typed name (the desk seeds its own zones)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "fill",
+        "adapter": "ui-keyboard",
+        "selector": "[aria-controls=desk-palette-listbox]",
+        "value": "Atlas zone",
+        "why": "find the zone by name on a fresh Desk read"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Atlas zone"
+        },
+        "observe_at": "[id='desk-palette-option-zone:{zone_id}']",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/directories/{zone_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/directories"
+          }
+        ],
+        "words": "setup: Search > New Zone makes a zone and opens its rename field; the owner types 'Atlas zone' and Enter. After a reload, Search finds the zone's own row (zone:<id>) and it reads 'Atlas zone', visible, in the viewport and not covered. The zone on the Floor itself is a WebGL drawing; its DOM mirror (.desk-world-a11y) is clipped to 1px (desk.css:161-167), so the Search row is the readable face."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p7.decision_delete.gone",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.decision_delete"
+      ],
+      "state_id": "state.desk_presentation.p7_decision_lifecycle",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas withdrawn decision",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decision.id",
+            "value": "{decision_id}"
+          },
+          "observe_at": "protocol: GET /api/decisions/{decision_id}",
+          "timeout_s": 10,
+          "why": "the decision exists before the delete"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx:201-216): the zone rename field and the delete receipt live in WorldStage only (DeskApp.tsx:199-203)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 393,
+          "why": "at 393 the Floor opens as a list (store/types.ts:65-72 defaultViewFor); the zone rename field and the delete verb's listener live in the spatial WorldStage only (WorldStage.tsx:137-152)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-obj-id='decision:{decision_id}']",
+          "state": "attached"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": "[data-obj-id='decision:{decision_id}']",
+          "why": "keyboard travel to the Floor object's chip (HS-96-05: a focused world button surfaces as a chip, desk.css:171)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Shift+Enter",
+          "why": "select it: the chip's click with Shift toggles selection (WorldStage.tsx:381-384); a plain click opens the pullout and clears it"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "key": "Delete",
+        "why": "object.delete (verbRegistry.ts:547, key Delete) -> the 8 s undo receipt -> DELETE /api/decisions/{id} (dataSlice.ts:518-548)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Removal committed"
+        },
+        "observe_at": ".undo-receipt",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/decisions"
+          }
+        ],
+        "words": "the owner selects the decision on the Floor and presses Delete; after the 8 s undo window the receipt reads 'Removal committed', readable, and the hub no longer has it (GET /api/decisions/{id} refuses; the list lacks it)."
+      },
+      "completion_bound_s": 40,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.zone_create.second_unnamed",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.zone_create"
+      ],
+      "state_id": "state.desk_presentation.p8_zone_name",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (store/types.ts defaultViewFor: phone width, more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Zone"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.new-zone']",
+          "why": "desk.new-zone (verbRegistry.ts) -> createPrimitive('zone') picks the free default name (zoneName.ts)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode input.desk-zone-rename",
+          "timeout_s": 20,
+          "optional": true,
+          "why": "the first zone's name field (after the post-create refresh); optional so main runs to a verdict: on main the list draws no field"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Zone"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[id='desk-palette-option-desk.new-zone']",
+        "why": "desk.new-zone (verbRegistry.ts) -> createPrimitive('zone') picks the free default name (zoneName.ts)",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/directories"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/directories",
+              "status": 201
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "directories",
+                    "match": {
+                      "name": "New zone"
+                    }
+                  }
+                },
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "directories",
+                    "match": {
+                      "name": "New zone 2"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "input_value",
+              "selector": ".desk-listmode input.desk-zone-rename",
+              "equals": "New zone 2"
+            },
+            {
+              "kind": "hit_target",
+              "min_width": 40,
+              "min_height": 16
+            }
+          ]
+        },
+        "observe_at": ".desk-listmode input.desk-zone-rename",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/directories"
+          },
+          {
+            "method": "GET",
+            "path": "/api/directories"
+          }
+        ],
+        "words": "on the list the owner presses New Zone twice with no rename between: the second create answers 201 (never 409 zone_name_taken), the hub holds 'New zone' and 'New zone 2', and the second zone's name field is open, visible and unobscured, reading 'New zone 2'"
+      },
+      "completion_bound_s": 40,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.zone_create.second_unnamed_floor",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.zone_create"
+      ],
+      "state_id": "state.desk_presentation.p8_zone_name",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 393,
+          "why": "at 393 the Floor opens as the list; the palette's Spatial view shows the Floor itself"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-world-a11y",
+          "state": "attached"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Zone"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.new-zone']",
+          "why": "desk.new-zone (verbRegistry.ts) -> createPrimitive('zone') picks the free default name (zoneName.ts)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "input.desk-zone-rename",
+          "timeout_s": 20,
+          "optional": true,
+          "why": "the first zone's name field (after the post-create refresh); optional so main runs to a verdict: on main the list draws no field"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Zone"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[id='desk-palette-option-desk.new-zone']",
+        "why": "desk.new-zone (verbRegistry.ts) -> createPrimitive('zone') picks the free default name (zoneName.ts)",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/directories"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/directories",
+              "status": 201
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "directories",
+                    "match": {
+                      "name": "New zone"
+                    }
+                  }
+                },
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "directories",
+                    "match": {
+                      "name": "New zone 2"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "input_value",
+              "selector": "input.desk-zone-rename",
+              "equals": "New zone 2"
+            },
+            {
+              "kind": "hit_target",
+              "min_width": 40,
+              "min_height": 16
+            }
+          ]
+        },
+        "observe_at": "input.desk-zone-rename",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/directories"
+          },
+          {
+            "method": "GET",
+            "path": "/api/directories"
+          }
+        ],
+        "words": "on the spatial Floor the owner presses New Zone twice with no rename between: the second create answers 201 (never 409 zone_name_taken), the hub holds 'New zone' and 'New zone 2', and the second zone's name field is open, visible and unobscured, reading 'New zone 2'"
+      },
+      "completion_bound_s": 40,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.zone_rename.list",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.zone_rename"
+      ],
+      "state_id": "state.desk_presentation.p8_zone_name",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (store/types.ts defaultViewFor: phone width, more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Zone"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.new-zone']",
+          "why": "desk.new-zone (verbRegistry.ts) -> createPrimitive('zone') picks the free default name (zoneName.ts)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": ".desk-listmode input.desk-zone-rename",
+          "value": "Platform",
+          "timeout_s": 20,
+          "optional": true,
+          "why": "the in-row field opens with the name selected (ZoneRenameRow is-inrow); optional so main runs to a verdict: main draws no field"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "key": "Enter",
+        "why": "Enter writes the name: PUT /api/directories/{id} (useZoneRenameField)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "Platform"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "directories",
+                    "match": {
+                      "name": "Platform"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-listmode .object-list-open[aria-label^=Platform]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/directories"
+          }
+        ],
+        "words": "on the list New Zone opens the name field in the new zone's row; the owner types 'Platform' and presses Enter; the row reads 'Platform', readable, and the hub lists a zone named 'Platform'"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.zone_rename.name_taken_list",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.zone_rename"
+      ],
+      "state_id": "state.desk_presentation.p8_zone_name",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (store/types.ts defaultViewFor: phone width, more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Zone"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.new-zone']",
+          "why": "desk.new-zone (verbRegistry.ts) -> createPrimitive('zone') picks the free default name (zoneName.ts)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": ".desk-listmode input.desk-zone-rename",
+          "value": "Inbox",
+          "timeout_s": 20,
+          "optional": true,
+          "why": "'Inbox' is a seeded zone, so the hub refuses it 409 zone_name_taken; optional so main runs to a verdict: main draws no list field"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "key": "Enter"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "NAME TAKEN"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "directories",
+                    "match": {
+                      "name": "New zone"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-listmode [data-testid=zone-name-refused]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/directories"
+          }
+        ],
+        "words": "on the list the owner names a new zone 'Inbox', a name the desk already has; the field stays and the library failure chip reads 'NAME TAKEN', readable; the hub keeps the zone as 'New zone'"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.zone_rename.name_taken_floor",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.zone_rename"
+      ],
+      "state_id": "state.desk_presentation.p8_zone_name",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 393,
+          "why": "at 393 the Floor opens as the list; the palette's Spatial view shows the Floor itself"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-world-a11y",
+          "state": "attached"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Zone"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.new-zone']",
+          "why": "desk.new-zone (verbRegistry.ts) -> createPrimitive('zone') picks the free default name (zoneName.ts)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input.desk-zone-rename",
+          "value": "Inbox",
+          "timeout_s": 20,
+          "optional": false,
+          "why": "'Inbox' is a seeded zone, so the hub refuses it 409 zone_name_taken"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "key": "Enter"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "NAME TAKEN"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "directories",
+                    "match": {
+                      "name": "New zone"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": "[data-testid=zone-name-refused]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/directories"
+          }
+        ],
+        "words": "on the spatial Floor the owner names a new zone 'Inbox', a name the desk already has; the field stays and the library failure chip reads 'NAME TAKEN', readable; the hub keeps the zone as 'New zone'"
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.zone_rename.f2_row",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.zone_rename"
+      ],
+      "state_id": "state.desk_presentation.p8_zone_name",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (store/types.ts defaultViewFor: phone width, more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": ".desk-listmode .object-list-open[aria-label^=Inbox]",
+          "why": "keyboard travel to the Inbox zone row (zone rows are not selectable; DeskListView.tsx F2 handler)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "key": "F2"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "input_value",
+              "selector": ".desk-listmode input.desk-zone-rename",
+              "equals": "Inbox"
+            },
+            {
+              "kind": "hit_target",
+              "min_width": 40,
+              "min_height": 16
+            }
+          ]
+        },
+        "observe_at": ".desk-listmode input.desk-zone-rename",
+        "words": "on the list the owner focuses the Inbox zone row and presses F2; the name field opens in that row reading 'Inbox', visible and unobscured"
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.list_delete.gone",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.decision_delete"
+      ],
+      "state_id": "state.desk_presentation.p8_one_delete",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas list delete",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (store/types.ts defaultViewFor: phone width, more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list delete,']",
+          "why": "the seeded row is drawn (the list refreshes after the reload)"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Atlas list delete",
+          "exact": false,
+          "button": "right",
+          "timeout_s": 25,
+          "why": "the row menu opens on a right-click (DeskListView.tsx onRowContextMenu)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "menuitem",
+        "name": "Delete",
+        "exact": false,
+        "why": "object.delete -> the one listener (deleteReceipt.tsx) -> the 8 s undo receipt -> DELETE /api/decisions/{id}"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 404
+                }
+              ]
+            },
+            {
+              "kind": "readable_text",
+              "value": "Removal committed"
+            }
+          ]
+        },
+        "observe_at": ".undo-receipt",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
+          }
+        ],
+        "words": "on the list the owner right-clicks the decision's row and presses Delete; after the 8 s window the receipt reads 'Removal committed', readable above the AskBar, and the hub answers 404 for the decision"
+      },
+      "completion_bound_s": 40,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.list_delete.undo",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.decision_delete"
+      ],
+      "state_id": "state.desk_presentation.p8_one_delete",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas list delete",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (store/types.ts defaultViewFor: phone width, more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list delete,']",
+          "why": "the seeded row is drawn (the list refreshes after the reload)"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Atlas list delete",
+          "exact": false,
+          "button": "right",
+          "timeout_s": 25,
+          "why": "the row menu opens on a right-click (DeskListView.tsx onRowContextMenu)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "menuitem",
+        "name": "Delete",
+        "exact": false,
+        "why": "object.delete -> the one listener (deleteReceipt.tsx) -> the 8 s undo receipt -> DELETE /api/decisions/{id}",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".undo-receipt.is-pending",
+            "timeout_s": 3,
+            "why": "the delete is pending (inside its window); optional so main runs to a verdict: on main the list shows no receipt",
+            "optional": true
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": "button.undo-receipt-btn",
+            "optional": true,
+            "requires": {
+              "visible": ".undo-receipt.is-pending",
+              "text": "Undo",
+              "seconds_left": {
+                "selector": ".undo-receipt-time",
+                "min": 2
+              }
+            },
+            "why": "the receipt's Undo, inside the window (one gesture with the Delete), re-checked at delivery; optional so a missing button is recorded, but a guard that does not hold BLOCKS (main shows no receipt: blocked)"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200
+                }
+              ]
+            },
+            {
+              "kind": "readable_text",
+              "value": "Restored Atlas list delete"
+            }
+          ]
+        },
+        "observe_at": ".undo-receipt",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
+          }
+        ],
+        "words": "on the list the owner deletes the decision from its row menu and presses Undo inside the window (one gesture: the trigger and its `then` steps); the receipt reads 'Restored Atlas list delete', readable, and the hub still answers 200 (the 200 after the window is read back in the closing rehearsal)"
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.list_delete.long_list_393",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.decision_delete"
+      ],
+      "state_id": "state.desk_presentation.p8_one_delete",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 01",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_00",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 02",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_01",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 03",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_02",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 04",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_03",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 05",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_04",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 06",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_05",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 07",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_06",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 08",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_07",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 09",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_08",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 10",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_09",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 11",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_10",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 12",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_11",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 13",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_12",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 14",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_13",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 15",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_14",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 16",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_15",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 17",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_16",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 18",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_17",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 19",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "long_18",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas long list 20",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "last_id",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (store/types.ts defaultViewFor: phone width, more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas long list 20,']"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": ".desk-listmode .object-list-open[aria-label^='Everyday context,']",
+          "why": "keyboard travel to the list's LAST row (the seeded knowledge base; decisions sort above agents and knowledge) scrolls the page to its end"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Atlas long list 20",
+          "exact": false,
+          "button": "right",
+          "timeout_s": 25
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "menuitem",
+        "name": "Delete",
+        "exact": false,
+        "why": "object.delete -> the one listener (deleteReceipt.tsx) -> the 8 s undo receipt -> DELETE /api/decisions/{id}"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 404
+                }
+              ]
+            },
+            {
+              "kind": "readable_text",
+              "value": "Removal committed"
+            }
+          ]
+        },
+        "observe_at": ".undo-receipt",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/decisions/{last_id}"
+          }
+        ],
+        "words": "on a list of more than 16 objects scrolled to its end, the owner deletes the last decision row; the receipt reads 'Removal committed' inside the viewport, unobscured, and the hub answers 404. The fence is ruled at 393 (exit 3); it runs at 1440 as well, where the same list also scrolls."
+      },
+      "completion_bound_s": 40,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.delete_then_leave.gone",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.decision_delete"
+      ],
+      "state_id": "state.desk_presentation.p8_one_delete",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas leave",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 393,
+          "why": "at 393 the Floor opens as the list; the palette's Spatial view shows the Floor itself"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-world-a11y",
+          "state": "attached"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-obj-id='decision:{decision_id}']",
+          "state": "attached"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": "[data-obj-id='decision:{decision_id}']",
+          "why": "keyboard travel to the Floor object's chip (a focused world button surfaces as a chip)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Shift+Enter",
+          "why": "select it: Shift toggles the selection (WorldStage chip click)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "key": "Delete",
+        "trigger_route": {
+          "method": "DELETE",
+          "path": "/api/decisions/{decision_id}"
+        },
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".undo-receipt.is-pending",
+            "timeout_s": 3,
+            "why": "the first delete is still inside its window (the receipt's pending phase)"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": "[data-testid=chair-floor-toggle]",
+            "requires": {
+              "visible": ".undo-receipt.is-pending",
+              "text": "Undo",
+              "seconds_left": {
+                "selector": ".undo-receipt-time",
+                "min": 2
+              }
+            },
+            "why": "leave the Floor for the Chair inside the window, re-checked at delivery (the receipt pending with Undo and at least 2 s left): a face change commits the pending delete (deleteReceipt.tsx)"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "DELETE",
+              "path": "/api/decisions/{decision_id}",
+              "status": 200
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 404
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": "protocol: GET /api/decisions/{decision_id}",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
+          }
+        ],
+        "words": "on the spatial Floor the owner deletes a decision and goes to the Chair inside the window (one gesture: the trigger and its `then` steps); the DELETE is sent (the face change commits it) and the hub answers 404. The Chair shows no receipt, so the outcome is read on the hub."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.chair.delete_withheld",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.decision_delete"
+      ],
+      "state_id": "state.desk_presentation.p8_one_delete",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "chair-desk"
+          },
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the Chair is in front, past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas chair keep",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 393,
+          "why": "at 393 the Floor opens as the list; the palette's Spatial view shows the Floor itself"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-world-a11y",
+          "state": "attached"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-obj-id='decision:{decision_id}']",
+          "state": "attached"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": "[data-obj-id='decision:{decision_id}']",
+          "why": "keyboard travel to the Floor object's chip (a focused world button surfaces as a chip)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Shift+Enter",
+          "why": "select it: Shift toggles the selection (WorldStage chip click)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "to the Chair with the selection left from the Floor (the keymap is global)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Delete",
+          "why": "the Delete key on the Chair does nothing: no face there shows a receipt"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "fill",
+        "adapter": "ui-keyboard",
+        "selector": "[aria-controls=desk-palette-listbox]",
+        "value": "Delete"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "Open the Floor or the list"
+            },
+            {
+              "kind": "attr_equals",
+              "attr": "aria-disabled",
+              "value": "true"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": "[id='desk-palette-option-object.delete']",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
+          }
+        ],
+        "words": "on the Chair with a decision still selected from the Floor, the Delete key deletes nothing (the hub answers 200) and the palette shows Delete greyed with its reason 'Open the Floor or the list', readable"
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p8.delete_twice.both_gone",
+      "job": "p8",
+      "edge_ids": [
+        "edge.face.decision_delete"
+      ],
+      "state_id": "state.desk_presentation.p8_one_delete",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas probe A",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "a_id",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas probe B",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "b_id",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 393,
+          "why": "at 393 the Floor opens as the list; the palette's Spatial view shows the Floor itself"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-world-a11y",
+          "state": "attached"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-obj-id='decision:{a_id}']",
+          "state": "attached"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": "[data-obj-id='decision:{a_id}']",
+          "why": "keyboard travel to the Floor object's chip (a focused world button surfaces as a chip)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Shift+Enter",
+          "why": "select it: Shift toggles the selection (WorldStage chip click)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "key": "Delete",
+        "why": "A queued: the receipt reads 'Removed Atlas probe A'",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".undo-receipt.is-pending",
+            "timeout_s": 3,
+            "why": "the first delete is still inside its window (the receipt's pending phase)"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": "[data-obj-id='decision:{b_id}']",
+            "state": "attached"
+          },
+          {
+            "kind": "ui",
+            "action": "focus",
+            "adapter": "ui-keyboard",
+            "selector": "[data-obj-id='decision:{b_id}']",
+            "why": "keyboard travel to the Floor object's chip (a focused world button surfaces as a chip)"
+          },
+          {
+            "kind": "ui",
+            "action": "press",
+            "adapter": "ui-keyboard",
+            "key": "Shift+Enter",
+            "why": "select it: Shift toggles the selection (WorldStage chip click)"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".undo-receipt.is-pending",
+            "timeout_s": 3,
+            "why": "the first delete is still inside its window (the receipt's pending phase)"
+          },
+          {
+            "kind": "ui",
+            "action": "press",
+            "adapter": "ui-keyboard",
+            "key": "Delete",
+            "requires": {
+              "visible": ".undo-receipt.is-pending",
+              "text": "Undo",
+              "seconds_left": {
+                "selector": ".undo-receipt-time",
+                "min": 2
+              }
+            },
+            "why": "B inside A's window, re-checked at delivery (A's receipt pending with Undo and at least 2 s left): the second delete commits A at once (useUndoReceipt flush) and queues B"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 404
+                },
+                {
+                  "status": 404
+                }
+              ]
+            },
+            {
+              "kind": "readable_text",
+              "value": "Removal committed"
+            }
+          ]
+        },
+        "observe_at": ".undo-receipt",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/decisions/{a_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/decisions/{b_id}"
+          }
+        ],
+        "words": "on the spatial Floor the owner deletes A, then selects B and deletes it inside A's 8 s window (one gesture: the trigger and its `then` steps; the receipt is pending right before B's Delete); both reach the hub (A 404 and B 404) and the receipt reads 'Removal committed', readable"
+      },
+      "completion_bound_s": 40,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p9.list_status.shown",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.list_zone_dive"
+      ],
+      "state_id": "state.desk_presentation.p9_list_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 1",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_1",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 2",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_2",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 3",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_3",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 4",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_4",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 5",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_5",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 6",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_6",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list note 6,']"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-listmode .object-list-open[aria-label^='Personal, ZONE']",
+        "why": "dive into the starter zone Personal (two starter notes: About me, How I like help)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "2 SHOWN OF 2"
+        },
+        "observe_at": ".desk-list-status",
+        "words": "the owner dives into a zone of two notes; the list's status reads '2 SHOWN OF 2' (the status style sets capitals), readable, in the viewport. Red on main: '2 SHOWNS OF 2' at both widths."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p9.list_columns.in_view",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.list_zone_dive"
+      ],
+      "state_id": "state.desk_presentation.p9_list_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 1",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_1",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 2",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_2",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 3",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_3",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 4",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_4",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 5",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_5",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 6",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_6",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list note 6,']"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-listmode .object-list-open[aria-label^='Personal, ZONE']",
+        "why": "dive into the starter zone Personal (two starter notes: About me, How I like help)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "PERSONAL"
+        },
+        "observe_at": ".desk-listmode .object-list-row:has(.object-list-open[aria-label^=About])",
+        "words": "the owner dives into a zone; the row 'About me' is wholly inside the viewport and names its zone PERSONAL: in the Zone column at 1440, on the fold line in the name Button at 393. Red on main at 393: the Kind, Zone and Attention cells run past the right edge, so the row is not in the viewport; preservation green at 1440."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p9.list_sort.zone_pressed",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.list_sort"
+      ],
+      "state_id": "state.desk_presentation.p9_list_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 1",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_1",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 2",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_2",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 3",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_3",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 4",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_4",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 5",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_5",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 6",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_6",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list note 6,']"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "Kind",
+        "exact": true,
+        "why": "PHILO-14 A2: the Kind sort verb (the zone rides the Kind cell; ObjectList has no Zone column): a column header at both widths (ObjectList's header Buttons)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "attr_equals",
+          "attr": "aria-pressed",
+          "value": "true"
+        },
+        "observe_at": ".desk-listmode [role=columnheader] .object-list-sort[aria-pressed=true]",
+        "words": "the owner sorts the list by Kind (PHILO-14 A2: the zone rides Kind); the sorted verb is the library Button and says it is pressed (aria-pressed true). Red on main at both widths: the sort verbs are raw buttons with no pressed state."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p9.list_row_menu.delete_in_view",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.list_row_menu"
+      ],
+      "state_id": "state.desk_presentation.p9_list_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 1",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_1",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 2",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_2",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 3",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_3",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 4",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_4",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 5",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_5",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 6",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_6",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list note 6,']"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": ".desk-listmode .object-list-row:last-child .object-list-open",
+          "why": "keyboard travel to the list's LAST row scrolls the page to its end; the row sits at the bottom edge"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "key": "Shift+F10",
+        "why": "the row menu from the keyboard (DeskListView.tsx: the list's onKeyDown, ContextMenu or Shift+F10) on the focused last row"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "hit_target",
+          "min_width": 44,
+          "min_height": 28,
+          "min_height_by_viewport": {
+            "393": 44
+          }
+        },
+        "observe_at": ".desk-work-menu [role=menuitem]:last-of-type",
+        "words": "the owner opens the row menu on the list's last row, at the bottom edge; the menu's last entry (Delete) is wholly inside the viewport and owns its nine hit points; at 393 it is 44 px tall. Red on main at 393: the panel's guessed clamp leaves Delete cut 15 px, rows 28 px; preservation green at 1440."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.philo603.toast.floor_list",
+      "job": "j6",
+      "edge_ids": [
+        "edge.timer.intel_drainer"
+      ],
+      "state_id": "state.meetings.intel.ready",
+      "applicability": "applicable",
+      "preconditions": [
+        "A real imported architect meeting reaches intel ready while the Floor list is active.",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "class",
+            "value": "desk-listmode"
+          },
+          "observe_at": ".desk-listmode",
+          "why": "the existing Floor list is active; the placement predicate owns the new slot check"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.77.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam; import, queue, persistence and aftercare remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "adapter": "http-route",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}",
+          "body": null,
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "why": "capture the route hash from the real meeting read before admitting the producer job"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Floor"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "HoldSpeak",
+          "why": "the current chrome exposes List view in the HoldSpeak menu (DeskListView.test.tsx chrome-toggle fence)"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "menuitem",
+          "name": "List view",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "select list mode when needed; the phone can already start in list mode"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-hub-dot",
+          "why": "an outside pointer-down closes the mode menu even when no mode change was needed"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[role=menu][aria-label=HoldSpeak]",
+          "state": "hidden",
+          "why": "a setup menu must not cover the surface during its aftercare observation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "the existing Floor list face is active before the producer trigger"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "POST",
+        "path": "/api/meetings/{meeting_id}/intelligence/run",
+        "body": {
+          "expected_selection_hash": "{selection_hash}"
+        },
+        "adapter": "http-route",
+        "expect_status": 200,
+        "why": "admit the real summary producer after the Floor list is active; its aftercare_ready signal reaches intelligenceAttention.ts"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "MEETING READY",
+          "slot_selector": "[data-aftercare-floor-slot=\"top\"]",
+          "scroll_target_selector": "[data-aftercare-floor-slot=\"top\"]",
+          "clear_of": [
+            {
+              "selector": "[data-testid=meeting-summary-text]",
+              "required": false,
+              "require_hit_test": false
+            },
+            {
+              "selector": "[data-testid=arrival-capture-bar]",
+              "required": false,
+              "require_hit_test": false
+            },
+            {
+              "selector": "[data-testid=arrival-brief-row]",
+              "required": false,
+              "require_hit_test": false
+            },
+            {
+              "selector": ".desk-list-census",
+              "required": true,
+              "require_hit_test": true
+            }
+          ],
+          "auto_scroll_calls_by_viewport": {
+            "393": 1,
+            "1440": 0
+          },
+          "no_field_focus": true
+        },
+        "observe_at": ".ambient-aftercare",
+        "words": "The real deferred summary reaches intel ready and the aftercare card renders above the Floor list. At 393, one nearest-scroll call brings the slot into view; it can be a no-op when the slot is already visible.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ]
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.philo603.toast.floor_spatial_fallback",
+      "job": "j6",
+      "edge_ids": [
+        "edge.timer.intel_drainer"
+      ],
+      "state_id": "state.meetings.intel.ready",
+      "applicability": "applicable",
+      "preconditions": [
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "class",
+            "value": "desk-world-canvas"
+          },
+          "observe_at": ".desk-world-canvas",
+          "why": "the spatial WebGL Floor is mounted; its fixed fallback is explicitly outside the placement build"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine yet']",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=needs-row-verb][data-verb=setup][aria-label='Choose an engine: No engine for summaries']",
+          "optional": true,
+          "timeout_s": 10,
+          "why": "PHILO-14 A5 (#935): the setup row's verb opens Runs on (NeedsDrawer.tsx openSurfaceOr('open-concierge'))."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard]",
+          "timeout_s": 30,
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx); the board paints from the roster"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]",
+          "why": "PHILO-16 (C): the Models window is Runs on (RunsOnCore.tsx): Add an engine opens the address row inline"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.77.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-model]",
+          "timeout_s": 30,
+          "why": "the Check answered READY with the model the address serves"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]",
+          "why": "Add: the engine joins the column, with no wire"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('ADDED')",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-default] .switchboard-job-name",
+          "why": "select a job first, so the next press always selects Meetings (a press on the selected job deselects it at 1440)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-job-meetings] .switchboard-job-name",
+          "why": "Meetings selected: at 1440 the board's keyboard twin patches it; at 393 the list opens to it"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=switchboard-engines] [data-testid=switchboard-engine-engine-192-168-77-43-8080], [data-testid=switchboard-tap-engine-192-168-77-43-8080]",
+          "key": "Enter",
+          "why": "the drag's keyboard twin (Switchboard.tsx keyPatch): Enter on the engine patches the selected job; at 393 Enter on the tap Button patches the open job. Meetings also writes the meeting.deferred_analysis row (useRunsOn.ts writeSummary)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
+          "timeout_s": 30,
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Close Runs on",
+          "why": "Runs on stays open after a patch (no commit closes it); the owner closes it before the next Chair step"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=runson-root]",
+          "state": "hidden"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "the provider reply is replayed at the product provider seam; import, queue, persistence and aftercare remain real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo5_summary_reply.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "adapter": "http-route",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}",
+          "body": null,
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "why": "capture the route hash from the real meeting read before admitting the producer job"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Chair')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open The week the way the owner does (Window > Chair > The week at 1440, Go > The week at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Floor"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "HoldSpeak"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "menuitem",
+          "name": "Spatial view",
+          "optional": true,
+          "timeout_s": 1,
+          "why": "select spatial mode when the device defaults to list"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-hub-dot",
+          "why": "an outside pointer-down closes the mode menu even when no mode change was needed"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[role=menu][aria-label=HoldSpeak]",
+          "state": "hidden",
+          "why": "a setup menu must not cover the surface during its aftercare observation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-world-canvas"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "POST",
+        "path": "/api/meetings/{meeting_id}/intelligence/run",
+        "body": {
+          "expected_selection_hash": "{selection_hash}"
+        },
+        "adapter": "http-route",
+        "expect_status": 200,
+        "why": "admit the real summary producer with the spatial Floor mounted; retain its existing fixed fallback as an explicit limitation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "MEETING READY",
+          "clear_of": [],
+          "auto_scroll_calls_by_viewport": {
+            "393": 0,
+            "1440": 0
+          },
+          "no_field_focus": true
+        },
+        "observe_at": ".ambient-aftercare",
+        "words": "The existing card remains readable in its fixed spatial Floor fallback. The observation records its computed position; this case makes no claim of a spatial flow slot or unobstructed WebGL furniture.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ]
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ]
+}

@@ -17,6 +17,14 @@
   font-family: var(--font-sans);
   color: var(--wb-paper);
 }
+/* PHILO-17: the chosen place (Change places) is the backdrop: its still
+   picture under the floor's light, on the Workbench backdrop colour. */
+.desk-screen[data-place-still] {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.28) 100%),
+    var(--desk-place-still) center / cover no-repeat,
+    var(--wb-backdrop);
+}
 /* 1440: the icons stand where layout.ts puts them (A-1). */
 .desk-screen[data-layout="free"] > .desk-icon-grid {
   display: block;

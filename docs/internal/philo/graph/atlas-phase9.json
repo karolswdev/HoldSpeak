@@ -11,7 +11,7 @@
         "edge.face.list_zone_dive"
       ],
       "state_id": "state.desk_presentation.p9_list_face",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -185,13 +185,6 @@
           "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list note 6,']"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "click",
-        "adapter": "ui-pointer",
-        "selector": ".desk-listmode .object-list-open[aria-label^='Personal, ZONE']",
-        "why": "dive into the starter zone Personal (two starter notes: About me, How I like help)"
-      },
       "expected": {
         "predicate": {
           "kind": "readable_text",
@@ -204,7 +197,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). The desk-wide list (DeskListView) is parked; its canvas has no face. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p9.list_columns.in_view",
@@ -213,7 +207,7 @@
         "edge.face.list_zone_dive"
       ],
       "state_id": "state.desk_presentation.p9_list_face",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -387,13 +381,6 @@
           "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list note 6,']"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "click",
-        "adapter": "ui-pointer",
-        "selector": ".desk-listmode .object-list-open[aria-label^='Personal, ZONE']",
-        "why": "dive into the starter zone Personal (two starter notes: About me, How I like help)"
-      },
       "expected": {
         "predicate": {
           "kind": "readable_text",
@@ -406,7 +393,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). The desk-wide list (DeskListView) is parked; its canvas has no face. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p9.list_sort.zone_pressed",
@@ -415,7 +403,7 @@
         "edge.face.list_sort"
       ],
       "state_id": "state.desk_presentation.p9_list_face",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -589,15 +577,6 @@
           "selector": ".desk-listmode .object-list-open[aria-label^='Atlas list note 6,']"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "click_role",
-        "adapter": "ui-pointer",
-        "role": "button",
-        "name": "Kind",
-        "exact": true,
-        "why": "PHILO-14 A2: the Kind sort verb (the zone rides the Kind cell; ObjectList has no Zone column): a column header at both widths (ObjectList's header Buttons)"
-      },
       "expected": {
         "predicate": {
           "kind": "attr_equals",
@@ -611,7 +590,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). The desk-wide list (DeskListView) is parked; its canvas has no face. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p9.list_row_menu.delete_in_view",
@@ -620,7 +600,7 @@
         "edge.face.list_row_menu"
       ],
       "state_id": "state.desk_presentation.p9_list_face",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -801,13 +781,6 @@
           "why": "keyboard travel to the list's LAST row scrolls the page to its end; the row sits at the bottom edge"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "press",
-        "adapter": "ui-keyboard",
-        "key": "Shift+F10",
-        "why": "the row menu from the keyboard (DeskListView.tsx: the list's onKeyDown, ContextMenu or Shift+F10) on the focused last row"
-      },
       "expected": {
         "predicate": {
           "kind": "hit_target",
@@ -824,7 +797,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). The desk-wide list (DeskListView) is parked; its canvas has no face. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p9.room_items.late_row",
@@ -2118,17 +2092,17 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "symbol": "<ObjectList",
           "claim": "PHILO-14 A2: the list face is the ObjectList species; in a surface of 520 px or less Kind and When fold under the name, the zone rides Kind and the attention rides State"
         },
         {
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "symbol": "countToken(visible.length, \"SHOWN\", \"SHOWN\")",
           "claim": "the status says SHOWN for any count"
         },
         {
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "symbol": "onSort={(key) =>",
           "claim": "PHILO-14 A2: the sort verbs are ObjectList's header Buttons (library Button, aria-pressed and aria-sort on the sorted column); a press on the sorted header flips it"
         },

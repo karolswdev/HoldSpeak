@@ -14,6 +14,7 @@ const state = vi.hoisted(() => ({
   refresh: vi.fn(),
   openPullout: vi.fn(),
   pullouts: [] as Array<{ id: string; origin: { x: number; y: number } | null }>,
+  infoWindows: [] as Array<{ ref: string; origin: { x: number; y: number } | null }>,
   renamingZoneId: null as string | null,
   zoneRenameError: null as null | { zoneId: string; name: string; code: string; label: string; detail: string },
   setRenamingZone: vi.fn(),
@@ -53,6 +54,7 @@ vi.mock("./store", () => {
       : null;
     desk.askOpen = state.askOpen;
     desk.pullouts = state.pullouts;
+    (desk as Record<string, unknown>).infoWindows = state.infoWindows;
     return selector(desk);
   };
   useDesk.getState = () => ({
@@ -108,6 +110,17 @@ vi.mock("./components/SurfaceWindows", () => ({
   ),
 }));
 vi.mock("./components/TrustWindow", () => ({ TrustWindow: marker("trust-window") }));
+// The window families and the compositor read the real store at import
+// (compositor/live.ts: useDesk.getState().panelDepth): mock their mounts.
+vi.mock("./components/DeskReceiptRow", () => ({ DeskReceiptRow: marker("receipt-row") }));
+vi.mock("./components/HandSheet", () => ({ HandSheet: marker("hand-sheet") }));
+vi.mock("./components/InfoWindow", () => ({ InfoWindow: marker("info-window") }));
+vi.mock("./compositor/CompositorLayer", () => ({ CompositorLayer: marker("compositor") }));
+vi.mock("./conductor", () => ({ ConductorWindows: marker("conductor-windows") }));
+vi.mock("./drawer", () => ({ DrawerWindows: marker("drawer-windows") }));
+vi.mock("./hand", () => ({ DragLayer: marker("drag-layer") }));
+vi.mock("./lane/LaneWindow", () => ({ LaneWindow: marker("lane-window") }));
+vi.mock("./deleteReceipt", () => ({ DeskDeleteHost: marker("delete-host") }));
 // returningWindows subscribes to the TrustWindow store at import: mock the mount.
 vi.mock("./returningWindows", () => ({ ReturningWindows: marker("returning-windows") }));
 vi.mock("./components/InlineEditor", () => ({ InlineEditor: marker("inline-editor") }));
@@ -277,9 +290,9 @@ describe("DeskApp arrival state", () => {
     expect(
       state.openPullout.mock.calls.filter(([ref]) => ref === "note:queued-deep-link"),
     ).toHaveLength(1);
-    expect(new URLSearchParams(window.location.search).get("open")).toBe(
-      "note:queued-deep-link",
-    );
+    // B2 (Astra P2 #747, DeskApp.tsx refreshDesk): a link opens once; the
+    // `open` parameter leaves the URL so a reload never replays it.
+    expect(new URLSearchParams(window.location.search).get("open")).toBeNull();
   });
 
   it("mounts staged pullouts on the normal Chair, never during arrival", () => {
@@ -301,5 +314,13 @@ describe("DeskApp arrival state", () => {
     expect(screen.getByTestId("normal-chair")).toBeInTheDocument();
     expect(screen.queryByTestId("atmosphere")).not.toBeInTheDocument();
     expect(screen.queryByTestId("world-stage")).not.toBeInTheDocument();
+  });
+
+  it("mounts Get Info windows on the one desk (the Floor used to)", () => {
+    state.arrivalRequired = false;
+    state.infoWindows = [{ ref: "note:n1", origin: null }];
+    render(<DeskApp />);
+    expect(screen.getByTestId("info-window")).toBeInTheDocument();
+    state.infoWindows = [];
   });
 });

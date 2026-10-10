@@ -1788,8 +1788,17 @@ def test_thought_op_save_starts_from_different_working_text() -> None:
 PHILO603_CASES = {
     "case.philo603.toast.arrival": "[data-testid=arrival-aftercare-slot]",
     "case.philo603.toast.meetings_window": "[data-aftercare-window-slot=\"top\"]",
-    "case.philo603.toast.floor_list": "[data-aftercare-floor-slot=\"top\"]",
 }
+#: PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"): the
+#: Floor's slots are parked; their cases are not applicable, the reason named.
+PHILO603_PARKED = ("case.philo603.toast.floor_list", "case.philo603.toast.floor_spatial_fallback")
+
+
+def test_philo603_floor_cases_are_not_applicable_with_the_ruling(atlas: dict) -> None:
+    cases = {case["id"]: case for case in atlas["cases"]}
+    for case_id in PHILO603_PARKED:
+        assert cases[case_id]["applicability"] == "not_applicable", case_id
+        assert "PHILO-17" in cases[case_id]["reason"] and "trigger" not in cases[case_id], case_id
 
 
 def test_philo603_cases_use_the_real_summary_producer_and_surface_slots(atlas: dict) -> None:

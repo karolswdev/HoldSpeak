@@ -220,7 +220,7 @@
       "preconditions": [
         "The real isolated repository fixture feeds the Roadmap API; the ordinary Desk palette opens its Roadmap object.",
         "The fixture seam patches the real build_roadmaps_router builder in the isolated hub, so production Roadmap reads use this case's repository.",
-        "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, Floor re-entry, and the final reopen."
+        "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, the desk after reload, and the final reopen."
       ],
       "setup": [
         {
@@ -315,18 +315,11 @@
           {
             "kind": "ui",
             "action": "wait_for",
-            "selector": "[data-testid=\"chair-floor-toggle\"]",
-            "state": "visible",
+            "adapter": "ui-observation",
+            "selector": "[data-testid=\"desk-screen\"]",
+            "state": "attached",
             "timeout_s": 15,
-            "adapter": "ui-observation"
-          },
-          {
-            "kind": "ui",
-            "action": "click_role",
-            "adapter": "ui-by-viewport",
-            "role": "button",
-            "name": "Floor",
-            "timeout_s": 2
+            "why": "PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): after the reload the desk is the Screen; there is no Floor to re-enter."
           },
           {
             "kind": "ui",
@@ -371,7 +364,7 @@
           "value": "Roadmap not found"
         },
         "observe_at": ".desk-roadmap-window",
-        "words": "The real repository-fixture-producer reaches the palette Roadmap, but the product refuses the fixture as not found; this observed product refusal persists through close, reload, Floor re-entry, and reopen. Root's five-column ledger records it as Product-red."
+        "words": "The real repository-fixture-producer reaches the palette Roadmap, but the product refuses the fixture as not found; this observed product refusal persists through close, reload, the desk after reload, and reopen. Root's five-column ledger records it as Product-red."
       },
       "completion_bound_s": 20,
       "viewports": [
@@ -390,7 +383,7 @@
       "preconditions": [
         "The repository is registered through its real route from the isolated fixture.",
         "The fixture seam patches the real build_roadmaps_router builder in the isolated hub, so production Repository reads use this case's repository.",
-        "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, Floor re-entry, and the final reopen."
+        "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, the desk after reload, and the final reopen."
       ],
       "setup": [
         {
@@ -498,18 +491,11 @@
           {
             "kind": "ui",
             "action": "wait_for",
-            "selector": "[data-testid=\"chair-floor-toggle\"]",
-            "state": "visible",
+            "adapter": "ui-observation",
+            "selector": "[data-testid=\"desk-screen\"]",
+            "state": "attached",
             "timeout_s": 15,
-            "adapter": "ui-observation"
-          },
-          {
-            "kind": "ui",
-            "action": "click_role",
-            "adapter": "ui-by-viewport",
-            "role": "button",
-            "name": "Floor",
-            "timeout_s": 2
+            "why": "PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): after the reload the desk is the Screen; there is no Floor to re-enter."
           },
           {
             "kind": "ui",
@@ -881,7 +867,7 @@
       "applicability": "applicable",
       "preconditions": [
         "POST /api/chains creates the actual empty Sequence.",
-        "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, Floor re-entry, and the final reopen."
+        "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, the desk after reload, and the final reopen."
       ],
       "setup": [
         {
@@ -990,18 +976,11 @@
           {
             "kind": "ui",
             "action": "wait_for",
-            "selector": "[data-testid=\"chair-floor-toggle\"]",
-            "state": "visible",
+            "adapter": "ui-observation",
+            "selector": "[data-testid=\"desk-screen\"]",
+            "state": "attached",
             "timeout_s": 15,
-            "adapter": "ui-observation"
-          },
-          {
-            "kind": "ui",
-            "action": "click_role",
-            "adapter": "ui-by-viewport",
-            "role": "button",
-            "name": "Floor",
-            "timeout_s": 2
+            "why": "PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): after the reload the desk is the Screen; there is no Floor to re-enter."
           },
           {
             "kind": "ui",
@@ -1064,7 +1043,7 @@
       "applicability": "applicable",
       "preconditions": [
         "The normal agent-hook producer ingests the retained Codex question and emits an awaiting-response session.",
-        "Every mouse/touch press uses ui-by-viewport. After the producer, the trigger refreshes the page before first open, then owns close, reload, Floor re-entry, and the final reopen."
+        "Every mouse/touch press uses ui-by-viewport. After the producer, the trigger refreshes the page before first open, then owns close, reload, the desk after reload, and the final reopen."
       ],
       "setup": [
         {
@@ -1179,18 +1158,11 @@
           {
             "kind": "ui",
             "action": "wait_for",
-            "selector": "[data-testid=\"chair-floor-toggle\"]",
-            "state": "visible",
+            "adapter": "ui-observation",
+            "selector": "[data-testid=\"desk-screen\"]",
+            "state": "attached",
             "timeout_s": 15,
-            "adapter": "ui-observation"
-          },
-          {
-            "kind": "ui",
-            "action": "click_role",
-            "adapter": "ui-by-viewport",
-            "role": "button",
-            "name": "Floor",
-            "timeout_s": 2
+            "why": "PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): after the reload the desk is the Screen; there is no Floor to re-enter."
           },
           {
             "kind": "ui",
@@ -1250,7 +1222,7 @@
         "edge.face.directory_zone_window"
       ],
       "state_id": "state.desk_presentation.p13_unwalked_windows",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "The Zone producer is real. Spatial's world zone is the ordinary Directory door: its native context menu should offer Open and the product verb should open the real ZoneWindow.",
         "Every mouse/touch press uses ui-by-viewport. The real __hsWorldZoneProbe and __hsWorldHitProbe agree on the produced zone before the native context gesture; the window closes, reloads, and reopens through that same door.",
@@ -1341,110 +1313,6 @@
           "at_width": 393
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "world_context_menu",
-        "adapter": "ui-by-viewport",
-        "selector": ".desk-world-canvas",
-        "world_target": "zone",
-        "world_ref": "{zone_id}",
-        "hold_ms": 650,
-        "then": [
-          {
-            "kind": "ui",
-            "action": "click_role",
-            "adapter": "ui-by-viewport",
-            "role": "menuitem",
-            "name": "Open"
-          },
-          {
-            "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-observation",
-            "selector": ".desk-zone-window",
-            "state": "visible",
-            "timeout_s": 10,
-            "capture_shot": true
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "adapter": "ui-by-viewport",
-            "selector": ".desk-zone-window button[aria-label^=\"Close \"]"
-          },
-          {
-            "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-observation",
-            "selector": ".desk-zone-window",
-            "state": "hidden",
-            "timeout_s": 10
-          },
-          {
-            "kind": "ui",
-            "action": "reload",
-            "adapter": "ui-navigation"
-          },
-          {
-            "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-observation",
-            "selector": "[data-testid=\"chair-floor-toggle\"]",
-            "state": "visible",
-            "timeout_s": 15
-          },
-          {
-            "kind": "ui",
-            "action": "click_role",
-            "adapter": "ui-by-viewport",
-            "role": "button",
-            "name": "Floor",
-            "optional": true,
-            "timeout_s": 2
-          },
-          {
-            "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-observation",
-            "selector": ".desk-world-canvas",
-            "state": "visible",
-            "timeout_s": 15
-          },
-          {
-            "kind": "ui",
-            "action": "world_context_menu",
-            "adapter": "ui-by-viewport",
-            "selector": ".desk-world-canvas",
-            "world_target": "zone",
-            "world_ref": "{zone_id}",
-            "hold_ms": 650
-          },
-          {
-            "kind": "ui",
-            "action": "click_role",
-            "adapter": "ui-by-viewport",
-            "role": "menuitem",
-            "name": "Open"
-          },
-          {
-            "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-observation",
-            "selector": ".desk-zone-window",
-            "state": "visible",
-            "timeout_s": 10
-          },
-          {
-            "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-observation",
-            "at_width": 1440,
-            "selector": ".desk-zone-window :text(\"Atlas Phase 13 Zone\")",
-            "state": "visible",
-            "timeout_s": 10
-          }
-        ]
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -1467,7 +1335,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). No face draws a zone, so the Spatial zone context door is gone; the zone data and the zone_* MCP tools stay. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p13.info.window",
@@ -1478,8 +1347,8 @@
       "state_id": "state.desk_presentation.p13_unwalked_windows",
       "applicability": "applicable",
       "preconditions": [
-        "A real Sequence object supplies Spatial's object context menu and Get Info verb; the object is located by the product's read-only __hsWorldProbe and confirmed by __hsWorldHitProbe.",
-        "Every mouse/touch press uses ui-by-viewport. Desktop uses a native right click; 393 uses Chromium's native touchStart/touchEnd with a 500 ms hold.",
+        "A real Note object supplies the desk's object menu and its Get Info verb; PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the door is the Screen icon's object menu (screen/Screen.tsx, objectMenu.ts), reached by keyboard at both widths.",
+        "Every pointer press uses ui-by-viewport; the menu door is the keyboard (Shift+F10 on the focused icon).",
         "A 1440 rerun showed IDENTITY at 52.465 s with a 40 s bound; 75 s allows 22.535 s of observed headroom without changing the expected result."
       ],
       "setup": [
@@ -1512,15 +1381,15 @@
         {
           "kind": "api",
           "method": "POST",
-          "path": "/api/chains",
+          "path": "/api/notes",
           "adapter": "http-route",
           "body": {
-            "name": "Atlas B0 Info Sequence",
-            "steps": []
+            "title": "Atlas B0 Info Note",
+            "body_markdown": "Get Info from the desk"
           },
           "expect_status": 201,
-          "capture_as": "info_chain_id",
-          "capture_path": "chain.id"
+          "capture_as": "info_note_id",
+          "capture_path": "note.id"
         },
         {
           "kind": "ui",
@@ -1530,52 +1399,36 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[data-testid=\"chair-floor-toggle\"]",
-          "state": "visible",
+          "adapter": "ui-observation",
+          "selector": "[data-testid=\"desk-screen\"]",
+          "state": "attached",
           "timeout_s": 15,
-          "adapter": "ui-observation"
+          "why": "PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the desk is the Screen; its icons are the object doors"
         },
         {
           "kind": "ui",
-          "action": "click_role",
-          "adapter": "ui-by-viewport",
-          "role": "button",
-          "name": "Floor",
-          "optional": true,
-          "timeout_s": 2
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-by-viewport",
-          "selector": ".desk-tools-launch",
-          "at_width": 393
-        },
-        {
-          "kind": "ui",
-          "action": "fill",
-          "adapter": "ui-input",
-          "selector": "input[placeholder=\"Search tools and Desk items\"]",
-          "value": "Spatial view",
-          "at_width": 393
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-by-viewport",
-          "selector": "[id=\"desk-palette-option-desk.toggle-view\"]",
-          "at_width": 393
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-screen [data-object-id='note:{info_note_id}']",
+          "state": "attached",
+          "timeout_s": 15
         }
       ],
       "trigger": {
         "kind": "ui",
-        "action": "world_context_menu",
-        "adapter": "ui-by-viewport",
-        "selector": ".desk-world-canvas",
-        "world_target": "object",
-        "world_ref": "sequence:{info_chain_id}",
-        "hold_ms": 650,
+        "action": "focus",
+        "adapter": "ui-keyboard",
+        "selector": ".desk-screen [data-object-id='note:{info_note_id}']",
+        "why": "keyboard travel to the note's desk icon (screen/Screen.tsx DeskIcon)",
         "then": [
+          {
+            "kind": "ui",
+            "action": "press",
+            "adapter": "ui-keyboard",
+            "selector": ".desk-screen [data-object-id='note:{info_note_id}']",
+            "key": "Shift+F10",
+            "why": "the icon's object menu (Screen.tsx onKeyDown: ContextMenu or Shift+F10; objectMenu.ts)"
+          },
           {
             "kind": "ui",
             "action": "click_role",
@@ -1615,35 +1468,33 @@
             "kind": "ui",
             "action": "wait_for",
             "adapter": "ui-observation",
-            "selector": "[data-testid=\"chair-floor-toggle\"]",
-            "state": "visible",
-            "timeout_s": 15
-          },
-          {
-            "kind": "ui",
-            "action": "click_role",
-            "adapter": "ui-by-viewport",
-            "role": "button",
-            "name": "Floor",
-            "optional": true,
-            "timeout_s": 2
+            "selector": "[data-testid=\"desk-screen\"]",
+            "state": "attached",
+            "timeout_s": 15,
+            "why": "PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): after the reload the desk is the Screen; there is no Floor to re-enter."
           },
           {
             "kind": "ui",
             "action": "wait_for",
             "adapter": "ui-observation",
-            "selector": ".desk-world-canvas",
-            "state": "visible",
+            "selector": ".desk-screen [data-object-id='note:{info_note_id}']",
+            "state": "attached",
             "timeout_s": 15
           },
           {
             "kind": "ui",
-            "action": "world_context_menu",
-            "adapter": "ui-by-viewport",
-            "selector": ".desk-world-canvas",
-            "world_target": "object",
-            "world_ref": "sequence:{info_chain_id}",
-            "hold_ms": 650
+            "action": "focus",
+            "adapter": "ui-keyboard",
+            "selector": ".desk-screen [data-object-id='note:{info_note_id}']",
+            "why": "keyboard travel to the note's desk icon (screen/Screen.tsx DeskIcon)"
+          },
+          {
+            "kind": "ui",
+            "action": "press",
+            "adapter": "ui-keyboard",
+            "selector": ".desk-screen [data-object-id='note:{info_note_id}']",
+            "key": "Shift+F10",
+            "why": "the icon's object menu (Screen.tsx onKeyDown: ContextMenu or Shift+F10; objectMenu.ts)"
           },
           {
             "kind": "ui",
@@ -1668,7 +1519,7 @@
           "value": "IDENTITY"
         },
         "observe_at": ".desk-info-window",
-        "words": "The produced Sequence opens Get Info through Spatial's ordinary object context door, closes before reload, and opens again through the same door."
+        "words": "The produced Note opens Get Info through the desk icon's object menu, closes before reload, and opens again through the same door."
       },
       "completion_bound_s": 75,
       "viewports": [
@@ -5329,7 +5180,7 @@
           "claim": "Directory objects have a registered pullout."
         },
         {
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "symbol": "<InfoWindow key={w.ref} refId={w.ref} origin={w.origin} />",
           "claim": "Info windows mount from the Floor."
         }

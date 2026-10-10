@@ -34,6 +34,7 @@ import { SurfaceWindows } from "./components/SurfaceWindows";
 import { TrustWindow } from "./components/TrustWindow";
 import { InlineEditor } from "./components/InlineEditor";
 import { Pullout } from "./components/Pullout";
+import { InfoWindow } from "./components/InfoWindow";
 import { ApplicationBoundary } from "./components/ApplicationBoundary";
 import { objectByRef } from "./world";
 import { useProjections } from "./projections";
@@ -96,6 +97,7 @@ function DeskFaces() {
   const loading = useDesk((s) => s.loading);
   const editingId = useDesk((s) => s.editingId);
   const pullouts = useDesk((s) => s.pullouts);
+  const infoWindows = useDesk((s) => s.infoWindows);
   const askOpen = useDesk((s) => s.askOpen);
   const error = useDesk((s) => s.error);
   const { refresh } = useDesk.getState();
@@ -209,6 +211,11 @@ function DeskFaces() {
           before reveal. */}
       {!arrivalRequired && chairOpenCards.map((pullout) => (
         <Pullout key={pullout.id} o={pullout.object!} pulloutId={pullout.id} origin={pullout.origin} />
+      ))}
+      {/* PHILO-17: Get Info windows (object.info). The parked Floor mounted
+          them; on the one desk they mount here. */}
+      {!arrivalRequired && (infoWindows ?? []).map((w) => (
+        <InfoWindow key={w.ref} refId={w.ref} origin={w.origin} />
       ))}
       {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
       {!arrivalRequired && <><ReturningWindows /* PHILO-13-07 (B2): the other families return once */ /><DeskToolInspector /></>}

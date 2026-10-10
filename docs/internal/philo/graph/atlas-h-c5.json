@@ -204,17 +204,17 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "symbol": "<ObjectList",
           "claim": "PHILO-14 A2: the list face is the ObjectList species; in a surface of 520 px or less Kind and When fold under the name, the zone rides Kind and the attention rides State"
         },
         {
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "symbol": "countToken(visible.length, \"SHOWN\", \"SHOWN\")",
           "claim": "the status says SHOWN for any count"
         },
         {
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "symbol": "onSort={(key) =>",
           "claim": "PHILO-14 A2: the sort verbs are ObjectList's header Buttons (library Button, aria-pressed and aria-sort on the sorted column); a press on the sorted header flips it"
         },

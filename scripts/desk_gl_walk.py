@@ -34,40 +34,39 @@ OUT = Path("uat/_runs/hs-95-01-walk")
 
 def wait_world(page):
     page.wait_for_selector(".desk-next", timeout=15000)
-    # The world canvas (GL) or the legacy world div (before shots).
-    page.wait_for_selector(".desk-world, .desk-listmode, .desk-empty",
-                           timeout=15000)
+    # PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"):
+    # the desk is the Screen; the GL Floor is parked (web/src/desk/_parked/floor/).
+    page.wait_for_selector(".desk-screen", timeout=15000)
     page.wait_for_timeout(1200)
 
 
-def free_object(page, title: str | None = None):
-    """Find a title-addressed object at a point the engine itself resolves.
-
-    DOM hit testing alone cannot see a zone painted inside the same canvas,
-    so the walk also asks the engine's read-only hit probe. That prevents a
-    native double-click from being misreported as an object-open failure when
-    it actually selects a zone."""
+def screen_probe(page):
+    """The Screen's icons in the old world probe's shape (title, ref, x, y,
+    selected): one per desk object the Screen draws (no drawers)."""
     return page.evaluate(
-        """(title) => {
-          const objs = window.__hsWorldProbe();
-          const pool = title ? objs.filter(o => o.title === title) : objs;
-          for (const o of pool) {
-            for (const dy of [0, -28, -48]) {
-              const x = o.x;
-              const y = o.y + dy;
-              const el = document.elementFromPoint(x, y);
-              const hitsWorld = el &&
-                (el.classList.contains('desk-world-canvas') ||
-                  el.classList.contains('desk-vignette'));
-              const hit = window.__hsWorldHitProbe(x, y);
-              if (hitsWorld && hit.type === 'object' && hit.ref === o.ref)
-                return { x, y, ref: o.ref, title: o.title };
-            }
-          }
-          return null;
-        }""",
-        title,
+        """() => [...document.querySelectorAll('.desk-screen .desk-icon[data-object-id]')]
+          .filter((el) => !el.dataset.objectId.startsWith('drawer:'))
+          .map((el) => { const r = el.getBoundingClientRect();
+            return { title: (el.getAttribute('aria-label') || '').split(', ')[0],
+                     ref: el.dataset.objectId, x: r.left + r.width / 2, y: r.top + r.height / 2,
+                     selected: el.getAttribute('aria-pressed') === 'true' }; })
+          .filter((o) => o.x > 0 && o.y > 0)"""
     )
+
+
+def free_object(page, title: str | None = None):
+    """A desk icon on the Screen, by title (or a ref prefix such as
+    ``workflow:``), at a point the icon itself owns."""
+    for o in screen_probe(page):
+        if title and o["title"] != title and not o["ref"].startswith(title):
+            continue
+        hit = page.evaluate(
+            "([x, y, ref]) => { const el = document.elementFromPoint(x, y);"
+            " return !!el && !!el.closest(`[data-object-id='${ref}']`); }",
+            [o["x"], o["y"], o["ref"]])
+        if hit:
+            return o
+    return None
 
 
 def open_desk_object(page, title: str):
@@ -158,12 +157,14 @@ def shots(label: str) -> None:
 def smoke() -> None:
     """Interaction smoke through the canvas: tap opens a pull-out, a drag
     moves an object and persists its park, a lasso ropes a selection."""
+    raise SystemExit("PARKED (PHILO-17): the GL Floor's drag, park and zone tray are parked; "
+                     "the one desk is fenced by tests/e2e/test_philo17_one_desk_glass.py")
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
-        objs = page.evaluate("() => window.__hsWorldProbe()")
+        objs = screen_probe(page)
         assert objs, "no objects on the seeded desk"
         target = free_object(page, objs[0]["title"])
         assert target, "no object has a reachable engine hit point"
@@ -179,7 +180,7 @@ def smoke() -> None:
             "a single click did not select (no ask bar)"
         )
         marked = next(
-            o for o in page.evaluate("() => window.__hsWorldProbe()")
+            o for o in screen_probe(page)
             if o["ref"] == target["ref"]
         )
         assert marked["selected"], "a single click did not mark the ring"
@@ -194,7 +195,7 @@ def smoke() -> None:
             "double-click open left the selection mark standing"
         )
         opened = next(
-            o for o in page.evaluate("() => window.__hsWorldProbe()")
+            o for o in screen_probe(page)
             if o["ref"] == target["ref"]
         )
         assert not opened["selected"], (
@@ -212,7 +213,7 @@ def smoke() -> None:
             page.mouse.move(target["x"] + 20 * i, target["y"] + 10 * i)
         page.mouse.up()
         page.wait_for_timeout(400)
-        moved = page.evaluate("() => window.__hsWorldProbe()")[0]
+        moved = screen_probe(page)[0]
         dx = abs(moved["x"] - target["x"]) + abs(moved["y"] - target["y"])
         assert dx > 100, f"drag did not move the object (dx={dx})"
         assert page.locator(".desk-pullout").count() == 0, "drag opened a pull-out"
@@ -245,6 +246,8 @@ def smoke() -> None:
 
 
 def storm(headed: bool = True) -> None:  # noqa: C901
+    raise SystemExit("PARKED (PHILO-17): the GL Floor's object-drag storm measured WebGL frames; "
+                     "the GL Floor is parked (web/src/desk/_parked/floor/)")
     """The object-drag storm. Runs HEADED by default so WebGL is the real
     GPU (headless Chromium falls back to SwiftShader software GL, which
     measures a CPU rasterizer, not the product). Frame timing is sampled
@@ -258,7 +261,7 @@ def storm(headed: bool = True) -> None:  # noqa: C901
         )
         page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
-        objs = page.evaluate("() => window.__hsWorldProbe()")
+        objs = screen_probe(page)
         assert objs, "no objects on the seeded desk"
         if "--assembled" in sys.argv:
             # The assembled worst case: the heaviest core (meeting memory)
@@ -295,7 +298,7 @@ def storm(headed: bool = True) -> None:  # noqa: C901
         t0 = time.time()
         i = 0
         while time.time() - t0 < 8:
-            target = page.evaluate("() => window.__hsWorldProbe()")[
+            target = screen_probe(page)[
                 i % len(objs)
             ]
             page.mouse.move(target["x"], target["y"])
@@ -1055,25 +1058,11 @@ def lastexits() -> None:
                 break
             page.keyboard.press("Escape")
             page.wait_for_timeout(400)
-        wf = free_object(page, "workflow:")
-        if not wf:
-            dump = page.evaluate(
-                """() => ({
-                  shells: [...document.querySelectorAll('.desk-window-shell')]
-                    .map(s => s.getAttribute('aria-label')),
-                  wfs: window.__hsWorldProbe()
-                    .filter(o => o.ref.startsWith('workflow:'))
-                    .map(o => {
-                      const el = document.elementFromPoint(o.x, o.y);
-                      return {ref: o.ref.slice(0, 28), x: Math.round(o.x),
-                              y: Math.round(o.y),
-                              hit: el ? String(el.className).slice(0, 44) : null};
-                    }),
-                })"""
-            )
-            page.screenshot(path=str(OUT / "lastexits-debug.png"))
-            raise AssertionError(f"no tappable workflow object: {dump}")
-        open_object(page, wf)
+        # PHILO-17: workflows are off the desk; ⌘K Search is their door.
+        page.keyboard.press("Meta+k")
+        page.wait_for_selector("[aria-controls=desk-palette-listbox]", timeout=3000)
+        page.fill("[aria-controls=desk-palette-listbox]", "workflow")
+        page.locator("[id^='desk-palette-option-workflow:']").first.click()
         page.wait_for_selector(".desk-pullout", timeout=8000)
         page.click(".desk-pullout button:has-text(\'Edit Workflow\')")
         wb = page.locator("[aria-label=\'Workbench\'].desk-surface-window")
@@ -1254,7 +1243,7 @@ def arrangement() -> None:
         page.wait_for_timeout(1500)
         page.keyboard.press("Escape")
         page.wait_for_timeout(500)
-        objs = page.evaluate("() => window.__hsWorldProbe()")
+        objs = screen_probe(page)
         assert objs, "no object on the phone desk"
         target = free_object(page, objs[0]["title"])
         assert target, "no phone object has a reachable engine hit point"
@@ -2091,13 +2080,13 @@ def focus() -> None:
             page.locator("[aria-label=\'Settings\'].desk-surface-window").count()
             == 0
         ), "Escape did not close the window"
-        # Keyboard travel through the GL world surfaces a visible chip.
+        # Keyboard travel reaches a desk icon on the Screen (PHILO-17).
         for _ in range(30):
             page.keyboard.press("Tab")
             chip = page.evaluate(
                 """() => {
                   const el = document.activeElement;
-                  return el && el.closest('.desk-world-a11y')
+                  return el && el.closest('.desk-screen .desk-icon')
                     ? el.textContent : null;
                 }"""
             )
