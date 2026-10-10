@@ -633,7 +633,10 @@ class TestSendToGlass:
         page.locator(f"[id='{MEET}'] [data-testid=send-running]").wait_for(timeout=T)
         assert "SENDING" in page.locator(f"[id='{MEET}'] [data-testid=send-running]").inner_text()
         color = self._ev(f"() => getComputedStyle(document.querySelector(\"[id='{MEET}'] [data-testid=send-running] .surface-state-chip\")).color")
-        accent_text = self._ev("() => { const p = document.createElement('span'); p.style.color = 'var(--accent-text)'; document.querySelector('.desk-next').appendChild(p); const c = getComputedStyle(p).color; p.remove(); return c; }")
+        # Phase 16 (COMPOSITOR §11): inside a window the accent is the kit's ember
+        # ink (window-interior.css remaps --accent-text to --wb-ember-ink), so the
+        # token is read where the chip is drawn, not at the desk root.
+        accent_text = self._ev(f"() => {{ const p = document.createElement('span'); p.style.color = 'var(--accent-text)'; const host = document.querySelector(\"[id='{MEET}'] [data-testid=send-running]\"); host.appendChild(p); const c = getComputedStyle(p).color; p.remove(); return c; }}")
         assert color == accent_text, (color, accent_text)
         self._whole(MEET, "C5-4", field=False)
         self._glass("C5-4")

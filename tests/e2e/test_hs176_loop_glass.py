@@ -236,8 +236,10 @@ def _assert_learned_board(page: Any) -> None:
     # `LEARNED` is said ONCE per face — the wing tab, never the body (A.7)
     assert "LEARNED" not in body, body
     # no caption count (ruling N5b): the tab is the name, the rows the count
-    caption = wing.locator(".surface-ledger-count").inner_text()
-    assert caption.strip() == "", caption
+    # Phase 16 kit: a Ledger with no count and no controls draws no head at
+    # all (Surface.tsx SurfaceLedger), so the caption is absent or empty.
+    captions = [c.strip() for c in wing.locator(".surface-ledger-count").all_inner_texts()]
+    assert not any(captions), captions
 
     # the trailing verb is the library Button, with the WORD (not the `x`
     # glyph). It is located by its slot, not by role+name: the ledger LINE is

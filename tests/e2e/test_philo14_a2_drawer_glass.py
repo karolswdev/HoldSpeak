@@ -153,7 +153,7 @@ class TestDrawerGlass:
                 ]
                 arrived: dict[str, bool] = {}
                 for ref, words in cases:
-                    drawer.locator(".drawer-head").click(position={"x": 4, "y": 4})  # the drawer in front
+                    drawer.get_by_test_id("drawer-facts").click(position={"x": 4, "y": 4})  # the drawer in front
                     self._member(drawer, ref).dblclick()
                     try:
                         page.wait_for_function(FRONT_JS, arg=words, timeout=T)
@@ -163,7 +163,7 @@ class TestDrawerGlass:
                     page.screenshot(path=str(SHOTS / f"glass-open-{ref.split(':')[0]}-1440.png"))
                 assert all(arrived.values()), arrived
                 # The drawer's own Room verb opens the Room.
-                drawer.locator(".drawer-head").click(position={"x": 4, "y": 4})
+                drawer.get_by_test_id("drawer-facts").click(position={"x": 4, "y": 4})
                 drawer.get_by_role("button", name="Room", exact=True).click()
                 page.locator(".room-head").first.wait_for(timeout=T)
                 assert not errors, errors
