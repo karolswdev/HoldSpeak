@@ -163,7 +163,7 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
       render(<ChairHome />);
       const rows = await screen.findAllByTestId("arrival-brief-row");
       fireEvent.click(rows.find((r) => r.textContent?.includes("Cursor pagination"))!);
-      await waitFor(() => expect(asked).toEqual([{ view: "receipts", decisionId: "mdec-cursor" }]));
+      await waitFor(() => expect(asked).toEqual([expect.objectContaining({ view: "receipts", decisionId: "mdec-cursor" })]));
       expect(openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history", "meeting:p13-api-review");
       expect(openPrimitive).not.toHaveBeenCalled();
     } finally {

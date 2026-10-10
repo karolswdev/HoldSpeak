@@ -76,18 +76,22 @@ export function meetingOutcomes(
         meta: owner(p.owner) || owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
       });
   // PHILO-17 ("what did we decide yesterday?"): the decisions the meeting
-  // recorded (the `decisions` table) are on its record too. A row a proposal
-  // already draws (the same words) is not drawn twice; a rejected one is not
-  // drawn.
+  // recorded are on its record too (the ledger: never a confirmed action).
+  // A row a proposal already draws is the same decision only by identity:
+  // the record the proposal wrote, or its artifact with the same words. A
+  // rejected one is not drawn.
   const said = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
-  const drawn = new Set(decisions.map((row) => said(row.text)));
+  const decisionProposals = live.filter((p) => p.kind === "decision");
+  const drawnByProposal = (d: MeetingDecision) => decisionProposals.some((p) =>
+    (Boolean(p.decision_record_id) && p.decision_record_id === d.record_id)
+    || (Boolean(p.source_artifact_id) && p.source_artifact_id === d.source_artifact_id
+      && said(p.text) === said(d.text)));
   for (const d of data.meetingDecisions ?? []) {
     const lifecycle = String(d.lifecycle ?? "").toLowerCase();
-    if (lifecycle === "rejected" || !String(d.text ?? "").trim() || drawn.has(said(d.text))) continue;
-    drawn.add(said(d.text));
+    if (lifecycle === "rejected" || !String(d.text ?? "").trim() || drawnByProposal(d)) continue;
     decisions.push({
       key: `dec-${d.id}`, plate: "DEC", text: d.text,
-      meta: lifecycle === "superseded" ? "REPLACED" : "DECIDED",
+      meta: lifecycle === "superseded" ? "REPLACED" : lifecycle === "disputed" ? "DISPUTED" : "DECIDED",
     });
   }
 

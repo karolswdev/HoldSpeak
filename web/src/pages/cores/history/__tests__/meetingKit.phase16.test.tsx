@@ -161,34 +161,40 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
 // recorded (the `decisions` table) are on its record, above Commitments,
 // even when no proposal names them.
 describe("the meeting's recorded decisions (PHILO-17)", () => {
-  it("meetingOutcomes draws recorded decisions; a proposal's twin once; a rejected one never", () => {
+  it("meetingOutcomes draws recorded decisions; a proposal's own row once (by identity); a rejected one never", () => {
     const { decisions } = meetingOutcomes({
       ftProposals: [
-        { id: "p1", meeting_id: "m1", kind: "decision", text: "Run reconciliation nightly", state: "confirmed", owner_hint: "Avery", created_at: "" },
+        { id: "p1", meeting_id: "m1", kind: "decision", text: "Run reconciliation nightly", state: "confirmed", owner_hint: "Avery", created_at: "", decision_record_id: "rec-1" },
       ],
       openActions: [],
       settledActions: [],
       meetingDecisions: [
         { id: "d1", text: "Freeze the old ledger on Nov 5", lifecycle: "recorded" },
-        { id: "d2", text: "run reconciliation  nightly", lifecycle: "accepted" },
+        // The row the confirmed proposal wrote (its record): drawn once, as the proposal.
+        { id: "d2", text: "Run reconciliation nightly", lifecycle: "active", record_id: "rec-1" },
+        // Astra r1 (6): the same words from another artifact are a second decision.
+        { id: "d5", text: "Run reconciliation nightly", lifecycle: "recorded", source_artifact_id: "art-2" },
         { id: "d3", text: "Keep the old ledger", lifecycle: "superseded" },
+        { id: "d6", text: "Shard the ledger", lifecycle: "disputed" },
         { id: "d4", text: "Drop the ledger", lifecycle: "rejected" },
       ],
     });
     expect(decisions.map((d) => [d.text, d.meta])).toEqual([
       ["Run reconciliation nightly", "AVERY"],
       ["Freeze the old ledger on Nov 5", "DECIDED"],
+      ["Run reconciliation nightly", "DECIDED"],
       ["Keep the old ledger", "REPLACED"],
+      ["Shard the ledger", "DISPUTED"],
     ]);
   });
 
-  it("the hook reads /api/decisions?meeting_id= and the record shows them above Commitments", async () => {
+  it("the hook reads the meeting's ledger rows and the record shows them above Commitments", async () => {
     const meeting = {
       id: "m9", title: "Ledger cutover sync", intel_status: "complete",
       intel: { summary: "s", action_items: [{ id: "ai-1", task: "Write the rollback runbook", owner: null, status: "pending" }] },
     };
     apiFetch.mockImplementation(async (url: string) => {
-      if (url === "/api/decisions?meeting_id=m9")
+      if (url === "/api/decisions?scope=all&limit=500&meeting_id=m9")
         return { decisions: [{ id: "d1", text: "Freeze the old ledger on Nov 5", lifecycle: "recorded" }] };
       if (url.includes("/follow-through-proposals")) return { proposals: [] };
       if (url === "/api/meetings/m9") return meeting;

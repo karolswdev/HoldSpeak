@@ -314,6 +314,16 @@ def test_a_decision_search_hit_opens_the_decision_and_adds_no_floor_icon(desk):
         assert page.locator(".desk-icon").count() == icons_before
         assert page.locator(".desk-icon-name", has_text="New decision").count() == 0
         _shot(page, "decision-search-hit", width)
+        # Astra r1 (5): back to the list, then the same hit again opens it again.
+        intel.get_by_role("button", name="← RESULTS").first.evaluate("el => el.click()")
+        intel.locator(".receipts-results").first.wait_for(timeout=15000)
+        assert intel.locator(".receipt-detail").count() == 0
+        page.locator("[aria-controls=desk-tool-shelf]").first.evaluate("el => el.click()")
+        page.locator("[aria-controls=desk-palette-listbox]").fill("Freeze the old ledger")
+        hit = page.locator("[id^='desk-palette-option-memory:decision:']").first
+        hit.wait_for(timeout=15000)
+        hit.evaluate("el => el.click()")
+        intel.locator(".receipt-detail h3").first.wait_for(timeout=15000)
 
 
 def test_trust_scope_names_a_saved_external_destination(desk):

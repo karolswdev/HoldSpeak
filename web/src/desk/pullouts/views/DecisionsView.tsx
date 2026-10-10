@@ -2,7 +2,9 @@ import { wireDate } from "../../surface/format";
 import { useEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
-import { qualifiedRef } from "../../api";
+import { holdObject, qualifiedRef } from "../../api";
+import { openRef } from "../../openObject";
+import { allObjects } from "../../world";
 import { useDesk } from "../../store";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
@@ -66,19 +68,18 @@ type DeskDecision = {
   record_id?: string | null;
 };
 
-/** The state word a row shows; empty when the decision stands. */
+/** The states in which a decision stands (an inclusion list: a disputed or
+ *  an unknown state is not current). The server's `current=1` uses the same. */
+const CURRENT = new Set(["recorded", "accepted", "active", "published"]);
+
+/** The state word a row shows; empty when the decision stands. Its
+ *  lifecycle is its record's when it has one (the ledger answers it). */
 function stateWord(row: DeskDecision): string {
   const lifecycle = String(row.lifecycle ?? "").toLowerCase();
+  if (CURRENT.has(lifecycle) || !lifecycle) return "";
   if (lifecycle === "superseded") return "REPLACED";
-  if (lifecycle === "rejected") return "REJECTED";
   if (lifecycle === "deprecated") return "RETIRED";
-  if (lifecycle === "proposed") return "PROPOSED";
-  if (row.source === "record" && lifecycle && lifecycle !== "active") return lifecycle.toUpperCase();
-  return "";
-}
-
-function isCurrent(row: DeskDecision): boolean {
-  return !["REPLACED", "REJECTED", "RETIRED"].includes(stateWord(row));
+  return lifecycle.toUpperCase();
 }
 
 function fromReceipt(receipt: Receipt & { created_at?: string | null }): DeskDecision {
@@ -88,10 +89,17 @@ function fromReceipt(receipt: Receipt & { created_at?: string | null }): DeskDec
   };
 }
 
-function matches(row: DeskDecision, query: string): boolean {
-  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const hay = [row.text, row.rationale, row.meeting_title].filter(Boolean).join(" ").toLowerCase();
-  return words.every((word) => hay.includes(word));
+/** One page of the desk's decisions. */
+const PAGE = 100;
+
+/** A Desk decision opens its window; one the Desk did not load is held
+ *  (read by its id) first, so the open is never dead. */
+function openDeskDecision(id: string): void {
+  const ref = qualifiedRef("decision", id);
+  const open = () => openRef(`desk_decision:${id}`);
+  const present = allObjects(useDesk.getState().items).some((o) => qualifiedRef(o.kind, o.id) === ref);
+  if (present || !holdObject(ref)) { open(); return; }
+  void useDesk.getState().refresh().then(open, open);
 }
 
 function shortId(id: string): string {
@@ -112,22 +120,27 @@ export function DecisionsView({
   workRef,
   receiptId,
   decisionId,
+  decisionNonce,
 }: {
   initialQuery?: string;
   /** The `Current only` filter (the navigation's `whyOnly`). */
   initialWhyOnly?: boolean;
   workRef?: string;
   receiptId?: string;
-  /** PHILO-17: open this decision (a `decisions` row) in place. */
+  /** PHILO-17: open this decision (a ledger row) in place, read by its id. */
   decisionId?: string;
+  /** A new number per request: the same decision asked again opens again. */
+  decisionNonce?: number;
 }) {
   const openPullout = useDesk((state) => state.openPullout);
   const [query, setQuery] = useState(initialQuery);
   const [whyOnly, setWhyOnly] = useState(initialWhyOnly);
   const [results, setResults] = useState<DeskDecision[]>([]);
+  const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<Receipt | null>(null);
   const [chosen, setChosen] = useState<DeskDecision | null>(null);
   const [loading, setLoading] = useState(true);
+  const [more, setMore] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -136,25 +149,39 @@ export function DecisionsView({
     setWhyOnly(initialWhyOnly);
   }, [initialQuery, initialWhyOnly]);
 
-  // A work ref lists the records linked to that work; else every decision.
-  const read = (): Promise<DeskDecision[]> => {
+  // A work ref lists the records linked to that work; else the desk's
+  // decisions, one page at a time, searched and filtered by the hub.
+  const read = (offset: number, limit = PAGE): Promise<{ rows: DeskDecision[]; total: number }> => {
     const [workType, ...workRefParts] = workRef?.split(":") ?? [];
     const linkedWorkRef = workRefParts.join(":");
     if (workType && linkedWorkRef) {
       return apiFetch<Receipt[]>(
         `/api/decision-records/work/${encodeURIComponent(workType)}/${encodeURIComponent(linkedWorkRef)}`,
-      ).then((receipts) => (Array.isArray(receipts) ? receipts.map(fromReceipt) : []));
+      ).then((receipts) => {
+        const rows = (Array.isArray(receipts) ? receipts.map(fromReceipt) : [])
+          .filter((row) => !whyOnly || !stateWord(row))
+          .filter((row) => !query.trim() || row.text.toLowerCase().includes(query.trim().toLowerCase()));
+        return { rows, total: rows.length };
+      });
     }
-    return apiFetch<{ decisions?: DeskDecision[] }>("/api/decisions?scope=all&limit=500")
-      .then((body) => (Array.isArray(body?.decisions) ? body.decisions : []));
+    const params = new URLSearchParams({ scope: "all", limit: String(limit), offset: String(offset) });
+    if (query.trim()) params.set("q", query.trim());
+    if (whyOnly) params.set("current", "true");
+    return apiFetch<{ decisions?: DeskDecision[]; page?: { total?: number } }>(`/api/decisions?${params}`)
+      .then((body) => {
+        const rows = Array.isArray(body?.decisions) ? body.decisions : [];
+        return { rows, total: Number(body?.page?.total ?? rows.length) };
+      });
   };
   // A decision made or changed in another window shows in this list. A quiet
-  // re-read: no loading state, and the last list stays when it fails.
-  // Reads can answer out of order. Two rules decide which may land:
-  // `query` -- a read made for an older work ref never lands; `order` -- of
-  // two reads for the same work ref, the one that started later wins, and
-  // an earlier one that answers after it is dropped.
+  // re-read of what is shown: no loading state, and the last list stays when
+  // it fails. Reads can answer out of order. Two rules decide which may land:
+  // `query` -- a read made for an older search, filter or work ref never
+  // lands; `order` -- of two reads for the same one, the one that started
+  // later wins, and an earlier one that answers after it is dropped.
   const reads = useRef({ query: 0, started: 0, landed: 0 });
+  const shown = useRef(0);
+  shown.current = results.length;
   const beginRead = () => {
     const mine = { query: reads.current.query, order: ++reads.current.started };
     return () => {
@@ -165,9 +192,9 @@ export function DecisionsView({
   };
   useOnDeskChanged(() => {
     const lands = beginRead();
-    void read()
-      .then((rows) => {
-        if (lands()) setResults(rows);
+    void read(0, Math.min(500, Math.max(PAGE, shown.current)))
+      .then(({ rows, total: all }) => {
+        if (lands()) { setResults(rows); setTotal(all); }
       })
       .catch(() => undefined);
   });
@@ -175,29 +202,41 @@ export function DecisionsView({
   useEffect(() => {
     let active = true;
     reads.current.query += 1; // every read already on its way is obsolete
-    setLoading(true);
-    setError("");
-    const lands = beginRead();
-    void read()
-      .then((rows) => {
-        if (lands()) setResults(rows);
-      })
-      .catch((reason) => {
-        if (lands()) {
-          setResults([]);
-          setError(readableError(reason));
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      setError("");
+      const lands = beginRead();
+      void read(0)
+        .then(({ rows, total: all }) => {
+          if (lands()) { setResults(rows); setTotal(all); }
+        })
+        .catch((reason) => {
+          if (lands()) {
+            setResults([]);
+            setTotal(0);
+            setError(readableError(reason));
+          }
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }, query.trim() ? 200 : 0);
     return () => {
       active = false;
+      window.clearTimeout(timer);
     };
-  }, [workRef]);
+  }, [query, workRef, whyOnly]);
 
-  const visibleResults = results.filter((row) =>
-    (!whyOnly || isCurrent(row)) && (!query.trim() || matches(row, query)));
+  const showMore = () => {
+    const lands = beginRead();
+    setMore(true);
+    void read(results.length)
+      .then(({ rows, total: all }) => {
+        if (lands()) { setResults((current) => [...current, ...rows]); setTotal(all); }
+      })
+      .catch((reason) => setError(readableError(reason)))
+      .finally(() => setMore(false));
+  };
 
   const openReceipt = (receiptId: string) => {
     setChosen(null);
@@ -215,24 +254,30 @@ export function DecisionsView({
 
   const openRow = (row: DeskDecision) => {
     if (row.record_id) openReceipt(row.record_id);
-    else if (row.source === "desk") openPullout(qualifiedRef("decision", row.id));
-    else setChosen(row);
+    else if (row.source === "desk") openDeskDecision(row.id);
+    else { setSelected(null); setChosen(row); }
   };
 
-  // PHILO-17: a decision asked for by id (a ⌘K hit) opens itself once the
-  // list holds it.
-  const asked = useRef<string | null>(null);
+  // PHILO-17: a decision asked for by id (a ⌘K hit, a Brief row) is read by
+  // its id, never looked up in the loaded page; each request opens it again.
   useEffect(() => {
-    if (!decisionId || asked.current === decisionId || loading) return;
-    const row = results.find((r) => r.source === "meeting" && r.id === decisionId);
-    if (!row) return;
-    asked.current = decisionId;
-    openRow(row);
-  }, [decisionId, results, loading]);
+    if (!decisionId) return;
+    let live = true;
+    const params = new URLSearchParams({ scope: "all", decision_id: decisionId, limit: "1" });
+    void apiFetch<{ decisions?: DeskDecision[] }>(`/api/decisions?${params}`)
+      .then((body) => {
+        if (!live) return;
+        const row = Array.isArray(body?.decisions) ? body.decisions[0] : undefined;
+        if (row) openRow(row);
+        else setError("This decision is not on the desk.");
+      })
+      .catch((reason) => { if (live) setError(readableError(reason)); });
+    return () => { live = false; };
+  }, [decisionId, decisionNonce]);
 
   const openSource = (source: ReceiptSource) => {
     const meetingId = source.meeting_id ?? (source.source_type === "meeting" ? source.source_ref : "");
-    if (meetingId) openPullout(qualifiedRef("meeting", meetingId));
+    if (meetingId) openRef(`meeting:${meetingId}`);
   };
 
   if (chosen) {
@@ -240,7 +285,7 @@ export function DecisionsView({
       <MeetingDecisionDetail
         decision={chosen}
         onBack={() => setChosen(null)}
-        onOpenMeeting={(meetingId) => openPullout(qualifiedRef("meeting", meetingId))}
+        onOpenMeeting={(meetingId) => openRef(`meeting:${meetingId}`)}
       />
     );
   }
@@ -286,12 +331,12 @@ export function DecisionsView({
         </Button>
       </div>
       {error ? <SurfaceState error={error} /> : null}
-      <SurfaceLedger cols="facts" count={countLabel("DECISIONS", visibleResults.length)}>
+      <SurfaceLedger cols="facts" count={countLabel("DECISIONS", total)}>
         {loading ? (
           <SurfaceState loading />
-        ) : visibleResults.length ? (
+        ) : results.length ? (
           <ul className="surface-ledger-rows receipts-results">
-            {visibleResults.map((row) => {
+            {results.map((row) => {
               const word = stateWord(row);
               return (
                 <SurfaceLedgerRow
@@ -324,6 +369,11 @@ export function DecisionsView({
           <SurfaceState empty emptyLabel={query.trim() ? "No decisions match this search." : whyOnly ? "No current decisions." : "No decisions yet."} />
         )}
       </SurfaceLedger>
+      {!loading && results.length < total ? (
+        <Button variant="secondary" dense loading={more} onClick={showMore} data-testid="decisions-more">
+          {`Show more (${results.length} of ${total})`}
+        </Button>
+      ) : null}
     </div>
   );
 }
