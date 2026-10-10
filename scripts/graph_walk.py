@@ -261,7 +261,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-RIG_VERSION = "1.5.3"
+RIG_VERSION = "1.5.4"
+
+# PHILO-17: a `check` precondition waits this long for a face that is still
+# loading (a cold browser and a cold hub, first case on a loaded worker, took
+# longer than the old 5 s: case.j1.first_words_continue_later.idle blocked
+# twice on 2026-10-10 and passed six times alone). A step's own `timeout_s`
+# still wins.
+CHECK_WAIT_S = 15
 
 # PHILO-3-02's real engine is supplied by the LAN endpoint configured through
 # the normal Concierge field.  The URL and model are provenance inputs for a
@@ -5818,7 +5825,7 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         # refused the precondition.
         probe_case = {"expected": {"observe_at": step.get("observe_at"),
                                    "predicate": step.get("predicate")}}
-        deadline = time.monotonic() + float(step.get("timeout_s", 5))
+        deadline = time.monotonic() + float(step.get("timeout_s", CHECK_WAIT_S))
         waited = 0.0
         while True:
             snap = snapshot(page, probe_case, hub)
@@ -5831,7 +5838,7 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
                 # Headless checks poll the owning hub without a Page. Keep
                 # the bounded wait honest and avoid a busy loop on MCP reads.
                 time.sleep(0.3)
-            waited = round(time.monotonic() - (deadline - float(step.get("timeout_s", 5))), 2)
+            waited = round(time.monotonic() - (deadline - float(step.get("timeout_s", CHECK_WAIT_S))), 2)
         record = {"kind": "check", "observe_at": step.get("observe_at"),
                   "predicate": step.get("predicate"),
                   "adapter": step.get("adapter", "observation"),
