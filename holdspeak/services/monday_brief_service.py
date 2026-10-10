@@ -592,11 +592,21 @@ class MondayBriefService:
             days_back = weekday - 4
 
         start_date = (period_end - datetime.timedelta(days=days_back)).date()
-        period_start = datetime.datetime.combine(
-            start_date,
-            datetime.time(hour=_LOOKBACK_START_HOUR),
-            tzinfo=period_end.tzinfo,
+        start_wall = datetime.datetime.combine(
+            start_date, datetime.time(hour=_LOOKBACK_START_HOUR)
         )
+        tz = period_end.tzinfo
+        if tz is None:
+            period_start = start_wall
+        elif isinstance(tz, datetime.timezone) and (
+            period_end.utcoffset() == period_end.astimezone().utcoffset()
+        ):
+            # Astra r1: ``local_now()`` carries a FIXED offset. Copied onto
+            # an earlier day it is wrong across a DST change, so midnight is
+            # resolved in the hub's real local zone for that day.
+            period_start = start_wall.astimezone()
+        else:
+            period_start = start_wall.replace(tzinfo=tz)
         return period_start, period_end
 
     def compute_lookahead(
@@ -2324,7 +2334,9 @@ class MondayBriefService:
         if made.astimezone(current.tzinfo).date() < current.date():
             return True
         queries = (
-            "SELECT MAX(COALESCE(ended_at, started_at)) FROM meetings WHERE parked = 0",
+            # Astra r1: the durable row time, never ``ended_at`` (an import's
+            # end can be ahead of the clock and kept the brief stale).
+            "SELECT MAX(created_at) FROM meetings WHERE parked = 0",
             "SELECT MAX(created_at) FROM decision_records",
             "SELECT MAX(updated_at) FROM inference_assignment_heads",
             "SELECT MAX(set_at) FROM inference_capability_off",

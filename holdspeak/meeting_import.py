@@ -119,7 +119,8 @@ class ImportResult:
 
 
 def _import_moment() -> datetime:
-    """When an import with no stated start happened: now.
+    """When an import with no stated start happened: now. The meeting ENDS
+    at this moment and starts ``duration`` earlier (PHILO-17).
 
     HS-201-10 (rehearsal defect 10). The old default was the FILE's mtime,
     which is not a fact about the meeting at all — a WAV copied onto the
@@ -316,7 +317,9 @@ def import_meeting(
         )
 
     if started_at is None:
-        started_at = _import_moment()
+        # PHILO-17 (Astra r1): the recording ENDED at the import moment. A
+        # start at "now" put the end in the future, outside the Brief window.
+        started_at = _import_moment() - timedelta(seconds=duration)
 
     window_samples = max(1, int(window_seconds * TARGET_SAMPLE_RATE))
     windows_total = int(np.ceil(len(audio) / window_samples))
@@ -687,7 +690,9 @@ def import_transcript(
     duration = max(cue.end for cue in parsed.cues)
 
     if started_at is None:
-        started_at = _import_moment()
+        # PHILO-17 (Astra r1): the recording ENDED at the import moment. A
+        # start at "now" put the end in the future, outside the Brief window.
+        started_at = _import_moment() - timedelta(seconds=duration)
 
     return _persist_import(
         db=db,

@@ -596,3 +596,50 @@ def test_queue_after_save_follows_the_setting_and_consent(tmp_path: Path) -> Non
     _seed_meeting(db, "every")
     assert queue_after_save(db, "every", auto_mode="every") == {"queued": True, "reason": "queued"}
     assert _jobs(db) == {"every": "queued"}
+
+
+def _unpressed_lan_engine(db: Database):
+    """A LAN engine HoldSpeak assigned by itself: the owner never pressed for it."""
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_batteries_default import OWNER
+    from tests.unit.test_phase143_inference_assignments import _profile
+
+    schema = process_inference_capability_registry().require("meeting.deferred_analysis")
+    _profile(db, "lan-engine", boundary="private_network",
+             claims=("language", f"result_schema:{schema.output_schema_sha256}"))
+    return InferenceAssignmentService(db).set_assignment(OWNER, {
+        "command_id": "unpressed-lan", "expected_revision": 0, "scope": {"kind": "global"},
+        "entries": [{"profile_id": "lan-engine", "profile_revision": 1}],
+    }, made_by="holdspeak_default")
+
+
+def test_stop_and_import_never_send_to_an_engine_the_owner_did_not_choose(tmp_path: Path, monkeypatch) -> None:
+    """Astra r1 MUST 2: the new after-save path keeps the consent guard. The
+    route is READY (so only consent can stop it); no job, the meeting waits."""
+    from types import SimpleNamespace
+
+    from holdspeak.config import Config
+    from holdspeak.meeting_import import import_transcript
+    from holdspeak.services.meeting_backlog_service import queue_after_save
+    from holdspeak.services.meeting_route_projection import project_route
+
+    cfg = Config()
+    cfg.meeting.intelligence_auto = "every"
+    monkeypatch.setattr(Config, "load", lambda: cfg)
+    monkeypatch.setattr("holdspeak.intel_queue_conductor.wake_intel_queue_conductor", lambda: True)
+    db = Database(tmp_path / "consent-after-save.db")
+    _unpressed_lan_engine(db)
+    assert project_route(db, invocation_id="meeting:stopped")["status"] == "ready"
+
+    _seed_meeting(db, "stopped")  # the Stop path's call
+    assert queue_after_save(db, "stopped", auto_mode="every") == {"queued": False, "reason": "waiting_consent"}
+
+    path = tmp_path / "sync.vtt"
+    path.write_text("WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n<v Priya>the rollout starts monday\n")
+    imported = import_transcript(
+        path, db=db, config=SimpleNamespace(meeting=SimpleNamespace(intel_enabled=True, intel_deferred_enabled=True)),
+    )
+    assert imported.intel_job_enqueued is False
+    assert _jobs(db) == {}
+    assert _marks(db) == {"stopped", imported.state.id}  # the backlog runs them once he consents

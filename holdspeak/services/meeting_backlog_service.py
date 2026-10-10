@@ -129,6 +129,13 @@ def queue_after_save(
         if not linked:
             return {"queued": False, "reason": "not_room_linked"}
     if not backlog_consent(db)["allowed"]:
+        # No automatic egress to an engine the owner did not choose: the
+        # meeting waits in the backlog, which drains once he consents.
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT OR IGNORE INTO meeting_summary_backlog (meeting_id, reason, marked_at) VALUES (?,?,?)",
+                (str(meeting_id), MARK_REASON, datetime.now(timezone.utc).isoformat()),
+            )
         return {"queued": False, "reason": "waiting_consent"}
     outcome = db.intel.request_intel_retry(
         str(meeting_id), reason=AFTER_SAVE_REASON, planned_route=route,

@@ -441,7 +441,8 @@ UTC = datetime.timezone.utc
 # the window arithmetic is unchanged.
 # Re-pinned 2026-10-10 (PHILO-17): the lookback opens at 00:00 of the
 # previous workday, not 17:00 (the walker's 10:00 meeting was missing).
-COMPUTE_WINDOW_BODY_SHA256 = "45e9cd994a09f5c3bf7eabb8d98304fa6ee4ba4b5167f8155077837a51827e2e"
+# Re-pinned again (Astra r1 on PHILO-17): local midnight in the real zone.
+COMPUTE_WINDOW_BODY_SHA256 = "73ca3c283def7f39d0094742d5d7c929bc0f95975293e03ca2795f31deeae243"
 
 
 def _seed_utc_event(db, eid: str, title: str, starts_at: str, *, uid: str | None = None) -> None:
