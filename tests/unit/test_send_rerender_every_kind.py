@@ -185,12 +185,16 @@ def test_old_brief_people_text_leaves_every_channel_byte_shape(
 
 
 KINDS = ("project_update", "monday_brief", "desk_decision", "meeting_decision", "decision_record",
-         "meeting_summary", "meeting_digest", "meeting_followup", "artifact")
+         "meeting_summary", "meeting_digest", "meeting_followup", "artifact", "note")
 
 
 def _mint_all(hub: Hub, tmp_path: Path) -> dict[str, str]:
     refs = mint_documents(hub.db, OWNER, people_keystore_path=tmp_path / "people.key")
     refs["artifact"] = mint_meeting_synthesis(hub.db)
+    from holdspeak.services.primitive_service import PrimitiveService
+
+    note = PrimitiveService(hub.db).create_note(OWNER, title="Pilot plan", body_markdown="We start on Monday.")
+    refs["note"] = f"note:{note['id']}"
     from holdspeak.services.document_sources import DOCUMENT_SOURCES
 
     assert set(refs) == set(DOCUMENT_SOURCES) == set(KINDS)

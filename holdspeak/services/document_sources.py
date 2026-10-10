@@ -569,6 +569,35 @@ class _ArtifactSource:
         )
 
 
+class _NoteSource:
+    """PHILO-17 U08: a note (also a Thought's working note) as he wrote it."""
+
+    kind = "note"
+
+    def render(self, db: Any, source_id: str) -> Document:
+        from .primitive_service import PrimitiveService
+
+        note = PrimitiveService(db).get_note(_source_read_context(), source_id)
+        title = str(note.get("title") or "").strip()
+        body = str(note.get("body_markdown") or "").strip()
+        # A new thought is born titled "Thought" (web NEW_THOUGHT_TITLE): a
+        # placeholder title alone is no words.
+        if not body and title in ("", "Thought"):
+            raise ChannelRefused("note_empty", f"Note {source_id} has no words", status=400)
+        title = title or "Note"
+        # A thought takes its first words as its title: say them once.
+        first, _, rest = body.partition("\n")
+        if first.strip().lstrip("#").strip() == title:
+            body = rest.strip()
+        return _make_document(
+            ref=f"{self.kind}:{source_id}",
+            title=title,
+            body_md=f"# {title}\n\n{body}\n" if body else f"# {title}\n",
+            slug=_slug(title, "note"),
+            label="NOTE",  # never the id: the label names the saved file
+        )
+
+
 DOCUMENT_SOURCES: dict[str, DocumentSource] = {
     "project_update": _ProjectUpdateSource(),
     "monday_brief": _MondayBriefSource(),
@@ -579,6 +608,7 @@ DOCUMENT_SOURCES: dict[str, DocumentSource] = {
     "meeting_digest": _MeetingAftercareSource("meeting_digest"),
     "meeting_followup": _MeetingAftercareSource("meeting_followup"),
     "artifact": _ArtifactSource(),
+    "note": _NoteSource(),
 }
 
 
