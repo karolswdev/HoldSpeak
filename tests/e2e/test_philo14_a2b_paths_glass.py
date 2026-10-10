@@ -19,7 +19,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import open_project_drawer, _api, _boot, _ensure_build, _normal_chair, _settle
 from .test_philo14_a2_drawer_glass import MEETING, PROJECT, _seed
 from tests._evidence import evidence_dir
 
@@ -323,7 +323,7 @@ class TestA2bPathsGlass:
 
                 pattern = f"**/api/projects/{PROJECT}/room*"
                 page.route(pattern, fault)
-                page.goto(f"{self.base}/?token={TOKEN}&open=project:{PROJECT}", wait_until="load")
+                open_project_drawer(page, self.base, PROJECT, TOKEN)  # PHILO-17 U30: the parked drawer, by its key
                 _normal_chair(page)
                 drawer = page.locator(".drawer-window")
                 facts = drawer.locator("[data-testid=drawer-facts]")
@@ -365,7 +365,7 @@ class TestA2bPathsGlass:
                 brief = prepared["brief"]
                 assert any(d["ref"].startswith("decision_record:record-") for d in brief["manifest"]["decisions"]), brief
                 _api(page, "POST", f"/api/briefs/{brief['id']}/keep", {}, token=TOKEN)
-                page.goto(f"{self.base}/?token={TOKEN}&open=project:{PROJECT}", wait_until="load")
+                open_project_drawer(page, self.base, PROJECT, TOKEN)  # PHILO-17 U30: the parked drawer, by its key
                 _normal_chair(page)
                 drawer = page.locator(".drawer-window")
                 drawer.locator("[data-testid=drawer-facts]").wait_for(timeout=T)

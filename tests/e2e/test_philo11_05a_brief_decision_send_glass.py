@@ -32,7 +32,7 @@ from typing import Any
 import pytest
 
 from ._doc_send_glass import Boards
-from .glass_infra import (_api, _api_allow_error, _boot, _ensure_build, _normal_chair, _room_through_drawer, _settle,
+from .glass_infra import (_api, _api_allow_error, _boot, _ensure_build, _normal_chair, _room_opened, _settle,
                           park_builtin_folder)
 from .chair_windows import open_chair_window
 from tests._evidence import evidence_dir
@@ -734,8 +734,8 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 page.locator("[aria-controls=desk-tool-shelf]").first.click()
                 page.locator("[aria-controls=desk-palette-listbox]").fill(PROJECT)
                 page.get_by_text(f"Open {PROJECT}").first.click(timeout=T)
-                # PHILO-14 A2 (#937): the generic Open lands in the drawer; its Room Button opens the Room.
-                _room_through_drawer(page)
+                # PHILO-17 U30: the generic Open lands in the Room (one home).
+                _room_opened(page)
                 page.locator("[data-testid=room-body]").wait_for(timeout=T)
                 page.locator("[data-testid=decision-row]").first.wait_for(timeout=T)
                 page.wait_for_timeout(1200)

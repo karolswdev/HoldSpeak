@@ -330,11 +330,16 @@ describe("PHILO-14 A2 the drawer", () => {
     expect(footer()).toBe("");
   });
 
-  it("a project ref and a calendar row open the drawer", () => {
+  // PHILO-17 U30: a project ref and a calendar row open the Room (one home);
+  // the drawer is parked as a project face and opens only by its own key.
+  it("a project ref and a calendar row open the Room, never a drawer", () => {
+    const before = shell.rooms.length;
     refOpener("project:p-ledger")!();
     calendarOpener({ project_id: "p-obs" })!();
+    expect(shell.rooms.slice(before)).toEqual(["p-ledger", "p-obs"]);
+    expect(useDrawers.getState().drawers).toEqual([]);
     openDrawer("p-ledger");
-    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["p-ledger", "p-obs"]);
+    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["p-ledger"]);
   });
 });
 

@@ -36,6 +36,18 @@ def _gh_not_signed_in(argv: list[str], **_kwargs: Any) -> subprocess.CompletedPr
     return subprocess.CompletedProcess(argv, 1, stdout="", stderr="not logged in")
 
 
+def _gh_signed_in(argv: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+    """gh signed in as acme with one repository; every list read is empty."""
+    args = list(argv)
+    if args[:3] == ["gh", "auth", "status"]:
+        return subprocess.CompletedProcess(
+            argv, 0, stdout="", stderr="github.com\n  Logged in to github.com account acme (keyring)\n")
+    if args[:3] == ["gh", "repo", "list"]:
+        return subprocess.CompletedProcess(
+            argv, 0, stdout='[{"name":"app","owner":{"login":"acme"},"visibility":"PUBLIC"}]', stderr="")
+    return subprocess.CompletedProcess(argv, 0, stdout="[]", stderr="")
+
+
 def _open_room(page: Any, project_id: str) -> Any:
     page.evaluate(
         """([key, scope]) => sessionStorage.setItem(
@@ -102,6 +114,71 @@ def _walk(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
             _assert_clean(page, errors)
         finally:
             browser.close()
+
+
+def _add_walk(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """Astra r1 on #1068: the job done: pick a repository, Add, reload, it is under SOURCES;
+    the same repository again says Already watched."""
+    _ensure_build()
+    _server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=_gh_signed_in)
+    errors: list[str] = []
+    from playwright.sync_api import sync_playwright
+
+    def pick_and_add(room: Any) -> Any:
+        well = room.get_by_test_id("room-add-sources")
+        well.wait_for(timeout=T)
+        well.get_by_test_id("door-trigger-github").click()
+        well.get_by_test_id("door-pick-acme/app").click()
+        add = well.get_by_test_id("room-add-sources-add")
+        page.wait_for_function(
+            "() => !document.querySelector('[data-testid=room-add-sources-add]')?.disabled", timeout=T)
+        add.click()
+        return well
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 900})
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        try:
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            clear_hub_windows(page, token=TOKEN)
+            pid = _api(page, "POST", "/api/projects/door", {"outcome": "Ledger cutover"}, token=TOKEN)["projectId"]
+            _api(page, "POST", "/api/connections/github/recheck", {}, token=TOKEN)
+
+            room = _open_room(page, pid)
+            well = pick_and_add(room)
+            well.wait_for(state="detached", timeout=T)  # added: the well closes
+
+            # Reload: the source is the project's, under SOURCES.
+            room = _open_room(page, pid)
+            scope = room.locator("[data-testid=source-scope]", has_text="acme/app")
+            scope.first.wait_for(timeout=T)
+            assert room.locator("[data-testid=source-scope]", has_text="acme/app").count() == 1
+            _settle(page)
+            room.screenshot(path=str(SHOTS / f"room-source-added-{width}.png"))
+
+            # The same repository again: refused, Already watched, nothing doubled.
+            def watch_ids() -> list[str]:
+                items = _api(page, "GET", f"/api/projects/{pid}/room", token=TOKEN)["sources"]["items"]
+                return sorted(i for item in items if item.get("scope") == "acme/app" for i in item.get("watchIds", []))
+
+            before = watch_ids()
+            assert before, "the added repository arms its watches"
+            room.get_by_test_id("room-add-source").click()
+            well = pick_and_add(room)
+            well.get_by_text("Already watched").wait_for(timeout=T)
+            assert watch_ids() == before
+            _assert_clean(page, errors)
+        finally:
+            browser.close()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+def test_add_a_repository_and_it_stays_after_reload(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    _add_walk(tmp_path, monkeypatch, width)
 
 
 @pytest.mark.parametrize("width", [1440, 393])

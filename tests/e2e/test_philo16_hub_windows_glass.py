@@ -34,7 +34,7 @@ from typing import Any, Callable
 import pytest
 
 from .chair_windows import open_chair_window
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import open_project_drawer, _api, _boot, _ensure_build, _normal_chair, _settle
 from .test_philo13_11_frame_glass import _seed
 from tests._evidence import evidence_dir
 
@@ -285,7 +285,7 @@ class TestHubWindows:
                 c.keyboard.press("Escape")
 
                 # ── B6 (Astra r1 M4): a Project drawer follows into a fresh view ──
-                a.goto(f"{self.base}/?token={TOKEN}&open=project:p-ledger", wait_until="load")
+                open_project_drawer(a, self.base, 'p-ledger', TOKEN)  # PHILO-17 U30: the parked drawer, by its key
                 _normal_chair(a)
                 a.locator(".drawer-window").first.wait_for(timeout=T)
                 drawer_row = _until(lambda: self._rows(a), lambda r: "drawer:project:p-ledger" in r)

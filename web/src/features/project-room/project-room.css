@@ -642,3 +642,11 @@
   gap: 6px;
   padding: 8px 0 8px 8px;
 }
+
+/* PHILO-17 U30: FILES names the reads it could not make (A.10). */
+.room-files-unread {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding-bottom: var(--space-1);
+}

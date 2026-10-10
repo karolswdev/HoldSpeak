@@ -23,7 +23,6 @@ import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, applicationForAction } from "../../applications";
-import { drawerWindowId } from "../../drawer/store";
 import { openProjectRoom } from "../../shell";
 import { RoomActions } from "./RoomActions";
 import {
@@ -525,11 +524,10 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       .filter((project) => windowsById["surface-project-memory"]?.scope === `project:${project.id}`)
       .map((project) => `project:${project.id}`),
   );
-  // PHILO-14 A2: an open drawer is its Project's launcher running (no second chip).
-  const activeDrawerIds = new Set(activeProjects.map((project) => drawerWindowId(project.id)));
+  // PHILO-17 U30: a Project's launcher means its Room only; a parked drawer
+  // window (restored from an older desk) keeps its own chip.
   const visibleWindowChips = windows.filter((window) =>
     !DOCK_APP_IDS.has(window.id) &&
-      !activeDrawerIds.has(window.id) &&
       !hiddenProjectWindowIds.has(windowsById[window.id]?.scope || ""),
   );
   // PHILO-16 (A1) §5: the seated windows no tile above seats (an application
@@ -665,16 +663,17 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         );
       })}
       {activeProjects.map((project) => {
+        // PHILO-17 U30: the launcher's window is the project's Room, never a drawer.
         const projectWindow = windows.find(
-          (window) => window.id === drawerWindowId(project.id) || (window.id === "surface-project-memory" &&
-            windowsById["surface-project-memory"]?.scope === `project:${project.id}`),
+          (window) => window.id === "surface-project-memory" &&
+            windowsById["surface-project-memory"]?.scope === `project:${project.id}`,
         );
         const count = !offline ? projectCounts[project.id] || 0 : 0;
         const seated = Boolean(projectWindow && panelMin.includes(projectWindow.id));
         return (
           <Button
             key={`project:${project.id}`}
-            ref={seatRef(projectWindow?.id ?? drawerWindowId(project.id))}
+            ref={seatRef(projectWindow?.id ?? `project:${project.id}`)}
             variant="chrome"
             data-app="project"
             className={`desk-dock-launch desk-dock-project${projectWindow && !seated ? " is-run" : ""}${seated ? " is-seated" : ""}`}

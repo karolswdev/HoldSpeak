@@ -17,7 +17,7 @@ import { asRows, rowId } from "../../pageSupport";
 import { DOOR_SECTIONS, displayState } from "./helpers";
 import { apiFetch } from "../../../lib/api";
 import { MeetingsConfig } from "./MeetingsConfig";
-import { openDrawer } from "../../../desk/drawer/store";
+import { openProjectRoom } from "../../../desk/shell";
 
 export function DoorSection({
   actions,
@@ -102,7 +102,7 @@ export function DoorSection({
                   }
                   onOpen={
                     section === "projects"
-                      ? () => openDrawer(String(row.id)) // PHILO-14 A2
+                      ? () => openProjectRoom(String(row.id)) // PHILO-17 U30: the Room
                       : undefined
                   }
                   verbs={

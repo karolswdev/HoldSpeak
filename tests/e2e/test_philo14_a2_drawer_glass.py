@@ -7,12 +7,12 @@ a note filed in the Project), and every Open is followed to its real window:
 - each member kind opens the window its identity names (the decision opens
   through the `decisions` row its record names, never the record's id; the
   action item opens its Follow-through card);
-- a generic Project open (`?open=project:<id>`, the Project primitive) lands
-  in the drawer, never in the Room; the drawer's Room verb opens the Room;
+- PHILO-17 U30: a generic Project open lands in the Room (one home); the
+  drawer is PARKED as a project face and this rig opens it by its key;
 - the drawer, its view and its place come back after a reload (B2);
 - Park on a meeting leaves `PARKED · <name>` with Restore on the drawer, also
   when the drawer is left empty; Restore brings the member back;
-- A2b: the Needs you row's Project button opens the drawer, never the Room.
+- the Needs you row's Project button opens the Room, never a drawer (U30).
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import open_project_drawer, _api, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="drawer glass needs Playwright")
@@ -114,7 +114,7 @@ class TestDrawerGlass:
 
     def _drawer(self, page: Any, project: str = PROJECT) -> Any:
         """A generic open of the Project (the arrival path → the Project primitive)."""
-        page.goto(f"{self.base}/?token={TOKEN}&open=project:{project}", wait_until="load")
+        open_project_drawer(page, self.base, project, TOKEN)  # PHILO-17 U30: the parked drawer, by its key
         _normal_chair(page)
         drawer = page.locator(".drawer-window")
         drawer.wait_for(timeout=T)
@@ -172,9 +172,9 @@ class TestDrawerGlass:
 
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
-    def test_the_needs_you_project_button_opens_the_drawer(self, width: int) -> None:
-        """A2b: a Needs you row names its Project (two Projects need him); its
-        Project button is a generic open, so it lands on the drawer."""
+    def test_the_needs_you_project_button_opens_the_room(self, width: int) -> None:
+        """A2b, PHILO-17 U30: a Needs you row names its Project (two Projects
+        need him); its Project button is a generic open: it lands in the Room."""
         from playwright.sync_api import sync_playwright
 
         from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
@@ -213,14 +213,14 @@ class TestDrawerGlass:
                     button.tap()
                 else:
                     button.click()
-                drawer = page.locator(".drawer-window")
-                drawer.wait_for(timeout=T)
-                drawer.locator("[data-testid=drawer-facts]").wait_for(timeout=T)
+                room = page.locator("#surface-project-memory")
+                room.wait_for(timeout=T)
+                room.locator("[data-testid=room-body]").wait_for(timeout=T)
                 page.wait_for_timeout(600)
-                page.screenshot(path=str(SHOTS / f"glass-needs-project-drawer-{width}.png"))
-                assert "Payments ledger cutover" in (drawer.first.get_attribute("aria-label") or drawer.first.inner_text())
-                # The Room is not a generic destination: no Room window opened.
-                assert page.locator(".room-head").count() == 0
+                page.screenshot(path=str(SHOTS / f"glass-needs-project-room-{width}.png"))
+                assert "Payments ledger cutover" in (room.first.get_attribute("aria-label") or room.first.inner_text())
+                # One home: no drawer window opened.
+                assert page.locator(".drawer-window").count() == 0
                 assert not errors, errors
             finally:
                 browser.close()

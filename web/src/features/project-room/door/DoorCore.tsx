@@ -90,8 +90,8 @@ function NotConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }
   const emblem = providerEmblem(row.provider);
   const name = providerName(row.provider);
   const tool = ctrl.tools.find((t) => t.provider_id === row.provider);
-  // PHILO-17 U29: the cause in plain words; a failed check for a missing sign-in says so.
-  const signIn = notSignedIn(row.connectionState as ConnectionState, tool?.error_detail);
+  // PHILO-17 U29: the cause in plain words, from the producer's state.
+  const signIn = notSignedIn(row.connectionState as ConnectionState);
   const chipState = signIn ? "warning" : "idle";
   const chipLabel = signIn ? "NOT SIGNED IN" : "NOT SET UP";
 

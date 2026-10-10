@@ -852,12 +852,15 @@ describe("DoorCore", () => {
       expect(mockOpenSurfaceWindow).not.toHaveBeenCalled();
     });
 
-    it("a failed check whose cause is no sign-in says NOT SIGNED IN, never Unreachable", async () => {
+    it("the chip reads the producer's state, never the error text", async () => {
+      // github_provider classifies gh's "not logged in" as owner_action_required;
+      // a degraded check says what it is, whatever its text holds.
       mockFetchConnections.mockResolvedValue({
-        tools: [{ ...ghTool(false), state: "degraded", error_detail: "You are not logged into any GitHub hosts." }, jiraTool(false)],
+        tools: [{ ...ghTool(false), state: "degraded", error_detail: "connect to 10.0.0.1:401 timed out" }, jiraTool(false)],
       });
       render(<DoorCore scope="" />);
-      await waitFor(() => expect(screen.getByTestId("state-chip-not-signed-in")).toBeTruthy());
+      await waitFor(() => expect(screen.getAllByTestId("state-chip-not-set-up").length).toBe(2));
+      expect(screen.queryByTestId("state-chip-not-signed-in")).toBeNull();
     });
 
     it("Recheck in the row checks the provider and reads the connections again", async () => {
@@ -902,6 +905,25 @@ describe("DoorCore", () => {
 
   /* PHILO-17 U10: the Room's Add source uses the same rows. */
   describe("Add source in the Room (U10)", () => {
+    it("a repository the project already watches says Already watched", async () => {
+      mockFetchConnections.mockResolvedValue(connectedTools());
+      mockDoorAddSources.mockRejectedValue(new Error("Already watched"));
+      const onAdded = vi.fn();
+      render(<AddSourcesWell projectId="proj_room_1" onAdded={onAdded} onCancel={() => undefined} />);
+      await waitFor(() => expect(screen.getByTestId("door-trigger-github")).toBeTruthy());
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("door-trigger-github"));
+      });
+      await act(async () => {
+        fireEvent.click(await screen.findByTestId("door-pick-karolswdev/HoldSpeak"));
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("room-add-sources-add"));
+      });
+      await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("Already watched"));
+      expect(onAdded).not.toHaveBeenCalled();
+    });
+
     it("adds the picked repository to the existing project", async () => {
       mockFetchConnections.mockResolvedValue(connectedTools());
       const onAdded = vi.fn();

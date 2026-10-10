@@ -40,15 +40,14 @@ function chipState(state: ConnectionState): ChipState {
   }
 }
 
-/** PHILO-17 U29: a failed check whose cause is a missing sign-in. */
-const NOT_SIGNED_IN = /not logged in|not authenticated|unauthori[sz]ed|login required|\b401\b/i;
-
-export function notSignedIn(state: ConnectionState, errorDetail?: string | null): boolean {
-  return state === "owner_action_required" || (state === "degraded" && NOT_SIGNED_IN.test(errorDetail ?? ""));
+/** PHILO-17 U29: the producer names a missing sign-in (`owner_action_required`:
+ *  github_provider / jira_provider classify the CLI's own answer); the face
+ *  reads that state, never the error text. */
+export function notSignedIn(state: ConnectionState): boolean {
+  return state === "owner_action_required";
 }
 
-export function chipLabel(state: ConnectionState, providerId: string, errorDetail?: string | null): string {
-  if (notSignedIn(state, errorDetail)) return "Not signed in";
+export function chipLabel(state: ConnectionState, providerId: string): string {
   switch (state) {
     case "connected": return "Connected";
     case "owner_action_required": return "Not signed in";
@@ -89,9 +88,9 @@ export function checkedAgo(
 export function stateWords(
   state: ConnectionState,
   providerId: string,
-  row: { last_checked_at?: string; checked_age_seconds?: number; account?: { login?: string } | object; error_detail?: string },
+  row: { last_checked_at?: string; checked_age_seconds?: number; account?: { login?: string } | object },
 ): string {
-  const label = chipLabel(state, providerId, row.error_detail);
+  const label = chipLabel(state, providerId);
   if (state === "never_checked") return label;
   // PHILO-15 B31 (Astra r1): a sign-in read from gh's config is no check:
   // it names its source and carries no time.
@@ -240,7 +239,7 @@ function GitHubCard({
       <div className="connections-tool-chips">
         <span title={state === "degraded" ? (tool.error_detail ?? undefined) : undefined}>
           <StateChip
-            state={notSignedIn(state, tool.error_detail) ? "warning" : chipState(state)}
+            state={chipState(state)}
             label={stateWords(state, "github", tool)}
           />
         </span>

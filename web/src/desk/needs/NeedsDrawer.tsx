@@ -24,7 +24,6 @@ import { useGate } from "../gate";
 import { clearWriteFailure, reportWriteFailure } from "../hooks/useWriteReceipt";
 import { refreshNeedsYou, useNeedsYou } from "../needsYou";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
-import { openDrawer } from "../drawer/store";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { AppHead, EgressChip, FilterBar, ScrollHint, StatusStrip, StringGadget, SurfaceFooter, SurfaceSection } from "../surface";
@@ -385,7 +384,7 @@ function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean
         kindWord={face.kindWord}
         plate={plateOf(face)}
         // A2b: the Project button is a generic open: the Project's drawer.
-        project={project ? { name: project.name, onOpen: () => openDrawer(project.id) } : undefined}
+        project={project ? { name: project.name, onOpen: () => openProjectRoom(project.id) } : undefined}
         verbs={(
           <>
             {face.moreAsks ? (

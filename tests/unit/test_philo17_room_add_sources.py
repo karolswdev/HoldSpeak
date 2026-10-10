@@ -81,6 +81,27 @@ def test_room_read_lists_the_added_source(db: Any) -> None:
     assert any(item.get("scope") == "acme/app" for item in room["sources"]["items"])
 
 
+def test_a_source_already_watched_is_never_armed_twice(db: Any) -> None:
+    """Astra r1 on #1068: repeated Add is refused, never hidden duplicate polling."""
+    from holdspeak.services.errors import ConflictError
+
+    door = _door(db)
+    project_id = door.create(OWNER, "Ship the release", [])["projectId"]
+    source = [{"provider": "github", "scope": "acme/app", "watches": ["open_prs"]}]
+    door.add_sources(OWNER, project_id, source)
+    before = sorted(w["id"] for w in db.automations.list_watches() if w.get("project_id") == project_id)
+    with pytest.raises(ConflictError) as refused:
+        door.add_sources(OWNER, project_id, source)
+    assert refused.value.code == "already_watched"
+    assert refused.value.detail == "Already watched"
+    after = sorted(w["id"] for w in db.automations.list_watches() if w.get("project_id") == project_id)
+    assert after == before
+    # A wider pick adds only what is new (CI), never a second PR queue.
+    door.add_sources(OWNER, project_id, [{"provider": "github", "scope": "acme/app", "watches": ["open_prs", "ci"]}])
+    kinds = sorted(w["query_kind"] for w in db.automations.list_watches() if w.get("project_id") == project_id)
+    assert kinds == ["branch_ci", "issues", "pull_requests"]
+
+
 def test_nothing_to_add_is_refused(db: Any) -> None:
     door = _door(db)
     project_id = door.create(OWNER, "Ship the release", [])["projectId"]
@@ -115,6 +136,12 @@ def test_hub_route_adds_to_the_project(tmp_path: Path, monkeypatch: pytest.Monke
         assert added.json()["projectId"] == project_id
         room = c.get(f"/api/projects/{project_id}/room").json()
         assert any(item.get("scope") == "acme/app" for item in room["sources"]["items"]), room["sources"]
+        again = c.post("/api/projects/door", json={
+            "project_id": project_id,
+            "sources": [{"provider": "github", "scope": "acme/app", "watches": ["open_prs"]}],
+        })
+        assert again.status_code == 409, again.text
+        assert again.json()["message"] == "Already watched"
         empty = c.post("/api/projects/door", json={"project_id": project_id, "sources": []})
         assert empty.status_code == 400, empty.text
     finally:

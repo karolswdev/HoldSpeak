@@ -37,6 +37,7 @@ import {
 } from "../../desk/surface";
 import { useDrawerMembers } from "../../desk/drawer/useDrawerData";
 import { memberOpens, openMember } from "../../desk/drawer/open";
+import { useDrawers } from "../../desk/drawer/store";
 import { useWindowTitle } from "../../desk/surface/title";
 import { Button } from "../../components/signal/Signal";
 import {
@@ -1451,12 +1452,16 @@ function SourcesSection({
 /* ── FILES section (PHILO-17 U30: the drawer's objects, in the Room) ── */
 
 function RoomFilesSection({ ctrl }: { ctrl: ReturnType<typeof useProjectRoomController> }) {
-  const { members } = useDrawerMembers(ctrl.projectId ?? "", ctrl);
+  const projectId = ctrl.projectId ?? "";
+  const { members, failed, retry } = useDrawerMembers(projectId, ctrl);
   const [sort, setSort] = useState<ObjectSort>({ key: "name", dir: "asc" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = members.find((m) => m.id === selectedId) ?? null;
-  // A zero is never said (UX-CANON A.8): no files, no section.
-  if (!members.length) return null;
+  // The Room names its own failed read; FILES names the reads only it makes
+  // (A.10: a failed read is never an empty or a complete list).
+  const unread = failed.filter((read) => read === "PEOPLE" || read === "RESOURCES");
+  // A zero is never said (UX-CANON A.8): no files and nothing failed, no section.
+  if (!members.length && !unread.length) return null;
   const open = (id: string | null) => {
     const member = members.find((m) => m.id === id);
     if (member && memberOpens(member)) openMember(member);
@@ -1468,20 +1473,38 @@ function RoomFilesSection({ ctrl }: { ctrl: ReturnType<typeof useProjectRoomCont
       label={countLabel("FILES", members.length)}
       data-testid="room-files"
       actions={
-        <Button dense variant="ghost" disabled={!selected || !memberOpens(selected)} onClick={() => open(selectedId)} data-testid="room-files-open">
-          Open
-        </Button>
+        <>
+          {unread.length ? (
+            <Button dense variant="ghost" onClick={retry} data-testid="room-files-retry">
+              Retry
+            </Button>
+          ) : null}
+          <Button dense variant="ghost" disabled={!selected} onClick={() => selected && useDrawers.getState().openInfo(selected, projectId)} data-testid="room-files-info">
+            Get Info
+          </Button>
+          <Button dense variant="ghost" disabled={!selected || !memberOpens(selected)} onClick={() => open(selectedId)} data-testid="room-files-open">
+            Open
+          </Button>
+        </>
       }
     >
-      <ObjectList
-        label="Files"
-        rows={members}
-        sort={sort}
-        onSort={onSort}
-        selectedId={selectedId}
-        onSelect={setSelectedId}
-        onOpen={open}
-      />
+      {unread.length ? (
+        <div className="room-files-unread" data-testid="room-files-not-read">
+          {unread.map((read) => <StateChip key={read} state="failure" label={`${read} · NOT READ`} />)}
+          {members.length ? <StateChip state="warning" label="PARTIAL" /> : null}
+        </div>
+      ) : null}
+      {members.length ? (
+        <ObjectList
+          label="Files"
+          rows={members}
+          sort={sort}
+          onSort={onSort}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onOpen={open}
+        />
+      ) : null}
     </SurfaceSection>
   );
 }

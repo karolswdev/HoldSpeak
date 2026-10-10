@@ -538,15 +538,16 @@ describe("ConnectionsPane", () => {
   });
   /* PHILO-17 U29: the cause in plain words, the command on every row, Add checks at once. */
   describe("sign in (U29)", () => {
-    it("a failed check whose cause is no sign-in says Not signed in, with its command", async () => {
-      const gh: ConnectionTool = {
+    it("the producer's owner_action_required reads Not signed in; a degraded check never does", async () => {
+      const degraded: ConnectionTool = {
         provider_id: "github", state: "degraded", account: {},
-        error_detail: "You are not logged into any GitHub hosts. To log in, run: gh auth login",
+        error_detail: "connect to 10.0.0.1:401 timed out",
         last_checked_at: "2026-09-04T13:00:00Z", egress_host: "github.com",
       };
-      renderPane({ tools: [gh, emptyJira(), connectedCalendar(), connectedModels()] });
+      renderPane({ tools: [degraded, emptyJira(), connectedCalendar(), connectedModels()] });
       const card = await screen.findByTestId("connections-github");
-      expect(within(card).getByText(/^Not signed in · Checked /)).toBeInTheDocument();
+      expect(within(card).getByText(/^Unreachable · Checked /)).toBeInTheDocument();
+      // Every row that is not ready shows its command and Copy.
       expect(within(card).getByText("gh auth login")).toBeInTheDocument();
       expect(within(card).getByText("Copy")).toBeInTheDocument();
     });

@@ -28,7 +28,7 @@ import pytest
 
 from tests._evidence import evidence_dir
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import open_project_drawer, _api, _boot, _ensure_build, _normal_chair, _settle
 
 pytest.importorskip("playwright.sync_api", reason="the drop-to-hand glass needs Playwright")
 
@@ -122,7 +122,7 @@ class TestDropToHandGlass:
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
         _api(page, "PUT", "/api/authority/control-mode", {"control_mode": mode}, token=TOKEN)
-        page.goto(f"{self.base}/?token={TOKEN}&open=project:{PROJECT}", wait_until="load")
+        open_project_drawer(page, self.base, PROJECT, TOKEN)  # PHILO-17 U30: the parked drawer, by its key
         _normal_chair(page)
         page.locator(".drawer-window [data-testid=drawer-facts]").wait_for(timeout=T)
         page.locator(f".drawer-window [data-object-id='action:{ACTION_ID}']").first.wait_for(timeout=T)

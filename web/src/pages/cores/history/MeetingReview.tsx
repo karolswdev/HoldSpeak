@@ -59,7 +59,7 @@ import {
   type MeetingReviewModel,
   type ReviewProposal,
 } from "./reviewModel";
-import { openDrawer } from "../../../desk/drawer/store";
+import { openProjectRoom } from "../../../desk/shell";
 
 type Receipt = { text: string; tone?: "warn" | "danger" | "success" };
 
@@ -308,7 +308,7 @@ export function MeetingReview({
 
   const openProject = () => {
     if (!model?.project) return;
-    openDrawer(model.project.id); // PHILO-14 A2: a Project opens as its drawer
+    openProjectRoom(model.project.id); // PHILO-17 U30: a Project opens its Room (one home)
   };
 
   // ── derived ──
