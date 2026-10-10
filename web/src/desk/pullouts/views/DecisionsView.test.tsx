@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DecisionsView } from "./DecisionsView";
+import { useDesk } from "../../store";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 
@@ -56,7 +57,32 @@ const detail = {
   }],
 };
 
-describe("HS-128-04 Receipts view", () => {
+// PHILO-17: the list is every decision on the desk (`/api/decisions?scope=all`),
+// each row with its date and its meeting; a row opens its record, its Desk
+// window, or (a meeting's decision with no record) the decision itself.
+const ledger = [
+  {
+    source: "meeting", id: "dec-1", text: receipt.decision_text, rationale: receipt.rationale,
+    decided_at: "2026-10-09T14:00:00", lifecycle: "recorded", meeting_id: "m-1",
+    meeting_title: "Ledger cutover sync", record_id: receipt.id,
+  },
+  {
+    source: "meeting", id: "dec-2", text: "Freeze the old ledger on Nov 5", rationale: "Agreed in the meeting.",
+    decided_at: "2026-10-09T14:05:00", lifecycle: "recorded", meeting_id: "m-1",
+    meeting_title: "Ledger cutover sync", record_id: null,
+  },
+  {
+    source: "meeting", id: "dec-3", text: "Keep the old ledger", rationale: null,
+    decided_at: "2026-10-01T09:00:00", lifecycle: "superseded", meeting_id: "m-0",
+    meeting_title: "Ledger kickoff", record_id: null,
+  },
+  {
+    source: "desk", id: "d-adr", text: "Use OTel for tracing", rationale: null,
+    decided_at: "2026-10-02", lifecycle: "accepted", meeting_id: null, meeting_title: null, record_id: null,
+  },
+];
+
+describe("Intelligence → Decisions (PHILO-17: every decision, its date and its meeting)", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
@@ -65,28 +91,42 @@ describe("HS-128-04 Receipts view", () => {
     apiFetch.mockReset();
     apiFetch.mockImplementation((path: string) => {
       if (path.includes("receipt-abcdef0123456789")) return Promise.resolve(detail);
-      if (path.includes("/search")) return Promise.resolve([receipt]);
+      if (path.startsWith("/api/decisions?scope=all")) return Promise.resolve({ decisions: ledger });
       return Promise.resolve([receipt]);
     });
   });
 
-  it("searches on keystroke and supports a governing-only WHY filter", async () => {
-    render(<DecisionsView />);
-    await screen.findByText(receipt.decision_text);
-
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search decisions" }), {
-      target: { value: "Intelligence" },
-    });
-    await waitFor(() =>
-      expect(apiFetch).toHaveBeenCalledWith("/api/decision-records/search?q=Intelligence"),
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "WHY ONLY" }));
-    expect(screen.getByText("GOVERNING DECISIONS")).toBeInTheDocument();
-    expect(screen.getByText(receipt.decision_text)).toBeInTheDocument();
+  it("lists every decision with its date and meeting; no UNASSIGNED, no GOVERNING, no WHY", async () => {
+    const { container } = render(<DecisionsView />);
+    await screen.findByText("Freeze the old ledger on Nov 5");
+    expect(apiFetch).toHaveBeenCalledWith("/api/decisions?scope=all&limit=500");
+    const rows = container.querySelectorAll("[data-testid=decisions-row]");
+    expect(rows).toHaveLength(4);
+    const freeze = [...rows].find((r) => r.textContent?.includes("Freeze the old ledger"))!;
+    expect(freeze.textContent).toContain("Ledger cutover sync");
+    expect(freeze.textContent).toContain(new Date("2026-10-09T14:05:00").toLocaleDateString());
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(/UNASSIGNED|GOVERNING|WHY/);
+    expect([...rows].find((r) => r.textContent?.includes("Use OTel"))!.textContent).toContain("Desk");
   });
 
-  it("opens full receipt evidence in place and returns to the preserved ledger", async () => {
+  it("searches in place; Current only hides a replaced decision", async () => {
+    render(<DecisionsView />);
+    await screen.findByText("Keep the old ledger");
+    expect(screen.getByText("REPLACED")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Current only" }));
+    expect(screen.queryByText("Keep the old ledger")).toBeNull();
+    expect(screen.getByText("Freeze the old ledger on Nov 5")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search decisions" }), {
+      target: { value: "cutover freeze" },
+    });
+    expect(screen.getByText("Freeze the old ledger on Nov 5")).toBeInTheDocument();
+    expect(screen.queryByText(receipt.decision_text)).toBeNull();
+  });
+
+  it("a row with a record opens full receipt evidence in place and returns to the list", async () => {
     render(<DecisionsView />);
     const row = await screen.findByRole("button", { name: `Open decision ${receipt.decision_text}` });
     fireEvent.click(row);
@@ -95,56 +135,67 @@ describe("HS-128-04 Receipts view", () => {
     expect(screen.getByText(/Receipts must explain the decision/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "story: HS-128-04" })).toBeInTheDocument();
     expect(screen.getByText(/Old rationale/)).toBeInTheDocument();
+    expect(screen.getByText("CURRENT")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "← RESULTS" }));
     expect(screen.getByText(receipt.decision_text)).toBeInTheDocument();
   });
 
-  // Astra, #785 finding 2: a slow bus re-read for the old query landed after
-  // the new query's rows and showed "alpha" rows under the field "beta".
-  it("drops a late answer for an older query", async () => {
+  it("a meeting's decision with no record opens itself: words, why, when, its meeting", async () => {
+    const openPullout = vi.fn();
+    useDesk.setState({ openPullout } as never);
+    render(<DecisionsView />);
+    fireEvent.click(await screen.findByRole("button", { name: "Open decision Freeze the old ledger on Nov 5" }));
+    const card = await screen.findByTestId("decision-detail");
+    expect(card.textContent).toContain("Freeze the old ledger on Nov 5");
+    expect(card.textContent).toContain("Agreed in the meeting.");
+    expect(card.textContent).toContain("Ledger cutover sync");
+    fireEvent.click(screen.getByRole("button", { name: "Open meeting" }));
+    expect(openPullout).toHaveBeenCalledWith("meeting:m-1");
+  });
+
+  it("decisionId (a ⌘K hit) opens that decision in place", async () => {
+    render(<DecisionsView decisionId="dec-2" />);
+    const card = await screen.findByTestId("decision-detail");
+    expect(card.textContent).toContain("Freeze the old ledger on Nov 5");
+  });
+
+  // Astra, #785 finding 2 (kept): a slow bus re-read for an older list must
+  // not land over the new one. The list now changes with the work ref.
+  it("drops a late answer for an older work ref", async () => {
     const alpha = { ...receipt, id: "receipt-alpha", decision_text: "Alpha decision" };
     const beta = { ...receipt, id: "receipt-beta", decision_text: "Beta decision" };
     let releaseAlpha: (rows: unknown[]) => void = () => undefined;
     let alphaReads = 0;
     apiFetch.mockImplementation((path: string) => {
-      if (path.includes("q=alpha")) {
+      if (path.includes("/work/story/alpha")) {
         alphaReads += 1;
-        // The first alpha read is the search; the second is the bus re-read, held.
         return alphaReads === 1
           ? Promise.resolve([alpha])
           : new Promise((resolve) => { releaseAlpha = resolve; });
       }
-      if (path.includes("q=beta")) return Promise.resolve([beta]);
-      return Promise.resolve([receipt]);
+      if (path.includes("/work/story/beta")) return Promise.resolve([beta]);
+      return Promise.resolve({ decisions: [] });
     });
 
-    // The test owns the clock: the search wait (200 ms) and the bus wait
-    // (300 ms) are stepped, so a slow machine cannot change the order. With
-    // real timers each step had one second, and a loaded full run missed it.
     vi.useFakeTimers();
     const step = (ms: number) => act(async () => { await vi.advanceTimersByTimeAsync(ms); });
 
-    render(<DecisionsView />);
-    const field = screen.getByRole("searchbox", { name: "Search decisions" });
-    fireEvent.change(field, { target: { value: "alpha" } });
-    await step(200);
+    const view = render(<DecisionsView workRef="story:alpha" />);
+    await step(50);
     expect(screen.getByText("Alpha decision")).toBeTruthy();
-    expect(alphaReads).toBe(1);
 
-    // A write somewhere: the view re-reads "alpha"; that read is slow.
     act(() => bus.handlers.forEach((handler) => handler({ type: "desk_changed", data: {} })));
     await step(300);
     expect(alphaReads).toBe(2);
 
-    fireEvent.change(field, { target: { value: "beta" } });
-    await step(200);
+    view.rerender(<DecisionsView workRef="story:beta" />);
+    await step(50);
     expect(screen.getByText("Beta decision")).toBeTruthy();
 
     await act(async () => { releaseAlpha([alpha]); });
     await step(50);
     expect(screen.getByText("Beta decision")).toBeTruthy();
     expect(screen.queryByText("Alpha decision")).toBeNull();
-    expect((field as HTMLInputElement).value).toBe("beta");
   });
 });

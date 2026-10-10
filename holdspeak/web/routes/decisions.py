@@ -48,7 +48,11 @@ def build_decisions_router(ctx: Any) -> APIRouter:
     # a second route-side model seam would be a second, unadmitted Decision path.
     def service() -> DecisionLifecycleService: return DecisionLifecycleService(_database(), kernel=_kernel_service(), observer=get_observer())
     @router.get("")
-    async def list_decisions(request: Request,project_id: Optional[str]=None,project_key: Optional[str]=None,meeting_id: Optional[str]=None,lifecycle: Optional[str]=None,limit: int=200,offset: int=0) -> Any:
+    async def list_decisions(request: Request,project_id: Optional[str]=None,project_key: Optional[str]=None,meeting_id: Optional[str]=None,lifecycle: Optional[str]=None,limit: int=200,offset: int=0,scope: Optional[str]=None) -> Any:
+        if scope == "all":
+            # PHILO-17: every decision on the desk, for Intelligence → Decisions.
+            try: return JSONResponse(service().list_decisions(_principal(request),scope="all",limit=limit))
+            except ServiceError as exc: return _error(exc)
         if not any((project_id, project_key, meeting_id, lifecycle)):
             return JSONResponse({"decisions": desk_ops().invoke(_principal(request), "decision.list", {"limit": limit})})
         try: return JSONResponse(service().list_decisions(_principal(request),project_id=project_id,project_key=project_key,meeting_id=meeting_id,lifecycle=lifecycle,limit=limit,offset=offset))

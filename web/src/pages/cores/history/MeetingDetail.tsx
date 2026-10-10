@@ -21,7 +21,12 @@ import {
 import { apiFetch } from "../../../lib/api";
 import type { DetailView, Receipt } from "./helpers";
 import { MeetingReview } from "./MeetingReview";
-import { useMeetingData, type FollowThroughProposal, type MeetingData } from "./useMeetingData";
+import {
+  useMeetingData,
+  type FollowThroughProposal,
+  type MeetingData,
+  type MeetingDecision,
+} from "./useMeetingData";
 import { MeetingHeader } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
 import { ArtifactsLibrary } from "./ArtifactsLibrary";
@@ -53,7 +58,8 @@ type OutcomeRow = {
  *  never drawn. The items are the aftercare's rows, else the meeting's own
  *  (`intel.action_items`). A Section with no rows is not drawn (A.8). */
 export function meetingOutcomes(
-  data: Pick<MeetingData, "ftProposals" | "openActions" | "settledActions">,
+  data: Pick<MeetingData, "ftProposals" | "openActions" | "settledActions">
+    & { meetingDecisions?: readonly MeetingDecision[] },
   intelActions: readonly Record<string, unknown>[] = [],
 ): {
   decisions: OutcomeRow[];
@@ -69,6 +75,21 @@ export function meetingOutcomes(
         key: `ft-${p.id}`, plate: "DEC" as const, text: p.text,
         meta: owner(p.owner) || owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
       });
+  // PHILO-17 ("what did we decide yesterday?"): the decisions the meeting
+  // recorded (the `decisions` table) are on its record too. A row a proposal
+  // already draws (the same words) is not drawn twice; a rejected one is not
+  // drawn.
+  const said = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
+  const drawn = new Set(decisions.map((row) => said(row.text)));
+  for (const d of data.meetingDecisions ?? []) {
+    const lifecycle = String(d.lifecycle ?? "").toLowerCase();
+    if (lifecycle === "rejected" || !String(d.text ?? "").trim() || drawn.has(said(d.text))) continue;
+    drawn.add(said(d.text));
+    decisions.push({
+      key: `dec-${d.id}`, plate: "DEC", text: d.text,
+      meta: lifecycle === "superseded" ? "REPLACED" : "DECIDED",
+    });
+  }
 
   const actionProposals = data.ftProposals.filter((p) => p.kind === "action");
   const proposalOf = (itemId: string) => actionProposals.find((p) => p.action_item_id && p.action_item_id === itemId);

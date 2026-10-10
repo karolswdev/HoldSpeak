@@ -6,6 +6,8 @@ export type IntelligenceNavigation = {
   view: IntelligenceView;
   receiptQuery?: string;
   receiptId?: string;
+  /** PHILO-17: one decision of the desk (a `decisions` row), opened in place. */
+  decisionId?: string;
   receiptWorkRef?: string;
   followThroughId?: string;
   overdueOnly?: boolean;

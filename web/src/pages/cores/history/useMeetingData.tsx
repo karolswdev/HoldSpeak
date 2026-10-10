@@ -75,6 +75,17 @@ export interface MeetingData {
   ftProposals: FollowThroughProposal[];
   confirmProposal: (id: string) => Promise<void>;
   dismissProposal: (id: string) => Promise<void>;
+  /** PHILO-17: the decisions the meeting recorded (the `decisions` table,
+   *  `GET /api/decisions?meeting_id=`), not only its proposals. */
+  meetingDecisions: MeetingDecision[];
+}
+
+/** PHILO-17: one decision the meeting recorded (a `decisions` row). */
+export interface MeetingDecision {
+  id: string;
+  text: string;
+  lifecycle?: string | null;
+  decided_at?: string | null;
 }
 
 export function useMeetingData(
@@ -89,6 +100,7 @@ export function useMeetingData(
   const [proposals, setProposals] = useState<Record<string, unknown>>({});
   const [authority, setAuthority] = useState<Record<string, unknown>>({});
   const [ftProposals, setFtProposals] = useState<FollowThroughProposal[]>([]);
+  const [meetingDecisions, setMeetingDecisions] = useState<MeetingDecision[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -133,6 +145,12 @@ export function useMeetingData(
         .then(mine((res: { proposals?: FollowThroughProposal[] }) =>
           setFtProposals(res.proposals ?? [])))
         .catch(() => { if (live) setFtProposals([]); }),
+      apiFetch<{ decisions?: MeetingDecision[] }>(
+        `/api/decisions?meeting_id=${encodeURIComponent(id)}`,
+      )
+        .then(mine((res: { decisions?: MeetingDecision[] }) =>
+          setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : [])))
+        .catch(() => { if (live) setMeetingDecisions([]); }),
     ]).catch((reason) => { if (live) setError(readableError(reason)); });
     return () => {
       live = false;
@@ -233,7 +251,8 @@ export function useMeetingData(
       : String(intelStatus ?? "");
   const intelOff = intelState === "disabled";
   const hasOutcomes =
-    proposalRows.length > 0 || openActions.length > 0 || settledActions.length > 0 || ftProposals.length > 0;
+    proposalRows.length > 0 || openActions.length > 0 || settledActions.length > 0 || ftProposals.length > 0
+    || meetingDecisions.length > 0;
   const captureBad =
     Boolean(detail?.capture_status) && detail?.capture_status !== "finalized";
 
@@ -337,5 +356,6 @@ export function useMeetingData(
     ftProposals,
     confirmProposal,
     dismissProposal,
+    meetingDecisions,
   };
 }

@@ -156,3 +156,54 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
     await waitFor(() => expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decisions · 1"));
   });
 });
+
+// PHILO-17 ("what did we decide yesterday?"): the decisions the meeting
+// recorded (the `decisions` table) are on its record, above Commitments,
+// even when no proposal names them.
+describe("the meeting's recorded decisions (PHILO-17)", () => {
+  it("meetingOutcomes draws recorded decisions; a proposal's twin once; a rejected one never", () => {
+    const { decisions } = meetingOutcomes({
+      ftProposals: [
+        { id: "p1", meeting_id: "m1", kind: "decision", text: "Run reconciliation nightly", state: "confirmed", owner_hint: "Avery", created_at: "" },
+      ],
+      openActions: [],
+      settledActions: [],
+      meetingDecisions: [
+        { id: "d1", text: "Freeze the old ledger on Nov 5", lifecycle: "recorded" },
+        { id: "d2", text: "run reconciliation  nightly", lifecycle: "accepted" },
+        { id: "d3", text: "Keep the old ledger", lifecycle: "superseded" },
+        { id: "d4", text: "Drop the ledger", lifecycle: "rejected" },
+      ],
+    });
+    expect(decisions.map((d) => [d.text, d.meta])).toEqual([
+      ["Run reconciliation nightly", "AVERY"],
+      ["Freeze the old ledger on Nov 5", "DECIDED"],
+      ["Keep the old ledger", "REPLACED"],
+    ]);
+  });
+
+  it("the hook reads /api/decisions?meeting_id= and the record shows them above Commitments", async () => {
+    const meeting = {
+      id: "m9", title: "Ledger cutover sync", intel_status: "complete",
+      intel: { summary: "s", action_items: [{ id: "ai-1", task: "Write the rollback runbook", owner: null, status: "pending" }] },
+    };
+    apiFetch.mockImplementation(async (url: string) => {
+      if (url === "/api/decisions?meeting_id=m9")
+        return { decisions: [{ id: "d1", text: "Freeze the old ledger on Nov 5", lifecycle: "recorded" }] };
+      if (url.includes("/follow-through-proposals")) return { proposals: [] };
+      if (url === "/api/meetings/m9") return meeting;
+      return {};
+    });
+    function Harness() {
+      const data = useMeetingData(meeting, () => undefined);
+      return <MeetingOutcomes data={data} meeting={meeting} />;
+    }
+    const { container } = render(<Harness />);
+    const decisions = await screen.findByTestId("meeting-decisions");
+    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
+    expect(decisions.textContent).toContain("Freeze the old ledger on Nov 5");
+    const order = [...container.querySelectorAll("[data-testid=meeting-decisions], [data-testid=meeting-commitments]")]
+      .map((el) => el.getAttribute("data-testid"));
+    expect(order).toEqual(["meeting-decisions", "meeting-commitments"]);
+  });
+});

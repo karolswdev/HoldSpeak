@@ -491,6 +491,42 @@ class DecisionRepository(BaseRepository):
             ).fetchall()
         return [self._row(row) for row in rows]
 
+    def ledger(self, *, limit: int = 500) -> list[dict[str, Any]]:
+        """PHILO-17: every decision on the desk, newest first, for one list.
+
+        A meeting's decision (this table) names its meeting and that meeting's
+        title; a Desk decision (``desk_decisions``) names none. Each row names
+        the decision record made from it, when there is one.
+        """
+        bounded = max(1, min(int(limit), 500))
+        record = (
+            "(SELECT r.id FROM decision_records r WHERE r.source_type = '{kind}'"
+            " AND r.source_id = {col} AND r.deleted = 0"
+            " AND COALESCE(r.kind, 'decision') = 'decision'"
+            " ORDER BY r.created_at DESC, r.id DESC LIMIT 1)"
+        )
+        with self._connection() as conn:
+            rows = conn.execute(
+                f"""SELECT 'meeting' AS source, d.id AS id, d.text AS text,
+                           d.rationale AS rationale, d.decided_at AS decided_at,
+                           d.lifecycle AS lifecycle,
+                           d.source_meeting_id AS meeting_id,
+                           m.title AS meeting_title,
+                           {record.format(kind="meeting", col="d.id")} AS record_id
+                    FROM decisions d LEFT JOIN meetings m ON m.id = d.source_meeting_id
+                    WHERE d.deleted = 0
+                    UNION ALL
+                    SELECT 'desk', dd.id, dd.title, NULL,
+                           COALESCE(dd.decided_at, dd.created_at), dd.status,
+                           NULL, NULL,
+                           {record.format(kind="desk", col="dd.id")}
+                    FROM desk_decisions dd
+                    WHERE dd.deleted = 0
+                    ORDER BY decided_at DESC, id DESC LIMIT ?""",
+                (bounded,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
     def assert_promotable(self, decision_id: str) -> DecisionRecord:
         clean_id = str(decision_id or "").strip()
         decision = self.get(clean_id)

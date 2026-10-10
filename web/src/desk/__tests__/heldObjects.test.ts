@@ -34,6 +34,8 @@ beforeEach(() => {
     if (path === "/api/meetings/m-old") return Promise.resolve({ id: "m-old", title: "Old meeting" });
     if (path === "/api/notes/n-old") return Promise.resolve({ note: { id: "n-old", title: "Old note", body_markdown: "x" } });
     if (path === "/api/decisions/d-old") return Promise.resolve({ decision: { id: "d-old", title: "Old decision" } });
+    if (path === "/api/decisions/mdec-1")
+      return Promise.resolve({ decision: { id: "mdec-1", text: "Freeze the old ledger", source_meeting_id: "m-old" }, lineage: {} });
     if (path === "/api/threads/t-old") return Promise.resolve({ id: "t-old", title: "Old thread" });
     if (path === "/api/meetings/m-gone") return Promise.reject(new Error("404"));
     return Promise.resolve({});
@@ -65,6 +67,15 @@ describe("held objects", () => {
     const again = await loadAll();
     expect(ids(again.items.meeting)).toContain("m-old");
     expect(ids(again.items.artifact)).toContain("art-27");
+  });
+
+  // PHILO-17: a decision a meeting recorded is not a Desk object; held, it
+  // never becomes an untitled "New decision" on the Floor.
+  it("a held decision a meeting recorded is left out of the Desk's decisions", async () => {
+    holdObject("decision:mdec-1");
+    const { items } = await loadAll();
+    expect(calls).toContain("/api/decisions/mdec-1");
+    expect(ids(items.decision)).toEqual([]);
   });
 
   it("an artifact beyond the first pull takes one wider pull", async () => {

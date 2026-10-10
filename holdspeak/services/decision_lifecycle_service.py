@@ -13,7 +13,12 @@ class DecisionLifecycleService:
     def __init__(self, db: Database, kernel: Any | None = None, *, observer: PipelineObserver | None = None) -> None:
         self._db, self._kernel = db, kernel
         self._observer = observer or NullObserver()
-    def list_decisions(self, principal: Principal, *, project_id: str | None = None, project_key: str | None = None, meeting_id: str | None = None, lifecycle: str | None = None, limit: int = 200, offset: int = 0) -> dict[str, Any]:
+    def list_decisions(self, principal: Principal, *, project_id: str | None = None, project_key: str | None = None, meeting_id: str | None = None, lifecycle: str | None = None, limit: int = 200, offset: int = 0, scope: str | None = None) -> dict[str, Any]:
+        # PHILO-17: `scope="all"` is every decision on the desk (meeting and
+        # Desk decisions), with its date, its meeting and its record.
+        if scope == "all":
+            self._require(principal, PrincipalRight.READ)
+            return {"decisions": self._db.decisions.ledger(limit=limit)}
         if project_id and project_key and project_id != project_key: raise ValidationError("project_id and project_key must name the same project")
         if not any((project_id, project_key, meeting_id, lifecycle)): return {"decisions":[r.to_dict() for r in self._db.desk_decisions.list(limit=limit)]}
         self._require(principal, PrincipalRight.READ)

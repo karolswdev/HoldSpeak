@@ -100,6 +100,7 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
         && request.followThroughId === current.followThroughId
         && request.overdueOnly === current.overdueOnly
         && request.receiptId === current.receiptId
+        && request.decisionId === current.decisionId
         && request.receiptQuery === current.receiptQuery
         && request.whyOnly === current.whyOnly
         && request.receiptWorkRef === current.receiptWorkRef;
@@ -159,7 +160,7 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
       <div className="desk-pullout-body desk-surface-body intelligence-pullout">
         {header}
         <section className="intelligence-view" aria-live="polite">
-          <DecisionsView initialQuery={navigation.receiptQuery} initialWhyOnly={navigation.whyOnly} workRef={navigation.receiptWorkRef} receiptId={navigation.receiptId} />
+          <DecisionsView initialQuery={navigation.receiptQuery} initialWhyOnly={navigation.whyOnly} workRef={navigation.receiptWorkRef} receiptId={navigation.receiptId} decisionId={navigation.decisionId} />
         </section>
       </div>
       <SurfaceFooter />
