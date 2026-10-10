@@ -166,7 +166,11 @@ class TestTheSecondMorning:
                 _press(page, mtg.get_by_role("button", name="Retry: Meetings"), width)
                 receipt = needs.get_by_test_id("needs-source-receipt")
                 receipt.wait_for()
-                assert receipt.inner_text().startswith("CHECKED · Meetings · "), receipt.inner_text()
+                # Phase 16 A3: the receipt is the Foot's receipt line, the caption step
+                # (UX-CANON §C: 12 mono uppercase), so the glass draws it upper case; the
+                # words keep the source's name as named (NeedsDrawer.test.tsx reads the same).
+                assert receipt.text_content().startswith("CHECKED · Meetings · "), receipt.text_content()
+                assert receipt.evaluate("(el) => getComputedStyle(el).textTransform") == "uppercase"
                 page.wait_for_function(
                     """() => ![...document.querySelectorAll("[data-testid='needs-source-row']")]
                         .some((li) => li.textContent.includes("Meetings"))""")

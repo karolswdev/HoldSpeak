@@ -74,6 +74,11 @@ def _the_day(page: Any, ledger_path: Path) -> None:
 
     pid = _api(page, "POST", "/api/projects", {"name": "Rehearsal repo hygiene"}, token=TOKEN)["project"]["id"]
     update = _api(page, "POST", f"/api/projects/{pid}/updates/draft", {}, token=TOKEN)["update"]["id"]
+    # PHILO-15 B64 (Astra r1): an update with no verified claim is refused
+    # NOTHING VERIFIED; a fresh Project's draft has none. The owner's own saved
+    # words are reviewed, so the update carries one line (tests/unit/_philo10_send.py).
+    _api(page, "PUT", f"/api/updates/{update}",
+         {"body_md": "## Progress\n\nCODEOWNERS landed; merges are squash only.\n"}, token=TOKEN)
     _api(page, "POST", f"/api/updates/{update}/publish", {}, token=TOKEN)
     ref = f"project_update:{update}"
     digest = _api(page, "POST", "/api/channels/preview",

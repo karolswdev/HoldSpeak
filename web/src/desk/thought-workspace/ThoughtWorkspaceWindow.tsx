@@ -521,8 +521,11 @@ function WorkspaceReady({
       className="thought-note-foot"
       egress={<span className="thought-note-reads" title={`Reads ${readsToken}`}>READS · {readsToken}</span>}
       receipt={<>
-        {writeLine ? <span className="surface-footer-receipt-line" role="status" data-tone={writeLine.danger ? "danger" : undefined}>{writeLine.text}</span> : null}
-        <span className="surface-footer-receipt-line" data-line="filing">{thoughtFilingLine(documentThought, completed)}</span>
+        {/* PHILO-3-04: the receipt keeps its whole words and wraps; the
+            library's wrap token ([data-wrap], surface-footer.css) lifts the
+            one-line clip a plain foot receipt wears (B27). */}
+        {writeLine ? <span className="surface-footer-receipt-line" role="status" data-wrap="" data-tone={writeLine.danger ? "danger" : undefined}>{writeLine.text}</span> : null}
+        <span className="surface-footer-receipt-line" data-wrap="" data-line="filing">{thoughtFilingLine(documentThought, completed)}</span>
       </>}
       verbs={<>
         {writer.conflicted
