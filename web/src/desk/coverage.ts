@@ -36,6 +36,37 @@ export interface CoverageRecord {
   watch_ids?: string[];
   /** The host a re-check reaches (github.com, a Jira site); none = local. */
   host?: string | null;
+  /** PHILO-17 (needsyou): a Watch's provider (`github`, `jira`). */
+  provider?: string | null;
+  /** PHILO-17 (needsyou): the plain cause (`Not signed in`); null when the
+   *  reason is a raw error line (the row's detail keeps it). */
+  cause?: string | null;
+}
+
+/** PHILO-17 (needsyou): the cause of an unread source and where its repair
+ *  goes. Sources with the same cause AND the same repair (verb, destination,
+ *  egress host) are ONE Needs-you row, counted once. A source with no plain
+ *  cause groups only with the same first error line. The twin of
+ *  `source_group_key` (holdspeak/services/needs_you_membership.py). */
+export function gapGroupKey(row: CoverageRecord): string {
+  const firstLine = String(row.reason ?? "").trim().split("\n")[0].split(/\s+/).filter(Boolean).join(" ").toLowerCase();
+  const cause = String(row.cause ?? "").trim() || firstLine;
+  return [
+    row.provider || row.kind || "", row.state || "", row.repair?.token || "", cause,
+    row.repair?.verb || "", row.repair?.href || "", row.host || "",
+  ].join("|");
+}
+
+/** The gaps grouped by cause, in their order (first seen leads). */
+export function groupGaps(gaps: readonly CoverageRecord[]): CoverageRecord[][] {
+  const groups = new Map<string, CoverageRecord[]>();
+  for (const gap of gaps) {
+    const key = gapGroupKey(gap);
+    const group = groups.get(key);
+    if (group) group.push(gap);
+    else groups.set(key, [gap]);
+  }
+  return [...groups.values()];
 }
 
 export interface CoverageReading {

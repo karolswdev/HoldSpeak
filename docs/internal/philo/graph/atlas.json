@@ -7582,7 +7582,7 @@
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "[title='Desk memory']",
+        "selector": ".desk-dock [data-launcher='attention']",
         "action": "click",
         "adapter": "ui-pointer"
       },
@@ -7657,7 +7657,7 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[title='Desk memory']"
+          "selector": ".desk-dock [data-launcher='attention']"
         },
         {
           "kind": "ui",
@@ -7731,7 +7731,7 @@
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "[title='Desk memory']",
+        "selector": ".desk-dock [data-launcher='attention']",
         "action": "click",
         "adapter": "ui-pointer"
       },
@@ -8098,7 +8098,7 @@
         },
         {
           "kind": "ui",
-          "selector": "[title='Desk memory']",
+          "selector": ".desk-dock [data-launcher='attention']",
           "action": "click",
           "adapter": "ui-pointer"
         }
@@ -8496,7 +8496,7 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[title='Desk memory']"
+          "selector": ".desk-dock [data-launcher='attention']"
         },
         {
           "kind": "ui",
@@ -8907,7 +8907,7 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[title='Desk memory']"
+          "selector": ".desk-dock [data-launcher='attention']"
         },
         {
           "kind": "ui",
@@ -9330,7 +9330,7 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
-          "selector": "[title='Desk memory']"
+          "selector": ".desk-dock [data-launcher='attention']"
         },
         {
           "kind": "ui",

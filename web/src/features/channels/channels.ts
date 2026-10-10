@@ -176,6 +176,7 @@ const REFUSED: Record<string, string> = {
   document_not_found: "DOCUMENT NOT FOUND",
   artifact_body_missing: "ARTIFACT BODY MISSING",
   artifact_not_text: "ARTIFACT NOT TEXT",
+  note_empty: "NOTE HAS NO WORDS",
   email_address_invalid: "ADDRESS NOT VALID",
   email_key_invalid: "KEY NOT VALID",
   email_key_missing: "NO KEY",

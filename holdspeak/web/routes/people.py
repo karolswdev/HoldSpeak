@@ -181,6 +181,14 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
+    @router.post("/relationships/{relationship_id}/owed", status_code=201)
+    async def create_owed_to_you(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+        """PHILO-17 (U09): record what the person owes him."""
+        try:
+            return {"commitment": service.create_owed_to_you(principal(request), relationship_id, body)}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
     @router.get("/relationships/{relationship_id}/notes")
     async def notes(request: Request, relationship_id: str) -> dict[str, list[dict[str, Any]]]:
         try:

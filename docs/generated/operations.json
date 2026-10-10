@@ -5199,7 +5199,7 @@
         "properties": {
           "document_ref": {
             "type": "string",
-            "description": "Document ref <kind>:<id>. Kinds: project_update, monday_brief, desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, meeting_followup, artifact. IDs come from source list/read views."
+            "description": "Document ref <kind>:<id>. Kinds: project_update, monday_brief, desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, meeting_followup, artifact, note. IDs come from source list/read views."
           },
           "destination_id": {
             "type": "string",
@@ -5223,6 +5223,7 @@
         "document_not_found",
         "artifact_body_missing",
         "artifact_not_text",
+        "note_empty",
         "not_published",
         "no_summary",
         "destination_not_saved",
@@ -5285,6 +5286,7 @@
         "document_not_found",
         "artifact_body_missing",
         "artifact_not_text",
+        "note_empty",
         "not_published",
         "no_summary",
         "destination_not_saved",
@@ -5423,6 +5425,7 @@
         "document_not_found",
         "artifact_body_missing",
         "artifact_not_text",
+        "note_empty",
         "not_published",
         "no_summary",
         "path_outside_folder",

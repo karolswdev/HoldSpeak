@@ -415,7 +415,7 @@ CHAIR_WINDOWS_OPEN_JS = """(() => { try {
   // on the hub too (before the page reads it: synchronous), Needs you last
   // (in front). A page with no token (no hub session yet) keeps the cache.
   if (!/^https?:$/.test(location.protocol)) return;
-  const token = new URLSearchParams(location.search).get("token") || sessionStorage.getItem("hs.web.token");
+  const token = new URLSearchParams(location.search).get("token") || localStorage.getItem("hs.web.token") || sessionStorage.getItem("hs.web.token");
   if (!token) return;
   for (const id of ["chair:brief", "chair:week", "chair:capture", "chair:needs"]) {
     const xhr = new XMLHttpRequest();

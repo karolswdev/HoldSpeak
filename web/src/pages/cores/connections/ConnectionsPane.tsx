@@ -3,7 +3,7 @@
 // it never derives "connected" itself. Zero sentences.
 
 import { wireDate } from "../../../desk/surface/format";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   GadgetGroup,
   StateChip,
@@ -539,11 +539,15 @@ export interface ConnectionsFoot {
 export function ConnectionsPane({
   onFooterUpdate,
   onOpenModule,
+  focusProvider,
 }: {
   /** Lifts the connections receipt to the parent footer. */
   onFooterUpdate: (foot: ConnectionsFoot) => void;
   /** Navigate to another settings module (calendar -> "meetings", models -> "models"). */
   onOpenModule: (moduleId: string) => void;
+  /** PHILO-17 (needsyou): the provider to bring into view and focus
+   *  (`github`, `jira`, `confluence`): Needs you's Reconnect lands here. */
+  focusProvider?: string | null;
 }) {
   const [data, setData] = useState<ConnectionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -582,6 +586,20 @@ export function ConnectionsPane({
   }, [onFooterUpdate]);
 
   useEffect(() => { void load(); }, [load]);
+
+  // PHILO-17 (needsyou): Reconnect opens on the provider's row, focused.
+  const anchorRef = useRef<HTMLSpanElement>(null);
+  const loaded = Boolean(data);
+  useEffect(() => {
+    if (!focusProvider || !loaded) return;
+    const group = anchorRef.current?.parentElement;
+    const row = group?.querySelector<HTMLElement>(`[data-testid^="connections-${focusProvider}"]`);
+    if (!row) return;
+    row.scrollIntoView?.({ block: "center" });
+    const target = row.querySelector<HTMLElement>("button:not([disabled])") ?? row;
+    if (target === row) row.tabIndex = -1;
+    target.focus({ preventScroll: true });
+  }, [focusProvider, loaded]);
 
   const handleRecheck = useCallback(async (providerId: string, subRef?: string) => {
     setRecheckBusy(subRef ?? providerId);
@@ -634,6 +652,7 @@ export function ConnectionsPane({
 
   return (
     <GadgetGroup label={`Tools ${toolCount}`}>
+      <span ref={anchorRef} hidden />
       {github ? (
         <GitHubCard
           tool={github}

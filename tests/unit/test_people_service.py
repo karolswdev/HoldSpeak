@@ -217,3 +217,41 @@ def test_readiness_reports_existing_encrypted_store_without_key(tmp_path: Path) 
     assert status["state"] == "key_unavailable"
     assert status["store"] == "encrypted"
     assert status["reason_code"] == "people_store_key_unavailable"
+
+
+def test_philo17_they_owe_you_is_a_commitment_the_other_way(service: PeopleService) -> None:
+    """U09: what the person owes him is stored as a commitment with
+    direction report_owes; it never shows as his own (You owe, brief, cards,
+    history), and Done closes it like his own."""
+    relationship = service.create_relationship(OWNER, {"display_name": "Maya Chen"})
+    rid = relationship["id"]
+    request = service.create_request(OWNER, rid, {"body": "Review her design doc"})
+    mine = service.accept_request(OWNER, request["id"])
+    owed = service.create_owed_to_you(OWNER, rid, {"body": "Send me the API migration estimate", "visibility": "shared_intent"})
+
+    assert owed["direction"] == "report_owes"
+    assert owed["state"] == "open"
+    assert owed["history"][0]["event"] == "recorded"
+
+    detail = service.get_relationship(OWNER, rid)
+    assert [item["id"] for item in detail["commitments"]] == [mine["id"]]
+    assert [item["id"] for item in detail["owed_to_you"]] == [owed["id"]]
+
+    brief = service.one_on_one_brief(OWNER, rid)
+    assert [item["id"] for item in brief["open_commitments"]] == [mine["id"]]
+    assert [item["id"] for item in brief["owed_to_you"]] == [owed["id"]]
+
+    assert [card.id for card in service.list_cards(OWNER)] == [f"people:{mine['id']}"]
+    assert service.history_summary(OWNER, rid)["accepted"] == 1
+
+    service.transition(OWNER, f"people:{owed['id']}", "done")
+    assert service.one_on_one_brief(OWNER, rid)["owed_to_you"] == []
+    assert service.get_relationship(OWNER, rid)["owed_to_you"][0]["state"] == "done"
+
+
+def test_philo17_they_owe_you_needs_a_body_and_the_owner(service: PeopleService) -> None:
+    rid = service.create_relationship(OWNER, {"display_name": "Sam Ortiz"})["id"]
+    with pytest.raises(PeopleServiceError, match="people_payload_required"):
+        service.create_owed_to_you(OWNER, rid, {"body": "  "})
+    with pytest.raises(PeopleServiceError):
+        service.create_owed_to_you(AGENT, rid, {"body": "Not his to write"})

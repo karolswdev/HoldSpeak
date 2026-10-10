@@ -143,8 +143,8 @@ def capture() -> None:
                 content=".desk-mc,.desk-mc-tab{display:none!important}"
             )
 
-            # Prove the owner-facing launcher: bell -> shade -> actual search window.
-            page.click(".desk-bell")
+            # Prove the owner-facing launcher: Desk memory launcher -> shade -> actual search window.
+            page.click(".desk-dock [data-launcher='attention']")
             page.wait_for_selector(".desk-shade", state="visible")
             page.locator(".desk-shade").screenshot(
                 path=str(OUT / "desk-memory-launcher.png")

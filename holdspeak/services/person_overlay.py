@@ -18,6 +18,8 @@ def compose_person_overlay(
     follow_through_service: Any,
     db: Any,
     principal: Any,
+    *,
+    shared_only: bool = False,
 ) -> dict[str, Any]:
     """Build person_sections from encrypted + plaintext sources.
 
@@ -26,6 +28,10 @@ def compose_person_overlay(
     ``{"state": "ready", "sections": [...]}``.
 
     Read-time, in-memory, NEVER persisted.
+
+    ``shared_only`` (PHILO-17, Astra r1): an agent / MCP / document surface
+    counts only agent-readable rows (you owe, they owe you, agenda); the
+    owner's own face keeps the full counts.
     """
     # -- readiness gate -------------------------------------------------------
     try:
@@ -79,8 +85,21 @@ def compose_person_overlay(
         you_owe_count = 0
         try:
             brief_data = people_service.one_on_one_brief(principal, rel_id, db=db)
-            you_owe_count = len(brief_data.get("open_commitments") or [])
-            agenda_backlog = len(brief_data.get("agenda_items") or [])
+            you_owe_count = len([
+                item for item in brief_data.get("open_commitments") or []
+                if isinstance(item, dict) and (not shared_only or _shared(item))
+            ])
+            # PHILO-17 (U09): what he recorded by hand that the person owes him.
+            owed_rows = [
+                item for item in brief_data.get("owed_to_you") or []
+                if isinstance(item, dict)
+                and (not shared_only or _shared(item))
+            ]
+            they_owe_count += len(owed_rows)
+            agenda_backlog = len([
+                item for item in brief_data.get("agenda_items") or []
+                if isinstance(item, dict) and (not shared_only or _shared(item))
+            ])
         except Exception:
             agenda_backlog = 0
 
@@ -199,3 +218,14 @@ def _next_linked_one_on_one(
         pass
 
     return None
+
+
+def _shared(record: dict[str, Any]) -> bool:
+    """True for a record an agent may read (the MCP read policy)."""
+    from holdspeak.people import PeopleOperation, PeoplePolicy, Visibility
+
+    try:
+        visibility = Visibility(str(record.get("visibility") or ""))
+    except ValueError:
+        return False
+    return PeoplePolicy.allows(visibility, PeopleOperation.MCP_READ)
