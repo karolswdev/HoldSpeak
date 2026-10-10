@@ -7,7 +7,8 @@ through ``save_meeting``, the Room row through the proposal bridge, the mute
 through heartbeat settings, no engine assigned); the hub then restarts on
 that database, as the Dock atlas case does.
 
-  * The Chair head, the bell and the Dock all show the same number: 6.
+  * The Chair head and the bell show the same number: 6. PHILO-17
+    (needsyou): the Dock's Intelligence and Desk memory tiles carry no copy.
   * No visible "need(s) you" text on the glass carries another number.
   * Done on A1 (the Chair row's own Done) -> all three read 5 within 1 s,
     with no reload. The measured latency is written beside the shots.
@@ -72,7 +73,7 @@ AGREE = r"""(target) => new Promise((resolve) => {
     const head = read('[data-testid=arrival-display]');
     const bell = read('.desk-bell strong');
     const intel = read('.desk-dock [aria-label^="Intelligence"] .desk-dock-badge');
-    if (head === target && bell === target && intel === target) {
+    if (head === target && bell === target && intel === null) {
       resolve({ ms: Math.round(performance.now() - t0), head, bell, intel });
       return;
     }
@@ -156,8 +157,7 @@ class TestOneNeedsYou:
         page.wait_for_function(
             """(n) => {
               const r = (s) => { const e = document.querySelector(s); const m = ((e && e.innerText) || '').match(/\\d+/); return m ? Number(m[0]) : null; };
-              return r('[data-testid=arrival-display]') === n && r('.desk-bell strong') === n
-                && r('.desk-dock [aria-label^="Intelligence"] .desk-dock-badge') === n;
+              return r('[data-testid=arrival-display]') === n && r('.desk-bell strong') === n;
             }""",
             arg=n, timeout=20_000,
         )
@@ -173,12 +173,11 @@ class TestOneNeedsYou:
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width)
             try:
-                # ── one number: 6 on the head, the bell and the Dock ──
+                # ── one number: 6 on the head and the bell; no Dock copy ──
                 before = self._agree_on(page, 6)
                 record["before"] = before
-                assert before["head_n"] == before["bell"] == before["intel"] == 6, before
-                if before["memory"] is not None:
-                    assert before["memory"] == 6, before
+                assert before["head_n"] == before["bell"] == 6, before
+                assert before["intel"] is None and before["memory"] is None, before
                 said = _numbers_said(before["said"])
                 assert said and all(n == 6 for n in said), before["said"]
 
@@ -202,8 +201,7 @@ class TestOneNeedsYou:
                 assert not nav, f"the page navigated: {nav}"
                 after = page.evaluate(READERS)
                 record["after"] = after
-                if after["memory"] is not None:
-                    assert after["memory"] == 5, after
+                assert after["intel"] is None and after["memory"] is None, after
                 said = _numbers_said(after["said"])
                 assert said and all(n == 5 for n in said), after["said"]
                 self._shot(page, "a2w-chair-done-5", width)

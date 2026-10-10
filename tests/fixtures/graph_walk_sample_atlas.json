@@ -50,10 +50,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "selector": ".desk-bell",
+          "selector": ".desk-dock [data-launcher='attention']",
           "timeout_s": 20,
           "adapter": "ui-pointer",
-          "why": "Desk memory (web/src/desk/components/DeskChrome.tsx:35)"
+          "why": "Desk memory: the Dock launcher opens the shade (PHILO-17: the bell opens Needs you)"
         },
         {
           "kind": "ui",
