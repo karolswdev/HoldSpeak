@@ -430,6 +430,7 @@ function WorkspaceReady({
     : "NOTHING";
 
   const writeLine = thoughtWriteLine(writer);
+  const unsaved = Boolean(writer.pending || writer.saving || writer.failed || writer.conflicted);
   /* Astra finding 4 — `writer.retry` returns during a conflict
      (useThoughtNoteWriter.ts:238), so "Try again" there was a verb that
      does nothing (A.11).  The honest verb re-reads the note: the hub's
@@ -547,9 +548,18 @@ function WorkspaceReady({
       onClose={() => { setReads(false); requestAnimationFrame(() => readsRef.current?.focus()); }}
     /> : null}
 
-    {sending ? <div className="thought-send-well" data-testid="thought-send">
-      <NoteSendWells id={draftNoteId} title={writer.draft.title || documentThought.working_note.title}
-        version={documentThought.working_revision} />
+    {sending ? <div className="thought-send-well" data-testid="thought-send" data-unsaved={unsaved || undefined}>
+      {/* Astra r1 MUST: the well sends the STORED note, so it waits while an
+          edit is not saved; the save re-reads the preview (version). */}
+      {unsaved ? <p className="thought-send-wait" role="status">
+        <span className="surface-token" data-chip data-tone={writer.failed || writer.conflicted ? "danger" : undefined}>
+          {writer.failed || writer.conflicted ? "NOT SAVED · SEND WAITS" : "SAVING… · SEND WAITS"}
+        </span>
+      </p> : null}
+      <div className="thought-send-body" inert={unsaved} aria-hidden={unsaved || undefined}>
+        <NoteSendWells id={draftNoteId} title={writer.draft.title || documentThought.working_note.title}
+          version={documentThought.working_revision} />
+      </div>
     </div> : null}
 
     <SurfaceFooter
@@ -563,7 +573,7 @@ function WorkspaceReady({
         <span className="surface-footer-receipt-line" data-wrap="" data-line="filing">{thoughtFilingLine(documentThought, completed)}</span>
         {copyReceipt}
       </>}
-      verbs={<>
+      verbs={<span className="surface-footer-verbs-group">
         {writer.conflicted
           ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
           : writer.failed ? <Button dense onClick={writer.retry}>Retry</Button> : null}
@@ -573,7 +583,7 @@ function WorkspaceReady({
         {completed
           ? <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void resume()}>Resume</Button>
           : <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void finish()}>Finish</Button>}
-      </>}
+      </span>}
     />
   </div>;
 }

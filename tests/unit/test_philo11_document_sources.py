@@ -57,6 +57,9 @@ def test_a_note_with_no_words_is_named_note_empty(db) -> None:
     with pytest.raises(ChannelRefused) as caught:
         render_document(db, mint_note(db, title="", body="  "))
     assert caught.value.code == "note_empty"
+    with pytest.raises(ChannelRefused) as placeholder:
+        render_document(db, mint_note(db, title="Thought", body=""))
+    assert placeholder.value.code == "note_empty"
 
 
 def test_registry_declares_the_nine_kinds() -> None:

@@ -274,11 +274,17 @@
 
 /* PHILO-17 U08: the SEND well under the note; it scrolls, the note keeps its room. */
 .desk-next .thought-send-well {
-  flex: none;
+  /* It gives up height before the foot does: the foot keeps every line. */
+  flex: 0 1 auto;
+  min-height: 72px;
   max-height: 45%;
   overflow-y: auto;
   padding: 6px clamp(22px, 3.4vw, 44px);
   border-top: 1px solid var(--border-subtle);
+}
+
+.desk-next .thought-send-wait {
+  margin: 4px 0;
 }
 
 .desk-next .thought-reads-find {
@@ -339,12 +345,17 @@
    is the only one that gives width, and it WRAPS (two lines at narrow
    width) instead of ellipsizing.  KEPT keeps its floor, the verbs keep
    their size, and the foot grows by a line. */
-.desk-next .surface-footer-layout.thought-note-foot {
-  /* PHILO-3-04 counsel (Astra, condition 1): the receipt column is `auto`,
+.desk-next .surface-footer-layout.thought-note-foot,
+.desk-next .surface-footer-layout.thought-note-foot:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
+  /* PHILO-17 (Astra r1, B27): the verbs are the library's wrapping group
+     (surface-footer.css); the column is never wider than the verbs and
+     never narrower than the widest one, so they wrap, not overflow. The
+     selector carries the library's `:has` so this grid wins over it.
+     PHILO-3-04 counsel (Astra, condition 1): the receipt column is `auto`,
      not `max-content` — it takes its full width when there is room and
      wraps when there is not, so a long cause or drawer name never pushes
      the verbs off the glass. READS keeps a floor of 10ch. */
-  grid-template-columns: minmax(10ch, 1fr) auto max-content;
+  grid-template-columns: minmax(10ch, 1fr) auto minmax(min-content, max-content);
   padding: 5px 0;
 }
 
@@ -402,7 +413,8 @@
    in `containerQueryLaw.test.ts` names exactly this). */
 @media (max-width: 720px) {
   .desk-next .desk-pullout.thought-workspace-window {
-    inset: var(--desk-work-top) 0 var(--desk-work-bottom) 0 !important;
+    /* Clear of the phone dock: its measured height (56 px + the safe area). */
+    inset: var(--desk-work-top) 0 var(--desk-dock-h, calc(56px + env(safe-area-inset-bottom, 0px))) 0 !important;
     width: 100vw;
     height: auto;
     min-width: 0;
@@ -423,8 +435,9 @@
     padding: 4px 12px;
   }
 
-  .desk-next .surface-footer-layout.thought-note-foot {
-    grid-template-columns: minmax(0, 1fr) max-content;
+  .desk-next .surface-footer-layout.thought-note-foot,
+  .desk-next .surface-footer-layout.thought-note-foot:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
+    grid-template-columns: minmax(0, 1fr) minmax(min-content, max-content);
     grid-template-areas: "egress verbs" "receipt verbs";
     row-gap: 3px;
   }
@@ -456,7 +469,8 @@
 
   /* PHILO-3-04 — the receipt takes the whole second row (the SurfaceFooter
      narrow default) so its two lines never wrap beside the verbs. */
-  .desk-next .surface-footer-layout.thought-note-foot {
+  .desk-next .surface-footer-layout.thought-note-foot,
+  .desk-next .surface-footer-layout.thought-note-foot:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
     grid-template-areas: "egress verbs" "receipt receipt";
   }
 

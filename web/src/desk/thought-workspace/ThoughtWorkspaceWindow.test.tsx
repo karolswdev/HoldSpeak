@@ -646,6 +646,45 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     await waitFor(() => expect(screen.queryByTestId("send-well")).not.toBeInTheDocument());
   });
 
+  it("an edit after Send opens holds the well until it is saved; the save re-reads the preview", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    const save = deferred<Awaited<ReturnType<typeof saveThoughtWorkingInWorkspace>>>();
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(() => save.promise);
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Send" }));
+    const well = await screen.findByTestId("send-well");
+    const body = well.closest(".thought-send-body")!;
+    expect(body).not.toHaveAttribute("inert");
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Note body" }), { target: { value: "The revised words" } });
+    // At once (before the save even starts): the well cannot be pressed.
+    expect(body).toHaveAttribute("inert");
+    expect(screen.getByText("SAVING… · SEND WAITS")).toBeInTheDocument();
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1));
+    expect(body).toHaveAttribute("inert");
+
+    await act(async () => {
+      save.resolve({ thought: { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "The revised words" } } });
+    });
+    await waitFor(() => expect(body).not.toHaveAttribute("inert"));
+    expect(screen.queryByText(/SEND WAITS/)).not.toBeInTheDocument();
+    expect(screen.getByTestId("send-well")).toHaveAttribute("data-version", "3");
+  });
+
+  it("a failed save keeps the well held, with a plain word", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    vi.mocked(saveThoughtWorkingInWorkspace).mockRejectedValue(new Error("offline"));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Send" }));
+    const body = (await screen.findByTestId("send-well")).closest(".thought-send-body")!;
+    fireEvent.change(screen.getByRole("textbox", { name: "Note body" }), { target: { value: "An edit that cannot land" } });
+    await screen.findByText("NOT SAVED · SEND WAITS");
+    expect(body).toHaveAttribute("inert");
+    expect(screen.getByTestId("send-well")).toHaveAttribute("data-version", "2");
+  });
+
   it("a finished thought keeps Copy and Send beside Resume", async () => {
     const done = { ...thought, state: "completed" as const };
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: done, workspace_state: "completed" }));

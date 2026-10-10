@@ -578,7 +578,9 @@ class _NoteSource:
         note = PrimitiveService(db).get_note(_source_read_context(), source_id)
         title = str(note.get("title") or "").strip()
         body = str(note.get("body_markdown") or "").strip()
-        if not title and not body:
+        # A new thought is born titled "Thought" (web NEW_THOUGHT_TITLE): a
+        # placeholder title alone is no words.
+        if not body and title in ("", "Thought"):
             raise ChannelRefused("note_empty", f"Note {source_id} has no words", status=400)
         title = title or "Note"
         # A thought takes its first words as its title: say them once.
