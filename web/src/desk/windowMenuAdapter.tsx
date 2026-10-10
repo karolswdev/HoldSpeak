@@ -49,8 +49,8 @@ function registrySub(id: string, label: string, ids: readonly string[]): WorkMen
 }
 
 /** Build WorkMenuEntry[] for the window's right-button menu: the active
- * window's menu bar (PHILO-13-12, C2; board C1-2b). Iconify ⌘M, Zoom ⌃M,
- * To back ⌃B, Close window ⌘W, then Desk ▸ and Go ▸. Labels + keycaps
+ * window's menu bar (PHILO-13-12, C2; board C1-2b). Iconify, Zoom,
+ * To back, Close window, then Desk ▸ and Go ▸. Labels + keycaps
  * come FROM the registry (⌘ stands for the Amiga key); onSelect
  * dispatches to the caller's per-window actions. WorkMenu calls onClose
  * before onSelect, so the adapter need not dismiss the menu itself.

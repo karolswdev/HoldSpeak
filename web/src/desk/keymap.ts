@@ -56,7 +56,8 @@ export function parseKey(cap: string): KeySpec | null {
  * rule: ⌘W/⌘M never eat a word in a field). PHILO-13-16: ⌃T too — in a
  * field it is the field's own key (on a Mac it swaps two letters). */
 const TYPING_GUARDED = new Set([
-  "w", "m", "b", "t",
+  // PHILO-17 (U27): ⌃N too (in a Mac field it moves to the next line).
+  "w", "m", "b", "t", "n",
   // PHILO-16: the arrangement keys. In a field ⌘⇧Z is redo, ⌘⏎ sends a
   // composer, ⌘⌥←/→ and ⌘` belong to the field or the system.
   "z", "g", "e", "`", "ArrowLeft", "ArrowRight", "Enter",
@@ -98,8 +99,8 @@ export function matchKey(e: KeyboardEvent, spec: KeySpec): boolean {
 }
 
 /** PHILO-13-12 (C2) — a literal ⌃ chord binds before a ⌘ chord: ⌘ also
- * accepts ctrl off the Mac, so ⌃M (Zoom) must win over ⌘M (Iconify) for the
- * ctrl key. On a Mac ⌘M stays Iconify. */
+ * accepts ctrl off the Mac, so a ⌃ chord wins over the ⌘ chord of the same
+ * letter for the ctrl key (PHILO-17: ⌃M and ⌘M are both Iconify now). */
 const BOUND_VERBS: { verb: Verb; spec: KeySpec }[] = VERBS.flatMap((verb) =>
   // PHILO-16: a verb's older keys (`altKeys`) stay bound one release.
   [verb.key, ...(verb.altKeys ?? [])].flatMap((cap) => {

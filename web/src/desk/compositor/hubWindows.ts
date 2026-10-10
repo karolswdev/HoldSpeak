@@ -107,6 +107,10 @@ interface Adapter {
   object?(): string | null;
 }
 
+/** A scope the hub holds as a window's object: a reference (`project:p-1`,
+ * `meeting:m-1?view=review`), never a payload. The hub takes 400 chars. */
+export const isScopeRef = (scope: string): boolean => /^[\w.:?=&/-]{1,400}$/.test(scope);
+
 /** The lane's window id (lane/LaneWindow.tsx; kept here so this module does
  * not import the window's component). */
 export const LANE_WINDOW_ID = "lane";
@@ -183,12 +187,24 @@ export function adapterFor(id: string): Adapter | null {
       close: () => useConductor.getState().closeWindow(),
     };
   }
+  // An application window carries its scope as the row's object (PHILO-17
+  // U28c): Desk memory scoped to a project is that project's Room. Without
+  // it, every other view (a reload with no cache, the iPad) opened the Room
+  // as unscoped "Desk memory". "" is "no scope", so a Room that goes back to
+  // Desk memory tells the hub too. Only a scope that is a reference goes to
+  // the hub; a payload scope (Calendar snapshot passes its result JSON)
+  // stays in this view and reads as "" there.
   const surface = surfaceByWindowId.get(id);
   if (surface) {
     return {
       isOpen: () => id in d().windowsById,
-      open: () => d().openSurfaceWindow(surface.action),
+      open: (row) => d().openSurfaceWindow(surface.action, row?.object_ref || undefined),
       close: () => d().closeSurfaceWindow(surface.action),
+      object: () => {
+        if (!(id in d().windowsById)) return null;
+        const scope = d().windowsById[id].scope ?? "";
+        return isScopeRef(scope) ? scope : "";
+      },
     };
   }
   return (
@@ -282,6 +298,9 @@ export interface HubWindows {
   sync(): void;
   /** True once the hub's rows seeded this desk (its order is the desk's). */
   seeded(): boolean;
+  /** True while window `id` mounts because the hub opened it here: its
+   * first seat is this view's, never written to the desk. */
+  placing(id: string): boolean;
   /** Resolves when every request in flight has settled (tests, the glass). */
   idle(): Promise<void>;
   readonly presentations: Presentations;
@@ -334,7 +353,7 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     const objects: Record<string, string> = {};
     for (const id of open) {
       const object = adapterFor(id)?.object?.();
-      if (object) objects[id] = object;
+      if (object != null) objects[id] = object;
     }
     return {
       open,
@@ -429,7 +448,8 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
           mounted.push(row.id);
         }
         // The same window on another object (the lane on another launch).
-        else if (adapter?.object && row.object_ref && adapter.object() !== row.object_ref) adapter.open(row);
+        // A row with no object (null: never sent) leaves this view's as is.
+        else if (adapter?.object && row.object_ref != null && (adapter.object() ?? "") !== row.object_ref) adapter.open(row);
       }
 
       // One write of the stacking, the seats, the zooms and the rects.
@@ -456,8 +476,10 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
           rects[row.id] = rect;
           saved.add(row.id);
         } else if (!row.arranged && saved.has(row.id)) {
+          // Not arranged on the hub: no longer this view's saved seat. The
+          // window keeps its place on the glass (a rect it lost would put it
+          // back on the CSS home, over the icon column; PHILO-17 U28).
           saved.delete(row.id);
-          delete rects[row.id];
         }
         const zr = row.zoom ? rectOf(row.zoom) : null;
         if (zr) zoom[row.id] = zr;
@@ -696,7 +718,7 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     const both = [...cur.open].filter((id) => prev.open.has(id) && onHub(id) && !quiet(id));
     for (const id of both) {
       const object = cur.objects[id];
-      if (object && object !== prev.objects[id])
+      if (object !== undefined && object !== (prev.objects[id] ?? ""))
         enqueue([id], { front: true }, () => transport.verb(id, "open", { object_ref: object, expected_revision: rev(id) }));
     }
     const unseated = new Set<string>();
@@ -898,6 +920,7 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     },
     sync,
     seeded: () => synced !== null,
+    placing: (id) => settling.has(id),
     idle,
     stop() {
       stopped = true;
@@ -961,6 +984,11 @@ export function hubWindows(): HubWindows {
  * the hub's stacking (a reload keeps the hub's order, L3). */
 export function hubSeeded(): boolean {
   return instance?.seeded() ?? false;
+}
+
+/** True while the hub opens window `id` in this view (see `placing`). */
+export function hubPlacing(id: string): boolean {
+  return instance?.placing(id) ?? false;
 }
 
 /** Test seam. */

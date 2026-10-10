@@ -11,6 +11,8 @@ import type { CoreProps } from "../pages/cores/core-types";
 export interface DeskSurfaceSpec {
   eyebrow: string;
   minW?: number;
+  /** Preferred first-open width (PHILO-17 U24); the band still clamps it. */
+  defaultW?: number;
   defaultH?: number;
   maximized?: boolean;
   load: () => Promise<{
@@ -81,7 +83,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/dictation",
     group: "app",
     dock: { order: 1, launch: "surface" },
-    shortcut: "⌘1",
+    shortcut: "⌃1",
     mark: true,
     surface: {
       eyebrow: "Daily cockpit",
@@ -111,11 +113,15 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/history",
     group: "app",
     dock: { order: 2, launch: "surface" },
-    shortcut: "⌘2",
+    shortcut: "⌃2",
     mark: true,
     surface: {
       eyebrow: "Meeting memory",
       minW: 640,
+      // PHILO-17 (U24): the list strip, the record and the six footer verbs
+      // need more than 640 x 600 (the footer took three rows).
+      defaultW: 920,
+      defaultH: 720,
       load: () =>
         import("../pages/cores/HistoryCore").then((module) => ({
           default: module.HistoryCore,
@@ -136,7 +142,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/conductor",
     group: "tool",
     dock: { order: 3, launch: "surface" },
-    shortcut: "⌘3",
+    shortcut: "⌃3",
     mark: true,
   },
   // PARKED (PHILO-14 C4): the old Agents application. It folded into the
@@ -168,7 +174,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/settings",
     group: "app",
     dock: { order: 4, launch: "surface" },
-    shortcut: "⌘4",
+    shortcut: "⌃4",
     mark: true,
     aliases: [
       { key: "configure-integrations", scope: "integration:destinations" },
