@@ -185,14 +185,16 @@ export function openRef(ref: string): void {
 }
 
 /** A decision ref names a Desk decision (its own window) or a decision a
- * meeting recorded (`decisions` lifecycle rows, no Desk window): that one
- * opens its meeting, where it was made. One read tells which. */
+ * meeting recorded (`decisions` lifecycle rows, no Desk window). PHILO-17:
+ * that one opens itself, in Intelligence → Decisions (its words, its date,
+ * its meeting), not the meeting that hid it. One read tells which. */
 function openDecision(ref: string): void {
   const id = ref.slice("decision:".length);
   void apiFetch<{ decision?: { source_meeting_id?: string | null } }>(`/api/decisions/${encodeURIComponent(id)}`)
     .then((body) => {
       const meeting = (body?.decision?.source_meeting_id ?? "").trim();
-      openSourceRef(meeting ? `meeting:${meeting}` : ref);
+      if (meeting) openIntelligence({ view: "receipts", decisionId: id });
+      else openSourceRef(ref);
     })
     .catch(() => openSourceRef(ref));
 }

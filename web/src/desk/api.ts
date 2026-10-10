@@ -692,6 +692,9 @@ async function loadHeld(kind: HeldKind, id: string, pulledArtifacts: unknown[]):
   if (kind === "decision") {
     const d = await apiFetch<Record<string, unknown>>(`/api/decisions/${key}`);
     const decision = wireRaw(d, "decision");
+    // PHILO-17: a decision a meeting recorded is not a Desk object (it has
+    // no window and no Floor icon); only a Desk decision is held.
+    if (wireString(decision, "source_meeting_id")) return null;
     return wireBool(decision, "deleted") ? null : fromWireDecision(decision);
   }
   if (kind === "thread") {
