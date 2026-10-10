@@ -46,6 +46,8 @@ pytestmark = [pytest.mark.e2e, pytest.mark.timeout(300, method="thread")]
 #
 # So `[title='Desk memory']` is a CORRECT selector that does not exist until
 # the gate is crossed, and "Continue later" is gone once it has been pressed.
+# PHILO-17 (needsyou): the bell opens Needs you now; the atlas opens the shade
+# from the Dock's Desk memory launcher (`.desk-dock [data-launcher='attention']`).
 REAL_ATLAS = REPO / "docs/internal/philo/graph/atlas.json"
 ATLAS_FENCE = {
     "case.j9.shade_receipt_open.rhythm_face": (

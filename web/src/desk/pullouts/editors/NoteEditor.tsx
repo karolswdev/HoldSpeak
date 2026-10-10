@@ -141,7 +141,7 @@ export function NoteEditor({ object: o, onClose, autoFocusName }: InlineEditorCo
       <StringGadget
         label="Title"
         value={f.title}
-        placeholder="Title"
+        placeholder="New note"
         autoFocus={autoFocusName}
         onChange={(value) => set("title", "title", value)}
       />

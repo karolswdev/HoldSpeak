@@ -14,6 +14,8 @@ import { composeScreen, layoutScreen, shortItemName, normalizeRef, type ScreenIn
 import { Screen } from "../Screen";
 import { resetScreenMembers } from "../members";
 import { DeskIcon } from "../../surface";
+import { verbById } from "../../verbRegistry";
+import { dispatchKey, keyContext } from "../../keymap";
 
 const shell = vi.hoisted(() => ({
   openProjectRoom: vi.fn(),
@@ -138,7 +140,7 @@ beforeEach(() => {
   shell.openCoderSession.mockReset();
   openMeeting.mockReset();
   useChairWindows.setState({ closed: { "chair:needs": true, "chair:brief": true, "chair:week": true, "chair:capture": true }, phone: "" });
-  useDesk.setState({ items: ITEMS, updatedAt: 1 });
+  useDesk.setState({ items: ITEMS, updatedAt: 1, selectedIds: [], editingId: null });
   useAgentFlights.setState({ sessions: SESSIONS.map(fromWireSessionRow), flights: [], loaded: true });
   wire();
 });
@@ -390,5 +392,55 @@ describe("PHILO-14 A1 — the pure parts", () => {
       sessions: [], flights: [], filed: new Set(), persons: [], membersLoaded: true,
     });
     expect(objects.find((o) => o.key === "drawer:conductor")?.lamp?.tone).toBe("ask");
+  });
+});
+
+describe("PHILO-17 objverbs — the Chair has the desk's one selection", () => {
+  it("a press on the Chair writes the store selection: the Object menu verbs are live, F2 renames", async () => {
+    render(<Screen />);
+    await waitFor(() => expect(keys()).toContain("note:n-2"));
+    const rename = verbById("object.rename")!;
+    // Nothing selected: the menu bar reads the store and ghosts the verb.
+    expect(rename.ghost(keyContext())).toBe("Select an object");
+    fireEvent.click(icon(/^Questions for Avery 1:1/));
+    expect(useDesk.getState().selectedIds).toEqual(["note:n-2"]);
+    expect(icon(/^Questions for Avery 1:1/).getAttribute("aria-pressed")).toBe("true");
+    // The menu bar's context (DeskMenuBar) and the keymap's are the same read.
+    expect(keyContext()).toEqual({ selectedRef: "note:n-2" });
+    expect(rename.ghost(keyContext())).toBeNull();
+    expect(verbById("object.open")!.ghost(keyContext())).toBeNull();
+    // F2 runs Rename: the note's editor opens.
+    const ran = dispatchKey(new KeyboardEvent("keydown", { key: "F2", bubbles: true, cancelable: true }));
+    expect(ran?.id).toBe("object.rename");
+    expect(useDesk.getState().editingId).toBe("n-2");
+  });
+
+  it("the rubber band and a press on empty glass write the store too", async () => {
+    render(<Screen />);
+    await waitFor(() => expect(keys()).toContain("note:n-2"));
+    fireEvent.click(icon(/^Questions for Avery 1:1/));
+    expect(useDesk.getState().selectedIds).toEqual(["note:n-2"]);
+    act(() => useDesk.getState().setSelected(["decision:d-otel"]));
+    expect(icon(/^Adopt OpenTelemetry/).getAttribute("aria-pressed")).toBe("true");
+    expect(icon(/^Questions for Avery 1:1/).getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("a right-click on an icon selects it and opens the Floor's object menu", async () => {
+    render(<Screen />);
+    await waitFor(() => expect(keys()).toContain("note:n-2"));
+    fireEvent.contextMenu(icon(/^Questions for Avery 1:1/), { clientX: 200, clientY: 200 });
+    expect(useDesk.getState().selectedIds).toEqual(["note:n-2"]);
+    const menu = await screen.findByRole("menu", { name: "Questions for Avery 1:1 menu" });
+    const item = within(menu).getByRole("menuitem", { name: /^Rename/ });
+    expect(item.getAttribute("aria-disabled")).not.toBe("true");
+    fireEvent.click(item);
+    expect(useDesk.getState().editingId).toBe("n-2");
+  });
+
+  it("a drawer with no desk object opens no menu", async () => {
+    render(<Screen />);
+    await waitFor(() => expect(keys()).toContain("note:n-2"));
+    fireEvent.contextMenu(icon(/^Parked, DRAWER$/));
+    expect(screen.queryByRole("menu")).toBeNull();
   });
 });
