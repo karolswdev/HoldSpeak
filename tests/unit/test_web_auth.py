@@ -87,3 +87,27 @@ def test_ensure_web_token_generates_and_persists_once():
     again = web_auth.ensure_web_token(config)
     assert again == token
     assert len(saved) == 1
+
+
+# PHILO-17 wayin: a wildcard bind prints addresses a person can open.
+
+
+def test_reachable_urls_wildcard_bind_names_loopback_then_the_lan() -> None:
+    assert web_auth.reachable_urls("http://0.0.0.0:8765", lan_ip="192.168.1.20") == [
+        "http://127.0.0.1:8765",
+        "http://192.168.1.20:8765",
+    ]
+    assert web_auth.reachable_urls("http://[::]:8765", lan_ip="10.0.0.5") == [
+        "http://127.0.0.1:8765",
+        "http://10.0.0.5:8765",
+    ]
+
+
+def test_reachable_urls_wildcard_without_a_lan_keeps_loopback(monkeypatch) -> None:
+    monkeypatch.setattr(web_auth, "_lan_ipv4", lambda: None)
+    assert web_auth.reachable_urls("http://0.0.0.0:8765") == ["http://127.0.0.1:8765"]
+
+
+def test_reachable_urls_concrete_host_is_unchanged() -> None:
+    for url in ("http://127.0.0.1:8765", "http://192.168.1.20:8765", "http://localhost:9000"):
+        assert web_auth.reachable_urls(url, lan_ip="10.9.9.9") == [url]
