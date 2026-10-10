@@ -1257,6 +1257,67 @@ def test_frozen_speech_deployment_replaces_mutable_large_instance_before_executi
     ) == "physical-base"
 
 
+@pytest.mark.parametrize("base_here", [True, False])
+def test_speech_readiness_asks_the_frozen_route_model_not_the_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, base_here: bool
+) -> None:
+    """PHILO-17 speech (Astra r1, MUST 1): the admitted route froze `base`;
+    the mutable config says `large`. The readiness question is asked for
+    `base`: with base here the meeting transcribes (a missing `large` does not
+    force audio-only); with base missing it is audio-only (a present `large`
+    cannot make it look ready)."""
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.meeting_session import MeetingSession
+    from tests.unit.test_meeting_session_admission import FakeJournal, FakeRecorder
+
+    db = Database(tmp_path / "frozen-readiness.db")
+    _assign_meeting_routes_without_speech(db)
+    broker = _configure(db)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
+    monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
+    config = _meeting_config("meeting-profile")
+    config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
+    assert broker.inference_adoption_service.migrate_speech_recognition_route_assignments(
+        OWNER, config
+    )["status"] == "migrated"
+    asked: list[tuple[str, str]] = []
+    constructed: list[str] = []
+
+    def speech_ready(model: str, backend: str) -> bool:
+        asked.append((model, backend))
+        return base_here if model == "base" else not base_here
+
+    class Frozen:
+        loaded = True
+        language = None
+
+        def __init__(self, frozen: dict[str, str]) -> None:
+            constructed.append(frozen["model"])
+            self.backend = frozen["backend"]
+            self.model_name = frozen["model"]
+
+    session = MeetingSession(
+        None,
+        transcriber_factory=lambda frozen: Frozen(frozen),
+        principal=OWNER,
+        intel_enabled=True,
+        transcription_backend="mlx",
+        transcription_model_name="large",
+        speech_ready=speech_ready,
+    )
+    state = session.start()
+
+    assert asked == [("base", "mlx")]
+    if base_here:
+        assert state.transcription_status == "active"
+        assert constructed == ["base"]
+    else:
+        assert state.transcription_status == "record_only"
+        assert state.transcription_status_detail["reason_code"] == "speech_not_set_up"
+        assert constructed == []
+
+
 def test_removed_locator_free_speech_revision_requires_migration_provenance(tmp_path: Path) -> None:
     """Only the migration's known built-in declaration may await first load."""
     from holdspeak.deployment_revisions import resolve_deployment_revision

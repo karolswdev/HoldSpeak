@@ -216,6 +216,12 @@ class MeetingGlueMixin:
         # can be reused.
         preloaded_transcriber = self.transcriber
 
+        def speech_ready_for(model: str, backend: str) -> bool:
+            # PHILO-17 speech: the one truth, for the model the route froze.
+            from ..whisper_models import speech_readiness
+
+            return bool(speech_readiness(model, backend)["ready"])
+
         def construct_transcriber(frozen: dict[str, str]):
             self.transcriber = self._ensure_transcriber_loaded(
                 model_name=frozen["model"],
@@ -262,6 +268,9 @@ class MeetingGlueMixin:
                 transcriber_factory=construct_transcriber,
                 transcription_backend=str(self.config.model.backend or ""),
                 transcription_model_name=str(self.config.model.name or ""),
+                # PHILO-17 speech: no speech model on this device means a
+                # record-only meeting that says why, never a silent download.
+                speech_ready=speech_ready_for,
                 requested_remote_device_ids=tuple(
                     str(getattr(descriptor, "id", "")) for descriptor, _source in device_pairs
                 ),
