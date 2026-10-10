@@ -175,9 +175,13 @@ def _check_microphone() -> DoctorCheck:
     )
 
 
-def _check_transcription_backend() -> DoctorCheck:
+def _check_transcription_backend(config: Config | None = None) -> DoctorCheck:
+    # PHILO-17 speech: the CONFIGURED backend (the one speech uses), not `auto`.
+    asked = "auto"
+    if config is not None:
+        asked = str(getattr(getattr(config, "model", None), "backend", "") or "auto").strip().lower()
     try:
-        backend = _resolve_backend("auto")
+        backend = _resolve_backend(asked)
     except TranscriberError as exc:
         if sys.platform.startswith("linux"):
             fix = "Install Linux backend with `pip install 'holdspeak[linux]'`."
@@ -195,7 +199,7 @@ def _check_transcription_backend() -> DoctorCheck:
     return DoctorCheck(
         name="Transcription backend",
         status="PASS",
-        detail=f"`auto` resolves to `{backend}`",
+        detail=f"`{asked}` resolves to `{backend}`",
     )
 
 
@@ -218,6 +222,12 @@ def _check_speech_model(config: Config | None = None) -> DoctorCheck:
     label = f"Whisper {speech['model']} ({speech['backend']})"
     if speech["ready"]:
         return DoctorCheck(name="Speech model", status="PASS", detail=f"{label} is on this device")
+    if speech["state"] == "backend_unavailable":
+        return DoctorCheck(
+            name="Speech model", status="FAIL",
+            detail=f"Speech is not set up: the speech library cannot run here ({speech.get('reason', '')})",
+            fix="Install the speech library, then rerun doctor",
+        )
     if speech["state"] == "will_download":
         return DoctorCheck(
             name="Speech model", status="FAIL",
@@ -1122,7 +1132,7 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         config_check,
         _check_database(),
         _check_microphone(),
-        _check_transcription_backend(),
+        _check_transcription_backend(config),
         _check_speech_model(config),
         _check_web_runtime(),
         _check_web_auth(config),

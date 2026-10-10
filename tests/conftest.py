@@ -58,6 +58,19 @@ def whisper_on_device(monkeypatch):
     monkeypatch.setattr("holdspeak.transcribe._local_source", lambda repo: repo)
     monkeypatch.setattr("holdspeak.whisper_models.whisper_on_disk", lambda *a, **k: True)
     monkeypatch.setattr("holdspeak.whisper_models.local_whisper_dir", lambda repo, **k: Path(repo))
+    # PHILO-17 speech: readiness also asks if the speech library can run here
+    # (whisper_models.speech_readiness). A test that fakes the library says yes.
+    import holdspeak.transcribe as _transcribe
+
+    _real_resolve = _transcribe._resolve_backend
+
+    def _resolve(backend: str) -> str:
+        try:
+            return _real_resolve(backend)
+        except _transcribe.TranscriberError:
+            return "mlx" if backend in ("auto", "mlx") else backend
+
+    monkeypatch.setattr("holdspeak.transcribe._resolve_backend", _resolve)
 
 
 @pytest.fixture

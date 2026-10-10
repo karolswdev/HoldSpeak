@@ -216,37 +216,88 @@ def test_no_speech_model_records_audio_only_and_says_why(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """PHILO-17 speech: no speech model on this device -> record-only with
-    `speech_not_set_up`, and no model load is tried (so nothing downloads)."""
-    db = _speech_only_db(tmp_path)
-    _configure(db)
+    `speech_not_set_up`; no model load is tried (so nothing downloads); the
+    REAL capture journal keeps every audio byte after Stop."""
+    import json
+
+    from tests.unit.test_phase143_meeting_live_cutover import (
+        OWNER as MIGRATION_OWNER,
+        _assign_meeting_routes_without_speech,
+        _meeting_config,
+    )
+
+    # A Whisper (mlx base) speech route, migrated the way a fresh desk gets it.
+    db = Database(tmp_path / "hs201-no-model.db")
+    _assign_meeting_routes_without_speech(db)
+    broker = _configure(db)
+    config = _meeting_config("meeting-profile")
+    config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
+    assert broker.inference_adoption_service.migrate_speech_recognition_route_assignments(
+        MIGRATION_OWNER, config
+    )["status"] == "migrated"
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
     monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
-    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", _FixtureRecorder)
-    monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", _FixtureJournal)
+
+    class _JournalingRecorder(_FixtureRecorder):
+        """The real recorder hands every chunk to `on_audio_chunk` as it lands."""
+
+        def __init__(self, **kwargs: Any) -> None:
+            super().__init__(**kwargs)
+            self._on_chunk = kwargs.get("on_audio_chunk")
+
+        def start(self) -> None:
+            super().start()
+            if self._on_chunk is not None:
+                self._on_chunk(self._chunk)
+
+    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", _JournalingRecorder)
     built: list[Any] = []
+    asked: list[tuple[str, str]] = []
+
+    def speech_ready(model: str, backend: str) -> bool:
+        asked.append((model, backend))
+        return False
+
     session = MeetingSession(
         None,
-        principal=OWNER,
-        intel_enabled=False,
+        principal=MIGRATION_OWNER,
+        intel_enabled=True,
         intel_deferred_enabled=True,
         transcriber_factory=lambda frozen: built.append(frozen),  # type: ignore[arg-type,func-returns-value]
         transcription_backend="mlx",
         transcription_model_name="base",
-        speech_ready=lambda: False,
+        speech_ready=speech_ready,
     )
 
     state = session.start()
 
+    assert asked == [("base", "mlx")]  # the admitted route's frozen identity
     assert built == []  # no load, so no download
     assert state.capture_status == "recording"
     assert state.transcription_status == "record_only"
-    assert state.transcription_status_detail == {
+    detail = {
         "family": "speech-recognition-route-assignments",
         "reason_code": "speech_not_set_up",
         "repair": "set_up_speech",
     }
-    durable = db.meetings.get_meeting(state.id)
+    assert state.transcription_status_detail == detail
+
+    stopped = session.stop()
+
+    assert stopped.capture_status == "finalized"
+    assert stopped.segments == []
+    durable = db.meetings.get_meeting(stopped.id)
     assert durable is not None
-    assert durable.transcription_status_detail == state.transcription_status_detail
+    assert durable.transcription_status == "record_only"
+    assert durable.transcription_status_detail == detail
+    # The audio is kept: the journal published every byte of the take.
+    folder = home / ".local" / "share" / "holdspeak" / "meeting-captures" / stopped.id
+    manifest = json.loads((folder / "capture.json").read_text())
+    expected = len(_FixtureRecorder()._chunk.audio) * 4
+    assert manifest["status"] == "finalized"
+    assert manifest["durable_bytes"] == {"mic": expected}
+    assert (folder / "mic.f32le.partial").stat().st_size == expected
 
 
 def test_speech_only_stop_saves_transcript_and_closes_parent_without_queue(
@@ -404,7 +455,6 @@ def test_web_record_constructs_capture_only_session_before_summary_gesture(
     harness.preview_window_seq = 0
     harness.runtime_status = {"last_error": ""}
     harness._ensure_transcriber_loaded = lambda **_kwargs: harness.transcriber
-    harness._whisper_model_on_disk = lambda: True
     harness._set_runtime_activity = lambda *_args, **_kwargs: None
     harness._broadcast_intel_status = lambda: None
     harness._apply_updated_config = lambda: None
@@ -425,5 +475,6 @@ def test_web_record_constructs_capture_only_session_before_summary_gesture(
 
     assert result["id"] == "hs201-runtime-meeting"
     assert captured["intel_enabled"] is False
-    # PHILO-17 speech: the session asks the one speech-readiness truth.
-    assert captured["speech_ready"] == harness._whisper_model_on_disk
+    # PHILO-17 speech: the session gets the one speech-readiness truth, asked
+    # per (model, backend) so it reads the admitted route's frozen identity.
+    assert callable(captured["speech_ready"])

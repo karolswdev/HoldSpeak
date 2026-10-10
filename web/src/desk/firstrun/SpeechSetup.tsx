@@ -17,13 +17,42 @@ import { EgressChip, StateChip } from "../surface";
 import { formatBytes, groupsOf, planSteps, sourceHost, speechReady, useLocalAi } from "./localAi";
 import "./speechSetup.css";
 
+/** One window's speech setup started or finished: every face reads again. */
+export const SPEECH_SETUP_EVENT = "hs:speech-setup";
+
+function announceSpeechSetup(): void {
+  try {
+    window.dispatchEvent(new Event(SPEECH_SETUP_EVENT));
+  } catch {
+    // no window (a test without a DOM): nothing to tell
+  }
+}
+
 export function useSpeechSetup() {
   const ai = useLocalAi();
+  // Astra r1 (finding 5): setup done in another window, or outside this
+  // browser, reaches this face: read again on the setup event and on focus.
+  const refresh = ai.refresh;
+  useEffect(() => {
+    const again = () => void refresh();
+    const visible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    window.addEventListener(SPEECH_SETUP_EVENT, again);
+    window.addEventListener("focus", again);
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      window.removeEventListener(SPEECH_SETUP_EVENT, again);
+      window.removeEventListener("focus", again);
+      document.removeEventListener("visibilitychange", visible);
+    };
+  }, [refresh]);
   const status = ai.read.kind === "ok" ? ai.read.status : null;
   const ready = speechReady(status);
   const whisper = groupsOf(status).find((group) => group.key === "whisper");
   // The hub's own size of what is missing; the Whisper rows as a fallback.
-  const bytes = status?.speech?.bytes || (whisper && !whisper.onDevice ? whisper.bytes : 0);
+  const bytes = status?.speech?.bytes ?? (whisper && !whisper.onDevice ? whisper.bytes : 0);
+  const speechState = status?.speech?.state;
   return {
     ai,
     status,
@@ -32,7 +61,8 @@ export function useSpeechSetup() {
     /** True only after a read that names the speech model: it is not here. */
     notSetUp: Boolean(status?.speech) && !ready,
     /** Setup can get the model (a pinned model): the verb is real. */
-    canSetUp: status !== null && status.speech?.state !== "not_covered" && bytes > 0,
+    canSetUp:
+      status !== null && speechState !== "not_covered" && speechState !== "backend_unavailable" && bytes > 0,
     bytes,
   };
 }
@@ -59,6 +89,7 @@ export function SpeechSetup({
     if (notSetUp) wasMissing.current = true;
     else if (setup.ready && wasMissing.current) {
       wasMissing.current = false;
+      announceSpeechSetup();
       onReady?.();
     }
   }, [notSetUp, setup.ready, onReady]);
@@ -76,7 +107,11 @@ export function SpeechSetup({
         </span>
       )}
       {failed ? <StateChip state="failure" label="CAN'T DOWNLOAD" /> : null}
-      {!canSetUp && !running ? <span className="surface-token" data-chip="">MODEL NOT IN SETUP</span> : null}
+      {!canSetUp && !running ? (
+        <span className="surface-token" data-chip="">
+          {status.speech?.state === "backend_unavailable" ? "SPEECH LIBRARY MISSING" : "MODEL NOT IN SETUP"}
+        </span>
+      ) : null}
       <span className="speech-setup-verbs">
         {running ? (
           <>
@@ -95,7 +130,7 @@ export function SpeechSetup({
               variant="primary"
               loading={ai.busy}
               disabled={ai.busy}
-              onClick={() => void ai.startSpeech()}
+              onClick={() => void ai.startSpeech().then(announceSpeechSetup)}
               data-testid={`${testId}-verb`}
             >
               {`Set up speech · ${formatBytes(bytes)}`}

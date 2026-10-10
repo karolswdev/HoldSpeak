@@ -232,7 +232,9 @@ export function RunsOnCore({ scope }: CoreProps) {
       currentToken: effective && row.inherited_from === "global" && job !== DEFAULT_JOB ? "FOLLOWS DEFAULT" : undefined,
       // The limitation is a token on the job (§12 rule 6), until a Try
       // answers in its place; a repair names itself there too.
-      result: job === SPEECH_JOB && speech.notSetUp && !result ? (
+      // Astra r1 (finding 5): the setup stays while speech is not ready, also
+      // after a Try it answered (its answer cannot repair a missing model).
+      result: job === SPEECH_JOB && speech.notSetUp ? (
         <SpeechSetup setup={speech} testId="runson-speech-setup" />
       ) : result ? (
         <span data-tone={result.tone === "danger" ? "danger" : result.tone === "idle" ? "idle" : undefined}>{result.tokens.join(" · ")}</span>

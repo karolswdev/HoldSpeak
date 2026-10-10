@@ -111,7 +111,7 @@ class MeetingSession(
         transcriber_factory: Optional[Callable[[dict[str, str]], Transcriber]] = None,
         transcription_backend: str = "",
         transcription_model_name: str = "",
-        speech_ready: Optional[Callable[[], bool]] = None,
+        speech_ready: Optional[Callable[[str, str], bool]] = None,
     ) -> None:
         """Initialize meeting session.
 
@@ -142,11 +142,13 @@ class MeetingSession(
             diarization_enabled: Enable speaker diarization for system audio.
             diarize_mic: Also diarize mic input (for on-site meetings).
             cross_meeting_recognition: Recognize speakers across meetings.
-            speech_ready: PHILO-17 speech: "is the speech model on this
-                device?" (``whisper_models.speech_readiness``). When it says
-                no, the meeting records audio only and says why
-                (``speech_not_set_up``); no model load is tried, so nothing
-                is downloaded.
+            speech_ready: PHILO-17 speech: ``(model, backend) -> bool``, "can
+                speech run on this device for this model?"
+                (``whisper_models.speech_readiness``). The session asks it
+                for the model and backend its ADMITTED route froze, never the
+                mutable config. When it says no, the meeting records audio
+                only and says why (``speech_not_set_up``); no model load is
+                tried, so nothing is downloaded.
         """
         self.transcriber = transcriber
         self._speech_ready = speech_ready
@@ -538,10 +540,16 @@ class MeetingSession(
             )
             speech_missing = False
             if self.transcriber is None and self._speech_ready is not None:
-                try:
-                    speech_missing = not bool(self._speech_ready())
-                except Exception as exc:  # a disk question never stops capture
-                    log.warning("speech model check failed: %s", type(exc).__name__)
+                # The execution identity: what admission froze, else the
+                # constructor's strings (a session with no admitted route).
+                frozen = self._frozen_transcription or {}
+                model = str(frozen.get("model") or self._transcription_model_name or "base")
+                engine = str(frozen.get("backend") or resolved_backend or "auto")
+                if engine in {"mlx", "faster-whisper", "auto"}:
+                    try:
+                        speech_missing = not bool(self._speech_ready(model, engine))
+                    except Exception as exc:  # a disk question never stops capture
+                        log.warning("speech model check failed: %s", type(exc).__name__)
             if speech_missing and not self._transcription_refusal:
                 # PHILO-17 speech: the meeting keeps its audio and says why it
                 # has no transcript.  No load is tried, so nothing downloads.

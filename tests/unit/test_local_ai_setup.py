@@ -69,6 +69,10 @@ WHISPER_WEIGHTS = _blob(b"whisper-weights-", 40_000)
 EMBED = _blob(b"embed-", 30_000, b"GGUF")
 STARTER = _blob(b"starter-", 50_000, b"GGUF")
 
+def _mlx_here(backend: str) -> str:
+    return "mlx" if backend in ("auto", "mlx") else backend
+
+
 WHISPER_FILES = (
     _pin("mlx-community/whisper-base-mlx", "config.json", WHISPER_CONFIG, magic=b""),
     _pin("mlx-community/whisper-base-mlx", "weights.npz", WHISPER_WEIGHTS, magic=b""),
@@ -165,6 +169,9 @@ def desk(tmp_path: Path, monkeypatch):
         ModelProfileService, "_local_runtime_readiness", staticmethod(lambda runtime_id: ("ready", "ready"))
     )
     monkeypatch.setattr("holdspeak.whisper_models._PINNED", {("mlx", "base"): WHISPER_FILES})
+    # PHILO-17 speech: readiness asks if the speech library can run here; the
+    # rig's library is MLX on every host (the Linux CI has none).
+    monkeypatch.setattr("holdspeak.transcribe._resolve_backend", _mlx_here)
     files = {f"/{m.repository}/{m.filename}": c for m, c in zip(WHISPER_FILES, (WHISPER_CONFIG, WHISPER_WEIGHTS))}
     files[f"/{EMBED_PIN.repository}/{EMBED_PIN.filename}"] = EMBED
     files["/unsloth/Qwen3.5-4B-GGUF/Qwen3.5-4B-Q4_K_M.gguf"] = STARTER
@@ -480,6 +487,9 @@ def boot(tmp_path: Path, monkeypatch):
     for name in ("HF_HUB_CACHE", "HF_HOME"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr("holdspeak.whisper_models._PINNED", {("mlx", "base"): WHISPER_FILES})
+    # PHILO-17 speech: readiness asks if the speech library can run here; the
+    # rig's library is MLX on every host (the Linux CI has none).
+    monkeypatch.setattr("holdspeak.transcribe._resolve_backend", _mlx_here)
     connects: list = []
     real_connect = socket.socket.connect
 

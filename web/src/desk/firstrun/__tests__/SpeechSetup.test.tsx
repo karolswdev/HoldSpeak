@@ -4,7 +4,7 @@
  * The hub is faked: GET /api/setup/local-ai answers `speech` (the
  * whisper_models.speech_readiness truth); a press of "Set up speech" is the
  * first-run page's own speech-only POST. Nothing is downloaded. */
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LocalAiStatus } from "../localAi";
 
@@ -15,7 +15,7 @@ vi.mock("../../../lib/api", async (importOriginal) => ({
   readableError: (error: unknown) => (error instanceof Error ? error.message : "Request failed"),
 }));
 
-import { SpeechSetup, useSpeechSetup } from "../SpeechSetup";
+import { SPEECH_SETUP_EVENT, SpeechSetup, useSpeechSetup } from "../SpeechSetup";
 import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../speechTruth";
 import { meetingsHeadline } from "../../../pages/cores/history/helpers";
 import { meetingStripItems } from "../../../pages/cores/history/MeetingHeader";
@@ -104,6 +104,32 @@ describe("SpeechSetup — the one row", () => {
     render(<Host />);
     expect((await screen.findByTestId("row-line")).textContent).toBe("Speech is not set up");
     expect(screen.queryByTestId("row-verb")).toBeNull();
+  });
+
+  it("the speech library cannot run here: named, and no download verb", async () => {
+    local = status(false, {
+      speech: { model: "base", backend: "mlx", state: "backend_unavailable", ready: false, bytes: 0 },
+    });
+    render(<Host />);
+    expect((await screen.findByTestId("row-line")).textContent).toBe("Speech is not set up");
+    expect(screen.getByText("SPEECH LIBRARY MISSING")).toBeTruthy();
+    expect(screen.queryByTestId("row-verb")).toBeNull();
+  });
+
+  it("setup done elsewhere reaches this face (the setup event, and focus)", async () => {
+    render(<Host />);
+    await screen.findByTestId("row-verb");
+    local = status(true);
+    act(() => {
+      window.dispatchEvent(new Event(SPEECH_SETUP_EVENT));
+    });
+    await waitFor(() => expect(screen.queryByTestId("row")).toBeNull());
+
+    local = status(false);
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(await screen.findByTestId("row-verb")).toBeTruthy();
   });
 
   it("bare: the verb only, for a row that already says it", async () => {

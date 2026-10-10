@@ -47,7 +47,19 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     for name in ("HF_HUB_CACHE", "HF_HOME"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr("holdspeak.whisper_models._PINNED", {("mlx", "base"): PINS})
+    # The speech library is MLX here, on every host (the Linux CI has none).
+    monkeypatch.setattr("holdspeak.transcribe._resolve_backend", _mlx_here)
     return where
+
+
+def _mlx_here(backend: str) -> str:
+    return "mlx" if backend in ("auto", "mlx") else backend
+
+
+def _no_library(backend: str) -> str:
+    from holdspeak.transcribe import TranscriberError
+
+    raise TranscriberError("mlx-whisper is not installed.")
 
 
 def _land(home: Path) -> None:
@@ -79,6 +91,24 @@ def test_a_model_setup_cannot_get_is_not_covered(home: Path) -> None:
     assert speech["ready"] is False
 
 
+def test_files_here_but_no_speech_library_is_not_ready(home: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Astra r1 (MUST 2): files on disk are not enough; the library must run."""
+    _land(home)
+    monkeypatch.setattr("holdspeak.transcribe._resolve_backend", _no_library)
+    speech = speech_readiness("base", "mlx", home=home)
+    assert speech["state"] == "backend_unavailable"
+    assert speech["ready"] is False
+    assert speech["bytes"] == 0
+    assert "not installed" in speech["reason"]
+
+
+def test_auto_resolves_before_the_files_are_read(home: Path) -> None:
+    _land(home)
+    speech = speech_readiness("base", "auto", home=home)
+    assert speech["backend"] == "mlx"
+    assert speech["ready"] is True
+
+
 def test_configured_readiness_reads_the_config_model(home: Path) -> None:
     config = SimpleNamespace(model=SimpleNamespace(name="base", backend="mlx"))
     assert configured_speech_readiness(config=config, home=home)["state"] == "will_download"
@@ -99,6 +129,24 @@ def test_doctor_speech_row_fails_until_the_model_lands(home: Path, monkeypatch: 
 
     _land(home)
     assert doctor._check_speech_model(config).status == "PASS"  # type: ignore[arg-type]
+
+    # The library cannot run: FAIL, and the backend row tests the SAME backend.
+    monkeypatch.setattr("holdspeak.transcribe._resolve_backend", _no_library)
+    monkeypatch.setattr(doctor, "_resolve_backend", _no_library)
+    row = doctor._check_speech_model(config)  # type: ignore[arg-type]
+    assert row.status == "FAIL" and "speech library cannot run" in row.detail
+    assert doctor._check_transcription_backend(config).status == "FAIL"  # type: ignore[arg-type]
+
+
+def test_doctor_backend_row_reads_the_configured_backend(monkeypatch: pytest.MonkeyPatch) -> None:
+    import holdspeak.commands.doctor as doctor
+
+    asked: list[str] = []
+    monkeypatch.setattr(doctor, "_resolve_backend", lambda backend: asked.append(backend) or "faster-whisper")
+    config = SimpleNamespace(model=SimpleNamespace(name="base", backend="faster-whisper"))
+    row = doctor._check_transcription_backend(config)  # type: ignore[arg-type]
+    assert asked == ["faster-whisper"]
+    assert row.detail == "`faster-whisper` resolves to `faster-whisper`"
 
 
 def test_doctor_lists_the_speech_row_after_the_backend_row(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -72,6 +72,7 @@ _ERRORS = {
     "refused": "The hub did not permit the download. Try again.",
     "unsafe": "The model folder holds a link. Remove the link. Then try again.",
     "setup": "The models are on this device, but setup did not finish. Try again.",
+    "speech_backend_unavailable": "The speech library cannot run on this device. Install it, then check again.",
     "speech_not_covered": "Set up local AI cannot get the selected Whisper model. Select the base model, or add the model yourself.",
 }
 
@@ -324,6 +325,8 @@ class LocalAISetupService:
             # Ready means speech too: a model setup cannot get is not ready.
             if speech["state"] == "not_covered":
                 state, error = "incomplete", "speech_not_covered"
+            elif speech["state"] == "backend_unavailable":
+                state, error = "incomplete", "speech_backend_unavailable"
             else:
                 state = "ready"
         else:

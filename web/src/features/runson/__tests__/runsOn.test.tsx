@@ -58,6 +58,13 @@ vi.mock("../../../lib/speakToFill", async (importOriginal) => ({
 }));
 
 vi.mock("../../concierge/MeaningSearchRow", () => ({ MeaningSearchRow: () => null }));
+// PHILO-17 speech: the speech truth is the hub's (its own vitest file fences
+// the row); here only "is speech set up" moves.
+const speechState = vi.hoisted(() => ({ notSetUp: false }));
+vi.mock("../../../desk/firstrun/SpeechSetup", () => ({
+  useSpeechSetup: () => ({ notSetUp: speechState.notSetUp, ready: !speechState.notSetUp }),
+  SpeechSetup: ({ testId }: { testId: string }) => <span data-testid={testId}>Speech is not set up</span>,
+}));
 vi.mock("../../../desk/shell", () => ({ openSurfaceOr: m.openSurfaceOr }));
 
 import { RunsOnCore } from "../RunsOnCore";
@@ -515,6 +522,26 @@ describe("Runs on — Try it", () => {
       expect(screen.getByTestId("switchboard-result-speech_recognition").textContent).toMatch(/^HEARD: "freeze the old ledger on nov 5"( · \d+ MS)?$/),
     );
     expect(m.probe).not.toHaveBeenCalled();
+  });
+});
+
+describe("Runs on — speech not set up (PHILO-17)", () => {
+  afterEach(() => {
+    speechState.notSetUp = false;
+  });
+
+  it("the Speech job keeps its setup row after Try it answers", async () => {
+    speechState.notSetUp = true;
+    m.startCapture.mockResolvedValue(undefined);
+    m.stopAndTranscribe.mockRejectedValue(new Error("no speech model"));
+    await board();
+    expect(screen.getByTestId("runson-speech-setup").textContent).toBe("Speech is not set up");
+    fireEvent.click(screen.getByTestId("runson-try-speech_recognition"));
+    await waitFor(() => expect(screen.getByTestId("runson-try-speech_recognition").textContent).toBe("Stop"));
+    fireEvent.click(screen.getByTestId("runson-try-speech_recognition"));
+    await waitFor(() => expect(m.stopAndTranscribe).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByTestId("runson-try-speech_recognition").textContent).toBe("Try it"));
+    expect(screen.getByTestId("runson-speech-setup")).toBeTruthy();
   });
 });
 

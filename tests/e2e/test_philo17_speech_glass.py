@@ -90,8 +90,10 @@ def _walk(page: Any, url: str, width: int) -> None:
         # Egress where the fetch happens: the host chip beside the verb.
         assert "HUGGINGFACE.CO" in row.inner_text().upper()
         if key == "record-live":
-            body = page.locator("body").inner_text()
-            assert "Ready to record audio only" in body or "Start meeting" in body
+            # The exact audio-only state, never the old "Ready to record".
+            head = page.get_by_text("Ready to record audio only", exact=True)
+            assert head.count() == 1 and head.first.is_visible()
+            assert page.get_by_text("Ready to record", exact=True).count() == 0
         _shot(page, row, name, width)
 
 
