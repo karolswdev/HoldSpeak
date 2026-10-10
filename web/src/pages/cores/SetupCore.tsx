@@ -17,6 +17,10 @@ import {
 } from "../../desk/surface/Surface";
 import { CoreResourceGuard, renderHeroSlot } from "./core-layout";
 import { deSnake, presentValue } from "../../desk/surface/format";
+import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
+
+/** The doctor's "Speech model" check (holdspeak/commands/doctor.py). */
+const SPEECH_SECTION = "speech-model";
 
 export function SetupCore({ hero }: CoreProps) {
   const resource = useResource<SetupStatus>("/api/setup/status", {});
@@ -26,6 +30,10 @@ export function SetupCore({ hero }: CoreProps) {
     detail: string;
   } | null>(null);
   const sections = asRows(resource.data.sections, []);
+  // PHILO-17 speech: the speech row carries its one verb, the same download
+  // the first-run page runs.
+  const speech = useSpeechSetup();
+  const reload = resource.reload;
 
   const testRuntime = async () => {
     setTesting(true);
@@ -108,7 +116,16 @@ export function SetupCore({ hero }: CoreProps) {
                           label={status}
                         />
                       }
-                    />
+                    >
+                      {section.id === SPEECH_SECTION && status === "fail" ? (
+                        <SpeechSetup
+                          setup={speech}
+                          bare
+                          onReady={() => void reload()}
+                          testId="setup-speech-setup"
+                        />
+                      ) : null}
+                    </SurfaceRow>
                   );
                 })}
               </SurfaceRows>

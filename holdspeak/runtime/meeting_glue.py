@@ -262,6 +262,9 @@ class MeetingGlueMixin:
                 transcriber_factory=construct_transcriber,
                 transcription_backend=str(self.config.model.backend or ""),
                 transcription_model_name=str(self.config.model.name or ""),
+                # PHILO-17 speech: no speech model on this device means a
+                # record-only meeting that says why, never a silent download.
+                speech_ready=self._whisper_model_on_disk,
                 requested_remote_device_ids=tuple(
                     str(getattr(descriptor, "id", "")) for descriptor, _source in device_pairs
                 ),

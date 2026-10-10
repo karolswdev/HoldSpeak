@@ -250,18 +250,15 @@ class LocalAISetupService:
         return items
 
     def _speech(self, plan: list[dict[str, Any]]) -> dict[str, Any]:
-        """Is the CONFIGURED Whisper model covered?  Never silently dropped."""
-        from ..whisper_models import whisper_on_disk
+        """Is the CONFIGURED Whisper model covered?  Never silently dropped.
+
+        The one speech-readiness truth (``whisper_models.speech_readiness``),
+        which Speak, Record, Runs on and Setup read too.
+        """
+        from ..whisper_models import speech_readiness
 
         name, backend = self._whisper()
-        pinned = [item for item in plan if item["key"] == "whisper"]
-        if pinned:
-            state = "on_device" if all(item["on_device"] for item in pinned) else "will_download"
-        elif whisper_on_disk(name, backend, home=self._home()):
-            state = "on_device_unpinned"  # the owner's own copy; no pin to check
-        else:
-            state = "not_covered"  # no pinned files for this model: setup cannot get it
-        return {"model": name, "backend": backend, "state": state}
+        return speech_readiness(name, backend, home=self._home())
 
     def _file_row(self, item: dict[str, Any]) -> dict[str, Any]:
         model: PinnedModel = item["model"]

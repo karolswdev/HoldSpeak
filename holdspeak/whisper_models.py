@@ -231,12 +231,71 @@ def whisper_on_disk(name: str, backend: str, *, home: Optional[Path] = None) -> 
     )
 
 
+#: The reason code a meeting with no transcript carries when the speech model
+#: was not on this device (the faces say "No transcript: speech is not set up").
+SPEECH_NOT_SET_UP = "speech_not_set_up"
+
+#: The two states in which speech can run on this device.
+SPEECH_READY_STATES = frozenset({"on_device", "on_device_unpinned"})
+
+
+def speech_readiness(name: str, backend: str, *, home: Optional[Path] = None) -> dict:
+    """The ONE speech-readiness truth (PHILO-17 speech): is the speech model
+    on this device, so that Speak, Record, Runs on and Setup can use it?
+
+    Disk only; never a network request.  ``state`` is one of:
+
+    * ``on_device``: the loader finds this (pinned) model on this disk;
+    * ``on_device_unpinned``: the owner's own copy of a model with no pins;
+    * ``will_download``: pinned files are missing; "Set up speech" gets them;
+    * ``not_covered``: no pins and no copy; setup cannot get this model.
+
+    ``bytes`` is the size "Set up speech" downloads (0 when nothing is missing).
+    """
+    where = home or Path.home()
+    clean_name = str(name or "").strip() or "base"
+    pins = pinned_whisper(clean_name, backend)
+    # The loader's own question: can it load this model from this disk?
+    if whisper_on_disk(clean_name, backend, home=where):
+        state, missing = ("on_device" if pins else "on_device_unpinned"), 0
+    elif pins:
+        state = "will_download"
+        missing = sum(model.size for model in pins if not pinned_file_on_device(model, home=where))
+    else:
+        state, missing = "not_covered", 0
+    return {
+        "model": clean_name,
+        "backend": backend,
+        "state": state,
+        "ready": state in SPEECH_READY_STATES,
+        "bytes": missing,
+    }
+
+
+def configured_speech_readiness(*, config=None, home: Optional[Path] = None) -> dict:
+    """``speech_readiness`` for the configured Whisper model (name + backend)."""
+    from .transcribe import resolve_backend_or_raw
+
+    if config is None:
+        from .config import Config
+
+        config = Config.load()
+    model = getattr(config, "model", None)
+    name = str(getattr(model, "name", "") or "base")
+    backend = resolve_backend_or_raw(str(getattr(model, "backend", "") or "auto"))
+    return speech_readiness(name, backend, home=home)
+
+
 __all__ = [
+    "SPEECH_NOT_SET_UP",
+    "SPEECH_READY_STATES",
+    "configured_speech_readiness",
     "local_whisper_dir",
     "pinned_file_on_device",
     "pinned_whisper",
     "pinned_whisper_dir",
     "repositories_for",
+    "speech_readiness",
     "whisper_on_disk",
     "whisper_root",
 ]

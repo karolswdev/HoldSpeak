@@ -40,7 +40,9 @@ export interface LocalAiStatus {
   bytes_done: number;
   percent?: number;
   egress?: { destination: string; files?: number; bytes?: number } | null;
-  speech?: { model: string; backend: string; state: SpeechState };
+  /** PHILO-17 speech: the one speech-readiness truth (`whisper_models.
+   *  speech_readiness`); `bytes` is what "Set up speech" downloads. */
+  speech?: { model: string; backend: string; state: SpeechState; ready?: boolean; bytes?: number };
   local_engine?: { ready: boolean };
   error?: string;
   error_code?: string;

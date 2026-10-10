@@ -3,6 +3,7 @@
 // you, what settled, the transcript as a receipt. Record/import and
 // the typed artifacts are wings; speakers/projects/queues plumbing
 // stacks behind the one gear door.
+import { speechWasMissing } from "../../../desk/firstrun/speechTruth";
 import { wireClock } from "../../../desk/surface/format";
 import { countToken } from "../../../desk/surface/count";
 import type { ReactNode } from "react";
@@ -351,6 +352,12 @@ export function meetingsHeadline(
   const failed = meetingRows.filter(meetingFailed).length;
   if (failed > 0) {
     return { text: counted(failed, "meeting failed", "meetings failed"), accent: true };
+  }
+  // PHILO-17 speech: a meeting saved with audio only because the speech
+  // model was missing is lost work; never the all-clear over it.
+  const noSpeech = meetingRows.filter(speechWasMissing).length;
+  if (noSpeech > 0) {
+    return { text: counted(noSpeech, "meeting has no transcript", "meetings have no transcript"), accent: true };
   }
   // PHILO-15 10 (B14): no all-clear while a meeting is still importing.
   const importing = meetingRows.filter((row) => stateToken(row).label === "IMPORTING").length;

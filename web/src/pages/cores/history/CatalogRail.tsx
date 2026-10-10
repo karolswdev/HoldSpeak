@@ -1,6 +1,7 @@
 // HS-170-04 — the meetings stream (the board's list face).
 // Each row: title at primary, date/duration/words/state tokens, verb at right.
 // Token separators: middle dot (U+00B7) between EVERY token, muted.
+import { speechWasMissing } from "../../../desk/firstrun/speechTruth";
 import { useEffect, useRef } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
@@ -174,7 +175,7 @@ function MeetingStreamRow({
   if (noTranscript && token.label === "OFF") {
     tokenParts.push(
       <span className="meetings-stream-no-transcript" data-testid="no-transcript-token">
-        NO TRANSCRIPT
+        {speechWasMissing(row) ? "NO TRANSCRIPT · SPEECH NOT SET UP" : "NO TRANSCRIPT"}
       </span>
     );
   } else if (displayLabel) {

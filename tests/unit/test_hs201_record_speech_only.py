@@ -212,6 +212,43 @@ def test_no_speech_assignment_records_named_refusal_immediately(
     assert durable.transcription_status_detail == state.transcription_status_detail
 
 
+def test_no_speech_model_records_audio_only_and_says_why(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """PHILO-17 speech: no speech model on this device -> record-only with
+    `speech_not_set_up`, and no model load is tried (so nothing downloads)."""
+    db = _speech_only_db(tmp_path)
+    _configure(db)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", _FixtureRecorder)
+    monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", _FixtureJournal)
+    built: list[Any] = []
+    session = MeetingSession(
+        None,
+        principal=OWNER,
+        intel_enabled=False,
+        intel_deferred_enabled=True,
+        transcriber_factory=lambda frozen: built.append(frozen),  # type: ignore[arg-type,func-returns-value]
+        transcription_backend="mlx",
+        transcription_model_name="base",
+        speech_ready=lambda: False,
+    )
+
+    state = session.start()
+
+    assert built == []  # no load, so no download
+    assert state.capture_status == "recording"
+    assert state.transcription_status == "record_only"
+    assert state.transcription_status_detail == {
+        "family": "speech-recognition-route-assignments",
+        "reason_code": "speech_not_set_up",
+        "repair": "set_up_speech",
+    }
+    durable = db.meetings.get_meeting(state.id)
+    assert durable is not None
+    assert durable.transcription_status_detail == state.transcription_status_detail
+
+
 def test_speech_only_stop_saves_transcript_and_closes_parent_without_queue(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -367,6 +404,7 @@ def test_web_record_constructs_capture_only_session_before_summary_gesture(
     harness.preview_window_seq = 0
     harness.runtime_status = {"last_error": ""}
     harness._ensure_transcriber_loaded = lambda **_kwargs: harness.transcriber
+    harness._whisper_model_on_disk = lambda: True
     harness._set_runtime_activity = lambda *_args, **_kwargs: None
     harness._broadcast_intel_status = lambda: None
     harness._apply_updated_config = lambda: None
@@ -387,3 +425,5 @@ def test_web_record_constructs_capture_only_session_before_summary_gesture(
 
     assert result["id"] == "hs201-runtime-meeting"
     assert captured["intel_enabled"] is False
+    # PHILO-17 speech: the session asks the one speech-readiness truth.
+    assert captured["speech_ready"] == harness._whisper_model_on_disk

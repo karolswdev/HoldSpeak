@@ -40,6 +40,7 @@ import {
 } from "./model";
 import { stateClass, stateWord } from "./stateWord";
 import { useRunsOn, type RunsOnController } from "./useRunsOn";
+import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 // The Meaning search row draws with the Concierge's ledger cells.
 import "../concierge/concierge.css";
 import "./runson.css";
@@ -160,6 +161,9 @@ export function RunsOnCore({ scope }: CoreProps) {
   }, [setTitle]);
 
   const { roster, detection, engines } = ctrl;
+  // PHILO-17 speech: with no speech model on this device the Speech job says
+  // so and offers the one download, in place of an engine repair it cannot use.
+  const speech = useSpeechSetup();
   const repairs = detection?.repairs ?? [];
   const { have, found } = useMemo(() => splitEngines(engines), [engines]);
 
@@ -228,7 +232,9 @@ export function RunsOnCore({ scope }: CoreProps) {
       currentToken: effective && row.inherited_from === "global" && job !== DEFAULT_JOB ? "FOLLOWS DEFAULT" : undefined,
       // The limitation is a token on the job (§12 rule 6), until a Try
       // answers in its place; a repair names itself there too.
-      result: result ? (
+      result: job === SPEECH_JOB && speech.notSetUp && !result ? (
+        <SpeechSetup setup={speech} testId="runson-speech-setup" />
+      ) : result ? (
         <span data-tone={result.tone === "danger" ? "danger" : result.tone === "idle" ? "idle" : undefined}>{result.tokens.join(" · ")}</span>
       ) : jobRepair ? (
         <span data-tone="danger" data-testid={`runson-job-repair-${job}`}>

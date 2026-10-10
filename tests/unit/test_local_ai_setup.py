@@ -423,7 +423,9 @@ def test_an_unpinned_whisper_choice_is_never_ready(desk) -> None:
     desk.service.start(OWNER)
     desk.service.wait(30)
     status = desk.service.status(OWNER)
-    assert status["speech"] == {"model": "small", "backend": "mlx", "state": "not_covered"}
+    assert status["speech"] == {
+        "model": "small", "backend": "mlx", "state": "not_covered", "ready": False, "bytes": 0,
+    }
     assert status["state"] == "incomplete"
     assert status["error_code"] == "speech_not_covered"
 
