@@ -403,7 +403,7 @@ function JiraCards({
           <StateChip state={chipState(tool.state)} label={stateWords(tool.state, "jira", tool)} />
           <ProvenanceChip source="acli" />
         </div>
-        <AddAccountFields provider="jira" onAdd={onAddAccount} busy={busyRef === "jira"} />
+        <AddAccountFields provider="jira" busy={busyRef === "jira"} onAdd={onAddAccount} />
       </div>
     );
   }
@@ -499,7 +499,7 @@ function ConfluenceCards({
           <StateChip state={chipState(tool.state)} label={stateWords(tool.state, "confluence", tool)} />
           <ProvenanceChip source="acli" />
         </div>
-        <AddAccountFields provider="confluence" onAdd={onAddAccount} busy={busyRef === "confluence"} />
+        <AddAccountFields provider="confluence" busy={busyRef === "confluence"} onAdd={onAddAccount} />
       </div>
     );
   }
