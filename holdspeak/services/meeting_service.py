@@ -190,18 +190,22 @@ class MeetingService:
         title: str | None,
         speaker: str | None,
         tags: list[str],
-        started_at: datetime,
+        started_at: datetime | None,
         config: Config,
         transcriber_factory: Callable[[Config], Any],
     ) -> dict[str, str]:
-        """Create the visible importing row and start its background worker."""
+        """Create the visible importing row and start its background worker.
+
+        ``started_at`` None (PHILO-17): no stated start. The placeholder row
+        shows now; the import resolves the start as the import moment less
+        the duration, and persists it."""
         meeting_id = uuid.uuid4().hex[:8]
         # PHILO-15-07 (B30): a stated title wins; else the file name humanised
         # (no extension, no underscores, no ids), never the raw stem.
         resolved_title = (title or "").strip() or humanize_title(filename)
         placeholder = MeetingState(
             id=meeting_id,
-            started_at=started_at,
+            started_at=started_at or local_wall(),
             title=resolved_title,
             tags=tags,
             segments=[],
@@ -271,7 +275,7 @@ class MeetingService:
                     f"occurred_at is not an ISO 8601 date and time: {occurred_at}"
                 ) from exc
         else:
-            started_at = local_wall()
+            started_at = None  # PHILO-17: the import resolves it
         return self.import_meeting(
             principal,
             tmp_path=tmp_path,
@@ -294,7 +298,7 @@ class MeetingService:
         title: str | None,
         speaker: str | None,
         tags: list[str],
-        started_at: datetime,
+        started_at: datetime | None,
         transcriber_factory: Callable[[Config], Any],
     ) -> None:
         try:

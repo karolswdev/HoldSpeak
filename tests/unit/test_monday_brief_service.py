@@ -362,9 +362,9 @@ def test_a_brief_is_stale_after_a_new_meeting_decision_or_engine(tmp_path, quiet
     meeting_at = (base + datetime.timedelta(minutes=5)).isoformat()
     with db._connection() as conn:
         conn.execute(
-            "INSERT INTO meetings (id, started_at, ended_at, title, duration_seconds, intel_status, capture_status, created_at) "
-            "VALUES ('m-new', ?, ?, 'Standup', 60, 'disabled', 'finalized', ?)",
-            (meeting_at, meeting_at, meeting_at),  # the row's durable time (Astra r1)
+            "INSERT INTO meetings (id, started_at, ended_at, title, duration_seconds, intel_status, capture_status,"
+            " created_at, updated_at) VALUES ('m-new', ?, ?, 'Standup', 60, 'disabled', 'finalized', ?, ?)",
+            (meeting_at, meeting_at, meeting_at, meeting_at),  # the row's durable times (Astra r1/r2)
         )
     assert service.is_stale(brief) is True
 
@@ -460,3 +460,89 @@ def test_the_scheduled_clock_opens_the_window_at_local_midnight_across_dst(
         friday, datetime.time(0, 0)
     )
     assert start.utcoffset() == datetime.timedelta(hours=friday_offset_h)
+
+
+def test_a_desk_upload_with_no_start_lands_in_a_fresh_brief(tmp_path, quiet_needs_you, monkeypatch):
+    """Astra r2 MUST 1, through the ACTUAL upload route: POST a 60-minute
+    transcript with no start; the worker ends it at the import moment and
+    persists that start; rebuild, reopen: the meeting is there, not stale."""
+    import time
+
+    from fastapi.testclient import TestClient
+
+    from holdspeak.db import get_database, reset_database
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    reset_database()
+    db = get_database(tmp_path / "upload.db")
+    try:
+        server = MeetingWebServer(
+            WebRuntimeCallbacks(
+                on_bookmark=lambda *_a, **_k: None, on_stop=lambda *_a, **_k: None, get_state=lambda: None,
+            ),
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+        vtt = (
+            "WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n<v Priya>we plan the release\n\n"
+            "00:59:00.000 --> 01:00:00.000\n<v Sam>that is all\n"
+        )
+        before = datetime.datetime.now()
+        response = client.post(
+            "/api/meetings/import", files={"file": ("planning.vtt", vtt.encode(), "text/vtt")},
+        )
+        assert response.status_code == 202, response.text
+        meeting_id = response.json()["meeting_id"]
+        deadline = time.time() + 15
+        stored = None
+        while time.time() < deadline:
+            stored = db.meetings.get_meeting(meeting_id)
+            if stored is not None and stored.segments and stored.ended_at is not None:
+                break
+            time.sleep(0.05)
+        assert stored is not None and stored.segments and stored.ended_at, "the upload did not finish"
+        # The persisted start is the resolved one: the meeting ended at the import.
+        assert before - datetime.timedelta(seconds=1) <= stored.ended_at <= datetime.datetime.now()
+        assert stored.started_at < before - datetime.timedelta(minutes=59)
+
+        rebuilt = client.post("/api/brief/generate")
+        assert rebuilt.status_code == 200, rebuilt.text
+        refs = [item["source_ref"] for item in rebuilt.json()["sections"]["changed"]]
+        assert f"meeting:{meeting_id}" in refs
+        reopened = client.get("/api/brief/latest").json()
+        assert reopened["stale"] is False
+    finally:
+        reset_database()
+
+
+def test_stop_after_the_brief_makes_it_stale_and_the_rebuild_holds_the_meeting(tmp_path, quiet_needs_you):
+    """Astra r2 MUST 2: Start persists the row, a brief made mid-recording
+    leaves it out, Stop updates the row (created_at kept): the brief is stale,
+    and the rebuild holds the meeting."""
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+
+    db = Database(tmp_path / "stop.db")
+    service = MondayBriefService(db)
+    started = datetime.datetime.now() - datetime.timedelta(minutes=30)
+    live = MeetingState(id="m-live", started_at=started, title="Design sync", segments=[])
+    live.capture_status = "recording"
+    db.meetings.save_meeting(live)  # Start
+
+    import time
+
+    time.sleep(1.1)  # the row times are whole seconds
+    mid = service.generate(None)
+    assert not any(item.source_ref == "meeting:m-live" for item in mid.sections["changed"])
+    assert service.is_stale(mid) is False
+
+    time.sleep(1.1)
+    stopped = MeetingState(
+        id="m-live", started_at=started, ended_at=datetime.datetime.now() - datetime.timedelta(seconds=1),
+        title="Design sync", segments=[TranscriptSegment("Ship it.", "Me", 0.0, 1.0)],
+    )
+    stopped.capture_status = "finalized"
+    db.meetings.save_meeting(stopped)  # Stop: same row, created_at kept
+
+    assert service.is_stale(service.get_latest(None)) is True
+    rebuilt = service.generate(None)
+    assert any(item.source_ref == "meeting:m-live" for item in rebuilt.sections["changed"])

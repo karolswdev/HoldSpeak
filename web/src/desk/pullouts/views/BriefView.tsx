@@ -185,6 +185,7 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [refreshFailed, setRefreshFailed] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shelf, setShelf] = useState<Record<string, ShelfState>>({});
   const [shelving, setShelving] = useState(false);
@@ -235,13 +236,24 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const generate = async () => {
     setGenerating(true);
     setError("");
-    setSelectedId(null);
+    setRefreshFailed("");
     try {
-      const generated = await apiFetch<MondayBrief>("/api/brief/generate", { method: "POST" });
-      setBrief(generated);
-      setShelf(generated?.shelf ?? {});
+      const generated = await apiFetch<MondayBrief | null>("/api/brief/generate", { method: "POST" });
+      // PHILO-17 (Astra r2): a rebuild that answers nothing keeps the brief
+      // on the glass; it never blanks a good one.
+      if (generated) {
+        setSelectedId(null);
+        setBrief(generated);
+        setShelf(generated.shelf ?? {});
+      } else if (!brief) {
+        setError("BRIEF NOT MADE");
+      } else {
+        setRefreshFailed("BRIEF NOT MADE AGAIN");
+      }
     } catch (requestError) {
-      setError(plainFailure("BRIEF NOT MADE", requestError));
+      // With a brief on the glass the failure is a footer fact, not a blank face.
+      if (brief) setRefreshFailed(plainFailure("BRIEF NOT MADE AGAIN", requestError));
+      else setError(plainFailure("BRIEF NOT MADE", requestError));
     } finally {
       setGenerating(false);
     }
@@ -570,6 +582,7 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
       <SurfaceFooter
         receipt={
           receipt ??
+          (refreshFailed || undefined) ??
           (selectedPerson
             ? `PERSON · ${selectedPerson.display_name}`
             : selected

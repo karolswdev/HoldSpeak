@@ -2334,9 +2334,11 @@ class MondayBriefService:
         if made.astimezone(current.tzinfo).date() < current.date():
             return True
         queries = (
-            # Astra r1: the durable row time, never ``ended_at`` (an import's
-            # end can be ahead of the clock and kept the brief stale).
+            # Astra r1/r2: the durable row times, never ``ended_at`` (an
+            # import's end can be ahead of the clock). ``updated_at`` moves on
+            # every save, so a Stop after the brief makes it stale.
             "SELECT MAX(created_at) FROM meetings WHERE parked = 0",
+            "SELECT MAX(updated_at) FROM meetings WHERE parked = 0",
             "SELECT MAX(created_at) FROM decision_records",
             "SELECT MAX(updated_at) FROM inference_assignment_heads",
             "SELECT MAX(set_at) FROM inference_capability_off",

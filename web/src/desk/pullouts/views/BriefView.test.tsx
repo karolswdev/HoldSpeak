@@ -14,6 +14,10 @@ const apiFetch = vi.hoisted(() => vi.fn());
 
 vi.mock("../../../lib/api", () => ({
   apiFetch,
+  // plainFailure reads `instanceof ApiError` on a failure.
+  ApiError: class ApiError extends Error {
+    status = 0;
+  },
   readableError: (reason: unknown) =>
     reason instanceof Error ? reason.message : "Request failed",
 }));
@@ -353,6 +357,24 @@ describe("BriefView PHILO-17: refresh, blocker verb, THIS WEEK rows, named triag
       fireEvent.click(screen.getByTestId("brief-refresh"));
     });
     expect(apiFetch.mock.calls.filter(([path]) => path === "/api/brief/generate")).toHaveLength(2);
+  });
+
+  it.each([
+    ["answers nothing", () => Promise.resolve(null)],
+    ["fails", () => Promise.reject(new Error("hub down"))],
+  ])("keeps the brief on the glass when a rebuild %s", async (_label, answer) => {
+    apiFetch.mockImplementation((path: string) => {
+      if (path === "/api/brief/latest") return Promise.resolve({ ...briefWithPeople, stale: true });
+      if (path === "/api/brief/generate") return answer();
+      return Promise.resolve({});
+    });
+    renderBriefView();
+    await waitFor(() => {
+      expect(apiFetch).toHaveBeenCalledWith("/api/brief/generate", { method: "POST" });
+    });
+    expect(await screen.findByText(/BRIEF NOT MADE AGAIN/)).toBeInTheDocument();
+    expect(screen.getByText("Standup")).toBeInTheDocument();
+    expect(screen.getByTestId("brief-refresh")).toBeInTheDocument();
   });
 
   it("does not make a fresh brief again by itself", async () => {

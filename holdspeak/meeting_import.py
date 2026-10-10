@@ -36,7 +36,7 @@ import uuid
 import wave
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from holdspeak.timestamps import local_wall
+from holdspeak.timestamps import local_wall, utc_iso
 from pathlib import Path
 from typing import Any, Callable, Optional, Sequence
 
@@ -615,6 +615,13 @@ def _persist_import(
     state.transcription_status_detail = None
 
     db.meetings.save_meeting(state)
+    # PHILO-17 (Astra r2): the upsert keeps a placeholder row's start; the
+    # start this import resolved is the one that stands.
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE meetings SET started_at = ? WHERE id = ?",
+            (utc_iso(state.started_at), state.id),
+        )
 
     intel_enqueued = False
     if meeting_cfg.intel_enabled:
