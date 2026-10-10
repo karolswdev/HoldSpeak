@@ -161,7 +161,8 @@ export function DecisionsView({
         const rows = (Array.isArray(receipts) ? receipts.map(fromReceipt) : [])
           .filter((row) => !whyOnly || !stateWord(row))
           .filter((row) => !query.trim() || row.text.toLowerCase().includes(query.trim().toLowerCase()));
-        return { rows, total: rows.length };
+        const count = rows.length;
+        return { rows, total: count };
       });
     }
     const params = new URLSearchParams({ scope: "all", limit: String(limit), offset: String(offset) });
@@ -280,6 +281,9 @@ export function DecisionsView({
     if (meetingId) openRef(`meeting:${meetingId}`);
   };
 
+  // A page of rows, never zero where the Show more verb is drawn.
+  const shownCount = results.length;
+
   if (chosen) {
     return (
       <MeetingDecisionDetail
@@ -369,9 +373,9 @@ export function DecisionsView({
           <SurfaceState empty emptyLabel={query.trim() ? "No decisions match this search." : whyOnly ? "No current decisions." : "No decisions yet."} />
         )}
       </SurfaceLedger>
-      {!loading && results.length < total ? (
+      {!loading && shownCount > 0 && shownCount < total ? (
         <Button variant="secondary" dense loading={more} onClick={showMore} data-testid="decisions-more">
-          {`Show more (${results.length} of ${total})`}
+          {shownCount > 0 ? `Show more (${shownCount} of ${total})` : "Show more"}
         </Button>
       ) : null}
     </div>
