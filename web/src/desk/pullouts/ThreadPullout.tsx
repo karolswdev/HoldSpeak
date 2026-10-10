@@ -76,6 +76,7 @@ import {
   wasAutoSpoken,
 } from "../autoSpeak";
 import type { PulloutContentProps } from "./types";
+import { noteName } from "../windowName";
 import "./thread-pullout.css";
 
 // HS-152-04: stable empty refs for zustand selectors (avoid infinite re-render).
@@ -395,7 +396,7 @@ function NoteResultView({ data }: { data: Record<string, unknown> }) {
       <div data-testid="result-note">
         <SurfaceRows>
           {items.slice(0, 8).map((n: Record<string, unknown>, i: number) => {
-            const title = String(n.title ?? n.name ?? "Note");
+            const title = noteName(n);
             const body = String(n.body_markdown ?? n.body ?? n.text ?? "");
             return (
               <SurfaceRow
@@ -412,10 +413,10 @@ function NoteResultView({ data }: { data: Record<string, unknown> }) {
   }
   // Single note (desk.get)
   const body = String(data.body_markdown ?? data.body ?? data.text ?? data.content ?? "");
-  const title = String(data.title ?? data.name ?? "");
+  const title = noteName(data);
   return (
     <div data-testid="result-note">
-      {title && <div className="thread-result-note-title">{title}</div>}
+      <div className="thread-result-note-title">{title}</div>
       {body ? <Material>{body}</Material> : <span className="thread-result-detail">(empty)</span>}
     </div>
   );

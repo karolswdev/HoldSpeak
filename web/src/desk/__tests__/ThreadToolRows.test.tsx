@@ -745,6 +745,26 @@ describe("HS-152-05 per-kind renderers", () => {
     expect(screen.getByTestId("raw-fold")).toBeTruthy();
   });
 
+  it("PHILO-17: an untitled note result is named by its words, else New note", () => {
+    const row = (callId: string, payload: unknown) => ({
+      callId, messageId: "msg-1", name: "desk.list", toolClass: "evidence_read", argsHead: '{"kind":"notes"}',
+      state: "receipted", decisionRequired: false, receiptId: `tr-${callId}`, outcome: "succeeded", kind: "note",
+      payload: payload as Record<string, unknown>,
+    });
+    seedStore([makeMsg()]);
+    useThreadStore.setState({
+      toolRows: { "t-1": { "call-untitled": row("call-untitled", [{ id: "n9", title: "", body_markdown: "Ask Avery about the cutover" }]) } },
+    } as never);
+    const first = renderPullout();
+    expect(screen.getByTestId("result-note").textContent).toContain("Ask Avery about the cutover");
+    first.unmount();
+    useThreadStore.setState({
+      toolRows: { "t-1": { "call-empty": row("call-empty", { title: "", body_markdown: "" }) } },
+    } as never);
+    renderPullout();
+    expect(screen.getByTestId("result-note").querySelector(".thread-result-note-title")?.textContent).toBe("New note");
+  });
+
   it("note kind renders NoteResultView with Material (single)", () => {
     seedStore([makeMsg()]);
     useThreadStore.setState({
