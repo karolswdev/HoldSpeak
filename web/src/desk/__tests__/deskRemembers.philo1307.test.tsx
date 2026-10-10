@@ -130,16 +130,18 @@ describe("B2: every open window returns after a reload", () => {
     expect(fresh.useChairWindows.getState().phone).toBe("chair:week");
   });
 
-  it("the screen (Chair or Floor) returns, and the compositor's save keeps it", async () => {
-    const { useChairState } = await import("../chairState");
+  // PHILO-17 (owner 2026-10-10, "everything must become one desk"): the
+  // Floor is parked, so nothing reads `screen`. A document that still says
+  // "floor" loads (the Screen shows; the glass fence proves the face), and a
+  // compositor save keeps the section it does not own.
+  it("a stored floor screen loads, and the compositor's save keeps the section", async () => {
+    const { saveDeskWorkspaceSection } = await import("../store/workspaceStorage");
+    saveDeskWorkspaceSection({ screen: "floor" });
+    vi.resetModules();
     const { useDesk } = await import("../store");
-    useChairState.getState().setSurface("floor");
     useDesk.getState().openPullout("decision:d1"); // a compositor save after it
     expect(stored().screen).toBe("floor");
-
-    vi.resetModules();
-    const fresh = await import("../chairState");
-    expect(fresh.useChairState.getState().surface).toBe("floor");
+    expect(stored().windows.pullouts).toContain("decision:d1");
   });
 });
 

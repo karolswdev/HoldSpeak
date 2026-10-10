@@ -10,7 +10,7 @@
  *
  * Ghosting over hiding: a verb that cannot run now stays visible with
  * its reason - the system admits what it can do. */
-import { defaultViewFor, useDesk } from "./store";
+import { useDesk } from "./store";
 import { openIntelligence } from "./intelligenceNavigation";
 import { openSurfaceOr } from "./shell";
 import { openPerson, openProjectUpdates } from "./openObject";
@@ -21,7 +21,6 @@ import { primitiveCan } from "../lib/primitives";
 import { handKindOf, openHand } from "./agentHand";
 import { usePalette, useShortcutSheet } from "./chromeState";
 import { useSettleState } from "./settleState";
-import { useChairState } from "./chairState";
 import { deleteSeatShown } from "./deleteSeat";
 import {
   closeFrontWindow,
@@ -85,10 +84,6 @@ export interface Verb {
    * query `People` finds the People app before a note that starts with the
    * word. */
   app?: string;
-  /** PHILO-8-01 — the verb makes or edits a zone, so only a face that shows
-   * zones (the Floor: spatial or list) offers it; the Chair withholds it
-   * (the owner's Q2 (c), UX-CANON §A.11). */
-  needsZones?: boolean;
   /** PHILO-13-11 (C1, slice two) — the menu face lists the verb inside a
    * submenu of this name (Window ▸ Chair). */
   submenu?: string;
@@ -101,16 +96,11 @@ export interface Verb {
   run(ctx: VerbContext): void;
 }
 
-/** PHILO-8-01 — true when the face the owner is on shows zones. */
-export function zonesShown(): boolean {
-  return useChairState.getState().surface === "floor";
-}
-
-/** PHILO-8-01 — false when this face withholds the verb (a zone verb on
- * the Chair). The palette and the menu bar ask this before they list it. */
+/** False when this width withholds the verb (a `wide` verb at 393). The
+ * palette and the menu bar ask this before they list it. PHILO-17: the zone
+ * verbs are parked (desk/_parked/floor/floorVerbs.ts); no face shows zones. */
 export function offeredHere(v: Verb): boolean {
-  if (v.wide && typeof window !== "undefined" && window.innerWidth <= 720) return false;
-  return !v.needsZones || zonesShown();
+  return !(v.wide && typeof window !== "undefined" && window.innerWidth <= 720);
 }
 
 export function verbLabel(v: Verb, ctx: VerbContext): string {
@@ -157,16 +147,6 @@ function duplicateOverrides(o: NonNullable<ReturnType<typeof selected>>) {
     case "workbench":
       return { name: copyName };
   }
-}
-
-/** The view the toggle verb would LEAVE (HS-105-01 density default). */
-function currentView(): "list" | "spatial" {
-  const s = useDesk.getState();
-  return defaultViewFor(
-    s.viewMode,
-    Object.values(s.items).reduce((n, l) => n + l.length, 0),
-    typeof window !== "undefined" && window.innerWidth <= 720,
-  );
 }
 
 /** The four applications carry ⌘1-⌘4 and a window id the keymap can
@@ -267,18 +247,6 @@ export const VERBS: Verb[] = [
     run: () => void useDesk.getState().createPrimitive("workbench"),
   },
   {
-    id: "desk.new-zone",
-    label: "New Zone",
-    menu: "desk",
-    scope: "floor",
-    group: "new",
-    glyph: KIND_GLYPH.zone,
-    keywords: ["create", "place"],
-    needsZones: true,
-    ghost: never,
-    run: () => void useDesk.getState().createPrimitive("zone"),
-  },
-  {
     id: "desk.new-thread",
     label: "New Thread",
     menu: "desk",
@@ -343,32 +311,6 @@ export const VERBS: Verb[] = [
     keywords: ["focus", "quiet", "zen", "chrome", "settle"],
     ghost: never,
     run: () => useSettleState.getState().toggle(),
-  },
-  {
-    id: "desk.toggle-view",
-    label: () => (currentView() === "list" ? "Spatial view" : "List view"),
-    menu: "desk",
-    scope: "floor",
-    group: "view",
-    keywords: ["list", "spatial", "view"],
-    ghost: never,
-    run: () => {
-      useDesk
-        .getState()
-        .setViewMode(currentView() === "list" ? "spatial" : "list");
-    },
-  },
-  {
-    id: "desk.arrange",
-    label: "Arrange desk",
-    scope: "floor",
-    group: "floor",
-    keywords: ["tidy", "clean"],
-    ghost: () =>
-      Object.keys(useDesk.getState().positions).length > 0
-        ? null
-        : "Nothing moved",
-    run: () => useDesk.getState().tidyDesk(),
   },
   {
     id: "desk.overview",
@@ -604,9 +546,8 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      // PHILO-8-01 — a zone renames where zones are shown; the Chair
-      // shows none, so it does not start a rename nothing can draw.
-      if (o.kind === "directory" && !zonesShown()) return "Open the Floor";
+      // PHILO-17: no face draws zones, so a zone rename has no field.
+      if (o.kind === "directory") return "Not renameable";
       return primitiveCan(o.kind, "rename")
         ? null
         : "Not renameable";
@@ -614,9 +555,7 @@ export const VERBS: Verb[] = [
     run: (ctx) => {
       const o = selected(ctx);
       if (!o) return;
-      if (o.kind === "directory") {
-        if (zonesShown()) useDesk.getState().setRenamingZone(o.id);
-      } else if (primitiveCan(o.kind, "rename")) useDesk.getState().openEditor(o.id, ctx.origin);
+      if (o.kind !== "directory" && primitiveCan(o.kind, "rename")) useDesk.getState().openEditor(o.id, ctx.origin);
     },
   },
   {
@@ -673,7 +612,7 @@ export const VERBS: Verb[] = [
       if (!primitiveCan(o.kind, "delete")) return "Cannot delete";
       // PHILO-8-02 round two — a delete is offered only where its receipt
       // can be read; the Chair shows none (UX-CANON A.11).
-      return deleteSeatShown() ? null : "Open the Floor or the list";
+      return deleteSeatShown() ? null : "Not on the desk";
     },
     run: (ctx) => {
       const o = selected(ctx);
@@ -681,20 +620,6 @@ export const VERBS: Verb[] = [
       window.dispatchEvent(
         new CustomEvent(OBJECT_DELETE_REQUEST, { detail: { ref: ctx.selectedRef } }),
       );
-    },
-  },
-  {
-    id: "zone.focus",
-    label: "Focus",
-    scope: "object",
-    ghost: (ctx) => {
-      const o = selected(ctx);
-      if (!o) return "Select a Zone";
-      return o.kind === "directory" ? null : "Select a Zone";
-    },
-    run: (ctx) => {
-      const o = selected(ctx);
-      if (o?.kind === "directory") useDesk.getState().diveInto(o.id);
     },
   },
   // ── Go (the applications - DESK_TOOLS is the data truth) ────────────
@@ -890,7 +815,7 @@ export const VERBS: Verb[] = [
     palette: false,
     keywords: ["chair", "window"],
     checked: () => isChairWindowOpen(w.id),
-    ghost: () => (useChairState.getState().surface === "chair" ? null : "Not on the Chair"),
+    ghost: never,
     run: () => openChairWindow(w.id),
   })),
   // ── System ──────────────────────────────────────────────────────────

@@ -45,7 +45,6 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "desk.new-agent",
       "desk.new-workflow",
       "desk.new-workbench",
-      "desk.new-zone",
       "desk.new-thread",
       "desk.new-project",
     ]);
@@ -53,11 +52,12 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       expect(v.ghost(CTX)).toBeNull();
   });
 
-  it("the floor owns its verbs (arrange / overview / reset / view)", () => {
+  // PHILO-17: List view, Arrange desk, New Zone and Focus are parked with the Floor.
+  it("the desk owns its verbs (overview / reset / refresh); the Floor's are parked", () => {
     const floor = verbsFor("floor").map((v) => v.id);
+    for (const id of ["desk.toggle-view", "desk.arrange", "desk.new-zone", "zone.focus"])
+      expect(VERBS.map((v) => v.id)).not.toContain(id);
     for (const id of [
-      "desk.toggle-view",
-      "desk.arrange",
       "desk.overview",
       "desk.reset-layout",
       "desk.reset-to-seed",
@@ -119,11 +119,6 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "system.search": "⌘K",
       "system.sheet": "⌘/",
     });
-  });
-
-  it("the view toggle names the OTHER view", () => {
-    const toggle = VERBS.find((v) => v.id === "desk.toggle-view")!;
-    expect(["List view", "Spatial view"]).toContain(verbLabel(toggle, CTX));
   });
 
   it("every THREAD_SLASH_COMMANDS entry has a registered verb id (HS-153-02)", () => {

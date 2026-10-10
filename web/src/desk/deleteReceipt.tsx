@@ -2,25 +2,20 @@
  *
  * `object.delete` is hook-free: it dispatches `OBJECT_DELETE_REQUEST`
  * (`verbRegistry.ts`). This module holds the ONE listener and the ONE
- * undo receipt for it. `DeskDeleteHost` mounts once, in `DeskApp`, so it
- * survives every face change; each face that shows the receipt (the
- * spatial Floor and the list) places `DeskDeleteSeat` in its foot, directly
- * above its AskBar (the seat the owner ratified in #665).
+ * undo receipt for it. `DeskDeleteHost` mounts once, in `DeskApp`; the
+ * Screen (the one desk, PHILO-17) places `DeskDeleteSeat` in its foot, the
+ * seat the owner ratified in #665 for the Floor (now parked).
  *
  * The rules (the Astra-role ruling, phase 8 story 02):
  * - the queued object leaves the selection, so the next select-and-Delete
  *   targets only the next object;
  * - a second delete commits the first at once (the receipt keeps one slot);
- * - a face change (Chair/Floor, list/spatial) commits a pending delete (it
- *   was queued on a face that showed its receipt). The face is read from the
- *   face state itself, never from a seat unmounting: a seat that unmounts
- *   for another reason (a failed refresh redraws the desk) keeps the Undo;
- * - where no seat is mounted (the Chair) the delete is WITHHELD: the verb is
+ * - a seat that unmounts (a failed refresh redraws the desk) keeps the Undo;
+ * - where no seat is mounted the delete is WITHHELD: the verb is
  *   greyed with its reason (`verbRegistry.ts`) and nothing is deleted.
  */
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { defaultViewFor, useDesk } from "./store";
-import { useChairState } from "./chairState";
+import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { useDesk } from "./store";
 import { qualifiedRef } from "./api";
 import { OBJECT_DELETE_REQUEST } from "./verbRegistry";
 import { objectByRef } from "./world";
@@ -44,24 +39,7 @@ function subscribe(listener: () => void) {
 
 /** The one listener and the one hook. Renders nothing itself. */
 export function DeskDeleteHost() {
-  const { remove, flush, receipt } = useUndoReceipt();
-
-  // A face change commits a pending delete. The first run is the mount.
-  // Round three: the face is the one the owner SEES, resolved the way
-  // DeskApp resolves it (a resize that turns the list into the spatial
-  // Floor is a face change), never the raw preference.
-  const surface = useChairState((s) => s.surface);
-  const viewMode = useDesk((s) => s.viewMode);
-  const total = useDesk((s) => Object.values(s.items).reduce((n, l) => n + l.length, 0));
-  const compact = useCompactWidth();
-  const face =
-    surface === "floor" ? `floor:${defaultViewFor(viewMode, total, compact)}` : surface;
-  const faceRef = useRef(face);
-  useEffect(() => {
-    if (faceRef.current === face) return;
-    faceRef.current = face;
-    flush();
-  }, [face, flush]);
+  const { remove, receipt } = useUndoReceipt();
 
   useEffect(() => {
     publish(receipt);
@@ -97,19 +75,6 @@ export function DeskDeleteHost() {
   }, [remove]);
 
   return null;
-}
-
-/** DeskApp's phone fact for the Floor's default view (`window.innerWidth
- * <= 720`), kept live across a resize. */
-function useCompactWidth(): boolean {
-  const read = () => (typeof window !== "undefined" ? window.innerWidth <= 720 : false);
-  const [compact, setCompact] = useState(read);
-  useEffect(() => {
-    const onResize = () => setCompact(read());
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-  return compact;
 }
 
 /** The receipt, where a face seats it. */

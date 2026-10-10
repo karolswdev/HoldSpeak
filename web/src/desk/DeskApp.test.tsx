@@ -10,7 +10,6 @@ const state = vi.hoisted(() => ({
   setupAvailable: true,
   arrivalRequired: true,
   refreshFails: false,
-  surface: "floor" as "chair" | "floor",
   askOpen: false,
   refresh: vi.fn(),
   openPullout: vi.fn(),
@@ -69,19 +68,13 @@ vi.mock("./store", () => {
   return { useDesk, defaultViewFor: () => "spatial" };
 });
 
-vi.mock("./chairState", () => ({
-  useChairState: (selector: any) => selector({ surface: state.surface }),
-}));
 vi.mock("./chair", () => ({
   ChairHome: ({ arrivalRequired }: { arrivalRequired?: boolean }) => (
     <div data-testid={arrivalRequired ? "first-value-chair" : "normal-chair"} />
   ),
 }));
 vi.mock("./gl/Atmosphere", () => ({ Atmosphere: marker("atmosphere") }));
-vi.mock("./gl/WorldStage", () => ({ WorldStage: marker("world-stage") }));
-vi.mock("./components/DeskListView", () => ({ DeskListView: marker("desk-list") }));
 vi.mock("./components/DeskChrome", () => ({ DeskChrome: marker("desk-chrome") }));
-vi.mock("./components/EmptyDesk", () => ({ EmptyDesk: marker("empty-desk") }));
 vi.mock("./components/RecordOrb", () => ({ RecordOrb: marker("record-orb") }));
 vi.mock("./hooks/useChatImport", () => ({ useChatImport: () => ({ receipt: "" }) }));
 vi.mock("./components/MissionControlConveyor", () => ({ MissionControlConveyor: marker("mission-control") }));
@@ -99,7 +92,6 @@ vi.mock("./components/NewWorkbenchChooser", () => ({ NewWorkbenchChooser: marker
 vi.mock("./components/ScheduleCreateWindow", () => ({ ScheduleCreateWindow: marker("schedule-create") }));
 vi.mock("./components/AttentionDrawer", () => ({ AttentionDrawer: marker("attention-drawer") }));
 vi.mock("./components/AskPanel", () => ({ AskPanel: marker("ask-panel") }));
-vi.mock("./components/GlassDropLayer", () => ({ GlassDropLayer: marker("glass-drop") }));
 vi.mock("./components/DeskToolInspector", () => ({ DeskToolInspector: marker("tool-inspector") }));
 vi.mock("./components/DeskWindow", () => ({
   Dock: ({ center }: { center?: ReactNode }) => <div data-testid="dock">{center}</div>,
@@ -116,6 +108,8 @@ vi.mock("./components/SurfaceWindows", () => ({
   ),
 }));
 vi.mock("./components/TrustWindow", () => ({ TrustWindow: marker("trust-window") }));
+// returningWindows subscribes to the TrustWindow store at import: mock the mount.
+vi.mock("./returningWindows", () => ({ ReturningWindows: marker("returning-windows") }));
 vi.mock("./components/InlineEditor", () => ({ InlineEditor: marker("inline-editor") }));
 vi.mock("./components/Pullout", () => ({
   Pullout: ({ o }: { o: { title: string } }) => <div data-testid="chair-pullout">{o.title}</div>,
@@ -137,7 +131,6 @@ describe("DeskApp arrival state", () => {
     state.setupAvailable = true;
     state.arrivalRequired = true;
     state.refreshFails = false;
-    state.surface = "floor";
     state.askOpen = false;
     state.refresh.mockClear();
     state.openPullout.mockClear();
@@ -208,7 +201,6 @@ describe("DeskApp arrival state", () => {
 
   it("C3-W: a later read that loses setup keeps the Desk, the Dock and the frame (no failure face)", () => {
     state.arrivalRequired = false;
-    state.surface = "chair";
     const view = render(<DeskApp />);
     expect(screen.getByTestId("dock")).toBeInTheDocument();
     // the hub goes down: the next refresh resolves with no setup snapshot
@@ -223,7 +215,6 @@ describe("DeskApp arrival state", () => {
 
   it("keeps the normal Chair and chrome when the server no longer requires arrival", () => {
     state.arrivalRequired = false;
-    state.surface = "chair";
     render(<DeskApp />);
 
     expect(screen.getByTestId("normal-chair")).toBeInTheDocument();
@@ -235,7 +226,6 @@ describe("DeskApp arrival state", () => {
 
   it("mounts the existing Ask panel when the normal Chair opens it", () => {
     state.arrivalRequired = false;
-    state.surface = "chair";
     state.askOpen = true;
     render(<DeskApp />);
 
@@ -244,7 +234,6 @@ describe("DeskApp arrival state", () => {
 
   it("keeps work and the empty Desk's recorder mounted while settling, then resets on exit", () => {
     state.arrivalRequired = false;
-    state.surface = "chair";
     const view = render(<DeskApp />);
     const recorder = screen.getByTestId("record-orb");
     const chair = screen.getByTestId("normal-chair");
@@ -271,7 +260,6 @@ describe("DeskApp arrival state", () => {
     expect(state.openPullout).not.toHaveBeenCalled();
 
     state.arrivalRequired = false;
-    state.surface = "chair";
     view.rerender(<DeskApp />);
     await waitFor(() =>
       expect(state.openPullout).toHaveBeenCalledWith("note:kept-first-sentence"),
@@ -300,40 +288,18 @@ describe("DeskApp arrival state", () => {
     expect(screen.queryByTestId("chair-pullout")).not.toBeInTheDocument();
 
     state.arrivalRequired = false;
-    state.surface = "chair";
     arrival.rerender(<DeskApp />);
     expect(screen.getByTestId("chair-pullout")).toHaveTextContent("First dictation");
   });
 
-  it("PHILO-8-01: a change of face ends a pending zone rename (no stale field on the next face)", () => {
+  // PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"):
+  // the Screen is the one desk. No Floor face, atmosphere or list mounts;
+  // a workspace that stored "floor" loads the Screen (the glass fence).
+  it("renders the Screen as the one desk, with no Floor face", () => {
     state.arrivalRequired = false;
-    state.surface = "floor";
-    const view = render(<DeskApp />);
-    state.renamingZoneId = "dir_a";
-    state.setRenamingZone.mockClear();
-    view.rerender(<DeskApp />);
-    expect(state.setRenamingZone).not.toHaveBeenCalled();
-    state.surface = "chair";
-    view.rerender(<DeskApp />);
-    expect(state.setRenamingZone).toHaveBeenCalledWith(null);
-    state.renamingZoneId = null;
-  });
-
-  it("PHILO-8-01 half B: a refusal still on the chip moves to the write receipt when the face changes", async () => {
-    const { currentWriteFailure, clearWriteFailure } = await import("./hooks/useWriteReceipt");
-    clearWriteFailure();
-    state.arrivalRequired = false;
-    state.surface = "floor";
-    const view = render(<DeskApp />);
-    state.renamingZoneId = "dir_a";
-    state.zoneRenameError = { zoneId: "dir_a", name: "Inbox", code: "zone_name_taken", label: "NAME TAKEN", detail: "" };
-    state.surface = "chair";
-    view.rerender(<DeskApp />);
-    expect(state.clearZoneRenameError).toHaveBeenCalled();
-    expect(currentWriteFailure()).toMatchObject({ verb: "RENAME ZONE", reason: "NAME TAKEN" });
-    expect(currentWriteFailure()?.retry).toBeTypeOf("function");
-    state.renamingZoneId = null;
-    state.zoneRenameError = null;
-    clearWriteFailure();
+    render(<DeskApp />);
+    expect(screen.getByTestId("normal-chair")).toBeInTheDocument();
+    expect(screen.queryByTestId("atmosphere")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("world-stage")).not.toBeInTheDocument();
   });
 });

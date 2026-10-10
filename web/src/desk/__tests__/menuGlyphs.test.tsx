@@ -4,7 +4,6 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { VERBS, menuVerbs, verbLabel } from "../verbRegistry";
 import { DESK_TOOLS, KIND_GLYPH } from "../tools";
-import { floorMenuEntries } from "../floorMenu";
 import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
 import { useDesk } from "../store";
 import { EMPTY_ITEMS } from "../api";
@@ -47,7 +46,6 @@ describe("glyph population (HS-148-02)", () => {
       "desk.new-agent": "recipe",
       "desk.new-workflow": "workflow",
       "desk.new-workbench": "workbench",
-      "desk.new-zone": "zone",
       "desk.new-thread": "thread",
       "desk.new-project": "project",
     };
@@ -189,47 +187,8 @@ describe("Go menu grouping separator (HS-148-02)", () => {
     expect(goVerbs.slice(0, 4).every((v) => v.group === "app")).toBe(true);
     expect(goVerbs.slice(4).every((v) => v.group === "tool")).toBe(true);
   });
-
-  it("the floor Launch submenu carries all Go entries with glyphs", () => {
-    const entries = floorMenuEntries();
-    const launch = entries.find(
-      (e) => e.type === "sub" && e.id === "floor.launch",
-    ) as Extract<WorkMenuEntry, { type: "sub" }>;
-    expect(launch).toBeTruthy();
-    const itemEntries = launch.entries.filter(
-      (e): e is Extract<WorkMenuEntry, { type: "item" }> => e.type === "item",
-    );
-    // Every Launch entry has a glyph.
-    for (const e of itemEntries) {
-      expect(e.glyph, `${e.id} missing glyph`).toBeTruthy();
-    }
-  });
-
-  it("the floor New submenu carries kind glyphs", () => {
-    const entries = floorMenuEntries();
-    const newSub = entries.find(
-      (e) => e.type === "sub" && e.id === "floor.new",
-    ) as Extract<WorkMenuEntry, { type: "sub" }>;
-    expect(newSub).toBeTruthy();
-    const itemEntries = newSub.entries.filter(
-      (e): e is Extract<WorkMenuEntry, { type: "item" }> => e.type === "item",
-    );
-    for (const e of itemEntries) {
-      expect(e.glyph, `${e.id} missing glyph`).toBeTruthy();
-    }
-  });
-
-  it("floor submenus declare menuContext='launcher'", () => {
-    const entries = floorMenuEntries();
-    const newSub = entries.find(
-      (e) => e.type === "sub" && e.id === "floor.new",
-    ) as Extract<WorkMenuEntry, { type: "sub" }>;
-    const launchSub = entries.find(
-      (e) => e.type === "sub" && e.id === "floor.launch",
-    ) as Extract<WorkMenuEntry, { type: "sub" }>;
-    expect(newSub.menuContext).toBe("launcher");
-    expect(launchSub.menuContext).toBe("launcher");
-  });
+  // PHILO-17: the Floor right-click menu (New ▸ / Launch ▸) is parked with
+  // the Floor (desk/_parked/floor/floorMenu.ts).
 });
 
 describe("casing sweep — Window menu (HS-148-02)", () => {
