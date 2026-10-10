@@ -45,6 +45,7 @@ from .glass_infra import (
     _ensure_build,
     _normal_chair,
     _settle,
+    people_key_file,
 )
 from tests._evidence import evidence_dir
 
@@ -294,10 +295,9 @@ def _people_body_check(page: Any, width: int) -> None:
 
 def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
     _ensure_build()
-    home = tmp_path / "home"
-    home.mkdir(exist_ok=True)
-    key_file = home / "people-dev-key.json"
-    monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(key_file))
+    # The key file the hub reads: `_boot` sets HOLDSPEAK_PEOPLE_KEYSTORE_FILE
+    # to it, inside the isolated HOME.
+    key_file = people_key_file(tmp_path)
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
     try:
@@ -419,9 +419,6 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 
 def _run_not_set_up(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
     _ensure_build()
-    home = tmp_path / "home"
-    home.mkdir(exist_ok=True)
-    monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(home / "people-dev-key.json"))
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
     try:

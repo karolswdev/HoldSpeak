@@ -175,6 +175,15 @@ def _ensure_build() -> None:
 
 # ── _boot: isolated MeetingWebServer with fresh DB ──
 
+def people_key_file(tmp_path: Path) -> Path:
+    """The People key file the ``_boot`` hub reads (HOLDSPEAK_PEOPLE_KEYSTORE_FILE).
+
+    One source of truth: ``_boot`` sets the env to this path, so a test that
+    seeds the key or breaks it uses this path, not one of its own.
+    """
+    return tmp_path / "home" / "people.key"
+
+
 def _boot(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -234,7 +243,7 @@ def _boot(
     monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
     monkeypatch.setenv("HOLDSPEAK_DESKTOP_NOTIFY", "0")
     monkeypatch.setenv("HOLDSPEAK_CHANNEL_KEYSTORE_FILE", str(home / "channel-keys.json"))
-    monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(home / "people.key"))
+    monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(people_key_file(tmp_path)))
     # Astra M1/M2 on b7a29e8c6: the agents' folders inside this HOME at the
     # env boundary; no owner API key; no AppleScript on the owner's screen.
     monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(home / ".claude"))
