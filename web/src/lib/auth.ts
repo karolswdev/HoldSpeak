@@ -2,21 +2,51 @@ const TOKEN_KEY = "hs.web.token";
 
 let sessionToken = "";
 
+/** PHILO-17 wayin: the token lives per hub origin in localStorage, so a new
+ * tab, a bookmark, or a browser restart stays signed in to the same hub. */
 function storage(): Storage | null {
   try {
-    return window.sessionStorage;
+    return window.localStorage;
   } catch {
     return null;
   }
 }
 
-/** Capture a tokenized arrival once, retain it for this tab, and scrub the URL. */
+function read(): string {
+  try {
+    return storage()?.getItem(TOKEN_KEY)?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function write(token: string): void {
+  try {
+    storage()?.setItem(TOKEN_KEY, token);
+  } catch {
+    /* private mode: the token stays in memory for this page */
+  }
+}
+
+/** The older tab-scoped copy (before PHILO-17): move it once, then drop it. */
+function migrateSessionToken(): string {
+  try {
+    const old = window.sessionStorage.getItem(TOKEN_KEY)?.trim() ?? "";
+    if (old) window.sessionStorage.removeItem(TOKEN_KEY);
+    return old;
+  } catch {
+    return "";
+  }
+}
+
+/** Capture a tokenized arrival once, keep it for this hub, and scrub the URL. */
 export function bootstrapAuth(location = window.location): string {
   const url = new URL(location.href);
   const queryToken = url.searchParams.get("token")?.trim() ?? "";
   if (queryToken) {
     sessionToken = queryToken;
-    storage()?.setItem(TOKEN_KEY, queryToken);
+    write(queryToken);
+    migrateSessionToken();
     url.searchParams.delete("token");
     window.history.replaceState(
       window.history.state,
@@ -24,13 +54,34 @@ export function bootstrapAuth(location = window.location): string {
       `${url.pathname}${url.search}${url.hash}`,
     );
   } else {
-    sessionToken = storage()?.getItem(TOKEN_KEY)?.trim() ?? "";
+    sessionToken = read();
+    if (!sessionToken) {
+      sessionToken = migrateSessionToken();
+      if (sessionToken) write(sessionToken);
+    }
   }
   return sessionToken;
 }
 
+/** The stored token wins over this page's copy: another tab may have stored
+ * a newer one. The copy serves only when storage is closed (private mode). */
 export function authToken(): string {
-  return sessionToken || storage()?.getItem(TOKEN_KEY)?.trim() || "";
+  return read() || sessionToken;
+}
+
+/** The hub refused this token (wrong or rotated): forget it, so the page asks
+ * for the token URL again. This page's copy and the stored token are each
+ * cleared only when they ARE the refused one: an old tab never erases a newer
+ * token that another tab stored. */
+export function forgetAuthToken(refused: string): void {
+  if (!refused) return;
+  if (sessionToken === refused) sessionToken = "";
+  if (read() !== refused) return;
+  try {
+    storage()?.removeItem(TOKEN_KEY);
+  } catch {
+    /* nothing stored */
+  }
 }
 
 export function authenticatedHeaders(initial?: HeadersInit): Headers {

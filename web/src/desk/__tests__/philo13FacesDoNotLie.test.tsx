@@ -2,8 +2,9 @@
  *
  * 1. Each status face names the one fact it shows: Settings = configured
  *    (`SUMMARY SET ON`), Trust = sends out or not (no lit dot on OFF), the
- *    meeting record = stored (`SUMMARY STORED`, never `SUMMARY OFF` above its
- *    own summary).
+ *    meeting record = stored (`SUMMARISED` since Phase 16's interior kit,
+ *    compositor canvas "Cutover sync"; never `SUMMARY OFF` above its own
+ *    summary).
  * 2. A failure is plain words with a verb, never the hub's own text: the
  *    Intelligence BRIEF, the Room publish, People, Ask, the voice failure.
  *    A static fence over those faces' failure branches holds it.
@@ -99,11 +100,11 @@ describe("plain failure words (A.3, A.10, Tenet 4)", () => {
 });
 
 describe("each face names its fact", () => {
-  it("the meeting record says SUMMARY STORED above its own summary", () => {
+  it("the meeting record says SUMMARISED above its own summary", () => {
     const detail = { id: "m1", title: "Checkout latency review", intel_status: "disabled", intel: { summary: "Latency came from a cold cache." } };
     const data = { detail, startedAt: "2026-10-01T08:00:00", durationS: 2700 } as unknown as MeetingData;
     render(<MeetingHeader meeting={detail} data={data} />);
-    expect(document.body.textContent).toMatch(/SUMMARY STORED/);
+    expect(document.body.textContent).toMatch(/SUMMARISED/);
     expect(document.body.textContent).not.toMatch(/SUMMARY OFF/);
   });
 

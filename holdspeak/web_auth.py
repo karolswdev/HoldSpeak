@@ -126,6 +126,46 @@ def authenticated_browser_url(url: str, token: str) -> str:
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
+_WILDCARD_HOSTS = {"0.0.0.0", "::", "[::]"}
+
+
+def _lan_ipv4() -> Optional[str]:
+    """The primary outbound IPv4 address (no packet is sent), or None."""
+    import socket
+
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+            probe.connect(("192.168.255.255", 1))
+            ip = probe.getsockname()[0]
+    except OSError:
+        return None
+    return None if not ip or ip.startswith("127.") or ip == "0.0.0.0" else ip
+
+
+def reachable_urls(url: str, *, lan_ip: Optional[str] = None) -> list[str]:
+    """The addresses a person can open for a hub served at ``url``.
+
+    PHILO-17 wayin: a wildcard bind (``HOLDSPEAK_WEB_HOST=0.0.0.0``) serves on
+    every interface, but ``http://0.0.0.0:8765`` opens on no iPad. Print
+    loopback for this Mac first, then the LAN address for other devices. Any
+    other host is returned as it is.
+    """
+    parts = urlsplit(str(url))
+    host = (parts.hostname or "").strip()
+    if host not in _WILDCARD_HOSTS and f"[{host}]" not in _WILDCARD_HOSTS:
+        return [str(url)]
+    port = f":{parts.port}" if parts.port else ""
+
+    def at(name: str) -> str:
+        return urlunsplit((parts.scheme, f"{name}{port}", parts.path, parts.query, parts.fragment))
+
+    urls = [at("127.0.0.1")]
+    ip = lan_ip if lan_ip is not None else _lan_ipv4()
+    if ip:
+        urls.append(at(ip))
+    return urls
+
+
 def websocket_auth_protocol(token: str) -> str:
     """Encode a bearer token as a WebSocket subprotocol offer.
 

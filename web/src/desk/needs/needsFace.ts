@@ -13,7 +13,7 @@ import { SELF_OWNER_NAMES, type NeedsYouMember, type NeedsYouRoomItem } from "..
 import type { AgentFlight, CoderSessionRow } from "../agentFlights";
 import { flightForItem, isInFlight } from "../agentFlights";
 import type { ObjectTone } from "../surface/objects";
-import { sourceLabel, type CoverageRecord } from "../coverage";
+import { gapGroupKey, sourceLabel, type CoverageRecord } from "../coverage";
 import { wireDate } from "../surface/format";
 import { needYouWords } from "../surface/count";
 import { commandForDoorVerb, supportsDoorVerb, type DoorVerb } from "../chair/doorVerbs";
@@ -39,7 +39,7 @@ export type NeedVerbs =
   | { kind: "setup"; key: string; verb: string }
   | { kind: "open"; ref: string }
   /** PHILO-15 B61: `watchIds` are the Watches Retry re-checks. */
-  | { kind: "repair"; verb: string; href: string; projectId: string; watchIds?: string[]; host?: string }
+  | { kind: "repair"; verb: string; href: string; projectId: string; watchIds?: string[]; host?: string; provider?: string }
   | { kind: "arming"; scheduleId: string; refused: boolean }
   | { kind: "calendar" }
   | { kind: "none" };
@@ -98,6 +98,10 @@ export interface NeedFace {
   /** Phase 16 (the FilterBar): the item's due date (ISO), when the hub
    *  has one. Absent on agents, sources, meetings and setup rows. */
   due?: string | null;
+  /** PHILO-17 (needsyou): a source row's detail, one line per source: its
+   *  name and the hub's own reason (a raw error line stays here, never on
+   *  the fact line). Shown by the row's Details verb. */
+  detail?: Array<{ name: string; reason: string }>;
 }
 
 /** Phase 16 (the interior kit, the Ledger's kind plate): the row's kind in
@@ -564,19 +568,55 @@ function observedAt(at: string | null | undefined, now?: Date): string {
   return d ? `observed ${whenWord(d, now)}` : "";
 }
 
+/** PHILO-17 (needsyou): the plain word of a source that was not read, when
+ *  the hub names no plain cause. A raw error line is never the fact. */
+function causeWord(gap: CoverageRecord): string {
+  if (gap.cause) return gap.cause;
+  const watch = gap.kind === "watch";
+  // A Watch's own state words (`not checked recently`, `paused`, `never
+  // checked`) are plain; only a failed Watch's reason can be a raw line.
+  if (watch && gap.state !== "failed" && gap.reason) return String(gap.reason);
+  switch (gap.state) {
+    case "failed": return watch ? "Cannot check" : "Cannot read";
+    case "forbidden": return "No access";
+    case "stale": return "Not checked recently";
+    case "unavailable": return watch ? "Not checked" : "Not read";
+    default: return "";
+  }
+}
+
+/** A Watch provider's name as a person reads it (the label's head). */
+function providerName(gap: CoverageRecord): string {
+  if (gap.kind === "project") return "Projects";
+  return sourceLabel(gap).split(" · ")[0] || sourceLabel(gap);
+}
+
+/** PHILO-17 (needsyou): the provider Reconnect focuses in Settings ·
+ *  Connections. */
+function providerOf(gap: CoverageRecord): string | undefined {
+  const raw = String(gap.provider ?? "").trim().toLowerCase();
+  if (raw) return raw === "gh" ? "github" : raw;
+  const head = sourceLabel(gap).split(" · ")[0].toLowerCase();
+  return ["github", "jira", "confluence"].includes(head) ? head : undefined;
+}
+
 /** A source the hub could not read, as a row after the members (UX-CANON
  *  A10: an unknown is never a clear desk). PHILO-15 B60: a source held by
- *  HoldSpeak's own quiet hours reads `QUIET UNTIL 08:00` and is not counted. */
+ *  HoldSpeak's own quiet hours reads `QUIET UNTIL 08:00` and is not counted.
+ *  PHILO-17 (needsyou): the fact is the plain cause; the hub's raw reason is
+ *  the row's detail. */
 export function coverageFace(gap: CoverageRecord, now?: Date): NeedFace {
   const repair = gap.repair ?? null;
   const quiet = gap.state === "quiet";
   // The quiet end is the lamp's word; the fact keeps only the last check.
-  const reason = quiet ? "" : String(gap.reason || gap.state);
+  const cause = quiet ? "" : causeWord(gap);
+  const reason = String(gap.reason || "").trim();
+  const provider = providerOf(gap);
   return {
     id: `coverage:${gap.source_id}`,
     kind: gap.kind === "project" ? "project" : "artifact",
     name: sourceLabel(gap),
-    fact: [reason, observedAt(gap.observed_at, now)].filter(Boolean).join(" · "),
+    fact: [cause, observedAt(gap.observed_at, now)].filter(Boolean).join(" · "),
     lamp: {
       label: repair?.token || gap.state.toUpperCase(),
       tone: quiet ? "info" : gap.state === "stale" ? "warn" : "fail",
@@ -587,10 +627,38 @@ export function coverageFace(gap: CoverageRecord, now?: Date): NeedFace {
         kind: "repair", verb: repair.verb, href: repair.href, projectId: String(gap.project_id ?? ""),
         watchIds: (gap.watch_ids ?? []).filter(Boolean),
         ...(gap.host ? { host: String(gap.host) } : {}),
+        ...(provider ? { provider } : {}),
       }
       : { kind: "none" },
     source: true,
     uncounted: quiet || undefined,
+    ...(!quiet && reason && reason.toLowerCase() !== cause.toLowerCase()
+      ? { detail: [{ name: sourceLabel(gap), reason }] }
+      : {}),
+  };
+}
+
+/** PHILO-17 (needsyou): the sources of one cause and one repair as ONE row:
+ *  `GitHub · 30 sources`, the cause, one verb that repairs them all. Every source and its
+ *  own reason stays in the row's detail. This is a grouping of one cause,
+ *  never a cap (HS-200-15): every source is listed in the detail. */
+export function coverageGroupFace(rows: readonly CoverageRecord[], now?: Date): NeedFace {
+  const first = rows[0];
+  const one = coverageFace(first, now);
+  if (rows.length < 2) return one;
+  // The group shares its repair (verb, destination) and its egress host
+  // (`gapGroupKey`), so the first source's repair stands for all; Retry
+  // re-checks every Watch of the group.
+  const verbs = one.verbs.kind === "repair"
+    ? { ...one.verbs, watchIds: rows.flatMap((r) => r.watch_ids ?? []).filter(Boolean) }
+    : one.verbs;
+  return {
+    ...one,
+    id: `coverage-group:${gapGroupKey(first)}`,
+    name: `${providerName(first)} · ${rows.length} sources`,
+    fact: causeWord(first),
+    verbs,
+    detail: rows.map((r) => ({ name: sourceLabel(r), reason: String(r.reason || causeWord(r)) })),
   };
 }
 
