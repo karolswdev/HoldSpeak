@@ -23,6 +23,7 @@ from typing import Any
 
 import pytest
 
+from .glass_infra import clear_hub_windows
 from .glass_infra import _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
 
 pytest.importorskip("playwright.sync_api", reason="memory faces glass needs Playwright")
@@ -118,6 +119,7 @@ def _shots(page: Any, name: str, width: int, face: Any) -> None:
 
 
 def _stage(page: Any, key: str, scope: str | None = None) -> None:
+    clear_hub_windows(page, TOKEN)  # PHILO-16 (16b): the hub holds the windows
     page.evaluate(
         """([key, scope]) => {
           localStorage.removeItem("hs.desk.workspace.v1");
@@ -274,6 +276,7 @@ def test_memory_on_the_desk(tmp_path, monkeypatch, width, height):
             _shots(page, "mem-B-pages", width, room)
 
             # ── desk: the Brief (Intelligence -> BRIEF) ──
+            clear_hub_windows(page, TOKEN)  # PHILO-16 (16b): the hub holds the windows
             page.evaluate("""() => { localStorage.removeItem("hs.desk.workspace.v1"); }""")
             page.reload(wait_until="load")
             _normal_chair(page)

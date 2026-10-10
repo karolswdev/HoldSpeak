@@ -294,6 +294,14 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "practice_recipe.list": ("evidence_read", False),
     "practice_recipe.get": ("evidence_read", False),
     "practice_recipe.compile": ("evidence_read", False),
+    # PHILO-16 (16b): the owner's desk windows. The list reads; every other
+    # tool changes what he sees, so Secure and Normal hold it (a proposal).
+    "desk_window.list": ("evidence_read", False),
+    "desk_window.open": ("effect_proposal", False),
+    "desk_window.close": ("effect_proposal", False),
+    "desk_window.raise": ("effect_proposal", False),
+    "desk_window.arrange": ("effect_proposal", False),
+    "desk_window.seat": ("effect_proposal", False),
     # Rows whose tools a thread may or may not offer: the owner's authority
     # table (holdspeak/mcp/tool_authority.py) decides, below (#694).
     "project.accept_review": ("effect_proposal", False),

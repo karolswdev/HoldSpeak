@@ -700,6 +700,36 @@
       "story": "CONDUCTOR-R7",
       "tool": "people.access.set",
       "operation": "people_access.set"
+    },
+    {
+      "story": "PHILO-16-16b",
+      "tool": "desk_window.list",
+      "operation": "windows.list"
+    },
+    {
+      "story": "PHILO-16-16b",
+      "tool": "desk_window.open",
+      "operation": "windows.open"
+    },
+    {
+      "story": "PHILO-16-16b",
+      "tool": "desk_window.close",
+      "operation": "windows.close"
+    },
+    {
+      "story": "PHILO-16-16b",
+      "tool": "desk_window.raise",
+      "operation": "windows.raise"
+    },
+    {
+      "story": "PHILO-16-16b",
+      "tool": "desk_window.arrange",
+      "operation": "windows.arrange"
+    },
+    {
+      "story": "PHILO-16-16b",
+      "tool": "desk_window.seat",
+      "operation": "windows.seat"
     }
   ],
   "moved": [
@@ -717,7 +747,7 @@
     "residual_mcp": 185,
     "residual_http": 55,
     "http_constructions": 56,
-    "public_tools": 250
+    "public_tools": 256
   },
   "entries": [
     {

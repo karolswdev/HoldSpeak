@@ -42,6 +42,7 @@ import { useRuntimeBus } from "../runtime/RuntimeBus";
 import { burstTimer } from "./burstTimer";
 import { isCoderFrame } from "./steering";
 import { useDesk } from "./store";
+import { isWindowsOnlyFrame } from "./compositor/windowFrames";
 
 /** Trailing-edge debounce window for a `desk_changed` burst, in ms. */
 export const DESK_CHANGED_DEBOUNCE_MS = 300;
@@ -56,7 +57,11 @@ export function useDeskChangedRefresh(
     // time the desk's data changes, which is exactly what depending on a
     // selected `refresh` would cause.
     const burst = burstTimer(() => void useDesk.getState().refresh(), debounceMs);
-    const unsubscribe = subscribe("desk_changed", burst.bump);
+    // PHILO-16 (16b): a window write changed no desk data; the hub's windows
+    // follow it (`compositor/hubWindows.ts`), never a whole-desk re-read.
+    const unsubscribe = subscribe("desk_changed", (frame) => {
+      if (!isWindowsOnlyFrame(frame?.data)) burst.bump();
+    });
     return () => {
       burst.cancel();
       unsubscribe();
@@ -86,7 +91,9 @@ export function useOnDeskChanged(
   useEffect(() => {
     if (!subscribe) return;
     const burst = burstTimer(() => latest.current(), debounceMs);
-    const unsubscribe = subscribe("desk_changed", burst.bump);
+    const unsubscribe = subscribe("desk_changed", (frame) => {
+      if (!isWindowsOnlyFrame(frame?.data)) burst.bump();
+    });
     return () => {
       burst.cancel();
       if (typeof unsubscribe === "function") unsubscribe();

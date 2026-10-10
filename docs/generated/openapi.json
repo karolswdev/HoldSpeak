@@ -10972,6 +10972,108 @@
         "summary": "Api Desk Seed"
       }
     },
+    "/api/desk/windows": {
+      "get": {
+        "operationId": "api_desk_windows_api_desk_windows_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Desk Windows Api Desk Windows Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Desk Windows"
+      }
+    },
+    "/api/desk/windows/arrange": {
+      "post": {
+        "operationId": "api_desk_windows_arrange_api_desk_windows_arrange_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Desk Windows Arrange Api Desk Windows Arrange Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Desk Windows Arrange"
+      }
+    },
+    "/api/desk/windows/stage-shelf": {
+      "post": {
+        "operationId": "api_desk_windows_shelf_api_desk_windows_stage_shelf_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Desk Windows Shelf Api Desk Windows Stage Shelf Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Desk Windows Shelf"
+      }
+    },
+    "/api/desk/windows/{window_id}/{verb}": {
+      "post": {
+        "operationId": "api_desk_window_verb_api_desk_windows__window_id___verb__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "window_id",
+            "required": true,
+            "schema": {
+              "title": "Window Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "verb",
+            "required": true,
+            "schema": {
+              "title": "Verb",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Desk Window Verb Api Desk Windows  Window Id   Verb  Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Desk Window Verb"
+      }
+    },
     "/api/devices/health": {
       "get": {
         "operationId": "api_devices_health_api_devices_health_get",

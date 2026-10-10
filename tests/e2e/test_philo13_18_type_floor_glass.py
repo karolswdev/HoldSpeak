@@ -39,6 +39,7 @@ from typing import Any
 import pytest
 
 from .chair_windows import open_chair_window
+from .glass_infra import clear_hub_windows
 from .glass_infra import (
     _api,
     _boot,
@@ -111,6 +112,10 @@ class TestTheTypeFloor:
                 body: JSON.stringify({disposition: 'completed'})})""",
             TOKEN,
         )
+        # PHILO-16 (16b): one hub is one desk; this page starts on an empty desk.
+        from .glass_infra import clear_hub_windows
+
+        clear_hub_windows(page, TOKEN)
         # The owner's FILE destination reads ~/Documents/HoldSpeak/Team updates
         # (channels.ts targetToken maps /Users/<name> to ~). A pytest HOME is a
         # 90-character /private/var path no reader of his would see; the
@@ -132,6 +137,7 @@ class TestTheTypeFloor:
 
     def _fresh(self, page: Any) -> None:
         """A fresh Desk: no remembered windows, the Chair on the glass."""
+        clear_hub_windows(page, TOKEN)  # PHILO-16 (16b): the hub holds the windows
         page.evaluate("localStorage.removeItem('hs.desk.workspace.v1')")
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _normal_chair(page)
@@ -143,6 +149,7 @@ class TestTheTypeFloor:
         _settle(page)
 
     def _stage(self, page: Any, key: str, scope: str | None = None) -> None:
+        clear_hub_windows(page, TOKEN)  # PHILO-16 (16b): the hub holds the windows
         page.evaluate("localStorage.removeItem('hs.desk.workspace.v1')")
         page.evaluate(
             """([key, scope]) => sessionStorage.setItem("hs.desk.staged-surface-open", JSON.stringify({key, scope}))""",
@@ -332,6 +339,7 @@ class TestTheTypeFloor:
                 page.locator(f".desk-window-shell[aria-label='{ROOM}']").wait_for()
                 self._walk_wings(page, width, "Object the Room", facts)
 
+                clear_hub_windows(page, TOKEN)  # PHILO-16 (16b): the hub holds the windows
                 page.evaluate("localStorage.removeItem('hs.desk.workspace.v1')")
                 page.goto(f"{self.base}/?token={TOKEN}&open=workbench:{self.wb}", wait_until="load")
                 _normal_chair(page)

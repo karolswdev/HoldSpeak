@@ -122,6 +122,7 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   tests from a busy one). UAT conductor tests boot real product
   processes; each xdist worker scans its own port range
   (uat/conductor/runs.py), so parallel runs cannot cross-boot onto one port.
+- **One hub is one desk (Phase 16 B, #1046).** Every page a browser test opens on one hub sees the same windows; a rig that opens several pages on one hub, or resets a desk by clearing localStorage, calls `clear_hub_windows` (`tests/e2e/glass_infra.py`) first. Every rig hub sets the isolation switches (`HOLDSPEAK_AGENT_STATE=off`, `HOLDSPEAK_ACTIVE_TARGET=off`, `HOLDSPEAK_DESKTOP_NOTIFY=0`, `HOLDSPEAK_MACOS_CALENDAR=0`, the keystores and agent config paths inside HOME): a new read of machine state needs a switch, default on.
 - Browser tests draw on the GPU on macOS (`tests/conftest.py` adds
   `--use-angle=metal` to every Chromium launch; software WebGL made the
   browser suite three times slower). `HOLDSPEAK_GLASS_GPU=0` turns it off;

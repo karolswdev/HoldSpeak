@@ -140,11 +140,20 @@ class TestParkGlass:
 
     @staticmethod
     def _meetings(page: Any) -> None:
+        # PHILO-16 (16b): the hub remembers the windows; clear them there too.
+        from .glass_infra import clear_hub_windows
+
+        clear_hub_windows(page, TOKEN)
         page.evaluate("""() => { localStorage.removeItem('hs.desk.workspace.v1');
             sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key: 'review-meetings'})); }""")
         page.reload(wait_until="load")
         _normal_chair(page)
         page.get_by_test_id("meetings-headline").wait_for(timeout=T)
+        # PHILO-16 (16b): the hub restores the Chair's windows beside the
+        # staged Meetings; which one lands in front depends on which page
+        # wrote first. The owner brings Meetings forward from its Dock door.
+        page.locator(".desk-dock").get_by_role("button", name="Meetings", exact=True).click()
+        page.wait_for_timeout(300)
         page.wait_for_timeout(600)
 
     @staticmethod

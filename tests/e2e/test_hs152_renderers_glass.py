@@ -181,6 +181,11 @@ def _api(page: Any, method: str, path: str, body: Any = None) -> Any:
 
 
 def _open_thread(page: Any, url: str, thread_id: str) -> None:
+    # PHILO-16 (16b): one hub is one desk; each case's thread opens on an
+    # empty desk (an earlier width's or case's window closed first).
+    from .glass_infra import clear_hub_windows_http
+
+    clear_hub_windows_http(url, TOKEN)
     _api(page, "POST", "/api/desk/seed")
     _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
     page.goto(f"{url}/?token={TOKEN}&open=thread:{thread_id}", wait_until="load")

@@ -590,6 +590,41 @@ def _p_people_access_set(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return hub.root.operations.invoke(OWNER, "people_access.set", {"mode": "read"})
 
 
+# PHILO-16 16b: the desk's windows (the real service on the hub's database).
+def _window_op(hub: Hub, name: str, args: dict[str, Any]) -> Any:
+    return hub.root.operations.invoke(OWNER, name, args)
+
+
+def _p_windows_list(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    _window_op(hub, "windows.open", {"window_id": "chair:brief"})
+    return _window_op(hub, "windows.list", {})
+
+
+def _p_windows_open(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    return _window_op(hub, "windows.open", {"window_id": "chair:brief"})
+
+
+def _p_windows_close(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    _window_op(hub, "windows.open", {"window_id": "chair:week"})
+    return _window_op(hub, "windows.close", {"window_id": "chair:week"})
+
+
+def _p_windows_raise(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    _window_op(hub, "windows.open", {"window_id": "chair:brief"})
+    _window_op(hub, "windows.open", {"window_id": "chair:needs"})
+    return _window_op(hub, "windows.raise", {"window_id": "chair:brief"})
+
+
+def _p_windows_arrange(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    _window_op(hub, "windows.open", {"window_id": "chair:brief"})
+    return _window_op(hub, "windows.arrange", {"rects": {"chair:brief": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}}})
+
+
+def _p_windows_seat(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    _window_op(hub, "windows.open", {"window_id": "chair:brief"})
+    return _window_op(hub, "windows.seat", {"window_id": "chair:brief", "seated": True})
+
+
 def _p_calendar_open_settings(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     """The real service and kernel path; only the macOS open is a double."""
     service = hub.root.operations.target("calendar.open_settings")
@@ -676,6 +711,13 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "project.repository.register": _p_project_repository_register,
     # Conductor K2: Hand to agent.
     "agent.hand": _p_agent_hand,
+    # PHILO-16 16b: the desk's windows.
+    "windows.list": _p_windows_list,
+    "windows.open": _p_windows_open,
+    "windows.close": _p_windows_close,
+    "windows.raise": _p_windows_raise,
+    "windows.arrange": _p_windows_arrange,
+    "windows.seat": _p_windows_seat,
 }
 
 

@@ -265,6 +265,9 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "project.repository.register",
         # Conductor K2: Hand to agent.
         "agent.hand",
+        # PHILO-16 16b: the desk's windows (the desk_window.* MCP tools).
+        "windows.list", "windows.open", "windows.close", "windows.raise", "windows.arrange",
+        "windows.seat",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

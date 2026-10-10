@@ -115,6 +115,7 @@ class RuntimeServices:
     channel_service: Optional[Any] = None           # PHILO-10-01: the Send
     onboarding_service: Optional[Any] = None        # the Conductor K1: agent_hooks.install
     agent_hand_service: Optional[Any] = None        # Conductor K2: Hand to agent
+    desk_window_service: Optional[Any] = None       # PHILO-16 16b: the desk's windows
 
     # --- operations ------------------------------------------------------
     cadence_service: Optional[Any] = None          # Config.load().cadence
@@ -533,6 +534,7 @@ def install_from_web_context(
     from holdspeak.services.kernel_read_service import KernelReadService
     from holdspeak.services.memory_service import MemoryService
     from holdspeak.services.agent_hand_service import default_agent_hand_service
+    from holdspeak.services.desk_window_service import DeskWindowService
 
     def _intel_notify(topic: str, value: Any) -> None:
         if services.broadcast is not None:
@@ -559,6 +561,8 @@ def install_from_web_context(
         "agent_hand_service": lambda: default_agent_hand_service(
             resolved_db, delivery_service=getattr(ctx, "delivery_service", None)
         ),
+        # PHILO-16 16b: the windows.* rows bind to it (the MCP family).
+        "desk_window_service": lambda: DeskWindowService(resolved_db),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

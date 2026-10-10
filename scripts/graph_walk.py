@@ -907,6 +907,13 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "agent.hand": {"kind": "tool", "name": "agent.hand"},
     # Conductor R7: the owner's People MCP access (config).
     "people_access.set": {"kind": "tool", "name": "people.access.set"},
+    # PHILO-16 16b: the desk's windows.
+    "windows.list": {"kind": "tool", "name": "desk_window.list"},
+    "windows.open": {"kind": "tool", "name": "desk_window.open"},
+    "windows.close": {"kind": "tool", "name": "desk_window.close"},
+    "windows.raise": {"kind": "tool", "name": "desk_window.raise"},
+    "windows.arrange": {"kind": "tool", "name": "desk_window.arrange"},
+    "windows.seat": {"kind": "tool", "name": "desk_window.seat"},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
@@ -951,6 +958,8 @@ OP_READ_OBSERVATIONS = frozenset({
     "memory.observations.read",
     # Memory slice 5.
     "memory.page.read",
+    # PHILO-16 16b.
+    "windows.list",
 })
 
 

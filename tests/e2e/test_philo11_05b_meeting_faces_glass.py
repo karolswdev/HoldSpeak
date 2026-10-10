@@ -152,6 +152,11 @@ class TestMeetingFacesGlass:
 
     @staticmethod
     def _stage(page: Any, key: str, scope: str | None = None) -> None:
+        # PHILO-16 (16b): the hub owns the windows; a staged surface starts on
+        # an empty desk by closing the hub's windows, not only the cache.
+        from .glass_infra import clear_hub_windows
+
+        clear_hub_windows(page, TOKEN)
         page.evaluate("""([key, scope]) => { localStorage.removeItem('hs.desk.workspace.v1');
             sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify(scope ? {key, scope} : {key})); }""",
                       [key, scope])
