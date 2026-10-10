@@ -32,6 +32,33 @@ def db(tmp_path: Path):
     reset_database()
 
 
+def mint_note(db, title: str = "Plan for the pilot", body: str = "We start on Monday.\n\n- Ask Avery") -> str:
+    """PHILO-17 U08: a note as the owner writes it (the Thought's working note)."""
+    from holdspeak.services.primitive_service import PrimitiveService
+
+    return f"note:{PrimitiveService(db).create_note(OWNER, title=title, body_markdown=body)['id']}"
+
+
+def test_a_note_sends_its_title_and_words(db) -> None:
+    document = render_document(db, mint_note(db))
+    assert document.title == "Plan for the pilot"
+    assert document.body_md == "# Plan for the pilot\n\nWe start on Monday.\n\n- Ask Avery\n"
+    assert document.label == "NOTE" and document.slug == "plan-for-the-pilot"
+
+
+def test_a_thought_titled_by_its_first_words_says_them_once(db) -> None:
+    words = "Pilot plan: we start on Monday"
+    document = render_document(db, mint_note(db, title=words, body=f"{words}\nAvery owns the rollout"))
+    assert document.body_md == f"# {words}\n\nAvery owns the rollout\n"
+    assert render_document(db, mint_note(db, title=words, body=words)).body_md == f"# {words}\n"
+
+
+def test_a_note_with_no_words_is_named_note_empty(db) -> None:
+    with pytest.raises(ChannelRefused) as caught:
+        render_document(db, mint_note(db, title="", body="  "))
+    assert caught.value.code == "note_empty"
+
+
 def test_registry_declares_the_nine_kinds() -> None:
     assert tuple(DOCUMENT_SOURCES) == (
         "project_update",
@@ -43,6 +70,7 @@ def test_registry_declares_the_nine_kinds() -> None:
         "meeting_digest",
         "meeting_followup",
         "artifact",
+        "note",
     )
 
 
@@ -54,6 +82,7 @@ def test_real_producers_render_all_nine_sources(db, tmp_path: Path) -> None:
         people_keystore_path=tmp_path / "people.key",
     )
     refs["artifact"] = mint_meeting_synthesis(db)
+    refs["note"] = mint_note(db)
     rendered = {kind: render_document(db, ref) for kind, ref in refs.items()}
 
     assert set(rendered) == set(DOCUMENT_SOURCES)
@@ -238,6 +267,7 @@ def test_no_rendered_document_carries_an_internal_id(db, tmp_path: Path) -> None
         people_keystore_path=tmp_path / "people.key",
     )
     refs["artifact"] = mint_meeting_synthesis(db)
+    refs["note"] = mint_note(db)
     source_ids = {ref.split(":", 1)[1] for ref in refs.values()}
     artifact_source_ids: set[str] = set()
     with db._connection() as conn:

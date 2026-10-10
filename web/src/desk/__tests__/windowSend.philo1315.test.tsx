@@ -21,11 +21,12 @@ vi.mock("../../pages/cores/connections/api", async () => {
 });
 
 import {
-  SEND_TO, latestPublished, pickFor, primeSendTo, readDestinations, resetSendTo, sendToEntry, windowDoc, withSendTo,
+  SEND_OPEN, SEND_TO, useAnnounceWindowDocument, latestPublished, pickFor, primeSendTo, readDestinations, resetSendTo, sendToEntry, windowDoc, withSendTo,
 } from "../windowSend";
 import { SendWells, pickDestination, pickedDestination, resetSendStore } from "../surface/send";
 import { MeetingSendWell } from "../../meetings/MeetingSendWell";
 import { useDesk } from "../store";
+import { WindowIdContext } from "../components/window/windowIdContext";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 
 const folder = (over: Partial<Destination> = {}): Destination => ({
@@ -87,6 +88,25 @@ describe("one composition: Send to ▸ with the saved destinations", () => {
     expect(sendToEntry("surface-configure-settings")).toBeNull();
     expect(sendToEntry("chair:brief")).toBeNull();
     expect(sendToEntry(null)).toBeNull();
+  });
+});
+
+describe("PHILO-17 U08: a Thought window sends its working note", () => {
+  function Seat() { useAnnounceWindowDocument({ kind: "note", id: "note-7" }); return null; }
+
+  it("the announced note gets `Send to`; the pick opens the window's well on note:<id>", async () => {
+    await readDestinations();
+    render(<WindowIdContext.Provider value="pullout:thought-7"><Seat /></WindowIdContext.Provider>);
+    expect(windowDoc("pullout:thought-7")).toEqual({ kind: "note", id: "note-7" });
+    expect(labels(sendToEntry("pullout:thought-7"))).toEqual(["Team updates · FILE", "PAY-118 · JIRA"]);
+    const opened = vi.fn();
+    window.addEventListener(SEND_OPEN, opened);
+    const focus = vi.spyOn(useDesk.getState(), "focusPanel").mockImplementation(() => {});
+    pickFor("pullout:thought-7", "chd_f");
+    await waitFor(() => expect(pickedDestination("note:note-7")).toBe("chd_f"));
+    expect((opened.mock.calls[0][0] as CustomEvent).detail).toEqual({ winId: "pullout:thought-7" });
+    window.removeEventListener(SEND_OPEN, opened);
+    focus.mockRestore();
   });
 });
 

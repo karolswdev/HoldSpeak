@@ -28,6 +28,10 @@ import { ThoughtSaveFault, useThoughtNoteWriter } from "../pullouts/editors/useT
 import { ThoughtDocumentPane } from "./ThoughtDocumentPane";
 import { ThoughtReadsWell, type ReadsResult } from "./ThoughtReadsWell";
 import { useThoughtWorkspaceController } from "./useThoughtWorkspaceController";
+import { useCopyReceipt } from "../hooks/useCopyReceipt";
+import { NoteSendWells } from "../documentSendsLazy";
+import { SEND_OPEN, useAnnounceWindowDocument } from "../windowSend";
+import { useWindowId } from "../components/window/windowIdContext";
 import { thoughtFilingLine, thoughtWriteLine } from "./thoughtReceipt";
 import "./thought-workspace.css";
 
@@ -125,6 +129,12 @@ function WorkspaceReady({
      SAVE / CHANGED ELSEWHERE), never again as prose on the message line. */
   const sayFault = (cause: unknown) => say(cause instanceof ThoughtSaveFault ? "" : readableError(cause));
   const [reads, setReads] = useState(false);
+  /* PHILO-17 U08: the thought is sendable. Send opens the SEND well on its
+     working note (he picks the destination and presses Send there); Copy
+     copies the working text. */
+  const [sending, setSending] = useState(false);
+  const { copy, receipt: copyReceipt } = useCopyReceipt();
+  const winId = useWindowId();
   const [revealRange, setRevealRange] = useState<{ start: number; end: number; focus?: boolean } | null>(null);
   /* HS-176-04 — the answer well is a PadGadget (the voice law): the ref
      holds its <label> and the focus reaches the textarea inside it. */
@@ -149,6 +159,7 @@ function WorkspaceReady({
     flush: () => writer.flush(),
   };
   const draftNoteId = documentThought.working_note.id;
+  useAnnounceWindowDocument({ kind: "note", id: draftNoteId });
   useEffect(() => seatThoughtDraft(draftNoteId, {
     words: () => draftSeat.current.words(),
     flush: () => draftSeat.current.flush(),
@@ -162,6 +173,14 @@ function WorkspaceReady({
   const keptBody = documentThought.working_note.body_markdown;
   useEffect(() => { withdrawWords.current = publishThoughtDraft(draftNoteId, { title: shownTitle, body: shownBody, keptBody }); }, [draftNoteId, shownTitle, shownBody, keptBody]);
   useEffect(() => () => withdrawWords.current(), [draftNoteId]);
+
+  useEffect(() => {
+    const onOpen = (event: Event) => {
+      if ((event as CustomEvent<{ winId?: string }>).detail?.winId === winId) void openSend(true);
+    };
+    window.addEventListener(SEND_OPEN, onOpen);
+    return () => window.removeEventListener(SEND_OPEN, onOpen);
+  });
 
   useEffect(() => {
     if (projection.thought.id === documentThought.id && projection.thought.aggregate_revision > documentThought.aggregate_revision) {
@@ -447,6 +466,17 @@ function WorkspaceReady({
     } catch (cause) { sayFault(cause); }
     finally { writer.release(); setBusy(false); }
   };
+  /* The well sends the stored note, so the sole writer saves first. */
+  const openSend = async (open = !sending) => {
+    if (!open) { setSending(false); return; }
+    if (busy) return;
+    setBusy(true); say("");
+    try {
+      await writer.flush({ fence: true });
+      setSending(true);
+    } catch (cause) { sayFault(cause); }
+    finally { writer.release(); setBusy(false); }
+  };
   const readsResult = (result: ReadsResult) => {
     setDocumentThought(result.thought);
     if (result.workbench) install(result.workbench);
@@ -517,6 +547,11 @@ function WorkspaceReady({
       onClose={() => { setReads(false); requestAnimationFrame(() => readsRef.current?.focus()); }}
     /> : null}
 
+    {sending ? <div className="thought-send-well" data-testid="thought-send">
+      <NoteSendWells id={draftNoteId} title={writer.draft.title || documentThought.working_note.title}
+        version={documentThought.working_revision} />
+    </div> : null}
+
     <SurfaceFooter
       className="thought-note-foot"
       egress={<span className="thought-note-reads" title={`Reads ${readsToken}`}>READS · {readsToken}</span>}
@@ -526,12 +561,15 @@ function WorkspaceReady({
             one-line clip a plain foot receipt wears (B27). */}
         {writeLine ? <span className="surface-footer-receipt-line" role="status" data-wrap="" data-tone={writeLine.danger ? "danger" : undefined}>{writeLine.text}</span> : null}
         <span className="surface-footer-receipt-line" data-wrap="" data-line="filing">{thoughtFilingLine(documentThought, completed)}</span>
+        {copyReceipt}
       </>}
       verbs={<>
         {writer.conflicted
           ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
           : writer.failed ? <Button dense onClick={writer.retry}>Retry</Button> : null}
         <Button ref={readsRef} dense aria-expanded={reads} disabled={busy} onClick={() => void openReads()}>Change</Button>
+        <Button dense disabled={!writer.draft.body.trim()} onClick={() => void copy(writer.draft.body)}>Copy</Button>
+        <Button dense aria-expanded={sending} disabled={busy} onClick={() => void openSend()}>Send</Button>
         {completed
           ? <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void resume()}>Resume</Button>
           : <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void finish()}>Finish</Button>}

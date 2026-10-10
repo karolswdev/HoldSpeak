@@ -272,6 +272,15 @@
   background: var(--surface-2);
 }
 
+/* PHILO-17 U08: the SEND well under the note; it scrolls, the note keeps its room. */
+.desk-next .thought-send-well {
+  flex: none;
+  max-height: 45%;
+  overflow-y: auto;
+  padding: 6px clamp(22px, 3.4vw, 44px);
+  border-top: 1px solid var(--border-subtle);
+}
+
 .desk-next .thought-reads-find {
   flex: 1 0 100%;
   display: block;

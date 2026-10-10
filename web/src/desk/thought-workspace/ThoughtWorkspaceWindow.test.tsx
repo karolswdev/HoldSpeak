@@ -36,6 +36,9 @@ vi.mock("./ThoughtDocumentPane", () => ({
 vi.mock("./ThoughtReadsWell", () => ({
   ThoughtReadsWell: ({ thought }: { thought: Thought }) => <div role="region" aria-label="What the AI reads">{thought.working_note.body_markdown}</div>,
 }));
+vi.mock("../documentSendsLazy", () => ({
+  NoteSendWells: ({ id, title, version }: { id: string; title?: string; version?: number }) => <div data-testid="send-well" data-doc={`note:${id}`} data-title={title} data-version={String(version)} />,
+}));
 vi.mock("../sprites", () => ({ spriteUrl: () => "note.png" }));
 vi.mock("../shell", () => ({ openSurfaceOr: vi.fn() }));
 vi.mock("../thoughts", async (importOriginal) => {
@@ -617,5 +620,40 @@ describe("ThoughtWorkspaceWindow: the name follows the draft across a save", () 
     fireEvent.change(body, { target: { value: "Ask Priya about the freeze window" } });
     expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1);
     expect(name()).toBe("Ask Priya about the freeze window");
+  });
+});
+
+describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () => {
+  it("has Copy and Send in the foot; Send opens the SEND well on the working note", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const send = await screen.findByRole("button", { name: "Send" });
+    expect(screen.queryByTestId("send-well")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(thought.working_note.body_markdown));
+    expect(await screen.findByText("COPIED")).toBeInTheDocument();
+
+    fireEvent.click(send);
+    const well = await screen.findByTestId("send-well");
+    expect(well).toHaveAttribute("data-doc", "note:note-1");
+    expect(well).toHaveAttribute("data-version", "2");
+    expect(send).toHaveAttribute("aria-expanded", "true");
+    // Nothing is sent from the foot: the press is in the well.
+    fireEvent.click(send);
+    await waitFor(() => expect(screen.queryByTestId("send-well")).not.toBeInTheDocument());
+  });
+
+  it("a finished thought keeps Copy and Send beside Resume", async () => {
+    const done = { ...thought, state: "completed" as const };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: done, workspace_state: "completed" }));
+    render(<ThoughtWorkspaceWindow object={object} thought={done} onClose={vi.fn()} />);
+
+    await screen.findByRole("button", { name: "Resume" });
+    expect(screen.getByRole("button", { name: "Copy" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(await screen.findByTestId("send-well")).toHaveAttribute("data-doc", "note:note-1");
   });
 });
