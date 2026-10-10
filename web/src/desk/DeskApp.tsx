@@ -3,18 +3,16 @@
 // React + Vite in the one Web tree. Full-bleed: the world owns the viewport;
 // chrome is the floating
 // minimal cluster (DeskChrome); a fresh desk shows the guiding empty state.
-// HS-135-06: the Chair is HOME at `/`. The spatial floor stays intact
-// behind a dock button (counsel ruling B.Q1).
+// PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"): the
+// Screen (ChairHome) is the one desk. The spatial Floor, its list view, its
+// atmosphere and its file drop are parked in desk/_parked/floor/.
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../components/signal/Signal";
-import { defaultViewFor, useDesk } from "./store";
-import { useChairState } from "./chairState";
+import { useDesk } from "./store";
 import { DeskReceiptRow } from "./components/DeskReceiptRow";
 import { useCompactViewport } from "./useCompactViewport";
 import { ChairHome } from "./chair"; import { ReturningWindows } from "./returningWindows"; // PHILO-13-07 (B2)
-import { DeskListView } from "./components/DeskListView";
 import { DeskChrome } from "./components/DeskChrome";
-import { EmptyDesk } from "./components/EmptyDesk";
 import { RecordOrb } from "./components/RecordOrb";
 import { useChatImport } from "./hooks/useChatImport";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
@@ -29,7 +27,6 @@ import { AttentionDrawer } from "./components/AttentionDrawer";
 import { AskPanel } from "./components/AskPanel";
 import { HandSheet } from "./components/HandSheet";
 import { DragLayer } from "./hand";
-import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
 import { Dock, Expose, SnapGhost, Switcher } from "./components/DeskWindow";
 import { CompositorLayer } from "./compositor/CompositorLayer";
@@ -41,24 +38,14 @@ import { ApplicationBoundary } from "./components/ApplicationBoundary";
 import { objectByRef } from "./world";
 import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
-import { useAtmospherePreference } from "./gl/atmospherePreference";
 import { useSettleState } from "./settleState";
 import { DeskDeleteHost } from "./deleteReceipt";
-import { qualifiedRef } from "./api";
-import { noteFaceChange } from "./zoneName";
-import { reportWriteFailure } from "./hooks/useWriteReceipt";
 import { DrawerWindows } from "./drawer";
 import { ConductorWindows } from "./conductor";
 import "./desk.css";
 
-// The Chair is HOME. Floor/GL and object-specific heavyweight windows cross
-// an actual user-open boundary before their code enters the Desk runtime.
-const Atmosphere = lazy(() =>
-  import("./gl/Atmosphere").then((module) => ({ default: module.Atmosphere })),
-);
-const WorldStage = lazy(() =>
-  import("./gl/WorldStage").then((module) => ({ default: module.WorldStage })),
-);
+// Object-specific heavyweight windows cross an actual user-open boundary
+// before their code enters the Desk runtime.
 const RoadmapWindow = lazy(() =>
   import("./components/RoadmapWindow").then((module) => ({
     default: module.RoadmapWindow,
@@ -107,14 +94,12 @@ function DeskFaces() {
   const workbenchWindows = useDesk((s) => s.workbenchWindows);
   const setup = useDesk((s) => s.setup);
   const loading = useDesk((s) => s.loading);
-  const viewMode = useDesk((s) => s.viewMode);
   const editingId = useDesk((s) => s.editingId);
   const pullouts = useDesk((s) => s.pullouts);
   const askOpen = useDesk((s) => s.askOpen);
   const error = useDesk((s) => s.error);
   const { refresh } = useDesk.getState();
   const [refreshFailure, setRefreshFailure] = useState<string | null>(null);
-  const [atmosphereId] = useAtmospherePreference();
   const settled = useSettleState((s) => s.settled);
   useEffect(() => () => useSettleState.getState().setSettled(false), []);
 
@@ -133,8 +118,6 @@ function DeskFaces() {
     }
   }, [refresh]);
 
-  // HS-135-06: Chair is HOME; the floor stays one dock-button away.
-  const surface = useChairState((s) => s.surface);
   // `updatedAt` changes only after the first combined desk/setup refresh has
   // settled. Keep the room quiet while that server-owned arrival choice is
   // unknown; later background refreshes preserve the normal Chair.
@@ -158,31 +141,6 @@ function DeskFaces() {
   useEffect(() => {
     if (arrivalRequired) useSettleState.getState().setSettled(false);
   }, [arrivalRequired]);
-  // HS-140-01: first value owns HOME. A stale Floor preference must not
-  // detour a fresh owner away from the one capture path.
-  const showFloor = surface === "floor" && !arrivalRequired;
-  // PHILO-8-01 — a rename lives on the face where it began. A change of
-  // face (Chair / Floor, or list / spatial) ends it, so no stale field
-  // comes up later on another face (FINDING Finding 1).
-  useEffect(() => {
-    noteFaceChange();
-    const s = useDesk.getState();
-    if (s.renamingZoneId) s.setRenamingZone(null);
-    // A refusal still on the chip leaves with the field: it moves to the
-    // desk's write receipt, never silence (the owner's ratified canvas).
-    const refused = s.zoneRenameError;
-    if (refused) {
-      s.clearZoneRenameError();
-      // PHILO-8-02 round eight: the refusal keeps its subject on the move, so
-      // another object's success never clears it (the desk channel's rule).
-      reportWriteFailure(
-        "RENAME ZONE",
-        refused.label,
-        () => void useDesk.getState().renameZone(refused.zoneId, refused.name),
-        qualifiedRef("directory", refused.zoneId),
-      );
-    }
-  }, [showFloor, viewMode]);
   const chairOpenCards = pullouts
     .map((pullout) => ({ ...pullout, object: objectByRef(items, pullout.id) }))
     .filter((pullout) => Boolean(pullout.object));
@@ -229,53 +187,27 @@ function DeskFaces() {
 
   return (
     <div className="desk-next" id="desk-next" data-menu-glyphs={menuGlyphsVariant()} data-settled={settled && !arrivalRequired ? "true" : undefined}>
-      {/* GL layers render only when the spatial floor is active. */}
-      {showFloor && (
-        <ApplicationBoundary label="Floor atmosphere">
-          <Suspense fallback={null}>
-            <Atmosphere id={atmosphereId} />
-          </Suspense>
-        </ApplicationBoundary>
-      )}
-      {showFloor && <GlassDropLayer />}
       {!arrivalRequired && <DeskChrome showDailyStarts={!empty} />}
       {/* PHILO-3-01 — the owner's ruling: at phone width a standing write
           receipt is a full-width row between the bar and the work. */}
       {!arrivalRequired && compact && <DeskReceiptRow />}
-      {showFloor ? (
-        empty ? (
-          <EmptyDesk arrivalRequired={arrivalRequired} />
-        ) : defaultViewFor(viewMode, total, window.innerWidth <= 720) ===
-          "list" ? (
-          <DeskListView />
-        ) : (
-          <ApplicationBoundary label="Floor">
-            <Suspense fallback={null}>
-              <WorldStage />
-            </Suspense>
-          </ApplicationBoundary>
-        )
-      ) : (
-        <ChairHome arrivalRequired={arrivalRequired} />
-      )}
-      {/* Floor/List own their Ask panel. The Chair's primary Ask AI verb uses
-          the same store seam, so mount that existing panel here as well. */}
-      {!arrivalRequired && !showFloor && askOpen && <AskPanel />}
+      {/* PHILO-17: the Screen is the one desk; a stored "floor" loads it. */}
+      <ChairHome arrivalRequired={arrivalRequired} />
+      {/* The Chair's primary Ask AI verb opens the one Ask panel. */}
+      {!arrivalRequired && askOpen && <AskPanel />}
       {/* Hand to agent (Conductor K3): the launch sheet, the Ask AI posture, on every face. */}
       {!arrivalRequired && <HandSheet />}
       {/* PHILO-14 C3: the drag's ghost and dotted path, over every window. */}
       {!arrivalRequired && <DragLayer />}
-      {/* HS-135-13 fix: the InlineEditor must render on the Chair too,
-          not only the Floor (DeskListView/WorldStage own their own copy).
-          Without this, "New Agent" from a Workbench on the Chair sets
-          editingId but nothing renders the editor. */}
-      {!arrivalRequired && !showFloor && editingId && (() => {
+      {/* HS-135-13: the InlineEditor ("New Agent" from a Workbench sets
+          editingId; this renders the editor). */}
+      {!arrivalRequired && editingId && (() => {
         const o = objectByRef(items, editingId);
         return o ? <InlineEditor key={o.id} o={o} u={{ x: 0.5, y: 0.4 }} /> : null;
       })()}
-      {/* Floor and List own their pullout mounts. The normal Chair needs the
-          same card seam for the first-value note staged before reveal. */}
-      {!arrivalRequired && !showFloor && chairOpenCards.map((pullout) => (
+      {/* The object windows (pullouts), and the first-value note staged
+          before reveal. */}
+      {!arrivalRequired && chairOpenCards.map((pullout) => (
         <Pullout key={pullout.id} o={pullout.object!} pulloutId={pullout.id} origin={pullout.origin} />
       ))}
       {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}

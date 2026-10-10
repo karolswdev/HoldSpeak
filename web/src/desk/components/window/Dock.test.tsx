@@ -105,10 +105,6 @@ vi.mock("../../store", () => ({ useDesk: mocks.useDesk }));
 vi.mock("../../settleState", () => ({
   useSettleState: (selector: (state: typeof mocks.settle) => unknown) => selector(mocks.settle),
 }));
-vi.mock("../../chairState", () => ({
-  useChairState: (selector: (state: { surface: string; toggle: () => void }) => unknown) =>
-    selector({ surface: "chair", toggle: vi.fn() }),
-}));
 vi.mock("../../chromeState", () => ({
   useShortcutSheet: Object.assign(
     (selector: (state: typeof mocks.shortcut) => unknown) => selector(mocks.shortcut),
@@ -196,6 +192,9 @@ describe("H-C3 Dock rendering", () => {
     // bell only; the Intelligence tile carries no copy of it.
     expect(screen.getByRole("button", { name: "Intelligence" })).toBeTruthy();
     expect(screen.queryByText("0")).toBeNull();
+    // PHILO-17: one desk. The dock has no Floor (or Chair) toggle.
+    expect(screen.queryByTestId("chair-floor-toggle")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Floor" })).toBeNull();
 
     await waitFor(() => expect(screen.getByTestId("desk-dock-send-state")).toHaveTextContent("SEND FAILED"));
     expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull();

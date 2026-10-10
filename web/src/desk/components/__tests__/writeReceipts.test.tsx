@@ -6,13 +6,12 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Note } from "../../../lib/primitives";
 import { EMPTY_ITEMS } from "../../api";
-import { floorMenuEntries } from "../../floorMenu";
+import { verbById } from "../../verbRegistry";
 import type { WorkMenuEntry } from "../DeskMenu";
 import { useDesk } from "../../store";
 import { clearWriteFailure } from "../../hooks/useWriteReceipt";
 import { WorkbenchWindow } from "../WorkbenchWindow";
 import { DeskChrome } from "../DeskChrome";
-import { EmptyDesk } from "../EmptyDesk";
 
 // Query helper scoped to the render root (testing-library renders into
 // document.body, so this equals baseElement.querySelector).
@@ -254,44 +253,6 @@ describe("HS-132-06 desk-floor write receipts", () => {
     vi.restoreAllMocks();
   });
 
-  it("names a refused SEED DESK on the empty floor", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response(JSON.stringify({}), { status: 500 })),
-    );
-    const user = userEvent.setup();
-    render(<EmptyDesk />);
-    await user.click(screen.getByRole("button", { name: /Seed the desk/ }));
-    await waitFor(() =>
-      expect(
-        q(".write-receipt-label")?.textContent,
-      ).toBe("SEED DESK FAILED · HTTP 500"),
-    );
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
-  });
-
-  it("names a refused CREATE NOTE on the empty floor", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-        if ((init?.method || "GET").toUpperCase() === "POST")
-          return new Response(JSON.stringify({}), { status: 500 });
-        return new Response(JSON.stringify({}), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        });
-      }),
-    );
-    const user = userEvent.setup();
-    render(<EmptyDesk />);
-    await user.click(screen.getByRole("button", { name: /New Note/ }));
-    await waitFor(() =>
-      expect(
-        q(".write-receipt-label")?.textContent,
-      ).toBe("CREATE NOTE FAILED · HTTP 500"),
-    );
-  });
-
   it("keeps a landed create quiet", async () => {
     vi.stubGlobal(
       "fetch",
@@ -309,12 +270,12 @@ describe("HS-132-06 desk-floor write receipts", () => {
   });
 });
 
-/** The floor menu's own NEW > Note entry — the exact path the right-click runs. */
+/** Desk ▸ New Note: the registry verb every New menu runs. PHILO-17: the
+ * Floor's right-click (floorMenu.ts) and the empty Floor (EmptyDesk) are
+ * parked, with the receipts only they drew. */
 function floorNewNote() {
-  const news = floorMenuEntries().find(
-    (e) => e.type === "sub" && e.id === "floor.new",
-  ) as Extract<WorkMenuEntry, { type: "sub" }>;
-  return news.entries[0] as Extract<WorkMenuEntry, { type: "item" }>;
+  const verb = verbById("desk.new-note")!;
+  return { onSelect: () => verb.run({ selectedRef: null }) };
 }
 
 function json(body: unknown, status = 200) {
@@ -328,7 +289,6 @@ describe("HS-132-06 populated-floor write receipts", () => {
   beforeEach(() => {
     localStorage.clear();
     clearWriteFailure();
-    // A populated desk: the arrival's EmptyDesk is NOT the surface here.
     useDesk.setState({
       items: {
         ...EMPTY_ITEMS,
@@ -396,28 +356,4 @@ describe("HS-132-06 populated-floor write receipts", () => {
     );
   });
 
-  it("prints one receipt only: a nearer line silences the system bar", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (_i: RequestInfo | URL, init?: RequestInit) =>
-        (init?.method || "GET").toUpperCase() === "POST" ? json({}, 500) : json({}),
-      ),
-    );
-    render(
-      <MemoryRouter>
-        <DeskChrome />
-        <EmptyDesk />
-      </MemoryRouter>,
-    );
-    await act(async () => {
-      floorNewNote().onSelect();
-    });
-    await waitFor(() =>
-      expect(qa(".write-receipt")).toHaveLength(1),
-    );
-    expect(
-      q(".desk-menubar .desk-chrome-receipt"),
-    ).toBeNull();
-    expect(q(".write-receipt-row .write-receipt")).toBeTruthy();
-  });
 });

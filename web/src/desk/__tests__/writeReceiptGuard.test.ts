@@ -179,7 +179,6 @@ describe("HS-132-06 swallowed-write guard", () => {
   it("leaves the wired surfaces with no swallowed write at all", () => {
     for (const path of [
       "/src/desk/components/WorkbenchWindow.tsx",
-      "/src/desk/components/EmptyDesk.tsx",
     ]) {
       expect(swallowedWrites(sources[path]), path).toEqual([]);
     }

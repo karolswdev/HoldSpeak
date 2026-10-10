@@ -6,7 +6,8 @@
 // opacity 0 and stayed, catching every tap at its old place.
 // jsdom renders no opacity and no hit test: the rendered proof is the glass
 // fence (story 05 evidence). This test proves the store + DOM half through
-// the real render site (DeskListView) and the real DeskWindowFrame.
+// the real render site (DeskApp's pullout mount, PHILO-17: the Floor's list
+// view is parked) and the real DeskWindowFrame.
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -15,7 +16,8 @@ import { EMPTY_ITEMS, type Items } from "../api";
 import { useDesk } from "../store";
 import { usePalette } from "../chromeState";
 import { useProjections } from "../projections";
-import { DeskListView } from "../components/DeskListView";
+import { Pullout } from "../components/Pullout";
+import { objectByRef } from "../world";
 
 // PHILO-13-05 fix round: the meeting's conflict recovery is the sibling that
 // reports `deleted`; this stand-in presses its real onResolved callback.
@@ -62,10 +64,24 @@ beforeEach(() => {
   );
 });
 
+/** DeskApp's pullout mount (`chairOpenCards`), the one render site. */
+function Pullouts() {
+  const items = useDesk((s) => s.items);
+  const pullouts = useDesk((s) => s.pullouts);
+  return (
+    <>
+      {pullouts.map((p) => {
+        const o = objectByRef(items, p.id);
+        return o ? <Pullout key={p.id} o={o} pulloutId={p.id} origin={p.origin} /> : null;
+      })}
+    </>
+  );
+}
+
 function renderList() {
   return render(
     <MemoryRouter>
-      <DeskListView />
+      <Pullouts />
     </MemoryRouter>,
   );
 }
