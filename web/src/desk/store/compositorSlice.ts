@@ -102,6 +102,12 @@ export function isRehydratedMinimized(id: string): boolean {
   return rehydratedMinimized.has(id);
 }
 
+/** PHILO-16 (16b): a window the hub reports seated comes back seated, like
+ * one rehydrated from the cache: its mount keeps it minimized. */
+export function markRehydratedMinimized(id: string): void {
+  rehydratedMinimized.add(id);
+}
+
 // ---- factory-generated open/close functions -----------------------------
 
 const openZone = makeOpenWindow(ZONE_WINDOW_CONFIG);

@@ -296,6 +296,9 @@ OPERATION_CONTRACT_VARIABLE_SITES: dict[str, str] = {
     # PHILO-7-02: invoke_receipted calls the registry's own invoke with its name.
     "holdspeak/operations.py|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args)",
     "holdspeak/operations.py|OperationRegistry.invoke_receipted|call#2": "self.invoke(principal, name, args, held=held)",
+    # PHILO-16 16b: the desk_window.* MCP tools invoke their declared windows.*
+    # row (TOOL_OPERATIONS[name]); window state, no runner.
+    "holdspeak/mcp/families/desk_windows.py|dispatch|call": "ops.invoke(principal, operation, dict(arguments or {}))",
 }
 
 

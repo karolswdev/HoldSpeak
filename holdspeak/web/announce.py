@@ -64,6 +64,12 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     # Each Room writes this by itself when it opens. No window shows it live,
     # and a frame for it made the Room re-read and erase its catch-up list.
     ("POST", "/api/projects/{project_id}/room/read"): "noise: the Room's own read marker",
+    # PHILO-16 (16b): the window service announces each change itself (one
+    # frame, kind ``windows``, one change per id); a no-op (a raise of the
+    # front window) changes nothing and sends nothing, never a desk refresh.
+    ("POST", "/api/desk/windows/{window_id}/{verb}"): "the window service announces (kind windows)",
+    ("POST", "/api/desk/windows/arrange"): "the window service announces (kind windows)",
+    ("POST", "/api/desk/windows/stage-shelf"): "the window service announces (kind windows)",
 }
 
 _KIND = {"people": "person", "all_action_items": "action_item"}

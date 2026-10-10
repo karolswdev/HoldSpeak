@@ -1,3 +1,4 @@
+import { isWindowsOnlyFrame } from "../desk/compositor/windowFrames";
 import {
   createContext,
   type ReactNode,
@@ -62,8 +63,14 @@ export function RuntimeBusProvider({ children }: { children: ReactNode }) {
           const frame = JSON.parse(event.data) as RuntimeFrame;
           if (!frame || typeof frame.type !== "string") return;
           setLastFrame(frame);
-          for (const listener of listeners.current.get(frame.type) ?? [])
-            listener(frame);
+          // PHILO-16 (16b): a `desk_changed` frame that names only windows is
+          // the desk's view state, not its data: it reaches the windows' own
+          // follower (a "*" listener, compositor/HubWindowsSync.tsx) and no
+          // data reader re-reads for it.
+          const viewOnly = frame.type === "desk_changed" && isWindowsOnlyFrame(frame.data);
+          if (!viewOnly)
+            for (const listener of listeners.current.get(frame.type) ?? [])
+              listener(frame);
           for (const listener of listeners.current.get("*") ?? [])
             listener(frame);
         } catch {

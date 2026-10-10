@@ -1,0 +1,19 @@
+{
+  "A": [
+    "/chair%3Abrief/open {}",
+    "/chair%3Aweek/open {}",
+    "/chair%3Aneeds/open {}",
+    "/chair%3Abrief/raise {\"expected_revision\":1}",
+    "/chair%3Abrief/set_geometry {\"rect\":{\"x\":\"-10.7042%\",\"y\":\"-40.9091%\",\"w\":\"49.1549%\",\"h\":\"62.7942%\"},\"expected_revision\":4}",
+    "/chair%3Aweek/raise {\"expected_revision\":2}",
+    "/chair%3Aweek/seat {\"seated\":true,\"expected_revision\":6}",
+    "/drawer%3Aproject%3Ap-ledger/open {}",
+    "/drawer%3Aproject%3Ap-ledger/raise {\"expected_revision\":10}",
+    "/lane/open {\"object_ref\":\"launch:L-glass\"}"
+  ],
+  "B": [
+    "/chair%3Aneeds/raise {\"expected_revision\":3}"
+  ],
+  "C": [],
+  "E": []
+}

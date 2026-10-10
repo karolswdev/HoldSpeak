@@ -75,8 +75,10 @@ class TestEnterOpensTheFirstRow:
         errors: list[str] = []
         writes: list[str] = []
         page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+        # PHILO-16 (16b): a window's open is the desk's view state on the hub
+        # (/api/desk/windows), not a desk object: it is not a write here.
         page.on("request", lambda r: writes.append(r.url.split("?")[0].replace(self.base, ""))
-                if r.method == "POST" else None)
+                if r.method == "POST" and "/api/desk/windows" not in r.url else None)
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
         note = _api(page, "POST", "/api/notes", {

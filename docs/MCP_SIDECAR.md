@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-250 tools across 44 families. Any MCP client (Claude Code, Cursor, a
+256 tools across 45 families. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without the web UI.
 
 This page is the MCP transport reference. Each tool description in the
@@ -350,7 +350,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 250 tools across 44 families.
+**Registry totals:** 256 tools across 45 families.
 
 #### agent (1)
 
@@ -430,6 +430,15 @@ database, FTS index or Cadence.
 - `desk.snapshot`
 - `desk.update`
 - `desk.verb`
+
+#### desk_window (6)
+
+- `desk_window.arrange`
+- `desk_window.close`
+- `desk_window.list`
+- `desk_window.open`
+- `desk_window.raise`
+- `desk_window.seat`
 
 #### dictation (2)
 
@@ -838,7 +847,7 @@ use it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 65 tools
-instead of 250.
+instead of 256.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed

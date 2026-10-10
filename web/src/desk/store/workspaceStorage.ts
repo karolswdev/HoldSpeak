@@ -269,6 +269,30 @@ type WorkspaceState = Pick<
   places?: Record<string, string>;
 };
 
+/** PHILO-16 (16b) — the hub owns the desk's windows; this document is the
+ * browser's cache of them (the first paint, before the hub answers). Each
+ * save tells its listeners, so every write that persists here also goes to
+ * the hub (`compositor/hubWindows.ts`). */
+type SavedListener = () => void;
+const savedListeners = new Set<SavedListener>();
+
+export function onWorkspaceSaved(listener: SavedListener): () => void {
+  savedListeners.add(listener);
+  return () => {
+    savedListeners.delete(listener);
+  };
+}
+
+function notifySaved(): void {
+  for (const listener of savedListeners) {
+    try {
+      listener();
+    } catch {
+      /* a listener never breaks a save */
+    }
+  }
+}
+
 /** The sections other stores own (the Chair's windows, the screen): the
  * desk compositor's save keeps them as they are in the stored document. */
 function storedSections(): Pick<DeskWorkspaceDocumentV1, "chair" | "screen"> {
@@ -299,6 +323,7 @@ export function saveDeskWorkspaceSection(
   } catch {
     /* storage may be unavailable; the live store remains authoritative */
   }
+  notifySaved();
 }
 
 export function saveDeskWorkspace(state: WorkspaceState): void {
@@ -346,4 +371,15 @@ export function saveDeskWorkspace(state: WorkspaceState): void {
   } catch {
     /* storage may be unavailable; the live compositor remains authoritative */
   }
+  notifySaved();
+}
+
+/** PHILO-16 (16b) — the workspace document as it stood when the desk's store
+ * modules first loaded: what the CACHE reopened, before any face of this
+ * visit opened a window of its own (a staged surface, a link). The hub's
+ * first seed closes only these when the hub does not hold them. */
+const BOOT_DOCUMENT: DeskWorkspaceDocumentV1 = loadDeskWorkspace();
+
+export function bootDeskWorkspace(): DeskWorkspaceDocumentV1 {
+  return BOOT_DOCUMENT;
 }

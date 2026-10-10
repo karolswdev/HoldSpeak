@@ -286,6 +286,14 @@ TOOL_AUTHORITY: dict[str, str] = {
     "practice_recipe.get": WORK,
     "practice_recipe.compile": WORK,
     "agent.hand": EGRESS,  # starts a cloud coding agent and sends it a brief from the desk
+    # PHILO-16 (16b): the owner's desk windows. A window is not egress,
+    # authority or config: an agent composes the desk beside the owner.
+    "desk_window.list": WORK,
+    "desk_window.open": WORK,
+    "desk_window.close": WORK,
+    "desk_window.raise": WORK,
+    "desk_window.arrange": WORK,
+    "desk_window.seat": WORK,
 }
 
 #: What a thread never offers or admits, in any mode.

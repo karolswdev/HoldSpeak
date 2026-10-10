@@ -420,6 +420,12 @@ def test_call_chip_glass(hub: dict) -> None:
             )
             thread_id = thread_res["payload"]["id"]
 
+            # PHILO-16 (16b): one hub, one desk: the earlier width's thread
+            # window would open here too; this width starts on an empty desk.
+            from .glass_infra import clear_hub_windows
+
+            clear_hub_windows(page, TOKEN)
+
             # Open the thread pullout
             page.goto(
                 f"{url}/?token={TOKEN}&open=thread:{thread_id}",

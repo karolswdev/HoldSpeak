@@ -312,7 +312,11 @@ def test_the_codex_launch_mounts_the_conductor_palette_with_its_mutators() -> No
     palette = resolve_palette(CONDUCTOR)
     assert {"project.item.update", "project.item.transition", "desk.create", "door.add_item",
             "follow_through.complete"} <= palette
-    assert len(palette) == 138
+    # PHILO-16 16b: + the six desk_window.* tools (work: an agent composes the
+    # owner's desk windows; the writes meet the launch's `window` rule).
+    assert {"desk_window.list", "desk_window.open", "desk_window.close", "desk_window.raise",
+            "desk_window.arrange", "desk_window.seat"} <= palette
+    assert len(palette) == 138 + 6
 
 
 # ── 6. Astra r2 on #996: the wait episode, the FIFO, expiry, provenance ──

@@ -233,6 +233,11 @@ def test_receipt_verbs_own_their_areas(hub, width: int) -> None:
         page = browser.new_page(viewport=VIEWPORTS[width])
         page.emulate_media(reduced_motion="reduce")
         page.goto(f"{hub.url}/?token={hub.token}")
+        # PHILO-16 (16b): one hub is one desk; this page starts on an empty desk.
+        from .glass_infra import clear_hub_windows
+
+        clear_hub_windows(page, hub.token)
+        page.reload()
         try:
             page.get_by_role("button", name="Continue later").click(timeout=4000)
         except Exception:

@@ -5,6 +5,7 @@ export {
   defaultViewFor,
   loadPanelLayout,
   isRehydratedMinimized,
+  markRehydratedMinimized,
   loadDeskWorkspace,
   DESK_WORKSPACE_STORAGE_KEY,
   DESK_WORKSPACE_VERSION,

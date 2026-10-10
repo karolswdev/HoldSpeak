@@ -36,6 +36,7 @@ from tests.unit.test_hs201_record_speech_only import (
     _FixtureTranscriber,
 )
 from tests.unit.test_meeting_deferred_admission import FakeHost, FakeIntel, _Route
+from .glass_infra import clear_hub_windows
 from .glass_infra import (
     _api,
     _assert_clean,
@@ -179,6 +180,7 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
 
             def open_meetings(meeting_id: str | None = None) -> None:
                 """The Meetings window, with one record open when asked."""
+                clear_hub_windows(page, TOKEN)  # PHILO-16 (16b): the hub holds the windows
                 page.evaluate(
                     """() => {
                         localStorage.removeItem('hs.desk.workspace.v1');
@@ -425,6 +427,7 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
             server.stop()
             restarted = server.start()
             page.goto(f"{restarted}/?token={TOKEN}", wait_until="load")
+            clear_hub_windows(page, TOKEN)  # PHILO-16 (16b): the hub holds the windows
             page.evaluate(
                 "() => { localStorage.removeItem('hs.desk.workspace.v1');"
                 " sessionStorage.removeItem('hs.desk.staged-surface-open'); }"
@@ -647,6 +650,7 @@ def test_import_transcribes_and_stops_then_the_summary_is_asked_for(
             )
 
             def open_meetings(expect_rows: bool = True) -> None:
+                clear_hub_windows(page, IMPORT_TOKEN)  # PHILO-16 (16b): the hub holds the windows
                 page.evaluate(
                     """() => {
                         localStorage.removeItem('hs.desk.workspace.v1');
