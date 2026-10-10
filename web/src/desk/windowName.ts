@@ -101,6 +101,17 @@ export function windowName(subject: WindowSubject, id?: string | null): string {
   }
 }
 
+/** PHILO-17: the shown name of a note record, wire (`body_markdown`) or
+ * store (`bodyMarkdown`) shape. A note may have no title (New Note posts
+ * none): its first words name it, else `New note`. Never empty. */
+export function noteName(note: Record<string, unknown>): string {
+  const s = (v: unknown) => (typeof v === "string" ? v : "");
+  return windowName(
+    { kind: "note", title: s(note.title) || s(note.name), body: s(note.body_markdown) || s(note.bodyMarkdown) || s(note.body) },
+    s(note.id) || null,
+  );
+}
+
 /** The name of a Desk primitive (a note, a thread, a meeting, …) from its
  * record: what its window, its palette row and its Floor object show. Never
  * empty, never the record's id. */

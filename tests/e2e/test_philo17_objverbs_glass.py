@@ -79,6 +79,18 @@ class TestObjectVerbsOnTheChair:
         editor.get_by_role("button", name="Save", exact=True).click()
         editor.wait_for(state="detached", timeout=T)
 
+    def _object_rename_disabled(self, page: Any, shot: str | None = None) -> bool:
+        """Open the menu bar Object menu; True when Rename is ghosted."""
+        page.locator(".desk-verbbar").get_by_role("button", name="Object", exact=True).click()
+        menu = page.get_by_role("menu", name="Object menu")
+        menu.wait_for(timeout=T)
+        disabled = menu.get_by_role("menuitem", name=re.compile(r"^Rename")).get_attribute("aria-disabled") == "true"
+        if shot:
+            page.screenshot(path=str(SHOTS / shot))
+        page.keyboard.press("Escape")
+        menu.wait_for(state="detached", timeout=T)
+        return disabled
+
     def test_1440_object_menu_f2_and_right_click(self) -> None:
         from playwright.sync_api import sync_playwright
 
@@ -86,23 +98,34 @@ class TestObjectVerbsOnTheChair:
             browser, page, errors = self._page(pw, 1440)
             try:
                 icon = page.locator(ICON)
+                # Nothing selected: Object ▸ Rename is ghosted.
+                assert self._object_rename_disabled(page) is True
                 icon.click()
                 assert icon.get_attribute("aria-pressed") == "true"
-                # The menu bar Object menu reads the same selection.
-                page.locator(".desk-verbbar").get_by_role("button", name="Object", exact=True).click()
-                menu = page.get_by_role("menu", name="Object menu")
-                menu.wait_for(timeout=T)
-                rename = menu.get_by_role("menuitem", name=re.compile(r"^Rename"))
-                assert rename.get_attribute("aria-disabled") != "true", rename.inner_text()
-                assert "Select an object" not in menu.inner_text()
-                page.screenshot(path=str(SHOTS / "objverbs-1440-object-menu.png"))
-                page.keyboard.press("Escape")
-                menu.wait_for(state="detached", timeout=T)
+                # Selected on the Chair: the menu bar Object menu reads the same selection.
+                assert self._object_rename_disabled(page, shot="objverbs-1440-object-menu.png") is False
+                # A press on empty glass clears the selection: ghosted again.
+                page.mouse.click(720, 600)
+                assert icon.get_attribute("aria-pressed") == "false"
+                assert self._object_rename_disabled(page) is True
                 # F2 renames the selected icon.
                 icon.click()
                 page.keyboard.press("F2")
                 self._rename_in_editor(page, "Avery 1:1 questions")
                 assert self._note_title() == "Avery 1:1 questions"
+                # After a reload the desk and the editor show the new title.
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                icon = page.locator(ICON)
+                icon.wait_for(timeout=T)
+                assert "Avery 1:1 questions" in (icon.get_attribute("aria-label") or ""), icon.get_attribute("aria-label")
+                icon.click()
+                page.keyboard.press("F2")
+                editor = page.locator(".desk-editor-window")
+                editor.wait_for(timeout=T)
+                assert editor.get_by_role("textbox", name="Title", exact=True).input_value() == "Avery 1:1 questions"
+                editor.get_by_role("button", name="Save", exact=True).click()
+                editor.wait_for(state="detached", timeout=T)
                 # A right-click opens the Floor's object menu.
                 icon.click(button="right")
                 ctx_menu = page.locator(".desk-world-menu")
