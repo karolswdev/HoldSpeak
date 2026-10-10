@@ -63,7 +63,10 @@ const TYPING_GUARDED = new Set([
 ]);
 
 function typing(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null;
+  // A key sent to the document (no focused element) is not typing; the
+  // document has no `closest`, so test for an element first.
+  if (!(target instanceof Element)) return false;
+  const el = target as HTMLElement;
   return Boolean(
     el &&
     (el.tagName === "INPUT" ||
