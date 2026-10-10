@@ -36,6 +36,30 @@ export interface CoverageRecord {
   watch_ids?: string[];
   /** The host a re-check reaches (github.com, a Jira site); none = local. */
   host?: string | null;
+  /** PHILO-17 (needsyou): a Watch's provider (`github`, `jira`). */
+  provider?: string | null;
+  /** PHILO-17 (needsyou): the plain cause (`Not signed in`); null when the
+   *  reason is a raw error line (the row's detail keeps it). */
+  cause?: string | null;
+}
+
+/** PHILO-17 (needsyou): the cause of an unread source. Sources of one cause
+ *  are ONE Needs-you row, counted once. The twin of `source_group_key`
+ *  (holdspeak/services/needs_you_membership.py). */
+export function gapGroupKey(row: CoverageRecord): string {
+  return [row.provider || row.kind || "", row.state || "", row.repair?.token || "", row.cause || ""].join("|");
+}
+
+/** The gaps grouped by cause, in their order (first seen leads). */
+export function groupGaps(gaps: readonly CoverageRecord[]): CoverageRecord[][] {
+  const groups = new Map<string, CoverageRecord[]>();
+  for (const gap of gaps) {
+    const key = gapGroupKey(gap);
+    const group = groups.get(key);
+    if (group) group.push(gap);
+    else groups.set(key, [gap]);
+  }
+  return [...groups.values()];
 }
 
 export interface CoverageReading {

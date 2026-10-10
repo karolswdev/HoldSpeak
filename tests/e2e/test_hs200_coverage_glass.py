@@ -164,9 +164,10 @@ def _shot(page: Any, name: str, width: int) -> Path:
 
 
 def _open_shade(page: Any) -> None:
-    bell = page.locator(".desk-bell")
-    bell.wait_for(timeout=10000)
-    bell.click()
+    # PHILO-17 (needsyou): the bell opens Needs you now; the shade opens on
+    # its own event (the Desk memory launcher and a held call's row send it).
+    page.locator(".desk-bell").wait_for(timeout=10000)
+    page.evaluate("window.dispatchEvent(new CustomEvent('hs-open-system-shade'))")
     page.locator(".desk-shade").wait_for(timeout=5000)
     _settle(page)
 

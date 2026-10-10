@@ -858,3 +858,83 @@ describe("NeedsDrawer FilterBar reads a proposal's own date (Phase 16)", () => {
     expect(names()).toEqual(["Pick the vendor"]);
   });
 });
+
+// PHILO-17 (needsyou, walker BLOCKS): 30 GitHub sources that cannot be
+// checked for one cause were 30 rows above the work, each with a raw runner
+// error. They are ONE row now, after the work, counted once; the raw lines
+// stay in the row's detail; Reconnect opens Settings · Connections on GitHub.
+describe("NeedsDrawer groups the sources of one cause (PHILO-17)", () => {
+  const RAW = "To get started with GitHub CLI, please run:  gh auth login";
+  const ghSource = (n: number) => ({
+    source_id: `watch:w-gh-${n}`, kind: "watch", state: "failed", observed_at: null,
+    label: `GitHub · acme/repo-${n}`, project_id: `p${n}`, provider: "github",
+    reason: `${RAW} (repo-${n})`, cause: null, watch_ids: [`w-gh-${n}`], host: "github.com",
+    repair: { token: "CANT CHECK", verb: "Reconnect", href: "/settings" },
+  });
+  const GROUPED = {
+    ...ANSWER,
+    // The hub's one number: 8 members + ONE grouped cause.
+    count: 9,
+    complete: false,
+    coverage: [1, 2, 3].map(ghSource),
+  };
+  beforeEach(() => {
+    vi.mocked(openSurfaceOr).mockClear();
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) return GROUPED as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+  });
+
+  it("draws ONE row for the cause, after the work, with no raw error on the face", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
+    const sources = screen.getAllByTestId("needs-source-row");
+    expect(sources).toHaveLength(1);
+    const group = sources[0];
+    expect(group.querySelector(".needs-row-name")?.textContent).toBe("GitHub · 3 sources");
+    expect(face(group).fact).toBe("Cannot check");
+    expect(face(group).lamps).toEqual(["CANT CHECK"]);
+    expect(group.textContent).not.toContain("gh auth login");
+    // The work leads; the plumbing is last.
+    const members = screen.getAllByTestId("needs-row");
+    expect(group.compareDocumentPosition(members[members.length - 1]) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(group.getAttribute("data-counted")).toBe("true");
+    // The browser twin counts the cause once, as the hub does.
+    const { readNeedsYouAnswer } = await import("../../needsYou");
+    expect(readNeedsYouAnswer(GROUPED as never).count).toBe(9);
+  });
+
+  it("keeps every source and its raw reason behind Details", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
+    const group = screen.getByTestId("needs-source-row");
+    expect(screen.queryByTestId("needs-detail")).toBeNull();
+    fireEvent.click(within(group).getByRole("button", { name: "Details: GitHub · 3 sources" }));
+    const detail = screen.getByTestId("needs-detail");
+    expect(detail.querySelectorAll("li")).toHaveLength(3);
+    expect(detail.textContent).toContain("GitHub · acme/repo-2");
+    expect(detail.textContent).toContain(`${RAW} (repo-2)`);
+  });
+
+  it("names the plain cause the hub gives", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...GROUPED, coverage: [1, 2].map((n) => ({ ...ghSource(n), cause: "Not signed in" })) } as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
+    const group = screen.getByTestId("needs-source-row");
+    expect(group.querySelector(".needs-row-name")?.textContent).toBe("GitHub · 2 sources");
+    expect(face(group).fact).toBe("Not signed in");
+  });
+
+  it("Reconnect opens Settings · Connections with GitHub focused", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
+    const group = screen.getByTestId("needs-source-row");
+    fireEvent.click(within(group).getByRole("button", { name: "Reconnect: GitHub · 3 sources" }));
+    expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "integration:github");
+  });
+});

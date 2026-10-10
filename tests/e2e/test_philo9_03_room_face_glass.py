@@ -420,7 +420,8 @@ class TestRoomFaceGlass:
                 self._two_late_rooms(page)
                 page.reload(wait_until="load")
                 _normal_chair(page)
-                page.locator(".desk-bell").click()
+                # PHILO-17 (needsyou): the bell opens Needs you; the shade has its own event.
+                page.evaluate("window.dispatchEvent(new CustomEvent('hs-open-system-shade'))")
                 page.locator(".desk-shade").wait_for(timeout=T)
                 row = page.locator("[data-testid=shade-project-row]", has_text=NAME).first
                 row.wait_for(timeout=T)

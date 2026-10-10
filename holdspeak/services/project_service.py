@@ -998,7 +998,23 @@ class ProjectService:
         ("no local query adapter", "No local adapter for meeting activity yet"),
         ("lock timeout", "acli is busy"),
         ("connector_snapshot_adapter_unavailable", "No local adapter for meeting activity yet"),
+        # PHILO-17 (needsyou): a provider CLI that is not signed in.
+        ("gh auth login", "Not signed in"),
+        ("not logged in", "Not signed in"),
+        ("bad credentials", "Not signed in"),
+        ("authentication required", "Not signed in"),
+        ("acli auth login", "Not signed in"),
+        ("unauthorized", "Not signed in"),
+        ("executable file not found", "Tool not installed"),
+        ("command not found", "Tool not installed"),
     ]
+
+    #: The plain words ``_plain_reason`` can give. A reason that is not one of
+    #: these is a raw error line (Needs you keeps it behind the row's detail).
+    PLAIN_REASONS: frozenset[str] = frozenset(
+        {plain for _pattern, plain in _PLAIN_REASON_PATTERNS}
+        | {"No local adapter for this source yet"}
+    )
 
     @staticmethod
     def _plain_reason(error: str | None) -> str | None:
