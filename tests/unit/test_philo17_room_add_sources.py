@@ -147,3 +147,41 @@ def test_hub_route_adds_to_the_project(tmp_path: Path, monkeypatch: pytest.Monke
     finally:
         reset_database()
         composition.install(composition.bare(label="pytest"))
+
+
+def test_an_older_project_with_a_repository_source_registers_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Astra r2 on #1068: a project that watches a repository nobody registered
+    (the Room's Register verb): the hub names it, and the Room's call
+    (POST /api/projects/{id}/repository, the call New Project makes on
+    create) registers it, owner only, with its receipt."""
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from test_philo9_b1_connections import _boot  # noqa: E402
+    from test_philo9_steward_admission import Runner  # noqa: E402
+
+    from holdspeak.db import reset_database
+    from holdspeak.runtime import composition
+
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    hub = _boot(tmp_path, monkeypatch, Runner(), Runner())
+    try:
+        c = hub.client
+        project_id = c.post("/api/projects/door", json={
+            "outcome": "Older project",
+            "sources": [{"provider": "github", "scope": "acme/app", "watches": ["open_prs"]}],
+        }).json()["projectId"]
+        before = c.get(f"/api/projects/{project_id}/repository").json()
+        assert (before["registered"], before["repository"], before["watched"]) == (False, None, ["acme/app"])
+        done = c.post(f"/api/projects/{project_id}/repository", json={"repository": before["watched"][0]})
+        assert done.status_code == 200, done.text
+        assert done.json()["receipt"]["outcome"] == "succeeded"
+        after = c.get(f"/api/projects/{project_id}/repository").json()
+        assert (after["repository"], after["registered"], after["cloned"]) == ("acme/app", True, False)
+    finally:
+        reset_database()
+        composition.install(composition.bare(label="pytest"))

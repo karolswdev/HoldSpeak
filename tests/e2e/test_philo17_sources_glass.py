@@ -184,3 +184,109 @@ def test_add_a_repository_and_it_stays_after_reload(
 @pytest.mark.parametrize("width", [1440, 393])
 def test_room_add_source_and_sign_in(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
     _walk(tmp_path, monkeypatch, width)
+
+
+# ── Astra r2 on #1068: what the parked drawer did, the Room does ──────────
+
+
+def _seed_lone_meeting() -> None:
+    """A project with one filed meeting (the hub's own producers)."""
+    from datetime import datetime, timedelta
+
+    from holdspeak.db import get_database
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    db = get_database()
+    start = datetime.now().replace(microsecond=0) - timedelta(hours=2)
+    db.projects.create_project(project_id="p-lone", name="Vendor review", description="One meeting.",
+                               keywords=["vendor"])
+    db.meetings.save_meeting(MeetingState(
+        id="m-lone", started_at=start, ended_at=start + timedelta(minutes=30), title="Vendor call",
+        segments=[TranscriptSegment(text="We pick the vendor.", speaker="Me", start_time=1.0, end_time=4.0)],
+        intel=IntelSnapshot(timestamp=1.0, topics=["vendor"], summary="Pick it.", action_items=[]),
+        intel_status="completed"))
+    db.projects.associate_meeting_project(meeting_id="m-lone", project_id="p-lone", source="manual", confidence=1.0)
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+def test_park_from_files_leaves_its_receipt_and_restore_in_the_room(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """FILES → Get Info → Park: the Room keeps `PARKED · Vendor call` with
+    Restore, also when FILES is left empty; Restore brings the meeting back."""
+    _ensure_build()
+    _server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=_gh_not_signed_in)
+    _seed_lone_meeting()
+    errors: list[str] = []
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 900})
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        try:
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            clear_hub_windows(page, token=TOKEN)
+            room = _open_room(page, "p-lone")
+            files = room.get_by_test_id("room-files")
+            files.wait_for(timeout=T)
+            files.locator(".object-list-open[aria-label^='Vendor call,']").click()
+            files.get_by_test_id("room-files-info").click()
+            info = page.locator(".drawer-info-window")
+            info.wait_for(timeout=T)
+            info.get_by_role("button", name="Park", exact=True).click()
+            receipt = room.get_by_test_id("room-files-park-receipt")
+            receipt.wait_for(timeout=T)
+            page.wait_for_function(
+                "() => !document.querySelector(\"#surface-project-memory [data-object-id='meeting:m-lone']\")",
+                timeout=T)
+            assert receipt.locator("[role=status]").text_content() == "PARKED · Vendor call"
+            _settle(page)
+            room.screenshot(path=str(SHOTS / f"room-park-receipt-{width}.png"))
+            receipt.get_by_role("button", name="Restore", exact=True).click()
+            room.locator("[data-object-id='meeting:m-lone']").wait_for(timeout=T)
+            page.wait_for_function(
+                "() => /RESTORED/.test(document.querySelector("
+                "'#surface-project-memory [data-testid=room-files-park-receipt] [role=status]')?.textContent || '')",
+                timeout=T)
+            _assert_clean(page, errors)
+        finally:
+            browser.close()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+def test_an_older_project_registers_its_repository_in_the_room(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """A project that watches acme/app with no registration (made before the
+    Door registered, or by the API): Register in the Room registers it."""
+    _ensure_build()
+    _server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=_gh_signed_in)
+    errors: list[str] = []
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 900})
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        try:
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            clear_hub_windows(page, token=TOKEN)
+            pid = _api(page, "POST", "/api/projects/door", {
+                "outcome": "Ledger cutover",
+                "sources": [{"provider": "github", "scope": "acme/app", "watches": ["open_prs"]}],
+            }, token=TOKEN)["projectId"]
+            before = _api(page, "GET", f"/api/projects/{pid}/repository", token=TOKEN)
+            assert (before["registered"], before["watched"]) == (False, ["acme/app"]), before
+            room = _open_room(page, pid)
+            register = room.get_by_test_id("room-register")
+            register.wait_for(timeout=T)
+            register.click()
+            register.wait_for(state="detached", timeout=T)  # registered: the verb leaves
+            after = _api(page, "GET", f"/api/projects/{pid}/repository", token=TOKEN)
+            assert (after["repository"], after["registered"], after["cloned"]) == ("acme/app", True, False), after
+            _assert_clean(page, errors)
+        finally:
+            browser.close()
