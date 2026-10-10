@@ -53,6 +53,15 @@ _RELATIONSHIP_KINDS = frozenset({"direct_report", "peer", "extended"})
 _ENTRY_KINDS = frozenset({"one_on_one"})
 _RECORD_KINDS = frozenset({"request", "commitment", "grounding_note"})
 _OPEN_COMMITMENT = "open"
+# PHILO-17 (U09): a commitment runs one of two ways. ``leader_owes`` is what
+# he owes the person (minted by accepting a request); ``report_owes`` is what
+# the person owes him (recorded directly). A record with no direction is his.
+_LEADER_OWES = "leader_owes"
+_REPORT_OWES = "report_owes"
+
+
+def _owed_by_leader(record: dict[str, Any]) -> bool:
+    return str(record.get("direction") or _LEADER_OWES) != _REPORT_OWES
 _WORD_RE = re.compile(r"[a-z0-9]+")
 
 
@@ -132,9 +141,11 @@ class PeopleService:
         view = self._relationship_view(record)
         sessions = self.list_one_on_ones(principal, relationship_id)
         requests = [self._record_view(item) for item in self._list("request", relationship_id=relationship_id)]
-        commitments = [self._record_view(item) for item in self._list("commitment", relationship_id=relationship_id)]
+        all_commitments = self._list("commitment", relationship_id=relationship_id)
+        commitments = [self._record_view(item) for item in all_commitments if _owed_by_leader(item)]
+        owed_to_you = [self._record_view(item) for item in all_commitments if not _owed_by_leader(item)]
         notes = [self._record_view(item) for item in self._list("grounding_note", relationship_id=relationship_id)]
-        view.update({"sessions": sessions, "requests": requests, "commitments": commitments, "notes": notes})
+        view.update({"sessions": sessions, "requests": requests, "commitments": commitments, "owed_to_you": owed_to_you, "notes": notes})
         if db is not None:
             calendar_context = self._brief_calendar_context(db, record)
             next_event = calendar_context["next_one_on_one"]
@@ -198,6 +209,25 @@ class PeopleService:
             "body": self._text(payload, "body", required=True, limit=20_000),
             "visibility": self._visibility(payload), "state": "requested", "lifecycle": "requested",
             "created_at": _now(), "updated_at": _now(),
+        })
+        return self._record_view(record)
+
+    def create_owed_to_you(self, principal: Any, relationship_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """PHILO-17 (U09): record what the person owes him, as an open commitment.
+
+        Stored the same way his own commitments are (encrypted, with history),
+        with ``direction = report_owes``; Done and Reopen work on it as on his.
+        """
+        self._require_relationship(principal, relationship_id)
+        now = _now()
+        record = self._create("commitment", {
+            "relationship_id": relationship_id,
+            "body": self._text(payload, "body", required=True, limit=20_000),
+            "visibility": self._visibility(payload),
+            "direction": _REPORT_OWES, "state": _OPEN_COMMITMENT, "lifecycle": _OPEN_COMMITMENT,
+            "execution_links": [],
+            "history": [{"event": "recorded", "state": _OPEN_COMMITMENT, "at": now, "source": "people"}],
+            "created_at": now, "updated_at": now,
         })
         return self._record_view(record)
 
@@ -330,6 +360,7 @@ class PeopleService:
         rows = [
             self._record_view(item)
             for item in self._list("commitment", **({"relationship_id": relationship_id} if relationship_id else {}))
+            if _owed_by_leader(item)
         ]
         satisfied = sum(1 for item in rows if item.get("state") == "done")
         dismissed = sum(1 for item in rows if item.get("state") == "dismissed")
@@ -392,12 +423,13 @@ class PeopleService:
         """
         relationship = self._require_relationship(principal, relationship_id, read=True)
 
-        # Encrypted: open commitments for this relationship.
-        open_commitments = [
-            self._record_view(item)
-            for item in self._list("commitment", relationship_id=relationship_id)
+        # Encrypted: open commitments for this relationship, each way.
+        open_rows = [
+            item for item in self._list("commitment", relationship_id=relationship_id)
             if item.get("state") == _OPEN_COMMITMENT
         ]
+        open_commitments = [self._record_view(item) for item in open_rows if _owed_by_leader(item)]
+        owed_to_you = [self._record_view(item) for item in open_rows if not _owed_by_leader(item)]
 
         # Encrypted: open agenda items across all sessions.
         sessions = self._list("one_on_one", relationship_id=relationship_id)
@@ -456,6 +488,7 @@ class PeopleService:
             "relationship_id": relationship_id,
             "display_name": relationship.get("display_name"),
             "open_commitments": open_commitments,
+            "owed_to_you": owed_to_you,
             "agenda_items": agenda_items,
             "grounding_note_count": grounding_note_count,
             "linked_meetings": linked_meetings,
@@ -1410,6 +1443,8 @@ class PeopleService:
             return []
         cards: list[FollowThroughCard] = []
         for commitment in self._open_commitments():
+            if not _owed_by_leader(commitment):
+                continue
             card_id = f"people:{commitment['id']}"
             cards.append(FollowThroughCard(
                 id=card_id,

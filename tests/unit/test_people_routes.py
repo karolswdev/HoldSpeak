@@ -187,3 +187,19 @@ def test_commitment_transition_http_is_a_parity_twin_of_mcp(
     }
     assert service.get_commitment(owner, mcp_commitment["id"])["state"] == "done"
     assert service.get_commitment(owner, http_commitment["id"])["state"] == "done"
+
+
+def test_philo17_owed_route_records_what_they_owe_you(tmp_path: Path) -> None:
+    owner = Principal(PrincipalKind.OWNER, "route-owner")
+    client = _client(tmp_path, owner)
+    client.post("/api/people/setup")
+    rid = client.post("/api/people/relationships", json={"display_name": "Maya Chen"}).json()["relationship"]["id"]
+    owed = client.post(f"/api/people/relationships/{rid}/owed", json={"body": "Send me the API migration estimate"})
+    assert owed.status_code == 201
+    assert owed.json()["commitment"]["direction"] == "report_owes"
+    detail = client.get(f"/api/people/relationships/{rid}").json()["relationship"]
+    assert detail["commitments"] == []
+    assert [item["body"] for item in detail["owed_to_you"]] == ["Send me the API migration estimate"]
+    done = client.post(f"/api/people/commitments/{owed.json()['commitment']['id']}/transition", json={"verb": "done"})
+    assert done.status_code == 200
+    assert client.post(f"/api/people/relationships/{rid}/owed", json={"body": ""}).status_code in {400, 422}

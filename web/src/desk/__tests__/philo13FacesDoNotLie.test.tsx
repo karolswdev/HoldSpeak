@@ -157,7 +157,7 @@ describe("a People store failure keeps the window and the note", () => {
     render(<PeopleCore scope="people:r1" />);
     await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
-    const note = await screen.findByLabelText("Grounding note");
+    const note = await screen.findByLabelText("Note");
     fireEvent.change(note, { target: { value: "Wants the cutover plan in writing" } });
     fireEvent.click(screen.getByRole("button", { name: "Add note" }));
 
@@ -165,7 +165,7 @@ describe("a People store failure keeps the window and the note", () => {
     // The window keeps the person and the unsent note.
     expect(screen.queryByTestId("people-joy-state")).toBeNull();
     expect(screen.getAllByText("Priya Nair").length).toBeGreaterThan(0);
-    expect((screen.getByLabelText("Grounding note") as HTMLTextAreaElement).value).toBe(
+    expect((screen.getByLabelText("Note") as HTMLTextAreaElement).value).toBe(
       "Wants the cutover plan in writing",
     );
     // Never the hub's code on the face.
@@ -175,7 +175,7 @@ describe("a People store failure keeps the window and the note", () => {
     storeDown = false;
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(screen.queryByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeNull());
-    expect((screen.getByLabelText("Grounding note") as HTMLTextAreaElement).value).toBe(
+    expect((screen.getByLabelText("Note") as HTMLTextAreaElement).value).toBe(
       "Wants the cutover plan in writing",
     );
   });
