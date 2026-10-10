@@ -385,7 +385,11 @@ class TestProjectRepositoryGlass:
                 linked = _api(page, "GET", f"/api/meetings/{LOOSE}/projects", token=TOKEN)["projects"]
                 assert [p["project_id"] for p in linked] == [PROJECT]
                 drawer = self._drawer(page, PROJECT)
-                drawer.get_by_text("Ledger rollback review").first.wait_for(timeout=T)
+                # PHILO-15 B40: an icon label is at most two lines, cut in the MIDDLE
+                # ("Ledger…\nreview"); the whole name is its title (DeskIcon.tsx IconName).
+                # The List view (393) draws the whole name.
+                drawer.get_by_title("Ledger rollback review", exact=True).or_(
+                    drawer.get_by_text("Ledger rollback review")).first.wait_for(timeout=T)
                 page.screenshot(path=str(SHOTS / f"16-drawer-lists-meeting-{width}.png"))
                 assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth")
                 assert not errors, errors

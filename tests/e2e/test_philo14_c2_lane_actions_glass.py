@@ -217,10 +217,20 @@ def test_rebrief_receipt_survives_send(lane) -> None:
     _arm(page)
     hook("UserPromptSubmit", prompt="Existing question answered.")
     page.locator("[data-testid='lane-ask']").wait_for(state="detached", timeout=15000)
+    # PHILO-15 14 (#996): mid-turn a Re-brief is QUEUED · AFTER THIS TURN
+    # (launch_rebrief.MID_TURN_EVENTS); the turn ends, so it is typed now: SENT.
+    hook("Stop")
+    # Re-brief types into the LAUNCH's own pane (FirstMessage.retarget reads the
+    # launch record's tmux session), so the seeded launch names this rig's pane.
+    from holdspeak.delivery.factory_launch import LaunchLedger
+
+    LaunchLedger().update("launch_c2_runbook", session=name)
     page.locator("[data-testid='lane-rebrief']").click()
     field = page.get_by_role("textbox", name="Re-brief", exact=True)
     field.fill("Re-brief: Jordan owns it.")
-    with page.expect_response(lambda r: "/steer" in r.url and r.request.method == "POST") as got:
+    # PHILO-15 14 (#996): Re-brief posts the launch's own route
+    # (laneStore.sendRebrief: /api/agent/launches/<id>/rebrief), not /steer.
+    with page.expect_response(lambda r: r.url.endswith("/rebrief") and r.request.method == "POST") as got:
         field.press("Enter")
     assert got.value.status == 200, got.value.text()
     page.locator("[data-testid='lane-rebrief-well']").wait_for(state="detached", timeout=5000)
