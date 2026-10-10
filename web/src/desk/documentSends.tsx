@@ -83,6 +83,18 @@ export function DecisionRecordSendWells({ id, text }: { id: string; text?: strin
   return <div data-seat="decision-record"><SendWells doc={decisionRecordDoc(id, text)} /></div>;
 }
 
+/** PHILO-17 U08: a note (a Thought's working note) on `note:<id>`. The
+ *  version is the note's revision: a saved edit reads the preview again. */
+export const noteDoc = (id: string, title?: string | null, version?: string | number): DocRef => ({
+  ref: `note:${id}`, title: String(title || "Note"), label: "NOTE",
+  version: version === undefined ? undefined : String(version),
+});
+
+/** The Thought window's well (PHILO-17 U08). */
+export function NoteSendWells({ id, title, version }: { id: string; title?: string | null; version?: string | number }) {
+  return <div data-seat="note"><SendWells doc={noteDoc(id, title, version)} /></div>;
+}
+
 /** PREPARED ×K on a Room decision row (B4). Nothing at zero. */
 export function DecisionRecordPreparedChip({ id }: { id: string }) {
   return <PreparedChip docRef={decisionRecordDoc(id).ref} />;

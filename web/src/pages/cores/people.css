@@ -28,6 +28,7 @@
 /* HS-149-03 — empty roster: lead with the create act. */
 .people-empty-roster { padding: 16px 0; }
 .people-empty-lead { color: var(--text-muted); font-size: var(--desk-surface-body-size); margin: 0; }
+.people-duplicate { display: inline-block; margin: 0 0 8px; }
 /* HS-149-03 — NEXT 1:1 header on relationship detail. */
 .people-next-header { color: var(--text-muted); font-family: var(--font-mono); font-size: var(--desk-surface-detail-size); letter-spacing: 0.04em; margin-bottom: 4px; }
 /* HS-149-03 — picker inline region. */

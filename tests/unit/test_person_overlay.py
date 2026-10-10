@@ -201,6 +201,69 @@ class TestF6MondayBriefMcpGate:
         )
 
 
+    @staticmethod
+    def _mcp_people(people_service: PeopleService, monkeypatch: pytest.MonkeyPatch) -> None:
+        from holdspeak.mcp.families import people as people_family
+        monkeypatch.delenv(people_family.ACCESS_ENV, raising=False)
+        monkeypatch.setattr(people_family, "build_people_service", lambda: people_service)
+
+    def test_philo17_private_only_owed_never_counts_in_mcp_brief(
+        self, mcp_db: Database, people_service: PeopleService, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Astra r1 MUST: a leader-private 'they owe you' row never reaches
+        monday_brief.get, as text or as a count; the owner's overlay keeps it."""
+        self._mcp_people(people_service, monkeypatch)
+        rel = people_service.create_relationship(OWNER, {"display_name": "Private Owed"})
+        people_service.create_owed_to_you(OWNER, rel["id"], {"body": "PRIVATE OWED", "visibility": "leader_private"})
+
+        tools.dispatch("monday_brief.generate", {}, OWNER)
+        result = tools.dispatch("monday_brief.get", {}, OWNER)
+        assert "PRIVATE OWED" not in json.dumps(result)
+        sections = [s for s in result.get("person_sections", []) if s["relationship_id"] == rel["id"]]
+        assert sections == [] or sections[0]["they_owe_count"] == 0
+
+        from holdspeak.services.follow_through_service import FollowThroughService
+        own = compose_person_overlay(("", ""), people_service, FollowThroughService(mcp_db), mcp_db, OWNER)
+        assert [s["they_owe_count"] for s in own["sections"] if s["relationship_id"] == rel["id"]] == [1]
+
+    def test_philo17_mixed_owed_counts_shared_only_in_mcp_brief(
+        self, mcp_db: Database, people_service: PeopleService, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self._mcp_people(people_service, monkeypatch)
+        rel = people_service.create_relationship(OWNER, {"display_name": "Mixed Owed"})
+        people_service.create_owed_to_you(OWNER, rel["id"], {"body": "PRIVATE OWED", "visibility": "leader_private"})
+        people_service.create_owed_to_you(OWNER, rel["id"], {"body": "Shared owed", "visibility": "shared_intent"})
+
+        tools.dispatch("monday_brief.generate", {}, OWNER)
+        result = tools.dispatch("monday_brief.get", {}, OWNER)
+        assert "PRIVATE OWED" not in json.dumps(result)
+        assert [s["they_owe_count"] for s in result["person_sections"] if s["relationship_id"] == rel["id"]] == [1]
+
+
+    def test_philo17_private_you_owe_and_agenda_never_count_in_mcp_brief(
+        self, mcp_db: Database, people_service: PeopleService, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A leader-private you-owe item and agenda item never count in
+        monday_brief.get; the owner's overlay keeps both."""
+        self._mcp_people(people_service, monkeypatch)
+        rel = people_service.create_relationship(OWNER, {"display_name": "Private Mine"})
+        req = people_service.create_request(OWNER, rel["id"], {"body": "PRIVATE YOU OWE", "visibility": "leader_private"})
+        people_service.accept_request(OWNER, req["id"])
+        session = people_service.create_one_on_one(OWNER, rel["id"], {"visibility": "leader_private"})
+        people_service.add_agenda_item(OWNER, session["id"], {"body": "PRIVATE AGENDA", "visibility": "leader_private"})
+
+        tools.dispatch("monday_brief.generate", {}, OWNER)
+        result = tools.dispatch("monday_brief.get", {}, OWNER)
+        rendered = json.dumps(result)
+        assert "PRIVATE YOU OWE" not in rendered and "PRIVATE AGENDA" not in rendered
+        sections = [s for s in result.get("person_sections", []) if s["relationship_id"] == rel["id"]]
+        assert sections == [] or (sections[0]["you_owe_count"], sections[0]["agenda_backlog"]) == (0, 0)
+
+        from holdspeak.services.follow_through_service import FollowThroughService
+        own = compose_person_overlay(("", ""), people_service, FollowThroughService(mcp_db), mcp_db, OWNER)
+        assert [(s["you_owe_count"], s["agenda_backlog"]) for s in own["sections"] if s["relationship_id"] == rel["id"]] == [(1, 1)]
+
+
 # -- Pin 5: L2 refusal -------------------------------------------------------
 
 
