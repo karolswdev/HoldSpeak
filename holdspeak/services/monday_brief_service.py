@@ -354,7 +354,8 @@ def _outermost(events: list[Any]) -> Any:
     return min(events, key=lambda row: (float(row["timestamp"]), -int(row["id"])))
 
 
-_CLOSE_HOUR = 17
+#: PHILO-17: the lookback opens at the start of the previous workday.
+_LOOKBACK_START_HOUR = 0
 _RETRY_WINDOW_SECONDS = 5 * 60
 # HS-132-08: a recorded meeting is the most material thing a week contains, so
 # it leads Changed ahead of the observer's method-level receipts (priority 0).
@@ -543,7 +544,7 @@ class MondayBriefService:
     """Create one durable brief per local calendar day.
 
     The supplied datetime's timezone (when it has one) is retained while
-    calculating the local 17:00 close. Naive datetimes retain the application's
+    calculating the local start of the previous workday. Naive datetimes retain the application's
     existing local-time convention.
     """
 
@@ -571,11 +572,12 @@ class MondayBriefService:
     def compute_window(
         self, now: datetime.datetime | None = None
     ) -> tuple[datetime.datetime, datetime.datetime]:
-        """Compute the local brief window, from the preceding close to *now*.
+        """Compute the local brief window, from the previous workday to *now*.
 
-        The "what happened" lookback is UNCHANGED from Phase 132:
-        Monday looks back to Friday 17:00, other weekdays to the
-        preceding business day 17:00, weekends to Friday 17:00.
+        PHILO-17: the lookback starts at 00:00 of the previous workday.
+        Monday looks back to Friday 00:00, other weekdays to the preceding
+        day 00:00, weekends to Friday 00:00. It started at 17:00 before, so
+        yesterday's 10:00 meeting was not in the brief.
 
         HS-175-05: the forward-looking "THIS WEEK" section uses
         ``compute_lookahead`` separately; this function is not widened.
@@ -590,11 +592,21 @@ class MondayBriefService:
             days_back = weekday - 4
 
         start_date = (period_end - datetime.timedelta(days=days_back)).date()
-        period_start = datetime.datetime.combine(
-            start_date,
-            datetime.time(hour=_CLOSE_HOUR),
-            tzinfo=period_end.tzinfo,
+        start_wall = datetime.datetime.combine(
+            start_date, datetime.time(hour=_LOOKBACK_START_HOUR)
         )
+        tz = period_end.tzinfo
+        if tz is None:
+            period_start = start_wall
+        elif isinstance(tz, datetime.timezone) and (
+            period_end.utcoffset() == period_end.astimezone().utcoffset()
+        ):
+            # Astra r1: ``local_now()`` carries a FIXED offset. Copied onto
+            # an earlier day it is wrong across a DST change, so midnight is
+            # resolved in the hub's real local zone for that day.
+            period_start = start_wall.astimezone()
+        else:
+            period_start = start_wall.replace(tzinfo=tz)
         return period_start, period_end
 
     def compute_lookahead(
@@ -2306,6 +2318,39 @@ class MondayBriefService:
                 "SELECT * FROM monday_briefs ORDER BY generated_at DESC, id DESC LIMIT 1"
             ).fetchone()
             return self._load_brief(conn, row) if row is not None else None
+
+    def is_stale(self, brief: MondayBrief, *, now: datetime.datetime | None = None) -> bool:
+        """PHILO-17: the brief is older than the desk it describes.
+
+        A cheap rule, read when the brief is read: it was made on an earlier
+        local day, or a meeting, a decision or an engine assignment is newer
+        than ``generated_at``. The Brief view makes the brief again when this
+        is true (one press of Refresh does the same).
+        """
+        made = parse_stamp(brief.generated_at)
+        if made is None:
+            return True
+        current = aware(now or self._clock())
+        if made.astimezone(current.tzinfo).date() < current.date():
+            return True
+        queries = (
+            # Astra r1: the durable row time, never ``ended_at`` (an import's
+            # end can be ahead of the clock and kept the brief stale).
+            "SELECT MAX(created_at) FROM meetings WHERE parked = 0",
+            "SELECT MAX(created_at) FROM decision_records",
+            "SELECT MAX(updated_at) FROM inference_assignment_heads",
+            "SELECT MAX(set_at) FROM inference_capability_off",
+        )
+        with self._db._connection() as conn:
+            for sql in queries:
+                try:
+                    row = conn.execute(sql).fetchone()
+                except Exception:  # a table this desk does not have yet
+                    continue
+                newest = parse_stamp(row[0]) if row is not None else None
+                if newest is not None and newest > made:
+                    return True
+        return False
 
     def get_by_id(self, brief_id: str) -> MondayBrief | None:
         """Return the stored brief with exactly *brief_id*, if it exists."""

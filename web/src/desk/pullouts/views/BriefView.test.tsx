@@ -325,3 +325,109 @@ describe("BriefView THIS WEEK counters and generated clock", () => {
     },
   );
 });
+
+describe("BriefView PHILO-17: refresh, blocker verb, THIS WEEK rows, named triage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("makes a stale brief again once, and shows Refresh with nothing selected", async () => {
+    const fresh = { ...briefWithPeople, id: "brief-fresh", stale: false };
+    apiFetch.mockImplementation((path: string) => {
+      if (path === "/api/brief/latest") return Promise.resolve({ ...briefWithPeople, stale: true });
+      if (path === "/api/brief/generate") return Promise.resolve(fresh);
+      return Promise.resolve({});
+    });
+    renderBriefView();
+
+    await waitFor(() => {
+      expect(apiFetch).toHaveBeenCalledWith("/api/brief/generate", { method: "POST" });
+    });
+    expect(apiFetch.mock.calls.filter(([path]) => path === "/api/brief/generate")).toHaveLength(1);
+    expect(await screen.findByTestId("brief-refresh")).toHaveTextContent("Refresh");
+    // Nothing is selected, so no verb acts on an unnamed row.
+    expect(screen.queryByText("Acknowledge")).not.toBeInTheDocument();
+    expect(screen.queryByText("Defer")).not.toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("brief-refresh"));
+    });
+    expect(apiFetch.mock.calls.filter(([path]) => path === "/api/brief/generate")).toHaveLength(2);
+  });
+
+  it("does not make a fresh brief again by itself", async () => {
+    mockBrief({ ...briefWithPeople, stale: false });
+    renderBriefView();
+    await screen.findByTestId("brief-refresh");
+    expect(apiFetch).not.toHaveBeenCalledWith("/api/brief/generate", expect.anything());
+  });
+
+  it("the no-engine row's verb is a Button that opens Runs on", async () => {
+    mockBrief({
+      ...briefWithPeople,
+      sections: {
+        ...briefWithPeople.sections,
+        waiting: [
+          {
+            id: "blocker-summary",
+            section: "waiting",
+            text: "No engine for summaries",
+            detail: "Choose an engine",
+            source_ref: "blocker:summary",
+            priority: 120,
+          },
+        ],
+      },
+    });
+    renderBriefView();
+
+    const verb = await screen.findByTestId("brief-blocker-verb-summary");
+    expect(verb.tagName).toBe("BUTTON");
+    expect(verb).toHaveTextContent("Choose an engine");
+    fireEvent.click(verb);
+    expect(openSurfaceOr).toHaveBeenCalledWith("open-concierge", "/models", "summary");
+  });
+
+  it("draws a THIS WEEK item no composed row draws, and no empty heading", async () => {
+    mockBrief({
+      ...briefWithPeople,
+      sections: {
+        ...briefWithPeople.sections,
+        this_week: [
+          {
+            id: "week-decisions",
+            section: "this_week",
+            text: "1 new decision from meetings",
+            detail: null,
+            source_ref: "meeting_watch:decisions",
+            priority: 52,
+          },
+        ],
+      },
+    });
+    renderBriefView();
+    expect(await screen.findByTestId("brief-tw-other")).toHaveTextContent("1 new decision from meetings");
+
+    mockBrief({
+      ...briefWithPeople,
+      sections: {
+        ...briefWithPeople.sections,
+        this_week: [
+          { id: "w0", section: "this_week", text: "0 armed", detail: null, source_ref: "calendar:armed", priority: 53 },
+        ],
+      },
+    });
+    const second = renderBriefView();
+    await waitFor(() => expect(second.container.querySelector("[data-testid='brief-since-friday']")).not.toBeNull());
+    expect(second.container.querySelector("[data-testid='brief-this-week']")).toBeNull();
+  });
+
+  it("the triage receipt names the selected row", async () => {
+    mockBrief();
+    renderBriefView();
+    fireEvent.click(await screen.findByText("Standup"));
+    expect(await screen.findByText("SELECTED · MEETING RECORDED · Standup")).toBeInTheDocument();
+    expect(screen.getByText("Acknowledge")).toBeInTheDocument();
+    expect(screen.queryByTestId("brief-refresh")).not.toBeInTheDocument();
+  });
+});

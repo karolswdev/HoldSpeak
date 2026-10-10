@@ -165,8 +165,9 @@ def test_an_imported_meeting_is_dated_the_import_moment(tmp_path, db):
         wav, db=db, transcriber=FakeTranscriber(["hello"]), config=_config()
     ).state
 
-    assert state.started_at >= before
-    assert state.started_at <= datetime.now()
+    # PHILO-17: the meeting ENDS at the import moment (never in the future).
+    assert state.ended_at >= before
+    assert state.ended_at <= datetime.now()
     assert abs((state.started_at - mtime).total_seconds()) > 60 * 60 * 24
 
     vtt = tmp_path / "old transcript.vtt"
@@ -174,7 +175,7 @@ def test_an_imported_meeting_is_dated_the_import_moment(tmp_path, db):
     old = (datetime.now() - timedelta(days=108)).timestamp()
     os.utime(vtt, (old, old))
     parsed = import_transcript(vtt, db=db, config=_config()).state
-    assert parsed.started_at >= before
+    assert parsed.ended_at >= before
 
     # An explicit start still wins: the caller (sync, a fixture, a future
     # "the file's date" gesture) keeps its say.

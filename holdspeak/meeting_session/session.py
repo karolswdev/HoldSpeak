@@ -460,8 +460,11 @@ class MeetingSession(
                 # revision through `InferenceRunner`.
                 self._open_live_intelligence()
             else:
+                # PHILO-17: the summary runs after Stop (the setting, the
+                # route and consent decide; runtime/meeting_glue.py), so the
+                # live session says the plain fact, not "disabled in config".
                 self._state.intel_status = "disabled"
-                self._state.intel_status_detail = "Meeting intelligence disabled in config."
+                self._state.intel_status_detail = "No summary yet."
 
             # Initialize speaker diarization if enabled (for system audio or mic)
             if (self.diarization_enabled or self.diarize_mic) and SpeakerDiarizer is not None:

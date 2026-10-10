@@ -550,3 +550,96 @@ def test_the_default_for_ai_work_routes_the_backlog_through_the_conductor(tmp_pa
     assert project_route(desk.db, invocation_id="meeting:before-engine")["status"] == "ready"
     assert second["backlog"]["queued"] == ["before-engine"]
     assert _jobs(desk.db) == {"before-engine": "queued"}
+
+
+# ── 5. PHILO-17: "Summary after every meeting" holds at Import too ───────────
+
+
+def test_an_import_with_an_engine_queues_its_summary(tmp_path: Path, monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from holdspeak.config import Config
+    from holdspeak.meeting_import import import_transcript
+
+    cfg = Config()
+    cfg.meeting.intelligence_auto = "every"
+    monkeypatch.setattr(Config, "load", lambda: cfg)
+    monkeypatch.setattr("holdspeak.intel_queue_conductor.wake_intel_queue_conductor", lambda: True)
+    db = Database(tmp_path / "import.db")
+    assign_meeting_engine(db)
+    path = tmp_path / "weekly sync.vtt"
+    path.write_text("WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n<v Priya>the rollout starts monday\n")
+    config = SimpleNamespace(meeting=SimpleNamespace(intel_enabled=True, intel_deferred_enabled=True))
+
+    result = import_transcript(path, db=db, config=config)
+
+    assert result.intel_job_enqueued is True
+    assert _jobs(db) == {result.state.id: "queued"}
+    assert db.meetings.get_meeting(result.state.id).intel_status == "queued"
+
+
+def test_queue_after_save_follows_the_setting_and_consent(tmp_path: Path) -> None:
+    from holdspeak.services.meeting_backlog_service import queue_after_save
+
+    db = Database(tmp_path / "after-save.db")
+    _seed_meeting(db, "no-engine")
+    assert queue_after_save(db, "no-engine", auto_mode="every") == {"queued": False, "reason": "no_engine"}
+    assert _marks(db) == {"no-engine"}  # the backlog runs it once an engine can
+
+    assign_meeting_engine(db)
+    _seed_meeting(db, "off")
+    assert queue_after_save(db, "off", auto_mode="off")["queued"] is False
+    _seed_meeting(db, "loose")
+    assert queue_after_save(db, "loose", auto_mode="room_linked")["reason"] == "not_room_linked"
+    _seed_meeting(db, "empty", has_segments=False)
+    assert queue_after_save(db, "empty", auto_mode="every")["reason"] == "no_transcript"
+    _seed_meeting(db, "every")
+    assert queue_after_save(db, "every", auto_mode="every") == {"queued": True, "reason": "queued"}
+    assert _jobs(db) == {"every": "queued"}
+
+
+def _unpressed_lan_engine(db: Database):
+    """A LAN engine HoldSpeak assigned by itself: the owner never pressed for it."""
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_batteries_default import OWNER
+    from tests.unit.test_phase143_inference_assignments import _profile
+
+    schema = process_inference_capability_registry().require("meeting.deferred_analysis")
+    _profile(db, "lan-engine", boundary="private_network",
+             claims=("language", f"result_schema:{schema.output_schema_sha256}"))
+    return InferenceAssignmentService(db).set_assignment(OWNER, {
+        "command_id": "unpressed-lan", "expected_revision": 0, "scope": {"kind": "global"},
+        "entries": [{"profile_id": "lan-engine", "profile_revision": 1}],
+    }, made_by="holdspeak_default")
+
+
+def test_stop_and_import_never_send_to_an_engine_the_owner_did_not_choose(tmp_path: Path, monkeypatch) -> None:
+    """Astra r1 MUST 2: the new after-save path keeps the consent guard. The
+    route is READY (so only consent can stop it); no job, the meeting waits."""
+    from types import SimpleNamespace
+
+    from holdspeak.config import Config
+    from holdspeak.meeting_import import import_transcript
+    from holdspeak.services.meeting_backlog_service import queue_after_save
+    from holdspeak.services.meeting_route_projection import project_route
+
+    cfg = Config()
+    cfg.meeting.intelligence_auto = "every"
+    monkeypatch.setattr(Config, "load", lambda: cfg)
+    monkeypatch.setattr("holdspeak.intel_queue_conductor.wake_intel_queue_conductor", lambda: True)
+    db = Database(tmp_path / "consent-after-save.db")
+    _unpressed_lan_engine(db)
+    assert project_route(db, invocation_id="meeting:stopped")["status"] == "ready"
+
+    _seed_meeting(db, "stopped")  # the Stop path's call
+    assert queue_after_save(db, "stopped", auto_mode="every") == {"queued": False, "reason": "waiting_consent"}
+
+    path = tmp_path / "sync.vtt"
+    path.write_text("WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n<v Priya>the rollout starts monday\n")
+    imported = import_transcript(
+        path, db=db, config=SimpleNamespace(meeting=SimpleNamespace(intel_enabled=True, intel_deferred_enabled=True)),
+    )
+    assert imported.intel_job_enqueued is False
+    assert _jobs(db) == {}
+    assert _marks(db) == {"stopped", imported.state.id}  # the backlog runs them once he consents

@@ -48,6 +48,9 @@ type MondayBrief = {
   generated_label?: string | null;
   period_start?: string;
   generated_at?: string;
+  /** PHILO-17: the desk is newer than the brief (a meeting, a decision, an
+   *  engine assignment, or a new day). The view makes the brief again. */
+  stale?: boolean;
 };
 
 const LOOKBACK_SECTIONS: readonly BriefSection[] = ["changed", "broke", "waiting", "decisions"];
@@ -158,6 +161,23 @@ function parseLookbackItem(item: BriefItem): {
   return { kind: null, primary: item.text, detail: item.detail ?? null };
 }
 
+/** PHILO-17: a brief row that names a setup blocker (`blocker:<key>`, from
+ *  the needs-you rule): its verb opens Runs on, or reads again for `unknown`. */
+export function blockerKey(sourceRef: string | null | undefined): string | null {
+  const match = /^blocker:(.+)$/.exec(String(sourceRef ?? ""));
+  return match ? match[1] : null;
+}
+
+/** The THIS WEEK refs the composed rows (MEETINGS, NEXT, ARMED, DUE) draw. */
+function composedThisWeek(item: BriefItem): boolean {
+  return (
+    item.source_ref === "calendar:week" ||
+    item.source_ref === "calendar:armed" ||
+    item.source_ref === "meeting_watch:commitments_due" ||
+    item.text.startsWith("Next:")
+  );
+}
+
 /* ================================================================== */
 
 export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; onOpenFollowThrough?: (id: string) => void }) {
@@ -176,6 +196,8 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const standingPages = useStandingPages("desk");
 
   const reads = useRef({ started: 0, landed: 0 });
+  // PHILO-17: a stale brief is made again once per open view (never a loop).
+  const autoRefreshed = useRef(false);
   const load = useCallback(async (quiet = false) => {
     if (!quiet) {
       setLoading(true);
@@ -201,9 +223,19 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
 
   useEffect(() => { void load(); }, [load]);
 
+  // PHILO-17: the brief was frozen at its first generation. When the hub says
+  // the desk is newer (a meeting, a decision, an engine), make it again.
+  useEffect(() => {
+    if (!brief?.stale || autoRefreshed.current || generating) return;
+    autoRefreshed.current = true;
+    void generate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brief?.stale]);
+
   const generate = async () => {
     setGenerating(true);
     setError("");
+    setSelectedId(null);
     try {
       const generated = await apiFetch<MondayBrief>("/api/brief/generate", { method: "POST" });
       setBrief(generated);
@@ -218,7 +250,9 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   /* ── Derived data ─────────────────────────────────────────────── */
 
   const thisWeekItems = brief?.sections["this_week"] ?? [];
-  const hasThisWeek = thisWeekItems.length > 0;
+  // PHILO-17: a THIS WEEK item no composed row draws (e.g. "1 new decision
+  // from meetings") is its own row; the heading never stands over nothing.
+  const thisWeekOther = thisWeekItems.filter((item) => !composedThisWeek(item));
   const lookbackItems = LOOKBACK_SECTIONS.flatMap((id) => brief?.sections[id] ?? []);
   const hasLookback = lookbackItems.length > 0;
   const allItems = [...thisWeekItems, ...lookbackItems];
@@ -267,6 +301,14 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const meetingsLabel = countToken(meetingCount, "MEETING", "MEETINGS");
   const armedLabel = countToken(armedCount, "ARMED");
   const dueLabel = countToken(dueCount, "DUE");
+  const hasThisWeek = Boolean(meetingsLabel || armedLabel || dueLabel || thisWeekOther.length > 0);
+
+  /* ── a setup blocker row opens Runs on (PHILO-17) ─────────────── */
+
+  const openBlocker = (key: string) => {
+    if (key === "unknown") void generate();
+    else openSurfaceOr("open-concierge", "/models", key);
+  };
 
   /* ── Triage shelf ─────────────────────────────────────────────── */
 
@@ -401,6 +443,15 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
               ) : null}
             </div>
           ) : null}
+
+          {thisWeekOther.map((item) => (
+            <div key={item.id} className="intelligence-brief-tw-row" data-testid="brief-tw-other">
+              <span className="intelligence-brief-tw-primary">{item.text}</span>
+              {item.detail ? (
+                <span className="intelligence-brief-tw-token">{humanizeDate(item.detail)}</span>
+              ) : null}
+            </div>
+          ))}
         </div>
       ) : null}
 
@@ -413,6 +464,19 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
               const state = shelf[item.id];
               const emblem = sourceEmblem(item.source_ref);
               const parsed = parseLookbackItem(item);
+              const blocker = blockerKey(item.source_ref);
+              if (blocker) {
+                return (
+                  <div key={item.id} className="intelligence-brief-sf-row" data-testid="brief-blocker-row">
+                    <div className="intelligence-brief-sf-body">
+                      <span className="intelligence-brief-sf-primary">{parsed.primary}</span>
+                    </div>
+                    <Button dense variant="ghost" onClick={() => openBlocker(blocker)} data-testid={`brief-blocker-verb-${blocker}`}>
+                      {parsed.detail || "Choose an engine"}
+                    </Button>
+                  </div>
+                );
+              }
               return (
                 <div key={item.id} className="intelligence-brief-sf-row" data-testid="brief-sf-row">
                   {parsed.kind ? (
@@ -509,7 +573,11 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
           (selectedPerson
             ? `PERSON · ${selectedPerson.display_name}`
             : selected
-              ? `SELECTED · ${parseLookbackItem(selected).kind ?? "ITEM"}`
+              ? (() => {
+                  // PHILO-17: the receipt names the row the verbs act on.
+                  const parsed = parseLookbackItem(selected);
+                  return `SELECTED · ${parsed.kind ? `${parsed.kind} · ` : ""}${parsed.primary}`;
+                })()
               : undefined)
         }
         verbs={
@@ -524,19 +592,25 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
                 Open person
               </Button>
             </>
-          ) : (
+          ) : selected ? (
+            // PHILO-17: the triage verbs show only with a selected row, and
+            // the receipt names that row (they acted on nothing visible).
             <>
-              <Button dense disabled={!selected || shelving} aria-pressed={selectedId ? shelf[selectedId] === "acknowledged" : undefined} onClick={() => void setShelfState("acknowledged")}>
+              <Button dense disabled={shelving} aria-pressed={shelf[selected.id] === "acknowledged"} onClick={() => void setShelfState("acknowledged")}>
                 Acknowledge
               </Button>
-              <Button dense variant="ghost" disabled={!selected || shelving} aria-pressed={selectedId ? shelf[selectedId] === "deferred" : undefined} onClick={() => void setShelfState("deferred")}>
+              <Button dense variant="ghost" disabled={shelving} aria-pressed={shelf[selected.id] === "deferred"} onClick={() => void setShelfState("deferred")}>
                 Defer
               </Button>
-              <Button dense variant="ghost" disabled={!selected} onClick={() => selected && openSurfaceOr("dictate", "/dictation", selected.source_ref ?? undefined)}>
+              <Button dense variant="ghost" onClick={() => openSurfaceOr("dictate", "/dictation", selected.source_ref ?? undefined)}>
                 Speak
               </Button>
             </>
-          )
+          ) : brief ? (
+            <Button dense variant="ghost" disabled={generating} onClick={() => void generate()} data-testid="brief-refresh">
+              {generating ? "Refreshing..." : "Refresh"}
+            </Button>
+          ) : null
         }
       />
     </>

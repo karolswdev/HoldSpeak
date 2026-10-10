@@ -119,7 +119,8 @@ class ImportResult:
 
 
 def _import_moment() -> datetime:
-    """When an import with no stated start happened: now.
+    """When an import with no stated start happened: now. The meeting ENDS
+    at this moment and starts ``duration`` earlier (PHILO-17).
 
     HS-201-10 (rehearsal defect 10). The old default was the FILE's mtime,
     which is not a fact about the meeting at all — a WAV copied onto the
@@ -316,7 +317,9 @@ def import_meeting(
         )
 
     if started_at is None:
-        started_at = _import_moment()
+        # PHILO-17 (Astra r1): the recording ENDED at the import moment. A
+        # start at "now" put the end in the future, outside the Brief window.
+        started_at = _import_moment() - timedelta(seconds=duration)
 
     window_samples = max(1, int(window_seconds * TARGET_SAMPLE_RATE))
     windows_total = int(np.ceil(len(audio) / window_samples))
@@ -580,9 +583,10 @@ def _persist_import(
     """The shared persistence tail: segments in, a real meeting out.
 
     One tail, every import path (audio HS-55, transcripts HS-57): builds the
-    normal ``MeetingState``, saves it via the normal ``save_meeting``, and
-    stops. **Import transcribes and stops** (HS-201-10): it asks for no
-    summary, so no provider is contacted until the owner asks for one.
+    normal ``MeetingState``, saves it via the normal ``save_meeting``, then
+    queues the summary by the same rule as Stop (PHILO-17,
+    ``meeting_backlog_service.queue_after_save``): the "after every meeting"
+    setting, a ready route, and the owner's consent.
     """
     state = MeetingState(
         id=meeting_id or str(uuid.uuid4())[:8],
@@ -593,26 +597,16 @@ def _persist_import(
         segments=segments,
     )
 
-    # HS-201-10 — Import does not run the summary by itself.
-    #
-    # This tail used to enqueue an intel job with only a transcript hash: no
-    # route bundle, no selection hash (the ledgered "hashless legacy entry
-    # point", lane-a-handoff.md). The 2026-09-20 rehearsal watched it contact
-    # 192.168.1.43 before any gesture, with `run_receipt: null` and no "Run
-    # summary" verb ever drawn — and Import is the only path a stranger
-    # without a microphone can take, so the whole Phase-201 disclosure
-    # contract (stories 03 and 04) was unreachable in practice.
-    # Article III wants the host disclosed AT THE POINT OF DECISION, and the
-    # decision belongs to the owner. So the imported meeting lands in the
-    # same shape as a recorded one: a transcript, no summary, and the "Run
-    # summary" verb with its disclosed route beside it.
+    # PHILO-17: Import is a meeting like a recorded one. It lands with a
+    # transcript and no summary; after the save below, the summary is queued
+    # when "Summary after every meeting" holds, the route is ready and the
+    # owner consented (meeting_backlog_service.queue_after_save, the same
+    # rule as Stop). HS-201-10's concern stands: no job without a disclosed
+    # route; the queued job carries the projected route.
     meeting_cfg = config.meeting
     state.intel_status = "disabled"
-    if meeting_cfg.intel_enabled and meeting_cfg.intel_deferred_enabled:
-        state.intel_status_detail = (
-            "No summary yet. Import does not run the summary — "
-            "ask for it on the meeting."
-        )
+    if meeting_cfg.intel_enabled:
+        state.intel_status_detail = "No summary yet."
     else:
         state.intel_status_detail = "Meeting intelligence disabled in config."
     # The transcript this import produced cannot change again, so its
@@ -622,13 +616,26 @@ def _persist_import(
 
     db.meetings.save_meeting(state)
 
+    intel_enqueued = False
+    if meeting_cfg.intel_enabled:
+        try:
+            from .services.meeting_backlog_service import queue_after_save
+
+            intel_enqueued = bool(queue_after_save(db, state.id).get("queued"))
+            if intel_enqueued:
+                from .intel_queue_conductor import wake_intel_queue_conductor
+
+                wake_intel_queue_conductor()
+        except Exception as exc:  # the import stands; the summary waits for a press
+            log.warning(f"summary after import not queued for {state.id}: {exc}")
+
     log.info(
         f"Imported meeting {state.id} from {source_name}: "
-        f"{len(segments)} segment(s), {duration:.1f}s, intel_enqueued=False"
+        f"{len(segments)} segment(s), {duration:.1f}s, intel_enqueued={intel_enqueued}"
     )
     return ImportResult(
         state=state,
-        intel_job_enqueued=False,
+        intel_job_enqueued=intel_enqueued,
         windows_total=windows_total,
         windows_empty=windows_empty,
         duration_seconds=duration,
@@ -683,7 +690,9 @@ def import_transcript(
     duration = max(cue.end for cue in parsed.cues)
 
     if started_at is None:
-        started_at = _import_moment()
+        # PHILO-17 (Astra r1): the recording ENDED at the import moment. A
+        # start at "now" put the end in the future, outside the Brief window.
+        started_at = _import_moment() - timedelta(seconds=duration)
 
     return _persist_import(
         db=db,
