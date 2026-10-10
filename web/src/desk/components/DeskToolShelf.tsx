@@ -28,7 +28,6 @@ import { useNamePrompt, usePalette } from "../chromeState";
 import { StringGadget } from "../surface/gadgets";
 import { allObjects } from "../world";
 import { DESK_TOOLS, KIND_GLYPH, KIND_LABEL } from "../tools";
-import { useChairState } from "../chairState";
 import {
   VERBS, offeredHere, verbLabel, weekVerbs, type VerbContext, type WeekPerson,
 } from "../verbRegistry";
@@ -309,8 +308,6 @@ export function DeskToolShelf() {
   const refresh = useDesk((state) => state.refresh);
   const openToolInspector = useDesk((state) => state.openToolInspector);
   const diveInto = useDesk((state) => state.diveInto);
-  // PHILO-8-01 — the face decides which zone verbs the deck offers.
-  const surface = useChairState((state) => state.surface);
   const integrations = setup?.trust?.destinations ?? [];
   const launchers = useLaunchers();
   // PHILO-13-14 (C4): his week, from the real routes. People come from the
@@ -607,17 +604,9 @@ export function DeskToolShelf() {
       });
     }
 
-    // ── OBJECTS: zones + desk items (query) + projects ──
+    // ── OBJECTS: desk items (query) + projects ──
     if (normalized) {
-      for (const zone of items.directory ?? [])
-        push({
-          id: `zone:${zone.id}`,
-          section: "OBJECTS",
-          glyph: "□",
-          label: String(zone.name ?? "Zone"),
-          kind: "ZONE",
-          run: () => diveInto(String(zone.id)),
-        });
+      // PHILO-17: no face draws zones; the palette lists no ZONE row.
       for (const item of allObjects(items)) {
         const kind = (KIND_LABEL[item.kind] ?? item.kind).toUpperCase();
         push({
@@ -745,7 +734,6 @@ export function DeskToolShelf() {
     projects,
     recents,
     selectedIds,
-    surface,
     targets,
   ]);
 

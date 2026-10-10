@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { WorkMenu, type WorkMenuEntry } from "../DeskMenu";
 import { useDesk } from "../../store";
-import { useChairState } from "../../chairState";
 import { useChairWindows } from "../../chair/chairWindows";
 import { useAllOpenWindows } from "./windowRegistry";
 import { phoneCurrent, phoneRing, showRingWindow, usePhoneSwipe } from "./phoneRing";
@@ -18,7 +17,6 @@ export function ScreenSwitcher({ name }: { name: string }) {
   useChairWindows((s) => s.phone);
   useChairWindows((s) => s.closed);
   useChairWindows((s) => s.captureInRing);
-  useChairState((s) => s.surface);
   useDesk((s) => s.panelOrder);
   useDesk((s) => s.panelMin);
   usePhoneSwipe(true);

@@ -1,6 +1,8 @@
-"""PHILO-7-03 follow-up -- the Floor's decision-delete receipt, fenced AS RENDERED.
+"""PHILO-7-03 follow-up -- the desk's decision-delete receipt, fenced AS RENDERED.
 
-The owner selects a decision on the Floor (spatial view) and presses Delete.
+The owner selects a decision on the desk and presses Delete. PHILO-17 (owner
+2026-10-10, "everything must become one desk"): the desk is the Screen; the
+receipt sits in the Screen's foot, the seat the Floor had (#665).
 The receipt must be readable in the viewport for the whole cycle: the pending
 receipt ("Removed ...") and, after the undo window, "Removal committed". Each
 phase is read on the real page through the real hub at 1440 and 393:
@@ -116,16 +118,12 @@ class TestDeleteReceiptGlass:
                 page.reload(wait_until="load")
                 _normal_chair(page)
 
-                # To the Floor; at 393 the Floor opens as a list, so switch to the spatial view.
-                page.locator("[data-testid=chair-floor-toggle]").click()
-                if width <= 720:
-                    page.locator("[aria-controls=desk-tool-shelf]").click()
-                    page.locator("[aria-controls=desk-palette-listbox]").fill("Spatial view")
-                    page.locator("[id='desk-palette-option-desk.toggle-view']").click()
-                row = page.locator(f"[data-obj-id='decision:{decision_id}']")
-                row.wait_for(state="attached", timeout=15_000)
-                row.focus()
-                page.keyboard.press("Shift+Enter")
+                # The one desk: select the decision's icon on the Screen.
+                icon = page.locator(f".desk-screen [data-object-id='decision:{decision_id}']")
+                icon.wait_for(timeout=15_000)
+                icon.scroll_into_view_if_needed()
+                icon.click()
+                assert icon.get_attribute("aria-pressed") == "true"
                 # An in-page clock: when 'Removal committed' first shows and when it goes.
                 page.evaluate("""() => {
                   window.__committedFirst = null; window.__committedGone = null;

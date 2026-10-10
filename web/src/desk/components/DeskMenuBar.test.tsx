@@ -2,7 +2,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetSurfaces, registerSurface } from "../shell";
-import { useChairState } from "../chairState";
 import { useDesk } from "../store";
 import { DeskMenuBar } from "./DeskMenuBar";
 
@@ -48,7 +47,6 @@ describe("DeskMenuBar at 393", () => {
       dispatchEvent: () => false,
     }));
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 393 });
-    useChairState.setState({ surface: "chair" });
   });
   afterEach(() => {
     vi.unstubAllGlobals();

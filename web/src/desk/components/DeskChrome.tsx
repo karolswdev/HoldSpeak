@@ -20,7 +20,6 @@ import { DeskToolShelf } from "./DeskToolShelf";
 import { DeskMenuBar } from "./DeskMenuBar";
 import { useFrontWindowId, useAllOpenWindows } from "./window/windowRegistry";
 import { ScreenSwitcher } from "./window/ScreenSwitcher";
-import { useChairState } from "../chairState";
 import { useNeedsYou } from "../needsYou";
 import { openNeedsYouDrawer } from "../screen/open";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
@@ -33,7 +32,8 @@ import { Button } from "../../components/signal/Signal";
 /** The mark menu's registry rows: the floor verbs, then the four
  * applications (the same go.* truth the Go menu and the dock speak).
  * HS-148-02: Open Intelligence / Open People join the app section. */
-const MARK_VERBS = ["desk.toggle-view", "desk.arrange", "desk.refresh"];
+// PHILO-17: List view and Arrange desk are parked with the Floor.
+const MARK_VERBS = ["desk.refresh"];
 
 /** HS-100-11 — the attention bell. PHILO-17 (needsyou, walker TAXES): the
  * bell carries the ONE needs-you number and opens Needs you, the list that
@@ -86,14 +86,11 @@ function MicLamp() {
 /** PHILO-13-11 (C1) — the screen title bar names the front window. It reads
  * the SAME front window as the blue frame (useFrontWindowId), so the bar
  * never disagrees with the glass. With no window open it names the screen:
- * the Chair or the Floor. */
+ * the Chair (PHILO-17: the one desk). */
 function ScreenTitle() {
   const front = useFrontWindowId();
   const open = useAllOpenWindows();
-  const surface = useChairState((s) => s.surface);
-  const name =
-    (front ? open.find((w) => w.id === front)?.label : null) ??
-    (surface === "chair" ? "Chair" : "Floor");
+  const name = (front ? open.find((w) => w.id === front)?.label : null) ?? "Chair";
   // PHILO-13-17 (C7, Q2): at 393 the title is the window switcher.
   const compact = useCompactViewport();
   if (compact) return <ScreenSwitcher name={name} />;

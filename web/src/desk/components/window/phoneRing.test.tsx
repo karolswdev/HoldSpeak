@@ -15,7 +15,6 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useDesk } from "../../store";
-import { useChairState } from "../../chairState";
 import { closeChairWindow, openChairWindow, useChairWindows } from "../../chair/chairWindows";
 import { announceWindow, retractWindow } from "./windowRegistry";
 import { phoneRing, phoneCurrent, stepRing, swipeDirection } from "./phoneRing";
@@ -46,7 +45,6 @@ beforeEach(() => {
     dispatchEvent: () => false,
   }));
   Object.defineProperty(window, "innerWidth", { configurable: true, value: 393 });
-  useChairState.setState({ surface: "chair" });
   useChairWindows.setState({ closed: {}, phone: "chair:needs", captureInRing: false });
   useDesk.setState({ panelOrder: [], panelMin: [] });
 });

@@ -9,7 +9,6 @@
 // (openChairWindow: the desk window in front iconifies, never closes).
 import { useEffect } from "react";
 import { useDesk } from "../../store";
-import { useChairState } from "../../chairState";
 import { COMPACT_VIEWPORT_QUERY } from "../../useCompactViewport";
 import {
   CHAIR_WINDOWS,
@@ -28,17 +27,14 @@ function compactNow(): boolean {
   );
 }
 
-/** The open windows in ring order (Chair windows only on the Chair). */
+/** The open windows in ring order: the Chair windows, then the desk's. */
 export function phoneRing(): RingWindow[] {
   const cw = useChairWindows.getState();
-  const onChair = useChairState.getState().surface === "chair";
-  const chair = onChair
-    ? CHAIR_WINDOWS.filter(
-        (w) =>
-          !cw.closed[w.id] &&
-          (w.phone || (w.id === "chair:capture" && (cw.captureInRing || cw.phone === w.id))),
-      ).map((w) => ({ id: w.id, label: w.title, chair: true }))
-    : [];
+  const chair = CHAIR_WINDOWS.filter(
+    (w) =>
+      !cw.closed[w.id] &&
+      (w.phone || (w.id === "chair:capture" && (cw.captureInRing || cw.phone === w.id))),
+  ).map((w) => ({ id: w.id, label: w.title, chair: true }));
   // The order the windows opened: their opening sequence, never the
   // registry Map's order (a title change re-announces a window at its end).
   const desk = registrySnapshot
@@ -54,7 +50,6 @@ export function phoneCurrent(): string | null {
   const s = useDesk.getState();
   const f = frontWindowId();
   if (f && !f.startsWith("chair:") && !s.panelMin.includes(f)) return f;
-  if (useChairState.getState().surface !== "chair") return null;
   return useChairWindows.getState().phone || null;
 }
 

@@ -10,7 +10,8 @@
  *  selects; the rubber band selects many; Enter or a double press opens
  *  (screen/open.ts). The selection is the desk's one selection (the store's
  *  selectedIds, PHILO-17): the menu bar Object menu, F2 and the right-click
- *  menu act on it exactly as on the Floor. */
+ *  menu act on it. PHILO-17 (owner 2026-10-10, "everything must become one
+ *  desk"): the Screen is the one desk; the Floor is parked. */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useAgentFlights } from "../agentFlights";
 import { projectOpenHere, useNeedsYou } from "../needsYou";
@@ -18,7 +19,8 @@ import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { useDesk } from "../store";
 import { WorkMenu } from "../components/DeskMenu";
-import { objectMenuEntries } from "../floorMenu";
+import { objectMenuEntries } from "../objectMenu";
+import { DeskDeleteSeat } from "../deleteReceipt";
 import { objectByRef } from "../world";
 import { DeskIcon, IconGrid, iconsInRect, type GridRect } from "../surface";
 import { useCompactViewport } from "../useCompactViewport";
@@ -101,7 +103,7 @@ export function Screen() {
     const next = prev.filter((k) => keys.has(k));
     if (next.length !== prev.length) useDesk.getState().setSelected(next);
   }, [objects]);
-  // The right-click menu: the Floor's object menu (floorMenu.ts), for an
+  // The right-click menu: the desk's object menu (objectMenu.ts), for an
   // object the desk can resolve. A drawer with no object keeps no menu.
   const openMenu = (key: string, x: number, y: number): boolean => {
     const o = objectByRef(items, key);
@@ -201,11 +203,16 @@ export function Screen() {
           x={menu.x}
           y={menu.y}
           autoFocus
-          entries={objectMenuEntries({ type: "object", id: menu.id, ref: menu.key, kind: menu.kind, title: menu.title })}
+          entries={objectMenuEntries({ ref: menu.key })}
           onClose={() => setMenu(null)}
         />
       ) : null}
       <HandConfirmSlot host={SCREEN_HOST} className="desk-screen-hand" />
+      {/* PHILO-17: the delete receipt's seat (the Floor's, #665): the desk's
+          foot, above the dock. Delete is offered where its Undo is read. */}
+      <div className="desk-world-foot" data-testid="desk-screen-foot">
+        <DeskDeleteSeat />
+      </div>
       {compact ? null : (
         // Astra's P3 on #939 (ruling): TALK is one press on the Chair. The
         // Capture window's own control, at the screen's foot-left.

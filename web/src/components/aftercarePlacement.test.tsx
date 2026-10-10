@@ -8,7 +8,6 @@ import {
   dismissAftercare,
   publishAftercare,
 } from "../desk/intelligenceAttention";
-import { useChairState } from "../desk/chairState";
 import { EMPTY_ITEMS } from "../desk/api";
 import { useDesk } from "../desk/store";
 import { openChairWindows } from "../desk/chair/__tests__/fixtures/openChairWindows";
@@ -16,7 +15,6 @@ import {
   SurfaceWindowHost,
   type SurfaceRow,
 } from "../desk/components/SurfaceWindows";
-import { DeskListView } from "../desk/components/DeskListView";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -81,7 +79,6 @@ beforeEach(() => {
     if (path === "/api/settings") return { presence: { enabled: false } };
     return null;
   });
-  useChairState.setState({ surface: "chair" });
   // PHILO-14 A1: the Chair is the screen; the slot is in the Capture window,
   // which these specs open first.
   openChairWindows();
@@ -132,7 +129,6 @@ describe("PHILO-6-03 aftercare rendered placement", () => {
   });
 
   it("renders into the actual active SurfaceWindowHost slot", async () => {
-    useChairState.setState({ surface: "chair" });
     const arrivalSlot = document.createElement("div");
     arrivalSlot.dataset.aftercareSlot = "before-capture";
     document.body.append(arrivalSlot);
@@ -162,28 +158,9 @@ describe("PHILO-6-03 aftercare rendered placement", () => {
     expect(document.querySelector('[data-aftercare-floor-slot="top"]')).toBeNull();
   });
 
-  it("renders into the actual Floor list host when no window is open", async () => {
-    useChairState.setState({ surface: "floor" });
-    const { container } = render(
-      <MemoryRouter>
-        <AmbientLayer />
-        <DeskListView />
-      </MemoryRouter>,
-    );
-    publish();
-
-    await waitFor(() =>
-      expect(
-        container.querySelector('[data-aftercare-floor-slot="top"] aside'),
-      ).toBeTruthy(),
-    );
-    const slot = container.querySelector('[data-aftercare-floor-slot="top"]')!;
-    expect(slot.querySelector("aside")).toHaveClass("ambient-aftercare-flow");
-    expect(slot.querySelector("aside")).not.toHaveStyle({ bottom: "104px" });
-  });
-
-  it("keeps the fixed fallback only when the spatial Floor has no slot", async () => {
-    useChairState.setState({ surface: "floor" });
+  // PHILO-17: the Floor and its list slot are parked; with no slot and no
+  // Chair screen mounted, the card keeps the fixed fallback.
+  it("keeps the fixed fallback when no slot and no Chair screen hold it", async () => {
     render(<AmbientLayer />);
     publish();
 
@@ -197,7 +174,6 @@ describe("PHILO-6-03 aftercare rendered placement", () => {
   });
 
   it("scrolls an obscured phone slot once and does not scroll a desktop slot", async () => {
-    useChairState.setState({ surface: "chair" });
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
       value: 393,
@@ -249,36 +225,7 @@ describe("PHILO-6-03 aftercare rendered placement", () => {
     expect(scroll).toHaveBeenCalledTimes(2);
   });
 
-  it("scrolls an off-Arrival phone slot once even when it is already visible", async () => {
-    useChairState.setState({ surface: "floor" });
-    Object.defineProperty(window, "innerWidth", {
-      configurable: true,
-      value: 393,
-    });
-    const { container } = render(
-      <MemoryRouter>
-        <AmbientLayer />
-        <DeskListView />
-      </MemoryRouter>,
-    );
-    const slot = await waitFor(() => {
-      const found = container.querySelector<HTMLElement>(
-        '[data-aftercare-floor-slot="top"]',
-      );
-      expect(found).toBeTruthy();
-      return found!;
-    });
-    const scroll = vi.fn();
-    slot.scrollIntoView = scroll;
-    publish("meeting-placement-floor", "Architecture review floor");
-
-    await waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
-    expect(scroll).toHaveBeenCalledWith({ block: "nearest", behavior: "auto" });
-    await waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
-  });
-
   it("scrolls an active window phone slot once", async () => {
-    useChairState.setState({ surface: "chair" });
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
       value: 393,
@@ -317,7 +264,6 @@ describe("PHILO-6-03 aftercare rendered placement", () => {
   });
 
   it("does not move the owner while a field has focus", async () => {
-    useChairState.setState({ surface: "chair" });
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
       value: 393,
