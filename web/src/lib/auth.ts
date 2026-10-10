@@ -2,21 +2,51 @@ const TOKEN_KEY = "hs.web.token";
 
 let sessionToken = "";
 
+/** PHILO-17 wayin: the token lives per hub origin in localStorage, so a new
+ * tab, a bookmark, or a browser restart stays signed in to the same hub. */
 function storage(): Storage | null {
   try {
-    return window.sessionStorage;
+    return window.localStorage;
   } catch {
     return null;
   }
 }
 
-/** Capture a tokenized arrival once, retain it for this tab, and scrub the URL. */
+function read(): string {
+  try {
+    return storage()?.getItem(TOKEN_KEY)?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function write(token: string): void {
+  try {
+    storage()?.setItem(TOKEN_KEY, token);
+  } catch {
+    /* private mode: the token stays in memory for this page */
+  }
+}
+
+/** The older tab-scoped copy (before PHILO-17): move it once, then drop it. */
+function migrateSessionToken(): string {
+  try {
+    const old = window.sessionStorage.getItem(TOKEN_KEY)?.trim() ?? "";
+    if (old) window.sessionStorage.removeItem(TOKEN_KEY);
+    return old;
+  } catch {
+    return "";
+  }
+}
+
+/** Capture a tokenized arrival once, keep it for this hub, and scrub the URL. */
 export function bootstrapAuth(location = window.location): string {
   const url = new URL(location.href);
   const queryToken = url.searchParams.get("token")?.trim() ?? "";
   if (queryToken) {
     sessionToken = queryToken;
-    storage()?.setItem(TOKEN_KEY, queryToken);
+    write(queryToken);
+    migrateSessionToken();
     url.searchParams.delete("token");
     window.history.replaceState(
       window.history.state,
@@ -24,13 +54,29 @@ export function bootstrapAuth(location = window.location): string {
       `${url.pathname}${url.search}${url.hash}`,
     );
   } else {
-    sessionToken = storage()?.getItem(TOKEN_KEY)?.trim() ?? "";
+    sessionToken = read();
+    if (!sessionToken) {
+      sessionToken = migrateSessionToken();
+      if (sessionToken) write(sessionToken);
+    }
   }
   return sessionToken;
 }
 
 export function authToken(): string {
-  return sessionToken || storage()?.getItem(TOKEN_KEY)?.trim() || "";
+  return sessionToken || read();
+}
+
+/** The hub refused this token (wrong or rotated): forget it, so the page asks
+ * for the token URL again. A token that changed since the request stays. */
+export function forgetAuthToken(refused: string): void {
+  if (!refused || authToken() !== refused) return;
+  sessionToken = "";
+  try {
+    storage()?.removeItem(TOKEN_KEY);
+  } catch {
+    /* nothing stored */
+  }
 }
 
 export function authenticatedHeaders(initial?: HeadersInit): Headers {

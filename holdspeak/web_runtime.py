@@ -501,6 +501,16 @@ class WebRuntime(
 
         self._note_serving_port()
 
+        # PHILO-17 wayin: print the token URL first and flush it. With
+        # `--no-open` this line is the only way in, and a piped stdout (a
+        # service log, `holdspeak web --no-open | tee`) held it in its buffer
+        # while the slower start-up steps below ran.
+        owner_url = authenticated_browser_url(
+            self.runtime_url, ensure_web_token(self.config)
+        )
+        log.info(f"HoldSpeak web runtime active at {self.runtime_url}")
+        print(f"HoldSpeak web runtime is running at: {owner_url}", flush=True)
+
         self.plugin_queue_thread = threading.Thread(
             target=self._deferred_plugin_queue_loop,
             name="HoldSpeakMirPluginQueue",
@@ -539,11 +549,6 @@ class WebRuntime(
         except Exception as exc:
             log.warning(f"Wake word unavailable: {exc}")
 
-        owner_url = authenticated_browser_url(
-            self.runtime_url, ensure_web_token(self.config)
-        )
-        log.info(f"HoldSpeak web runtime active at {self.runtime_url}")
-        print(f"HoldSpeak web runtime is running at: {owner_url}")
         self._print_setup_nudge()
         print(
             "Settings: "
@@ -562,7 +567,7 @@ class WebRuntime(
             print("Opened web dashboard in your default browser.")
         else:
             print("Headless mode active (`--no-open`): browser auto-open disabled.")
-        print("Press Ctrl+C to stop.")
+        print("Press Ctrl+C to stop.", flush=True)
 
         if self.register_signal_handlers:
             signal.signal(signal.SIGINT, self._signal_handler)

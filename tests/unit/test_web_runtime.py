@@ -143,10 +143,13 @@ def test_run_web_runtime_starts_and_stops_services(monkeypatch: pytest.MonkeyPat
     assert isinstance(egress["egress"], str) and egress["egress"]
 
 
-def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_run_web_runtime_no_open_skips_browser(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     monkeypatch.setattr(web_runtime.Config, "load", lambda: _config(auto_open=True))
 
     browser_urls: list[str] = []
+    printed_before_hotkey: list[str] = []
 
     class FakeServer:
         def __init__(self, callbacks=None, **kwargs):
@@ -165,6 +168,7 @@ def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) 
             if callbacks is not None:
                 kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
+            printed_before_hotkey.append(capsys.readouterr().out)
 
     class FakeHotkeyListener:
         def __init__(self, callbacks=None, **kwargs):
@@ -193,6 +197,10 @@ def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) 
     )
 
     assert browser_urls == []
+    # PHILO-17 wayin: with --no-open the token URL is the only way in; it is
+    # printed (and flushed) before the slower hotkey and audio set-up.
+    assert printed_before_hotkey, "the audio recorder was never built"
+    assert "running at: http://127.0.0.1:9998?token=" in printed_before_hotkey[0]
 
 
 def test_runtime_loads_projects_for_detector_via_projects_repo(
