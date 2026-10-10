@@ -39,23 +39,23 @@ def db(tmp_path):
 class TestComputeWindowUnchanged:
 
     def test_monday_still_looks_back_to_friday(self, db):
-        """On Monday Sep 7, period_start is Friday Sep 4 at 17:00."""
+        """On Monday Sep 7, period_start is Friday Sep 4 at 00:00 (PHILO-17)."""
         svc = MondayBriefService(db)
         now = datetime.datetime(2026, 9, 7, 9, 30, 0)
         assert now.weekday() == 0  # Monday
         start, end = svc.compute_window(now)
 
-        assert start == datetime.datetime(2026, 9, 4, 17, 0)
+        assert start == datetime.datetime(2026, 9, 4, 0, 0)
         assert end == now
 
     def test_wednesday_looks_back_to_tuesday(self, db):
-        """On Wednesday Sep 2, period_start is Tuesday Sep 1 at 17:00."""
+        """On Wednesday Sep 2, period_start is Tuesday Sep 1 at 00:00 (PHILO-17)."""
         svc = MondayBriefService(db)
         now = datetime.datetime(2026, 9, 2, 14, 30, 0)
         assert now.weekday() == 2  # Wednesday
         start, end = svc.compute_window(now)
 
-        assert start == datetime.datetime(2026, 9, 1, 17, 0)
+        assert start == datetime.datetime(2026, 9, 1, 0, 0)
         assert end == now
 
 
@@ -292,15 +292,15 @@ class TestBriefGenerationThisWeek:
     def test_generate_lookback_unchanged(self, db):
         """The generated brief's lookback (period_start) is unchanged."""
         svc = MondayBriefService(db)
-        # Thursday Sep 3 2026 -- lookback to Wednesday Sep 2 17:00
+        # Thursday Sep 3 2026 -- lookback to Wednesday Sep 2 00:00 (PHILO-17)
         now = datetime.datetime(2026, 9, 3, 14, 0, 0)
         assert now.weekday() == 3  # Thursday
         brief = svc.generate(OWNER, now=now)
 
         start_dt = datetime.datetime.fromisoformat(brief.period_start)
-        # Lookback: Thursday -> previous day 17:00 = Wednesday 17:00 (local;
+        # Lookback: Thursday -> previous day 00:00 = Wednesday 00:00 (local;
         # a naive clock's window is stored as the same instant in UTC).
-        assert start_dt == datetime.datetime(2026, 9, 2, 17, 0).astimezone()
+        assert start_dt == datetime.datetime(2026, 9, 2, 0, 0).astimezone()
 
     def test_sections_include_this_week(self, db):
         """The generated brief always has a this_week key in sections."""
@@ -439,7 +439,9 @@ UTC = datetime.timezone.utc
 # Re-pinned 2026-10-05 (aware-time census): the default clock is
 # ``local_wall()`` (the same naive local wall time as ``datetime.now()``);
 # the window arithmetic is unchanged.
-COMPUTE_WINDOW_BODY_SHA256 = "c135fe2dff41bdb57567f4a8e6200f78952f8281ca972d9ac88d3547292af462"
+# Re-pinned 2026-10-10 (PHILO-17): the lookback opens at 00:00 of the
+# previous workday, not 17:00 (the walker's 10:00 meeting was missing).
+COMPUTE_WINDOW_BODY_SHA256 = "45e9cd994a09f5c3bf7eabb8d98304fa6ee4ba4b5167f8155077837a51827e2e"
 
 
 def _seed_utc_event(db, eid: str, title: str, starts_at: str, *, uid: str | None = None) -> None:
@@ -500,8 +502,8 @@ class TestForwardHalfReadsFromNow:
         assert [i.text for i in nxt] == ["Next: Design review at 09:00"]
         assert "2 meetings this week" in brief.headline
         assert "watch item" not in brief.headline
-        # The lookback is untouched: Monday still opens at Friday 17:00.
-        assert brief.period_start == datetime.datetime(2026, 9, 4, 17, 0, tzinfo=UTC).isoformat()
+        # The lookback: Monday opens at Friday 00:00 (PHILO-17).
+        assert brief.period_start == datetime.datetime(2026, 9, 4, 0, 0, tzinfo=UTC).isoformat()
 
     def test_naive_local_now_is_read_as_local(self, db, monkeypatch):
         """Counsel H6-1 inverted: under TZ=Europe/Warsaw a naive Saturday

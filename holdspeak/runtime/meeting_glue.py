@@ -449,24 +449,27 @@ class MeetingGlueMixin:
                 project_result = self._associate_meeting_with_projects(meeting_id)
                 save_payload["projects_associated"] = int(project_result.get("projects_associated") or 0)
                 save_payload["project_association_error"] = project_result.get("error")
-                # HS-201: Record ends with a saved transcript. The summary
-                # gesture supplies its disclosed route later. Keep the legacy
-                # automatic-intelligence helper parked outside this Stop path.
+                # PHILO-17: "Summary after every meeting" is true at Stop.
+                # With a ready route, the setting and the owner's consent
+                # (meeting_backlog_service.queue_after_save), the summary is
+                # queued now and the drainer wakes. With no ready route the
+                # meeting is marked, and the backlog runs it once an engine can.
                 save_payload["auto_intel_enqueued"] = False
                 save_payload["auto_intel_error"] = None
-                # Owner ruling 2026-10-05: no summary is queued here (above).
-                # A meeting saved while NO engine could summarise it is marked
-                # durably, so the summary backlog can run it once one can
-                # (services/meeting_backlog_service.py).  A record, not a job.
                 try:
                     from ..db import get_database as _backlog_db
-                    from ..services.meeting_backlog_service import mark_if_no_engine
+                    from ..services.meeting_backlog_service import queue_after_save
 
-                    save_payload["summary_deferred_no_engine"] = mark_if_no_engine(
-                        _backlog_db(), meeting_id
-                    )
+                    after_save = queue_after_save(_backlog_db(), meeting_id)
+                    save_payload["auto_intel_enqueued"] = bool(after_save.get("queued"))
+                    save_payload["summary_deferred_no_engine"] = after_save.get("reason") == "no_engine"
+                    if after_save.get("queued"):
+                        from ..intel_queue_conductor import wake_intel_queue_conductor
+
+                        wake_intel_queue_conductor()
                 except Exception as mark_exc:
-                    log.warning("summary backlog mark failed for %s: %s", meeting_id, mark_exc)
+                    save_payload["auto_intel_error"] = str(mark_exc)
+                    log.warning("summary after Stop not queued for %s: %s", meeting_id, mark_exc)
         except Exception as exc:
             save_error = str(exc)
             log.error(f"Failed to save meeting from web runtime: {exc}")

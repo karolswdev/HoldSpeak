@@ -378,7 +378,9 @@ export function meetingsHeadline(
   // Inventory 2026-10-03 (UX-CANON A.10): the all-clear stood over the
   // footer's "NO SUMMARY ROUTE". With no engine the next meeting gets no
   // summary; the headline says so in the Chair's words, not "all done".
-  if (routeMissing) return { text: "No engine for summaries", accent: true };
+  // PHILO-17: every stored summary is done; the missing engine is a fact for
+  // the NEXT meeting, not an alarm, so it is not drawn in the accent colour.
+  if (routeMissing) return { text: "No engine for summaries", accent: false };
   return { text: "All summaries done", accent: false };
 }
 

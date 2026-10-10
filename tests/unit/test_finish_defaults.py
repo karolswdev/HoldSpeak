@@ -550,3 +550,49 @@ def test_the_default_for_ai_work_routes_the_backlog_through_the_conductor(tmp_pa
     assert project_route(desk.db, invocation_id="meeting:before-engine")["status"] == "ready"
     assert second["backlog"]["queued"] == ["before-engine"]
     assert _jobs(desk.db) == {"before-engine": "queued"}
+
+
+# ── 5. PHILO-17: "Summary after every meeting" holds at Import too ───────────
+
+
+def test_an_import_with_an_engine_queues_its_summary(tmp_path: Path, monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from holdspeak.config import Config
+    from holdspeak.meeting_import import import_transcript
+
+    cfg = Config()
+    cfg.meeting.intelligence_auto = "every"
+    monkeypatch.setattr(Config, "load", lambda: cfg)
+    monkeypatch.setattr("holdspeak.intel_queue_conductor.wake_intel_queue_conductor", lambda: True)
+    db = Database(tmp_path / "import.db")
+    assign_meeting_engine(db)
+    path = tmp_path / "weekly sync.vtt"
+    path.write_text("WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n<v Priya>the rollout starts monday\n")
+    config = SimpleNamespace(meeting=SimpleNamespace(intel_enabled=True, intel_deferred_enabled=True))
+
+    result = import_transcript(path, db=db, config=config)
+
+    assert result.intel_job_enqueued is True
+    assert _jobs(db) == {result.state.id: "queued"}
+    assert db.meetings.get_meeting(result.state.id).intel_status == "queued"
+
+
+def test_queue_after_save_follows_the_setting_and_consent(tmp_path: Path) -> None:
+    from holdspeak.services.meeting_backlog_service import queue_after_save
+
+    db = Database(tmp_path / "after-save.db")
+    _seed_meeting(db, "no-engine")
+    assert queue_after_save(db, "no-engine", auto_mode="every") == {"queued": False, "reason": "no_engine"}
+    assert _marks(db) == {"no-engine"}  # the backlog runs it once an engine can
+
+    assign_meeting_engine(db)
+    _seed_meeting(db, "off")
+    assert queue_after_save(db, "off", auto_mode="off")["queued"] is False
+    _seed_meeting(db, "loose")
+    assert queue_after_save(db, "loose", auto_mode="room_linked")["reason"] == "not_room_linked"
+    _seed_meeting(db, "empty", has_segments=False)
+    assert queue_after_save(db, "empty", auto_mode="every")["reason"] == "no_transcript"
+    _seed_meeting(db, "every")
+    assert queue_after_save(db, "every", auto_mode="every") == {"queued": True, "reason": "queued"}
+    assert _jobs(db) == {"every": "queued"}

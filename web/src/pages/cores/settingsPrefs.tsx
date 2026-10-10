@@ -531,7 +531,17 @@ export function PrefsFace({
               : hub.meetings.intelligence && hub.meetings.engineSet === false
               ? <StateChip state="warning" label="SUMMARY · NO ENGINE" />
               : hub.meetings.intelligence
-              ? <StateChip state="idle" label={`SUMMARY SET ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`} />
+              ? (
+                // PHILO-17: the idle lamp's empty ring read as an empty
+                // checkbox beside "AFTER EVERY MEETING". A summary that runs
+                // by itself shows a check; by hand only, the ring stays.
+                <StateChip
+                  state="idle"
+                  icon={hub.meetings.auto && hub.meetings.auto !== "off" ? "✓" : undefined}
+                  label={`SUMMARY SET ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`}
+                  data-testid="settings-hub-summary-chip"
+                />
+              )
               : <StateChip state="warning" label="SUMMARY SET OFF" />}
           </>}
         />
