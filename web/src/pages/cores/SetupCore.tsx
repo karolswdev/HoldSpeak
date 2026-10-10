@@ -121,6 +121,7 @@ export function SetupCore({ hero }: CoreProps) {
                         <SpeechSetup
                           setup={speech}
                           bare
+                          primary={false}
                           onReady={() => void reload()}
                           testId="setup-speech-setup"
                         />

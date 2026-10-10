@@ -75,6 +75,7 @@ export function SpeechSetup({
   onReady,
   testId = "speech-setup",
   bare = false,
+  primary = true,
 }: {
   setup: SpeechSetupState;
   /** Called once when speech turns ready after this row was drawn. */
@@ -82,6 +83,10 @@ export function SpeechSetup({
   testId?: string;
   /** The host row already says "Speech is not set up": draw the verb only. */
   bare?: boolean;
+  /** One primary per face: the verb is primary only on Speak, where it is
+   *  the face's one job. Live meeting (Start meeting), Runs on (Add) and
+   *  Setup (Test runtime) keep their own primary; there it is secondary. */
+  primary?: boolean;
 }) {
   const { ai, status, notSetUp, canSetUp, bytes } = setup;
   const wasMissing = useRef(false);
@@ -127,7 +132,7 @@ export function SpeechSetup({
             {host ? <EgressChip label={host} scope="cloud" /> : null}
             <Button
               dense
-              variant="primary"
+              variant={primary ? "primary" : "secondary"}
               loading={ai.busy}
               disabled={ai.busy}
               onClick={() => void ai.startSpeech().then(announceSpeechSetup)}

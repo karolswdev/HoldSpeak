@@ -622,7 +622,7 @@ export function LiveCore({ hero }: CoreProps) {
             ? audioOnly ? "Recording audio only" : "Recording"
             : audioOnly ? "Ready to record audio only" : "Ready to record"),
       )}
-      <SpeechSetup setup={speech} testId="live-speech-setup" />
+      <SpeechSetup setup={speech} primary={false} testId="live-speech-setup" />
       {action.message ? <SurfaceState error={action.message} /> : null}
       {captureAlert ? (
         <SurfaceState

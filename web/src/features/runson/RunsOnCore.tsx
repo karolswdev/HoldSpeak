@@ -235,7 +235,7 @@ export function RunsOnCore({ scope }: CoreProps) {
       // Astra r1 (finding 5): the setup stays while speech is not ready, also
       // after a Try it answered (its answer cannot repair a missing model).
       result: job === SPEECH_JOB && speech.notSetUp ? (
-        <SpeechSetup setup={speech} testId="runson-speech-setup" />
+        <SpeechSetup setup={speech} primary={false} testId="runson-speech-setup" />
       ) : result ? (
         <span data-tone={result.tone === "danger" ? "danger" : result.tone === "idle" ? "idle" : undefined}>{result.tokens.join(" · ")}</span>
       ) : jobRepair ? (
