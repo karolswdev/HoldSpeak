@@ -420,3 +420,18 @@ def test_the_lane_is_on_the_hub_with_its_launch(svc: Any) -> None:
     again = svc.open("lane", object_ref="launch:L-2")
     assert again["object_ref"] == "launch:L-2" and again["revision"] > row["revision"]
     assert len(svc.list()["windows"]) == 1
+
+
+def test_an_application_window_carries_its_scope_and_clears_it(svc: Any) -> None:
+    """PHILO-17 U28c: the Room is Desk memory scoped to a project; the scope
+    is the row's object, changed by an open with another object and cleared
+    by an open with "" (the web view's round-trip, hubWindows.ts)."""
+    row = svc.open("surface-project-memory", object_ref="project:p-1")
+    assert row["object_ref"] == "project:p-1"
+    row = svc.open("surface-project-memory", object_ref="project:p-2", expected_revision=row["revision"])
+    assert row["object_ref"] == "project:p-2"
+    row = svc.open("surface-project-memory", object_ref="", expected_revision=row["revision"])
+    assert row["object_ref"] == ""
+    assert svc.list()["windows"][0]["object_ref"] == ""
+    with pytest.raises(ValidationError):
+        svc.open("surface-calendar-snapshot", object_ref="x" * 401)

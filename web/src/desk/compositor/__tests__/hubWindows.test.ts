@@ -26,7 +26,7 @@ import {
 const VIEW: Rect = { x: 10, y: 38, w: 1420, h: 772 };
 const REGISTRY = {
   static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", lane: "lane",
-    "surface-project-memory": "surface" },
+    "surface-project-memory": "surface", "surface-calendar-snapshot": "surface" },
   families: { "zone:": "zone", "drawer:project:": "drawer" },
   // (lane is static on the hub)
 };
@@ -65,6 +65,9 @@ function fakeHub(initial: HubWindowRow[], adopted = true) {
       calls.push({ verb, id, body });
       const next = answers.shift();
       if (next) return next(id, verb, body) as Promise<HubWindowRow>;
+      // As the service: an object_ref over 400 chars is refused.
+      if (typeof body.object_ref === "string" && body.object_ref.length > 400)
+        throw new ApiError(400, "object_ref is too long", { error: "window_ref_invalid" });
       state.desk += 1;
       state.adopted = true;
       if (verb === "close") {
@@ -78,6 +81,8 @@ function fakeHub(initial: HubWindowRow[], adopted = true) {
         revision: state.desk,
         ...(verb === "raise" || verb === "open" ? { depth: top + 1 } : {}),
         ...(verb === "seat" ? { minimized: Boolean(body.seated) } : {}),
+        // As the service: an open with an object puts it on the row.
+        ...(verb === "open" && typeof body.object_ref === "string" ? { object_ref: body.object_ref } : {}),
         ...(verb === "set_geometry" && body.rect ? { ...(body.rect as object), arranged: true } : {}),
       };
       state.windows = [...state.windows.filter((w) => w.id !== id), updated];
@@ -424,16 +429,36 @@ describe("hubWindows", () => {
     useDesk.getState().openSurfaceWindow("open-project-memory", "project:p-2");
     await flush(hub);
     expect(fake.calls.filter((c) => c.verb === "open").map((c) => c.body.object_ref)).toEqual(["project:p-2"]);
+    // Settled: the hub's answer is applied, and the window shows p-2.
+    const hubRef = () => fake.state.windows.find((w) => w.id === "surface-project-memory")?.object_ref;
+    expect(hubRef()).toBe("project:p-2");
+    expect(useDesk.getState().windowsById["surface-project-memory"]?.scope).toBe("project:p-2");
     // Back to Desk memory with no project: "" says "no scope" to the hub.
     useDesk.getState().openSurfaceWindow("open-project-memory");
     await flush(hub);
     expect(fake.calls.filter((c) => c.verb === "open").map((c) => c.body.object_ref)).toEqual(["project:p-2", ""]);
+    expect(hubRef()).toBe("");
+    expect(useDesk.getState().windowsById["surface-project-memory"]?.scope ?? null).toBeNull();
     // A row with no object (never sent) leaves this view's scope as is.
     useDesk.getState().openSurfaceWindow("open-project-memory", "project:p-3");
     fake.state.windows = [row("surface-project-memory", { app: "surface", object_ref: null, depth: 9, revision: 99 })];
     hub.onFrame({ kind: "windows", id: "surface-project-memory" });
     await flush(hub);
     expect(useDesk.getState().windowsById["surface-project-memory"]?.scope).toBe("project:p-3");
+  });
+
+  it("PHILO-17 U28c (Astra r1 M1): a payload scope stays in this view; the window stays open", async () => {
+    const { fake, hub } = start([]);
+    await hub.start();
+    const payload = JSON.stringify({ events: Array.from({ length: 40 }, (_, i) => ({ title: `Event ${i}`, at: "09:00" })) });
+    expect(payload.length).toBeGreaterThan(400);
+    useDesk.getState().openSurfaceWindow("review-calendar-snapshot", payload);
+    await flush(hub);
+    const opens = fake.calls.filter((c) => c.id === "surface-calendar-snapshot" && c.verb === "open");
+    expect(opens.length).toBe(1);
+    expect(opens[0].body.object_ref).toBeUndefined();
+    expect(fake.calls.some((c) => c.verb === "close")).toBe(false);
+    expect(useDesk.getState().windowsById["surface-calendar-snapshot"]?.scope).toBe(payload);
   });
 
   it("PHILO-17 U28: a row the hub holds unarranged keeps this view's seat on the glass", async () => {

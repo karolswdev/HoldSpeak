@@ -14,7 +14,9 @@ the built bundle, three browser contexts (three views, three localStorages):
      named by the project.
   W4 A reloads: the same windows at the same places, the Room still the Room.
   W5 context B (1440, a fresh load, its own empty cache): the same windows at
-     the same places; no "Desk memory" window.
+     the same places; no "Desk memory" window. W5b with both views open, A
+     drags the Room: B shows it there without a reload, B writes nothing, and
+     nothing bounces back in either view.
   W6 context C (393, a fresh load): the same windows by name; no "Desk memory".
 
 Shots: docs/internal/philo/phase-17/windows-shots/ (``.tmp/evidence-shots/``
@@ -54,12 +56,21 @@ WINS_JS = r"""() => {
       rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]}; });
 }"""
 
-# The right edge of the desk's left icon column (icons outside windows and
-# the Dock), or 0 when the desk shows none.
-ICONS_JS = r"""() => Math.max(0, ...[...document.querySelectorAll('.desk-icon')]
-  .filter((e) => !e.closest('.desk-window, .desk-dock'))
-  .map((e) => e.getBoundingClientRect())
-  .filter((r) => r.width > 0 && r.left <= 160).map((r) => r.right))"""
+# The right edge of the desk's left icon columns (icons outside windows and
+# the Dock), or 0 when the desk shows none: the icons at the left edge, then
+# each placed icon that starts right beside them (a second drawer column).
+ICONS_JS = r"""() => {
+  const icons = [...document.querySelectorAll('.desk-icon')]
+    .filter((e) => !e.closest('.desk-window, .desk-dock'))
+    .map((e) => ({r: e.getBoundingClientRect(), placed: !!e.closest('.desk-screen-placed')}))
+    .filter(({r}) => r.width > 0);
+  let right = 0, edge = 60;
+  for (let col = 0; ; col++) {
+    const next = Math.max(right, ...icons.filter(({r, placed}) => r.left <= edge && (col === 0 || placed)).map(({r}) => r.right));
+    if (next <= right) return right;
+    right = next; edge = right + 24;
+  }
+}"""
 
 # A point on the title bar of window `name` that hits the bar itself (not a
 # tab, a gadget or the title): the empty part of the bar.
@@ -117,6 +128,11 @@ class TestWindowsOpenWell:
         page.set_default_timeout(T)
         errors: list[str] = []
         page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+        # Every window write this view sends to the hub (a follower sends none).
+        sent: list[str] = []
+        page.on("request", lambda r: sent.append(r.url.split("/api/desk/windows", 1)[1])
+                if "/api/desk/windows" in r.url and r.method == "POST" else None)
+        page.hub_writes = sent  # type: ignore[attr-defined]
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         if onboard:
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
@@ -199,6 +215,33 @@ class TestWindowsOpenWell:
                 if moved:
                     fails["W5 B shows them at the same places"] = moved
                 b.screenshot(path=str(SHOTS / "1440-B-fresh.png"))
+
+                # ── W5b: both views open; A moves the Room, B follows live ──
+                # (Astra r1 on #1070): no reload; B writes nothing; nothing
+                # bounces back in either view. The Room is A's front window.
+                b_writes = len(b.hub_writes)
+                start = _wins(a).get(ROOM)
+                spot = a.evaluate(EMPTY_BAR_JS, ROOM)
+                if not start or not spot:
+                    fails["W5b the Room's bar is on A's glass"] = {"wins": sorted(_wins(a)), "spot": spot}
+                else:
+                    a.mouse.move(spot["x"], spot["y"])
+                    a.mouse.down()
+                    a.mouse.move(spot["x"] + 60, spot["y"] + 50, steps=10)
+                    a.mouse.up()
+                    moved_a = _until(lambda: _wins(a).get(ROOM), lambda r: bool(r) and r[:2] != start[:2])
+                    seen_b = _until(lambda: _wins(b).get(ROOM), lambda r: bool(r) and bool(moved_a) and _near(r, moved_a))
+                    if not moved_a or moved_a[:2] == start[:2]:
+                        fails["W5b A moved the Room"] = {"start": start, "after": moved_a}
+                    elif not seen_b or not _near(seen_b, moved_a):
+                        fails["W5b B shows the Room where A put it"] = {"A": moved_a, "B": seen_b}
+                    a.wait_for_timeout(1500)
+                    later_a, later_b = _wins(a).get(ROOM), _wins(b).get(ROOM)
+                    if moved_a and (not later_a or not _near(later_a, moved_a) or not later_b or not _near(later_b, moved_a)):
+                        fails["W5b nothing bounces back"] = {"moved": moved_a, "A later": later_a, "B later": later_b}
+                    if len(b.hub_writes) != b_writes:
+                        fails["W5b B (a follower) writes nothing"] = b.hub_writes[b_writes:]
+                b.screenshot(path=str(SHOTS / "1440-B-follows-A.png"))
 
                 # ── W6: the phone, a fresh load ─────────────────────────────
                 ctx_c, c, errors_c = self._page(browser, 393)

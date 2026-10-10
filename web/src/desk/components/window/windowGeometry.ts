@@ -121,17 +121,28 @@ export function placeWindow(
   return { x: best.x, y: best.y, w, h };
 }
 
-/** PHILO-17 (U28a) — the right edge of the desk's left icon column (the
- * Chair's and the Floor's icons, not icons inside a window or the Dock), plus
- * a gap: a new window opens to the right of it. MARGIN when there is none. */
+/** PHILO-17 (U28a) — the right edge of the desk's left icon columns (the
+ * Chair's drawer columns, the Floor's first column; not icons inside a window
+ * or the Dock), plus a gap: a new window opens to the right of them. The
+ * columns are found as a chain: the icons that start at the left edge, then
+ * every icon that starts right beside them (a drawer column sits 8 px from
+ * the next; the loose objects start 70 px away, screen/layout.ts). MARGIN
+ * when the desk shows none. */
 export function iconColumnRight(gap = 12): number {
   if (typeof document === "undefined") return MARGIN;
+  const icons = Array.from(document.querySelectorAll<HTMLElement>(".desk-icon"))
+    .filter((el) => !el.closest(".desk-window, .desk-dock"))
+    .map((el) => ({ r: el.getBoundingClientRect(), placed: Boolean(el.closest(".desk-screen-placed")) }))
+    .filter(({ r }) => r.width > 0 && r.height > 0);
   let right = 0;
-  for (const el of Array.from(document.querySelectorAll<HTMLElement>(".desk-icon"))) {
-    if (el.closest(".desk-window, .desk-dock")) continue;
-    const r = el.getBoundingClientRect();
-    if (!r.width || !r.height || r.left > 160) continue; // the left column only
-    right = Math.max(right, r.right);
+  let edge = 60; // the first column starts at the screen's left edge
+  for (let column = 0; ; column += 1) {
+    // Past the first column, only the screen's placed icons chain (a Floor
+    // grid flows edge to edge; it has no second "column" to keep clear).
+    const next = Math.max(right, ...icons.filter(({ r, placed }) => r.left <= edge && (column === 0 || placed)).map(({ r }) => r.right));
+    if (next <= right) break;
+    right = next;
+    edge = right + 24;
   }
   return right ? Math.round(right + gap) : MARGIN;
 }

@@ -107,6 +107,10 @@ interface Adapter {
   object?(): string | null;
 }
 
+/** A scope the hub holds as a window's object: a reference (`project:p-1`,
+ * `meeting:m-1?view=review`), never a payload. The hub takes 400 chars. */
+export const isScopeRef = (scope: string): boolean => /^[\w.:?=&/-]{1,400}$/.test(scope);
+
 /** The lane's window id (lane/LaneWindow.tsx; kept here so this module does
  * not import the window's component). */
 export const LANE_WINDOW_ID = "lane";
@@ -187,14 +191,20 @@ export function adapterFor(id: string): Adapter | null {
   // U28c): Desk memory scoped to a project is that project's Room. Without
   // it, every other view (a reload with no cache, the iPad) opened the Room
   // as unscoped "Desk memory". "" is "no scope", so a Room that goes back to
-  // Desk memory tells the hub too.
+  // Desk memory tells the hub too. Only a scope that is a reference goes to
+  // the hub; a payload scope (Calendar snapshot passes its result JSON)
+  // stays in this view and reads as "" there.
   const surface = surfaceByWindowId.get(id);
   if (surface) {
     return {
       isOpen: () => id in d().windowsById,
       open: (row) => d().openSurfaceWindow(surface.action, row?.object_ref || undefined),
       close: () => d().closeSurfaceWindow(surface.action),
-      object: () => (id in d().windowsById ? d().windowsById[id].scope ?? "" : null),
+      object: () => {
+        if (!(id in d().windowsById)) return null;
+        const scope = d().windowsById[id].scope ?? "";
+        return isScopeRef(scope) ? scope : "";
+      },
     };
   }
   return (
