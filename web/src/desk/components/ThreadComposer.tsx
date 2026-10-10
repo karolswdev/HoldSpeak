@@ -31,6 +31,7 @@ import { KIND_GLYPH } from "../tools";
 import { SurfaceRows, SurfaceRow } from "../surface/Surface";
 import { Button } from "../../components/signal/Signal";
 import { useThreadComposerDraft } from "../threadComposerDrafts";
+import { noteName } from "../windowName";
 
 // ── ref chip (the attachment) ───────────────────────────────────────
 
@@ -242,10 +243,11 @@ export async function loadPromptNotes(): Promise<PromptNote[]> {
     );
     const notes = data.notes ?? [];
     _promptCache = notes
-      .filter((n) => n.title && !n.deleted)
+      .filter((n) => !n.deleted)
       .map((n) => ({
         id: String(n.id ?? ""),
-        title: String(n.title ?? ""),
+        // PHILO-17: an untitled note is named by its first words.
+        title: noteName(n),
         body: String(n.body_markdown ?? ""),
       }));
     return _promptCache;
@@ -273,10 +275,10 @@ export async function loadGuardrailNotes(): Promise<Array<{ id: string; title: s
     );
     const notes = data.notes ?? [];
     _guardrailCache = notes
-      .filter((n) => n.title && !n.deleted)
+      .filter((n) => !n.deleted)
       .map((n) => ({
         id: String(n.id ?? ""),
-        title: String(n.title ?? ""),
+        title: noteName(n),
       }));
     return _guardrailCache;
   } catch {
@@ -421,7 +423,8 @@ export function ThreadComposer({
     for (const { key, kind } of kinds) {
       for (const it of items[key] ?? []) {
         const prim = it as unknown as Record<string, unknown>;
-        const name = String(prim.title ?? prim.name ?? prim.id ?? "");
+        // PHILO-17: an untitled note is named by its first words, not skipped.
+        const name = kind === "note" ? noteName(prim) : String(prim.title ?? prim.name ?? prim.id ?? "");
         if (!name) continue;
         out.push({
           id: String(prim.id ?? ""),
