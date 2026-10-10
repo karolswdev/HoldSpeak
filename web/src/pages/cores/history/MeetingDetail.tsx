@@ -1,5 +1,6 @@
 // HS-170-04 — the meeting detail pane (the board's right side).
 // Display title + tokens, NEEDS YOU section, TRANSCRIPT well, settled list.
+import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../../../desk/firstrun/speechTruth";
 import type { ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection } from "../../../desk/surface";
@@ -340,6 +341,7 @@ export function MeetingDetail({
               id={id}
               segments={segments}
               momentSegmentIndex={momentSegmentIndex}
+              emptyLabel={speechWasMissing(detail ?? meeting) ? NO_TRANSCRIPT_SPEECH : undefined}
             />
           </div>
           {/* RAW · ROUTING — the intent timeline section (only when data present) */}

@@ -72,6 +72,7 @@ _ERRORS = {
     "refused": "The hub did not permit the download. Try again.",
     "unsafe": "The model folder holds a link. Remove the link. Then try again.",
     "setup": "The models are on this device, but setup did not finish. Try again.",
+    "speech_backend_unavailable": "The speech library cannot run on this device. Install it, then check again.",
     "speech_not_covered": "Set up local AI cannot get the selected Whisper model. Select the base model, or add the model yourself.",
 }
 
@@ -250,18 +251,15 @@ class LocalAISetupService:
         return items
 
     def _speech(self, plan: list[dict[str, Any]]) -> dict[str, Any]:
-        """Is the CONFIGURED Whisper model covered?  Never silently dropped."""
-        from ..whisper_models import whisper_on_disk
+        """Is the CONFIGURED Whisper model covered?  Never silently dropped.
+
+        The one speech-readiness truth (``whisper_models.speech_readiness``),
+        which Speak, Record, Runs on and Setup read too.
+        """
+        from ..whisper_models import speech_readiness
 
         name, backend = self._whisper()
-        pinned = [item for item in plan if item["key"] == "whisper"]
-        if pinned:
-            state = "on_device" if all(item["on_device"] for item in pinned) else "will_download"
-        elif whisper_on_disk(name, backend, home=self._home()):
-            state = "on_device_unpinned"  # the owner's own copy; no pin to check
-        else:
-            state = "not_covered"  # no pinned files for this model: setup cannot get it
-        return {"model": name, "backend": backend, "state": state}
+        return speech_readiness(name, backend, home=self._home())
 
     def _file_row(self, item: dict[str, Any]) -> dict[str, Any]:
         model: PinnedModel = item["model"]
@@ -327,6 +325,8 @@ class LocalAISetupService:
             # Ready means speech too: a model setup cannot get is not ready.
             if speech["state"] == "not_covered":
                 state, error = "incomplete", "speech_not_covered"
+            elif speech["state"] == "backend_unavailable":
+                state, error = "incomplete", "speech_backend_unavailable"
             else:
                 state = "ready"
         else:

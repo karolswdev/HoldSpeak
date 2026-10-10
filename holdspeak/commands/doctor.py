@@ -175,9 +175,13 @@ def _check_microphone() -> DoctorCheck:
     )
 
 
-def _check_transcription_backend() -> DoctorCheck:
+def _check_transcription_backend(config: Config | None = None) -> DoctorCheck:
+    # PHILO-17 speech: the CONFIGURED backend (the one speech uses), not `auto`.
+    asked = "auto"
+    if config is not None:
+        asked = str(getattr(getattr(config, "model", None), "backend", "") or "auto").strip().lower()
     try:
-        backend = _resolve_backend("auto")
+        backend = _resolve_backend(asked)
     except TranscriberError as exc:
         if sys.platform.startswith("linux"):
             fix = "Install Linux backend with `pip install 'holdspeak[linux]'`."
@@ -195,7 +199,45 @@ def _check_transcription_backend() -> DoctorCheck:
     return DoctorCheck(
         name="Transcription backend",
         status="PASS",
-        detail=f"`auto` resolves to `{backend}`",
+        detail=f"`{asked}` resolves to `{backend}`",
+    )
+
+
+def _check_speech_model(config: Config | None = None) -> DoctorCheck:
+    """PHILO-17 speech: is the speech model on this device?
+
+    The backend check above says which library runs speech; this one says if
+    the model it loads is here.  The one truth is
+    ``whisper_models.speech_readiness`` (disk only, no network).
+    """
+    from ..whisper_models import configured_speech_readiness
+
+    try:
+        speech = configured_speech_readiness(config=config)
+    except Exception as exc:
+        return DoctorCheck(
+            name="Speech model", status="WARN",
+            detail=f"Cannot check the speech model: {exc}",
+        )
+    label = f"Whisper {speech['model']} ({speech['backend']})"
+    if speech["ready"]:
+        return DoctorCheck(name="Speech model", status="PASS", detail=f"{label} is on this device")
+    if speech["state"] == "backend_unavailable":
+        return DoctorCheck(
+            name="Speech model", status="FAIL",
+            detail=f"Speech is not set up: the speech library cannot run here ({speech.get('reason', '')})",
+            fix="Install the speech library, then rerun doctor",
+        )
+    if speech["state"] == "will_download":
+        return DoctorCheck(
+            name="Speech model", status="FAIL",
+            detail=f"Speech is not set up: {label} is not on this device",
+            fix="Set up speech",
+        )
+    return DoctorCheck(
+        name="Speech model", status="FAIL",
+        detail=f"Speech is not set up: {label} is not on this device, and setup cannot get it",
+        fix="Select the base model in Runs on, or add the model yourself",
     )
 
 
@@ -1090,7 +1132,8 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         config_check,
         _check_database(),
         _check_microphone(),
-        _check_transcription_backend(),
+        _check_transcription_backend(config),
+        _check_speech_model(config),
         _check_web_runtime(),
         _check_web_auth(config),
         _check_meeting_intel_runtime(config),
