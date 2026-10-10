@@ -68,6 +68,10 @@ def _hit(locator, *, fit=True):
 
 def _desk(page, base, *, capture=False):
     """Between jobs only: clear remembered windows, keeping all saved objects."""
+    # PHILO-16 (16b): the hub remembers the windows; clear them there too.
+    from .glass_infra import clear_hub_windows
+
+    clear_hub_windows(page, TOKEN)
     page.evaluate("localStorage.removeItem('hs.desk.workspace.v1')")
     page.goto(base + "/?token=" + TOKEN)
     _normal_chair(page)

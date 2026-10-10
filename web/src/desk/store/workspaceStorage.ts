@@ -373,3 +373,13 @@ export function saveDeskWorkspace(state: WorkspaceState): void {
   }
   notifySaved();
 }
+
+/** PHILO-16 (16b) — the workspace document as it stood when the desk's store
+ * modules first loaded: what the CACHE reopened, before any face of this
+ * visit opened a window of its own (a staged surface, a link). The hub's
+ * first seed closes only these when the hub does not hold them. */
+const BOOT_DOCUMENT: DeskWorkspaceDocumentV1 = loadDeskWorkspace();
+
+export function bootDeskWorkspace(): DeskWorkspaceDocumentV1 {
+  return BOOT_DOCUMENT;
+}

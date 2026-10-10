@@ -27,7 +27,7 @@ import { CONDUCTOR_WINDOW_ID, useConductor } from "../conductor/store";
 import { useLane } from "../lane/laneStore";
 import { PARKED_WINDOW_ID, drawerWindowId, useDrawers } from "../drawer/store";
 import { markRehydratedMinimized, useDesk, type PanelRect } from "../store";
-import { onWorkspaceSaved, saveDeskWorkspace } from "../store/workspaceStorage";
+import { bootDeskWorkspace, onWorkspaceSaved, saveDeskWorkspace } from "../store/workspaceStorage";
 import { anticipate, createPresentations, type Change, type Presentations } from "./anticipate";
 import { bandFor, record, resolveRect, type Rect, type Value, type ValueRect } from "./geometry";
 import { orderFromDepth } from "./planes";
@@ -81,14 +81,18 @@ export interface HubTransport {
   shelf(side: "left" | "right", expected?: number): Promise<{ stage_shelf: "left" | "right"; revision: number }>;
 }
 
+// A window write survives the page leaving (a reload right after an open):
+// `keepalive`, so the hub holds what this view did before the next view reads.
 export const httpTransport: HubTransport = {
   list: () => apiFetch<HubWindowList>("/api/desk/windows"),
   verb: (id, verb, body) =>
-    apiFetch(`/api/desk/windows/${encodeURIComponent(id)}/${verb}`, { method: "POST", json: body }),
+    apiFetch(`/api/desk/windows/${encodeURIComponent(id)}/${verb}`, { method: "POST", json: body, keepalive: true }),
   arrange: (rects, expected) =>
-    apiFetch("/api/desk/windows/arrange", { method: "POST", json: { rects, expected_revisions: expected } }),
+    apiFetch("/api/desk/windows/arrange", {
+      method: "POST", json: { rects, expected_revisions: expected }, keepalive: true }),
   shelf: (side, expected) =>
-    apiFetch("/api/desk/windows/stage-shelf", { method: "POST", json: { side, expected_revision: expected } }),
+    apiFetch("/api/desk/windows/stage-shelf", {
+      method: "POST", json: { side, expected_revision: expected }, keepalive: true }),
 };
 
 // ---- the local families: how a hub row opens and closes here ---------------
@@ -915,7 +919,22 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
  * (read once, at import, before any face opened one of its own). */
 const BOOT_OPEN: readonly string[] = (() => {
   try {
-    return [...adapterOpenIds(), ...Object.keys(useDesk.getState().panelDepth)];
+    // Read from the cache DOCUMENT, not the stores: a window a store opened
+    // at load for this visit (a staged surface, a link) is this load's own.
+    const doc = bootDeskWorkspace();
+    const lists = doc.windows;
+    const chairClosed = doc.chair ? new Set(doc.chair.closed) : null;
+    return [
+      ...Object.keys(doc.windowsById ?? {}),
+      ...Object.keys(doc.panel?.depth ?? {}),
+      ...(doc.zoneWindows ?? []).map((id) => `zone:${id}`),
+      ...(lists?.pullouts ?? []).map((id) => `pullout:${id}`),
+      ...(lists?.info ?? []).map((ref) => `info:${ref}`),
+      ...(lists?.roadmap ?? []).map((slug) => `roadmap:${slug}`),
+      ...(lists?.repository ?? []).map((id) => `repository:${id}`),
+      ...(lists?.workbench ?? []).map((id) => `workbench:${id}`),
+      ...(chairClosed ? CHAIR_WINDOW_IDS.filter((id) => !chairClosed.has(id)) : []),
+    ];
   } catch {
     return [];
   }
@@ -924,7 +943,7 @@ const BOOT_OPEN: readonly string[] = (() => {
 /** The stacking the cache restored when the desk's modules loaded. */
 const BOOT_DEPTH: Readonly<Record<string, number>> = (() => {
   try {
-    return { ...useDesk.getState().panelDepth };
+    return { ...(bootDeskWorkspace().panel?.depth ?? {}) };
   } catch {
     return {};
   }
