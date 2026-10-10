@@ -103,7 +103,7 @@ function NotConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }
       trailing={
         <Button
           dense
-          variant="primary"
+          variant="secondary"
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             ctrl.connect(row.provider);

@@ -316,10 +316,13 @@ function RoomHead({
   room,
   ctrl,
   updateCtrl,
+  quiet = false,
 }: {
   room: RoomSnapshot;
   ctrl: ReturnType<typeof useProjectRoomController>;
   updateCtrl: ReturnType<typeof useUpdateController>;
+  /** PHILO-17: another well holds the face's one primary (Add source's Add). */
+  quiet?: boolean;
 }) {
   const health = room.health.state === "ok" ? (room.health as RoomHealthData & { state: "ok" }) : null;
   const healthWord = roomHealthWord(room);
@@ -401,7 +404,7 @@ function RoomHead({
         <span className="room-head-trailing">
           <Button
             dense
-            variant="primary"
+            variant={quiet ? "secondary" : "primary"}
             loading={updateCtrl.loading}
             onClick={() => void updateCtrl.enterUpdates()}
             data-testid="updates-verb"
@@ -1211,11 +1214,14 @@ function SourcesSection({
   onReload,
   stewardCtrl,
   ctrl,
+  onAdding,
 }: {
   room: RoomSnapshot;
   onReload: () => void;
   stewardCtrl: ReturnType<typeof useStewardController>;
   ctrl: ReturnType<typeof useProjectRoomController>;
+  /** One filled primary per face: while Add source is open, Add is it. */
+  onAdding?: (adding: boolean) => void;
 }) {
   const [busyWatch, setBusyWatch] = useState<string>("");
   // Astra r2 on #1068: an older project that watches a repository nobody
@@ -1241,6 +1247,9 @@ function SourcesSection({
   const [adding, setAdding] = useState<boolean>(
     () => room.sources.state === "ok" && !room.sources.items.some((s) => !s.suggested),
   );
+
+  const showsAdding = adding && room.sources.state === "ok";
+  useEffect(() => { onAdding?.(showsAdding); }, [showsAdding, onAdding]);
 
   if (room.sources.state !== "ok") return null;
   const { items, count } = room.sources;
@@ -2380,6 +2389,7 @@ function computeHistoryCounts(changes: RoomChangeRow[]): { todayCount: number; w
 
 export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   const ctrl = useProjectRoomController(scope, scopeLabel);
+  const [addingSources, setAddingSources] = useState(false);
   useAgentFlightsLive();
   const agentFlights = useAgentFlights((s) => s.flights);
   const loading = ctrl.loadStatus === "loading";
@@ -2659,7 +2669,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
           {ctrl.view === "room" ? (
             <>
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>
-                <RoomHead room={ctrl.room} ctrl={ctrl} updateCtrl={updateCtrl} />
+                <RoomHead room={ctrl.room} ctrl={ctrl} updateCtrl={updateCtrl} quiet={addingSources} />
               </div>
               {/* Memory on the Desk (canvas section 2, option B): the
                   project's standing pages sit under the head, as ratified. */}
@@ -2697,7 +2707,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
                 <RoomUnfinishedSection ask={askCtrl} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "80ms" }}>
-                <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} />
+                <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "90ms" }}>
                 <RoomFilesSection ctrl={ctrl} />

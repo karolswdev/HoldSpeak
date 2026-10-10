@@ -202,7 +202,7 @@ export function SignInWell({
         <>
           {hints.map((hint) => <CommandWell key={hint} hint={hint} />)}
           <div className="connections-fold-actions">
-            <Button dense variant="primary" onClick={onRecheck} loading={busy} data-testid={`signin-recheck-${provider}`}>
+            <Button dense variant="secondary" onClick={onRecheck} loading={busy} data-testid={`signin-recheck-${provider}`}>
               Recheck
             </Button>
           </div>
