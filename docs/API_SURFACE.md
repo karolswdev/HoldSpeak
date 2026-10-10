@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 757 (plus static mounts). iOS-consumed: 89. Web-consumed: 591.
+Routes: 758 (plus static mounts). iOS-consumed: 89. Web-consumed: 592.
 
 ## device_audio_ws
 
@@ -497,6 +497,7 @@ Routes: 757 (plus static mounts). iOS-consumed: 89. Web-consumed: 591.
 | Method | Path | Consumers |
 |---|---|---|
 | POST | `/api/meetings/import` | ios, web |
+| POST | `/api/meetings/{meeting_id}/transcribe` | web |
 
 ## web.routes.meetings.action_items
 

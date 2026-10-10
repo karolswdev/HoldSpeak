@@ -30,6 +30,7 @@ import { MeetingSendWellLazy as MeetingSendWell } from "../../../meetings/Meetin
 import { MeetingDecideWell } from "../../../meetings/MeetingDecideWell";
 import { NeedsYouTable, showsRunSummary } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
+import { AudioOnlyVerb } from "./TranscribeVerb";
 
 
 /** One row of the meeting's outcomes ledgers. */
@@ -184,8 +185,11 @@ export function MeetingDetail({
   onOpenEvidence,
   runRefusal,
   footerRunReceipt,
+  onTranscribe,
 }: {
   meeting: Record<string, unknown> | null;
+  /** PHILO-17 transcribe: start Transcribe on this audio-only meeting. */
+  onTranscribe?: (id: string) => Promise<unknown>;
   /** "outcomes" (the face), "review" (HS-200-12, posture 4) or "artifacts". */
   view: DetailView;
   /** HS-109-02/05: a resolved decision moment seeks this transcript row. */
@@ -240,6 +244,11 @@ export function MeetingDetail({
   return (
     <SurfaceSection>
       <MeetingHeader meeting={meeting} data={data} compact={view === "review"} />
+      {/* PHILO-17 transcribe: an audio-only meeting's one verb, under the
+          strip that says "NO TRANSCRIPT · SPEECH NOT SET UP". */}
+      {onTranscribe ? (
+        <AudioOnlyVerb row={{ ...meeting, ...(detail ?? {}) }} onTranscribe={onTranscribe} setUpSpeech testId="meeting-transcribe" />
+      ) : null}
       <CaptureSlab detail={detail} meeting={meeting} />
       <MeetingConflictRecovery
         meetingId={id}

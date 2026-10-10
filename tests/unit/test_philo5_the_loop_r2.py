@@ -24,6 +24,7 @@ and what turned it red on round one (``fca54146``):
 from __future__ import annotations
 
 import builtins
+from datetime import datetime
 import json
 import os
 import pathlib
@@ -218,7 +219,9 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
     assert operations.MEETING_IMPORT.owner_only is True
     # Both secret saves are owner only and HTTP only, with held inputs.
     assert [d.name for d in operations.DESCRIPTORS if d.owner_only] == [
-        "meeting.import", "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install",
+        "meeting.import",
+        "meeting.transcribe",  # PHILO-17: only the owner transcribes a meeting's kept audio
+        "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install",
         "people_access.set",  # Conductor R7: only the owner sets People MCP access
         "calendar.open_settings",  # PHILO-15 04: only the owner opens the Calendars privacy pane
         "project.repository.register",  # PHILO-15 16: only the owner names a Project's repository
@@ -276,6 +279,37 @@ def _p_meeting_import(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     result = hub.root.operations.invoke(OWNER, "meeting.import", {"filename": "shape.txt"}, held={
         "tmp_path": held, "config": Config.load(), "transcriber_factory": lambda cfg: None})
     _wait_imported(hub, result["meeting_id"])
+    return result
+
+
+def _p_meeting_transcribe(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    """PHILO-17: an audio-only meeting (its audio in the real journal), speech ready."""
+    import numpy as np
+
+    from holdspeak.config import Config
+    from holdspeak.meeting_capture_journal import MeetingCaptureJournal
+    from holdspeak.meeting_session import MeetingState
+
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setattr(
+        "holdspeak.whisper_models.configured_speech_readiness",
+        lambda **_kw: {"model": "base", "backend": "mlx", "state": "on_device", "ready": True, "bytes": 0},
+    )
+    meeting = MeetingState(id="m-audio-only", started_at=datetime.now(), segments=[])
+    meeting.transcription_status = "record_only"
+    meeting.transcription_status_detail = {"reason_code": "speech_not_set_up"}
+    hub.db.meetings.save_meeting(meeting)
+    journal = MeetingCaptureJournal(meeting.id)
+    journal.append("mic", np.full(16_000, 0.1, dtype=np.float32))
+    journal.finalize()
+
+    class _Replay:
+        def transcribe(self, _audio: Any, **_kwargs: Any) -> str:
+            return "shape"
+
+    result = hub.root.operations.invoke(OWNER, "meeting.transcribe", {"meeting_id": meeting.id}, held={
+        "config": Config.load(), "transcriber_factory": lambda cfg: _Replay()})
+    _wait_imported(hub, meeting.id)
     return result
 
 
@@ -666,6 +700,7 @@ def _p_agent_hand(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
+    "meeting.transcribe": _p_meeting_transcribe,
     "meeting.summary.run": _p_summary_run,
     "brief.shelf.write": _p_shelf_write,
     "brief.shelf.read": _p_shelf_read,

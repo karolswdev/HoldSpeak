@@ -433,6 +433,33 @@ MEETING_IMPORT = OperationDescriptor(
     owner_only=True,
 )
 
+MEETING_TRANSCRIBE = OperationDescriptor(
+    name="meeting.transcribe",
+    version=1,
+    description="Transcribe a saved meeting that kept its audio only because speech was not set up. Writes the transcript into the same meeting in the background. Refused while speech is not set up.",
+    args_schema={
+        "type": "object",
+        "properties": {"meeting_id": {"type": "string"}},
+        "required": ["meeting_id"],
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL + "; the background transcription runs under that same principal",
+    effect="write",
+    result="{meeting_id, status: transcribing}",
+    refusals=_CONTRACT_REFUSALS + (
+        "owner_required", "NotFound: unknown meeting",
+        "ConflictError: not_audio_only | transcribing | no_audio_kept | speech_not_set_up",
+    ),
+    completion="asynchronous; read meeting.read until intel_status leaves importing (a failure keeps the meeting record_only with transcription_status_detail.last_error); one desk_changed frame (kind meeting, op update) when the worker ends",
+    exposure=("http:POST /api/meetings/{meeting_id}/transcribe", "mcp:meeting.transcribe"),
+    service="meeting_service",
+    method="transcribe_saved",
+    # The configuration and the transcriber stay transport work (as import).
+    held=("config", "transcriber_factory"),
+    # PHILO-17: the owner's verb; it loads the speech model on the hub.
+    owner_only=True,
+)
+
 MEETING_SUMMARY_RUN = OperationDescriptor(
     name="meeting.summary.run",
     version=1,
@@ -2169,7 +2196,7 @@ from holdspeak.desk_window_operations import DESK_WINDOW_OPERATIONS  # noqa: E40
 #: The whole catalogue, in export order.
 DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_CREATE, DECISION_UPDATE, DECISION_READ, DECISION_LIST,
-    MEETING_LIST, MEETING_READ, MEETING_IMPORT, MEETING_SUMMARY_RUN,
+    MEETING_LIST, MEETING_READ, MEETING_IMPORT, MEETING_TRANSCRIBE, MEETING_SUMMARY_RUN,
     BRIEF_GENERATE, BRIEF_LATEST, BRIEF_SHELF_WRITE, BRIEF_SHELF_READ,
     THOUGHT_CREATE, THOUGHT_SAVE, THOUGHT_READ, THOUGHT_WORKBENCH_READ, THOUGHT_LIST,
     NOTE_CREATE, NOTE_READ, NOTE_UPDATE, NOTE_DELETE, NOTE_LIST,

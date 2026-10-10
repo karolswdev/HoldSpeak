@@ -3884,6 +3884,16 @@
       ]
     },
     {
+      "path": "/api/meetings/{meeting_id}/transcribe",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meeting_import",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/memory/meaning-search",
       "methods": [
         "GET"

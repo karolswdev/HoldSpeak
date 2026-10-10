@@ -702,6 +702,11 @@
       "operation": "people_access.set"
     },
     {
+      "story": "PHILO-17",
+      "tool": "meeting.transcribe",
+      "operation": "meeting.transcribe"
+    },
+    {
       "story": "PHILO-16-16b",
       "tool": "desk_window.list",
       "operation": "windows.list"

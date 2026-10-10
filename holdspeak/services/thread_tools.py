@@ -322,6 +322,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "project.add_suggested_source": ("effect_proposal", False),
     "connection.recheck": ("evidence_read", False),
     "meeting.import": ("effect_proposal", False),
+    "meeting.transcribe": ("effect_proposal", False),
     "nudge.send": ("effect_proposal", False),
     "channel.save_destination": ("effect_proposal", False),
     "channel.remove_destination": ("effect_proposal", False),

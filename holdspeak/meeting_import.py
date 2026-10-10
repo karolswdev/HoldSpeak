@@ -636,6 +636,149 @@ def _persist_import(
     )
 
 
+# PHILO-17 transcribe: a meeting recorded while speech was not set up keeps
+# its audio in the capture journal (``meeting_capture_journal.py``) and is
+# saved record-only with ``speech_not_set_up``. Transcribe turns that kept
+# audio into the transcript of the SAME meeting.
+CAPTURE_ROOT_PARTS = (".local", "share", "holdspeak", "meeting-captures")
+
+
+def capture_folder(meeting_id: str, directory: Optional[Path] = None) -> Path:
+    """The meeting's capture journal folder (the journal's own default root)."""
+    return (directory or Path.home().joinpath(*CAPTURE_ROOT_PARTS)) / meeting_id
+
+
+def kept_audio_bytes(meeting_id: str, directory: Optional[Path] = None) -> int:
+    """The durable audio bytes the journal published for this meeting (0: none)."""
+    import json
+
+    try:
+        manifest = json.loads((capture_folder(meeting_id, directory) / "capture.json").read_text("utf-8"))
+    except (OSError, ValueError):
+        return 0
+    return sum(int(v or 0) for v in dict(manifest.get("durable_bytes") or {}).values())
+
+
+def load_kept_audio(meeting_id: str, directory: Optional[Path] = None) -> list[tuple[str, np.ndarray]]:
+    """Read the journal's durable audio: ``[(source, mono float32 16 kHz)]``.
+
+    Only the bytes the manifest calls durable are read (a torn final append
+    is ignored, as recovery does). Raises :class:`MeetingImportError` when
+    the meeting has no kept audio.
+    """
+    import json
+
+    folder = capture_folder(meeting_id, directory)
+    try:
+        manifest = json.loads((folder / "capture.json").read_text("utf-8"))
+    except (OSError, ValueError) as exc:
+        raise MeetingImportError(
+            f"Meeting {meeting_id} has no kept audio ({exc}).", cause="NO AUDIO KEPT"
+        ) from exc
+    rate = int(manifest.get("sample_rate") or TARGET_SAMPLE_RATE)
+    tracks: list[tuple[str, np.ndarray]] = []
+    for source, durable in sorted(dict(manifest.get("durable_bytes") or {}).items()):
+        size = int(durable or 0) // 4 * 4
+        path = folder / f"{source}.f32le.partial"
+        if size <= 0 or not path.is_file():
+            continue
+        with open(path, "rb") as handle:
+            audio = np.frombuffer(handle.read(size), dtype="<f4").astype(np.float32)
+        if rate != TARGET_SAMPLE_RATE:
+            audio = _linear_resample_mono(audio, rate, TARGET_SAMPLE_RATE)
+        if len(audio) >= TARGET_SAMPLE_RATE // 2:
+            tracks.append((str(source), audio))
+    if not tracks:
+        raise MeetingImportError(
+            f"Meeting {meeting_id} has no kept audio to transcribe.", cause="NO AUDIO KEPT"
+        )
+    return tracks
+
+
+def transcribe_saved_meeting(
+    meeting_id: str,
+    *,
+    db,
+    transcriber,
+    config,
+    progress: Optional[ProgressCallback] = None,
+    principal: Any = None,
+    directory: Optional[Path] = None,
+    window_seconds: float = DEFAULT_WINDOW_SECONDS,
+) -> MeetingState:
+    """Transcribe a saved meeting's kept audio into that same meeting.
+
+    The import's own transcription (one admitted speech session, the same
+    windows and guards) runs over each kept track; the mic track speaks as
+    the meeting's mic label, the system track as its remote label. The
+    record-only state is cleared and the meeting lands like an import: a
+    transcript and no summary; the summary waits for its verb.
+    """
+    state = db.meetings.get_meeting(meeting_id)
+    if state is None:
+        raise MeetingImportError(f"Unknown meeting: {meeting_id}", cause="MEETING NOT FOUND")
+    tracks = load_kept_audio(meeting_id, directory)
+    window_samples = max(1, int(window_seconds * TARGET_SAMPLE_RATE))
+    counts = [int(np.ceil(len(audio) / window_samples)) for _source, audio in tracks]
+    windows_total = sum(counts)
+    labels = {"mic": state.mic_label or "Me", "system": state.remote_label or "Remote"}
+
+    from .speech_session import admit_speech_session, hold_gesture_principal
+
+    session = admit_speech_session(
+        kind="dictation.session",
+        principal=principal or hold_gesture_principal(),
+        insertion_aim="recording-import",
+        config_snapshot=config,
+        registry_snapshot=db,
+        deadline_seconds=max(300.0, 120.0 * windows_total),
+        child_budget=4 * windows_total + 4,
+    )
+    admission = session.transcription()
+    segments: list[TranscriptSegment] = []
+    try:
+        offset = 0
+        for (source, audio), count in zip(tracks, counts):
+            def on_track(done: int, _total: int, _offset: int = offset) -> None:
+                if progress is not None:
+                    progress(_offset + done, windows_total)
+
+            found, _empty = _transcribe_import_windows(
+                transcriber, audio, admission,
+                windows_total=count, window_samples=window_samples,
+                window_seconds=window_seconds,
+                duration=len(audio) / float(TARGET_SAMPLE_RATE),
+                speaker_label=labels.get(source, source), progress=on_track,
+            )
+            segments.extend(found)
+            offset += count
+    except BaseException:
+        session.cancel_and_close()
+        raise
+    else:
+        session.close("succeeded")
+    if not segments:
+        raise MeetingImportError(
+            f"No speech could be transcribed from meeting {meeting_id} "
+            f"({windows_total} window(s) checked).",
+            cause="NO SPEECH FOUND",
+        )
+    segments.sort(key=lambda seg: (seg.start_time, seg.end_time))
+    state.segments = segments
+    state.transcription_status = TRANSCRIPTION_COMPLETE
+    state.transcription_status_detail = None
+    # The same summary rule as the import tail: no summary is asked here;
+    # the meeting lands with its "Run summary" verb and the route beside it.
+    state.intel_status = "disabled"
+    if config.meeting.intel_enabled and config.meeting.intel_deferred_enabled:
+        state.intel_status_detail = "No summary yet. Ask for it on the meeting."
+    else:
+        state.intel_status_detail = "Meeting intelligence disabled in config."
+    db.meetings.save_meeting(state)
+    log.info(f"Transcribed meeting {meeting_id}: {len(segments)} segment(s) from {len(tracks)} track(s)")
+    return state
+
+
 def import_transcript(
     path: Path | str,
     *,

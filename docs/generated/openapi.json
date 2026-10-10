@@ -17077,6 +17077,44 @@
         "summary": "Api Resolve Meeting Sync Conflict"
       }
     },
+    "/api/meetings/{meeting_id}/transcribe": {
+      "post": {
+        "description": "PHILO-17: Transcribe a meeting saved with its audio only (202).",
+        "operationId": "transcribe_meeting_api_meetings__meeting_id__transcribe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meeting_id",
+            "required": true,
+            "schema": {
+              "title": "Meeting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transcribe Meeting"
+      }
+    },
     "/api/memory/meaning-search": {
       "get": {
         "description": "OFF / DOWNLOADING / INDEXING / ON for the Settings row.",

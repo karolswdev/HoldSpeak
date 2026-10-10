@@ -168,6 +168,16 @@ class MeetingRepository(BaseRepository):
             ).fetchall()
         return [str(row["id"]) for row in rows]
 
+    def list_interrupted_transcribe_ids(self) -> list[str]:
+        """PHILO-17 transcribe: rows a Transcribe worker left `importing / record_only`."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT id FROM meetings
+                   WHERE intel_status = 'importing' AND transcription_status = 'record_only'
+                   ORDER BY id"""
+            ).fetchall()
+        return [str(row["id"]) for row in rows]
+
     def list_unread_ready(self) -> list[dict[str, Any]]:
         """Return only producer-created readiness rows still unseen."""
         with self._connection() as conn:

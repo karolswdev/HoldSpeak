@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 
 from ... import operations
 from ...config import Config
-from ...services.errors import ValidationError
+from ...services.errors import ConflictError, NotFound, ValidationError
 
 
 def _default_transcriber_factory(config: Config):
@@ -117,6 +117,24 @@ def build_meeting_import_router(ctx) -> APIRouter:
         except ValidationError as exc:
             tmp_path.unlink(missing_ok=True)
             return JSONResponse({"error": exc.detail}, status_code=400)
+        return JSONResponse(result, status_code=202)
+
+    @router.post("/api/meetings/{meeting_id}/transcribe")
+    async def transcribe_meeting(request: Request, meeting_id: str):
+        """PHILO-17: Transcribe a meeting saved with its audio only (202)."""
+        try:
+            result = operations.for_context(ctx, meeting_service=_service).invoke(
+                _principal(request),
+                "meeting.transcribe",
+                {"meeting_id": meeting_id},
+                held={"config": Config.load(), "transcriber_factory": _transcriber_factory},
+            )
+        except operations.OperationOwnerRequired as refused:
+            return JSONResponse({"error": refused.detail, "code": refused.code}, status_code=403)
+        except NotFound as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=404)
+        except ConflictError as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=409)
         return JSONResponse(result, status_code=202)
 
     return router

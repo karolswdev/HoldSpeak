@@ -3,7 +3,7 @@
 // you, what settled, the transcript as a receipt. Record/import and
 // the typed artifacts are wings; speakers/projects/queues plumbing
 // stacks behind the one gear door.
-import { speechWasMissing } from "../../../desk/firstrun/speechTruth";
+import { speechTranscribing, speechWasMissing } from "../../../desk/firstrun/speechTruth";
 import { wireClock } from "../../../desk/surface/format";
 import { countToken } from "../../../desk/surface/count";
 import type { ReactNode } from "react";
@@ -105,6 +105,9 @@ export function stateToken(row: Record<string, unknown>): StateToken {
     importing: { label: "IMPORTING", tone: "warn" },
   };
   if (row.status === "failed") return { label: "FAILED", tone: "danger" };
+  // PHILO-17 transcribe: an audio-only meeting's kept audio is being
+  // transcribed (the same worker state as an import).
+  if (speechTranscribing(row)) return { label: "TRANSCRIBING", tone: "warn" };
   // PHILO-13-04 A3-W (coordinator ruling): an ACTIVE run is the live fact,
   // so RUNNING, QUEUED and FAILED (with its Retry) show first.
   if (["running", "queued", "pending", "error", "failed", "importing"].includes(state)) {
@@ -359,6 +362,10 @@ export function meetingsHeadline(
   if (noSpeech > 0) {
     return { text: counted(noSpeech, "meeting has no transcript", "meetings have no transcript"), accent: true };
   }
+  const transcribing = meetingRows.filter(speechTranscribing).length;
+  if (transcribing > 0) {
+    return { text: counted(transcribing, "meeting transcribing", "meetings transcribing"), accent: true };
+  }
   // PHILO-15 10 (B14): no all-clear while a meeting is still importing.
   const importing = meetingRows.filter((row) => stateToken(row).label === "IMPORTING").length;
   if (importing > 0) {
@@ -435,8 +442,8 @@ export function meetingRowState(row: Record<string, unknown>): MeetingRowState {
     return { label: "OFF", verb: "Open", verbVariant: "ghost" };
   }
   // IMPORTING (PHILO-15 10): the transcript is not here yet; no verb.
-  if (token.label === "IMPORTING") {
-    return { label: "IMPORTING", tone: "warn", verb: null, verbVariant: "ghost" };
+  if (token.label === "IMPORTING" || token.label === "TRANSCRIBING") {
+    return { label: token.label, tone: "warn", verb: null, verbVariant: "ghost" };
   }
   // REC (live capture — no verb, the meeting is in the live room)
   if (token.label === "REC") {

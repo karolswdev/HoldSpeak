@@ -821,6 +821,7 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "meeting.list": {"kind": "tool", "name": "meeting.list"},
     "meeting.read": {"kind": "tool", "name": "meeting.get"},
     "meeting.import": {"kind": "tool", "name": "meeting.import"},
+    "meeting.transcribe": {"kind": "tool", "name": "meeting.transcribe"},
     "meeting.summary.run": {"kind": "tool", "name": "meeting.run_intelligence"},
     "brief.generate": {"kind": "tool", "name": "monday_brief.generate"},
     "brief.latest": {"kind": "tool", "name": "monday_brief.get"},

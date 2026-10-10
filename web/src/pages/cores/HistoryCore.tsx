@@ -638,8 +638,16 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     }
   };
 
+  // PHILO-17 transcribe: the hub starts Transcribe on an audio-only meeting
+  // (202); the face reads itself again now and on the worker's desk_changed.
+  const transcribeMeeting = async (id: string) => {
+    await apiFetch(`/api/meetings/${encodeURIComponent(id)}/transcribe`, { method: "POST" });
+    await refreshFace();
+  };
+
   const rail = (
     <CatalogRail
+      onTranscribe={transcribeMeeting}
       meetingRows={meetingRows}
       restoredId={restoredId}
       meetings={meetings}
@@ -656,6 +664,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const detailPane = (paneView: DetailView) => (
     <MeetingDetail
       meeting={selected}
+      onTranscribe={transcribeMeeting}
       view={paneView}
       momentSegmentIndex={evidenceSegment ?? requestedMomentSegment}
       onClose={() => setSelected(null)}
