@@ -3341,6 +3341,60 @@ class ProjectService:
             self._record_command(conn, cmd_id, project_id, "add_source_watch", req_hash, envelope, result=result)
         return result
 
+    @_serialized_command
+    def add_source_watches(
+        self, principal: Principal, project_id: str, specs: list[dict[str, Any]],
+        *, command_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """PHILO-17 U10: sources added to a project that exists (the Room's Add source).
+
+        The same rows ``create_from_setup`` writes for each source (the watch,
+        its rules, the ``project_sources`` binding), in ONE transaction with
+        the revision, one ``watch.created`` change per watch and its event.
+        """
+        self._require_project(project_id)
+        if not specs:
+            raise ValidationError("At least one source is required")
+        req_hash = _request_hash({"project_id": project_id, "specs": specs, "action": "add_source_watches"})
+        replay = self._check_idempotency(command_id, req_hash, "add_source_watches")
+        if replay is not None:
+            return replay
+        cmd_id = command_id or generate_pcmd_id()
+        now_iso = utc_now_iso()
+        project_ref = format_ref("project", project_id)
+        with self._command_txn(command_id) as conn:
+            new_revision = self._get_revision(conn, project_id) + 1
+            conn.execute("UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
+                         (new_revision, now_iso, project_id))
+            activated: list[dict[str, Any]] = []
+            for ordinal, spec in enumerate(specs):
+                watch = self._arm_source_watch_in_txn(conn, project_id, spec, now_iso)
+                activated.append(watch)
+                watch_ref = format_ref("watch", watch["watch_id"])
+                conn.execute(
+                    """INSERT INTO project_changes (
+                        id, project_id, project_revision, change_kind, target_ref, actor_ref,
+                        command_id, before_hash, after_hash, summary_json, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (generate_pchg_id(project_id=project_id, project_revision=new_revision, ordinal=ordinal),
+                     project_id, new_revision, "watch.created", watch_ref,
+                     f"principal:{principal.identity}", cmd_id, None, None,
+                     json.dumps({"watch_id": watch["watch_id"], "name": watch["name"]}), now_iso),
+                )
+                self._ledger.append_in_transaction(
+                    conn, principal, event_type="watch.created", producer="ProjectService",
+                    subject_ref=project_ref, source_revision=str(new_revision),
+                    facts={"project_id": project_id, "watch_id": watch["watch_id"]},
+                    refs=[project_ref, watch_ref],
+                )
+            envelope = CommandResultEnvelope(
+                result_kind=ResultKind.UPDATED, project_id=project_id, project_revision=new_revision,
+                changed_refs=(parse_ref(project_ref),),
+            )
+            result = {"project_id": project_id, "activated_watches": activated, **_envelope_to_dict(envelope)}
+            self._record_command(conn, cmd_id, project_id, "add_source_watches", req_hash, envelope, result=result)
+        return result
+
     def update_project(
         self, principal: Principal, project_id: str, patch: dict[str, Any],
         *, expected_revision: Optional[int] = None,

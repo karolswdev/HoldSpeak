@@ -381,3 +381,17 @@
     animation: none;
   }
 }
+
+/* PHILO-17 U10: Add source in the Room (the Door's rows, its verbs at the foot). */
+.door-add-well {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-2);
+}
+
+.door-add-verbs {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

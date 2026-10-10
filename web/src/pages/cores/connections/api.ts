@@ -164,6 +164,12 @@ export async function fetchConnections(): Promise<ConnectionsResponse> {
   }
 }
 
+/** PHILO-17 U29: add a Jira or Confluence account (site, email); the caller
+ *  checks it at once, so it never stays NEVER CHECKED. */
+export async function addAtlassianAccount(providerId: "jira" | "confluence", site: string, email: string): Promise<void> {
+  await apiFetch(`/api/providers/${providerId}/connections`, { method: "POST", json: { site, email } });
+}
+
 export async function recheckProvider(providerId: string): Promise<ConnectionTool | null> {
   try {
     const raw = await apiFetch(`/api/connections/${providerId}/recheck`, {

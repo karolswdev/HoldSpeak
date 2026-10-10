@@ -31,7 +31,12 @@ import {
   CitationChips,
   sourceLabel,
   Material,
+  ObjectList,
+  type ObjectSort,
+  type ObjectSortKey,
 } from "../../desk/surface";
+import { useDrawerMembers } from "../../desk/drawer/useDrawerData";
+import { memberOpens, openMember } from "../../desk/drawer/open";
 import { useWindowTitle } from "../../desk/surface/title";
 import { Button } from "../../components/signal/Signal";
 import {
@@ -87,6 +92,7 @@ import { PreparePosture, RESULT_OPTIONS } from "./prepare/PreparePosture";
 import { coverageToken, clockToken } from "./prepare/model";
 import * as api from "./api";
 import { RoomPeopleSection, monogram } from "./RoomPeopleSection";
+import { AddSourcesWell } from "./door/DoorCore";
 import "./project-room.css";
 import { RecallFace } from "./recall/RecallFace";
 import { DecisionRecordPreparedChip, DecisionRecordSendWells } from "../../desk/documentSendsLazy";
@@ -1205,6 +1211,10 @@ function SourcesSection({
   ctrl: ReturnType<typeof useProjectRoomController>;
 }) {
   const [busyWatch, setBusyWatch] = useState<string>("");
+  // PHILO-17 U10: Add source in the Room; open at once when the project has none.
+  const [adding, setAdding] = useState<boolean>(
+    () => room.sources.state === "ok" && !room.sources.items.some((s) => !s.suggested),
+  );
 
   if (room.sources.state !== "ok") return null;
   const { items, count } = room.sources;
@@ -1251,11 +1261,25 @@ function SourcesSection({
         /* HS-169-07 park candidate: the steward's settings live under the
            sources (D4/D5).  Until per-source Adjust exists, this ghost verb
            is the honest interim entry point to the StewardPosture. */
-        <Button dense variant="ghost" loading={stewardCtrl.loading} onClick={() => void stewardCtrl.enterSteward()} data-testid="steward-verb" data-verb="steward">
-          Steward
-        </Button>
+        <>
+          {!adding ? (
+            <Button dense variant="ghost" onClick={() => setAdding(true)} data-testid="room-add-source" data-verb="add-source">
+              Add source
+            </Button>
+          ) : null}
+          <Button dense variant="ghost" loading={stewardCtrl.loading} onClick={() => void stewardCtrl.enterSteward()} data-testid="steward-verb" data-verb="steward">
+            Steward
+          </Button>
+        </>
       }
     >
+      {adding && room.projectId ? (
+        <AddSourcesWell
+          projectId={room.projectId}
+          onAdded={() => { setAdding(false); onReload(); }}
+          onCancel={() => setAdding(false)}
+        />
+      ) : null}
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows">
           {/* HS-172-06: suggested sources sit above existing */}
@@ -1420,6 +1444,44 @@ function SourcesSection({
           })}
         </ul>
       </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+/* ── FILES section (PHILO-17 U30: the drawer's objects, in the Room) ── */
+
+function RoomFilesSection({ ctrl }: { ctrl: ReturnType<typeof useProjectRoomController> }) {
+  const { members } = useDrawerMembers(ctrl.projectId ?? "", ctrl);
+  const [sort, setSort] = useState<ObjectSort>({ key: "name", dir: "asc" });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = members.find((m) => m.id === selectedId) ?? null;
+  // A zero is never said (UX-CANON A.8): no files, no section.
+  if (!members.length) return null;
+  const open = (id: string | null) => {
+    const member = members.find((m) => m.id === id);
+    if (member && memberOpens(member)) openMember(member);
+  };
+  const onSort = (key: ObjectSortKey) =>
+    setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
+  return (
+    <SurfaceSection
+      label={countLabel("FILES", members.length)}
+      data-testid="room-files"
+      actions={
+        <Button dense variant="ghost" disabled={!selected || !memberOpens(selected)} onClick={() => open(selectedId)} data-testid="room-files-open">
+          Open
+        </Button>
+      }
+    >
+      <ObjectList
+        label="Files"
+        rows={members}
+        sort={sort}
+        onSort={onSort}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        onOpen={open}
+      />
     </SurfaceSection>
   );
 }
@@ -2550,6 +2612,9 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
               </div>
               <div className="room-section-rise" style={{ animationDelay: "80ms" }}>
                 <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} />
+              </div>
+              <div className="room-section-rise" style={{ animationDelay: "90ms" }}>
+                <RoomFilesSection ctrl={ctrl} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "100ms" }}>
                 <RoomPeopleSection projectId={ctrl.projectId} />

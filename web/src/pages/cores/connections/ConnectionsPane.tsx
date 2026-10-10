@@ -23,7 +23,7 @@ import type {
   ConnectionState,
   JiraSubConnection,
 } from "./api";
-import { fetchConnections, recheckProvider } from "./api";
+import { addAtlassianAccount, fetchConnections, recheckProvider } from "./api";
 import "./connections.css";
 
 /* ── State mapping (D1 + D6) ── */
@@ -40,10 +40,18 @@ function chipState(state: ConnectionState): ChipState {
   }
 }
 
-export function chipLabel(state: ConnectionState, providerId: string): string {
+/** PHILO-17 U29: a failed check whose cause is a missing sign-in. */
+const NOT_SIGNED_IN = /not logged in|not authenticated|unauthori[sz]ed|login required|\b401\b/i;
+
+export function notSignedIn(state: ConnectionState, errorDetail?: string | null): boolean {
+  return state === "owner_action_required" || (state === "degraded" && NOT_SIGNED_IN.test(errorDetail ?? ""));
+}
+
+export function chipLabel(state: ConnectionState, providerId: string, errorDetail?: string | null): string {
+  if (notSignedIn(state, errorDetail)) return "Not signed in";
   switch (state) {
     case "connected": return "Connected";
-    case "owner_action_required": return "Sign in";
+    case "owner_action_required": return "Not signed in";
     case "unavailable":
       if (providerId === "jira" || providerId === "confluence") return "acli missing";
       return "gh missing";
@@ -81,9 +89,9 @@ export function checkedAgo(
 export function stateWords(
   state: ConnectionState,
   providerId: string,
-  row: { last_checked_at?: string; checked_age_seconds?: number; account?: { login?: string } | object },
+  row: { last_checked_at?: string; checked_age_seconds?: number; account?: { login?: string } | object; error_detail?: string },
 ): string {
-  const label = chipLabel(state, providerId);
+  const label = chipLabel(state, providerId, row.error_detail);
   if (state === "never_checked") return label;
   // PHILO-15 B31 (Astra r1): a sign-in read from gh's config is no check:
   // it names its source and carries no time.
@@ -99,9 +107,9 @@ function toolTier(state: ConnectionState): string | undefined {
   return undefined;
 }
 
-/** Whether the fold should be open by default for this state. */
+/** PHILO-17 U29: every row that is not ready shows its exact command and Copy. */
 function foldOpen(state: ConnectionState): boolean {
-  return state === "owner_action_required" || state === "unavailable";
+  return state !== "connected" && state !== "signed_in";
 }
 
 function formatTime(iso: string | undefined | null): string {
@@ -165,6 +173,46 @@ function CommandWell({
   );
 }
 
+/** PHILO-17 U29: sign in where the source row is (New Project, the Room):
+ *  the exact command with Copy, Add for an Atlassian account, and Recheck.
+ *  No Settings window over the work. */
+export function SignInWell({
+  tool,
+  busy,
+  onRecheck,
+  onAddAccount,
+}: {
+  tool: ConnectionTool;
+  busy: boolean;
+  onRecheck: () => void;
+  onAddAccount: (site: string, email: string) => void;
+}) {
+  const provider = tool.provider_id;
+  const atlassian = provider === "jira" || provider === "confluence";
+  const waiting = (tool.connections ?? []).filter((c) => c.state !== "connected");
+  const hints: string[] = atlassian
+    ? waiting.map((c) => c.recovery_hint ?? `acli ${provider} auth login --site ${c.account.site} --email ${c.account.email} --token`)
+    : [tool.recovery_hint && tool.state !== "unavailable" ? tool.recovery_hint : "gh auth login"];
+  if (tool.state === "unavailable" && tool.recovery_hint) hints.splice(0, hints.length, tool.recovery_hint);
+  const noAccount = atlassian && !(tool.connections ?? []).length;
+  return (
+    <div className="connections-signin-well" data-testid={`signin-well-${provider}`}>
+      {noAccount ? (
+        <AddAccountFields provider={provider as "jira" | "confluence"} onAdd={onAddAccount} busy={busy} />
+      ) : (
+        <>
+          {hints.map((hint) => <CommandWell key={hint} hint={hint} />)}
+          <div className="connections-fold-actions">
+            <Button dense variant="primary" onClick={onRecheck} loading={busy} data-testid={`signin-recheck-${provider}`}>
+              Recheck
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ── Tool cards ── */
 
 function GitHubCard({
@@ -192,7 +240,7 @@ function GitHubCard({
       <div className="connections-tool-chips">
         <span title={state === "degraded" ? (tool.error_detail ?? undefined) : undefined}>
           <StateChip
-            state={chipState(state)}
+            state={notSignedIn(state, tool.error_detail) ? "warning" : chipState(state)}
             label={stateWords(state, "github", tool)}
           />
         </span>
@@ -247,7 +295,7 @@ function JiraConnectionRow({
   busy: boolean;
 }) {
   const state = conn.state;
-  const showFold = state === "owner_action_required";
+  const showFold = foldOpen(state);
   const hint = conn.recovery_hint ?? `acli jira auth login --site ${conn.account.site} --email ${conn.account.email} --token`;
   const site = conn.account.site;
 
@@ -287,6 +335,48 @@ function JiraConnectionRow({
   );
 }
 
+/** PHILO-17 U29: the Add for a Jira or Confluence account: Site, Email, the
+ *  exact sign-in command (with Copy) and Add. The caller checks the new
+ *  account at once. */
+export function AddAccountFields({
+  provider,
+  onAdd,
+  busy = false,
+}: {
+  provider: "jira" | "confluence";
+  onAdd: (site: string, email: string) => void;
+  busy?: boolean;
+}) {
+  const [site, setSite] = useState("");
+  const [email, setEmail] = useState("");
+  const s = site.trim();
+  const e = email.trim();
+  const add = () => {
+    if (!s || !e) return;
+    onAdd(s, e);
+    setSite("");
+    setEmail("");
+  };
+  return (
+    <div className="connections-jira-ghost-fields" data-testid={`connections-add-${provider}`}>
+      <label className="connections-field-label">
+        <span className="connections-field-label-text">Site</span>
+        <StringGadget label="Site" value={site} onChange={setSite} placeholder="site.atlassian.net" />
+      </label>
+      <label className="connections-field-label">
+        <span className="connections-field-label-text">Email</span>
+        <StringGadget label="Email" value={email} onChange={setEmail} placeholder="email" />
+      </label>
+      <CommandWell hint={`acli ${provider} auth login --site ${s || "<site>"} --email ${e || "<email>"} --token`} />
+      <div className="connections-jira-add-row">
+        <Button dense variant="ghost" disabled={!s || !e} loading={busy} onClick={add}>
+          Add
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function JiraCards({
   tool,
   onRecheck,
@@ -298,19 +388,6 @@ function JiraCards({
   onAddAccount: (site: string, email: string) => void;
   busyRef: string | null;
 }) {
-  const [addSite, setAddSite] = useState("");
-  const [addEmail, setAddEmail] = useState("");
-
-  const handleAdd = useCallback(() => {
-    const s = addSite.trim();
-    const e = addEmail.trim();
-    if (s && e) {
-      onAddAccount(s, e);
-      setAddSite("");
-      setAddEmail("");
-    }
-  }, [addSite, addEmail, onAddAccount]);
-
   const connections = tool.connections ?? [];
   const hasConnections = connections.length > 0;
 
@@ -327,21 +404,7 @@ function JiraCards({
           <StateChip state={chipState(tool.state)} label={stateWords(tool.state, "jira", tool)} />
           <ProvenanceChip source="acli" />
         </div>
-        <div className="connections-jira-ghost-fields">
-          <label className="connections-field-label">
-            <span className="connections-field-label-text">Site</span>
-            <StringGadget label="Site" value={addSite} onChange={setAddSite} placeholder="site.atlassian.net" />
-          </label>
-          <label className="connections-field-label">
-            <span className="connections-field-label-text">Email</span>
-            <StringGadget label="Email" value={addEmail} onChange={setAddEmail} placeholder="email" />
-          </label>
-          <div className="connections-jira-add-row">
-            <Button dense variant="ghost" disabled={!addSite.trim() || !addEmail.trim()} onClick={handleAdd}>
-              Add
-            </Button>
-          </div>
-        </div>
+        <AddAccountFields provider="jira" onAdd={onAddAccount} busy={busyRef === "jira"} />
       </div>
     );
   }
@@ -373,7 +436,7 @@ function ConfluenceConnectionRow({
   busy: boolean;
 }) {
   const state = conn.state;
-  const showFold = state === "owner_action_required";
+  const showFold = foldOpen(state);
   const hint = conn.recovery_hint ?? `acli confluence auth login --site ${conn.account.site} --email ${conn.account.email} --token`;
   const site = conn.account.site;
 
@@ -416,17 +479,19 @@ function ConfluenceConnectionRow({
 function ConfluenceCards({
   tool,
   onRecheck,
+  onAddAccount,
   busyRef,
 }: {
   tool: ConnectionTool;
   onRecheck: (ref?: string) => void;
+  onAddAccount: (site: string, email: string) => void;
   busyRef: string | null;
 }) {
   const connections = tool.connections ?? [];
 
   if (connections.length === 0) {
     return (
-      <div className="connections-tool-row" data-testid="connections-confluence" data-tier={undefined}>
+      <div className="connections-tool-row connections-jira-ghost" data-testid="connections-confluence" data-tier={undefined}>
         <span className="connections-tool-identity">
           <span className="connections-tool-emblem">C</span>
           <span className="connections-tool-label">Confluence</span>
@@ -435,6 +500,7 @@ function ConfluenceCards({
           <StateChip state={chipState(tool.state)} label={stateWords(tool.state, "confluence", tool)} />
           <ProvenanceChip source="acli" />
         </div>
+        <AddAccountFields provider="confluence" onAdd={onAddAccount} busy={busyRef === "confluence"} />
       </div>
     );
   }
@@ -604,14 +670,17 @@ export function ConnectionsPane({
     }
   }, [data, onFooterUpdate]);
 
-  const handleAddJiraAccount = useCallback(async (site: string, email: string) => {
+  // PHILO-17 U29: an added account is checked at once (never left NEVER CHECKED).
+  const handleAddAccount = useCallback(async (provider: "jira" | "confluence", site: string, email: string) => {
+    setRecheckBusy(provider);
     try {
-      await import("../../../lib/api").then(({ apiFetch: f }) =>
-        f("/api/providers/jira/connections", { method: "POST", json: { site, email } })
-      );
-      void load();
+      await addAtlassianAccount(provider, site, email);
+      await recheckProvider(provider);
     } catch {
-      // The add failed silently; the user will see the state is unchanged.
+      // The add failed; the card shows the state unchanged.
+    } finally {
+      setRecheckBusy(null);
+      void load();
     }
   }, [load]);
 
@@ -645,7 +714,7 @@ export function ConnectionsPane({
         <JiraCards
           tool={jira}
           onRecheck={(ref) => void handleRecheck("jira", ref)}
-          onAddAccount={handleAddJiraAccount}
+          onAddAccount={(site, email) => void handleAddAccount("jira", site, email)}
           busyRef={recheckBusy}
         />
       ) : null}
@@ -653,6 +722,7 @@ export function ConnectionsPane({
         <ConfluenceCards
           tool={confluence}
           onRecheck={(ref) => void handleRecheck("confluence", ref)}
+          onAddAccount={(site, email) => void handleAddAccount("confluence", site, email)}
           busyRef={recheckBusy}
         />
       ) : null}

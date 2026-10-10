@@ -219,13 +219,19 @@ describe("H-C3 Dock rendering", () => {
     }
   });
 
-  // PHILO-14 A2: the Dock opens a Project as its drawer.
-  it("opens an active project as its drawer", async () => {
+  // PHILO-17 U30: the Dock opens a Project's Room (one home), never its drawer.
+  it("opens an active project's Room, not its drawer", async () => {
     useDrawers.setState({ drawers: [], infos: [] });
-    render(<Dock />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Alpha, 1 open here" }));
-    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["p1"]);
+    const shell = await import("../../shell");
+    const room = vi.spyOn(shell, "openProjectRoom").mockImplementation(() => undefined);
+    try {
+      render(<Dock />);
+      fireEvent.click(screen.getByRole("button", { name: "Alpha, 1 open here" }));
+      expect(room).toHaveBeenCalledWith("p1");
+      expect(useDrawers.getState().drawers).toEqual([]);
+    } finally {
+      room.mockRestore();
+    }
   });
 
   it("keeps a successful Send snapshot when the People projection fails", async () => {

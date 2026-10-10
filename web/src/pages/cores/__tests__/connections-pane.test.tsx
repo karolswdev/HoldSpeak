@@ -22,6 +22,7 @@ vi.mock("../../../lib/api", () => ({
 }));
 
 import { fetchConnections, recheckProvider } from "../connections/api";
+import { apiFetch } from "../../../lib/api";
 
 const mockFetchConnections = vi.mocked(fetchConnections);
 const mockRecheckProvider = vi.mocked(recheckProvider);
@@ -199,13 +200,14 @@ describe("ConnectionsPane", () => {
   });
 
   describe("GitHub owner_action_required", () => {
-    it("shows Sign in chip with open fold and COPY transport key", async () => {
+    it("shows Not signed in chip with open fold and COPY transport key", async () => {
       const response: ConnectionsResponse = {
         tools: [signInGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
       const card = await screen.findByTestId("connections-github");
-      expect(within(card).getByText("Sign in")).toBeInTheDocument();
+      // PHILO-17 U29: the cause in plain words.
+      expect(within(card).getByText("Not signed in")).toBeInTheDocument();
       // Fold is open with the command
       expect(within(card).getByText("gh auth login")).toBeInTheDocument();
       // Copy transport key
@@ -309,7 +311,7 @@ describe("ConnectionsPane", () => {
       const alpha = await screen.findByTestId("connections-jira-conn-alpha-user");
       expect(within(alpha).getByText("Connected")).toBeInTheDocument();
       const beta = await screen.findByTestId("connections-jira-conn-beta-admin");
-      expect(within(beta).getByText("Sign in")).toBeInTheDocument();
+      expect(within(beta).getByText("Not signed in")).toBeInTheDocument();
     });
   });
 
@@ -532,6 +534,44 @@ describe("ConnectionsPane", () => {
       // Calendar and Models are local reads: no age.
       const cal = await screen.findByTestId("connections-calendar");
       expect(within(cal).getByText("Connected")).toBeInTheDocument();
+    });
+  });
+  /* PHILO-17 U29: the cause in plain words, the command on every row, Add checks at once. */
+  describe("sign in (U29)", () => {
+    it("a failed check whose cause is no sign-in says Not signed in, with its command", async () => {
+      const gh: ConnectionTool = {
+        provider_id: "github", state: "degraded", account: {},
+        error_detail: "You are not logged into any GitHub hosts. To log in, run: gh auth login",
+        last_checked_at: "2026-09-04T13:00:00Z", egress_host: "github.com",
+      };
+      renderPane({ tools: [gh, emptyJira(), connectedCalendar(), connectedModels()] });
+      const card = await screen.findByTestId("connections-github");
+      expect(within(card).getByText(/^Not signed in · Checked /)).toBeInTheDocument();
+      expect(within(card).getByText("gh auth login")).toBeInTheDocument();
+      expect(within(card).getByText("Copy")).toBeInTheDocument();
+    });
+
+    it("Jira Add posts the account and checks it at once", async () => {
+      vi.mocked(apiFetch).mockResolvedValue({});
+      mockRecheckProvider.mockResolvedValue(null);
+      renderPane({ tools: [connectedGithub(), emptyJira(), connectedCalendar(), connectedModels()] });
+      const card = await screen.findByTestId("connections-jira");
+      const inputs = card.querySelectorAll("input");
+      fireEvent.change(inputs[0], { target: { value: "acme.atlassian.net" } });
+      fireEvent.change(inputs[1], { target: { value: "me@acme.com" } });
+      expect(within(card).getByText("acli jira auth login --site acme.atlassian.net --email me@acme.com --token")).toBeInTheDocument();
+      fireEvent.click(within(card).getByText("Add"));
+      await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
+        "/api/providers/jira/connections", { method: "POST", json: { site: "acme.atlassian.net", email: "me@acme.com" } }));
+      await waitFor(() => expect(mockRecheckProvider).toHaveBeenCalledWith("jira"));
+    });
+
+    it("Confluence with no account has its Add", async () => {
+      const conf: ConnectionTool = { provider_id: "confluence", state: "never_checked", account: {}, connections: [] };
+      renderPane({ tools: [connectedGithub(), emptyJira(), conf, connectedCalendar(), connectedModels()] });
+      const card = await screen.findByTestId("connections-confluence");
+      expect(within(card).getByText("Add")).toBeInTheDocument();
+      expect(within(card).getByText(/acli confluence auth login/)).toBeInTheDocument();
     });
   });
 });

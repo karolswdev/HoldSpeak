@@ -23,7 +23,8 @@ import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, applicationForAction } from "../../applications";
-import { drawerWindowId, openDrawer } from "../../drawer/store";
+import { drawerWindowId } from "../../drawer/store";
+import { openProjectRoom } from "../../shell";
 import { RoomActions } from "./RoomActions";
 import {
   dockStateLabel,
@@ -673,16 +674,16 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         return (
           <Button
             key={`project:${project.id}`}
-            ref={seatRef(drawerWindowId(project.id))}
+            ref={seatRef(projectWindow?.id ?? drawerWindowId(project.id))}
             variant="chrome"
             data-app="project"
             className={`desk-dock-launch desk-dock-project${projectWindow && !seated ? " is-run" : ""}${seated ? " is-seated" : ""}`}
             aria-label={(count > 0 ? `${project.name}, ${count} open here` : project.name) + (seated ? ", iconified" : "")}
-            // PHILO-14 A2: the Dock opens a Project as its drawer.
-            // PHILO-16 (A1): a seated drawer comes back from its seat.
+            // PHILO-17 U30: the Dock opens a Project's Room (one home; Create
+            // Project opens the Room too). A seated window comes back from its seat.
             onClick={() => {
               if (seated && projectWindow) useDesk.getState().restorePanel(projectWindow.id);
-              else openDrawer(project.id);
+              else openProjectRoom(project.id);
             }}
           >
             {/* C1: a project is a drawer (the Workbench silhouette rule). */}

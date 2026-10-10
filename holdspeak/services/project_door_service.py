@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from holdspeak.principals import Principal
-from holdspeak.services.errors import ServiceError
+from holdspeak.services.errors import ServiceError, ValidationError
 
 DOOR_DEFAULTS: dict[str, list[dict[str, Any]]] = {
     "github": [
@@ -254,9 +254,15 @@ class ProjectDoorService:
     def create(
         self,
         principal: Principal,
-        outcome: str,
-        sources: list[dict[str, Any]],
+        outcome: str = "",
+        sources: list[dict[str, Any]] | None = None,
+        project_id: str | None = None,
     ) -> dict[str, Any]:
+        sources = sources or []
+        if project_id:
+            return self.add_sources(principal, project_id, sources)
+        if not str(outcome or "").strip():
+            raise ValidationError("outcome is required")
         if self._project_service is None:
             raise ServiceError(
                 "project_service_missing",
@@ -265,47 +271,10 @@ class ProjectDoorService:
 
         name = (outcome[:80]).strip() or "New Project"
 
-        proposals: list[dict[str, Any]] = []
-        for source in sources:
-            provider = source.get("provider", "")
-            scope = source.get("scope")
-            watch_keys = source.get("watches", [])
-            adjust = source.get("adjust") or {}
-
-            for key in watch_keys:
-                default = _DEFAULTS_BY_KEY.get(key)
-                if not default:
-                    continue
-
-                template_id = default["template_id"]
-                if provider == "github":
-                    repo = str(scope) if isinstance(scope, str) else ""
-                    if key == "ci":
-                        spec = self._compile_ci_watch(repo, adjust)
-                    else:
-                        spec = self._compile_github(template_id, repo, adjust)
-                elif provider == "jira":
-                    jira_scope = scope if isinstance(scope, dict) else {}
-                    spec = self._compile_jira(template_id, jira_scope, adjust)
-                else:
-                    continue
-
-                proposals.append({
-                    "id": f"door_{uuid.uuid4().hex[:12]}",
-                    "spec": spec,
-                    "state": "selected",
-                    "test_state": "passed",
-                })
-                if provider == "github" and key == "open_prs":
-                    # Conductor R4: the open issues ride with the PR queue
-                    # (no toggle of their own), so a Room's GitHub issue
-                    # rows work out of the box.
-                    proposals.append({
-                        "id": f"door_{uuid.uuid4().hex[:12]}",
-                        "spec": self._compile_github("watch.github.open_issues", repo, {}),
-                        "state": "selected",
-                        "test_state": "passed",
-                    })
+        proposals = [
+            {"id": f"door_{uuid.uuid4().hex[:12]}", "spec": spec, "state": "selected", "test_state": "passed"}
+            for spec in self._specs(sources)
+        ]
 
         setup_payload = {
             "name": name,
@@ -321,23 +290,77 @@ class ProjectDoorService:
             principal, setup_payload, command_id=cmd_id,
         )
 
-        activated = result.get("activated_watches", [])
-        if activated and self._watch_service is not None:
-            for aw in activated:
-                wid = aw.get("watch_id", "")
-                if not wid:
-                    continue
-                try:
-                    self._watch_service.baseline_watch(principal, wid)
-                except Exception:
-                    try:
-                        self._watch_service._repo.update_watch_spec(
-                            wid, baseline_state="pending",
-                        )
-                    except Exception:
-                        pass
-
+        self._baseline(principal, result.get("activated_watches", []))
         return {"projectId": result.get("project_id", "")}
+
+    def add_sources(
+        self,
+        principal: Principal,
+        project_id: str,
+        sources: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """PHILO-17 U10: the Door's source rows, added to a project that exists.
+
+        The same specs ``create`` arms, through ``ProjectService.add_source_watches``.
+        """
+        if self._project_service is None:
+            raise ServiceError(
+                "project_service_missing",
+                "ProjectDoorService requires a composed ProjectService",
+            )
+        specs = self._specs(sources)
+        if not specs:
+            raise ValidationError("Choose a source to add")
+        result = self._project_service.add_source_watches(principal, project_id, specs)
+        activated = result.get("activated_watches", [])
+        self._baseline(principal, activated)
+        return {"projectId": project_id, "watches": len(activated)}
+
+    def _specs(self, sources: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Each GitHub or Jira source row compiled to its watch specs."""
+        specs: list[dict[str, Any]] = []
+        for source in sources or []:
+            provider = source.get("provider", "")
+            scope = source.get("scope")
+            adjust = source.get("adjust") or {}
+            for key in source.get("watches", []):
+                default = _DEFAULTS_BY_KEY.get(key)
+                if not default:
+                    continue
+                template_id = default["template_id"]
+                if provider == "github":
+                    repo = str(scope) if isinstance(scope, str) else ""
+                    if key == "ci":
+                        specs.append(self._compile_ci_watch(repo, adjust))
+                    else:
+                        specs.append(self._compile_github(template_id, repo, adjust))
+                    if key == "open_prs":
+                        # Conductor R4: the open issues ride with the PR queue
+                        # (no toggle of their own), so a Room's GitHub issue
+                        # rows work out of the box.
+                        specs.append(self._compile_github("watch.github.open_issues", repo, {}))
+                elif provider == "jira":
+                    jira_scope = scope if isinstance(scope, dict) else {}
+                    specs.append(self._compile_jira(template_id, jira_scope, adjust))
+        return specs
+
+    def _baseline(self, principal: Principal, activated: list[dict[str, Any]]) -> None:
+        """Each armed watch takes its baseline read now (or is marked pending)."""
+        if self._watch_service is None:
+            return
+        for aw in activated:
+            wid = aw.get("watch_id", "")
+            if not wid:
+                continue
+            try:
+                self._watch_service.baseline_watch(principal, wid)
+            except Exception:
+                try:
+                    self._watch_service._repo.update_watch_spec(
+                        wid, baseline_state="pending",
+                    )
+                except Exception:
+                    pass
 
     def _compile_ci_watch(
         self,
