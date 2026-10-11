@@ -89,7 +89,6 @@ import {
   type PlannedRoute,
   type SummaryRefusal,
 } from "../../meetings/summaryRoute";
-import { openDrawer } from "../drawer/store";
 import { AgentWords } from "../components/AgentWords";
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -803,10 +802,9 @@ function Arrival() {
     ? checkedAge === "JUST NOW" ? "CHECKED JUST NOW" : `CHECKED ${checkedAge} AGO`
     : "";
 
-  // PHILO-14 A2b: a generic open of a Project opens its drawer; only an
-  // explicit Room verb opens the Room.
+  // PHILO-17 U30: a generic open of a Project opens its Room (one home).
   const openProject = useCallback((projectId: string) => {
-    openDrawer(projectId);
+    openProjectRoom(projectId);
   }, []);
 
   // The owning verb of a coverage gap: `Retry` re-reads the aggregate
@@ -1863,7 +1861,7 @@ function useNeedsYouOpener(item: NeedsYouItem, card?: DoorCard): Opener | null {
   const proposalId = item.proposalId;
   if (proposalId && projectId) return () => openProjectProposal(projectId, proposalId);
   // A row that names only its Project opens the drawer.
-  return projectId ? () => openDrawer(projectId) : null;
+  return projectId ? () => openProjectRoom(projectId) : null;
 }
 
 /** The one verb of a constituent projection inside the `N SOURCES`
@@ -2824,7 +2822,7 @@ function CoderNeedsYouRow({ item, now, primary }: { item: NeedsYouItem; now: Dat
           {projectId && projectName ? (
             <ProjectButton
               name={projectName}
-              onOpen={() => openDrawer(projectId)}
+              onOpen={() => openProjectRoom(projectId)}
               data-testid="arrival-project"
             />
           ) : null}

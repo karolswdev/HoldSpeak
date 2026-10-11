@@ -468,6 +468,39 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to list Confluence connections")
 
+    # ── POST /api/providers/confluence/connections ───────────────────
+    # PHILO-17 U29: Confluence gets its Add, as Jira has (body {site, email}).
+
+    @router.post("/api/providers/confluence/connections")
+    async def confluence_add_connection(request: Request) -> Any:
+        """Add a Confluence connection: body {site, email}."""
+        try:
+            adapter = ctx.confluence_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Confluence provider is not configured"},
+                    status_code=404,
+                )
+            body = await request.json()
+            site = body.get("site", "") if isinstance(body, dict) else ""
+            email = body.get("email", "") if isinstance(body, dict) else ""
+            if not site or not email:
+                return JSONResponse(
+                    {"code": "validation_error",
+                     "message": "site and email are required"},
+                    status_code=400,
+                )
+            result = adapter.add_connection(principal(request), site, email)
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except Exception as exc:
+            return error_500(exc, log, "Failed to add Confluence connection")
+
     # ── POST /api/providers/confluence/connections/{ref}/recheck ────────
 
     @router.post("/api/providers/confluence/connections/{ref}/recheck")

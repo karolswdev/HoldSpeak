@@ -2241,7 +2241,7 @@
     {
       "name": "project.door.create",
       "version": 1,
-      "description": "Make a project through the Door: the outcome in your words names it, and each GitHub or Jira source arms watches that read that provider on a schedule, then takes a baseline read.",
+      "description": "Make a project through the Door: the outcome in your words names it, and each GitHub or Jira source arms watches that read that provider on a schedule, then takes a baseline read. With project_id, the sources are added to that project (the Room's Add source) and no project is made.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -2251,21 +2251,24 @@
           },
           "sources": {
             "description": "Optional list of {provider: github|jira, scope, watches, adjust}."
+          },
+          "project_id": {
+            "type": "string",
+            "description": "Optional: add the sources to this project (project.list returns the ids)."
           }
         },
-        "required": [
-          "outcome"
-        ],
+        "required": [],
         "additionalProperties": false
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "write",
-      "result": "the new project's id as projectId",
+      "result": "the project's id as projectId (the new one, or project_id)",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
         "authority_in_arguments",
-        "ServiceError project_service_missing"
+        "ServiceError project_service_missing",
+        "ValidationError validation"
       ],
       "completion": "synchronous; project.get returns it; each armed watch took its baseline read (or is marked pending)",
       "exposure": [

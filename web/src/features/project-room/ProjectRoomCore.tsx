@@ -31,7 +31,19 @@ import {
   CitationChips,
   sourceLabel,
   Material,
+  ObjectList,
+  type ObjectSort,
+  type ObjectSortKey,
 } from "../../desk/surface";
+import { useDrawerMembers } from "../../desk/drawer/useDrawerData";
+import { memberOpens, openMember } from "../../desk/drawer/open";
+import { useDrawers } from "../../desk/drawer/store";
+import { ParkReceipt, restoreFailedOutcome, restoredOutcome } from "../../desk/surface";
+import { restoreMeeting } from "../../desk/api";
+import { HandConfirmSlot, drawerHost, handOriginOfRef, handSourceProps } from "../../desk/hand";
+import { useCompactViewport } from "../../desk/useCompactViewport";
+import { registerProjectRepository, registrable, useProjectRepository } from "../../desk/projectRepository";
+import { plainFailure } from "../../desk/surface/plainFailure";
 import { useWindowTitle } from "../../desk/surface/title";
 import { Button } from "../../components/signal/Signal";
 import {
@@ -87,6 +99,7 @@ import { PreparePosture, RESULT_OPTIONS } from "./prepare/PreparePosture";
 import { coverageToken, clockToken } from "./prepare/model";
 import * as api from "./api";
 import { RoomPeopleSection, monogram } from "./RoomPeopleSection";
+import { AddSourcesWell } from "./door/DoorCore";
 import "./project-room.css";
 import { RecallFace } from "./recall/RecallFace";
 import { DecisionRecordPreparedChip, DecisionRecordSendWells } from "../../desk/documentSendsLazy";
@@ -303,10 +316,13 @@ function RoomHead({
   room,
   ctrl,
   updateCtrl,
+  quiet = false,
 }: {
   room: RoomSnapshot;
   ctrl: ReturnType<typeof useProjectRoomController>;
   updateCtrl: ReturnType<typeof useUpdateController>;
+  /** PHILO-17: another well holds the face's one primary (Add source's Add). */
+  quiet?: boolean;
 }) {
   const health = room.health.state === "ok" ? (room.health as RoomHealthData & { state: "ok" }) : null;
   const healthWord = roomHealthWord(room);
@@ -388,7 +404,7 @@ function RoomHead({
         <span className="room-head-trailing">
           <Button
             dense
-            variant="primary"
+            variant={quiet ? "secondary" : "primary"}
             loading={updateCtrl.loading}
             onClick={() => void updateCtrl.enterUpdates()}
             data-testid="updates-verb"
@@ -1198,13 +1214,42 @@ function SourcesSection({
   onReload,
   stewardCtrl,
   ctrl,
+  onAdding,
 }: {
   room: RoomSnapshot;
   onReload: () => void;
   stewardCtrl: ReturnType<typeof useStewardController>;
   ctrl: ReturnType<typeof useProjectRoomController>;
+  /** One filled primary per face: while Add source is open, Add is it. */
+  onAdding?: (adding: boolean) => void;
 }) {
   const [busyWatch, setBusyWatch] = useState<string>("");
+  // Astra r2 on #1068: an older project that watches a repository nobody
+  // registered registers it here (the call New Project makes on create).
+  const repository = useProjectRepository(room.projectId);
+  const toRegister = registrable(repository.state);
+  const [registering, setRegistering] = useState(false);
+  const [registerFailure, setRegisterFailure] = useState("");
+  const register = async () => {
+    if (!toRegister) return;
+    setRegistering(true);
+    setRegisterFailure("");
+    try {
+      await registerProjectRepository(room.projectId, toRegister);
+      repository.reload();
+    } catch (reason) {
+      setRegisterFailure(plainFailure("NOT REGISTERED", reason));
+    } finally {
+      setRegistering(false);
+    }
+  };
+  // PHILO-17 U10: Add source in the Room; open at once when the project has none.
+  const [adding, setAdding] = useState<boolean>(
+    () => room.sources.state === "ok" && !room.sources.items.some((s) => !s.suggested),
+  );
+
+  const showsAdding = adding && room.sources.state === "ok";
+  useEffect(() => { onAdding?.(showsAdding); }, [showsAdding, onAdding]);
 
   if (room.sources.state !== "ok") return null;
   const { items, count } = room.sources;
@@ -1251,11 +1296,33 @@ function SourcesSection({
         /* HS-169-07 park candidate: the steward's settings live under the
            sources (D4/D5).  Until per-source Adjust exists, this ghost verb
            is the honest interim entry point to the StewardPosture. */
-        <Button dense variant="ghost" loading={stewardCtrl.loading} onClick={() => void stewardCtrl.enterSteward()} data-testid="steward-verb" data-verb="steward">
-          Steward
-        </Button>
+        <>
+          {toRegister ? (
+            <Button dense variant="ghost" loading={registering} onClick={() => void register()} data-testid="room-register" title={`Register ${toRegister}`}>
+              Register
+            </Button>
+          ) : null}
+          {!adding ? (
+            <Button dense variant="ghost" onClick={() => setAdding(true)} data-testid="room-add-source" data-verb="add-source">
+              Add source
+            </Button>
+          ) : null}
+          <Button dense variant="ghost" loading={stewardCtrl.loading} onClick={() => void stewardCtrl.enterSteward()} data-testid="steward-verb" data-verb="steward">
+            Steward
+          </Button>
+        </>
       }
     >
+      {registerFailure ? (
+        <span className="surface-token" data-chip data-tone="fail" role="status" data-testid="room-register-failure">{registerFailure}</span>
+      ) : null}
+      {adding && room.projectId ? (
+        <AddSourcesWell
+          projectId={room.projectId}
+          onAdded={() => { setAdding(false); onReload(); }}
+          onCancel={() => setAdding(false)}
+        />
+      ) : null}
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows">
           {/* HS-172-06: suggested sources sit above existing */}
@@ -1420,6 +1487,96 @@ function SourcesSection({
           })}
         </ul>
       </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+/* ── FILES section (PHILO-17 U30: the drawer's objects, in the Room) ── */
+
+function RoomFilesSection({ ctrl }: { ctrl: ReturnType<typeof useProjectRoomController> }) {
+  const projectId = ctrl.projectId ?? "";
+  const { members, failed, retry } = useDrawerMembers(projectId, ctrl);
+  const [sort, setSort] = useState<ObjectSort>({ key: "name", dir: "asc" });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = members.find((m) => m.id === selectedId) ?? null;
+  // The Room names its own failed read; FILES names the reads only it makes
+  // (A.10: a failed read is never an empty or a complete list).
+  const unread = failed.filter((read) => read === "PEOPLE" || read === "RESOURCES");
+  // Astra r2 on #1068: Park from Get Info leaves its receipt and Restore HERE
+  // (the drawer that drew it is parked), also when FILES is left empty.
+  const receipt = useDrawers((s) => s.receipts[projectId]);
+  const restore = async (ids: string[]) => {
+    const store = useDrawers.getState();
+    try {
+      for (const id of ids) await restoreMeeting(id);
+      store.setReceipt(projectId, restoredOutcome(ids));
+      store.changed();
+      void useDesk.getState().refresh();
+    } catch {
+      store.setReceipt(projectId, restoreFailedOutcome(ids));
+    }
+  };
+  // A filed object drags onto an agent (the hand), as the drawer's icons did;
+  // no drag at 393 (the hand there is a press on a Room row).
+  const compact = useCompactViewport();
+  const host = drawerHost(projectId);
+  const rowProps = (row: { id: string }) => {
+    const member = members.find((m) => m.id === row.id);
+    const origin = member && !compact ? handOriginOfRef(member.ref, member.name, projectId) : null;
+    return origin && member
+      ? handSourceProps({ origin, source: { kind: member.kind, id: member.id, sprite: member.sprite }, host })
+      : {};
+  };
+  // A zero is never said (UX-CANON A.8): no files, nothing failed, no receipt: no section.
+  if (!members.length && !unread.length && !receipt) return null;
+  const open = (id: string | null) => {
+    const member = members.find((m) => m.id === id);
+    if (member && memberOpens(member)) openMember(member);
+  };
+  const onSort = (key: ObjectSortKey) =>
+    setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
+  return (
+    <SurfaceSection
+      label={countLabel("FILES", members.length)}
+      data-testid="room-files"
+      actions={
+        <>
+          {unread.length ? (
+            <Button dense variant="ghost" onClick={retry} data-testid="room-files-retry">
+              Retry
+            </Button>
+          ) : null}
+          <Button dense variant="ghost" disabled={!selected} onClick={() => selected && useDrawers.getState().openInfo(selected, projectId)} data-testid="room-files-info">
+            Get Info
+          </Button>
+          <Button dense variant="ghost" disabled={!selected || !memberOpens(selected)} onClick={() => open(selectedId)} data-testid="room-files-open">
+            Open
+          </Button>
+        </>
+      }
+    >
+      {receipt ? (
+        <ParkReceipt outcome={receipt} onRestore={(ids) => void restore(ids)} data-testid="room-files-park-receipt" />
+      ) : null}
+      <HandConfirmSlot host={host} />
+      {unread.length ? (
+        <div className="room-files-unread" data-testid="room-files-not-read">
+          {unread.map((read) => <StateChip key={read} state="failure" label={`${read} · NOT READ`} />)}
+          {members.length ? <StateChip state="warning" label="PARTIAL" /> : null}
+        </div>
+      ) : null}
+      {members.length ? (
+        <ObjectList
+          label="Files"
+          rows={members}
+          sort={sort}
+          onSort={onSort}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onOpen={open}
+          rowProps={rowProps}
+        />
+      ) : null}
     </SurfaceSection>
   );
 }
@@ -2232,6 +2389,7 @@ function computeHistoryCounts(changes: RoomChangeRow[]): { todayCount: number; w
 
 export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   const ctrl = useProjectRoomController(scope, scopeLabel);
+  const [addingSources, setAddingSources] = useState(false);
   useAgentFlightsLive();
   const agentFlights = useAgentFlights((s) => s.flights);
   const loading = ctrl.loadStatus === "loading";
@@ -2511,7 +2669,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
           {ctrl.view === "room" ? (
             <>
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>
-                <RoomHead room={ctrl.room} ctrl={ctrl} updateCtrl={updateCtrl} />
+                <RoomHead room={ctrl.room} ctrl={ctrl} updateCtrl={updateCtrl} quiet={addingSources} />
               </div>
               {/* Memory on the Desk (canvas section 2, option B): the
                   project's standing pages sit under the head, as ratified. */}
@@ -2549,7 +2707,10 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
                 <RoomUnfinishedSection ask={askCtrl} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "80ms" }}>
-                <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} />
+                <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
+              </div>
+              <div className="room-section-rise" style={{ animationDelay: "90ms" }}>
+                <RoomFilesSection ctrl={ctrl} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "100ms" }}>
                 <RoomPeopleSection projectId={ctrl.projectId} />

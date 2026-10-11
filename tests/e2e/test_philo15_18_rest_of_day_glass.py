@@ -34,7 +34,7 @@ import pytest
 
 from tests._evidence import evidence_dir
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import open_project_drawer, _api, _boot, _ensure_build, _normal_chair, _settle
 
 pytest.importorskip("playwright.sync_api", reason="the lane 18 glass needs Playwright")
 
@@ -260,7 +260,7 @@ class TestTheKnownSignInDefault:
             browser, page, errors = _page(pw, self.base, width)
             try:
                 _api(page, "PUT", "/api/authority/control-mode", {"control_mode": "yolo"}, token=TOKEN)
-                page.goto(f"{self.base}/?token={TOKEN}&open=project:{self.project}", wait_until="load")
+                open_project_drawer(page, self.base, self.project, TOKEN)  # PHILO-17 U30: the parked drawer, by its key
                 _normal_chair(page)
                 drawer = page.locator(".drawer-window")
                 drawer.locator(f"[data-object-id='action:{self.action_id}']").first.wait_for(timeout=T)
@@ -471,7 +471,7 @@ class TestTwoLineDrawerLabels:
         with sync_playwright() as pw:
             browser, page, errors = _page(pw, self.base, width)
             try:
-                page.goto(f"{self.base}/?token={TOKEN}&open=project:{B40_PROJECT}", wait_until="load")
+                open_project_drawer(page, self.base, B40_PROJECT, TOKEN)  # PHILO-17 U30: the parked drawer, by its key
                 _normal_chair(page)
                 drawer = page.locator(".drawer-window")
                 drawer.locator(f"[data-object-id='action:{B40_ACTION}']").first.wait_for(timeout=T)

@@ -6,8 +6,8 @@
  *  `coder:` ref in `openObject.ts`). The screen calls `openTarget` only. */
 import { openChairWindow } from "../chair/chairWindows";
 import { refOpener } from "../openObject";
-import { openDrawer as openProjectDrawer, openParkedDrawer as openParkedWindow } from "../drawer/store";
-import { openSurfaceOr } from "../shell";
+import { openParkedDrawer as openParkedWindow } from "../drawer/store";
+import { openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 
 export type ScreenTarget =
@@ -19,10 +19,11 @@ export type ScreenTarget =
   | { type: "ref"; ref: string }
   | { type: "agent"; key: string };
 
-/** A Project drawer (PHILO-14 A2b: the drawer is the Project's face; the
- *  Room is one press away, in the drawer's head). */
+/** A Project opens its Room (PHILO-17 U30: one home; Create Project opens
+ *  the Room, so the desk icon does too). The Room carries the drawer's
+ *  files. The drawer window stays for drawers the desk restores. */
 export function openDrawer(projectId: string): void {
-  openProjectDrawer(projectId);
+  openProjectRoom(projectId);
 }
 
 /** The Needs you smart drawer: the Phase-13 Needs you window. */
