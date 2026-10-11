@@ -10,8 +10,8 @@ the built bundle, three browser contexts (three views, three localStorages):
      the left icon column, the two do not sit on each other, and Meetings opens
      wide enough for its record (U24).
   W2 A drags Meetings by the empty part of its tabbed title bar: it moves.
-  W3 A opens the Room of one project (its drawer's Room verb): the window is
-     named by the project.
+  W3 A opens the Room of one project (its icon): the window is named by the
+     project.
   W4 A reloads: the same windows at the same places, the Room still the Room.
   W5 context B (1440, a fresh load, its own empty cache): the same windows at
      the same places; no "Desk memory" window. W5b with both views open, A
@@ -30,7 +30,7 @@ from typing import Any, Callable
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _room_opened, _settle
 from .test_philo13_11_frame_glass import ROOM, _seed
 from tests._evidence import evidence_dir
 
@@ -197,9 +197,9 @@ class TestWindowsOpenWell:
                                                                   "spot": spot, "wins": _wins(a)}
 
                 # ── W3: the Room of one project ────────────────────────────
+                # PHILO-17 U30 (#1068): opening a Project opens its Room.
                 a.get_by_role("button", name=f"{ROOM}, PROJECT").first.dblclick()
-                drawer = a.locator(".desk-window-shell").filter(has=a.get_by_test_id("drawer-history"))
-                drawer.get_by_role("button", name="Room", exact=True).click()
+                _room_opened(a)
                 wins_a = _until(lambda: _wins(a), lambda w: ROOM in w)
                 if ROOM not in wins_a or "Desk memory" in wins_a:
                     fails["W3 the Room is named by its project"] = sorted(wins_a)
