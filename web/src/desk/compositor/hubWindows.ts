@@ -788,20 +788,9 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
         enqueue([bottom], {}, () => transport.verb(bottom, "send_back", { expected_revision: rev(bottom) }));
       else for (const id of after.slice(first)) raise(id);
     }
-    // A window that rejoins the stacking here (a mount, a remount) is
-    // raised on the hub too. PHILO-17 (briefcover): one that joined BEHIND
-    // windows shown here (a Chair window mounting after the window he
-    // opened) must stay behind them on the hub as well.
-    const rejoined = both.filter((id) => id in cur.depth && !(id in prev.depth) && !unseated.has(id));
-    if (rejoined.length) {
-      // Raise every window from the lowest rejoined one up, in this view's
-      // order: the hub's order then matches the glass (a rejoined window on
-      // top is the only raise, as before).
-      const floor = Math.min(...rejoined.map((id) => cur.depth[id]));
-      const up = both
-        .filter((id) => id in cur.depth && cur.depth[id] >= floor && !unseated.has(id))
-        .sort((a, b) => cur.depth[a] - cur.depth[b]);
-      for (const id of up)
+    // A window that rejoins the stacking here presents on top (a remount).
+    for (const id of both) {
+      if (id in cur.depth && !(id in prev.depth) && !unseated.has(id))
         enqueue([id], { front: true }, () => transport.verb(id, "raise", { expected_revision: rev(id) }));
     }
     for (const id of both) {

@@ -15,7 +15,7 @@
 //   5. The A3-W ledger: no `Run summary` beside SUMMARY STORED.
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { apiFetch } from "../../../lib/api";
+import { ApiError, apiFetch } from "../../../lib/api";
 import { useDesk } from "../../store";
 import { ChairHome } from "../ChairHome";
 import { DeskMenuBar } from "../../components/DeskMenuBar";
@@ -485,9 +485,17 @@ describe("PHILO-17 briefcover — hidden is not closed", () => {
       transport: {
         list: async () => ({ windows: [...rows.values()], stage_shelf: "left", revision, adopted: true,
           registry: { static: Object.fromEntries(ids.map((id) => [id, "x"])), families: {} } }),
-        verb: async (id, verb) => {
+        verb: async (id, verb, body) => {
           calls.push(`${verb} ${id}`);
-          return { ...rows.get(id)!, revision: ++revision };
+          // As the service: a write on a stale revision is refused (409).
+          const row = rows.get(id)!;
+          const expected = (body as { expected_revision?: number }).expected_revision;
+          if (expected !== undefined && expected !== row.revision)
+            throw new ApiError(409, "window_stale", { error: "window_stale" });
+          const next = { ...row, revision: ++revision,
+            ...(verb === "raise" ? { depth: Math.max(...[...rows.values()].map((r) => r.depth)) + 1 } : {}) };
+          rows.set(id, next);
+          return next;
         },
         arrange: async () => ({ windows: [] }),
         shelf: async (side) => ({ stage_shelf: side, revision: 1 }),
