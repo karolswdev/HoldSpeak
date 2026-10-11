@@ -210,57 +210,53 @@ describe("Needs you: the head counts what needs him; Waiting lists the rest", ()
 // values the browser test's seed gives (tests/unit/test_desk_needs_you.py
 // reads the same seed through the real route).
 describe("Needs you: proposal rows on arrival", () => {
-  // The row as the hub answers it, captured from GET /api/desk/needs-you on
-  // the browser test's seed (tests/unit/test_desk_needs_you.py::_seed_hs172).
-  const proposal = (id: string, kind: "action" | "decision", title: string, due: string | null) => ({
-    projectId: "proj-a", projectName: "Q4 Platform", ref: title, title,
-    why: "PROPOSED · Standup", ageToken: "2026-10-11T09:36:11.666763", since: "2026-10-11T09:36:11.666763",
-    dueAt: null, kind: "proposal", source: "proposal", verbHref: `/api/proposals/${id}/confirm`, severity: "info",
-    proposalId: id, proposalKind: kind, proposalHost: "192.168.1.43", proposalDue: due,
-    meetingTitle: "Standup", meetingId: "m-standup", id: `proposal:${id}`,
-    dedupCount: 1, rankClass: "no_due_date", waiting: false, muted: false,
-  });
-
-  it("each proposal names its meeting and act, has one Confirm, and Confirm takes exactly that row away", async () => {
+  // The hub's own answers on the browser test's seed (a Room's ran Standup with
+  // an action and a decision proposal), from ONE hub boot: the read before
+  // Confirm, Confirm on the action, the read after
+  // (scripts/record_needs_you_fixture.py `arrival`).
+  it("each proposal names its meeting and act, has one Confirm; Confirm turns exactly that row into a commitment", async () => {
     // replaces: tests/e2e/test_hs172_arrival_glass.py::TestArrivalProposals::test_arrival_proposals
     // replaces: tests/e2e/test_hs172_arrival_glass.py::TestArrivalProposals::test_arrival_confirm_fires (the face half)
-    let items = [
-      proposal("prop-a", "action", "Marek owns the PostgreSQL migration", "Fri"),
-      proposal("prop-d", "decision", "cut-over on the 12th", null),
-    ];
+    const { action, steps } = RECORDED.arrival;
+    const decision = "cut-over on the 12th";
+    let at = 0;
     const posted: string[] = [];
-    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string }) => {
       const value = String(path);
-      if (value === "/api/inference/assignments") return ROSTER;
-      if (value.startsWith("/api/desk/needs-you"))
-        return { count: items.length, projects: ["proj-a"], items, next: null, coverage: [], complete: true };
-      if (value.startsWith("/api/proposals/")) {
+      if (init?.method === "POST") {
         posted.push(value);
-        items = items.filter((row) => !value.includes(`/${row.proposalId}/`));
-        return { ok: true };
+        const next = steps.findIndex((step, i) => i > at && step.post === value);
+        if (next < 0) throw new Error(`unrecorded POST ${value}`);
+        at = next;
+        return structuredClone(steps[next].answer) as never;
       }
-      if (value.startsWith("/api/door")) return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
-      return null;
-    }));
+      return recordedGet(steps[at].gets, value) as never;
+    });
     render(<ChairHome />);
-    await waitFor(() => expect(head()).toMatch(/^2 need you/));
-    const rows = needsRows().filter((r) => r.getAttribute("data-object-id")?.startsWith("proposal:"));
-    expect(rows).toHaveLength(2);
-    for (const r of rows) {
+    await waitFor(() => expect(head()).toMatch(/^4 need you/), { timeout: 3000 });
+    const proposalRows = () => needsRows().filter((r) => r.getAttribute("data-object-id")?.startsWith("proposal:"));
+    expect(proposalRows()).toHaveLength(2);
+    for (const r of proposalRows()) {
       expect(r.querySelector(".needs-row-fact")?.textContent).toMatch(/^from Standup/);
       expect(r.querySelectorAll('[data-verb="confirm"]')).toHaveLength(1);
       expect(r.getAttribute("data-opens")).toBe("true");
     }
-    expect(rows.map(lampOf).sort()).toEqual(["TO CONFIRM", "TO DECIDE"]);
+    expect(proposalRows().map(lampOf).sort()).toEqual(["TO CONFIRM", "TO DECIDE"]);
     const face = document.querySelector('[data-testid="needs-drawer"]')?.textContent ?? "";
     expect(face).not.toContain("LOCAL");
     expect(face).not.toContain("0 NEEDS");
 
-    fireEvent.click(screen.getByRole("button", { name: "Confirm: Marek owns the PostgreSQL migration" }));
-    await waitFor(() => expect(head()).toMatch(/^1 needs you/));
-    expect(posted).toEqual(["/api/proposals/prop-a/confirm"]);
-    expect(rowNamed("Marek owns the PostgreSQL migration")).toBeUndefined();
-    expect(rowNamed("cut-over on the 12th")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: `Confirm: ${action}` }));
+    expect(posted).toEqual([steps[1].post]);
+    // The hub files the action as a commitment: the proposal row leaves, a
+    // commitment row with the same words takes its place, with no Confirm.
+    await waitFor(() => expect(proposalRows().map((r) => r.querySelector(".needs-row-name")?.textContent)).toEqual([decision]));
+    const filed = rowNamed(action);
+    expect(filed, "the confirmed action is drawn as the hub's commitment row").toBeTruthy();
+    expect(filed!.getAttribute("data-object-id")).not.toMatch(/^proposal:/);
+    expect(filed!.querySelectorAll('[data-verb="confirm"]')).toHaveLength(0);
+    // The hub still counts 4: the obligation is still his, now filed.
+    expect(head()).toMatch(/^4 need you/);
   });
 });
 

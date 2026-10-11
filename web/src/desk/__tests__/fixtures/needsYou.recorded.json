@@ -1,4 +1,2888 @@
 {
+ "arrival": {
+  "action": "Marek owns the PostgreSQL migration",
+  "steps": [
+   {
+    "gets": {
+     "/api/desk/needs-you?fresh=1": {
+      "arming": [],
+      "blockers": [
+       {
+        "key": "summary",
+        "label": "No engine for summaries",
+        "verb": "Choose an engine"
+       }
+      ],
+      "complete": true,
+      "computedAt": "2026-10-11T15:19:11.255538-06:00",
+      "count": 4,
+      "coverage": [
+       {
+        "kind": "project",
+        "label": "Q4 Platform",
+        "observed_at": "2026-09-05T10:00:00",
+        "project_id": "proj-a",
+        "reason": null,
+        "repair": null,
+        "source_id": "project:proj-a",
+        "state": "available"
+       },
+       {
+        "kind": "meeting",
+        "label": "Q4 Platform",
+        "observed_at": "2026-09-05T10:00:00",
+        "project_id": "proj-a",
+        "reason": null,
+        "repair": null,
+        "source_id": "meeting:proj-a",
+        "state": "available"
+       },
+       {
+        "kind": "commitment",
+        "label": "Q4 Platform",
+        "observed_at": "2026-09-05T10:00:00",
+        "project_id": "proj-a",
+        "reason": null,
+        "repair": null,
+        "source_id": "commitment:proj-a",
+        "state": "available"
+       },
+       {
+        "cause": null,
+        "host": "github.com",
+        "kind": "watch",
+        "label": "GitHub",
+        "observed_at": "2026-10-11T21:19:11+00:00",
+        "project_id": "proj-a",
+        "provider": "github",
+        "reason": null,
+        "repair": null,
+        "source_id": "watch:w-prs",
+        "state": "available",
+        "watch_ids": [
+         "w-prs"
+        ]
+       },
+       {
+        "kind": "coder",
+        "label": "Agents",
+        "observed_at": "2026-10-11T21:19:11.273530+00:00",
+        "project_id": "",
+        "reason": null,
+        "repair": null,
+        "source_id": "coders",
+        "state": "available"
+       }
+      ],
+      "failedMeetings": [],
+      "items": [
+       {
+        "ageToken": "2026-10-11T15:19:11.253664",
+        "dedupCount": 1,
+        "dueAt": null,
+        "id": "proposal:prop-256b0ca4e9eb",
+        "kind": "proposal",
+        "meetingId": "m-standup",
+        "meetingTitle": "Standup",
+        "muted": false,
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "proposalDue": null,
+        "proposalHost": "192.168.1.43",
+        "proposalId": "prop-256b0ca4e9eb",
+        "proposalKind": "decision",
+        "rank": 1,
+        "rankClass": "no_due_date",
+        "ref": "cut-over on the 12th",
+        "severity": "info",
+        "since": "2026-10-11T15:19:11.253664",
+        "source": "proposal",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proposal:prop-256b0ca4e9eb",
+          "observedAt": null,
+          "severity": "info",
+          "source": "proposal",
+          "title": "cut-over on the 12th",
+          "verbHref": "/api/proposals/prop-256b0ca4e9eb/confirm",
+          "why": "PROPOSED \u00b7 Standup"
+         }
+        ],
+        "title": "cut-over on the 12th",
+        "verbHref": "/api/proposals/prop-256b0ca4e9eb/confirm",
+        "waiting": false,
+        "why": "PROPOSED \u00b7 Standup"
+       },
+       {
+        "ageToken": "2026-10-11T15:19:11.253664",
+        "dedupCount": 1,
+        "dueAt": null,
+        "id": "proposal:prop-3c5a1fbffb40",
+        "kind": "proposal",
+        "meetingId": "m-standup",
+        "meetingTitle": "Standup",
+        "muted": false,
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "proposalDue": "Fri",
+        "proposalHost": "192.168.1.43",
+        "proposalId": "prop-3c5a1fbffb40",
+        "proposalKind": "action",
+        "rank": 2,
+        "rankClass": "no_due_date",
+        "ref": "Marek owns the PostgreSQL migration",
+        "severity": "info",
+        "since": "2026-10-11T15:19:11.253664",
+        "source": "proposal",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proposal:prop-3c5a1fbffb40",
+          "observedAt": null,
+          "severity": "info",
+          "source": "proposal",
+          "title": "Marek owns the PostgreSQL migration",
+          "verbHref": "/api/proposals/prop-3c5a1fbffb40/confirm",
+          "why": "PROPOSED \u00b7 Standup"
+         }
+        ],
+        "title": "Marek owns the PostgreSQL migration",
+        "verbHref": "/api/proposals/prop-3c5a1fbffb40/confirm",
+        "waiting": false,
+        "why": "PROPOSED \u00b7 Standup"
+       },
+       {
+        "ageToken": "2026-10-11T15:19:11.253664",
+        "dedupCount": 1,
+        "dueAt": null,
+        "id": "proj-a:github:#612 Rig settles animations before every shot",
+        "kind": null,
+        "muted": false,
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "rank": 3,
+        "rankClass": "waiting",
+        "ref": "#612 Rig settles animations before every shot",
+        "severity": "warning",
+        "since": "2026-10-11T15:19:11.253664",
+        "source": "github",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proj-a:github:#612 Rig settles animations before every shot",
+          "observedAt": null,
+          "severity": "warning",
+          "source": "github",
+          "title": "#612 Rig settles animations before every shot",
+          "verbHref": "https://github.com/karolswdev/holdspeak/pull/612",
+          "why": "WAITING ON YOUR REVIEW \u00b7 JUST NOW"
+         }
+        ],
+        "title": "#612 Rig settles animations before every shot",
+        "verbHref": "https://github.com/karolswdev/holdspeak/pull/612",
+        "waiting": false,
+        "why": "WAITING ON YOUR REVIEW \u00b7 JUST NOW"
+       }
+      ],
+      "members": [
+       {
+        "kind": "attention",
+        "ref": "cut-over on the 12th"
+       },
+       {
+        "kind": "attention",
+        "ref": "Marek owns the PostgreSQL migration"
+       },
+       {
+        "kind": "attention",
+        "ref": "#612 Rig settles animations before every shot"
+       },
+       {
+        "kind": "blocker",
+        "ref": "blocker:summary"
+       }
+      ],
+      "mutedCount": 0,
+      "next": null,
+      "ownerNames": [
+       "manager",
+       "me",
+       "you"
+      ],
+      "peopleStoreState": "unconfigured",
+      "projectCounts": {
+       "proj-a": 3
+      },
+      "projects": [
+       "proj-a"
+      ],
+      "roomComplete": true,
+      "roomCounts": {
+       "proj-a": 3
+      },
+      "roomItems": [
+       {
+        "ageToken": "2026-10-11T15:19:11.253664",
+        "dedupCount": 1,
+        "dueAt": null,
+        "id": "proposal:prop-256b0ca4e9eb",
+        "kind": "proposal",
+        "meetingId": "m-standup",
+        "meetingTitle": "Standup",
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "proposalDue": null,
+        "proposalHost": "192.168.1.43",
+        "proposalId": "prop-256b0ca4e9eb",
+        "proposalKind": "decision",
+        "rank": 1,
+        "rankClass": "no_due_date",
+        "ref": "cut-over on the 12th",
+        "severity": "info",
+        "since": "2026-10-11T15:19:11.253664",
+        "source": "proposal",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proposal:prop-256b0ca4e9eb",
+          "observedAt": null,
+          "severity": "info",
+          "source": "proposal",
+          "title": "cut-over on the 12th",
+          "verbHref": "/api/proposals/prop-256b0ca4e9eb/confirm",
+          "why": "PROPOSED \u00b7 Standup"
+         }
+        ],
+        "title": "cut-over on the 12th",
+        "verbHref": "/api/proposals/prop-256b0ca4e9eb/confirm",
+        "why": "PROPOSED \u00b7 Standup"
+       },
+       {
+        "ageToken": "2026-10-11T15:19:11.253664",
+        "dedupCount": 1,
+        "dueAt": null,
+        "id": "proposal:prop-3c5a1fbffb40",
+        "kind": "proposal",
+        "meetingId": "m-standup",
+        "meetingTitle": "Standup",
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "proposalDue": "Fri",
+        "proposalHost": "192.168.1.43",
+        "proposalId": "prop-3c5a1fbffb40",
+        "proposalKind": "action",
+        "rank": 2,
+        "rankClass": "no_due_date",
+        "ref": "Marek owns the PostgreSQL migration",
+        "severity": "info",
+        "since": "2026-10-11T15:19:11.253664",
+        "source": "proposal",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proposal:prop-3c5a1fbffb40",
+          "observedAt": null,
+          "severity": "info",
+          "source": "proposal",
+          "title": "Marek owns the PostgreSQL migration",
+          "verbHref": "/api/proposals/prop-3c5a1fbffb40/confirm",
+          "why": "PROPOSED \u00b7 Standup"
+         }
+        ],
+        "title": "Marek owns the PostgreSQL migration",
+        "verbHref": "/api/proposals/prop-3c5a1fbffb40/confirm",
+        "why": "PROPOSED \u00b7 Standup"
+       },
+       {
+        "ageToken": "2026-10-11T15:19:11.253664",
+        "dedupCount": 1,
+        "dueAt": null,
+        "id": "proj-a:github:#612 Rig settles animations before every shot",
+        "kind": null,
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "rank": 3,
+        "rankClass": "waiting",
+        "ref": "#612 Rig settles animations before every shot",
+        "severity": "warning",
+        "since": "2026-10-11T15:19:11.253664",
+        "source": "github",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proj-a:github:#612 Rig settles animations before every shot",
+          "observedAt": null,
+          "severity": "warning",
+          "source": "github",
+          "title": "#612 Rig settles animations before every shot",
+          "verbHref": "https://github.com/karolswdev/holdspeak/pull/612",
+          "why": "WAITING ON YOUR REVIEW \u00b7 JUST NOW"
+         }
+        ],
+        "title": "#612 Rig settles animations before every shot",
+        "verbHref": "https://github.com/karolswdev/holdspeak/pull/612",
+        "why": "WAITING ON YOUR REVIEW \u00b7 JUST NOW"
+       }
+      ],
+      "sourceErrors": {},
+      "stale": false,
+      "sweepId": null,
+      "waitingCount": 0
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/inference/assignments": {
+      "issue_count": 1,
+      "rows": [
+       {
+        "assignment": null,
+        "editor_capability_id": "agent.code",
+        "expected_revision": 0,
+        "id": "global",
+        "inherited_from": null,
+        "label": "Default for AI work",
+        "repair": "Choose default",
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "ask.answer",
+        "expected_revision": 0,
+        "id": "thoughts_notes",
+        "inherited_from": null,
+        "label": "Thoughts & notes",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "speech.intent_classify",
+        "expected_revision": 0,
+        "id": "writing_dictation",
+        "inherited_from": null,
+        "label": "Writing & dictation",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "speech.transcribe",
+        "expected_revision": 0,
+        "id": "speech_recognition",
+        "inherited_from": null,
+        "label": "Speech recognition",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "meeting.auto_title",
+        "expected_revision": 0,
+        "id": "meetings",
+        "inherited_from": null,
+        "label": "Meetings",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "agent.code",
+        "expected_revision": 0,
+        "id": "agents_tools",
+        "inherited_from": null,
+        "label": "Agents & tools",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "background.cadence_draft",
+        "expected_revision": 0,
+        "id": "background",
+        "inherited_from": null,
+        "label": "Background",
+        "repair": null,
+        "status": "no_assignment"
+       }
+      ],
+      "schema": "InferenceAssignmentSummary@1",
+      "task_overrides": [
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.code",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.code",
+        "issues": [],
+        "label": "Agent code",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.plan",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.plan",
+        "issues": [],
+        "label": "Agent plan",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.tool_turn",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.tool_turn",
+        "issues": [],
+        "label": "Agent tool turn",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "ask.answer",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "ask.answer",
+        "issues": [],
+        "label": "Ask answer",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "background.cadence_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "background.cadence_draft",
+        "issues": [],
+        "label": "Cadence draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "background.rails_summary",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "background.rails_summary",
+        "issues": [],
+        "label": "Rails summary",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "calendar.snapshot_extract",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "calendar.snapshot_extract",
+        "issues": [],
+        "label": "Calendar snapshot extraction",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "chat.turn",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "chat.turn",
+        "issues": [],
+        "label": "Desk chat",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "decision.promotion_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "decision.promotion_draft",
+        "issues": [],
+        "label": "Decision promotion draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "delivery.pr_review_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "delivery.pr_review_draft",
+        "issues": [],
+        "label": "Pull request review draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.auto_title",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.auto_title",
+        "issues": [],
+        "label": "Meeting title",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.bookmark_label",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.bookmark_label",
+        "issues": [],
+        "label": "Meeting bookmark label",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.deferred_analysis",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.deferred_analysis",
+        "issues": [],
+        "label": "Deferred meeting analysis",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.live_analysis",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.live_analysis",
+        "issues": [],
+        "label": "Live meeting analysis",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.action_owner_enforcer",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.action_owner_enforcer",
+        "issues": [],
+        "label": "Meeting plugin: action owner enforcer",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.adr_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.adr_drafter",
+        "issues": [],
+        "label": "Meeting plugin: adr drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.customer_signal_extractor",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.customer_signal_extractor",
+        "issues": [],
+        "label": "Meeting plugin: customer signal extractor",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.decision_announcement_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.decision_announcement_drafter",
+        "issues": [],
+        "label": "Meeting plugin: decision announcement drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.decision_capture",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.decision_capture",
+        "issues": [],
+        "label": "Meeting plugin: decision capture",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.dependency_mapper",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.dependency_mapper",
+        "issues": [],
+        "label": "Meeting plugin: dependency mapper",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.incident_timeline",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.incident_timeline",
+        "issues": [],
+        "label": "Meeting plugin: incident timeline",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.mermaid_architecture",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.mermaid_architecture",
+        "issues": [],
+        "label": "Meeting plugin: mermaid architecture",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.milestone_planner",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.milestone_planner",
+        "issues": [],
+        "label": "Meeting plugin: milestone planner",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.project_detector",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.project_detector",
+        "issues": [],
+        "label": "Meeting plugin: project detector",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.requirements_extractor",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.requirements_extractor",
+        "issues": [],
+        "label": "Meeting plugin: requirements extractor",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.risk_heatmap",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.risk_heatmap",
+        "issues": [],
+        "label": "Meeting plugin: risk heatmap",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.runbook_delta",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.runbook_delta",
+        "issues": [],
+        "label": "Meeting plugin: runbook delta",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.scope_guard",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.scope_guard",
+        "issues": [],
+        "label": "Meeting plugin: scope guard",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.stakeholder_update_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.stakeholder_update_drafter",
+        "issues": [],
+        "label": "Meeting plugin: stakeholder update drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.consolidate",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.consolidate",
+        "issues": [],
+        "label": "Memory observations",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.embed",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.embed",
+        "issues": [],
+        "label": "Memory embedding",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.extract",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.extract",
+        "issues": [],
+        "label": "Memory facts",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.page",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.page",
+        "issues": [],
+        "label": "Memory pages",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project.brief_prepare",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project.brief_prepare",
+        "issues": [],
+        "label": "Project preparation brief",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project.update_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project.update_draft",
+        "issues": [],
+        "label": "Project update draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project_doc.suggest_update",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project_doc.suggest_update",
+        "issues": [],
+        "label": "Project document suggestion",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "recipe.run",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "recipe.run",
+        "issues": [],
+        "label": "Recipe run",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "sequence.step",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "sequence.step",
+        "issues": [],
+        "label": "Sequence step",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.intent_classify",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.intent_classify",
+        "issues": [],
+        "label": "Dictation intent",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.rewrite",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.rewrite",
+        "issues": [],
+        "label": "Dictation rewrite",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.target_classify",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.target_classify",
+        "issues": [],
+        "label": "Dictation target",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": {
+          "created_at": "2026-10-11T21:19:10.997514Z",
+          "effective_retry_policy_id": "retry.audio.transcription",
+          "entries": [
+           {
+            "boundary": "local",
+            "label": "Whisper mlx base",
+            "ordinal": 1,
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "readiness": "unavailable"
+           }
+          ],
+          "id": "ia_fa286f176b01464fa4aa312a289f2ec3",
+          "issues": [
+           {
+            "code": "binding_not_ready",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "repair"
+           }
+          ],
+          "retry_policy_id": null,
+          "retry_policy_source": "capability_default",
+          "revision": 1,
+          "schema": "InferenceAssignmentProjection@1",
+          "scope": {
+           "capability_id": "speech.transcribe",
+           "kind": "capability"
+          },
+          "sha256": "sha256:181eb4a9ddf9111df3168cd0e2de22cb6c342caf1a4641931e7272ab4154dcc3"
+         },
+         "capability_id": "speech.transcribe",
+         "inherited_from": "capability",
+         "repair": null,
+         "status": "assigned"
+        },
+        "group": {
+         "id": "speech_recognition",
+         "label": "Speech recognition"
+        },
+        "has_override": true,
+        "id": "speech.transcribe",
+        "issues": [
+         {
+          "code": "binding_not_ready",
+          "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+          "profile_revision": 1,
+          "severity": "repair"
+         }
+        ],
+        "label": "Speech transcription",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "thought.interview",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "thought.interview",
+        "issues": [],
+        "label": "Thought development",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "voice.reference_resolve",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "voice.reference_resolve",
+        "issues": [],
+        "label": "Voice reference resolution",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "workbench.item",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "workbench.item",
+        "issues": [],
+        "label": "Workbench item",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "workflow.node",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "workflow.node",
+        "issues": [],
+        "label": "Workflow node",
+        "queue": null
+       }
+      ]
+     }
+    },
+    "name": "before"
+   },
+   {
+    "answer": {
+     "action_item_id": "action-ac73ad7a3fed418c",
+     "commitment_id": "commitment-ae5d2a5888f74020",
+     "decision_id": "dec-97351b8f251b47d8",
+     "decision_record_id": "record-1d65d7143fcb4786",
+     "original_text": null,
+     "proposal": {
+      "acceptance": "accepted",
+      "action_item_id": null,
+      "claim_kind": "proposal",
+      "commitment_id": "commitment-ae5d2a5888f74020",
+      "created_at": "2026-10-11T15:19:11.253664",
+      "decided_at": "2026-10-11T21:19:11.292899+00:00",
+      "decision_record_id": "record-1d65d7143fcb4786",
+      "deferred_until": null,
+      "due": "Fri",
+      "due_hint": "Fri",
+      "due_supplied": null,
+      "edited_at": null,
+      "extraction_model": null,
+      "extraction_revision": null,
+      "id": "prop-3c5a1fbffb40",
+      "job_attempt": null,
+      "job_id": null,
+      "kind": "action",
+      "meeting_id": "m-standup",
+      "model_host": "192.168.1.43",
+      "original_text": null,
+      "owner": null,
+      "owner_hint": null,
+      "owner_supplied": null,
+      "project_id": "proj-a",
+      "rationale": null,
+      "retry_key": null,
+      "segment_index": null,
+      "segment_timestamp": null,
+      "source_artifact_id": null,
+      "source_plugin": "decision_capture",
+      "span_end": null,
+      "span_start": null,
+      "speaker_label": null,
+      "state": "confirmed",
+      "support": "unknown",
+      "support_record": null,
+      "text": "Marek owns the PostgreSQL migration",
+      "text_edited": false,
+      "unknowns": [
+       {
+        "type": "owner",
+        "value": "unknown"
+       }
+      ]
+     },
+     "proposal_id": "prop-3c5a1fbffb40",
+     "replayed": false,
+     "state": "confirmed",
+     "success": true
+    },
+    "gets": {
+     "/api/desk/needs-you?fresh=1": {
+      "arming": [],
+      "blockers": [
+       {
+        "key": "summary",
+        "label": "No engine for summaries",
+        "verb": "Choose an engine"
+       }
+      ],
+      "complete": true,
+      "computedAt": "2026-10-11T15:19:11.295070-06:00",
+      "count": 4,
+      "coverage": [
+       {
+        "kind": "project",
+        "label": "Q4 Platform",
+        "observed_at": "2026-09-05T10:00:00",
+        "project_id": "proj-a",
+        "reason": null,
+        "repair": null,
+        "source_id": "project:proj-a",
+        "state": "available"
+       },
+       {
+        "kind": "meeting",
+        "label": "Q4 Platform",
+        "observed_at": "2026-09-05T10:00:00",
+        "project_id": "proj-a",
+        "reason": null,
+        "repair": null,
+        "source_id": "meeting:proj-a",
+        "state": "available"
+       },
+       {
+        "kind": "commitment",
+        "label": "Q4 Platform",
+        "observed_at": "2026-09-05T10:00:00",
+        "project_id": "proj-a",
+        "reason": null,
+        "repair": null,
+        "source_id": "commitment:proj-a",
+        "state": "available"
+       },
+       {
+        "cause": null,
+        "host": "github.com",
+        "kind": "watch",
+        "label": "GitHub",
+        "observed_at": "2026-10-11T21:19:11+00:00",
+        "project_id": "proj-a",
+        "provider": "github",
+        "reason": null,
+        "repair": null,
+        "source_id": "watch:w-prs",
+        "state": "available",
+        "watch_ids": [
+         "w-prs"
+        ]
+       },
+       {
+        "kind": "coder",
+        "label": "Agents",
+        "observed_at": "2026-10-11T21:19:11.309176+00:00",
+        "project_id": "",
+        "reason": null,
+        "repair": null,
+        "source_id": "coders",
+        "state": "available"
+       }
+      ],
+      "failedMeetings": [],
+      "items": [
+       {
+        "actionItemId": "action-ac73ad7a3fed418c",
+        "ageToken": "2026-10-11T21:19:11.292873+00:00",
+        "commitmentId": "commitment-ae5d2a5888f74020",
+        "decisionRecordId": "record-1d65d7143fcb4786",
+        "dedupCount": 1,
+        "dueAt": "Fri",
+        "id": "proj-a:commitment:Marek owns the PostgreSQL migration",
+        "kind": "commitment",
+        "muted": false,
+        "nextAction": "name_owner",
+        "owner": null,
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "rank": 1,
+        "rankClass": "no_due_date",
+        "ref": "Marek owns the PostgreSQL migration",
+        "severity": "warning",
+        "since": "2026-10-11T21:19:11.292873+00:00",
+        "source": "commitment",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proj-a:commitment:Marek owns the PostgreSQL migration",
+          "observedAt": null,
+          "severity": "warning",
+          "source": "commitment",
+          "title": "Marek owns the PostgreSQL migration",
+          "verbHref": null,
+          "why": "OWNER \u00b7 UNKNOWN"
+         }
+        ],
+        "title": "Marek owns the PostgreSQL migration",
+        "unknowns": [
+         "owner"
+        ],
+        "verbHref": null,
+        "waiting": false,
+        "why": "OWNER \u00b7 UNKNOWN"
+       },
+       {
+        "ageToken": "2026-10-11T15:19:11.253664",
+        "dedupCount": 1,
+        "dueAt": null,
+        "id": "proposal:prop-256b0ca4e9eb",
+        "kind": "proposal",
+        "meetingId": "m-standup",
+        "meetingTitle": "Standup",
+        "muted": false,
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "proposalDue": null,
+        "proposalHost": "192.168.1.43",
+        "proposalId": "prop-256b0ca4e9eb",
+        "proposalKind": "decision",
+        "rank": 2,
+        "rankClass": "no_due_date",
+        "ref": "cut-over on the 12th",
+        "severity": "info",
+        "since": "2026-10-11T15:19:11.253664",
+        "source": "proposal",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proposal:prop-256b0ca4e9eb",
+          "observedAt": null,
+          "severity": "info",
+          "source": "proposal",
+          "title": "cut-over on the 12th",
+          "verbHref": "/api/proposals/prop-256b0ca4e9eb/confirm",
+          "why": "PROPOSED \u00b7 Standup"
+         }
+        ],
+        "title": "cut-over on the 12th",
+        "verbHref": "/api/proposals/prop-256b0ca4e9eb/confirm",
+        "waiting": false,
+        "why": "PROPOSED \u00b7 Standup"
+       },
+       {
+        "ageToken": "2026-10-11T15:19:11.253664",
+        "dedupCount": 1,
+        "dueAt": null,
+        "id": "proj-a:github:#612 Rig settles animations before every shot",
+        "kind": null,
+        "muted": false,
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "rank": 3,
+        "rankClass": "waiting",
+        "ref": "#612 Rig settles animations before every shot",
+        "severity": "warning",
+        "since": "2026-10-11T15:19:11.253664",
+        "source": "github",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proj-a:github:#612 Rig settles animations before every shot",
+          "observedAt": null,
+          "severity": "warning",
+          "source": "github",
+          "title": "#612 Rig settles animations before every shot",
+          "verbHref": "https://github.com/karolswdev/holdspeak/pull/612",
+          "why": "WAITING ON YOUR REVIEW \u00b7 JUST NOW"
+         }
+        ],
+        "title": "#612 Rig settles animations before every shot",
+        "verbHref": "https://github.com/karolswdev/holdspeak/pull/612",
+        "waiting": false,
+        "why": "WAITING ON YOUR REVIEW \u00b7 JUST NOW"
+       }
+      ],
+      "members": [
+       {
+        "kind": "attention",
+        "ref": "Marek owns the PostgreSQL migration"
+       },
+       {
+        "kind": "attention",
+        "ref": "cut-over on the 12th"
+       },
+       {
+        "kind": "attention",
+        "ref": "#612 Rig settles animations before every shot"
+       },
+       {
+        "kind": "blocker",
+        "ref": "blocker:summary"
+       }
+      ],
+      "mutedCount": 0,
+      "next": null,
+      "ownerNames": [
+       "manager",
+       "me",
+       "you"
+      ],
+      "peopleStoreState": "unconfigured",
+      "projectCounts": {
+       "proj-a": 3
+      },
+      "projects": [
+       "proj-a"
+      ],
+      "roomComplete": true,
+      "roomCounts": {
+       "proj-a": 3
+      },
+      "roomItems": [
+       {
+        "actionItemId": "action-ac73ad7a3fed418c",
+        "ageToken": "2026-10-11T21:19:11.292873+00:00",
+        "commitmentId": "commitment-ae5d2a5888f74020",
+        "decisionRecordId": "record-1d65d7143fcb4786",
+        "dedupCount": 1,
+        "dueAt": "Fri",
+        "id": "proj-a:commitment:Marek owns the PostgreSQL migration",
+        "kind": "commitment",
+        "nextAction": "name_owner",
+        "owner": null,
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "rank": 1,
+        "rankClass": "no_due_date",
+        "ref": "Marek owns the PostgreSQL migration",
+        "severity": "warning",
+        "since": "2026-10-11T21:19:11.292873+00:00",
+        "source": "commitment",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proj-a:commitment:Marek owns the PostgreSQL migration",
+          "observedAt": null,
+          "severity": "warning",
+          "source": "commitment",
+          "title": "Marek owns the PostgreSQL migration",
+          "verbHref": null,
+          "why": "OWNER \u00b7 UNKNOWN"
+         }
+        ],
+        "title": "Marek owns the PostgreSQL migration",
+        "unknowns": [
+         "owner"
+        ],
+        "verbHref": null,
+        "why": "OWNER \u00b7 UNKNOWN"
+       },
+       {
+        "ageToken": "2026-10-11T15:19:11.253664",
+        "dedupCount": 1,
+        "dueAt": null,
+        "id": "proposal:prop-256b0ca4e9eb",
+        "kind": "proposal",
+        "meetingId": "m-standup",
+        "meetingTitle": "Standup",
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "proposalDue": null,
+        "proposalHost": "192.168.1.43",
+        "proposalId": "prop-256b0ca4e9eb",
+        "proposalKind": "decision",
+        "rank": 2,
+        "rankClass": "no_due_date",
+        "ref": "cut-over on the 12th",
+        "severity": "info",
+        "since": "2026-10-11T15:19:11.253664",
+        "source": "proposal",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proposal:prop-256b0ca4e9eb",
+          "observedAt": null,
+          "severity": "info",
+          "source": "proposal",
+          "title": "cut-over on the 12th",
+          "verbHref": "/api/proposals/prop-256b0ca4e9eb/confirm",
+          "why": "PROPOSED \u00b7 Standup"
+         }
+        ],
+        "title": "cut-over on the 12th",
+        "verbHref": "/api/proposals/prop-256b0ca4e9eb/confirm",
+        "why": "PROPOSED \u00b7 Standup"
+       },
+       {
+        "ageToken": "2026-10-11T15:19:11.253664",
+        "dedupCount": 1,
+        "dueAt": null,
+        "id": "proj-a:github:#612 Rig settles animations before every shot",
+        "kind": null,
+        "projectId": "proj-a",
+        "projectName": "Q4 Platform",
+        "rank": 3,
+        "rankClass": "waiting",
+        "ref": "#612 Rig settles animations before every shot",
+        "severity": "warning",
+        "since": "2026-10-11T15:19:11.253664",
+        "source": "github",
+        "sources": [
+         {
+          "fromLastObservation": false,
+          "id": "proj-a:github:#612 Rig settles animations before every shot",
+          "observedAt": null,
+          "severity": "warning",
+          "source": "github",
+          "title": "#612 Rig settles animations before every shot",
+          "verbHref": "https://github.com/karolswdev/holdspeak/pull/612",
+          "why": "WAITING ON YOUR REVIEW \u00b7 JUST NOW"
+         }
+        ],
+        "title": "#612 Rig settles animations before every shot",
+        "verbHref": "https://github.com/karolswdev/holdspeak/pull/612",
+        "why": "WAITING ON YOUR REVIEW \u00b7 JUST NOW"
+       }
+      ],
+      "sourceErrors": {},
+      "stale": false,
+      "sweepId": null,
+      "waitingCount": 0
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [
+        {
+         "created_at": "2026-10-11T21:19:11.292873+00:00",
+         "decision_id": "dec-97351b8f251b47d8",
+         "delegated_at": null,
+         "due": "Fri",
+         "id": "action-ac73ad7a3fed418c",
+         "lane": "unassigned",
+         "lawful_verbs": [
+          {
+           "arguments": {
+            "card_id": "action-ac73ad7a3fed418c",
+            "verb": "done"
+           },
+           "name": "follow_through.complete"
+          },
+          {
+           "arguments": {
+            "card_id": "action-ac73ad7a3fed418c",
+            "verb": "dismiss"
+           },
+           "name": "follow_through.complete"
+          },
+          {
+           "arguments": {
+            "card_id": "action-ac73ad7a3fed418c",
+            "verb": "snooze"
+           },
+           "name": "follow_through.complete",
+           "required_arguments": [
+            "payload.until"
+           ]
+          },
+          {
+           "arguments": {
+            "card_id": "action-ac73ad7a3fed418c",
+            "verb": "delegate"
+           },
+           "name": "follow_through.complete",
+           "required_arguments": [
+            "payload.to"
+           ]
+          },
+          {
+           "arguments": {
+            "id": "action-ac73ad7a3fed418c",
+            "kind": "action"
+           },
+           "name": "agent.hand"
+          }
+         ],
+         "meeting_id": "m-standup",
+         "owner": null,
+         "provenance": {
+          "available": false,
+          "meeting_id": "m-standup",
+          "moment": null,
+          "segment_speaker": null,
+          "segment_start": null,
+          "segment_text": null,
+          "thread_id": null
+         },
+         "source": "action_item",
+         "stale_score": null,
+         "status": "open",
+         "target_ref": "action_item:action-ac73ad7a3fed418c",
+         "text": "Marek owns the PostgreSQL migration"
+        }
+       ],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/inference/assignments": {
+      "issue_count": 1,
+      "rows": [
+       {
+        "assignment": null,
+        "editor_capability_id": "agent.code",
+        "expected_revision": 0,
+        "id": "global",
+        "inherited_from": null,
+        "label": "Default for AI work",
+        "repair": "Choose default",
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "ask.answer",
+        "expected_revision": 0,
+        "id": "thoughts_notes",
+        "inherited_from": null,
+        "label": "Thoughts & notes",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "speech.intent_classify",
+        "expected_revision": 0,
+        "id": "writing_dictation",
+        "inherited_from": null,
+        "label": "Writing & dictation",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "speech.transcribe",
+        "expected_revision": 0,
+        "id": "speech_recognition",
+        "inherited_from": null,
+        "label": "Speech recognition",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "meeting.auto_title",
+        "expected_revision": 0,
+        "id": "meetings",
+        "inherited_from": null,
+        "label": "Meetings",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "agent.code",
+        "expected_revision": 0,
+        "id": "agents_tools",
+        "inherited_from": null,
+        "label": "Agents & tools",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "background.cadence_draft",
+        "expected_revision": 0,
+        "id": "background",
+        "inherited_from": null,
+        "label": "Background",
+        "repair": null,
+        "status": "no_assignment"
+       }
+      ],
+      "schema": "InferenceAssignmentSummary@1",
+      "task_overrides": [
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.code",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.code",
+        "issues": [],
+        "label": "Agent code",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.plan",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.plan",
+        "issues": [],
+        "label": "Agent plan",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.tool_turn",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.tool_turn",
+        "issues": [],
+        "label": "Agent tool turn",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "ask.answer",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "ask.answer",
+        "issues": [],
+        "label": "Ask answer",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "background.cadence_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "background.cadence_draft",
+        "issues": [],
+        "label": "Cadence draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "background.rails_summary",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "background.rails_summary",
+        "issues": [],
+        "label": "Rails summary",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "calendar.snapshot_extract",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "calendar.snapshot_extract",
+        "issues": [],
+        "label": "Calendar snapshot extraction",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "chat.turn",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "chat.turn",
+        "issues": [],
+        "label": "Desk chat",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "decision.promotion_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "decision.promotion_draft",
+        "issues": [],
+        "label": "Decision promotion draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "delivery.pr_review_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "delivery.pr_review_draft",
+        "issues": [],
+        "label": "Pull request review draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.auto_title",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.auto_title",
+        "issues": [],
+        "label": "Meeting title",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.bookmark_label",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.bookmark_label",
+        "issues": [],
+        "label": "Meeting bookmark label",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.deferred_analysis",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.deferred_analysis",
+        "issues": [],
+        "label": "Deferred meeting analysis",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.live_analysis",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.live_analysis",
+        "issues": [],
+        "label": "Live meeting analysis",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.action_owner_enforcer",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.action_owner_enforcer",
+        "issues": [],
+        "label": "Meeting plugin: action owner enforcer",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.adr_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.adr_drafter",
+        "issues": [],
+        "label": "Meeting plugin: adr drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.customer_signal_extractor",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.customer_signal_extractor",
+        "issues": [],
+        "label": "Meeting plugin: customer signal extractor",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.decision_announcement_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.decision_announcement_drafter",
+        "issues": [],
+        "label": "Meeting plugin: decision announcement drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.decision_capture",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.decision_capture",
+        "issues": [],
+        "label": "Meeting plugin: decision capture",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.dependency_mapper",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.dependency_mapper",
+        "issues": [],
+        "label": "Meeting plugin: dependency mapper",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.incident_timeline",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.incident_timeline",
+        "issues": [],
+        "label": "Meeting plugin: incident timeline",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.mermaid_architecture",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.mermaid_architecture",
+        "issues": [],
+        "label": "Meeting plugin: mermaid architecture",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.milestone_planner",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.milestone_planner",
+        "issues": [],
+        "label": "Meeting plugin: milestone planner",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.project_detector",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.project_detector",
+        "issues": [],
+        "label": "Meeting plugin: project detector",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.requirements_extractor",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.requirements_extractor",
+        "issues": [],
+        "label": "Meeting plugin: requirements extractor",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.risk_heatmap",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.risk_heatmap",
+        "issues": [],
+        "label": "Meeting plugin: risk heatmap",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.runbook_delta",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.runbook_delta",
+        "issues": [],
+        "label": "Meeting plugin: runbook delta",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.scope_guard",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.scope_guard",
+        "issues": [],
+        "label": "Meeting plugin: scope guard",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.stakeholder_update_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.stakeholder_update_drafter",
+        "issues": [],
+        "label": "Meeting plugin: stakeholder update drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.consolidate",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.consolidate",
+        "issues": [],
+        "label": "Memory observations",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.embed",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.embed",
+        "issues": [],
+        "label": "Memory embedding",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.extract",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.extract",
+        "issues": [],
+        "label": "Memory facts",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.page",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.page",
+        "issues": [],
+        "label": "Memory pages",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project.brief_prepare",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project.brief_prepare",
+        "issues": [],
+        "label": "Project preparation brief",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project.update_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project.update_draft",
+        "issues": [],
+        "label": "Project update draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project_doc.suggest_update",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project_doc.suggest_update",
+        "issues": [],
+        "label": "Project document suggestion",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "recipe.run",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "recipe.run",
+        "issues": [],
+        "label": "Recipe run",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "sequence.step",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "sequence.step",
+        "issues": [],
+        "label": "Sequence step",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.intent_classify",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.intent_classify",
+        "issues": [],
+        "label": "Dictation intent",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.rewrite",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.rewrite",
+        "issues": [],
+        "label": "Dictation rewrite",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.target_classify",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.target_classify",
+        "issues": [],
+        "label": "Dictation target",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": {
+          "created_at": "2026-10-11T21:19:10.997514Z",
+          "effective_retry_policy_id": "retry.audio.transcription",
+          "entries": [
+           {
+            "boundary": "local",
+            "label": "Whisper mlx base",
+            "ordinal": 1,
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "readiness": "unavailable"
+           }
+          ],
+          "id": "ia_fa286f176b01464fa4aa312a289f2ec3",
+          "issues": [
+           {
+            "code": "binding_not_ready",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "repair"
+           }
+          ],
+          "retry_policy_id": null,
+          "retry_policy_source": "capability_default",
+          "revision": 1,
+          "schema": "InferenceAssignmentProjection@1",
+          "scope": {
+           "capability_id": "speech.transcribe",
+           "kind": "capability"
+          },
+          "sha256": "sha256:181eb4a9ddf9111df3168cd0e2de22cb6c342caf1a4641931e7272ab4154dcc3"
+         },
+         "capability_id": "speech.transcribe",
+         "inherited_from": "capability",
+         "repair": null,
+         "status": "assigned"
+        },
+        "group": {
+         "id": "speech_recognition",
+         "label": "Speech recognition"
+        },
+        "has_override": true,
+        "id": "speech.transcribe",
+        "issues": [
+         {
+          "code": "binding_not_ready",
+          "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+          "profile_revision": 1,
+          "severity": "repair"
+         }
+        ],
+        "label": "Speech transcription",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "thought.interview",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "thought.interview",
+        "issues": [],
+        "label": "Thought development",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "voice.reference_resolve",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "voice.reference_resolve",
+        "issues": [],
+        "label": "Voice reference resolution",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "workbench.item",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "workbench.item",
+        "issues": [],
+        "label": "Workbench item",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "workflow.node",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "workflow.node",
+        "issues": [],
+        "label": "Workflow node",
+        "queue": null
+       }
+      ]
+     }
+    },
+    "name": "confirm",
+    "post": "/api/proposals/prop-3c5a1fbffb40/confirm"
+   }
+  ]
+ },
  "cold": {
   "gets": {
    "/api/desk/needs-you?fresh=1": {
@@ -11,13 +2895,13 @@
      }
     ],
     "complete": true,
-    "computedAt": "2026-10-11T14:43:19.746266-06:00",
+    "computedAt": "2026-10-11T15:19:10.469854-06:00",
     "count": 1,
     "coverage": [
      {
       "kind": "coder",
       "label": "Agents",
-      "observed_at": "2026-10-11T20:43:19.760792+00:00",
+      "observed_at": "2026-10-11T21:19:10.483829+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -966,7 +3850,7 @@
      {
       "effective": {
        "assignment": {
-        "created_at": "2026-10-11T20:43:19.195288Z",
+        "created_at": "2026-10-11T21:19:10.121631Z",
         "effective_retry_policy_id": "retry.audio.transcription",
         "entries": [
          {
@@ -979,7 +3863,7 @@
           "readiness": "unavailable"
          }
         ],
-        "id": "ia_70d9685b293e4a3ebe7f0e41f0f46202",
+        "id": "ia_e8d1d6bf70b848c79661b734ce122f13",
         "issues": [
          {
           "code": "binding_not_ready",
@@ -996,7 +3880,7 @@
          "capability_id": "speech.transcribe",
          "kind": "capability"
         },
-        "sha256": "sha256:33d88631f9a6fa00a1489d3de92975a4bd67ee51f5e0368e61a847de6e700450"
+        "sha256": "sha256:d9bf41f57c3ca6afe5659016a24be69ebd1270763d053e27069dd32f656f8f55"
        },
        "capability_id": "speech.transcribe",
        "inherited_from": "capability",
@@ -1222,37 +4106,37 @@
      }
     ],
     "complete": false,
-    "computedAt": "2026-10-11T14:43:21.016633-06:00",
+    "computedAt": "2026-10-11T15:19:11.812292-06:00",
     "count": 3,
     "coverage": [
      {
       "kind": "project",
       "label": "Payments ledger",
-      "observed_at": "2026-10-11T14:43:20.892747",
-      "project_id": "proj-829d41eab0b5",
+      "observed_at": "2026-10-11T15:19:11.710291",
+      "project_id": "proj-a01fc4270017",
       "reason": null,
       "repair": null,
-      "source_id": "project:proj-829d41eab0b5",
+      "source_id": "project:proj-a01fc4270017",
       "state": "available"
      },
      {
       "kind": "meeting",
       "label": "Payments ledger",
-      "observed_at": "2026-10-11T14:43:20.892747",
-      "project_id": "proj-829d41eab0b5",
+      "observed_at": "2026-10-11T15:19:11.710291",
+      "project_id": "proj-a01fc4270017",
       "reason": null,
       "repair": null,
-      "source_id": "meeting:proj-829d41eab0b5",
+      "source_id": "meeting:proj-a01fc4270017",
       "state": "available"
      },
      {
       "kind": "commitment",
       "label": "Payments ledger",
-      "observed_at": "2026-10-11T14:43:20.892747",
-      "project_id": "proj-829d41eab0b5",
+      "observed_at": "2026-10-11T15:19:11.710291",
+      "project_id": "proj-a01fc4270017",
       "reason": null,
       "repair": null,
-      "source_id": "commitment:proj-829d41eab0b5",
+      "source_id": "commitment:proj-a01fc4270017",
       "state": "available"
      },
      {
@@ -1261,7 +4145,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-00",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1281,7 +4165,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-10",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1301,7 +4185,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-12",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1321,7 +4205,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-14",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1341,7 +4225,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-16",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1361,7 +4245,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-18",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1381,7 +4265,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-02",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1401,7 +4285,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-20",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1421,7 +4305,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-22",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1441,7 +4325,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-24",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1461,7 +4345,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-26",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1479,9 +4363,29 @@
       "cause": "Not signed in",
       "host": "github.com",
       "kind": "watch",
+      "label": "GitHub \u00b7 acme/repo-28",
+      "observed_at": null,
+      "project_id": "proj-a01fc4270017",
+      "provider": "github",
+      "reason": "Not signed in",
+      "repair": {
+       "href": "/settings",
+       "token": "CANT CHECK",
+       "verb": "Reconnect"
+      },
+      "source_id": "watch:w-gh-28",
+      "state": "failed",
+      "watch_ids": [
+       "w-gh-28"
+      ]
+     },
+     {
+      "cause": "Not signed in",
+      "host": "github.com",
+      "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-04",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1501,7 +4405,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-06",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1521,7 +4425,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-08",
       "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
+      "project_id": "proj-a01fc4270017",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1536,53 +4440,33 @@
       ]
      },
      {
-      "cause": "Not signed in",
-      "host": "github.com",
-      "kind": "watch",
-      "label": "GitHub \u00b7 acme/repo-28",
-      "observed_at": null,
-      "project_id": "proj-829d41eab0b5",
-      "provider": "github",
-      "reason": "Not signed in",
-      "repair": {
-       "href": "/settings",
-       "token": "CANT CHECK",
-       "verb": "Reconnect"
-      },
-      "source_id": "watch:w-gh-28",
-      "state": "failed",
-      "watch_ids": [
-       "w-gh-28"
-      ]
-     },
-     {
       "kind": "project",
       "label": "Staff hiring",
-      "observed_at": "2026-10-11T14:43:20.898365",
-      "project_id": "proj-88c5c746deb6",
+      "observed_at": "2026-10-11T15:19:11.713717",
+      "project_id": "proj-898dca64f967",
       "reason": null,
       "repair": null,
-      "source_id": "project:proj-88c5c746deb6",
+      "source_id": "project:proj-898dca64f967",
       "state": "available"
      },
      {
       "kind": "meeting",
       "label": "Staff hiring",
-      "observed_at": "2026-10-11T14:43:20.898365",
-      "project_id": "proj-88c5c746deb6",
+      "observed_at": "2026-10-11T15:19:11.713717",
+      "project_id": "proj-898dca64f967",
       "reason": null,
       "repair": null,
-      "source_id": "meeting:proj-88c5c746deb6",
+      "source_id": "meeting:proj-898dca64f967",
       "state": "available"
      },
      {
       "kind": "commitment",
       "label": "Staff hiring",
-      "observed_at": "2026-10-11T14:43:20.898365",
-      "project_id": "proj-88c5c746deb6",
+      "observed_at": "2026-10-11T15:19:11.713717",
+      "project_id": "proj-898dca64f967",
       "reason": null,
       "repair": null,
-      "source_id": "commitment:proj-88c5c746deb6",
+      "source_id": "commitment:proj-898dca64f967",
       "state": "available"
      },
      {
@@ -1591,7 +4475,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-01",
       "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1611,7 +4495,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-11",
       "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1631,7 +4515,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-13",
       "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1651,7 +4535,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-15",
       "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1671,7 +4555,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-17",
       "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1691,7 +4575,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-19",
       "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1711,7 +4595,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-21",
       "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1731,7 +4615,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-23",
       "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1751,7 +4635,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-25",
       "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1769,89 +4653,9 @@
       "cause": "Not signed in",
       "host": "github.com",
       "kind": "watch",
-      "label": "GitHub \u00b7 acme/repo-03",
-      "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
-      "provider": "github",
-      "reason": "Not signed in",
-      "repair": {
-       "href": "/settings",
-       "token": "CANT CHECK",
-       "verb": "Reconnect"
-      },
-      "source_id": "watch:w-gh-3",
-      "state": "failed",
-      "watch_ids": [
-       "w-gh-3"
-      ]
-     },
-     {
-      "cause": "Not signed in",
-      "host": "github.com",
-      "kind": "watch",
-      "label": "GitHub \u00b7 acme/repo-05",
-      "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
-      "provider": "github",
-      "reason": "Not signed in",
-      "repair": {
-       "href": "/settings",
-       "token": "CANT CHECK",
-       "verb": "Reconnect"
-      },
-      "source_id": "watch:w-gh-5",
-      "state": "failed",
-      "watch_ids": [
-       "w-gh-5"
-      ]
-     },
-     {
-      "cause": "Not signed in",
-      "host": "github.com",
-      "kind": "watch",
-      "label": "GitHub \u00b7 acme/repo-07",
-      "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
-      "provider": "github",
-      "reason": "Not signed in",
-      "repair": {
-       "href": "/settings",
-       "token": "CANT CHECK",
-       "verb": "Reconnect"
-      },
-      "source_id": "watch:w-gh-7",
-      "state": "failed",
-      "watch_ids": [
-       "w-gh-7"
-      ]
-     },
-     {
-      "cause": "Not signed in",
-      "host": "github.com",
-      "kind": "watch",
-      "label": "GitHub \u00b7 acme/repo-09",
-      "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
-      "provider": "github",
-      "reason": "Not signed in",
-      "repair": {
-       "href": "/settings",
-       "token": "CANT CHECK",
-       "verb": "Reconnect"
-      },
-      "source_id": "watch:w-gh-9",
-      "state": "failed",
-      "watch_ids": [
-       "w-gh-9"
-      ]
-     },
-     {
-      "cause": "Not signed in",
-      "host": "github.com",
-      "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-27",
       "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1871,7 +4675,7 @@
       "kind": "watch",
       "label": "GitHub \u00b7 acme/repo-29",
       "observed_at": null,
-      "project_id": "proj-88c5c746deb6",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "Not signed in",
       "repair": {
@@ -1886,16 +4690,96 @@
       ]
      },
      {
+      "cause": "Not signed in",
+      "host": "github.com",
+      "kind": "watch",
+      "label": "GitHub \u00b7 acme/repo-03",
+      "observed_at": null,
+      "project_id": "proj-898dca64f967",
+      "provider": "github",
+      "reason": "Not signed in",
+      "repair": {
+       "href": "/settings",
+       "token": "CANT CHECK",
+       "verb": "Reconnect"
+      },
+      "source_id": "watch:w-gh-3",
+      "state": "failed",
+      "watch_ids": [
+       "w-gh-3"
+      ]
+     },
+     {
+      "cause": "Not signed in",
+      "host": "github.com",
+      "kind": "watch",
+      "label": "GitHub \u00b7 acme/repo-05",
+      "observed_at": null,
+      "project_id": "proj-898dca64f967",
+      "provider": "github",
+      "reason": "Not signed in",
+      "repair": {
+       "href": "/settings",
+       "token": "CANT CHECK",
+       "verb": "Reconnect"
+      },
+      "source_id": "watch:w-gh-5",
+      "state": "failed",
+      "watch_ids": [
+       "w-gh-5"
+      ]
+     },
+     {
+      "cause": "Not signed in",
+      "host": "github.com",
+      "kind": "watch",
+      "label": "GitHub \u00b7 acme/repo-07",
+      "observed_at": null,
+      "project_id": "proj-898dca64f967",
+      "provider": "github",
+      "reason": "Not signed in",
+      "repair": {
+       "href": "/settings",
+       "token": "CANT CHECK",
+       "verb": "Reconnect"
+      },
+      "source_id": "watch:w-gh-7",
+      "state": "failed",
+      "watch_ids": [
+       "w-gh-7"
+      ]
+     },
+     {
+      "cause": "Not signed in",
+      "host": "github.com",
+      "kind": "watch",
+      "label": "GitHub \u00b7 acme/repo-09",
+      "observed_at": null,
+      "project_id": "proj-898dca64f967",
+      "provider": "github",
+      "reason": "Not signed in",
+      "repair": {
+       "href": "/settings",
+       "token": "CANT CHECK",
+       "verb": "Reconnect"
+      },
+      "source_id": "watch:w-gh-9",
+      "state": "failed",
+      "watch_ids": [
+       "w-gh-9"
+      ]
+     },
+     {
       "cause": "paused",
       "host": "github.com",
       "kind": "watch",
       "label": "GitHub \u00b7 acme/paused",
-      "observed_at": "2026-10-11T20:38:21+00:00",
-      "project_id": "proj-88c5c746deb6",
+      "observed_at": "2026-10-11T21:14:11+00:00",
+      "project_id": "proj-898dca64f967",
       "provider": "github",
       "reason": "paused",
       "repair": {
-       "href": "/projects/proj-88c5c746deb6",
+       "href": "/projects/proj-898dca64f967",
        "token": "PAUSED",
        "verb": "Open source"
       },
@@ -1908,7 +4792,7 @@
      {
       "kind": "coder",
       "label": "Agents",
-      "observed_at": "2026-10-11T20:43:21.041085+00:00",
+      "observed_at": "2026-10-11T21:19:11.834926+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -1936,8 +4820,8 @@
     "projects": [],
     "roomComplete": false,
     "roomCounts": {
-     "proj-829d41eab0b5": 0,
-     "proj-88c5c746deb6": 0
+     "proj-898dca64f967": 0,
+     "proj-a01fc4270017": 0
     },
     "roomItems": [],
     "sourceErrors": {},
@@ -2860,7 +5744,7 @@
      {
       "effective": {
        "assignment": {
-        "created_at": "2026-10-11T20:43:20.547416Z",
+        "created_at": "2026-10-11T21:19:11.396233Z",
         "effective_retry_policy_id": "retry.audio.transcription",
         "entries": [
          {
@@ -2873,7 +5757,7 @@
           "readiness": "unavailable"
          }
         ],
-        "id": "ia_9e4aa2c098f54a0f86f09f94ea4257f5",
+        "id": "ia_9324834271f34d119214fa8b63d6216a",
         "issues": [
          {
           "code": "binding_not_ready",
@@ -2890,7 +5774,7 @@
          "capability_id": "speech.transcribe",
          "kind": "capability"
         },
-        "sha256": "sha256:e6d106e2a01295de42db1b68c44b05cb011f2f1f36ab8abc4d339382729db4d5"
+        "sha256": "sha256:1430b60871973b5e81dda68a5de8283dd962ffc84fc95e878eaf4ffc7b884f4d"
        },
        "capability_id": "speech.transcribe",
        "inherited_from": "capability",
@@ -3245,7 +6129,7 @@
      "live": true,
      "target": "auto"
     },
-    "writtenAt": 1791751400.546317
+    "writtenAt": 1791753551.395061
    }
   }
  },
@@ -3267,13 +6151,13 @@
        }
       ],
       "complete": true,
-      "computedAt": "2026-10-11T14:43:20.352722-06:00",
+      "computedAt": "2026-10-11T15:19:10.864595-06:00",
       "count": 3,
       "coverage": [
        {
         "kind": "coder",
         "label": "Agents",
-        "observed_at": "2026-10-11T20:43:20.379099+00:00",
+        "observed_at": "2026-10-11T21:19:10.876914+00:00",
         "project_id": "",
         "reason": null,
         "repair": null,
@@ -3284,10 +6168,10 @@
       "failedMeetings": [],
       "items": [
        {
-        "ageToken": "2026-10-11T20:43:20.333377+00:00",
+        "ageToken": "2026-10-11T21:19:10.863116+00:00",
         "dedupCount": 1,
         "dueAt": null,
-        "id": "proposal:prop-24f5bf2f971d456a",
+        "id": "proposal:prop-683642613bae42df",
         "kind": "proposal",
         "meetingId": "m-philo15-08",
         "meetingTitle": "philo3_architect_meeting",
@@ -3297,36 +6181,36 @@
         "proposalActionItemId": "action_philo15_08_priya",
         "proposalDue": "Friday",
         "proposalHost": null,
-        "proposalId": "prop-24f5bf2f971d456a",
+        "proposalId": "prop-683642613bae42df",
         "proposalKind": "action",
         "rank": 1,
         "rankClass": "no_due_date",
         "ref": "Add the named failure fence before ship",
         "severity": "info",
-        "since": "2026-10-11T20:43:20.333377+00:00",
+        "since": "2026-10-11T21:19:10.863116+00:00",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-24f5bf2f971d456a",
+          "id": "proposal:prop-683642613bae42df",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "Add the named failure fence before ship",
-          "verbHref": "/api/proposals/prop-24f5bf2f971d456a/confirm",
+          "verbHref": "/api/proposals/prop-683642613bae42df/confirm",
           "why": "PROPOSED \u00b7 philo3_architect_meeting"
          }
         ],
         "title": "Add the named failure fence before ship",
-        "verbHref": "/api/proposals/prop-24f5bf2f971d456a/confirm",
+        "verbHref": "/api/proposals/prop-683642613bae42df/confirm",
         "waiting": false,
         "why": "PROPOSED \u00b7 philo3_architect_meeting"
        },
        {
-        "ageToken": "2026-10-11T20:43:20.332744+00:00",
+        "ageToken": "2026-10-11T21:19:10.862891+00:00",
         "dedupCount": 1,
         "dueAt": null,
-        "id": "proposal:prop-66b6e039966d4985",
+        "id": "proposal:prop-cc4f4bde618e4794",
         "kind": "proposal",
         "meetingId": "m-philo15-08",
         "meetingTitle": "philo3_architect_meeting",
@@ -3335,28 +6219,28 @@
         "projectName": "",
         "proposalDue": null,
         "proposalHost": null,
-        "proposalId": "prop-66b6e039966d4985",
+        "proposalId": "prop-cc4f4bde618e4794",
         "proposalKind": "decision",
         "rank": 2,
         "rankClass": "no_due_date",
         "ref": "Use a recorded provider reply for isolated rig tests",
         "severity": "info",
-        "since": "2026-10-11T20:43:20.332744+00:00",
+        "since": "2026-10-11T21:19:10.862891+00:00",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-66b6e039966d4985",
+          "id": "proposal:prop-cc4f4bde618e4794",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "Use a recorded provider reply for isolated rig tests",
-          "verbHref": "/api/proposals/prop-66b6e039966d4985/confirm",
+          "verbHref": "/api/proposals/prop-cc4f4bde618e4794/confirm",
           "why": "PROPOSED \u00b7 philo3_architect_meeting"
          }
         ],
         "title": "Use a recorded provider reply for isolated rig tests",
-        "verbHref": "/api/proposals/prop-66b6e039966d4985/confirm",
+        "verbHref": "/api/proposals/prop-cc4f4bde618e4794/confirm",
         "waiting": false,
         "why": "PROPOSED \u00b7 philo3_architect_meeting"
        }
@@ -3389,10 +6273,10 @@
       "roomCounts": {},
       "roomItems": [
        {
-        "ageToken": "2026-10-11T20:43:20.333377+00:00",
+        "ageToken": "2026-10-11T21:19:10.863116+00:00",
         "dedupCount": 1,
         "dueAt": null,
-        "id": "proposal:prop-24f5bf2f971d456a",
+        "id": "proposal:prop-683642613bae42df",
         "kind": "proposal",
         "meetingId": "m-philo15-08",
         "meetingTitle": "philo3_architect_meeting",
@@ -3401,35 +6285,35 @@
         "proposalActionItemId": "action_philo15_08_priya",
         "proposalDue": "Friday",
         "proposalHost": null,
-        "proposalId": "prop-24f5bf2f971d456a",
+        "proposalId": "prop-683642613bae42df",
         "proposalKind": "action",
         "rank": 1,
         "rankClass": "no_due_date",
         "ref": "Add the named failure fence before ship",
         "severity": "info",
-        "since": "2026-10-11T20:43:20.333377+00:00",
+        "since": "2026-10-11T21:19:10.863116+00:00",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-24f5bf2f971d456a",
+          "id": "proposal:prop-683642613bae42df",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "Add the named failure fence before ship",
-          "verbHref": "/api/proposals/prop-24f5bf2f971d456a/confirm",
+          "verbHref": "/api/proposals/prop-683642613bae42df/confirm",
           "why": "PROPOSED \u00b7 philo3_architect_meeting"
          }
         ],
         "title": "Add the named failure fence before ship",
-        "verbHref": "/api/proposals/prop-24f5bf2f971d456a/confirm",
+        "verbHref": "/api/proposals/prop-683642613bae42df/confirm",
         "why": "PROPOSED \u00b7 philo3_architect_meeting"
        },
        {
-        "ageToken": "2026-10-11T20:43:20.332744+00:00",
+        "ageToken": "2026-10-11T21:19:10.862891+00:00",
         "dedupCount": 1,
         "dueAt": null,
-        "id": "proposal:prop-66b6e039966d4985",
+        "id": "proposal:prop-cc4f4bde618e4794",
         "kind": "proposal",
         "meetingId": "m-philo15-08",
         "meetingTitle": "philo3_architect_meeting",
@@ -3437,28 +6321,28 @@
         "projectName": "",
         "proposalDue": null,
         "proposalHost": null,
-        "proposalId": "prop-66b6e039966d4985",
+        "proposalId": "prop-cc4f4bde618e4794",
         "proposalKind": "decision",
         "rank": 2,
         "rankClass": "no_due_date",
         "ref": "Use a recorded provider reply for isolated rig tests",
         "severity": "info",
-        "since": "2026-10-11T20:43:20.332744+00:00",
+        "since": "2026-10-11T21:19:10.862891+00:00",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-66b6e039966d4985",
+          "id": "proposal:prop-cc4f4bde618e4794",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "Use a recorded provider reply for isolated rig tests",
-          "verbHref": "/api/proposals/prop-66b6e039966d4985/confirm",
+          "verbHref": "/api/proposals/prop-cc4f4bde618e4794/confirm",
           "why": "PROPOSED \u00b7 philo3_architect_meeting"
          }
         ],
         "title": "Use a recorded provider reply for isolated rig tests",
-        "verbHref": "/api/proposals/prop-66b6e039966d4985/confirm",
+        "verbHref": "/api/proposals/prop-cc4f4bde618e4794/confirm",
         "why": "PROPOSED \u00b7 philo3_architect_meeting"
        }
       ],
@@ -3474,7 +6358,7 @@
        "overdue": [],
        "unassigned": [
         {
-         "created_at": "2026-10-11T14:43:20.327989",
+         "created_at": "2026-10-11T15:19:10.861769",
          "decision_id": null,
          "delegated_at": null,
          "due": "Friday",
@@ -4450,7 +7334,7 @@
        {
         "effective": {
          "assignment": {
-          "created_at": "2026-10-11T20:43:19.878435Z",
+          "created_at": "2026-10-11T21:19:10.574827Z",
           "effective_retry_policy_id": "retry.audio.transcription",
           "entries": [
            {
@@ -4463,7 +7347,7 @@
             "readiness": "unavailable"
            }
           ],
-          "id": "ia_5a8335810f584da6bcef6228ac1e07f9",
+          "id": "ia_bde9fcf6d42d4b8f87daf2cbda4924dd",
           "issues": [
            {
             "code": "binding_not_ready",
@@ -4480,7 +7364,7 @@
            "capability_id": "speech.transcribe",
            "kind": "capability"
           },
-          "sha256": "sha256:3b6c81ee999fb7296ed6a45163461a3a094b05602a572383fd979651fa4cf519"
+          "sha256": "sha256:b8aab2ed3f34aa3623b88281d3dbefd29a2416695a79f02df761ebd6b683acc2"
          },
          "capability_id": "speech.transcribe",
          "inherited_from": "capability",
@@ -4584,18 +7468,18 @@
    {
     "answer": {
      "action_item_id": "action_philo15_08_priya",
-     "commitment_id": "commitment-bfe5e23a3ed947ef",
-     "decision_id": "dec-ed37188635ed4cdf",
-     "decision_record_id": "record-9226c46c30104b70",
+     "commitment_id": "commitment-5988fea3a5104c72",
+     "decision_id": "dec-3e6e1315eb8d4c86",
+     "decision_record_id": "record-bd8ced1f67bc428c",
      "original_text": "Add the named failure fence before ship",
      "proposal": {
       "acceptance": "accepted",
       "action_item_id": "action_philo15_08_priya",
       "claim_kind": "proposal",
-      "commitment_id": "commitment-bfe5e23a3ed947ef",
-      "created_at": "2026-10-11T20:43:20.333377+00:00",
-      "decided_at": "2026-10-11T20:43:20.407908+00:00",
-      "decision_record_id": "record-9226c46c30104b70",
+      "commitment_id": "commitment-5988fea3a5104c72",
+      "created_at": "2026-10-11T21:19:10.863116+00:00",
+      "decided_at": "2026-10-11T21:19:10.885666+00:00",
+      "decision_record_id": "record-bd8ced1f67bc428c",
       "deferred_until": null,
       "due": "Friday",
       "due_hint": "Friday",
@@ -4603,7 +7487,7 @@
       "edited_at": null,
       "extraction_model": null,
       "extraction_revision": "6a011fdadc5a8cfe526ef1988ebfb4d797834c2e6677bcc5d6ba076d2db6241a",
-      "id": "prop-24f5bf2f971d456a",
+      "id": "prop-683642613bae42df",
       "job_attempt": null,
       "job_id": null,
       "kind": "action",
@@ -4639,7 +7523,7 @@
       "text_edited": false,
       "unknowns": []
      },
-     "proposal_id": "prop-24f5bf2f971d456a",
+     "proposal_id": "prop-683642613bae42df",
      "replayed": false,
      "state": "confirmed",
      "success": true
@@ -4655,13 +7539,13 @@
        }
       ],
       "complete": true,
-      "computedAt": "2026-10-11T14:43:20.412052-06:00",
+      "computedAt": "2026-10-11T15:19:10.888140-06:00",
       "count": 2,
       "coverage": [
        {
         "kind": "coder",
         "label": "Agents",
-        "observed_at": "2026-10-11T20:43:20.429171+00:00",
+        "observed_at": "2026-10-11T21:19:10.895761+00:00",
         "project_id": "",
         "reason": null,
         "repair": null,
@@ -4672,10 +7556,10 @@
       "failedMeetings": [],
       "items": [
        {
-        "ageToken": "2026-10-11T20:43:20.332744+00:00",
+        "ageToken": "2026-10-11T21:19:10.862891+00:00",
         "dedupCount": 1,
         "dueAt": null,
-        "id": "proposal:prop-66b6e039966d4985",
+        "id": "proposal:prop-cc4f4bde618e4794",
         "kind": "proposal",
         "meetingId": "m-philo15-08",
         "meetingTitle": "philo3_architect_meeting",
@@ -4684,36 +7568,36 @@
         "projectName": "",
         "proposalDue": null,
         "proposalHost": null,
-        "proposalId": "prop-66b6e039966d4985",
+        "proposalId": "prop-cc4f4bde618e4794",
         "proposalKind": "decision",
         "rank": 1,
         "rankClass": "no_due_date",
         "ref": "Use a recorded provider reply for isolated rig tests",
         "severity": "info",
-        "since": "2026-10-11T20:43:20.332744+00:00",
+        "since": "2026-10-11T21:19:10.862891+00:00",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-66b6e039966d4985",
+          "id": "proposal:prop-cc4f4bde618e4794",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "Use a recorded provider reply for isolated rig tests",
-          "verbHref": "/api/proposals/prop-66b6e039966d4985/confirm",
+          "verbHref": "/api/proposals/prop-cc4f4bde618e4794/confirm",
           "why": "PROPOSED \u00b7 philo3_architect_meeting"
          }
         ],
         "title": "Use a recorded provider reply for isolated rig tests",
-        "verbHref": "/api/proposals/prop-66b6e039966d4985/confirm",
+        "verbHref": "/api/proposals/prop-cc4f4bde618e4794/confirm",
         "waiting": false,
         "why": "PROPOSED \u00b7 philo3_architect_meeting"
        },
        {
         "_doorCard": {
-         "created_at": "2026-10-11T14:43:20.327989",
-         "decision_id": "dec-ed37188635ed4cdf",
-         "delegated_at": "2026-10-11T20:43:20.407876+00:00",
+         "created_at": "2026-10-11T15:19:10.861769",
+         "decision_id": "dec-3e6e1315eb8d4c86",
+         "delegated_at": "2026-10-11T21:19:10.885641+00:00",
          "due": "Friday",
          "id": "action_philo15_08_priya",
          "lane": "waiting",
@@ -4848,10 +7732,10 @@
       "roomCounts": {},
       "roomItems": [
        {
-        "ageToken": "2026-10-11T20:43:20.332744+00:00",
+        "ageToken": "2026-10-11T21:19:10.862891+00:00",
         "dedupCount": 1,
         "dueAt": null,
-        "id": "proposal:prop-66b6e039966d4985",
+        "id": "proposal:prop-cc4f4bde618e4794",
         "kind": "proposal",
         "meetingId": "m-philo15-08",
         "meetingTitle": "philo3_architect_meeting",
@@ -4859,28 +7743,28 @@
         "projectName": "",
         "proposalDue": null,
         "proposalHost": null,
-        "proposalId": "prop-66b6e039966d4985",
+        "proposalId": "prop-cc4f4bde618e4794",
         "proposalKind": "decision",
         "rank": 1,
         "rankClass": "no_due_date",
         "ref": "Use a recorded provider reply for isolated rig tests",
         "severity": "info",
-        "since": "2026-10-11T20:43:20.332744+00:00",
+        "since": "2026-10-11T21:19:10.862891+00:00",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-66b6e039966d4985",
+          "id": "proposal:prop-cc4f4bde618e4794",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "Use a recorded provider reply for isolated rig tests",
-          "verbHref": "/api/proposals/prop-66b6e039966d4985/confirm",
+          "verbHref": "/api/proposals/prop-cc4f4bde618e4794/confirm",
           "why": "PROPOSED \u00b7 philo3_architect_meeting"
          }
         ],
         "title": "Use a recorded provider reply for isolated rig tests",
-        "verbHref": "/api/proposals/prop-66b6e039966d4985/confirm",
+        "verbHref": "/api/proposals/prop-cc4f4bde618e4794/confirm",
         "why": "PROPOSED \u00b7 philo3_architect_meeting"
        }
       ],
@@ -4897,9 +7781,9 @@
        "unassigned": [],
        "waiting": [
         {
-         "created_at": "2026-10-11T14:43:20.327989",
-         "decision_id": "dec-ed37188635ed4cdf",
-         "delegated_at": "2026-10-11T20:43:20.407876+00:00",
+         "created_at": "2026-10-11T15:19:10.861769",
+         "decision_id": "dec-3e6e1315eb8d4c86",
+         "delegated_at": "2026-10-11T21:19:10.885641+00:00",
          "due": "Friday",
          "id": "action_philo15_08_priya",
          "lane": "waiting",
@@ -5881,7 +8765,7 @@
        {
         "effective": {
          "assignment": {
-          "created_at": "2026-10-11T20:43:19.878435Z",
+          "created_at": "2026-10-11T21:19:10.574827Z",
           "effective_retry_policy_id": "retry.audio.transcription",
           "entries": [
            {
@@ -5894,7 +8778,7 @@
             "readiness": "unavailable"
            }
           ],
-          "id": "ia_5a8335810f584da6bcef6228ac1e07f9",
+          "id": "ia_bde9fcf6d42d4b8f87daf2cbda4924dd",
           "issues": [
            {
             "code": "binding_not_ready",
@@ -5911,7 +8795,7 @@
            "capability_id": "speech.transcribe",
            "kind": "capability"
           },
-          "sha256": "sha256:3b6c81ee999fb7296ed6a45163461a3a094b05602a572383fd979651fa4cf519"
+          "sha256": "sha256:b8aab2ed3f34aa3623b88281d3dbefd29a2416695a79f02df761ebd6b683acc2"
          },
          "capability_id": "speech.transcribe",
          "inherited_from": "capability",
@@ -6011,7 +8895,7 @@
      }
     },
     "name": "confirm",
-    "post": "/api/proposals/prop-24f5bf2f971d456a/confirm"
+    "post": "/api/proposals/prop-683642613bae42df/confirm"
    },
    {
     "answer": {
@@ -6021,7 +8905,7 @@
       "action_item_id": null,
       "claim_kind": "proposal",
       "commitment_id": null,
-      "created_at": "2026-10-11T20:43:20.332744+00:00",
+      "created_at": "2026-10-11T21:19:10.862891+00:00",
       "decided_at": null,
       "decision_record_id": null,
       "deferred_until": "2026-10-12T00:00:00-06:00",
@@ -6031,7 +8915,7 @@
       "edited_at": null,
       "extraction_model": null,
       "extraction_revision": "6a011fdadc5a8cfe526ef1988ebfb4d797834c2e6677bcc5d6ba076d2db6241a",
-      "id": "prop-66b6e039966d4985",
+      "id": "prop-cc4f4bde618e4794",
       "job_attempt": null,
       "job_id": null,
       "kind": "decision",
@@ -6067,7 +8951,7 @@
       "text_edited": false,
       "unknowns": []
      },
-     "proposal_id": "prop-66b6e039966d4985",
+     "proposal_id": "prop-cc4f4bde618e4794",
      "state": "proposed",
      "success": true
     },
@@ -6082,13 +8966,13 @@
        }
       ],
       "complete": true,
-      "computedAt": "2026-10-11T14:43:20.444482-06:00",
+      "computedAt": "2026-10-11T15:19:10.904590-06:00",
       "count": 1,
       "coverage": [
        {
         "kind": "coder",
         "label": "Agents",
-        "observed_at": "2026-10-11T20:43:20.456818+00:00",
+        "observed_at": "2026-10-11T21:19:10.911609+00:00",
         "project_id": "",
         "reason": null,
         "repair": null,
@@ -6100,9 +8984,9 @@
       "items": [
        {
         "_doorCard": {
-         "created_at": "2026-10-11T14:43:20.327989",
-         "decision_id": "dec-ed37188635ed4cdf",
-         "delegated_at": "2026-10-11T20:43:20.407876+00:00",
+         "created_at": "2026-10-11T15:19:10.861769",
+         "decision_id": "dec-3e6e1315eb8d4c86",
+         "delegated_at": "2026-10-11T21:19:10.885641+00:00",
          "due": "Friday",
          "id": "action_philo15_08_priya",
          "lane": "waiting",
@@ -6245,9 +9129,9 @@
        "unassigned": [],
        "waiting": [
         {
-         "created_at": "2026-10-11T14:43:20.327989",
-         "decision_id": "dec-ed37188635ed4cdf",
-         "delegated_at": "2026-10-11T20:43:20.407876+00:00",
+         "created_at": "2026-10-11T15:19:10.861769",
+         "decision_id": "dec-3e6e1315eb8d4c86",
+         "delegated_at": "2026-10-11T21:19:10.885641+00:00",
          "due": "Friday",
          "id": "action_philo15_08_priya",
          "lane": "waiting",
@@ -7229,7 +10113,7 @@
        {
         "effective": {
          "assignment": {
-          "created_at": "2026-10-11T20:43:19.878435Z",
+          "created_at": "2026-10-11T21:19:10.574827Z",
           "effective_retry_policy_id": "retry.audio.transcription",
           "entries": [
            {
@@ -7242,7 +10126,7 @@
             "readiness": "unavailable"
            }
           ],
-          "id": "ia_5a8335810f584da6bcef6228ac1e07f9",
+          "id": "ia_bde9fcf6d42d4b8f87daf2cbda4924dd",
           "issues": [
            {
             "code": "binding_not_ready",
@@ -7259,7 +10143,7 @@
            "capability_id": "speech.transcribe",
            "kind": "capability"
           },
-          "sha256": "sha256:3b6c81ee999fb7296ed6a45163461a3a094b05602a572383fd979651fa4cf519"
+          "sha256": "sha256:b8aab2ed3f34aa3623b88281d3dbefd29a2416695a79f02df761ebd6b683acc2"
          },
          "capability_id": "speech.transcribe",
          "inherited_from": "capability",
@@ -7359,7 +10243,7 @@
      }
     },
     "name": "defer",
-    "post": "/api/proposals/prop-66b6e039966d4985/defer"
+    "post": "/api/proposals/prop-cc4f4bde618e4794/defer"
    }
   ]
  }

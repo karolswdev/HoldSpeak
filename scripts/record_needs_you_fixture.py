@@ -115,6 +115,33 @@ def unfiled() -> dict[str, Any]:
             _close()
 
 
+def arrival() -> dict[str, Any]:
+    """HS-172: a Room's ran meeting with an action and a decision proposal, one hub boot.
+
+    The read before Confirm, Confirm on the action, the read after."""
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _boot("arrival", mp)
+        try:
+            seeds._seed_hs172(hub)
+            before = _gets(hub, COMMON_GETS)
+            action = next(
+                row for row in before["/api/desk/needs-you?fresh=1"]["items"]
+                if row.get("proposalKind") == "action"
+            )
+            confirm_path = f"/api/proposals/{action['proposalId']}/confirm"
+            confirmed = _post(hub, confirm_path)
+            return {
+                "action": action["title"],
+                "steps": [
+                    {"name": "before", "gets": before},
+                    {"name": "confirm", "post": confirm_path, "answer": confirmed,
+                     "gets": _gets(hub, COMMON_GETS)},
+                ],
+            }
+        finally:
+            _close()
+
+
 def grouped() -> dict[str, Any]:
     """PHILO-17: 30 signed-out GitHub sources (the producer's baseline errors), plus Settings' reads."""
     with pytest.MonkeyPatch.context() as mp:
@@ -145,6 +172,7 @@ def main() -> int:
         "recordedBy": "scripts/record_needs_you_fixture.py",
         "cold": cold(),
         "unfiled": unfiled(),
+        "arrival": arrival(),
         "grouped": grouped(),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
