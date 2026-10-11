@@ -1,6 +1,6 @@
 import { wireClock } from "../../desk/surface/format";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, type ReactNode } from "react";
 import { countLabel } from "../../desk/surface";
 import { useLaunchers } from "../../desk/components/DeskWindow";
 import { useProcessWindow } from "../../desk/processWindow";
@@ -62,6 +62,16 @@ export function shownTarget(row: Pick<ProcessRow, "kind" | "target">, items?: It
   return target;
 }
 
+/** PHILO-17 (the desk sweep): an operation name is one long word
+ * (`CHANNEL.SAVE_DESTINATION`, 225 px in a 160 px cell); it may break after
+ * each `.` and `_`, so it wraps in its cell and never runs over the facts. */
+export function breakableKind(kind: string): ReactNode[] {
+  return kind
+    .toUpperCase()
+    .split(/(?<=[._])/)
+    .flatMap((part, i) => (i ? [<wbr key={i} />, part] : [part]));
+}
+
 function stateToken(row: ProcessRow): string {
   if (row.latestEventType === "operation.awaiting_decision") return "NEEDS YOU";
   return row.state ? row.state.toUpperCase() : "UNKNOWN";
@@ -98,7 +108,7 @@ function LedgerRows({
               primary={
                 <>
                   {depth > 0 ? "└ " : ""}
-                  {row.kind.toUpperCase()}
+                  {breakableKind(row.kind)}
                   {shownTarget(row, items) ? (
                     <span className="process-target" data-testid="process-target">{` · ${shownTarget(row, items)}`}</span>
                   ) : null}

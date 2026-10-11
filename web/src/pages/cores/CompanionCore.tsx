@@ -38,6 +38,9 @@ const WINGS = [
   { id: "delivery", label: "Delivery" },
 ];
 
+/** The wings are drawn after this long even when a read is still out. */
+const WINGS_READS_CAP_MS = 8000; // the Room's cap (roomReads.ts ROOM_READS_CAP_MS)
+
 export function CompanionCore({ hero }: CoreProps) {
   const [chosenView, setView] = useState("roster");
   // The Delivery wing shows repository work and pull request receipts. With
@@ -56,8 +59,19 @@ export function CompanionCore({ hero }: CoreProps) {
   const view = hasDelivery ? chosenView : "roster";
   const [doorOpen, setDoorOpen] = useState(false);
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  // PHILO-17 (the desk sweep): the wings are drawn once the reads that
+  // decide the Delivery wing have ended (or at the cap); a Delivery wing
+  // that arrived late moved Roster and the door 44 px (UX-CANON D).
+  const prLoaded = usePrReceipts((s) => s.loaded);
+  const deliveryRead = useDelivery((s) => s.updatedAt !== null || s.error !== "");
+  const [wingsCapped, setWingsCapped] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setWingsCapped(true), WINGS_READS_CAP_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+  const wingsKnown = wingsCapped || (prLoaded && deliveryRead);
   useWindowWings(
-    <SurfaceWings
+    !wingsKnown ? null : <SurfaceWings
       wings={wings}
       active={view}
       onChange={setView}
@@ -65,7 +79,7 @@ export function CompanionCore({ hero }: CoreProps) {
       doorOpen={doorOpen}
       onDoor={() => setDoorOpen((v) => !v)}
     />,
-    [view, doorOpen, hasDelivery],
+    [view, doorOpen, hasDelivery, wingsKnown],
   );
   const recipes = useResource<RecipesResponse>("/api/recipes", {});
   // Conductor F2 (K4c): every live session, from `/api/coders/sessions`

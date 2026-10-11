@@ -79,7 +79,10 @@ export function StateChip({
       data-testid={dataTestId}
     >
       <span className="surface-state-chip-icon" aria-hidden="true">
-        {icon ?? DEFAULT_ICONS[state]}
+        {/* PHILO-17 (the desk sweep): the glyph is data, never drawn; its
+            own box is display none, so no reader takes it for text on the
+            lit lamp (it read 1:1 on the ember lamp). */}
+        <span className="surface-state-chip-glyph">{icon ?? DEFAULT_ICONS[state]}</span>
       </span>
       {shown}
     </span>

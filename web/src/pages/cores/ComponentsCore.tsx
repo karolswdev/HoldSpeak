@@ -400,14 +400,13 @@ export function ComponentsCore({ hero }: CoreProps) {
         </ChoiceCardGroup>
       </SurfaceSection>
       <SurfaceSection label="Popover: in-flow anchored">
-        <button
+        {/* PHILO-17 (the desk sweep): the catalog obeys the library. */}
+        <Button
           ref={popoverAnchorRef}
-          type="button"
-          className="signal-btn"
           onClick={() => setPopoverOpen(!popoverOpen)}
         >
           {popoverOpen ? "Close popover" : "Open popover"}
-        </button>
+        </Button>
         <Popover
           anchor={popoverAnchorRef}
           open={popoverOpen}

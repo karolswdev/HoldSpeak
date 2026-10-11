@@ -37,6 +37,9 @@
   background: var(--wash-2);
   box-shadow: var(--bevel-raised), 0 0 0 1px var(--wb-ink);
 }
+.surface-state-chip-glyph {
+  display: none;
+}
 
 /* PHILO-15 B31 (Astra r2): the wrap variant. The words break between
    tokens and stay inside the card; the lamp keeps the first line. */

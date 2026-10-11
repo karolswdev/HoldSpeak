@@ -169,6 +169,53 @@ describe("hubWindows", () => {
     expect(order(["conductor", "chair:brief"])).toEqual(["conductor", "chair:brief"]);
   });
 
+  // PHILO-17 (the desk sweep, needs-393): the phone draws only the Chair
+  // window `phone` names. A hub-opened Chair window names it when no open
+  // Chair window holds the work area; else it waits in the ring (passive).
+  describe("a hub-opened Chair window at 393", () => {
+    const phoneWidth = (narrow: boolean) =>
+      vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+        matches: narrow && query.includes("max-width: 720px"),
+        media: query, onchange: null,
+        addListener: () => {}, removeListener: () => {},
+        addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => false,
+      }) as MediaQueryList);
+    afterEach(() => vi.restoreAllMocks());
+
+    it("takes the phone's work area when no Chair window holds it", async () => {
+      phoneWidth(true);
+      const { hub } = start([row("chair:needs", { depth: 3 })]);
+      await hub.start();
+      expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
+      expect(useChairWindows.getState().phone).toBe("chair:needs");
+    });
+
+    it("takes it from a phone window that is closed", async () => {
+      phoneWidth(true);
+      useChairWindows.setState({ phone: "chair:brief" }); // closed in beforeEach
+      const { hub } = start([row("chair:needs", { depth: 3 })]);
+      await hub.start();
+      expect(useChairWindows.getState().phone).toBe("chair:needs");
+    });
+
+    it("waits behind an open phone window: a hub open is passive", async () => {
+      phoneWidth(true);
+      useChairWindows.setState((s) => ({ phone: "chair:brief", closed: { ...s.closed, "chair:brief": false } }));
+      const { hub } = start([row("chair:brief", { depth: 2 }), row("chair:needs", { depth: 3 })]);
+      await hub.start();
+      expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
+      expect(useChairWindows.getState().phone).toBe("chair:brief");
+    });
+
+    it("leaves the phone's window alone at 1440", async () => {
+      phoneWidth(false);
+      const { hub } = start([row("chair:needs", { depth: 3 })]);
+      await hub.start();
+      expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
+      expect(useChairWindows.getState().phone).toBe("");
+    });
+  });
+
   it("seeds the desk from the hub's rows: open, order, seat, rect as share+px", async () => {
     const { hub } = start([
       row("chair:brief", { depth: 4, arranged: true, x: "-1/2", y: "-1/2", w: "1/2", h: "100%" }),

@@ -22,7 +22,7 @@
 import { ApiError, apiFetch } from "../../lib/api";
 import { SURFACE_APPLICATIONS } from "../applications";
 import { meetingOfScope } from "../objectWindows";
-import { CHAIR_WINDOW_IDS, closeChairWindow, useChairWindows } from "../chair/chairWindows";
+import { CHAIR_WINDOW_IDS, closeChairWindow, openChairWindowFromHub, useChairWindows } from "../chair/chairWindows";
 import { workBand } from "../components/window/windowGeometry";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "../conductor/store";
 import { useLane } from "../lane/laneStore";
@@ -162,7 +162,9 @@ export function adapterFor(id: string): Adapter | null {
   if (CHAIR_WINDOW_IDS.includes(id)) {
     return {
       isOpen: () => !useChairWindows.getState().closed[id],
-      open: () => useChairWindows.setState((s) => ({ closed: { ...s.closed, [id]: false } })),
+      // At 393 the phone draws the Chair window `phone` names: a hub open
+      // must name it there, or the window is open and never drawn.
+      open: () => openChairWindowFromHub(id),
       close: () => closeChairWindow(id),
     };
   }

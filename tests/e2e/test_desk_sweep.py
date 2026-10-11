@@ -77,6 +77,8 @@ pytest.importorskip("playwright.sync_api", reason="the desk sweep needs Playwrig
 from holdspeak.services.desk_window_service import window_app  # noqa: E402
 from holdspeak.services.errors import ValidationError  # noqa: E402
 
+from tests._evidence import evidence_dir  # noqa: E402
+
 from ._hs173_seed import seed_health_room  # noqa: E402
 from . import room_seed_rig as hs158  # noqa: E402
 from . import open_rig as open13  # noqa: E402
@@ -236,42 +238,19 @@ class Red(NamedTuple):
     maybe: bool = False
 
 
-_PLACES = "a Place card Button and its Favorite star are drawn over each other"
-_COMPONENTS = [  # the Components catalog (a demo surface), both widths, both wings
-    ("readable", r"clipped '(Started|Transcribed|Partial|Failed)' in surface-receipt-label$",
-     "receipt labels are cut by their own box (surface-receipt-label)"),
-    ("clipped", r"'(Started|Transcribed|Partial|Failed)' cut by \.surface-receipt-label \(y\)$",
-     "receipt labels are cut by their own box (surface-receipt-label)"),
-    ("readable", r"clipped '.+' in surface-topology-(map-area|node-label)$",
-     "the topology demo's labels are cut by the map and the node boxes"),
-    ("clipped", r"' cut by \.surface-topology-(map-area|node-label) \([xy]+\)$",
-     "the topology demo's labels are cut by the map and the node boxes"),
-    ("contrast", r"^'[*●]' 1:1 < 4\.5 \(ember, .*surface-state-chip",
-     "the ember state-chip icons (* and ●) read 1:1 on their ground"),
-    ("library", r'^<button class="signal-btn"> Open popover$', "a raw <button> demo: Open popover"),
-    ("library", r'^<button class="surface-topology-node"> (This Mac|LAN Server|Cloud API)$',
-     "the topology demo's nodes are raw <button>s"),
+# The library's topology map is a pan surface: 500 px of demo nodes in a 363 px
+# view at 393. Its far nodes are reached by a drag; the reader reads them as cut.
+# Fitting it on a phone is a design decision (zoom to fit, or a stacked phone
+# layout), not a placement fix.
+_TOPOLOGY_393 = [
+    Red("readable", r"^clipped '.+' in surface-topology-map-area$",
+        "Components at 393: the topology demo is wider than the phone; its far nodes pan into view"),
+    Red("clipped", r"' cut by \.surface-topology-map-area \(x\)$",
+        "Components at 393: the topology demo is wider than the phone; its far nodes pan into view"),
 ]
 
-
-def _components(width: int) -> list[Red]:
-    rows = [Red(k + wing, m, w) for k, m, w in _COMPONENTS for wing in ("", "@Record")]
-    # The Record wing: the catalog's heading reads as overlapping the gadgets under it.
-    rows += [Red("readable@Record", rf"^overlap '{a}' x '{b}'$", "Components, Record wing: the catalog heading "
-                 "overlaps the gadget rows under it") for a, b in (
-        [("The gadget kit on the surface idiom", "PropGadget")] if width == 1440 else
-        [("The gadget kit on the surface idiom", "Level"), ("The gadget kit on the surface idiom", "Gallery scalar"),
-         ("0.60", "Primary verb")])]
-    if width == 393:
-        rows += [Red("readable" + wing, r"^clipped '.+' in desk-surface-body$",
-                     "the catalog body scrolls sideways at 393") for wing in ("", "@Record")]
-    return rows
-
-
-_ROOM_MATERIAL = [Red("material@History", rf"^Button '{b}' is not raised \(box-shadow none\)$",
-                      f"Room, History wing: the {b} filter Button has no bevel") for b in ("GITHUB", "JIRA", "ROOM")]
-
 KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
+    ("surface-components", 393): _TOPOLOGY_393,
     ("desk", 1440): [
         Red("overlap", r"^People, DRAWER, 1:1 [\d:]+ x Conductor, DRAWER, ", "the People drawer icon overlaps the "
             "Conductor icon by 5 px when its `1:1 HH:MM` caption is wide (depends on the clock)", maybe=True),
@@ -280,46 +259,12 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
         Red("readable", r"^overlap '1' x 'People, DRAWER, 1:1 [\d:]+'$",
             "the People icon's count badge 1 overlaps its caption", maybe=True),
     ],
-    ("desk", 393): [Red("overlap", r"^Delivery x More AppIcons ",
-                        "the Dock's Delivery launcher and More AppIcons overlap (49x54 px)")],
-    ("surface-places", 1440): [
-        Red("overlap", rf"^{n}.* x Favorite {n} ", _PLACES) for n in
-        ("Rainy City", "Lantern Garden", "After-Hours Radio", "Midnight Archive")] + [
-        Red("readable", rf"^overlap '{n}.*' x 'Favorite {n}'$", _PLACES) for n in
-        ("Rainy City", "Lantern Garden", "After-Hours Radio", "Midnight Archive")],
-    ("surface-places", 393): [
-        Red("overlap", rf"^{n}.* x Favorite {n} ", _PLACES) for n in ("Rainy City", "Lantern Garden")] + [
-        Red("readable", rf"^overlap '{n}.*' x 'Favorite {n}'$", _PLACES) for n in ("Rainy City", "Lantern Garden")],
-    ("surface-processes", 1440): [
-        Red("clipped", r"^'CHANNEL\.SAVE_DESTINATION' spills \.surface-ledger-primary ",
-            "Processes: the target CHANNEL.SAVE_DESTINATION is 225 px in a 160 px cell"),
-        Red("readable", r"^overlap 'CHANNEL\.SAVE_DESTINATION' x 'Owner-session",
-            "Processes: CHANNEL.SAVE_DESTINATION runs over its neighbour Owner-session"),
-    ],
-    ("surface-companion", 1440): [
-        Red("library@Delivery", r'^<button class="desk-list-open"> action-',
-            "Agents, Delivery wing: raw <button class=desk-list-open> rows (DeliveryListSection.tsx:54)"),
-        Red("still", r"^(Roster|How it connects) moved \d+ px$",
-            "Agents: Roster and How it connects move 44 px after the window settles (a late read)", maybe=True),
-    ],
-    ("surface-companion", 393): [
-        Red("library@Delivery", r'^<button class="desk-list-open"> action-',
-            "Agents, Delivery wing: raw <button class=desk-list-open> rows (DeliveryListSection.tsx:54)"),
-    ],
-    ("surface-components", 1440): _components(1440),
-    ("surface-components", 393): _components(393),
     ("surface-concierge", 1440): [
+        # The ratified order: the jobs paint before the detection, the engines
+        # fill in (useRunsOn.ts:222, fenced by runsOn.test.tsx "paints the
+        # roster's jobs before the detection lands"). Holding them is a ruling.
         Red("still", r"^(switchboard-job-\w+|concierge-[\w-]+) moved \d+ px$",
             "Runs on: the switchboard job rows move 84 px after the window settles", maybe=True),
-    ],
-    ("surface-concierge", 393): [
-        Red("material", r"^Button '[^']+OFF' is not raised \(box-shadow none\)$",
-            "Runs on at 393: the job switch Buttons (… OFF) have no bevel"),
-    ],
-    ("meeting", 1440): [
-        Red("still", r"^(meeting-decide(-well)?|transcript-speaker) moved \d+ px$",
-            "the meeting window: meeting-decide and the transcript speakers move after the window settles",
-            maybe=True),
     ],
     ("room", 1440): [
         Red("readable", r"^overlap '(Settlement latency under load|Compliance team sign-off|RISK|LIKELIHOOD HIGH|"
@@ -328,21 +273,15 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
             "scrolled under an opaque bar); where they sit depends on the late read", maybe=True),
         # A late read (the sources row) lands after the window settles and moves the body
         # down (295 px seen); what overlaps the ask bar then depends on when it lands.
-        Red("still", r"^(room-footer-receipt|room-add-source|steward-verb|source-scope|Pause|since-read-empty) "
-            r"moved \d+ px$", "Room: a late read moves the body after the window settles", maybe=True),
+        # The footer receipt holds still now (it is said with the body it reads for).
+        Red("still", r"^(room-add-source|steward-verb|source-scope|Pause|since-read-empty) "
+            r"moved \d+ px$", "Room: a late read moves the body after the window settles (not reproduced "
+            "on 2026-10-11 under held reads; kept until a run shows it)", maybe=True),
         Red("readable", r"^overlap '(GH|org/repo|\d+ OPEN PRS|·|CI GREEN|CI RED)' x 'Ask this project'$",
             "Room: the sources row reads as overlapping the ask bar after the late read lands", maybe=True),
         Red("overlap", r"^Pause x Choose ", "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
         Red("readable", r"^overlap '(Pause|Choose)' x '(Pause|Choose)'$",
             "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
-        *_ROOM_MATERIAL,
-    ],
-    ("room", 393): [*_ROOM_MATERIAL],
-    ("needs", 393): [
-        Red("drawn", r"^chair:needs never settled: \{'window': None",
-            "a chair:needs window opened on the hub is not drawn at 393: the phone draws only the Chair window its "
-            "own cache names (chairWindows.ts `phone`); the hub adapter (hubWindows.ts adapterFor) clears `closed` "
-            "and leaves `phone` empty"),
     ],
 }
 
@@ -580,6 +519,11 @@ OVERLAP_JS = r"""(sel) => {""" + _COMMON_JS + r"""
     // an inset by design: a control drawn inside a text entry (the in-well mic)
     const inside = (x, y) => x.p.L >= y.p.L - 1 && x.p.R <= y.p.R + 1 && x.p.T >= y.p.T - 1 && x.p.B <= y.p.B + 1;
     if ((inside(a, b) && b.c.matches('textarea, input')) || (inside(b, a) && a.c.matches('textarea, input'))) continue;
+    // the one ratified waiver (test_philo13_13_dock_glass._read; the species
+    // glass `pager`): at 393 the next page of the Dock's shelf scrolls under
+    // its sticky More AppIcons gadget, drawn over it on purpose
+    const pager = (x, y) => x.c.matches('.desk-dock > .desk-dock-more') && y.c.closest('.desk-dock') === x.c.parentElement;
+    if (pager(a, b) || pager(b, a)) continue;
     out.push(`${name(a.c)} x ${name(b.c)} (${Math.round(w)}x${Math.round(h)} px)`);
   }
   return out;
@@ -629,10 +573,13 @@ RECORD_JS = r"""([sel, ms]) => new Promise((resolve) => {
 WINGS_JS = r"""(id) => {
   const w = document.getElementById(id);
   if (!w) return {kind: null, wings: []};
-  const tabs = [...w.querySelectorAll('.desk-wings [role=tab]')].filter((t) => t.getBoundingClientRect().width > 0);
+  // A specimen (the Components catalog's demo wings, data-specimen) is the
+  // body's content, not the window's wing control.
+  const tabs = [...w.querySelectorAll('.desk-wings [role=tab]')].filter((t) => t.getBoundingClientRect().width > 0)
+    .filter((t) => !t.closest('[data-specimen]'));
   if (tabs.length) return {kind: 'tabs', wings: tabs.map((t) => ({label: t.textContent.trim(),
     on: t.getAttribute('aria-selected') === 'true' || t.classList.contains('is-on')}))};
-  const menu = w.querySelector('.desk-wings-menu');
+  const menu = w.querySelector('.desk-wings-menu:not([data-specimen] *)');
   return {kind: menu && menu.getBoundingClientRect().width > 0 ? 'menu' : null, wings: []};
 }"""
 
@@ -710,6 +657,8 @@ class _Case:
         self.sel = f'[id="{wid}"]' if wid else None
         self.failures: dict[str, list[str]] = {}
         self.baseline: tuple[set[str], set[str]] = (set(), set())
+        #: DESK_SWEEP_SHOTS=1: one shot per fence pass, named by this stem.
+        self.shot = ""
 
     def settle(self) -> None:
         try:
@@ -727,6 +676,9 @@ class _Case:
     def fences(self, wing: str = "") -> None:
         page, sel = self.page, self.sel
         at = f"@{wing}" if wing else ""
+        if self.shot and os.environ.get("DESK_SWEEP_SHOTS") == "1":
+            name = re.sub(r"[^\w@.-]+", "_", f"{self.shot}{('-' + wing) if wing else ''}")
+            page.screenshot(path=str(evidence_dir("desk-sweep") / f"{name}.png"))
 
         def fail(fence: str, observations: Any) -> None:
             if isinstance(observations, str):
@@ -787,7 +739,7 @@ class _Case:
         if found["kind"] == "tabs":
             labels = [w["label"] for w in found["wings"] if not w["on"] and w["label"]]
         elif found["kind"] == "menu":
-            front.locator(".desk-wings-menu").first.click()
+            front.locator(".desk-wings-menu:not([data-specimen] *)").first.click()
             rows = page.locator(".desk-menu-list [role='menuitemcheckbox']")
             rows.first.wait_for(timeout=T)
             labels = [r.inner_text().strip() for r in rows.all()
@@ -799,7 +751,7 @@ class _Case:
                     front.locator(".desk-wings [role='tab']", has_text=label).first.click()
                 else:
                     if not page.locator(".desk-menu-list [role='menuitemcheckbox']").count():
-                        front.locator(".desk-wings-menu").first.click()
+                        front.locator(".desk-wings-menu:not([data-specimen] *)").first.click()
                     page.locator(".desk-menu-list [role='menuitemcheckbox']", has_text=label).first.click()
                 self.settle()
             except Exception as exc:  # noqa: BLE001 -- a wing that cannot be opened is a red
@@ -903,6 +855,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         page.locator("[data-testid=desk-screen]").wait_for(state="attached", timeout=T)
         sweep = _Case(page, base, wid, errors, requests)
         sweep.baseline = baseline
+        sweep.shot = f"{case_id}-{width}"
         if palette:
             page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
             page.locator("[aria-controls=desk-tool-shelf]").first.click()

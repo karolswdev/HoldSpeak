@@ -3,6 +3,7 @@
 // and screen-reader use: a Story row opens its dossier IN a window, a Coder
 // session row opens the immutable-target terminal. Renders nothing until the
 // delivery read model has objects, so the plain Desk list is untouched.
+import { Button } from "../../components/signal/Signal";
 import { deliveryListRows, useDelivery } from "../delivery";
 import { useDeliveryDossier } from "../deliveryDossier";
 import { targetHandle, useDeliveryFactory } from "../deliveryFactory";
@@ -49,13 +50,15 @@ export function DeliveryListSection() {
             {rows.map((row) => (
               <tr key={row.key}>
                 <th scope="row">
-                  <button
-                    type="button"
+                  {/* PHILO-17: the library Button; the row link keeps its own
+                      ink (list-view.css .desk-list-open), so it is chrome. */}
+                  <Button
+                    variant="chrome"
                     className="desk-list-open"
                     onClick={() => openRow(row)}
                   >
                     {row.label}
-                  </button>
+                  </Button>
                 </th>
                 <td>{row.kind}</td>
                 <td>{row.detail}</td>

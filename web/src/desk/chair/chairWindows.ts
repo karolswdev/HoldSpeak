@@ -137,6 +137,26 @@ export function openChairWindow(id: string): void {
   else useDesk.getState().focusPanel(id);
 }
 
+/** PHILO-17 (the desk sweep): a Chair window the HUB opened (an agent, a
+ * route, another view). It opens here as the hub says, and it is passive: it
+ * takes no focus. At 393 the phone draws only the window `phone` names, so a
+ * hub-opened window takes the work area when no open Chair window holds it;
+ * else it waits in the ring behind the one the owner looks at. */
+export function openChairWindowFromHub(id: string): void {
+  if (!chairWindowSpec(id)) return;
+  const compact = compactNow();
+  useChairWindows.setState((s) => {
+    const closed = { ...s.closed, [id]: false };
+    const free = !s.phone || s.closed[s.phone];
+    if (!compact || !free) return { closed };
+    return {
+      closed,
+      phone: id,
+      captureInRing: s.captureInRing || id === "chair:capture",
+    };
+  });
+}
+
 /** Close a Chair window. At 393 the next open Chair window takes the work
  * area (Capture never does: it opens on demand). */
 export function closeChairWindow(id: string): void {

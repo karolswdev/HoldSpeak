@@ -1,9 +1,9 @@
 // HS-170-04 — the meeting detail pane (the board's right side).
 // Display title + tokens, NEEDS YOU section, TRANSCRIPT well, settled list.
 import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../../../desk/firstrun/speechTruth";
-import type { ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection } from "../../../desk/surface";
+import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState } from "../../../desk/surface";
 import { presentValue } from "../../../desk/surface/format";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
@@ -23,6 +23,7 @@ import { apiFetch } from "../../../lib/api";
 import type { DetailView, Receipt } from "./helpers";
 import { MeetingReview } from "./MeetingReview";
 import {
+  MEETING_READS_CAP_MS,
   useMeetingData,
   type FollowThroughProposal,
   type MeetingData,
@@ -32,6 +33,7 @@ import { MeetingHeader } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
 import { ArtifactsLibrary } from "./ArtifactsLibrary";
 import { MeetingSendWellLazy as MeetingSendWell } from "../../../meetings/MeetingSendWellLazy";
+import { SendWellReadContext } from "../../../desk/surface/send/SendWell";
 import { MeetingDecideWell } from "../../../meetings/MeetingDecideWell";
 import { NeedsYouTable, showsRunSummary } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
@@ -253,6 +255,24 @@ export function MeetingDetail({
 }) {
   const id = String(meeting?.id ?? "");
   const data = useMeetingData(meeting, onReceipt, revision);
+  // PHILO-17 (the desk sweep): the body is drawn once (per meeting) when
+  // the record's first reads and its Send well's have ended, or at the cap.
+  const [wellRead, setWellRead] = useState<{ id: string; read: boolean } | null>(null);
+  const reportWell = useCallback((read: boolean) => setWellRead({ id, read }), [id]);
+  const [cappedFor, setCappedFor] = useState("");
+  useEffect(() => {
+    const timer = window.setTimeout(() => setCappedFor(id), MEETING_READS_CAP_MS);
+    return () => window.clearTimeout(timer);
+  }, [id]);
+  const [drawnFor, setDrawnFor] = useState("");
+  // The Send well is drawn on the outcomes face of a meeting with a summary.
+  const wellAsked = view === "outcomes" && Boolean(readMeetingIntel(data.detail ?? meeting)?.summary?.trim());
+  const wellDone = !wellAsked || (wellRead?.id === id && wellRead.read);
+  const ready = cappedFor === id || (data.firstRead && wellDone);
+  useLayoutEffect(() => {
+    if (ready && drawnFor !== id) setDrawnFor(id);
+  }, [ready, drawnFor, id]);
+  const shown = drawnFor === id || ready;
   const {
     detail,
     setDetail,
@@ -284,6 +304,14 @@ export function MeetingDetail({
   return (
     <SurfaceSection>
       <MeetingHeader meeting={meeting} data={data} compact={view === "review"} saidOnFace={saidOnFace} />
+      {/* PHILO-17 (the desk sweep): the record's body is mounted at once
+          (its wells start their reads) but drawn only when its first reads
+          end, the Send well's included, or at the cap: a late read never
+          moves a row under the owner's eye (UX-CANON D; the Room's pattern,
+          roomReads.ts and project-room.css .room-body[data-settling]). */}
+      <SendWellReadContext.Provider value={reportWell}>
+      <div className="meetings-detail-body" data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
+      {shown ? null : <div className="meetings-detail-settling-line"><SurfaceState loading /></div>}
       {/* PHILO-17 transcribe: an audio-only meeting's one verb, under the
           strip that says "NO TRANSCRIPT · SPEECH NOT SET UP". */}
       {onTranscribe ? (
@@ -406,6 +434,8 @@ export function MeetingDetail({
           ) : null}
         </>
       )}
+      </div>
+      </SendWellReadContext.Provider>
     </SurfaceSection>
   );
 }

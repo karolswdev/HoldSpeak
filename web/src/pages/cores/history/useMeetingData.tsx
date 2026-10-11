@@ -1,5 +1,6 @@
 // HS-172 — extracted from MeetingDetail: the parallel API fetches and
 // derived row arrays. Now also fetches follow-through proposals.
+import { preloadMeetingSendWell } from "../../../meetings/MeetingSendWellLazy";
 import { useEffect, useRef, useState } from "react";
 import type {
   MeetingDetailResponse,
@@ -82,7 +83,16 @@ export interface MeetingData {
   /** PHILO-17: the decisions the meeting recorded (the `decisions` table,
    *  `GET /api/decisions?meeting_id=`), not only its proposals. */
   meetingDecisions: MeetingDecision[];
+  /** PHILO-17 (the desk sweep): the record's first reads ended (each read
+   *  or failed; the newest read of its records). The record holds its body
+   *  until then, or until MEETING_READS_CAP_MS, so no late read moves a row
+   *  under the owner's eye (UX-CANON D). */
+  firstRead: boolean;
 }
+
+/** The record body is drawn after this long even when a read is still out
+ *  (the Room's cap, roomReads.ts ROOM_READS_CAP_MS). */
+export const MEETING_READS_CAP_MS = 8000;
 
 /** PHILO-17: one decision the meeting recorded (a ledger row of
  *  `GET /api/decisions?scope=all&meeting_id=`: never a confirmed action; its
@@ -115,6 +125,10 @@ export function useMeetingData(
   const [meetingDecisions, setMeetingDecisions] = useState<MeetingDecision[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  // The meeting whose first reads ended (or capped): a new object for the
+  // same meeting (a list refresh) keeps the body drawn; another meeting waits.
+  const [readFor, setReadFor] = useState("");
+  const firstRead = readFor === id;
   // PHILO-17 (Astra r2): ONE freshness rule for the meeting's own records
   // (aftercare, proposals, follow-through proposals, decisions), read by the
   // first read and again on every revision: only the newest request writes.
@@ -142,6 +156,9 @@ export function useMeetingData(
       apiFetch<MeetingDetailResponse>(`/api/meetings/${encodeURIComponent(id)}`).then(
         mine(setDetail),
       ),
+      // The Send well's own chunk: the body waits for it too (it drew a
+      // frame late and moved the rows under it).
+      preloadMeetingSendWell(),
       apiFetch<MeetingArtifactsResponse>(`/api/meetings/${encodeURIComponent(id)}/artifacts`)
         .then(mine(setArtifacts))
         .catch(() => { if (live) setArtifacts({}); }),
@@ -171,7 +188,10 @@ export function useMeetingData(
         .then(mine(newest((res: { decisions?: MeetingDecision[] }) =>
           setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : []))))
         .catch(() => { if (live && records === recordsSeq.current) setMeetingDecisions([]); }),
-    ]).catch((reason) => { if (live) setError(readableError(reason)); });
+    ]).catch((reason) => { if (live) setError(readableError(reason)); })
+      // A newer read of the records (a desk change) supersedes this one's
+      // records (`newest`): the body then waits for that read instead.
+      .finally(() => { if (live && records === recordsSeq.current) setReadFor(id); });
     return () => {
       live = false;
     };
@@ -188,19 +208,23 @@ export function useMeetingData(
     const mine = <T,>(apply: (value: T) => void) => (value: T) => {
       if (live && records === recordsSeq.current) apply(value);
     };
-    void apiFetch<MeetingAftercareResponse>(`/api/meetings/${encodeURIComponent(id)}/aftercare`)
-      .then(mine(setAftercare)).catch(() => undefined);
-    void apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
-      .then(mine(setProposals)).catch(() => undefined);
-    void apiFetch<{ proposals: FollowThroughProposal[] }>(
-      `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
-    ).then(mine((res: { proposals?: FollowThroughProposal[] }) => setFtProposals(res.proposals ?? [])))
-      .catch(() => undefined);
-    void apiFetch<{ decisions?: MeetingDecision[] }>(
-      `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
-    ).then(mine((res: { decisions?: MeetingDecision[] }) =>
-      setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : [])))
-      .catch(() => undefined);
+    // A newer read of the records that ended also ends the wait for the
+    // record's body (a stalled first read never holds it to the cap).
+    void Promise.all([
+      apiFetch<MeetingAftercareResponse>(`/api/meetings/${encodeURIComponent(id)}/aftercare`)
+        .then(mine(setAftercare)).catch(() => undefined),
+      apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
+        .then(mine(setProposals)).catch(() => undefined),
+      apiFetch<{ proposals: FollowThroughProposal[] }>(
+        `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
+      ).then(mine((res: { proposals?: FollowThroughProposal[] }) => setFtProposals(res.proposals ?? [])))
+        .catch(() => undefined),
+      apiFetch<{ decisions?: MeetingDecision[] }>(
+        `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
+      ).then(mine((res: { decisions?: MeetingDecision[] }) =>
+        setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : [])))
+        .catch(() => undefined),
+    ]).then(() => { if (live && records === recordsSeq.current) setReadFor(id); });
     return () => {
       live = false;
     };
@@ -406,5 +430,6 @@ export function useMeetingData(
     confirmProposal,
     dismissProposal,
     meetingDecisions,
+    firstRead,
   };
 }

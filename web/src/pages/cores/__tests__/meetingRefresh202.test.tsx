@@ -137,7 +137,9 @@ describe("the open meeting record re-reads itself (HS-202-02)", () => {
     act(() => {
       announceTaskReturn();
     });
-    expect(await screen.findByTestId("detail-run-intelligence-btn")).toBeVisible();
+    // PHILO-17 (the desk sweep): the record's body is drawn once its first
+    // reads end, so the verb is mounted at once and visible after.
+    await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible());
   });
 
   it("re-reads the record when the hub says a run finished", async () => {
@@ -149,7 +151,9 @@ describe("the open meeting record re-reads itself (HS-202-02)", () => {
       emit("aftercare_ready");
     });
     await waitFor(() => expect(detailReads).toBeGreaterThan(before));
-    expect(await screen.findByTestId("detail-run-intelligence-btn")).toBeVisible();
+    // PHILO-17 (the desk sweep): the record's body is drawn once its first
+    // reads end, so the verb is mounted at once and visible after.
+    await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible());
   });
 
   it("re-reads the record on the desk_changed frame", async () => {
@@ -219,7 +223,9 @@ describe("a refresh never withdraws what the record had", () => {
       return {} as never;
     });
     openRecord();
-    expect(await screen.findByTestId("detail-run-intelligence-btn")).toBeVisible();
+    // PHILO-17 (the desk sweep): the record's body is drawn once its first
+    // reads end, so the verb is mounted at once and visible after.
+    await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible());
     act(() => {
       emit("desk_changed");
     });
@@ -247,9 +253,7 @@ describe("the announced refresh survives the owner opening a record", () => {
       emit("desk_changed");
     });
     openRecord();
-    expect(
-      await screen.findByTestId("detail-run-intelligence-btn", {}, { timeout: 4000 }),
-    ).toBeVisible();
+    await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible(), { timeout: 4000 });
   });
 });
 
@@ -274,9 +278,7 @@ describe("the open record follows the hub", () => {
       window.dispatchEvent(new Event("focus"));
     });
     await waitFor(() => expect(openTitle()).toBe("The transcribed meeting"));
-    expect(
-      await screen.findByTestId("detail-run-intelligence-btn", {}, { timeout: 4000 }),
-    ).toBeVisible();
+    await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible(), { timeout: 4000 });
   });
 });
 

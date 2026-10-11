@@ -358,31 +358,8 @@
 .room-history-controls {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
-/* Condition 1+7: filter tokens via library Button with flat styling override.
-   Active = filled dark, no accent, no bevel. */
-.room-history-filters { display: inline-flex; gap: 0; }
-.room-filter-token.btn {
-  font-size: var(--font-size-xs);
-  font-family: var(--font-mono);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border: 1px solid var(--border);
-  border-radius: 0;
-  background: transparent;
-  color: var(--text-muted);
-  padding: 3px 10px;
-  box-shadow: none;
-  min-height: unset;
-}
-.room-filter-token.btn:first-child { border-radius: 2px 0 0 2px; }
-.room-filter-token.btn:last-child  { border-radius: 0 2px 2px 0; }
-.room-filter-token.btn + .room-filter-token.btn { border-left: none; }
-.room-filter-token.btn:hover { background: var(--surface-2, #1c1f27); }
-.room-filter-token.btn[data-filter-active] {
-  background: var(--surface-2, #1c1f27);
-  color: var(--text-primary, #f2f3f5);
-}
+/* PHILO-17: the source filter is the library's FilterTokens strip
+   (filter-tokens.css draws it). */
 .room-history-search {
   display: flex; align-items: center; gap: 4px; flex: 1; min-width: 120px;
 }

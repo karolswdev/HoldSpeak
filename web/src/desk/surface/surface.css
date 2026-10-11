@@ -2546,18 +2546,20 @@ button.surface-edit-in-place:hover {
     inset 1px 1px 0 var(--bevel-light),
     inset -1px -1px 0 var(--bevel-dark);
 }
+/* PHILO-17 (the desk sweep): the Favorite star sits under its card, not on
+   it: two verbs never share one box (it was drawn over the card's Button). */
 .prefs-wallpaper-choice {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
 }
 .prefs-wallpaper-choice > .prefs-wallpaper-card {
+  flex: 1;
   width: 100%;
-  height: 100%;
 }
 .prefs-wallpaper-favorite {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+  align-self: flex-end;
   min-width: 36px;
   min-height: 36px;
   color: var(--text);
@@ -3845,6 +3847,11 @@ button.surface-edit-in-place:hover {
   overflow: visible;
   text-overflow: unset;
 }
+/* PHILO-17 (the desk sweep): a word longer than its cell still wraps (a
+   process name ran 65 px over its neighbour at 1440). */
+.surface-ledger[data-cols="process"] .surface-ledger-row[data-wrap] .surface-ledger-primary {
+  overflow-wrap: anywhere;
+}
 @container surface (max-width: 559.9px) {
   .surface-ledger-row[data-wrap] .surface-ledger-line {
     display: flex;
@@ -4118,6 +4125,19 @@ button.surface-edit-in-place:hover {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+/* PHILO-17 (the desk sweep): the record's body is one box with no box of
+   its own (the section's gap stays). While its first reads are out it is
+   mounted but not drawn (the Room's rule, project-room.css), and the
+   loading glyph stands in its place. */
+.meetings-detail-body {
+  display: contents;
+}
+.meetings-detail-body[data-settling] {
+  visibility: hidden;
+}
+.meetings-detail-settling-line {
+  visibility: visible;
 }
 .meetings-detail-facts [data-tone="success"] { color: var(--success); }
 .meetings-detail-facts [data-tone="warn"] { color: var(--warning); }

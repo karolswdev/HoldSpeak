@@ -130,3 +130,29 @@ describe("Astra r1: a Stop is final for the meeting's window", () => {
     expect(result.current[0]).toBe(false);
   });
 });
+
+describe("PHILO-17 desk sweep: the record holds still while its first reads land", () => {
+  it("draws the body once the first reads end, never row by row", async () => {
+    let release: (value: unknown) => void = () => undefined;
+    let details = 0;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const url = String(path);
+      // The window reads the meeting row first; the record's own first
+      // reads (useMeetingData) follow, and the detail one stalls.
+      if (isDetail(url) && ++details > 1) return new Promise((resolve) => { release = resolve; }) as never;
+      if (isDetail(url)) return meeting("ready") as never;
+      return {} as never;
+    });
+    const { container } = render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
+    // Mounted (its wells start their reads) but not drawn: the body is busy.
+    await waitFor(() => expect(container.querySelector("[aria-busy='true'][data-settling]")).toBeTruthy());
+    expect(container.querySelector("[data-settling] [data-testid='meeting-decide']")).toBeTruthy();
+    await act(async () => {
+      release(meeting("ready"));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    await waitFor(() => expect(container.querySelector("[data-settling]")).toBeNull());
+    expect(screen.getByTestId("meeting-decide")).toBeTruthy();
+    expect(container.querySelector("[aria-busy='true']:not(button)")).toBeNull();
+  });
+});

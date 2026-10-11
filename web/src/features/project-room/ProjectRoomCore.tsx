@@ -32,6 +32,7 @@ import {
   sourceLabel,
   Material,
   ObjectList,
+  FilterTokens,
   type ObjectSort,
   type ObjectSortKey,
 } from "../../desk/surface";
@@ -2316,22 +2317,16 @@ function HistoryWing({
         count={todayCount > 0 ? `${todayCount} today` : "Nothing today"}
         controls={
           <div className="room-history-controls">
-            {/* Condition 1: library Button, not raw <button>; flat filter via data-filter + CSS */}
-            <span className="room-history-filters" role="group" aria-label="Source filter">
-              {HISTORY_FILTERS.map((f) => (
-                <Button
-                  key={f.value}
-                  dense
-                  variant="ghost"
-                  className="room-filter-token"
-                  data-filter-active={sourceFilter === f.value || undefined}
-                  onClick={() => setSourceFilter(f.value)}
-                  aria-pressed={sourceFilter === f.value}
-                >
-                  {f.value}
-                </Button>
-              ))}
-            </span>
+            {/* PHILO-17 (the desk sweep): the library's filter strip (it was
+                promoted from this very strip, FilterTokens.tsx), so the
+                tokens wear the kit's bevel. */}
+            <FilterTokens
+              label="Source filter"
+              className="room-history-filters"
+              options={HISTORY_FILTERS.map((f) => ({ value: f.value, label: f.value }))}
+              value={sourceFilter}
+              onChange={setSourceFilter}
+            />
             <div className="room-history-search">
               <input // UX-CANON: needs redesign (HS-170-04)
                 type="search"
@@ -2759,9 +2754,12 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
     </span>
   ) : (
     <span className="surface-footer-receipt-line" role="status" data-testid="room-footer-receipt">
-      {readReceipt}
-      {readReceipt && nextCheck ? " · " : ""}
-      {nextCheck ? `NEXT CHECK ${formatTimeShort(nextCheck)}` : ""}
+      {/* PHILO-17 (the desk sweep): the read receipt is said with the body
+          it reads for: drawn while the reads land, its centred line moved
+          51 px under the Pause and Choose verbs. */}
+      {shown ? readReceipt : ""}
+      {shown && readReceipt && nextCheck ? " · " : ""}
+      {shown && nextCheck ? `NEXT CHECK ${formatTimeShort(nextCheck)}` : ""}
     </span>
   );
 
