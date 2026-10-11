@@ -244,6 +244,41 @@ function subscribeResizeClamp() {
   };
 }
 
+/** PHILO-17 snapjump: while a window title drag holds the pointer, a
+ * native drag (a desk icon's drag-to-send) never starts. One capture
+ * listener for every window; `held` is the switch. */
+let nativeDragHeld = false;
+let nativeDragGuard = false;
+function holdNativeDrag(held: boolean): void {
+  nativeDragHeld = held;
+  if (nativeDragGuard || typeof document === "undefined") return;
+  nativeDragGuard = true;
+  document.addEventListener(
+    "dragstart",
+    (e) => {
+      if (nativeDragHeld) e.preventDefault();
+    },
+    true,
+  );
+  // A window that closes mid-drag never sees its gesture end: any release
+  // lets native drags start again.
+  document.addEventListener(
+    "pointerup",
+    () => {
+      nativeDragHeld = false;
+    },
+    true,
+  );
+}
+
+/** PHILO-17 snapjump: a drag that ends by a real release (pointerup, or
+ * a mouseup/touchend where pointer events are absent). A lost pointer
+ * capture or a cancel is not a release: it never tiles the window. */
+function releasedHere(event: Event | undefined): boolean {
+  const type = event?.type ?? "";
+  return type === "pointerup" || type === "mouseup" || type === "touchend";
+}
+
 /** The desk-window physics (Phase 93). Module-private since HS-95-02:
  * every window adopts it through `DeskWindowFrame`, never by hand. */
 function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
@@ -511,7 +546,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   }, [opts.fitContent, arranged, open]);
 
   const dragBind = useDrag(
-    ({ event, first, last, movement: [mx, my], memo }) => {
+    ({ event, first, last, xy: [px, py], movement: [mx, my], memo }) => {
       // Buttons and inputs inside the head keep their own gestures.
       if (first) {
         const t = event?.target as HTMLElement | null;
@@ -523,6 +558,11 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         if (mode === "stage" || mode === "expose") return { skip: true };
       }
       if (memo?.skip) return memo;
+      // PHILO-17 snapjump: while the title drag holds the pointer, no
+      // native drag starts. The first step moves the window out from under
+      // the press point; a draggable desk icon under that point started a
+      // native drag, Chrome cancelled the pointer, and the drag died.
+      holdNativeDrag(!last);
       const base: PanelRect = memo?.base ?? measure();
       if (Math.abs(mx) + Math.abs(my) > 3) {
         // Nothing animates under the pointer (the raise lift, an arrange).
@@ -531,19 +571,20 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         // A snap region shows its landing tile as a live ghost while
         // dragging (HS-97-05); releasing inside it lands exactly there
         // (HS-95-03); anywhere else parks the dragged rect as before.
-        const ev = event as PointerEvent | undefined;
-        const tile =
-          ev && typeof ev.clientX === "number"
-            ? snapForPointer(
-                ev.clientX,
-                ev.clientY,
-                window.innerWidth || 1280,
-                window.innerHeight || 800,
-              )
-            : null;
+        // PHILO-17 snapjump: the pointer is the gesture's last pointer
+        // (`xy`), never the end event's own clientX, and only a real
+        // release (pointerup) tiles. A lost capture or a cancel carries
+        // clientX 0, clientY 0 in Chrome: that read as the top-left corner
+        // and tiled the window into its quarter on the first step.
+        const tile = snapForPointer(
+          px,
+          py,
+          window.innerWidth || 1280,
+          window.innerHeight || 800,
+        );
         publishGhost(last ? null : tile);
         writeRect(
-          (last ? tile : null) ??
+          (last && releasedHere(event) ? tile : null) ??
             clampRect(
               { ...base, x: base.x + mx, y: base.y + my },
               minW,
