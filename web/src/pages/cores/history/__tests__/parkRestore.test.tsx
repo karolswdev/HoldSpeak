@@ -172,3 +172,35 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     await screen.findByTestId("meeting-row-m-2");
   });
 });
+
+// The test diet (2026-10-11): the reload half of the park glass. A reload is
+// a fresh mount of the Meetings list over a hub that already holds the
+// meeting parked: the row is absent, PARKED 1 comes from the hub's parked
+// read, and Restore from the filter brings it back. The DB half (kept, parked,
+// every retained row) is tests/unit/test_philo13_meeting_parking.py::
+// test_real_import_route_parks_reads_retained_detail_and_restores.
+// replaces: tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_meeting_park_parked_filter_restore_and_reload
+describe("PHILO-13-02 Meetings after a reload", () => {
+  beforeEach(() => mockedApiFetch.mockReset());
+
+  it("a fresh mount over a parked meeting: no row, PARKED 1, the parked row, Restore brings it back marked", async () => {
+    const hub = wireHub();
+    await apiFetch("/api/meetings/m-2", { method: "DELETE" });   // parked before the reload
+    hub.calls.length = 0;
+    render(<HistoryCore />);
+    await screen.findByTestId("meeting-row-m-1");
+    expect(screen.queryByTestId("meeting-row-m-2")).toBeNull();
+    fireEvent.click(await screen.findByText("PARKED 1"));
+    const row = await screen.findByTestId("parked-row");
+    expect(row.textContent).toContain("Hiring debrief");
+    expect(hub.calls.some((c) => c.path === "/api/meetings?parked=true")).toBe(true);
+    fireEvent.click(within(row.closest("li")!).getByRole("button", { name: "Restore" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^RESTORED \d\d:\d\d$/),
+    );
+    const back = await screen.findByTestId("meeting-row-m-2");
+    await waitFor(() => expect(back.getAttribute("data-restored")).toBe("true"));
+    await waitFor(() => expect(screen.queryByText(/^PARKED \d+$/)).toBeNull());
+    expect(hub.calls.filter((c) => c.method !== "GET")).toEqual([{ path: "/api/meetings/m-2/restore", method: "POST" }]);
+  });
+});

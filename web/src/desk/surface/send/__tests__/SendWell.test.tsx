@@ -19,6 +19,7 @@ vi.mock("../../../../pages/cores/connections/api", async () => {
 
 import { ApiError } from "../../../../lib/api";
 import { PreparedChip, SendWells, resetSendStore, type DocRef } from "..";
+import { BriefSendWells, DecisionRecordSendWells, DeskDecisionSendWells } from "../../../documentSends";
 
 const REF = "monday_brief:b1";
 const BRIEF: DocRef = { ref: REF, title: "Brief Sep 29", label: "BRIEF SEP 29" };
@@ -418,5 +419,119 @@ describe("a regenerated brief reads its preview again (PHILO-15-09)", () => {
     await waitFor(() => expect(previews).toEqual([REF]));
     view.rerender(<SendWells doc={{ ...BRIEF, version: "2026-10-07T11:08:00-06:00" }} />);
     await waitFor(() => expect(previews).toEqual([REF, REF]));
+  });
+});
+
+// The test diet (2026-10-11): the face halves of the PHILO-11-05a glass.
+// Each document face composes the species through desk/documentSends.tsx with
+// its OWN document_ref; the hub's channel routes are mocked with the wire
+// shapes the existing cases above use (channel_service.py `send` rows).
+// replaces: tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_brief_well_on_the_chair_and_in_intelligence
+// replaces: tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_window_well_and_preview_changed
+// replaces: tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_record_wells_in_the_room_and_intelligence
+// (the well-reachable elementFromPoint leg of the brief test, T3c, is left to the T3 sweep)
+describe("PHILO-11-05a: each document face sends its own document_ref", () => {
+  type Sent = { document_ref?: unknown; send_id?: unknown; preview_digest?: unknown };
+  let stored: Record<string, Send[]>;
+  let sent: Sent[];
+  const refOf = (path: string) => decodeURIComponent(path.split("document_ref=")[1] ?? "");
+  beforeEach(() => {
+    stored = {};
+    sent = [];
+    routes["GET /api/channels/sends"] = (_init, path) => ({ sends: stored[refOf(path)] ?? [] });
+    routes["POST /api/channels/preview"] = (init) => {
+      previews.push(String(init.json?.document_ref));
+      return { payload_digest: `dig:${String(init.json?.document_ref)}`, preview: { text: `# ${String(init.json?.document_ref)}` } };
+    };
+    routes["POST /api/channels/send"] = (init) => {
+      const ref = String(init.json?.document_ref);
+      sent.push(init.json as Sent);
+      const row = send({ id: `chs_${sent.length}`, document_ref: ref, proof: { path: `${FOLDER}/${ref.replace(":", "-")}.md` } });
+      stored[ref] = [...(stored[ref] ?? []), row];
+      return { send: row };
+    };
+  });
+  const pressSend = async () => {
+    const verb = await screen.findByTestId("send-verb");
+    await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(verb);
+  };
+
+  it.each([
+    ["brief", "monday_brief:brief_42", <BriefSendWells key="b" brief={{ id: "brief_42", generated_at: "2026-10-05T09:00:00Z" }} />],
+    ["desk-decision", "desk_decision:decision_7f3a", <DeskDecisionSendWells key="d" id="decision_7f3a" title="Freeze the old ledger on Nov 3" />],
+    ["decision-record", "decision_record:record-85f927aa", <DecisionRecordSendWells key="r" id="record-85f927aa" text="Freeze the old ledger on Nov 3" />],
+  ])("the %s face: the preview and the press carry %s, and the receipt is its row", async (seat, ref, face) => {
+    const { container } = render(face);
+    expect(await screen.findByTestId("send-well")).toBeTruthy();
+    expect(container.querySelector(`[data-seat=${seat}] [data-testid=send-well]`)?.getAttribute("data-doc")).toBe(ref);
+    await pick("Team folder");
+    expect(await screen.findByTestId("send-preview-body")).toBeTruthy();
+    await pressSend();
+    const saved = await screen.findByTestId("send-sent");
+    expect(previews).toEqual([ref]);
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toMatchObject({ document_ref: ref, destination_id: "chd_f", preview_digest: `dig:${ref}` });
+    expect(within(saved).getByTestId("proof").textContent).toBe(`${FOLDER}/${ref.replace(":", "-")}.md`);
+    expect((await screen.findByTestId("send-history")).querySelector("h3")?.textContent).toBe("SENDS 1");
+    expect(screen.getByTestId("send-verb").textContent).toBe("Send again");
+  });
+
+  it("the decision changed elsewhere: REFUSED PREVIEW CHANGED, NOTHING SENT, a fresh preview of the new words, then Send sends them", async () => {
+    let words = "Freeze the old ledger on Nov 5.";
+    routes["POST /api/channels/preview"] = () => ({ payload_digest: `dig:${words}`, preview: { text: `## Decision\n\n${words}` } });
+    routes["POST /api/channels/send"] = (init) => {
+      sent.push(init.json as Sent);
+      // The hub re-renders the stored decision; a digest that is not the current one is refused.
+      if (init.json?.preview_digest !== `dig:${words}`) {
+        throw new ApiError(409, "changed", { success: false, error_code: "preview_changed" });
+      }
+      const row = send({ id: `chs_${sent.length}`, document_ref: "desk_decision:decision_7f3a" });
+      stored["desk_decision:decision_7f3a"] = [row];
+      return { send: row };
+    };
+    render(<DeskDecisionSendWells id="decision_7f3a" title="Freeze the old ledger" />);
+    await pick("Team folder");
+    await waitFor(() => expect(screen.getByTestId("send-preview-body").textContent).toContain("Nov 5"));
+    words = "Freeze the old ledger on Nov 6.";   // PUT /api/decisions/<id> in another place
+    await pressSend();
+    const refused = await screen.findByTestId("send-refused");
+    expect(refused.getAttribute("data-code")).toBe("preview_changed");
+    expect(refused.textContent).toContain("REFUSED");
+    expect(refused.textContent).toContain("PREVIEW CHANGED");
+    expect(refused.textContent).toContain("NOTHING SENT");
+    expect(stored["desk_decision:decision_7f3a"]).toBeUndefined();
+    await waitFor(() => expect(screen.getByTestId("send-preview-body").textContent).toContain("Nov 6"));
+    await pressSend();
+    expect((await screen.findByTestId("send-sent")).textContent).toContain("SAVED");
+    expect(sent.map((s) => [s.document_ref, s.preview_digest])).toEqual([
+      ["desk_decision:decision_7f3a", "dig:Freeze the old ledger on Nov 5."],
+      ["desk_decision:decision_7f3a", "dig:Freeze the old ledger on Nov 6."],
+    ]);
+  });
+
+  it("an agent's prepared send of a record: first, D-<id>, BY the agent; its Send sends that send_id and stays as its result", async () => {
+    const ref = "decision_record:record-85f927aa";
+    stored[ref] = [send({
+      id: "chs_prepared", document_ref: ref, state: "prepared", prepare_operation_id: "op_p",
+      prepared_by: { kind: "agent", identity: "remote-project-agent" },
+      dispatch_started_at: null, settled_at: null, proof: null, file_path: null,
+    })];
+    routes["POST /api/channels/send"] = (init) => {
+      sent.push(init.json as Sent);
+      const row = { ...stored[ref][0], state: "sent", proof: { path: `${FOLDER}/record.md` }, file_path: `${FOLDER}/record.md`,
+        dispatch_started_at: "2026-10-05T09:01:00Z", settled_at: "2026-10-05T09:01:01Z" } as Send;
+      stored[ref] = [row];
+      return { send: row };
+    };
+    render(<DecisionRecordSendWells id="record-85f927aa" text="Finance runs one more reconciliation" />);
+    const row = await screen.findByTestId("prepared-row");
+    expect(within(row).getByTestId("prepared-label").textContent).toBe("D-85F927");
+    expect(within(row).getByTestId("prepared-by").textContent).toBe("BY REMOTE-PROJECT-AGENT");
+    fireEvent.click(screen.getByTestId("prepared-send"));
+    await screen.findByTestId("prepared-result");
+    expect(sent).toHaveLength(1);
+    expect(sent[0].send_id).toBe("chs_prepared");
+    expect(screen.getByTestId("prepared-result").textContent).toContain(`${FOLDER}/record.md`);
   });
 });
