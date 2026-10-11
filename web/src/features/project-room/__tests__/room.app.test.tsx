@@ -20,6 +20,15 @@ import { WingSlotContext } from "../../../desk/surface/wings";
 import { useDesk } from "../../../desk/store";
 import { ProjectRoomCore } from "../ProjectRoomCore";
 import { RoomPeopleSection } from "../RoomPeopleSection";
+import { ApiError } from "../../../lib/api";
+// The final diet lane's recorded wires (scripts/record_room_wires.py: the real
+// hub through TestClient on each browser test's own seed; nothing typed).
+import U173 from "./room-wires/update173.json";
+import C200 from "./room-wires/claims200.json";
+import N10 from "./room-wires/nudge10.json";
+import H175 from "./room-wires/hs175.json";
+import S17 from "./room-wires/sources17.json";
+import F17 from "./room-wires/files17.json";
 
 vi.mock("../../../desk/ask", async () => {
   const actual = await vi.importActual<typeof import("../../../desk/ask")>("../../../desk/ask");
@@ -32,6 +41,23 @@ vi.mock("../../../desk/components/DeskEditor", () => ({
       onChange={(e) => onChange(e.target.value)} />
   ),
 }));
+
+// The runtime bus, as roomInFlight.f2.test.tsx stands it in: subscriptions are
+// kept so a test can deliver a frame the hub broadcast (a recorded one).
+const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
+vi.mock("../../../runtime/RuntimeBus", () => {
+  const value = {
+    state: "connected",
+    lastFrame: null,
+    subscribe: (type: string, handler: (frame: unknown) => void) => {
+      const set = bus.handlers.get(type) ?? new Set();
+      set.add(handler);
+      bus.handlers.set(type, set);
+      return () => set.delete(handler);
+    },
+  };
+  return { useRuntimeBus: () => value, useOptionalRuntimeBus: () => value, useRuntimeFrame: () => null };
+});
 
 const apiFetch = vi.fn();
 vi.mock("../../../lib/api", async () => {
@@ -899,5 +925,324 @@ describe("HS-200-16: a meeting from an earlier day, its decision and its commitm
     expect(decision.emblem).toBe("DEC");
     expect(commitment.emblem).toBe("CMT");
     expect(commitment.chips).not.toContain("CURRENT");
+  });
+});
+
+/* ── The final diet lane: replays of whole recorded Rooms ─────────────
+ *
+ * Each answer below is the hub's own, recorded by scripts/record_room_wires.py
+ * on the browser test's own seed (the room-wires/*.json files). `replay`
+ * answers a GET by its exact path (query included) and a press by
+ * `METHOD path`; a read the recording does not hold is a failed read and is
+ * listed in `misses`, which every test asserts empty: the face asked the
+ * hub nothing the recording did not answer. */
+
+type Gets = Record<string, unknown>;
+type Press = (init: Init) => unknown;
+const misses: string[] = [];
+let hubGets: Gets = {};
+
+function hubAnswer(value: unknown): Promise<unknown> {
+  if (value && typeof value === "object" && "__status" in (value as Record<string, unknown>)) {
+    const { __status, body } = value as { __status: number; body: Record<string, unknown> };
+    return Promise.reject(new ApiError(__status, String(body?.message ?? body?.detail ?? `HTTP ${__status}`), body));
+  }
+  return Promise.resolve(clone(value));
+}
+
+function replay(gets: Gets, presses: Record<string, Press> = {}) {
+  hubGets = gets;
+  misses.length = 0;
+  apiFetch.mockImplementation((url: string, init: Init = {}) => {
+    const method = init.method ?? "GET";
+    calls.push({ key: `${method} ${url.split("?")[0]}`, json: init.json });
+    const press = presses[`${method} ${url}`];
+    if (press) return Promise.resolve(press(init)).then(hubAnswer);
+    const key = method === "GET" ? url : `${method} ${url}`;
+    if (key in hubGets) return hubAnswer(hubGets[key]);
+    misses.push(`${method} ${url}`);
+    return Promise.reject(new ApiError(404, `not recorded: ${method} ${url}`, {}));
+  });
+}
+
+const chipLabels = (testId: string) =>
+  Array.from(document.querySelectorAll(`[data-testid="${testId}"] .surface-state-chip`)).map((el) => el.getAttribute("aria-label") ?? "");
+const tokenTexts = (testId: string) =>
+  Array.from(document.querySelectorAll(`[data-testid="${testId}"]`)).map((el) => (el.textContent ?? "").trim());
+
+async function openFirstUpdate() {
+  fireEvent.click(await screen.findByTestId("updates-verb"));
+  await screen.findByTestId("update-posture");
+  const items = await screen.findAllByTestId("update-list-item");
+  fireEvent.click(items[0]);
+  return screen.findByTestId("update-editor");
+}
+
+describe("HS-173-02: the Update editor names who drafted it", () => {
+  // replaces: tests/e2e/test_hs173_update_glass.py::test_model_draft_footer_and_claims_1440
+  // replaces: tests/e2e/test_hs173_update_glass.py::test_model_draft_footer_393 (the same DOM fact; the rig's 393 leg asserted the model token only)
+  it("a model draft: the footer names QWEN3 32B Q6 and the LAN host; 1 UNSUPPORTED, 3 LINKED · MIGRATED; PR #612, KAN-7, MTG 09-05", async () => {
+    const { pid, gets } = U173.model;
+    replay(gets);
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await openFirstUpdate();
+    expect(screen.getByTestId("update-footer-model").textContent).toContain("QWEN3 32B Q6");
+    const host = Array.from(document.querySelectorAll(".gadget-chip-egress")).find((c) => (c.textContent ?? "").includes("192.168.1.43"));
+    expect(host?.textContent).toContain("LAN");
+    const support = chipLabels("update-claim-support");
+    expect(support.filter((s) => s === "UNSUPPORTED")).toHaveLength(1);
+    expect(support.filter((s) => s === "LINKED · MIGRATED")).toHaveLength(3);
+    expect(screen.queryAllByTestId("update-claim-unverified")).toHaveLength(0);
+    const refs = tokenTexts("update-claim-ref");
+    for (const label of ["PR #612", "KAN-7", "MTG 09-05"]) expect(refs).toContain(label);
+    expect(misses).toEqual([]);
+  });
+
+  // replaces: tests/e2e/test_hs173_update_glass.py::test_deterministic_no_model_footer
+  it("a deterministic draft: no model token, no UNVERIFIED badge, its one citation reads LINKED · MIGRATED", async () => {
+    const { pid, gets } = U173.deterministic;
+    replay(gets);
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await openFirstUpdate();
+    expect(screen.queryByTestId("update-footer-model")).toBeNull();
+    expect(screen.queryAllByTestId("update-claim-unverified")).toHaveLength(0);
+    expect(chipLabels("update-claim-support")).toEqual(["LINKED · MIGRATED"]);
+    expect(misses).toEqual([]);
+  });
+});
+
+describe("HS-200-06: the three claim axes on the Update face", () => {
+  // replaces: tests/e2e/test_hs200_claim_support_glass.py::test_real_draft_supported_then_edited_1440 (the face;
+  // the draft and the edit are the hub's: tests/integration/test_phase200_claim_support.py::TestAxesOnTheWire::test_drafted_claims_carry_all_three_axes
+  // and ::test_edit_through_the_wire_invalidates_support)
+  it("a real draft edited in one sentence: every claim OBSERVATION; that sentence LINKED · EDITED, the rest SUPPORTED; his words ACCEPTED", async () => {
+    const { pid, gets, drafted } = C200.real;
+    const claims = JSON.parse(drafted.claims_json) as Array<{ text: string }>;
+    const edited = claims.filter((c) => c.text === claims[0].text).length;
+    replay(gets);
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await openFirstUpdate();
+    const kinds = tokenTexts("update-claim-kind");
+    expect(kinds.length).toBeGreaterThan(0);
+    expect(new Set(kinds)).toEqual(new Set(["OBSERVATION"]));
+    const support = chipLabels("update-claim-support");
+    expect(support.filter((s) => s === "LINKED · EDITED")).toHaveLength(edited);
+    expect(support.filter((s) => s === "SUPPORTED")).toHaveLength(claims.length - edited);
+    expect(chipLabels("update-claim-acceptance")).toEqual([...Array(claims.length).fill("UNREVIEWED"), "ACCEPTED"]);
+    expect(misses).toEqual([]);
+  });
+
+  // replaces: tests/e2e/test_hs200_claim_support_glass.py::test_mixed_claims_axes_1440
+  // replaces: tests/e2e/test_hs200_claim_support_glass.py::test_mixed_claims_axes_393 (the same DOM asserts at 393)
+  it("every state the service serves: kinds, support, acceptance and the typed unknowns, in order", async () => {
+    const { pid, gets } = C200.mixed;
+    replay(gets);
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await openFirstUpdate();
+    expect(tokenTexts("update-claim-kind")).toEqual(["OBSERVATION", "INFERENCE", "INFERENCE", "DECISION", "INFERENCE"]);
+    expect(chipLabels("update-claim-support")).toEqual(["SUPPORTED", "LINKED", "UNSUPPORTED", "SUPPORTED", "LINKED · MIGRATED"]);
+    expect(chipLabels("update-claim-acceptance")).toEqual(["UNREVIEWED", "UNREVIEWED", "UNREVIEWED", "ACCEPTED", "UNREVIEWED"]);
+    expect(chipLabels("update-claim-unknown")).toEqual([
+      "DEADLINE 2026-12-31 · NO SOURCE", "NAME Priya · NO SOURCE", "NUMBER 95% · NO SOURCE",
+    ]);
+    expect(misses).toEqual([]);
+  });
+});
+
+describe("PHILO-10-02: a nudge whose answer never came back is never offered again", () => {
+  // replaces: tests/e2e/test_philo10_02_nudge_unknown_glass.py::test_the_unknown_nudge_is_never_offered_again_1440
+  // replaces: tests/e2e/test_philo10_02_nudge_unknown_glass.py::test_the_unknown_nudge_is_never_offered_again_393 (the same DOM asserts at 393)
+  // The hub half (one gh call, the step persisted unknown, a second Send refused):
+  // tests/unit/test_philo10_cli_channels.py::test_f4_a_nudge_whose_gh_times_out_is_unknown_and_never_offered_again
+  const { pid, step, before, send, after } = N10;
+  const sendKey = `POST /api/nudges/${step}/send`;
+  const sends = () => calls.filter((c) => c.key === sendKey);
+  function unknownAndNoSend() {
+    const row = screen.getByTestId("nudge-unknown-row");
+    const text = (row.textContent ?? "").toUpperCase();
+    expect(text).toContain("RESULT UNKNOWN");
+    expect(text).toContain("CHECK #612");
+    expect(text).toContain("GITHUB.COM");
+    expect(screen.queryByTestId("nudge-send")).toBeNull();
+  }
+
+  it("Send, close and reopen while in flight, the answer lands UNKNOWN; a remount and a reload read the persisted step: no Send", async () => {
+    let land!: () => void;
+    const inFlight = new Promise<void>((resolve) => { land = resolve; });
+    replay(before, {
+      [sendKey]: () => inFlight.then(() => { hubGets = after; return send.answer; }),
+    });
+    const view = render(<WindowHarness scope={`project:${pid}`} />);
+    fireEvent.click(await screen.findByTestId("nudge-verb"));
+    fireEvent.click(await screen.findByTestId("nudge-send"));
+    fireEvent.click(screen.getByTestId("nudge-verb")); // close
+    fireEvent.click(screen.getByTestId("nudge-verb")); // reopen: busy, no second post
+    const again = screen.queryByTestId("nudge-send");
+    if (again) fireEvent.click(again);
+    expect(sends()).toHaveLength(1);
+    await act(async () => { land(); await inFlight; });
+    await screen.findByTestId("nudge-unknown-row");
+    unknownAndNoSend();
+    expect(rawButtons(screen.getByTestId("room-body"))).toEqual([]);
+    fireEvent.click(screen.getByTestId("nudge-verb")); // close
+    fireEvent.click(screen.getByTestId("nudge-verb")); // reopen: a remount of the card
+    unknownAndNoSend();
+    view.unmount();
+
+    // The reload: a fresh Room over the hub's reads after the send.
+    replay(after);
+    render(<WindowHarness scope={`project:${pid}`} />);
+    fireEvent.click(await screen.findByTestId("nudge-verb"));
+    await screen.findByTestId("nudge-unknown-row");
+    unknownAndNoSend();
+    expect(sends()).toHaveLength(1);
+    expect(misses).toEqual([]);
+  });
+});
+
+describe("HS-175-04: the meeting source row in SOURCES", () => {
+  const { pid, before, pause, paused, resume, resumed, empty, watch } = H175;
+  const meetingRow = () => screen.getByTestId("source-meeting-row");
+  const verb = () => within(meetingRow()).getByTestId("source-meeting-verb");
+  const zeroCounters = (root: Element) => (root.textContent ?? "").match(/\b0\s+(?:NEEDS|SOURCES|MEETINGS|DECISIONS|items)/g) ?? [];
+
+  // replaces: tests/e2e/test_hs175_room_glass.py::TestRoomMeetingSourceGlass::test_meeting_source_1440
+  // replaces: tests/e2e/test_hs175_room_glass.py::TestRoomMeetingSourceGlass::test_meeting_source_393 (the same DOM asserts at 393)
+  it("MTG, MEETINGS, the hub's NEXT token, CHECKED, no egress; Pause gives PAUSED + Resume, Resume gives Pause back", async () => {
+    const pauseKey = `POST /api/watches/${watch}/pause`;
+    const resumeKey = `POST /api/watches/${watch}/resume`;
+    replay(before, {
+      [pauseKey]: () => { hubGets = paused; return pause.answer; },
+      [resumeKey]: () => { hubGets = resumed; return resume.answer; },
+    });
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await screen.findByTestId("source-meeting-row");
+    expect(screen.getAllByTestId("source-meeting-row")).toHaveLength(1);
+    expect(meetingRow().querySelector(".surface-ledger-lead")?.textContent?.trim()).toBe("MTG");
+    expect(within(meetingRow()).getByTestId("source-scope").textContent?.trim()).toBe("MEETINGS");
+    const wired = ((before as Record<string, unknown>)[`/api/projects/${pid}/room`] as { sources: { items: Array<{ provider: string; tokens: string[] }> } })
+      .sources.items.find((s) => s.provider === "meeting")!;
+    expect(wired.tokens.some((t) => t.startsWith("NEXT "))).toBe(true);
+    const tokens = within(meetingRow()).getAllByTestId("source-meeting-token").map((t) => t.textContent?.trim());
+    expect(tokens).toEqual(wired.tokens);
+    // The CHECKED chip is on the row's second line (a sibling of the testid line, inside its li).
+    expect(screen.getAllByTestId("source-meeting-checked")[0].textContent).toMatch(/CHECKED|NEVER/);
+    expect(meetingRow().querySelectorAll(".surface-egress-chip, [data-scope]")).toHaveLength(0);
+    const sources = Array.from(document.querySelectorAll(".surface-section-head, .surface-section-label"))
+      .map((s) => (s.textContent ?? "").trim()).find((t) => t.startsWith("SOURCES"));
+    expect(Number(/SOURCES\s+(\d+)/.exec(sources ?? "")?.[1] ?? 0)).toBeGreaterThanOrEqual(2);
+
+    expect(verb().textContent).toBe("Pause");
+    fireEvent.click(verb());
+    await waitFor(() => expect(screen.getAllByTestId("source-paused")[0].textContent).toContain("PAUSED"));
+    expect(verb().textContent).toBe("Resume");
+    fireEvent.click(verb());
+    await waitFor(() => expect(verb().textContent).toBe("Pause"));
+    expect(screen.queryAllByTestId("source-paused")).toHaveLength(0);
+    expect(rawButtons(screen.getByTestId("room-body"))).toEqual([]);
+    expect(zeroCounters(screen.getByTestId("room-body"))).toEqual([]);
+    expect(misses).toEqual([]);
+  });
+
+  // replaces: tests/e2e/test_hs175_room_glass.py::TestRoomMeetingSourceGlass::test_no_meetings_no_row
+  it("a Room with no linked meeting draws no meeting row and no zero counter", async () => {
+    replay(empty.gets);
+    render(<WindowHarness scope={`project:${empty.pid}`} />);
+    await screen.findByTestId("room-body");
+    await waitFor(() => expect(calls.some((c) => c.key === `POST /api/projects/${empty.pid}/room/read`)).toBe(true));
+    expect(screen.queryByTestId("source-meeting-row")).toBeNull();
+    expect(zeroCounters(screen.getByTestId("room-body"))).toEqual([]);
+    expect(misses).toEqual([]);
+  });
+});
+
+describe("PHILO-17 sources: Add a repository in the Room", () => {
+  // replaces: tests/e2e/test_philo17_sources_glass.py::test_add_a_repository_and_it_stays_after_reload (the face; the hub
+  //   half: tests/integration/test_desk_project_room.py::test_a_repository_added_in_the_room_stays_and_the_same_one_again_is_already_watched)
+  const { pid, before, count, add, after, again } = S17;
+  const doorKey = "POST /api/projects/door";
+  const posts = () => calls.filter((c) => c.key === doorKey);
+
+  async function pickAndAdd() {
+    const well = await screen.findByTestId("room-add-sources");
+    fireEvent.click(await within(well).findByTestId("door-trigger-github"));
+    fireEvent.click(await within(well).findByTestId("door-pick-acme/app"));
+    const addButton = within(well).getByTestId("room-add-sources-add") as HTMLButtonElement;
+    await waitFor(() => expect(addButton.disabled).toBe(false));
+    fireEvent.click(addButton);
+    return well;
+  }
+
+  it("pick acme/app, Add: the well closes and SOURCES holds acme/app; the same again says Already watched", async () => {
+    let added = 0;
+    replay(before, {
+      "POST /api/projects/door/count": () => count.answer,
+      [doorKey]: () => {
+        added += 1;
+        if (added === 1) { hubGets = after; return add.answer; }
+        return again.answer;
+      },
+    });
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await pickAndAdd();
+    await waitFor(() => expect(screen.queryByTestId("room-add-sources")).toBeNull());
+    expect(posts()[0].json).toEqual(add.request);
+    expect(calls.find((c) => c.key === "POST /api/projects/door/count")?.json).toEqual(count.request);
+    await waitFor(() => expect(screen.getAllByTestId("source-scope").map((e) => e.textContent?.trim())).toContain("acme/app"));
+
+    fireEvent.click(screen.getByTestId("room-add-source"));
+    const well = await pickAndAdd();
+    await within(well).findByText("Already watched");
+    expect(posts()).toHaveLength(2);
+    expect(screen.getAllByTestId("source-scope").filter((e) => e.textContent?.trim() === "acme/app")).toHaveLength(1);
+    expect(misses).toEqual([]);
+  });
+});
+
+describe("PHILO-17 sources: a parked meeting leaves FILES on the hub's own frame", () => {
+  // replaces: tests/e2e/test_philo17_sources_glass.py::test_park_from_files_leaves_its_receipt_and_restore_in_the_room
+  //   (the leg the earlier successor left to the browser: the row leaving FILES and coming back; the hub
+  //   half is tests/integration/test_desk_project_room.py::test_park_from_files_parks_the_meeting_and_restore_brings_it_back_to_the_room)
+  const { pid, before, park, park_frames, parked, restore, restore_frames, restored } = F17;
+  const deliver = (frames: Array<{ type: string; data: unknown }>) =>
+    act(() => { for (const f of frames) for (const h of bus.handlers.get(f.type) ?? []) h(f); });
+  const row = () => screen.getByTestId("room-files").querySelector("[data-object-id='meeting:m-lone']");
+
+  it("Park: PARKED · Vendor call, and the hub's desk_changed takes the row out; Restore and its frame bring it back", async () => {
+    const { DrawerInfoWindow } = await import("../../../desk/drawer/InfoWindow");
+    const { useDrawers } = await import("../../../desk/drawer/store");
+    useDesk.setState({ refresh: vi.fn(() => Promise.resolve()) } as never);
+    replay(before, {
+      "DELETE /api/meetings/m-lone": () => { hubGets = parked; return park.answer; },
+      "POST /api/meetings/m-lone/restore": () => { hubGets = restored; return restore.answer; },
+    });
+    function Desk() {
+      const infos = useDrawers((s) => s.infos);
+      return (
+        <>
+          <WindowHarness scope={`project:${pid}`} />
+          {infos.map((info) => <DrawerInfoWindow key={info.ref} info={info} />)}
+        </>
+      );
+    }
+    render(<Desk />);
+    const files = await screen.findByTestId("room-files");
+    fireEvent.click(await within(files).findByRole("button", { name: /^Vendor call,/ }));
+    fireEvent.click(within(files).getByTestId("room-files-info"));
+    fireEvent.click(await screen.findByRole("button", { name: "Park" }), { detail: 1 });
+    const receipt = await within(screen.getByTestId("room-files")).findByTestId("room-files-park-receipt");
+    expect(receipt.querySelector("[role=status]")?.textContent).toBe("PARKED · Vendor call");
+    expect(row()).not.toBeNull(); // nothing re-read yet: the hub's frame has not come
+    deliver(park_frames);
+    await waitFor(() => expect(row()).toBeNull(), { timeout: 3000 });
+    expect(screen.getByTestId("room-files-park-receipt").querySelector("[role=status]")?.textContent).toBe("PARKED · Vendor call");
+
+    fireEvent.click(within(screen.getByTestId("room-files-park-receipt")).getByRole("button", { name: "Restore" }));
+    await waitFor(() => expect(screen.getByTestId("room-files-park-receipt").querySelector("[role=status]")?.textContent)
+      .toMatch(/RESTORED/));
+    deliver(restore_frames);
+    await waitFor(() => expect(row()).not.toBeNull(), { timeout: 3000 });
+    expect(misses).toEqual([]);
+    useDrawers.getState().setReceipt(pid, null);
   });
 });

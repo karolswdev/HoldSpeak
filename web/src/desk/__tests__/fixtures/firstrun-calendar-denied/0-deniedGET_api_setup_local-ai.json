@@ -1,0 +1,77 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:25:06.411000Z",
+  "wire": {
+    "bytes_done": 0,
+    "bytes_total": 3030808786,
+    "egress": {
+      "bytes": 3030808786,
+      "destination": "huggingface.co",
+      "files": 4,
+      "what": "model file request"
+    },
+    "error": "",
+    "error_code": "",
+    "files": [
+      {
+        "filename": "config.json",
+        "key": "whisper",
+        "label": "whisper-base-mlx",
+        "on_device": false,
+        "sha256": "737220a6d958b3ad48e78f840fa991556266983c84ea2ca40e413389c62e4c2f",
+        "size_bytes": 262,
+        "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/config.json"
+      },
+      {
+        "filename": "weights.npz",
+        "key": "whisper",
+        "label": "whisper-base-mlx",
+        "on_device": false,
+        "sha256": "2f57d5f3ef473054c638961f90716f4ee415e8108de81313eccb2c5fd62eff0b",
+        "size_bytes": 143724204,
+        "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/weights.npz"
+      },
+      {
+        "filename": "nomic-embed-text-v1.5.Q8_0.gguf",
+        "key": "embed",
+        "label": "nomic-embed-text v1.5",
+        "on_device": false,
+        "sha256": "3e24342164b3d94991ba9692fdc0dd08e3fd7362e0aacc396a9a5c54a544c3b7",
+        "size_bytes": 146146432,
+        "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/0188c9bf409793f810680a5a431e7b899c46104c/nomic-embed-text-v1.5.Q8_0.gguf"
+      },
+      {
+        "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+        "key": "starter",
+        "label": "Quick local Qwen",
+        "on_device": false,
+        "sha256": "1d203c2196991da08bc5b191ab4727516f476f3167e3276f75a0c5257493aadb",
+        "size_bytes": 2740937888,
+        "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf"
+      }
+    ],
+    "local_engine": {
+      "deployment_id": null,
+      "profile_id": null,
+      "profile_revision": null,
+      "ready": false
+    },
+    "meaning_search": "off",
+    "percent": 0,
+    "runtime": {
+      "minimum": "0.3.34",
+      "package": "llama-cpp-python",
+      "ready": true,
+      "reason": "",
+      "revision": "0.3.35"
+    },
+    "speech": {
+      "backend": "mlx",
+      "bytes": 143724466,
+      "model": "base",
+      "ready": false,
+      "state": "will_download"
+    },
+    "state": "not_started"
+  }
+}

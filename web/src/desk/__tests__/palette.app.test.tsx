@@ -24,11 +24,15 @@ vi.mock("../shell", async () => {
 });
 vi.mock("../setup", () => ({ loadSetup: vi.fn(() => Promise.resolve(null)) }));
 
-import { EMPTY_ITEMS, __resetHeldObjects, fromWireMeeting } from "../api";
+import { EMPTY_ITEMS, __resetHeldObjects, fromWireMeeting, loadAll } from "../api";
+import { ApiError } from "../../lib/api";
 import type { Meeting, Note } from "../../lib/primitives";
 import { useDesk } from "../store";
 import { usePalette } from "../chromeState";
 import { DeskToolShelf, MEMORY_DEBOUNCE_MS } from "../components/DeskToolShelf";
+import { objectByRef } from "../world";
+import { Pullout } from "../components/Pullout";
+import enterHub from "./fixtures/palette-enter/recorded.json";
 
 /* The hub's list row for a meeting whose speakers are Dana Okafor and Me
  * (GET /api/meetings?limit=24, `db.meetings.save_meeting`, intel off). */
@@ -173,6 +177,109 @@ describe("the palette finds the right row and opens it", () => {
     // The window draws the object's own words.
     expect(held?.segments?.map((s) => s.text)).toEqual(["The numbat migration waits for finance."]);
     expect(apiFetch.mock.calls.map(([p]) => p)).toContain("/api/meetings/m-old-00");
+  });
+});
+
+/* ── Enter on the first row opens THAT note (A-apps row 41, 2026-10-03) ──
+ * The hub's answers are recorded by scripts/record_chrome_palette.py (one
+ * boot: the note made by POST /api/notes, the reads before Develop, the
+ * owner's Develop, the reads after). The palette opens the note the first
+ * row names; the window the desk draws for that ref is the note's own
+ * window, or, once developed, the Thought window OF THAT NOTE. No press and
+ * no read writes anything (no thought, no note). */
+describe("Enter on the first row opens the note it names", () => {
+  const ref = `note:${enterHub.note_id}`;
+  const writes = () => apiFetch.mock.calls
+    .filter(([, init]) => ((init as RequestInit | undefined)?.method ?? "GET").toUpperCase() !== "GET")
+    .map(([path]) => String(path));
+  const unrouted: string[] = [];
+
+  type Read = { status: number; body: unknown };
+  const notesOf = (table: Record<string, Read>) => (table["/api/notes"].body as { notes: { id: string }[] }).notes.map((n) => n.id);
+
+  /** The recorded reads, as the hub answered them (a refusal is replayed as
+   * that refusal); a read the recorder did not make fails the test. */
+  async function replay(table: Record<string, Read>) {
+    unrouted.length = 0;
+    apiFetch.mockImplementation((path: string, init?: RequestInit) => {
+      const method = (init?.method ?? "GET").toUpperCase();
+      const hit = method === "GET" ? table[path] ?? table[path.split("?")[0]] : undefined;
+      if (!hit) {
+        unrouted.push(`${method} ${path}`);
+        return Promise.reject(new Error(`unrecorded ${method} ${path}`));
+      }
+      return hit.status < 300
+        ? Promise.resolve(structuredClone(hit.body))
+        : Promise.reject(new ApiError(hit.status, `HTTP ${hit.status}`, structuredClone(hit.body)));
+    });
+    // The desk's own read of the notes (the real loader, the recorded list).
+    const { items } = await loadAll();
+    useDesk.setState({ items });
+    apiFetch.mockClear();
+  }
+
+  /** ⌘K, `ledger`, then Enter (1440) or a press on the first row (393). */
+  async function pressEnterOnLedger(gesture: "enter" | "tap" = "enter") {
+    const input = await deck();
+    await type(input, "ledger");
+    const first = rows()[0];
+    expect(first?.id).toBe(`desk-palette-option-${ref}`);
+    expect(first?.getAttribute("aria-selected")).toBe("true");
+    expect(first?.textContent).toContain(enterHub.title);
+    if (gesture === "enter") fireEvent.keyDown(input, { key: "Enter" });
+    else fireEvent.click(first!);
+    expect(useDesk.getState().openPullout).toHaveBeenCalledWith(ref);
+  }
+
+  async function drawWindow() {
+    const o = objectByRef(useDesk.getState().items, ref);
+    expect(o, "the desk holds the note the row names").toBeTruthy();
+    useDesk.setState({ profiles: [], closePullout: vi.fn() });
+    const view = render(<MemoryRouter><Pullout o={o!} pulloutId={ref} /></MemoryRouter>);
+    await settle(50);
+    return view;
+  }
+
+  it("an ordinary note: Enter opens the note's own window; no thought is made", async () => {
+    // replaces: tests/e2e/test_palette_enter_opens_the_note_glass.py::TestEnterOpensTheFirstRow::test_enter_opens_the_note_the_first_row_names (part 1, 1440 Enter; the 393 tap runs the same row)
+    await replay(enterHub.before);
+    await pressEnterOnLedger();
+    const { container } = await drawWindow();
+    expect(await screen.findByRole("button", { name: "Develop this thought" })).toBeTruthy();
+    const frame = container.querySelector(`[id="pullout:${ref}"]`);
+    expect(frame?.getAttribute("aria-label")).toBe(enterHub.title);
+    expect(container.querySelector(".thought-workspace-window")).toBeNull();
+    expect(unrouted).toEqual([]);
+    expect(writes()).toEqual([]);
+  });
+
+  it("the phone's press on the first row opens the same note, and writes nothing", async () => {
+    // replaces: tests/e2e/test_palette_enter_opens_the_note_glass.py::TestEnterOpensTheFirstRow::test_enter_opens_the_note_the_first_row_names[393] (part 1, the tap)
+    await replay(enterHub.before);
+    await pressEnterOnLedger("tap");
+    expect(unrouted).toEqual([]);
+    expect(writes()).toEqual([]);
+  });
+
+  it("a developed note: the same Enter opens the Thought window OF THAT NOTE; no new note is made", async () => {
+    // replaces: tests/e2e/test_palette_enter_opens_the_note_glass.py::TestEnterOpensTheFirstRow::test_enter_opens_the_note_the_first_row_names (part 3, after Develop this thought)
+    await replay(enterHub.after);
+    // The premise, from the hub's own reads: Develop made no second note.
+    expect(notesOf(enterHub.after)).toEqual(notesOf(enterHub.before));
+    await pressEnterOnLedger();
+    const { container } = await drawWindow();
+    const thought = await vi.waitFor(() => {
+      const node = container.querySelector(".thought-workspace-window");
+      expect(node, "the Thought window is drawn").toBeTruthy();
+      return node as HTMLElement;
+    });
+    expect(container.querySelectorAll(".thought-workspace-window")).toHaveLength(1);
+    const named = container.querySelector(`[id="pullout:${ref}"]`);
+    expect(named?.getAttribute("aria-label")).toBe(enterHub.title);
+    expect(container.querySelector(".thought-note-title")?.textContent).toContain(enterHub.title);
+    expect(screen.queryByRole("button", { name: "Develop this thought" })).toBeNull();
+    expect(unrouted).toEqual([]);
+    expect(writes()).toEqual([]);
   });
 });
 

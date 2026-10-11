@@ -25,32 +25,33 @@ import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { BriefView } from "../../../desk/pullouts/views/BriefView";
 import { CadenceCore } from "../CadenceCore";
 import { inventedFields, recorded } from "../../../test/wireShape";
-import HEARTBEAT_WIRE from "../../../test/wire/heartbeat.wire.json";
-import STATUS_WIRE from "../../../test/wire/cadence-status.wire.json";
-import DOOR_WIRE from "../../../test/wire/door.fresh.wire.json";
 import BRIEF_WIRE from "../../../test/wire/brief-latest.generated.wire.json";
+// One recorded source for the Rhythm's reads (scripts/record_chair_rhythm_fixture.py):
+// the cold hub's heartbeat, cadence status, Door, loops, history and projects.
+import RHYTHM from "./fixtures/rhythm-wire/rhythm.recorded.json";
 
 function json(body: unknown) {
   return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
 }
 
-const HEARTBEAT = {
-  sweep_every_minutes: 15, quiet_hours: { start: 22, end: 8 }, notify: "edge",
-  muted_projects: [], last_sweep_at: null, next_sweep_at: null, runs_on: null, last_remote_run_at: null,
-};
+type Json = Record<string, any>;
+const COLD = (RHYTHM.change.steps[0] as { gets: Record<string, Json> }).gets;
+const HEARTBEAT = structuredClone(COLD["/api/settings/heartbeat"]);
+const STATUS = structuredClone(COLD["/api/cadence/status"]);
 
-// The hub's own /api/cadence/status (its `egress` is {label, scope}; the
-// typed copy said "local").
-const STATUS = recorded(STATUS_WIRE);
-
+/** A Brief row: the recorded Brief's own row with these values. */
 function item(id: string, section: string, text: string, sourceRef: string | null, detail: string | null = null) {
-  return { id, section, text, detail, source_ref: sourceRef, priority: 50, created_at: null };
+  const row = recorded<{ sections: { waiting: Json[] } }>(BRIEF_WIRE).sections.waiting[0];
+  return { ...row, id, section, text, detail, source_ref: sourceRef, priority: 50, created_at: null };
 }
 
 /** The glass rig's seed after `POST /api/brief/generate`: 4 events this local
- *  week, one armed, one commitment due today; one SINCE FRIDAY item. */
+ *  week, one armed, one commitment due today; one SINCE FRIDAY item. The
+ *  hub's recorded Brief (tests/integration/test_face_wire_fences.py) with
+ *  these values. */
 function brief(thisWeek: unknown[]) {
   return {
+    ...recorded<Json>(BRIEF_WIRE),
     id: "brief-1",
     period_start: "2026-10-02T17:00:00+00:00",
     period_end: "2026-10-07T16:00:00+00:00",
@@ -64,12 +65,8 @@ function brief(thisWeek: unknown[]) {
     },
     generated_at: "2026-10-07T15:30:00+00:00",
     is_empty: false,
-    shelf: {},
-    ledger: { operations: 0 },
     period_label: "OCT 02-07",
     generated_label: "GENERATED OCT 07 15:30",
-    title: "Brief · Wednesday 7 Oct 2026",
-    stale: false,
   };
 }
 
@@ -86,22 +83,20 @@ function hub(over: { door?: unknown; brief?: unknown; heartbeat?: unknown } = {}
     const url = String(input);
     if (url.includes("/api/settings/heartbeat")) return json(over.heartbeat ?? HEARTBEAT);
     if (url.includes("/api/brief/latest")) return json(over.brief ?? null);
-    if (url.includes("/api/door")) return json(over.door ?? { calendar_configured: false });
-    if (url.includes("/api/projects")) return json({ projects: [] });
+    if (url.includes("/api/door")) return json(over.door ?? COLD["/api/door"]);
+    if (url.includes("/api/projects")) return json(COLD["/api/projects"]);
     if (url.includes("/api/cadence/status")) return json(STATUS);
-    if (url.includes("/api/cadence/loops")) return json({ loops: [] });
-    if (url.includes("/api/cadence/history")) return json({ nudges: [] });
+    if (url.includes("/api/cadence/loops")) return json(COLD["/api/cadence/loops"]);
+    if (url.includes("/api/cadence/history")) return json(COLD["/api/cadence/history?limit=20"]);
     return json({});
   }));
 }
 
-/** `door_service.get` with a calendar source (the strip parts the Rhythm ignores). */
+/** The recorded cold Door with a calendar source (the strip parts the Rhythm ignores). */
 const DOOR_WITH_CALENDAR = {
-  board: { overdue: [], now: [], waiting: [], active: [] },
-  upcoming: [],
-  counts: { overdue: 0, now: 0, waiting: 0, active: 0, upcoming_today: 0 },
+  ...structuredClone(COLD["/api/door"]),
   calendar_configured: true,
-  week: { days: [], total: 0, has_calendar: true, starts_at: "2026-10-05T06:00:00+00:00", ends_at: "2026-10-12T06:00:00+00:00" },
+  week: { ...COLD["/api/door"].week, has_calendar: true },
 };
 
 afterEach(() => vi.unstubAllGlobals());
@@ -202,13 +197,155 @@ describe("The Brief detail the Rhythm row names", () => {
 });
 
 describe("The typed hub bodies carry only the hub's fields (the SCAR LAW)", () => {
-  // The hub's own answers: tests/integration/test_face_wire_fences.py::test_rhythm_reads.
-  it("heartbeat, cadence status, the Door and the Brief", () => {
-    expect(inventedFields(HEARTBEAT, recorded(HEARTBEAT_WIRE))).toEqual([]);
-    expect(inventedFields(STATUS, recorded(STATUS_WIRE))).toEqual([]);
-    expect(inventedFields(DOOR_WITH_CALENDAR, recorded(DOOR_WIRE))).toEqual([]);
+  // Heartbeat, status, loops, history and projects are the recorded answers
+  // themselves; the Door and the Brief carry typed values on recorded rows.
+  it("the Door with a calendar and the Brief", () => {
+    expect(inventedFields(DOOR_WITH_CALENDAR, COLD["/api/door"])).toEqual([]);
     expect(inventedFields(brief([]), recorded(BRIEF_WIRE))).toEqual([]);
     const hubBrief = recorded<{ sections: { waiting: unknown[] } }>(BRIEF_WIRE);
     expect(inventedFields(item("x", "waiting", "t", "blocker:summary", "d"), hubBrief.sections.waiting[0])).toEqual([]);
+  });
+});
+
+// ── HS-171-02 and HS-174-08: the Rhythm face over the hub's RECORDED answers ──
+// scripts/record_chair_rhythm_fixture.py boots the real hub on an isolated
+// HOME (the browser tests' seeds), and records, in one boot per scenario,
+// every read CadenceCore makes, each press with the hub's answer, and the
+// reads after it. Only `fetch` is stubbed; it serves those answers in order,
+// and a press the recording does not hold (another path, method or body)
+// fails the test. The clock is faked for Date only and pinned in Denver.
+import { act, fireEvent } from "@testing-library/react";
+import { beforeEach } from "vitest";
+
+type Step = { name: string; gets: Record<string, unknown>; method?: string; path?: string; body?: unknown; answer?: unknown };
+
+function replay(steps: Step[]) {
+  let at = 0;
+  const presses: string[] = [];
+  vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+    const url = new URL(String(input), "http://hub.test");
+    const path = url.pathname + url.search;
+    const method = (init?.method ?? "GET").toUpperCase();
+    if (method !== "GET") {
+      const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      const next = steps.findIndex((s, i) => i > at && s.method === method && s.path === path
+        && JSON.stringify(s.body) === JSON.stringify(body));
+      if (next < 0) throw new Error(`unrecorded press ${method} ${path} ${JSON.stringify(body)}`);
+      at = next;
+      presses.push(`${method} ${path}`);
+      return json(structuredClone(steps[next].answer));
+    }
+    if (!(path in steps[at].gets)) throw new Error(`unrecorded read ${path}`);
+    return json(structuredClone(steps[at].gets[path]));
+  }));
+  return presses;
+}
+
+/** A Wednesday in Denver at the given local hour (the recorded quiet hours
+ *  are 22-08 by default and 09-11 in `quiet`). */
+function clockAt(hour: number) {
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date(`2026-10-07T${String(hour + 6).padStart(2, "0")}:00:00Z`) });
+}
+
+describe("Rhythm (recorded hub): the sweep, the mute tokens and quiet hours", () => {
+  beforeEach(() => clockAt(12));
+  afterEach(() => vi.useRealTimers());
+
+  it("cold: Every 15 min, the Sweep, Brief and Notify rows, Run now and Generate", async () => {
+    // replaces: tests/e2e/test_hs171_rhythm_glass.py::TestRhythmFace::test_cold_state_1440
+    // replaces: tests/e2e/test_hs171_rhythm_glass.py::TestRhythmFace::test_phone_width (a shot and a clean page; the 393 fit and clean fences are the sweep's surface-cadence case at 393)
+    replay(RHYTHM.change.steps as Step[]);
+    render(<CadenceCore />);
+    await waitFor(() => expect(screen.getByTestId("rhythm-headline").textContent).toBe("Every 15 min"));
+    for (const id of ["rhythm-sweep-row", "rhythm-brief-row", "rhythm-notify-row"]) expect(screen.getByTestId(id), id).toBeTruthy();
+    expect(screen.getByTestId("rhythm-run-now").textContent).toBe("Run now");
+    expect(screen.getByTestId("rhythm-generate-now").textContent).toBe("Generate");
+    expect(screen.getByTestId("rhythm-sweep-facts").textContent).not.toContain("HELD");
+  });
+
+  it("the Sweep interval set to 30 puts it on the hub and the headline reads Every 30 min", async () => {
+    // replaces: tests/e2e/test_hs171_rhythm_glass.py::TestRhythmFace::test_change_cadence
+    const steps = RHYTHM.change.steps as Step[];
+    expect((steps[1].gets["/api/settings/heartbeat"] as { sweep_every_minutes: number }).sweep_every_minutes).toBe(30);
+    const presses = replay(steps);
+    render(<CadenceCore />);
+    await waitFor(() => expect(screen.getByTestId("rhythm-headline").textContent).toBe("Every 15 min"));
+    fireEvent.change(screen.getByLabelText("Sweep interval"), { target: { value: "30" } });
+    await waitFor(() => expect(screen.getByTestId("rhythm-headline").textContent).toBe("Every 30 min"));
+    expect(presses).toEqual(["PUT /api/settings/heartbeat"]);
+  });
+
+  it("Run now sweeps once on the hub and the facts read LAST and the receipt's rooms and time", async () => {
+    // replaces: tests/e2e/test_hs171_rhythm_glass.py::TestRhythmFace::test_run_now
+    const steps = RHYTHM.runNow.steps as Step[];
+    const presses = replay(steps);
+    render(<CadenceCore />);
+    const facts = await screen.findByTestId("rhythm-sweep-facts");
+    await waitFor(() => expect(screen.getByTestId("rhythm-headline").textContent).toBe("Every 15 min"));
+    expect(facts.textContent).not.toContain("LAST");
+    fireEvent.click(screen.getByTestId("rhythm-run-now"));
+    await waitFor(() => expect(screen.getByTestId("rhythm-sweep-facts").textContent).toMatch(/LAST \d{2}:\d{2}/));
+    const receipt = steps[1].answer as { rooms: number; duration_ms: number };
+    expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain(`${Math.round(receipt.duration_ms)} MS`);
+    expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain(`${receipt.rooms} ROOM`);
+    expect(presses).toEqual(["POST /api/settings/heartbeat/run-now"]);
+  });
+
+  it("a Project's mute token: off mutes it on the hub, on again clears it", async () => {
+    // replaces: tests/e2e/test_hs171_rhythm_glass.py::TestRhythmFace::test_mute_toggle
+    const presses = replay(RHYTHM.mute.steps as Step[]);
+    render(<CadenceCore />);
+    const token = await screen.findByRole("checkbox", { name: "Q4 PLATFORM" });
+    expect((token as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(token);
+    await waitFor(() => expect((screen.getByRole("checkbox", { name: "Q4 PLATFORM" }) as HTMLInputElement).checked).toBe(false));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Q4 PLATFORM" }));
+    await waitFor(() => expect((screen.getByRole("checkbox", { name: "Q4 PLATFORM" }) as HTMLInputElement).checked).toBe(true));
+    expect(presses).toEqual(["PUT /api/settings/heartbeat", "PUT /api/settings/heartbeat"]);
+  });
+
+  it("quiet hours around now: the Sweep reads HELD · QUIET UNTIL 11:00 and Notify reads HELD", async () => {
+    // replaces: tests/e2e/test_hs171_rhythm_glass.py::TestRhythmFace::test_quiet_hours_held
+    // The hub's answer after PUT quiet_hours 09-11; the viewer's clock is 10:00.
+    vi.useRealTimers();
+    clockAt(10);
+    const steps = RHYTHM.quiet.steps as Step[];
+    replay([{ ...steps[1], name: "after" }]);
+    render(<CadenceCore />);
+    await waitFor(() => expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain("HELD · QUIET UNTIL 11:00"));
+    expect(screen.getByTestId("rhythm-notify-row").textContent).toContain("HELD");
+  });
+});
+
+describe("Rhythm (recorded hub): Runs on", () => {
+  beforeEach(() => clockAt(12));
+  afterEach(() => vi.useRealTimers());
+
+  it("THIS DEVICE: the Runs on row, no caption; Run now once, on the Sweep row only", async () => {
+    // replaces: tests/e2e/test_hs174_rhythm_runs_on_glass.py::test_runs_on_local_1440
+    // replaces: tests/e2e/test_hs174_rhythm_runs_on_glass.py::test_run_now_once
+    replay(RHYTHM.change.steps as Step[]);
+    render(<CadenceCore />);
+    const row = await screen.findByTestId("rhythm-runs-on-row");
+    await waitFor(() => expect(screen.getByTestId("rhythm-headline").textContent).toBe("Every 15 min"));
+    expect(screen.queryByTestId("rhythm-runs-on-caption")).toBeNull();
+    expect(screen.getAllByTestId("rhythm-run-now")).toHaveLength(1);
+    expect(row.textContent).not.toContain("Run now");
+    expect(within(screen.getByTestId("rhythm-sweep-row")).getByTestId("rhythm-run-now")).toBeTruthy();
+  });
+
+  it("a remote run seen, Runs on set to that host: WHILE THIS MAC IS AWAKE and LAST RUN", async () => {
+    // replaces: tests/e2e/test_hs174_rhythm_runs_on_glass.py::test_runs_on_remote_1440
+    // (test_runs_on_remote_393 stays in the browser suite: its fit at 393 with the remote caption is layout, and the sweep's seed sets no runs_on)
+    const steps = RHYTHM.runsOn.steps as Step[];
+    const presses = replay(steps);
+    render(<CadenceCore />);
+    const gadget = await screen.findByLabelText("Runner host");
+    await waitFor(() => expect([...(gadget as HTMLSelectElement).options].map((o) => o.value)).toEqual(["local", "192.168.1.43"]));
+    expect(screen.queryByTestId("rhythm-runs-on-caption")).toBeNull();
+    await act(async () => { fireEvent.change(gadget, { target: { value: "192.168.1.43" } }); });
+    await waitFor(() => expect(screen.getByTestId("rhythm-runs-on-caption").textContent).toBe("WHILE THIS MAC IS AWAKE"));
+    expect(screen.getByTestId("rhythm-runs-on-facts").textContent).toContain("LAST RUN");
+    expect(presses).toEqual(["PUT /api/settings/heartbeat"]);
   });
 });

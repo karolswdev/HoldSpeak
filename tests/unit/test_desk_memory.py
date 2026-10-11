@@ -196,3 +196,189 @@ def test_a_deleted_source_leaves_the_beliefs_and_the_pages(hub: Hub) -> None:
     assert gone.status_code in (200, 204), gone.text
     texts = _belief_texts(hub)
     assert "Cutover rollback owner is Marek." not in texts and "Cutover date is 10-10." not in texts, texts
+
+
+# ── HS-200-13: recall of a superseded decision chain, and the chain across a restart ──
+#
+# The seed of tests/e2e/test_hs200_continuity_glass.py (`_seed_chain`), copied:
+# two meetings linked to a Room, three proposals confirmed through the real
+# route, Saturday's decision superseded by Sunday's. The answers the Desk
+# memory face reads are recorded for web/src/desk/__tests__/memory.app.test.tsx
+# (fixtures/memory-continuity/recall.json; HOLDSPEAK_WIRE_WRITE=1 rewrites it).
+
+CONTINUITY_FIXTURES = (Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__"
+                       / "fixtures" / "memory-continuity")
+SAT, SUN = "2026-09-02", "2026-09-07"
+OLD_TEXT = "Freeze window is Saturday 02:00"
+NEW_TEXT = "Freeze window is Sunday 02:00, not Saturday"
+NEW_WHY = "Payments cannot drain the queue before 02:00 on a weekday."
+CMT_TEXT = "Priya confirms the freeze window"
+
+
+def _ok(response: Any) -> Any:
+    assert response.status_code == 200, (response.request.url, response.status_code, response.text[:300])
+    return response.json()
+
+
+def _seed_continuity_meeting(meeting_id: str, day: str, title: str) -> None:
+    from holdspeak.db import get_database
+
+    with get_database()._connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO meetings (id, started_at, ended_at, title, duration_seconds, "
+            " intel_status, capture_status, provenance) "
+            "VALUES (?, ?, ?, ?, 3600, 'complete', 'finalized', 'desktop')",
+            (meeting_id, f"{day}T11:00:00", f"{day}T12:00:00", title),
+        )
+        conn.execute("DELETE FROM segments WHERE meeting_id = ?", (meeting_id,))
+        for start, text in ((0.0, "Let's start with the cut-over sequencing for the payments platform"),
+                            (1080.0, "Cut-over runs on the read replica first, then we flip writes"),
+                            (1860.0, NEW_TEXT), (1980.0, CMT_TEXT)):
+            conn.execute(
+                "INSERT INTO segments (meeting_id, text, speaker, start_time, end_time) "
+                "VALUES (?, ?, 'Marek', ?, ?)",
+                (meeting_id, text, start, start + 60.0),
+            )
+
+
+def _continuity_propose(meeting_id: str, project_id: str, kind: str, text: str, *,
+                        segment_index: int, rationale: str | None = None) -> str:
+    from holdspeak.db import get_database
+
+    prop = get_database().proposals.create_proposal(
+        meeting_id=meeting_id, project_id=project_id, kind=kind, text=text,
+        source_plugin="decision_capture" if kind == "decision" else "action_owner_enforcer",
+        segment_timestamp=1860.0, span_start=1860.0, span_end=1920.0,
+        segment_index=segment_index, support="supported", rationale=rationale,
+        model_host="192.168.1.43",
+    )
+    assert prop is not None
+    return prop.id
+
+
+def _seed_continuity_chain(hub: Hub) -> dict[str, Any]:
+    pid = _ok(hub.client.post("/api/projects", json={
+        "name": "Q4 Platform", "description": "Seeded for the HS-200-13 proof.",
+        "command_id": "hs200-13-q4-platform",
+    }))["project"]["id"]
+    _seed_continuity_meeting("m-sat", SAT, "Cut-over planning")
+    _seed_continuity_meeting("m-sun", SUN, "Architecture review")
+    for mid in ("m-sat", "m-sun"):
+        _ok(hub.client.post(f"/api/projects/{pid}/meetings/{mid}", json={}))
+
+    def confirm(proposal_id: str) -> dict[str, Any]:
+        return _ok(hub.client.post(f"/api/proposals/{proposal_id}/confirm", json={}))
+
+    old = confirm(_continuity_propose("m-sat", pid, "decision", OLD_TEXT, segment_index=2,
+                                      rationale="Least traffic on Saturday"))
+    new = confirm(_continuity_propose("m-sun", pid, "decision", NEW_TEXT, segment_index=2, rationale=NEW_WHY))
+    cmt = confirm(_continuity_propose("m-sun", pid, "action", CMT_TEXT, segment_index=3))
+    sealed = _ok(hub.client.post(f"/api/decision-records/{old['decision_record_id']}/supersede",
+                                 json={"successor_id": new["decision_record_id"], "reason": "moved to Sunday"}))
+    assert sealed["lifecycle"] == "superseded", sealed
+    return {"project_id": pid, "old": old, "new": new, "cmt": cmt}
+
+
+def _recall_read(hub: Hub, **params: str) -> dict[str, Any]:
+    return _ok(hub.client.get("/api/memory/recall", params=params))
+
+
+def test_the_recall_minute_reads_the_current_decision_carries_it_and_names_an_owner(
+    hub: Hub, tmp_path: Path,
+) -> None:
+    """replaces: tests/e2e/test_hs200_continuity_glass.py::TestContinuityGlass::test_recall_1440 (T1 half:
+      the recall wire, the carry, the owed row's next action after Name an owner)
+
+    The same seed, the same presses the face makes, through the real routes.
+    The answers are the fixture memory.app.test.tsx replays."""
+    from tests.unit.test_desk_speak import _record
+
+    chain = _seed_continuity_chain(hub)
+    recent = _recall_read(hub, recent="1", filter="all")
+    searched = _recall_read(hub, query="freeze window", filter="all")
+    assert [c["id"] for c in searched["current"]] == [chain["new"]["decision_record_id"]]
+    assert [c["id"] for c in searched["superseded"]] == [chain["old"]["decision_record_id"]]
+    assert [r["id"] for r in searched["owed"]] == [chain["cmt"]["commitment_id"]]
+    assert searched["current"][0]["rationale"] == NEW_WHY
+    assert searched["current"][0]["carried"] is False
+
+    carry_body = {"project_id": chain["project_id"]}
+    carried = _ok(hub.client.post(f"/api/decision-records/{chain['new']['decision_record_id']}/carry",
+                                  json=carry_body))
+    assert carried["replayed"] is False and carried["project_id"] == chain["project_id"]
+    after_carry = _recall_read(hub, query="freeze window", filter="all")
+    assert after_carry["current"][0]["carried"] is True
+
+    owed = after_carry["owed"][0]
+    name_body = {"card_id": owed["action_item_id"], "verb": "delegate", "payload": {"to": "Priya"}}
+    named = _ok(hub.client.post("/api/follow-through/complete", json=name_body))
+    after_name = _recall_read(hub, query="freeze window", filter="all")
+    assert after_name["owed"][0]["next_action"] == "set_date", after_name["owed"]
+    # Naming an owner does not complete the commitment (AC4).
+    board = _ok(hub.client.get("/api/follow-through/board"))
+    cards = [c for lane in board.values() if isinstance(lane, list) for c in lane
+             if c.get("id") == chain["cmt"]["action_item_id"]]
+    assert cards and cards[0]["status"] in ("open", "pending"), cards
+
+    miss = _recall_read(hub, query="unfindablequasar", filter="all")
+    assert miss["current"] == [] and miss["owed"] == [] and miss["meetings"] == []
+    # The one other read the Desk memory window makes (its coder sessions).
+    coders = _ok(hub.client.get("/api/coders/sessions?include_ended=false"))
+
+    _record("recall", {
+        "recent": recent, "searched": searched,
+        "carry": {"path": f"/api/decision-records/{chain['new']['decision_record_id']}/carry",
+                  "body": carry_body, "answer": carried},
+        "after_carry": after_carry,
+        "name_owner": {"body": name_body, "answer": named},
+        "after_name": after_name, "miss": miss,
+        "coders_sessions": coders,
+    }, tmp_path, "tests/unit/test_desk_memory.py::test_the_recall_minute_reads_the_current_decision_carries_it_and_names_an_owner",
+        folder=CONTINUITY_FIXTURES)
+
+
+def test_the_decision_chain_and_the_carry_survive_a_hub_restart(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """replaces: tests/e2e/test_hs200_continuity_glass.py::TestContinuityGlass::test_chain_survives_a_hub_restart
+
+    The first hub seeds the chain, carries the current decision and reads
+    Needs you once; a second hub boots on the same HOME and database file."""
+    from holdspeak.db import get_database, reset_database
+    from holdspeak.services.brief_carry import pending_carries
+    from holdspeak.services.needs_you_aggregate import LastKnownStore
+
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    try:
+        first = _boot(tmp_path, monkeypatch)
+        chain = _seed_continuity_chain(first)
+        carried = _ok(first.client.post(f"/api/decision-records/{chain['new']['decision_record_id']}/carry", json={}))
+        assert carried["replayed"] is False and carried["project_id"] == chain["project_id"]
+        needs = _ok(first.client.get("/api/desk/needs-you?fresh=1"))
+        row = next(i for i in needs["items"] if i["source"] == "commitment" and i["title"] == CMT_TEXT)
+        assert row["nextAction"] == "name_owner" and row["actionItemId"] == chain["cmt"]["action_item_id"]
+        first.client.close()
+
+        # ── the SECOND hub on the same HOME (the same database file) ──
+        second = _boot(tmp_path, monkeypatch)
+        wire = _recall_read(second, query="freeze window", filter="all")
+        assert [c["id"] for c in wire["current"]] == [chain["new"]["decision_record_id"]]
+        assert wire["current"][0]["carried"] is True, "the carry mark did not survive the restart"
+        assert wire["current"][0]["rationale"] == NEW_WHY
+        assert [c["id"] for c in wire["superseded"]] == [chain["old"]["decision_record_id"]]
+        assert [r["id"] for r in wire["owed"]] == [chain["cmt"]["commitment_id"]]
+
+        marks = pending_carries(get_database(), chain["project_id"])
+        assert len(marks) == 1, marks
+        assert marks[0]["current_record_id"] == chain["new"]["decision_record_id"]
+        assert marks[0]["ref"] == marks[0]["current_ref"] and marks[0]["superseded"] is False
+        assert marks[0]["text"] == NEW_TEXT and marks[0]["rationale"] == NEW_WHY
+        remembered = LastKnownStore(db_factory=get_database).recall(f"project:{chain['project_id']}")
+        assert remembered is not None and any(i.get("source") == "commitment" for i in remembered["items"])
+        again = _ok(second.client.get("/api/desk/needs-you?fresh=1"))
+        assert any(i["source"] == "commitment" and i["nextAction"] == "name_owner" for i in again["items"])
+    finally:
+        reset_database()
+        composition.install(composition.bare(label="pytest"))

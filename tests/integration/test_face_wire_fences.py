@@ -51,13 +51,9 @@ def _fence(name: str, payload: Any, tmp_path: Path, hub: Any) -> None:
 
 
 def test_rhythm_reads(hub: Any, tmp_path: Path) -> None:
-    """rhythm.app.test.tsx: heartbeat settings, cadence status, the Door, the Brief."""
-    for name, path in (
-        ("heartbeat", "/api/settings/heartbeat"),
-        ("cadence-status", "/api/cadence/status"),
-        ("door.fresh", "/api/door"),
-    ):
-        _fence(name, _ok(hub.client.get(path)), tmp_path, hub)
+    """The fresh Door (OneScreen) and a generated Brief (rhythm.app's Brief rows).
+    The Rhythm's other reads are recorded by scripts/record_chair_rhythm_fixture.py."""
+    _fence("door.fresh", _ok(hub.client.get("/api/door")), tmp_path, hub)
     _ok(hub.client.post("/api/brief/generate", json={}))
     _fence("brief-latest.generated", _ok(hub.client.get("/api/brief/latest")), tmp_path, hub)
 

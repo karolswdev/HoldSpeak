@@ -1,0 +1,204 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_ask_ai.py::test_a_call_turn_lands_its_words_and_call_mode_persists (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "thread_id": "th_02193f958cc6",
+ "fresh": {
+  "id": "th_02193f958cc6",
+  "title": "Call Loop Glass",
+  "recipe_id": "",
+  "profile_override": "",
+  "directory_id": "",
+  "call_mode": 0,
+  "parent_thread_id": null,
+  "status_line": "",
+  "token_in": 0,
+  "token_out": 0,
+  "created_at": 1791761512.7124171,
+  "updated_at": 1791761512.7124171,
+  "last_turn_at": null,
+  "mode": null,
+  "messages": [],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+ },
+ "after_turn": {
+  "id": "th_02193f958cc6",
+  "title": "Call Loop Glass",
+  "recipe_id": "",
+  "profile_override": "",
+  "directory_id": "",
+  "call_mode": 0,
+  "parent_thread_id": null,
+  "status_line": "",
+  "token_in": 20,
+  "token_out": 20,
+  "created_at": 1791761512.7124171,
+  "updated_at": 1791761512.843528,
+  "last_turn_at": 1791761512.735297,
+  "mode": null,
+  "messages": [
+   {
+    "id": "tm_a600de761312",
+    "role": "user",
+    "parent_id": null,
+    "streaming": false,
+    "receipt_id": "",
+    "egress_scope": "",
+    "egress_host": "",
+    "egress_receipt_id": "",
+    "egress_fallback": false,
+    "model_id": "",
+    "error_json": null,
+    "stats_json": null,
+    "parts": [
+     {
+      "id": "tp_ab8f1d29f071",
+      "kind": "text",
+      "text": "Hello from the call loop",
+      "ordinal": 0,
+      "sensitive": false,
+      "draft": false
+     }
+    ],
+    "created_at": 1791761512.7245388,
+    "updated_at": 1791761512.7248142,
+    "completed_at": null,
+    "aborted_at": null
+   },
+   {
+    "id": "tm_4d7e0763d306",
+    "role": "assistant",
+    "parent_id": "tm_a600de761312",
+    "streaming": false,
+    "receipt_id": "ire_82e10fa1db31ae7f8882ce3969e0382c",
+    "egress_scope": "local",
+    "egress_host": "",
+    "egress_receipt_id": "ire_82e10fa1db31ae7f8882ce3969e0382c",
+    "egress_fallback": false,
+    "model_id": "Qwen3.5 4B",
+    "error_json": null,
+    "stats_json": {
+     "completion_tokens": 20,
+     "prompt_tokens": 20
+    },
+    "parts": [
+     {
+      "id": "tp_aadcceb8ff5f",
+      "kind": "text",
+      "text": "Glass test response from the fake engine. ",
+      "ordinal": 0,
+      "sensitive": false,
+      "draft": false
+     }
+    ],
+    "created_at": 1791761512.735297,
+    "updated_at": 1791761512.843412,
+    "completed_at": 1791761512.843412,
+    "aborted_at": null
+   }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+ },
+ "call_on": {
+  "id": "th_02193f958cc6",
+  "title": "Call Loop Glass",
+  "recipe_id": "",
+  "profile_override": "",
+  "directory_id": "",
+  "call_mode": 1,
+  "parent_thread_id": null,
+  "status_line": "",
+  "token_in": 20,
+  "token_out": 20,
+  "created_at": 1791761512.7124171,
+  "updated_at": 1791761512.8483179,
+  "last_turn_at": 1791761512.735297,
+  "mode": null,
+  "messages": [
+   {
+    "id": "tm_a600de761312",
+    "role": "user",
+    "parent_id": null,
+    "streaming": false,
+    "receipt_id": "",
+    "egress_scope": "",
+    "egress_host": "",
+    "egress_receipt_id": "",
+    "egress_fallback": false,
+    "model_id": "",
+    "error_json": null,
+    "stats_json": null,
+    "parts": [
+     {
+      "id": "tp_ab8f1d29f071",
+      "kind": "text",
+      "text": "Hello from the call loop",
+      "ordinal": 0,
+      "sensitive": false,
+      "draft": false
+     }
+    ],
+    "created_at": 1791761512.7245388,
+    "updated_at": 1791761512.7248142,
+    "completed_at": null,
+    "aborted_at": null
+   },
+   {
+    "id": "tm_4d7e0763d306",
+    "role": "assistant",
+    "parent_id": "tm_a600de761312",
+    "streaming": false,
+    "receipt_id": "ire_82e10fa1db31ae7f8882ce3969e0382c",
+    "egress_scope": "local",
+    "egress_host": "",
+    "egress_receipt_id": "ire_82e10fa1db31ae7f8882ce3969e0382c",
+    "egress_fallback": false,
+    "model_id": "Qwen3.5 4B",
+    "error_json": null,
+    "stats_json": {
+     "completion_tokens": 20,
+     "prompt_tokens": 20
+    },
+    "parts": [
+     {
+      "id": "tp_aadcceb8ff5f",
+      "kind": "text",
+      "text": "Glass test response from the fake engine. ",
+      "ordinal": 0,
+      "sensitive": false,
+      "draft": false
+     }
+    ],
+    "created_at": 1791761512.735297,
+    "updated_at": 1791761512.843412,
+    "completed_at": 1791761512.843412,
+    "aborted_at": null
+   }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+ },
+ "patch_call_on": {
+  "id": "th_02193f958cc6",
+  "title": "Call Loop Glass",
+  "recipe_id": "",
+  "profile_override": "",
+  "directory_id": "",
+  "call_mode": 1,
+  "parent_thread_id": null,
+  "status_line": "",
+  "token_in": 20,
+  "token_out": 20,
+  "created_at": 1791761512.7124171,
+  "updated_at": 1791761512.8483179,
+  "last_turn_at": 1791761512.735297,
+  "mode": null
+ },
+ "tts_status": {
+  "installed": false,
+  "model_ready": false
+ }
+}

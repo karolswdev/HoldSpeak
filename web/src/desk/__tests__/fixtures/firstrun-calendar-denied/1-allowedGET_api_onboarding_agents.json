@@ -1,0 +1,58 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:25:06.450975Z",
+  "wire": {
+    "agents": [
+      {
+        "hooks": "missing",
+        "hooks_path": "/tmp/rig/home/.claude/settings.json",
+        "id": "claude",
+        "installed": true,
+        "label": "Claude Code",
+        "path": "/Users/me/.local/bin/claude",
+        "ready": false,
+        "signed_in": "not_read",
+        "signed_in_from": null,
+        "verb": "Use it",
+        "version": "2.1.288"
+      },
+      {
+        "hooks": "missing",
+        "hooks_path": "/tmp/rig/home/.codex/hooks.json",
+        "id": "codex",
+        "installed": true,
+        "label": "Codex",
+        "path": "/Users/me/.local/bin/codex",
+        "ready": false,
+        "signed_in": "not_read",
+        "signed_in_from": null,
+        "verb": "Use it",
+        "version": "0.161.0"
+      },
+      {
+        "hooks": "not_read",
+        "hooks_path": "/repo/holdspeak/agent_context/pi_extension/holdspeak-pi.ts",
+        "id": "pi",
+        "installed": true,
+        "label": "pi",
+        "path": "/Users/me/.nvm/versions/node/v22.21.0/bin/pi",
+        "ready": false,
+        "signed_in": "not_read",
+        "signed_in_from": null,
+        "verb": null,
+        "version": "1.1.0"
+      }
+    ],
+    "holdspeak": {
+      "hook_executable": "/repo/.venv/bin/holdspeak",
+      "hook_runs": true,
+      "path": "/repo/.venv/bin/holdspeak"
+    },
+    "tmux": {
+      "install_hint": null,
+      "installed": true,
+      "path": "/opt/homebrew/bin/tmux",
+      "version": "3.6b"
+    }
+  }
+}

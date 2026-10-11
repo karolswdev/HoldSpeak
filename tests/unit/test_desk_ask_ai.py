@@ -429,3 +429,59 @@ def test_a_chat_with_lan_local_cloud_turns_keeps_each_turns_route(hub) -> None:
         ("local", "", "Qwen3.5 4B"),
         ("cloud", "api.openai.com", "gpt-5-mini"),
     ]
+
+
+# ── HS-154 call mode: a turn lands its words; call mode persists ────────────
+
+
+def test_a_call_turn_lands_its_words_and_call_mode_persists(hub, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """replaces: tests/e2e/test_hs154_call_glass.py::test_call_loop_glass (hub half: the turn's words
+      are the thread's user message, the fixture engine's answer its assistant message)
+    replaces: tests/e2e/test_hs154_call_glass.py::test_call_chip_glass (hub half: a new thread reads
+      call_mode 0; PATCH call_mode=1 answers 1 and the read keeps it)
+    replaces: tests/e2e/test_hs154_call_glass.py::test_speaker_glyph_glass (hub half: the finished
+      assistant row the glyph rides)
+
+    The three thread reads are the fixture the face replays
+    (web/src/desk/__tests__/fixtures/speak-hub/call.json, askai.app.test.tsx)."""
+    from tests.unit.test_desk_speak import _record
+
+    _seed_routes(hub.db)
+    _assign(hub.db, "chat.turn", ["glass-local"], "call-1")
+    hub.broker.inference_runner._engine_factory = lambda rev, **_kw: _TextEngine(
+        str(rev.model), "Glass test response from the fake engine.")
+    frames: list = []
+    svc = _thread_service(hub, frames)
+    created = hub.client.post("/api/threads", json={"title": "Call Loop Glass"})
+    assert created.status_code == 201, created.text
+    tid = created.json()["id"]
+    fresh = hub.client.get(f"/api/threads/{tid}").json()
+    assert fresh["call_mode"] == 0 and fresh["messages"] == []
+
+    _run_turn(svc, frames, tid, "Hello from the call loop")
+    after_turn = hub.client.get(f"/api/threads/{tid}").json()
+    roles = [(m["role"], " ".join(p.get("text") or "" for p in m["parts"]).strip()) for m in after_turn["messages"]]
+    assert roles == [("user", "Hello from the call loop"),
+                     ("assistant", "Glass test response from the fake engine.")], roles
+    assert all(m["streaming"] in (0, False) for m in after_turn["messages"])
+
+    patched = hub.client.patch(f"/api/threads/{tid}", json={"call_mode": 1})
+    assert patched.status_code == 200 and patched.json()["call_mode"] == 1, patched.text
+    call_on = hub.client.get(f"/api/threads/{tid}").json()
+    assert call_on["call_mode"] == 1
+
+    # The voice the glyph speaks with: the hub's TTS status without the extra
+    # (the browser rig pinned the same probe), so the face takes the browser voice.
+    import holdspeak.web.routes.tts as tts_routes
+    from holdspeak.web.context import WebContext
+
+    monkeypatch.setattr(tts_routes, "_kokoro_checked", True)
+    monkeypatch.setattr(tts_routes, "_kokoro_available", False)
+    tts_app = FastAPI()
+    tts_app.include_router(tts_routes.build_tts_router(WebContext(get_state=lambda: {})))
+    tts_status = TestClient(tts_app).get("/api/tts/status").json()
+    assert tts_status["installed"] is False and tts_status["model_ready"] is False
+
+    _record("call", {"thread_id": tid, "fresh": fresh, "after_turn": after_turn, "call_on": call_on,
+                     "patch_call_on": patched.json(), "tts_status": tts_status},
+            tmp_path, "tests/unit/test_desk_ask_ai.py::test_a_call_turn_lands_its_words_and_call_mode_persists")
