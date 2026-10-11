@@ -496,3 +496,23 @@ describe("Phase 16 the Conductor on the interior kit", () => {
     expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
   });
 });
+
+// PHILO-17 (mainreds3): a seat remembered from another view (the workspace
+// keeps `min`) must not swallow a fresh open: the Conductor opens on glass.
+describe("opening the Conductor shows it", () => {
+  it("a fresh open clears a remembered seat and fronts the window", async () => {
+    __resetConductor();
+    useDesk.setState({ panelMin: ["conductor"] });
+    useConductor.getState().openWindow();
+    expect(useConductor.getState().open).toBe(true);
+    await waitFor(() => expect(useDesk.getState().panelMin).not.toContain("conductor"));
+  });
+
+  it("an open Conductor that is seated comes back", async () => {
+    __resetConductor();
+    useConductor.getState().openWindow();
+    useDesk.setState({ panelMin: ["conductor"] });
+    useConductor.getState().openWindow();
+    await waitFor(() => expect(useDesk.getState().panelMin).not.toContain("conductor"));
+  });
+});

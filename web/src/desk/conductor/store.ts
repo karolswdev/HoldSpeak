@@ -89,16 +89,19 @@ export const useConductor = create<ConductorState>((set, get) => ({
     set({ stops: next });
   },
   openWindow(origin = null) {
+    // An open asks for the front, also from the Dock: restore = show + raise.
+    // PHILO-17 (mainreds3): this holds when the window is not mounted too.
+    // A seat remembered from another view or an older load (the workspace
+    // keeps `min`) otherwise opened the Conductor straight into its seat:
+    // mounted state on, nothing on glass.
+    const front = () =>
+      void import("../store").then((m) => m.useDesk.getState().restorePanel(CONDUCTOR_WINDOW_ID));
     if (get().open) {
-      // Already open: bring it forward (and back from the Dock).
-      void import("../store").then((m) => {
-        const desk = m.useDesk.getState();
-        if (desk.panelMin.includes(CONDUCTOR_WINDOW_ID)) desk.restorePanel(CONDUCTOR_WINDOW_ID);
-        desk.focusPanel(CONDUCTOR_WINDOW_ID);
-      });
+      front();
       return;
     }
     set({ open: true, origin });
+    front();
   },
   closeWindow() {
     set({ open: false, infos: [] });
