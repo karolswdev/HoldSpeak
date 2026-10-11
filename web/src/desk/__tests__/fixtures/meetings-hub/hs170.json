@@ -1,12 +1,12 @@
 {
- "_source": "Captured from a real MeetingWebServer (tests/e2e/glass_infra._boot, isolated HOME) seeded by tests/e2e/test_hs170_meetings_glass.py::_seed_meetings + glass_infra.seed_meetings_engines; GET bodies verbatim, keyed by request path. Regenerate with the same seed; never hand-edit a field a test reads.",
- "_now": "2026-10-11T09:11:16.119",
+ "_source": "Captured from a real MeetingWebServer (tests/e2e/glass_infra._boot, isolated HOME) seeded by tests/e2e/test_hs170_meetings_glass.py::_seed_meetings + glass_infra.seed_meetings_engines; GET bodies verbatim, plus the POST /intelligence/run answer from the SAME boot (sent the listed row's selection_hash; status 200), keyed by request path. Regenerate with the same seed; never hand-edit a field a test reads.",
+ "_now": "2026-10-11T09:58:45.917",
  "/api/meetings?limit=100": {
   "meetings": [
    {
     "id": "m-off-words",
-    "started_at": "2026-10-11T07:11:16.119045",
-    "ended_at": "2026-10-11T07:41:16.119045",
+    "started_at": "2026-10-11T07:58:45.803727",
+    "ended_at": "2026-10-11T08:28:45.803727",
     "title": "Census standup",
     "duration_seconds": 1800.0,
     "segment_count": 20,
@@ -35,7 +35,7 @@
     "planned_route": {
      "status": "ready",
      "reason_code": null,
-     "selection_hash": "sha256:4e2c4f157c95cab784164148e89fc69fc9497be76b3d05da7dbb717bd11ee1a0",
+     "selection_hash": "sha256:5bfaec063949cb4f560063cd0cd628bb9027e1ad3c8d69ad346875fcc87bd0f1",
      "legs": [
       {
        "ordinal": 1,
@@ -53,8 +53,8 @@
    },
    {
     "id": "m-queued",
-    "started_at": "2026-10-10T09:11:16.119045",
-    "ended_at": "2026-10-10T09:31:16.119045",
+    "started_at": "2026-10-10T09:58:45.803727",
+    "ended_at": "2026-10-10T10:18:45.803727",
     "title": "Already titled",
     "duration_seconds": 1200.0,
     "segment_count": 2,
@@ -82,7 +82,7 @@
     "planned_route": {
      "status": "ready",
      "reason_code": null,
-     "selection_hash": "sha256:4e2c4f157c95cab784164148e89fc69fc9497be76b3d05da7dbb717bd11ee1a0",
+     "selection_hash": "sha256:5bfaec063949cb4f560063cd0cd628bb9027e1ad3c8d69ad346875fcc87bd0f1",
      "legs": [
       {
        "ordinal": 1,
@@ -100,8 +100,8 @@
    },
    {
     "id": "m-saved-outcomes",
-    "started_at": "2026-10-09T09:11:16.119045",
-    "ended_at": "2026-10-09T09:56:16.119045",
+    "started_at": "2026-10-09T09:58:45.803727",
+    "ended_at": "2026-10-09T10:43:45.803727",
     "title": "Design review",
     "duration_seconds": 2700.0,
     "segment_count": 5,
@@ -130,7 +130,7 @@
     "planned_route": {
      "status": "ready",
      "reason_code": null,
-     "selection_hash": "sha256:4e2c4f157c95cab784164148e89fc69fc9497be76b3d05da7dbb717bd11ee1a0",
+     "selection_hash": "sha256:5bfaec063949cb4f560063cd0cd628bb9027e1ad3c8d69ad346875fcc87bd0f1",
      "legs": [
       {
        "ordinal": 1,
@@ -148,8 +148,8 @@
    },
    {
     "id": "m-saved-clean",
-    "started_at": "2026-10-04T09:11:16.119045",
-    "ended_at": "2026-10-04T09:36:16.119045",
+    "started_at": "2026-10-04T09:58:45.803727",
+    "ended_at": "2026-10-04T10:23:45.803727",
     "title": "1:1 Ania",
     "duration_seconds": 1500.0,
     "segment_count": 3,
@@ -178,7 +178,7 @@
     "planned_route": {
      "status": "ready",
      "reason_code": null,
-     "selection_hash": "sha256:4e2c4f157c95cab784164148e89fc69fc9497be76b3d05da7dbb717bd11ee1a0",
+     "selection_hash": "sha256:5bfaec063949cb4f560063cd0cd628bb9027e1ad3c8d69ad346875fcc87bd0f1",
      "legs": [
       {
        "ordinal": 1,
@@ -196,8 +196,8 @@
    },
    {
     "id": "m-no-transcript",
-    "started_at": "2026-10-02T09:11:16.119045",
-    "ended_at": "2026-10-02T09:23:16.119045",
+    "started_at": "2026-10-02T09:58:45.803727",
+    "ended_at": "2026-10-02T10:10:45.803727",
     "title": "Vendor call",
     "duration_seconds": 720.0,
     "segment_count": 0,
@@ -223,7 +223,7 @@
     "planned_route": {
      "status": "ready",
      "reason_code": null,
-     "selection_hash": "sha256:4e2c4f157c95cab784164148e89fc69fc9497be76b3d05da7dbb717bd11ee1a0",
+     "selection_hash": "sha256:5bfaec063949cb4f560063cd0cd628bb9027e1ad3c8d69ad346875fcc87bd0f1",
      "legs": [
       {
        "ordinal": 1,
@@ -241,7 +241,7 @@
    },
    {
     "id": "m-dead-rec",
-    "started_at": "2026-09-20T09:11:16.119045",
+    "started_at": "2026-09-20T09:58:45.803727",
     "ended_at": null,
     "title": "Standup gone wrong",
     "duration_seconds": 0.0,
@@ -268,7 +268,7 @@
     "planned_route": {
      "status": "ready",
      "reason_code": null,
-     "selection_hash": "sha256:4e2c4f157c95cab784164148e89fc69fc9497be76b3d05da7dbb717bd11ee1a0",
+     "selection_hash": "sha256:5bfaec063949cb4f560063cd0cd628bb9027e1ad3c8d69ad346875fcc87bd0f1",
      "legs": [
       {
        "ordinal": 1,
@@ -306,8 +306,8 @@
     "source_timestamp": null,
     "meeting_id": "m-queued",
     "meeting_title": "Already titled",
-    "meeting_date": "2026-10-10T09:11:16.119045",
-    "created_at": "2026-10-11T09:11:16",
+    "meeting_date": "2026-10-10T09:58:45.803727",
+    "created_at": "2026-10-11T09:58:45",
     "completed_at": null,
     "reviewed_at": null,
     "source_type": "meeting"
@@ -321,8 +321,8 @@
  "/api/meetings/m-saved-outcomes?include_parked=true": {
   "id": "m-saved-outcomes",
   "parked": false,
-  "started_at": "2026-10-09T09:11:16.119045",
-  "ended_at": "2026-10-09T09:56:16.119045",
+  "started_at": "2026-10-09T09:58:45.803727",
+  "ended_at": "2026-10-09T10:43:45.803727",
   "duration": 2700.0,
   "formatted_duration": "45:00",
   "title": "Design review",
@@ -395,12 +395,12 @@
   "calendar_event_id": null,
   "transcriptWords": 35,
   "unclearSpans": 0,
-  "sync_modified_at": "2026-10-11T09:11:16",
+  "sync_modified_at": "2026-10-11T09:58:45",
   "devices": [],
   "planned_route": {
    "status": "ready",
    "reason_code": null,
-   "selection_hash": "sha256:4e2c4f157c95cab784164148e89fc69fc9497be76b3d05da7dbb717bd11ee1a0",
+   "selection_hash": "sha256:5bfaec063949cb4f560063cd0cd628bb9027e1ad3c8d69ad346875fcc87bd0f1",
    "legs": [
     {
      "ordinal": 1,
@@ -424,7 +424,7 @@
  "/api/meetings/m-saved-outcomes/aftercare": {
   "meeting_id": "m-saved-outcomes",
   "meeting_title": "Design review",
-  "meeting_date": "2026-10-09T09:11:16.119045",
+  "meeting_date": "2026-10-09T09:58:45.803727",
   "open_items": {
    "total": 0,
    "by_owner": []
@@ -434,7 +434,7 @@
    "previous_meeting": {
     "id": "m-saved-clean",
     "title": "1:1 Ania",
-    "date": "2026-10-04T09:11:16.119045"
+    "date": "2026-10-04T09:58:45.803727"
    },
    "new_decisions": [],
    "new_actions": [],
@@ -454,7 +454,7 @@
   "meeting_id": "m-saved-outcomes",
   "proposals": [
    {
-    "id": "a435360a-5c5b-40b4-acdb-1494efaccfa0",
+    "id": "b4a39191-b1e4-4229-9989-832c733ea969",
     "origin": "meeting",
     "meeting_id": "m-saved-outcomes",
     "window_id": "m-saved-outcomes:aftercare",
@@ -473,7 +473,7 @@
     "decided_by": null,
     "authority": null,
     "operation": {
-     "operation_id": "actuator:a435360a-5c5b-40b4-acdb-1494efaccfa0",
+     "operation_id": "actuator:b4a39191-b1e4-4229-9989-832c733ea969",
      "family": "external_write",
      "effect_class": "slack/assign",
      "actor": "owner",
@@ -496,12 +496,12 @@
     },
     "result": null,
     "error": null,
-    "created_at": "2026-10-11 15:11:16",
+    "created_at": "2026-10-11 15:58:45",
     "decided_at": null,
     "executed_at": null
    },
    {
-    "id": "47d15a09-8962-4cb5-9252-27ea71034b8e",
+    "id": "2cc10ffe-fe9a-4908-ad0b-3720a3c44be4",
     "origin": "meeting",
     "meeting_id": "m-saved-outcomes",
     "window_id": "m-saved-outcomes:aftercare",
@@ -520,7 +520,7 @@
     "decided_by": null,
     "authority": null,
     "operation": {
-     "operation_id": "actuator:47d15a09-8962-4cb5-9252-27ea71034b8e",
+     "operation_id": "actuator:2cc10ffe-fe9a-4908-ad0b-3720a3c44be4",
      "family": "external_write",
      "effect_class": "slack/followup",
      "actor": "owner",
@@ -543,12 +543,12 @@
     },
     "result": null,
     "error": null,
-    "created_at": "2026-10-11 15:11:16",
+    "created_at": "2026-10-11 15:58:45",
     "decided_at": null,
     "executed_at": null
    },
    {
-    "id": "000c0ddd-7d1d-4626-ac09-2e821be00cf3",
+    "id": "1f20d2dd-867a-4174-aece-f96b9d4b2a4b",
     "origin": "meeting",
     "meeting_id": "m-saved-outcomes",
     "window_id": "m-saved-outcomes:aftercare",
@@ -567,7 +567,7 @@
     "decided_by": null,
     "authority": null,
     "operation": {
-     "operation_id": "actuator:000c0ddd-7d1d-4626-ac09-2e821be00cf3",
+     "operation_id": "actuator:1f20d2dd-867a-4174-aece-f96b9d4b2a4b",
      "family": "external_write",
      "effect_class": "slack/decide",
      "actor": "owner",
@@ -590,7 +590,7 @@
     },
     "result": null,
     "error": null,
-    "created_at": "2026-10-11 15:11:16",
+    "created_at": "2026-10-11 15:58:45",
     "decided_at": null,
     "executed_at": null
    }
@@ -627,7 +627,7 @@
   "planned_route": {
    "status": "ready",
    "reason_code": null,
-   "selection_hash": "sha256:4e2c4f157c95cab784164148e89fc69fc9497be76b3d05da7dbb717bd11ee1a0",
+   "selection_hash": "sha256:5bfaec063949cb4f560063cd0cd628bb9027e1ad3c8d69ad346875fcc87bd0f1",
    "legs": [
     {
      "ordinal": 1,
@@ -654,8 +654,8 @@
  "/api/meetings/m-off-words?include_parked=true": {
   "id": "m-off-words",
   "parked": false,
-  "started_at": "2026-10-11T07:11:16.119045",
-  "ended_at": "2026-10-11T07:41:16.119045",
+  "started_at": "2026-10-11T07:58:45.803727",
+  "ended_at": "2026-10-11T08:28:45.803727",
   "duration": 1800.0,
   "formatted_duration": "30:00",
   "title": "Census standup",
@@ -719,12 +719,12 @@
   "calendar_event_id": null,
   "transcriptWords": 1200,
   "unclearSpans": 0,
-  "sync_modified_at": "2026-10-11T09:11:16",
+  "sync_modified_at": "2026-10-11T09:58:45",
   "devices": [],
   "planned_route": {
    "status": "ready",
    "reason_code": null,
-   "selection_hash": "sha256:4e2c4f157c95cab784164148e89fc69fc9497be76b3d05da7dbb717bd11ee1a0",
+   "selection_hash": "sha256:5bfaec063949cb4f560063cd0cd628bb9027e1ad3c8d69ad346875fcc87bd0f1",
    "legs": [
     {
      "ordinal": 1,
@@ -748,7 +748,7 @@
  "/api/meetings/m-off-words/aftercare": {
   "meeting_id": "m-off-words",
   "meeting_title": "Census standup",
-  "meeting_date": "2026-10-11T07:11:16.119045",
+  "meeting_date": "2026-10-11T07:58:45.803727",
   "open_items": {
    "total": 0,
    "by_owner": []
@@ -758,7 +758,7 @@
    "previous_meeting": {
     "id": "m-queued",
     "title": "Already titled",
-    "date": "2026-10-10T09:11:16.119045"
+    "date": "2026-10-10T09:58:45.803727"
    },
    "new_decisions": [],
    "new_actions": [],
@@ -809,7 +809,7 @@
   "planned_route": {
    "status": "ready",
    "reason_code": null,
-   "selection_hash": "sha256:4e2c4f157c95cab784164148e89fc69fc9497be76b3d05da7dbb717bd11ee1a0",
+   "selection_hash": "sha256:5bfaec063949cb4f560063cd0cd628bb9027e1ad3c8d69ad346875fcc87bd0f1",
    "legs": [
     {
      "ordinal": 1,
@@ -832,5 +832,28 @@
    "retry": false,
    "skip": false
   }
+ },
+ "POST /api/meetings/m-off-words/intelligence/run": {
+  "jobId": "ij_24a16e880cb543a25b6192895deb9ec4868151257797dc57e0fb6dbebe9c826c",
+  "state": "queued",
+  "host": "same_device",
+  "drainer": "absent",
+  "expectedWithinSeconds": null,
+  "planned_route": {
+   "legs": [
+    {
+     "boundary": "local",
+     "deployment_revision_id": "dep2_b0d54eebb5a484d5d9c07b80e2b9f44ff50eeda5b0ba63873305dee66f7fcdfe",
+     "host": "same_device",
+     "ordinal": 1,
+     "profile_id": "hs201-meeting-engine",
+     "profile_revision": 1
+    }
+   ],
+   "reason_code": null,
+   "selection_hash": "sha256:5bfaec063949cb4f560063cd0cd628bb9027e1ad3c8d69ad346875fcc87bd0f1",
+   "status": "ready"
+  },
+  "run_receipt": null
  }
 }

@@ -68,8 +68,11 @@ function hub(fixture: Fixture, overrides: Record<string, unknown> = {}): Call[] 
     if (init?.method === "POST") {
       if (url.endsWith("/intelligence/run")) {
         // MeetingIntelService.run_intelligence (meeting_intel_service.py:268).
-        const id = url.split("/")[3];
-        return { jobId: `ij_${id}`, state: "queued", host: "same_device", drainer: "absent", expectedWithinSeconds: null, planned_route: null, run_receipt: null } as never;
+        // Captured from the SAME boot as the GET bodies: a meeting with words
+        // and an assigned engine answers its admitted planned_route, never null.
+        const answer = bodies[`POST ${url}`];
+        if (answer === undefined) throw new Error(`no captured run answer for ${url}`);
+        return answer as never;
       }
       if (url.endsWith("/transcribe")) return (bodies["POST /transcribe"] as { body: unknown })?.body as never;
       return {} as never;
@@ -170,6 +173,10 @@ describe("the Meetings list over the HS-170 seed", () => {
         init: { method: "POST", json: { expected_selection_hash: hash } },
       }),
     );
+    // The hub's answer admits the SAME route the row disclosed (the real
+    // path, not the missing-route fallback of summaryRoute.ts).
+    const answer = (hs170 as Fixture)["POST /api/meetings/m-off-words/intelligence/run"] as { planned_route: { selection_hash: string; status: string } };
+    expect(answer.planned_route).toMatchObject({ status: "ready", selection_hash: hash });
     // The chip stays through the run.
     await waitFor(() => expect(chip()?.textContent).toContain("THIS DEVICE"));
   });
