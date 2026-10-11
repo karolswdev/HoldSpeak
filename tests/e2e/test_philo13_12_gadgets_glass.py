@@ -339,7 +339,13 @@ class TestTheGadgets:
 
                 # G4 the other shortcuts, each by its verb's effect.
                 page.keyboard.press("Meta+k")
-                ok_k = page.locator("#desk-palette-listbox").is_visible()
+                # PHILO-17 (palette-rank, #1097): the deck opens at once and its
+                # list draws when its ranking reads resolve (at most 600 ms).
+                try:
+                    page.locator("#desk-palette-listbox").wait_for(state="visible", timeout=3_000)
+                    ok_k = True
+                except Exception:  # noqa: BLE001 - recorded as the G4 fault below
+                    ok_k = False
                 page.keyboard.press("Escape")
                 page.keyboard.press("Meta+/")
                 page.wait_for_timeout(300)
