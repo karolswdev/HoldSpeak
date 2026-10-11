@@ -287,7 +287,10 @@ def test_receipt_verbs_own_their_areas(hub, width: int) -> None:
         status, _ = hub.api("POST", "/api/brief/generate", {})
         assert status in (200, 201), status
         _search(page, "Show today's brief", "[id='desk-palette-option-desk.intelligence-brief']")
-        page.locator(".intelligence-brief-sf-primary").first.click()
+        # PHILO-17 summaries (#1064): a setup row ("No engine for summaries")
+        # can lead the list; select the decision's own row.
+        page.locator("[data-testid=brief-sf-row] .intelligence-brief-sf-primary",
+                     has_text="Receipt hit material").first.click()
         _fault(page, "POST", "/api/brief/items/")
         page.get_by_role("button", name="Acknowledge").first.click()
         _probe(page, ".surface-footer-receipt", "brief-footer", width, failures)
