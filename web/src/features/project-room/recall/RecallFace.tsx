@@ -1,4 +1,4 @@
-/* HS-200-13: the Desk memory face: recall (posture 5).
+/* HS-200-13: the Memory face: recall (posture 5).
  *
  * Built to the ratified boards `P5Recall` (1440), `P5RecallPhone` (393) and
  * `P5RecallQuiet` (the miss), design D2(e):
@@ -8,7 +8,7 @@
  *               `SEARCH THE DESK`; `SEARCHING` while the last content dims;
  *               `CANT SEARCH · <reason>` with `Retry` when the read failed.
  *   well     : StringGadget with its mic (`Dictate into the search`) +
- *               `Search` (`Search desk memory`).
+ *               `Search` (`Search memory`).
  *   filters  : `All · Decisions · Commitments · Briefs · Meetings`, the
  *               same five at both widths, roved Left/Right.
  *   CURRENT  : the accented card: the decision at primary step, the three
@@ -427,7 +427,7 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
               variant="secondary"
               loading={status === "searching"}
               disabled={!ctrl.query.trim()}
-              aria-label="Search desk memory"
+              aria-label="Search memory"
               data-testid="recall-search"
               onClick={() => void ctrl.search()}
             >

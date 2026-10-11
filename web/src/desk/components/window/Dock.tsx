@@ -5,10 +5,9 @@ import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouse
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openIntelligence } from "../../intelligenceNavigation";
-import { projectOpenHere, refreshNeedsYou, useNeedsYou } from "../../needsYou";
+import { refreshNeedsYou, useNeedsYou } from "../../needsYou";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { DOCK_SPRITES } from "../../systemSprites";
-import { spriteUrl } from "../../sprites";
 import { useDesk } from "../../store";
 import { useSettleState } from "../../settleState";
 import { useShortcutSheet } from "../../chromeState";
@@ -21,8 +20,7 @@ import { useLaunchers } from "./launcherRegistry";
 import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
-import { DOCK_APPLICATIONS, applicationForAction } from "../../applications";
-import { openProjectRoom } from "../../shell";
+import { DOCK_APPLICATIONS } from "../../applications";
 import { RoomActions } from "./RoomActions";
 import {
   dockStateLabel,
@@ -30,9 +28,7 @@ import {
   deskChanges,
   formatDockTime,
   latestSendSettle,
-  nextOneOnOneLabel,
   reduceDockFrame,
-  type DockRelationshipRead,
   type DockSendOutcome,
   type DockSendRead,
   type DockLiveState,
@@ -54,22 +50,16 @@ const DOCK_LIVE_FRAMES = [
 interface DockReadState {
   sendOutcome: DockSendOutcome | null;
   sendSettledAt: string | null;
-  nextOneOnOne: string | null;
-  peopleReadiness: PeopleReadinessState | null;
   readyMeetingIds: string[];
   sendReadAt: number | null;
-  peopleReadAt: number | null;
   readyReadAt: number | null;
 }
 
 const EMPTY_DOCK_READ: DockReadState = {
   sendOutcome: null,
   sendSettledAt: null,
-  nextOneOnOne: null,
-  peopleReadiness: null,
   readyMeetingIds: [],
   sendReadAt: null,
-  peopleReadAt: null,
   readyReadAt: null,
 };
 
@@ -80,71 +70,6 @@ function wireRows<T>(body: unknown, key: string): T[] {
   return Array.isArray(rows) ? rows as T[] : [];
 }
 
-type PeopleReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "ready";
-const PEOPLE_READINESS_STATES: readonly PeopleReadinessState[] = [
-  "unconfigured",
-  "locked",
-  "key_unavailable",
-  "corrupt",
-  "unavailable",
-  "ready",
-];
-
-interface PeopleProjectionRead {
-  readiness: PeopleReadinessState | null;
-  nextOneOnOne: string | null;
-  complete: boolean;
-}
-
-function peopleReadinessOf(body: unknown): PeopleReadinessState | null {
-  if (!body || typeof body !== "object") return null;
-  const value = (body as Record<string, unknown>).state ??
-    (body as Record<string, unknown>).readiness;
-  return PEOPLE_READINESS_STATES.includes(value as PeopleReadinessState)
-    ? value as PeopleReadinessState
-    : null;
-}
-
-async function readPeopleProjection(): Promise<PeopleProjectionRead> {
-  const readinessBody = await apiFetch<unknown>("/api/people/readiness");
-  const readiness = peopleReadinessOf(readinessBody);
-  if (readiness !== "ready") return { readiness, nextOneOnOne: null, complete: readiness !== null };
-
-  const body = await apiFetch<unknown>("/api/people/relationships");
-  const relationships = wireRows<DockRelationshipRead>(body, "relationships");
-  const direct = relationships.filter((relationship) =>
-    relationship.next_one_on_one !== undefined || relationship.nextOneOnOne !== undefined,
-  );
-  const ids = relationships
-    .map((relationship) => relationship.id)
-    .filter((id): id is string => Boolean(id));
-  const details = await Promise.allSettled(
-    ids.map((id) => apiFetch<unknown>(
-      `/api/people/relationships/${encodeURIComponent(id)}/brief`,
-    )),
-  );
-  const successfulDetails = details
-    .filter((detail): detail is PromiseFulfilledResult<unknown> => detail.status === "fulfilled")
-    .map((detail) => detail.value)
-    .flatMap((value) => {
-      const row = value && typeof value === "object"
-        ? value as Record<string, unknown>
-        : {};
-      return [{
-        brief: (row.brief && typeof row.brief === "object"
-          ? row.brief
-          : {}) as DockRelationshipRead,
-      }];
-    });
-  const complete = relationships.length === 0 || direct.length === relationships.length ||
-    (ids.length === relationships.length && successfulDetails.length === ids.length);
-  return {
-    readiness,
-    nextOneOnOne: nextOneOnOneLabel([...relationships, ...successfulDetails]),
-    complete,
-  };
-}
-
 async function readUnreadReadyMeetings(): Promise<string[]> {
   const body = await apiFetch<unknown>("/api/meetings/ready");
   return wireRows<{ id?: string }>(body, "meetings")
@@ -152,11 +77,12 @@ async function readUnreadReadyMeetings(): Promise<string[]> {
     .filter(Boolean);
 }
 
-/** HS-100-11 — the dock IS the launcher: the four applications ride it
- * always (running mark when their window is open); drawers and tools
- * moved to the menu-bar bell and the search shelf. */
+/** HS-100-11 — the dock IS the launcher. PHILO-17 (doors): one primary
+ * door per application. Speak, Meetings and Intelligence ride the Dock;
+ * People, the Conductor and the projects are drawers on the desk; Settings
+ * is in the HoldSpeak menu. Go lists them all. */
 const DOCK_APP_IDS = new Set<string>(
-  [...DOCK_APPLICATIONS.map((application) => application.windowId), "surface-people"],
+  DOCK_APPLICATIONS.map((application) => application.windowId),
 );
 const ACTIONABLE_LAUNCHERS = new Set(["attention", "delivery-board"]);
 /** PHILO-16 (A1): parked, seats live in the dock (§5). The window chips
@@ -206,13 +132,7 @@ function SeatTile({
     </Button>
   );
 }
-const PEOPLE_APPLICATION = applicationForAction("open-people");
-const DOCK_FACE_APPLICATIONS = [
-  ...DOCK_APPLICATIONS,
-  ...(PEOPLE_APPLICATION
-    ? [{ ...PEOPLE_APPLICATION, dock: { order: 2.5, launch: "surface" as const } }]
-    : []),
-].sort((left, right) => left.dock.order - right.dock.order);
+const DOCK_FACE_APPLICATIONS = DOCK_APPLICATIONS;
 
 /** Read the two Dock-only projections after a live invalidation.  The
  * membership read itself is owned by useNeedsYou; this function only reads
@@ -224,8 +144,6 @@ function useDockLiveReads(): {
   lastSuccessfulAt: number | null;
   needsYouCount: number;
   needsYouItems: ReturnType<typeof useNeedsYou>["unmutedItems"];
-  /** PHILO-14 A1: each Project's Room count (its head's number). */
-  projectOpen: Record<string, number>;
 } {
   const runtime = useOptionalRuntimeBus();
   const runtimeState = runtime?.state ?? "offline";
@@ -239,9 +157,8 @@ function useDockLiveReads(): {
   const refresh = useCallback(async () => {
     if (runtimeState !== "connected") return;
     const requestedReadyGeneration = readyReadGeneration.current;
-    const [sends, people, ready] = await Promise.allSettled([
+    const [sends, ready] = await Promise.allSettled([
       apiFetch<unknown>("/api/channels/sends"),
-      readPeopleProjection(),
       readUnreadReadyMeetings(),
     ]);
     // A live invalidation always refreshes A2 through its shared read. This
@@ -259,16 +176,6 @@ function useDockLiveReads(): {
           sendReadAt: readAt,
         };
       })() : {}),
-      ...(people.status === "fulfilled" ? {
-        peopleReadiness: people.value.readiness,
-        ...(people.value.complete ? {
-          nextOneOnOne: people.value.nextOneOnOne,
-          peopleReadAt: readAt,
-        } : { nextOneOnOne: null }),
-      } : {
-        nextOneOnOne: null,
-        peopleReadiness: null,
-      }),
       ...(ready.status === "fulfilled" &&
         requestedReadyGeneration === readyReadGeneration.current ? {
         readyMeetingIds: ready.value,
@@ -320,15 +227,14 @@ function useDockLiveReads(): {
     const state = runtimeState;
     const reconnected = state === "connected" && lastState.current !== "connected";
     lastState.current = state;
-    const hasSnapshot = reads.sendReadAt !== null || reads.peopleReadAt !== null || reads.readyReadAt !== null;
+    const hasSnapshot = reads.sendReadAt !== null || reads.readyReadAt !== null;
     if (state === "connected" && (reconnected || !hasSnapshot)) {
       void refresh();
     }
-  }, [reads.peopleReadAt, reads.readyReadAt, reads.sendReadAt, refresh, runtimeState]);
+  }, [reads.readyReadAt, reads.sendReadAt, refresh, runtimeState]);
 
   const lastSuccessfulAt = Math.max(
     reads.sendReadAt ?? 0,
-    reads.peopleReadAt ?? 0,
     reads.readyReadAt ?? 0,
   ) || null;
 
@@ -340,7 +246,6 @@ function useDockLiveReads(): {
     needsYouCount: needs.count,
     // A row the owner waits on someone else for is not counted on a badge.
     needsYouItems: needs.unmutedItems.filter((item) => !item.waiting),
-    projectOpen: projectOpenHere(needs),
   };
 }
 
@@ -366,7 +271,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // PHILO-13-03 / C3: every Desk face reads the same membership snapshot.
   // The Dock opts out of the hook's minute poll; RuntimeBus invalidations
   // call the explicit refresh path in useDockLiveReads.
-  const { live, reads, offline, lastSuccessfulAt, projectOpen } = useDockLiveReads();
+  const { live, reads, offline, lastSuccessfulAt } = useDockLiveReads();
   // PHILO-17 (needsyou, walker TAXES): the one number is on the Needs-you
   // icon and the bell only; the Intelligence tile carries no copy of it.
   const intelligenceBadge: string | null = null;
@@ -488,9 +393,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const shown = NUB_CHIPS
     ? launchers.filter((l) => !windows.some((w) => w.id === l.id))
     : launchers;
-  const activeProjects = useDesk((s) => s.projects).filter((project) => !project.is_archived);
-  // PHILO-14 A1: one Project, one number: the Room's own count.
-  const projectCounts = projectOpen;
   const readyMeetingIds = new Set([...live.readyMeetingIds, ...reads.readyMeetingIds]);
   const readyMeetingBadge = !offline && readyMeetingIds.size > 0
     ? `READY ${readyMeetingIds.size}`
@@ -512,20 +414,10 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     ? dockStateLabel(sendOutcome, sendOutcome === reads.sendOutcome ? reads.sendSettledAt : null)
     : null;
   const sendTone = sendOutcome === "sent" ? "ok" : sendOutcome === "failed" ? "fail" : "warn";
-  const peopleLabel = !offline && reads.peopleReadiness === "ready" && reads.nextOneOnOne
-    ? `1:1 ${formatDockTime(reads.nextOneOnOne)}`
-    : null;
-  const hiddenProjectWindowIds = new Set(
-    activeProjects
-      .filter((project) => windowsById["surface-project-memory"]?.scope === `project:${project.id}`)
-      .map((project) => `project:${project.id}`),
-  );
-  // PHILO-17 U30: a Project's launcher means its Room only; a parked drawer
-  // window (restored from an older desk) keeps its own chip.
-  const visibleWindowChips = windows.filter((window) =>
-    !DOCK_APP_IDS.has(window.id) &&
-      !hiddenProjectWindowIds.has(windowsById[window.id]?.scope || ""),
-  );
+  // PHILO-17 (doors): projects left the Dock (they are desk drawers and
+  // Go ▸ Projects); an open Room is a window like any other, so iconified it
+  // has its own seat tile.
+  const visibleWindowChips = windows.filter((window) => !DOCK_APP_IDS.has(window.id));
   // PHILO-16 (A1) §5: the seated windows no tile above seats (an application
   // opened as a pullout, a launcher, or a project already has its tile).
   const tiledIds = new Set<string>([
@@ -650,51 +542,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             {application.windowId === "intelligence:desk" && sendLabel === "SEND FAILED" ? (
               <span id="desk-dock-send-failed-desc" hidden>Send failed</span>
             ) : null}
-            {application.windowId === "surface-people" && peopleLabel ? (
-              <span className="desk-dock-state" data-testid="desk-dock-people-state">
-                {peopleLabel}
-              </span>
-            ) : null}
-          </Button>
-        );
-      })}
-      {activeProjects.map((project) => {
-        // PHILO-17 U30: the launcher's window is the project's Room, never a drawer.
-        const projectWindow = windows.find(
-          (window) => window.id === "surface-project-memory" &&
-            windowsById["surface-project-memory"]?.scope === `project:${project.id}`,
-        );
-        const count = !offline ? projectCounts[project.id] || 0 : 0;
-        const seated = Boolean(projectWindow && panelMin.includes(projectWindow.id));
-        return (
-          <Button
-            key={`project:${project.id}`}
-            ref={seatRef(projectWindow?.id ?? `project:${project.id}`)}
-            variant="chrome"
-            data-app="project"
-            className={`desk-dock-launch desk-dock-project${projectWindow && !seated ? " is-run" : ""}${seated ? " is-seated" : ""}`}
-            aria-label={(count > 0 ? `${project.name}, ${count} open here` : project.name) + (seated ? ", iconified" : "")}
-            // PHILO-17 U30: the Dock opens a Project's Room (one home; Create
-            // Project opens the Room too). A seated window comes back from its seat.
-            onClick={() => {
-              if (seated && projectWindow) useDesk.getState().restorePanel(projectWindow.id);
-              else openProjectRoom(project.id);
-            }}
-          >
-            {/* C1: a project is a drawer (the Workbench silhouette rule). */}
-            <img src={spriteUrl("directory", project.id)} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
-            <span className="desk-dock-label">{project.name}</span>
-            {seated ? seatLamp : null}
-            {count > 0 ? (
-              <span className="desk-chip desk-dock-badge" data-tone="warn">
-                {count}
-              </span>
-            ) : null}
           </Button>
         );
       })}
       {/* PHILO-16 (A1) §5: a seated window always has a seat. One whose
-          application has no tile here gets its own, after the projects. */}
+          application has no tile here gets its own. */}
       {seatedWithoutTile.map((w) => (
         <SeatTile
           key={`seat:${w.id}`}

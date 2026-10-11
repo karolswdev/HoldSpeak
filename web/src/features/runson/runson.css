@@ -77,3 +77,11 @@
 @container surface (max-width: 719px) {
   .runson-foot .btn { min-height: 44px; }
 }
+
+/* PHILO-17 runsonfoot: an empty foot is a steel strip with nothing on it.
+   On first use Runs on has no egress, no receipt and no verb, and the
+   strip took 36 px from a scrolling body at 393 (it cut "Add an engine"
+   at the scroll edge). The foot shows when it has a word or a verb. */
+.desk-next .desk-surface-foot:has(> .runson-foot > .surface-footer-egress:empty):has(> .runson-foot > .surface-footer-receipt:empty):has(> .runson-foot > .surface-footer-verbs:empty) {
+  display: none;
+}

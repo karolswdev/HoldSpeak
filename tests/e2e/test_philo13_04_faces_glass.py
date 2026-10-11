@@ -187,8 +187,10 @@ class TestFacesDoNotLie:
                 assert "SUMMARY STORED" in badges and "OFF" in badges, badges
                 self._shot(page, "chair-facts", width)
 
-                # Settings: the CONFIGURED switch.
-                self._press(page, page.locator(".desk-dock-launch[aria-label^='Settings']"), width)
+                # Settings: the CONFIGURED switch. PHILO-17 (doors): Settings
+                # opens from the HoldSpeak menu.
+                self._press(page, page.locator(".desk-mark"), width)
+                self._press(page, page.locator("[role^=menuitem]").filter(has=page.locator(".desk-menu-label", has_text=re.compile(r"^Settings$"))).last, width)
                 settings = page.locator(".desk-window[aria-label='Settings']")
                 # 2026-10-03 (inventory A defect 10): with the switch on and no
                 # engine the row names the missing engine, not SET ON.

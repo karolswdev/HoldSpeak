@@ -216,6 +216,13 @@ def _wire_provider(monkeypatch: pytest.MonkeyPatch, engine: Any) -> None:
     )
 
     _assign_deferred_queue_routes(_db())
+    # PHILO-17: "after every meeting" queues a summary at Import by itself.
+    # This walk's meeting station posts the owner's Run press and reads its
+    # outcome, so the setting is OFF here (the automatic path has its own
+    # fences: test_hs201_summary_face_glass, test_hs201_summary_producer_chain).
+    monkeypatch.setattr(
+        "holdspeak.services.meeting_backlog_service._configured_auto_mode", lambda: "off"
+    )
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
     monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
     monkeypatch.setattr(
@@ -349,7 +356,7 @@ def _open_desk_memory(page: Any) -> None:
 def _search_memory(page: Any, query: str) -> None:
     page.get_by_role("searchbox", name="Search the Desk").fill(query)
     page.locator(".desk-surface-window").get_by_role(
-        "button", name="Search desk memory", exact=True,
+        "button", name="Search memory", exact=True,
     ).click()
     page.get_by_test_id("recall-results").wait_for(timeout=10000)
     _settle(page)

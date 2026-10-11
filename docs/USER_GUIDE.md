@@ -1075,7 +1075,7 @@ Editing a past message or regenerating a reply creates a branch.
 Branch controls show the siblings.
 Keep a reply as a Note or an Artifact with its provenance.
 Desk search includes saved Threads.
-A recall in the Desk memory window returns the current decision first, with its rationale and source.
+A recall in the Memory window returns the current decision first, with its rationale and source.
 It lists superseded or disputed versions after it.
 **Carry into brief** queues the current record for the Project's next preparation.
 See [Relationship-aware memory](RELATIONSHIP_AWARE_MEMORY.md).
@@ -1179,7 +1179,7 @@ If the hub was down, it leaves a missed receipt after restart.
 
 ## Project memory
 
-Open **Desk memory** to search connected evidence across the Desk or within a Project.
+Open **Memory** from the **Go** menu to search connected evidence across the Desk or within a Project.
 Intelligence turns each decision from a meeting into a durable record.
 A decision moves through `proposed`, `accepted`, `superseded`, and `deprecated`.
 A decision that replaces another names the one it supersedes.

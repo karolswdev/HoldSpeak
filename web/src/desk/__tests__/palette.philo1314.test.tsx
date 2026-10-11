@@ -85,6 +85,7 @@ beforeEach(() => {
     openToolInspector: vi.fn(),
     diveInto: vi.fn(),
     focusPanel: vi.fn(),
+    restorePanel: vi.fn(),
   });
 });
 
@@ -147,7 +148,8 @@ describe("PHILO-13-14 the palette knows his week", () => {
       await type(input, "send");
       expect(top()).toContain("Send Freeze the old ledger to Team updates");
       fireEvent.keyDown(input, { key: "Enter" });
-      expect(useDesk.getState().focusPanel).toHaveBeenCalledWith("pullout:decision:d-freeze");
+      // An open asks for the front, also from the Dock (PHILO-17 doors).
+      expect(useDesk.getState().restorePanel).toHaveBeenCalledWith("pullout:decision:d-freeze");
       await vi.waitFor(() => expect(pickedDestination("desk_decision:d-freeze")).toBe("chd_f"));
       expect(calls.filter(([m, p]) => m === "POST" && p.startsWith("/api/channels/send"))).toEqual([]);
     } finally {

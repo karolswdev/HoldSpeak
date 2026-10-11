@@ -364,7 +364,8 @@ export const VERBS: Verb[] = [
   {
     id: "desk.open-intelligence",
     label: "Open Intelligence",
-    menu: "desk",
+    // PHILO-17 (doors): one index. Go lists Intelligence; the Desk menu does not.
+    menu: "go",
     scope: "floor",
     group: "view",
     glyph: "◆",
@@ -376,7 +377,7 @@ export const VERBS: Verb[] = [
   {
     id: "desk.open-people",
     label: "Open People",
-    menu: "desk",
+    menu: "go",
     scope: "floor",
     group: "view",
     glyph: "⊕",
@@ -639,7 +640,11 @@ export const VERBS: Verb[] = [
     return {
       id: `go.${tool.action}`,
       label: tool.label,
-      menu: "go",
+      // PHILO-17 (doors): only an application with a Go row is in Go; the
+      // rest (Settings, Runs on, Connections, Setup, Change places) keep
+      // their verb for ⌘K, the keys and the HoldSpeak menu.
+      ...(application?.go ? { menu: "go" as const } : {}),
+      ...(application?.go?.section === "tools" ? { submenu: "Tools" } : {}),
       scope: "go",
       group: tool.group,
       glyph: tool.glyph,

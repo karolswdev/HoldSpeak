@@ -59,7 +59,7 @@ READERS = r"""() => {
   const head = document.querySelector('[data-testid=arrival-display]');
   const bell = document.querySelector('.desk-bell strong');
   const intel = document.querySelector('.desk-dock [aria-label^="Intelligence"] .desk-dock-badge');
-  const memory = document.querySelector('.desk-dock [aria-label^="Desk memory"] .desk-dock-badge');
+  const memory = document.querySelector('.desk-dock [aria-label^="Missed"] .desk-dock-badge');
   return { said, head: head ? head.innerText : null, head_n: num(head), bell: num(bell),
            intel: num(intel), memory: memory ? num(memory) : null };
 }"""

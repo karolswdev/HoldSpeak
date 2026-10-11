@@ -64,6 +64,17 @@
 }
 /* B30 (Astra r1): a label set by fitName (DeskIcon) carries its own line
    breaks and already fits the clamp; nothing it holds is hidden. */
+/* PHILO-17 (doors): one short line under the name (the People drawer's next
+   1:1): the Dock's state tag, ink on paper, one line. */
+.desk-icon-caption {
+  margin-top: 2px;
+  padding: 0 4px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  font: 700 var(--font-size-xs) / 16px var(--font-mono);
+  white-space: nowrap;
+}
 .desk-icon-name[data-fitted] {
   white-space: pre-line;
 }

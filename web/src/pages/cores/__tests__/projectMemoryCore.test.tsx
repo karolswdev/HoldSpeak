@@ -295,7 +295,7 @@ describe("Project Memory", () => {
         target: { value: "zephyr" },
       },
     );
-    fireEvent.click(screen.getByRole("button", { name: "Search desk memory" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
 
     expect(await screen.findByText("Rollout checklist")).toBeTruthy();
     expect(screen.getByText("Owners").tagName).toBe("MARK");
@@ -334,7 +334,7 @@ describe("Project Memory", () => {
     render(<ProjectMemoryCore />);
     const input = screen.getByRole("searchbox", { name: "Search the Desk" });
     fireEvent.change(input, { target: { value: "connected evidence" } });
-    fireEvent.click(screen.getByRole("button", { name: "Search desk memory" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
 
     await waitFor(() =>
       expect(apiFetch).toHaveBeenCalledWith(

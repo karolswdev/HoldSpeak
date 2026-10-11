@@ -83,14 +83,14 @@ describe("a window that shows one record of a program", () => {
   const project = { kind: "project", id: "p-ledger", name: "Payments ledger cutover" };
 
   it("a Project Room is named by its project; Desk memory with no project keeps its word", async () => {
-    const row: SurfaceRow = { key: "open-project-memory", id: "surface-project-memory", title: "Desk memory", glyph: "▤", eyebrow: "", Core: core(() => <p>room</p>) };
+    const row: SurfaceRow = { key: "open-project-memory", id: "surface-project-memory", title: "Memory", glyph: "▤", eyebrow: "", Core: core(() => <p>room</p>) };
     const items = { ...EMPTY_ITEMS, project: [project] } as typeof EMPTY_ITEMS;
     const { rerender } = render(<SurfaceWindowHost row={row} scope="project:p-ledger" items={items} />);
     await screen.findByText("room");
     expect(registrySnapshot.find((w) => w.id === "surface-project-memory")?.label).toBe("Payments ledger cutover");
     expect(screen.getByRole("region", { name: "Payments ledger cutover" })).toBeTruthy();
     rerender(<SurfaceWindowHost row={row} scope={undefined} items={items} />);
-    await waitFor(() => expect(registrySnapshot.find((w) => w.id === "surface-project-memory")?.label).toBe("Desk memory"));
+    await waitFor(() => expect(registrySnapshot.find((w) => w.id === "surface-project-memory")?.label).toBe("Memory"));
   });
 
   it("People custody: a person's name is never a window name; the People window stays `People`", async () => {

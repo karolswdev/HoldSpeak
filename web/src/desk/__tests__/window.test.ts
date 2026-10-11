@@ -57,6 +57,25 @@ describe("desk windows", () => {
     expect(useDesk.getState().panelOrder).toEqual(["pullout", "ask"]);
   });
 
+  // PHILO-17 (doors, Astra r2): at 393 a Chair window hides the window in
+  // front (minimize); opening that app again must show it, not only raise it.
+  it("an open shows a hidden (iconified) window and puts it in front", () => {
+    useDesk.getState().openAsk();
+    useDesk.getState().focusPanel("pullout");
+    useDesk.getState().minimizePanel("ask");
+    useDesk.getState().openAsk();
+    expect(useDesk.getState().panelMin).not.toContain("ask");
+    expect(useDesk.getState().panelOrder.at(-1)).toBe("ask");
+    for (const [open, id] of [
+      [() => useDesk.getState().openChat("p1"), "chat"],
+      [() => useDesk.getState().openToolInspector("project", "r1"), "inspector"],
+    ] as const) {
+      useDesk.getState().minimizePanel(id);
+      open();
+      expect(useDesk.getState().panelMin, id).not.toContain(id);
+    }
+  });
+
   // PHILO-13-07 (B2) supersedes HS-97-03's session-only minimize: a
   // minimized window comes back minimized after a reload.
   it("the stacking order persists; so does minimize (PHILO-13-07 B2)", () => {

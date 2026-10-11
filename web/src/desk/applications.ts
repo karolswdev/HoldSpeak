@@ -37,8 +37,13 @@ export interface DeskApplication {
   surface?: DeskSurfaceSpec;
   aliases?: readonly DeskApplicationAlias[];
   dock?: { order: number; launch: "surface" | "intelligence" };
+  /** PHILO-17 (doors): the row in the menu bar's Go. `app` rows lead Go in
+   * `order`; `tools` rows ride Go ▸ Tools. No `go`: not in Go (the palette
+   * still finds a grouped application). */
+  go?: { order: number; section: "app" | "tools" };
   shortcut?: string;
-  mark?: boolean;
+  /** PHILO-17 (doors): the row in the HoldSpeak menu, in this order. */
+  mark?: number;
   toolLabel?: string;
   toolGlyph?: string;
 }
@@ -72,7 +77,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "◈",
     href: "/",
     dock: { order: 0, launch: "intelligence" },
-    mark: true,
+    go: { order: 3, section: "app" },
   },
   {
     action: "dictate",
@@ -83,8 +88,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/dictation",
     group: "app",
     dock: { order: 1, launch: "surface" },
+    go: { order: 1, section: "app" },
     shortcut: "⌃1",
-    mark: true,
     surface: {
       eyebrow: "Daily cockpit",
       minW: 560,
@@ -103,6 +108,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "✦",
     href: "/ask",
     group: "app",
+    go: { order: 4, section: "app" },
   },
   {
     action: "review-meetings",
@@ -113,8 +119,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/history",
     group: "app",
     dock: { order: 2, launch: "surface" },
+    go: { order: 2, section: "app" },
     shortcut: "⌃2",
-    mark: true,
     surface: {
       eyebrow: "Meeting memory",
       minW: 640,
@@ -141,9 +147,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "◉",
     href: "/conductor",
     group: "tool",
-    dock: { order: 3, launch: "surface" },
+    // PHILO-17 (doors): the Conductor's door is its desk drawer and Go.
+    go: { order: 6, section: "app" },
     shortcut: "⌃3",
-    mark: true,
   },
   // PARKED (PHILO-14 C4): the old Agents application. It folded into the
   // Conductor drawer; its route `/companion` stays alive, but it is in no
@@ -173,9 +179,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "⚙",
     href: "/settings",
     group: "app",
-    dock: { order: 4, launch: "surface" },
+    // PHILO-17 (doors): Settings is in the HoldSpeak menu only.
     shortcut: "⌃4",
-    mark: true,
+    mark: 1,
     aliases: [
       { key: "configure-integrations", scope: "integration:destinations" },
       { key: "configure-integration" },
@@ -217,6 +223,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "◷",
     href: "/cadence",
     group: "tool",
+    go: { order: 4, section: "tools" },
     surface: {
       eyebrow: "Follow-through",
       minW: 520,
@@ -243,9 +250,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "What this device is ready for, check by check.",
     glyph: "⚙",
     href: "/",
-    // A tool, not one of the four dock primaries: it reaches Go and ⌘K in
-    // the tool cluster and takes no dock seat.
+    // A tool, not a dock primary. PHILO-17 (doors): its door is the
+    // HoldSpeak menu; ⌘K still finds it.
     group: "tool",
+    mark: 4,
     surface: {
       eyebrow: "Readiness",
       minW: 560,
@@ -264,6 +272,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "§",
     href: "/context",
     group: "tool",
+    go: { order: 6, section: "tools" },
     surface: {
       eyebrow: "Owner",
       minW: 480,
@@ -281,6 +290,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "⚒",
     href: "/workbenches",
     group: "tool",
+    go: { order: 1, section: "tools" },
     surface: {
       eyebrow: "Work",
       minW: 560,
@@ -315,6 +325,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "⊙",
     href: "/activity",
     group: "tool",
+    go: { order: 2, section: "tools" },
     surface: {
       eyebrow: "This-device context",
       minW: 480,
@@ -327,11 +338,13 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-project-memory",
     windowId: "surface-project-memory",
-    label: "Desk memory",
+    // PHILO-17 (doors): one name. The Dock's Missed list is a different thing.
+    label: "Memory",
     description: "Search connected evidence across the Desk or within a Project.",
     glyph: "▤",
     href: "/project-memory",
     group: "tool",
+    go: { order: 7, section: "app" },
     surface: {
       eyebrow: "Long memory",
       minW: 800,
@@ -395,6 +408,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "∷",
     href: "/#processes",
     group: "tool",
+    go: { order: 3, section: "tools" },
     surface: {
       eyebrow: "Kernel",
       minW: 520,
@@ -412,6 +426,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "⌘",
     href: "/commands",
     group: "tool",
+    go: { order: 5, section: "tools" },
     surface: {
       eyebrow: "Voice commands",
       minW: 460,
@@ -428,7 +443,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Relationships, commitments, and follow-through.",
     glyph: "♧",
     href: "/",
-    mark: true,
+    // PHILO-17 (doors): the People drawer on the desk, and Go.
+    go: { order: 5, section: "app" },
     surface: {
       eyebrow: "Follow-through",
       minW: 560,
@@ -463,6 +479,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "▣",
     href: "/models",
     group: "tool",
+    mark: 2,
   },
   {
     action: "configure-integrations",
@@ -472,6 +489,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "↗",
     href: "/settings",
     group: "tool",
+    mark: 3,
     subjectRef: "integration:destinations",
   },
 ] as const;
@@ -492,13 +510,31 @@ export const DOCK_APPLICATIONS: readonly DockApplication[] =
     (application): application is DockApplication => Boolean(application.dock),
   ).sort((left, right) => left.dock.order - right.dock.order);
 
-export const MARK_APPLICATION_COMMANDS = DESK_APPLICATIONS.filter(
-  (application) => application.mark,
-).map((application) =>
-  application.action === "open-intelligence" || application.action === "open-people"
+/** The registry verb that opens an application: Intelligence and People
+ * open through their desk verbs, every other application through `go.*`. */
+export function applicationVerbId(application: DeskApplication): string {
+  return application.action === "open-intelligence" || application.action === "open-people"
     ? `desk.${application.action}`
-    : `go.${application.action}`,
-);
+    : `go.${application.action}`;
+}
+
+/** PHILO-17 (doors): the HoldSpeak menu holds the setup applications only:
+ * Settings, Runs on, Connections, Setup. */
+export const MARK_APPLICATION_COMMANDS = DESK_APPLICATIONS.filter(
+  (application) => application.mark !== undefined,
+)
+  .sort((left, right) => (left.mark ?? 0) - (right.mark ?? 0))
+  .map(applicationVerbId);
+
+function goRows(section: "app" | "tools"): readonly DeskApplication[] {
+  return DESK_APPLICATIONS.filter((application) => application.go?.section === section)
+    .sort((left, right) => (left.go?.order ?? 0) - (right.go?.order ?? 0));
+}
+
+/** PHILO-17 (doors): Go is the index of the applications. Its lead rows,
+ * in order; then Projects ▸; then Tools ▸ with `GO_TOOL_APPLICATIONS`. */
+export const GO_APPLICATIONS = goRows("app");
+export const GO_TOOL_APPLICATIONS = goRows("tools");
 
 export const DESK_APPLICATION_ALIASES = Object.fromEntries(
   DESK_APPLICATIONS.flatMap((application) =>
