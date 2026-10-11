@@ -191,7 +191,9 @@ export function useProjectRoomController(
     } catch {
       // Non-fatal: the face renders without proposals/suggestions/nudges
     } finally {
-      if (!quiet && !stale()) setExtrasStatus("ready");
+      // Any load's phase 3 that ends answers the first read: a quiet
+      // re-read (desk_changed) that overtakes the first load ends it too.
+      setExtrasStatus("ready");
     }
   };
 
