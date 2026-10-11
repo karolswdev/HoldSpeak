@@ -156,7 +156,8 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   other").** Every pytest, vitest, glass_for and graph-walk run, in every lane
   and the orchestrator's FAST alike, goes through the lock:
   `uv run python scripts/test_lock.py -- <command>`. It waits for the previous
-  run to finish, then runs yours. Under the lock use `-n 4`, not `-n auto`.
+  run to finish, then runs yours. Under the lock use `-n 8` (measured 2026-10-11: the
+  whole browser suite 30 min at `-n 4`, 16.5 min at `-n 8`; FAST 11 → 6.5 min), not `-n auto`.
   A worker never runs FAST; a worker waits for the lock rather than running
   a smaller suite in parallel. Load above 60 means someone skipped the lock.
 
@@ -171,6 +172,27 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   that wants a wider run says so in its report. A new worktree is synced with
   `uv sync --extra dev` ONLY: `--all-extras` exhausts an xdist worker's file
   descriptors seven minutes into FAST, and plain `uv sync` strips pytest.
+
+- **THE TEST DIET (owner approval 2026-10-11: "each time we run a test suite it
+  fucking takes hours … didn't we just build out a declarative compositor framework
+  … programmatic e2e … without relying much (or at all) on playwright?" → "I do like
+  your plan, and approve you immediately working on it").** A new check goes to the
+  CHEAPEST tier that honestly proves it, grouped BY APP, never by phase:
+  T1 a hub test (`tests/unit|integration/test_desk_<app>.py`; window behaviour
+  against `/api/desk/windows`); T2 vitest, one file per app
+  (`web/src/**/__tests__/<app>.app.test.tsx`); T3 the generic desk sweep
+  (`tests/e2e/test_desk_sweep.py`: every app in `applications.ts`, every wing, the
+  palette, `chair:needs` and every page route at 1440 and 393; fit, visible,
+  console, readable, contrast, 12 px, clipped, overlap, library Button, material,
+  still, egress); T4 a real browser only for drag, focus, keys, touch, hover,
+  multi-browser, clipboard or an exact geometry relation. No new phase-named
+  browser file. Test doubles replay RECORDED REAL hub answers
+  (`scripts/record_needs_you_fixture.py`, `web/src/test/recordedHub.ts`,
+  `HOLDSPEAK_WIRE_WRITE`), never typed ones, and drive a press through to the
+  RENDERED outcome. The sweep's `KNOWN_REDS` name single defects (strict: a heal
+  fails until the entry is removed). Retired browser files are parked in
+  `tests/e2e/_parked/` (not collected), never deleted. Run vitest from `web/`
+  with `./node_modules/.bin/vitest`.
 
 Run the relevant tests with these commands and read the output before
 you open the PR. Type-check is not validation.
