@@ -53,6 +53,10 @@ function open() {
 
 beforeEach(seed);
 
+/** PHILO-17 (palette-rank): the list draws once its ranking inputs (the
+ *  needs-you and people reads) resolve, or at its cap. */
+const drawn = () => screen.findByRole("listbox", {}, { timeout: 2000 });
+
 describe("ranking", () => {
   it("scores exact, prefix, word-boundary, and ordered fuzzy matches", () => {
     expect(fuzzyScore("meetings", "Meetings")).toBe(100);
@@ -69,9 +73,10 @@ describe("ranking", () => {
 });
 
 describe("the deck", () => {
-  it("Enter runs the TOP hit — the palette dead-end is gone", () => {
+  it("Enter runs the TOP hit — the palette dead-end is gone", async () => {
     const deck = open();
     fireEvent.change(deck, { target: { value: "meet the team" } });
+    await drawn();
     // The top hit is the prefix match on the note's title.
     const top = screen.getByRole("option", { name: /Meet the team/ });
     expect(top.className).toContain("is-selected");
@@ -83,9 +88,10 @@ describe("the deck", () => {
     ).toContain("note:n1");
   });
 
-  it("ArrowDown moves the selection index; Enter runs the moved hit", () => {
+  it("ArrowDown moves the selection index; Enter runs the moved hit", async () => {
     const deck = open();
     fireEvent.change(deck, { target: { value: "met" } });
+    await drawn();
     const first = screen.getByRole("option", { selected: true }).id;
     fireEvent.keyDown(deck, { key: "ArrowDown" });
     const moved = screen.getByRole("option", { selected: true }).id;
@@ -98,9 +104,10 @@ describe("the deck", () => {
       .toContain(moved.replace("desk-palette-option-", ""));
   });
 
-  it("meetings sit in their own MEETINGS band", () => {
+  it("meetings sit in their own MEETINGS band", async () => {
     const deck = open();
     fireEvent.change(deck, { target: { value: "launch" } });
+    await drawn();
     expect(screen.getByText("MEETINGS")).toBeInTheDocument();
     expect(
       screen.getByRole("option", { name: /Meeting: launch/ }),
@@ -116,8 +123,9 @@ describe("the deck", () => {
     expect(usePalette.getState().open).toBe(false);
   });
 
-  it("the empty deck lists every program (the launcher truth)", () => {
+  it("the empty deck lists every program (the launcher truth)", async () => {
     open();
+    await drawn();
     expect(screen.getByText("PROGRAMS")).toBeInTheDocument();
     expect(
       screen.getByRole("option", { name: /Workbenches/ }),

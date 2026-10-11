@@ -275,6 +275,9 @@ export function stableDeck<T extends { id: string }>(
 
 /* ── MEMORY: content search (inventory gap 9) ── */
 export const MEMORY_MIN_QUERY = 3;
+/** PHILO-17 (palette-rank): the longest the list waits for its ranking
+ *  inputs before it draws unranked. */
+export const PALETTE_RANK_CAP_MS = 600;
 export const MEMORY_DEBOUNCE_MS = 250;
 const MEMORY_ROWS = 6;
 
@@ -350,7 +353,7 @@ export function DeskToolShelf() {
   // repair token instead of a silent zero — no fake all-clear on the deck.
   const [projectCoverage, setProjectCoverage] = useState<Record<string, string>>({});
   const readNeedsYou = useCallback(() => {
-    void apiFetch<{
+    return apiFetch<{
       items?: Array<{ projectId?: string; muted?: boolean; waiting?: boolean }>;
       /** The hub's members by Project: a project badge ("N OPEN"). */
       projectCounts?: Record<string, number>;
@@ -372,9 +375,25 @@ export function DeskToolShelf() {
       })
       .catch(() => null);
   }, []);
+  // PHILO-17 (palette-rank): the rows rank on the needs-you counts and the
+  // people read; the list is not drawn until both have resolved (read or
+  // failed), or PALETTE_RANK_CAP_MS has passed (then it draws unranked).
+  // Once drawn, its rows hold their places (stableDeck).
+  const [rankInputs, setRankInputs] = useState({ needs: false, people: false, capped: false });
   useEffect(() => {
-    if (open) readNeedsYou();
+    if (!open) return;
+    setRankInputs({ needs: false, people: false, capped: false });
+    setPendingEnter(false);
+    let live = true;
+    void readNeedsYou().finally(() => { if (live) setRankInputs((now) => ({ ...now, needs: true })); });
+    const cap = window.setTimeout(() => setRankInputs((now) => ({ ...now, capped: true })), PALETTE_RANK_CAP_MS);
+    return () => { live = false; window.clearTimeout(cap); };
   }, [open, readNeedsYou]);
+  const ranked = rankInputs.capped || (rankInputs.needs && rankInputs.people);
+  // Astra on #1097: an Enter pressed while the list waits is remembered and
+  // runs once, on the ranked first row, when the list draws (at most the
+  // cap). More typing, Escape or a closed deck forgets it.
+  const [pendingEnter, setPendingEnter] = useState(false);
   useOnDeskChanged(readNeedsYou);
 
   useEffect(() => {
@@ -385,6 +404,7 @@ export function DeskToolShelf() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
+      setPendingEnter(false);
       setQuery("");
       usePalette.getState().setOpen(false);
       launchRef.current?.focus();
@@ -415,7 +435,8 @@ export function DeskToolShelf() {
           return [{ id, name, kind: String(r.relationship_kind ?? ""), aliases, role: String(r.role_context ?? "") }];
         }));
       })
-      .catch(() => { if (live) setPeople([]); });
+      .catch(() => { if (live) setPeople([]); })
+      .finally(() => { if (live) setRankInputs((now) => ({ ...now, people: true })); });
     primeSendTo(frontId);
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -431,7 +452,10 @@ export function DeskToolShelf() {
   // it); an unmounting shelf never leaves it stranded open.
   useEffect(() => () => usePalette.getState().setOpen(false), []);
 
-  useEffect(() => setSel(0), [query]);
+  useEffect(() => {
+    setSel(0);
+    setPendingEnter(false);
+  }, [query]);
 
   useEffect(() => {
     if (!open) return;
@@ -813,14 +837,15 @@ export function DeskToolShelf() {
 
   // PHILO-17 (phonepass): the rows drawn for this query (and this opening)
   // hold their places while reads land; see stableDeck.
-  const drawnRef = useRef<{ query: string; open: boolean; ids: string[] }>({ query: "", open: false, ids: [] });
+  // Nothing counts as drawn before the ranking inputs resolve.
+  const drawnRef = useRef<{ query: string; open: boolean; ids: string[] | null }>({ query: "", open: false, ids: null });
   const rows: DeckRow[] = useMemo(() => {
     const drawn = drawnRef.current;
-    const same = drawn.open === open && drawn.query === normalized && !prompt;
+    const same = ranked && drawn.ids !== null && drawn.open === open && drawn.query === normalized && !prompt;
     const next = stableDeck(same ? drawn.ids : null, [...localRows, ...memoryRows], [...localCapped, ...memoryRows]);
-    drawnRef.current = { query: normalized, open, ids: next.map((r) => r.id) };
+    drawnRef.current = { query: normalized, open, ids: ranked ? next.map((r) => r.id) : null };
     return next;
-  }, [localRows, localCapped, memoryRows, normalized, open, prompt]);
+  }, [localRows, localCapped, memoryRows, normalized, open, prompt, ranked]);
 
   // The runnable list the selection index walks (ghosts stay visible
   // but are never selected, never run).
@@ -845,10 +870,19 @@ export function DeskToolShelf() {
     row.run();
   };
 
+  // The remembered Enter runs on the first ranked drawing.
+  useEffect(() => {
+    if (!pendingEnter || !ranked || !open || prompt) return;
+    setPendingEnter(false);
+    if (selected) runRow(selected);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingEnter, ranked, open, prompt]);
+
   const onDeckKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
-      if (!runnable.length) return;
+      // While the list waits for its ranking, there is nothing to move to.
+      if (!ranked || !runnable.length) return;
       setSel((now) => {
         const at = Math.min(now, runnable.length - 1);
         return event.key === "ArrowDown"
@@ -859,6 +893,7 @@ export function DeskToolShelf() {
       // Enter ALWAYS runs the selected hit - the top hit by default.
       event.preventDefault();
       if (prompt) submitName();
+      else if (!ranked) setPendingEnter(true);
       else if (selected) runRow(selected);
     }
   };
@@ -926,7 +961,7 @@ export function DeskToolShelf() {
                     Save
                   </Button>
                 </div>
-              ) : rows.length ? (
+              ) : !ranked ? null : rows.length ? (
                 <ul
                   id="desk-palette-listbox"
                   className="desk-deck-list"
