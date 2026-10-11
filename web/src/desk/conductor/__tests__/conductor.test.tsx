@@ -498,21 +498,42 @@ describe("Phase 16 the Conductor on the interior kit", () => {
 });
 
 // PHILO-17 (mainreds3): a seat remembered from another view (the workspace
-// keeps `min`) must not swallow a fresh open: the Conductor opens on glass.
+// keeps `min`) must not swallow a deliberate open: the Conductor opens on
+// glass, in front of the other windows.
 describe("opening the Conductor shows it", () => {
+  const front = () => {
+    const d = useDesk.getState().panelDepth;
+    return Object.keys(d).sort((a, b) => d[a] - d[b]).at(-1);
+  };
+
   it("a fresh open clears a remembered seat and fronts the window", async () => {
     __resetConductor();
-    useDesk.setState({ panelMin: ["conductor"] });
+    useDesk.setState({ panelMin: ["conductor"], panelDepth: { conductor: 1, "surface-meetings": 2 } });
     useConductor.getState().openWindow();
     expect(useConductor.getState().open).toBe(true);
     await waitFor(() => expect(useDesk.getState().panelMin).not.toContain("conductor"));
+    expect(front()).toBe("conductor");
   });
 
-  it("an open Conductor that is seated comes back", async () => {
+  it("an open Conductor that is seated comes back in front", async () => {
     __resetConductor();
+    useDesk.setState({ panelMin: [], panelDepth: { "surface-meetings": 1 } });
     useConductor.getState().openWindow();
-    useDesk.setState({ panelMin: ["conductor"] });
+    // The first open's restore has landed before the seat is set.
+    await waitFor(() => expect(front()).toBe("conductor"));
+    useDesk.setState({ panelMin: ["conductor"], panelDepth: { conductor: 1, "surface-meetings": 2 } });
     useConductor.getState().openWindow();
     await waitFor(() => expect(useDesk.getState().panelMin).not.toContain("conductor"));
+    expect(front()).toBe("conductor");
+  });
+
+  it("a hub open (showFromHub) keeps the seat and does not raise", async () => {
+    __resetConductor();
+    useDesk.setState({ panelMin: ["conductor"], panelDepth: { conductor: 1, "surface-meetings": 2 } });
+    useConductor.getState().showFromHub();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(useConductor.getState().open).toBe(true);
+    expect(useDesk.getState().panelMin).toContain("conductor");
+    expect(front()).toBe("surface-meetings");
   });
 });

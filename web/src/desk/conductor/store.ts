@@ -54,6 +54,9 @@ interface ConductorState {
   /** PHILO-15 B35: the last install the hub did, and when (hh:mm). */
   installDone: { agent: AgentId; at: string } | null;
   openWindow(origin?: { x: number; y: number } | null): void;
+  /** The hub says the Conductor is open (hydration, replay): mount it and
+   *  keep the hub's seat and depth. No gesture, so no raise. */
+  showFromHub(): void;
   closeWindow(): void;
   openInfo(member: ConductorMember): void;
   closeInfo(ref: string): void;
@@ -89,11 +92,12 @@ export const useConductor = create<ConductorState>((set, get) => ({
     set({ stops: next });
   },
   openWindow(origin = null) {
-    // An open asks for the front, also from the Dock: restore = show + raise.
-    // PHILO-17 (mainreds3): this holds when the window is not mounted too.
-    // A seat remembered from another view or an older load (the workspace
-    // keeps `min`) otherwise opened the Conductor straight into its seat:
-    // mounted state on, nothing on glass.
+    // A deliberate open (Go, the drawer, /conductor) asks for the front, also
+    // from the Dock: restore = show + raise. PHILO-17 (mainreds3): this holds
+    // when the window is not mounted too. A seat remembered from another view
+    // or an older load (the workspace keeps `min`) otherwise opened the
+    // Conductor straight into its seat: mounted state on, nothing on glass.
+    // The hub's own replay uses showFromHub, which keeps the hub's seat.
     const front = () =>
       void import("../store").then((m) => m.useDesk.getState().restorePanel(CONDUCTOR_WINDOW_ID));
     if (get().open) {
@@ -102,6 +106,9 @@ export const useConductor = create<ConductorState>((set, get) => ({
     }
     set({ open: true, origin });
     front();
+  },
+  showFromHub() {
+    if (!get().open) set({ open: true });
   },
   closeWindow() {
     set({ open: false, infos: [] });

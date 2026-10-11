@@ -10,9 +10,9 @@ written through the product's producers. The agent's words are the owner's
 shot, word for word (`evidence/hub-lane.json`, events[7].text); the SENT line
 is the hub's real 120-character head of the pi brief (the steering audit).
 The test reads the ask well, the rail and the Needs ASKS row for marks left
-as text, and shoots them at 1440 and 393 to
-`docs/internal/philo/phase-16/02-shots/` when `HOLDSPEAK_P16_SHOTS=1` (else
-to `.tmp/evidence-shots/p16-agent-words/`).
+as text, and shoots them at 1440 and 393 through `tests/_evidence.py`:
+`.tmp/evidence-shots/docs/internal/philo/phase-16/02-shots/`, or the tracked
+`docs/internal/philo/phase-16/02-shots/` when `HOLDSPEAK_EVIDENCE_WRITE=1`.
 """
 from __future__ import annotations
 

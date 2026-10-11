@@ -82,44 +82,106 @@ def test_no_test_writes_into_tracked_evidence() -> None:
     )
 
 
-def _shots_dirs_outside_evidence(tree: ast.Module) -> list[int]:
-    """PHILO-17 (mainreds3): a module-level shots directory (a name with
-    SHOT in it) that spells a tracked tree (pm/roadmap or docs/internal,
-    also in parts) without evidence_dir(). Phase shots under docs/internal
-    were rewritten by every run, and `"pm" / "roadmap"` slipped past the
-    fence above."""
-    lines = []
-    for stmt in ast.walk(tree):
-        if not isinstance(stmt, ast.Assign) or not any(
-            isinstance(t, ast.Name) and "SHOT" in t.id.upper() for t in stmt.targets
-        ):
-            continue
-        if isinstance(stmt.value, ast.Call) and getattr(stmt.value.func, "id", "") == "evidence_dir":
-            continue
-        parts = "/".join(
-            n.value for n in _div_operands(stmt.value) if isinstance(n, ast.Constant) and isinstance(n.value, str)
-        )
-        if "pm/roadmap" in parts or "docs/internal" in parts:
-            lines.append(stmt.lineno)
-    return lines
+def _tracked_path(value: ast.AST | None) -> bool:
+    """A path expression that spells pm/roadmap or docs/internal (also in
+    parts, `"pm" / "roadmap"`), not through evidence_dir()."""
+    if value is None:
+        return False
+    if isinstance(value, ast.Call) and getattr(value.func, "id", "") == "evidence_dir":
+        return False
+    ops = _div_operands(value)
+    # Anchored at the repository (`Path(__file__)...`, the module constant
+    # `REPO` / `ROOT`, upper case): a
+    # `tmp_path / "pm" / "roadmap"` fixture tree is not the tracked tree.
+    root = {n.id for n in ast.walk(ops[0]) if isinstance(n, ast.Name)}
+    if not (root & {"__file__"} or any(r.strip("_") in {"REPO", "ROOT", "REPO_ROOT"} for r in root)):
+        return False
+    parts = "/".join(n.value for n in ops if isinstance(n, ast.Constant) and isinstance(n.value, str))
+    return any(t in parts for t in ("pm/roadmap", "docs/internal"))
 
 
-def test_no_shots_dir_writes_into_tracked_trees() -> None:
+def _names(node: ast.AST | None) -> set[str]:
+    return {n.id for n in ast.walk(node) if isinstance(n, ast.Name)} if node is not None else set()
+
+
+WRITE_METHODS = {"mkdir", "write_text", "write_bytes", "touch"}
+
+
+def _tracked_writes(tree: ast.Module) -> list[int]:
+    """PHILO-17 (mainreds3): a name bound to a tracked path (`=` or an
+    annotated `X: Path = ...`) outside evidence_dir() that is later WRITTEN
+    through: `.mkdir()`, `.write_text()`, `.write_bytes()`, `.touch()`,
+    `screenshot(path=...)`, `open(..., "w"|"a")`, `shutil.copy*(..., dst)`.
+    A name that is only read (an atlas, a schema) is not a writer."""
+    bound: dict[str, int] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and _tracked_path(node.value):
+            for t in node.targets:
+                if isinstance(t, ast.Name):
+                    bound.setdefault(t.id, node.lineno)
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and _tracked_path(node.value):
+            bound.setdefault(node.target.id, node.lineno)
+    if not bound:
+        return []
+    hits: set[int] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        used: set[str] = set()
+        if isinstance(func, ast.Attribute) and func.attr in WRITE_METHODS:
+            used = _names(func.value)
+        elif isinstance(func, ast.Attribute) and func.attr == "screenshot":
+            used = set().union(*(_names(k.value) for k in node.keywords if k.arg == "path")) if node.keywords else set()
+        elif isinstance(func, ast.Name) and func.id == "open" and node.args:
+            mode = node.args[1] if len(node.args) > 1 else next((k.value for k in node.keywords if k.arg == "mode"), None)
+            if isinstance(mode, ast.Constant) and isinstance(mode.value, str) and any(c in mode.value for c in "wa"):
+                used = _names(node.args[0])
+        elif isinstance(func, ast.Attribute) and func.attr.startswith("copy") and len(node.args) > 1:
+            used = _names(node.args[1])
+        for name in used & set(bound):
+            hits.add(bound[name])
+    return sorted(hits)
+
+
+def test_no_writes_through_a_tracked_path_outside_evidence_dir() -> None:
     offenders = []
     for path in sorted(TESTS.rglob("*.py")):
         rel = path.relative_to(REPO).as_posix()
         if rel in ALLOWLIST or rel.startswith(("tests/_parked/", "tests/e2e/_parked/")):
             continue
         source = path.read_text(encoding="utf-8")
-        if "SHOT" not in source.upper():
+        if not any(t in source for t in ('"docs"', "docs/internal", '"pm"', "pm/roadmap")):
             continue
-        lines = _shots_dirs_outside_evidence(ast.parse(source, filename=rel))
+        lines = _tracked_writes(ast.parse(source, filename=rel))
         if lines:
             offenders.append(f"{rel}:{lines[0]}")
     assert not offenders, (
-        f"EVIDENCE-WRITE: {len(offenders)} shots dir(s) point into pm/roadmap or docs/internal; "
+        f"EVIDENCE-WRITE: {len(offenders)} test file(s) write through a pm/roadmap or docs/internal path; "
         "use tests._evidence.evidence_dir(\"<rel>\"):\n  " + "\n  ".join(offenders)
     )
+
+
+# Calibration (Astra r1 on #1087): the three former writers, an evidence_dir
+# use, and readers.
+CALIBRATION = {
+    "philo15_20 (was)": ('SHOTS = Path(__file__).resolve().parents[2] / "docs" / "internal" / "philo" / "phase-15" / "20-shots"\n'
+                         'def t(page):\n    page.screenshot(path=str(SHOTS / "a.png"))\n', True),
+    "hs143 (was)": ('SHOTS = REPO / "pm" / "roadmap" / "holdspeak" / "x" / "story-12-shots"\n'
+                    'def t(page):\n    SHOTS.mkdir(parents=True, exist_ok=True)\n', True),
+    "phase16 (was, annotated)": ('SHOTS: Path = Path(__file__).resolve().parents[2] / "docs" / "internal" / "philo" / "phase-16" / "02-shots"\n'
+                                 'SHOTS.mkdir(parents=True, exist_ok=True)\n', True),
+    "open for write": ('OUT = REPO / "docs/internal/x.json"\nwith open(OUT, "w") as f:\n    f.write("x")\n', True),
+    "evidence_dir": ('SHOTS = evidence_dir("docs/internal/philo/phase-15/20-shots")\n'
+                     'def t(page):\n    page.screenshot(path=str(SHOTS / "a.png"))\n', False),
+    "reader": ('ATLAS = REPO / "docs/internal/philo/graph/atlas.json"\n'
+               'data = json.loads(ATLAS.read_text())\nopen(ATLAS).read()\n', False),
+}
+
+
+def test_the_write_fence_is_calibrated() -> None:
+    for name, (source, flagged) in CALIBRATION.items():
+        assert bool(_tracked_writes(ast.parse(source))) is flagged, name
 
 
 def test_allowlist_files_exist() -> None:
