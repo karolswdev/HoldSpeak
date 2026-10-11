@@ -1118,6 +1118,72 @@ class TestEvaluateOnce:
         assert svc.evaluate_once(OWNER, "watch-everr2")["state"] == "no_op"
         assert db.automations.get_watch("watch-everr2")["last_error"] is None
 
+    @pytest.mark.parametrize("verb", ["evaluate_once", "baseline_watch"])
+    def test_a_stored_error_holds_no_credential(self, tmp_path, verb) -> None:
+        """Astra r1 (1): gh stderr that carries credentials, through the real
+        GitHub adapter. ``last_error`` keeps the cause and loses every secret."""
+        import subprocess
+
+        from holdspeak.services.watch_sources import fetch_watch_snapshot
+
+        stderr = "\n".join([
+            "To get started with GitHub CLI, please run:  gh auth login",
+            "token ghp_AAAAbbbbCCCCddddEEEEffffGGGGhhhh1234",
+            "Authorization: token gho_ZZZZyyyyXXXXwwww9876543210",
+            "Authorization: Basic dXNlcjpodW50ZXIycGFzcw==",
+            "fetch https://octo:hunter2pass@github.com/acme/app.git",
+            "GET https://api.github.com/x?token=qwertyuiop123&a=1",
+            "api_key=AKfake1234567890",
+            "acli ATATT3xFfGF0abcdefghijklmnopqrstuvwxyz0123456789",
+        ])
+        secrets = ["ghp_AAAA", "gho_ZZZZ", "dXNlcjpodW50ZXIycGFzcw", "hunter2pass",
+                   "qwertyuiop123", "AKfake1234567890", "ATATT3xFfGF0"]
+
+        def runner(*args, **kwargs):
+            return subprocess.CompletedProcess(args=args[0], returncode=4, stdout="", stderr=stderr)
+
+        def fetcher(principal, **kwargs):
+            return fetch_watch_snapshot(principal, github_runner=runner, **kwargs)
+
+        db = Database(tmp_path / "eval-err-redact.db")
+        _make_watch(db, "watch-redact")
+        db.automations.update_watch_spec("watch-redact", revision=1)
+        with pytest.raises(ServiceError):
+            getattr(_watch_svc(db, fetcher=fetcher), verb)(OWNER, "watch-redact")
+        stored = db.automations.get_watch("watch-redact")["last_error"]
+        assert "gh auth login" in stored
+        assert [s for s in secrets if s in stored] == [], stored
+        from holdspeak.services.project_service import ProjectService
+        assert ProjectService._plain_reason(stored) == "Not signed in"
+
+    def test_the_stored_error_is_capped(self, tmp_path) -> None:
+        from holdspeak.db.automations import redact_source_error
+
+        assert len(redact_source_error("x " * 2000)) == 1000
+
+    @pytest.mark.parametrize("verb", ["evaluate_once", "baseline_watch"])
+    def test_a_failed_error_write_keeps_the_providers_own_error(
+        self, tmp_path, monkeypatch, verb,
+    ) -> None:
+        """Astra r1 (2): when the error cannot be stored, the caller still
+        gets the provider's error, never the database's."""
+        import sqlite3
+
+        db = Database(tmp_path / "eval-err-write.db")
+        _make_watch(db, "watch-everr3")
+        db.automations.update_watch_spec("watch-everr3", revision=1)
+
+        def broken_connection(*_a, **_k):
+            raise sqlite3.OperationalError("database is locked")
+
+        def fetcher(principal, **kwargs):
+            monkeypatch.setattr(db.automations, "_connection", broken_connection)
+            raise RuntimeError("provider offline")
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        with pytest.raises(RuntimeError, match="provider offline"):
+            getattr(svc, verb)(OWNER, "watch-everr3")
+
     def test_baseline_advanced_after_evaluate(self, tmp_path) -> None:
         """After evaluate_once, the baseline reflects the new snapshot."""
         db = Database(tmp_path / "eval-advance.db")

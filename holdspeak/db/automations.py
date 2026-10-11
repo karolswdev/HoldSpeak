@@ -2,9 +2,33 @@
 from __future__ import annotations
 
 import json
+import logging
+import re
 from typing import Any
 
+from holdspeak.memory.defense import REDACTED, redact
+
 from .base import BaseRepository
+
+log = logging.getLogger(__name__)
+
+#: PHILO-17 evalerror (Astra r1): two shapes a gh/acli error line can carry
+#: that the memory redactor leaves alone. An Authorization header with any
+#: scheme ("token", "Basic"), and a URL with a user and password.
+_AUTH_HEADER = re.compile(r"(?i)\b(authorization\s*[:=]\s*)(?:bearer|token|basic|digest)\s+\S+")
+_URL_USERINFO = re.compile(r"(?i)\b([a-z][a-z0-9+.-]*://)[^\s/@:]+:[^\s/@]+@")
+_ERROR_CAP = 1000
+
+
+def redact_source_error(error: object) -> str:
+    """A Watch's raw read error made safe to store and show: secrets out
+    (tokens, Authorization headers, ``?token=``, passwords in URLs, Atlassian
+    API tokens), then cut to the column cap. The one helper for every
+    ``record_refresh_error`` caller."""
+    text = str(error if error is not None else "")
+    text = _AUTH_HEADER.sub(lambda m: m.group(1) + REDACTED, text)
+    text = _URL_USERINFO.sub(lambda m: m.group(1) + REDACTED + "@", text)
+    return redact(text)[:_ERROR_CAP]
 
 
 class AutomationRepository(BaseRepository):
@@ -209,11 +233,17 @@ class AutomationRepository(BaseRepository):
         return self._insert_event(conn, event)
 
     def record_refresh_error(self, watch_id: str, error: str) -> None:
-        with self._connection() as conn:
-            conn.execute(
-                "UPDATE connector_watches SET last_error=?,updated_at=datetime('now') WHERE id=?",
-                (error[:1000], watch_id),
-            )
+        """Store a failed read's cause on the Watch: redacted, capped, and
+        never raising. Every caller re-raises the provider's own error, so a
+        failed write here is logged and the original error goes on."""
+        try:
+            with self._connection() as conn:
+                conn.execute(
+                    "UPDATE connector_watches SET last_error=?,updated_at=datetime('now') WHERE id=?",
+                    (redact_source_error(error), watch_id),
+                )
+        except Exception:
+            log.warning("could not record the error of watch %s", watch_id, exc_info=True)
 
     def list_events(self, *, event_type: str | None = None, producer: str | None = None,
                     limit: int = 100) -> list[dict[str, Any]]:
