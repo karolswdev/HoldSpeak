@@ -114,24 +114,23 @@ export function SurfaceWindows({
   }, [firstValueRecoveryOnly]);
 
   useEffect(() => {
-    const offs = rows.map((row) =>
-      registerSurface(row.key, (scope) => {
-        setWaiting((now) => {
-          if (!now.has(row.id)) return now;
-          const next = new Set(now);
-          next.delete(row.id);
-          return next;
-        });
-        useDesk.getState().openSurfaceWindow(row.key, scope);
-      }),
-    );
+    // One reveal-and-open for a row and its aliases (Astra r2 on #1085): a
+    // window that waits off glass (first run opened again) comes back on
+    // glass when any of its keys is pressed.
+    const reveal = (row: SurfaceRow, scope?: string) => {
+      setWaiting((now) => {
+        if (!now.has(row.id)) return now;
+        const next = new Set(now);
+        next.delete(row.id);
+        return next;
+      });
+      useDesk.getState().openSurfaceWindow(row.key, scope);
+    };
+    const offs = rows.map((row) => registerSurface(row.key, (scope) => reveal(row, scope)));
     const aliasOffs = Object.entries(DESK_APPLICATION_ALIASES)
-      .filter(([, alias]) => rows.some((row) => row.key === alias.target))
-      .map(([key, alias]) =>
-        registerSurface(key, (scope) =>
-          useDesk.getState().openSurfaceWindow(alias.target, scope ?? alias.scope),
-        ),
-      );
+      .map(([key, alias]) => [key, alias, rows.find((row) => row.key === alias.target)] as const)
+      .filter(([, , row]) => Boolean(row))
+      .map(([key, alias, row]) => registerSurface(key, (scope) => reveal(row!, scope ?? alias.scope)));
     // This runs only after every normal row and applicable alias is present in
     // the dispatcher. Consume a demoted-route intent only here, then publish
     // the fact the /meetings proof awaits; first-value recovery has no normal
