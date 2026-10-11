@@ -16584,7 +16584,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/DeskListView.tsx",
+     "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
      "line": 284,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -16605,7 +16605,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/DeskListView.tsx",
+     "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
      "line": 321,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -17403,7 +17403,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/EmptyDesk.tsx",
+     "path": "web/src/desk/_parked/floor/components/EmptyDesk.tsx",
      "line": 41,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -17424,7 +17424,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/EmptyDesk.tsx",
+     "path": "web/src/desk/_parked/floor/components/EmptyDesk.tsx",
      "line": 52,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -17613,7 +17613,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/GlassDropLayer.tsx",
+     "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
      "line": 144,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -17634,7 +17634,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/GlassDropLayer.tsx",
+     "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
      "line": 154,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -17655,7 +17655,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/GlassDropLayer.tsx",
+     "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
      "line": 168,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -21981,7 +21981,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/gl/WorldStage.tsx",
+     "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
      "line": 268,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -22002,7 +22002,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/gl/WorldStage.tsx",
+     "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
      "line": 367,
      "anchor": "onClick",
      "claim": "a unclassified control's onClick handler on name"
@@ -22023,7 +22023,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/gl/WorldStage.tsx",
+     "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
      "line": 383,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -22044,7 +22044,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/gl/WorldStage.tsx",
+     "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
      "line": 457,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on input"
@@ -22065,7 +22065,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/gl/WorldStage.tsx",
+     "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
      "line": 461,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on input"
@@ -46328,7 +46328,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/floorMenu.ts",
+     "path": "web/src/desk/_parked/floor/floorMenu.ts",
      "line": 2,
      "claim": "the floor menu composes registry verbs and mints none",
      "anchor": "from the ONE verb registry; this module mints NOTHING"

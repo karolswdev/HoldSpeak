@@ -6,7 +6,6 @@ import { EMPTY_ITEMS } from "../api";
 import { registerSurface } from "../shell";
 import { useDesk } from "../store";
 import { DeskToolShelf, DESK_TOOLS } from "./DeskToolShelf";
-import { EmptyDesk } from "./EmptyDesk";
 import { useDrawers } from "../drawer/store";
 
 describe("Phase 93 Desk arrival", () => {
@@ -28,44 +27,7 @@ describe("Phase 93 Desk arrival", () => {
     });
   });
 
-  it("presents Dictate, Record, and one progressive Create entry", () => {
-    render(
-      <MemoryRouter>
-        <EmptyDesk />
-      </MemoryRouter>,
-    );
-
-    const starts = screen.getByRole("group", { name: "Daily starts" });
-    expect(starts).toBeInTheDocument();
-    // HS-95-05: Dictate opens the in-world Dictation window through the
-    // shell dispatcher — it is a button, never a route exit.
-    expect(screen.getByRole("button", { name: "Dictate" })).toBeInTheDocument();
-    // Record is one verb: the chip starts the hub recorder in place (the
-    // orb's exact behavior) instead of leaving the Desk for /live.
-    const record = screen.getByRole("button", { name: "Record" });
-    expect(record).toHaveAttribute("aria-pressed", "false");
-    fireEvent.click(record);
-    expect(useDesk.getState().startRecording).toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Create" })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Create" }));
-    const menu = screen.getByRole("menu", { name: "Create a Desk item" });
-    expect(menu).toBeInTheDocument();
-    for (const label of ["Note", "Zone", "Knowledge", "Agent", "Workflow"]) {
-      expect(
-        screen.getByRole("menuitem", { name: `Create ${label}` }),
-      ).toBeInTheDocument();
-    }
-
-    fireEvent.click(screen.getByRole("menuitem", { name: "Create Agent" }));
-    expect(useDesk.getState().createPrimitive).toHaveBeenCalledWith("recipe");
-    fireEvent.click(screen.getByRole("button", { name: "New Note" }));
-    expect(useDesk.getState().createPrimitive).toHaveBeenCalledWith("note");
-    expect(
-      screen.getByText("or right-click for more options"),
-    ).toBeInTheDocument();
-  });
-
+  // PHILO-17: the empty Floor (EmptyDesk) is parked with the Floor.
   it("keeps every moved advanced route in the Desk tool shelf", () => {
     render(
       <MemoryRouter>

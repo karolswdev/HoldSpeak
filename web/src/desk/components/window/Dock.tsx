@@ -7,11 +7,10 @@ import { apiFetch } from "../../../lib/api";
 import { openIntelligence } from "../../intelligenceNavigation";
 import { projectOpenHere, refreshNeedsYou, useNeedsYou } from "../../needsYou";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
-import { DOCK_SPRITES, SYSTEM } from "../../systemSprites";
+import { DOCK_SPRITES } from "../../systemSprites";
 import { spriteUrl } from "../../sprites";
 import { useDesk } from "../../store";
 import { useSettleState } from "../../settleState";
-import { useChairState } from "../../chairState";
 import { useShortcutSheet } from "../../chromeState";
 import { useKeymap } from "../../keymap";
 import { WorkMenu } from "../DeskMenu";
@@ -364,9 +363,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // verb can draw it.
   useKeymap();
   const sheetOpen = useShortcutSheet((s) => s.open);
-  // HS-135-06: the Chair/Floor dock toggle (counsel ruling B.Q1).
-  const chairSurface = useChairState((s) => s.surface);
-  const toggleSurface = useChairState((s) => s.toggle);
   // PHILO-13-03 / C3: every Desk face reads the same membership snapshot.
   // The Dock opts out of the hook's minute poll; RuntimeBus invalidations
   // call the explicit refresh path in useDockLiveReads.
@@ -709,25 +705,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           }}
         />
       ))}
-      {/* HS-135-06 + HS-135-14: Floor/Chair toggle — the floor-grid
-          sprite replaces the ▦ glyph character. */}
-      <Button
-        key="chair-floor-toggle"
-        variant="chrome"
-        className={
-          "desk-dock-launch" +
-          (chairSurface === "floor" ? " is-run" : "")
-        }
-        aria-label={chairSurface === "chair" ? "Floor" : "Chair"}
-        aria-pressed={chairSurface === "floor"}
-        onClick={toggleSurface}
-        data-testid="chair-floor-toggle"
-      >
-        <img src={SYSTEM.floorGrid} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
-        <span className="desk-dock-label">
-          {chairSurface === "chair" ? "Floor" : "Chair"}
-        </span>
-      </Button>
+      {/* PHILO-17 (owner 2026-10-10, "everything must become one desk"):
+          the Chair/Floor toggle is gone; the Screen is the one desk. */}
       {shown.map((launcher) => {
         const actionable = ACTIONABLE_LAUNCHERS.has(launcher.id);
         const seated = windows.some((w) => w.id === launcher.id) && panelMin.includes(launcher.id);

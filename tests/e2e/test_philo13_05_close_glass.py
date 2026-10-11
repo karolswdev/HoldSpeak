@@ -10,9 +10,9 @@ Openers (the store keeps the id each one passes):
   * the palette ``decision:<id>``   (qualified; the Chair's card mount)
   * the Dock ``intelligence:desk``  (qualified; the J1 window)
   * ``Write a thought`` ``note:<id>`` (qualified; the Thought window)
-  * the Floor's object button ``<id>`` (bare; the Floor's card mount, 1440)
-  * a list row ``note:<id>`` (qualified; the list's card mount, 393)
-  * the list row's menu -> Open ``<id>`` (bare; object.open, 393)
+  * a desk icon on the Screen, Enter ``note:<id>`` (qualified; screen/open.ts)
+  * the icon's menu -> Open ``<id>`` (bare; object.open)
+  (PHILO-17: the Floor and its list are parked; the Screen is the one desk.)
 And the J1 recovery leg: the closed Intelligence window must not swallow the
 Chair's brief ``Retry``.
 
@@ -171,31 +171,33 @@ class TestCloseMeansGone:
                 page.locator(".desk-gadget-close[aria-label='Close New thought']").wait_for()
                 self._close_and_prove(page, width, "New thought", "write-a-thought")
 
-                self._press(page, page.get_by_test_id("chair-floor-toggle"), width)
-                page.wait_for_timeout(2500)  # the Floor (1440) or the list (393) mounts
-                if width >= 720:
-                    # 4. a bare id: the Floor stage's object button (WorldStage → openPullout(o.id)).
-                    obj = page.locator(f"[data-obj-id][aria-label^='{NOTE}']").first
-                    obj.wait_for(state="attached")
-                    obj.focus()
-                    page.keyboard.press("Enter")
-                    page.locator(f".desk-gadget-close[aria-label='Close {NOTE}']").wait_for()
-                    self._close_and_prove(page, width, NOTE, "floor-bare-note")
-                else:
-                    # 4. the list mount at 393: a row's open passes `note:<id>` (qualifiedRef).
-                    # PHILO-14 A2: a tap selects the row; Enter (or a double press) opens it.
-                    page.locator(f".desk-listmode .object-list-open[aria-label^='{NOTE},']").focus()
-                    page.keyboard.press("Enter")
-                    page.locator(f".desk-gadget-close[aria-label='Close {NOTE}']").wait_for()
-                    self._close_and_prove(page, width, NOTE, "list-row-note")
-                    # 5. a bare id at 393: the row's menu → Open (object.open → openPullout(o.id)).
-                    page.locator(f".desk-listmode .object-list-open[aria-label^='{DECISION},']").focus()
-                    page.keyboard.press("Shift+F10")
-                    item = page.get_by_role("menuitem", name="Open", exact=True)
-                    item.wait_for()
-                    self._press(page, item, width)
-                    page.locator(f".desk-gadget-close[aria-label='Close {DECISION}']").wait_for()
-                    self._close_and_prove(page, width, DECISION, "row-menu-bare-decision")
+                # 4. the one desk (PHILO-17): a Screen icon, Enter -> `note:<id>` (qualified).
+                icon = page.locator(f"[data-testid=desk-screen] .desk-icon[aria-label^='{NOTE}']").first
+                icon.wait_for(state="attached")
+                # 393: one window fills the work area; close the Chair windows
+                # shown over the desk until its icons are on the glass.
+                for _ in range(6):
+                    if icon.is_visible():
+                        break
+                    shown = page.locator(".desk-window-shell.chair-window:visible .desk-gadget-close").first
+                    if not shown.count():
+                        break
+                    self._press(page, shown, width)
+                    page.wait_for_timeout(500)
+                icon.wait_for()
+                icon.focus()
+                page.keyboard.press("Enter")
+                page.locator(f".desk-gadget-close[aria-label='Close {NOTE}']").wait_for()
+                self._close_and_prove(page, width, NOTE, "screen-icon-note")
+                # 5. a bare id: the icon's menu -> Open (object.open -> openPullout(o.id)).
+                icon = page.locator(f"[data-testid=desk-screen] .desk-icon[aria-label^='{DECISION}']").first
+                icon.focus()
+                page.keyboard.press("Shift+F10")
+                item = page.get_by_role("menuitem", name="Open", exact=True)
+                item.wait_for()
+                self._press(page, item, width)
+                page.locator(f".desk-gadget-close[aria-label='Close {DECISION}']").wait_for()
+                self._close_and_prove(page, width, DECISION, "icon-menu-bare-decision")
                 assert not errors, errors
             finally:
                 browser.close()

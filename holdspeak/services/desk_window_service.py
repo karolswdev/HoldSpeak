@@ -106,6 +106,11 @@ WINDOW_FAMILIES: dict[str, str] = {
     "workbench:": "workbench",
 }
 
+#: Retired families: their rows still close, a new window is refused.
+RETIRED_APPS: dict[str, str] = {
+    "zone": "no face draws a zone (PHILO-17, one desk)",
+}
+
 _WINDOW_ID = re.compile(r"^[A-Za-z0-9:_-]{1,200}$")
 _MAX_REF = 400
 _ROOM = re.compile(r"^[A-Za-z0-9:_.-]{0,200}$")
@@ -307,6 +312,15 @@ class DeskWindowService:
         """Open a window on top. Idempotent: an open window returns its row,
         shown (restored) and raised to the front."""
         known_app, known_ref = window_app(window_id)
+        if known_app in RETIRED_APPS:
+            # PHILO-17 (owner 2026-10-10, "Yes, everything must become one
+            # desk"): no face draws a zone. A new zone window is refused, so an
+            # older view cannot reopen one; a saved row still closes.
+            raise ValidationError(
+                f"The window {window_id} is retired: {RETIRED_APPS[known_app]}",
+                code="window_retired",
+                context={"window_id": window_id, "app": known_app},
+            )
         if app is not None and str(app) != known_app:
             raise ValidationError(
                 f"The window {window_id} is a {known_app} window, not {app}",

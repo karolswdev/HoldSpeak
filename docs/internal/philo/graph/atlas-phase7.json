@@ -11,7 +11,7 @@
         "edge.face.zone_create"
       ],
       "state_id": "state.desk_presentation.p7_zone_membership",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -147,14 +147,6 @@
           "selector": "[aria-controls=desk-tool-shelf]"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "fill",
-        "adapter": "ui-keyboard",
-        "selector": "[aria-controls=desk-palette-listbox]",
-        "value": "Atlas zone",
-        "why": "find the zone by name on a fresh Desk read"
-      },
       "expected": {
         "predicate": {
           "kind": "readable_text",
@@ -177,7 +169,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). New Zone is parked with the Floor verbs; no face draws a zone. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p7.zone_file.note_in_zone",
@@ -1275,11 +1268,11 @@
           "kind": "check",
           "predicate": {
             "kind": "attr_equals",
-            "attr": "aria-pressed",
-            "value": "true"
+            "attr": "data-testid",
+            "value": "desk-screen"
           },
-          "observe_at": "[data-testid=chair-floor-toggle]",
-          "why": "the Floor is the surface in front (the toggle is pressed)"
+          "observe_at": "[data-testid=desk-screen]",
+          "why": "PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the desk in front"
         }
       ],
       "setup": [
@@ -1334,54 +1327,25 @@
         },
         {
           "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=chair-floor-toggle]",
-          "why": "go to the Floor (Dock.tsx:201-216): the zone rename field and the delete receipt live in WorldStage only (DeskApp.tsx:199-203)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[aria-controls=desk-tool-shelf]",
-          "at_width": 393
-        },
-        {
-          "kind": "ui",
-          "action": "fill",
-          "adapter": "ui-keyboard",
-          "selector": "[aria-controls=desk-palette-listbox]",
-          "value": "Spatial view",
-          "at_width": 393
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[id='desk-palette-option-desk.toggle-view']",
-          "at_width": 393,
-          "why": "at 393 the Floor opens as a list (store/types.ts:65-72 defaultViewFor); the zone rename field and the delete verb's listener live in the spatial WorldStage only (WorldStage.tsx:137-152)"
-        },
-        {
-          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": "[data-obj-id='decision:{decision_id}']",
+          "selector": ".desk-screen [data-object-id='decision:{decision_id}']",
           "state": "attached"
         },
         {
           "kind": "ui",
           "action": "focus",
           "adapter": "ui-keyboard",
-          "selector": "[data-obj-id='decision:{decision_id}']",
-          "why": "keyboard travel to the Floor object's chip (HS-96-05: a focused world button surfaces as a chip, desk.css:171)"
+          "selector": ".desk-screen [data-object-id='decision:{decision_id}']",
+          "why": "keyboard travel to the decision's desk icon (screen/Screen.tsx DeskIcon)"
         },
         {
           "kind": "ui",
           "action": "press",
           "adapter": "ui-keyboard",
-          "key": "Shift+Enter",
-          "why": "select it: the chip's click with Shift toggles selection (WorldStage.tsx:381-384); a plain click opens the pullout and clears it"
+          "key": "Space",
+          "why": "select it: Space is the icon's native click, which selects (DeskIcon.tsx); Enter would open it",
+          "selector": ".desk-screen [data-object-id='decision:{decision_id}']"
         }
       ],
       "trigger": {
@@ -1407,7 +1371,7 @@
             "path": "/api/decisions"
           }
         ],
-        "words": "the owner selects the decision on the Floor and presses Delete; after the 8 s undo window the receipt reads 'Removal committed', readable, and the hub no longer has it (GET /api/decisions/{id} refuses; the list lacks it)."
+        "words": "the owner selects the decision on the desk and presses Delete; after the 8 s undo window the receipt reads 'Removal committed', readable, and the hub no longer has it (GET /api/decisions/{id} refuses; the list lacks it)."
       },
       "completion_bound_s": 40,
       "viewports": [
@@ -3637,7 +3601,7 @@
           "claim": "the pullout's Filing strip draws one chip per zone, pressed where the object is filed"
         },
         {
-          "path": "web/src/desk/verbRegistry.ts",
+          "path": "web/src/desk/_parked/floor/floorVerbs.ts",
           "symbol": "id: \"desk.new-zone\"",
           "claim": "the face makes a zone with the New Zone verb"
         }

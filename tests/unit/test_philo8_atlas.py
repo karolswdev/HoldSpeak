@@ -201,6 +201,20 @@ def _cases(atlas: dict) -> dict[str, dict]:
     return {case["id"]: case for case in atlas["cases"]}
 
 
+#: PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"): a
+#: case whose Floor subject is gone is not_applicable here; its declaration
+#: (trigger included) is kept in the parked atlas file.
+PARKED17 = REPO / "docs/internal/philo/graph/parked-philo17-floor.json"
+
+
+def _declared(atlas: dict, cid: str) -> dict:
+    """The case as declared: the live one, or its parked declaration."""
+    case = _cases(atlas)[cid]
+    if case["applicability"] == "not_applicable":
+        return _cases(json.loads(PARKED17.read_text()))[cid]
+    return case
+
+
 def _parts(predicate: dict) -> list[dict]:
     return predicate["predicates"] if predicate.get("kind") == "all_of" else [predicate]
 
@@ -276,7 +290,7 @@ def test_an_in_window_case_is_one_gesture(atlas8, cid) -> None:
     phase build failed the list Undo at 393: the Undo came after the commit).
     The first Delete is the trigger; the rest of the gesture is its `then`,
     and the receipt is read pending right before the second act."""
-    trigger = _cases(atlas8)[cid]["trigger"]
+    trigger = _declared(atlas8, cid)["trigger"]
     assert trigger.get("key") == "Delete" or trigger.get("name") == "Delete"
     then = trigger["then"]
     assert all(step["kind"] == "ui" for step in then)
@@ -294,7 +308,7 @@ def test_then_takes_ui_steps_only(then) -> None:
 def test_the_walk_reaches_then_steps(atlas8) -> None:
     """The fence above must see the Undo's optional `then` step; a walk that
     stops at the trigger would not (red on the r1 walk: `general._acts`)."""
-    undo = _cases(atlas8)["case.p8.list_delete.undo"]
+    undo = _declared(atlas8, "case.p8.list_delete.undo")
     assert any(s.get("optional") for s in _acts_with_then(undo) if s.get("selector") == "button.undo-receipt-btn")
     assert not any(s.get("selector") == "button.undo-receipt-btn" for s in general._acts(undo))
 
@@ -319,7 +333,7 @@ def test_every_then_step_is_a_legal_ui_step(atlas8, ) -> None:
 def test_every_timed_follow_up_is_guarded_at_delivery(atlas8, cid) -> None:
     """Codex Astra r1 (blocking): the act that must land inside the window
     re-reads the window at delivery -- pending, Undo offered, >= 2 s left."""
-    last = _cases(atlas8)[cid]["trigger"]["then"][-1]
+    last = _declared(atlas8, cid)["trigger"]["then"][-1]
     assert last.get("requires") == {"visible": ".undo-receipt.is-pending", "text": "Undo",
                                     "seconds_left": {"selector": ".undo-receipt-time", "min": 2}}, last
 
@@ -388,7 +402,7 @@ def test_only_click_and_press_are_guarded() -> None:
 
 def test_the_list_cases_right_click_the_row(atlas8) -> None:
     for cid in ("case.p8.list_delete.gone", "case.p8.list_delete.undo", "case.p8.list_delete.long_list_393"):
-        rights = [s for s in _cases(atlas8)[cid]["setup"] if s.get("button") == "right"]
+        rights = [s for s in _declared(atlas8, cid)["setup"] if s.get("button") == "right"]
         assert len(rights) == 1 and rights[0]["action"] == "click_role", cid
 
 

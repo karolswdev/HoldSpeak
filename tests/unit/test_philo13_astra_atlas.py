@@ -56,16 +56,20 @@ LIVE_DOCK_CASES = {
 }
 EXPECTED_CASES |= LIVE_DOCK_CASES
 
+# PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"): after a
+# reload the desk is the Screen; the re-entry is its wait, not a Floor press.
+SCREEN = '[data-testid="desk-screen"]'
+
 LIFECYCLE_CASES = {
     "case.p13.roadmap.window": {
         "first_observe": ".desk-roadmap-window",
         "refusal_observe": '.desk-roadmap-window:has-text("Roadmap not found")',
-        "reenter": "Floor",
+        "reenter": SCREEN,
         "reopen_selector": '[id="desk-palette-option-roadmap:roadmap:atlas-desk"]',
     },
     "case.p13.repository.window": {
         "first_observe": '.desk-repo-files .desk-sortable-table-row:has-text("atlas_repository.py")',
-        "reenter": "Floor",
+        "reenter": SCREEN,
         "reopen_selector": '[id="desk-palette-option-repository:{repository_id}"]',
     },
     "case.p13.delivery.dossier_window": {
@@ -80,13 +84,13 @@ LIFECYCLE_CASES = {
     },
     "case.p13.chain.pullout": {
         "first_observe": '.desk-pullout[aria-label="Atlas B0 Sequence"] :text("No steps")',
-        "reenter": "Floor",
+        "reenter": SCREEN,
         "reopen_selector": '[id="desk-palette-option-chain:{chain_id}"]',
         "dock_chip": ".desk-dock-chip button",
     },
     "case.p13.coder.pullout": {
         "first_observe": '.desk-pullout.is-card :text("Should I run the full suite now?")',
-        "reenter": "Floor",
+        "reenter": SCREEN,
         "reopen_selector": '[id="desk-palette-option-coder:{coder_session_id}"]',
         "dock_chip": ".desk-dock-chip button",
     },
@@ -166,6 +170,10 @@ def _assert_phase13_lifecycle_fence(atlas: dict) -> None:
                 step.get("action") == "click_role"
                 and step.get("name") == contract["reenter"]
             )
+            or (
+                step.get("action") == "wait_for"
+                and step.get("selector") == contract["reenter"]
+            )
         ]
         assert not setup_lifecycle, f"{case_id}: setup owns live lifecycle {setup_lifecycle!r}"
 
@@ -192,8 +200,8 @@ def _assert_phase13_lifecycle_fence(atlas: dict) -> None:
         assert reload_index > close_index, case_id
         reentry_index = next(
             i for i, step in enumerate(trigger_steps[reload_index + 1:], reload_index + 1)
-            if step.get("action") == "click_role"
-            and step.get("name") == contract["reenter"]
+            if (step.get("action") == "click_role" and step.get("name") == contract["reenter"])
+            or (step.get("action") == "wait_for" and step.get("selector") == contract["reenter"])
         )
         reopen_indices = [
             i for i, step in enumerate(trigger_steps)
@@ -243,39 +251,29 @@ def _assert_phase13_lifecycle_fence(atlas: dict) -> None:
 
 
 def _assert_phase13_spatial_reload_fence(atlas: dict) -> None:
-    """Require Floor and the real canvas before Spatial's second context door."""
+    """PHILO-17: Get Info's second door comes after the reload and the Screen.
+
+    The Spatial Floor is parked; the door is the Screen icon's object menu
+    (Shift+F10 on the focused icon). The Zone case is not applicable."""
     cases = {case["id"]: case for case in atlas["cases"]}
-    for case_id in ("case.p13.directory.zone", "case.p13.info.window"):
-        trigger_steps = _steps({"setup": [], "trigger": cases[case_id]["trigger"]})
-        doors = [
-            i for i, step in enumerate(trigger_steps)
-            if step.get("action") == "world_context_menu"
-        ]
-        assert len(doors) == 2, f"{case_id}: expected first and post-reload context doors"
-        reload_index = next(
-            i for i, step in enumerate(trigger_steps)
-            if step.get("action") == "reload"
-        )
-        floor_wait = next(
-            i for i, step in enumerate(trigger_steps[reload_index + 1:], reload_index + 1)
-            if step.get("action") == "wait_for"
-            and step.get("selector") == '[data-testid="chair-floor-toggle"]'
-            and step.get("state") == "visible"
-        )
-        floor_click = next(
-            i for i, step in enumerate(trigger_steps[floor_wait + 1:], floor_wait + 1)
-            if step.get("action") == "click_role" and step.get("name") == "Floor"
-        )
-        assert trigger_steps[floor_click].get("optional") is True, (
-            f"{case_id}: post-reload Floor re-entry must be optional"
-        )
-        canvas_wait = next(
-            i for i, step in enumerate(trigger_steps[floor_click + 1:], floor_click + 1)
-            if step.get("action") == "wait_for"
-            and step.get("selector") == ".desk-world-canvas"
-            and step.get("state") == "visible"
-        )
-        assert reload_index < floor_wait < floor_click < canvas_wait < doors[1], case_id
+    case_id = "case.p13.info.window"
+    trigger_steps = _steps({"setup": [], "trigger": cases[case_id]["trigger"]})
+    doors = [
+        i for i, step in enumerate(trigger_steps)
+        if step.get("action") == "press" and step.get("key") == "Shift+F10"
+    ]
+    assert len(doors) == 2, f"{case_id}: expected first and post-reload menu doors"
+    reload_index = next(
+        i for i, step in enumerate(trigger_steps)
+        if step.get("action") == "reload"
+    )
+    screen_wait = next(
+        (i for i, step in enumerate(trigger_steps[reload_index + 1:], reload_index + 1)
+         if step.get("action") == "wait_for" and step.get("selector") == SCREEN),
+        None,
+    )
+    assert screen_wait is not None, f"{case_id}: the post-reload door must wait for the Screen"
+    assert reload_index < screen_wait < doors[1], case_id
 
 
 def _assert_phase13_repository_seam_fence(atlas: dict) -> None:
@@ -434,43 +432,10 @@ def _assert_phase13_case_fence(atlas: dict) -> None:
         for step in trigger_steps[reload_index + 1:]
     )
 
+    # PHILO-17: no face draws a zone; the Zone door is not applicable.
     directory = cases["case.p13.directory.zone"]
-    assert directory["applicability"] == "applicable"
-    assert directory["expected"]["predicate"] == {
-        "kind": "all_of",
-        "predicates": [
-            {"kind": "attr_equals", "attr": "aria-label", "value": "Atlas Phase 13 Zone"},
-            {"kind": "readable_text", "value": "Drop items here"},
-        ],
-    }
-    assert directory["completion_bound_s"] == 40
-    assert any("33.753 s" in text and "40 s" in text for text in directory["preconditions"])
-    assert directory["expected"]["observe_at"] == ".desk-zone-window"
-    assert "should open its real ZoneWindow" in directory["expected"]["words"]
-    assert directory["trigger"]["action"] == "world_context_menu"
-    assert any(
-        step.get("action") == "wait_for" and step.get("at_width") == 1440
-        and step.get("selector") == '.desk-zone-window :text("Atlas Phase 13 Zone")'
-        and step.get("state") == "visible"
-        for step in directory["trigger"].get("then", [])
-    ), "the desktop title remains visible after reopen"
-    zone_doors = [
-        step for step in _steps(directory)
-        if step.get("action") == "world_context_menu"
-    ]
-    assert len(zone_doors) == 2, directory["id"]
-    assert all(
-        step.get("selector") == ".desk-world-canvas"
-        and step.get("world_target") == "zone"
-        and step.get("world_ref") == "{zone_id}"
-        and step.get("adapter") == "ui-by-viewport"
-        for step in zone_doors
-    ), directory["id"]
-    assert all(
-        step.get("action") == "click_role" and step.get("name") == "Open"
-        for door in zone_doors for step in door.get("then", [])[:1]
-    ), directory["id"]
-    assert "[data-zone-id=" not in json.dumps(directory), f"{directory['id']}: hidden zone selector is forbidden"
+    assert directory["applicability"] == "not_applicable"
+    assert "PHILO-17" in directory["reason"] and "parked-philo17-floor.json" in directory["reason"]
 
     info = cases["case.p13.info.window"]
     assert info["applicability"] == "applicable"
@@ -478,47 +443,19 @@ def _assert_phase13_case_fence(atlas: dict) -> None:
     assert info["expected"]["observe_at"] == ".desk-info-window"
     assert info["completion_bound_s"] == 75
     assert any("52.465 s" in text and "75 s" in text for text in info["preconditions"])
-    assert info["trigger"]["action"] == "world_context_menu"
+    icon = ".desk-screen [data-object-id='note:{info_note_id}']"
     info_doors = [
         step for step in _steps(info)
-        if step.get("action") == "world_context_menu"
+        if step.get("action") == "press" and step.get("key") == "Shift+F10"
     ]
-    assert len(info_doors) == 2, info["id"]
-    assert all(
-        step.get("selector") == ".desk-world-canvas"
-        and step.get("world_target") == "object"
-        and step.get("world_ref") == "sequence:{info_chain_id}"
-        and step.get("adapter") == "ui-by-viewport"
-        for step in info_doors
-    ), info["id"]
-    assert all(
-        step.get("action") == "click_role" and step.get("name") == "Get Info"
-        for door in info_doors for step in door.get("then", [])[:1]
-    ), info["id"]
-    assert "desk-list-name-cell" not in json.dumps(info), f"{info['id']}: List is not the Spatial door"
-
-    # At 1440 the Floor's unset view is already Spatial; a palette action
-    # named "Spatial view" would toggle it back to List.  The compact phone
-    # path alone needs the real palette toggle from its dense List default.
-    for case in (directory, info):
-        mode_steps = [
-            step for step in case["setup"]
-            if step.get("at_width") in (1440, 393)
-            and (
-                step.get("selector") == ".desk-tools-launch"
-                or step.get("selector") == 'input[placeholder="Search tools and Desk items"]'
-                or step.get("selector") == '[id="desk-palette-option-desk.toggle-view"]'
-            )
-        ]
-        assert not [step for step in mode_steps if step.get("at_width") == 1440], case["id"]
-        assert [
-            (step.get("action"), step.get("selector"), step.get("value"))
-            for step in mode_steps if step.get("at_width") == 393
-        ] == [
-            ("click", ".desk-tools-launch", None),
-            ("fill", 'input[placeholder="Search tools and Desk items"]', "Spatial view"),
-            ("click", '[id="desk-palette-option-desk.toggle-view"]', None),
-        ], case["id"]
+    assert len(info_doors) == 2 and all(step.get("selector") == icon for step in info_doors), info["id"]
+    steps = _steps(info)
+    for i, step in enumerate(steps):
+        if step in info_doors:
+            assert steps[i + 1].get("action") == "click_role" and steps[i + 1].get("name") == "Get Info", info["id"]
+    dumped = json.dumps(info)
+    assert "chair-floor-toggle" not in dumped and "desk.toggle-view" not in dumped, info["id"]
+    assert "world_context_menu" not in dumped, f"{info['id']}: the Spatial door is parked"
 
 
 @pytest.mark.parametrize("fence", GENERAL, ids=lambda fence: fence.__name__)
@@ -554,10 +491,14 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
     assert len(faces) == 9
     for case in faces:
         assert case["viewports"] == [1440, 393]
-        assert case["applicability"] == "applicable", case["id"]
+        # PHILO-17: the Zone door is not applicable (no face draws a zone).
+        want = "not_applicable" if case["id"] == "case.p13.directory.zone" else "applicable"
+        assert case["applicability"] == want, case["id"]
         # A DOM-only text match passed an off-screen Repository in the real walk.
         expected_kind = "all_of" if case["id"] == "case.p13.directory.zone" else "readable_text"
         assert case["expected"]["predicate"]["kind"] == expected_kind, case["id"]
+        if want == "not_applicable":
+            continue  # its declaration (trigger included) is in parked-philo17-floor.json
         steps = _steps(case)
         close_index = next(i for i, step in enumerate(steps) if 'Close ' in step.get("selector", ""))
         assert steps[close_index + 1]["state"] == "hidden", case["id"]
@@ -752,27 +693,18 @@ def test_phase13_case_fence_rejects_old_doors_then_accepts_current_atlas() -> No
     with pytest.raises(AssertionError):
         _assert_phase13_case_fence(old_calendar)
 
+    # PHILO-17: the Zone door is parked; an applicable Zone case is refused.
     old_directory = copy.deepcopy(proper)
     directory = next(case for case in old_directory["cases"] if case["id"] == "case.p13.directory.zone")
-    directory["trigger"] = {
-        "kind": "ui",
-        "action": "focus",
-        "adapter": "ui-input",
-        "selector": '[data-zone-id="{zone_id}"]',
-    }
-    with pytest.raises(AssertionError, match="world_context_menu"):
+    directory["applicability"] = "applicable"
+    with pytest.raises(AssertionError):
         _assert_phase13_case_fence(old_directory)
 
+    # The Spatial Get Info door is parked; a world_context_menu door is refused.
     old_info = copy.deepcopy(proper)
     info = next(case for case in old_info["cases"] if case["id"] == "case.p13.info.window")
-    info["setup"] = [{
-        "kind": "ui",
-        "action": "click",
-        "adapter": "ui-by-viewport",
-        "selector": '.desk-list-name-cell[aria-label="Atlas B0 Info Sequence"]',
-        "button": "right",
-    }]
-    with pytest.raises(AssertionError, match="world_context_menu"):
+    info["trigger"] = dict(info["trigger"], action="world_context_menu", selector=".desk-world-canvas")
+    with pytest.raises(AssertionError):
         _assert_phase13_case_fence(old_info)
 
 
@@ -812,24 +744,19 @@ def test_phase13_roadmap_fence_rejects_committed_pre_fix_atlas_then_accepts_curr
         _assert_phase13_roadmap_case_fence(wrong_selector)
 
 
-def test_phase13_spatial_reload_fence_accepts_only_floor_reentry() -> None:
+def test_phase13_info_reload_fence_needs_the_screen_after_reload() -> None:
+    """PHILO-17: the post-reload Get Info door waits for the Screen first."""
     proper = _atlas()
     _assert_phase13_spatial_reload_fence(proper)
 
-    for case_id in ("case.p13.directory.zone", "case.p13.info.window"):
-        missing_optional = copy.deepcopy(proper)
-        case = next(case for case in missing_optional["cases"] if case["id"] == case_id)
-        trigger_steps = _steps({"setup": [], "trigger": case["trigger"]})
-        reload_index = next(
-            i for i, step in enumerate(trigger_steps) if step.get("action") == "reload"
-        )
-        floor_step = next(
-            step for step in trigger_steps[reload_index + 1:]
-            if step.get("action") == "click_role" and step.get("name") == "Floor"
-        )
-        floor_step.pop("optional", None)
-        with pytest.raises(AssertionError, match="post-reload Floor re-entry must be optional"):
-            _assert_phase13_spatial_reload_fence(missing_optional)
+    missing_wait = copy.deepcopy(proper)
+    case = next(case for case in missing_wait["cases"] if case["id"] == "case.p13.info.window")
+    case["trigger"]["then"] = [
+        step for step in case["trigger"]["then"]
+        if not (step.get("action") == "wait_for" and step.get("selector") == SCREEN)
+    ]
+    with pytest.raises(AssertionError, match="must wait for the Screen"):
+        _assert_phase13_spatial_reload_fence(missing_wait)
 
 
 def test_phase13_repository_cases_name_the_real_router_seam() -> None:

@@ -10,7 +10,8 @@
  *  selects; the rubber band selects many; Enter or a double press opens
  *  (screen/open.ts). The selection is the desk's one selection (the store's
  *  selectedIds, PHILO-17): the menu bar Object menu, F2 and the right-click
- *  menu act on it exactly as on the Floor. */
+ *  menu act on it. PHILO-17 (owner 2026-10-10, "everything must become one
+ *  desk"): the Screen is the one desk; the Floor is parked. */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useAgentFlights } from "../agentFlights";
 import { projectOpenHere, useNeedsYou } from "../needsYou";
@@ -18,7 +19,7 @@ import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { useDesk } from "../store";
 import { WorkMenu } from "../components/DeskMenu";
-import { objectMenuEntries } from "../floorMenu";
+import { objectMenuEntries } from "../objectMenu";
 import { objectByRef } from "../world";
 import { DeskIcon, IconGrid, iconsInRect, type GridRect } from "../surface";
 import { useCompactViewport } from "../useCompactViewport";
@@ -27,6 +28,8 @@ import { layoutScreen } from "./layout";
 import { retryPeople, retryProject, useScreenMembers } from "./members";
 import { openTarget } from "./open";
 import { SCREEN_HOST, HandConfirmSlot, handOriginOfRef, handSourceProps, handTargetProps, useDropHand } from "../hand";
+import { useAtmospherePreference } from "../gl/atmospherePreference";
+import { resolveAtmosphere } from "../gl/atmosphereRegistry";
 import "./screen.css";
 
 /** The A-1 screen measured at 1440 × 900 (a screen that has not laid out yet). */
@@ -101,7 +104,7 @@ export function Screen() {
     const next = prev.filter((k) => keys.has(k));
     if (next.length !== prev.length) useDesk.getState().setSelected(next);
   }, [objects]);
-  // The right-click menu: the Floor's object menu (floorMenu.ts), for an
+  // The right-click menu: the desk's object menu (objectMenu.ts), for an
   // object the desk can resolve. A drawer with no object keeps no menu.
   const openMenu = (key: string, x: number, y: number): boolean => {
     const o = objectByRef(items, key);
@@ -121,9 +124,22 @@ export function Screen() {
   // PHILO-14 C3: drop to hand. A loose work item drags (not at 393: the
   // hand there is the verb); the Conductor drawer and the agents take it.
   const drag = useDropHand((s) => s.drag);
+  // PHILO-17 (Muad'Dib's ruling): the Screen draws the chosen place as its
+  // backdrop: the place's still picture on the A1 floor, never a GL scene.
+  // Quiet Desk has no still: the floor alone.
+  const [placeId] = useAtmospherePreference();
+  const still = resolveAtmosphere(placeId).previewUrl;
 
   return (
-    <div className="desk-screen" ref={ref} data-testid="desk-screen" data-layout={compact ? "grid" : "free"}>
+    <div
+      className="desk-screen"
+      ref={ref}
+      data-testid="desk-screen"
+      data-layout={compact ? "grid" : "free"}
+      data-place={placeId}
+      data-place-still={still ? "" : undefined}
+      style={still ? ({ "--desk-place-still": `url("${still}")` } as React.CSSProperties) : undefined}
+    >
       <IconGrid
         label="Desk"
         marquee={marquee}
@@ -201,7 +217,7 @@ export function Screen() {
           x={menu.x}
           y={menu.y}
           autoFocus
-          entries={objectMenuEntries({ type: "object", id: menu.id, ref: menu.key, kind: menu.kind, title: menu.title })}
+          entries={objectMenuEntries({ ref: menu.key })}
           onClose={() => setMenu(null)}
         />
       ) : null}

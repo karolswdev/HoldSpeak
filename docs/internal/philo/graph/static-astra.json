@@ -1365,7 +1365,7 @@
       "sha256": "207f54423e8be561d8be2ded6c42cb0571160a4f13b0fba388e5cb44d58175f8"
     },
     {
-      "path": "web/src/desk/components/DeskListView.tsx",
+      "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
       "sha256": "5ff354b39138612548b23cbc2fd7f509a5072721a22b624e137a39915fcdacc4"
     },
     {
@@ -1401,7 +1401,7 @@
       "sha256": "f83cee3c2f9a0a5d5b00a7ad1b4decd5b97b5cae2370cdc5214928aa0de9449b"
     },
     {
-      "path": "web/src/desk/components/EmptyDesk.tsx",
+      "path": "web/src/desk/_parked/floor/components/EmptyDesk.tsx",
       "sha256": "cbee5702535d6331ed7bcac028530a9931da6ef31382f8b3d1a50a3a70042149"
     },
     {
@@ -1409,7 +1409,7 @@
       "sha256": "2f9cf3f4c8f87cbe285a87bac1d3010c78882568ae8d323c82bb4751234b7f69"
     },
     {
-      "path": "web/src/desk/components/GlassDropLayer.tsx",
+      "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
       "sha256": "f8cac69cf04b65fbbfcd2123d10bd19360bad6bea47c6185ef6b899078d018d8"
     },
     {
@@ -1553,7 +1553,7 @@
       "sha256": "ec45670425587b3658f514eee8de24865fa78211517e4dd06f536bd387ef832f"
     },
     {
-      "path": "web/src/desk/gl/WorldStage.tsx",
+      "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
       "sha256": "f312528691f1d1575f96bb49abf9d7ddef62a39577d064a7d6793807b4d4c909"
     },
     {
@@ -17151,7 +17151,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "line": 304,
           "anchor": "onRowKeyDown={(event, row) => { if (row.type !== \"object\") return; if (event.key === \" \") { event.preventDefault(); toggleSelected(qualifiedRef(row.object.kind, row.object.id)); } else if (event.key =",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -17263,7 +17263,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 468,
           "anchor": "onText={(t) => setName(t)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18415,7 +18415,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "line": 296,
           "anchor": "onSort={(key, dir) => setSort({ key: key as ListSortKey, dir })}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18639,7 +18639,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 445,
           "anchor": "onBlur={(e) => { // HS-111-10: commit only when focus LEAVES the row — pressing // the speak-to-fill mic must not commit-and-unmount mid-press. if (!e.currentTarget.contains(e.relatedTarget as Node | ",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -20751,7 +20751,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "line": 332,
           "anchor": "onClose={() => setRowMenu(null)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21007,7 +21007,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "line": 300,
           "anchor": "onRowClick={(row) => { if (row.type === \"zone\") diveInto(row.id); else openPullout(qualifiedRef(row.object.kind, row.object.id)); }}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21903,7 +21903,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/EmptyDesk.tsx",
+          "path": "web/src/desk/_parked/floor/components/EmptyDesk.tsx",
           "line": 73,
           "anchor": "onDismiss={() => setContinued(true)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22639,7 +22639,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 337,
           "anchor": "onClose={() => setWorldMenu(null)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22847,7 +22847,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 260,
           "anchor": "onText={() => undefined}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -23743,7 +23743,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "line": 315,
           "anchor": "onRowContextMenu={(event, row) => { if (row.type !== \"object\") return; event.preventDefault(); openMenu(row.object, event.clientX, event.clientY); }}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24335,7 +24335,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 259,
           "anchor": "onProposalConfirm={confirmDeskVoice}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -25007,7 +25007,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "line": 220,
           "anchor": "<Button variant=\"ghost\" dense className=\"desk-sortable-table-open\" aria-label={[`${row.title} zone`, countToken(row.count, \"item\", \"items\")].filter(Boolean).join(\", \")}>",
           "claim": "Button source site has no local onX event attribute. Form submission, spread props, containing event delegation or disabled/presentation conditions may own the gesture; absence of a local handler alone is not a product defect. Census only."
@@ -25039,7 +25039,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "line": 228,
           "anchor": "<Button variant=\"ghost\" dense className=\"desk-sortable-table-open desk-list-name-cell\" aria-label={selected ? `${row.object.title}, in Ask context` : row.object.title}>",
           "claim": "Button source site has no local onX event attribute. Form submission, spread props, containing event delegation or disabled/presentation conditions may own the gesture; absence of a local handler alone is not a product defect. Census only."
@@ -25119,7 +25119,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 383,
           "symbol": "WorldStage",
           "claim": "The production JSX source declares onClick at this control site."
@@ -27967,7 +27967,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/EmptyDesk.tsx",
+          "path": "web/src/desk/_parked/floor/components/EmptyDesk.tsx",
           "line": 41,
           "symbol": "EmptyDesk",
           "claim": "The production JSX source declares onClick at this control site."
@@ -29311,7 +29311,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "line": 284,
           "symbol": "DeskListView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -29423,7 +29423,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
           "line": 144,
           "symbol": "GlassDropLayer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -29823,7 +29823,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskListView.tsx",
+          "path": "web/src/desk/_parked/floor/components/DeskListView.tsx",
           "line": 321,
           "symbol": "DeskListView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30127,7 +30127,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
           "line": 154,
           "symbol": "GlassDropLayer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -31135,7 +31135,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 457,
           "symbol": "ZoneRenameOverlay",
           "claim": "The production JSX source declares onChange at this control site."
@@ -31583,7 +31583,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 461,
           "symbol": "ZoneRenameOverlay",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -32655,7 +32655,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/EmptyDesk.tsx",
+          "path": "web/src/desk/_parked/floor/components/EmptyDesk.tsx",
           "line": 52,
           "symbol": "EmptyDesk",
           "claim": "The production JSX source declares onClick at this control site."
@@ -35039,7 +35039,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
           "line": 168,
           "symbol": "GlassDropLayer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -36223,7 +36223,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 367,
           "symbol": "WorldStage",
           "claim": "The production JSX source declares onClick at this control site."
@@ -38063,7 +38063,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 444,
           "symbol": "ZoneRenameOverlay",
           "claim": "The production JSX source declares onPointerDown at this control site."
@@ -41887,7 +41887,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 268,
           "symbol": "WorldStage",
           "claim": "The production JSX source declares onClick at this control site."
@@ -73957,7 +73957,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
           "line": 98,
           "symbol": "document",
           "claim": "Source registers the browser dragover listener on document; static census records the registration site."
@@ -74021,7 +74021,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 183,
           "symbol": "window",
           "claim": "Source registers the browser keydown listener on window; static census records the registration site."
@@ -74117,7 +74117,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
           "line": 100,
           "symbol": "document",
           "claim": "Source registers the browser drop listener on document; static census records the registration site."
@@ -74181,7 +74181,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 182,
           "symbol": "window",
           "claim": "Source registers the browser pointerdown listener on window; static census records the registration site."
@@ -74421,7 +74421,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/WorldStage.tsx",
+          "path": "web/src/desk/_parked/floor/gl/WorldStage.tsx",
           "line": 168,
           "symbol": "document",
           "claim": "Source registers the browser keydown listener on document; static census records the registration site."
@@ -74693,7 +74693,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
           "line": 99,
           "symbol": "document",
           "claim": "Source registers the browser dragleave listener on document; static census records the registration site."
@@ -74789,7 +74789,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
           "line": 97,
           "symbol": "document",
           "claim": "Source registers the browser dragenter listener on document; static census records the registration site."
@@ -110871,7 +110871,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
           "line": 17,
           "symbol": "GlassDropLayer",
           "claim": "Declared source owner is present; this reference identifies the entry-point source. It does not prove every caller or the resulting operation."
