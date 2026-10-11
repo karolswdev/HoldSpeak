@@ -58,6 +58,7 @@ from ..plugins.gated_connector import (
     WriteConnectorManifest,
     build_gated_connector,
 )
+from ..redaction import redact_secrets
 from .channel_contract import CHANNELS, ERROR_LIMIT, REDACTED, ChannelRefused, Document, Outcome, redact, sha256
 from .errors import ValidationError
 
@@ -235,7 +236,8 @@ def sendgrid_errors(raw: bytes) -> tuple[tuple[str, str], ...]:
     found = data.get("errors") if isinstance(data, dict) else None
     if not isinstance(found, list):
         return ()
-    return tuple((str(item.get("field") or "")[:80], str(item.get("message") or "")[:500])
+    # PHILO-17 redact (Astra r1 MUST 2): redact the whole message, then cut.
+    return tuple((redact_secrets(item.get("field") or "")[:80], redact_secrets(item.get("message") or "")[:500])
                  for item in found[:10] if isinstance(item, dict))
 
 
@@ -342,7 +344,7 @@ def resend_error(raw: bytes, status: int) -> Optional[tuple[str, str]]:
     answered, name, message = data.get("statusCode"), data.get("name"), data.get("message")
     if type(answered) is not int or answered != int(status) or not isinstance(name, str) or not isinstance(message, str):
         return None
-    return name[:80], message[:500]
+    return redact_secrets(name)[:80], redact_secrets(message)[:500]  # redact, then cut
 
 
 def resend_id(raw: bytes) -> str:
@@ -778,7 +780,8 @@ class EmailChannel:
         outcome = chosen.interpret(answer.status, answer.headers, answer.body)
         if outcome.proof.get("error"):
             # Cut BEFORE the excerpt scan (story 02's GATE 1): the scan's cost is bounded by 240 characters.
-            cut = " ".join(str(outcome.proof["error"]).split())[:ERROR_LIMIT]
+            # PHILO-17 redact: secrets out of the WHOLE text first, then the cut.
+            cut = " ".join(redact_secrets(outcome.proof["error"]).split())[:ERROR_LIMIT]
             outcome = replace(outcome, proof={**outcome.proof, "error": redact(cut, body)})
         return outcome
 

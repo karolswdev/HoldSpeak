@@ -7,6 +7,7 @@ import re
 import socket
 from typing import Any, Optional
 
+from holdspeak.redaction import redact_error, redact_secrets
 from ..logging_config import get_logger
 from .models import ActionItem, DEFAULT_CLOUD_BASE_URL
 
@@ -292,8 +293,9 @@ def _extract_status_code(exc: BaseException) -> Optional[int]:
 
 
 def _describe_cloud_exception(exc: BaseException, *, model: str, base_url: Optional[str]) -> str:
-    endpoint = (base_url or DEFAULT_CLOUD_BASE_URL).strip() or DEFAULT_CLOUD_BASE_URL
-    message = str(exc).strip() or exc.__class__.__name__
+    endpoint = redact_secrets((base_url or DEFAULT_CLOUD_BASE_URL).strip() or DEFAULT_CLOUD_BASE_URL)
+    # PHILO-17 redact: a provider's error body can echo the key it was sent.
+    message = redact_error(exc) or exc.__class__.__name__
     message_lower = message.lower()
     exc_name = exc.__class__.__name__.lower()
     status_code = _extract_status_code(exc)

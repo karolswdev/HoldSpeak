@@ -14,6 +14,7 @@ from urllib.parse import urlsplit
 
 import holdspeak.intel as _intel_pkg
 
+from holdspeak.redaction import redact_error
 from ..kernel.external_egress import run_external_egress
 from ..kernel.provider_signals import CONTROL_SIGNALS, ProviderCompatibilityRetry, ProviderKnownNoGenerationTransient, ProviderPermanentNoGeneration, ProviderPermissionDenied
 from ..logging_config import get_logger
@@ -829,7 +830,7 @@ class MeetingIntel:
             raise
         except Exception as exc:
             log.error(f"Streaming prompt failed: {exc}", exc_info=True)
-            yield Delta(kind="error", text=str(exc))
+            yield Delta(kind="error", text=redact_error(exc))
 
     def run_prompt(
         self,

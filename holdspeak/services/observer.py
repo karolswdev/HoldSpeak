@@ -6,10 +6,16 @@ import functools
 import inspect
 import json
 import logging
+import re
 import time
 import uuid
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
+
+from holdspeak.redaction import REDACTED, redact_bounded, redact_error
+
+#: The most of an exception's text one pipeline event keeps (redacted first).
+FAILURE_LIMIT = 4096
 
 
 _correlation_id: contextvars.ContextVar[str] = contextvars.ContextVar("_correlation_id")
@@ -57,7 +63,36 @@ class NullObserver:
         pass
 
 
+#: A dict key that names a credential: its value is withheld whole.
+_CREDENTIAL_KEY = re.compile(r"(?i)[A-Za-z0-9_-]*(?:token|password|passwd|secret|api[_-]?key|apikey|credential|authorization)")
+
+
+def _redact_tree(value: Any) -> Any:
+    """Every string leaf redacted, and every value under a credential key
+    withheld, BEFORE the JSON encoding (PHILO-17 redact, Astra r2: an
+    encoded string escapes its quotes, which hides a quoted label)."""
+    if isinstance(value, str):
+        return redact_bounded(value)
+    if isinstance(value, dict):
+        out: dict[Any, Any] = {}
+        for key, item in value.items():
+            if (isinstance(key, str) and _CREDENTIAL_KEY.fullmatch(key)
+                    and isinstance(item, (str, int, float)) and not isinstance(item, bool)
+                    and str(item).strip() and not str(item).isdigit()):
+                out[key] = REDACTED
+            else:
+                out[key] = _redact_tree(item)
+        return out
+    if isinstance(value, (list, tuple)):
+        return [_redact_tree(item) for item in value]
+    return value
+
+
 def _truncate(value: Any, limit: int = 2048) -> str:
+    try:
+        value = _redact_tree(value)
+    except Exception:
+        pass
     try:
         summary = json.dumps(value, default=str, separators=(",", ":"))
     except Exception:
@@ -66,6 +101,10 @@ def _truncate(value: Any, limit: int = 2048) -> str:
         except Exception:
             summary = "<unserializable>"
 
+    # PHILO-17 redact: agents read pipeline events (MCP ``pipeline://events``),
+    # so no credential a provider echoed is recorded. Redact first (the scan
+    # is bounded at 64k, far past this cut), then cut.
+    summary = redact_bounded(summary)
     if len(summary) > limit:
         return summary[: limit - 1] + "…"
     return summary
@@ -120,7 +159,7 @@ def _failure(exc: BaseException) -> tuple[str | None, str | None, str]:
     outcome = getattr(exc, "observed_outcome", None)
     if outcome:
         return None, None, _truncate({"outcome": str(outcome), "code": code})
-    return repr(exc), code, ""
+    return redact_error(repr(exc), FAILURE_LIMIT), code, ""
 
 
 def observed(fn: Any) -> Any:

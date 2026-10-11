@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 from typing import Any, Iterator, Mapping, Optional, Protocol
 
 from ..home_paths import home_display
+from ..redaction import redact_secrets
 from .errors import NotFound, ServiceError, ValidationError
 
 #: Size limits, refused by name before dispatch (section 3): ``payload_too_large:<channel>``.
@@ -160,11 +161,16 @@ def redact(text: Any, payload: bytes = b"", secrets: Any = ()) -> str:
     text whole. A named code (``Outcome.reason``, a refusal code) never passes
     through here, so a redaction never erases the diagnosis.
     """
-    raw = " ".join(" ".join(str(text or "").split())[:ERROR_LIMIT].split())
+    whole = str(text or "")
     for value in secrets or ():
         if value and len(str(value)) >= 4:
-            raw = raw.replace(str(value), REDACTED)
-    raw = _SECRET.sub(REDACTED, raw)
+            whole = whole.replace(str(value), REDACTED)
+    # PHILO-17 redact: the shared redactor reads the WHOLE text before the
+    # cut (a cut can leave the head of a secret no pattern knows), then once
+    # more after the fold. It adds Basic credentials, passwords in URLs and
+    # sk- keys to this module's own set.
+    raw = " ".join(" ".join(redact_secrets(whole).split())[:ERROR_LIMIT].split())
+    raw = redact_secrets(_SECRET.sub(REDACTED, raw))
     if payload and len(payload) > REDACT_SCAN_LIMIT:
         return REDACTED if raw else ""
     body = " ".join(payload.decode("utf-8", errors="replace").split()) if payload else ""

@@ -659,6 +659,10 @@ class MeetingWebServer:
         from .principals import agent_credentials
 
         agent_credentials.set_hub_url(f"http://{self.host}:{self.port}")
+        # PHILO-17 redact: uvicorn's own log lines pass the redactor too.
+        from .logging_config import install_log_redaction
+
+        install_log_redaction()
         config = uvicorn.Config(
             self.app,
             host=self.host,

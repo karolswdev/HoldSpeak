@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 from dataclasses import dataclass
+from holdspeak.redaction import redact_error
 from holdspeak.timestamps import local_wall
 from typing import Any, Callable, Iterable, Optional
 
@@ -165,7 +166,7 @@ def run_github_cli_enrichment(
             results.append(
                 GithubCliRunResult(
                     plan=plan,
-                    error=stderr[:400] or f"gh exited with status {completed.returncode}",
+                    error=redact_error(stderr, 400) or f"gh exited with status {completed.returncode}",
                 )
             )
             continue

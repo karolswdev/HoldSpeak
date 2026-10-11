@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 from dataclasses import dataclass
+from holdspeak.redaction import redact_error
 from holdspeak.timestamps import local_wall
 from typing import Any, Callable, Iterable, Optional
 
@@ -157,7 +158,7 @@ def run_jira_cli_enrichment(
             results.append(
                 JiraCliRunResult(
                     plan=plan,
-                    error=stderr[:400] or f"jira exited with status {completed.returncode}",
+                    error=redact_error(stderr, 400) or f"jira exited with status {completed.returncode}",
                 )
             )
             continue

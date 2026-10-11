@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from typing import Any, Optional
 
+from holdspeak.redaction import redact_error
 from ..actuator_executor import Connector
 from ..gated_connector import GatedOperation, WriteConnectorManifest, build_gated_connector
 
@@ -74,7 +75,7 @@ def _status_plan(proposal: Any) -> GatedOperation:
 def _interpret(completed: Any, op: GatedOperation) -> dict[str, Any]:
     if getattr(completed, "returncode", None) != 0:
         detail = str(getattr(completed, "stderr", "") or getattr(completed, "stdout", "") or "no output").strip()
-        raise RuntimeError(f"GitHub write failed: {detail[:240]}")
+        raise RuntimeError(f"GitHub write failed: {redact_error(detail, 240)}")
     output = str(getattr(completed, "stdout", "") or "").strip()
     return {"output": output[-500:]}
 

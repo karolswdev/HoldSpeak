@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Literal, Sequence
 
 from .agent_context import AgentSession
+from .redaction import redact_error
 
 SummarizerProvider = Literal["codex", "claude"]
 
@@ -261,7 +262,7 @@ def summarize_agent_session(
         cwd=cwd,
     )
     if completed.returncode != 0:
-        stderr = _single_line(completed.stderr) or f"exit code {completed.returncode}"
+        stderr = _single_line(redact_error(completed.stderr)) or f"exit code {completed.returncode}"
         raise RuntimeError(f"summarizer failed: {stderr}")
 
     raw_output = completed.stdout.strip()

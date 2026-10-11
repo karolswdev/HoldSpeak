@@ -421,7 +421,7 @@ class ConfluenceProviderAdapter:
                 "connection_ref": ref,
                 "account": {"site": site, "email": email},
                 "error_code": CODE_SCOPE_DENIED,
-                "error_detail": parsed.get("detail", "read-back mismatch"),
+                "error_detail": redact_source_error(parsed.get("detail", "read-back mismatch"))[:500],
                 "recovery": None,
                 "capability_manifest": dict(_CAPABILITIES),
                 "capability_revision": _CAPABILITY_REVISION,
@@ -661,7 +661,7 @@ class ConfluenceProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_SCOPE_DENIED,
-                    "error_detail": parsed.get("detail", "read-back mismatch"),
+                    "error_detail": redact_source_error(parsed.get("detail", "read-back mismatch"))[:500],
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
