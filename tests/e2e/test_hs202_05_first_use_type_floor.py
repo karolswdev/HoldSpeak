@@ -261,8 +261,23 @@ _MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + FOLDED_WORD_JS + """
       getComputedStyle(document.documentElement).getPropertyValue('--desk-button-hit-size')) || 44;
     for (const el of document.querySelectorAll('.btn')) {
       if (!visible(el)) continue;
+      const r0 = el.getBoundingClientRect();
+      if (r0.bottom <= 0 || r0.top >= innerHeight || r0.right <= 0 || r0.left >= innerWidth) continue;
+      // The product rule (window-chrome.css scroll-padding-block, PHILO-7-02):
+      // a Button is fully hittable once it is scrolled into view. A Button
+      // that its own window body's scroll edge cuts is not a hit-area defect,
+      // so scroll it into view (nearest) in its own scroller first, probe it
+      // there, and put every scroller back after the probe.
+      const scrolled = [];
+      for (let n = el.parentElement; n; n = n.parentElement) {
+        if (n.scrollHeight > n.clientHeight || n.scrollWidth > n.clientWidth)
+          scrolled.push([n, n.scrollTop, n.scrollLeft]);
+      }
+      const doc = document.scrollingElement;
+      scrolled.push([doc, doc.scrollTop, doc.scrollLeft]);
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      try {
       const r = el.getBoundingClientRect();
-      if (r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth) continue;
       const halfW = Math.max(hit, r.width) / 2, halfH = Math.max(hit, r.height) / 2;
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       // A Desk window covers the Chair behind it. Those Buttons are in
@@ -298,6 +313,9 @@ _MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + FOLDED_WORD_JS + """
       plated.push({ label: (el.textContent || '').trim().slice(0, 24), occluded: false,
                     w: Math.round(halfW*2), h: Math.round(halfH*2), covered,
                     painted: Math.round(r.height), path: path(el), bad });
+      } finally {
+        for (const [n, top, left] of scrolled) { n.scrollTop = top; n.scrollLeft = left; }
+      }
     }
     // The chrome strips this product actually has at 393.
     for (const [kind, sel] of [
