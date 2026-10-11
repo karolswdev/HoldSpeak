@@ -34,6 +34,7 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any
 
+from holdspeak.db.automations import redact_source_error
 from holdspeak.connector_packs import acli_confluence
 from holdspeak.connector_runtime import PermissionGate
 from holdspeak.principals import Principal
@@ -292,7 +293,7 @@ class ConfluenceProviderAdapter:
                 "connection_ref": ref,
                 "account": {"site": site, "email": email},
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": f"acli auth switch failed: {str(exc)[:500]}",
+                "error_detail": f"acli auth switch failed: {redact_source_error(exc)[:500]}",
                 "recovery": None,
                 "capability_manifest": dict(_CAPABILITIES),
                 "capability_revision": _CAPABILITY_REVISION,
@@ -334,7 +335,7 @@ class ConfluenceProviderAdapter:
                 "connection_ref": ref,
                 "account": {"site": site, "email": email},
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": f"acli auth switch failed: {switch_combined.strip()[:500]}",
+                "error_detail": f"acli auth switch failed: {redact_source_error(switch_combined).strip()[:500]}",
                 "recovery": None,
                 "capability_manifest": dict(_CAPABILITIES),
                 "capability_revision": _CAPABILITY_REVISION,
@@ -358,7 +359,7 @@ class ConfluenceProviderAdapter:
                 "connection_ref": ref,
                 "account": {"site": site, "email": email},
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": f"acli auth status failed: {str(exc)[:500]}",
+                "error_detail": f"acli auth status failed: {redact_source_error(exc)[:500]}",
                 "recovery": None,
                 "capability_manifest": dict(_CAPABILITIES),
                 "capability_revision": _CAPABILITY_REVISION,
@@ -400,7 +401,7 @@ class ConfluenceProviderAdapter:
                 "connection_ref": ref,
                 "account": {"site": site, "email": email},
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": f"acli auth status non-zero: {status_combined.strip()[:500]}",
+                "error_detail": f"acli auth status non-zero: {redact_source_error(status_combined).strip()[:500]}",
                 "recovery": None,
                 "capability_manifest": dict(_CAPABILITIES),
                 "capability_revision": _CAPABILITY_REVISION,
@@ -581,7 +582,7 @@ class ConfluenceProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": f"acli auth switch failed: {str(exc)[:500]}",
+                    "error_detail": f"acli auth switch failed: {redact_source_error(exc)[:500]}",
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
@@ -606,7 +607,7 @@ class ConfluenceProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": f"acli auth switch failed: {switch_combined.strip()[:500]}",
+                    "error_detail": f"acli auth switch failed: {redact_source_error(switch_combined).strip()[:500]}",
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
@@ -623,7 +624,7 @@ class ConfluenceProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": f"acli auth status failed: {str(exc)[:500]}",
+                    "error_detail": f"acli auth status failed: {redact_source_error(exc)[:500]}",
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
@@ -648,7 +649,7 @@ class ConfluenceProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": f"acli auth status non-zero: {status_combined.strip()[:500]}",
+                    "error_detail": f"acli auth status non-zero: {redact_source_error(status_combined).strip()[:500]}",
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
@@ -731,14 +732,14 @@ class ConfluenceProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": str(exc)[:500],
+                    "error_detail": redact_source_error(exc)[:500],
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
                 }
 
             if completed.returncode != 0:
-                detail = ((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
+                detail = redact_source_error((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
                 code = CODE_AUTH_REQUIRED if _is_unauthenticated(detail) else CODE_UNAVAILABLE
                 return {
                     "state": DISCOVERY_FAILED,
@@ -850,12 +851,12 @@ class ConfluenceProviderAdapter:
                     "valid": False,
                     "space": None,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": str(exc)[:500],
+                    "error_detail": redact_source_error(exc)[:500],
                     "connection_ref": canonical_ref,
                 }
 
             if completed.returncode != 0:
-                detail = ((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
+                detail = redact_source_error((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
                 return {
                     "valid": False,
                     "space": None,
@@ -921,14 +922,14 @@ class ConfluenceProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": str(exc)[:500],
+                    "error_detail": redact_source_error(exc)[:500],
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
                 }
 
             if completed.returncode != 0:
-                detail = ((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
+                detail = redact_source_error((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_QUERY_INVALID,

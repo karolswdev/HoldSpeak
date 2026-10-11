@@ -12,22 +12,34 @@ from .base import BaseRepository
 
 log = logging.getLogger(__name__)
 
-#: PHILO-17 evalerror (Astra r1): two shapes a gh/acli error line can carry
-#: that the memory redactor leaves alone. An Authorization header with any
-#: scheme ("token", "Basic"), and a URL with a user and password.
-_AUTH_HEADER = re.compile(r"(?i)\b(authorization\s*[:=]\s*)(?:bearer|token|basic|digest)\s+\S+")
-_URL_USERINFO = re.compile(r"(?i)\b([a-z][a-z0-9+.-]*://)[^\s/@:]+:[^\s/@]+@")
+#: PHILO-17 evalerror (Astra r1, r2): two shapes a gh/acli error line can
+#: carry that the memory redactor leaves alone. An Authorization (or
+#: Proxy-Authorization) value of ANY scheme -- header ``:``, ``=`` or a JSON
+#: key -- is redacted whole: a quoted value to its closing quote, else to the
+#: end of the line. A URL with a user and password is redacted up to the
+#: ``@``, or to the end of the text when a cut took the ``@host`` away.
+_AUTH_VALUE = re.compile(
+    r"""(?im)(["']?\b(?:proxy-)?authorization["']?\s*[:=]\s*)("[^"\n]*"?|'[^'\n]*'?|[^\n]*)"""
+)
+_URL_USERINFO = re.compile(r"(?i)\b([a-z][a-z0-9+.-]*://)[^\s/@:]+:[^\s/@]*(@|\Z)")
 _ERROR_CAP = 1000
+
+
+def _auth_value(match: re.Match[str]) -> str:
+    value = match.group(2)
+    quote = value[:1] if value[:1] in {'"', "'"} else ""
+    return match.group(1) + (f"{quote}{REDACTED}{quote}" if quote else REDACTED)
 
 
 def redact_source_error(error: object) -> str:
     """A Watch's raw read error made safe to store and show: secrets out
     (tokens, Authorization headers, ``?token=``, passwords in URLs, Atlassian
     API tokens), then cut to the column cap. The one helper for every
-    ``record_refresh_error`` caller."""
+    ``record_refresh_error`` caller and every provider error text: redact
+    the WHOLE text first, cut after (a cut can hide a secret's shape)."""
     text = str(error if error is not None else "")
-    text = _AUTH_HEADER.sub(lambda m: m.group(1) + REDACTED, text)
-    text = _URL_USERINFO.sub(lambda m: m.group(1) + REDACTED + "@", text)
+    text = _AUTH_VALUE.sub(_auth_value, text)
+    text = _URL_USERINFO.sub(lambda m: m.group(1) + REDACTED + m.group(2), text)
     return redact(text)[:_ERROR_CAP]
 
 

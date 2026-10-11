@@ -412,3 +412,87 @@ def test_confluence_error_detail_is_redacted(error_code) -> None:
             query={"connection_ref": "a.atlassian.net|u@x.com", "space_id": "42"},
         )
     _no_secret(exc_info.value)
+
+
+# ── PHILO-17 evalerror (Astra r2) ────────────────────────────────────
+
+
+@pytest.mark.parametrize("text", [
+    "Authorization: Negotiate abc",
+    'Authorization: Digest username="u", response="r"',
+    "Authorization: X abc def",
+    "Proxy-Authorization: Basic Zm9vOmJhcg==",
+    "Authorization=X abc def",
+    '{"authorization": "X abc def", "status": 401}',
+])
+def test_any_authorization_value_is_redacted_whole(text) -> None:
+    from holdspeak.db.automations import redact_source_error
+
+    out = redact_source_error("HTTP 401\n" + text + "\nretry later")
+    assert "abc" not in out and "def" not in out.replace("[redacted]", "")
+    assert 'username="u"' not in out and 'response="r"' not in out
+    assert "Zm9vOmJhcg" not in out
+    assert out.startswith("HTTP 401\n") and out.endswith("\nretry later"), out
+
+
+def test_a_cut_url_password_is_redacted() -> None:
+    from holdspeak.db.automations import redact_source_error
+
+    assert "secret123" not in redact_source_error("fetch https://u:secret123")
+
+
+_ACLI_REF = "alpha.atlassian.net|user@example.com"
+
+
+def _acli_runner(family: str, failure: str):
+    """A real-shaped acli: switch and status succeed, the read fails."""
+    def runner(*args, **kwargs):
+        cmd = list(args[0]) if args else list(kwargs.get("args", []))
+        if "switch" in cmd:
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout="✓ Switched to account: alpha.atlassian.net [user@example.com]", stderr="")
+        if "status" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, stdout=(
+                "✓ Authenticated\n  Site: alpha.atlassian.net\n  Email: user@example.com\n"
+                "  Authentication Type: oauth\n"), stderr="")
+        return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=failure)
+    return runner
+
+
+def _cut_secret(family: str) -> str:
+    """Atlassian recovery text, padded so a 500 cut lands right after the
+    password and drops the ``@host``."""
+    head = f"✗ Error: unauthorized: use 'acli {family} auth login' to authenticate "
+    return head + "x" * (480 - len(head)) + " https://u:secret123@host"
+
+
+def test_jira_producer_redacts_before_the_cut(tmp_path) -> None:
+    from holdspeak.db.core import Database
+    from holdspeak.services.jira_provider import JiraProviderAdapter
+
+    adapter = JiraProviderAdapter(db=Database(tmp_path / "j.db"), runner=_acli_runner("jira", _cut_secret("jira")))
+    result = adapter.search(OWNER, _ACLI_REF, jql="project = KAN")
+    assert result["state"] == "failed", result
+    assert "secret123" not in json.dumps(result), result
+    with pytest.raises(ServiceError) as exc_info:
+        JiraWatchSource(adapter=adapter).snapshot(
+            OWNER, query_kind="issues", query={"connection_ref": _ACLI_REF, "projects": ["KAN"]})
+    assert "secret123" not in f"{exc_info.value.detail} {exc_info.value}"
+    assert "acli jira auth login" in exc_info.value.detail
+
+
+def test_confluence_producer_redacts_before_the_cut(tmp_path) -> None:
+    from holdspeak.db.core import Database
+    from holdspeak.services.confluence_provider import ConfluenceProviderAdapter
+    from holdspeak.services.watch_sources import ConfluenceWatchSource
+
+    adapter = ConfluenceProviderAdapter(
+        db=Database(tmp_path / "c.db"), runner=_acli_runner("confluence", _cut_secret("confluence")))
+    result = adapter.fetch_recent_blogs(OWNER, _ACLI_REF, space_id="42")
+    assert result["state"] == "failed", result
+    assert "secret123" not in json.dumps(result), result
+    with pytest.raises(ServiceError) as exc_info:
+        ConfluenceWatchSource(adapter=adapter).snapshot(
+            OWNER, query_kind="recent_blogs", query={"connection_ref": _ACLI_REF, "space_id": "42"})
+    assert "secret123" not in f"{exc_info.value.detail} {exc_info.value}"
+    assert "acli confluence auth login" in exc_info.value.detail

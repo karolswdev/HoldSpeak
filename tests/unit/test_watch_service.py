@@ -1163,7 +1163,7 @@ class TestEvaluateOnce:
 
     @pytest.mark.parametrize("verb", ["evaluate_once", "baseline_watch"])
     def test_a_failed_error_write_keeps_the_providers_own_error(
-        self, tmp_path, monkeypatch, verb,
+        self, tmp_path, monkeypatch, caplog, verb,
     ) -> None:
         """Astra r1 (2): when the error cannot be stored, the caller still
         gets the provider's error, never the database's."""
@@ -1181,8 +1181,16 @@ class TestEvaluateOnce:
             raise RuntimeError("provider offline")
 
         svc = _watch_svc(db, fetcher=fetcher)
+        caplog.set_level("WARNING", logger="holdspeak.db.automations")
         with pytest.raises(RuntimeError, match="provider offline"):
             getattr(svc, verb)(OWNER, "watch-everr3")
+        # Astra r2 (3): the failed write is logged, with its traceback.
+        logged = [r for r in caplog.records
+                  if r.name == "holdspeak.db.automations"
+                  and "could not record the error of watch watch-everr3" in r.getMessage()]
+        assert len(logged) == 1, caplog.records
+        assert logged[0].levelname == "WARNING"
+        assert logged[0].exc_info and logged[0].exc_info[0].__name__ == "OperationalError"
 
     def test_baseline_advanced_after_evaluate(self, tmp_path) -> None:
         """After evaluate_once, the baseline reflects the new snapshot."""
