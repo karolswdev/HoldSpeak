@@ -324,6 +324,11 @@
     position: static;
   }
 }
+/* PHILO-17: while Add source is open its verbs (Cancel, Add) sit at the
+   section's foot; the ask well goes into the flow so it never covers them. */
+.room-body:has([data-testid="room-add-sources"]) .room-ask-container {
+  position: static;
+}
 
 /* ── moment 4: new needs-you row accent fade ── */
 @keyframes room-needs-you-accent {
@@ -641,4 +646,12 @@
   align-items: center;
   gap: 6px;
   padding: 8px 0 8px 8px;
+}
+
+/* PHILO-17 U30: FILES names the reads it could not make (A.10). */
+.room-files-unread {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding-bottom: var(--space-1);
 }

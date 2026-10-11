@@ -26,7 +26,7 @@ import pytest
 
 from tests._evidence import evidence_dir
 
-from .glass_infra import _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import open_project_drawer, _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
 from .test_philo14_a2_drawer_glass import PROJECT, _seed as _seed_drawer
 from .test_philo14_c4_conductor_glass import _seed as _seed_agents
 
@@ -184,7 +184,7 @@ def test_the_material_on_six_faces(tmp_path: Path, monkeypatch: pytest.MonkeyPat
                 _assert_material(page, f"needs-{width}", ".desk-window-shell.chair-window[aria-label='Needs you']")
 
                 # 3. A Project drawer.
-                page.goto(f"{url}/?token={TOKEN}&open=project:{PROJECT}", wait_until="load")
+                open_project_drawer(page, url, PROJECT, TOKEN)  # PHILO-17 U30: the parked drawer, by its key
                 _normal_chair(page)
                 drawer = page.locator(".drawer-window")
                 drawer.wait_for(timeout=T)

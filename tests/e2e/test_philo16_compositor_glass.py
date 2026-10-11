@@ -31,7 +31,7 @@ from typing import Any
 import pytest
 
 from .chair_windows import open_chair_window
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import open_project_drawer, _api, _boot, _ensure_build, _normal_chair, _settle
 from .test_philo13_11_frame_glass import _seed, _stage
 from tests._evidence import evidence_dir
 
@@ -297,7 +297,7 @@ class TestCompositor:
                     fails["C4 Esc returns the remembered rects"] = {"free": free, "back": back}
 
                 # C5 gather: the project drawer and its Get Info share a Room.
-                page.goto(f"{self.base}/?token={TOKEN}&open=project:p-ledger", wait_until="load")
+                open_project_drawer(page, self.base, 'p-ledger', TOKEN)  # PHILO-17 U30: the parked drawer, by its key
                 _normal_chair(page)
                 drawer = page.locator(".drawer-window")
                 drawer.wait_for(timeout=T)

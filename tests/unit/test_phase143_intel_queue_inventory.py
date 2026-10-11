@@ -125,7 +125,9 @@ def test_inventory_projection_dtos_session_import_and_persistence_writers_are_pi
     # owner's gesture is the only thing that enqueues from an imported
     # meeting. The census pins the absence so it cannot creep back.
     assert "enqueue_intel_job" not in imported
-    assert "Import does not run the summary by itself" in imported
+    # PHILO-17: an import queues its summary by the Stop rule, through the
+    # routed "Run intelligence" producer (a job with its disclosed route).
+    assert "queue_after_save" in imported
 
 
 def test_inventory_plugin_job_family_is_separate_and_non_colliding() -> None:

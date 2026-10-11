@@ -371,3 +371,27 @@ describe("ProjectRoomCore — name said once (was: identity dedup)", () => {
     expect(body?.textContent).not.toContain("REV ");
   });
 });
+
+// PHILO-17 U30 (Astra r1 on #1068): FILES names a failed read with Retry, as
+// the drawer did; a failure is never an empty or a complete list (A.10).
+describe("ProjectRoomCore — FILES names its failed read", () => {
+  it("draws RESOURCES · NOT READ with Retry, and Retry reads again", async () => {
+    let resourceReads = 0;
+    apiFetch.mockImplementation((url: string) => {
+      if (url.endsWith("/api/projects/p1/resources")) {
+        resourceReads += 1;
+        return resourceReads === 1
+          ? Promise.reject(new Error("read failed"))
+          : Promise.resolve({ resources: [] });
+      }
+      return Promise.resolve(response(url));
+    });
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("room-body");
+    const unread = await screen.findByTestId("room-files-not-read");
+    expect(unread.textContent).toContain("RESOURCES · NOT READ");
+    screen.getByTestId("room-files-retry").click();
+    await waitFor(() => expect(resourceReads).toBeGreaterThan(1));
+    await waitFor(() => expect(screen.queryByTestId("room-files-not-read")).toBeNull());
+  });
+});

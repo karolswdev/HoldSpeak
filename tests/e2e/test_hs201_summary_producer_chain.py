@@ -253,25 +253,23 @@ def _lan_engine_model() -> str | None:
 
 
 @pytest.mark.parametrize("engine_kind", ["stub", "lan"])
-def test_import_asks_for_no_summary_and_the_gesture_runs_the_frozen_producer(
+def test_import_queues_the_disclosed_route_and_the_drainer_runs_the_frozen_producer(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, engine_kind: str,
 ) -> None:
-    """HS-201-10 — the same producer chain, entered through Import.
+    """HS-201-10, as ruled in PHILO-17 — the same producer chain, entered through Import.
 
     The rehearsal's defect 2: `_persist_import` enqueued a job with only a
     transcript hash, so the producer ran with no disclosed route and no
     receipt. Here the REAL import runs with a summary engine already
-    selected, and the chain stays cold until the owner's gesture — which
-    carries the disclosed selection hash and leaves a receipt naming the
-    host that was contacted.
+    selected (by the owner's press): Import queues one job with the disclosed
+    selection hash, contacts nobody, and the drained run leaves a receipt
+    naming the host that was contacted.
     """
     from datetime import datetime, timedelta
     from types import SimpleNamespace
 
     from holdspeak.intel_queue import process_next_intel_job
     from holdspeak.meeting_import import import_meeting
-    from holdspeak.principals import Principal, PrincipalKind
-    from holdspeak.services.meeting_intel_service import MeetingIntelService
     from tests.unit.test_meeting_deferred_admission import FakeHost, FakeIntel, _Route
 
     fixture = Path(__file__).resolve().parents[1] / "fixtures" / "core_path_smoke_16k.wav"
@@ -364,35 +362,35 @@ def test_import_asks_for_no_summary_and_the_gesture_runs_the_frozen_producer(
     )
     meeting_id = imported.state.id
 
-    # ── cold: nothing queued, nothing drained, nobody contacted ──
-    assert imported.intel_job_enqueued is False
-    assert db.intel.list_intel_jobs() == []
-    assert db.intel.get_latest_intel_job(meeting_id) is None
-    assert process_next_intel_job(retry_max_attempts=1) is False
+    # ── PHILO-17 ruling (supersedes HS-201-10's "import runs no summary" for
+    # an engine the owner chose): "after every meeting" queues ONE job at
+    # Import, carrying the disclosed route and its selection hash. Nothing is
+    # contacted at Import; the drainer runs the frozen route, and the receipt
+    # names the host. (No engine the owner did not choose is ever queued:
+    # tests/unit/test_finish_defaults.py::test_stop_and_import_never_send_to_an_engine_the_owner_did_not_choose.)
+    assert imported.intel_job_enqueued is True
+    route = project_route(db, invocation_id=f"meeting:{meeting_id}")
+    assert route["status"] == "ready", route
+    jobs = db.intel.list_intel_jobs()
+    assert [job.meeting_id for job in jobs] == [meeting_id]
+    assert jobs[0].planned_route["selection_hash"] == route["selection_hash"], jobs[0].planned_route
     if engine_kind == "stub":
-        assert engine.analyzed == []
+        assert engine.analyzed == []  # queued, not yet run: Import contacts nobody
     assert db.intel.get_run_receipt(meeting_id) is None
     with db._connection() as conn:
         attempts = conn.execute(
             "SELECT COUNT(*) AS n FROM inference_route_attempts"
         ).fetchone()
     assert attempts["n"] == 0, dict(attempts)
-    # …and the import is dated now, with a final transcript.
+    # …and the import ends now, with a final transcript.
     saved = db.meetings.get_meeting(meeting_id)
     assert saved.started_at > datetime.now() - timedelta(minutes=10)
     assert saved.transcription_status == "complete"
 
-    # ── the gesture: the disclosed selection, and only then a provider ──
-    route = project_route(db, invocation_id=f"meeting:{meeting_id}")
-    assert route["status"] == "ready", route
-    MeetingIntelService(db).run_intelligence(
-        Principal(PrincipalKind.OWNER, "hs201-owner"),
-        meeting_id,
-        expected_selection_hash=route["selection_hash"],
-    )
+    # ── the drainer runs the frozen, disclosed route ──
     assert process_next_intel_job(retry_max_attempts=1) is True
     if engine_kind == "stub":
-        assert engine.analyzed, "the gesture never reached the producer"
+        assert engine.analyzed, "the queued job never reached the producer"
 
     receipt = db.intel.get_run_receipt(meeting_id)
     assert receipt is not None

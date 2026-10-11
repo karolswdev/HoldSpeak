@@ -539,8 +539,10 @@ export const PRIMITIVES = {
     icon: "M4 4h16v16H4zM8 2v4M16 2v4M8 10h8M8 14h5",
     authorable: false,
     capabilities: ["send"],
-    // PHILO-14 A2: a Project opens as its drawer (the Room is one press away in its head).
-    surface: { type: "surface", surfaceKey: "open-project-drawer" },
+    // PHILO-17 U30: a Project opens its Room (one home). The drawer's key
+    // (`open-project-drawer`, drawer/DrawerWindows.tsx) is parked: no
+    // product opener names it.
+    surface: { type: "surface", surfaceKey: "open-project-memory" },
   },
   repository: {
     kind: "repository",

@@ -17,7 +17,7 @@ import { openRef } from "../../../desk/openObject";
 import { Disclosure, RefTokens, countLabel, countToken } from "../../../desk/surface";
 import { ProjectButton } from "../../../desk/surface/patterns";
 import type { BeliefCardData } from "./model";
-import { openDrawer } from "../../../desk/drawer/store";
+import { openProjectRoom } from "../../../desk/shell";
 
 const STATE_TONE: Record<string, "ok" | "danger" | "warn"> = {
   current: "ok",
@@ -64,7 +64,7 @@ export function BeliefCard({
         {belief.project ? (
           <ProjectButton
             name={belief.project.name}
-            onOpen={() => openDrawer(belief.project!.id)}
+            onOpen={() => openProjectRoom(belief.project!.id)}
             data-testid="recall-project"
           />
         ) : null}

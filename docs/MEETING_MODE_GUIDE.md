@@ -210,7 +210,7 @@ Rules for imports:
   A file with no names gets one label. The default is **Transcript**. A `.txt` file has no times, so HoldSpeak spreads the segments evenly.
 - A file with no readable content is refused. An import never makes an empty meeting.
 - The meeting start time is the time of the import.
-- An import does not run the summary. Select **Run summary** on the meeting.
+- An import runs the summary when **Summary** is set to after every meeting and you chose the engine. Otherwise, select **Run summary** on the meeting.
 
 ## Find meetings
 

@@ -105,7 +105,13 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
         result["period_label"] = _period_label(result)
         result["generated_label"] = _generated_label(result)
         result["title"] = brief_title(result.get("period_end"))
-        return _compose_overlay(result, registry.target("brief.latest"), request)
+        # PHILO-17: the view makes the brief again when the desk is newer.
+        service = registry.target("brief.latest")
+        try:
+            result["stale"] = bool(service.is_stale(brief))
+        except Exception:  # a read never blocks the brief
+            result["stale"] = False
+        return _compose_overlay(result, service, request)
 
     @router.post("/generate")
     async def generate(request: Request) -> dict[str, Any]:

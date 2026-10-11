@@ -6,7 +6,9 @@ import { readableError } from "../../../lib/api";
 import { openSurface } from "../../../desk/shell";
 import { useDesk } from "../../../desk/store";
 import {
+  addAtlassianAccount,
   fetchConnections,
+  recheckProvider,
   type ConnectionTool,
 } from "../../../pages/cores/connections/api";
 import { discoverGitHub, discoverJira, discoverConfluence } from "./api";
@@ -61,6 +63,8 @@ export interface SourceRow {
   reason: string | null;
   pickerOpen: boolean;
   adjustOpen: boolean;
+  /** PHILO-17 U29: the sign-in well is open in this row. */
+  connectOpen: boolean;
   adjust: {
     base?: string;
     labels?: string;
@@ -120,6 +124,7 @@ function makeRow(tool: ConnectionTool): SourceRow {
     reason: null,
     pickerOpen: false,
     adjustOpen: false,
+    connectOpen: false,
     adjust: { base: "main" },
     pickerQuery: "",
     pickerItems: [],
@@ -160,14 +165,32 @@ export interface DoorController {
   closeAdjust: (provider: string) => void;
   updateAdjust: (provider: string, patch: Partial<SourceRow["adjust"]>) => void;
   connect: (provider: string) => void;
+  /** PHILO-17 U29: the connection read each row signs in from. */
+  tools: ConnectionTool[];
+  /** The provider whose check or add is running. */
+  busy: string | null;
+  recheck: (provider: string) => void;
+  addAccount: (provider: string, site: string, email: string) => void;
+  /** PHILO-17 U10: set when the rows add to a project that exists. */
+  projectId: string | null;
   create: () => void;
   cancel: () => void;
   searchPicker: (provider: string, query: string) => void;
   loadMorePicker: (provider: string) => void;
 }
 
-export function useDoorController(): DoorController {
+export interface DoorOptions {
+  /** PHILO-17 U10: add the rows to this project (the Room's Add source). */
+  projectId?: string | null;
+  onAdded?: () => void;
+  onCancel?: () => void;
+}
+
+export function useDoorController(options: DoorOptions = {}): DoorController {
+  const projectId = options.projectId || null;
   const [outcome, setOutcome] = useState("");
+  const [tools, setTools] = useState<ConnectionTool[]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
   const [sources, setSources] = useState<SourceRow[]>([]);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
@@ -204,6 +227,7 @@ export function useDoorController(): DoorController {
       const resp = await fetchConnections();
       connectionToolsRef.current = resp.tools;
       safe(() => {
+        setTools(resp.tools);
         setSources((prev) => {
           if (prev.length === 0) return buildRows(resp.tools);
           return prev.map((row) => {
@@ -218,7 +242,7 @@ export function useDoorController(): DoorController {
               host: tool.egress_host ?? row.host,
               ...(wasConnected || !nowConnected
                 ? {}
-                : { state: "unpicked" as const }),
+                : { state: "unpicked" as const, connectOpen: false }),
             };
           });
         });
@@ -233,11 +257,8 @@ export function useDoorController(): DoorController {
     void readConnections();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Settings → Connections round trip (168 D2) ── */
-
-  const openConnectionsInPlace = useCallback(() => {
-    useDesk.getState().openSurfaceWindow("configure-settings", "integrations");
-  }, []);
+  /* ── Settings → Connections round trip (168 D2): a sign-in made in
+     Settings shows here when Settings closes. ── */
 
   const SETTINGS_WINDOW_ID = "surface-settings";
   useEffect(() => {
@@ -496,17 +517,52 @@ export function useDoorController(): DoorController {
 
   /* ── Connect ── */
 
+  /* PHILO-17 U29: Connect opens the sign-in well in the row (the exact
+     command, Copy, Add, Recheck); no Settings window over the work. */
   const connect = useCallback(
-    (_provider: string) => {
-      openConnectionsInPlace();
+    (provider: string) => {
+      setSources((prev) =>
+        prev.map((r) => (r.provider === provider ? { ...r, connectOpen: !r.connectOpen } : r)),
+      );
     },
-    [openConnectionsInPlace],
+    [],
+  );
+
+  const recheck = useCallback(
+    async (provider: string) => {
+      setBusy(provider);
+      try {
+        await recheckProvider(provider);
+      } finally {
+        await readConnections();
+        safe(() => setBusy(null));
+      }
+    },
+    [readConnections], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  /* An added account is checked at once: never left NEVER CHECKED. */
+  const addAccount = useCallback(
+    async (provider: string, site: string, email: string) => {
+      if (provider !== "jira" && provider !== "confluence") return;
+      setBusy(provider);
+      try {
+        await addAtlassianAccount(provider, site, email);
+        await recheckProvider(provider);
+      } catch (err) {
+        safe(() => setError(readableError(err)));
+      } finally {
+        await readConnections();
+        safe(() => setBusy(null));
+      }
+    },
+    [readConnections], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   /* ── Create ── */
 
   const create = useCallback(async () => {
-    if (!outcome.trim()) return;
+    if (!projectId && !outcome.trim()) return;
     setCreating(true);
     setError("");
     try {
@@ -518,6 +574,19 @@ export function useDoorController(): DoorController {
           watches: enabledWatchKeys(r.provider, r.toggles),
           adjust: r.adjust as Record<string, unknown>,
         }));
+      if (projectId) {
+        // PHILO-17 U10: the rows join this project; the rows clear for the next one.
+        await doorApi.doorAddSources(projectId, payloads);
+        safe(() => {
+          setCreating(false);
+          setSources((prev) => prev.map((r) => ({
+            ...r, scope: null, scopeRaw: null, state: "unpicked" as const, counts: [], plain: "", reason: null,
+            pickerOpen: false, adjustOpen: false,
+          })));
+          options.onAdded?.();
+        });
+        return;
+      }
       const resp = await doorApi.doorCreate(outcome.trim(), payloads);
       // PHILO-15 16 (B38): the GitHub row's repository is the Project's
       // repository (owner-only, one receipt; the first hand clones it). A
@@ -539,13 +608,17 @@ export function useDoorController(): DoorController {
         setError(readableError(err));
       });
     }
-  }, [outcome, sources]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [outcome, sources, projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Cancel ── */
 
   const cancel = useCallback(() => {
+    if (projectId) {
+      options.onCancel?.();
+      return;
+    }
     useDesk.getState().closeSurfaceWindow("surface-project-setup");
-  }, []);
+  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     outcome,
@@ -561,6 +634,11 @@ export function useDoorController(): DoorController {
     closeAdjust,
     updateAdjust,
     connect,
+    tools,
+    busy,
+    recheck: (provider: string) => void recheck(provider),
+    addAccount: (provider: string, site: string, email: string) => void addAccount(provider, site, email),
+    projectId,
     create,
     cancel,
     searchPicker,

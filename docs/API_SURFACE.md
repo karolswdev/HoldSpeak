@@ -244,7 +244,7 @@ Routes: 758 (plus static mounts). iOS-consumed: 89. Web-consumed: 592.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/decision-records` | web |
+| GET | `/api/decision-records` | server only |
 | GET | `/api/decision-records/review` | web |
 | GET | `/api/decision-records/search` | web |
 | GET | `/api/decision-records/source/{source_type}/{source_id}` | web |
@@ -1022,7 +1022,8 @@ Routes: 758 (plus static mounts). iOS-consumed: 89. Web-consumed: 592.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/providers` | web |
-| GET | `/api/providers/confluence/connections` | server only |
+| GET | `/api/providers/confluence/connections` | web |
+| POST | `/api/providers/confluence/connections` | web |
 | POST | `/api/providers/confluence/connections/{ref}/recheck` | server only |
 | GET | `/api/providers/confluence/discover` | server only |
 | POST | `/api/providers/confluence/validate` | server only |

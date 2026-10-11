@@ -8,7 +8,6 @@
  * (`openSourceRef`), a Project's drawer (`drawer/`), the People surface,
  * Intelligence. */
 import { apiFetch } from "../lib/api";
-import { openDrawer } from "./drawer/store";
 import { openIntelligence } from "./intelligenceNavigation";
 import { openAgentLane, openCoderSession, openProjectRoom, openSurfaceOr } from "./shell";
 import { openSourceRef } from "./surface";
@@ -136,11 +135,11 @@ export function refOpener(ref: string | null | undefined): Opener | null {
     if (!id || id.startsWith("project:")) return null;
     return () => openPerson(id);
   }
-  // PHILO-14 A2: a Project opens as its drawer (the Room is one press away,
-  // in the drawer's head).
+  // PHILO-17 U30: a Project opens its Room (one home; the drawer is parked
+  // as a project face).
   if (clean.startsWith("project:")) {
     const id = clean.slice("project:".length);
-    return id ? () => openDrawer(id) : null;
+    return id ? () => openProjectRoom(id) : null;
   }
   // Conductor F2: a Needs you coder row (R5) is `coder:<agent>:<session_id>`;
   // it opens the agent's session window.
@@ -185,14 +184,16 @@ export function openRef(ref: string): void {
 }
 
 /** A decision ref names a Desk decision (its own window) or a decision a
- * meeting recorded (`decisions` lifecycle rows, no Desk window): that one
- * opens its meeting, where it was made. One read tells which. */
+ * meeting recorded (`decisions` lifecycle rows, no Desk window). PHILO-17:
+ * that one opens itself, in Intelligence → Decisions (its words, its date,
+ * its meeting), not the meeting that hid it. One read tells which. */
 function openDecision(ref: string): void {
   const id = ref.slice("decision:".length);
   void apiFetch<{ decision?: { source_meeting_id?: string | null } }>(`/api/decisions/${encodeURIComponent(id)}`)
     .then((body) => {
       const meeting = (body?.decision?.source_meeting_id ?? "").trim();
-      openSourceRef(meeting ? `meeting:${meeting}` : ref);
+      if (meeting) openIntelligence({ view: "receipts", decisionId: id });
+      else openSourceRef(ref);
     })
     .catch(() => openSourceRef(ref));
 }
@@ -233,7 +234,7 @@ export function calendarOpener(event: {
   const person = (event.person_relationship_id ?? "").trim();
   if (person) return () => openPerson(person, "prep");
   const project = (event.project_id ?? "").trim();
-  if (project) return () => openDrawer(project);
+  if (project) return () => openProjectRoom(project);
   return null;
 }
 

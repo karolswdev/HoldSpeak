@@ -6,13 +6,17 @@ module pays that debt, and only that debt.
 
 The rule:
 
+* **PHILO-17: a meeting saved WITH a ready route is queued at once**
+  (``queue_after_save``, called at Stop and at Import), under the same
+  setting and consent rules as the drain below. Only a meeting saved with no
+  ready route is marked.
 * **The mark is durable and per meeting.**  At Stop, a meeting with a
   transcript whose summary route is not ready is marked
   ``summary_deferred_no_engine`` (table ``meeting_summary_backlog``).  The
   backlog is exactly the marked meetings: never inferred from a restart, a
   clock, or an "engine gained" moment.  A meeting saved WITH an engine is never
-  marked, so the backlog never queues it (the Stop decision of HS-201-02 stands:
-  ``runtime/meeting_glue.py``).
+  marked: ``queue_after_save`` queued it at save, or the setting or consent
+  kept it for the "Run summary" press.
 * **Skip clears it.**  ``MeetingIntelService.skip_recovery`` removes the mark;
   a skipped meeting is never queued.
 * **Same route as the queue.**  Each marked meeting's route is projected with
@@ -78,6 +82,69 @@ def mark_if_no_engine(db: Any, meeting_id: str, *, route_for: Optional[RouteFor]
             (str(meeting_id), MARK_REASON, datetime.now(timezone.utc).isoformat()),
         )
     return True
+
+
+#: The receipt on a meeting queued at Stop or Import (PHILO-17).
+AFTER_SAVE_REASON = "Queued after the meeting."
+
+
+def queue_after_save(
+    db: Any,
+    meeting_id: str,
+    *,
+    auto_mode: Optional[str] = None,
+    route_for: Optional[RouteFor] = None,
+) -> dict[str, Any]:
+    """PHILO-17: "Summary after every meeting" is true at Stop and at Import.
+
+    The setting said AFTER EVERY MEETING, yet a stopped or imported meeting
+    waited for "Run summary". Now, when the summary route is ready, the
+    setting allows it and the backlog's consent rule allows it (a LOCAL
+    engine, or one the owner chose by his own press), the meeting's summary
+    is queued here, through the same "Run intelligence" producer and route.
+    With no ready route the meeting is marked, as before, and the backlog
+    queues it once an engine can. Returns ``{"queued": bool, "reason": str}``.
+    """
+    route_for = route_for or _project_route
+    mode = str(auto_mode or _configured_auto_mode()).strip().lower()
+    with db._connection() as conn:
+        has_transcript = conn.execute(
+            "SELECT 1 FROM segments WHERE meeting_id=? LIMIT 1", (str(meeting_id),)
+        ).fetchone() is not None
+    if not has_transcript:
+        return {"queued": False, "reason": "no_transcript"}
+    route = route_for(db, str(meeting_id))
+    if route.get("status") != "ready":
+        marked = mark_if_no_engine(db, meeting_id, route_for=lambda _db, _id: route)
+        return {"queued": False, "reason": "no_engine" if marked else "summaries_off"}
+    if _is_off(db, route):
+        return {"queued": False, "reason": "summaries_off"}
+    if mode == "off":
+        return {"queued": False, "reason": "auto_off"}
+    if mode == "room_linked":
+        with db._connection() as conn:
+            linked = conn.execute(
+                "SELECT 1 FROM meeting_projects WHERE meeting_id=? LIMIT 1", (str(meeting_id),)
+            ).fetchone() is not None
+        if not linked:
+            return {"queued": False, "reason": "not_room_linked"}
+    if not backlog_consent(db)["allowed"]:
+        # No automatic egress to an engine the owner did not choose: the
+        # meeting waits in the backlog, which drains once he consents.
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT OR IGNORE INTO meeting_summary_backlog (meeting_id, reason, marked_at) VALUES (?,?,?)",
+                (str(meeting_id), MARK_REASON, datetime.now(timezone.utc).isoformat()),
+            )
+        return {"queued": False, "reason": "waiting_consent"}
+    outcome = db.intel.request_intel_retry(
+        str(meeting_id), reason=AFTER_SAVE_REASON, planned_route=route,
+    )
+    if outcome != "queued":
+        return {"queued": False, "reason": str(outcome)}
+    clear_mark(db, meeting_id)
+    _record(db, str(meeting_id), route, auto_mode=mode)
+    return {"queued": True, "reason": "queued"}
 
 
 def _reason_for(db: Any, meeting_id: str) -> str:
@@ -194,8 +261,8 @@ def drain_backlog(
     return {"status": "queued" if queued else "idle", "queued": queued}
 
 
-def _record(db: Any, meeting_id: str, route: dict[str, Any]) -> None:
-    """The ledger event the after-capture auto-intel writes, mode ``backlog``."""
+def _record(db: Any, meeting_id: str, route: dict[str, Any], *, auto_mode: str = "backlog") -> None:
+    """The ledger event the after-capture auto-intel writes (mode ``backlog`` from the drain)."""
     try:
         from .service_event_ledger import ServiceEventLedger
 
@@ -207,7 +274,7 @@ def _record(db: Any, meeting_id: str, route: dict[str, Any]) -> None:
                 producer="MeetingBacklog",
                 subject_ref=f"meeting:{meeting_id}",
                 source_revision="",
-                facts={"meeting_id": meeting_id, "auto_mode": "backlog", "host": str(host)},
+                facts={"meeting_id": meeting_id, "auto_mode": auto_mode, "host": str(host)},
                 refs=[f"meeting:{meeting_id}"],
                 correlation_id=None,
                 causation_id=f"meeting:{meeting_id}",
