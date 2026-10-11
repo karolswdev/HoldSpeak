@@ -310,7 +310,8 @@ def test_slash_completion_and_prompt_insert(hub: dict) -> None:
     r = _api_direct(url, "GET", "/api/notes?tag=prompt")
     assert r["status"] == 200, f"Failed to get prompt notes: {r}"
     prompt_notes = r["payload"]["notes"]
-    assert len(prompt_notes) >= 2, f"Expected >=2 prompt notes, got {len(prompt_notes)}"
+    # PHILO-17 U18: the seed's one prompt is Weekly update (1:1 prep opens People).
+    assert len(prompt_notes) >= 1, f"Expected >=1 prompt notes, got {len(prompt_notes)}"
 
     # Create a thread
     r = _api_direct(url, "POST", "/api/threads", {"title": "Slash glass test"})

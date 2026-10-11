@@ -7,6 +7,13 @@
 # prep, Current priorities, Weekly update. The five notes it carried before
 # (How I like help, People & vocabulary, Meeting preferences, Effect guard,
 # Egress guard) are parked as text in docs/internal/PARKED-SEED-NOTES.md.
+#
+# PHILO-17 U18 (owner walk 2026-10-10: after ten minutes he did not know what
+# the product is for): Start here is the loop in three jobs, each with its
+# door button (`[Label](door:<name>)`, web/src/desk/surface/Material.tsx
+# NOTE_DOORS). 1:1 prep opens People, where each person has Prep. Weekly
+# update stays a seeded `prompt` note: the Thread /prompt starter. The old
+# Start here text is parked in docs/internal/PARKED-SEED-NOTES.md.
 
 directories:
   - id: hs-seed-inbox
@@ -29,11 +36,13 @@ notes:
   - id: hs-seed-start-here
     title: Start here
     body_markdown: |
-      These drawers and notes are yours to edit, rename, move, or delete.
+      HoldSpeak does three jobs for you.
 
-      Everyday context is never automatically included in an AI request. Attach it in Ask, or select it for an Agent, only when you want it used.
+      - [Record a meeting](door:record-live) HoldSpeak writes the summary, the decisions and the actions.
+      - [Dictate](door:dictate) Speak, and HoldSpeak types your words.
+      - [Review what needs you](door:needs) See the actions and decisions that wait for you.
 
-      Normal Desk sync continues to follow your existing device-pairing choices.
+      These notes are yours. Edit, move or delete them.
   - id: hs-seed-about-me
     title: About me
     body_markdown: |
@@ -49,6 +58,8 @@ notes:
       - Priority: [example: ]
       - Why it matters: [example: ]
       - Next step: [example: ]
+  # A Thread starter for /prompt (orchestrator ruling 2026-10-11), not a
+  # desk job: the Thread composer's /prompt lists notes tagged `prompt`.
   - id: hs-seed-prompt-weekly-update
     title: Weekly update
     tags: [prompt]
@@ -59,12 +70,10 @@ notes:
       End with what needs attention next week.
   - id: hs-seed-prompt-one-on-one-prep
     title: 1:1 prep
-    tags: [prompt]
     body_markdown: |
-      Prepare for my next 1:1.
-      List open commitments, recent decisions that need follow-up,
-      and any blockers worth raising.
-      Keep it to three sections, one paragraph each.
+      Before a 1:1, open the person in People and select Prep. Prep shows the agenda, the open actions and the next 1:1.
+
+      - [Open People](door:open-people)
 
 recipes:
   - id: hs-seed-mode-desk

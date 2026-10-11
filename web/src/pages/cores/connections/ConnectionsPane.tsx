@@ -148,9 +148,10 @@ function CalendarEmblem() {
   );
 }
 
-/* ── Command well: code left, COPY right ── */
+/* ── Command well: code left, COPY right ── (first run's Connections card
+   uses it too, PHILO-17) */
 
-function CommandWell({
+export function CommandWell({
   hint,
 }: {
   hint: string;

@@ -126,14 +126,14 @@ class TestPrimitiveServiceListNotes:
 
 
 class TestSeedPromptNotes:
-    """The fresh-desk seed includes at least two prompt notes."""
+    """The fresh-desk seed includes the /prompt starter. PHILO-17 U18: 1:1 prep
+    is a note with a People door, no longer a prompt."""
 
     def test_seed_creates_prompt_notes(self, db: Database) -> None:
         from holdspeak.db.seed import apply_seed
 
         apply_seed(db)
         prompts = db.notes.list_by_tag("prompt")
-        assert len(prompts) >= 2, f"Expected >=2 seed prompts, got {len(prompts)}"
         titles = {p.title for p in prompts}
         assert "Weekly update" in titles
-        assert "1:1 prep" in titles
+        assert "1:1 prep" not in titles

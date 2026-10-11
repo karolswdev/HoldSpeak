@@ -158,7 +158,8 @@ export function receiptLine(receipt: ApplyReceipt): string {
     if (receipt.limited > 0) parts.push(`${receipt.limited} LIMITED`);
     if (receipt.off > 0) parts.push(`${receipt.off} OFF`);
   }
-  if (receipt.defaultSet) parts.push("DEFAULT SET");
+  // PHILO-17: plain words (was "DEFAULT SET").
+  if (receipt.defaultSet) parts.push("NOW THE DEFAULT");
   // Astra r2 (finding 4): each cause ONCE. One group names itself; several
   // with one cause read `5 GROUPS · NO MODEL RECORD`. Each row keeps its own.
   const byToken = new Map<string, string[]>();

@@ -100,3 +100,35 @@ The notes, as they were in the seed manifest:
       n_messages: 4
       ---
 ```
+
+## PHILO-17 U18 (2026-10-10)
+
+The owner's walk: after ten minutes he did not know what the product is for.
+Start here held three privacy sentences, and its main button was "Develop
+this thought". The starter notes were prompts with no button. Start here is
+now the loop in three jobs, each with its door button. 1:1 prep now opens
+People (each person has Prep) and is no longer a prompt. Weekly update stays
+in the seed as the Thread `/prompt` starter (orchestrator ruling 2026-10-11;
+a thread starter, not a desk job). Two texts are parked here.
+
+### Start here (the old text, id `hs-seed-start-here`)
+
+```
+These drawers and notes are yours to edit, rename, move, or delete.
+
+Everyday context is never automatically included in an AI request. Attach it in Ask, or select it for an Agent, only when you want it used.
+
+Normal Desk sync continues to follow your existing device-pairing choices.
+```
+
+### 1:1 prep as a prompt (id `hs-seed-prompt-one-on-one-prep`, tag `prompt`)
+
+```
+Prepare for my next 1:1.
+List open commitments, recent decisions that need follow-up,
+and any blockers worth raising.
+Keep it to three sections, one paragraph each.
+```
+
+Desks seeded before this change keep their notes (the seed never changes an
+object it made, except through Reset to seed).

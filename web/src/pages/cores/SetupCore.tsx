@@ -3,6 +3,7 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-98-05 — re-crafted native on the surface kit; wire calls unchanged.
 import { useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
+import { openFirstRun } from "../../desk/firstrun/reopen";
 import type { CoreProps, SetupStatus } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { LampGadget } from "../../desk/surface/gadgets";
@@ -159,17 +160,16 @@ export function SetupCore({ hero }: CoreProps) {
                   : "Ready"}
               </p>
               <div className="surface-actions">
+                {/* PHILO-17 U17: Get ready opens the SAME first-run cards
+                    the fresh desk shows (was "Continue arrival" to /welcome).
+                    "Open Desk" left: no surface answered "return-to-desk" and
+                    this window is already on the desk (a dead verb). */}
                 <Button
-                  variant="primary"
+                  variant={resource.data.first_run ? "primary" : "secondary"}
                   dense
-                  onClick={() =>
-                    openSurfaceOr(
-                      resource.data.first_run ? "arrival" : "return-to-desk",
-                      resource.data.first_run ? "/welcome" : "/",
-                    )
-                  }
+                  onClick={openFirstRun}
                 >
-                  {resource.data.first_run ? "Continue arrival" : "Open Desk"}
+                  Get ready
                 </Button>
                 <Button
                   dense

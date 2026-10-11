@@ -193,7 +193,7 @@ describe("PHILO-15 10 — receipts, not surprises (B10, Astra r1 finding 3)", ()
     fireEvent.click(screen.getByTestId("concierge-apply"));
     await waitFor(() =>
       expect(screen.getByTestId("concierge-receipt").textContent).toBe(
-        "USING · QWEN3.8 27B · 1 GROUP · DEFAULT SET · THOUGHTS & NOTES · NO MODEL RECORD · AGENTS & TOOLS · INCOMPATIBLE",
+        "USING · QWEN3.8 27B · 1 GROUP · NOW THE DEFAULT · THOUGHTS & NOTES · NO MODEL RECORD · AGENTS & TOOLS · INCOMPATIBLE",
       ),
     );
     expect(mocks.closeSurfaceWindow).not.toHaveBeenCalled();
@@ -256,7 +256,7 @@ describe("PHILO-15 10 — receipts, not surprises (B10, Astra r1 finding 3)", ()
     expect(
       receiptLine({ kind: "summaries", engine: "qwen3.8-27b", host: "192.168.1.43:8080",
         ready: 1, limited: 0, failed: 0, off: 0, defaultSet: true, failures: [] }),
-    ).toBe("USING · QWEN3.8-27B · SUMMARIES · DEFAULT SET");
+    ).toBe("USING · QWEN3.8-27B · SUMMARIES · NOW THE DEFAULT");
   });
 });
 
@@ -266,8 +266,12 @@ describe("PHILO-15 10 — the Check asks the server about tool calls", () => {
     await open();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
     fireEvent.change(await screen.findByLabelText("Server address"), { target: { value: LAN_URL } });
-    if (myServer) fireEvent.click(screen.getByLabelText("MY SERVER"));
+    if (myServer) fireEvent.click(screen.getByLabelText("I OWN THIS SERVER"));
     fireEvent.click(screen.getByTestId("concierge-add-check"));
+    if (tools === "unknown") {
+      await screen.findByTestId("concierge-add-model");
+      return screen.queryByTestId("concierge-add-tools")?.textContent ?? null;
+    }
     return (await screen.findByTestId("concierge-add-tools")).textContent;
   }
 
@@ -275,12 +279,13 @@ describe("PHILO-15 10 — the Check asks the server about tool calls", () => {
     expect(await check("yes")).toBe("TOOLS");
   });
 
-  it("says TOOLS UNKNOWN when the server cannot say", async () => {
-    expect(await check("unknown")).toBe("TOOLS UNKNOWN");
+  // PHILO-17: no token when the server cannot say (was TOOLS UNKNOWN).
+  it("shows no tools token when the server cannot say", async () => {
+    expect(await check("unknown")).toBeNull();
   });
 
-  // Astra r1 (finding 4): MY SERVER is the owner's word; it travels with the Check.
-  it("MY SERVER travels with the Check", async () => {
+  // Astra r1 (finding 4): I OWN THIS SERVER (was MY SERVER) is the owner's word; it travels with the Check.
+  it("I OWN THIS SERVER travels with the Check", async () => {
     await check("yes", true);
     expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "", true);
   });

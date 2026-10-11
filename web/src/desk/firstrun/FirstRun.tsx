@@ -12,7 +12,7 @@
  *
  * The Conductor canvas K1 (ratified 2026-10-06): an Agents card after
  * Connections. It is optional, so it does not join `ready`. */
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   EgressChip,
@@ -52,6 +52,8 @@ import { useCalendarStep } from "./calendarStep";
 import { useConnectionsStep } from "./connectionsStep";
 import { useAgentsStep } from "./agentsStep";
 import { Ready } from "./Ready";
+import { closeFirstRun } from "./reopen";
+import { SpeechSetup, speechSetupOf } from "./SpeechSetup";
 import { LanServerRow, type LanUsed } from "./LanServer";
 import { isLanAddress } from "../../features/concierge/endpointDraft";
 import "../../features/concierge/concierge.css";
@@ -141,6 +143,7 @@ function LocalAiCard({
   return (
     <Card
       title="Local AI"
+      line="Puts the speech model and the summary model on this Mac."
       testId="firstrun-local-ai"
       selected={ready || Boolean(lanUsed)}
       state={
@@ -238,6 +241,7 @@ function YouCard({ owner, folded }: { owner: ReturnType<typeof useOwnerName>; fo
   return (
     <Card
       title="You"
+      line="Your name, so summaries know which person is you."
       testId="firstrun-you"
       selected={owner.isSet}
       state={owner.isSet ? <StateChip state="success" label="SET" icon="●" /> : null}
@@ -286,22 +290,37 @@ function YouCard({ owner, folded }: { owner: ReturnType<typeof useOwnerName>; fo
 function FirstWordsCard({
   ready,
   take,
+  ai,
+  done = false,
 }: {
   ready: boolean;
   take: ReturnType<typeof useFirstTake>;
+  /** The face's one Local AI read: a missing speech model is fixed here. */
+  ai: ReturnType<typeof useLocalAi>;
+  /** PHILO-17 U17: a first dictation happened before (first run opened again). */
+  done?: boolean;
 }) {
   const heard = take.state === "heard" && take.take;
   const contract = take.failure ? DICTATION_FAILURES[take.failure] : null;
+  // PHILO-17: the hub said "no speech model": read Local AI again, so the
+  // card offers the speech fix the hub's read names.
+  const missingModel = take.failure === "missing_model";
+  const refreshAi = ai.refresh;
+  useEffect(() => {
+    if (missingModel) void refreshAi();
+  }, [missingModel, refreshAi]);
+  const speechFix = speechSetupOf(ai);
   return (
     <Card
       title="First words"
+      line="Say one sentence to test the microphone and speech."
       testId="firstrun-first-words"
       className="firstrun-words"
       disabled={!ready}
-      lit={ready && !heard}
-      selected={take.kept}
+      lit={ready && !heard && !done}
+      selected={take.kept || (done && !heard)}
       state={
-        take.kept ? (
+        take.kept || (done && !heard) ? (
           <StateChip state="success" label="HEARD" icon="●" />
         ) : ready ? (
           <StateChip state="success" label="SPEECH READY" icon="●" />
@@ -311,9 +330,14 @@ function FirstWordsCard({
       }
     >
       {!ready ? (
-        <Button variant="secondary" disabled>
-          Dictate one sentence
-        </Button>
+        <>
+          <Button variant="secondary" disabled>
+            Dictate one sentence
+          </Button>
+          {missingModel && speechFix.notSetUp ? (
+            <SpeechSetup setup={speechFix} bare primary={false} testId="firstrun-words-speech" />
+          ) : null}
+        </>
       ) : heard && take.take ? (
         <HeardQuote
           text={take.take.text}
@@ -367,17 +391,22 @@ function FirstWordsCard({
               <StateChip state="failure" label={FAILURE_TOKENS[take.failure].chip} />
               <span className="surface-token" data-tone="danger">{FAILURE_TOKENS[take.failure].reason}</span>
               {contract?.setup ? (
-                <Button
-                  dense
-                  variant="secondary"
-                  onClick={() =>
-                    needsMicrophoneDoctor(take.failure)
-                      ? openSurfaceOr("configure-setup", "/")
-                      : openSurfaceOr("project-setup", "/")
-                  }
-                >
-                  {needsMicrophoneDoctor(take.failure) ? "Check the microphone" : "Setup"}
-                </Button>
+                needsMicrophoneDoctor(take.failure) ? (
+                  <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-setup", "/")}>
+                    Check the microphone
+                  </Button>
+                ) : speechFix.notSetUp ? (
+                  /* PHILO-17: the speech fix in place (#1066's shared verb,
+                     "Set up speech · <size>" with its egress chip). Was a
+                     "Setup" button that opened New Project. */
+                  <SpeechSetup setup={speechFix} bare primary={false} testId="firstrun-words-speech" />
+                ) : (
+                  /* Speech is on this device by the hub's read: the model
+                     choice lives on Runs on's Speech row. */
+                  <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}>
+                    Runs on
+                  </Button>
+                )
               ) : null}
             </div>
           ) : null}
@@ -420,7 +449,11 @@ export function FirstRun() {
     await apiFetch("/api/desk/seed", { method: "POST" });
     await apiFetch("/api/setup/onboarding", { method: "PUT", json: { disposition } });
     await useDesk.getState().refresh();
+    closeFirstRun();
   }, []);
+  // PHILO-17 U17: opened again after a first dictation, First words is done
+  // (read once: a take heard on this face keeps its own custody flow).
+  const [wordsBefore] = useState(() => useDesk.getState().setup?.first_run === false);
   const take = useFirstTake({ onHandoff: handoff });
   const proposals = useProposals();
   const calendar = useCalendarStep();
@@ -430,7 +463,7 @@ export function FirstRun() {
   const agents = useAgentsStep();
   // The C1 part is done: models here, his name, his words kept. Its three
   // cards fold to their receipts (canvas A: "the three C1 cards, finished").
-  const c1Done = aiReady && owner.isSet && take.kept;
+  const c1Done = aiReady && owner.isSet && (take.kept || wordsBefore);
   // While the ingest still reads a source just added, the Door's next
   // meeting may change: Ready waits for the read (calendarStep `follow`).
   const ready = c1Done && calendar.inUse && !calendar.following && connections.done;
@@ -438,7 +471,7 @@ export function FirstRun() {
   const heard = take.state === "heard" && !take.kept;
   // One lit card: the next press. First words lights itself while it waits
   // for his sentence; then the Calendar; then the Connections.
-  const wordsPending = speech && !take.kept;
+  const wordsPending = speech && !take.kept && !wordsBefore;
   const calendarLit = !ready && !wordsPending && calendar.loaded && !calendar.inUse;
   const connectionsLit = !ready && !wordsPending && calendar.inUse && connections.loaded && !connections.done;
   const agentsLit = !wordsPending && calendar.inUse && connections.done && agents.pending.length > 0;
@@ -477,7 +510,7 @@ export function FirstRun() {
           onLanUsed={onLanUsed}
         />
         <YouCard owner={owner} folded={c1Done} />
-        <FirstWordsCard ready={speech} take={take} />
+        <FirstWordsCard ready={speech} take={take} ai={ai} done={wordsBefore} />
       </div>
       <div className="firstrun-cards firstrun-cards-two">
         <CalendarCard step={calendar} lit={calendarLit} />
@@ -493,13 +526,25 @@ export function FirstRun() {
           <span className="firstrun-reason">{take.message}</span>
         </div>
       ) : null}
-      {ready ? null : (
-        <div className="firstrun-foot">
+      {/* PHILO-17: the cards are done -> "Open my desk"; else Continue later.
+          On Ready its three start verbs hold the primary. */}
+      <div className="firstrun-foot">
+        {c1Done && !heard ? (
+          <Button
+            variant={ready ? "secondary" : "primary"}
+            dense={ready}
+            disabled={take.keeping}
+            loading={take.keeping}
+            onClick={() => void take.finish()}
+          >
+            Open my desk
+          </Button>
+        ) : (
           <Button variant="ghost" dense disabled={take.keeping} loading={take.keeping} onClick={() => void take.leave()}>
             {heard ? "Save draft & continue" : "Continue later"}
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
 }

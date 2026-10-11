@@ -777,6 +777,14 @@
 .surface-material ol {
   margin: 0;
 }
+/* PHILO-17 U18: a door link in a note is the library Button, then its line. */
+.surface-material .surface-material-door {
+  margin: 2px 8px 2px 0;
+  vertical-align: middle;
+}
+.surface-material li:has(> .surface-material-door) {
+  margin-bottom: 6px;
+}
 .surface-material .surface-material-h {
   font-size: var(--desk-type-primary-size);
   font-weight: var(--desk-type-primary-weight);

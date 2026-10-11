@@ -69,19 +69,32 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS.map((application) => ({
    dispatcher found no surface and fell back to `/`, so the one recovery
    the card offers did nothing. Both Setup doors are registered during
    first use, and nothing else is. */
-const FIRST_VALUE_RECOVERY_KEYS = new Set(["project-setup", "configure-setup"]);
+/* PHILO-17 (Astra r1 on #1085): First words' recovery doors are Setup
+   (the microphone) and Runs on (the speech model's row): both are admitted
+   here, so neither falls back to a route recovery never consumes (the
+   /models fallback reloaded the page and lost the card). Runs on's hosted
+   surface is `open-concierge`; `configure-runs-on` is its alias. */
+const FIRST_VALUE_RECOVERY_KEYS = new Set(["project-setup", "configure-setup", "open-concierge"]);
 const FIRST_VALUE_RECOVERY_SURFACES = SURFACES.filter((row) =>
   FIRST_VALUE_RECOVERY_KEYS.has(row.key),
 );
 
 export function SurfaceWindows({
   firstValueRecoveryOnly = false,
+  keepDeskWindows = false,
 }: {
   /** First value registers only its explicit Setup recovery and starts with
       no persisted Desk windows competing on glass. */
   firstValueRecoveryOnly?: boolean;
+  /** PHILO-17: first run opened again. Recovery-only, but his desk windows
+      are NOT cleared: the ones open now wait off glass and come back when he
+      leaves first run; a recovery door he presses here opens on glass. */
+  keepDeskWindows?: boolean;
 } = {}) {
   const windowsById = useDesk((s) => s.windowsById);
+  const [waiting, setWaiting] = useState<ReadonlySet<string>>(() =>
+    keepDeskWindows ? new Set(Object.keys(useDesk.getState().windowsById)) : new Set(),
+  );
   const items = useDesk((s) => s.items);
   const [ready, setReady] = useState(!firstValueRecoveryOnly);
   // `ready` is first-value paint recovery. This separate fact names the
@@ -96,23 +109,28 @@ export function SurfaceWindows({
     // The persisted open set belongs to the normal Desk. Hide it before this
     // recovery-only mount becomes paintable; FirstWords can still open Setup
     // after the registry below is ready.
-    if (firstValueRecoveryOnly) useDesk.getState().clearSurfaceWindows();
+    if (firstValueRecoveryOnly && !keepDeskWindows) useDesk.getState().clearSurfaceWindows();
     setReady(true);
   }, [firstValueRecoveryOnly]);
 
   useEffect(() => {
-    const offs = rows.map((row) =>
-      registerSurface(row.key, (scope) => {
-        useDesk.getState().openSurfaceWindow(row.key, scope);
-      }),
-    );
+    // One reveal-and-open for a row and its aliases (Astra r2 on #1085): a
+    // window that waits off glass (first run opened again) comes back on
+    // glass when any of its keys is pressed.
+    const reveal = (row: SurfaceRow, scope?: string) => {
+      setWaiting((now) => {
+        if (!now.has(row.id)) return now;
+        const next = new Set(now);
+        next.delete(row.id);
+        return next;
+      });
+      useDesk.getState().openSurfaceWindow(row.key, scope);
+    };
+    const offs = rows.map((row) => registerSurface(row.key, (scope) => reveal(row, scope)));
     const aliasOffs = Object.entries(DESK_APPLICATION_ALIASES)
-      .filter(([, alias]) => rows.some((row) => row.key === alias.target))
-      .map(([key, alias]) =>
-        registerSurface(key, (scope) =>
-          useDesk.getState().openSurfaceWindow(alias.target, scope ?? alias.scope),
-        ),
-      );
+      .map(([key, alias]) => [key, alias, rows.find((row) => row.key === alias.target)] as const)
+      .filter(([, , row]) => Boolean(row))
+      .map(([key, alias, row]) => registerSurface(key, (scope) => reveal(row!, scope ?? alias.scope)));
     // This runs only after every normal row and applicable alias is present in
     // the dispatcher. Consume a demoted-route intent only here, then publish
     // the fact the /meetings proof awaits; first-value recovery has no normal
@@ -140,6 +158,7 @@ export function SurfaceWindows({
       {rows.map((row) => {
         const instance = windowsById[row.id];
         if (!instance || instance.applicationKey !== row.key) return null;
+        if (waiting.has(row.id)) return null;
         return (
           <SurfaceWindowHost
             key={row.id}

@@ -41,6 +41,8 @@ CONTEXT_NOTES = {
     "hs-seed-current-priorities": "Current priorities",
 }
 EVERYDAY_CONTEXT = "hs-seed-everyday-context"
+# PHILO-17 U18: 1:1 prep is a note with a People door, no longer a prompt.
+# Weekly update stays the seeded /prompt starter (ruling 2026-10-11).
 PROMPT_NOTE = "hs-seed-prompt-weekly-update"
 # PHILO-15 11 (B20, owner ruling 2026-10-07): the guard notes and three
 # starter-question notes are parked (docs/internal/PARKED-SEED-NOTES.md).
@@ -139,6 +141,20 @@ def test_fresh_desk_carries_at_most_five_day_one_notes(db) -> None:
         assert title in parked
 
 
+def test_start_here_is_the_loop_in_three_jobs(db) -> None:
+    """PHILO-17 U18: Start here names the three jobs, each with its door
+    button (Material NOTE_DOORS); the one prompt note is the /prompt starter."""
+    apply_seed(db)
+    body = db.notes.get(START_HERE).body_markdown
+    for door in ("[Record a meeting](door:record-live)", "[Dictate](door:dictate)",
+                 "[Review what needs you](door:needs)"):
+        assert door in body
+    assert "never automatically included" not in body
+    prep = db.notes.get("hs-seed-prompt-one-on-one-prep")
+    assert "(door:open-people)" in prep.body_markdown and "prompt" not in prep.tags
+    assert [n.title for n in db.notes.list_by_tag("prompt")] == ["Weekly update"]
+
+
 def test_guard_notes_fresh_desk_loads_none_existing_desk_keeps_them(db) -> None:
     """PHILO-15 11 (B20; ruling: intended for day one). A fresh desk has no
     guard notes, so the Desk and Chase modes load no guardrail (``[]``); a desk
@@ -173,8 +189,9 @@ def test_mode_recipe_census_matches_its_authoritative_source() -> None:
 def test_starter_text_is_questions_not_invented_owner_facts(db) -> None:
     apply_seed(db)
     text = "\n".join(note.body_markdown for note in db.notes.list())
-    assert "never automatically included" in db.notes.get(START_HERE).body_markdown
-    assert "device-pairing" in db.notes.get(START_HERE).body_markdown
+    # PHILO-17 U18: Start here is the loop in three jobs (the old privacy
+    # sentences are parked in docs/internal/PARKED-SEED-NOTES.md).
+    assert "HoldSpeak does three jobs for you." in db.notes.get(START_HERE).body_markdown
     for invented_fact in ("Karol", "Acme", "I am ", "My name is", "I work at"):
         assert invented_fact not in text
 

@@ -472,7 +472,8 @@ export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: 
         <span data-testid="concierge-add-my-server">
           <CheckGadget
             variant="token"
-            label="MY SERVER"
+            /* PHILO-17: the plain words (was "MY SERVER"). */
+            label="I OWN THIS SERVER"
             checked={ctrl.addEngineMyServer}
             onChange={ctrl.setAddEngineMyServer}
           />
@@ -503,13 +504,10 @@ export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: 
               {ctrl.addEngineModel}
             </span>
             {/* PHILO-15 10: the server's own answer about tool calls. */}
-            {ctrl.addEngineTools ? (
+            {/* PHILO-17: no token when the server cannot say (was TOOLS UNKNOWN). */}
+            {ctrl.addEngineTools === "yes" || ctrl.addEngineTools === "no" ? (
               <span className="concierge-token" data-testid="concierge-add-tools">
-                {ctrl.addEngineTools === "yes"
-                  ? "TOOLS"
-                  : ctrl.addEngineTools === "no"
-                    ? "NO TOOLS"
-                    : "TOOLS UNKNOWN"}
+                {ctrl.addEngineTools === "yes" ? "TOOLS" : "NO TOOLS"}
               </span>
             ) : null}
           </span>

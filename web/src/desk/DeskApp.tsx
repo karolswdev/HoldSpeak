@@ -40,6 +40,7 @@ import { objectByRef } from "./world";
 import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
 import { useSettleState } from "./settleState";
+import { useFirstRunOpen } from "./firstrun/reopen";
 import { DeskDeleteHost, DeskDeleteSeat } from "./deleteReceipt";
 import { DrawerWindows } from "./drawer";
 import { ConductorWindows } from "./conductor";
@@ -139,7 +140,11 @@ function DeskFaces() {
       ? error || "Your Desk is still unchanged. HoldSpeak could not read setup status. Retry to check it again."
       : null);
   const setupPending = !setupFailure && updatedAt === null && (loading || shownSetup === null);
-  const arrivalRequired = shownSetup?.arrival_required === true;
+  // PHILO-17 U17: first run shows when the server owes first value, or on
+  // his press (Setup ▸ Get ready, the old /welcome address): the same cards.
+  const serverArrival = shownSetup?.arrival_required === true;
+  const firstRunOpen = useFirstRunOpen((s) => s.open);
+  const arrivalRequired = serverArrival || firstRunOpen;
   useEffect(() => {
     if (arrivalRequired) useSettleState.getState().setSettled(false);
   }, [arrivalRequired]);
@@ -264,9 +269,13 @@ function DeskFaces() {
       )}
       {/* Recovery remains direct and in-place: FirstWords opens Setup through
           this existing surface registry without restoring the whole Desk. */}
+      {/* First run (owed or opened again) registers only its recovery doors
+          (Setup, Runs on). Opened again, his desk windows are kept: they wait
+          off glass and come back when he leaves first run. */}
       <SurfaceWindows
-        key={arrivalRequired ? "first-value-recovery" : "desk"}
+        key={serverArrival ? "first-value-recovery" : firstRunOpen ? "first-run-reopened" : "desk"}
         firstValueRecoveryOnly={arrivalRequired}
+        keepDeskWindows={!serverArrival && firstRunOpen}
       />
       {!arrivalRequired && <TrustWindow />}
       {!arrivalRequired && <Dock center={<RecordOrb />} />}
