@@ -729,6 +729,8 @@ CLAIMS: list[Claim] = [
         sentence=(
             "Meeting changes announce themselves from the import worker when an "
             "import ends, success or failure (`MeetingService._run_import_job`), "
+            "from the Transcribe worker when a transcription ends, success or "
+            "failure (`MeetingService._run_transcribe_job`), "
             "from the summary queue after durable running and settled "
             "transitions (`_notify_queue_meeting_changed`), and when a meeting is "
             "parked or restored (`MeetingService.delete_meeting`, "
@@ -740,7 +742,8 @@ CLAIMS: list[Claim] = [
         state="holds",
         truth=(
             "literal-kind 'meeting' desk_changed calls under holdspeak/ are in "
-            "MeetingService._run_import_job, delete_meeting and restore_meeting "
+            "MeetingService._run_import_job, _run_transcribe_job (PHILO-17, row "
+            "updated 2026-10-10), delete_meeting and restore_meeting "
             "(PHILO-13-02, row updated 2026-10-03) and _notify_queue_meeting_changed; "
             "real-producer queue fences verify durable running and settled "
             "publication. No literal thought/project/room/sync kind exists "
@@ -958,6 +961,7 @@ def desk_changed_comment_holds() -> bool:
     kinds = desk_changed_literal_kinds()
     if kinds.get("meeting") != {
         ("holdspeak/services/meeting_service.py", "_run_import_job"),
+        ("holdspeak/services/meeting_service.py", "_run_transcribe_job"),
         ("holdspeak/services/meeting_service.py", "delete_meeting"),
         ("holdspeak/services/meeting_service.py", "restore_meeting"),
         ("holdspeak/intel_queue.py", "_notify_queue_meeting_changed"),

@@ -182,11 +182,6 @@ class MeetingRepository(BaseRepository):
     # conditional UPDATE; every later write names the claim it holds, so a
     # stale or losing worker never changes the result, and only the fields
     # Transcribe owns are written (a rename during the run is kept).
-    _TRANSCRIBE_CLAIMED = (
-        "intel_status = 'importing' AND transcription_status = 'record_only' "
-        "AND json_extract(transcription_status_detail_json, '$.claim') = ?"
-    )
-
     def claim_transcription(self, meeting_id: str, token: str) -> bool:
         """Claim an ended, audio-only (`speech_not_set_up`) meeting for Transcribe."""
         with self._connection() as conn:
@@ -210,7 +205,9 @@ class MeetingRepository(BaseRepository):
     def note_transcription_progress(self, meeting_id: str, token: str, detail: str) -> bool:
         with self._connection() as conn:
             cursor = conn.execute(
-                f"UPDATE meetings SET intel_status_detail = ? WHERE id = ? AND {self._TRANSCRIBE_CLAIMED}",
+                """UPDATE meetings SET intel_status_detail = ?
+                   WHERE id = ? AND intel_status = 'importing' AND transcription_status = 'record_only'
+                     AND json_extract(transcription_status_detail_json, '$.claim') = ?""",
                 (detail, meeting_id, token),
             )
             return cursor.rowcount == 1
@@ -221,13 +218,14 @@ class MeetingRepository(BaseRepository):
         """Write the transcript and clear the audio-only state, under the claim only."""
         with self._connection() as conn:
             cursor = conn.execute(
-                f"""UPDATE meetings SET
+                """UPDATE meetings SET
                         transcription_status = 'complete',
                         transcription_status_detail_json = NULL,
                         intel_status = 'disabled',
                         intel_status_detail = ?,
                         updated_at = datetime('now')
-                    WHERE id = ? AND {self._TRANSCRIBE_CLAIMED}""",
+                    WHERE id = ? AND intel_status = 'importing' AND transcription_status = 'record_only'
+                      AND json_extract(transcription_status_detail_json, '$.claim') = ?""",
                 (intel_status_detail, meeting_id, token),
             )
             if cursor.rowcount != 1:
@@ -242,28 +240,23 @@ class MeetingRepository(BaseRepository):
         `speech_not_set_up` marker kept, so Transcribe is offered again).
         ``cause`` is the short reason a run failed. ``token`` None releases
         any claim (an interrupted run at hub start)."""
-        detail = "json_remove(transcription_status_detail_json, '$.claim', '$.prior_intel_status')"
-        if cause is not None:
-            detail = f"json_set({detail}, '$.last_error', ?)"
-        where = (
-            "intel_status = 'importing' AND transcription_status = 'record_only'"
-            if token is None else self._TRANSCRIBE_CLAIMED
-        )
-        params: list[Any] = [] if cause is None else [cause]
-        params.append(meeting_id)
-        if token is not None:
-            params.append(token)
         with self._connection() as conn:
             cursor = conn.execute(
-                f"""UPDATE meetings SET
+                """UPDATE meetings SET
                         intel_status = COALESCE(
                             json_extract(transcription_status_detail_json, '$.prior_intel_status'),
                             'disabled'),
                         intel_status_detail = NULL,
-                        transcription_status_detail_json = {detail},
+                        transcription_status_detail_json = CASE WHEN ? IS NULL
+                            THEN json_remove(transcription_status_detail_json, '$.claim', '$.prior_intel_status')
+                            ELSE json_set(
+                                json_remove(transcription_status_detail_json, '$.claim', '$.prior_intel_status'),
+                                '$.last_error', ?)
+                            END,
                         updated_at = datetime('now')
-                    WHERE id = ? AND {where}""",
-                params,
+                    WHERE id = ? AND intel_status = 'importing' AND transcription_status = 'record_only'
+                      AND (? IS NULL OR json_extract(transcription_status_detail_json, '$.claim') = ?)""",
+                (cause, cause, meeting_id, token, token),
             )
             return cursor.rowcount == 1
 
