@@ -152,20 +152,20 @@ describe("HS-135-15 AGENT section empty vs filtered labels", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows 'No assistants yet' with create affordance when no assistants exist", async () => {
+  it("shows 'No agents yet' with create affordance when no agents exist", async () => {
     mockHub({ recipeId: null, recipes: [] });
     render(<WorkbenchWindow workbenchId="wb1" />);
 
     // The config panel auto-opens when no agent is bound
     await waitFor(() =>
-      expect(screen.getByText("No assistants yet")).toBeInTheDocument(),
+      expect(screen.getByText("No agents yet")).toBeInTheDocument(),
     );
 
-    // Should show a "New assistant" create affordance
-    expect(screen.getByText("New assistant")).toBeInTheDocument();
+    // Should show a "New Agent" create affordance
+    expect(screen.getByText("New Agent")).toBeInTheDocument();
   });
 
-  it("shows 'No assistants match' when search filters all assistants", async () => {
+  it("shows 'No agents match' when search filters all agents", async () => {
     mockHub({
       recipeId: null,
       recipes: [{ id: "r1", name: "Test Agent", avatar: "", role: "" }],
@@ -191,7 +191,7 @@ describe("HS-135-15 AGENT section empty vs filtered labels", () => {
     });
 
     await waitFor(() =>
-      expect(screen.getByText("No assistants match")).toBeInTheDocument(),
+      expect(screen.getByText("No agents match")).toBeInTheDocument(),
     );
   });
 });

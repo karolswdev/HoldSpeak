@@ -385,24 +385,27 @@ describe("PHILO-14 C4 the Conductor window", () => {
   });
 
   // PHILO-17 U32 (walk D 8): "3 ready · 3 HARNESSES" beside NO HOOKS · SIGN-IN UNKNOWN.
-  it("ready counts only agents that can run; the strip says CODING AGENTS; hooks are said in one line", async () => {
+  it("ready counts only coders that can run; the strip says CODERS; hooks are said in one line", async () => {
     const claude = DETECT.agents[0];
     const rows = [
       { ...claude },
       { ...claude, id: "codex", label: "Codex", hooks: "missing" },
+      // The owner's Claude Code: the Keychain sign-in is not read; it does not block.
       { ...claude, id: "pi", label: "pi", signed_in: "unknown" },
     ] as never[];
-    expect(rows.map((r) => canRun(r))).toEqual([true, false, false]);
-    expect(headFact({ atWork: 0, ask: 0 }, rows.map((r) => readyMember(r)))).toBe("1 ready");
-    expect(headFact({ atWork: 0, ask: 0 }, rows.slice(1).map((r) => readyMember(r)))).toBe("No agent ready");
-    expect(headFact({ atWork: 0, ask: 0 }, [])).toBe("No agent");
+    expect(rows.map((r) => canRun(r))).toEqual([true, false, true]);
+    expect(canRun({ ...claude, signed_in: "no" } as never)).toBe(false);
+    expect(readyMember(rows[2]).facts.more?.find((f) => f.key === "signin")?.value).toBe("NOT CHECKED");
+    expect(headFact({ atWork: 0, ask: 0 }, rows.map((r) => readyMember(r)))).toBe("2 ready");
+    expect(headFact({ atWork: 0, ask: 0 }, rows.slice(1, 2).map((r) => readyMember(r)))).toBe("No coder ready");
+    expect(headFact({ atWork: 0, ask: 0 }, [])).toBe("No coder");
 
     sessionsReply = () => ({ sessions: [], flights: [], history: [], launches: { live: 0, cap: 3 } });
     detectReply = () => ({ ...DETECT, agents: rows });
     render(<ConductorWindow />);
     const head = await screen.findByTestId("conductor-head");
-    await waitFor(() => expect(head.textContent).toContain("1 ready"));
-    expect(head.textContent).toContain("3 CODING AGENTS");
+    await waitFor(() => expect(head.textContent).toContain("2 ready"));
+    expect(head.textContent).toContain("3 CODERS");
     expect(head.textContent).not.toMatch(/harness/i);
     // Nothing selected, Codex lacks hooks: Install hooks with its one line.
     expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
@@ -417,7 +420,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     render(<ConductorWindow />);
     const notRead = await screen.findByText(/SESSIONS ·/);
     expect(notRead.textContent).toContain("NOT READ");
-    expect(screen.queryByText("No agent found")).toBeNull();
+    expect(screen.queryByText("No coder found")).toBeNull();
     expect(screen.queryByText(/No sessions/i)).toBeNull();
     // The ready agents still show; no live agent is claimed gone.
     expect(await screen.findByRole("button", { name: /^Claude Code, AGENT$/ })).toBeTruthy();

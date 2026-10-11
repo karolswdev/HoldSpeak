@@ -43,7 +43,7 @@ export const KIND_LABEL: Record<string, string> = {
   meeting: "Meeting",
   note: "Note",
   project: "Project",
-  recipe: "Assistant",
+  recipe: "Agent",
   workbench: "Workbench",
   workflow: "Workflow",
   thread: "Thread",

@@ -31,8 +31,8 @@ def test_registry_is_versioned_complete_and_strict() -> None:
     registry = load_product_language(REGISTRY_PATH)
 
     assert registry.version == 2
-    assert registry.label("recipe") == "Assistant"  # PHILO-17 U32 (was HS-100-10 "Agent")
-    assert registry.label("agent", plural=True) == "Assistants"  # PHILO-17 U32
+    assert registry.label("recipe") == "Agent"  # HS-100-10: the canon word
+    assert registry.label("agent", plural=True) == "Agents"  # HS-100-10
     assert registry.label("directory") == "Zone"
     assert registry.label("kb") == "Knowledge"
     assert registry.label("chain") == "Sequence"
@@ -68,8 +68,8 @@ def test_registry_is_versioned_complete_and_strict() -> None:
 
 
 def test_module_accessor_uses_the_same_registry() -> None:
-    assert product_label("persona") == "Assistant"  # PHILO-17 U32
-    assert product_label("recipe") == "Assistant"  # PHILO-17 U32
+    assert product_label("persona") == "Agent"  # HS-100-10
+    assert product_label("recipe") == "Agent"  # HS-100-10
     assert product_label("coder", plural=True) == "Coder sessions"
     assert control_mode_wire("Secure") == "safe"
     assert control_mode_wire("normal") == "neutral"

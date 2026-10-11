@@ -139,11 +139,12 @@ export function closeReceipt(flight: AgentFlight): string {
   return words.join(" · ");
 }
 
-/** PHILO-17 U32: an agent can run only when it is on this Mac, its hooks are
- *  in, and it is signed in (pi signs in to nothing: its row reads `yes`).
- *  The head counts these as ready; NO HOOKS or SIGN-IN UNKNOWN is not ready. */
+/** PHILO-17 U32: a coder can run when it is on this Mac and its hooks are in.
+ *  The sign-in blocks only when the hub read it as signed out; an unread
+ *  sign-in (Claude Code keeps its token in the Keychain) does not block: the
+ *  Get Info says SIGN-IN NOT CHECKED as a fact. NO HOOKS is not ready. */
 export function canRun(row: AgentRow): boolean {
-  return row.installed && row.hooks === "installed" && row.signed_in === "yes";
+  return row.installed && row.hooks === "installed" && (row.signed_in as string) !== "no";
 }
 
 /** The ready rows: version, hooks, sign-in from the detect read. */
@@ -174,7 +175,7 @@ export function readyMember(row: AgentRow): ConductorMember {
         ? [
             { key: "version", word: "Version", value: row.version ?? "" },
             { key: "hooks", word: "Hooks", value: hooks },
-            { key: "signin", word: "Sign-in", value: row.signed_in === "yes" ? "SIGNED IN" : "UNKNOWN" },
+            { key: "signin", word: "Sign-in", value: row.signed_in === "yes" ? "SIGNED IN" : "NOT CHECKED" },
           ]
         : [],
     },

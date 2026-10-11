@@ -219,11 +219,11 @@ export function headFact(head: { atWork: number; ask: number }, members: readonl
   const found = members.filter((m) => m.role === "ready" && m.detect?.installed);
   const ready = found.filter((m) => canRun(m.detect!)).length;
   if (ready > 0) return `${ready} ready`;
-  return found.length ? "No agent ready" : "No agent";
+  return found.length ? "No coder ready" : "No coder";
 }
 
 /** PHILO-17 U32: what hooks do, in one line, where Install hooks is offered. */
-export const HOOKS_LINE = "Hooks let HoldSpeak see what the agent does and hand it work";
+export const HOOKS_LINE = "Hooks let HoldSpeak see what the coder does and hand it work";
 
 /** `ASKED 6 MIN AGO`, `ASKED 3 H AGO`, `ASKED OCT 5`; `ASKS` with no age. */
 export function askedWord(when: string | undefined): string {
@@ -285,7 +285,7 @@ export function ConductorWindow() {
     setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
   const words = headWords(head);
   const byId = (id: string) => members.find((m) => m.id === id) ?? null;
-  // Phase 16: the coding agents this Mac has (installed), and The ask:
+  // Phase 16: the coders this Mac has (installed), and The ask:
   // each live agent that asks (or holds a call), with its question.
   const installed = (reads.detect?.agents ?? []).filter((a) => a.installed).length;
   const asks = members
@@ -335,7 +335,7 @@ export function ConductorWindow() {
                   lamp: w.endsWith(" ASK") ? ("ask" as const) : undefined,
                   text: w,
                 })),
-                installed > 0 ? { key: "agents", text: `${installed} ${installed === 1 ? "CODING AGENT" : "CODING AGENTS"}` } : null,
+                installed > 0 ? { key: "agents", text: `${installed} ${installed === 1 ? "CODER" : "CODERS"}` } : null,
               ]}
             />
           </AppHead>
@@ -357,7 +357,7 @@ export function ConductorWindow() {
           {loading ? (
             <SurfaceState loading />
           ) : !members.length && failed.length ? null : !members.length ? (
-            <SurfaceState empty emptyLabel="No agent found" />
+            <SurfaceState empty emptyLabel="No coder found" />
           ) : view === "icons" ? (
             <IconGrid well label="Conductor" onClear={() => setSelectedId(null)}>
               {members.map((m) => (

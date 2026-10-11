@@ -75,8 +75,8 @@
       "meaning": "An ongoing endeavor or work scope, distinct from placement and grounding."
     },
     "persona": {
-      "singular": "Assistant",
-      "plural": "Assistants",
+      "singular": "Agent",
+      "plural": "Agents",
       "category": "capability",
       "meaning": "Saved reusable behavior made from instructions, tools, and knowledge."
     },

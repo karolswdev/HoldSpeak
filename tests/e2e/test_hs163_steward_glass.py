@@ -438,7 +438,7 @@ def test_dogfood_run_and_dedup(
             # Footer receipt line
             footer = page.get_by_test_id("steward-footer-receipt")
             footer.wait_for(timeout=5000)
-            assert "STEWARD" in footer.inner_text()
+            assert "RUNS" in footer.inner_text()  # PHILO-17 U31: was STEWARD RUNS
 
             # -- No raw IDs on list view --
             _assert_no_raw_ids(page)
@@ -1004,8 +1004,7 @@ def test_run_history_and_policy(
             footer = page.get_by_test_id("steward-footer-receipt")
             footer.wait_for(timeout=5000)
             footer_text = footer.inner_text()
-            assert "STEWARD" in footer_text
-            assert "RUNS" in footer_text
+            assert "RUNS" in footer_text  # PHILO-17 U31: was STEWARD RUNS
 
             # SHOT: populated run history list
             page.screenshot(

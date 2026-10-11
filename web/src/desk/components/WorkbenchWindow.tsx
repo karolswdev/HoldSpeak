@@ -213,11 +213,11 @@ function ConfigStrip({
             kind="agent"
             size={16}
           />
-          <span>{String(recipe.name || "Assistant")}</span>
+          <span>{String(recipe.name || "Agent")}</span>
         </span>
       ) : (
         <span className="wb-config-strip-agent wb-config-strip-empty">
-          No assistant
+          No agent
         </span>
       )}
       <span className="wb-config-strip-sep" aria-hidden="true">
@@ -353,7 +353,7 @@ function ConfigPanel({
       </button>
 
       {/* ── agent ───────────────────────────────────────────────────── */}
-      <SurfaceSection label="ASSISTANT">
+      <SurfaceSection label="AGENT">
         {recipe ? (
           <div className="wb-config-current-agent">
             <AgentAvatar
@@ -363,7 +363,7 @@ function ConfigPanel({
               size={32}
             />
             <span className="wb-config-agent-info">
-              <strong>{String(recipe.name || "Assistant")}</strong>
+              <strong>{String(recipe.name || "Agent")}</strong>
               {recipe.role ? <small>{String(recipe.role)}</small> : null}
             </span>
           </div>
@@ -404,15 +404,15 @@ function ConfigPanel({
         {filteredRecipes.length === 0 && recipes.length === 0 ? (
           <SurfaceState
             empty
-            emptyLabel="No assistants yet"
+            emptyLabel="No agents yet"
             emptyGlyph="+"
-            actionLabel="New assistant"
+            actionLabel="New Agent"
             onAction={() =>
               void useDesk.getState().createPrimitive("recipe")
             }
           />
         ) : filteredRecipes.length === 0 ? (
-          <SurfaceState empty emptyLabel="No assistants match" />
+          <SurfaceState empty emptyLabel="No agents match" />
         ) : null}
       </SurfaceSection>
 

@@ -28,7 +28,7 @@ export const PRODUCT_TERMS = {
   zone: ["Zone", "Zones"],
   knowledge: ["Knowledge", "Knowledge collections"],
   project: ["Project", "Projects"],
-  persona: ["Assistant", "Assistants"],  // PHILO-17 U32: "agent" is a coding agent (the Conductor)
+  persona: ["Agent", "Agents"],
   coder_session: ["Coder session", "Coder sessions"],
   workflow: ["Workflow", "Workflows"],
   sequence: ["Sequence", "Sequences"],
