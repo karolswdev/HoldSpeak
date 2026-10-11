@@ -401,7 +401,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
 
 
 @pytest.mark.parametrize(
-    "case", ["lost_update", "meeting_undo", "inherited_mobile", "stale_confirmation", "host_moves", "download_failure", "summary_override"]
+    "case", ["lost_update", "meeting_undo", "inherited_mobile", "stale_confirmation", "host_moves", "download_failure", "summary_override", "summary_override_mobile"]
 )
 def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str) -> None:
     server, url, fakes, ticks = _rig(tmp_path, monkeypatch)
@@ -410,12 +410,12 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
-            page = browser.new_page(viewport={"width": 393 if case == "inherited_mobile" else 1440, "height": 900})
+            page = browser.new_page(viewport={"width": 393 if case in ("inherited_mobile", "summary_override_mobile") else 1440, "height": 900})
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _api(page, "POST", "/api/desk/seed", token=TOKEN)
             _normal_chair(page)
             lan, local = _seed(page, fakes[2].server_address[1])
-            if case == "summary_override":
+            if case in ("summary_override", "summary_override_mobile"):
                 # Astra r1 (M2), through the real producer: the Meetings
                 # group runs on this Mac, but the summary capability has its
                 # own head on the LAN engine. Summaries leave the machine.
@@ -444,6 +444,27 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
                 # The Meetings wire itself still draws to the Mac engine.
                 wire = page.locator("[data-testid='switchboard-wire'][data-job='meetings'][data-order='0']")
                 assert wire.get_attribute("data-engine") == local[0]
+                return
+
+            if case == "summary_override_mobile":
+                # Astra r2 (M2): the phone's open Meeting summaries card shows
+                # the summary route's engine, never the Meetings wire's Mac one.
+                detect = _api(page, "GET", "/api/concierge/detect", token=TOKEN)
+                assert detect["summaryAssignment"]["profileId"] == lan[0], detect["summaryAssignment"]
+                assert page.get_by_test_id("switchboard").get_attribute("data-layout") == "list"
+                row = page.get_by_test_id("switchboard-job-meetings")
+                page.wait_for_function(
+                    "() => /192\\.168\\.77\\.43/.test(document.querySelector(\"[data-testid='switchboard-job-meetings']\")?.textContent || '')",
+                    timeout=15_000,
+                )
+                assert "THIS MAC" not in (row.inner_text() or "").upper()
+                row.click()
+                page.get_by_text("Meeting summaries · runs on").wait_for()
+                shown = page.locator(".switchboard.is-list > .switchboard-job.is-open + .switchboard-engine")
+                shown.wait_for()
+                text = shown.inner_text()
+                assert "27B" in text and "4B" not in text.replace("27B", ""), text
+                _shot(page, "summary-override-list", 393)
                 return
 
             if case == "inherited_mobile":

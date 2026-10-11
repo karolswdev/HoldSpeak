@@ -163,6 +163,7 @@ export function useRunsOn(scope?: string) {
   const [roster, setRoster] = useState<Roster | null>(null);
   const [detection, setDetection] = useState<Detection | null>(null);
   const [error, setError] = useState("");
+  const [detectionFailed, setDetectionFailed] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [egress, setEgress] = useState<Egress | null>(null);
@@ -202,12 +203,17 @@ export function useRunsOn(scope?: string) {
   }, []);
 
   const loadDetection = useCallback(() => {
+    if (mounted.current) setDetectionFailed(false);
     const promise = readDetection()
       .then((next) => {
         if (mounted.current) setDetection(next);
         return next;
       })
-      .catch(() => null);
+      .catch(() => {
+        // Astra r2 (M1): a failed read is said, never guessed around.
+        if (mounted.current) setDetectionFailed(true);
+        return null;
+      });
     detectionRef.current = promise;
     return promise;
   }, []);
@@ -777,6 +783,8 @@ export function useRunsOn(scope?: string) {
   return {
     roster,
     detection,
+    detectionFailed,
+    readAgain: () => void loadDetection(),
     error,
     engines,
     selected,

@@ -3,7 +3,6 @@
 
 import type { Repair } from "../concierge/api";
 import { hostPlace } from "../../desk/surface/egress";
-import type { SummaryAssignment } from "../concierge/api";
 import type { Detection, Roster, RosterEntry, RosterRow, RunsOnEngine } from "./api";
 import { stateWord, type StateWord } from "./stateWord";
 
@@ -115,18 +114,28 @@ export function hostLabel(engine: BoardEngine): string {
   return (place.host || engine.host || "NOT SET").toUpperCase();
 }
 
-/** PHILO-17 (U16, Astra r1 M2): the engine a job's lead names. Meeting
- *  summaries run on the `meeting.deferred_analysis` capability's own
- *  effective assignment (concierge_service.py summary_assignment_projection),
- *  which can differ from the Meetings group's wire; every other job runs on
- *  its group's first engine. `null`: summaries are off. */
+/** The summary route while it is not known yet: still being read, or the
+ *  read failed. The lead never guesses it from the Meetings wire. */
+export type LeadUnknown = "checking" | "unknown";
+
+/** PHILO-17 (U16, Astra r1 M2, r2 M1): the engine a job's lead names.
+ *  Meeting summaries run on the `meeting.deferred_analysis` capability's
+ *  own effective assignment (concierge_service.py
+ *  summary_assignment_projection), which can differ from the Meetings
+ *  group's wire; until detection says it, the lead says `checking` (or
+ *  `unknown` when the read failed). Every other job runs on its group's
+ *  first engine. `null`: summaries are off. */
 export function leadEngine(
   job: string,
   groupEngine: BoardEngine | undefined,
-  summary: SummaryAssignment | null | undefined,
+  detection: Pick<Detection, "summaryAssignment"> | null | undefined,
   engines: BoardEngine[],
-): BoardEngine | undefined | null {
-  if (job !== MEETINGS_JOB || !summary) return groupEngine;
+  detectionFailed = false,
+): BoardEngine | undefined | null | LeadUnknown {
+  if (job !== MEETINGS_JOB) return groupEngine;
+  if (!detection) return detectionFailed ? "unknown" : "checking";
+  const summary = detection.summaryAssignment;
+  if (!summary) return "unknown";
   if (summary.status === "off") return null;
   if (summary.status !== "assigned" || !summary.profileId) return undefined;
   const known = engines.find((e) => e.profileId === summary.profileId && !e.found);
@@ -148,8 +157,14 @@ export function leadEngine(
 
 /** PHILO-17 (U16): the job card's lead, in plain words: what the owner
  *  gets and where it runs (`Meeting summaries → Qwen 27B · on this Mac`). */
-export function leadLine(job: string, row: { label?: string } | null | undefined, engine: BoardEngine | undefined | null): string {
+export function leadLine(
+  job: string,
+  row: { label?: string } | null | undefined,
+  engine: BoardEngine | undefined | null | LeadUnknown,
+): string {
   const name = jobName(job, row);
+  if (engine === "checking") return `${name} → checking…`;
+  if (engine === "unknown") return `${name} → not known`;
   if (engine === null) return `${name} → off`;
   if (!engine) return `${name} → no engine`;
   return `${name} → ${engine.name} · on ${enginePlace(engine).words}`;

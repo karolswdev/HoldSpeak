@@ -107,7 +107,7 @@ describe("egressBadge agrees with the Trust window", () => {
   });
 
   it("a host the transport does not pin as loopback is never this device (Astra r1 M1)", () => {
-    for (const name of ["dev.localhost:8080", "0.0.0.0:8080"]) {
+    for (const name of ["dev.localhost:8080", "0.0.0.0:8080", "127.0.0.1.:8080", "127.00.0.1:8080", "localhost.:11434"]) {
       const badge = egressBadge({ trust: { last_egress: { id: "x", name, receipt: "r" } } });
       expect(badge.text, name).not.toBe("⌂ This device");
       expect(badge.scope, name).not.toBe("local");

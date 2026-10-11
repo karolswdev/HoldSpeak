@@ -14,33 +14,103 @@ export type EgressScope = "local" | "cloud" | "remote" | undefined;
 /** The wire words a model record or a receipt uses for "on this machine". */
 const THIS_MACHINE = new Set(["local", "LOCAL", "this_device", "same_device", "THIS DEVICE"]);
 
-/** `http://127.0.0.1:8899/v1` -> `127.0.0.1`; a bare host stays as it is. */
+/** `http://127.0.0.1:8899/v1` -> `127.0.0.1`; a bare host stays as it is.
+ *  Astra r2 (M3): the RAW spelling, never a URL parser's normal form
+ *  (`new URL` turns `127.0.0.1.` into a loopback name the transport does not
+ *  pin). Scheme, userinfo, path and port go; nothing else changes. */
 export function bareHost(value: string | null | undefined): string {
   const text = String(value ?? "").trim();
   if (!text) return "";
-  try {
-    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(text)) return new URL(text).hostname.replace(/^\[|\]$/g, "");
-  } catch {
-    // fall through to the plain split
+  let authority = text.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "").split(/[/?#]/)[0] ?? "";
+  const at = authority.lastIndexOf("@");
+  if (at >= 0) authority = authority.slice(at + 1);
+  if (authority.startsWith("[")) {
+    const close = authority.indexOf("]");
+    return close > 0 ? authority.slice(1, close) : authority.slice(1);
   }
-  const host = text.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "").split("/")[0] ?? "";
-  // A bare IPv6 address (`::1`) has no port to strip.
-  if ((host.match(/:/g) ?? []).length > 1 && !host.startsWith("[")) return host;
-  if (host.startsWith("[")) return host.slice(1, host.indexOf("]") > 0 ? host.indexOf("]") : undefined);
-  return host.replace(/:\d+$/, "");
+  // A bare IPv6 spelling (`::1`) has no port to strip.
+  if ((authority.match(/:/g) ?? []).length > 1) return authority;
+  return authority.replace(/:\d*$/, "");
+}
+
+/** Python's strict IPv4 (ipaddress): four decimal parts, no leading zeros. */
+function ipv4Parts(text: string): number[] | null {
+  const parts = text.split(".");
+  if (parts.length !== 4) return null;
+  const out: number[] = [];
+  for (const part of parts) {
+    if (!/^(0|[1-9]\d{0,2})$/.test(part)) return null;
+    const n = Number(part);
+    if (n > 255) return null;
+    out.push(n);
+  }
+  return out;
+}
+
+/** Python's strict IPv6 (ipaddress): eight 16-bit groups, one
+ *  `::` at most, an optional trailing dotted quad. */
+function ipv6Groups(text: string): number[] | null {
+  // A scope id (`::1%lo0`) is allowed and does not change the address.
+  const scope = text.indexOf("%");
+  if (scope >= 0 && (scope === text.length - 1 || text.slice(scope + 1).includes("/"))) return null;
+  const addr = scope >= 0 ? text.slice(0, scope) : text;
+  if (!addr || (addr.match(/::/g) ?? []).length > 1 || addr.includes(":::")) return null;
+  let tail: number[] = [];
+  let body = addr;
+  const lastColon = body.lastIndexOf(":");
+  if (body.slice(lastColon + 1).includes(".")) {
+    const v4 = ipv4Parts(body.slice(lastColon + 1));
+    if (!v4) return null;
+    tail = [(v4[0] << 8) | v4[1], (v4[2] << 8) | v4[3]];
+    body = body.slice(0, lastColon + 1);
+    if (body.endsWith(":") && !body.endsWith("::")) body = body.slice(0, -1);
+  }
+  const half = (chunk: string): number[] | null => {
+    if (!chunk) return [];
+    const out: number[] = [];
+    for (const group of chunk.split(":")) {
+      if (!/^[0-9a-f]{1,4}$/i.test(group)) return null;
+      out.push(parseInt(group, 16));
+    }
+    return out;
+  };
+  const room = 8 - tail.length;
+  if (body.includes("::")) {
+    const [left, right] = body.split("::");
+    const l = half(left);
+    const r = half(right);
+    if (!l || !r || l.length + r.length >= room) return null;
+    return [...l, ...new Array(room - l.length - r.length).fill(0), ...r, ...tail];
+  }
+  const all = half(body);
+  if (!all || all.length !== room) return null;
+  return [...all, ...tail];
 }
 
 /** Loopback: the request never leaves this Mac. Mirrors the transport's
- *  contract exactly (holdspeak/loopback_http.py is_loopback_engine_host):
- *  the word `localhost`, or a loopback IP literal (127.0.0.0/8, ::1). Not
- *  `*.localhost` and not `0.0.0.0`: the transport does not pin those, so a
- *  face must not call them this Mac. */
+ *  contract exactly (holdspeak/loopback_http.py is_loopback_engine_host:
+ *  strip one pair of brackets, lowercase, then the word `localhost` or
+ *  `ipaddress.ip_address(...).is_loopback`): 127.0.0.0/8 in strict dotted
+ *  quad, `::1`, and the IPv4-mapped `::ffff:127.x.x.x`. Never `*.localhost`,
+ *  `0.0.0.0`, a trailing dot (`127.0.0.1.`), leading zeros (`127.00.0.1`) or
+ *  `:::1`: the transport does not pin those, so a face must not either. */
 export function isLoopbackHost(host: string): boolean {
   const h = host.trim().replace(/^\[|\]$/g, "").toLowerCase();
   if (h === "localhost") return true;
-  if (/^127\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(h)) return h.split(".").every((part) => Number(part) <= 255);
-  if (h === "0:0:0:0:0:0:0:1") return true;
-  return h.includes("::") && /^(0{0,4}:){2,7}0{0,3}1$/.test(h);
+  const v4 = ipv4Parts(h);
+  if (v4) return v4[0] === 127;
+  const v6 = ipv6Groups(h);
+  if (!v6) return false;
+  if (v6.slice(0, 7).every((g) => g === 0) && v6[7] === 1) return true;
+  // IPv4-mapped (Python 3.13+ reads its IPv4 address).
+  return v6.slice(0, 5).every((g) => g === 0) && v6[5] === 0xffff && v6[6] >> 8 === 127;
+}
+
+/** Spelled like loopback once normalised (`127.0.0.1.`, `localhost.`), but
+ *  not pinned by the transport: the backend calls it the private network
+ *  (holdspeak/intel/providers.py), so the face says its host, never this Mac. */
+function loopbackLookalike(host: string): boolean {
+  return host.endsWith(".") && isLoopbackHost(host.replace(/\.+$/, ""));
 }
 
 export type HostPlace = "mac" | "lan" | "cloud";
@@ -61,7 +131,7 @@ export function hostPlace(
     return { place: "mac", host: "", words: "this Mac" };
   }
   if (kind === "cloud") return { place: "cloud", host, words: host || "the internet" };
-  if (kind === "lan" || (host && PRIVATE_IP_RE.test(host))) {
+  if (kind === "lan" || (host && (PRIVATE_IP_RE.test(host) || loopbackLookalike(host)))) {
     return { place: "lan", host, words: host || "your network" };
   }
   // No address at all: an in-process engine (MLX, a file) the backend named

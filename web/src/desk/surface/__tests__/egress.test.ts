@@ -1,6 +1,6 @@
 // HS-172-03 + HS-174-04 — egressFor + egressForEvent: the egress-label + scope mapper.
 import { describe, expect, it } from "vitest";
-import { egressFor, egressForEvent, hostPlace, receiptLabel } from "../egress";
+import { bareHost, egressFor, egressForEvent, hostPlace, isLoopbackHost, receiptLabel } from "../egress";
 
 describe("egressFor", () => {
   it("returns empty for null/undefined/empty", () => {
@@ -54,6 +54,36 @@ describe("hostPlace — the one helper for host words (PHILO-17 U16)", () => {
     expect(hostPlace("http://dev.localhost:8080/v1", "local").place).not.toBe("mac");
     expect(hostPlace("127.1.2.3").place).toBe("mac");
     expect(hostPlace("0:0:0:0:0:0:0:1").place).toBe("mac");
+  });
+
+  it("parser parity: every spelling is classified as holdspeak/loopback_http.py classifies it (Astra r2 M3)", () => {
+    // The right-hand values are `is_loopback_engine_host(h)` from the backend
+    // (Python 3.14), printed on 2026-10-10: strict dotted quad, no leading
+    // zeros, valid IPv6 loopback only, a scope id allowed, no trailing dot.
+    const backend: [string, boolean][] = [
+      ["127.00.0.1", false], [":::1", false], ["::1", true], ["0:0:0:0:0:0:0:1", true], ["::0:1", true],
+      ["0::1", true], ["127.1.2.3", true], ["::ffff:127.0.0.1", true], ["::ffff:7f00:1", true], ["0000::1", true],
+      ["00000::1", false], ["127.0.0.1.", false], ["localhost.", false], ["LOCALHOST", true], ["[::1]", true],
+      ["1::1", false], ["::", false], ["0.0.0.0", false], ["127.0.0.256", false], ["127.0.0", false],
+      ["dev.localhost", false], ["::1%lo0", true], ["1:2:3:4:5:6:7:8:9", false], ["::ffff:10.0.0.1", false],
+      ["127.0.0.01", false], ["0127.0.0.1", false], ["::1:", false], ["1:0:0:0:0:0:0:1", false],
+      ["0:0:0:0:0:0:0:0:1", false],
+    ];
+    for (const [host, loopback] of backend) expect(isLoopbackHost(host), host).toBe(loopback);
+  });
+
+  it("classifies the RAW spelling, before any URL normalisation (Astra r2 M3)", () => {
+    expect(bareHost("http://127.0.0.1.:8080/v1")).toBe("127.0.0.1.");
+    expect(bareHost("http://u:p@[::1]:8/x")).toBe("::1");
+    expect(bareHost("http://127.00.0.1:8080/v1")).toBe("127.00.0.1");
+    // Lead, badge and attempt all read hostPlace: these are never this Mac.
+    for (const url of ["http://127.0.0.1.:8080/v1", "http://localhost.:11434", "http://127.00.0.1:8080", "http://[:::1]:8080"]) {
+      expect(hostPlace(url).place, url).not.toBe("mac");
+      expect(hostPlace(url, "local").place, url).not.toBe("mac");
+      expect(egressFor(bareHost(url)).label, url).not.toBe("THIS DEVICE");
+    }
+    // The backend calls a trailing-dot loopback the private network.
+    expect(hostPlace("http://127.0.0.1.:8080/v1").place).toBe("lan");
   });
 
   it("a server on his network is its host name or IP", () => {

@@ -54,8 +54,12 @@ export interface SwitchJob {
   /** The engine the job runs on now, own wire or inherited (the phone list
    *  shows it under `<Job> · runs on`). */
   current?: string;
-  /** A token on that engine when it is inherited (`FOLLOWS DEFAULT`). */
+  /** A token on that engine when it is inherited (`SAME AS EVERYTHING ELSE`). */
   currentToken?: string;
+  /** Phone: the engine the open card shows in place of the wire (an id),
+   *  or `null` for none (the job's `runsOn` words say why). Undefined: the
+   *  wire decides. */
+  shows?: string | null;
 }
 
 export interface SwitchEngine {
@@ -511,9 +515,11 @@ function SwitchboardList({
   const chain = (wires ?? [])
     .filter((wire) => open && wire.job === open.id)
     .sort((a, b) => a.order - b.order);
-  const own = chain[0] ? engines.find((engine) => engine.id === chain[0].engine) : undefined;
-  const inherited = !own && open?.current ? engines.find((engine) => engine.id === open.current) : undefined;
-  const first = own ?? inherited;
+  const pinned = open?.shows !== undefined;
+  const shown = pinned && open?.shows ? engines.find((engine) => engine.id === open.shows) : undefined;
+  const own = !pinned && chain[0] ? engines.find((engine) => engine.id === chain[0].engine) : undefined;
+  const inherited = !pinned && !own && open?.current ? engines.find((engine) => engine.id === open.current) : undefined;
+  const first = shown ?? own ?? inherited;
   const alternatives = engines.filter(
     (engine) =>
       engine.draggable &&
@@ -532,6 +538,9 @@ function SwitchboardList({
             data-state={open.state}
           >
             <span className="switchboard-job-name">{`${open.name} · runs on`}</span>
+            {pinned && !shown && open.runsOn ? (
+              <span className="switchboard-job-tasks" data-testid={`switchboard-shows-${open.id}`}>{open.runsOn}</span>
+            ) : null}
             {open.result ? (
               <span className="switchboard-job-result" data-testid={`switchboard-result-${open.id}`}>
                 {open.result}
@@ -541,7 +550,7 @@ function SwitchboardList({
           {first ? (
             <EnginePlate
               engine={
-                inherited && open?.currentToken
+                (inherited || shown) && open?.currentToken
                   ? { ...first, tokens: [...first.tokens, open.currentToken] }
                   : first
               }

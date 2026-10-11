@@ -264,6 +264,31 @@ describe("Runs on — paint and words", () => {
     await waitFor(() => expect(lead()).toBe("Meeting summaries → OpenRouter · on openrouter.ai"));
   });
 
+  it("withholds the summary route until detection says it; a failed read says not known with Try again (Astra r2 M1)", async () => {
+    // A local Meetings wire: the lead must not borrow it while detection loads.
+    const local = roster();
+    local.rows = local.rows.map((r) =>
+      r.id === "meetings"
+        ? { ...r, inherited_from: "group", assignment: { revision: 1, entries: [Q4B], issues: [] }, expected_revision: 1 }
+        : r,
+    );
+    m.readRoster.mockResolvedValue(local);
+    let fail: (reason: unknown) => void = () => {};
+    m.readDetection.mockReturnValueOnce(new Promise<Detection>((_, reject) => (fail = reject)));
+    render(<RunsOnCore />);
+    await screen.findByTestId("switchboard");
+    const lead = () => screen.getByTestId("switchboard-job-meetings").querySelector(".switchboard-job-name")?.textContent;
+    expect(lead()).toBe("Meeting summaries → checking…");
+    await act(async () => fail(new Error("offline")));
+    await waitFor(() => expect(lead()).toBe("Meeting summaries → not known"));
+    expect(lead()).not.toContain("this Mac");
+    // Try again reads detection again; the real route then lands.
+    m.readDetection.mockResolvedValueOnce(detection());
+    fireEvent.click(screen.getByTestId("runson-read-again"));
+    await waitFor(() => expect(lead()).toBe("Meeting summaries → qwen3.8 27B · on 192.168.1.43"));
+    expect(screen.queryByTestId("runson-read-again")).toBeNull();
+  });
+
   it("summaries off: the lead says off", async () => {
     const off = detection();
     off.summaryAssignment = { ...off.summaryAssignment!, status: "off", profileId: null, profileRevision: null, label: null };
