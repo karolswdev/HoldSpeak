@@ -20,7 +20,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-from .glass_infra import _api, _api_allow_error, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import clear_hub_windows, _api, _api_allow_error, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="transcribe glass needs Playwright")
@@ -65,6 +65,9 @@ def _seed_audio_only(db: Any) -> None:
 
 
 def _open_meetings(page: Any) -> None:
+    # One hub is one desk: the meeting window opened earlier comes back over
+    # the list; the walk starts each open from an empty desk (PHILO-17).
+    clear_hub_windows(page, TOKEN)
     page.evaluate("""() => {
         localStorage.removeItem('hs.desk.workspace.v1');
         sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key:'review-meetings'}));
@@ -146,7 +149,8 @@ def test_an_audio_only_meeting_is_transcribed_in_place(tmp_path: Path, monkeypat
 
             # 3. Transcribe: the transcript lands on the SAME meeting.
             record_verb.click()
-            page.locator("#surface-meetings").get_by_text(LINE, exact=True).first.wait_for(timeout=30_000)
+            # PHILO-17: the record is the meeting's own window.
+            page.locator(f"[id='pullout:meeting:{MEETING}']").get_by_text(LINE, exact=True).first.wait_for(timeout=30_000)
             saved = db.meetings.get_meeting(MEETING)
             assert saved is not None and [seg.text for seg in saved.segments] == [LINE]
             assert saved.transcription_status == "complete"

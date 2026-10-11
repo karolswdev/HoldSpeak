@@ -346,7 +346,8 @@ class TestRoomFaceGlass:
                     conn.commit()
                 _api(page, "POST", f"/api/projects/{pid}/meetings/m-p903", {}, token=TOKEN)
                 self._stage(page, "review-meetings", "meeting:m-p903")
-                page.locator(".surface-split-detail .surface-display").first.wait_for(timeout=T)
+                # PHILO-17: the meeting opens in its own window.
+                page.locator("[id='pullout:meeting:m-p903'] .surface-display").first.wait_for(timeout=T)
                 pick_wing(page, "Review")
                 page.locator("[data-testid='meeting-review']").wait_for(timeout=T)
                 button = page.locator("[data-testid=review-project]").first

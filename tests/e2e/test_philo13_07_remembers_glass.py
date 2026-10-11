@@ -46,6 +46,8 @@ ROOM_WORDS = "Dry run passed Tuesday; EU shard backup plan due Friday; Priya own
 AGENDA = "Ask Priya about the EU shard backup plan"
 DECISION = "Freeze the old ledger on Nov 5"
 
+# PHILO-17 (2b): a person opens in their own window, named by the person.
+PERSON = ".desk-window[aria-label='Priya Nair'], .desk-window-shell[aria-label='Priya Nair']"
 WINDOWS_JS = r"""() => [...document.querySelectorAll('.desk-window-shell, .desk-window, .desk-pullout')]
   .filter((w) => { const r = w.getBoundingClientRect(); const cs = getComputedStyle(w);
     return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity) > 0.05; })
@@ -147,7 +149,7 @@ class TestTheDeskRemembers(_Rig):
                 commitment = page.locator(".desk-window-shell[aria-label='Needs you'] [data-testid='needs-row']",
                                           has_text=COMMITMENT).first.locator(".needs-row-name")
                 self._press(page, commitment, width)
-                people = page.locator(".desk-window[aria-label='People'], .desk-window-shell[aria-label='People']").first
+                people = page.locator(PERSON).first
                 people.get_by_role("tab", name="1:1s").wait_for()
                 self._press(page, people.get_by_role("tab", name="1:1s"), width)
                 pad = people.get_by_role("textbox", name="Agenda item")
@@ -211,7 +213,14 @@ class TestTheDeskRemembers(_Rig):
                 page.wait_for_function(
                     "(w) => [...document.querySelectorAll('#surface-project-memory [contenteditable=true]')].some(e => e.innerText.includes(w))",
                     arg=ROOM_WORDS, timeout=15_000)
-                people = page.locator(".desk-window[aria-label='People'], .desk-window-shell[aria-label='People']").first
+                people = page.locator(PERSON).first
+                if width < 720:
+                    # 393 shows one window at a time: he brings Priya's window
+                    # forward from the screen switcher (PHILO-17: her own window).
+                    people.wait_for(state="attached", timeout=20_000)
+                    self._press(page, page.get_by_test_id("desk-screen-switcher"), width)
+                    self._press(page, page.locator(".desk-screen-switcher-menu [role=menuitemcheckbox]",
+                                                   has_text="Priya Nair").first, width)
                 people.get_by_role("textbox", name="Agenda item").wait_for(timeout=20_000)
                 page.wait_for_timeout(1200)
                 _settle(page)
@@ -246,7 +255,7 @@ class TestTheDeskRemembers(_Rig):
                     # placed again and could land elsewhere); it is whole in the
                     # band and hides no other window's title bar.
                     assert room_after == room_rect, (room_rect, room_after)
-                    people_id = next(w["id"] for w in after_windows if w["title"] == "People")
+                    people_id = next(w["id"] for w in after_windows if w["title"] == "Priya Nair")
                     people_before = next(w["rect"] for w in before["windows"] if w["id"] == people_id)
                     pr = next(w["rect"] for w in after_windows if w["id"] == people_id)
                     assert pr == people_before, (people_before, pr)
@@ -302,7 +311,8 @@ class TestTheDeskRemembers(_Rig):
 
 
 class TestSliceTwoReturns(_Rig):
-    """B2 slice two, on the same rig: the meeting window with its SEND form
+    """B2 slice two, on the same rig (PHILO-17: the meeting window is the
+    meeting's whole record, `.desk-object-window`): the meeting window with its SEND form
     pick and its unfinished Decide title, the Delivery board, the Trust
     window and Schedule recording with its typed title all come back after a
     reload; the closed ones stay gone. Red on the slice-one head 22287ab1
@@ -314,9 +324,9 @@ class TestSliceTwoReturns(_Rig):
 
     def _present(self, page: Any) -> dict[str, Any]:
         return page.evaluate("""() => ({
-          meeting: !!document.querySelector(".desk-pullout [data-testid=meeting-decide-well]"),
-          form: (document.querySelector(".desk-pullout [data-testid=doc-forms] select") || {}).value || null,
-          decide: (document.querySelector(".desk-pullout [aria-label='Decision title']") || {}).value ?? null,
+          meeting: !!document.querySelector(".desk-object-window [data-testid=meeting-decide-well]"),
+          form: (document.querySelector(".desk-object-window [data-testid=doc-forms] select") || {}).value || null,
+          decide: (document.querySelector(".desk-object-window [aria-label='Decision title']") || {}).value ?? null,
           board: !!document.querySelector(".desk-dlv-board"),
           trust: !!document.querySelector("#trust"),
           schedule: (document.querySelector("[id='schedule:__create__'] input[aria-label='Title']") || {}).value ?? null,
@@ -346,14 +356,16 @@ class TestSliceTwoReturns(_Rig):
                     if r.method in ("PUT", "POST", "DELETE") and "/api/" in r.url
                     and not any(p in r.url for p in ("/preview", "/subscriptions", "/peek", "/brief/generate",
                                                      # PHILO-16 (16b): the windows' view state, not a draft.
-                                                     "/api/desk/windows")) else None)
+                                                     "/api/desk/windows",
+                                                     # PHILO-17: opening a meeting reads its READY.
+                                                     "/ready/read")) else None)
             try:
                 # 1. the meeting window: Digest, then Decide -> a title, not saved
                 page.goto(f"{self.base}/?token={TOKEN}&open=meeting:m-standup", wait_until="load")
                 _normal_chair(page)
-                well = page.locator(".desk-pullout [data-testid=meeting-decide-well]").first
+                well = page.locator(".desk-object-window [data-testid=meeting-decide-well]").first
                 well.wait_for(timeout=20_000)
-                page.locator(".desk-pullout [data-testid=doc-forms] select").first.select_option("meeting_digest")
+                page.locator(".desk-object-window [data-testid=doc-forms] select").first.select_option("meeting_digest")
                 self._press(page, well.get_by_role("button", name="Decide", exact=True), width)
                 well.get_by_role("textbox", name="Decision title").fill(self.DECIDE)
                 # 2. the Delivery board from the Dock. At 393 the shelf pages:
@@ -399,7 +411,7 @@ class TestSliceTwoReturns(_Rig):
 
                 page.reload(wait_until="load")
                 _normal_chair(page)
-                page.locator(".desk-pullout [data-testid=meeting-decide-well]").first.wait_for(state="attached", timeout=20_000)
+                page.locator(".desk-object-window [data-testid=meeting-decide-well]").first.wait_for(state="attached", timeout=20_000)
                 page.locator("[id='schedule:__create__']").wait_for(state="attached", timeout=20_000)
                 page.wait_for_timeout(1500)
                 _settle(page)

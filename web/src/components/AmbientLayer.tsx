@@ -167,7 +167,7 @@ function AftercareNote() {
   const { subscribe } = useRuntimeBus();
   const signal = useAftercare();
   const compact = useCompactViewport();
-  const aftercareSlot = useAftercareSlot(Boolean(signal));
+  const aftercareSlot = useAftercareSlot(Boolean(signal), signal?.meetingId ?? null);
   // PHILO-14 A1c: the Chair says itself that it is the screen of objects.
   const chairScreen = useChairWindows((state) => state.screenMounted);
   const host: AftercareHost = !signal
@@ -285,16 +285,24 @@ function AftercareNote() {
 /** The FRONT desk window's own aftercare slot, or null. PHILO-13-17 (C7;
  * Muad'Dib's ruling 2026-10-03): at 393 a card this slot can host lands
  * there; Capture does not open and the front window stays. */
-export function frontWindowAftercareSlot(): HTMLElement | null {
+export function frontWindowAftercareSlot(meetingId?: string | null): HTMLElement | null {
   if (typeof document === "undefined") return null;
-  return document.querySelector<HTMLElement>(
+  const slot = document.querySelector<HTMLElement>(
     '.desk-surface-window.is-front [data-aftercare-window-slot="top"]',
   );
+  return slot && hostsCard(slot, meetingId) ? slot : null;
 }
 
-function findAftercareSlot(): HTMLElement | null {
+/** PHILO-17 ("A meeting opens in one window"): a meeting's own window seats
+ *  only ITS meeting's card; another meeting's card never lands in it. */
+function hostsCard(slot: HTMLElement, meetingId?: string | null): boolean {
+  const own = slot.dataset.meetingId;
+  return !own || !meetingId || own === meetingId;
+}
+
+function findAftercareSlot(meetingId?: string | null): HTMLElement | null {
   if (typeof document === "undefined") return null;
-  const activeWindow = frontWindowAftercareSlot();
+  const activeWindow = frontWindowAftercareSlot(meetingId);
   if (activeWindow) return activeWindow;
   const anyWindow = Array.from(
     document.querySelectorAll<HTMLElement>(
@@ -302,14 +310,14 @@ function findAftercareSlot(): HTMLElement | null {
     ),
   ).find((candidate) => {
     const shell = candidate.closest<HTMLElement>(".desk-surface-window");
-    return shell?.style.display !== "none";
+    return shell?.style.display !== "none" && hostsCard(candidate, meetingId);
   });
   if (anyWindow) return anyWindow;
   // PHILO-17: the Screen is the one desk (the Floor's slot is parked).
   return document.querySelector<HTMLElement>('[data-aftercare-slot="before-capture"]');
 }
 
-function useAftercareSlot(active: boolean): HTMLElement | null {
+function useAftercareSlot(active: boolean, meetingId?: string | null): HTMLElement | null {
   const [slot, setSlot] = useState<HTMLElement | null>(null);
 
   useLayoutEffect(() => {
@@ -320,7 +328,7 @@ function useAftercareSlot(active: boolean): HTMLElement | null {
     let disposed = false;
     const update = () => {
       if (disposed) return;
-      const next = findAftercareSlot();
+      const next = findAftercareSlot(meetingId);
       setSlot((current) => (current === next ? current : next));
     };
     update();
@@ -342,7 +350,7 @@ function useAftercareSlot(active: boolean): HTMLElement | null {
       disposed = true;
       observer.disconnect();
     };
-  }, [active]);
+  }, [active, meetingId]);
 
   return slot;
 }

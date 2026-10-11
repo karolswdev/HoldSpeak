@@ -10,7 +10,7 @@
  * Seats: the Meetings record under SUMMARY (MeetingDetail), the meeting
  * window (MeetingPullout) and the Chair's MEETINGS row when unfolded.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CycleGadget } from "../desk/surface";
 import { SendHistory, SendWell, mergeKnown, pickDestination, pickedDestination, useSends } from "../desk/surface/send";
 import { useAnnounceWindowDocument } from "../desk/windowSend";
@@ -65,13 +65,34 @@ export function MeetingSendWell({ meetingId, title, startedAt }: {
   // since this well opened shows on that form.
   const reloadForm = reads[kind].reload;
   useEffect(() => { reloadForm(); }, [kind, reloadForm]);
+  // PHILO-17: the meeting window is a fixed-size window; a form switch can
+  // lengthen the open preview past its fold. The open preview's Send stays in
+  // view (as the pick brought it into view), never under the window's foot.
+  const wellRef = useRef<HTMLDivElement | null>(null);
+  const firstKind = useRef(true);
+  useEffect(() => {
+    if (firstKind.current) { firstKind.current = false; return; }
+    const root = wellRef.current;
+    if (!root) return;
+    // The new form's preview arrives after its read: follow it for a moment.
+    const keep = () => root.querySelector("[data-testid=send-open] [data-testid=send-verbs]")
+      ?.scrollIntoView?.({ block: "nearest" });
+    keep();
+    const observer = typeof MutationObserver === "undefined" ? null : new MutationObserver(keep);
+    observer?.observe(root, { childList: true, subtree: true });
+    const stop = window.setTimeout(() => observer?.disconnect(), 2500);
+    return () => {
+      window.clearTimeout(stop);
+      observer?.disconnect();
+    };
+  }, [kind]);
   const history = MEETING_FORMS.flatMap((f) => mergeKnown(`${f.value}:${meetingId}`, reads[f.value].data ?? []));
   const formTag = (s: { document_ref: string }) => {
     const f = MEETING_FORMS.find((x) => s.document_ref === `${x.value}:${meetingId}`);
     return f ? { form: f.value, word: f.word } : null;
   };
   return (
-    <div data-seat="meeting" data-testid="meeting-send-well">
+    <div ref={wellRef} data-seat="meeting" data-testid="meeting-send-well">
       <SendWell key={kind} head={head} sendsRead={reads[kind]}
         doc={{ ref: `${kind}:${meetingId}`, title: `${title} ${form.label.toLowerCase()}`, label: `${form.word} ${day(startedAt)}`.trim() }} />
       <SendHistory sends={history} tag={formTag} />

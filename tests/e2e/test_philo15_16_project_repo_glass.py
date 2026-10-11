@@ -377,7 +377,9 @@ class TestProjectRepositoryGlass:
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"16-record-project-menu-{width}.png"))
                 menu.get_by_text("Payments ledger cutover").click()
-                receipt = page.get_by_test_id("add-to-project-receipt").first
+                # PHILO-17: the meeting is its own window; its foot carries the
+                # receipt (the record's receipt line, as the Meetings record did).
+                receipt = page.locator(f"[id='pullout:meeting:{LOOSE}'] [data-testid=meetings-run-receipt]")
                 receipt.wait_for(timeout=T)
                 assert receipt.inner_text() == "IN PAYMENTS LEDGER CUTOVER"
                 _settle(page)

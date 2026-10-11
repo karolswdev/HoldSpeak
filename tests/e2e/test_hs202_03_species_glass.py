@@ -394,10 +394,13 @@ class TestSharedControlsAreSpecies:
             ), f"the {name} menu survived Escape"
 
             # ── the wings: one roving Tab stop, arrows walk, species ────
+            # PHILO-17 ("A meeting opens in one window"): the Meetings window
+            # is the list (two wings that fit at 393); Speak keeps four wings
+            # and a door, the strip that folds.
             page.evaluate(
                 """([key]) => sessionStorage.setItem(
                      "hs.desk.staged-surface-open", JSON.stringify({key}))""",
-                ["review-meetings"],
+                ["dictate"],
             )
             page.reload(wait_until="load")
             _normal_chair(page)
@@ -503,10 +506,17 @@ class TestSharedControlsAreSpecies:
                 )
             else:
                 pytest.fail(
-                    "the Meetings window drew fewer than two wings; "
+                    "the Speak window drew fewer than two wings; "
                     "the wing keyboard grammar was NOT ASSESSED"
                 )
 
+            # The Meetings list holds the rows (PHILO-17).
+            page.evaluate(
+                """() => sessionStorage.setItem(
+                     "hs.desk.staged-surface-open", JSON.stringify({key: 'review-meetings'}))""")
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            page.locator(".meetings-stream-row-body").first.wait_for(timeout=15_000)
             # ── the Meetings row body: a real Button that draws as a div ─
             # It WAS `<div role="button" tabIndex={0}>` (the last raw control
             # on the Meetings stream, `CatalogRail.tsx:211` in the census).
