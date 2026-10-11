@@ -3,7 +3,7 @@
 // Proves the mount: from the real Room, open the Steward posture by real clicks.
 // Pattern: UpdatePosture.test.tsx (the 162 exemplar).
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TitleSlotContext } from "../../../../desk/surface/title";
@@ -369,12 +369,12 @@ function setupStewardPosture(opts: {
 // ── MOUNT PROOF: The posture opens from the Room by real clicks ──
 
 describe("Mount proof: Steward verb in Room chrome", () => {
-  it("shows 'Steward' button in the Room", async () => {
+  it("shows the 'Watch sources' button in the Room (PHILO-17 U31: was Steward)", async () => {
     setupStewardPosture();
     render(<WindowHarness scope="project:p1" />);
 
     const btn = await screen.findByTestId("steward-verb");
-    expect(btn.textContent).toBe("Steward");
+    expect(btn.textContent).toBe("Watch sources");
   });
 
   it("clicking 'Steward' enters the steward list posture", async () => {
@@ -968,7 +968,7 @@ describe("Empty state", () => {
     await waitFor(() => screen.getByTestId("steward-posture"));
 
     // The empty state is visible
-    const emptyLabel = screen.getByText("No steward runs yet. Run once to start.");
+    const emptyLabel = screen.getByText("No runs yet. Run once to start.");
     expect(emptyLabel).toBeTruthy();
   });
 });
@@ -976,7 +976,7 @@ describe("Empty state", () => {
 // ── FINDING 1: Policy toggles render visible labels ──
 
 describe("Policy: visible labels on toggles", () => {
-  it("enabled toggle has visible 'Steward enabled' label", async () => {
+  it("enabled toggle has visible 'Watch on' label", async () => {
     setupStewardPosture({ policy: policyFixture() });
     render(<WindowHarness scope="project:p1" />);
 
@@ -987,7 +987,57 @@ describe("Policy: visible labels on toggles", () => {
     await waitFor(() => screen.getByTestId("steward-policy"));
 
     const enabledRow = screen.getByTestId("steward-policy-enabled-row");
-    expect(enabledRow.textContent).toContain("Steward enabled");
+    expect(enabledRow.textContent).toContain("Watch on");
+  });
+
+  // PHILO-17 U31: three presets set the existing policy fields; the detail is under RAW.
+  it("offers Off / Tell me / Do it; a preset sets the policy fields and Save sends them", async () => {
+    setupStewardPosture({ policy: policyFixture() });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+    fireEvent.click(screen.getByTestId("steward-verb-policy"));
+    await waitFor(() => screen.getByTestId("steward-policy"));
+
+    const group = screen.getByRole("radiogroup", { name: "Watch sources" });
+    const radios = within(group).getAllByRole("radio") as HTMLInputElement[];
+    expect(radios.map((r) => r.value)).toEqual(["off", "tell", "do"]);
+    // The detail is folded under RAW.
+    const raw = screen.getByTestId("steward-policy-enabled-row").closest("details");
+    expect(raw?.querySelector("summary")?.textContent).toContain("RAW");
+    expect(raw?.hasAttribute("open")).toBe(false);
+
+    // Astra r1 (#1084): every preset's SAVED fields, pressed one by one.
+    const puts = () =>
+      apiFetch.mock.calls.filter(([u, init]) => String(u).includes("/steward/policy") && (init as { method?: string } | undefined)?.method === "PUT");
+    const lastBody = () => (puts().at(-1)![1] as { json: { enabled: boolean; unattended_enabled: boolean; eligible_effect_kinds: string[] } }).json;
+    const press = async (index: number, word: string) => {
+      const before = puts().length;
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Watch sources" })).getAllByRole("radio")[index]);
+      expect(screen.getByTestId("steward-footer-receipt").textContent).toBe(`WATCH SOURCES · ${word}`);
+      fireEvent.click(screen.getByTestId("steward-verb-save-policy"));
+      await waitFor(() => expect(puts().length).toBe(before + 1));
+      return lastBody();
+    };
+
+    const tell = await press(1, "TELL ME");
+    expect(tell.enabled).toBe(true);
+    expect(tell.unattended_enabled).toBe(true);
+    expect([...tell.eligible_effect_kinds].sort()).toEqual(["create_door_item", "create_proposals", "refresh_sources"]);
+
+    const doIt = await press(2, "DO IT");
+    expect(doIt.enabled).toBe(true);
+    expect(doIt.unattended_enabled).toBe(true);
+    expect([...doIt.eligible_effect_kinds].sort()).toEqual(
+      ["apply_proposal_effects", "create_door_item", "create_proposals", "draft_update", "prepare_send", "refresh_sources"],
+    );
+    expect(doIt.eligible_effect_kinds).not.toContain("github_comment");
+
+    const off = await press(0, "OFF");
+    expect(off.unattended_enabled).toBe(false);
+    expect(off.enabled).toBe(true); // Run once still works
+    expect([...off.eligible_effect_kinds].sort()).toEqual([...doIt.eligible_effect_kinds].sort());
   });
 
   it("each effect kind toggle has its human label visible", async () => {

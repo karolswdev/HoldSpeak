@@ -139,6 +139,14 @@ export function closeReceipt(flight: AgentFlight): string {
   return words.join(" · ");
 }
 
+/** PHILO-17 U32: a coder can run when it is on this Mac and its hooks are in.
+ *  The sign-in blocks only when the hub read it as signed out; an unread
+ *  sign-in (Claude Code keeps its token in the Keychain) does not block: the
+ *  Get Info says SIGN-IN NOT CHECKED as a fact. NO HOOKS is not ready. */
+export function canRun(row: AgentRow): boolean {
+  return row.installed && row.hooks === "installed" && (row.signed_in as string) !== "no";
+}
+
 /** The ready rows: version, hooks, sign-in from the detect read. */
 export function readyMember(row: AgentRow): ConductorMember {
   const id = `agent:${row.id}`;
@@ -154,7 +162,7 @@ export function readyMember(row: AgentRow): ConductorMember {
     role: "ready",
     agent: row.id,
     kind: "agent",
-    kindWord: "AGENT",
+    kindWord: "CODER",
     name: titleOf(row.id),
     ...sprites(row.id, id),
     state,
@@ -167,7 +175,7 @@ export function readyMember(row: AgentRow): ConductorMember {
         ? [
             { key: "version", word: "Version", value: row.version ?? "" },
             { key: "hooks", word: "Hooks", value: hooks },
-            { key: "signin", word: "Sign-in", value: row.signed_in === "yes" ? "SIGNED IN" : "UNKNOWN" },
+            { key: "signin", word: "Sign-in", value: row.signed_in === "yes" ? "SIGNED IN" : "NOT CHECKED" },
           ]
         : [],
     },
@@ -220,7 +228,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       live: state,
       agent: row.agent,
       kind: "coder",
-      kindWord: "AGENT",
+      kindWord: "CODER",
       name: agentName(row),
       ...sprites(row.agent, row.key),
       when: ageWord(at, now),
@@ -233,7 +241,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       facts: {
         where: flight?.projectName || undefined,
         from: flight?.title || row.name,
-        owner: `${titleOf(row.agent)} (agent)`,
+        owner: `${titleOf(row.agent)} (coder)`,
         state: lamp,
         made: launchId ? madeWord(reads.launchedAt[launchId], now) || undefined : undefined,
       },
@@ -255,7 +263,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       live: state,
       agent: flight.agent,
       kind: "coder",
-      kindWord: "AGENT",
+      kindWord: "CODER",
       name: `${titleOf(flight.agent)}: ${shortItemName(flight.title)}`,
       ...sprites(flight.agent, flight.launchId),
       when: ageWord(at, now),
@@ -268,7 +276,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       facts: {
         where: flight.projectName || undefined,
         from: flight.title,
-        owner: `${titleOf(flight.agent)} (agent)`,
+        owner: `${titleOf(flight.agent)} (coder)`,
         state: lamp,
         made: madeWord(at, now) || undefined,
       },
@@ -291,7 +299,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       role: "stale",
       agent: flight.agent,
       kind: "coder",
-      kindWord: "AGENT",
+      kindWord: "CODER",
       name: `${titleOf(flight.agent)}: ${shortItemName(flight.title)}`,
       ...sprites(flight.agent, flight.launchId, true),
       when: ageWord(at, now),
@@ -304,7 +312,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       facts: {
         where: flight.projectName || undefined,
         from: flight.title,
-        owner: `${titleOf(flight.agent)} (agent)`,
+        owner: `${titleOf(flight.agent)} (coder)`,
         state,
         made: madeWord(reads.launchedAt[flight.launchId], now) || undefined,
       },

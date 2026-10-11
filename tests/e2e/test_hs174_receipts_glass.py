@@ -270,10 +270,17 @@ def _room_shot(page: Any, name: str, width: int) -> Path:
     return path
 
 
-def test_room_receipts_1440(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Room RECEIPTS section shows REMOTE + THIS DEVICE rows at 1440."""
+def _room_receipts_leg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """The Room's receipts under History: a remote write with its REMOTE badge
+    and a local write without one, at ``width``.
+
+    PHILO-17 U31 / Astra r1-r2 (#1084): the receipts live under History; the
+    fence selects it and fails without rows. The LOCAL write is minted by the
+    real producer (POST /api/projects/{id}/items -> ProjectService.create_item,
+    observed into pipeline_events). The REMOTE write is still a seeded
+    pipeline event: minting it for real needs the remote listener, an agent
+    credential with a project grant and a non-loopback client (see STATUS).
+    """
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
@@ -282,98 +289,65 @@ def test_room_receipts_1440(
 
     PID = "proj-174-receipts"
     _seed_project(PID, "Q4 Platform")
-
-    # Seed two pipeline events scoped to the project (project_id in args_summary)
     _seed_pipeline_event(
-        service="HeartbeatService", method="run_sweep",
+        service="ProjectService", method="update_project",
         origin="remote", caller="192.168.1.43",
         caller_identity="sweep-runner",
-        result_summary=f'{{"watches":4,"rooms":2,"held":false,"project_id":"{PID}"}}',
-        args_summary=f'{{"project_id":"{PID}"}}',
-    )
-    _seed_pipeline_event(
-        service="StewardService", method="project_run_steward",
-        origin="local", caller="",
-        result_summary='{"status":"completed"}',
+        result_summary=f'{{"id":"{PID}"}}',
         args_summary=f'{{"project_id":"{PID}"}}',
     )
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
-        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page = browser.new_page(viewport={"width": width, "height": 900})
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(f"{url}/?token={TOKEN}", wait_until="load")
         _api(page, "POST", "/api/desk/seed", token=TOKEN)
         _api(page, "PUT", "/api/setup/onboarding",
              {"disposition": "completed"}, token=TOKEN)
+        # The local write, through the Room's real route and service.
+        _api(page, "POST", f"/api/projects/{PID}/items", {
+            "item_type": "milestone", "title": "Write the cutover runbook", "command_id": f"hs174-item-{width}",
+        }, token=TOKEN)
         _normal_chair(page)
         _settle(page)
 
         _open_room(page, PID)
         _settle(page)
 
-        # Look for RECEIPTS section
+        page.get_by_role("tab", name="History").first.click()
         receipts = page.locator('[data-testid="receipt-row"]')
-        if receipts.count() > 0:
-            # At least one receipt row rendered
-            egress_chips = page.locator('[data-testid="receipt-egress"]')
-            if egress_chips.count() > 0:
-                all_text = " ".join(
-                    egress_chips.nth(i).text_content() or ""
-                    for i in range(egress_chips.count())
-                )
-                assert "REMOTE" in all_text, f"REMOTE badge missing: {all_text}"
+        receipts.first.wait_for(timeout=15_000)
+        page.wait_for_function(
+            "() => document.querySelectorAll('[data-testid=\"receipt-row\"]').length >= 2",
+            timeout=15_000,
+        )
+        rows = [receipts.nth(i) for i in range(receipts.count())]
+        texts = [(r.text_content() or "") for r in rows]
+        remote = [r for r, t in zip(rows, texts) if "UPDATE PROJECT" in t.upper()]
+        local = [r for r, t in zip(rows, texts) if "CREATE ITEM" in t.upper()]
+        assert len(remote) == 1 and len(local) >= 1, texts
+        # The remote write wears its REMOTE badge with the caller; the local
+        # write wears none (egress exactly where egress happens).
+        badge = remote[0].locator('[data-testid="receipt-egress"]')
+        assert badge.count() == 1, texts
+        assert (badge.text_content() or "").strip() == "REMOTE · 192.168.1.43", badge.text_content()
+        for row in local:
+            assert row.locator('[data-testid="receipt-egress"]').count() == 0, texts
+        # No machine tokens (UX-CANON): no "Service." on a row.
+        for text in texts:
+            assert "Service." not in text, text
 
-            # No row text should contain "Service." (UX-CANON: no machine tokens)
-            for i in range(receipts.count()):
-                row_text = receipts.nth(i).text_content() or ""
-                assert "Service." not in row_text, (
-                    f"Raw class.method on a face (row {i}): {row_text}"
-                )
-
-        _room_shot(page, "build-room-receipts-1440", 1440)
+        _room_shot(page, f"build-room-receipts-{width}", width)
         _assert_clean(page, errors)
         browser.close()
 
 
-def test_room_receipts_393(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Room RECEIPTS section at 393."""
-    _ensure_build()
-    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
-    errors: list[str] = []
+def test_room_receipts_1440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Room receipts under History: REMOTE + local rows at 1440."""
+    _room_receipts_leg(tmp_path, monkeypatch, 1440)
 
-    from playwright.sync_api import sync_playwright
 
-    PID = "proj-174-receipts"
-    _seed_project(PID, "Q4 Platform")
-
-    _seed_pipeline_event(
-        service="HeartbeatService", method="run_sweep",
-        origin="remote", caller="192.168.1.43",
-        args_summary=f'{{"project_id":"{PID}"}}',
-    )
-    _seed_pipeline_event(
-        service="StewardService", method="project_run_steward",
-        origin="local", caller="",
-        args_summary=f'{{"project_id":"{PID}"}}',
-    )
-
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch()
-        page = browser.new_page(viewport={"width": 393, "height": 900})
-        page.on("pageerror", lambda e: errors.append(str(e)))
-        page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-        _api(page, "POST", "/api/desk/seed", token=TOKEN)
-        _api(page, "PUT", "/api/setup/onboarding",
-             {"disposition": "completed"}, token=TOKEN)
-        _normal_chair(page)
-        _settle(page)
-
-        _open_room(page, PID)
-        _settle(page)
-
-        _room_shot(page, "build-room-receipts-393", 393)
-        _assert_clean(page, errors)
-        browser.close()
+def test_room_receipts_393(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Room receipts under History: REMOTE + local rows at 393."""
+    _room_receipts_leg(tmp_path, monkeypatch, 393)

@@ -10,9 +10,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../api";
 import { useDesk } from "../../store";
 import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../../agentFlights";
-import { ConductorWindow } from "../ConductorWindow";
+import { ConductorWindow, HOOKS_LINE, headFact } from "../ConductorWindow";
 import { ConductorInfoWindow } from "../ConductorInfoWindow";
-import { closeReceipt, conductorHead, conductorMembers, headWords } from "../members";
+import { canRun, closeReceipt, conductorHead, conductorMembers, headWords, readyMember } from "../members";
 import { __resetConductor, useConductor } from "../store";
 import { laneSessionKey as laneSessionKeyOf } from "../../lane/laneStore";
 
@@ -225,12 +225,12 @@ describe("PHILO-14 C4 the Conductor members", () => {
 describe("PHILO-14 C4 the Conductor window", () => {
   it("lists every member as an icon; the head says 3 AT WORK · 1 ASK · 3 OF 3", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: /^Claude Code: rollback runbook, AGENT, ASKS/ });
-    expect(icon(/^Codex: reconciliation job, AGENT, WORKS/)).toBeTruthy();
-    expect(icon(/^Claude Code: scratch, AGENT, WORKS/)).toBeTruthy();
-    expect(icon(/^Claude Code: ledger freeze flag, AGENT, PR #412/)).toBeTruthy();
-    expect(icon(/^Claude Code: cutover checklist, AGENT, PR #413 MERGED/)).toBeTruthy();
-    await screen.findByRole("button", { name: /^Codex, AGENT, NOT INSTALLED/ });
+    await screen.findByRole("button", { name: /^Claude Code: rollback runbook, CODER, ASKS/ });
+    expect(icon(/^Codex: reconciliation job, CODER, WORKS/)).toBeTruthy();
+    expect(icon(/^Claude Code: scratch, CODER, WORKS/)).toBeTruthy();
+    expect(icon(/^Claude Code: ledger freeze flag, CODER, PR #412/)).toBeTruthy();
+    expect(icon(/^Claude Code: cutover checklist, CODER, PR #413 MERGED/)).toBeTruthy();
+    await screen.findByRole("button", { name: /^Codex, CODER, NOT INSTALLED/ });
     const head = screen.getByTestId("conductor-head").textContent ?? "";
     // Phase 16 (the interior kit): `3 at work` is the window's one big fact;
     // the ask (a lamp) and the cap are tokens on the strip beside it.
@@ -248,7 +248,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(shell.lanes).toEqual([["l-runbook"]]);
     fireEvent.keyDown(icon(/^Claude Code: scratch/), { key: "Enter" });
     expect(shell.sessions).toEqual([["claude:solo"]]);
-    fireEvent.keyDown(await screen.findByRole("button", { name: /^Claude Code, AGENT$/ }), { key: "Enter" });
+    fireEvent.keyDown(await screen.findByRole("button", { name: /^Claude Code, CODER$/ }), { key: "Enter" });
     expect(useConductor.getState().infos.map((m) => m.ref)).toEqual(["agent:claude"]);
   });
 
@@ -258,7 +258,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     fireEvent.click(screen.getByRole("button", { name: "Answer" }));
     expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
     fireEvent.click(screen.getByTestId("conductor-stop"));
-    expect(screen.getByTestId("conductor-stop-confirm").textContent).toContain("ends the agent's session");
+    expect(screen.getByTestId("conductor-stop-confirm").textContent).toContain("ends the coder's session");
     // The confirmation REPLACES the verb row: only Back and the confirm.
     expect(screen.queryByRole("button", { name: "Answer" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
@@ -349,9 +349,9 @@ describe("PHILO-14 C4 the Conductor window", () => {
     const missing = { ...DETECT, agents: [{ ...DETECT.agents[0], hooks: "missing" }, DETECT.agents[1]] };
     detectReply = () => missing;
     render(<ConductorWindow />);
-    fireEvent.click(await screen.findByRole("button", { name: /^Codex, AGENT, NOT INSTALLED/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Codex, CODER, NOT INSTALLED/ }));
     expect(screen.getByRole("button", { name: "Copy install: Codex" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /^Claude Code, AGENT, NO HOOKS/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Claude Code, CODER, NO HOOKS/ }));
     detectReply = () => DETECT;
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Install hooks" }));
@@ -373,6 +373,9 @@ describe("PHILO-14 C4 the Conductor window", () => {
     // Nothing selected: one verb per agent (it was hidden until a selection).
     const claude = await screen.findByRole("button", { name: "Install hooks · Claude Code" });
     expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
+    // Astra r1 (#1084): one primary per face; the next Install hooks is secondary.
+    expect(claude.className).toContain("btn--primary");
+    expect(screen.getByRole("button", { name: "Install hooks · Codex" }).className).toContain("btn--secondary");
     detectReply = () => ({ ...both, agents: [{ ...both.agents[0], hooks: "installed" }, both.agents[1]] });
     await act(async () => {
       fireEvent.click(claude);
@@ -384,15 +387,46 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
   });
 
+  // PHILO-17 U32 (walk D 8): "3 ready · 3 HARNESSES" beside NO HOOKS · SIGN-IN UNKNOWN.
+  it("ready counts only coders that can run; the strip says CODERS; hooks are said in one line", async () => {
+    const claude = DETECT.agents[0];
+    const rows = [
+      { ...claude },
+      { ...claude, id: "codex", label: "Codex", hooks: "missing" },
+      // The owner's Claude Code: the Keychain sign-in is not read; it does not block.
+      { ...claude, id: "pi", label: "pi", signed_in: "unknown" },
+    ] as never[];
+    expect(rows.map((r) => canRun(r))).toEqual([true, false, true]);
+    expect(canRun({ ...claude, signed_in: "no" } as never)).toBe(false);
+    expect(readyMember(rows[2]).facts.more?.find((f) => f.key === "signin")?.value).toBe("NOT CHECKED");
+    expect(headFact({ atWork: 0, ask: 0 }, rows.map((r) => readyMember(r)))).toBe("2 ready");
+    expect(headFact({ atWork: 0, ask: 0 }, rows.slice(1, 2).map((r) => readyMember(r)))).toBe("No coder ready");
+    expect(headFact({ atWork: 0, ask: 0 }, [])).toBe("No coder");
+
+    sessionsReply = () => ({ sessions: [], flights: [], history: [], launches: { live: 0, cap: 3 } });
+    detectReply = () => ({ ...DETECT, agents: rows });
+    render(<ConductorWindow />);
+    const head = await screen.findByTestId("conductor-head");
+    await waitFor(() => expect(head.textContent).toContain("2 ready"));
+    expect(head.textContent).toContain("3 CODERS");
+    expect(head.textContent).not.toMatch(/harness/i);
+    // Nothing selected, Codex lacks hooks: Install hooks with its one line.
+    expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
+    expect(screen.getByTestId("conductor-hooks-line").textContent).toBe(HOOKS_LINE);
+    // A selected agent with its hooks in: no line.
+    fireEvent.click(screen.getByRole("button", { name: /^Claude Code, CODER$/ }));
+    expect(screen.queryByTestId("conductor-hooks-line")).toBeNull();
+  });
+
   it("a failed sessions read is NOT READ with Retry, never an empty drawer", async () => {
     sessionsReply = () => new Error("hub down");
     render(<ConductorWindow />);
     const notRead = await screen.findByText(/SESSIONS ·/);
     expect(notRead.textContent).toContain("NOT READ");
-    expect(screen.queryByText("No agent found")).toBeNull();
+    expect(screen.queryByText("No coder found")).toBeNull();
     expect(screen.queryByText(/No sessions/i)).toBeNull();
     // The ready agents still show; no live agent is claimed gone.
-    expect(await screen.findByRole("button", { name: /^Claude Code, AGENT$/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Claude Code, CODER$/ })).toBeTruthy();
     sessionsReply = () => SESSIONS;
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await screen.findByRole("button", { name: /^Claude Code: rollback runbook/ });
@@ -405,12 +439,12 @@ describe("PHILO-14 C4 the Conductor window", () => {
     flights: [{ ...FLIGHT_RUNBOOK, state: "working" }, ...SESSIONS.flights.slice(1)] };
     sessionsReply = () => working;
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: /^Claude Code: rollback runbook, AGENT, WORKS/ });
+    await screen.findByRole("button", { name: /^Claude Code: rollback runbook, CODER, WORKS/ });
     sessionsReply = () => SESSIONS;
     act(() => {
       for (const h of bus.handlers.get("intel_status") ?? []) h({ type: "intel_status", data: { state: "ready", scope: "coder" } });
     });
-    await screen.findByRole("button", { name: /^Claude Code: rollback runbook, AGENT, ASKS/ });
+    await screen.findByRole("button", { name: /^Claude Code: rollback runbook, CODER, ASKS/ });
   });
 
   it("a ready agent's Get Info: version, hooks, sign-in", async () => {
@@ -441,7 +475,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
 describe("Phase 16 the Conductor on the interior kit", () => {
   it("The ask is a Section over a Ledger row: the agent's plate, its question, ASKED <age>", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: /^Claude Code: rollback runbook, AGENT, ASKS/ });
+    await screen.findByRole("button", { name: /^Claude Code: rollback runbook, CODER, ASKS/ });
     const asks = await screen.findByTestId("conductor-asks");
     expect(asks.querySelector("h3")?.textContent).toBe("The ask");
     const rows = within(asks).getAllByTestId("conductor-ask-row");

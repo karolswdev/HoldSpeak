@@ -276,15 +276,15 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
     expect(within(rows[0]).getByTestId("needs-you-open-action")).toBeTruthy();
   });
 
-  it("a row with no flight wears no chip and keeps Hand to agent (F1)", async () => {
+  it("a row with no flight wears no chip and keeps Hand to coder (F1)", async () => {
     wire([]);
     render(<WindowHarness scope="project:p1" />);
     const rows = await screen.findAllByTestId("needs-you-row");
     expect(screen.queryByTestId("flight-chip")).toBeNull();
-    expect(within(rows[0]).getByRole("button", { name: "Hand to agent: Write the rollback runbook" })).toBeTruthy();
+    expect(within(rows[0]).getByRole("button", { name: "Hand to coder: Write the rollback runbook" })).toBeTruthy();
   });
 
-  it("an in-flight row (STARTING, WAITING, PR OPEN, MERGED awaiting confirm) shows no Hand to agent", async () => {
+  it("an in-flight row (STARTING, WAITING, PR OPEN, MERGED awaiting confirm) shows no Hand to coder", async () => {
     wire([
       flight({ state: "starting", session_key: null }),
       flight({ origin_ref: "action:ai-recon", id: "ai-recon", title: "Shard the reconciliation job", state: "merged", close: "awaiting_confirm",
@@ -294,7 +294,7 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
     ]);
     render(<WindowHarness scope="project:p1" />);
     await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(3));
-    expect(screen.queryAllByRole("button", { name: /^Hand to agent/ })).toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: /^Hand to coder/ })).toHaveLength(0);
     expect(screen.getAllByTestId("flight-chip")[0].textContent).toContain("CLAUDE CODE · STARTING");
   });
 });

@@ -21,6 +21,9 @@ import {
   CheckGadget,
   StringGadget,
   StepperGadget,
+  FoldGadget,
+  ChoiceCard,
+  ChoiceCardGroup,
   humanTime,
   countLabel,
   useScrollHint,
@@ -29,7 +32,7 @@ import {
 import { openRef } from "../../../desk/openObject";
 import { refusalWord } from "../../../desk/surface/egress";
 import type { StewardController } from "./useStewardController";
-import type { StewardRun, StewardStep } from "./model";
+import type { StewardPreset, StewardRun, StewardStep } from "./model";
 import {
   EFFECT_KINDS,
   circuitStateLabel,
@@ -41,6 +44,8 @@ import {
   isModelTouchingKind,
   phaseLabel,
   pluralize,
+  presetOf,
+  STEWARD_PRESETS,
   provenanceLabel,
   provenanceTone,
   receiptRefs,
@@ -289,7 +294,7 @@ function RunDetail({
       <div data-testid="steward-run-plan">
         <ProgressPlan
           steps={planSteps}
-          ariaLabel="Steward run phases"
+          ariaLabel="Watch run phases"
         />
       </div>
 
@@ -440,6 +445,13 @@ function RunList({ ctrl }: { ctrl: StewardController }) {
 
 /* ── Policy editor (in-world, no modals) ── */
 
+/** The footer word of the chosen preset (`OFF`, `TELL ME`, `DO IT`, `CUSTOM`). */
+function presetWord(draft: Parameters<typeof presetOf>[0] | null): string {
+  if (!draft) return "OFF";
+  const preset = presetOf(draft);
+  return preset === "custom" ? "CUSTOM" : STEWARD_PRESETS.find((p) => p.value === preset)!.label.toUpperCase();
+}
+
 function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
   const draft = ctrl.policyDraft;
   if (!draft) return null;
@@ -447,6 +459,8 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
   const activeWatches = ctrl.watches.filter((w) => w.state === "active" || w.state === "tested");
   const cadences = activeWatches.map((w) => w.evaluationCadenceMinutes).filter((c) => c > 0);
   const cadence = cadences.length > 0 ? Math.min(...cadences) : 60;
+
+  const preset = presetOf(draft);
 
   const circuitWatches = ctrl.watches.filter(
     (w) => w.circuitState !== "closed",
@@ -515,12 +529,34 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
         </>
       ) : null}
 
+      {/* PHILO-17 U31: three presets set the policy; the detail is under RAW. */}
+      <ChoiceCardGroup
+        name="steward-preset"
+        value={preset === "custom" ? null : preset}
+        onChange={(v) => ctrl.applyPreset(v as StewardPreset)}
+        ariaLabel="Watch sources"
+        layout="row"
+      >
+        {STEWARD_PRESETS.map((p) => (
+          <ChoiceCard
+            key={p.value}
+            name="steward-preset"
+            selectedValue={preset}
+            onChange={(v) => ctrl.applyPreset(v as StewardPreset)}
+            value={p.value}
+            label={p.label}
+            summary={p.summary}
+          />
+        ))}
+      </ChoiceCardGroup>
+
+      <FoldGadget className="steward-policy-raw" title="RAW" token={preset === "custom" ? "CUSTOM" : undefined}>
       {/* R4 item 2: POLICY as ONE GadgetGroup — label ONCE per row */}
-      <GadgetGroup label="Steward policy">
+      <GadgetGroup label="Watch settings">
         <div data-testid="steward-policy-enabled-row">
-          <GadgetRow label="Steward enabled">
+          <GadgetRow label="Watch on">
             <SurfaceToggle
-              label="Steward enabled"
+              label="Watch on"
               checked={draft.enabled}
               onChange={(v) => ctrl.updatePolicyDraft("enabled", v)}
             />
@@ -665,6 +701,7 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
           </span>
         </GadgetRow>
       </GadgetGroup>
+      </FoldGadget>
 
       {ctrl.policyError ? (
         <SurfaceState error={ctrl.policyError} />
@@ -759,7 +796,7 @@ export function StewardPosture({
         {ctrl.runs.length === 0 && !ctrl.loading ? (
           <SurfaceState
             empty
-            emptyLabel="No steward runs yet. Run once to start."
+            emptyLabel="No runs yet. Run once to start."
             emptyGlyph={"*"}
           />
         ) : (
@@ -769,7 +806,7 @@ export function StewardPosture({
         <SurfaceFooter
           receipt={
             <span className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
-              {countLabel("STEWARD RUNS", ctrl.runs.length)}
+              {countLabel("RUNS", ctrl.runs.length)}
             </span>
           }
         />
@@ -794,7 +831,7 @@ export function StewardPosture({
             <span className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
               {run
                 ? `RUN ${runNumber} · ${runStateLabel(run.state).toUpperCase()} · ${phaseCount} PHASE${phaseCount === 1 ? "" : "S"}`
-                : "STEWARD"}
+                : "WATCH SOURCES"}
             </span>
           }
         />
@@ -810,7 +847,7 @@ export function StewardPosture({
         <SurfaceFooter
           receipt={
             <span className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
-              STEWARD POLICY
+              {`WATCH SOURCES · ${presetWord(ctrl.policyDraft)}`}
             </span>
           }
         />

@@ -13,7 +13,7 @@ here is a file read), and the hand runs through the C3 launch rig.
   HOOKS INSTALLED · CLAUDE CODE · hh:mm (main: no verb until a selection,
   no receipt for a success).
 - B36: Claude Code's sign-in is unknown, Codex's is known. The drawer's
-  Hand to agent line is on Codex and says CLAUDE CODE · SIGN-IN UNKNOWN.
+  Hand to coder line is on Codex and says CLAUDE CODE · SIGN-IN UNKNOWN.
 - B56: an aftercare card with 2 to review leaves once both are handled
   (main: the card kept "2 to review").
 
@@ -266,7 +266,7 @@ class TestTheKnownSignInDefault:
                 drawer.locator(f"[data-object-id='action:{self.action_id}']").first.wait_for(timeout=T)
                 _settle(page)
                 drawer.locator(f"[data-object-id='action:{self.action_id}']").first.click()
-                drawer.get_by_role("button", name="Hand to agent").click()
+                drawer.get_by_role("button", name="Hand to coder").click()
                 line = drawer.get_by_test_id("hand-confirm")
                 line.wait_for(timeout=T)
                 page.wait_for_function(

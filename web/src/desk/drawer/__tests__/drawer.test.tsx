@@ -458,7 +458,7 @@ describe("PHILO-14 A2 Get Info window", () => {
   it("shows the facts the object has and its own verbs", () => {
     render(<DrawerInfoWindow info={{ ref: "action:a1", projectId: "p", member: member({
       id: "action:a1", ref: "action:a1", kind: "action", name: "Write the rollback runbook", parks: false,
-      facts: { where: "Payments ledger cutover", from: "Ledger cutover sync", owner: "Claude Code (agent)", state: { label: "CLAUDE CODE ASKS", tone: "ask" } },
+      facts: { where: "Payments ledger cutover", from: "Ledger cutover sync", owner: "Claude Code (coder)", state: { label: "CLAUDE CODE ASKS", tone: "ask" } },
     }) }} />);
     const info = document.querySelector(".object-info")!;
     expect(info).toHaveTextContent("Write the rollback runbook");

@@ -412,7 +412,7 @@ describe("HS-200-41: the Room ask well is in the return-to-task loop", () => {
     // chip still read NOT SET. That is the STATE half of return-to-task
     // failing on the surface this story sends him back to.
     render(<WindowHarness scope="project:p1" />);
-    expect(await screen.findByText("MODEL · NOT SET")).toBeInTheDocument();
+    expect(await screen.findByText("No engine for answers")).toBeInTheDocument(); // PHILO-17 U31 (was MODEL · NOT SET)
 
     // A model is assigned while he is away, and the endpoint is one the
     // desk store has never heard of.
@@ -441,6 +441,6 @@ describe("HS-200-41: the Room ask well is in the return-to-task loop", () => {
     announceTaskReturn();
 
     expect(await screen.findByText("MODEL · 192.168.1.43:8080")).toBeInTheDocument();
-    expect(screen.queryByText("MODEL · NOT SET")).toBeNull();
+    expect(screen.queryByText("No engine for answers")).toBeNull();
   });
 });

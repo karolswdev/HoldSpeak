@@ -438,7 +438,7 @@ def test_dogfood_run_and_dedup(
             # Footer receipt line
             footer = page.get_by_test_id("steward-footer-receipt")
             footer.wait_for(timeout=5000)
-            assert "STEWARD" in footer.inner_text()
+            assert "RUNS" in footer.inner_text()  # PHILO-17 U31: was STEWARD RUNS
 
             # -- No raw IDs on list view --
             _assert_no_raw_ids(page)
@@ -1004,8 +1004,7 @@ def test_run_history_and_policy(
             footer = page.get_by_test_id("steward-footer-receipt")
             footer.wait_for(timeout=5000)
             footer_text = footer.inner_text()
-            assert "STEWARD" in footer_text
-            assert "RUNS" in footer_text
+            assert "RUNS" in footer_text  # PHILO-17 U31: was STEWARD RUNS
 
             # SHOT: populated run history list
             page.screenshot(
@@ -1028,6 +1027,8 @@ def test_run_history_and_policy(
             posture = page.get_by_test_id("steward-posture")
             assert posture.get_attribute("data-phase") == "policy"
 
+            # PHILO-17 U31: the policy detail is under RAW (presets on top).
+            page.locator("[data-testid='steward-policy'] .steward-policy-raw > summary").click()
             # Policy toggles visible
             effects = page.get_by_test_id("steward-policy-effects")
             effects.wait_for(timeout=5000)
@@ -1035,7 +1036,7 @@ def test_run_history_and_policy(
 
             # The CheckGadget renders aria-label, not visible text.
             # Verify an enabled checkbox exists via aria-label.
-            enabled_checkbox = policy_posture.locator('input[aria-label="Steward enabled"]')
+            enabled_checkbox = policy_posture.locator('input[aria-label="Watch on"]')
             assert enabled_checkbox.count() >= 1, "Enabled toggle checkbox should be present"
 
             # SHOT: policy editor

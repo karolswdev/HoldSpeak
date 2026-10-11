@@ -12,7 +12,7 @@ import { DeskWindowFrame } from "../components/DeskWindow";
 import { GetInfo, SurfaceFooter, type GetInfoFacts } from "../surface";
 import { windowName } from "../windowName";
 import { madeWord } from "../drawer/members";
-import { MemberReceipt, MemberVerbs } from "./ConductorWindow";
+import { HooksLine, MemberReceipt, MemberVerbs } from "./ConductorWindow";
 import { readyMember, type ConductorMember } from "./members";
 import { conductorInfoId, useConductor } from "./store";
 
@@ -90,6 +90,7 @@ export function ConductorInfoWindow({ member }: { member: ConductorMember }) {
             sprite={member.sprite}
             facts={facts}
           />
+          <HooksLine member={current} />
         </div>
       </div>
       <SurfaceFooter

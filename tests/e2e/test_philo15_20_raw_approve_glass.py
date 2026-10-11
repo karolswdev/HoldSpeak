@@ -74,7 +74,7 @@ def test_raw_shows_a_cut_call_whole_and_approves_it_at_1440_and_393(tmp_path: Pa
     errors: list[str] = []
     try:
         seed = _seed(tmp_path / "home")
-        # The launch's registered session (as a Hand to agent leaves it once
+        # The launch's registered session (as a Hand to coder leaves it once
         # its hook registered): Needs you reads a hold of THIS launch.
         factory_launch.LaunchLedger().update("launch_c2_runbook", session_key=KEY)
         clone = "/private/var/folders/q7/T/hs-r2/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558"

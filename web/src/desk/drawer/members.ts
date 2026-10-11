@@ -197,7 +197,7 @@ function flightState(flight: AgentFlight | null): { label: string; tone: ObjectT
 }
 
 function flightOwner(flight: AgentFlight | null): string | undefined {
-  return flight ? `${agentName(flight.agent)} (agent)` : undefined;
+  return flight ? `${agentName(flight.agent)} (coder)` : undefined;
 }
 
 /** Every object filed in the Project, once each. */
@@ -380,7 +380,7 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
         spriteSelected: objectSprite("agent", ref, "sel", 64, f.agent),
         when: ageWord(at, now), whenSort: epoch(at),
         state, lamp: state,
-        facts: { where, from: f.title, owner: `${agentName(f.agent)} (agent)`, state },
+        facts: { where, from: f.title, owner: `${agentName(f.agent)} (coder)`, state },
       });
     }
     if (f.pr?.number) {
@@ -392,7 +392,7 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
         id: ref, ref, kind: "pr", name: `#${f.pr.number} ${f.pr.title || f.title}`,
         url: f.pr.url || undefined,
         state, lamp: state,
-        facts: { where, from: f.title, owner: `${agentName(f.agent)} (agent)`, state },
+        facts: { where, from: f.title, owner: `${agentName(f.agent)} (coder)`, state },
       });
     }
   }

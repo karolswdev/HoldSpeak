@@ -14,7 +14,7 @@ canned). No agent starts; nothing leaves the machine.
   lit); the confirm line waits in the drawer head; Brief ▸ shows the brief;
   Hand launches; the line reads the receipt.
 - 1440, Secure: the same drop opens the launch sheet.
-- 393: no drag; the drawer list's Hand to agent reaches the same line.
+- 393: no drag; the drawer list's Hand to coder reaches the same line.
 
 Shots go to `.tmp/evidence-shots/p14-c3/`.
 """
@@ -292,7 +292,7 @@ class TestDropToHandGlass:
                     self._drag_onto_conductor(page)
                 else:
                     drawer.get_by_text(ACTION, exact=True).first.click()
-                    drawer.get_by_role("button", name="Hand to agent").click()
+                    drawer.get_by_role("button", name="Hand to coder").click()
                 line = drawer.get_by_test_id("hand-confirm")
                 line.wait_for(timeout=T)
                 page.keyboard.press("Escape")
@@ -333,7 +333,7 @@ class TestDropToHandGlass:
                 # No drag gesture at 393.
                 assert page.locator(".desk-icon[draggable=true]").count() == 0
                 drawer.get_by_text(ACTION, exact=True).first.click()
-                drawer.get_by_role("button", name="Hand to agent").click()
+                drawer.get_by_role("button", name="Hand to coder").click()
                 line = drawer.get_by_test_id("hand-confirm")
                 line.wait_for(timeout=T)
                 page.wait_for_function(

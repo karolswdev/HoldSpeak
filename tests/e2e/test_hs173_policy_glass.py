@@ -85,6 +85,7 @@ def test_sixth_row_unchecked_with_badge_1440(
             # Enter policy
             page.click('[data-testid="steward-verb-policy"]')
             page.wait_for_selector('[data-testid="steward-policy"]')
+            page.click('[data-testid="steward-policy"] .steward-policy-raw > summary')  # PHILO-17 U31: detail under RAW
 
             # The sixth kind label reads "Reviewer nudge"
             label = page.query_selector('[data-testid="steward-policy-kind-label-github_comment"]')
@@ -148,6 +149,7 @@ def test_check_reveals_template_and_save(
             page.wait_for_selector('[data-testid="steward-posture"]')
             page.click('[data-testid="steward-verb-policy"]')
             page.wait_for_selector('[data-testid="steward-policy"]')
+            page.click('[data-testid="steward-policy"] .steward-policy-raw > summary')  # PHILO-17 U31: detail under RAW
 
             # Check the github_comment checkbox (6th)
             effects = page.query_selector('[data-testid="steward-policy-effects"]')
@@ -168,6 +170,7 @@ def test_check_reveals_template_and_save(
             page.wait_for_selector('[data-testid="steward-posture"][data-phase="list"]')
             page.click('[data-testid="steward-verb-policy"]')
             page.wait_for_selector('[data-testid="steward-policy"]')
+            page.click('[data-testid="steward-policy"] .steward-policy-raw > summary')  # PHILO-17 U31: detail under RAW
 
             # github_comment should be checked after save
             effects2 = page.query_selector('[data-testid="steward-policy-effects"]')
@@ -208,6 +211,7 @@ def test_policy_stacking_393(
             page.wait_for_selector('[data-testid="steward-posture"]')
             page.click('[data-testid="steward-verb-policy"]')
             page.wait_for_selector('[data-testid="steward-policy"]')
+            page.click('[data-testid="steward-policy"] .steward-policy-raw > summary')  # PHILO-17 U31: detail under RAW
 
             # The sixth row is present
             label = page.query_selector('[data-testid="steward-policy-kind-label-github_comment"]')
