@@ -44,6 +44,7 @@ import {
   accepts as acceptsRule,
   buildEngines,
   hostLabel,
+  jobName,
   jobForScope,
   limitTokens,
   offMachine,
@@ -162,6 +163,7 @@ export function useRunsOn(scope?: string) {
   const [roster, setRoster] = useState<Roster | null>(null);
   const [detection, setDetection] = useState<Detection | null>(null);
   const [error, setError] = useState("");
+  const [detectionFailed, setDetectionFailed] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [egress, setEgress] = useState<Egress | null>(null);
@@ -201,12 +203,17 @@ export function useRunsOn(scope?: string) {
   }, []);
 
   const loadDetection = useCallback(() => {
+    if (mounted.current) setDetectionFailed(false);
     const promise = readDetection()
       .then((next) => {
         if (mounted.current) setDetection(next);
         return next;
       })
-      .catch(() => null);
+      .catch(() => {
+        // Astra r2 (M1): a failed read is said, never guessed around.
+        if (mounted.current) setDetectionFailed(true);
+        return null;
+      });
     detectionRef.current = promise;
     return promise;
   }, []);
@@ -317,7 +324,7 @@ export function useRunsOn(scope?: string) {
           entries: own.map((e) => ({ profile_id: e.profile_id, profile_revision: e.profile_revision })),
           produced: Number(written.revision ?? 0),
         };
-        const label = row.id === "global" ? "Default for AI work" : row.label;
+        const label = jobName(job, row);
         let text = `PATCHED ${clock()} · ${label} → ${engine.name}${asFallback ? " · FALLBACK" : ""}`;
         if (job === MEETINGS_JOB) {
           const before = det?.summaryAssignment ?? null;
@@ -352,7 +359,7 @@ export function useRunsOn(scope?: string) {
   );
 
   const refuse = useCallback((job: string, _key: string, reason: string) => {
-    const label = rowOf(job)?.label ?? job;
+    const label = jobName(job, rowOf(job));
     setReceipt({ text: `REFUSED · ${label.toUpperCase()} · ${reason}`, tone: "danger" });
   }, [rowOf]);
 
@@ -360,7 +367,7 @@ export function useRunsOn(scope?: string) {
     const step = undoStack[undoStack.length - 1];
     if (!step) return;
     const row = rowOf(step.job);
-    const label = step.job === DEFAULT_JOB ? "Default for AI work" : (row?.label ?? step.job);
+    const label = jobName(step.job, row);
     setBusy(true);
     // The step leaves the stack whatever happens: a refused Undo is not
     // retried against a row someone else now owns.
@@ -776,6 +783,8 @@ export function useRunsOn(scope?: string) {
   return {
     roster,
     detection,
+    detectionFailed,
+    readAgain: () => void loadDetection(),
     error,
     engines,
     selected,

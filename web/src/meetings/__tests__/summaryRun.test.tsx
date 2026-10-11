@@ -204,6 +204,38 @@ describe("HS-201-04 the disclosure beside the verb", () => {
     expect(text.indexOf("192.168.1.43")).toBeLessThan(text.indexOf("api.example.com"));
     expect(text).toContain("FAILED");
   });
+
+  it("does not say again the host the face's foot already names; a failure still shows (PHILO-17 U16)", () => {
+    const loopback = {
+      ...SUCCEEDED_RECEIPT,
+      attempts: [{ leg_ordinal: 1, host: "127.0.0.1", outcome: "succeeded", operation_id: "op_1" }],
+    };
+    const { rerender } = render(<RunAttempts receipt={readRunReceipt({ run_receipt: loopback })} saidOnFace="THIS DEVICE" />);
+    expect(screen.queryByTestId("summary-attempts")).toBeNull();
+    // Without the foot's word the loopback host reads THIS DEVICE, never 127.0.0.1.
+    rerender(<RunAttempts receipt={readRunReceipt({ run_receipt: loopback })} />);
+    expect(screen.getByTestId("summary-attempts").textContent).toContain("THIS DEVICE");
+    expect(screen.getByTestId("summary-attempts").textContent).not.toContain("127.0.0.1");
+    rerender(<RunAttempts receipt={readRunReceipt({ run_receipt: SUCCEEDED_RECEIPT })} saidOnFace="api.example.com" />);
+    const text = screen.getByTestId("summary-attempts").textContent ?? "";
+    expect(text).toContain("192.168.1.43");
+    expect(text).toContain("FAILED");
+    expect(text).not.toContain("api.example.com");
+    // A host the transport does not pin as loopback is not THIS DEVICE, so a
+    // THIS DEVICE foot never hides it (Astra r1 M1).
+    const offBox = {
+      ...SUCCEEDED_RECEIPT,
+      attempts: [{ leg_ordinal: 1, host: "dev.localhost", outcome: "succeeded", operation_id: "op_1" }],
+    };
+    rerender(<RunAttempts receipt={readRunReceipt({ run_receipt: offBox })} saidOnFace="THIS DEVICE" />);
+    expect(screen.getByTestId("summary-attempts").textContent).toContain("dev.localhost");
+    // Raw spellings the backend does not pin (Astra r2 M3) stay visible too.
+    for (const host of ["127.0.0.1.", "127.00.0.1"]) {
+      const odd = { ...SUCCEEDED_RECEIPT, attempts: [{ leg_ordinal: 1, host, outcome: "succeeded", operation_id: "op_1" }] };
+      rerender(<RunAttempts receipt={readRunReceipt({ run_receipt: odd })} saidOnFace="THIS DEVICE" />);
+      expect(screen.getByTestId("summary-attempts").textContent).toContain(host);
+    }
+  });
 });
 
 describe("HS-201-04 the record's Retry", () => {

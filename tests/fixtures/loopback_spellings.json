@@ -1,0 +1,151 @@
+{
+  "_about": "PHILO-17 U16 (Astra r2 M3): one table both sides read. `loopback`: holdspeak/loopback_http.py is_loopback_engine_host(host) and web/src/desk/surface/egress.ts isLoopbackHost(host). `boundary`: holdspeak/intel/providers.py egress_boundary(base_url=url) and egress.ts hostPlace(url).place (local=mac, private_network=lan, cloud=cloud). Fenced by tests/unit/test_loopback_spellings_parity.py and web/src/desk/surface/__tests__/egress.test.ts.",
+  "loopback": [
+    {
+      "host": "127.00.0.1",
+      "loopback": false
+    },
+    {
+      "host": ":::1",
+      "loopback": false
+    },
+    {
+      "host": "::1",
+      "loopback": true
+    },
+    {
+      "host": "0:0:0:0:0:0:0:1",
+      "loopback": true
+    },
+    {
+      "host": "::0:1",
+      "loopback": true
+    },
+    {
+      "host": "0::1",
+      "loopback": true
+    },
+    {
+      "host": "127.1.2.3",
+      "loopback": true
+    },
+    {
+      "host": "::ffff:127.0.0.1",
+      "loopback": true
+    },
+    {
+      "host": "::ffff:7f00:1",
+      "loopback": true
+    },
+    {
+      "host": "0000::1",
+      "loopback": true
+    },
+    {
+      "host": "00000::1",
+      "loopback": false
+    },
+    {
+      "host": "127.0.0.1.",
+      "loopback": false
+    },
+    {
+      "host": "localhost.",
+      "loopback": false
+    },
+    {
+      "host": "LOCALHOST",
+      "loopback": true
+    },
+    {
+      "host": "[::1]",
+      "loopback": true
+    },
+    {
+      "host": "1::1",
+      "loopback": false
+    },
+    {
+      "host": "::",
+      "loopback": false
+    },
+    {
+      "host": "0.0.0.0",
+      "loopback": false
+    },
+    {
+      "host": "127.0.0.256",
+      "loopback": false
+    },
+    {
+      "host": "127.0.0",
+      "loopback": false
+    },
+    {
+      "host": "dev.localhost",
+      "loopback": false
+    },
+    {
+      "host": "::1%lo0",
+      "loopback": true
+    },
+    {
+      "host": "1:2:3:4:5:6:7:8:9",
+      "loopback": false
+    },
+    {
+      "host": "::ffff:10.0.0.1",
+      "loopback": false
+    },
+    {
+      "host": "127.0.0.01",
+      "loopback": false
+    },
+    {
+      "host": "0127.0.0.1",
+      "loopback": false
+    },
+    {
+      "host": "::1:",
+      "loopback": false
+    },
+    {
+      "host": "1:0:0:0:0:0:0:1",
+      "loopback": false
+    },
+    {
+      "host": "0:0:0:0:0:0:0:0:1",
+      "loopback": false
+    }
+  ],
+  "boundary": [
+    {
+      "url": "http://127.0.0.1:8080",
+      "boundary": "local"
+    },
+    {
+      "url": "http://[::1]:8/",
+      "boundary": "local"
+    },
+    {
+      "url": "http://localhost:11434/v1",
+      "boundary": "local"
+    },
+    {
+      "url": "http://127.0.0.1.:8080/v1",
+      "boundary": "private_network"
+    },
+    {
+      "url": "http://localhost.:11434",
+      "boundary": "private_network"
+    },
+    {
+      "url": "http://127.00.0.1:8080",
+      "boundary": "cloud"
+    },
+    {
+      "url": "http://192.168.1.43:8080/v1",
+      "boundary": "private_network"
+    }
+  ]
+}

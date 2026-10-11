@@ -35,7 +35,12 @@ export type SwitchLamp = "ok" | "busy" | "warn" | "broken" | "off";
 export interface SwitchJob {
   id: string;
   name: string;
-  /** The job's tasks, as one token line. */
+  /** PHILO-17 (U16): the card's lead in plain words (what the owner gets
+   *  and where it runs); the board shows it in place of the name. */
+  lead?: string;
+  /** The job's details (its tasks by name): the card's title, not its face. */
+  detail?: string;
+  /** The job's tokens, as one line (empty: no line). */
   tasks: string;
   state: SwitchState;
   /** The global head: every job with no wire of its own follows it. */
@@ -49,8 +54,12 @@ export interface SwitchJob {
   /** The engine the job runs on now, own wire or inherited (the phone list
    *  shows it under `<Job> · runs on`). */
   current?: string;
-  /** A token on that engine when it is inherited (`FOLLOWS DEFAULT`). */
+  /** A token on that engine when it is inherited (`SAME AS EVERYTHING ELSE`). */
   currentToken?: string;
+  /** Phone: the engine the open card shows in place of the wire (an id),
+   *  or `null` for none (the job's `runsOn` words say why). Undefined: the
+   *  wire decides. */
+  shows?: string | null;
 }
 
 export interface SwitchEngine {
@@ -405,14 +414,15 @@ function SwitchboardBoard({
               data-testid={`switchboard-job-${job.id}`}
               data-job-id={job.id}
               data-state={job.state}
+              title={job.detail || undefined}
               onClick={(event) => {
                 if ((event.target as Element).closest("button")) return;
                 onSelect?.(selected === job.id ? null : job.id);
               }}
             >
-              <span className="switchboard-job-name">{job.name}</span>
+              <span className="switchboard-job-name">{job.lead ?? job.name}</span>
               {job.verb ? <span className="switchboard-job-verb">{job.verb}</span> : null}
-              <span className="switchboard-job-tasks">{job.tasks}</span>
+              {job.tasks ? <span className="switchboard-job-tasks">{job.tasks}</span> : null}
               {job.result ? (
                 <span className="switchboard-job-result" data-testid={`switchboard-result-${job.id}`}>
                   {job.result}
@@ -505,9 +515,11 @@ function SwitchboardList({
   const chain = (wires ?? [])
     .filter((wire) => open && wire.job === open.id)
     .sort((a, b) => a.order - b.order);
-  const own = chain[0] ? engines.find((engine) => engine.id === chain[0].engine) : undefined;
-  const inherited = !own && open?.current ? engines.find((engine) => engine.id === open.current) : undefined;
-  const first = own ?? inherited;
+  const pinned = open?.shows !== undefined;
+  const shown = pinned && open?.shows ? engines.find((engine) => engine.id === open.shows) : undefined;
+  const own = !pinned && chain[0] ? engines.find((engine) => engine.id === chain[0].engine) : undefined;
+  const inherited = !pinned && !own && open?.current ? engines.find((engine) => engine.id === open.current) : undefined;
+  const first = shown ?? own ?? inherited;
   const alternatives = engines.filter(
     (engine) =>
       engine.draggable &&
@@ -520,11 +532,15 @@ function SwitchboardList({
         <>
           <div
             className={"switchboard-job is-open " + STATE_CLASS[open.state]}
+            title={open.detail || undefined}
             data-testid={`switchboard-job-${open.id}`}
             data-job-id={open.id}
             data-state={open.state}
           >
             <span className="switchboard-job-name">{`${open.name} · runs on`}</span>
+            {pinned && !shown && open.runsOn ? (
+              <span className="switchboard-job-tasks" data-testid={`switchboard-shows-${open.id}`}>{open.runsOn}</span>
+            ) : null}
             {open.result ? (
               <span className="switchboard-job-result" data-testid={`switchboard-result-${open.id}`}>
                 {open.result}
@@ -534,7 +550,7 @@ function SwitchboardList({
           {first ? (
             <EnginePlate
               engine={
-                inherited && open?.currentToken
+                (inherited || shown) && open?.currentToken
                   ? { ...first, tokens: [...first.tokens, open.currentToken] }
                   : first
               }
@@ -572,7 +588,7 @@ function SwitchboardList({
             onClick={() => onSelect?.(job.id)}
           >
             <span className="switchboard-job-name">{job.name}</span>
-            <span className="switchboard-job-tasks">{job.runsOn ?? job.tasks}</span>
+            {job.runsOn ?? job.tasks ? <span className="switchboard-job-tasks">{job.runsOn ?? job.tasks}</span> : null}
           </Button>
         ))}
       {found.length > 0 ? (

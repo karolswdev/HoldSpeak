@@ -15,6 +15,8 @@ names its SETUP row (the cold HOME assigns no summary engine).
 """
 from __future__ import annotations
 
+import re
+
 from pathlib import Path
 from typing import Any
 
@@ -214,8 +216,14 @@ class TestChairWindowComesToFront:
                 page.locator(".desk-window-shell[aria-label='Runs on']").first.wait_for()
                 _settle(page)
 
+                # PHILO-17 (doors, #1078): Settings opens from the HoldSpeak menu.
+                def open_settings() -> None:
+                    page.locator(".desk-mark").click()
+                    page.locator("[role^=menuitem]").filter(
+                        has=page.locator(".desk-menu-label", has_text=re.compile(r"^Settings$"))).last.click()
+
                 # 1) a fresh Brief over the open Settings and Runs on windows
-                page.locator(".desk-dock [aria-label^='Settings']").first.click()
+                open_settings()
                 page.locator(".desk-window-shell[aria-label^='Settings']").first.wait_for()
                 _settle(page)
                 fresh._menu_pick(page, 1440, "Brief")
@@ -225,7 +233,7 @@ class TestChairWindowComesToFront:
                 assert front_of("Brief"), "Window > Chair > Brief opened behind another window"
 
                 # 2) an open Brief behind Settings comes to the front again
-                page.locator(".desk-dock [aria-label^='Settings']").first.click()
+                open_settings()
                 _settle(page)
                 fresh._menu_pick(page, 1440, "Brief")
                 _settle(page)

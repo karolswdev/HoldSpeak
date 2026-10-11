@@ -158,6 +158,13 @@ export function closeChairWindow(id: string): void {
       captureInRing: id === "chair:capture" ? false : s.captureInRing,
     };
   });
+  // PHILO-17 (briefcover, Astra r1 on #1080): a hidden or iconified Chair
+  // window kept its plane (keepsPlane) and its frame's cleanup already ran,
+  // so a close leaves the stacking order here and forgets an unsaved rect.
+  // A saved arrangement stays (the next open returns to it).
+  const desk = useDesk.getState();
+  if (!desk.panelSaved.includes(id) && desk.panelRects[id]) desk.resetPanelRect(id);
+  desk.retirePanel(id);
 }
 
 /** PHILO-13-12 (C2) — depth on the phone: the Chair shows one window at a

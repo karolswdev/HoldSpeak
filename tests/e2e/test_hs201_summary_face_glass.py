@@ -19,6 +19,7 @@ body), never the click.
 """
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 import json
 import os
 import time
@@ -36,7 +37,7 @@ from tests.unit.test_hs201_record_speech_only import (
     _FixtureTranscriber,
 )
 from tests.unit.test_meeting_deferred_admission import FakeHost, FakeIntel, _Route
-from .glass_infra import clear_hub_windows
+from .glass_infra import clear_hub_windows, clear_hub_windows_http
 from .glass_infra import (
     _api,
     _assert_clean,
@@ -81,7 +82,29 @@ def _chip_label(host: str) -> str:
     """
     if host in ("local", "LOCAL", "this_device", "same_device", "this machine"):
         return "THIS DEVICE"
+    # PHILO-17 U16: a loopback host is THIS DEVICE, by the transport's rule.
+    from holdspeak.loopback_http import is_loopback_engine_host
+
+    if is_loopback_engine_host(host):
+        return "THIS DEVICE"
     return host
+
+
+# PHILO-17 U16 (Astra r1 M3): the record names its run's host ONCE -- on its
+# summary slab, or on the window foot when the foot already names that host
+# (the slab then does not repeat it). Never both, never neither.
+RECORD_HOST_JS = """([scope, label]) => {
+  const base = document.querySelector(scope);
+  const root = (base && (base.closest('.desk-surface-window') || base)) || document;
+  const said = ['[data-testid=summary-record-attempts]', '.surface-footer-egress']
+    .map(sel => root.querySelector(sel)).filter(Boolean)
+    .filter(el => (el.textContent || '').includes(label));
+  return said.length === 1;
+}"""
+
+
+def _wait_record_host(page: Any, label: str, scope: str = "#surface-meetings", timeout: int = 30_000) -> None:
+    page.wait_for_function(RECORD_HOST_JS, arg=[scope, label], timeout=timeout)
 
 
 def _record_fixture_meeting(monkeypatch: pytest.MonkeyPatch) -> str:
@@ -180,15 +203,9 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
 
             def open_meetings(meeting_id: str | None = None) -> None:
                 """The Meetings window, with one record open when asked."""
-                clear_hub_windows(page, TOKEN)  # PHILO-16 (16b): the hub holds the windows
-                page.evaluate(
-                    """() => {
-                        localStorage.removeItem('hs.desk.workspace.v1');
-                        sessionStorage.setItem('hs.desk.staged-surface-open',
-                            JSON.stringify({key:'review-meetings'}));
-                    }"""
-                )
-                page.reload(wait_until="load")
+                # PHILO-16 (16b): the hub holds the windows. PHILO-17
+                # (mainreds2): the old page is gone before the reset.
+                _fresh_desk_with_staged_open(page, url, TOKEN, "review-meetings")
                 _normal_chair(page)
                 if meeting_id is None:
                     page.locator(".meetings-stream-rows").wait_for(timeout=15_000)
@@ -252,10 +269,8 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
             summary_text = meetings_surface.get_by_test_id("meeting-summary-text")
             summary_text.wait_for(timeout=15_000)
             assert (summary_text.text_content() or "").strip() == engine.result.summary
-            attempts = meetings_surface.get_by_test_id("summary-record-attempts")
-            attempts.wait_for()
             for attempt in receipt["attempts"]:
-                assert _chip_label(attempt["host"]) in (attempts.text_content() or "")
+                _wait_record_host(page, _chip_label(attempt["host"]))
             # The parked proposal chain never says a counter of zero.
             body = page.locator(".desk-surface-window").first.text_content() or ""
             assert "0 PROPOSALS" not in body.upper(), body
@@ -586,6 +601,28 @@ def _shot_10(page, name: str) -> None:
     page.set_viewport_size({"width": 1440, "height": 900})
 
 
+def _fresh_desk_with_staged_open(page: Any, url: str, token: str, key: str) -> None:
+    """A fresh load of an empty desk whose staged open is `key`.
+
+    The old desk page is left FIRST (about:blank), so it can neither consume
+    the staged open (its SurfaceWindows effect re-runs on hub frames) nor
+    re-save its workspace cache after the rig drops it. Then the hub's windows
+    are closed, the storage set on a same-origin page that runs no desk, and
+    the desk loads once, cold, with only the staged open.
+    """
+    page.goto("about:blank")
+    clear_hub_windows_http(url, token)
+    page.goto(f"{url}/health", wait_until="load")
+    page.evaluate(
+        """(key) => {
+            localStorage.removeItem('hs.desk.workspace.v1');
+            sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key}));
+        }""",
+        key,
+    )
+    page.goto(f"{url}/?token={token}", wait_until="load")
+
+
 def test_import_transcribes_then_queues_the_disclosed_summary(
     tmp_path, monkeypatch
 ):
@@ -650,15 +687,9 @@ def test_import_transcribes_then_queues_the_disclosed_summary(
             )
 
             def open_meetings(expect_rows: bool = True) -> None:
-                clear_hub_windows(page, IMPORT_TOKEN)  # PHILO-16 (16b): the hub holds the windows
-                page.evaluate(
-                    """() => {
-                        localStorage.removeItem('hs.desk.workspace.v1');
-                        sessionStorage.setItem('hs.desk.staged-surface-open',
-                            JSON.stringify({key:'review-meetings'}));
-                    }"""
-                )
-                page.reload(wait_until="load")
+                # PHILO-16 (16b): the hub holds the windows. PHILO-17
+                # (mainreds2): the old page is gone before the reset.
+                _fresh_desk_with_staged_open(page, url, IMPORT_TOKEN, "review-meetings")
                 _normal_chair(page)
                 # A cold desk draws the Meetings face with no stream at all,
                 # so the face's own head verbs are what a first visit waits
@@ -776,10 +807,8 @@ def test_import_transcribes_then_queues_the_disclosed_summary(
             summary_text = meetings_surface.get_by_test_id("meeting-summary-text")
             summary_text.wait_for(timeout=15_000)
             assert (summary_text.text_content() or "").strip() == engine.result.summary
-            attempts = meetings_surface.get_by_test_id("summary-record-attempts")
-            attempts.wait_for(timeout=15_000)
             for attempt in receipt["attempts"]:
-                assert _chip_label(attempt["host"]) in (attempts.text_content() or "")
+                _wait_record_host(page, _chip_label(attempt["host"]), timeout=15_000)
             _shot_10(page, "import-after-run")
             _assert_no_overlap(page)
             _assert_clean(page, errors)
