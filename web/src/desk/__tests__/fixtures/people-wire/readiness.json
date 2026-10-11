@@ -1,0 +1,7 @@
+{
+  "capture": "notes_only",
+  "readiness": "ready",
+  "state": "ready",
+  "store": "encrypted",
+  "sync": "local_only"
+}

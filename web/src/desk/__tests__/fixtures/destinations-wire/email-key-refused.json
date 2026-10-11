@@ -1,0 +1,21 @@
+{
+  "code": "email_key_store_not_native",
+  "error_code": "email_key_store_not_native",
+  "message": "The key could not be saved: email_key_store_not_native",
+  "operation_id": "op_8e67f5f1194c4fa9a83268b1f76f884f",
+  "receipt": {
+    "actor_identity": "owner-session",
+    "actor_kind": "owner",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "created_at": 1791732950.705951,
+    "delegator_identity": "",
+    "delegator_kind": "",
+    "operation_id": "op_8e67f5f1194c4fa9a83268b1f76f884f",
+    "outcome": "email_key_store_not_native",
+    "receipt_id": "rcpt_a95f8589abf944c29ff244c3b812860a",
+    "result_ref": "",
+    "state": "refused",
+    "target_ref": "desk:channel.save_email_key"
+  },
+  "success": false
+}

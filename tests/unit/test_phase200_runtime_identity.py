@@ -151,6 +151,7 @@ def test_config_revision_moves_with_the_file(tmp_path):
 
 
 def test_matching_bundle_and_schema_produce_no_diagnosis(tmp_path, monkeypatch):
+    """replaces: tests/e2e/test_hs200_runtime_identity_glass.py::test_runtime_identity_healthy (the hub half)"""
     bundle = tmp_path / "_built"
     _stamp(bundle, "same")
     monkeypatch.setattr(ri, "built_dir", lambda: bundle)
@@ -163,6 +164,7 @@ def test_matching_bundle_and_schema_produce_no_diagnosis(tmp_path, monkeypatch):
 
 
 def test_stale_bundle_when_the_disk_moved_under_the_process(tmp_path, monkeypatch):
+    """replaces: tests/e2e/test_hs200_runtime_identity_glass.py::test_runtime_identity_stale_bundle (the hub half)"""
     bundle = tmp_path / "_built"
     _stamp(bundle, "loaded")
     monkeypatch.setattr(ri, "built_dir", lambda: bundle)

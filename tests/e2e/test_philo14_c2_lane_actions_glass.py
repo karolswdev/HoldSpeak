@@ -31,7 +31,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle
-from .test_philo14_c2_lane_glass import KEY, QUESTION, SESSION_ID, TOKEN, _open_lane, _seed, mint_held_call
+from .agents_lane_rig import KEY, QUESTION, SESSION_ID, TOKEN, _open_lane, _seed, mint_held_call
 
 pytest.importorskip("playwright.sync_api", reason="the lane glass needs Playwright")
 

@@ -59,6 +59,17 @@ def test_real_channel_settlement_emits_dock_invalidation(
 
     durable = next(row for row in sends(hub) if row["id"] == send_id)
     assert durable["state"] == state
+    # replaces: tests/e2e/test_philo13_13_dock_glass.py::TestLiveDock::test_the_dock_shows_his_day_live_and_stays_through_an_outage
+    # (the SENT leg's producer half): the settled row carries its settle time,
+    # and the hub's read the Dock uses (GET /api/channels/sends) returns it;
+    # Dock.test.tsx "SENT carries its settle time" draws SENT hh:mm from it.
+    assert durable["settled_at"], durable
+    read = hub.client.get("/api/channels/sends")
+    assert read.status_code == 200, read.text
+    listed = next(row for row in read.json()["sends"] if row["id"] == send_id)
+    assert (listed["state"], listed["settled_at"]) == (state, durable["settled_at"])
+    if state == "sent":
+        assert any((Path.home() / f"c3-dock-{state}").iterdir()), "the FILE destination wrote nothing"
     changed = [
         data for frame_type, data in hub.frames[frame_start:]
         if frame_type == "desk_changed" and data.get("kind") == "send"

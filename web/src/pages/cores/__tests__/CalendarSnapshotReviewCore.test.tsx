@@ -126,6 +126,7 @@ describe("CalendarSnapshotReviewCore", () => {
     expect(screen.getByTestId("calendar-snapshot-refusal").textContent).toBe("✗CAN'T READ Not a calendar image");
   });
 
+  // replaces (the calendar leg): tests/e2e/test_finish_face_polish_glass.py::TestFinishFacePolish::test_the_named_faces_say_names_and_plain_reasons
   it("names the no-model refusal in plain words, never the hub's code (B0-L1)", () => {
     render(<CalendarSnapshotReviewCore scope={JSON.stringify({ error: "no_vision_model_assigned", events: [] })} />);
     const refusal = screen.getByTestId("calendar-snapshot-refusal");

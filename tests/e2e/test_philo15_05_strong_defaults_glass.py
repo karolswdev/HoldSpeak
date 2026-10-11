@@ -80,7 +80,7 @@ def test_the_lane_draft_chip_names_the_default(tmp_path: Path, monkeypatch: pyte
     from holdspeak.agent_context import event_log
     from holdspeak.services import agent_responder
 
-    from .test_philo14_c2_lane_glass import _open_lane, _seed
+    from .agents_lane_rig import _open_lane, _seed
 
     state = tmp_path / "home" / ".holdspeak"
     state.mkdir(parents=True)

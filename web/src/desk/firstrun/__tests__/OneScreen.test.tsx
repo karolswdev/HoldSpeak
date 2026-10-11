@@ -418,6 +418,9 @@ describe("Connections card", () => {
     expect(chips.join(" ")).toContain("GITHUB.COM");
     expect(chips.join(" ")).toContain("ACME.ATLASSIAN.NET");
     expect(conn.textContent).toContain("gh · karolswdev");
+    // replaces (the first-run leg): tests/e2e/test_philo15_18_rest_of_day_glass.py::TestOneSignInTruth::test_first_run_and_connections_say_the_same_sign_in
+    // The same words Settings › Connections reads (web/src/desk/__tests__/connections.app.test.tsx).
+    expect(within(conn).getByTestId("firstrun-connection-signin").textContent).toContain("Signed in · karolswdev · From gh config");
     await act(async () => {
       fireEvent.click(within(conn).getByRole("button", { name: "Use GitHub karolswdev" }));
     });

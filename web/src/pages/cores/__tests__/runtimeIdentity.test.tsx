@@ -2,6 +2,10 @@
 // The compact repair chips, the identity tokens, the diagnostics fold,
 // and the two rules the canon holds: no counter of zero, and the
 // database path never appears outside the RAW fold.
+//
+// replaces: tests/e2e/test_hs200_runtime_identity_glass.py::test_runtime_identity_healthy
+// replaces: tests/e2e/test_hs200_runtime_identity_glass.py::test_runtime_identity_stale_bundle
+// (the face halves; the hub halves are tests/unit/test_phase200_runtime_identity.py)
 
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
@@ -162,7 +166,7 @@ describe("RuntimeIdentityModule", () => {
     const { container } = render(<RuntimeIdentityModule />);
 
     await waitFor(() => { expect(screen.getByTestId("runtime-backend")).toBeTruthy(); });
-    // The canon fence (tests/e2e/test_hs170_settings_hub_glass.py:142): a
+    // The canon fence (parked tests/e2e/_parked/test_hs170_settings_hub_glass.py:142; successor web/src/desk/__tests__/settings.app.test.tsx): a
     // library button carries .btn, .surface-ledger-line or .gadget-cycle.
     const raw = Array.from(container.querySelectorAll("button")).filter(
       (node) =>

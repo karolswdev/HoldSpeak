@@ -2727,6 +2727,9 @@ class ThreadService:
             "profile_override": thread.profile_override,
             "directory_id": thread.directory_id,
             "call_mode": thread.call_mode,
+            # The head reads the saved status on a reload (threads.ts getThread);
+            # without it only the live frames carried it (test diet 2026-10-11).
+            "status_line": thread.status_line,
             "token_in": thread.token_in,
             "token_out": thread.token_out,
             "created_at": thread.created_at,

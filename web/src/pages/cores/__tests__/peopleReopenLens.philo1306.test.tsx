@@ -26,6 +26,8 @@ afterEach(() => vi.unstubAllGlobals());
 
 const selectedLens = () => screen.getAllByRole("tab").find((t) => t.getAttribute("aria-selected") === "true")?.textContent;
 
+// The full desk suite runs in parallel; a slow render under that load must not
+// read as a failure, so the waits take 5 s, not the 1 s default (#1100).
 describe("PHILO-13-06: a repeat Prep open re-applies Prep", () => {
   it("Prep → Now → the same open again lands on Prep", async () => {
     const handlers: Record<string, () => Response> = {
@@ -39,13 +41,13 @@ describe("PHILO-13-06: a repeat Prep open re-applies Prep", () => {
     // The 1:1 row's open: THAT person, on Prep.
     personWindowRef("people:r1:prep");
     render(<PersonWindowBody relationshipId="r1" />);
-    await waitFor(() => expect(selectedLens()).toBe("Prep"));
+    await waitFor(() => expect(selectedLens()).toBe("Prep"), { timeout: 5000 });
 
     fireEvent.click(screen.getByRole("tab", { name: "Now" }));
     expect(selectedLens()).toBe("Now");
 
     // The 1:1 row again: the same scope, an explicit Prep open.
     await act(async () => { openPerson("r1", "prep"); });
-    await waitFor(() => expect(selectedLens()).toBe("Prep"));
+    await waitFor(() => expect(selectedLens()).toBe("Prep"), { timeout: 5000 });
   });
 });

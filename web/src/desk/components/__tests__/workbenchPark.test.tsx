@@ -230,3 +230,44 @@ describe("PHILO-13-02 the Workbench window's Park", () => {
     await waitFor(async () => expect((await receipt()).textContent).toMatch(/^RESTORED/));
   });
 });
+
+// The test diet (2026-10-11): the reload half of the park glass. A reload is
+// a fresh mount over a hub that already holds the rows parked; the PARKED
+// token and the Parked filter come from the hub's read, never from the
+// client's memory of the press. The DB half (the row is kept and parked) is
+// tests/integration/test_desk_workbenches.py.
+// replaces: tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_workbench_item_park_single_bulk_restore_and_reload
+describe("PHILO-13-02 the Workbench window after a reload", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    mocks.listeners.clear();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("a fresh mount over parked rows: PARKED 2, no done item in the list, Restore each from the filter until the token goes", async () => {
+    const hub = mockHub({ i1: "done", i3: "done" });
+    // Before the reload: Clear done parked both on the hub.
+    await fetch("/api/workbenches/wb1/items/park", { method: "POST", body: JSON.stringify({ item_ids: ["i1", "i3"] }) });
+    hub.requests.length = 0;
+    render(<WorkbenchWindow workbenchId="wb1" />);
+    await screen.findByText("Second item");
+    expect(screen.queryByText("First item")).toBeNull();
+    expect(screen.queryByText("Third item")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Clear done" })).toBeNull();
+    for (const left of [2, 1]) {
+      fireEvent.click(await screen.findByText(`PARKED ${left}`));
+      const row = (await screen.findAllByTestId("parked-row"))[0];
+      fireEvent.click(within(row.closest("li")!).getByRole("button", { name: "Restore" }));
+      await waitFor(async () => expect((await receipt()).textContent).toMatch(/^RESTORED/));
+      await waitFor(() => expect(screen.queryByText(`PARKED ${left}`)).toBeNull());
+    }
+    await screen.findByText("First item");
+    await screen.findByText("Third item");
+    expect(screen.queryByText(/^PARKED \d+$/)).toBeNull();
+    expect(hub.requests.every((r) => r.method === "POST" && /\/restore$/.test(r.url))).toBe(true);
+    expect(hub.requests).toHaveLength(2);
+  });
+});

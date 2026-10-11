@@ -1,0 +1,458 @@
+{
+  "board": {
+    "active": [],
+    "now": [
+      {
+        "created_at": null,
+        "decision_id": null,
+        "delegated_at": null,
+        "due": null,
+        "id": "people:30cd93d5-19b2-4dd0-a0d5-df296d526734",
+        "lane": "now",
+        "lawful_verbs": [
+          {
+            "arguments": {
+              "commitment_id": "30cd93d5-19b2-4dd0-a0d5-df296d526734",
+              "verb": "done"
+            },
+            "name": "people.commitment.transition"
+          },
+          {
+            "arguments": {
+              "commitment_id": "30cd93d5-19b2-4dd0-a0d5-df296d526734",
+              "verb": "dismiss"
+            },
+            "name": "people.commitment.transition"
+          }
+        ],
+        "meeting_id": null,
+        "owner": "you",
+        "provenance": {
+          "available": false,
+          "meeting_id": null,
+          "moment": null,
+          "segment_speaker": null,
+          "segment_start": null,
+          "segment_text": null,
+          "thread_id": null
+        },
+        "source": "people_commitment",
+        "stale_score": null,
+        "status": "open",
+        "target_ref": "people:d2797a58-c862-4900-94b1-e3f8bdab34f4",
+        "text": "Avery: send the status by Thursday"
+      },
+      {
+        "created_at": null,
+        "decision_id": null,
+        "delegated_at": null,
+        "due": null,
+        "id": "people:176391da-6c43-4996-8316-3d67f663aa0f",
+        "lane": "now",
+        "lawful_verbs": [
+          {
+            "arguments": {
+              "commitment_id": "176391da-6c43-4996-8316-3d67f663aa0f",
+              "verb": "done"
+            },
+            "name": "people.commitment.transition"
+          },
+          {
+            "arguments": {
+              "commitment_id": "176391da-6c43-4996-8316-3d67f663aa0f",
+              "verb": "dismiss"
+            },
+            "name": "people.commitment.transition"
+          }
+        ],
+        "meeting_id": null,
+        "owner": "you",
+        "provenance": {
+          "available": false,
+          "meeting_id": null,
+          "moment": null,
+          "segment_speaker": null,
+          "segment_start": null,
+          "segment_text": null,
+          "thread_id": null
+        },
+        "source": "people_commitment",
+        "stale_score": null,
+        "status": "open",
+        "target_ref": "people:33497fac-9a6b-46e8-9198-1606775a189d",
+        "text": "Jordan: send the status by Thursday"
+      },
+      {
+        "created_at": null,
+        "decision_id": null,
+        "delegated_at": null,
+        "due": null,
+        "id": "people:a48ee3a7-31c2-4fa7-9961-73fc251c8f7f",
+        "lane": "now",
+        "lawful_verbs": [
+          {
+            "arguments": {
+              "commitment_id": "a48ee3a7-31c2-4fa7-9961-73fc251c8f7f",
+              "verb": "done"
+            },
+            "name": "people.commitment.transition"
+          },
+          {
+            "arguments": {
+              "commitment_id": "a48ee3a7-31c2-4fa7-9961-73fc251c8f7f",
+              "verb": "dismiss"
+            },
+            "name": "people.commitment.transition"
+          }
+        ],
+        "meeting_id": null,
+        "owner": "you",
+        "provenance": {
+          "available": false,
+          "meeting_id": null,
+          "moment": null,
+          "segment_speaker": null,
+          "segment_start": null,
+          "segment_text": null,
+          "thread_id": null
+        },
+        "source": "people_commitment",
+        "stale_score": null,
+        "status": "open",
+        "target_ref": "people:f0423c64-8c7e-46d5-9c66-97fb34980ac3",
+        "text": "Sam: send the status by Thursday"
+      },
+      {
+        "created_at": null,
+        "decision_id": null,
+        "delegated_at": null,
+        "due": null,
+        "id": "people:1869296c-1737-4f67-b5b7-a7ed9fdbc3c0",
+        "lane": "now",
+        "lawful_verbs": [
+          {
+            "arguments": {
+              "commitment_id": "1869296c-1737-4f67-b5b7-a7ed9fdbc3c0",
+              "verb": "done"
+            },
+            "name": "people.commitment.transition"
+          },
+          {
+            "arguments": {
+              "commitment_id": "1869296c-1737-4f67-b5b7-a7ed9fdbc3c0",
+              "verb": "dismiss"
+            },
+            "name": "people.commitment.transition"
+          }
+        ],
+        "meeting_id": null,
+        "owner": "you",
+        "provenance": {
+          "available": false,
+          "meeting_id": null,
+          "moment": null,
+          "segment_speaker": null,
+          "segment_start": null,
+          "segment_text": null,
+          "thread_id": null
+        },
+        "source": "people_commitment",
+        "stale_score": null,
+        "status": "open",
+        "target_ref": "people:13376da5-0528-4c28-882b-a4df2a786e9a",
+        "text": "Review the rollout plan before Friday"
+      }
+    ],
+    "overdue": [],
+    "unassigned": [
+      {
+        "created_at": "2026-10-11T12:37:18",
+        "decision_id": null,
+        "delegated_at": null,
+        "due": null,
+        "id": "m-standup-a1",
+        "lane": "unassigned",
+        "lawful_verbs": [
+          {
+            "arguments": {
+              "card_id": "m-standup-a1",
+              "verb": "done"
+            },
+            "name": "follow_through.complete"
+          },
+          {
+            "arguments": {
+              "card_id": "m-standup-a1",
+              "verb": "dismiss"
+            },
+            "name": "follow_through.complete"
+          },
+          {
+            "arguments": {
+              "card_id": "m-standup-a1",
+              "verb": "snooze"
+            },
+            "name": "follow_through.complete",
+            "required_arguments": [
+              "payload.until"
+            ]
+          },
+          {
+            "arguments": {
+              "card_id": "m-standup-a1",
+              "verb": "delegate"
+            },
+            "name": "follow_through.complete",
+            "required_arguments": [
+              "payload.to"
+            ]
+          },
+          {
+            "arguments": {
+              "id": "m-standup-a1",
+              "kind": "action"
+            },
+            "name": "agent.hand"
+          }
+        ],
+        "meeting_id": "m-standup",
+        "owner": null,
+        "provenance": {
+          "available": false,
+          "meeting_id": "m-standup",
+          "moment": null,
+          "segment_speaker": null,
+          "segment_start": null,
+          "segment_text": null,
+          "thread_id": null
+        },
+        "source": "action_item",
+        "stale_score": null,
+        "status": "pending",
+        "target_ref": "action_item:m-standup-a1",
+        "text": "Write the rollback runbook"
+      },
+      {
+        "created_at": "2026-10-10T12:37:18",
+        "decision_id": null,
+        "delegated_at": null,
+        "due": null,
+        "id": "m-arch-a1",
+        "lane": "unassigned",
+        "lawful_verbs": [
+          {
+            "arguments": {
+              "card_id": "m-arch-a1",
+              "verb": "done"
+            },
+            "name": "follow_through.complete"
+          },
+          {
+            "arguments": {
+              "card_id": "m-arch-a1",
+              "verb": "dismiss"
+            },
+            "name": "follow_through.complete"
+          },
+          {
+            "arguments": {
+              "card_id": "m-arch-a1",
+              "verb": "snooze"
+            },
+            "name": "follow_through.complete",
+            "required_arguments": [
+              "payload.until"
+            ]
+          },
+          {
+            "arguments": {
+              "card_id": "m-arch-a1",
+              "verb": "delegate"
+            },
+            "name": "follow_through.complete",
+            "required_arguments": [
+              "payload.to"
+            ]
+          },
+          {
+            "arguments": {
+              "id": "m-arch-a1",
+              "kind": "action"
+            },
+            "name": "agent.hand"
+          }
+        ],
+        "meeting_id": "m-arch",
+        "owner": null,
+        "provenance": {
+          "available": false,
+          "meeting_id": "m-arch",
+          "moment": null,
+          "segment_speaker": null,
+          "segment_start": null,
+          "segment_text": null,
+          "thread_id": null
+        },
+        "source": "action_item",
+        "stale_score": null,
+        "status": "pending",
+        "target_ref": "action_item:m-arch-a1",
+        "text": "Pilot OTel in billing"
+      },
+      {
+        "created_at": "2026-10-09T12:37:18",
+        "decision_id": null,
+        "delegated_at": null,
+        "due": null,
+        "id": "m-avery-a1",
+        "lane": "unassigned",
+        "lawful_verbs": [
+          {
+            "arguments": {
+              "card_id": "m-avery-a1",
+              "verb": "done"
+            },
+            "name": "follow_through.complete"
+          },
+          {
+            "arguments": {
+              "card_id": "m-avery-a1",
+              "verb": "dismiss"
+            },
+            "name": "follow_through.complete"
+          },
+          {
+            "arguments": {
+              "card_id": "m-avery-a1",
+              "verb": "snooze"
+            },
+            "name": "follow_through.complete",
+            "required_arguments": [
+              "payload.until"
+            ]
+          },
+          {
+            "arguments": {
+              "card_id": "m-avery-a1",
+              "verb": "delegate"
+            },
+            "name": "follow_through.complete",
+            "required_arguments": [
+              "payload.to"
+            ]
+          },
+          {
+            "arguments": {
+              "id": "m-avery-a1",
+              "kind": "action"
+            },
+            "name": "agent.hand"
+          }
+        ],
+        "meeting_id": "m-avery",
+        "owner": null,
+        "provenance": {
+          "available": false,
+          "meeting_id": "m-avery",
+          "moment": null,
+          "segment_speaker": null,
+          "segment_start": null,
+          "segment_text": null,
+          "thread_id": null
+        },
+        "source": "action_item",
+        "stale_score": null,
+        "status": "pending",
+        "target_ref": "action_item:m-avery-a1",
+        "text": "Review Avery's promo packet"
+      }
+    ],
+    "waiting": []
+  },
+  "calendar_configured": true,
+  "counts": {
+    "active": 0,
+    "now": 4,
+    "overdue": 0,
+    "upcoming_today": 2,
+    "waiting": 0
+  },
+  "people_store_state": "ready",
+  "upcoming": [
+    {
+      "ends_at": "2026-10-11T21:57:00Z",
+      "id": "ce_9c10340468f014f8daf20c79af0797dd035db75e24dc92a3541d961e0a3e5e37",
+      "location": null,
+      "meeting_url": null,
+      "person_label": "Priya Nair",
+      "person_relationship_id": "13376da5-0528-4c28-882b-a4df2a786e9a",
+      "source": "calendar_event",
+      "source_id": "p13-06-week",
+      "source_label": "Work",
+      "starts_at": "2026-10-11T21:27:00Z",
+      "state": "scheduled",
+      "target_ref": "calendar_event:ce_9c10340468f014f8daf20c79af0797dd035db75e24dc92a3541d961e0a3e5e37",
+      "title": "1:1 Priya / Karol",
+      "uid": "p13-06-1on1"
+    },
+    {
+      "ends_at": "2026-10-11T23:12:00Z",
+      "id": "ce_f5cee862ce100b34a64b117a171679f548f411e29078285894524f0234a287a9",
+      "location": null,
+      "meeting_url": null,
+      "project_id": "p-ledger",
+      "project_name": "Payments ledger cutover",
+      "source": "calendar_event",
+      "source_id": "p13-06-week",
+      "source_label": "Work",
+      "starts_at": "2026-10-11T22:27:00Z",
+      "state": "scheduled",
+      "target_ref": "calendar_event:ce_f5cee862ce100b34a64b117a171679f548f411e29078285894524f0234a287a9",
+      "title": "Ledger cutover sync",
+      "uid": "p13-06-sync"
+    }
+  ],
+  "week": {
+    "days": [
+      {
+        "count": 0,
+        "date": "2026-10-05",
+        "dow": "MON"
+      },
+      {
+        "count": 0,
+        "date": "2026-10-06",
+        "dow": "TUE"
+      },
+      {
+        "count": 0,
+        "date": "2026-10-07",
+        "dow": "WED"
+      },
+      {
+        "count": 0,
+        "date": "2026-10-08",
+        "dow": "THU"
+      },
+      {
+        "count": 0,
+        "date": "2026-10-09",
+        "dow": "FRI"
+      },
+      {
+        "count": 0,
+        "date": "2026-10-10",
+        "dow": "SAT"
+      },
+      {
+        "count": 2,
+        "date": "2026-10-11",
+        "dow": "SUN"
+      }
+    ],
+    "ends_at": "2026-10-12T06:00:00+00:00",
+    "has_calendar": true,
+    "starts_at": "2026-10-05T06:00:00+00:00",
+    "total": 2
+  }
+}

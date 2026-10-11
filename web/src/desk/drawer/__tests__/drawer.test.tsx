@@ -13,6 +13,9 @@ import { drawerHead, drawerMembers, type DrawerMember } from "../members";
 import { openDrawer, useDrawers } from "../store";
 import { memberOpens, openMember } from "../open";
 import { refOpener, calendarOpener } from "../../openObject";
+import { PreparePosture } from "../../../features/project-room/prepare/PreparePosture";
+import { usePrepareController } from "../../../features/project-room/prepare/usePrepareController";
+import { decodeBrief } from "../../../features/project-room/prepare/model";
 
 const apiFetch = vi.fn();
 vi.mock("../../../lib/api", async () => {
@@ -260,7 +263,7 @@ describe("PHILO-14 A2 the drawer", () => {
       project_id: "p-ledger", project_name: "Payments ledger cutover", agent: "claude", state: "working", session_key: null, pr: null };
     apiFetch.mockImplementation((url: string) => {
       if (url.includes("/room")) {
-        return Promise.resolve(degraded ? { ...ROOM, decisions: { state: "degraded", error_code: "read_failed" } } : ROOM);
+        return Promise.resolve(degraded ? { ...ROOM, decisions: { state: "degraded", error_code: "decisions_read_failed" } } : ROOM);
       }
       if (url.startsWith("/api/coders/sessions")) return Promise.resolve({ sessions: [], flights: [recordFlight] });
       return Promise.resolve(route(url));
@@ -556,5 +559,78 @@ describe("Phase 16 the Room window on the interior kit", () => {
     ]);
     expect(rows[0].meta).toMatch(/^CHECKED /);
     expect(rows[1].meta).toBe("CAN'T CHECK");
+  });
+});
+
+// The test diet (2026-10-11): the A2b paths glass, the drawer's two rows.
+// replaces: tests/e2e/test_philo14_a2b_paths_glass.py::TestA2bPathsGlass::test_a_degraded_decisions_read_is_named_and_retried
+//   -> "A2b: a degraded decisions section is a failed read: NOT READ, PARTIAL, Retry, no second copy" above
+//      (its degraded section is the hub's own: ProjectService._room_section answers
+//      {state: "degraded", error_code: "decisions_read_failed"}).
+// replaces: tests/e2e/test_philo14_a2b_paths_glass.py::TestA2bPathsGlass::test_prepare_opens_a_decision_record_through_its_source
+// The kept brief below is the real producer's answer (PreparationBriefService.prepare
+// + keep, deterministic, on the a2 drawer glass seed), trimmed to the fields the face reads.
+const RECORD_ID = "record-f67e10fe705c45ada9d1d7b603bc06d3";
+const SOURCE_DECISION = "dec-eee0dbcac4e95493623b";
+const KEPT_BRIEF = {
+  id: "pbrief_c59a7565cfa4a99109c569f2", project_id: "p-ledger", project_revision: 0,
+  purpose: "Ledger decision review", lifecycle: "kept", manifest_revision: 1,
+  manifest: {
+    calendar: { present: false }, commitments: [], coverage: { available: 0, complete: true, expected: 0 },
+    decisions: [{ at: "2026-10-11T15:14:00.599633+00:00", kind: "decision", lifecycle: "current", meeting_title: "",
+      ref: `decision_record:${RECORD_ID}`, text: "Freeze the old ledger on Nov 5" }],
+    not_included: [], omitted: [], prepared_at: "2026-10-11T15:14:01.182859+00:00", project_id: "p-ledger",
+    project_revision: 0, purpose: "Ledger decision review", sources: [],
+  },
+  manifest_sha256: "d2a5ae5b46a261c26c825325d350d7406a1ecf91790e7227ecfa80514dbf1a2a",
+  integrity: "verified",
+  outline: { obligations: [], priorities: [{ span_id: "s_priorities_0", text: "Freeze the old ledger on Nov 5" }], questions: [] },
+  body_md: "## DECIDE TODAY\n- Freeze the old ledger on Nov 5",
+  claims_json: JSON.stringify([{ acceptance: "accepted", kind: "decision", refs: [`decision_record:${RECORD_ID}`],
+    section: "priorities", span_id: "s_priorities_0", support: "supported",
+    support_record: { fields: ["decision_text", "lifecycle"], method: "field_mapping",
+      source_refs: [`decision_record:${RECORD_ID}`], source_version: "project:p-ledger@0" },
+    text: "Freeze the old ledger on Nov 5" }]),
+  generator: "deterministic", generator_host: null, generator_model: null, elapsed_ms: 0,
+  created_at: "2026-10-11T15:14:01.182859+00:00", updated_at: "2026-10-11T15:14:01.183190+00:00",
+  kept_at: "2026-10-11T15:14:01.183190+00:00",
+};
+
+function PrepareHarness() {
+  const ctrl = usePrepareController("p-ledger", () => undefined);
+  return (
+    <>
+      <button type="button" onClick={() => void ctrl.openBrief(decodeBrief(KEPT_BRIEF))}>open the kept brief</button>
+      <PreparePosture ctrl={ctrl} projectName="Payments ledger cutover" onOpenRef={(ref) => opened.refs.push(ref)} onResultChange={() => undefined} />
+    </>
+  );
+}
+
+describe("PHILO-14 A2b Prepare's DEC citation opens its record through the record's route", () => {
+  it("Open source on a DEC claim reads /api/decision-records/<id>, then its source decision; never /api/decisions/record-", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url === `/api/briefs/${KEPT_BRIEF.id}`) return Promise.resolve({ brief: KEPT_BRIEF });
+      if (url.startsWith("/api/projects/p-ledger/briefs")) return Promise.resolve(url.includes("/briefs?") ? { briefs: [KEPT_BRIEF] } : {});
+      // DecisionRecordService.get: the record with its source (keys trimmed, not invented).
+      if (url === `/api/decision-records/${RECORD_ID}`) {
+        return Promise.resolve({ id: RECORD_ID, kind: "decision", lifecycle: "active", decision_text: "Freeze the old ledger on Nov 5",
+          source_type: "meeting", source_id: SOURCE_DECISION, sources: [] });
+      }
+      // DecisionLifecycleService.get_decision: {decision, lineage}; the decision names its meeting.
+      if (url === `/api/decisions/${SOURCE_DECISION}`) {
+        return Promise.resolve({ decision: { id: SOURCE_DECISION, text: "Freeze the old ledger on Nov 5", source_meeting_id: "m-sync" }, lineage: [] });
+      }
+      return Promise.resolve(route(url));
+    });
+    render(<PrepareHarness />);
+    fireEvent.click(screen.getByText("open the kept brief"));
+    const ref = await screen.findByTestId("prepare-claim-ref");
+    expect(ref.textContent).toMatch(/^DEC/);
+    fireEvent.click(screen.getByTestId("prepare-claim-open"));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(`/api/decision-records/${RECORD_ID}`));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(`/api/decisions/${SOURCE_DECISION}`));
+    const asked = apiFetch.mock.calls.map(([u]) => String(u));
+    expect(asked.some((u) => u.startsWith("/api/decisions/record-"))).toBe(false);
+    expect(opened.refs).not.toContain(`decision_record:${RECORD_ID}`);
   });
 });

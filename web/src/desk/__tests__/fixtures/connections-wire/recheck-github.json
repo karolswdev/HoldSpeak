@@ -1,0 +1,31 @@
+{
+  "account": {
+    "login": "karol-test"
+  },
+  "checked_age_seconds": 0,
+  "egress_host": "github.com",
+  "error_detail": null,
+  "last_checked_at": "2026-10-11T15:49:39.424152+00:00",
+  "next_action": {
+    "kind": "recheck",
+    "label": "Recheck"
+  },
+  "operation_id": "op_c033f88a03a4401c9645f8548054ca20",
+  "provider_id": "github",
+  "receipt": {
+    "actor_identity": "owner-session",
+    "actor_kind": "owner",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "created_at": 1791733779.424493,
+    "delegator_identity": "",
+    "delegator_kind": "",
+    "operation_id": "op_c033f88a03a4401c9645f8548054ca20",
+    "outcome": "succeeded",
+    "receipt_id": "rcpt_78f1c0a2d909490caf2a278b8a559e1a",
+    "result_ref": "connection:github",
+    "state": "succeeded",
+    "target_ref": "connection:github"
+  },
+  "recovery_hint": null,
+  "state": "connected"
+}

@@ -977,30 +977,37 @@ describe("HS-152-05 error taxonomy codes", () => {
 // ── HS-152-05: status line tests ───────────────────────────────────
 
 describe("HS-152-05 status line", () => {
-  it("persisted status_line shown in the head", () => {
-    const detail: ThreadDetail = {
-      thread: {
-        id: "t-1",
-        title: "Test Thread",
-        recipe_id: null,
-        profile_override: null,
-        directory_id: null,
-        parent_thread_id: null,
-        status_line: "Preparing your brief...",
-        mode: null,
-        call_mode: 0,
-        token_in: 100,
-        token_out: 50,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        last_turn_at: null,
-      },
-      messages: [makeMsg()],
+  it("persisted status_line shown in the head", async () => {
+    // The hub's real GET /api/threads/{id} body: ThreadService._thread_dict
+    // (holdspeak/services/thread_service.py) plus messages, siblings, refs
+    // and draft_annotations from ThreadService.get. status_line is on the
+    // wire since the test diet (2026-10-11); this test used to seed the
+    // store with a field the hub never sent (scar law).
+    const now = new Date().toISOString();
+    const body = {
+      id: "t-1",
+      title: "Test Thread",
+      recipe_id: null,
+      profile_override: null,
+      directory_id: null,
+      call_mode: 0,
+      status_line: "Preparing your brief...",
+      token_in: 100,
+      token_out: 50,
+      created_at: now,
+      updated_at: now,
+      last_turn_at: null,
+      mode: null,
+      messages: [],
       siblings: {},
       refs: [],
-      draftAnnotations: [],
+      draft_annotations: [],
     };
-    useThreadStore.setState({ threads: { "t-1": detail }, buffers: {}, loading: {} });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(body), {
+      status: 200, headers: { "content-type": "application/json" },
+    })));
+    await act(async () => { await useThreadStore.getState().loadThread("t-1"); });
+    expect(useThreadStore.getState().threads["t-1"]?.thread.status_line).toBe("Preparing your brief...");
     const { container } = renderPullout();
     const statusEl = container.querySelector(".thread-status-line");
     expect(statusEl).toBeTruthy();

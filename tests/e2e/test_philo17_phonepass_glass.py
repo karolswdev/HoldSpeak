@@ -45,7 +45,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _boot, _ensure_build, _normal_chair, _room_opened, _settle
-from .test_philo13_06_open_glass import _http, _seed
+from .open_rig import _http, _seed
 from .test_philo13_07_remembers_glass import SIZES, TOKEN, _Rig
 from tests._evidence import evidence_dir
 
@@ -288,7 +288,7 @@ class TestCaptionTouchesNothing(_Rig):
         import holdspeak.delivery.factory_launch as factory_launch
         from holdspeak.agent_context import event_log
 
-        from .test_philo14_c4_conductor_glass import _seed as conductor_seed
+        from .conductor_rig import _seed as conductor_seed
 
         keyfile = tmp_path / "people.key"
         keyfile.write_text("{}")

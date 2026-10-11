@@ -10,6 +10,9 @@
 // (tests/integration/test_philo11_slack_operations.py asserts them:
 // `{key_ref, saved}`, account `{key_ref}`, target `{channel_label}`,
 // check state `ready`, the refusal `slack_webhook_invalid`).
+//
+// replaces: tests/e2e/test_philo11_05b_meeting_faces_glass.py::TestMeetingFacesGlass::test_the_meeting_faces_and_slack_destinations
+// (boards D1-D5: the form, the refusal, Check, the Edit probe)
 
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";

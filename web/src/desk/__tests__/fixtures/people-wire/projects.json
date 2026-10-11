@@ -1,0 +1,54 @@
+{
+  "projects": [
+    {
+      "context": {},
+      "created_at": "2026-10-11T14:37:18.868757",
+      "description": "Move settlement to the new ledger by Nov 5.",
+      "detection_threshold": 0.4,
+      "id": "p-ledger",
+      "is_archived": false,
+      "keywords": [
+        "payments",
+        "ledger",
+        "cutover"
+      ],
+      "meeting_count": 1,
+      "name": "Payments ledger cutover",
+      "team_members": [],
+      "updated_at": "2026-10-11T14:37:18.868757"
+    },
+    {
+      "context": {},
+      "created_at": "2026-10-11T14:37:18.869107",
+      "description": "One tracing stack for all services.",
+      "detection_threshold": 0.4,
+      "id": "p-obs",
+      "is_archived": false,
+      "keywords": [
+        "platform",
+        "observability"
+      ],
+      "meeting_count": 1,
+      "name": "Platform observability",
+      "team_members": [],
+      "updated_at": "2026-10-11T14:37:18.869107"
+    },
+    {
+      "context": {},
+      "created_at": "2026-10-11T14:37:18.869192",
+      "description": "Two senior hires before Q1.",
+      "detection_threshold": 0.4,
+      "id": "p-hiring",
+      "is_archived": false,
+      "keywords": [
+        "staff",
+        "hiring",
+        "loop"
+      ],
+      "meeting_count": 0,
+      "name": "Staff hiring loop",
+      "team_members": [],
+      "updated_at": "2026-10-11T14:37:18.869192"
+    }
+  ]
+}

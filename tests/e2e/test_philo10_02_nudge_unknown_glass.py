@@ -19,7 +19,7 @@ import pytest
 from tests._evidence import evidence_dir
 
 from .glass_infra import _assert_clean, _boot, _ensure_build, _settle
-from .test_hs173_health_glass import (
+from .room_glass_helpers import (
     TOKEN,
     _assert_no_raw_button,
     _init_desk,

@@ -119,7 +119,10 @@ def _inject_fake_kokoro():
 
 
 class TestTtsNotInstalled:
-    """When the kokoro-onnx extra is absent, routes 404 with typed code."""
+    """When the kokoro-onnx extra is absent, routes 404 with typed code.
+
+    replaces: tests/e2e/test_hs154_call_glass.py::test_tts_api_404_law
+    """
 
     def test_status_returns_not_installed(self):
         cleanup = _hide_kokoro()

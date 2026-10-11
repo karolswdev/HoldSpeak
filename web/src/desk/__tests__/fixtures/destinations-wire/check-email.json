@@ -1,0 +1,33 @@
+{
+  "check": {
+    "answered_at": null,
+    "resolved": null,
+    "state": "ready"
+  },
+  "destination": {
+    "account": {
+      "from_email": "karol@acme.io",
+      "from_name": "",
+      "key_ref": "sendgrid-karol-acme.io",
+      "provider": "sendgrid"
+    },
+    "badge": "cloud",
+    "builtin": false,
+    "channel": "email",
+    "connection": null,
+    "created_at": "2026-10-11T15:35:50+00:00",
+    "id": "chd_53fd3bad2b67baf14a3b57f4",
+    "name": "Email lena@acme.io",
+    "parked_at": null,
+    "state": "active",
+    "synced": false,
+    "target": {
+      "cc": [],
+      "to": [
+        "lena@acme.io",
+        "tomas@acme.io"
+      ]
+    },
+    "target_digest": "a38c3e82df92f761c3a4d2c4ff1cb9b42ebd97d0b1d5338581cd81dc5f2b4c1c"
+  }
+}

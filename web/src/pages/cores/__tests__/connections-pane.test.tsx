@@ -187,6 +187,7 @@ beforeEach(() => {
 describe("ConnectionsPane", () => {
   /* ── GitHub states ── */
 
+  // replaces (the face half): tests/e2e/test_hs168_connections_glass.py::test_connections_real_readiness
   describe("GitHub connected", () => {
     it("shows Connected chip, login summary, and quiet Recheck verb", async () => {
       renderPane();
@@ -573,6 +574,24 @@ describe("ConnectionsPane", () => {
       const card = await screen.findByTestId("connections-confluence");
       expect(within(card).getByText("Add")).toBeInTheDocument();
       expect(within(card).getByText(/acli confluence auth login/)).toBeInTheDocument();
+    });
+  });
+});
+
+/* replaces: tests/e2e/test_philo17_needs_you_grouped_glass.py::test_one_row_per_cause_and_repair_on_the_real_hub
+   (the leg "Reconnect lands on Settings · Connections, GitHub focused"). Needs you's Reconnect opens
+   Settings with scope "integration:github" (NeedsDrawer.test.tsx:961); SettingsCore passes it on as
+   focusProvider (SettingsCore.tsx:2388). Here the pane puts focus on that provider's row. */
+describe("ConnectionsPane focusProvider", () => {
+  it("puts focus inside the named provider's row once the list loads", async () => {
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(
+      <ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="github" />,
+    );
+    const card = await screen.findByTestId("connections-github");
+    await waitFor(() => {
+      expect(document.activeElement).not.toBeNull();
+      expect(card.contains(document.activeElement)).toBe(true);
     });
   });
 });

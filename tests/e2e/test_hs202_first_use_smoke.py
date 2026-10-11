@@ -24,7 +24,7 @@ from .glass_infra import (
     REPO, SPEECH_CAPABILITY, _api, _boot, _ensure_build, _normal_chair,
     assign_engine, engine_profile,
 )
-from .test_hs201_09_connect_engine_glass import _StubHandler
+from .engine_stub_rig import _StubHandler
 from .test_hs201_one_thing_glass import _quiet_concierge
 from .test_hs201_summary_face_glass import _FixtureImportTranscriber, _chip_label, _wait_record_host
 from tests._evidence import evidence_dir

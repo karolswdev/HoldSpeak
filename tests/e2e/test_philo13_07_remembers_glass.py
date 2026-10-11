@@ -2,7 +2,7 @@
 
 Through the real hub on an isolated HOME, at 1440x900 (mouse) and 393x852
 (touch: every press a tap). The canvas week is minted by the real producers
-(test_philo13_06_open_glass._seed). One job, then a real page reload:
+(open_rig._seed, first written for the parked test_philo13_06_open_glass). One job, then a real page reload:
 
   * the decision window (palette `decision:d-freeze`), then iconified
     (1440: its Iconify gadget; 393 has no Iconify gadget, so there the
@@ -31,7 +31,7 @@ import pytest
 
 from .chair_windows import open_chair_window
 from .glass_infra import _boot, _ensure_build, _normal_chair, _settle, _room_opened
-from .test_philo13_06_open_glass import COMMITMENT, _seed
+from .open_rig import COMMITMENT, _seed
 from tests._evidence import evidence_dir
 
 # PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
