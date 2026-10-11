@@ -240,6 +240,13 @@ class TestRoomFaceGlass:
         _settle(page)
 
     @staticmethod
+    def _history(page: Any) -> None:
+        """PHILO-17 U31: the Room's receipts live under its History wing."""
+        page.get_by_role("tab", name="History").first.click()
+        page.locator("[data-testid=room-history]").wait_for(timeout=T)
+        page.wait_for_timeout(300)
+
+    @staticmethod
     def _project(page: Any, name: str = NAME) -> str:
         return _api(page, "POST", "/api/projects", {"name": name}, token=TOKEN)["project"]["id"]
 
@@ -831,6 +838,7 @@ class TestRoomFaceGlass:
                 assert status == 400 and self._deliveries(page, pid, uid) == [], (status, body)
                 hub = _api(page, "GET", f"/api/projects/{pid}/room", token=TOKEN)["receipts"]["items"]
                 self._room(page, pid)
+                self._history(page)
                 row = page.locator("[data-testid=receipt-row]", has_text="DELIVERED").first
                 row.wait_for(timeout=T)
                 row.scroll_into_view_if_needed()
@@ -870,6 +878,8 @@ class TestRoomFaceGlass:
                      token=TOKEN)
                 hub = _api(page, "GET", f"/api/projects/{pid}/room", token=TOKEN)["receipts"]["items"]
                 self._room(page, pid)
+                self._history(page)
+                page.locator("[data-testid=receipt-row]").first.wait_for(timeout=T)
                 rows = self._facts(page)["receipts"]
                 _record("receipts-own-room", width, {"hub": hub, "face": rows})
                 assert [i["op"] for i in hub].count("create_project") == 1, hub
@@ -889,6 +899,7 @@ class TestRoomFaceGlass:
         from playwright.sync_api import sync_playwright
 
         def receipts(page: Any) -> list[str]:
+            self._history(page)
             page.locator("[data-testid=receipt-row]").first.wait_for(timeout=10_000)
             return self._facts(page)["receipts"]
 

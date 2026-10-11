@@ -293,7 +293,7 @@ def _run_room_rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             _settle(page)
 
             # First paint shows source counts (never blank)
-            page.locator("text=SOURCES").wait_for(timeout=5000)
+            page.get_by_role("heading", name="SOURCES").first.wait_for(timeout=5000)  # PHILO-17: "Watch sources" also says it
 
             # Exactly one display element
             displays = page.locator(".room-body .surface-display")
@@ -539,7 +539,7 @@ def _run_room_rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             assert text_q == "Clear here", f"Quiet headline: {text_q}"
 
             # Source counts visible (never blank)
-            page.locator("text=SOURCES").wait_for(timeout=5000)
+            page.get_by_role("heading", name="SOURCES").first.wait_for(timeout=5000)  # PHILO-17: "Watch sources" also says it
 
             _shot(page, "room-quiet", width)
 
