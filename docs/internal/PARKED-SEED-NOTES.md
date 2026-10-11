@@ -107,8 +107,9 @@ The owner's walk: after ten minutes he did not know what the product is for.
 Start here held three privacy sentences, and its main button was "Develop
 this thought". The starter notes were prompts with no button. Start here is
 now the loop in three jobs, each with its door button. 1:1 prep now opens
-People (each person has Prep) and is no longer a prompt. Two texts are parked
-here.
+People (each person has Prep) and is no longer a prompt. Weekly update stays
+in the seed as the Thread `/prompt` starter (orchestrator ruling 2026-10-11;
+a thread starter, not a desk job). Two texts are parked here.
 
 ### Start here (the old text, id `hs-seed-start-here`)
 
@@ -118,18 +119,6 @@ These drawers and notes are yours to edit, rename, move, or delete.
 Everyday context is never automatically included in an AI request. Attach it in Ask, or select it for an Agent, only when you want it used.
 
 Normal Desk sync continues to follow your existing device-pairing choices.
-```
-
-### Weekly update (id `hs-seed-prompt-weekly-update`, tag `prompt`)
-
-A prompt for a Thread's `/prompt` command. To get it back, make a note with
-the tag `prompt` and this body:
-
-```
-Summarize what happened this week.
-Focus on decisions made, commitments moved, and open questions.
-One paragraph per topic, no filler.
-End with what needs attention next week.
 ```
 
 ### 1:1 prep as a prompt (id `hs-seed-prompt-one-on-one-prep`, tag `prompt`)

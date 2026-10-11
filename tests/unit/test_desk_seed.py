@@ -41,9 +41,9 @@ CONTEXT_NOTES = {
     "hs-seed-current-priorities": "Current priorities",
 }
 EVERYDAY_CONTEXT = "hs-seed-everyday-context"
-# PHILO-17 U18: Weekly update (a prompt with no button) is parked; 1:1 prep
-# is a note with a People door, no longer a prompt.
-PARKED_PROMPT_NOTE = "hs-seed-prompt-weekly-update"
+# PHILO-17 U18: 1:1 prep is a note with a People door, no longer a prompt.
+# Weekly update stays the seeded /prompt starter (ruling 2026-10-11).
+PROMPT_NOTE = "hs-seed-prompt-weekly-update"
 # PHILO-15 11 (B20, owner ruling 2026-10-07): the guard notes and three
 # starter-question notes are parked (docs/internal/PARKED-SEED-NOTES.md).
 PRACTICE_NOTES = {
@@ -66,7 +66,7 @@ MODE_RECIPES = {
     "hs-seed-mode-chase",
     "hs-seed-mode-draft",
     "hs-seed-mode-plan", "hs-seed-mode-project"}
-SEED_COUNTS = {"directories": 6, "notes": 4, "kbs": 1, "recipes": 4}
+SEED_COUNTS = {"directories": 6, "notes": 5, "kbs": 1, "recipes": 4}
 
 
 @pytest.fixture
@@ -114,6 +114,7 @@ def test_fresh_db_seeds_exactly_the_manifest(db) -> None:
     assert dict((i, n) for i, n, _ in snap["directories"]) == ZONES
     assert {n.id: n.title for n in db.notes.list()} == {
         START_HERE: "Start here",
+        PROMPT_NOTE: "Weekly update",
         **PRACTICE_NOTES,
         **CONTEXT_NOTES,
     }
@@ -133,17 +134,16 @@ def test_fresh_desk_carries_at_most_five_day_one_notes(db) -> None:
     and no developer-facing guard note."""
     apply_seed(db)
     titles = sorted(note.title for note in db.notes.list())
-    assert titles == sorted(["Start here", "About me", "1:1 prep", "Current priorities"])
+    assert titles == sorted(["Start here", "About me", "1:1 prep", "Current priorities", "Weekly update"])
     assert not [note for note in db.notes.list() if "guardrail" in note.tags or "guard" in note.title.lower()]
     parked = (Path(__file__).resolve().parents[2] / "docs" / "internal" / "PARKED-SEED-NOTES.md").read_text()
-    for title in ("Effect guard", "Egress guard", "How I like help", "People & vocabulary", "Meeting preferences",
-                  "Weekly update"):
+    for title in ("Effect guard", "Egress guard", "How I like help", "People & vocabulary", "Meeting preferences"):
         assert title in parked
 
 
 def test_start_here_is_the_loop_in_three_jobs(db) -> None:
     """PHILO-17 U18: Start here names the three jobs, each with its door
-    button (Material NOTE_DOORS); no starter note is a prompt with no button."""
+    button (Material NOTE_DOORS); the one prompt note is the /prompt starter."""
     apply_seed(db)
     body = db.notes.get(START_HERE).body_markdown
     for door in ("[Record a meeting](door:record-live)", "[Dictate](door:dictate)",
@@ -152,8 +152,7 @@ def test_start_here_is_the_loop_in_three_jobs(db) -> None:
     assert "never automatically included" not in body
     prep = db.notes.get("hs-seed-prompt-one-on-one-prep")
     assert "(door:open-people)" in prep.body_markdown and "prompt" not in prep.tags
-    assert db.notes.get(PARKED_PROMPT_NOTE) is None
-    assert db.notes.list_by_tag("prompt") == []
+    assert [n.title for n in db.notes.list_by_tag("prompt")] == ["Weekly update"]
 
 
 def test_guard_notes_fresh_desk_loads_none_existing_desk_keeps_them(db) -> None:
@@ -250,7 +249,7 @@ def test_retry_completes_new_relationships_without_mutating_partial_desk(db) -> 
 
     report = apply_seed(db)
 
-    assert report.applied == {"notes": 2, "kbs": 1, "recipes": 4}
+    assert report.applied == {"notes": 3, "kbs": 1, "recipes": 4}
     assert report.filed == 1
     kb = db.kbs.get(EVERYDAY_CONTEXT)
     assert kb is not None and set(kb.member_ids) == {
@@ -278,7 +277,7 @@ def test_seed_route_applies_the_packaged_manifest(client, db) -> None:
     assert body["applied"] == SEED_COUNTS
     assert body["profiles_seeded"] == body["workbenches_seeded"] == 0
     assert body["filed"] == 3
-    assert body["total"] == 15  # PHILO-17: Weekly update parked
+    assert body["total"] == 16
     assert {d.id for d in db.directories.list()} == set(ZONES)
 
 
@@ -332,10 +331,10 @@ def test_reset_tombstones_clutter_and_reseeds(db) -> None:
 
     assert {d.id for d in db.directories.list()} == set(ZONES)
     assert {n.id for n in db.notes.list()} == {
-        START_HERE, *PRACTICE_NOTES, *CONTEXT_NOTES,
+        START_HERE, PROMPT_NOTE, *PRACTICE_NOTES, *CONTEXT_NOTES,
     }
     assert {recipe.id for recipe in db.recipes.list()} == MODE_RECIPES
-    assert report.seed is not None and report.seed.total == 15
+    assert report.seed is not None and report.seed.total == 16
 
 
 def test_reset_force_restores_edited_and_tombstoned_packaged_objects(db) -> None:
@@ -384,7 +383,7 @@ def test_reset_route_names_the_counts(client, db) -> None:
     assert body["tombstoned"]["directories"] == 1
     assert body["tombstoned"]["workbenches"] == 1
     assert body["seeded"] == SEED_COUNTS
-    assert body["seeded_total"] == 15
+    assert body["seeded_total"] == 16
     assert body["profiles_seeded"] == 0
     assert body["profiles_adopted"] == {}
     assert body["filed"] == 3

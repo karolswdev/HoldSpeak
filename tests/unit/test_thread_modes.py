@@ -587,10 +587,17 @@ class TestNotesListByTag:
 # ---------------------------------------------------------------------------
 
 class TestPromptNoteSeed:
-    # PHILO-17 U18: the fresh desk seeds no prompt note (Weekly update is
-    # parked in docs/internal/PARKED-SEED-NOTES.md; 1:1 prep opens People).
-    def test_fresh_seed_has_no_prompt_note(self, db: Database) -> None:
+    def test_weekly_update_seed_exists(self, db: Database) -> None:
+        from holdspeak.db.seed import apply_seed
+        apply_seed(db)
+        results = db.notes.list_by_tag("prompt")
+        assert len(results) >= 1
+        titles = {n.title for n in results}
+        assert "Weekly update" in titles
+
+    def test_weekly_update_seed_is_idempotent(self, db: Database) -> None:
         from holdspeak.db.seed import apply_seed
         apply_seed(db)
         apply_seed(db)
-        assert db.notes.list_by_tag("prompt") == []
+        results = db.notes.list_by_tag("prompt")
+        assert len([n for n in results if n.title == "Weekly update"]) == 1

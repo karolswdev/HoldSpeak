@@ -12,8 +12,8 @@
 # the product is for): Start here is the loop in three jobs, each with its
 # door button (`[Label](door:<name>)`, web/src/desk/surface/Material.tsx
 # NOTE_DOORS). 1:1 prep opens People, where each person has Prep. Weekly
-# update (a prompt with no button) is parked with the old Start here text in
-# docs/internal/PARKED-SEED-NOTES.md.
+# update stays a seeded `prompt` note: the Thread /prompt starter. The old
+# Start here text is parked in docs/internal/PARKED-SEED-NOTES.md.
 
 directories:
   - id: hs-seed-inbox
@@ -58,6 +58,16 @@ notes:
       - Priority: [example: ]
       - Why it matters: [example: ]
       - Next step: [example: ]
+  # A Thread starter for /prompt (orchestrator ruling 2026-10-11), not a
+  # desk job: the Thread composer's /prompt lists notes tagged `prompt`.
+  - id: hs-seed-prompt-weekly-update
+    title: Weekly update
+    tags: [prompt]
+    body_markdown: |
+      Summarize what happened this week.
+      Focus on decisions made, commitments moved, and open questions.
+      One paragraph per topic, no filler.
+      End with what needs attention next week.
   - id: hs-seed-prompt-one-on-one-prep
     title: 1:1 prep
     body_markdown: |

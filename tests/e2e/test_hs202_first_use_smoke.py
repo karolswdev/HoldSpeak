@@ -272,7 +272,10 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             import holdspeak.whisper_models as whisper_models
 
             real_readiness = whisper_models.speech_readiness
-            whisper_models.speech_readiness = lambda *a, **k: {"state": "on_device", "bytes": 0}
+            whisper_models.speech_readiness = lambda name, backend, **k: {
+                "model": str(name or "base"), "backend": str(backend or "auto"),
+                "state": "on_device", "ready": True, "bytes": 0,
+            }
             try:
                 page.goto(base + "/welcome?token=" + TOKEN)
                 words_card = page.get_by_test_id("firstrun-first-words")
