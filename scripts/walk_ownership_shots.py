@@ -144,19 +144,14 @@ def walk_viewport(
     page.wait_for_timeout(200)
 
     # --- WorkbenchWindow config (INHERITED skills) -----------------------
-    # Re-navigate to clear any open pullouts (on mobile the pullout
-    # covers the list completely).
-    page.goto(
-        f"{fixture.url}/?token={fixture.owner_token}&view=list",
-        wait_until="networkidle",
-    )
+    # PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"):
+    # the desk-wide list is parked; workbenches open from ⌘K Search.
+    page.goto(f"{fixture.url}/?token={fixture.owner_token}", wait_until="networkidle")
     desk.wait_for_ready()
-    page.wait_for_selector(".desk-listmode", timeout=8000)
+    page.keyboard.press("Meta+k")
+    page.fill("[aria-controls=desk-palette-listbox]", "Workbench")
     page.wait_for_timeout(400)
-    # Open the seed workbench from the list view row.
-    wb_row = page.locator(
-        'button.desk-sortable-table-open:has-text("Workbench")'
-    )
+    wb_row = page.locator("[id^='desk-palette-option-workbench:']")
     if wb_row.count():
         wb_row.first.click()
         page.wait_for_timeout(500)

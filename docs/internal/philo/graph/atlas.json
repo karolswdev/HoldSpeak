@@ -15730,7 +15730,7 @@
         "edge.timer.intel_drainer"
       ],
       "state_id": "state.meetings.intel.ready",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "A real imported architect meeting reaches intel ready while the Floor list is active.",
         {
@@ -16090,17 +16090,6 @@
           "why": "the existing Floor list face is active before the producer trigger"
         }
       ],
-      "trigger": {
-        "kind": "api",
-        "method": "POST",
-        "path": "/api/meetings/{meeting_id}/intelligence/run",
-        "body": {
-          "expected_selection_hash": "{selection_hash}"
-        },
-        "adapter": "http-route",
-        "expect_status": 200,
-        "why": "admit the real summary producer after the Floor list is active; its aftercare_ready signal reaches intelligenceAttention.ts"
-      },
       "expected": {
         "predicate": {
           "kind": "readable_text",
@@ -16148,7 +16137,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). The Floor list's aftercare slot is parked with the list. Successor: case.philo603.toast.arrival. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.philo603.toast.floor_spatial_fallback",
@@ -16157,7 +16147,7 @@
         "edge.timer.intel_drainer"
       ],
       "state_id": "state.meetings.intel.ready",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         {
           "kind": "check",
@@ -16514,17 +16504,6 @@
           "selector": ".desk-world-canvas"
         }
       ],
-      "trigger": {
-        "kind": "api",
-        "method": "POST",
-        "path": "/api/meetings/{meeting_id}/intelligence/run",
-        "body": {
-          "expected_selection_hash": "{selection_hash}"
-        },
-        "adapter": "http-route",
-        "expect_status": 200,
-        "why": "admit the real summary producer with the spatial Floor mounted; retain its existing fixed fallback as an explicit limitation"
-      },
       "expected": {
         "predicate": {
           "kind": "readable_text",
@@ -16549,7 +16528,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). The spatial Floor and its fixed fallback are parked. Successor: case.philo603.toast.arrival. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     }
   ],
   "states": [

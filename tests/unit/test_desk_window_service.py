@@ -68,8 +68,8 @@ def test_open_is_idempotent_and_raises_an_open_window(svc: Any) -> None:
 
 
 def test_object_window_carries_its_app_and_object_ref(svc: Any) -> None:
-    row = svc.open("zone:dir-7", geometry={"x": "-1/2", "y": "-1/2 + 4", "w": "1/2", "h": "100%"})
-    assert row["app"] == "zone" and row["object_ref"] == "dir-7"
+    row = svc.open("workbench:wb-7", geometry={"x": "-1/2", "y": "-1/2 + 4", "w": "1/2", "h": "100%"})
+    assert row["app"] == "workbench" and row["object_ref"] == "wb-7"
     assert (row["x"], row["y"], row["w"], row["h"]) == ("-1/2", "-1/2 + 4", "1/2", "100%")
     assert row["arranged"] is True
     assert svc.open("drawer:project:p-1")["app"] == "drawer"
@@ -420,3 +420,24 @@ def test_the_lane_is_on_the_hub_with_its_launch(svc: Any) -> None:
     again = svc.open("lane", object_ref="launch:L-2")
     assert again["object_ref"] == "launch:L-2" and again["revision"] > row["revision"]
     assert len(svc.list()["windows"]) == 1
+
+
+# ---- PHILO-17: the zone family is retired ----------------------------------
+
+
+def test_a_zone_window_open_is_refused_and_an_old_row_still_closes(svc: Any) -> None:
+    """PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"):
+    no face draws a zone. A NEW zone window is refused by name, so an old
+    view cannot reopen one; a row saved before the ruling still closes."""
+    with pytest.raises(ValidationError) as refused:
+        svc.open("zone:dir-7")
+    assert refused.value.code == "window_retired"
+    assert [w["id"] for w in svc.list()["windows"]] == []
+    # A row saved before the ruling (written as the old service wrote it).
+    with svc._db._connection() as conn:  # noqa: SLF001
+        conn.execute(
+            "INSERT INTO desk_windows (id, app, object_ref, depth, minimized, revision) VALUES (?, ?, ?, ?, ?, ?)",
+            ("zone:dir-8", "zone", "dir-8", 1, 0, 1),
+        )
+    assert svc.close("zone:dir-8")["closed"] is True
+    assert [w["id"] for w in svc.list()["windows"]] == []

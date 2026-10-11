@@ -94,16 +94,13 @@ function IdentityName({ o }: { o: WorldObject }) {
 export function InfoWindow({
   refId,
   origin,
-  onOpenZone,
 }: {
-  /** Where a Filed zone opens. The list has no zone windows: it dives. */
-  onOpenZone?: (zoneId: string) => void;
   /** `kind:id` or bare id (objects) — or `zone:<id>` for a drawer. */
   refId: string;
   origin?: { x: number; y: number } | null;
 }) {
   const items = useDesk((s) => s.items);
-  const { closeInfoWindow, openZoneWindow, openPullout } = useDesk.getState();
+  const { closeInfoWindow, openPullout } = useDesk.getState();
   const zoneId = refId.startsWith("zone:") ? refId.slice(5) : null;
   const o: WorldObject | null = zoneId
     ? (() => {
@@ -186,15 +183,11 @@ export function InfoWindow({
           <section>
             <h3>Filed</h3>
             <div className="desk-pullout-lineage">
+              {/* PHILO-17: no face draws a zone; its name is a read-only fact. */}
               {zones.map((z) => (
-                <button
-                  key={String(z.id)}
-                  type="button"
-                  className="desk-chip quiet"
-                  onClick={() => (onOpenZone ?? openZoneWindow)(String(z.id))}
-                >
+                <span key={String(z.id)} className="desk-chip quiet" data-testid="info-filed-zone">
                   ▦ {String(z.name || z.id)}
-                </button>
+                </span>
               ))}
             </div>
           </section>

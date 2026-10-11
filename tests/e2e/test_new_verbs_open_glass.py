@@ -7,7 +7,7 @@ ended. On a desk with a roadmap that read takes 2 to 5 s (`GET /api/roadmaps`),
 so the press looked dead and the records piled up unseen.
 
 Through the real hub on an isolated HOME, at 1440x900 and 393x852, on the
-Chair and on the Floor. The one thing this rig adds is the slow read: the
+one desk (PHILO-17: the Floor is parked). The one thing this rig adds is the slow read: the
 page delays its own `GET /api/roadmaps` by 4 s (the real hub still answers
 it). Every record is made by the product's own verb.
 
@@ -19,8 +19,6 @@ it). Every record is made by the product's own verb.
   after the name its window opens inside 1.5 s.
 * The palette is the same door (1440, the Chair): New Agent, Enter.
 
-The Floor's right-click New menu runs the same registry verbs
-(web/src/desk/floorMenu.ts `item`), so it is covered by the verbs here.
 """
 from __future__ import annotations
 
@@ -157,7 +155,7 @@ class TestEveryNewVerbOpensItsWindow:
         self._press(page, win.locator("[aria-label^='Close']").first, width)
         win.wait_for(state="detached")
 
-    @pytest.mark.parametrize("face", ["chair", "floor"])
+    @pytest.mark.parametrize("face", ["chair"])
     @pytest.mark.parametrize("width", list(SIZES))
     def test_a_new_verb_opens_its_window_at_once(self, width: int, face: str) -> None:
         from playwright.sync_api import sync_playwright
@@ -165,10 +163,6 @@ class TestEveryNewVerbOpensItsWindow:
         with sync_playwright() as pw:
             browser, page, errors, posts = self._page(pw, width)
             try:
-                if face == "floor":
-                    self._press(page, page.locator("[data-testid=chair-floor-toggle]"), width)
-                    page.locator(".chair").wait_for(state="detached")
-                    page.wait_for_timeout(2500)  # the Floor (1440) or the list (393) mounts
                 proof: list[str] = []
                 for label, path, editor in VERBS:
                     before, sent = page.evaluate(WINDOW_IDS), len(posts)

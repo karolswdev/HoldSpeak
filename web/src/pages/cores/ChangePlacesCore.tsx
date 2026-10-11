@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { SurfaceVerbs } from "../../desk/surface/Surface";
 import { useDesk } from "../../desk/store";
-import { useChairState } from "../../desk/chairState";
 import { useSettleState } from "../../desk/settleState";
 import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
 import { resolveAtmosphere } from "../../desk/gl/atmosphereRegistry";
@@ -13,7 +12,6 @@ import type { CoreProps } from "./core-types";
 export function ChangePlacesCore(_props: CoreProps) {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [id] = useAtmospherePreference();
-  const surface = useChairState((s) => s.surface);
   return (
     <>
       <SurfaceVerbs status={resolveAtmosphere(id).name}>
@@ -35,15 +33,6 @@ export function ChangePlacesCore(_props: CoreProps) {
         >
           Favorites
         </Button>
-        {surface !== "floor" && (
-          <Button
-            type="button"
-            dense
-            onClick={() => useChairState.getState().setSurface("floor")}
-          >
-            View on Floor
-          </Button>
-        )}
         <Button
           type="button"
           dense

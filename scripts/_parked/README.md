@@ -8,7 +8,15 @@ script is kept, never deleted. Each parked script gets one mapping note below.
 
 ## Parked
 
-None. On 2026-09-22 (PHILO-2-07, main `112561bd`) no walk script met the rule:
+- `philo8_rehearsal.py` (2026-10-10, PHILO-17, owner ruling "Yes, everything
+  must become one desk"): its subject is gone. It rehearsed zone rename and
+  delete in the Floor's desk-wide list, which is parked
+  (`web/src/desk/_parked/floor/`). Delete on the one desk:
+  `case.p7.decision_delete.gone`, `case.p8.delete_twice.both_gone`
+  (ported to the Screen), `tests/e2e/test_philo7_delete_receipt_glass.py`.
+  Zone rename has no face.
+
+Before 2026-10-10: none. On 2026-09-22 (PHILO-2-07, main `112561bd`) no walk script met the rule:
 
 - The atlas (`docs/internal/philo/graph/atlas.json`, 73 cases) covers the
   eleven first-use jobs J1–J11. The prior walks prove other phases' surfaces.
@@ -21,7 +29,7 @@ None. On 2026-09-22 (PHILO-2-07, main `112561bd`) no walk script met the rule:
 |---|---|---|
 | `automations_walk.py` | none | Workbench Automations/Resourceful shots (PR #461); no atlas case. Imports `chair_walk.py`. |
 | `chair_walk.py` | `automations_walk.py`, `people_walk.py`, `people_walk_full.py`, `schedule_walk_hs136.py` import its harness | Phase 135 Chair shots at 1440/960; the atlas has no 960 case and no console-error predicate. Four live callers. |
-| `desk_gl_walk.py` | none in code | GL world parity, drag, lasso, frame timing (HS-95-01); no atlas case. |
+| `desk_gl_walk.py` | none in code | GL world parity, drag, lasso, frame timing (HS-95-01); no atlas case. PHILO-17: its helpers read the Screen; `smoke` and `storm` exit PARKED (the GL Floor is parked). |
 | `desk_walk/` | `walk_ownership_shots.py` | Phase 122–124 keyboard, MCP and observer walks; no atlas case. |
 | `door_walk_hs144.py` | none in code | Dashboard Door cold/populated walk (HS-144-06); no atlas case. |
 | `hs109_01_live_proof.py` … `hs109_04_live_proof.py` | `phase109_closeout_beats.py` (02–04) | Real-archive decision and memory proofs; no atlas case. They read the owner's real archive: do not run them under the current laws. |

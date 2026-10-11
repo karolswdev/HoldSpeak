@@ -466,3 +466,51 @@ describe("hubWindows", () => {
     expect(isWindowsOnlyFrame({})).toBe(false);
   });
 });
+
+// PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"):
+// zone windows are retired (no face draws a zone). Astra r2: retirement is
+// a close the hub took, a refused close is tried again (bounded), and the
+// row never opens or counts here.
+describe("PHILO-17: retired zone windows", () => {
+  const zoneRows = () => [row("zone:z1", { app: "zone", object_ref: "z1", depth: 1, revision: 2 })];
+  const closes = (fake: ReturnType<typeof fakeHub>) => fake.calls.filter((c) => c.verb === "close" && c.id === "zone:z1");
+
+  it("a saved zone row is closed on the hub and never opens here", async () => {
+    const { fake, hub } = start(zoneRows());
+    await hub.start();
+    await flush(hub);
+    expect(closes(fake)).toHaveLength(1);
+    expect(fake.state.windows.map((w) => w.id)).not.toContain("zone:z1");
+    expect(useDesk.getState().zoneWindows).toEqual([]);
+    expect(Object.keys(useDesk.getState().panelDepth)).not.toContain("zone:z1");
+    expect(hub.rows.has("zone:z1")).toBe(false);
+  });
+
+  it("a refused close re-reads and closes with the hub's revision", async () => {
+    const { fake, hub } = start(zoneRows());
+    fake.answers.push(async () => {
+      // An older view moved the row first: the close's revision is stale.
+      fake.state.windows = [row("zone:z1", { app: "zone", object_ref: "z1", depth: 3, revision: 5 })];
+      throw new ApiError(409, "window_stale", { error: "window_stale" });
+    });
+    await hub.start();
+    await flush(hub);
+    await flush(hub);
+    const sent = closes(fake);
+    expect(sent).toHaveLength(2);
+    expect(sent[1].body.expected_revision).toBe(5);
+    expect(fake.state.windows.map((w) => w.id)).not.toContain("zone:z1");
+  });
+
+  it("a close the hub always refuses is tried at most three times (no loop)", async () => {
+    const { fake, hub } = start(zoneRows());
+    for (let i = 0; i < 10; i += 1)
+      fake.answers.push(async () => {
+        throw new ApiError(409, "window_stale", { error: "window_stale" });
+      });
+    await hub.start();
+    for (let i = 0; i < 6; i += 1) await flush(hub);
+    expect(closes(fake)).toHaveLength(3);
+    expect(useDesk.getState().zoneWindows).toEqual([]);
+  });
+});

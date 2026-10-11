@@ -69,23 +69,23 @@ def test_open_list_raise_and_front(hub: Any) -> None:
 
 
 def test_every_verb_reaches_the_service(hub: Any) -> None:
-    _post(hub, "zone:d1", "open", {"geometry": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}})
+    _post(hub, "workbench:d1", "open", {"geometry": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}})
     _post(hub, "chair:brief", "open")
-    assert _post(hub, "zone:d1", "move", {"x": "-1/2 + 10", "y": 0}).json()["x"] == "-1/2 + 10"
-    assert _post(hub, "zone:d1", "resize", {"w": 300, "h": "1/2"}).json()["w"] == 300
-    assert _post(hub, "zone:d1", "set_geometry", {"rect": {"x": 1, "y": 2, "w": 3, "h": 4}}).json()["h"] == 4
-    assert _post(hub, "zone:d1", "send_back").json()["depth"] < 2
-    assert _post(hub, "zone:d1", "seat", {"seated": True}).json()["minimized"] is True
-    assert _post(hub, "zone:d1", "seat", {"seated": False}).json()["front"] is True
-    zoomed = _post(hub, "zone:d1", "zoom", {"zoomed": True, "rect": {"x": "-1/2", "y": "-1/2", "w": "100%", "h": "100%"}})
+    assert _post(hub, "workbench:d1", "move", {"x": "-1/2 + 10", "y": 0}).json()["x"] == "-1/2 + 10"
+    assert _post(hub, "workbench:d1", "resize", {"w": 300, "h": "1/2"}).json()["w"] == 300
+    assert _post(hub, "workbench:d1", "set_geometry", {"rect": {"x": 1, "y": 2, "w": 3, "h": 4}}).json()["h"] == 4
+    assert _post(hub, "workbench:d1", "send_back").json()["depth"] < 2
+    assert _post(hub, "workbench:d1", "seat", {"seated": True}).json()["minimized"] is True
+    assert _post(hub, "workbench:d1", "seat", {"seated": False}).json()["front"] is True
+    zoomed = _post(hub, "workbench:d1", "zoom", {"zoomed": True, "rect": {"x": "-1/2", "y": "-1/2", "w": "100%", "h": "100%"}})
     assert zoomed.json()["zoomed"] is True
     arranged = hub.post("/api/desk/windows/arrange", json={"rects": {
-        "zone:d1": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"},
+        "workbench:d1": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"},
         "chair:brief": {"x": "0%", "y": "-1/2", "w": "1/2", "h": "100%"}}})
     assert arranged.status_code == 200 and len(arranged.json()["windows"]) == 2
     assert hub.post("/api/desk/windows/stage-shelf", json={"side": "right"}).json()["stage_shelf"] == "right"
-    closed = _post(hub, "zone:d1", "close").json()
-    assert closed["id"] == "zone:d1" and closed["closed"] is True and closed["revision"] > 1
+    closed = _post(hub, "workbench:d1", "close").json()
+    assert closed["id"] == "workbench:d1" and closed["closed"] is True and closed["revision"] > 1
 
 
 def test_refusals_carry_their_status(hub: Any) -> None:
@@ -123,3 +123,11 @@ def test_the_edge_gate_admits_only_the_owner() -> None:
     for method, path in (("GET", "/api/desk/windows"), ("POST", "/api/desk/windows/chair:brief/raise"),
                          ("POST", "/api/desk/windows/arrange")):
         assert required_right(method, path) is PrincipalRight.OWNER
+
+
+def test_a_zone_window_open_is_refused_by_name(hub: Any) -> None:
+    """PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"):
+    the zone family is retired; an old view's open is refused by name."""
+    refused = _post(hub, "zone:d1", "open")
+    assert refused.status_code == 400 and refused.json()["error"] == "window_retired", refused.text
+    assert "zone:d1" not in [w["id"] for w in hub.get("/api/desk/windows").json()["windows"]]

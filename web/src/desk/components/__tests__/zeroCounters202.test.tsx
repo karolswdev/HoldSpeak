@@ -24,9 +24,7 @@ import { EMPTY_ITEMS, type Items } from "../../api";
 import { useDesk } from "../../store";
 import { usePalette } from "../../chromeState";
 import { useProjections } from "../../projections";
-import { DeskListView } from "../DeskListView";
 import { AskPanel } from "../AskPanel";
-import { WorldStage } from "../../gl/WorldStage";
 
 vi.mock("../../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({
@@ -71,92 +69,8 @@ beforeEach(() => {
   );
 });
 
-describe("an empty zone never counts to a screen reader (A.8)", () => {
-  it("does not announce '0 items' in the row's accessible name", () => {
-    render(
-      <MemoryRouter>
-        <DeskListView />
-      </MemoryRouter>,
-    );
-    const names = [...document.querySelectorAll("[aria-label]")].map(
-      (element) => element.getAttribute("aria-label") ?? "",
-    );
-    // PHILO-14 A2: the zone is an ObjectList row (`<name>, ZONE, <count>`);
-    // an empty one says EMPTY, never a zero.
-    expect(names).toContain("Launch, ZONE, EMPTY");
-    expect(names.filter((name) => /\b0 items?\b/i.test(name))).toEqual([]);
-  });
-
-  /* The shot walk caught this one: `countToken`'s default plural appends
-   * an S to the token as given, so a lowercase noun announced "2 itemS".
-   * A screen reader reads the case. */
-  it("announces a filled zone in plain words (no itemS)", () => {
-    useDesk.setState({
-      items: {
-        ...items,
-        directory: [
-          { kind: "directory", id: "z1", name: "Launch",
-            memberIds: ["note:n1"] } as never,
-        ],
-      },
-    });
-    render(
-      <MemoryRouter>
-        <DeskListView />
-      </MemoryRouter>,
-    );
-    const names = [...document.querySelectorAll("[aria-label]")].map(
-      (element) => element.getAttribute("aria-label") ?? "",
-    );
-    expect(names).toContain("Launch, ZONE, 1 ITEM");
-    expect(names.some((name) => /itemS/.test(name))).toBe(false);
-  });
-
-  it("does not print 0 ITEMS in the zone row's own cell", () => {
-    render(
-      <MemoryRouter>
-        <DeskListView />
-      </MemoryRouter>,
-    );
-    const cells = [...document.querySelectorAll("[role=gridcell]")].map(
-      (cell) => cell.textContent ?? "",
-    );
-    expect(cells.some((cell) => cell.includes("Launch"))).toBe(true);
-    expect(cells.filter((cell) => /^0 ITEMS?$/.test(cell.trim()))).toEqual([]);
-  });
-});
-
-/* The shot walk found the SECOND site the inventory's §4 actually named:
- * the spatial Floor's own accessibility layer (`desk/gl/WorldStage.tsx`).
- * At 393 the list face never opened, and the names the 393 leg read came
- * from there, still saying "0 items". */
-describe("the spatial Floor announces no zero either (A.8)", () => {
-  it("names an empty zone without a count", () => {
-    const { container } = render(<WorldStage />);
-    const names = [...container.querySelectorAll("[data-zone-id]")].map(
-      (element) => element.getAttribute("aria-label") ?? "",
-    );
-    expect(names).toContain("Launch zone");
-    expect(names.filter((name) => /\b0 items?\b/.test(name))).toEqual([]);
-  });
-
-  it("counts a filled zone in plain lowercase words", () => {
-    useDesk.setState({
-      items: {
-        ...items,
-        directory: [
-          { kind: "directory", id: "z1", name: "Launch",
-            memberIds: ["note:n1"] } as never,
-        ],
-      },
-    });
-    const { container } = render(<WorldStage />);
-    const names = [...container.querySelectorAll("[data-zone-id]")].map(
-      (element) => element.getAttribute("aria-label") ?? "",
-    );
-    expect(names).toContain("Launch zone, 1 item");
-  });
-});
+// PHILO-17: the zone rows (DeskListView) and the spatial Floor (WorldStage)
+// are parked with the Floor (desk/_parked/floor/); no face draws a zone.
 
 describe("Ask AI opens without counting its turns to zero (A.8)", () => {
   it("heads a fresh session with SESSION, not SESSION · 0 TURNS", () => {

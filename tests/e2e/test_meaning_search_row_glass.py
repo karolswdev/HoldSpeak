@@ -302,11 +302,24 @@ def test_a_refused_press_is_named_with_a_way_forward(tmp_path, monkeypatch, widt
             _assert_species(page, row)
             _assert_whole_on_glass(page, f"refused {width}")
 
-            # The way forward works: the same press, as the owner.
+            # The way forward works: open this desk as the owner, then press.
+            # PHILO-17 wayin (#1059): a 401 forgets the token the page sent, so
+            # the owner opens the desk again with the token address
+            # (web/src/lib/api.ts apiRequest/apiFetch -> forgetAuthToken).
             page.unroute("**/api/memory/meaning-search/turn-on")
+            with page.expect_response(lambda r: r.url.endswith("/turn-on")):
+                row.get_by_test_id("meaning-search-verb").click()  # this page has no token now
+            _state(page, "failed")
+            assert answers == [401, 401], answers
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _normal_chair(page)
+            row = page.get_by_test_id("concierge-meaning-search")
+            row.wait_for(timeout=30_000)
+            _state(page, "off")
+            assert row.get_by_test_id("meaning-search-verb").inner_text().strip() == "Turn on"
             row.get_by_test_id("meaning-search-verb").click()
             _state(page, "downloading", timeout=20_000)
-            assert answers == [401, 200]
+            assert answers == [401, 401, 200], answers
             assert row.get_by_test_id("meaning-search-error").count() == 0
             row.get_by_test_id("meaning-search-verb").click()
             _state(page, "off", timeout=20_000)

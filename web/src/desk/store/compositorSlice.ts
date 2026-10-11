@@ -89,7 +89,7 @@ const returningIds = new Set<string>([
   ...initialWindowLists.roadmap.map((slug) => `roadmap:${slug}`),
   ...initialWindowLists.repository.map((id) => `repository:${id}`),
   ...initialWindowLists.workbench.map((id) => `workbench:${id}`),
-  ...initialWorkspace.zoneWindows.map((id) => `zone:${id}`),
+  // PHILO-17: zone windows are retired; a saved one does not return.
 ]);
 const initialPanelMin = (initialPanelLayout.min ?? []).filter(
   (id) => returningIds.has(id) || id.startsWith("chair:"),
@@ -181,14 +181,15 @@ export type CompositorSlice = Pick<
 export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) => ({
   panelRects: initialPanelRects,
   panelSaved: Object.keys(initialPanelRects),
-  ...stack(initialPanelLayout.depth ?? {}),
+  // PHILO-17: a saved zone window is retired at boot (no face draws a zone).
+  ...stack(Object.fromEntries(Object.entries(initialPanelLayout.depth ?? {}).filter(([id]) => !id.startsWith("zone:")))),
   stageShelf: initialPanelLayout.shelf ?? "left",
   panelMin: initialPanelMin,
   panelMax: initialPanelLayout.max,
   panelZoom: initialPanelLayout.zoom ?? {},
   windowsById: initialWindowsById,
   pullouts: reopened("id", initialWindowLists.pullouts),
-  zoneWindows: initialWorkspace.zoneWindows.map((id) => ({ id, origin: null })),
+  zoneWindows: [],
   zoneViewPrefs: initialWorkspace.zoneViewPrefs,
   infoWindows: reopened("ref", initialWindowLists.info),
   roadmapWindows: reopened("slug", initialWindowLists.roadmap),
@@ -287,6 +288,8 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
 
   // ---- factory-generated window pairs -----------------------------------
 
+  // PHILO-17: no live door opens a zone window (no face draws a zone); the
+  // store primitive stays for the parked Floor and its tests.
   openZoneWindow(id, origin) {
     openZone(id, origin, set, get);
   },

@@ -7,12 +7,10 @@ import {
 } from "../../../desk/gl/atmosphereFavorites";
 import { ATMOSPHERE_STORAGE_KEY } from "../../../desk/gl/atmospherePreference";
 import { useSettleState } from "../../../desk/settleState";
-import { useChairState } from "../../../desk/chairState";
 
 beforeEach(() => {
   localStorage.clear();
   useSettleState.setState({ settled: false });
-  useChairState.setState({ surface: "chair" });
 });
 
 describe("Change places", () => {
@@ -21,9 +19,8 @@ describe("Change places", () => {
     expect(screen.getAllByRole("radio")).toHaveLength(9);
     fireEvent.click(screen.getByRole("radio", { name: /Night Train/ }));
     expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("night-train");
-    expect(useChairState.getState().surface).toBe("chair");
-    fireEvent.click(screen.getByRole("button", { name: "View on Floor" }));
-    expect(useChairState.getState().surface).toBe("floor");
+    // PHILO-17: the Floor is parked; the window offers no "View on Floor".
+    expect(screen.queryByRole("button", { name: "View on Floor" })).toBeNull();
   });
   it("favorites never switch the room and the filter retains keyboard entry", () => {
     render(<ChangePlacesCore />);

@@ -11,7 +11,7 @@
         "edge.face.zone_create"
       ],
       "state_id": "state.desk_presentation.p8_zone_name",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -131,17 +131,6 @@
           "value": "New Zone"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "click",
-        "adapter": "ui-pointer",
-        "selector": "[id='desk-palette-option-desk.new-zone']",
-        "why": "desk.new-zone (verbRegistry.ts) -> createPrimitive('zone') picks the free default name (zoneName.ts)",
-        "trigger_route": {
-          "method": "POST",
-          "path": "/api/directories"
-        }
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -204,7 +193,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). No face draws a zone; New Zone and the zone rename field are parked with the Floor. The headless .op sibling still proves the zone route. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p8.zone_create.second_unnamed_floor",
@@ -213,7 +203,7 @@
         "edge.face.zone_create"
       ],
       "state_id": "state.desk_presentation.p8_zone_name",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -333,17 +323,6 @@
           "value": "New Zone"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "click",
-        "adapter": "ui-pointer",
-        "selector": "[id='desk-palette-option-desk.new-zone']",
-        "why": "desk.new-zone (verbRegistry.ts) -> createPrimitive('zone') picks the free default name (zoneName.ts)",
-        "trigger_route": {
-          "method": "POST",
-          "path": "/api/directories"
-        }
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -406,7 +385,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). No face draws a zone; New Zone and the zone rename field are parked with the Floor. The headless .op sibling still proves the zone route. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p8.zone_rename.list",
@@ -415,7 +395,7 @@
         "edge.face.zone_rename"
       ],
       "state_id": "state.desk_presentation.p8_zone_name",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -523,13 +503,6 @@
           "why": "the in-row field opens with the name selected (ZoneRenameRow is-inrow); optional so main runs to a verdict: main draws no field"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "press",
-        "adapter": "ui-keyboard",
-        "key": "Enter",
-        "why": "Enter writes the name: PUT /api/directories/{id} (useZoneRenameField)"
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -567,7 +540,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). No face draws a zone; New Zone and the zone rename field are parked with the Floor. The headless .op sibling still proves the zone route. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p8.zone_rename.name_taken_list",
@@ -576,7 +550,7 @@
         "edge.face.zone_rename"
       ],
       "state_id": "state.desk_presentation.p8_zone_name",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -684,12 +658,6 @@
           "why": "'Inbox' is a seeded zone, so the hub refuses it 409 zone_name_taken; optional so main runs to a verdict: main draws no list field"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "press",
-        "adapter": "ui-keyboard",
-        "key": "Enter"
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -727,7 +695,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). No face draws a zone; New Zone and the zone rename field are parked with the Floor. The headless .op sibling still proves the zone route. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p8.zone_rename.name_taken_floor",
@@ -736,7 +705,7 @@
         "edge.face.zone_rename"
       ],
       "state_id": "state.desk_presentation.p8_zone_name",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -844,12 +813,6 @@
           "why": "'Inbox' is a seeded zone, so the hub refuses it 409 zone_name_taken"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "press",
-        "adapter": "ui-keyboard",
-        "key": "Enter"
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -887,7 +850,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). No face draws a zone; New Zone and the zone rename field are parked with the Floor. The headless .op sibling still proves the zone route. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p8.zone_rename.f2_row",
@@ -896,7 +860,7 @@
         "edge.face.zone_rename"
       ],
       "state_id": "state.desk_presentation.p8_zone_name",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -981,12 +945,6 @@
           "why": "keyboard travel to the Inbox zone row (zone rows are not selectable; DeskListView.tsx F2 handler)"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "press",
-        "adapter": "ui-keyboard",
-        "key": "F2"
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -1010,7 +968,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). No face draws a zone; New Zone and the zone rename field are parked with the Floor. The headless .op sibling still proves the zone route. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p8.chair.no_new_zone",
@@ -1095,7 +1054,7 @@
         "edge.face.decision_delete"
       ],
       "state_id": "state.desk_presentation.p8_one_delete",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -1210,15 +1169,6 @@
           "why": "the row menu opens on a right-click (DeskListView.tsx onRowContextMenu)"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "click_role",
-        "adapter": "ui-pointer",
-        "role": "menuitem",
-        "name": "Delete",
-        "exact": false,
-        "why": "object.delete -> the one listener (deleteReceipt.tsx) -> the 8 s undo receipt -> DELETE /api/decisions/{id}"
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -1250,7 +1200,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). The desk-wide list is parked. Successor: case.p7.decision_delete.gone (delete from the desk). The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p8.list_delete.undo",
@@ -1259,7 +1210,7 @@
         "edge.face.decision_delete"
       ],
       "state_id": "state.desk_presentation.p8_one_delete",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -1374,42 +1325,6 @@
           "why": "the row menu opens on a right-click (DeskListView.tsx onRowContextMenu)"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "click_role",
-        "adapter": "ui-pointer",
-        "role": "menuitem",
-        "name": "Delete",
-        "exact": false,
-        "why": "object.delete -> the one listener (deleteReceipt.tsx) -> the 8 s undo receipt -> DELETE /api/decisions/{id}",
-        "then": [
-          {
-            "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-pointer",
-            "selector": ".undo-receipt.is-pending",
-            "timeout_s": 3,
-            "why": "the delete is pending (inside its window); optional so main runs to a verdict: on main the list shows no receipt",
-            "optional": true
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "adapter": "ui-pointer",
-            "selector": "button.undo-receipt-btn",
-            "optional": true,
-            "requires": {
-              "visible": ".undo-receipt.is-pending",
-              "text": "Undo",
-              "seconds_left": {
-                "selector": ".undo-receipt-time",
-                "min": 2
-              }
-            },
-            "why": "the receipt's Undo, inside the window (one gesture with the Delete), re-checked at delivery; optional so a missing button is recorded, but a guard that does not hold BLOCKS (main shows no receipt: blocked)"
-          }
-        ]
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -1441,7 +1356,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). The desk-wide list is parked. Successor: case.p7.decision_delete.gone (delete from the desk). The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p8.list_delete.long_list_393",
@@ -1450,7 +1366,7 @@
         "edge.face.decision_delete"
       ],
       "state_id": "state.desk_presentation.p8_one_delete",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -1817,15 +1733,6 @@
           "timeout_s": 25
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "click_role",
-        "adapter": "ui-pointer",
-        "role": "menuitem",
-        "name": "Delete",
-        "exact": false,
-        "why": "object.delete -> the one listener (deleteReceipt.tsx) -> the 8 s undo receipt -> DELETE /api/decisions/{id}"
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -1857,7 +1764,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). The desk-wide list is parked. Successor: case.p7.decision_delete.gone (delete from the desk). The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p8.delete_twice.both_gone",
@@ -1873,11 +1781,11 @@
           "kind": "check",
           "predicate": {
             "kind": "attr_equals",
-            "attr": "aria-pressed",
-            "value": "true"
+            "attr": "data-testid",
+            "value": "desk-screen"
           },
-          "observe_at": "[data-testid=chair-floor-toggle]",
-          "why": "the Floor is the surface in front (the toggle is pressed)"
+          "observe_at": "[data-testid=desk-screen]",
+          "why": "PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the desk in front"
         }
       ],
       "setup": [
@@ -1940,61 +1848,24 @@
         },
         {
           "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=chair-floor-toggle]",
-          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[aria-controls=desk-tool-shelf]",
-          "at_width": 393
-        },
-        {
-          "kind": "ui",
-          "action": "fill",
-          "adapter": "ui-keyboard",
-          "selector": "[aria-controls=desk-palette-listbox]",
-          "value": "Spatial view",
-          "at_width": 393
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[id='desk-palette-option-desk.toggle-view']",
-          "at_width": 393,
-          "why": "at 393 the Floor opens as the list; the palette's Spatial view shows the Floor itself"
-        },
-        {
-          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-world-a11y",
-          "state": "attached"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": "[data-obj-id='decision:{a_id}']",
+          "selector": ".desk-screen [data-object-id='decision:{a_id}']",
           "state": "attached"
         },
         {
           "kind": "ui",
           "action": "focus",
           "adapter": "ui-keyboard",
-          "selector": "[data-obj-id='decision:{a_id}']",
-          "why": "keyboard travel to the Floor object's chip (a focused world button surfaces as a chip)"
+          "selector": ".desk-screen [data-object-id='decision:{a_id}']",
+          "why": "keyboard travel to the decision's desk icon (screen/Screen.tsx DeskIcon)"
         },
         {
           "kind": "ui",
           "action": "press",
           "adapter": "ui-keyboard",
-          "key": "Shift+Enter",
-          "why": "select it: Shift toggles the selection (WorldStage chip click)"
+          "key": "Space",
+          "why": "select it: Space is the icon's native click, which selects (DeskIcon.tsx)"
         }
       ],
       "trigger": {
@@ -2016,22 +1887,22 @@
             "kind": "ui",
             "action": "wait_for",
             "adapter": "ui-pointer",
-            "selector": "[data-obj-id='decision:{b_id}']",
+            "selector": ".desk-screen [data-object-id='decision:{b_id}']",
             "state": "attached"
           },
           {
             "kind": "ui",
             "action": "focus",
             "adapter": "ui-keyboard",
-            "selector": "[data-obj-id='decision:{b_id}']",
-            "why": "keyboard travel to the Floor object's chip (a focused world button surfaces as a chip)"
+            "selector": ".desk-screen [data-object-id='decision:{b_id}']",
+            "why": "keyboard travel to the decision's desk icon (screen/Screen.tsx DeskIcon)"
           },
           {
             "kind": "ui",
             "action": "press",
             "adapter": "ui-keyboard",
-            "key": "Shift+Enter",
-            "why": "select it: Shift toggles the selection (WorldStage chip click)"
+            "key": "Space",
+            "why": "select it: Space is the icon's native click, which selects (DeskIcon.tsx)"
           },
           {
             "kind": "ui",
@@ -2090,7 +1961,7 @@
             "path": "/api/decisions/{b_id}"
           }
         ],
-        "words": "on the spatial Floor the owner deletes A, then selects B and deletes it inside A's 8 s window (one gesture: the trigger and its `then` steps; the receipt is pending right before B's Delete); both reach the hub (A 404 and B 404) and the receipt reads 'Removal committed', readable"
+        "words": "on the desk the owner deletes A, then selects B and deletes it inside A's 8 s window (one gesture: the trigger and its `then` steps; the receipt is pending right before B's Delete); both reach the hub (A 404 and B 404) and the receipt reads 'Removal committed', readable"
       },
       "completion_bound_s": 40,
       "viewports": [
@@ -2105,7 +1976,7 @@
         "edge.face.decision_delete"
       ],
       "state_id": "state.desk_presentation.p8_one_delete",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -2223,41 +2094,6 @@
           "why": "select it: Shift toggles the selection (WorldStage chip click)"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "press",
-        "adapter": "ui-keyboard",
-        "key": "Delete",
-        "trigger_route": {
-          "method": "DELETE",
-          "path": "/api/decisions/{decision_id}"
-        },
-        "then": [
-          {
-            "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-pointer",
-            "selector": ".undo-receipt.is-pending",
-            "timeout_s": 3,
-            "why": "the first delete is still inside its window (the receipt's pending phase)"
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "adapter": "ui-pointer",
-            "selector": "[data-testid=chair-floor-toggle]",
-            "requires": {
-              "visible": ".undo-receipt.is-pending",
-              "text": "Undo",
-              "seconds_left": {
-                "selector": ".undo-receipt-time",
-                "min": 2
-              }
-            },
-            "why": "leave the Floor for the Chair inside the window, re-checked at delivery (the receipt pending with Undo and at least 2 s left): a face change commits the pending delete (deleteReceipt.tsx)"
-          }
-        ]
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -2291,7 +2127,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). There is one face, so no change of face commits a pending delete (deleteReceipt.tsx). The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p8.chair.delete_withheld",
@@ -2300,7 +2137,7 @@
         "edge.face.decision_delete"
       ],
       "state_id": "state.desk_presentation.p8_one_delete",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         {
@@ -2438,13 +2275,6 @@
           "selector": "[aria-controls=desk-tool-shelf]"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "fill",
-        "adapter": "ui-keyboard",
-        "selector": "[aria-controls=desk-palette-listbox]",
-        "value": "Delete"
-      },
       "expected": {
         "predicate": {
           "kind": "all_of",
@@ -2481,7 +2311,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PRODUCT RULING PHILO-17 (owner 2026-10-10, \"Yes, everything must become one desk\"): the Screen is the one desk; the Floor, its zones and its desk-wide list are parked (web/src/desk/_parked/floor/). The ruling reverses the subject: the Screen seats the delete receipt (#665's seat), so the desk offers Delete. Successor: case.p7.decision_delete.gone. The old declaration is kept in docs/internal/philo/graph/parked-philo17-floor.json."
     },
     {
       "id": "case.p8.decision_heads.hidden",
@@ -3098,7 +2929,7 @@
           "claim": "the ONE zone name field: over the zone on the Floor, in the row on the list"
         },
         {
-          "path": "web/src/desk/verbRegistry.ts",
+          "path": "web/src/desk/_parked/floor/floorVerbs.ts",
           "symbol": "id: \"desk.new-zone\"",
           "claim": "the face makes a zone with the New Zone verb (Floor only: needsZones)"
         }

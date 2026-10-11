@@ -1,11 +1,10 @@
-/** PHILO-8-02 — one delete everywhere: the one listener, the selection
- * drop, and the commit on a face change. The glass half reads the real hub
+/** PHILO-8-02 — one delete everywhere: the one listener and the selection
+ * drop. PHILO-17: the Screen is the one desk, so no face change commits. The glass half reads the real hub
  * (tests/e2e/test_philo8_one_delete_glass.py). */
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
-import { useChairState } from "../chairState";
 import { OBJECT_DELETE_REQUEST, verbById } from "../verbRegistry";
 import { DeskDeleteHost, DeskDeleteSeat } from "../deleteReceipt";
 
@@ -20,7 +19,6 @@ function request(ref: string) {
 beforeEach(() => {
   vi.useFakeTimers();
   deletePrimitive.mockClear();
-  useChairState.setState({ surface: "floor" });
   useDesk.setState({
     items: {
       ...EMPTY_ITEMS,
@@ -30,7 +28,6 @@ beforeEach(() => {
       ] as never[],
     },
     selectedIds: ["decision:a"],
-    viewMode: "list",
     deletePrimitive: deletePrimitive as never,
   });
 });
@@ -61,24 +58,15 @@ describe("DeskDeleteHost", () => {
     expect(deletePrimitive).toHaveBeenCalledWith("b", "decision");
   });
 
-  it("a face change commits the pending delete (cause 3)", () => {
+  it("says Removal committed once the delete has landed (round four)", async () => {
     render(<><DeskDeleteHost /><DeskDeleteSeat /></>);
     request("decision:a");
-    act(() => useChairState.setState({ surface: "chair" }));
+    act(() => vi.advanceTimersByTime(8500));
     expect(deletePrimitive).toHaveBeenCalledWith("a", "decision");
-  });
-
-  it("list to spatial is a face change too", async () => {
-    render(<><DeskDeleteHost /><DeskDeleteSeat /></>);
-    request("decision:a");
-    act(() => useDesk.setState({ viewMode: "spatial" }));
-    expect(deletePrimitive).toHaveBeenCalledWith("a", "decision");
-    // Round four: "Removal committed" only once the delete has landed.
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     expect(screen.getByText("Removal committed")).toBeTruthy();
   });
-
-  it("a seat that unmounts without a face change keeps the Undo", () => {
+  it("a seat that unmounts keeps the Undo", () => {
     const view = render(<><DeskDeleteHost /><DeskDeleteSeat key="one" /></>);
     request("decision:a");
     view.rerender(<DeskDeleteHost />);
@@ -89,7 +77,7 @@ describe("DeskDeleteHost", () => {
     expect(deletePrimitive).toHaveBeenCalledWith("a", "decision");
   });
 
-  it("with no seat mounted (the Chair) the delete is withheld", () => {
+  it("with no seat mounted the delete is withheld", () => {
     render(<DeskDeleteHost />);
     request("decision:a");
     act(() => vi.advanceTimersByTime(20_000));
@@ -100,11 +88,11 @@ describe("DeskDeleteHost", () => {
   it("the verb is greyed with its reason where no seat is mounted", () => {
     const del = verbById("object.delete")!;
     const ctx = { selectedRef: "decision:a" };
-    expect(del.ghost(ctx)).toBe("Open the Floor or the list");
+    expect(del.ghost(ctx)).toBe("Not on the desk");
     const seat = render(<DeskDeleteSeat />);
     expect(del.ghost(ctx)).toBeNull();
     seat.unmount();
-    expect(del.ghost(ctx)).toBe("Open the Floor or the list");
+    expect(del.ghost(ctx)).toBe("Not on the desk");
   });
 
   it("a repeated request for one object keeps one Undo that restores it (P1-a)", () => {
@@ -116,28 +104,6 @@ describe("DeskDeleteHost", () => {
     act(() => screen.getByRole("button", { name: "Undo" }).click());
     act(() => vi.advanceTimersByTime(20_000));
     expect(deletePrimitive).not.toHaveBeenCalled();
-  });
-
-  it("a resize that turns the list into the spatial Floor commits", () => {
-    const wide = window.innerWidth;
-    const many = Array.from({ length: 20 }, (_, n) => ({ kind: "decision", id: `d${n}`, title: `D${n}` }));
-    useDesk.setState({
-      items: { ...EMPTY_ITEMS, decision: [{ kind: "decision", id: "a", title: "Probe A" }, ...many] as never[] },
-      viewMode: "unset" as never,
-    });
-    Object.defineProperty(window, "innerWidth", { configurable: true, value: 393 });
-    try {
-      render(<><DeskDeleteHost /><DeskDeleteSeat /></>);
-      request("decision:a");
-      expect(deletePrimitive).not.toHaveBeenCalled();
-      act(() => {
-        Object.defineProperty(window, "innerWidth", { configurable: true, value: 1440 });
-        window.dispatchEvent(new Event("resize"));
-      });
-      expect(deletePrimitive).toHaveBeenCalledWith("a", "decision");
-    } finally {
-      Object.defineProperty(window, "innerWidth", { configurable: true, value: wide });
-    }
   });
 
   it("undo keeps the object", () => {
