@@ -423,9 +423,9 @@ export const VERBS: Verb[] = [
     run: (ctx) => {
       const o = selected(ctx);
       if (!o) return;
-      if (o.kind === "directory")
-        useDesk.getState().openZoneWindow(o.id, ctx.origin);
-      else useDesk.getState().openPullout(o.id, ctx.origin);
+      // PHILO-17: no face draws a zone; a zone opens no window.
+      if (o.kind === "directory") return;
+      useDesk.getState().openPullout(o.id, ctx.origin);
     },
   },
   {

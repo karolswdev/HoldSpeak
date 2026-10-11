@@ -21,8 +21,9 @@ import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { isRehydratedMinimized, useDesk, type PanelRect } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
-import { WorkMenu } from "./DeskMenu";
+import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { headMenuEntries } from "../windowMenuAdapter";
+import { windowObjectEntry } from "../objectMenu";
 import { WindowIdContext } from "./window/windowIdContext";
 import { primeSendTo, sendToEntry, useSendToTick, withSendTo } from "../windowSend";
 import { DESK_WINDOW } from "../../lib/tokens.gen";
@@ -91,6 +92,12 @@ import {
 import { inheritance, modeNow, mountWindow, unmountWindow } from "../compositor/live";
 
 // -- Re-exports: zero consumer edits (HS-117-04) --
+
+/** PHILO-17: the window's `Object ▸` leads its own group, after `Send to ▸`. */
+function withObject(object: WorkMenuEntry | null, entries: WorkMenuEntry[]): WorkMenuEntry[] {
+  return object ? [object, { type: "sep", id: "window-object-sep" }, ...entries] : entries;
+}
+
 export { placeWindow, clampIntoBand, snapForPointer, resizeEdge, exposeLayout };
 export { SnapGhost, Switcher, Expose, Dock };
 export { toggleExpose };
@@ -1191,14 +1198,14 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           label={`${name} window menu`}
           x={headMenu.x}
           y={headMenu.y}
-          entries={withSendTo(sendToEntry(id), headMenuEntries({
+          entries={withSendTo(sendToEntry(id), withObject(windowObjectEntry(id, requestClose), headMenuEntries({
             maximized,
             compact,
             requestMinimize,
             toggleMaximize: () => zoomWindow(id),
             requestClose,
             toBack: () => sendWindowToBack(id),
-          }))}
+          })))}
           onClose={() => setHeadMenu(null)}
         />
       ) : null}

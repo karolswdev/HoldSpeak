@@ -20,7 +20,10 @@
 /* PHILO-17: the chosen place (Change places) is the backdrop: its still
    picture under the floor's light, on the Workbench backdrop colour. */
 .desk-screen[data-place-still] {
+  /* The A1 floor's one light (tokens.css --desk-floor): bright top-left,
+     falling to the foot, over the picture. */
   background:
+    radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 60%),
     linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.28) 100%),
     var(--desk-place-still) center / cover no-repeat,
     var(--wb-backdrop);
@@ -102,4 +105,9 @@
   left: 20px;
   bottom: calc(var(--desk-dock-h, 76px) + 14px);
   z-index: 1;
+}
+/* PHILO-17: the delete receipt's seat (the Floor's foot, #665) stays in
+   view while the desk scrolls (the 393 grid scrolls inside .desk-screen). */
+.desk-next .desk-screen > .desk-world-foot {
+  position: fixed;
 }

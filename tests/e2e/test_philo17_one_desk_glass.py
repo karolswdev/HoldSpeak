@@ -10,7 +10,13 @@ Through the real hub on an isolated HOME at 1440x900 (mouse) and 393x852
 * nothing on the page carries ``data-zone-id`` (a zone with a member is seeded);
 * Send from the desk: a decision opened from its desk icon, its window menu
   ``Send to ▸`` -> the FILE destination -> the preview -> Send writes the file
-  and the hub records one send.
+  and the hub records one send;
+* an off-desk kind keeps Delete (Astra r1): a Sequence opened from Search,
+  its window menu ``Object ▸ Delete`` -> the window closes, the receipt is
+  readable on the desk, the hub answers 404 after the Undo window;
+* a saved zone window never returns (Astra r1): a workspace and a hub row
+  that say ``zone:<id>`` is open boot with no zone window, the hub row is
+  closed, and Get Info shows the zone as a fact (no button, no window).
 
 The Floor never drew destination icons: Phase 12's drag-to-send was folded
 into ``Send to ▸`` (PHILO-13-15 C5, commit 7bfe756ac), and
@@ -27,7 +33,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the one-desk glass needs Playwright")
@@ -187,3 +193,115 @@ class TestOneDesk:
             finally:
                 browser.close()
                 shutil.rmtree(scratch, ignore_errors=True)
+
+    def _desk(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
+        phone = width <= 720
+        browser = pw.chromium.launch(headless=True)
+        ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1,
+                                  has_touch=phone, reduced_motion="reduce")
+        page = ctx.new_page()
+        page.set_default_timeout(45_000)
+        errors: list[str] = []
+        page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+        page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+        _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+        return browser, page, errors
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_an_off_desk_window_deletes_its_object(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        phone = width <= 720
+        with sync_playwright() as pw:
+            browser, page, errors = self._desk(pw, width)
+            try:
+                made = _api(page, "POST", "/api/chains", {"name": "One desk sequence", "steps": []}, token=TOKEN)
+                chain_id = made["chain"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.locator("[data-testid=desk-screen]").wait_for(timeout=T)
+                # Search is the Sequence's door (it is not on the desk).
+                field = page.locator("[aria-controls=desk-palette-listbox]")
+                if not field.is_visible():
+                    page.locator("[aria-controls=desk-tool-shelf]").first.click()
+                field.fill("One desk sequence")
+                self._tap(page, page.locator(f"[id='desk-palette-option-chain:{chain_id}']"), phone, 900)
+                win = f"pullout:sequence:{chain_id}"
+                page.locator(f"[id='{win}']").wait_for(timeout=T)
+                page.wait_for_timeout(900)
+                self._window_menu(page, win, phone)
+                obj = page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Object')").first
+                obj.wait_for(timeout=T)
+                if phone:
+                    self._tap(page, obj, phone)
+                else:
+                    obj.hover()
+                    page.wait_for_timeout(700)
+                delete = page.locator("[role=menu] [role^=menuitem]:has-text('Delete')").last
+                assert delete.get_attribute("aria-disabled") != "true", delete.inner_text()
+                self._tap(page, delete, phone, 900)
+                page.locator(f"[id='{win}']").wait_for(state="detached", timeout=T)
+                receipt = page.locator(".undo-receipt").first
+                receipt.wait_for(timeout=T)
+                assert "Removed" in receipt.inner_text(), receipt.inner_text()
+                box = receipt.bounding_box()
+                assert box and box["y"] >= 0 and box["y"] + box["height"] <= SIZES[width], box
+                _settle(page)
+                page.screenshot(path=str(SHOTS / f"one-desk-window-delete-{width}.png"))
+                page.wait_for_function(
+                    "() => (document.querySelector('.undo-receipt')?.innerText || '').includes('Removal committed')",
+                    timeout=20_000)
+                status, _ = _api_allow_error(page, "GET", f"/api/chains/{chain_id}", token=TOKEN)
+                assert status == 404, status
+                assert not [e for e in errors if "ResizeObserver" not in e and "Failed to fetch" not in e], errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_saved_zone_window_never_returns(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        phone = width <= 720
+        with sync_playwright() as pw:
+            browser, page, errors = self._desk(pw, width)
+            try:
+                zone = _api(page, "POST", "/api/directories", {"name": "Payments"}, token=TOKEN)
+                zid = (zone.get("directory") or zone)["id"]
+                note = _api(page, "POST", "/api/notes", {"title": "Filed runbook", "body": "Steps"}, token=TOKEN)
+                nid = (note.get("note") or note)["id"]
+                _api(page, "PUT", f"/api/directories/{zid}/members/note:{nid}", {}, token=TOKEN)
+                win = f"zone:{zid}"
+                # A saved zone window: the workspace cache and the hub row both say open.
+                status, _ = _api_allow_error(page, "POST", f"/api/desk/windows/{win}/open", {}, token=TOKEN)
+                assert status in (200, 201), status
+                page.evaluate("""([key, zid, win]) => { const raw = localStorage.getItem(key);
+                    const doc = raw ? JSON.parse(raw) : { version: 1 }; doc.version = 1;
+                    doc.zoneWindows = [zid]; doc.panel = doc.panel || {}; doc.panel.depth = { ...(doc.panel.depth || {}), [win]: 9 };
+                    localStorage.setItem(key, JSON.stringify(doc)); }""", [WORKSPACE, zid, win])
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.locator("[data-testid=desk-screen]").wait_for(timeout=T)
+                page.wait_for_timeout(2500)  # the hub read and its answer
+                assert page.locator(".desk-zone-window").count() == 0
+                assert page.locator(f"[id='{win}']").count() == 0
+                rows = _api(page, "GET", "/api/desk/windows", token=TOKEN)["windows"]
+                assert win not in [r["id"] for r in rows], [r["id"] for r in rows]
+                # Get Info names the zone as a fact: no button, no zone window.
+                icon = page.locator(f".desk-screen [data-object-id='note:{nid}']")
+                icon.wait_for(timeout=T)
+                icon.focus()
+                page.keyboard.press("Shift+F10")
+                self._tap(page, page.get_by_role("menuitem", name="Get Info", exact=True), phone, 900)
+                filed = page.locator(".desk-info-window [data-testid=info-filed-zone]").first
+                filed.wait_for(timeout=T)
+                assert filed.evaluate("e => e.tagName") == "SPAN" and "Payments" in filed.inner_text()
+                assert page.locator(".desk-info-window button:has-text('Payments')").count() == 0
+                _settle(page)
+                page.screenshot(path=str(SHOTS / f"one-desk-zone-retired-{width}.png"))
+                assert not [e for e in errors if "ResizeObserver" not in e and "Failed to fetch" not in e], errors
+            finally:
+                browser.close()
