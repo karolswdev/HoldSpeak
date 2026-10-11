@@ -51,6 +51,9 @@ export function useProjectRoomController(
     projectId ? "loading" : "idle",
   );
   const [detailStatus, setDetailStatus] = useState<"idle" | "loading" | "ready">("idle");
+  // PHILO-17 (phonepass): phase 3 (proposals, suggested sources, nudges)
+  // resolved once; the Room is not drawn before it (rows land in NEEDS YOU).
+  const [extrasStatus, setExtrasStatus] = useState<"idle" | "loading" | "ready">("idle");
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [searchHits, setSearchHits] = useState<Record<string, unknown>[]>([]);
@@ -187,6 +190,8 @@ export function useProjectRoomController(
       setNudges(proposedNudges);
     } catch {
       // Non-fatal: the face renders without proposals/suggestions/nudges
+    } finally {
+      if (!quiet && !stale()) setExtrasStatus("ready");
     }
   };
 
@@ -340,6 +345,7 @@ export function useProjectRoomController(
     projectId,
     loadStatus,
     detailStatus,
+    extrasStatus,
     error,
     // Data
     project,

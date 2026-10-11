@@ -74,7 +74,9 @@ export function usePrepareController(
     }
   }, [projectId]);
 
-  useEffect(() => { void loadKept(); }, [loadKept]);
+  // PHILO-17 (phonepass): the first kept read resolved (the Room waits for it).
+  const [keptRead, setKeptRead] = useState(false);
+  useEffect(() => { void loadKept().finally(() => setKeptRead(true)); }, [loadKept]);
 
   // ── the coverage BEFORE the run, and the route beside the verb ──
   const reloadCoverage = useCallback(async () => {
@@ -285,6 +287,7 @@ export function usePrepareController(
     brief,
     refusal,
     kept,
+    keptRead,
     error,
     keepBusy,
     discardBusy,

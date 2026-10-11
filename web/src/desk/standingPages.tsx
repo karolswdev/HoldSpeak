@@ -86,6 +86,12 @@ export function scopeKey(scope: "desk" | "project", projectId?: string | null): 
  * drawn until the re-read lands (`useMemoryChanges`).
  */
 export function useStandingPages(scope: "desk" | "project", projectId?: string | null) {
+  return useStandingPagesRead(scope, projectId).pages;
+}
+
+/** PHILO-17 (phonepass): the pages, and whether the first read for this
+ *  scope has resolved (the Room waits for it). */
+export function useStandingPagesRead(scope: "desk" | "project", projectId?: string | null) {
   const key = scopeKey(scope, projectId);
   const [cache, setCache] = useState<{ key: string; pages: StandingPageWire[] }>({ key: "", pages: [] });
   const wanted = useRef(key);
@@ -116,13 +122,17 @@ export function useStandingPages(scope: "desk" | "project", projectId?: string |
     });
   }, [load, key]);
   const held = useMemoryChanges(load);
-  const pages = cache.key === key ? cache.pages : [];
-  return pages
-    .map((page) => ({
-      ...page,
-      sentences: (page.sentences ?? []).filter((s) => !held(s.refs.map((r) => r.ref))),
-    }))
-    .filter((page) => page.sentences.length);
+  const loaded = cache.key === key;
+  const pages = loaded ? cache.pages : [];
+  return {
+    loaded,
+    pages: pages
+      .map((page) => ({
+        ...page,
+        sentences: (page.sentences ?? []).filter((s) => !held(s.refs.map((r) => r.ref))),
+      }))
+      .filter((page) => page.sentences.length),
+  };
 }
 
 export function StandingPagesSection({

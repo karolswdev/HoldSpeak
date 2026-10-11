@@ -252,15 +252,25 @@ export function oneDoorPerName<
   return out;
 }
 
-/** PHILO-17 (phonepass): a read that lands while the list is drawn never
- *  moves a row he can see. The rows drawn for this query keep their order
- *  (a row whose read went away leaves); a row that arrives later goes below
- *  them. A new query draws a fresh ranking. */
-export function keepDrawnOrder<T extends { id: string }>(drawn: readonly string[], rows: readonly T[]): T[] {
-  if (!drawn.length) return [...rows];
-  const at = new Map(drawn.map((id, i) => [id, i]));
-  const kept = rows.filter((r) => at.has(r.id)).sort((a, b) => at.get(a.id)! - at.get(b.id)!);
-  return [...kept, ...rows.filter((r) => !at.has(r.id))];
+/** PHILO-17 (phonepass, Astra r1): a read that lands while the list is
+ *  drawn never moves a row he can see. `full` is every candidate, ranked,
+ *  before the section limits; `fresh` is what a new drawing shows (limits
+ *  applied). With nothing drawn yet (a new query or opening), `fresh`.
+ *  Otherwise every drawn row that is still a candidate keeps its place, also
+ *  when a late rank change would push it past its section's limit; only a
+ *  row that is no longer a candidate leaves. A row that `fresh` shows and
+ *  was not drawn goes below. */
+export function stableDeck<T extends { id: string }>(
+  drawn: readonly string[] | null,
+  full: readonly T[],
+  fresh: readonly T[],
+): T[] {
+  if (!drawn) return [...fresh];
+  const candidates = new Map(full.map((row) => [row.id, row] as const));
+  for (const row of fresh) if (!candidates.has(row.id)) candidates.set(row.id, row);
+  const kept = drawn.flatMap((id) => (candidates.has(id) ? [candidates.get(id)!] : []));
+  const drawnIds = new Set(drawn);
+  return [...kept, ...fresh.filter((row) => !drawnIds.has(row.id))];
 }
 
 /* ── MEMORY: content search (inventory gap 9) ── */
@@ -471,15 +481,15 @@ export function DeskToolShelf() {
     const push = (row: DeckRow) => out.push(row);
 
     // ── PROJECTS: one verb per active Room (HS-171-07) ──
-    // Sorted by needs-you count desc then name; capped at 10.
+    // Sorted by needs-you count desc then name; the limit of 10 is the
+    // section limit below (PHILO-17 phonepass: after stableDeck's candidates).
     const projectRows = projects
       .map((p) => ({ project: p, needs: projectNeedsYou[p.id] as number | undefined }))
       .sort((a, b) =>
         (b.needs ?? -1) !== (a.needs ?? -1)
           ? (b.needs ?? -1) - (a.needs ?? -1)
           : a.project.name.localeCompare(b.project.name),
-      )
-      .slice(0, 10);
+      );
     for (const { project, needs } of projectRows) {
       const badge =
         needs && needs > 0
@@ -703,28 +713,9 @@ export function DeskToolShelf() {
       if (sec !== 0) return sec;
       return a.i - b.i;
     });
-    // Per-section cut: a query keeps the deck dense; the cold deck
-    // shows every PROGRAM (they are the launcher truth) and a short
-    // head of everything else.
-    const cap = (s: Section) =>
-      s === "PROJECTS"
-        ? 10
-        : normalized
-          ? s === "OBJECTS"
-            ? 5
-            : 10
-          : s === "PROGRAMS"
-            ? Number.POSITIVE_INFINITY
-            : 6;
-    const byCount = new Map<Section, number>();
-    return ranked
-      .filter(({ row }) => {
-        const n = byCount.get(row.section) ?? 0;
-        if (n >= cap(row.section)) return false;
-        byCount.set(row.section, n + 1);
-        return true;
-      })
-      .map(({ row }) => row);
+    // PHILO-17 (phonepass): every candidate, ranked; the section limits
+    // apply below (stableDeck keeps a drawn row past them).
+    return ranked.map(({ row }) => row);
   }, [
     ctx.selectedRef,
     frontId,
@@ -748,12 +739,35 @@ export function DeskToolShelf() {
     targets,
   ]);
 
+  // Per-section cut: a query keeps the deck dense; the cold deck
+  // shows every PROGRAM (they are the launcher truth) and a short
+  // head of everything else.
+  const localCapped: DeckRow[] = useMemo(() => {
+    const cap = (s: Section) =>
+      s === "PROJECTS"
+        ? 10
+        : normalized
+          ? s === "OBJECTS"
+            ? 5
+            : 10
+          : s === "PROGRAMS"
+            ? Number.POSITIVE_INFINITY
+            : 6;
+    const byCount = new Map<Section, number>();
+    return localRows.filter((row) => {
+      const n = byCount.get(row.section) ?? 0;
+      if (n >= cap(row.section)) return false;
+      byCount.set(row.section, n + 1);
+      return true;
+    });
+  }, [localRows, normalized]);
+
   // ── MEMORY: the content hits, after the local matches. Only the hits of
   // THIS query; an object a local row already shows is not shown twice; a
   // hit that opens nothing is left out. ──
-  const rankedRows: DeckRow[] = useMemo(() => {
-    if (normalized.length < MEMORY_MIN_QUERY || memory.query !== normalized) return localRows;
-    const shown = new Set(localRows.map((row) => row.id));
+  const memoryRows: DeckRow[] = useMemo(() => {
+    if (normalized.length < MEMORY_MIN_QUERY || memory.query !== normalized) return [];
+    const shown = new Set(localCapped.map((row) => row.id));
     const out: DeckRow[] = [];
     for (const hit of memory.hits) {
       const ref = String(hit.source_ref ?? "").trim();
@@ -794,19 +808,19 @@ export function DeskToolShelf() {
       });
       if (out.length >= MEMORY_ROWS) break;
     }
-    return out.length ? [...localRows, ...out] : localRows;
-  }, [localRows, memory, normalized]);
+    return out;
+  }, [localCapped, memory, normalized]);
 
-  // PHILO-17 (phonepass): the order drawn for this query (and this opening)
-  // holds while reads land; see keepDrawnOrder.
+  // PHILO-17 (phonepass): the rows drawn for this query (and this opening)
+  // hold their places while reads land; see stableDeck.
   const drawnRef = useRef<{ query: string; open: boolean; ids: string[] }>({ query: "", open: false, ids: [] });
   const rows: DeckRow[] = useMemo(() => {
     const drawn = drawnRef.current;
     const same = drawn.open === open && drawn.query === normalized && !prompt;
-    const next = same ? keepDrawnOrder(drawn.ids, rankedRows) : rankedRows;
+    const next = stableDeck(same ? drawn.ids : null, [...localRows, ...memoryRows], [...localCapped, ...memoryRows]);
     drawnRef.current = { query: normalized, open, ids: next.map((r) => r.id) };
     return next;
-  }, [rankedRows, normalized, open, prompt]);
+  }, [localRows, localCapped, memoryRows, normalized, open, prompt]);
 
   // The runnable list the selection index walks (ghosts stay visible
   // but are never selected, never run).

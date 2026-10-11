@@ -67,9 +67,10 @@ export function useDrawerMembers(projectId: string, ctrl: ReturnType<typeof useP
     );
   }, [projectId]);
 
+  // PHILO-17 (phonepass): both first reads resolved (the Room waits for them).
+  const [firstRead, setFirstRead] = useState(false);
   useEffect(() => {
-    void readPeople();
-    void readResources();
+    void Promise.allSettled([readPeople(), readResources()]).then(() => setFirstRead(true));
   }, [readPeople, readResources, revision, tick]);
 
   const members = useMemo<DrawerMember[]>(
@@ -112,6 +113,8 @@ export function useDrawerMembers(projectId: string, ctrl: ReturnType<typeof useP
      *  Sources section. */
     room: ctrl.room,
     loading: ctrl.loadStatus === "loading" && !ctrl.room,
+    /** Every read the members come from has resolved once. */
+    settled: firstRead && ctrl.detailStatus === "ready",
     failed,
     retry,
     head,

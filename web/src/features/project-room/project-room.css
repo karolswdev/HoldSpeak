@@ -74,6 +74,10 @@
   left: var(--desk-surface-row-pad-x, 14px);
   visibility: visible;
 }
+/* A late section's place at the foot while its read is out. */
+.room-late-line {
+  min-height: 40px;
+}
 .room-loading, .room-error {
   display: flex; align-items: center; justify-content: center; min-height: 200px;
 }
