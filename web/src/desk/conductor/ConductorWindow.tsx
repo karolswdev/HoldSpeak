@@ -162,7 +162,7 @@ export function MemberVerbs({ member, onInfo }: { member: ConductorMember | null
             });
           }}
         >
-          Stop · sure? (ends the agent's session)
+          Stop · sure? (ends the coder's session)
         </Button>
       </>
     );
@@ -271,7 +271,7 @@ export function ConductorWindow() {
 
   const loading = (reads.flightsState === "idle" || reads.flightsState === "loading") && !members.length;
   const failed = [
-    reads.detectState === "failed" ? { part: "AGENTS", token: reads.detectFailure } : null,
+    reads.detectState === "failed" ? { part: "CODERS", token: reads.detectFailure } : null,
     reads.flightsState === "failed" ? { part: "SESSIONS", token: "" } : null,
   ].filter((f): f is { part: string; token: string } => f !== null);
   const retry = () => {
