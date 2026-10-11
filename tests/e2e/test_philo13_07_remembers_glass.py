@@ -105,6 +105,11 @@ class _Rig:
         except Exception:
             ids = page.evaluate("() => [...document.querySelectorAll('[id^=desk-palette-option-]')].map(o => o.id)")
             raise AssertionError(f"no palette option {option!r}; options: {ids}")
+        # The shelf's MEMORY rows arrive after the local rows and move them;
+        # a touch tap aimed before they land hits a neighbour (at 393 a
+        # meeting row sat under the Project's: its window opened over the Room).
+        page.wait_for_timeout(900)
+        _settle(page)
         self._press(page, opt, width)
 
     def _chair_window(self, page: Any, width: int, name: str) -> None:
@@ -175,6 +180,11 @@ class TestTheDeskRemembers(_Rig):
                 self._palette(page, "Payments", "project.open.p-ledger", width)
                 _room_opened(page)
                 room = page.locator("#surface-project-memory")
+                # The Room's reads land after it opens and move its rows; a
+                # touch tap aimed before they land hits a meeting row (its own
+                # window then covers the Room at 393).
+                page.wait_for_timeout(900)
+                _settle(page)
                 self._press(page, room.get_by_test_id("updates-verb"), width)
                 self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)
                 editor = room.locator("[contenteditable=true]").first
@@ -464,6 +474,11 @@ class TestSliceTwoReturns(_Rig):
                 self._palette(page, "Payments", "project.open.p-ledger", width)
                 _room_opened(page)
                 room = page.locator("#surface-project-memory")
+                # The Room's reads land after it opens and move its rows; a
+                # touch tap aimed before they land hits a meeting row (its own
+                # window then covers the Room at 393).
+                page.wait_for_timeout(900)
+                _settle(page)
                 self._press(page, room.get_by_test_id("updates-verb"), width)
                 self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)
                 editor = room.locator("[contenteditable=true]").first
