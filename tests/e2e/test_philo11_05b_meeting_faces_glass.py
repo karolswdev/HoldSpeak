@@ -64,7 +64,9 @@ FOLDER = "Team folder"
 # The well in the Meetings record. The Chair's meeting rows (Arrival, The week)
 # draw the same well in their own windows, so the record's window is named.
 MR = ".desk-window:has(.meetings-detail-head) [data-seat=meeting]"
-MW = ".desk-pullout [data-seat=meeting]"         # the well in the meeting window
+# PHILO-17 ("A meeting opens in one window"): the record IS the meeting's own
+# window (`pullout:meeting:<id>`); the row opens it and so does `?open=`.
+MW = ".desk-object-window [data-seat=meeting]"   # the well in the meeting window
 DS = "[data-testid=destinations]"
 
 

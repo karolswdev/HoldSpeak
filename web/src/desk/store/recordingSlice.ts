@@ -26,6 +26,7 @@ export type RecordingSlice = Pick<
   | "recording"
   | "recordingExternal"
   | "recordingStartedAt"
+  | "liveMeetingId"
   | "applyRecordingActivity"
   | "startRecording"
   | "stopRecording"
@@ -35,6 +36,7 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
   recording: "idle",
   recordingExternal: false,
   recordingStartedAt: null,
+  liveMeetingId: null,
 
   applyRecordingActivity(activity) {
     if (!activity || typeof activity !== "object") return;
@@ -54,6 +56,7 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
           recording: "idle",
           recordingExternal: false,
           recordingStartedAt: null,
+          liveMeetingId: null,
         });
     }
   },
@@ -88,7 +91,18 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
       return;
     }
     clearWriteFailure();
-    set({ recording: "recording", recordingExternal: false });
+    // PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): the new
+    // meeting opens in its own window, the live room while it records; on
+    // Stop the same window shows the saved meeting.
+    let meetingId = "";
+    try {
+      const body = (await res.json()) as { meeting?: { id?: unknown; meeting_id?: unknown } | null };
+      meetingId = String(body?.meeting?.id ?? body?.meeting?.meeting_id ?? "");
+    } catch {
+      // No body: the recorder runs; the window opens from the Meetings list.
+    }
+    set({ recording: "recording", recordingExternal: false, liveMeetingId: meetingId || null });
+    if (meetingId) get().openPullout(`meeting:${meetingId}`);
   },
 
   async stopRecording() {
@@ -120,6 +134,7 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
       recording: "idle",
       recordingExternal: false,
       recordingStartedAt: null,
+      liveMeetingId: null,
     });
     await get().refresh();
     const after = get().items.meeting.map((m) => String(m.id));

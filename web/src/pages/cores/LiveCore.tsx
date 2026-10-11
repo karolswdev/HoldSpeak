@@ -24,6 +24,7 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // results, not provider token streams.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { openPrimitive } from "../../desk/shell";
+import { useDesk } from "../../desk/store";
 import type {
   CoreProps,
   MeetingStateResponse,
@@ -70,7 +71,14 @@ import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../../desk/firstrun/spee
 
 type Segment = Record<string, unknown>;
 
-export function LiveCore({ hero }: CoreProps) {
+/** PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): the live
+ *  room is the body of the meeting's own window while it records
+ *  (`meetingId`); on Stop that window shows the saved meeting
+ *  (`onStopped`). Without `meetingId` it is the Live meeting window, the
+ *  place a meeting starts; the started meeting then opens in its own window. */
+export type LiveCoreProps = CoreProps & { meetingId?: string; onStopped?: () => void };
+
+export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   const initial = useResource<MeetingStateResponse>("/api/state", {});
   const runtimeStatus = useResource<RuntimeStatusResponse>("/api/runtime/status", {});
   const intentControl = useResource<IntentControlResponse>("/api/intents/control", {});
@@ -253,8 +261,10 @@ export function LiveCore({ hero }: CoreProps) {
     [subscribe, reloadDevices],
   );
 
+  // The meeting's own window shows this room only while it records.
   const active = Boolean(
-    state.active ?? state.meeting_active ?? state.status === "recording",
+    (meetingId && state.active !== false) ||
+      (state.active ?? state.meeting_active ?? state.status === "recording"),
   );
   // PHILO-17 speech: the live `duration` frame (a "MM:SS" string, one a
   // second) leads. `formatted_duration` arrives once with meeting_started /
@@ -274,6 +284,18 @@ export function LiveCore({ hero }: CoreProps) {
     await action.run(async () => {
       const value = await apiFetch<Record<string, unknown>>(path, { method: "POST", json });
       if (path.endsWith("start")) {
+        const startedId = String((value.meeting as Record<string, unknown> | undefined)?.id ?? "");
+        if (!meetingId && startedId) {
+          useDesk.setState({
+            recording: "recording",
+            recordingExternal: false,
+            recordingStartedAt: Date.now(),
+            liveMeetingId: startedId,
+          });
+          useDesk.getState().openPullout(`meeting:${startedId}`);
+          useDesk.getState().closeSurfaceWindow("record-live");
+          return;
+        }
         setRetainedMeetingId("");
         setCaptureAlert("");
         setIntelResult(null);
@@ -286,9 +308,13 @@ export function LiveCore({ hero }: CoreProps) {
         }));
       }
       if (path.endsWith("stop")) {
-        const meetingId = String(state.id ?? state.meeting_id ?? "");
-        if (meetingId) setRetainedMeetingId(meetingId);
+        const stoppedId = meetingId || String(state.id ?? state.meeting_id ?? "");
+        if (stoppedId) setRetainedMeetingId(stoppedId);
         setState((current) => ({ ...current, active: false }));
+        if (meetingId) {
+          useDesk.setState({ recording: "idle", recordingExternal: false, recordingStartedAt: null, liveMeetingId: null });
+          onStopped?.();
+        }
       }
     });
   };

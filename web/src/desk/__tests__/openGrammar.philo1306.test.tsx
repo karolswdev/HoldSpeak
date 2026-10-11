@@ -6,6 +6,7 @@
  * printed a raw id; "Open person" asked for the key `people`, which
  * dispatches nowhere; Acknowledge/Defer/Speak stood beside a failed read.
  */
+import { takePersonLens } from "../objectWindows";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "../../lib/api";
@@ -138,7 +139,8 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
 
     const meeting = rows.find((r) => r.textContent?.includes("Ledger cutover sync"))!;
     fireEvent.click(meeting);
-    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:p13-cutover-sync");
+    // PHILO-17: a meeting opens in its own window.
+    expect(openPrimitive).toHaveBeenCalledWith("meeting:p13-cutover-sync");
 
     const coverage = rows.find((r) => r.textContent?.includes("Coverage line"))!;
     expect(coverage.getAttribute("role")).toBeNull();
@@ -185,7 +187,9 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
     const rows = await screen.findAllByTestId("arrival-meeting-row");
     const oneOnOne = rows.find((r) => r.textContent?.includes("1:1 Priya"))!;
     fireEvent.click(oneOnOne);
-    expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:rel-priya:prep");
+    // PHILO-17 (2b): THAT person, in her own window, on Prep.
+    expect(openPrimitive).toHaveBeenCalledWith("people:rel-priya");
+    expect(takePersonLens("rel-priya")).toBe("prep");
 
     const sync = rows.find((r) => r.textContent?.includes("Ledger cutover sync"))!;
     fireEvent.click(sync);
@@ -214,7 +218,7 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
     expect(row.getAttribute("role")).toBeNull();
     // The card names its person and the Desk cannot run its verb: Open opens the person.
     fireEvent.click(within(row).getByRole("button", { name: "Open: Review the rollout plan before Friday" }));
-    expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:rel-priya");
+    expect(openPrimitive).toHaveBeenCalledWith("people:rel-priya");
   });
 });
 
@@ -302,8 +306,8 @@ describe("PHILO-13-06: Intelligence BRIEF opens its rows; Brief → People works
     render(<BriefView header={null} />);
     fireEvent.click(await screen.findByTestId("person-row-rel-priya"));
     fireEvent.click(screen.getByTestId("verb-open-person"));
-    expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:rel-priya");
-    expect(openSurfaceOr).not.toHaveBeenCalledWith("people", "/people", expect.anything());
+    expect(openPrimitive).toHaveBeenCalledWith("people:rel-priya");
+    expect(openSurfaceOr).not.toHaveBeenCalledWith("open-people", "/", expect.anything());
   });
 
   it("a failed read withholds Acknowledge, Defer and Speak (A.11)", async () => {

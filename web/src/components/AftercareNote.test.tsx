@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AmbientLayer } from "./AmbientLayer";
 import { dismissAftercare } from "../desk/intelligenceAttention";
+import { takeMeetingRequest } from "../desk/objectWindows";
 
 /**
  * HS-132-08 — a finished meeting is visible without the mascot.
@@ -14,6 +15,7 @@ import { dismissAftercare } from "../desk/intelligenceAttention";
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
   openSurfaceWhenReady: vi.fn(),
+  openPrimitive: vi.fn(),
   listeners: new Map<string, (frame: { type: string; data: unknown }) => void>(),
 }));
 
@@ -38,6 +40,7 @@ vi.mock("../runtime/RuntimeBus", () => ({
 
 vi.mock("../desk/shell", () => ({
   openSurfaceWhenReady: mocks.openSurfaceWhenReady,
+  openPrimitive: mocks.openPrimitive,
 }));
 
 vi.mock("../desk/projections", () => {
@@ -97,10 +100,9 @@ describe("aftercare without the mascot", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open proposals" }));
 
     // PHILO-15 08 (B13): the verb lands where the proposals are.
-    expect(mocks.openSurfaceWhenReady).toHaveBeenCalledWith(
-      "review-meetings",
-      "meeting:meeting-42?view=review",
-    );
+    // PHILO-17: the meeting's own window, on its Review wing.
+    expect(mocks.openPrimitive).toHaveBeenCalledWith("meeting:meeting-42");
+    expect(takeMeetingRequest("meeting-42")?.view).toBe("review");
     expect(screen.queryByLabelText("Meeting aftercare")).toBeNull();
   });
 
@@ -138,10 +140,9 @@ describe("aftercare without the mascot", () => {
     fireEvent.click(
       within(transitioned).getByRole("button", { name: "Open proposals" }),
     );
-    expect(mocks.openSurfaceWhenReady).toHaveBeenCalledWith(
-      "review-meetings",
-      "meeting:meeting-decided?view=review",
-    );
+    // PHILO-17: the meeting's own window, on its Review wing.
+    expect(mocks.openPrimitive).toHaveBeenCalledWith("meeting:meeting-decided");
+    expect(takeMeetingRequest("meeting-decided")?.view).toBe("review");
     expect(screen.queryByLabelText("Meeting aftercare")).toBeNull();
 
     mocks.openSurfaceWhenReady.mockClear();

@@ -29,7 +29,8 @@ import {
 } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { restoreMeeting, restoreProject, restoreWorkbenchItem } from "../api";
-import { openProjectRoom, openSurfaceOr } from "../shell";
+import { openProjectRoom } from "../shell";
+import { openSourceRef } from "../surface/citations";
 import { useDesk } from "../store";
 import { useOnDeskChanged } from "../useDeskChangedRefresh";
 import { drawerReceipt } from "./DrawerWindow";
@@ -80,7 +81,8 @@ export function parkedRow(item: ParkedItem, now: Date = new Date()): ObjectListR
 
 /** Open: where the parked object lives. */
 export function openParkedHome(item: ParkedItem): void {
-  if (item.kind === "meeting") openSurfaceOr("review-meetings", "/history");
+  // PHILO-17: a meeting opens in its own window.
+  if (item.kind === "meeting") openSourceRef(`meeting:${item.id}`);
   else if (item.kind === "workbench_item" && item.home.workbench_id) {
     useDesk.getState().openWorkbenchWindow(item.home.workbench_id);
   } else if (item.kind === "project") openProjectRoom(item.id);

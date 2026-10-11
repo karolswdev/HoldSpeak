@@ -234,6 +234,8 @@ describe("an Update citation opens through the one open grammar", () => {
       .find((el) => el.getAttribute("data-ref") === "meeting:m-fixture");
     fireEvent.click(chip!);
 
-    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-fixture");
+    // PHILO-17: the meeting opens in its own window.
+    expect(openPrimitive).toHaveBeenCalledWith("meeting:m-fixture");
+    expect(openSurfaceOr).not.toHaveBeenCalled();
   });
 });

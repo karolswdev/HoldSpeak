@@ -7,6 +7,7 @@ import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
 import { plainFailure } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
+import { openSourceRef } from "../../desk/surface/citations";
 import { PERSON_OPEN_EVENT, refOpener, type PersonOpenRequest } from "../../desk/openObject";
 import { composePeoplePrep, readPeoplePrep, type PeoplePrepData, type PrepCalendarEvent } from "../../desk/people/prepData";
 import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
@@ -27,6 +28,7 @@ import {
 } from "../../desk/surface/Surface";
 import { countToken } from "../../desk/surface";
 import { renderHeroSlot } from "./core-layout";
+import { useWindowTitle } from "../../desk/surface/title";
 import "./people.css";
 import { openProjectRoom } from "../../desk/shell";
 
@@ -391,7 +393,77 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
 /** HS-172-05: concern focus for Now wing opened from Prep summary rows. */
 type NowConcern = "prs" | "assignments" | "commitments" | null;
 
-function RelationshipPane({ relationship, initialLens, lensRequest = null, onRefresh, onProtectedFailure, onArchived, onBack }: { relationship: RelationshipDetail; initialLens?: Lens | null; lensRequest?: { lens: Lens; seq: number } | null; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack(): void }) {
+/** PHILO-17 (2b) — a person's own window (`pullout:people:<id>`): THAT
+ *  person, on the RelationshipPane, not the People roster. A lens a door
+ *  asks for comes in as a request (`PERSON_OPEN_EVENT`); a store that is
+ *  not ready says so and offers its one verb, as the People window does. */
+export function PersonWindowBody({ relationshipId, initialLens = null, onClose }: { relationshipId: string; initialLens?: Lens | null; onClose?(): void }) {
+  const [readiness, setReadiness] = useState<Readiness | null>(null);
+  const [detail, setDetail] = useState<RelationshipDetail | null>(null);
+  const [error, setError] = useState("");
+  const [lensRequest, setLensRequest] = useState<{ lens: Lens; seq: number } | null>(null);
+  useWindowTitle(detail?.display_name ?? null, [detail?.display_name]);
+  useEffect(() => {
+    const onOpen = (event: Event) => {
+      const request = (event as CustomEvent<PersonOpenRequest>).detail;
+      if (request?.relationshipId !== relationshipId || !request.lens) return;
+      setLensRequest({ lens: request.lens as Lens, seq: request.seq });
+    };
+    window.addEventListener(PERSON_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(PERSON_OPEN_EVENT, onOpen);
+  }, [relationshipId]);
+  const read = useCallback(async () => {
+    try {
+      const next = await apiFetch<Readiness>("/api/people/readiness");
+      setReadiness(next);
+      if (stateOf(next) !== "ready") { setDetail(null); return; }
+      const [relationship, sessions] = await Promise.all([
+        apiFetch<{ relationship: Relationship }>(`/api/people/relationships/${encodeURIComponent(relationshipId)}`),
+        apiFetch<{ one_on_ones: Session[] }>(`/api/people/relationships/${encodeURIComponent(relationshipId)}/one-on-ones`),
+      ]);
+      setDetail({ ...relationship.relationship, sessions: sessions.one_on_ones });
+      setError("");
+    } catch (cause) {
+      if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
+      setError(plainFailure(detail ? "PEOPLE STORE" : "PERSON DID NOT LOAD", cause));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [relationshipId]);
+  useEffect(() => { void read(); }, [read]);
+  // A write in another window shows here with no reload.
+  useOnDeskChanged(() => { if (readiness && stateOf(readiness) === "ready") void read(); });
+  const protectedFailure = (cause: unknown) => {
+    if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
+    setError(plainFailure("NOT DONE", cause));
+  };
+  if (!readiness && !error) return <SurfaceState loading />;
+  if (readiness && stateOf(readiness) !== "ready") {
+    const face = readinessFace(stateOf(readiness));
+    return <div className="people-joy-state" data-testid="people-joy-state">
+      <div className="people-joy-lead">
+        <Button variant="primary" onClick={() => openSurfaceOr("open-people", "/")} data-testid="people-joy-action">{face.action}</Button>
+        <span className="people-joy-line">{face.label}</span>
+      </div>
+    </div>;
+  }
+  return <div className="people-surface" data-testid="person-window">
+    {error ? (
+      <span className="people-failure" role="alert" data-testid="people-failure">
+        <span className="people-failure-label">{error}</span>
+        <Button dense variant="ghost" onClick={() => void read()}>Try again</Button>
+      </span>
+    ) : null}
+    {detail ? (
+      <RelationshipPane relationship={detail} initialLens={initialLens} lensRequest={lensRequest}
+        onRefresh={() => void read()} onProtectedFailure={protectedFailure}
+        onArchived={() => { if (onClose) onClose(); else { setDetail(null); void read(); } }} />
+    ) : null}
+  </div>;
+}
+
+/** PHILO-17 (2b): exported; a person's own window (`pullout:people:<id>`)
+ *  hosts it. There the window's close is the way back, so no Back. */
+export function RelationshipPane({ relationship, initialLens, lensRequest = null, onRefresh, onProtectedFailure, onArchived, onBack }: { relationship: RelationshipDetail; initialLens?: Lens | null; lensRequest?: { lens: Lens; seq: number } | null; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack?(): void }) {
   // PHILO-13-07 (B2): the tab is part of the place, kept per person.
   const lensPlace = `people/lens/${relationship.id}`;
   const [lens, setLensState] = useState<Lens>(() => initialLens || (keptPlace(lensPlace) as Lens) || "now");
@@ -429,7 +501,7 @@ function RelationshipPane({ relationship, initialLens, lensRequest = null, onRef
     if (id !== "now") setNowConcern(null);
   }, [setLens]);
   return <div className="people-detail">
-    <div className="people-detail-head"><Button dense variant="ghost" onClick={onBack}>Back</Button><strong>{relationship.display_name}</strong></div>
+    <div className="people-detail-head">{onBack ? <Button dense variant="ghost" onClick={onBack}>Back</Button> : null}<strong>{relationship.display_name}</strong></div>
     {nextLabel ? <div className="people-next-header" data-testid="people-next-1on1">NEXT 1:1 &middot; {nextLabel}</div> : null}
     <div className="people-lenses" role="tablist" aria-label={`${relationship.display_name} lenses`}>
       {([['now', 'Now'], ['prep', 'Prep'], ['one-on-ones', '1:1s'], ['context', 'Context'], ['history', 'History'], ['info', 'Info']] as const).map(([id, label]) => <Button key={id} dense variant="ghost" role="tab" aria-selected={lens === id} onClick={() => switchLens(id)}>{label}</Button>)}
@@ -590,7 +662,7 @@ function PrepLens({ relationship, onRefresh, onProtectedFailure, onOpenConcern }
               {lm.open_count > 0 ? <span className="people-prep-token people-prep-token-muted" data-testid="prep-meeting-open-count">{lm.open_count} OPEN</span> : null}
             </span>
             <span className="people-prep-row-spacer" />
-            <Button dense variant="ghost" onClick={() => openSurfaceOr("review-meetings", "/history", lm.meeting_id)} data-testid="prep-meeting-open">Open</Button>
+            <Button dense variant="ghost" onClick={() => openSourceRef(`meeting:${lm.meeting_id}`)} data-testid="prep-meeting-open">Open</Button>
           </div>
         </div>
       ) : null}

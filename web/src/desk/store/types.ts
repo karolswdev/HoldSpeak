@@ -198,6 +198,9 @@ export interface DeskState {
   recording: "idle" | "recording" | "busy";
   recordingExternal: boolean;
   recordingStartedAt: number | null;
+  /** PHILO-17: the meeting this desk started and is recording; its window
+   * (`pullout:meeting:<id>`) shows the live room until it stops. */
+  liveMeetingId: string | null;
   /** HS-136-03: scheduled recording state visible on the Chair. */
   scheduledRecordings: ScheduledRecording[];
   /** HS-136-03: arming countdown state (hub-authoritative). */

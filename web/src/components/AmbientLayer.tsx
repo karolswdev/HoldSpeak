@@ -12,7 +12,7 @@ import {
   type AftercareHost,
 } from "../desk/intelligenceAttention";
 import { useChairWindows } from "../desk/chair/chairWindows";
-import { openSurfaceWhenReady } from "../desk/shell";
+import { openSourceRef } from "../desk/surface/citations";
 import { humanizeWireValue } from "../lib/productLanguage";
 import { Button } from "./signal/Signal";
 import { AddToProject } from "../desk/AddToProject";
@@ -257,7 +257,7 @@ function AftercareNote() {
             variant="primary"
             data-testid="aftercare-open-proposals"
             onClick={() => {
-              openSurfaceWhenReady("review-meetings", `meeting:${signal.meetingId}?view=review`);
+              openSourceRef(`meeting:${signal.meetingId}?view=review`);
               dismissAftercare();
             }}
           >

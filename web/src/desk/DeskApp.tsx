@@ -37,6 +37,7 @@ import { Pullout } from "./components/Pullout";
 import { InfoWindow } from "./components/InfoWindow";
 import { ApplicationBoundary } from "./components/ApplicationBoundary";
 import { objectByRef } from "./world";
+import { objectWindowStandIn } from "./objectWindows";
 import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
 import { useSettleState } from "./settleState";
@@ -149,7 +150,9 @@ function DeskFaces() {
     if (arrivalRequired) useSettleState.getState().setSettled(false);
   }, [arrivalRequired]);
   const chairOpenCards = pullouts
-    .map((pullout) => ({ ...pullout, object: objectByRef(items, pullout.id) }))
+    // PHILO-17: a meeting or a person window reads its own object; the desk
+    // holds the newest meetings only, and a person is not a desk item.
+    .map((pullout) => ({ ...pullout, object: objectByRef(items, pullout.id) ?? objectWindowStandIn(pullout.id) }))
     .filter((pullout) => Boolean(pullout.object));
 
   useEffect(() => {

@@ -29,7 +29,8 @@ import deskCreateMenuSrc from "../components/DeskCreateMenu.tsx?raw";
 import pulloutSrc from "../components/Pullout.tsx?raw";
 import exposeSrc from "../components/window/Expose.tsx?raw";
 import noteEditorSrc from "../pullouts/editors/NoteEditor.tsx?raw";
-import meetingPulloutSrc from "../pullouts/MeetingPullout.tsx?raw";
+import meetingWindowSrc from "../pullouts/MeetingWindow.tsx?raw";
+import meetingRecordSrc from "../../pages/cores/history/MeetingRecord.tsx?raw";
 import thoughtContextSrc from "../pullouts/ThoughtContextPicker.tsx?raw";
 
 import { Button } from "../../components/signal/Signal";
@@ -63,7 +64,9 @@ const MIGRATED: Array<[string, string]> = [
   ["desk/components/Pullout.tsx", pulloutSrc],
   ["desk/components/window/Expose.tsx", exposeSrc],
   ["desk/pullouts/editors/NoteEditor.tsx", noteEditorSrc],
-  ["desk/pullouts/MeetingPullout.tsx", meetingPulloutSrc],
+  // PHILO-17: the meeting window (its body moved from the Meetings window).
+  ["desk/pullouts/MeetingWindow.tsx", meetingWindowSrc],
+  ["pages/cores/history/MeetingRecord.tsx", meetingRecordSrc],
   ["desk/pullouts/ThoughtContextPicker.tsx", thoughtContextSrc],
 ];
 

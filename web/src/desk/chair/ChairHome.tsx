@@ -43,6 +43,7 @@ import {
   countToken,
   StringGadget,
   needYouWords,
+  openSourceRef,
 } from "../surface";
 import { openIntelligence } from "../intelligenceNavigation";
 import { calendarOpener, openProjectProposal, refOpener, resolveOwner, type Opener } from "../openObject";
@@ -2684,7 +2685,7 @@ function MeetingsSection({
                     variant="ghost"
                     dense
                     onClick={() =>
-                      openSurfaceOr("review-meetings", "/meetings", `meeting:${m.id}`)
+                      openSourceRef(`meeting:${m.id}`)
                     }
                     data-testid="arrival-meeting-open"
                   >
@@ -2693,7 +2694,7 @@ function MeetingsSection({
                 ) : null
               }
               onToggle={() =>
-                openSurfaceOr("review-meetings", "/meetings", `meeting:${m.id}`)
+                openSourceRef(`meeting:${m.id}`)
               }
               open={Boolean(detailState)}
               expands={false}

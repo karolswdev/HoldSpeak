@@ -5,6 +5,8 @@
  * legacy route until every surface lives in-world (HS-95-08 removes the
  * fallbacks and the guard keeps them out). */
 
+import { objectWindowStandIn } from "./objectWindows";
+
 export type SurfaceOpenOptions = { origin?: "dock" | "menu" | "route" };
 
 export type SurfaceOpener = (scope?: string, options?: SurfaceOpenOptions) => void;
@@ -133,6 +135,12 @@ export function openProjectRoom(projectId: string | null | undefined): void {
  * a flat route it walks home first (`/?open=<ref>` is the arrival path). */
 export function openPrimitive(ref: string): void {
   if (window.location.pathname === "/") {
+    // PHILO-17: a meeting or a person window reads its own object; it opens
+    // at once, with no desk refresh first.
+    if (objectWindowStandIn(ref)) {
+      void import("./store").then((m) => m.useDesk.getState().openPullout(ref));
+      return;
+    }
     // The arrival path's exact behavior: refresh first so a just-created
     // primitive is in the items before the pull-out resolves it.
     void import("./store").then((m) =>

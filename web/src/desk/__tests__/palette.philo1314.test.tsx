@@ -10,6 +10,7 @@
  * - `People` puts the People app above the `People & vocabulary` note; one
  *   Escape closes the shelf, also with a query typed.
  * Real store, real palette, real C5 seam; the hub transport is the double. */
+import { takePersonLens } from "../objectWindows";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -27,6 +28,8 @@ vi.mock("../shell", async () => {
     openSurface: (key: string, scope?: string) => { opened.surfaces.push([key, scope]); return true; },
     openSurfaceOr: (key: string, _href: string, scope?: string) => { opened.surfaces.push([key, scope]); },
     openProjectRoom: (id: string) => { opened.surfaces.push(["open-project-memory", `project:${id}`]); },
+    // PHILO-17 (2b): a person opens in their own window.
+    openPrimitive: (ref: string) => { opened.surfaces.push(["window", ref]); },
   };
 });
 
@@ -111,7 +114,7 @@ describe("PHILO-13-14 the palette knows his week", () => {
     expect(top()).toContain("Priya Shah");
     expect(top()).toContain("PERSON");
     fireEvent.keyDown(input, { key: "Enter" });
-    expect(opened.surfaces).toContainEqual(["open-people", "people:rel-priya"]);
+    expect(opened.surfaces).toContainEqual(["window", "people:rel-priya"]);
     expect(calls).toContainEqual(["GET", "/api/people/relationships"]);
   });
 
@@ -121,7 +124,8 @@ describe("PHILO-13-14 the palette knows his week", () => {
     expect(options().some((o) => o.includes("Prep 1:1 with Priya Shah"))).toBe(true);
     expect(options().some((o) => o.includes("Prep 1:1 with Omar Haddad"))).toBe(true);
     fireEvent.click(screen.getByRole("option", { name: /Prep 1:1 with Priya Shah/ }));
-    expect(opened.surfaces).toContainEqual(["open-people", "people:rel-priya:prep"]);
+    expect(opened.surfaces).toContainEqual(["window", "people:rel-priya"]);
+    expect(takePersonLens("rel-priya")).toBe("prep");
   });
 
   it("a word inside a thought finds that thought, and Enter opens it", async () => {

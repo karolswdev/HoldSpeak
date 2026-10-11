@@ -382,7 +382,9 @@ def _open_review_wing(page: Any, meeting_id: str) -> None:
     page.reload(wait_until="load")
     _normal_chair(page)
     page.locator(".desk-surface-window").first.wait_for(timeout=15000)
-    page.locator(".surface-split-detail .surface-display").first.wait_for(timeout=15000)
+    # PHILO-17 ("A meeting opens in one window"): the deep link opens the
+    # meeting's own window, which holds the record and its wings.
+    page.locator(f"[id='pullout:meeting:{meeting_id}'] .surface-display").first.wait_for(timeout=15000)
     pick_wing(page, "Review")  # PHILO-13-11: tabs at 1440, the strip menu at 393
     page.locator("[data-testid='meeting-review']").wait_for(timeout=15000)
     _settle(page)

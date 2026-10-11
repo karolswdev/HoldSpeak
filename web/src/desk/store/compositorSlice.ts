@@ -4,6 +4,7 @@ import { coderOpenFirst } from "../lane/coderOpen";
 import { assertNever } from "../assertNever";
 import type { DeskState, PanelRect, SliceCreator } from "./types";
 import { SURFACE_APPLICATIONS } from "../applications";
+import { meetingWindowRef, personWindowRef } from "../objectWindows";
 import {
   loadDeskWorkspace,
   saveDeskWorkspace,
@@ -60,10 +61,24 @@ const surfaceByAction = new Map(
 const surfaceByWindowId = new Map(
   SURFACE_APPLICATIONS.map((application) => [application.windowId, application]),
 );
-const initialWindowsById = Object.fromEntries(
+const initialWindowsByIdRaw = Object.fromEntries(
   Object.entries(initialWorkspace.windowsById).filter(([id, instance]) => {
     const application = surfaceByWindowId.get(id);
     return application?.action === instance.applicationKey;
+  }),
+);
+// PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): a saved
+// Meetings window scoped to one meeting held that meeting's record. The
+// record is the meeting's own window now: the saved scope comes back as
+// `pullout:meeting:<id>`, and the Meetings window comes back as the list.
+const bootMeetingWindows: string[] = [];
+const initialWindowsById = Object.fromEntries(
+  Object.entries(initialWindowsByIdRaw).map(([id, instance]) => {
+    if (instance.applicationKey !== "review-meetings") return [id, instance];
+    const ref = meetingWindowRef(instance.scope);
+    if (!ref) return [id, instance];
+    bootMeetingWindows.push(ref);
+    return [id, { ...instance, scope: null }];
   }),
 );
 
@@ -188,7 +203,10 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   panelMax: initialPanelLayout.max,
   panelZoom: initialPanelLayout.zoom ?? {},
   windowsById: initialWindowsById,
-  pullouts: reopened("id", initialWindowLists.pullouts),
+  pullouts: reopened("id", [
+    ...initialWindowLists.pullouts,
+    ...bootMeetingWindows.filter((ref) => !initialWindowLists.pullouts.includes(ref)),
+  ]),
   zoneWindows: [],
   zoneViewPrefs: initialWorkspace.zoneViewPrefs,
   infoWindows: reopened("ref", initialWindowLists.info),
@@ -232,18 +250,33 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
       const coder = (get().items.coder ?? []).find((c) => c.id === resolved.resolvedId);
       if (coder && coderOpenFirst(coder)) return;
     }
+    const openCard = (key: string) => {
+      const open = get().pullouts;
+      if (!open.some((p) => p.id === key))
+        set({ pullouts: [...open, { id: key, origin: origin ?? null }] });
+      set({ editingId: null });
+      saveDeskWorkspace(get());
+      // PHILO-13-06 (B1): an open asks for the window in front, also when
+      // it sits iconified on its Dock chip (393: a Chair window iconifies
+      // the desk windows), never a press that leaves it hidden.
+      get().restorePanel(`pullout:${key}`);
+    };
+    // PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): a
+    // meeting and a person each have ONE window, `pullout:meeting:<id>` and
+    // `pullout:people:<id>`, whatever id form the door gave (a bare id, a
+    // qualified ref). A second door brings the open window to the front.
+    if (resolved.kind === "meeting") {
+      openCard(`meeting:${resolved.resolvedId}`);
+      return;
+    }
+    if (resolved.kind === "people" && resolved.resolvedId !== "people" && !resolved.resolvedId.startsWith("project:")) {
+      openCard(`people:${resolved.resolvedId}`);
+      return;
+    }
     const desc = PRIMITIVES[resolved.kind];
     switch (desc.surface.type) {
       case "pullout": {
-        const open = get().pullouts;
-        if (!open.some((p) => p.id === id))
-          set({ pullouts: [...open, { id, origin: origin ?? null }] });
-        set({ editingId: null });
-        saveDeskWorkspace(get());
-        // PHILO-13-06 (B1): an open asks for the window in front, also when
-        // it sits iconified on its Dock chip (393: a Chair window iconifies
-        // the desk windows), never a press that leaves it hidden.
-        get().restorePanel(`pullout:${id}`);
+        openCard(id);
         break;
       }
       case "window": {
@@ -339,6 +372,25 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   // ---- static applications (one normalized lifecycle authority) --------
 
   openSurfaceWindow(key, scope) {
+    // PHILO-17: the Meetings application scoped to one meeting is that
+    // meeting's window; the People application scoped to one person is that
+    // person's window. The applications themselves are the list and the
+    // roster.
+    const objectRef =
+      key === "review-meetings" ? meetingWindowRef(scope)
+        : key === "open-people" ? personWindowRef(scope)
+          : null;
+    if (objectRef) {
+      get().openPullout(objectRef);
+      return;
+    }
+    // PHILO-17: while this desk records a meeting, the Live meeting door is
+    // that meeting's window.
+    const liveId = get().liveMeetingId;
+    if (key === "record-live" && liveId && get().recording !== "idle") {
+      get().openPullout(`meeting:${liveId}`);
+      return;
+    }
     const application = surfaceByAction.get(key);
     if (!application) {
       console.warn(`openSurfaceWindow: unknown application "${key}"`);

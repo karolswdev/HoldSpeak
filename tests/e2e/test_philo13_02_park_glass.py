@@ -204,19 +204,26 @@ class TestParkGlass:
                 assert page.get_by_text(re.compile(r"^PARKED \d+$")).count() == 0, "a PARKED token at zero"
                 deletes: list[str] = []
                 page.on("request", lambda r: deletes.append(r.url) if r.method == "DELETE" else None)
-                # C1-5a: the selected record's footer verb is Park; no Delete.
+                # C1-5a: the record's footer verb is Park; no Delete. PHILO-17
+                # ("A meeting opens in one window"): the row opens the meeting's
+                # own window, and the record's foot is there.
                 self._press(page.get_by_test_id("meeting-row-p13-hiring").locator(".meetings-stream-row-body"))
-                park = page.get_by_role("button", name="Park", exact=True)
+                record = page.locator("[id='pullout:meeting:p13-hiring']")
+                park = record.get_by_role("button", name="Park", exact=True)
                 park.wait_for(timeout=T)
                 assert page.get_by_role("button", name=re.compile("^Delete")).count() == 0
                 self._shot(page, "01-meeting-selected-park", width)
-                # One press, no confirm.
+                # One press, no confirm; the receipt (with Restore) is in the
+                # window where Park was pressed.
                 self._press(park)
-                text = self._receipt(page, "meetings-park-receipt", r"^PARKED \d\d:\d\d$")
+                text = self._receipt(page, "meeting-park-receipt", r"^PARKED \d\d:\d\d$")
                 assert CLOCK.match(text), text
                 assert len(deletes) == 1 and deletes[0].endswith("/api/meetings/p13-hiring"), deletes
                 page.get_by_test_id("meeting-row-p13-hiring").wait_for(state="detached", timeout=T)
                 self._shot(page, "02-meeting-parked-receipt", width)
+                # The owner brings the Meetings list forward from its Dock door.
+                page.locator(".desk-dock").get_by_role("button", name="Meetings", exact=True).click()
+                page.wait_for_timeout(600)
                 # The row is in the DB, parked, with all its work.
                 parked = _meeting_rows(self.db, "p13-hiring")
                 assert parked == {**before, "parked": 1}, parked
@@ -253,19 +260,19 @@ class TestParkGlass:
                 assert _meeting_rows(self.db, "p13-hiring") == before
                 # C1-5e: a refused Restore names it with Retry; Retry restores.
                 self._press(page.get_by_test_id("meeting-row-p13-hiring").locator(".meetings-stream-row-body"))
-                self._press(page.get_by_role("button", name="Park", exact=True))
-                self._receipt(page, "meetings-park-receipt", r"^PARKED ")
+                self._press(record.get_by_role("button", name="Park", exact=True))
+                self._receipt(page, "meeting-park-receipt", r"^PARKED ")
                 refuse = lambda route: route.fulfill(status=500, content_type="application/json", body='{"error":"no"}')  # noqa: E731
                 page.route("**/api/meetings/p13-hiring/restore", refuse)
-                self._press(page.get_by_test_id("meetings-park-receipt").get_by_role("button", name="Restore", exact=True))
-                failed = self._receipt(page, "meetings-park-receipt", "^NOT RESTORED")
+                self._press(page.get_by_test_id("meeting-park-receipt").get_by_role("button", name="Restore", exact=True))
+                failed = self._receipt(page, "meeting-park-receipt", "^NOT RESTORED")
                 assert failed == "NOT RESTORED · THE HUB DID NOT ACCEPT THE CHANGE", failed
-                assert page.locator("[data-testid=meetings-park-receipt] [role=status]").get_attribute("data-tone") == "danger"
+                assert page.locator("[data-testid=meeting-park-receipt] [role=status]").get_attribute("data-tone") == "danger"
                 assert _meeting_rows(self.db, "p13-hiring")["parked"] == 1
                 self._shot(page, "05-meeting-restore-refused", width)
                 page.unroute("**/api/meetings/p13-hiring/restore", refuse)
-                self._press(page.get_by_test_id("meetings-park-receipt").get_by_role("button", name="Retry"))
-                self._receipt(page, "meetings-park-receipt", r"^RESTORED ")
+                self._press(page.get_by_test_id("meeting-park-receipt").get_by_role("button", name="Retry"))
+                self._receipt(page, "meeting-park-receipt", r"^RESTORED ")
                 assert _meeting_rows(self.db, "p13-hiring") == before
                 print(f"meetings {width}: before {before}; parked {parked}; DELETE {deletes}")
                 self._clean(page, errors)

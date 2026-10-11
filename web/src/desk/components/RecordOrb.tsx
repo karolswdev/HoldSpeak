@@ -10,7 +10,6 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDesk } from "../store";
-import { openSurfaceOr } from "../shell";
 import { SYSTEM } from "../systemSprites";
 import { Button } from "../../components/signal/Signal";
 
@@ -65,9 +64,9 @@ export function RecordOrb() {
             return;
           }
           if (state !== "idle") return;
+          // PHILO-17: the start opens the new meeting's own window (the
+          // live room; on Stop the same window shows the saved meeting).
           void useDesk.getState().startRecording();
-          // Recording never leaves the desk: the live window rides along.
-          openSurfaceOr("record-live", "/live");
         }}
         aria-label={recording ? "Stop recording" : "Record a meeting"}
         title={recording ? "Stop recording" : "Record a meeting"}

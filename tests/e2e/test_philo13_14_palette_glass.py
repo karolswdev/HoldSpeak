@@ -266,7 +266,7 @@ class TestPaletteKnowsHisWeek:
         self._glass("#desk-tool-shelf", "C4-1")
         self._shot("C4-1-priya-row")
         self._run_top(rows)
-        self._front("People", "Priya Nair")
+        self._front("Priya Nair", "Priya Nair")  # PHILO-17 (2b): her own window
         assert page.locator("#desk-tool-shelf").count() == 0
         self._shot("C4-1b-priya-window")
 
@@ -278,7 +278,7 @@ class TestPaletteKnowsHisWeek:
         self._glass("#desk-tool-shelf", "C4-2")
         self._shot("C4-2-prep-row")
         self._run_top(rows)
-        self._front("People", "Priya Nair")
+        self._front("Priya Nair", "Priya Nair")  # PHILO-17 (2b): her own window
         page.wait_for_function("() => document.querySelector('.people-lenses [role=tab][aria-selected=true]')?.textContent.trim() === 'Prep'",
                                timeout=T)
         self._shot("C4-2b-prep-window")
