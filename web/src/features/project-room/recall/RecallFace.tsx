@@ -64,7 +64,7 @@ import { useRecallController, type RecallController } from "./useRecallControlle
 import { BeliefCard } from "./BeliefCard";
 import { useMemoryChanges } from "../../../desk/memoryChanges";
 import "./recall.css";
-import { openDrawer } from "../../../desk/drawer/store";
+import { openProjectRoom } from "../../../desk/shell";
 
 /** Render the trusted FTS marker grammar without injecting result HTML. */
 export function MemorySnippet({ value }: { value: string }) {
@@ -85,7 +85,7 @@ export function MemorySnippet({ value }: { value: string }) {
 }
 
 function openProject(projectId: string) {
-  openDrawer(projectId); // PHILO-14 A2: a Project opens as its drawer
+  openProjectRoom(projectId); // PHILO-17 U30: a Project opens its Room (one home)
 }
 
 function Chip({ label, tone, testid }: { label: string; tone?: string; testid?: string }) {

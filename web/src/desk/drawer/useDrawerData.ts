@@ -23,6 +23,19 @@ export type DrawerRead = "ROOM" | "DECISIONS" | "PEOPLE" | "RESOURCES";
 
 export function useDrawerData(projectId: string) {
   const ctrl = useProjectRoomController(`project:${projectId}`, undefined);
+  const revision = useDrawers((s) => s.revision);
+  const [tick, setTick] = useState(0);
+  useOnDeskChanged(() => setTick((n) => n + 1));
+  useEffect(() => {
+    if (revision || tick) void ctrl.load(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revision, tick]);
+  return useDrawerMembers(projectId, ctrl);
+}
+
+/** PHILO-17 U30: the drawer's objects over a Room controller the caller
+ *  holds (the Room's FILES section passes its own: no second Room read). */
+export function useDrawerMembers(projectId: string, ctrl: ReturnType<typeof useProjectRoomController>) {
   useAgentFlightsLive();
   const flights = useAgentFlights((s) => s.flights);
   const sessions = useAgentFlights((s) => s.sessions);
@@ -58,11 +71,6 @@ export function useDrawerData(projectId: string) {
     void readPeople();
     void readResources();
   }, [readPeople, readResources, revision, tick]);
-
-  useEffect(() => {
-    if (revision || tick) void ctrl.load(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revision, tick]);
 
   const members = useMemo<DrawerMember[]>(
     () =>

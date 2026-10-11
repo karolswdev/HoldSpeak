@@ -16,7 +16,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, _room_through_drawer
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, _room_opened
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the window names glass needs Playwright")
@@ -95,7 +95,7 @@ class TestWindowNamesOnGlass:
                 row = page.get_by_role("option", name=f"Open {PROJECT}").first
                 row.wait_for()
                 self._press(page, row, width)
-                _room_through_drawer(page, lambda loc: self._press(page, loc, width))
+                _room_opened(page)
                 room = page.locator("[id='surface-project-memory']")
                 room.wait_for()
                 page.wait_for_timeout(1200)

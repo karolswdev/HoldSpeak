@@ -1,13 +1,14 @@
 // HS-169-02 — DoorCore vitest: every state the one-screen Door passes through.
 
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act, within } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 /* ── Mock door API (includes discovery wires moved from setup/api by HS-170-02) ── */
 
 const mockDoorCount = vi.fn();
 const mockDoorCreate = vi.fn();
+const mockDoorAddSources = vi.fn();
 const mockDiscoverGitHub = vi.fn();
 const mockDiscoverJira = vi.fn();
 const mockDiscoverConfluence = vi.fn();
@@ -15,6 +16,7 @@ const mockDiscoverConfluence = vi.fn();
 vi.mock("../api", () => ({
   doorCount: (...args: unknown[]) => mockDoorCount(...args),
   doorCreate: (...args: unknown[]) => mockDoorCreate(...args),
+  doorAddSources: (...args: unknown[]) => mockDoorAddSources(...args),
   discoverGitHub: (...args: unknown[]) => mockDiscoverGitHub(...args),
   discoverJira: (...args: unknown[]) => mockDiscoverJira(...args),
   discoverConfluence: (...args: unknown[]) => mockDiscoverConfluence(...args),
@@ -23,9 +25,13 @@ vi.mock("../api", () => ({
 /* ── Mock connections API ── */
 
 const mockFetchConnections = vi.fn();
+const mockRecheckProvider = vi.fn();
+const mockAddAtlassianAccount = vi.fn();
 
 vi.mock("../../../../pages/cores/connections/api", () => ({
   fetchConnections: (...args: unknown[]) => mockFetchConnections(...args),
+  recheckProvider: (...args: unknown[]) => mockRecheckProvider(...args),
+  addAtlassianAccount: (...args: unknown[]) => mockAddAtlassianAccount(...args),
 }));
 
 /* ── Mock shell ── */
@@ -141,6 +147,10 @@ vi.mock("../../../../desk/surface", () => ({
       autoFocus={autoFocus}
     />
   ),
+  SurfaceWell: ({ children }: { children?: React.ReactNode }) => <div data-testid="surface-well">{children}</div>,
+  TransportKey: ({ label, onClick }: { label?: string; onClick?: () => void }) => (
+    <button data-testid={`transport-${label?.toLowerCase()}`} onClick={onClick}>{label}</button>
+  ),
   MicButton: ({
     onText,
     label,
@@ -166,7 +176,7 @@ vi.mock("../../../../desk/surface/title", () => ({
 
 /* ── Import component AFTER mocks ── */
 
-import { DoorCore } from "../DoorCore";
+import { AddSourcesWell, DoorCore } from "../DoorCore";
 
 /* ── Fixture helpers ── */
 
@@ -261,6 +271,9 @@ beforeEach(() => {
   mockFetchConnections.mockResolvedValue({ tools: [] });
   mockDoorCount.mockResolvedValue(liveCountResponse("github"));
   mockDoorCreate.mockResolvedValue({ projectId: "proj_test_123" });
+  mockDoorAddSources.mockResolvedValue({ projectId: "proj_room_1" });
+  mockRecheckProvider.mockResolvedValue(null);
+  mockAddAtlassianAccount.mockResolvedValue(undefined);
   mockDiscoverGitHub.mockResolvedValue(ghDiscoveryItems());
   mockDiscoverJira.mockResolvedValue({ items: [], cursor: null });
 });
@@ -311,7 +324,7 @@ describe("DoorCore", () => {
       expect(screen.getByTestId("door-connect-jira")).toBeTruthy();
     });
 
-    it("shows SIGN IN chip for github with not_configured state", async () => {
+    it("shows NOT SIGNED IN chip for github when not signed in", async () => {
       mockFetchConnections.mockResolvedValue({
         tools: [
           { ...ghTool(false), state: "owner_action_required" },
@@ -320,7 +333,7 @@ describe("DoorCore", () => {
       });
       render(<DoorCore scope="" />);
       await waitFor(() => {
-        expect(screen.getByTestId("state-chip-sign-in")).toBeTruthy();
+        expect(screen.getByTestId("state-chip-not-signed-in")).toBeTruthy();
       });
     });
 
@@ -820,6 +833,120 @@ describe("DoorCore", () => {
       const row = screen.getByTestId("door-row-confluence");
       expect(row.textContent).toContain("NOT SET UP");
       expect(screen.getByTestId("door-connect-confluence")).toBeTruthy();
+    });
+  });
+  /* PHILO-17 U29: sign in where the row is; no Settings window over the work. */
+  describe("sign in in the row (U29)", () => {
+    it("Connect opens the exact command with Copy in the row, not Settings", async () => {
+      mockFetchConnections.mockResolvedValue({
+        tools: [{ ...ghTool(false), state: "owner_action_required", recovery_hint: "gh auth login" }, jiraTool(false)],
+      });
+      render(<DoorCore scope="" />);
+      await waitFor(() => expect(screen.getByTestId("door-connect-github")).toBeTruthy());
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("door-connect-github"));
+      });
+      const well = await screen.findByTestId("signin-well-github");
+      expect(well.textContent).toContain("gh auth login");
+      expect(screen.getByTestId("transport-copy")).toBeTruthy();
+      expect(mockOpenSurfaceWindow).not.toHaveBeenCalled();
+    });
+
+    it("the chip reads the producer's state, never the error text", async () => {
+      // github_provider classifies gh's "not logged in" as owner_action_required;
+      // a degraded check says what it is, whatever its text holds.
+      mockFetchConnections.mockResolvedValue({
+        tools: [{ ...ghTool(false), state: "degraded", error_detail: "connect to 10.0.0.1:401 timed out" }, jiraTool(false)],
+      });
+      render(<DoorCore scope="" />);
+      await waitFor(() => expect(screen.getAllByTestId("state-chip-not-set-up").length).toBe(2));
+      expect(screen.queryByTestId("state-chip-not-signed-in")).toBeNull();
+    });
+
+    it("Recheck in the row checks the provider and reads the connections again", async () => {
+      mockFetchConnections.mockResolvedValue({
+        tools: [{ ...ghTool(false), state: "owner_action_required" }, jiraTool(false)],
+      });
+      render(<DoorCore scope="" />);
+      await waitFor(() => expect(screen.getByTestId("door-connect-github")).toBeTruthy());
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("door-connect-github"));
+      });
+      const reads = mockFetchConnections.mock.calls.length;
+      await act(async () => {
+        fireEvent.click(await screen.findByTestId("signin-recheck-github"));
+      });
+      await waitFor(() => expect(mockRecheckProvider).toHaveBeenCalledWith("github"));
+      await waitFor(() => expect(mockFetchConnections.mock.calls.length).toBeGreaterThan(reads));
+    });
+
+    it("Add for a Jira account checks it at once (never left NEVER CHECKED)", async () => {
+      mockFetchConnections.mockResolvedValue({ tools: [ghTool(false), { ...jiraTool(false), connections: [] }] });
+      render(<DoorCore scope="" />);
+      await waitFor(() => expect(screen.getByTestId("door-connect-jira")).toBeTruthy());
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("door-connect-jira"));
+      });
+      const well = await screen.findByTestId("signin-well-jira");
+      const inputs = well.querySelectorAll("input");
+      await act(async () => {
+        fireEvent.change(inputs[0], { target: { value: "acme.atlassian.net" } });
+        fireEvent.change(inputs[1], { target: { value: "me@acme.com" } });
+      });
+      // The exact sign-in command follows what is typed.
+      expect(well.textContent).toContain("acli jira auth login --site acme.atlassian.net --email me@acme.com --token");
+      await act(async () => {
+        fireEvent.click(within(well).getByText("Add"));
+      });
+      await waitFor(() => expect(mockAddAtlassianAccount).toHaveBeenCalledWith("jira", "acme.atlassian.net", "me@acme.com"));
+      await waitFor(() => expect(mockRecheckProvider).toHaveBeenCalledWith("jira"));
+    });
+  });
+
+  /* PHILO-17 U10: the Room's Add source uses the same rows. */
+  describe("Add source in the Room (U10)", () => {
+    it("a repository the project already watches says Already watched", async () => {
+      mockFetchConnections.mockResolvedValue(connectedTools());
+      mockDoorAddSources.mockRejectedValue(new Error("Already watched"));
+      const onAdded = vi.fn();
+      render(<AddSourcesWell projectId="proj_room_1" onAdded={onAdded} onCancel={() => undefined} />);
+      await waitFor(() => expect(screen.getByTestId("door-trigger-github")).toBeTruthy());
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("door-trigger-github"));
+      });
+      await act(async () => {
+        fireEvent.click(await screen.findByTestId("door-pick-karolswdev/HoldSpeak"));
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("room-add-sources-add"));
+      });
+      await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("Already watched"));
+      expect(onAdded).not.toHaveBeenCalled();
+    });
+
+    it("adds the picked repository to the existing project", async () => {
+      mockFetchConnections.mockResolvedValue(connectedTools());
+      const onAdded = vi.fn();
+      render(<AddSourcesWell projectId="proj_room_1" onAdded={onAdded} onCancel={() => undefined} />);
+      await waitFor(() => expect(screen.getByTestId("door-trigger-github")).toBeTruthy());
+      expect((screen.getByTestId("room-add-sources-add") as HTMLButtonElement).disabled).toBe(true);
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("door-trigger-github"));
+      });
+      await act(async () => {
+        fireEvent.click(await screen.findByTestId("door-pick-karolswdev/HoldSpeak"));
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("room-add-sources-add"));
+      });
+      await waitFor(() => expect(mockDoorAddSources).toHaveBeenCalled());
+      const [projectId, payloads] = mockDoorAddSources.mock.calls[0];
+      expect(projectId).toBe("proj_room_1");
+      expect(payloads).toEqual([
+        expect.objectContaining({ provider: "github", scope: "karolswdev/HoldSpeak", watches: ["open_prs", "ci"] }),
+      ]);
+      expect(mockDoorCreate).not.toHaveBeenCalled();
+      await waitFor(() => expect(onAdded).toHaveBeenCalled());
     });
   });
 });

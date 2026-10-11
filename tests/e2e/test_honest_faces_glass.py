@@ -260,7 +260,70 @@ def test_intelligence_lane_names_and_decision_rows(desk):
         row_text = row.inner_text()
         assert "Freeze the old ledger on Nov 5" in row_text
         assert not re.search(r"D-[0-9a-f]{6,}", row_text)
+        # PHILO-17: a row names its meeting (and its date), never
+        # "UNASSIGNED GOVERNING"; the filter is a plain word.
+        assert "Ledger cutover sync" in row_text, row_text
+        assert "UNASSIGNED" not in row_text and "GOVERNING" not in row_text, row_text
+        view = intel.locator(".receipts-view").inner_text()
+        assert "WHY" not in view, view
+        intel.get_by_role("button", name="Current only").wait_for(timeout=5000)
         _shot(page, "intelligence-decisions", width)
+
+
+def test_an_open_meeting_shows_its_decisions_above_commitments(desk):
+    """PHILO-17 ("what did we decide yesterday?"): the meeting's recorded
+    decision is on its record, above Commitments."""
+    open_page, _ = desk
+    for width, height in WIDTHS:
+        page = open_page(width, height, "review-meetings")
+        row = page.locator("[data-testid='meeting-row-m-standup'] .meetings-stream-row-body").first
+        row.wait_for(timeout=15000)
+        row.evaluate("el => el.click()")
+        decisions = page.locator("[data-testid='meeting-decisions']").first
+        decisions.wait_for(timeout=15000)
+        assert "Freeze the old ledger on Nov 5" in decisions.inner_text()
+        commitments = page.locator("[data-testid='meeting-commitments']").first
+        commitments.wait_for(timeout=15000)
+        assert decisions.bounding_box()["y"] < commitments.bounding_box()["y"]
+        decisions.scroll_into_view_if_needed()
+        _shot(page, "meeting-decisions", width)
+
+
+def test_a_decision_search_hit_opens_the_decision_and_adds_no_floor_icon(desk):
+    """PHILO-17: ⌘K → a DECISION hit opens the decision itself (in
+    Intelligence → Decisions), not the meeting, and drops no "New decision"
+    icon on the Floor."""
+    open_page, _ = desk
+    for width, height in WIDTHS:
+        page = open_page(width, height)
+        page.wait_for_timeout(1500)
+        _settle(page)
+        icons_before = page.locator(".desk-icon").count()
+        page.locator("[aria-controls=desk-tool-shelf]").first.evaluate("el => el.click()")
+        page.locator("[aria-controls=desk-palette-listbox]").fill("Freeze the old ledger")
+        hit = page.locator("[id^='desk-palette-option-memory:decision:']").first
+        hit.wait_for(timeout=15000)
+        hit.evaluate("el => el.click()")
+        intel = page.locator(".desk-window[aria-label='Intelligence']")
+        intel.wait_for(timeout=15000)
+        head = intel.locator(".receipt-detail h3").first
+        head.wait_for(timeout=15000)
+        assert (head.text_content() or "").strip() == "Freeze the old ledger on Nov 5"
+        page.wait_for_timeout(1500)
+        _settle(page)
+        assert page.locator(".desk-icon").count() == icons_before
+        assert page.locator(".desk-icon-name", has_text="New decision").count() == 0
+        _shot(page, "decision-search-hit", width)
+        # Astra r1 (5): back to the list, then the same hit again opens it again.
+        intel.get_by_role("button", name="← RESULTS").first.evaluate("el => el.click()")
+        intel.locator(".receipts-results").first.wait_for(timeout=15000)
+        assert intel.locator(".receipt-detail").count() == 0
+        page.locator("[aria-controls=desk-tool-shelf]").first.evaluate("el => el.click()")
+        page.locator("[aria-controls=desk-palette-listbox]").fill("Freeze the old ledger")
+        hit = page.locator("[id^='desk-palette-option-memory:decision:']").first
+        hit.wait_for(timeout=15000)
+        hit.evaluate("el => el.click()")
+        intel.locator(".receipt-detail h3").first.wait_for(timeout=15000)
 
 
 def test_trust_scope_names_a_saved_external_destination(desk):

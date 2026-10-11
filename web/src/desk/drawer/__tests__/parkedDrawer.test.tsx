@@ -20,7 +20,11 @@ vi.mock("../../../runtime/RuntimeBus", () => {
 const shell = vi.hoisted(() => ({ opened: [] as string[] }));
 vi.mock("../../shell", async () => {
   const actual = await vi.importActual<typeof import("../../shell")>("../../shell");
-  return { ...actual, openSurfaceOr: (key: string) => shell.opened.push(key) };
+  return {
+    ...actual,
+    openSurfaceOr: (key: string) => shell.opened.push(key),
+    openProjectRoom: (id: string) => shell.opened.push(`room:${id}`),
+  };
 });
 
 const ITEMS: ParkedItem[] = [
@@ -116,8 +120,10 @@ describe("the Parked drawer", () => {
     expect(shell.opened).toEqual(["review-meetings"]);
     fireEvent.doubleClick(rowOf(/^Draft the runbook/));
     expect(openWb).toHaveBeenCalledWith("wb-1");
+    // PHILO-17 U30: a parked Project opens its Room (one home), never a drawer.
     fireEvent.doubleClick(rowOf(/^Old migration/));
-    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toContain("p-old");
+    expect(shell.opened).toContain("room:p-old");
+    expect(useDrawers.getState().drawers.map((d) => d.projectId)).not.toContain("p-old");
   });
 
   it("a kind the hub could not read is named; nothing parked says so once", async () => {

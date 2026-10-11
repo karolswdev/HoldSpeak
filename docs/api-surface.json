@@ -1611,9 +1611,7 @@
         "GET"
       ],
       "module": "web.routes.decision_records",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/decision-records/review",
@@ -5342,7 +5340,19 @@
         "GET"
       ],
       "module": "web.routes.providers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/providers/confluence/connections",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/providers/confluence/connections/{ref}/recheck",

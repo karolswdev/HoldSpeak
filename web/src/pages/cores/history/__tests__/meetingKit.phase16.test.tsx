@@ -156,3 +156,88 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
     await waitFor(() => expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decisions · 1"));
   });
 });
+
+// PHILO-17 ("what did we decide yesterday?"): the decisions the meeting
+// recorded (the `decisions` table) are on its record, above Commitments,
+// even when no proposal names them.
+describe("the meeting's recorded decisions (PHILO-17)", () => {
+  it("meetingOutcomes draws recorded decisions; a proposal's own row once (by identity); a rejected one never", () => {
+    const { decisions } = meetingOutcomes({
+      ftProposals: [
+        { id: "p1", meeting_id: "m1", kind: "decision", text: "Run reconciliation nightly", state: "confirmed", owner_hint: "Avery", created_at: "", decision_record_id: "rec-1" },
+      ],
+      openActions: [],
+      settledActions: [],
+      meetingDecisions: [
+        { id: "d1", text: "Freeze the old ledger on Nov 5", lifecycle: "recorded" },
+        // The row the confirmed proposal wrote (its record): drawn once, as the proposal.
+        { id: "d2", text: "Run reconciliation nightly", lifecycle: "active", record_id: "rec-1" },
+        // Astra r1 (6): the same words from another artifact are a second decision.
+        { id: "d5", text: "Run reconciliation nightly", lifecycle: "recorded", source_artifact_id: "art-2" },
+        { id: "d3", text: "Keep the old ledger", lifecycle: "superseded" },
+        { id: "d6", text: "Shard the ledger", lifecycle: "disputed" },
+        { id: "d4", text: "Drop the ledger", lifecycle: "rejected" },
+      ],
+    });
+    expect(decisions.map((d) => [d.text, d.meta])).toEqual([
+      ["Run reconciliation nightly", "AVERY"],
+      ["Freeze the old ledger on Nov 5", "DECIDED"],
+      ["Run reconciliation nightly", "DECIDED"],
+      ["Keep the old ledger", "REPLACED"],
+      ["Shard the ledger", "DISPUTED"],
+    ]);
+  });
+
+  // Astra r2 (1): a confirmed proposal and its ledger row are ONE row, and
+  // that row says the RECORD's state once the record is replaced or disputed.
+  it("a confirmed proposal paired with its record reads REPLACED / DISPUTED, never DECIDED", () => {
+    const proposal = (id: string, text: string, record: string) => ({
+      id, meeting_id: "m1", kind: "decision" as const, text, state: "confirmed" as const,
+      owner_hint: "Avery", created_at: "", decision_record_id: record,
+    });
+    const { decisions } = meetingOutcomes({
+      ftProposals: [
+        proposal("p1", "Freeze the old ledger on Nov 5", "rec-1"),
+        proposal("p2", "Run reconciliation nightly", "rec-2"),
+        proposal("p3", "Shard the ledger", "rec-3"),
+      ],
+      openActions: [],
+      settledActions: [],
+      meetingDecisions: [
+        { id: "d1", text: "Freeze the old ledger on Nov 5", lifecycle: "superseded", record_id: "rec-1" },
+        { id: "d2", text: "Run reconciliation nightly", lifecycle: "disputed", record_id: "rec-2" },
+        { id: "d3", text: "Shard the ledger", lifecycle: "active", record_id: "rec-3" },
+      ],
+    });
+    expect(decisions.map((d) => [d.key, d.text, d.meta])).toEqual([
+      ["ft-p1", "Freeze the old ledger on Nov 5", "REPLACED"],
+      ["ft-p2", "Run reconciliation nightly", "DISPUTED"],
+      ["ft-p3", "Shard the ledger", "AVERY"],
+    ]);
+  });
+
+  it("the hook reads the meeting's ledger rows and the record shows them above Commitments", async () => {
+    const meeting = {
+      id: "m9", title: "Ledger cutover sync", intel_status: "complete",
+      intel: { summary: "s", action_items: [{ id: "ai-1", task: "Write the rollback runbook", owner: null, status: "pending" }] },
+    };
+    apiFetch.mockImplementation(async (url: string) => {
+      if (url === "/api/decisions?scope=all&limit=500&meeting_id=m9")
+        return { decisions: [{ id: "d1", text: "Freeze the old ledger on Nov 5", lifecycle: "recorded" }] };
+      if (url.includes("/follow-through-proposals")) return { proposals: [] };
+      if (url === "/api/meetings/m9") return meeting;
+      return {};
+    });
+    function Harness() {
+      const data = useMeetingData(meeting, () => undefined);
+      return <MeetingOutcomes data={data} meeting={meeting} />;
+    }
+    const { container } = render(<Harness />);
+    const decisions = await screen.findByTestId("meeting-decisions");
+    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
+    expect(decisions.textContent).toContain("Freeze the old ledger on Nov 5");
+    const order = [...container.querySelectorAll("[data-testid=meeting-decisions], [data-testid=meeting-commitments]")]
+      .map((el) => el.getAttribute("data-testid"));
+    expect(order).toEqual(["meeting-decisions", "meeting-commitments"]);
+  });
+});
