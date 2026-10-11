@@ -42,6 +42,7 @@ import { ParkReceipt, restoreFailedOutcome, restoredOutcome } from "../../desk/s
 import { restoreMeeting } from "../../desk/api";
 import { HandConfirmSlot, drawerHost, handOriginOfRef, handSourceProps } from "../../desk/hand";
 import { useCompactViewport } from "../../desk/useCompactViewport";
+import { useSettledLayout } from "../../desk/useSettledLayout";
 import { registerProjectRepository, registrable, useProjectRepository } from "../../desk/projectRepository";
 import { plainFailure } from "../../desk/surface/plainFailure";
 import { useWindowTitle } from "../../desk/surface/title";
@@ -2525,7 +2526,15 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     window.addEventListener(ROOM_PROPOSAL_EVENT, take);
     return () => window.removeEventListener(ROOM_PROPOSAL_EVENT, take);
   }, [ctrl.projectId]);
-  const roomBodyRef = useRef<HTMLDivElement>(null);
+  const roomBodyRef = useRef<HTMLDivElement | null>(null);
+  // PHILO-17 (phonepass): the body is not drawn until its sections' reads
+  // stop moving its rows (a tap never lands on a row that moved under it).
+  const [roomBodyEl, setRoomBodyEl] = useState<HTMLDivElement | null>(null);
+  const bindRoomBody = useCallback((el: HTMLDivElement | null) => {
+    roomBodyRef.current = el;
+    setRoomBodyEl(el);
+  }, []);
+  const bodySettled = useSettledLayout(roomBodyEl, ctrl.projectId ?? "");
   const revealedSeq = useRef(0);
   // Once per request: when the row is drawn (the wing switch and a posture's
   // close render first), it scrolls into view; a later re-read never pulls
@@ -2665,7 +2674,9 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     <>
       {hero ? hero(<Button dense variant="ghost" onClick={handleRefresh}>Refresh</Button>) : null}
       {ctrl.room ? (
-        <div className="room-body" data-testid="room-body" ref={roomBodyRef}>
+        <div className="room-body" data-testid="room-body" ref={bindRoomBody}
+          data-settling={bodySettled ? undefined : "true"} aria-busy={bodySettled ? undefined : true}>
+          {bodySettled ? null : <p className="room-empty-line room-settling-line">Loading…</p>}
           {sendFailure}
           {ctrl.view === "room" ? (
             <>

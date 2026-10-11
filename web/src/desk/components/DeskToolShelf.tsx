@@ -252,6 +252,17 @@ export function oneDoorPerName<
   return out;
 }
 
+/** PHILO-17 (phonepass): a read that lands while the list is drawn never
+ *  moves a row he can see. The rows drawn for this query keep their order
+ *  (a row whose read went away leaves); a row that arrives later goes below
+ *  them. A new query draws a fresh ranking. */
+export function keepDrawnOrder<T extends { id: string }>(drawn: readonly string[], rows: readonly T[]): T[] {
+  if (!drawn.length) return [...rows];
+  const at = new Map(drawn.map((id, i) => [id, i]));
+  const kept = rows.filter((r) => at.has(r.id)).sort((a, b) => at.get(a.id)! - at.get(b.id)!);
+  return [...kept, ...rows.filter((r) => !at.has(r.id))];
+}
+
 /* ── MEMORY: content search (inventory gap 9) ── */
 export const MEMORY_MIN_QUERY = 3;
 export const MEMORY_DEBOUNCE_MS = 250;
@@ -740,7 +751,7 @@ export function DeskToolShelf() {
   // ── MEMORY: the content hits, after the local matches. Only the hits of
   // THIS query; an object a local row already shows is not shown twice; a
   // hit that opens nothing is left out. ──
-  const rows: DeckRow[] = useMemo(() => {
+  const rankedRows: DeckRow[] = useMemo(() => {
     if (normalized.length < MEMORY_MIN_QUERY || memory.query !== normalized) return localRows;
     const shown = new Set(localRows.map((row) => row.id));
     const out: DeckRow[] = [];
@@ -785,6 +796,17 @@ export function DeskToolShelf() {
     }
     return out.length ? [...localRows, ...out] : localRows;
   }, [localRows, memory, normalized]);
+
+  // PHILO-17 (phonepass): the order drawn for this query (and this opening)
+  // holds while reads land; see keepDrawnOrder.
+  const drawnRef = useRef<{ query: string; open: boolean; ids: string[] }>({ query: "", open: false, ids: [] });
+  const rows: DeckRow[] = useMemo(() => {
+    const drawn = drawnRef.current;
+    const same = drawn.open === open && drawn.query === normalized && !prompt;
+    const next = same ? keepDrawnOrder(drawn.ids, rankedRows) : rankedRows;
+    drawnRef.current = { query: normalized, open, ids: next.map((r) => r.id) };
+    return next;
+  }, [rankedRows, normalized, open, prompt]);
 
   // The runnable list the selection index walks (ghosts stay visible
   // but are never selected, never run).
