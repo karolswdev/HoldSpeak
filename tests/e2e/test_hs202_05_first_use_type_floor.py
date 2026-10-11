@@ -75,9 +75,104 @@ FLOOR_LEDGER: dict[str, str] = {}
 # so it can never drift from design-tokens.json.
 _FAINT_JS = "getComputedStyle(document.documentElement).getPropertyValue('--text-faint').trim()"
 
+# The live hit probe, shared by `_MEASURE` and the SELF-TEST so the self-test
+# exercises the very path the gate reads (Astra r1, PR #1075).
+HIT_PROBE_JS = """
+  // The product rule (window-chrome.css scroll-padding-block, PHILO-7-02):
+  // a Button is fully hittable once it is scrolled into view. So before the
+  // probe, scroll ONLY the containers a user can scroll (overflow auto or
+  // scroll, and the page) to bring the Button in, nearest, inside each
+  // one's scroll padding. An overflow:hidden box is never scrolled: what it
+  // clips stays clipped and fails. Every scroller goes back after the probe.
+  const hs202Scrollable = (n, axis) => {
+    const o = getComputedStyle(n)[axis === 'y' ? 'overflowY' : 'overflowX'];
+    return (o === 'auto' || o === 'scroll')
+      && (axis === 'y' ? n.scrollHeight > n.clientHeight : n.scrollWidth > n.clientWidth);
+  };
+  const hs202Bring = (el, n, viewTop, viewBottom, viewLeft, viewRight) => {
+    const cs = getComputedStyle(n);
+    const pt = parseFloat(cs.scrollPaddingTop) || 0, pb = parseFloat(cs.scrollPaddingBottom) || 0;
+    const pl = parseFloat(cs.scrollPaddingLeft) || 0, pr = parseFloat(cs.scrollPaddingRight) || 0;
+    let r = el.getBoundingClientRect();
+    if (hs202Scrollable(n, 'y')) {
+      if (r.top < viewTop + pt) n.scrollTop -= (viewTop + pt) - r.top;
+      else if (r.bottom > viewBottom - pb) n.scrollTop += r.bottom - (viewBottom - pb);
+    }
+    r = el.getBoundingClientRect();
+    if (hs202Scrollable(n, 'x')) {
+      if (r.left < viewLeft + pl) n.scrollLeft -= (viewLeft + pl) - r.left;
+      else if (r.right > viewRight - pr) n.scrollLeft += r.right - (viewRight - pr);
+    }
+  };
+  const hs202Probe = (el, hit, where) => {
+    const doc = document.scrollingElement;
+    const saved = [];
+    for (let n = el.parentElement; n && n !== doc && n !== document.body; n = n.parentElement)
+      if (hs202Scrollable(n, 'y') || hs202Scrollable(n, 'x')) saved.push([n, n.scrollTop, n.scrollLeft]);
+    saved.push([doc, doc.scrollTop, doc.scrollLeft]);
+    try {
+      for (const [n] of saved) {
+        if (n === doc) {
+          const st = getComputedStyle(doc);
+          if (st.overflowY !== 'hidden' && st.overflowX !== 'hidden') hs202BringPage(el);
+          continue;
+        }
+        const nr = n.getBoundingClientRect();
+        const top = nr.top + n.clientTop, left = nr.left + n.clientLeft;
+        hs202Bring(el, n, top, top + n.clientHeight, left, left + n.clientWidth);
+      }
+      const r = el.getBoundingClientRect();
+      const halfW = Math.max(hit, r.width) / 2, halfH = Math.max(hit, r.height) / 2;
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const label = (el.textContent || '').trim().slice(0, 24);
+      // A Desk window covers the Chair behind it. Those Buttons are in the
+      // DOM and laid out, but nothing can reach them and the halo is not
+      // what is in their way. ONLY a centre in another layer, in front
+      // (`covered`), makes the Button OCCLUDED and outside this probe's
+      // claim. A centre lost to a same-layer neighbour, an ancestor clip
+      // or the body is a MISS like any other point (Astra r1, PR #1075).
+      const centreSeen = hs202Classify(el, cx, cy);
+      if (centreSeen.outcome === 'covered') {
+        return { label, occluded: true, by: centreSeen.owner,
+                 w: Math.round(halfW*2), h: Math.round(halfH*2), covered: [],
+                 painted: Math.round(r.height), path: where, bad: [] };
+      }
+      // The ruling rejects two things: a CLIPPED area, and an adjacent
+      // CONTROL owning the same point. A window drawn in front of the
+      // Chair is neither -- it is the layer order doing its job. Split
+      // the two, so a real clip is never excused and a layering fact is
+      // never reported as a hit-area defect.
+      const bad = [], covered = [];
+      for (const [fx, fy] of [[0,0],[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]]) {
+        const x = cx + fx * (halfW - 1), y = cy + fy * (halfH - 1);
+        if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue;  // off-screen edge
+        const seen = hs202Classify(el, x, y);
+        if (seen.outcome === 'own') continue;
+        const at = `(${fx},${fy})[${seen.outcome}]->` + seen.owner;
+        // ONLY a box in another layer, in front, is coverage. A body hit,
+        // an ancestor clip or a neighbour in the same layer is a MISS.
+        if (seen.outcome === 'covered') covered.push(at); else bad.push(at);
+      }
+      return { label, occluded: false, w: Math.round(halfW*2), h: Math.round(halfH*2),
+               covered, painted: Math.round(r.height), path: where, bad };
+    } finally {
+      for (const [n, top, left] of saved) { n.scrollTop = top; n.scrollLeft = left; }
+    }
+  };
+  const hs202BringPage = (el) => {
+    const doc = document.scrollingElement;
+    const r = el.getBoundingClientRect();
+    if (r.top < 0) doc.scrollTop += r.top;
+    else if (r.bottom > innerHeight) doc.scrollTop += r.bottom - innerHeight;
+    const r2 = el.getBoundingClientRect();
+    if (r2.left < 0) doc.scrollLeft += r2.left;
+    else if (r2.right > innerWidth) doc.scrollLeft += r2.right - innerWidth;
+  };
+"""
+
 # The M7/M8 reader. Kept deliberately close to the census's own code so a
 # number here means the same thing a number in census.json means.
-_MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + FOLDED_WORD_JS + """
+_MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + HIT_PROBE_JS + FOLDED_WORD_JS + """
   const parse = (s) => {
     const m = /rgba?\\(([^)]+)\\)/.exec(s || "");
     if (!m) return null;
@@ -263,59 +358,7 @@ _MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + FOLDED_WORD_JS + """
       if (!visible(el)) continue;
       const r0 = el.getBoundingClientRect();
       if (r0.bottom <= 0 || r0.top >= innerHeight || r0.right <= 0 || r0.left >= innerWidth) continue;
-      // The product rule (window-chrome.css scroll-padding-block, PHILO-7-02):
-      // a Button is fully hittable once it is scrolled into view. A Button
-      // that its own window body's scroll edge cuts is not a hit-area defect,
-      // so scroll it into view (nearest) in its own scroller first, probe it
-      // there, and put every scroller back after the probe.
-      const scrolled = [];
-      for (let n = el.parentElement; n; n = n.parentElement) {
-        if (n.scrollHeight > n.clientHeight || n.scrollWidth > n.clientWidth)
-          scrolled.push([n, n.scrollTop, n.scrollLeft]);
-      }
-      const doc = document.scrollingElement;
-      scrolled.push([doc, doc.scrollTop, doc.scrollLeft]);
-      el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-      try {
-      const r = el.getBoundingClientRect();
-      const halfW = Math.max(hit, r.width) / 2, halfH = Math.max(hit, r.height) / 2;
-      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-      // A Desk window covers the Chair behind it. Those Buttons are in
-      // the DOM and laid out, but nothing can reach them and the halo is
-      // not what is in their way. The centre decides: if the Button does
-      // not own its own middle, it is OCCLUDED and this probe has no
-      // claim on it. Counting it would make the rig report a layering
-      // fact as a hit-area defect.
-      const centreSeen = hs202Classify(el, cx, cy);
-      if (centreSeen.outcome !== 'own') {
-        plated.push({ label: (el.textContent || '').trim().slice(0, 24),
-                      occluded: true, by: centreSeen.owner,
-                      w: Math.round(halfW*2), h: Math.round(halfH*2), covered: [],
-                      painted: Math.round(r.height), path: path(el), bad: [] });
-        continue;
-      }
-      // The ruling rejects two things: a CLIPPED area, and an adjacent
-      // CONTROL owning the same point. A window drawn in front of the
-      // Chair is neither -- it is the layer order doing its job. Split
-      // the two, so a real clip is never excused and a layering fact is
-      // never reported as a hit-area defect.
-      const bad = [], covered = [];
-      for (const [fx, fy] of [[0,0],[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]]) {
-        const x = cx + fx * (halfW - 1), y = cy + fy * (halfH - 1);
-        if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue;  // off-screen edge
-        const seen = hs202Classify(el, x, y);
-        if (seen.outcome === 'own') continue;
-        const where = `(${fx},${fy})[${seen.outcome}]->` + seen.owner;
-        // ONLY a box in another layer, in front, is coverage. A body hit,
-        // an ancestor clip or a neighbour in the same layer is a MISS.
-        if (seen.outcome === 'covered') covered.push(where); else bad.push(where);
-      }
-      plated.push({ label: (el.textContent || '').trim().slice(0, 24), occluded: false,
-                    w: Math.round(halfW*2), h: Math.round(halfH*2), covered,
-                    painted: Math.round(r.height), path: path(el), bad });
-      } finally {
-        for (const [n, top, left] of scrolled) { n.scrollTop = top; n.scrollLeft = left; }
-      }
+      plated.push(hs202Probe(el, hit, path(el)));
     }
     // The chrome strips this product actually has at 393.
     for (const [kind, sel] of [
@@ -347,7 +390,7 @@ _MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + FOLDED_WORD_JS + """
 # look like coverage -- reads them with the shipping readers, and
 # asserts they were caught. Then it removes them.
 _SELFTEST = """() => {
-""" + OWNERSHIP_JS + """
+""" + OWNERSHIP_JS + HIT_PROBE_JS + """
   const host = document.querySelector(
     '.desk-surface-window, .desk-pullout, .desk-window') || document.body;
   const probe = document.createElement('div');
@@ -378,6 +421,39 @@ _SELFTEST = """() => {
     return [...out];
   };
   const hit = { clipped: read(probe.querySelector('#hs202-clipped')), bare: read(bare) };
+
+  // Astra r1 (PR #1075): the live probe itself, `hs202Probe`, on three
+  // planted shapes in the front window. A Button cut by a USER scroller's
+  // edge must pass once scrolled in (and the scroller must go back); one
+  // cut by an overflow:hidden box must fail; one whose CENTRE a same-layer
+  // neighbour covers must fail, not slip out as occluded.
+  const live = document.createElement('div');
+  live.id = 'hs202-05-selftest-live';
+  live.style.cssText = 'position:fixed;left:8px;top:200px;z-index:60000;'
+    + 'display:flex;flex-direction:column;gap:16px;width:180px';
+  live.innerHTML =
+      '<div id="hs202-scroller" style="height:100px;overflow:auto;scroll-padding-block:24px">'
+    + '<div style="height:80px"></div>'
+    + '<button class="btn" id="hs202-edge" style="min-height:44px;height:44px">Edge</button>'
+    + '<div style="height:200px"></div></div>'
+    + '<div style="height:60px;overflow:hidden"><div style="height:40px"></div>'
+    + '<button class="btn" id="hs202-hidden" style="min-height:44px;height:44px">Hidden</button></div>'
+    + '<div style="position:relative;height:60px">'
+    + '<button class="btn" id="hs202-sib" style="min-height:44px;height:44px">Sibling</button>'
+    + '<span style="position:absolute;inset:0"></span></div>';
+  host.appendChild(live);
+  const scroller = live.querySelector('#hs202-scroller');
+  const liveRead = (id) => {
+    const r = hs202Probe(live.querySelector('#' + id), 44, id);
+    return { occluded: r.occluded, bad: r.bad, covered: r.covered };
+  };
+  const probed = {
+    edge: liveRead('hs202-edge'),
+    edgeScrollBack: scroller.scrollTop,
+    hidden: liveRead('hs202-hidden'),
+    sibling: liveRead('hs202-sib'),
+  };
+  live.remove();
 
   // The ember probe, read exactly the way the gate reads a text leaf.
   const ink = probe.querySelector('#hs202-ink');
@@ -413,7 +489,7 @@ _SELFTEST = """() => {
   const inkKind = EMBER.some((e) => same(bgC, hx(e)) || same(fgC, hx(e))) ? 'ember' : 'other';
 
   probe.remove(); kill.remove();
-  return { hit, inkPaints: !!a && a.r === b.r && a.g === b.g && a.b === b.b,
+  return { hit, probed, inkPaints: !!a && a.r === b.r && a.g === b.g && a.b === b.b,
            inkFill, bgNow, fg: fgNow, inkKind, inkRatio, emberList: EMBER };
 }"""
 
@@ -581,6 +657,23 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
                             "'covered' inside the front window; coverage is a "
                             "ledger line, so this reader cannot fail"
                         )
+                live = probe["probed"]
+                if live["edge"]["occluded"] or live["edge"]["bad"]:
+                    failures.append(
+                        "SELF-TEST scroll edge: a Button cut by a user scroller's "
+                        f"edge did not pass once scrolled in: {live['edge']}"
+                    )
+                if live["edgeScrollBack"] != 0:
+                    failures.append(
+                        "SELF-TEST scroll edge: the probe did not put the scroller "
+                        f"back (scrollTop {live['edgeScrollBack']})"
+                    )
+                for shape in ("hidden", "sibling"):
+                    if live[shape]["occluded"] or not live[shape]["bad"]:
+                        failures.append(
+                            f"SELF-TEST {shape}: the live probe let a lost Button "
+                            f"pass: {live[shape]}; this reader cannot fail"
+                        )
                 if probe["inkKind"] != "ember" or probe["inkRatio"] >= 4.5:
                     failures.append(
                         "SELF-TEST ink: a muted label on --accent-ink classified as "
@@ -594,6 +687,7 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
                         f"({probe['inkFill']} vs {probe['bgNow']}); the ember gate "
                         "was not exercised"
                     )
+                print(f"SELF-TEST: live probe {probe['probed']}")
                 print(f"SELF-TEST: hit probes lost their points as {probe['hit']}; "
                       f"ember probe {probe['fg']} on {probe['bgNow']} classified "
                       f"{probe['inkKind']} at {probe['inkRatio']}:1 "
@@ -705,7 +799,7 @@ def test_first_use_screens_hold_the_floor_and_the_contrast(
             whole = plated_seen[0] - partly[0]
             print(
                 f"HIT CONTRACT {width}: {plated_seen[0] + occluded[0]} visible plated "
-                f"Button observations = {occluded[0]} occluded (centre not owned, "
+                f"Button observations = {occluded[0]} occluded (centre under a layer in front, "
                 f"skipped) + {plated_seen[0]} probed. Of the probed: {whole} own ALL "
                 f"nine points of their 44x44 area, {partly[0]} own fewer because a "
                 f"layer in front covers the rest (ledgered below). Misses (body, "
