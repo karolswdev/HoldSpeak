@@ -158,7 +158,13 @@ def _boot_with_fast_retry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     home = tmp_path / "home"
     (home / ".holdspeak").mkdir(parents=True, exist_ok=True)
     (home / ".holdspeak" / "config.json").write_text(
-        json.dumps({"meeting": {"intel_retry_base_seconds": 2, "intel_retry_max_seconds": 4}}),
+        # PHILO-17: "after every meeting" queues a summary at Import by itself.
+        # This rig's subject is the owner's Run gesture chain, so the setting
+        # is OFF here and every run below is the gesture's own.
+        json.dumps({"meeting": {
+            "intel_retry_base_seconds": 2, "intel_retry_max_seconds": 4,
+            "intelligence_auto": "off",
+        }}),
         encoding="utf-8",
     )
     assert current_lock() is None, "this process already owns a database"

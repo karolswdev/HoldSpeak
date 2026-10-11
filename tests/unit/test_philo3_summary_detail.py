@@ -254,6 +254,12 @@ def _change_summary_assignment_to_endpoint(db: Any, monkeypatch: Any) -> None:
 def _produce_summary_wire_cases(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
     """Mint every fixture case through the real import/service/queue producers."""
     cases: dict[str, Any] = {}
+    # PHILO-17: "after every meeting" queues a summary at Import by itself.
+    # These states are the owner's own Run gesture and its outcomes, so the
+    # setting is OFF for the minting (the imported meeting waits for the press).
+    monkeypatch.setattr(
+        "holdspeak.services.meeting_backlog_service._configured_auto_mode", lambda: "off"
+    )
 
     imported_dir = tmp_path / "imported_off"
     imported_dir.mkdir(parents=True, exist_ok=True)
