@@ -83,7 +83,7 @@ function wire(payload: unknown | (() => unknown)) {
 
 async function search(query = "freeze window") {
   fireEvent.change(screen.getByRole("searchbox", { name: "Search the Desk" }), { target: { value: query } });
-  fireEvent.click(screen.getByRole("button", { name: "Search desk memory" }));
+  fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
   await screen.findByTestId("recall-results");
 }
 
@@ -121,7 +121,7 @@ describe("RecallFace (HS-200-13)", () => {
       ["All", "Decisions", "Commitments", "Briefs", "Meetings"],
     );
     expect(within(group).getByRole("button", { name: "Filter: Decisions" }).getAttribute("aria-pressed")).toBe("false");
-    expect(screen.getByRole("button", { name: "Search desk memory" })).toHaveProperty("disabled", true);
+    expect(screen.getByRole("button", { name: "Search memory" })).toHaveProperty("disabled", true);
   });
 
   it("recall: the current decision accented with rationale, source, Project and Carry; the superseded one under it, dimmed and named", async () => {
@@ -269,7 +269,7 @@ describe("RecallFace (HS-200-13)", () => {
     vi.mocked(apiFetch).mockRejectedValue(new Error("memory index locked"));
     render(<RecallFace />);
     fireEvent.change(screen.getByRole("searchbox", { name: "Search the Desk" }), { target: { value: "freeze window" } });
-    fireEvent.click(screen.getByRole("button", { name: "Search desk memory" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
     expect((await screen.findByTestId("recall-failed-token")).textContent).toBe("CANT SEARCH · MEMORY INDEX LOCKED");
     expect((screen.getByRole("searchbox", { name: "Search the Desk" }) as HTMLInputElement).value).toBe("freeze window");
     wire(result());

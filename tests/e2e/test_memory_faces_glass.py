@@ -143,7 +143,7 @@ def _search_cutover(page: Any) -> None:
         lambda r: "/api/memory/recall" in r.url and "query=cutover" in r.url and r.status == 200,
         timeout=T,
     ):
-        page.locator(".desk-surface-window").get_by_role("button", name="Search desk memory", exact=True).click()
+        page.locator(".desk-surface-window").get_by_role("button", name="Search memory", exact=True).click()
     page.get_by_test_id("recall-ref-token").filter(has_text="REF · CUTOVER").wait_for(timeout=T)
     page.locator("[data-testid=recall-results]:not([data-dimmed])").wait_for(timeout=T)
     page.wait_for_function(
@@ -167,7 +167,7 @@ def _search_cutover_after_delete(page: Any) -> None:
         lambda r: "/api/memory/recall" in r.url and "query=cutover" in r.url and r.status == 200,
         timeout=T,
     ):
-        page.locator(".desk-surface-window").get_by_role("button", name="Search desk memory", exact=True).click()
+        page.locator(".desk-surface-window").get_by_role("button", name="Search memory", exact=True).click()
     page.locator("[data-testid=recall-belief]").filter(has_text="Cutover rollback owner is Marek.").wait_for(timeout=T)
     assert page.locator("[data-testid=recall-results]").filter(has_text="Cutover date is 10-17.").count() == 0
 
@@ -197,7 +197,7 @@ def _discarded_refresh_releases_nothing(page: Any, width: int) -> None:
         _api(page, "DELETE", "/api/meetings/m-0929", None, token=TOKEN)
         until(1)  # the quiet refresh, held
         _gone(page, beliefs, belief)  # hidden from the frame on
-        page.locator(".desk-surface-window").get_by_role("button", name="Search desk memory", exact=True).click()
+        page.locator(".desk-surface-window").get_by_role("button", name="Search memory", exact=True).click()
         until(2)  # the search, held
         page.locator(f"{results}[data-dimmed]").wait_for(timeout=T)
         held[0].continue_()  # the refresh lands while the search is pending: discarded

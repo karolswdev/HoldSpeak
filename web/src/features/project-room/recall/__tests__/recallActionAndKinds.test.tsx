@@ -60,7 +60,7 @@ function wire(payload: Record<string, unknown>) {
 
 async function search(query: string) {
   fireEvent.change(screen.getByRole("searchbox", { name: "Search the Desk" }), { target: { value: query } });
-  fireEvent.click(screen.getByRole("button", { name: "Search desk memory" }));
+  fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
   await screen.findByTestId("recall-results");
 }
 

@@ -617,7 +617,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 destination = page.get_by_role("region", name=selected_note["title"], exact=True)
                 _loaded(destination.get_by_text(selected_note["body_markdown"], exact=True))
             elif note_match:
-                destination = page.get_by_role("region", name=re.compile(r"^(Notes|Desk memory)$"))
+                destination = page.get_by_role("region", name=re.compile(r"^(Notes|Memory)$"))
                 _loaded(destination.get_by_text(NOTE_TITLE, exact=True))
             else:
                 # Current fixture deterministically opens Change places. Its grid

@@ -149,9 +149,10 @@ class TestDoors:
 
     def _no_old_names(self, page: Any, where: str, fails: dict[str, Any]) -> None:
         words = page.evaluate(WORDS_JS)
-        for old in ("Desk memory", "List view"):
-            if old in words:
-                fails[f"D5 no '{old}' ({where})"] = [line for line in words.splitlines() if old in line][:3]
+        for old in ("desk memory", "list view"):
+            hits = [line for line in words.splitlines() if old in line.lower()]
+            if hits:
+                fails[f"D5 no '{old}' ({where})"] = hits[:3]
 
     def _one_on_one(self, page: Any, width: int, fails: dict[str, Any]) -> None:
         """The People drawer shows the next 1:1 (it left the Dock with People)."""
@@ -168,17 +169,105 @@ class TestDoors:
         if want not in label:
             fails[f"{width} the People drawer says the next 1:1"] = label
 
-    def _opens(self, page: Any, door: Callable[[], None], name: str) -> list[str]:
-        self._fresh(page)
-        door()
-        want = re.compile(name)
-        deadline = time.monotonic() + T / 1000
-        while time.monotonic() < deadline:
-            hits = [n for n in page.evaluate(SHELLS_JS) if want.search(n or "")]
-            if hits:
-                return hits
-            page.wait_for_timeout(250)
-        raise AssertionError(f"no window named {name!r}")
+    def _doors(self, page: Any, width: int, fails: dict[str, Any]) -> None:
+        """D3: every application opens from each kept door, and the window
+        holds that application's LOADED content (and scope)."""
+        phone = width < 720
+
+        def dom_click(selector: str) -> Callable[[], None]:
+            # A DOM click: at 393 the Dock pages its seats.
+            return lambda: page.locator(selector).first.evaluate("el => el.click()")
+
+        def drawer(key: str) -> Callable[[], None]:
+            def run() -> None:
+                icon = page.locator(f".desk-screen [data-object-id='{key}']")
+                icon.focus()
+                page.keyboard.press("Enter")
+            return run
+
+        def go_row(*path: str) -> Callable[[], None]:
+            def run() -> None:
+                self._menu(page, "go")
+                for label in path:
+                    _row(page, label).click()
+            return run
+
+        def mark_row(label: str) -> Callable[[], None]:
+            def run() -> None:
+                self._menu(page, "mark")
+                _row(page, label).click()
+            return run
+
+        def missed_memory() -> None:
+            page.locator(".desk-dock [data-launcher='attention']").first.evaluate("el => el.click()")
+            page.get_by_role("group", name="Missed").get_by_role("button", name="Memory", exact=True).click()
+
+        settings = "#surface-settings"
+        # (door, how, the loaded content, what must NOT be there)
+        doors: list[tuple[str, Callable[[], None], str, str | None]] = [
+            # At 393 Speak opens the Chair's Capture window (PHILO-15 11).
+            ("Speak (Dock)", dom_click(".desk-dock [data-app='surface-dictation']"),
+             ".desk-window-shell[aria-label='Capture']" if phone else "#surface-dictation .speak-footer", None),
+            ("Meetings (Dock)", dom_click(".desk-dock [data-app='surface-meetings']"), "#surface-meetings .meetings-head-verbs", None),
+            ("Intelligence (Dock)", dom_click(".desk-dock [data-app='intelligence:desk']"), ".intelligence-segment", None),
+            ("People (drawer)", drawer("drawer:people"), "#surface-people >> text=Avery Chen", None),
+            ("People (Go)", go_row("People"), "#surface-people >> text=Avery Chen", None),
+            ("Conductor (drawer)", drawer("drawer:conductor"), ".conductor-window", None),
+            ("Conductor (Go)", go_row("Conductor"), ".conductor-window", None),
+            ("Change places (Dock)", dom_click(".desk-dock [aria-label='Change places']"),
+             "#surface-places >> role=button[name='All places']", None),
+            ("Settings (HoldSpeak)", mark_row("Settings"), f"{settings} .surface-ledger-primary >> text=Meetings",
+             f"{settings} [data-testid='connections-github']"),
+            ("Runs on (HoldSpeak)", mark_row("Runs on"), "[data-testid='switchboard']", None),
+            ("Connections (HoldSpeak)", mark_row("Connections"), f"{settings} [data-testid='connections-github']", None),
+            ("Setup (HoldSpeak)", mark_row("Setup"), "#surface-setup >> text=/Readiness checks|Everything is ready/", None),
+        ]
+        if phone:
+            doors.append(("Memory (Missed ▸ Memory)", missed_memory,
+                          "#surface-project-memory [aria-label='Search memory']", None))
+        else:
+            doors += [
+                ("Ask AI (Go)", go_row("Ask AI"), ".desk-ask textarea, .desk-ask [role=textbox]", None),
+                ("Memory (Go)", go_row("Memory"), "#surface-project-memory [aria-label='Search memory']", None),
+                ("Workbenches (Go ▸ Tools)", go_row("Tools", "Workbenches"), "#surface-workbenches", None),
+            ]
+        for what, door, content, absent in doors:
+            try:
+                self._fresh(page)
+                door()
+                page.locator(content).first.wait_for(timeout=T)
+                if absent:
+                    page.wait_for_timeout(600)
+                    if page.locator(absent).count():
+                        fails[f"D3 {width} {what}: the right scope"] = f"{absent} is on glass"
+                if "Memory" in what:
+                    self._no_old_names(page, f"{width} Memory open", fails)
+            except Exception as exc:  # noqa: BLE001 -- the fence names every door that failed
+                fails[f"D3 {width} {what} opens loaded"] = {"error": str(exc)[:200], "shells": page.evaluate(SHELLS_JS)}
+        page.screenshot(path=str(SHOTS / f"{width}-last-door.png"))
+
+        # ── D6: a Room opens, iconifies to its own Dock tile, comes back ──
+        room = PROJECTS[0]
+        try:
+            self._fresh(page)
+            (go_row(room) if phone else go_row("Projects", room))()
+            shell = page.locator(f".desk-window-shell[aria-label='{room}']")
+            shell.wait_for(timeout=T)
+            if phone:
+                page.keyboard.press("Control+m")
+            else:
+                page.locator(f"[aria-label='Iconify {room}']").first.click()
+            seat = page.locator(".desk-dock [data-seat='surface-project-memory']")
+            seat.wait_for(timeout=T)
+            if not (seat.get_attribute("aria-label") or "").startswith(room):
+                fails[f"D6 {width} the Room's tile names it"] = seat.get_attribute("aria-label")
+            page.screenshot(path=str(SHOTS / f"{width}-room-seated.png"))
+            seat.evaluate("el => el.click()")
+            page.locator("#surface-project-memory").wait_for(state="visible", timeout=T)
+            page.locator(".desk-dock [data-seat='surface-project-memory']").wait_for(state="detached", timeout=T)
+        except Exception as exc:  # noqa: BLE001
+            fails[f"D6 {width} Room open → iconify → restore from its tile"] = {
+                "error": str(exc)[:200], "shells": page.evaluate(SHELLS_JS)}
 
     def test_one_door_per_application(self) -> None:
         from playwright.sync_api import sync_playwright
@@ -243,47 +332,7 @@ class TestDoors:
                 self._no_old_names(page, "Missed open", fails)
                 page.screenshot(path=str(SHOTS / "1440-missed.png"))
 
-                # ── D3: every application opens from its kept door ──────────
-                def dock_tile(app: str) -> Callable[[], None]:
-                    return lambda: page.locator(f".desk-dock [data-app='{app}']").click()
-
-                def drawer(key: str) -> Callable[[], None]:
-                    return lambda: page.locator(f".desk-screen [data-object-id='{key}']").dblclick()
-
-                def go_row(*path: str) -> Callable[[], None]:
-                    def run() -> None:
-                        self._menu(page, "go")
-                        for label in path:
-                            _row(page, label).click()
-                    return run
-
-                def mark_row(label: str) -> Callable[[], None]:
-                    def run() -> None:
-                        self._menu(page, "mark")
-                        _row(page, label).click()
-                    return run
-
-                doors: list[tuple[str, Callable[[], None], str]] = [
-                    ("Speak (Dock)", dock_tile("surface-dictation"), "^Speak"),
-                    ("Meetings (Dock)", dock_tile("surface-meetings"), "^Meetings"),
-                    ("Intelligence (Dock)", dock_tile("intelligence:desk"), "^Intelligence"),
-                    ("People (drawer)", drawer("drawer:people"), "^People"),
-                    ("Conductor (drawer)", drawer("drawer:conductor"), "^Conductor"),
-                    ("Ask AI (Go)", go_row("Ask AI"), "Ask"),
-                    ("Memory (Go)", go_row("Memory"), "^Memory"),
-                    ("a project (Go ▸ Projects)", go_row("Projects", PROJECTS[0]), f"^{PROJECTS[0]}"),
-                    ("Workbenches (Go ▸ Tools)", go_row("Tools", "Workbenches"), "^Workbenches"),
-                    ("Settings (HoldSpeak)", mark_row("Settings"), "^Settings"),
-                    ("Runs on (HoldSpeak)", mark_row("Runs on"), "^Runs on"),
-                    ("Connections (HoldSpeak)", mark_row("Connections"), "^(Settings|Connections)"),
-                    ("Setup (HoldSpeak)", mark_row("Setup"), "^Setup"),
-                ]
-                for what, door, name in doors:
-                    try:
-                        self._opens(page, door, name)
-                    except Exception as exc:  # noqa: BLE001 -- the fence names every door that failed
-                        fails[f"D3 {what} opens"] = {"error": str(exc)[:160], "shells": page.evaluate(SHELLS_JS)}
-                page.screenshot(path=str(SHOTS / "1440-last-door.png"))
+                self._doors(page, 1440, fails)
                 if errors:
                     fails["1440 no page errors"] = errors[:5]
                 ctx.close()
@@ -304,10 +353,11 @@ class TestDoors:
                 self._no_old_names(page, "393 Go open", fails)
                 page.screenshot(path=str(SHOTS / "393-go.png"))
                 page.keyboard.press("Escape")
-                try:
-                    self._opens(page, mark_row("Settings"), "^Settings")
-                except Exception as exc:  # noqa: BLE001
-                    fails["D4 393 the HoldSpeak menu opens Settings"] = str(exc)[:160]
+                mark = self._menu(page, "mark")
+                if mark != MARK_ROWS:
+                    fails["D4 393 the HoldSpeak menu is the setup rows"] = mark
+                page.keyboard.press("Escape")
+                self._doors(page, 393, fails)
                 self._fresh(page)
                 self._no_old_names(page, "393 desk", fails)
                 page.screenshot(path=str(SHOTS / "393-desk.png"))

@@ -24,6 +24,7 @@ that no two children of the add row intersect.
 from __future__ import annotations
 
 import json
+import re
 import threading
 import urllib.error
 import urllib.request
@@ -430,19 +431,16 @@ class TestConnectAnEngineFromTheFace:
             print(f"SUMMARY BACK ON {back_on}")
             _shot(page, "models-engine-back-on", width)
 
-            # ── the door: Go -> Runs on (1440); Go -> Settings -> Runs on (393,
-            # whose short Go lists the places, PHILO-15 11) — no command deck ──
+            # ── the door: HoldSpeak -> Runs on at both widths (PHILO-17 doors:
+            # the setup applications live in the HoldSpeak menu) — no command deck ──
             close_runs_on(page)
-            page.locator(".desk-verbbar-title", has_text="Go").click()
-            if width == 393:
-                page.get_by_role("menuitem", name="Settings", exact=True).first.click()
-                row = page.locator(".surface-ledger-row", has_text="Runs on").first
-                row.get_by_role("button", name="Open", exact=True).click()
-            else:
-                page.get_by_role("menuitem", name="Runs on", exact=True).first.click()
+            page.locator(".desk-mark").click()
+            mark = page.get_by_role("menu", name="HoldSpeak")
+            mark.locator("[role^=menuitem]").filter(
+                has=page.locator(".desk-menu-label", has_text=re.compile(r"^Runs on$"))).first.click()
             wait_board(page)
-            print("DOOR Go opened the Runs on window")
-            _shot(page, "models-from-the-go-menu", width)
+            print("DOOR HoldSpeak opened the Runs on window")
+            _shot(page, "models-from-the-holdspeak-menu", width)
 
             real = [e for e in errors if "ResizeObserver" not in e]
             assert not real, real

@@ -314,7 +314,7 @@ describe("ProjectRoomCore — no-scope states", () => {
     localStorage.clear();
     render(<ProjectRoomCore />);
     expect(screen.getByRole("searchbox", { name: "Search the Desk" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Search desk memory" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Search memory" })).toBeTruthy();
     expect(screen.getByText("SEARCH THE DESK")).toBeTruthy();
     expect(screen.getByText("THIS DEVICE")).toBeTruthy();
   });

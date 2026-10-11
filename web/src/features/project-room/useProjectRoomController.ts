@@ -199,7 +199,7 @@ export function useProjectRoomController(
     [meetings, decisions, artifacts],
   );
   const projectName = String(
-    room?.project.name || project.name || scopeLabel || (projectId ? "Project" : "Desk memory"),
+    room?.project.name || project.name || scopeLabel || (projectId ? "Project" : "Memory"),
   );
 
   const openMoment = async (decision: Record<string, unknown>) => {

@@ -129,9 +129,9 @@ def _open_desk_memory(page: Any) -> None:
 
 def _search_verb(page: Any) -> Any:
     """The face's own Search verb (the desk chrome has one too).
-    HS-200-13: the recall face names it `Search desk memory`."""
+    HS-200-13: the recall face names it `Search memory`."""
     return page.locator(".desk-surface-window").get_by_role(
-        "button", name="Search desk memory", exact=True
+        "button", name="Search memory", exact=True
     )
 
 
