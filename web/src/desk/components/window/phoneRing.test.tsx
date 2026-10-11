@@ -194,7 +194,7 @@ describe("Go at 393 is the owner's short list (PHILO-15 11, B21; supersedes C7 Q
     expect(out.map((e) => (e.type === "sep" ? "—" : e.label))).toEqual([
       "chair.window.needs", "chair.window.brief", "chair.window.week", "chair.window.capture", "—",
       // PHILO-17 (doors): Settings is in the HoldSpeak menu, not Go.
-      "Meetings", "People", "Conductor", "—",
+      "Meetings", "Ask AI", "People", "Conductor", "—",
       "Ledger cutover", "—", "New"]);
     const nu = out[out.length - 1] as Extract<WorkMenuEntry, { type: "sub" }>;
     expect(nu.entries.map((e) => (e.type === "sep" ? "—" : e.label))).toEqual(["Thought", "Meeting", "Project", "Person"]);

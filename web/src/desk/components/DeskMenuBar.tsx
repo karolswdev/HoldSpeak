@@ -59,9 +59,11 @@ export const PHONE_GO_CHAIR = [
   "chair.window.week",
   "chair.window.capture",
 ] as const;
-// PHILO-17 (doors): Settings left Go; it is in the HoldSpeak menu.
+// PHILO-17 (doors): Settings left Go; it is in the HoldSpeak menu. Ask AI
+// is here because a phone has no ⌘I and no keyboard for ⌘K.
 export const PHONE_GO_PLACES: readonly (readonly [string, string])[] = [
   ["go.review-meetings", "Meetings"],
+  ["go.ask", "Ask AI"],
   ["desk.open-people", "People"],
   ["go.open-conductor", "Conductor"],
 ];

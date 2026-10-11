@@ -26,7 +26,7 @@ TOKEN = "philo15-11-menus"
 SHOTS = evidence_dir("philo-15-11")
 PROJECT = "Payments ledger cutover"
 
-GO_ROWS = ["Needs you", "Brief", "The week", "Capture", "Meetings", "People", "Conductor", "Settings", PROJECT, "New"]
+GO_ROWS = ["Needs you", "Brief", "The week", "Capture", "Meetings", "Ask AI", "People", "Conductor", PROJECT, "New"]
 NEW_ROWS = ["Thought", "Meeting", "Project", "Person"]
 
 ROWS = """() => [...document.querySelectorAll('.desk-verbbar-menu [role^=menuitem]')]

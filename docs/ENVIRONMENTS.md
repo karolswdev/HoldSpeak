@@ -1,15 +1,14 @@
 # Places
 
-Choose an environment for the Floor and save your favorites.
+Choose an environment for the desk and save your favorites.
 Use **Hide the menus** (Settle in) when you want fewer navigation controls around your open work.
 
 ## Change places
 
 1. Open **Places** from the Dock, or press **Command/Ctrl+Shift+P**.
 2. Select an environment.
-3. Select **View on Floor** if you want to switch from Chair to Floor.
 
-The picker changes the Floor immediately.
+There is one desk. The picker changes the scene behind it immediately.
 Selecting a place preserves your work and object positions.
 You can also open the picker from **Settings > Wallpaper**.
 Arrow keys and Home/End change the selected place.

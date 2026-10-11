@@ -108,7 +108,7 @@ describe("DeskMenuBar at 393", () => {
     Array.from(menu.querySelectorAll("[role^=menuitem] .desk-menu-label"), (e) => e.textContent?.trim());
 
   // PHILO-17 (doors): Settings left Go (it is in the HoldSpeak menu).
-  it("Go is nine rows: Chair windows, places, the projects, New; no ⌘ keycap", () => {
+  it("Go is ten rows: Chair windows, places, the projects, New; no ⌘ keycap", () => {
     useDesk.setState((s) => ({
       items: {
         ...s.items,
@@ -120,7 +120,7 @@ describe("DeskMenuBar at 393", () => {
     const menu = screen.getByRole("menu", { name: "Go menu" });
     expect(labels(menu)).toEqual([
       "Needs you", "Brief", "The week", "Capture",
-      "Meetings", "People", "Conductor",
+      "Meetings", "Ask AI", "People", "Conductor",
       "Ledger cutover",
       "New",
     ]);

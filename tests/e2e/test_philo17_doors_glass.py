@@ -47,7 +47,7 @@ PROJECTS = ["Ledger cutover", "Platform observability", "Hiring loop"]
 GO_ROWS = ["Speak", "Meetings", "Intelligence", "Ask AI", "People", "Conductor", "Memory", "Projects", "Tools"]
 TOOLS = ["Workbenches", "Activity", "Processes", "Rhythm", "Commands", "Context"]
 MARK_ROWS = ["Refresh from hub", "Settings", "Runs on", "Connections", "Setup"]
-PHONE_GO = ["Needs you", "Brief", "The week", "Capture", "Meetings", "People", "Conductor", *sorted(PROJECTS), "New"]
+PHONE_GO = ["Needs you", "Brief", "The week", "Capture", "Meetings", "Ask AI", "People", "Conductor", *sorted(PROJECTS), "New"]
 
 # The rows of the innermost open menu list (a submenu nests in its parent).
 ROWS_JS = r"""(n) => {
@@ -222,12 +222,12 @@ class TestDoors:
             ("Connections (HoldSpeak)", mark_row("Connections"), f"{settings} [data-testid='connections-github']", None),
             ("Setup (HoldSpeak)", mark_row("Setup"), "#surface-setup >> text=/Readiness checks|Everything is ready/", None),
         ]
+        doors.append(("Ask AI (Go)", go_row("Ask AI"), ".desk-ask textarea, .desk-ask [role=textbox]", None))
         if phone:
             doors.append(("Memory (Missed ▸ Memory)", missed_memory,
                           "#surface-project-memory [aria-label='Search memory']", None))
         else:
             doors += [
-                ("Ask AI (Go)", go_row("Ask AI"), ".desk-ask textarea, .desk-ask [role=textbox]", None),
                 ("Memory (Go)", go_row("Memory"), "#surface-project-memory [aria-label='Search memory']", None),
                 ("Workbenches (Go ▸ Tools)", go_row("Tools", "Workbenches"), "#surface-workbenches", None),
             ]
