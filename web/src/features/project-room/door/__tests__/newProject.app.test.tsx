@@ -15,7 +15,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetSurfaces, stageSurfaceOpen } from "../../../../desk/shell";
 import { SurfaceWindows } from "../../../../desk/components/SurfaceWindows";
 import { useDesk } from "../../../../desk/store";
-import { registerSurface } from "../../../../desk/shell";
 import { DeskMenuBar } from "../../../../desk/components/DeskMenuBar";
 import { ApiError } from "../../../../lib/api";
 // The final diet lane's recorded wires (scripts/record_room_wires.py: the real
@@ -158,18 +157,34 @@ describe("HS-174-07: the Door's Confluence row", () => {
 describe("PHILO-17 U30: Go ▸ Projects ▸ <name> opens the project's Room", () => {
   // replaces: tests/e2e/test_philo17_sources_glass.py::test_room_add_source_and_sign_in (its Go ▸ Projects leg at 1440;
   //   the Room half is room.app.test.tsx "PHILO-17 sources: the Room's SOURCES on a bare project")
-  it("the desk's projects come from the hub's /api/projects; the pick opens the Room, never a drawer", async () => {
-    replay({ "/api/projects": S17.before["/api/projects"] });
+  it("the desk's projects come from the hub's /api/projects; the pick opens that project's Room, never a drawer", async () => {
+    // The production opener: SurfaceWindows registers open-project-memory (SurfaceWindows.tsx:127-133);
+    // nothing is stubbed but apiFetch, which replays the hub's recorded reads for this project's Room.
+    replay(S17.before);
     await useDesk.getState().refresh();
-    const opened: Array<string | undefined> = [];
-    const off = registerSurface("open-project-memory", (scope) => opened.push(scope));
-    render(<DeskMenuBar />);
+    render(
+      <>
+        <DeskMenuBar />
+        <SurfaceWindows />
+      </>,
+    );
     fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
     const go = screen.getByRole("menu", { name: "Go menu" });
     fireEvent.click(within(go).getByRole("menuitem", { name: /^Projects\W*$/ }));
     fireEvent.click(screen.getByRole("menuitem", { name: /Ledger cutover/ }));
-    expect(opened).toEqual([`project:${S17.pid}`]);
+    // The Room window opens on THIS project, and its core draws the hub's Room read.
+    const room = await waitFor(() => {
+      const el = document.getElementById("surface-project-memory");
+      expect(el).not.toBeNull();
+      return el!;
+    }, { timeout: 5000 });
+    expect(useDesk.getState().windowsById["surface-project-memory"]?.scope).toBe(`project:${S17.pid}`);
+    const headline = await within(room).findByTestId("room-headline", undefined, { timeout: 5000 });
+    expect(headline.textContent).toBe("Clear here");
+    expect(room.textContent).toContain("Ledger cutover");
+    expect(apiFetch.mock.calls.map(([url]) => String(url))).toContain(`/api/projects/${S17.pid}/room`);
+    // Never a drawer: no drawer window in the store or on the page.
     expect(Object.keys(useDesk.getState().windowsById).filter((id) => id.includes("drawer"))).toEqual([]);
-    off();
+    expect(document.querySelector(".drawer-window")).toBeNull();
   });
 });
