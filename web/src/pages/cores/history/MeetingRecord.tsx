@@ -189,6 +189,11 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   // record publishes again on every face change.
   useWindowTitle(title || null, [title, wings.view]);
 
+  // PHILO-17 (U16, #1083): the window's foot names the summary engine; the
+  // record does not say the same host again (one chip per face). Only while
+  // that foot is mounted: the Review wing draws its own.
+  const footerHost =
+    wings.view !== "review" && route && routeReady(route) ? egressFor(route.legs[0].host).label : null;
   // HS-201-04 (UX-CANON A.9): the foot says where this meeting's summary runs.
   const footerEgress = useMemo(() => {
     if (!route) return null;
@@ -266,6 +271,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   return (
     <>
       <MeetingDetail
+        saidOnFace={footerHost}
         meeting={meeting}
         onTranscribe={async (id: string) => {
           // PHILO-17 transcribe: the hub starts it (202); the record reads again.
