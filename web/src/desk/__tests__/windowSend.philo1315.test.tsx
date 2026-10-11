@@ -101,7 +101,7 @@ describe("PHILO-17 U08: a Thought window sends its working note", () => {
     expect(labels(sendToEntry("pullout:thought-7"))).toEqual(["Team updates · FILE", "PAY-118 · JIRA"]);
     const opened = vi.fn();
     window.addEventListener(SEND_OPEN, opened);
-    const focus = vi.spyOn(useDesk.getState(), "focusPanel").mockImplementation(() => {});
+    const focus = vi.spyOn(useDesk.getState(), "restorePanel").mockImplementation(() => {});
     pickFor("pullout:thought-7", "chd_f");
     await waitFor(() => expect(pickedDestination("note:note-7")).toBe("chd_f"));
     expect((opened.mock.calls[0][0] as CustomEvent).detail).toEqual({ winId: "pullout:thought-7" });
@@ -210,9 +210,9 @@ describe("the push seam and the pick", () => {
     expect(screen.getByTestId("send-well")).toBe(well);
   });
 
-  it("the pick from the menu resolves the window's document and focuses the window; nothing is sent", async () => {
+  it("the pick from the menu resolves the window's document and brings the window to the front (also from the Dock); nothing is sent", async () => {
     await readDestinations();
-    const focus = vi.spyOn(useDesk.getState(), "focusPanel").mockImplementation(() => {});
+    const focus = vi.spyOn(useDesk.getState(), "restorePanel").mockImplementation(() => {});
     pickFor("pullout:decision:dec-9", "chd_f");
     await waitFor(() => expect(pickedDestination("desk_decision:dec-9")).toBe("chd_f"));
     expect(focus).toHaveBeenCalledWith("pullout:decision:dec-9");

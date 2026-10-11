@@ -23,7 +23,7 @@ A line marked "(overlaps X)" repeats part of X. Read X first.
 | Describe your goals, Projects, and decisions | [Interview](INTERVIEW.md) |
 | Prepare a decision brief or agent brief | [Architecture work](ARCHITECTURE_WORK.md) |
 | Work with Desk objects and windows | [The Desk](WEB_DESK.md) |
-| Review attention items and Receipts | [Desk memory](DESK_MEMORY.md) |
+| Review attention items and Receipts | [Missed](DESK_MEMORY.md) |
 | Find earlier work across your records | [Memory](RELATIONSHIP_AWARE_MEMORY.md) |
 | Connect sources to a Project | [Project Rooms](PROJECT_ROOMS.md) |
 | Select a Place or use Settle in | [Places](ENVIRONMENTS.md) |

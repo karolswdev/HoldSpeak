@@ -159,7 +159,7 @@ Artifacts, decisions, Threads and other records. These routes serve it:
 The MCP tool is `memory.search`. A search needs a principal with read
 permission. It supports kind, Project and time filters. Search selects
 evidence. It does not grant authority. An empty result is a real empty
-result. See [Desk memory](DESK_MEMORY.md).
+result. See [Memory](RELATIONSHIP_AWARE_MEMORY.md).
 
 Workbench memory is separate. Each Workbench keeps an append-only JSONL
 file of at most 100 entries. A run recalls the most recent entries, up to

@@ -50,22 +50,26 @@ function TwoWindows({ onCloseA = () => {} }) {
 }
 
 describe("the dock", () => {
-  it("draws no window chips (PHILO-16 A1: parked, seats live in the dock); the four applications ride always", () => {
+  it("draws no window chips (PHILO-16 A1: parked, seats live in the dock); the three applications ride always", () => {
     const { unmount } = render(<TwoWindows />);
     expect(screen.getByRole("toolbar", { name: "Dock" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Focus Alpha" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Focus Beta" })).toBeNull();
     unmount();
     // HS-100-11 — the dock IS the launcher: with nothing open it still
-    // carries the four applications (no window chips, no running marks).
-    // PHILO-14 C4: the Agents entry became the Conductor drawer.
+    // carries its applications (no window chips, no running marks).
+    // PHILO-17 (doors): Intelligence, Speak, Meetings; the Conductor and
+    // People are desk drawers, Settings is in the HoldSpeak menu.
     render(<Dock />);
     expect(screen.getByRole("toolbar", { name: "Dock" })).toBeTruthy();
-    for (const app of ["Speak", "Meetings", "Conductor", "Settings"]) {
+    for (const app of ["Intelligence", "Speak", "Meetings"]) {
       expect(screen.getByRole("button", { name: app })).toBeTruthy();
     }
+    for (const gone of ["Conductor", "Settings", "People"]) {
+      expect(screen.queryByRole("button", { name: gone })).toBeNull();
+    }
     expect(screen.queryByRole("button", { name: /Focus / })).toBeNull();
-    for (const app of ["Speak", "Meetings", "Conductor", "Settings"]) {
+    for (const app of ["Intelligence", "Speak", "Meetings"]) {
       expect(
         screen.getByRole("button", { name: app }).className,
       ).not.toContain("is-run");

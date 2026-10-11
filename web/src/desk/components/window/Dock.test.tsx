@@ -126,20 +126,13 @@ vi.mock("../../applications", () => {
   const applications = [
     { windowId: "intelligence:desk", action: "open-intelligence", href: "/intelligence", label: "Intelligence", glyph: "I", surface: false, dock: { order: 1, launch: "intelligence" } },
     { windowId: "surface-meetings", action: "open-meetings", href: "/meetings", label: "Meetings", glyph: "M", surface: true, dock: { order: 2, launch: "surface" } },
-    { windowId: "surface-agents", action: "open-agents", href: "/agents", label: "Agents", glyph: "A", surface: true, dock: { order: 3, launch: "surface" } },
-    { windowId: "surface-settings", action: "open-settings", href: "/settings", label: "Settings", glyph: "S", surface: true, dock: { order: 4, launch: "surface" } },
   ];
-  return {
-    DOCK_APPLICATIONS: applications,
-    applicationForAction: (action: string) => action === "open-people"
-      ? { windowId: "surface-people", action, href: "/people", label: "People", glyph: "P", surface: true, dock: { order: 5, launch: "surface" } }
-      : undefined,
-  };
+  // PHILO-17 (doors): the Dock seats Intelligence, Speak and Meetings only.
+  return { DOCK_APPLICATIONS: applications };
 });
 vi.mock("./RoomActions", () => ({ RoomActions: () => null }));
 
 import { Dock } from "./Dock";
-import { useDrawers } from "../../drawer/store";
 import { __resetSurfaces, registerSurface } from "../../shell";
 
 function makeRecordingProducer() {
@@ -186,8 +179,10 @@ describe("H-C3 Dock rendering", () => {
   it("renders durable state marks and no needs-you badge on Intelligence (PHILO-17)", async () => {
     render(<Dock />);
 
-    expect(screen.getByRole("button", { name: "Alpha, 1 open here" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Quiet" })).toBeTruthy();
+    // PHILO-17 (doors): projects left the Dock (desk drawers and Go ▸ Projects).
+    expect(screen.queryByRole("button", { name: /^Alpha/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Quiet" })).toBeNull();
+    expect(document.querySelector(".desk-dock-project")).toBeNull();
     // PHILO-17 (needsyou): the one number is on the Needs-you icon and the
     // bell only; the Intelligence tile carries no copy of it.
     expect(screen.getByRole("button", { name: "Intelligence" })).toBeTruthy();
@@ -198,9 +193,10 @@ describe("H-C3 Dock rendering", () => {
 
     await waitFor(() => expect(screen.getByTestId("desk-dock-send-state")).toHaveTextContent("SEND FAILED"));
     expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull();
-    expect(screen.getByTestId("desk-dock-people-state")).toHaveTextContent("1:1");
     expect(mocks.refreshNeedsYou).toHaveBeenCalledWith(true);
-    expect(mocks.apiFetch).toHaveBeenCalledWith("/api/people/relationships/r1/brief");
+    // PHILO-17 (doors): People left the Dock; its 1:1 read moved to the People drawer (screen/nextOneOnOne.ts).
+    expect(screen.queryByTestId("desk-dock-people-state")).toBeNull();
+    expect(mocks.apiFetch).not.toHaveBeenCalledWith("/api/people/readiness");
   });
 
   // PHILO-15-09 (B11, Astra r2): the shared seed (an item with a folded
@@ -219,81 +215,6 @@ describe("H-C3 Dock rendering", () => {
     } finally {
       mocks.useNeedsYou.mockImplementation((() => ({ count: 1, unmutedItems: [{ projectId: "p1" }] })) as never);
     }
-  });
-
-  // PHILO-17 U30: the Dock opens a Project's Room (one home), never its drawer.
-  it("opens an active project's Room, not its drawer", async () => {
-    useDrawers.setState({ drawers: [], infos: [] });
-    const shell = await import("../../shell");
-    const room = vi.spyOn(shell, "openProjectRoom").mockImplementation(() => undefined);
-    try {
-      render(<Dock />);
-      fireEvent.click(screen.getByRole("button", { name: "Alpha, 1 open here" }));
-      expect(room).toHaveBeenCalledWith("p1");
-      expect(useDrawers.getState().drawers).toEqual([]);
-    } finally {
-      room.mockRestore();
-    }
-  });
-
-  it("keeps a successful Send snapshot when the People projection fails", async () => {
-    mocks.apiFetch.mockImplementation(async (path: string) => {
-      if (path === "/api/channels/sends") {
-        return { sends: [{ state: "sent", settled_at: "2026-10-03T12:00:00Z" }] };
-      }
-      throw new Error("people unavailable");
-    });
-    render(<Dock />);
-
-    await waitFor(() => expect(screen.getByTestId("desk-dock-send-state")).toHaveTextContent("SENT"));
-    expect(screen.queryByTestId("desk-dock-people-state")).toBeNull();
-  });
-
-  it("reads People readiness before protected relationships", async () => {
-    render(<Dock />);
-
-    await waitFor(() => expect(screen.getByTestId("desk-dock-people-state")).toHaveTextContent("1:1"));
-    const paths = mocks.apiFetch.mock.calls.map(([path]) => path);
-    const readinessIndex = paths.indexOf("/api/people/readiness");
-    const relationshipsIndex = paths.indexOf("/api/people/relationships");
-    expect(readinessIndex).toBeGreaterThanOrEqual(0);
-    expect(relationshipsIndex).toBeGreaterThanOrEqual(0);
-    expect(readinessIndex).toBeLessThan(relationshipsIndex);
-  });
-
-  it.each([
-    ["unconfigured", { readiness: "unconfigured" }],
-    ["unavailable", { readiness: "unavailable" }],
-  ] as const)("clears the stale 1:1 mark and gates relationships when People is %s", async (_label, readiness) => {
-    render(<Dock />);
-
-    await waitFor(() => expect(screen.getByTestId("desk-dock-people-state")).toHaveTextContent("1:1"));
-    const relationshipReads = () => mocks.apiFetch.mock.calls
-      .filter(([path]) => path === "/api/people/relationships").length;
-    const before = relationshipReads();
-    mocks.people.readiness = readiness;
-    act(() => {
-      mocks.emitRuntime("desk_changed", { kind: "people_changed" });
-    });
-
-    await waitFor(() => expect(screen.queryByTestId("desk-dock-people-state")).toBeNull());
-    expect(relationshipReads()).toBe(before);
-  });
-
-  it("clears the 1:1 mark and withholds relationships when the readiness request fails", async () => {
-    render(<Dock />);
-
-    await waitFor(() => expect(screen.getByTestId("desk-dock-people-state")).toHaveTextContent("1:1"));
-    const relationshipReads = () => mocks.apiFetch.mock.calls
-      .filter(([path]) => path === "/api/people/relationships").length;
-    const before = relationshipReads();
-    mocks.people.readinessError = new Error("readiness unavailable");
-    act(() => {
-      mocks.emitRuntime("desk_changed", { kind: "people_changed" });
-    });
-
-    await waitFor(() => expect(screen.queryByTestId("desk-dock-people-state")).toBeNull());
-    expect(relationshipReads()).toBe(before);
   });
 
   it("shows REC only after the real recording producer receives hub confirmation", async () => {
@@ -394,15 +315,6 @@ describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
     // The Intelligence AppIcon carries the full words as its description.
     const icon = screen.getByRole("button", { name: /^Intelligence/ });
     expect(icon).toHaveAccessibleDescription("Send failed");
-  });
-
-  it("a project AppIcon is the drawer sprite, not a text glyph", () => {
-    render(<Dock />);
-    const project = screen.getByRole("button", { name: "Alpha, 1 open here" });
-    expect(project.textContent).not.toContain("▤");
-    const sprite = project.querySelector("img.desk-dock-sprite");
-    expect(sprite?.getAttribute("src")).toMatch(/desk\/sprites\/project-drawer\.png$/);
-    expect(project).toHaveAttribute("data-app", "project");
   });
 
   it("names each daily seat for the phone order and carries the More AppIcons gadget", () => {

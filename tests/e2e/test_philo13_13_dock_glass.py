@@ -261,7 +261,8 @@ class TestLiveDock:
                           .filter((x) => x.r.right <= more.left + 0.5 && x.r.left >= 0)
                           .sort((a, b) => a.r.left - b.r.left).map((x) => x.app);
                     }""")
-                    assert seats == ["intelligence:desk", "surface-meetings", "surface-people", "surface-dictation"], seats
+                    # PHILO-17 (doors): People is a desk drawer now; Missed fits the first page.
+                    assert seats == ["intelligence:desk", "surface-meetings", "surface-dictation", "Missed"], seats
                     before = page.evaluate("() => document.querySelector('.desk-dock').scrollLeft")
                     self._press(page, page.get_by_role("button", name="More AppIcons"), width)
                     page.wait_for_timeout(700)

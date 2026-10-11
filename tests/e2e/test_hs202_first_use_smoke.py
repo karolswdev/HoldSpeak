@@ -324,7 +324,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # Persistent doors: real hit ownership, normal clicks, loaded destination.
             dock = page.locator(".desk-dock")
             doors = {}
-            for key, name in (("speak", "Speak"), ("meetings", "Meetings"), ("memory", "Desk memory")):
+            for key, name in (("speak", "Speak"), ("meetings", "Meetings"), ("missed", "Missed")):
                 door = dock.get_by_role("button", name=name, exact=True)
                 # PHILO-13-13 C3-W (the ratified C1 393 Dock): the shelf ends on a
                 # whole icon and More AppIcons pages it; a door past the page is
@@ -606,7 +606,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             selected = _loaded(shelf.locator('[id="' + active_id + '"]'))
             selected_text = selected.inner_text()
             selected_label = selected.locator(".desk-deck-label").inner_text().strip()
-            note_match = "option-note:" in active_id or selected_label in {"Notes", "Desk memory"}
+            note_match = "option-note:" in active_id or selected_label in {"Notes", "Memory"}
             print("Notes query highlighted:", selected_text.replace("\n", " / "))
             field.press("Enter")
             shelf.wait_for(state="detached")
@@ -617,7 +617,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 destination = page.get_by_role("region", name=selected_note["title"], exact=True)
                 _loaded(destination.get_by_text(selected_note["body_markdown"], exact=True))
             elif note_match:
-                destination = page.get_by_role("region", name=re.compile(r"^(Notes|Desk memory)$"))
+                destination = page.get_by_role("region", name=re.compile(r"^(Notes|Memory)$"))
                 _loaded(destination.get_by_text(NOTE_TITLE, exact=True))
             else:
                 # Current fixture deterministically opens Change places. Its grid

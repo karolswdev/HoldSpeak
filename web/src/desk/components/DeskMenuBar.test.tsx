@@ -30,6 +30,56 @@ describe("DeskMenuBar", () => {
   });
 });
 
+/* PHILO-17 (doors): Go at 1440 is the application index. Seven
+ * applications, Projects ▸, Tools ▸; the setup applications are in the
+ * HoldSpeak menu; the Desk menu does not open People or Intelligence. */
+describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
+  const PROJECT = (id: string, name: string) => ({ kind: "project" as const, id, name, description: "", keywords: [], teamMembers: [], meetingCount: 0, createdAt: "", updatedAt: "" });
+  afterEach(() => {
+    useDesk.setState((s) => ({ items: { ...s.items, project: [] } }));
+  });
+  const top = (menu: HTMLElement) =>
+    Array.from(menu.querySelectorAll(":scope [role^=menuitem] .desk-menu-label"), (e) => e.textContent?.trim());
+
+  it("Go is seven applications, Projects ▸ and Tools ▸", () => {
+    useDesk.setState((s) => ({
+      items: { ...s.items, project: [PROJECT("p-1", "Alpha"), PROJECT("p-2", "Beta"), PROJECT("p-3", "Gamma")] },
+    }));
+    render(<DeskMenuBar />);
+    fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
+    const menu = screen.getByRole("menu", { name: "Go menu" });
+    expect(top(menu)).toEqual([
+      "Speak", "Meetings", "Intelligence", "Ask AI", "People", "Conductor", "Memory",
+      "Projects", "Tools",
+    ]);
+    expect(menu.textContent).not.toMatch(/Settings|Runs on|Connections|Setup|Desk memory|List view/);
+    // The ⌃ keys stay on their rows (PHILO-17 U27).
+    expect(within(menu).getByRole("menuitem", { name: /Speak/ }).textContent).toContain("⌃1");
+
+    fireEvent.click(within(menu).getByRole("menuitem", { name: /^Projects\W*$/ }));
+    expect(top(screen.getAllByRole("menu").at(-1)!)).toEqual(["Alpha", "Beta", "Gamma"]);
+  });
+
+  it("Tools ▸ holds the six tools", () => {
+    render(<DeskMenuBar />);
+    fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
+    const menu = screen.getByRole("menu", { name: "Go menu" });
+    // No projects: no Projects ▸ row (no empty submenu).
+    expect(top(menu)).not.toContain("Projects");
+    fireEvent.click(within(menu).getByRole("menuitem", { name: /^Tools\W*$/ }));
+    expect(top(screen.getAllByRole("menu").at(-1)!)).toEqual([
+      "Workbenches", "Activity", "Processes", "Rhythm", "Commands", "Context",
+    ]);
+  });
+
+  it("the Desk menu does not open People or Intelligence", () => {
+    render(<DeskMenuBar />);
+    fireEvent.click(screen.getByRole("button", { name: /^Desk$/ }), { detail: 0 });
+    const menu = screen.getByRole("menu", { name: "Desk menu" });
+    expect(menu.textContent).not.toMatch(/Open People|Open Intelligence/);
+  });
+});
+
 /* PHILO-15 11 (B21, owner ruling 2026-10-07): rehearsal 1A counted 22 Go
  * rows with ⌘ keycaps at 393 and nine New kinds. At 393 Go is the Chair's
  * four windows, the Dock's places, the projects, then New ▸ with four kinds;
@@ -57,6 +107,7 @@ describe("DeskMenuBar at 393", () => {
   const labels = (menu: HTMLElement) =>
     Array.from(menu.querySelectorAll("[role^=menuitem] .desk-menu-label"), (e) => e.textContent?.trim());
 
+  // PHILO-17 (doors): Settings left Go (it is in the HoldSpeak menu).
   it("Go is ten rows: Chair windows, places, the projects, New; no ⌘ keycap", () => {
     useDesk.setState((s) => ({
       items: {
@@ -69,7 +120,7 @@ describe("DeskMenuBar at 393", () => {
     const menu = screen.getByRole("menu", { name: "Go menu" });
     expect(labels(menu)).toEqual([
       "Needs you", "Brief", "The week", "Capture",
-      "Meetings", "People", "Conductor", "Settings",
+      "Meetings", "Ask AI", "People", "Conductor",
       "Ledger cutover",
       "New",
     ]);

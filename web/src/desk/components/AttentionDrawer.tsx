@@ -106,11 +106,13 @@ export function AttentionDrawer() {
   useEffect(() => {
     announceLauncher({
       id: "attention",
-      label: "Desk memory",
+      // PHILO-17 (doors): one name per thing. This is what you missed; the
+      // Memory application (Go ▸ Memory) is the search.
+      label: "Missed",
       glyph: "◎",
       open: store.open,
       // PHILO-17 (needsyou, walker TAXES): the one number is on the
-      // Needs-you icon and the bell only; Desk memory carries no copy.
+      // Needs-you icon and the bell only; Missed carries no copy.
       activate: () => setShadeOpen(true),
     });
     return () => retractLauncher("attention");
@@ -127,9 +129,9 @@ export function AttentionDrawer() {
       <DeskWindowFrame
         id="attention"
       glyph="◎"
-        label="Desk memory"
+        label="Missed"
         className="desk-attention-drawer"
-        title="Desk memory"
+        title="Missed"
         entrance={false}
         open={store.open}
         onClose={() => store.setOpen(false)}
@@ -206,7 +208,7 @@ export function AttentionDrawer() {
           {store.error ? (
             <>
               <SurfaceState
-                error="Desk memory unavailable"
+                error="Missed is not available"
                 onRetry={() => void store.refresh(true)}
               />
               <FoldGadget title="RAW · DETAIL">

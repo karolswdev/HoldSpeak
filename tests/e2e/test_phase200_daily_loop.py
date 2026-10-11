@@ -356,7 +356,7 @@ def _open_desk_memory(page: Any) -> None:
 def _search_memory(page: Any, query: str) -> None:
     page.get_by_role("searchbox", name="Search the Desk").fill(query)
     page.locator(".desk-surface-window").get_by_role(
-        "button", name="Search desk memory", exact=True,
+        "button", name="Search memory", exact=True,
     ).click()
     page.get_by_test_id("recall-results").wait_for(timeout=10000)
     _settle(page)

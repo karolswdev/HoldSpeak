@@ -64,6 +64,9 @@ export interface DeskIconProps {
   onOpen?(): void;
   /** Extra words for the accessible name (e.g. `3 need you`). */
   ariaExtra?: string;
+  /** PHILO-17 (doors): one short line under the name (`1:1 15:00`); it is
+   *  in the accessible name too. Absent: nothing is drawn. */
+  caption?: string;
   className?: string;
   style?: CSSProperties;
   draggable?: boolean;
@@ -93,6 +96,7 @@ export function DeskIcon({
   onSelect,
   onOpen,
   ariaExtra,
+  caption,
   className,
   style,
   draggable,
@@ -108,7 +112,7 @@ export function DeskIcon({
       ? spriteSelected
       : sprite
     : objectSprite(kind, id, lit ? "sel" : "rest");
-  const label = [name, kindWord ?? objectKindWord(kind), lamp?.label, ariaExtra]
+  const label = [name, kindWord ?? objectKindWord(kind), lamp?.label, caption, ariaExtra]
     .filter(Boolean)
     .join(", ");
   // Enter OPENS: handled on keydown, whose default (the native click) is
@@ -156,6 +160,7 @@ export function DeskIcon({
         ) : null}
       </span>
       <IconName name={name} />
+      {caption ? <span className="desk-icon-caption" data-testid={`desk-icon-caption-${id}`}>{caption}</span> : null}
     </Button>
   );
 }

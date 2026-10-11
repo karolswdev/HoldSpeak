@@ -29,9 +29,9 @@ import { SYSTEM } from "../systemSprites";
 import { MARK_APPLICATION_COMMANDS } from "../applications";
 import { Button } from "../../components/signal/Signal";
 
-/** The mark menu's registry rows: the floor verbs, then the four
- * applications (the same go.* truth the Go menu and the dock speak).
- * HS-148-02: Open Intelligence / Open People join the app section. */
+/** The mark menu's registry rows: the floor verbs, then the setup
+ * applications (PHILO-17 doors: Settings, Runs on, Connections, Setup; the
+ * daily applications are on the Dock, the desk drawers and Go). */
 // PHILO-17: List view and Arrange desk are parked with the Floor.
 const MARK_VERBS = ["desk.refresh"];
 

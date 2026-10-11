@@ -26,6 +26,7 @@ import { useCompactViewport } from "../useCompactViewport";
 import { composeScreen, screenIsBare } from "./compose";
 import { layoutScreen } from "./layout";
 import { retryPeople, retryProject, useScreenMembers } from "./members";
+import { useNextOneOnOne } from "./nextOneOnOne";
 import { openTarget } from "./open";
 import { SCREEN_HOST, HandConfirmSlot, handOriginOfRef, handSourceProps, handTargetProps, useDropHand } from "../hand";
 import { useAtmospherePreference } from "../gl/atmospherePreference";
@@ -63,6 +64,8 @@ export function Screen() {
     [items.project],
   );
   const members = useScreenMembers(projects);
+  // PHILO-17 (doors): the next 1:1 moved from the Dock to the People drawer.
+  const nextOneOnOne = useNextOneOnOne();
 
   const objects = useMemo(() => {
     const needsRefs = new Set<string>();
@@ -87,8 +90,9 @@ export function Screen() {
       unknownAll: members.unknownAll,
       unknownMeetings: members.unknownMeetings,
       peopleNotRead: members.peopleNotRead,
+      peopleCaption: nextOneOnOne,
     });
-  }, [items, needs, sessions, flights, members]);
+  }, [items, needs, sessions, flights, members, nextOneOnOne]);
 
   // PHILO-17: the one selection truth. The menu bar Object menu, the keymap
   // (F2) and the Floor read the store's selectedIds; the screen writes there.
@@ -180,6 +184,7 @@ export function Screen() {
                 lamp={o.lamp}
                 count={o.count}
                 ariaExtra={o.ariaExtra}
+                caption={o.caption}
                 selected={selected.has(o.key)}
                 onSelect={() => setSelected(new Set([o.key]))}
                 onOpen={() => openTarget(o.target)}

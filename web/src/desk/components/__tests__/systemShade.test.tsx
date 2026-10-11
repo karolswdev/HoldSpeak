@@ -58,7 +58,7 @@ describe("SystemShade (canon §6.1)", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Acknowledge" }));
     expect(present).toHaveBeenCalledWith("p1", "acknowledge");
-    fireEvent.click(screen.getByRole("button", { name: "Desk memory" }));
+    fireEvent.click(screen.getByRole("button", { name: "Memory" }));
     expect(onOpenMemory).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
   });

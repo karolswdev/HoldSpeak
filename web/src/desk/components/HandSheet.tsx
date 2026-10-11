@@ -323,7 +323,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   const [cloneDone, setCloneDone] = useState<HandClone | null>(null);
 
   useEffect(() => {
-    useDesk.getState().focusPanel(HAND_WINDOW_ID);
+    useDesk.getState().restorePanel(HAND_WINDOW_ID);
   }, [origin.kind, origin.id]);
 
   const request = { kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null };

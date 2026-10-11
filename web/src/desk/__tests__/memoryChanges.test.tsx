@@ -201,7 +201,7 @@ describe("Desk memory beliefs follow the bus (P1)", () => {
     // He presses Search while the refresh is in flight; the search is slow too.
     const searched = deferred<unknown>();
     vi.mocked(apiFetch).mockReturnValueOnce(searched.promise as Promise<never>);
-    fireEvent.click(screen.getByRole("button", { name: "Search desk memory" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(3));
     expect(screen.getByTestId("recall-results").getAttribute("data-dimmed")).toBe("true");
     // The refresh lands while the search is pending: it is discarded, and the

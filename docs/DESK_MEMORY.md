@@ -1,15 +1,15 @@
-# Desk memory: attention and receipts
+# Missed: attention and receipts
 
-Desk memory shows what still needs you and what happened while you were away.
+Missed shows what still needs you and what happened while you were away.
 It is a read model over records that HoldSpeak already keeps.
 It is not a new queue and not an audit log.
 
-This page covers the **Desk memory** dock entry.
+This page covers the **Missed** entry in the Dock.
 To search what HoldSpeak remembers, see [Memory](RELATIONSHIP_AWARE_MEMORY.md).
 
 ## Open it
 
-1. Select **Desk memory** in the dock.
+1. Select **Missed** in the Dock.
 2. Read the counts at the top. They show how many items need attention.
 3. Enter text in **Search receipts**, or change **Show**.
 4. Select **Filter**.
