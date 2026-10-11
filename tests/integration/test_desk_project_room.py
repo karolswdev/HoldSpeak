@@ -761,6 +761,66 @@ def test_the_hubs_poll_closes_the_item_on_merge_and_the_sent_update_carries_it(
         assert "meeting_summary_unavailable" not in text
 
 
+def test_the_merge_poll_tells_the_open_room_once_the_pr_merges_and_not_before(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The mounted Room re-reads on a ``desk_changed`` frame whose changes are
+    not windows only (web/src/desk/useDeskChangedRefresh.ts; the consumer half
+    is roomInFlight.f2.test.tsx "the merge lands while the Room stays open").
+    The hub's own PR poll (HeartbeatService.poll_open_prs) runs every 1 s:
+    while PR #1 is open it sends no frame; once GitHub merges it, the poll
+    sends ONE ``desk_changed`` frame. Frames are captured at the hub's
+    WebSocket fan-out (``WebSocketManager.broadcast``), as every client gets them.
+
+    replaces: tests/e2e/test_philo15_17_merge_receipt_glass.py::TestMergeReachesTheUpdate::test_the_receipt_and_the_sent_update (the no-press arrival)
+    """
+    from types import SimpleNamespace
+
+    from holdspeak.delivery import factory_launch, follow_through
+    from holdspeak.delivery.attempts import WorkAttemptService
+    from holdspeak.delivery.factory_launch import LaunchLedger
+
+    launches = tmp_path / "home" / ".holdspeak" / "agent_launches.json"
+    github = FakeGitHub()
+    monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", launches)
+    monkeypatch.setattr(follow_through, "POLL_SECONDS", 1)
+    monkeypatch.setattr(follow_through, "default_follow_through", lambda db: follow_through.FollowThroughObserver(
+        db, ledger=LaunchLedger(launches), registry=SimpleNamespace(get=lambda _id: None), receipts=github,
+        attempts=WorkAttemptService(db.work_attempts), control_mode=lambda: "yolo",
+    ))
+    with _hub(tmp_path, monkeypatch, lifespan=True) as hub:
+        frames: list[dict[str, Any]] = []
+        fan_out = hub.server._ws.broadcast
+
+        async def capture(message: Any) -> None:
+            frames.append(message.to_dict())
+            await fan_out(message)
+
+        monkeypatch.setattr(hub.server._ws, "broadcast", capture)
+        _seed_merge_launch(hub.db, launches)
+
+        def desk_changed() -> list[dict[str, Any]]:
+            return [f for f in frames if f.get("type") == "desk_changed"]
+
+        # PR #1 open: the poll reads it (one gh pr view a poll) and says nothing.
+        frames.clear()
+        views = github.views
+        assert _wait(lambda: github.views >= views + 3, timeout=10), "the hub's poll never read the open PR"
+        assert desk_changed() == [], desk_changed()
+
+        github.merge()
+        assert _wait(lambda: bool(desk_changed()), timeout=10), frames
+        time.sleep(2.5)  # two more polls: the closed flight is not announced again
+        [frame] = desk_changed()
+        data = frame["data"]
+        changes = data["changes"]
+        # Not windows only, so the Room re-reads (isWindowsOnlyFrame is false).
+        assert changes and all(c["kind"] != "windows" for c in changes), data
+        assert (data["kind"], data["op"], data["origin"]) == ("heartbeat", "pr_poll", "hub"), data
+        assert changes == [{"kind": "heartbeat", "id": "", "op": "pr_poll"}], changes
+        assert next(f for f in hub.ok("GET", "/api/coders/sessions?include_ended=false")["flights"])["close"] == "closed"
+
+
 # ── the second morning (PHILO-15 lane 21) ───────────────────────────
 
 MORNING_PROJECT = "prj-hygiene"
