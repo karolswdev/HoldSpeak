@@ -1060,6 +1060,64 @@ class TestEvaluateOnce:
         # No observations (no project binding).
         assert result["observation_ids"] == []
 
+    def test_failed_evaluate_records_the_cause_and_a_success_clears_it(
+        self, tmp_path,
+    ) -> None:
+        """PHILO-17 evalerror: the owner's Evaluate on a source that cannot
+        be read records ``last_error`` (as baseline does), so Needs you and
+        the Room show the plain cause; the next good read clears it."""
+        db = Database(tmp_path / "eval-err.db")
+        _make_watch(db, "watch-everr")
+        db.automations.update_watch_spec("watch-everr", revision=1)
+        raw = "To get started with GitHub CLI, please run:  gh auth login"
+        signed_in = [True]
+
+        def fetcher(principal, **kwargs):
+            if not signed_in[0]:
+                raise RuntimeError(raw)
+            return [{"number": 1, "state": "open", "title": "One",
+                     "url": "http://gh/1"}]
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "watch-everr")
+        assert db.automations.get_watch("watch-everr")["last_error"] is None
+
+        signed_in[0] = False
+        with pytest.raises(RuntimeError, match="gh auth login"):
+            svc.evaluate_once(OWNER, "watch-everr")
+        last_error = db.automations.get_watch("watch-everr")["last_error"]
+        assert last_error == raw
+        from holdspeak.services.project_service import ProjectService
+        assert ProjectService._plain_reason(last_error) == "Not signed in"
+
+        signed_in[0] = True
+        assert svc.evaluate_once(OWNER, "watch-everr")["state"] == "completed"
+        assert db.automations.get_watch("watch-everr")["last_error"] is None
+
+    def test_a_no_op_read_also_clears_the_error(self, tmp_path) -> None:
+        """An identical snapshot is a good read: the cause goes away."""
+        db = Database(tmp_path / "eval-err-noop.db")
+        _make_watch(db, "watch-everr2")
+        db.automations.update_watch_spec("watch-everr2", revision=1)
+        ok = [True]
+
+        def fetcher(principal, **kwargs):
+            if not ok[0]:
+                raise RuntimeError("provider offline")
+            return [{"number": 1, "state": "open", "title": "One",
+                     "url": "http://gh/1"}]
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "watch-everr2")
+        assert svc.evaluate_once(OWNER, "watch-everr2")["state"] == "completed"
+        ok[0] = False
+        with pytest.raises(RuntimeError):
+            svc.evaluate_once(OWNER, "watch-everr2")
+        assert db.automations.get_watch("watch-everr2")["last_error"] == "provider offline"
+        ok[0] = True
+        assert svc.evaluate_once(OWNER, "watch-everr2")["state"] == "no_op"
+        assert db.automations.get_watch("watch-everr2")["last_error"] is None
+
     def test_baseline_advanced_after_evaluate(self, tmp_path) -> None:
         """After evaluate_once, the baseline reflects the new snapshot."""
         db = Database(tmp_path / "eval-advance.db")
