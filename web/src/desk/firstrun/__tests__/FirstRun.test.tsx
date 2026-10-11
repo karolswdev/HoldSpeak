@@ -40,6 +40,7 @@ vi.mock("../../../lib/micStreamSession", async (importOriginal) => ({
 }));
 
 import { FirstRun } from "../FirstRun";
+import { ApiError } from "../../../lib/api";
 
 const MB = 1_000_000;
 function status(over: Partial<LocalAiStatus> & { landed?: boolean; all?: boolean } = {}): LocalAiStatus {
@@ -264,6 +265,42 @@ describe("FirstRun", () => {
     expect(failure.querySelector(".firstrun-reason")).toBeNull();
     expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Continue later" })).toBeTruthy();
+  });
+});
+
+describe("PHILO-17: First words' missing speech model is fixed in place", () => {
+  it("never opens New Project: the hub says no speech model -> the shared Set up speech verb, its host, a speech-only download", async () => {
+    local = status({ landed: true, state: "not_started" });
+    mocks.start.mockImplementation(async () => {
+      local = status(); // the hub's read now: the Whisper files are not here
+      throw new ApiError(503, "transcription unavailable", null);
+    });
+    render(<FirstRun />);
+    fireEvent.click(await screen.findByRole("button", { name: "◖ Dictate one sentence" }));
+    const verb = await screen.findByTestId("firstrun-words-speech-verb");
+    expect(verb.textContent).toBe("Set up speech · 142 MB");
+    const words = screen.getByTestId("firstrun-first-words");
+    expect(words.textContent).toContain("HUGGINGFACE.CO");
+    expect(screen.queryByRole("button", { name: "Setup" })).toBeNull();
+    await act(async () => {
+      fireEvent.click(verb);
+    });
+    const post = calls.find((c) => c.path === "/api/setup/local-ai" && c.method === "POST");
+    expect(post?.json).toEqual({ only: ["whisper"] });
+    const shell = await import("../../shell");
+    expect(vi.mocked(shell.openSurfaceOr)).not.toHaveBeenCalledWith("project-setup", "/");
+  });
+
+  it("speech on this device by the hub's read: the door is Runs on, not New Project", async () => {
+    local = status({ all: true, state: "ready" });
+    mocks.start.mockRejectedValue(new ApiError(503, "transcription unavailable", null));
+    render(<FirstRun />);
+    fireEvent.click(await screen.findByRole("button", { name: "◖ Dictate one sentence" }));
+    await screen.findByTestId("firstrun-take-failure");
+    const shell = await import("../../shell");
+    fireEvent.click(await screen.findByRole("button", { name: "Runs on" }));
+    expect(vi.mocked(shell.openSurfaceOr)).toHaveBeenCalledWith("configure-runs-on", "/profiles");
+    expect(vi.mocked(shell.openSurfaceOr)).not.toHaveBeenCalledWith("project-setup", "/");
   });
 });
 

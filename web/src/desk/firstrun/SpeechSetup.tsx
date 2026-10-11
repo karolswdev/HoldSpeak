@@ -47,6 +47,12 @@ export function useSpeechSetup() {
       document.removeEventListener("visibilitychange", visible);
     };
   }, [refresh]);
+  return speechSetupOf(ai);
+}
+
+/** The speech-setup state from a `useLocalAi()` the face already holds
+ *  (first run's First words card shares its Local AI read). */
+export function speechSetupOf(ai: ReturnType<typeof useLocalAi>) {
   const status = ai.read.kind === "ok" ? ai.read.status : null;
   const ready = speechReady(status);
   const whisper = groupsOf(status).find((group) => group.key === "whisper");
@@ -67,7 +73,7 @@ export function useSpeechSetup() {
   };
 }
 
-export type SpeechSetupState = ReturnType<typeof useSpeechSetup>;
+export type SpeechSetupState = ReturnType<typeof speechSetupOf>;
 
 /** The row: "Speech is not set up" + "Set up speech · <size>". */
 export function SpeechSetup({

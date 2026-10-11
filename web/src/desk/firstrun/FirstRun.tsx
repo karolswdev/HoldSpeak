@@ -12,7 +12,7 @@
  *
  * The Conductor canvas K1 (ratified 2026-10-06): an Agents card after
  * Connections. It is optional, so it does not join `ready`. */
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   EgressChip,
@@ -53,6 +53,7 @@ import { useConnectionsStep } from "./connectionsStep";
 import { useAgentsStep } from "./agentsStep";
 import { Ready } from "./Ready";
 import { closeFirstRun } from "./reopen";
+import { SpeechSetup, speechSetupOf } from "./SpeechSetup";
 import { LanServerRow, type LanUsed } from "./LanServer";
 import { isLanAddress } from "../../features/concierge/endpointDraft";
 import "../../features/concierge/concierge.css";
@@ -289,15 +290,26 @@ function YouCard({ owner, folded }: { owner: ReturnType<typeof useOwnerName>; fo
 function FirstWordsCard({
   ready,
   take,
+  ai,
   done = false,
 }: {
   ready: boolean;
   take: ReturnType<typeof useFirstTake>;
+  /** The face's one Local AI read: a missing speech model is fixed here. */
+  ai: ReturnType<typeof useLocalAi>;
   /** PHILO-17 U17: a first dictation happened before (first run opened again). */
   done?: boolean;
 }) {
   const heard = take.state === "heard" && take.take;
   const contract = take.failure ? DICTATION_FAILURES[take.failure] : null;
+  // PHILO-17: the hub said "no speech model": read Local AI again, so the
+  // card offers the speech fix the hub's read names.
+  const missingModel = take.failure === "missing_model";
+  const refreshAi = ai.refresh;
+  useEffect(() => {
+    if (missingModel) void refreshAi();
+  }, [missingModel, refreshAi]);
+  const speechFix = speechSetupOf(ai);
   return (
     <Card
       title="First words"
@@ -318,9 +330,14 @@ function FirstWordsCard({
       }
     >
       {!ready ? (
-        <Button variant="secondary" disabled>
-          Dictate one sentence
-        </Button>
+        <>
+          <Button variant="secondary" disabled>
+            Dictate one sentence
+          </Button>
+          {missingModel && speechFix.notSetUp ? (
+            <SpeechSetup setup={speechFix} bare primary={false} testId="firstrun-words-speech" />
+          ) : null}
+        </>
       ) : heard && take.take ? (
         <HeardQuote
           text={take.take.text}
@@ -374,17 +391,22 @@ function FirstWordsCard({
               <StateChip state="failure" label={FAILURE_TOKENS[take.failure].chip} />
               <span className="surface-token" data-tone="danger">{FAILURE_TOKENS[take.failure].reason}</span>
               {contract?.setup ? (
-                <Button
-                  dense
-                  variant="secondary"
-                  onClick={() =>
-                    needsMicrophoneDoctor(take.failure)
-                      ? openSurfaceOr("configure-setup", "/")
-                      : openSurfaceOr("project-setup", "/")
-                  }
-                >
-                  {needsMicrophoneDoctor(take.failure) ? "Check the microphone" : "Setup"}
-                </Button>
+                needsMicrophoneDoctor(take.failure) ? (
+                  <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-setup", "/")}>
+                    Check the microphone
+                  </Button>
+                ) : speechFix.notSetUp ? (
+                  /* PHILO-17: the speech fix in place (#1066's shared verb,
+                     "Set up speech · <size>" with its egress chip). Was a
+                     "Setup" button that opened New Project. */
+                  <SpeechSetup setup={speechFix} bare primary={false} testId="firstrun-words-speech" />
+                ) : (
+                  /* Speech is on this device by the hub's read: the model
+                     choice lives on Runs on's Speech row. */
+                  <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}>
+                    Runs on
+                  </Button>
+                )
               ) : null}
             </div>
           ) : null}
@@ -488,7 +510,7 @@ export function FirstRun() {
           onLanUsed={onLanUsed}
         />
         <YouCard owner={owner} folded={c1Done} />
-        <FirstWordsCard ready={speech} take={take} done={wordsBefore} />
+        <FirstWordsCard ready={speech} take={take} ai={ai} done={wordsBefore} />
       </div>
       <div className="firstrun-cards firstrun-cards-two">
         <CalendarCard step={calendar} lit={calendarLit} />
