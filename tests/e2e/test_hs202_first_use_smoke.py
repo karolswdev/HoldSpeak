@@ -197,6 +197,14 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
 
     monkeypatch.setattr(meeting_service, "run_meeting_import", import_fixture)
     monkeypatch.setattr(meeting_import, "_transcriber_factory", lambda _: _AudioImport(permit_import))
+    # PHILO-17: "after every meeting" queues a summary at Import by itself.
+    # Job 2's subject is the owner's Run press (the planned host beside the
+    # verb, the admitted run, its receipt), so the setting is OFF here. The
+    # automatic path has its own fences (test_hs201_summary_face_glass,
+    # test_hs201_summary_producer_chain).
+    monkeypatch.setattr(
+        "holdspeak.services.meeting_backlog_service._configured_auto_mode", lambda: "off"
+    )
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     db = get_database()
     _configure(db)
