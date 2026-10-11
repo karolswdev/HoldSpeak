@@ -90,22 +90,22 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
   it("the bound key set is the HS-101 grammar, declared in the registry", () => {
     const keys = VERBS.filter((v) => v.key).map((v) => [v.id, v.key]);
     expect(Object.fromEntries(keys)).toEqual({
-      "desk.new-note": "⌘N",
+      "desk.new-note": "⌃N",
       // PHILO-13-16 (C6): the pop-key, a thought from any window.
       "desk.new-thought": "⌃T",
-      "desk.new-decision": "⌘⇧N",
+      "desk.new-decision": "⌃⇧N",
       "desk.overview": "⌘⇧E",
       "desk.settle": "⌘⇧F",
       "object.rename": "F2",
       "object.delete": "Delete",
       "go.ask": "⌘I",
       "go.change-places": "⌘⇧P",
-      "go.dictate": "⌘1",
-      "go.review-meetings": "⌘2",
-      "go.open-conductor": "⌘3",
-      "go.configure-settings": "⌘4",
-      "window.close": "⌘W",
-      "window.minimize": "⌘M",
+      "go.dictate": "⌃1",
+      "go.review-meetings": "⌃2",
+      "go.open-conductor": "⌃3",
+      "go.configure-settings": "⌃4",
+      "window.close": "⌃W",
+      "window.minimize": "⌃M",
       // PHILO-16 §5: the compositor's keys (the C2 keys ⌃M, ⌃B, ⌃` stay
       // bound one release as altKeys; the reverse cycle has no key now).
       "window.maximize": "⌘⇧Z",

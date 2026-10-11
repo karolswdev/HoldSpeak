@@ -46,7 +46,7 @@ describe("DeskOS application manifest", () => {
       DESK_APPLICATIONS.filter((application) => application.shortcut).map(
         (application) => application.shortcut,
       ),
-    ).toEqual(["⌘⇧P", "⌘1", "⌘2", "⌘3", "⌘4"]);
+    ).toEqual(["⌘⇧P", "⌃1", "⌃2", "⌃3", "⌃4"]); // PHILO-17 U27
   });
 
   it("PHILO-14 C4: the old Agents application is parked: route alive, in no Dock, Go list, shortcut or mark", () => {
@@ -58,7 +58,7 @@ describe("DeskOS application manifest", () => {
     expect(parked?.group).toBeUndefined();
     expect(DOCK_APPLICATIONS.some((application) => application.windowId === "surface-companion")).toBe(false);
     const conductor = DOCK_APPLICATIONS.find((application) => application.action === "open-conductor");
-    expect(conductor).toMatchObject({ windowId: "conductor", label: "Conductor", href: "/conductor", shortcut: "⌘3" });
+    expect(conductor).toMatchObject({ windowId: "conductor", label: "Conductor", href: "/conductor", shortcut: "⌃3" });
   });
 
   it("derives mark-menu application commands", () => {
