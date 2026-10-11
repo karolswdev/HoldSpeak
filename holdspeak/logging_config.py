@@ -8,6 +8,16 @@ LOG_DIR = Path.home() / ".local" / "share" / "holdspeak"
 LOG_FILE = LOG_DIR / "holdspeak.log"
 
 
+class RedactingFormatter(logging.Formatter):
+    """A log line, its traceback included, with no credential in it
+    (PHILO-17 redact): a provider's stderr or error body can echo a token."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        from .redaction import redact_secrets
+
+        return redact_secrets(super().format(record))
+
+
 def setup_logging(verbose: bool = False) -> logging.Logger:
     """Configure logging for HoldSpeak.
     
@@ -24,7 +34,7 @@ def setup_logging(verbose: bool = False) -> logging.Logger:
     # File handler - always logs everything
     file_handler = logging.FileHandler(LOG_FILE, mode='a')
     file_handler.setLevel(logging.DEBUG)
-    file_formatter = logging.Formatter(
+    file_formatter = RedactingFormatter(
         '%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
@@ -35,7 +45,7 @@ def setup_logging(verbose: bool = False) -> logging.Logger:
     if verbose:
         console_handler = logging.StreamHandler(sys.stderr)
         console_handler.setLevel(logging.DEBUG)
-        console_formatter = logging.Formatter('%(levelname)-8s | %(message)s')
+        console_formatter = RedactingFormatter('%(levelname)-8s | %(message)s')
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
     

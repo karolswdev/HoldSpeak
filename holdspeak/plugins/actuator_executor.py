@@ -32,6 +32,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Iterable, Optional
 
+from holdspeak.redaction import redact_error
 from ..actuator_authority import AuthorityBinding, authority_binding, payload_hash
 from ..operation_policy import grant_matches, operation_for_proposal
 from ..logging_config import get_logger
@@ -207,13 +208,16 @@ class ActuatorExecutor:
         try:
             result = self._connector(proposal_view)
         except Exception as exc:  # connector failure → failed (retryable) + audit
-            log.error("actuator connector failed for %s: %s", proposal_id, exc)
+            # PHILO-17 redact: every connector's error text, redacted once here
+            # before the log, the proposal row and its receipt.
+            reason = redact_error(f"{type(exc).__name__}: {exc}")
+            log.error("actuator connector failed for %s: %s", proposal_id, reason)
             updated = self._db.actuators.transition_proposal(
                 proposal_id,
                 to_status="failed",
                 actor=self._actor,
                 detail=f"connector error; payload {current_hash[:12]}",
-                error=f"{type(exc).__name__}: {exc}",
+                error=reason,
             )
             self._receipt_operation(operation_id, updated)
             self._notify_result(updated)

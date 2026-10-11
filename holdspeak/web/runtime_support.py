@@ -25,6 +25,8 @@ from typing import Any, Optional
 
 from fastapi.responses import JSONResponse
 
+from holdspeak.redaction import redact_error
+
 
 class UnknownDeviceError(LookupError):
     """Raised by ``on_start`` when a requested device id is not registered.
@@ -68,8 +70,9 @@ def error_500(exc: Exception, logger: logging.Logger, detail: str) -> JSONRespon
     ``detail`` is the already-formatted message (the caller keeps any f-string
     interpolation), so this reproduces the original ``log.error`` exactly.
     """
-    logger.error(f"{detail}: {exc}")
-    return JSONResponse({"error": str(exc)}, status_code=500)
+    reason = redact_error(exc)  # PHILO-17 redact: no echoed credential in the log or the answer
+    logger.error(f"{detail}: {reason}")
+    return JSONResponse({"error": reason}, status_code=500)
 
 
 # Backwards-friendly aliases so call sites keep their underscore-prefixed names.

@@ -11,6 +11,8 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
+from holdspeak.redaction import redact_error, redact_secrets
+
 
 _correlation_id: contextvars.ContextVar[str] = contextvars.ContextVar("_correlation_id")
 
@@ -66,7 +68,13 @@ def _truncate(value: Any, limit: int = 2048) -> str:
         except Exception:
             summary = "<unserializable>"
 
-    if len(summary) > limit:
+    # PHILO-17 redact: agents read pipeline events (MCP ``pipeline://events``),
+    # so no credential a provider echoed is recorded. Redact before the cut;
+    # the scan reads four times the limit, so a secret that crosses the scan's
+    # end lies past the cut anyway.
+    long = len(summary) > limit
+    summary = redact_secrets(summary[: limit * 4])
+    if long or len(summary) > limit:
         return summary[: limit - 1] + "…"
     return summary
 
@@ -120,7 +128,7 @@ def _failure(exc: BaseException) -> tuple[str | None, str | None, str]:
     outcome = getattr(exc, "observed_outcome", None)
     if outcome:
         return None, None, _truncate({"outcome": str(outcome), "code": code})
-    return repr(exc), code, ""
+    return redact_error(repr(exc)), code, ""
 
 
 def observed(fn: Any) -> Any:

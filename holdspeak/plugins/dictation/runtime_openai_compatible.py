@@ -15,6 +15,7 @@ import time
 from typing import Any
 from urllib.parse import urlparse
 
+from holdspeak.redaction import redact_error
 from holdspeak.intel.endpoint_health import default_health as _endpoint_health
 from holdspeak.intel.parsing import _extract_status_code
 from holdspeak.kernel.provider_signals import ProviderKnownNoGenerationTransient, ProviderPermanentNoGeneration, ProviderPermissionDenied
@@ -162,7 +163,7 @@ class OpenAICompatibleRuntime:
                 log.info("OpenAI-compatible endpoint rejected response_format")
                 raise
             log.error("OpenAI-compatible dictation classify failed: %s", exc, exc_info=True)
-            raise RuntimeError(f"OpenAI-compatible classify failed: {exc}") from exc
+            raise RuntimeError(f"OpenAI-compatible classify failed: {redact_error(exc)}") from exc
         _endpoint_health.record_success(
             endpoint_key, latency_ms=(time.monotonic() - started) * 1000
         )
@@ -208,7 +209,7 @@ class OpenAICompatibleRuntime:
             if _extract_status_code(exc) == 404:
                 raise ProviderPermanentNoGeneration() from exc
             log.error("OpenAI-compatible dictation rewrite failed: %s", exc, exc_info=True)
-            raise RuntimeError(f"OpenAI-compatible rewrite failed: {exc}") from exc
+            raise RuntimeError(f"OpenAI-compatible rewrite failed: {redact_error(exc)}") from exc
         return _extract_message_text(response)
 
 

@@ -48,6 +48,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Optional, TextIO
 
+from holdspeak.redaction import redact_error
 from .auth import resolve_auth
 from .resources import ResourceError, list_resources, read_resource
 from .tools import TOOLS, ToolError, dispatch, dispatch_for_palette, tools_for_palette
@@ -81,7 +82,22 @@ def _error(
     return response
 
 
+def _redacted(value: Any) -> Any:
+    """Every string in an error answer, redacted (PHILO-17 redact)."""
+    if isinstance(value, str):
+        return redact_error(value)
+    if isinstance(value, dict):
+        return {key: _redacted(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_redacted(item) for item in value]
+    return value
+
+
 def _tool_result(value: Any, *, is_error: bool = False) -> dict[str, Any]:
+    if is_error:
+        # PHILO-17 redact: an agent reads this; a provider's error text can
+        # echo a credential. Strings are redacted one by one, so the JSON holds.
+        value = _redacted(value)
     return {
         "content": [{"type": "text", "text": json.dumps(value, sort_keys=True, default=str)}],
         "isError": is_error,
@@ -213,7 +229,7 @@ def handle_message_via_hub(request: dict[str, Any]) -> dict[str, Any] | None:
     except urllib.error.HTTPError as exc:
         detail = ""
         try:
-            detail = exc.read().decode("utf-8", "replace")[:400]
+            detail = redact_error(exc.read().decode("utf-8", "replace"), 400)
         except Exception:
             pass
         if not _owner_token():

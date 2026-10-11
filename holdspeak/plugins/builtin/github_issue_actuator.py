@@ -44,6 +44,7 @@ import re
 from typing import Any, Optional
 from urllib.parse import urlparse
 
+from holdspeak.redaction import redact_error
 from ...logging_config import get_logger
 from ..actuator_executor import Connector
 from ..gated_connector import (
@@ -196,7 +197,7 @@ def _interpret(completed: Any, op: GatedOperation) -> dict[str, Any]:
     stderr = (getattr(completed, "stderr", "") or "").strip()
     if returncode != 0:
         raise RuntimeError(
-            f"gh issue create failed (exit {returncode}): {stderr or stdout or 'no output'}"
+            f"gh issue create failed (exit {returncode}): {redact_error(stderr or stdout or 'no output', 500)}"
         )
     # `gh issue create` prints the URL of the new issue to stdout (last line).
     url = stdout.splitlines()[-1].strip() if stdout else ""

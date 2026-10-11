@@ -58,6 +58,7 @@ from ..plugins.gated_connector import (
     WriteConnectorManifest,
     build_gated_connector,
 )
+from ..redaction import redact_secrets
 from .channel_contract import CHANNELS, ERROR_LIMIT, REDACTED, ChannelRefused, Document, Outcome, redact, sha256
 from .errors import ValidationError
 
@@ -778,7 +779,8 @@ class EmailChannel:
         outcome = chosen.interpret(answer.status, answer.headers, answer.body)
         if outcome.proof.get("error"):
             # Cut BEFORE the excerpt scan (story 02's GATE 1): the scan's cost is bounded by 240 characters.
-            cut = " ".join(str(outcome.proof["error"]).split())[:ERROR_LIMIT]
+            # PHILO-17 redact: secrets out of the WHOLE text first, then the cut.
+            cut = " ".join(redact_secrets(outcome.proof["error"]).split())[:ERROR_LIMIT]
             outcome = replace(outcome, proof={**outcome.proof, "error": redact(cut, body)})
         return outcome
 
