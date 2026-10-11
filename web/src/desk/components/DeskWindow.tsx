@@ -140,6 +140,11 @@ export interface DeskWindowOptions {
    * material decides) until the user arranges the window; the HS-97-09
    * max-height seed inflation is skipped. */
   fitContent?: boolean;
+  /** PHILO-17 (briefcover): true while the window is still open in its
+   * owner's store although its frame is hidden (a Chair window off the
+   * phone's one-window ring). Hiding it then keeps its plane; only a close
+   * leaves the stacking order. */
+  keepsPlane?: () => boolean;
   /** Round 9 — the client point this window opened FROM (the tapped
    * desk object). The window seats itself beside it and the open/close
    * motion flies out of and back into it — spatial, not a side dock. */
@@ -317,7 +322,9 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       // too. Without this, a closed sheet kept its old plane in the persisted
       // order, and after a reload its reopen stayed BEHIND the window that
       // opened it (the Delivery board covered the reopened Dossier at 393).
-      return () => useDesk.getState().retirePanel(id);
+      return () => {
+        if (!opts.keepsPlane?.()) useDesk.getState().retirePanel(id);
+      };
     const s = useDesk.getState();
     const vw = window.innerWidth || 1280;
     const vh = window.innerHeight || 800;
@@ -426,6 +433,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       // the panel is re-placed from its default home next time. Closing
       // also leaves the stacking order, so a reopen presents on top.
       const st = useDesk.getState();
+      if (opts.keepsPlane?.()) return;
       if (!st.panelSaved.includes(id) && st.panelRects[id])
         st.resetPanelRect(id);
       st.retirePanel(id);
@@ -671,6 +679,8 @@ export interface DeskWindowFrameProps {
   defaultH?: number;
   /** Content-sized card: see DeskWindowOptions.fitContent. */
   fitContent?: boolean;
+  /** See DeskWindowOptions.keepsPlane. */
+  keepsPlane?: () => boolean;
   /** The client point this window opened from: see DeskWindowOptions. */
   origin?: { x: number; y: number } | null;
   /** A tiled window: see DeskWindowOptions.tiled. */
@@ -721,6 +731,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     defaultW,
     defaultH,
     fitContent,
+    keepsPlane,
     origin,
     tiled,
     dockChip: chipMode = "always",
@@ -755,6 +766,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     defaultW,
     defaultH,
     fitContent,
+    keepsPlane,
     origin,
     tiled,
     zoomed: maximized && !compact,

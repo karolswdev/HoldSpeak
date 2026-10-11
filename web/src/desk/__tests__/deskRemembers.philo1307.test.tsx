@@ -167,6 +167,27 @@ describe("B2 / B0-F2: a closed sheet (393) leaves the stacking order", () => {
   });
 });
 
+describe("PHILO-17 briefcover: a hidden window that is still open keeps its plane", () => {
+  it("hiding (keepsPlane) does not leave the stacking order; a close does", async () => {
+    const { useDesk } = await import("../store");
+    const { DeskWindowFrame } = await import("../components/DeskWindow");
+    let open = true;
+    const brief = render(<DeskWindowFrame id="chair:brief" title="Brief" open keepsPlane={() => open} onClose={() => {}}>b</DeskWindowFrame>);
+    const meetings = render(<DeskWindowFrame id="surface-meetings" title="Meetings" open onClose={() => {}}>m</DeskWindowFrame>);
+    expect(useDesk.getState().panelOrder).toEqual(["chair:brief", "surface-meetings"]);
+    // Hidden (a narrow moment), then shown again: Meetings stays in front.
+    brief.rerender(<DeskWindowFrame id="chair:brief" title="Brief" open={false} keepsPlane={() => open} onClose={() => {}}>b</DeskWindowFrame>);
+    brief.rerender(<DeskWindowFrame id="chair:brief" title="Brief" open keepsPlane={() => open} onClose={() => {}}>b</DeskWindowFrame>);
+    expect(useDesk.getState().panelOrder).toEqual(["chair:brief", "surface-meetings"]);
+    // Closed: it leaves the order.
+    open = false;
+    brief.rerender(<DeskWindowFrame id="chair:brief" title="Brief" open={false} keepsPlane={() => open} onClose={() => {}}>b</DeskWindowFrame>);
+    expect(useDesk.getState().panelOrder).toEqual(["surface-meetings"]);
+    brief.unmount();
+    meetings.unmount();
+  });
+});
+
 describe("B2: unsent drafts return, per object, and clear on save", () => {
   function json(body: unknown, status = 200) {
     return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });

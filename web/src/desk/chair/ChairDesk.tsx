@@ -80,6 +80,10 @@ function ChairWindow({
       // PHILO-14 A1: a floating Chair window keeps its C1-1 seat's CSS height
       // until he arranges it (no max-height seed inflation over its neighbour).
       fitContent={!tiled}
+      // PHILO-17 (briefcover): hidden (393's one-window ring, a narrow
+      // moment) is not closed: the window keeps its plane, so back at 1440 it
+      // does not jump above the window he is using.
+      keepsPlane={() => !useChairWindows.getState().closed[spec.id]}
       dockChip="iconified"
       escapeCloses={false}
       entrance={false}
