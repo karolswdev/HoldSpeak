@@ -574,6 +574,11 @@ class TestMeetingFacesGlass:
                               "receipt": t1_receipt}
 
                 # ── C6: the meeting window -- the same well, its history ──
+                # PHILO-17: each meeting is its own window; the hub holds the
+                # ones opened above, so the desk starts empty here.
+                from .glass_infra import clear_hub_windows
+
+                clear_hub_windows(page, TOKEN)
                 page.evaluate("() => localStorage.removeItem('hs.desk.workspace.v1')")
                 page.goto(f"{self.base}/?token={TOKEN}&open=meeting:{ids['sync']}", wait_until="load")
                 _normal_chair(page)

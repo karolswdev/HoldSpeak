@@ -10,7 +10,7 @@
  * Seats: the Meetings record under SUMMARY (MeetingDetail), the meeting
  * window (MeetingPullout) and the Chair's MEETINGS row when unfolded.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CycleGadget } from "../desk/surface";
 import { SendHistory, SendWell, mergeKnown, pickDestination, pickedDestination, useSends } from "../desk/surface/send";
 import { useAnnounceWindowDocument } from "../desk/windowSend";
@@ -60,6 +60,11 @@ export function MeetingSendWell({ meetingId, title, startedAt }: {
     meeting_digest: useSends(`meeting_digest:${meetingId}`),
     meeting_followup: useSends(`meeting_followup:${meetingId}`),
   };
+  // PHILO-17: a form he switches to reads its sends again (kept while the
+  // read runs), so a send prepared elsewhere (an agent, another window)
+  // since this well opened shows on that form.
+  const reloadForm = reads[kind].reload;
+  useEffect(() => { reloadForm(); }, [kind, reloadForm]);
   const history = MEETING_FORMS.flatMap((f) => mergeKnown(`${f.value}:${meetingId}`, reads[f.value].data ?? []));
   const formTag = (s: { document_ref: string }) => {
     const f = MEETING_FORMS.find((x) => s.document_ref === `${x.value}:${meetingId}`);
