@@ -373,18 +373,22 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
           rightX + seed.w <= vw - MARGIN ? rightX : Math.max(MARGIN, leftX);
         seed.y = origin.y - 56;
       }
-      // The icon-column floor is for windows opening on the generic home
-      // (24,72). A Chair window's first seat is the designed Phase-13
-      // arrangement (Needs you left, Brief and The week right; chair.css):
-      // shifting it right put Needs you over The week's title bar.
-      const floor = id.startsWith("chair:") ? MARGIN : iconColumnRight();
-      const placed = placeWindow(seed, others, vw, vh, minW, minH, floor);
+      // A Chair window's first seat is the designed Phase-13 arrangement
+      // (Needs you left, Brief and The week right; chair.css): it is not
+      // moved by the scan or the icon-column floor. Moving it put Needs you
+      // over The week's title bar and over Capture's verbs.
+      const chairSeat = id.startsWith("chair:");
+      const placed = chairSeat
+        ? clampIntoBand(seed, vw, vh, minW, minH)
+        : placeWindow(seed, others, vw, vh, minW, minH, iconColumnRight());
       // PHILO-17 (U28c): the first seat is kept (saved, and sent to the hub
       // with the open), so a reload and every other view show the window
       // where it opened. Not for a content-sized card (its height stays the
       // material's) and not for a window the hub opened here (a view that
-      // only loads writes nothing to the desk).
-      s.setPanelRect(id, placed, !opts.fitContent && !hubPlacing(id));
+      // only loads writes nothing to the desk), and not for a Chair window.
+      // A Chair window's seat is CSS (it follows the band and the aftercare
+      // card, C1-4e): never saved until he moves it.
+      s.setPanelRect(id, placed, !opts.fitContent && !chairSeat && !hubPlacing(id));
       if (
         origin &&
         el &&
