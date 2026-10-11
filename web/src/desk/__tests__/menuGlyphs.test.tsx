@@ -27,9 +27,8 @@ beforeEach(() => {
 
 describe("glyph population (HS-148-02)", () => {
   it("every Go verb carries its DESK_TOOLS glyph — one glyph language", () => {
-    const goVerbs = menuVerbs("go");
     for (const tool of DESK_TOOLS) {
-      const verb = goVerbs.find((v) => v.id === `go.${tool.action}`);
+      const verb = VERBS.find((v) => v.id === `go.${tool.action}`);
       expect(verb, `go.${tool.action} missing`).toBeTruthy();
       expect(verb!.glyph).toBe(tool.glyph);
     }
@@ -171,21 +170,17 @@ describe("variant matrix — root attribute gating (HS-148-02)", () => {
 });
 
 describe("Go menu grouping separator (HS-148-02)", () => {
-  // HS-202-02: 12 tools — `configure-setup` was unparked and given a Go/⌘K
-  // door (the readiness face had none at any width). The four app
-  // primaries are unchanged.
-  it("Go menu entries have the 4/12 app/tool group split with a separator", () => {
+  // PHILO-17 (doors): Go is seven applications, then Tools ▸ with six.
+  // Settings, Runs on, Connections, Setup and Change places are not in Go.
+  it("Go menu verbs: six ride Tools ▸, the setup verbs are not in Go", () => {
     const goVerbs = menuVerbs("go");
-    // First 4 should be "app" group, rest "tool" group.
-    const appVerbs = goVerbs.filter((v) => v.group === "app");
-    const toolVerbs = goVerbs.filter((v) => v.group === "tool");
-    expect(appVerbs.length).toBe(4);
-    expect(toolVerbs.length).toBe(12);
-    expect(toolVerbs.some((verb) => verb.id === "go.change-places")).toBe(true);
-    expect(toolVerbs.some((verb) => verb.id === "go.open-project-memory")).toBe(true);
-    // Verify the order: first 4 are app, rest are tool.
-    expect(goVerbs.slice(0, 4).every((v) => v.group === "app")).toBe(true);
-    expect(goVerbs.slice(4).every((v) => v.group === "tool")).toBe(true);
+    expect(goVerbs.filter((v) => v.submenu === "Tools").map((v) => v.id).sort()).toEqual([
+      "go.configure-cadence", "go.configure-commands", "go.inspect-activity",
+      "go.inspect-processes", "go.open-constitutional-context", "go.open-workbenches",
+    ]);
+    expect(goVerbs.filter((v) => !v.submenu)).toHaveLength(7);
+    for (const id of ["go.configure-settings", "go.configure-runs-on", "go.configure-integrations", "go.configure-setup", "go.change-places"])
+      expect(goVerbs.some((v) => v.id === id), id).toBe(false);
   });
   // PHILO-17: the Floor right-click menu (New ▸ / Launch ▸) is parked with
   // the Floor (desk/_parked/floor/floorMenu.ts).

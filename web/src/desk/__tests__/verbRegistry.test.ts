@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { VERBS, menuVerbs, verbLabel, verbsFor, verbById } from "../verbRegistry";
 import { DESK_TOOLS } from "../tools";
+import { GO_APPLICATIONS, GO_TOOL_APPLICATIONS, applicationVerbId } from "../applications";
 import { registerSurface } from "../shell";
 import { THREAD_SLASH_COMMANDS } from "../components/ThreadComposer";
 
@@ -80,11 +81,12 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
     expect(opened).toEqual(["desk"]);
   });
 
-  it("the Go menu derives from DESK_TOOLS — the deck's same truth", () => {
-    const go = menuVerbs("go");
-    expect(go.map((v) => verbLabel(v, CTX))).toEqual(
-      DESK_TOOLS.map((t) => t.label),
-    );
+  it("PHILO-17 (doors): the Go verbs are the manifest's Go rows", () => {
+    const go = new Set(menuVerbs("go").map((v) => v.id));
+    const placed = [...GO_APPLICATIONS, ...GO_TOOL_APPLICATIONS].map(applicationVerbId);
+    expect([...go].sort()).toEqual([...placed].sort());
+    // The rest of DESK_TOOLS keep their verb (⌘K, keys, the HoldSpeak menu).
+    for (const tool of DESK_TOOLS) expect(verbById(`go.${tool.action}`), tool.action).toBeTruthy();
   });
 
   it("the bound key set is the HS-101 grammar, declared in the registry", () => {

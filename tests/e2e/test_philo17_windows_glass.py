@@ -155,11 +155,14 @@ class TestWindowsOpenWell:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
             try:
-                # ── W1: two apps from the Dock ──────────────────────────────
+                # ── W1: two apps from their doors ───────────────────────────
+                # PHILO-17 (doors): Meetings from the Dock, People from its
+                # desk drawer.
                 ctx_a, a, errors_a = self._page(browser, 1440, onboard=True)
-                for app in ("Meetings", "People"):
-                    a.locator(".desk-dock button").filter(has_text=app).first.click()
-                    a.wait_for_timeout(900)
+                a.locator(".desk-dock button").filter(has_text="Meetings").first.click()
+                a.wait_for_timeout(900)
+                a.locator(".desk-screen [data-object-id='drawer:people']").dblclick()
+                a.wait_for_timeout(900)
                 wins = _until(lambda: _wins(a), lambda w: {"Meetings", "People"} <= set(w))
                 icons = a.evaluate(ICONS_JS)
                 if not {"Meetings", "People"} <= set(wins):

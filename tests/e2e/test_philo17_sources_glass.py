@@ -101,13 +101,15 @@ def _walk(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
             room.screenshot(path=str(SHOTS / f"room-add-source-{width}.png"))
 
             if width >= 1000:
-                # U30: the Dock opens the project's Room (one home), not the drawer.
+                # U30: Go ▸ Projects opens the project's Room (one home), not
+                # the drawer. PHILO-17 (doors): projects left the Dock.
                 clear_hub_windows(page, token=TOKEN)
                 page.reload(wait_until="load")
                 _normal_chair(page)
-                dock = page.locator(".desk-dock-project", has_text="Ledger cutover").first
-                dock.wait_for(timeout=T)
-                dock.click()
+                page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                go = page.get_by_role("menu", name="Go menu")
+                go.get_by_role("menuitem", name="Projects").click()
+                page.get_by_role("menuitem", name="Ledger cutover").click()
                 page.locator("#surface-project-memory").wait_for(timeout=T)
                 page.wait_for_timeout(400)
                 assert page.locator(".drawer-window").count() == 0

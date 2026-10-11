@@ -26,6 +26,11 @@ import { KIND_GLYPH } from "../tools";
 import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { useCompactViewport } from "../useCompactViewport";
 import { CHAIR_WINDOW_IDS } from "../chair/chairWindows";
+import {
+  GO_APPLICATIONS,
+  GO_TOOL_APPLICATIONS,
+  applicationVerbId,
+} from "../applications";
 import { Button } from "../../components/signal/Signal";
 import { frontSendTo, primeSendTo, useSendToTick } from "../windowSend";
 import {
@@ -54,11 +59,11 @@ export const PHONE_GO_CHAIR = [
   "chair.window.week",
   "chair.window.capture",
 ] as const;
+// PHILO-17 (doors): Settings left Go; it is in the HoldSpeak menu.
 export const PHONE_GO_PLACES: readonly (readonly [string, string])[] = [
   ["go.review-meetings", "Meetings"],
   ["desk.open-people", "People"],
   ["go.open-conductor", "Conductor"],
-  ["go.configure-settings", "Settings"],
 ];
 export const PHONE_NEW: readonly (readonly [string, string])[] = [
   ["desk.new-thought", "Thought"],
@@ -95,6 +100,41 @@ export function phoneGo(
   }
   out.push({ type: "sep", id: "go-new-sep" });
   out.push({ type: "sub", id: "go-new", label: "New", entries: rows(PHONE_NEW) });
+  return out;
+}
+
+/** PHILO-17 (doors, Muad'Dib's determination 2026-10-10) — Go at 1440 is
+ * the index of the applications: Speak, Meetings, Intelligence, Ask AI,
+ * People, Conductor, Memory; then Projects ▸ (the desk's projects; omitted
+ * when there are none); then Tools ▸. Settings, Runs on, Connections and
+ * Setup are in the HoldSpeak menu. Pure over its inputs. */
+export function deskGo(
+  row: (verbId: string, label?: string) => WorkMenuEntry | null,
+  projects: readonly { id: string; name: string }[],
+  openProject: (id: string) => void,
+): WorkMenuEntry[] {
+  const rows = (apps: typeof GO_APPLICATIONS) =>
+    apps
+      .map((app) => row(applicationVerbId(app), app.toolLabel ?? app.label))
+      .filter((e): e is WorkMenuEntry => e !== null);
+  const out: WorkMenuEntry[] = rows(GO_APPLICATIONS);
+  if (projects.length) {
+    out.push({ type: "sep", id: "go-projects-sep" });
+    out.push({
+      type: "sub",
+      id: "go-projects",
+      label: "Projects",
+      entries: projects.map((p) => ({
+        type: "item" as const,
+        id: `go-project-${p.id}`,
+        label: p.name,
+        glyph: KIND_GLYPH.project,
+        onSelect: () => openProject(p.id),
+      })),
+    });
+  }
+  out.push({ type: "sep", id: "go-tools-sep" });
+  out.push({ type: "sub", id: "go-tools", label: "Tools", entries: rows(GO_TOOL_APPLICATIONS) });
   return out;
 }
 
@@ -232,9 +272,10 @@ export function DeskMenuBar() {
       );
   };
 
-  /** One registry verb as a phone row: its label (or the phone's word for
-   * it), glyph, ghost and check; never a keycap. */
-  const phoneRow = (verbId: string, label?: string): WorkMenuEntry | null => {
+  /** One registry verb as a Go row: its label (or Go's word for it),
+   * glyph, ghost and check; a keycap at desktop width only (a phone has no
+   * ⌘ key). */
+  const goRow = (verbId: string, label?: string): WorkMenuEntry | null => {
     const v = VERBS.find((x) => x.id === verbId);
     if (!v) return null;
     return {
@@ -242,6 +283,7 @@ export function DeskMenuBar() {
       id: v.id,
       label: label ?? verbLabel(v, ctx),
       glyph: v.glyph,
+      ...(!compact && v.key ? { keycap: v.key } : {}),
       ghost: v.ghost(ctx),
       ...(v.checked ? { checked: v.checked(ctx) } : {}),
       onSelect: () => v.run(ctx),
@@ -249,10 +291,12 @@ export function DeskMenuBar() {
   };
 
   const entries = (id: MenuId): WorkMenuEntry[] => {
+    // PHILO-15 11 (B21): the phone door is the owner's short Go.
+    if (compact && id === "go") return phoneGo(goRow, projects ?? [], openProjectRoom);
+    // PHILO-17 (doors): Go at desktop width is the application index.
+    if (id === "go") return deskGo(goRow, projects ?? [], openProjectRoom);
     const out: WorkMenuEntry[] = [];
     menuEntries(id, out);
-    // PHILO-15 11 (B21): the phone door is the owner's short Go.
-    if (compact && id === "go") return phoneGo(phoneRow, projects ?? [], openProjectRoom);
     return out;
   };
 

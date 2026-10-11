@@ -151,12 +151,14 @@ def test_the_conductor_drawer_at_1440_and_393(tmp_path: Path, monkeypatch) -> No
                     page.reload(wait_until="load")
                     _normal_chair(page)
                     _settle(page)
-                    # The Dock's Agents entry is the Conductor now.
-                    dock = page.locator(".desk-dock [data-app='conductor']")
-                    dock.wait_for(timeout=T)
-                    assert "Conductor" in (dock.text_content() or "")
+                    # PHILO-17 (doors): the Conductor's door is its desk
+                    # drawer (and Go), not a Dock tile.
+                    assert page.locator(".desk-dock [data-app='conductor']").count() == 0
                     assert page.locator(".desk-dock [data-app='surface-companion']").count() == 0
-                    dock.click()
+                    drawer = page.locator(".desk-screen [data-object-id='drawer:conductor']")
+                    drawer.wait_for(timeout=T)
+                    assert (drawer.get_attribute("aria-label") or "").startswith("Conductor")
+                    drawer.dblclick()
                 else:
                     # The Conductor's address opens the same window.
                     page.goto(f"{url}/conductor", wait_until="load")

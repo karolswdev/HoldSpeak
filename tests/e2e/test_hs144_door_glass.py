@@ -620,11 +620,12 @@ def test_meetings_settings_calendar_glass_and_egress_fact(
                 "enabled": True,
             }
 
-            # Open Settings through its normal Go registry path; the settings
-            # window retains the browser's authorized root context.
-            page.get_by_role("button", name="Go", exact=True).click()
-            go_menu = page.get_by_role("menu", name="Go menu")
-            go_menu.get_by_role("menuitem", name="Settings").click()
+            # Open Settings through its one door, the HoldSpeak menu (PHILO-17
+            # doors); the settings window retains the browser's authorized
+            # root context.
+            page.locator(".desk-mark").click()
+            mark_menu = page.get_by_role("menu", name="HoldSpeak")
+            mark_menu.get_by_role("menuitem", name="Settings").click()
             settings = page.locator("#surface-settings")
             settings.wait_for()
             # HS-170-04: the hub is now SurfaceLedgerRows; click the Meetings row.

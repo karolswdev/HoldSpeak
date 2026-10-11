@@ -234,7 +234,7 @@ export function SystemShade({
             onOpenMemory();
           }}
         >
-          Desk memory
+          Memory
         </Button>
       </div>
 
