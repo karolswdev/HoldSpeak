@@ -14,6 +14,10 @@ Through the real hub on an isolated HOME, at 1440x900 and 393x852:
   (``pullout:meeting:<id>``) into the saved record. The capture device is
   the one stand-in: ``on_start`` / ``on_stop`` answer in place of a
   microphone, and the stop saves the meeting through the real producer.
+* A summary that finishes while its meeting is open (the hub's
+  ``aftercare_ready``) lands in that meeting's window: at 393 the meeting
+  sheet stays the visible front; Capture never takes it (the owner's bug:
+  after Import the meeting he opened hid behind Capture).
 * A person icon opens THAT person (``pullout:people:<id>``, the
   RelationshipPane with the person's name), not the People application.
 
@@ -87,7 +91,7 @@ class TestOneMeetingOneWindow:
         _ensure_build()
         capture = _Capture()
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN, on_start=capture.start, on_stop=capture.stop)
-        self.base = base
+        self.base, self.server = base, server
         from holdspeak.db import get_database
         from holdspeak.people import production_people_store
         from holdspeak.principals import Principal, PrincipalKind
@@ -303,6 +307,37 @@ class TestOneMeetingOneWindow:
                 assert page.locator("#surface-people").count() == 0
                 assert not re.search(r"\bBack\b", win.locator(".people-detail-head").inner_text())
                 self._shot("person-window")
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_finished_summary_keeps_the_open_meeting_in_front(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                self._open_icon(f"meeting:{ONE}")
+                wid = f"pullout:meeting:{ONE}"
+                self._one_front(ONE, "icon")
+                # The summary finishes: the hub announces the meeting's aftercare
+                # on its one bus (the queue's own frame; the run is the stand-in).
+                self.server.broadcast("aftercare_ready", {
+                    "meeting_id": ONE, "title": "Platform sync", "open_total": 1, "proposal_total": 1,
+                })
+                page.wait_for_timeout(1500)
+                state = page.evaluate("""(id) => {
+                    const w = document.getElementById(id);
+                    const cap = document.getElementById('chair:capture');
+                    return {front: !!w && w.classList.contains('is-front'),
+                            shown: !!w && getComputedStyle(w).display !== 'none' && w.checkVisibility(),
+                            captureFront: !!cap && cap.classList.contains('is-front')};
+                }""", wid)
+                assert state == {"front": True, "shown": True, "captureFront": False}, f"{width}: {state}"
+                self._shot("meeting-window-aftercare")
                 assert not errors, errors
             finally:
                 browser.close()

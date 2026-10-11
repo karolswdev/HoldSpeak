@@ -125,6 +125,10 @@ function PulloutFrame({
       {hosted ? (
         <FootSlotContext.Provider value={foot}>
           <div className="desk-surface-body">
+            {/* The aftercare card's seat (as SurfaceWindowHost): a card for
+                this meeting lands in its own window, and at 393 Capture never
+                takes the front from it (ChairDesk, frontWindowAftercareSlot). */}
+            {o.kind === "meeting" ? <div data-aftercare-window-slot="top" /> : null}
             <TitleSlotContext.Provider value={setTitleOverride}>
               <WingSlotContext.Provider value={setWings}>
                 <Content object={o} onClose={() => closePullout(pulloutId)} />
