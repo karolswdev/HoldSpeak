@@ -310,6 +310,8 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     "project.resource.remove": (PROJECT, "", ""),
     "project.open_review": (PROJECT, "", ""),
     # never: the owner's records and state, or a global run
+    # PHILO-17: the owner's own meeting, an owner-only operation.
+    "meeting.transcribe": (NEVER, "meeting", "meeting_id"),
     "thread.set_status": (NEVER, "thread", "thread_id"),
     "interview.change_section": (NEVER, "thread", "thread_id"),
     "interview.record_fact": (NEVER, "thread", "thread_id"),

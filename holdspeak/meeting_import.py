@@ -650,6 +650,121 @@ def _persist_import(
     )
 
 
+# PHILO-17 transcribe: a meeting recorded while speech was not set up keeps
+# its audio in the capture journal (``meeting_capture_journal.py``) and is
+# saved record-only with ``speech_not_set_up``. Transcribe turns that kept
+# audio into the transcript of the SAME meeting.
+CAPTURE_ROOT_PARTS = (".local", "share", "holdspeak", "meeting-captures")
+
+
+def capture_folder(meeting_id: str, directory: Optional[Path] = None) -> Path:
+    """The meeting's capture journal folder (the journal's own default root)."""
+    return (directory or Path.home().joinpath(*CAPTURE_ROOT_PARTS)) / meeting_id
+
+
+def load_kept_audio(meeting_id: str, directory: Optional[Path] = None) -> list[tuple[str, np.ndarray]]:
+    """Read the journal's durable audio: ``[(source, mono float32 16 kHz)]``.
+
+    Only the bytes the manifest calls durable are read (a torn final append
+    is ignored, as recovery does). Raises :class:`MeetingImportError` when
+    the meeting has no kept audio.
+    """
+    import json
+
+    folder = capture_folder(meeting_id, directory)
+    try:
+        manifest = json.loads((folder / "capture.json").read_text("utf-8"))
+    except (OSError, ValueError) as exc:
+        raise MeetingImportError(
+            f"Meeting {meeting_id} has no kept audio ({exc}).", cause="NO AUDIO KEPT"
+        ) from exc
+    rate = int(manifest.get("sample_rate") or TARGET_SAMPLE_RATE)
+    tracks: list[tuple[str, np.ndarray]] = []
+    for source, durable in sorted(dict(manifest.get("durable_bytes") or {}).items()):
+        size = int(durable or 0) // 4 * 4
+        path = folder / f"{source}.f32le.partial"
+        if size <= 0 or not path.is_file():
+            continue
+        with open(path, "rb") as handle:
+            audio = np.frombuffer(handle.read(size), dtype="<f4").astype(np.float32)
+        if rate != TARGET_SAMPLE_RATE:
+            audio = _linear_resample_mono(audio, rate, TARGET_SAMPLE_RATE)
+        if len(audio) >= TARGET_SAMPLE_RATE // 2:
+            tracks.append((str(source), audio))
+    if not tracks:
+        raise MeetingImportError(
+            f"Meeting {meeting_id} has no kept audio to transcribe.", cause="NO AUDIO KEPT"
+        )
+    return tracks
+
+
+def kept_audio_windows(meeting_id: str, directory: Optional[Path] = None,
+                       window_seconds: float = DEFAULT_WINDOW_SECONDS) -> int:
+    """How many transcription windows the kept audio holds (from the manifest
+    alone; the speech session's budget is sized by it before any audio is read)."""
+    import json
+
+    try:
+        manifest = json.loads((capture_folder(meeting_id, directory) / "capture.json").read_text("utf-8"))
+    except (OSError, ValueError):
+        return 0
+    rate = int(manifest.get("sample_rate") or TARGET_SAMPLE_RATE)
+    total = 0
+    for durable in dict(manifest.get("durable_bytes") or {}).values():
+        seconds = (int(durable or 0) // 4) / float(rate)
+        total += int(np.ceil(seconds / window_seconds)) if seconds > 0 else 0
+    return total
+
+
+def transcribe_kept_audio(
+    meeting_id: str,
+    *,
+    transcriber,
+    admission,
+    labels: dict[str, str],
+    progress: Optional[ProgressCallback] = None,
+    directory: Optional[Path] = None,
+    window_seconds: float = DEFAULT_WINDOW_SECONDS,
+) -> list[TranscriptSegment]:
+    """Transcribe a saved meeting's kept audio, under the caller's admission.
+
+    The import's own transcription (the same windows and guards) runs over
+    each kept track; the mic track speaks as ``labels["mic"]``, the system
+    track as ``labels["system"]``. Nothing is written here: the caller
+    persists only the fields Transcribe owns (``db.meetings.
+    complete_transcription``). Raises :class:`MeetingImportError` when no
+    speech was found.
+    """
+    tracks = load_kept_audio(meeting_id, directory)
+    window_samples = max(1, int(window_seconds * TARGET_SAMPLE_RATE))
+    counts = [int(np.ceil(len(audio) / window_samples)) for _source, audio in tracks]
+    windows_total = sum(counts)
+    segments: list[TranscriptSegment] = []
+    offset = 0
+    for (source, audio), count in zip(tracks, counts):
+        def on_track(done: int, _total: int, _offset: int = offset) -> None:
+            if progress is not None:
+                progress(_offset + done, windows_total)
+
+        found, _empty = _transcribe_import_windows(
+            transcriber, audio, admission,
+            windows_total=count, window_samples=window_samples,
+            window_seconds=window_seconds,
+            duration=len(audio) / float(TARGET_SAMPLE_RATE),
+            speaker_label=labels.get(source, source), progress=on_track,
+        )
+        segments.extend(found)
+        offset += count
+    if not segments:
+        raise MeetingImportError(
+            f"No speech could be transcribed from meeting {meeting_id} "
+            f"({windows_total} window(s) checked).",
+            cause="NO SPEECH FOUND",
+        )
+    segments.sort(key=lambda seg: (seg.start_time, seg.end_time))
+    return segments
+
+
 def import_transcript(
     path: Path | str,
     *,

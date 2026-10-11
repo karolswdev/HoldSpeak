@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 
 from ... import operations
 from ...config import Config
-from ...services.errors import ValidationError
+from ...services.errors import ConflictError, NotFound, ValidationError
 
 
 def _default_transcriber_factory(config: Config):
@@ -31,6 +31,22 @@ def _default_transcriber_factory(config: Config):
 
 # Tests monkeypatch this to inject a fake transcriber.
 _transcriber_factory = _default_transcriber_factory
+
+
+def _default_frozen_transcriber_factory(construct: dict):
+    """PHILO-17 transcribe: build the transcriber from the ADMITTED speech
+    route's model, backend and language (never Config after admission)."""
+    from ...transcribe import Transcriber
+
+    return Transcriber(
+        model_name=construct["model_name"],
+        backend=construct["backend"],
+        language=construct.get("language") or "auto",
+    )
+
+
+# Tests monkeypatch this to inject a fake transcriber for Transcribe.
+_frozen_transcriber_factory = _default_frozen_transcriber_factory
 
 
 def build_meeting_import_router(ctx) -> APIRouter:
@@ -118,6 +134,24 @@ def build_meeting_import_router(ctx) -> APIRouter:
         except ValidationError as exc:
             tmp_path.unlink(missing_ok=True)
             return JSONResponse({"error": exc.detail}, status_code=400)
+        return JSONResponse(result, status_code=202)
+
+    @router.post("/api/meetings/{meeting_id}/transcribe")
+    async def transcribe_meeting(request: Request, meeting_id: str):
+        """PHILO-17: Transcribe a meeting saved with its audio only (202)."""
+        try:
+            result = operations.for_context(ctx, meeting_service=_service).invoke(
+                _principal(request),
+                "meeting.transcribe",
+                {"meeting_id": meeting_id},
+                held={"config": Config.load(), "transcriber_factory": _frozen_transcriber_factory},
+            )
+        except operations.OperationOwnerRequired as refused:
+            return JSONResponse({"error": refused.detail, "code": refused.code}, status_code=403)
+        except NotFound as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=404)
+        except ConflictError as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=409)
         return JSONResponse(result, status_code=202)
 
     return router

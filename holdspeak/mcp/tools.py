@@ -327,6 +327,13 @@ TOOLS.extend([
         },
         ["path"],
     ),
+    # PHILO-17: Transcribe a meeting saved with its audio only.
+    _mcp_tool(
+        "meeting.transcribe",
+        "Owner only. Transcribe a saved meeting that kept its audio only because speech was not set up. The transcript goes into the same meeting, in the background; read meeting.get until transcription finishes. Refused while speech is not set up.",
+        {"meeting_id": {"type": "string", "description": "Meeting identifier."}},
+        ["meeting_id"],
+    ),
     _mcp_tool(
         "meeting.run_intelligence",
         "Enqueue a fresh intelligence job using the disclosed summary route selection hash. Refuses when the hash is absent, stale, or the meeting has no transcript.",
@@ -1107,6 +1114,14 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         return ops().invoke(principal, "meeting.read", {"meeting_id": str(args.get("meeting_id") or ""), "include": args.get("include"), "include_parked": args.get("include_parked")})
     if name == "meeting.import":
         return _meeting_import(ops(), meetings, principal, args)
+    if name == "meeting.transcribe":
+        from holdspeak.config import Config
+        from holdspeak.web.routes import meeting_import as import_route
+
+        return ops().invoke(principal, "meeting.transcribe", {"meeting_id": str(args.get("meeting_id") or "")}, held={
+            "config": Config.load(),
+            "transcriber_factory": import_route._frozen_transcriber_factory,
+        })
     if name == "meeting.start_capture":
         config = args.get("config")
         if config is not None and not isinstance(config, dict):

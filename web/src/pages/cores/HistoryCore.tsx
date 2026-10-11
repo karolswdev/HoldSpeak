@@ -1,5 +1,6 @@
 // HS-170-04 — the Meetings face, rewritten to the settled design.
 // Board: display headline + Record/Import + stream rows + SurfaceSplit detail.
+import { SPEECH_SETUP_EVENT } from "../../desk/firstrun/SpeechSetup";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
@@ -408,7 +409,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     const offAftercare = subscribeFrames("aftercare_ready", bump);
     const offReturn = onReturnToTask(refresh);
     window.addEventListener("focus", refresh);
+    // PHILO-17 transcribe: speech set up in any window changes the
+    // meetings' own Transcribe readiness (`transcribe_speech`).
+    window.addEventListener(SPEECH_SETUP_EVENT, refresh);
     return () => {
+      window.removeEventListener(SPEECH_SETUP_EVENT, refresh);
       burst.cancel();
       offDeskChanged();
       offAftercare();
@@ -638,8 +643,16 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     }
   };
 
+  // PHILO-17 transcribe: the hub starts Transcribe on an audio-only meeting
+  // (202); the face reads itself again now and on the worker's desk_changed.
+  const transcribeMeeting = async (id: string) => {
+    await apiFetch(`/api/meetings/${encodeURIComponent(id)}/transcribe`, { method: "POST" });
+    await refreshFace();
+  };
+
   const rail = (
     <CatalogRail
+      onTranscribe={transcribeMeeting}
       meetingRows={meetingRows}
       restoredId={restoredId}
       meetings={meetings}
@@ -656,6 +669,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const detailPane = (paneView: DetailView) => (
     <MeetingDetail
       meeting={selected}
+      onTranscribe={transcribeMeeting}
       view={paneView}
       momentSegmentIndex={evidenceSegment ?? requestedMomentSegment}
       onClose={() => setSelected(null)}

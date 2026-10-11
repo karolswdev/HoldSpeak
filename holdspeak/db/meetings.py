@@ -168,6 +168,98 @@ class MeetingRepository(BaseRepository):
             ).fetchall()
         return [str(row["id"]) for row in rows]
 
+    def list_interrupted_transcribe_ids(self) -> list[str]:
+        """PHILO-17 transcribe: rows a Transcribe worker left `importing / record_only`."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT id FROM meetings
+                   WHERE intel_status = 'importing' AND transcription_status = 'record_only'
+                   ORDER BY id"""
+            ).fetchall()
+        return [str(row["id"]) for row in rows]
+
+    # PHILO-17 transcribe (Astra r1): one Transcribe per meeting, by ONE
+    # conditional UPDATE; every later write names the claim it holds, so a
+    # stale or losing worker never changes the result, and only the fields
+    # Transcribe owns are written (a rename during the run is kept).
+    def claim_transcription(self, meeting_id: str, token: str) -> bool:
+        """Claim an ended, audio-only (`speech_not_set_up`) meeting for Transcribe."""
+        with self._connection() as conn:
+            cursor = conn.execute(
+                """UPDATE meetings SET
+                       intel_status = 'importing',
+                       intel_status_detail = 'Preparing transcription…',
+                       transcription_status_detail_json = json_set(
+                           transcription_status_detail_json,
+                           '$.claim', ?, '$.prior_intel_status', intel_status),
+                       updated_at = datetime('now')
+                   WHERE id = ? AND parked = 0
+                     AND ended_at IS NOT NULL AND capture_status <> 'recording'
+                     AND transcription_status = 'record_only'
+                     AND json_extract(transcription_status_detail_json, '$.reason_code') = 'speech_not_set_up'
+                     AND intel_status <> 'importing'""",
+                (token, meeting_id),
+            )
+            return cursor.rowcount == 1
+
+    def note_transcription_progress(self, meeting_id: str, token: str, detail: str) -> bool:
+        with self._connection() as conn:
+            cursor = conn.execute(
+                """UPDATE meetings SET intel_status_detail = ?
+                   WHERE id = ? AND intel_status = 'importing' AND transcription_status = 'record_only'
+                     AND json_extract(transcription_status_detail_json, '$.claim') = ?""",
+                (detail, meeting_id, token),
+            )
+            return cursor.rowcount == 1
+
+    def complete_transcription(
+        self, meeting_id: str, token: str, segments: list, *, intel_status_detail: str
+    ) -> bool:
+        """Write the transcript and clear the audio-only state, under the claim only."""
+        with self._connection() as conn:
+            cursor = conn.execute(
+                """UPDATE meetings SET
+                        transcription_status = 'complete',
+                        transcription_status_detail_json = NULL,
+                        intel_status = 'disabled',
+                        intel_status_detail = ?,
+                        updated_at = datetime('now')
+                    WHERE id = ? AND intel_status = 'importing' AND transcription_status = 'record_only'
+                      AND json_extract(transcription_status_detail_json, '$.claim') = ?""",
+                (intel_status_detail, meeting_id, token),
+            )
+            if cursor.rowcount != 1:
+                return False
+            self._save_segments(conn, meeting_id, segments)
+            return True
+
+    def release_transcription(
+        self, meeting_id: str, token: Optional[str], *, cause: Optional[str] = None
+    ) -> bool:
+        """Give the claim back: the meeting is audio-only again (its
+        `speech_not_set_up` marker kept, so Transcribe is offered again).
+        ``cause`` is the short reason a run failed. ``token`` None releases
+        any claim (an interrupted run at hub start)."""
+        with self._connection() as conn:
+            cursor = conn.execute(
+                """UPDATE meetings SET
+                        intel_status = COALESCE(
+                            json_extract(transcription_status_detail_json, '$.prior_intel_status'),
+                            'disabled'),
+                        intel_status_detail = NULL,
+                        transcription_status_detail_json = CASE WHEN ? IS NULL
+                            THEN json_remove(transcription_status_detail_json, '$.claim', '$.prior_intel_status')
+                            ELSE json_set(
+                                json_remove(transcription_status_detail_json, '$.claim', '$.prior_intel_status'),
+                                '$.last_error', ?)
+                            END,
+                        updated_at = datetime('now')
+                    WHERE id = ? AND intel_status = 'importing' AND transcription_status = 'record_only'
+                      AND (? IS NULL OR json_extract(transcription_status_detail_json, '$.claim') = ?)""",
+                (cause, cause, meeting_id, token, token),
+            )
+            return cursor.rowcount == 1
+
     def list_unread_ready(self) -> list[dict[str, Any]]:
         """Return only producer-created readiness rows still unseen."""
         with self._connection() as conn:

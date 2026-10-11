@@ -24,6 +24,7 @@ and what turned it red on round one (``fca54146``):
 from __future__ import annotations
 
 import builtins
+from datetime import datetime
 import json
 import os
 import pathlib
@@ -218,7 +219,9 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
     assert operations.MEETING_IMPORT.owner_only is True
     # Both secret saves are owner only and HTTP only, with held inputs.
     assert [d.name for d in operations.DESCRIPTORS if d.owner_only] == [
-        "meeting.import", "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install",
+        "meeting.import",
+        "meeting.transcribe",  # PHILO-17: only the owner transcribes a meeting's kept audio
+        "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install",
         "people_access.set",  # Conductor R7: only the owner sets People MCP access
         "calendar.open_settings",  # PHILO-15 04: only the owner opens the Calendars privacy pane
         "project.repository.register",  # PHILO-15 16: only the owner names a Project's repository
@@ -276,6 +279,71 @@ def _p_meeting_import(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     result = hub.root.operations.invoke(OWNER, "meeting.import", {"filename": "shape.txt"}, held={
         "tmp_path": held, "config": Config.load(), "transcriber_factory": lambda cfg: None})
     _wait_imported(hub, result["meeting_id"])
+    return result
+
+
+def _audio_only_meeting(hub: Hub, monkeypatch: Any, tmp_path: Path, meeting_id: str = "m-audio-only") -> str:
+    """PHILO-17: an ended audio-only meeting, its audio in the real journal, speech ready."""
+    import numpy as np
+
+    from holdspeak.meeting_capture_journal import MeetingCaptureJournal
+    from holdspeak.meeting_session import MeetingState
+
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setattr(
+        "holdspeak.whisper_models.speech_readiness",
+        lambda name, backend, **_kw: {"model": name, "backend": backend, "state": "on_device", "ready": True, "bytes": 0},
+    )
+    meeting = MeetingState(id=meeting_id, started_at=datetime.now(), segments=[])
+    meeting.ended_at = datetime.now()
+    meeting.capture_status = "finalized"
+    meeting.transcription_status = "record_only"
+    meeting.transcription_status_detail = {"reason_code": "speech_not_set_up"}
+    hub.db.meetings.save_meeting(meeting)
+    journal = MeetingCaptureJournal(meeting.id)
+    journal.append("mic", np.full(16_000, 0.1, dtype=np.float32))
+    journal.finalize()
+    return meeting_id
+
+
+def test_mcp_transcribe_builds_its_transcriber_from_the_frozen_construction(hub: Hub, monkeypatch, tmp_path) -> None:
+    """Astra r2 P1: the ACTUAL MCP caller hands Transcribe the factory that
+    takes the frozen construction (a dict), not the import's Config factory."""
+    from holdspeak.web.routes import meeting_import as import_route
+
+    meeting_id = _audio_only_meeting(hub, monkeypatch, tmp_path, "m-mcp-transcribe")
+    built: list[dict[str, str]] = []
+
+    class Stub:
+        def transcribe(self, _audio: Any, **_kwargs: Any) -> str:
+            return "mcp words"
+
+    def frozen_factory(construct: dict[str, str]) -> Any:
+        built.append({"model_name": construct["model_name"], "backend": construct["backend"]})
+        return Stub()
+
+    monkeypatch.setattr(import_route, "_frozen_transcriber_factory", frozen_factory)
+    monkeypatch.setattr(import_route, "_transcriber_factory", lambda cfg: pytest.fail("the import factory ran"))
+    is_error, started = hub.mcp("meeting.transcribe", {"meeting_id": meeting_id})
+    assert is_error is False, started
+    done = _wait_imported(hub, meeting_id, timeout=60.0)
+    assert [s["text"] for s in done["segments"]] == ["mcp words"]
+    assert len(built) == 1 and built[0]["model_name"]
+
+
+def _p_meeting_transcribe(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    """PHILO-17: an audio-only meeting (its audio in the real journal), speech ready."""
+    from holdspeak.config import Config
+
+    meeting_id = _audio_only_meeting(hub, monkeypatch, tmp_path)
+
+    class _Replay:
+        def transcribe(self, _audio: Any, **_kwargs: Any) -> str:
+            return "shape"
+
+    result = hub.root.operations.invoke(OWNER, "meeting.transcribe", {"meeting_id": meeting_id}, held={
+        "config": Config.load(), "transcriber_factory": lambda construct: _Replay()})
+    _wait_imported(hub, meeting_id)
     return result
 
 
@@ -666,6 +734,7 @@ def _p_agent_hand(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
+    "meeting.transcribe": _p_meeting_transcribe,
     "meeting.summary.run": _p_summary_run,
     "brief.shelf.write": _p_shelf_write,
     "brief.shelf.read": _p_shelf_read,

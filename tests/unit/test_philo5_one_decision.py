@@ -219,7 +219,7 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
     # -- an explicit list, no framework.
     assert names == [
         "decision.create", "decision.update", "decision.read", "decision.list",
-        "meeting.list", "meeting.read", "meeting.import", "meeting.summary.run",
+        "meeting.list", "meeting.read", "meeting.import", "meeting.transcribe", "meeting.summary.run",
         "brief.generate", "brief.latest", "brief.shelf.write", "brief.shelf.read",
         "thought.create", "thought.save", "thought.read", "thought.workbench.read", "thought.list",
         # PHILO-7-01: the desk slice, one row per (kind, verb).

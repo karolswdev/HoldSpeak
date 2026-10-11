@@ -42,11 +42,12 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
     # then PHILO-9-02's twenty-one (the Door's count, a watch's update and
     # its baseline are HTTP only), then PHILO-10-01's nine (the Send), then
     # Conductor K2's one (agent.hand), then Conductor R7's (people_access.set),
-    # then PHILO-16 16b's six (the desk's windows).
-    assert len(gw.OP_MCP_PROJECTIONS) == 106
+    # then PHILO-16 16b's six (the desk's windows), then PHILO-17's
+    # meeting.transcribe.
+    assert len(gw.OP_MCP_PROJECTIONS) == 107
     assert set(gw.OP_MCP_PROJECTIONS) == {
         "decision.create", "decision.update", "decision.read", "decision.list",
-        "meeting.list", "meeting.read", "meeting.import", "meeting.summary.run",
+        "meeting.list", "meeting.read", "meeting.import", "meeting.transcribe", "meeting.summary.run",
         "brief.generate", "brief.latest", "brief.shelf.write", "brief.shelf.read",
         "thought.create", "thought.save", "thought.read",
         "thought.workbench.read", "thought.list",

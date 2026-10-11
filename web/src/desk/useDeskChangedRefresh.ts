@@ -14,7 +14,8 @@
  * resourceful projections, coder-materialized notes, the rails journal, the
  * guardrail seeds). Meeting changes announce themselves from the import worker
  * when an import ends, success or failure (`MeetingService._run_import_job`),
- * from the summary queue after durable running and settled transitions
+ * from the Transcribe worker when a transcription ends, success or failure
+ * (`MeetingService._run_transcribe_job`), from the summary queue after durable running and settled transitions
  * (`_notify_queue_meeting_changed`), and when a meeting is parked or restored
  * (`MeetingService.delete_meeting`, `restore_meeting`).
  *

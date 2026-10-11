@@ -69,6 +69,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "meeting.delete": WORK,
     "meeting.export": WORK,
     "meeting.import": AUTHORITY,  # custody: the hub reads a file path on the owner's disk (owner_only)
+    "meeting.transcribe": WORK,  # PHILO-17: local speech over the meeting's own kept audio
     "meeting.run_intelligence": WORK,
     "meeting.proposals": WORK,
     "proposal.confirm": WORK,

@@ -29,6 +29,7 @@ import {
   meetingRowState, stateToken,
 } from "./helpers";
 import type { ReactNode } from "react";
+import { AudioOnlyVerb } from "./TranscribeVerb";
 
 /** HS-201-04 — true when this row would draw a verb that STARTS a summary
  *  run: the verb is a run verb AND a route resolves for it. The rail uses
@@ -87,9 +88,12 @@ function MeetingStreamRow({
   refusal,
   isLead,
   restored = false,
+  onTranscribe,
 }: {
   row: Record<string, unknown>;
   isSelected: boolean;
+  /** PHILO-17 transcribe: start Transcribe on an audio-only meeting. */
+  onTranscribe?: (id: string) => Promise<unknown>;
   /** PHILO-13-02 — the row Restore just brought back: it comes into view,
    *  marked (C1-5d). */
   restored?: boolean;
@@ -285,7 +289,8 @@ function MeetingStreamRow({
           durable={readLastRefusal(row)}
           testId="row-refusal"
         />
-        {verb ? (
+        {verb ? (() => {
+          const verbButton = (
           <Button
             dense
             variant={verbVariant === "primary" ? "primary" : "ghost"}
@@ -310,7 +315,13 @@ function MeetingStreamRow({
           >
             {verb}
           </Button>
-        ) : null}
+          );
+          // PHILO-17 transcribe: an audio-only meeting's verb is Transcribe
+          // once speech is set up; else the row keeps its Open.
+          return onTranscribe ? (
+            <AudioOnlyVerb row={row} onTranscribe={onTranscribe} otherwise={verbButton} testId="row-transcribe" />
+          ) : verbButton;
+        })() : null}
       </div>
     </div>
   );
@@ -327,8 +338,11 @@ export function CatalogRail({
   runRefusal,
   narrowed,
   restoredId = null,
+  onTranscribe,
 }: {
   meetingRows: Record<string, unknown>[];
+  /** PHILO-17 transcribe: start Transcribe on an audio-only meeting. */
+  onTranscribe?: (id: string) => Promise<unknown>;
   /** PHILO-13-02 — the meeting Restore just brought back. */
   restoredId?: string | null;
   meetings: { loading: boolean; error: string; reload(): Promise<unknown> };
@@ -376,6 +390,7 @@ export function CatalogRail({
               onRunIntelligence={onRunIntelligence}
               isLead={leadId === String(row.id)}
               restored={restoredId === String(row.id)}
+              onTranscribe={onTranscribe}
               runningId={runningId}
               drainerAbsent={drainerAbsent}
               refusal={
