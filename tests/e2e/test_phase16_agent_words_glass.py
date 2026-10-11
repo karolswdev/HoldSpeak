@@ -10,13 +10,12 @@ written through the product's producers. The agent's words are the owner's
 shot, word for word (`evidence/hub-lane.json`, events[7].text); the SENT line
 is the hub's real 120-character head of the pi brief (the steering audit).
 The test reads the ask well, the rail and the Needs ASKS row for marks left
-as text, and shoots them at 1440 and 393 to
-`docs/internal/philo/phase-16/02-shots/` when `HOLDSPEAK_P16_SHOTS=1` (else
-to `.tmp/evidence-shots/p16-agent-words/`).
+as text, and shoots them at 1440 and 393 through `tests/_evidence.py`:
+`.tmp/evidence-shots/docs/internal/philo/phase-16/02-shots/`, or the tracked
+`docs/internal/philo/phase-16/02-shots/` when `HOLDSPEAK_EVIDENCE_WRITE=1`.
 """
 from __future__ import annotations
 
-import os
 import re
 import subprocess
 import time
@@ -61,11 +60,8 @@ BRIEF = (
     'host line".\nProject: proj-e5abdabc568b.\n\nConstraints and acceptance:\n- Control mode: YOLO.'
 )
 
-if os.environ.get("HOLDSPEAK_P16_SHOTS") == "1":
-    SHOTS = Path(__file__).resolve().parents[2] / "docs" / "internal" / "philo" / "phase-16" / "02-shots"
-    SHOTS.mkdir(parents=True, exist_ok=True)
-else:
-    SHOTS = evidence_dir("p16-agent-words")
+# Into .tmp/evidence-shots/ unless HOLDSPEAK_EVIDENCE_WRITE=1 (tests/_evidence.py).
+SHOTS = evidence_dir("docs/internal/philo/phase-16/02-shots")
 
 
 def _git(cwd: Path, *argv: str) -> str:

@@ -10,6 +10,7 @@ import { ApiError } from "../../../lib/api";
 import { useChairWindows } from "../../chair/chairWindows";
 import { useDrawers } from "../../drawer/store";
 import { useLane } from "../../lane/laneStore";
+import { __resetConductor, useConductor } from "../../conductor/store";
 import { useDesk } from "../../store";
 import { DESK_WORKSPACE_STORAGE_KEY } from "../../store/workspaceStorage";
 import { record, type Rect } from "../geometry";
@@ -25,7 +26,7 @@ import {
 
 const VIEW: Rect = { x: 10, y: 38, w: 1420, h: 772 };
 const REGISTRY = {
-  static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", lane: "lane",
+  static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", lane: "lane", conductor: "conductor",
     "surface-project-memory": "surface", "surface-calendar-snapshot": "surface" },
   families: { "zone:": "zone", "drawer:project:": "drawer" },
   // (lane is static on the hub)
@@ -125,6 +126,7 @@ beforeEach(() => {
   });
   useDrawers.setState({ drawers: [], infos: [], parked: null });
   useLane.setState({ launchId: null });
+  __resetConductor();
 });
 
 afterEach(() => {
@@ -150,6 +152,23 @@ function start(rows: HubWindowRow[], adopted = true, cacheOpen: string[] = [], b
 const CHAIR = ["chair:brief", "chair:week", "chair:needs"];
 
 describe("hubWindows", () => {
+  // PHILO-17 (mainreds3, Astra r1): a hub open is passive. The real Conductor
+  // adapter mounts the window and keeps the hub's seat and depth; only a
+  // gesture (Go, the drawer, /conductor) fronts it.
+  it("a Conductor seated on the hub stays seated after boot, below what the hub put over it", async () => {
+    __resetConductor();
+    const { hub } = start([
+      row("conductor", { app: "conductor", depth: 3, minimized: true }),
+      row("chair:brief", { depth: 5 }),
+    ]);
+    await hub.start();
+    await flush(hub);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(useConductor.getState().open).toBe(true);
+    expect(useDesk.getState().panelMin).toContain("conductor");
+    expect(order(["conductor", "chair:brief"])).toEqual(["conductor", "chair:brief"]);
+  });
+
   it("seeds the desk from the hub's rows: open, order, seat, rect as share+px", async () => {
     const { hub } = start([
       row("chair:brief", { depth: 4, arranged: true, x: "-1/2", y: "-1/2", w: "1/2", h: "100%" }),

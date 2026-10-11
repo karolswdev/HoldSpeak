@@ -26,7 +26,9 @@ pytest.importorskip("playwright.sync_api", reason="Model Library glass needs Pla
 
 TOKEN = "hs143-model-library-glass"
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm" / "roadmap" / "holdspeak" / "phase-143-intelligence-router" / "assets" / "story-12-shots"
+from tests._evidence import evidence_dir  # noqa: E402
+# Into .tmp/evidence-shots/ unless HOLDSPEAK_EVIDENCE_WRITE=1 (tests/_evidence.py).
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-143-intelligence-router/assets/story-12-shots")
 
 
 def _api(page: Any, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:

@@ -184,19 +184,15 @@ def mint_held_call(url: str, worktree: str, command: str = PSQL, proposal_id: st
 
 
 def _open_lane(page: Any) -> Any:
-    """The real entry (PHILO-14 C4): Dock -> Conductor -> Open on the asking
-    agent. The Arrival's AGENTS section and its coder Open are parked. At a
-    width whose Dock does not carry the Conductor, its address does."""
-    dock = page.locator(".desk-dock [data-app='conductor']")
-    if dock.count() and dock.first.is_visible():
-        dock.first.click()
-    else:
-        from urllib.parse import urlsplit
+    """The real entry: Go -> Conductor -> Open on the asking agent.
+    PHILO-17 (doors, #1078): the Conductor left the Dock; its doors are its
+    desk drawer and Go (both widths). Go fronts an open Conductor, also one
+    another view left seated (one hub is one desk), and never toggles it."""
+    import re as _re
 
-        origin = "{0.scheme}://{0.netloc}".format(urlsplit(page.url))
-        page.goto(f"{origin}/conductor", wait_until="load")
-        _normal_chair(page)
-        _settle(page)
+    page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+    page.locator("[role^=menuitem]").filter(
+        has=page.locator(".desk-menu-label", has_text=_re.compile(r"^Conductor$"))).last.click()
     conductor = page.locator(".conductor-window")
     conductor.wait_for(timeout=15000)
     agent = conductor.locator("[data-object-id='launch:launch_c2_runbook']")

@@ -188,7 +188,9 @@ export function adapterFor(id: string): Adapter | null {
   if (id === CONDUCTOR_WINDOW_ID) {
     return {
       isOpen: () => useConductor.getState().open,
-      open: () => useConductor.getState().openWindow(),
+      // A hub open is passive (hydration, another view): it keeps the hub's
+      // seat and depth; only a gesture here fronts the Conductor.
+      open: () => useConductor.getState().showFromHub(),
       close: () => useConductor.getState().closeWindow(),
     };
   }
