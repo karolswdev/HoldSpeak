@@ -40,6 +40,7 @@ export interface SetupStatus {
 }
 import { apiFetch } from "../lib/api";
 import { isLanAddress } from "../features/concierge/endpointDraft";
+import { hostPlace } from "./surface/egress";
 
 export async function loadSetup(
   onError?: (cause: unknown) => void,
@@ -105,8 +106,16 @@ export function inboundLine(
   return `${open ? "yes" : "no"} \u00b7 Token: ${trust?.auth_token_set ? "set" : "not set"}`;
 }
 
+/** PHILO-17 (U16): a loopback server is this Mac, never "LAN" (the one
+ *  host helper, desk/surface/egress.ts hostPlace). */
+function onMac(value: string | undefined): boolean {
+  const host = (value || "").trim();
+  return Boolean(host) && hostPlace(host).place === "mac";
+}
+
 /** PHILO-15 10 (B10): is this destination a server on his own network? */
 function onLan(d: { boundary?: string; destination?: string }): boolean {
+  if (onMac(d.destination)) return false;
   if ((d.boundary || "").toLowerCase() === "lan") return true;
   const host = (d.destination || "").trim();
   return /^[\w.-]+(:\d+)?$/.test(host) && host.includes(".") && isLanAddress(host);
@@ -119,6 +128,14 @@ function bareHost(value: string): string {
 
 export function egressBadge(setup: SetupStatus | null): EgressBadge {
   const t = setup?.trust || {};
+  if (t.last_egress?.name && onMac(t.last_egress.name)) {
+    // PHILO-17 (U16): the last egress went to a server on this Mac.
+    return {
+      scope: "local",
+      text: "⌂ This device",
+      title: `Last receipted call stayed on this device: ${t.last_egress.receipt}`,
+    };
+  }
   if (t.last_egress?.name) {
     // PHILO-15 10 (B10): a server on his network is named as LAN.
     const name = t.last_egress.name;
@@ -134,7 +151,8 @@ export function egressBadge(setup: SetupStatus | null): EgressBadge {
   // `:79-81`), so `actuators_enabled` alone -- a permission with nothing
   // switched on to use it -- must not read as reach. Zero enabled
   // destinations = this device, on both faces.
-  const enabledDestinations = (t.destinations ?? []).filter((d) => d.enabled);
+  // PHILO-17 (U16): a destination on this Mac is not reach.
+  const enabledDestinations = (t.destinations ?? []).filter((d) => d.enabled && !onMac(d.destination));
   if (enabledDestinations.length > 0 && t.actuators_enabled) {
     // PHILO-15 10 (B10): the chip names the fact, never "external reach".
     // A server on his own network reads `LAN · <host>`; anything else
@@ -157,8 +175,10 @@ export function egressBadge(setup: SetupStatus | null): EgressBadge {
       title: `Configured destinations: ${names}.`,
     };
   }
-  if (t.transcript_egress && t.transcript_egress !== "none") {
-    const ep = (t.configured_endpoints && t.configured_endpoints[0]) || "";
+  const endpoints = (t.configured_endpoints ?? []).filter((e) => !onMac(e));
+  const allHere = (t.configured_endpoints ?? []).length > 0 && endpoints.length === 0;
+  if (t.transcript_egress && t.transcript_egress !== "none" && !allHere) {
+    const ep = endpoints[0] || "";
     const label = ep ? `Leaves device · ${ep}` : "Configured endpoint";
     return {
       scope: "cloud",
