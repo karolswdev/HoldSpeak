@@ -167,6 +167,8 @@ export interface DoorController {
   connect: (provider: string) => void;
   /** PHILO-17 U29: the connection read each row signs in from. */
   tools: ConnectionTool[];
+  /** PHILO-17 (phonepass): the first connection read resolved. */
+  loaded: boolean;
   /** The provider whose check or add is running. */
   busy: string | null;
   recheck: (provider: string) => void;
@@ -253,8 +255,9 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
-    void readConnections();
+    void readConnections().finally(() => safe(() => setLoaded(true)));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Settings → Connections round trip (168 D2): a sign-in made in
@@ -624,6 +627,7 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
     outcome,
     setOutcome,
     sources,
+    loaded,
     creating,
     error,
     pickScope,

@@ -62,6 +62,22 @@
 .room-empty-state {
   display: flex; align-items: center; justify-content: center; min-height: 200px;
 }
+/* PHILO-17 (phonepass): while its reads still move its rows, the body keeps
+   its place but is not drawn, so no tap lands on a row that moves. */
+.room-body[data-settling] {
+  position: relative;
+  visibility: hidden;
+}
+.room-settling-line {
+  position: absolute;
+  top: 0;
+  left: var(--desk-surface-row-pad-x, 14px);
+  visibility: visible;
+}
+/* A late section's place at the foot while its read is out. */
+.room-late-line {
+  min-height: 40px;
+}
 .room-loading, .room-error {
   display: flex; align-items: center; justify-content: center; min-height: 200px;
 }

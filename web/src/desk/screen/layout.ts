@@ -22,6 +22,10 @@ const AGENT_COL = 130; // the agents: one column left of Needs you
 const BOTTOM = 136; // Parked: its top this far above the screen's foot
 const TALK_ZONE = 72; // the TALK control at the foot-left (Astra's P3 on #939)
 const NOT_READ_LINE = 30; // a NOT READ drawer's Retry line
+// PHILO-17 (phonepass): a caption (People's `1:1 15:00`) adds 24 px to the
+// icon (117 px with a one-line name), and the drawer below wears its count
+// notch 6 px above its top: the captioned row is 136 px, so nothing touches.
+const CAPTION_LINE = 24;
 
 export function layoutScreen(objects: readonly ScreenObject[], width: number, height: number): Record<string, Placed> {
   const at: Record<string, Placed> = {};
@@ -34,7 +38,7 @@ export function layoutScreen(objects: readonly ScreenObject[], width: number, he
   let col = 0;
   let y = TOP;
   for (const o of drawers) {
-    const tall = o.notRead ? DRAWER_ROW + NOT_READ_LINE : DRAWER_ROW;
+    const tall = DRAWER_ROW + (o.notRead ? NOT_READ_LINE : 0) + (o.caption ? CAPTION_LINE : 0);
     if (y > TOP && y + tall > columnFoot) {
       col += 1;
       y = TOP;

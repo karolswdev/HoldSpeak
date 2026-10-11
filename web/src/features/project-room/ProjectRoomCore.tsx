@@ -5,7 +5,7 @@
 // no REV, no raw field names, the name said once.
 import { HandRowVerb } from "../../desk/components/HandRowVerb";
 import { wireDate } from "../../desk/surface/format";
-import React, { useEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
 import {
   countLabel,
   SurfaceFooter,
@@ -42,6 +42,10 @@ import { ParkReceipt, restoreFailedOutcome, restoredOutcome } from "../../desk/s
 import { restoreMeeting } from "../../desk/api";
 import { HandConfirmSlot, drawerHost, handOriginOfRef, handSourceProps } from "../../desk/hand";
 import { useCompactViewport } from "../../desk/useCompactViewport";
+import {
+  PENDING_PLACE, ROOM_READS_CAP_MS, RoomReadsContext, RoomSlotContext, placeResolved, unresolvedSlots,
+  useRoomRead, withRead, type SlotReads,
+} from "./roomReads";
 import { registerProjectRepository, registrable, useProjectRepository } from "../../desk/projectRepository";
 import { plainFailure } from "../../desk/surface/plainFailure";
 import { useWindowTitle } from "../../desk/surface/title";
@@ -61,7 +65,7 @@ import {
 } from "../../desk/ask";
 import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
-import { StandingPagesSection, useStandingPages } from "../../desk/standingPages";
+import { StandingPagesSection, useStandingPagesRead } from "../../desk/standingPages";
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
@@ -1163,6 +1167,7 @@ function ItemsSection({ projectId, revision }: { projectId: string; revision: nu
       .catch(() => { if (live) { setFailed(true); setItems(null); } });
     return () => { live = false; };
   }, [projectId, revision, attempt]);
+  useRoomRead("items", items !== null || failed);
   if (failed) {
     return (
       <SurfaceSection
@@ -1227,6 +1232,7 @@ function SourcesSection({
   // Astra r2 on #1068: an older project that watches a repository nobody
   // registered registers it here (the call New Project makes on create).
   const repository = useProjectRepository(room.projectId);
+  useRoomRead("repository", repository.state !== null || repository.failed);
   const toRegister = registrable(repository.state);
   const [registering, setRegistering] = useState(false);
   const [registerFailure, setRegisterFailure] = useState("");
@@ -1495,7 +1501,8 @@ function SourcesSection({
 
 function RoomFilesSection({ ctrl }: { ctrl: ReturnType<typeof useProjectRoomController> }) {
   const projectId = ctrl.projectId ?? "";
-  const { members, failed, retry } = useDrawerMembers(projectId, ctrl);
+  const { members, failed, retry, settled } = useDrawerMembers(projectId, ctrl);
+  useRoomRead("files", settled);
   const [sort, setSort] = useState<ObjectSort>({ key: "name", dir: "asc" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = members.find((m) => m.id === selectedId) ?? null;
@@ -1946,7 +1953,11 @@ export function useRoomAsk(projectId: string, projectName: string) {
     setUnfinished(page.items);
   }, [projectId]);
 
-  useEffect(() => { void loadUnfinished(); }, [loadUnfinished]);
+  // PHILO-17 (phonepass): the first read resolved (the Room waits for it).
+  const [unfinishedRead, setUnfinishedRead] = useState(false);
+  useEffect(() => {
+    void loadUnfinished().catch(() => undefined).finally(() => setUnfinishedRead(true));
+  }, [loadUnfinished]);
   // The generalisation the design's D3 called MISSING: the Room's ask well
   // subscribes to return-to-task like every other face holding unfinished
   // work, so readiness and the saved row re-read WITHOUT a reload.
@@ -2029,7 +2040,7 @@ export function useRoomAsk(projectId: string, projectName: string) {
   };
 
   return {
-    prompt, setPrompt, result, busy, error, unfinished, working,
+    prompt, setPrompt, result, busy, error, unfinished, unfinishedRead, working,
     inputRef, ask, resume, discard,
   };
 }
@@ -2388,7 +2399,57 @@ function computeHistoryCounts(changes: RoomChangeRow[]): { todayCount: number; w
 
 /* ── main core ── */
 
-export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
+/** PHILO-17 (phonepass): one Room section's place. The reads its section
+ *  makes register in this slot (RoomSlotContext); `own` are the Room's own
+ *  reads that belong to it. A slot whose reads were still out when the body
+ *  was first drawn stands at the foot (`order`), and a fixed line holds its
+ *  place until they resolve; its section stays mounted (its reads run) but
+ *  is not drawn. */
+type SlotPlace = { style?: React.CSSProperties; waiting: boolean };
+
+function OwnRead({ name, resolved }: { name: string; resolved: boolean }) {
+  useRoomRead(name, resolved);
+  return null;
+}
+
+function RoomSlot({
+  id,
+  place,
+  own,
+  empty = false,
+  delay,
+  children,
+  ...rest
+}: {
+  id: string;
+  place: SlotPlace;
+  own?: Record<string, boolean>;
+  /** Nothing to draw: the slot takes no place (no gap) unless it waits. */
+  empty?: boolean;
+  delay: string;
+  children?: React.ReactNode;
+} & React.HTMLAttributes<HTMLDivElement> & { "data-section"?: string }) {
+  const hide = empty && !place.waiting ? { display: "none" } : undefined;
+  return (
+    <RoomSlotContext.Provider value={id}>
+      {Object.entries(own ?? {}).map(([name, resolved]) => <OwnRead key={name} name={name} resolved={resolved} />)}
+      <div className="room-section-rise" data-room-slot={id}
+        style={{ animationDelay: delay, ...place.style, ...hide }} {...rest}>
+        {place.waiting ? <p className="room-empty-line room-late-line" data-testid="room-late-line">Loading…</p> : null}
+        <div style={{ display: place.waiting ? "none" : "contents" }}>{children}</div>
+      </div>
+    </RoomSlotContext.Provider>
+  );
+}
+
+/** PHILO-17 (phonepass, Astra r2): a Room window that changes Project (the
+ *  window's scope) remounts its core, so every first-read flag and the gate
+ *  start again for the new Project. */
+export function ProjectRoomCore(props: CoreProps) {
+  return <ProjectRoomCoreFor key={props.scope ?? ""} {...props} />;
+}
+
+function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   const ctrl = useProjectRoomController(scope, scopeLabel);
   const [addingSources, setAddingSources] = useState(false);
   useAgentFlightsLive();
@@ -2459,7 +2520,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   // HS-200-41 — one controller, two faces: UNFINISHED sits in the body as a
   // section, the well stays sticky at the foot (F5).
   const askCtrl = useRoomAsk(ctrl.projectId, ctrl.projectName);
-  const standingPages = useStandingPages("project", ctrl.projectId);
+  const { pages: standingPages, loaded: pagesLoaded } = useStandingPagesRead("project", ctrl.projectId);
 
   // HS-200-11 — the Prepare posture: one manual preparation path over the
   // Room's read sources, its carried decisions and its open commitments.
@@ -2525,7 +2586,50 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     window.addEventListener(ROOM_PROPOSAL_EVENT, take);
     return () => window.removeEventListener(ROOM_PROPOSAL_EVENT, take);
   }, [ctrl.projectId]);
-  const roomBodyRef = useRef<HTMLDivElement>(null);
+  const roomBodyRef = useRef<HTMLDivElement | null>(null);
+  // PHILO-17 (phonepass): the body is not drawn until its sections' reads
+  // stop moving its rows (a tap never lands on a row that moved under it).
+  // Astra r1/r2: an explicit gate, not a timer. Each read registers when
+  // its section mounts, in the slot it mounts in (roomReads.ts); the body is
+  // drawn when every registered read has resolved, or at the cap. A slot
+  // still out at the cap stands at the foot; each that resolves later takes
+  // the next place there, below every slot already drawn.
+  const readsRef = useRef<SlotReads>({});
+  const [, bumpReads] = useReducer((n: number) => n + 1, 0);
+  const reportRead = useCallback((slot: string, name: string, resolved: boolean | null) => {
+    const next = withRead(readsRef.current, slot, name, resolved);
+    if (next === readsRef.current) return;
+    readsRef.current = next;
+    bumpReads();
+  }, []);
+  const [gate, setGate] = useState<{ shown: boolean; late: string[]; places: Record<string, number> }>(
+    { shown: false, late: [], places: {} });
+  const [capped, setCapped] = useState(false);
+  const hasRoom = Boolean(ctrl.room);
+  useEffect(() => {
+    if (!hasRoom) return;
+    const timer = window.setTimeout(() => setCapped(true), ROOM_READS_CAP_MS);
+    return () => window.clearTimeout(timer);
+  }, [hasRoom]);
+  // After the children's layout effects (their registrations), before paint.
+  useLayoutEffect(() => {
+    if (!hasRoom) return;
+    const reads = readsRef.current;
+    if (!gate.shown) {
+      const late = unresolvedSlots(reads);
+      if (!late.length || capped) setGate({ shown: true, late, places: {} });
+      return;
+    }
+    const places = placeResolved(gate.late, gate.places, reads);
+    if (places) setGate((now) => ({ ...now, places }));
+  });
+  const shown = gate.shown;
+  const extrasRead = ctrl.extrasStatus === "ready";
+  const place = (id: string): SlotPlace => {
+    if (!gate.shown || !gate.late.includes(id)) return { waiting: false };
+    const at = gate.places[id];
+    return { style: { order: at ?? PENDING_PLACE }, waiting: at === undefined };
+  };
   const revealedSeq = useRef(0);
   // Once per request: when the row is drawn (the wing switch and a posture's
   // close render first), it scrolls into view; a later re-read never pulls
@@ -2665,7 +2769,10 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     <>
       {hero ? hero(<Button dense variant="ghost" onClick={handleRefresh}>Refresh</Button>) : null}
       {ctrl.room ? (
-        <div className="room-body" data-testid="room-body" ref={roomBodyRef}>
+        <RoomReadsContext.Provider value={reportRead}>
+        <div className="room-body" data-testid="room-body" ref={roomBodyRef}
+          data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
+          {shown ? null : <p className="room-empty-line room-settling-line">Loading…</p>}
           {sendFailure}
           {ctrl.view === "room" ? (
             <>
@@ -2674,15 +2781,14 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
               </div>
               {/* Memory on the Desk (canvas section 2, option B): the
                   project's standing pages sit under the head, as ratified. */}
-              {standingPages.length ? (
-                <div className="room-section-rise" style={{ animationDelay: "10ms" }}>
-                  <StandingPagesSection pages={standingPages} />
-                </div>
-              ) : null}
+              <RoomSlot id="pages" place={place("pages")} own={{ pages: pagesLoaded }}
+                empty={!standingPages.length} delay="10ms">
+                {standingPages.length ? <StandingPagesSection pages={standingPages} /> : null}
+              </RoomSlot>
               <div className="room-section-rise" style={{ animationDelay: "20ms" }}>
                 <HealthSection room={ctrl.room} onRetry={handleRefresh} />
               </div>
-              <div className="room-section-rise" style={{ animationDelay: "40ms" }}>
+              <RoomSlot id="needs" place={place("needs")} own={{ extras: extrasRead }} delay="40ms">
                 <NeedsYouSection
                   room={ctrl.room}
                   ctrl={ctrl}
@@ -2690,12 +2796,12 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
                   selectedProposalId={selectedProposalId}
                   pendingCount={pendingCount}
                 />
-              </div>
+              </RoomSlot>
               {/* PHILO-9-03 (the Q3 ruling, the ratified items canvas): ITEMS sits
                   right after NEEDS YOU -- the plan he reads after what needs him. */}
-              <div className="room-section-rise" style={{ animationDelay: "50ms" }} data-section="items">
+              <RoomSlot id="items" place={place("items")} delay="50ms" data-section="items">
                 <ItemsSection projectId={ctrl.projectId} revision={ctrl.room.revision} />
-              </div>
+              </RoomSlot>
               {/* HS-200-41 F5: the saved work is a SECTION in the body, and it
                   sits HERE — directly after NEEDS YOU. Unfinished work IS
                   attention, so it belongs in the reading path next to the
@@ -2704,27 +2810,27 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
                   CREATED. Filed last it was also the section the sticky foot
                   reached, so the one row he came back for opened underneath
                   the composer with its verb hidden. */}
-              <div className="room-section-rise" style={{ animationDelay: "60ms" }}>
+              <RoomSlot id="unfinished" place={place("unfinished")} own={{ unfinished: askCtrl.unfinishedRead }} delay="60ms">
                 <RoomUnfinishedSection ask={askCtrl} />
-              </div>
-              <div className="room-section-rise" style={{ animationDelay: "80ms" }}>
+              </RoomSlot>
+              <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="80ms">
                 <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
-              </div>
-              <div className="room-section-rise" style={{ animationDelay: "90ms" }}>
+              </RoomSlot>
+              <RoomSlot id="files" place={place("files")} delay="90ms">
                 <RoomFilesSection ctrl={ctrl} />
-              </div>
-              <div className="room-section-rise" style={{ animationDelay: "100ms" }}>
+              </RoomSlot>
+              <RoomSlot id="people" place={place("people")} delay="100ms">
                 <RoomPeopleSection projectId={ctrl.projectId} />
-              </div>
+              </RoomSlot>
               <div className="room-section-rise" style={{ animationDelay: "120ms" }}>
                 <SinceYouLookedSection room={ctrl.room} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "160ms" }}>
                 <DecisionsCommitmentsSection room={ctrl.room} />
               </div>
-              <div className="room-section-rise" style={{ animationDelay: "180ms" }}>
+              <RoomSlot id="briefs" place={place("briefs")} own={{ briefs: prepareCtrl.keptRead }} delay="180ms">
                 <RoomBriefsSection prepare={prepareCtrl} />
-              </div>
+              </RoomSlot>
               {/* Condition 7: ask well sticky at the foot of a wide window; in the
                   flow at a narrow one (PHILO-9-03 F10, project-room.css). */}
               <div className="room-section-rise room-ask-container" style={{ animationDelay: "200ms" }}>
@@ -2744,6 +2850,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
             </>
           )}
         </div>
+        </RoomReadsContext.Provider>
       ) : loading ? (
         <div className="room-loading"><p className="room-empty-line">Loading…</p></div>
       ) : ctrl.error ? (

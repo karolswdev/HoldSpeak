@@ -20,6 +20,7 @@
 //     Project and remembers the verb for the way back (AC4).
 // Every verb is the library Button; no prose; no counters of zero; one
 // verb per row (the way into the ledger sits on the head, once).
+import { useRoomRead } from "./roomReads";
 import { useCallback, useEffect, useState } from "react";
 import {
   SurfaceSection,
@@ -307,6 +308,7 @@ export function RoomPeopleSection({
   const [prep, setPrep] = useState<RoomPeoplePreparation | null>(null);
   const [openOwner, setOpenOwner] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  useRoomRead("people", prep !== null);
 
   const load = useCallback(() => {
     return fetchRoomPeoplePreparation(projectId)

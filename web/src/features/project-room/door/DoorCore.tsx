@@ -1,6 +1,7 @@
 // HS-169-02 — The streamlined Door: one screen to create a project.
 // Composed from the surface library. Every verb is the library Button.
 
+import { useRoomRead } from "../roomReads";
 import { useContext, useEffect } from "react";
 import {
   SurfaceLedgerRow,
@@ -409,6 +410,7 @@ export function AddSourcesWell({
   onCancel: () => void;
 }) {
   const ctrl = useDoorController({ projectId, onAdded, onCancel });
+  useRoomRead("door", ctrl.loaded);
   const picked = ctrl.sources.filter((s) => s.connected && s.scope != null).length;
   return (
     <div className="door-add-well" data-testid="room-add-sources">

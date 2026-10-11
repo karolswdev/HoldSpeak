@@ -389,6 +389,19 @@ describe("PHILO-14 A1 — the pure parts", () => {
     expect(at["people:a"]).toEqual({ x: 330, y: 24 });
   });
 
+  it("PHILO-17 phonepass: a captioned People drawer takes a taller row (the next drawer's notch never touches it)", () => {
+    const base: ScreenInputs = {
+      items: { ...EMPTY_ITEMS } as never,
+      projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0, sessions: [], flights: [],
+      filed: new Set(), persons: [], membersLoaded: true,
+    };
+    const plain = layoutScreen(composeScreen(base), 1440, 796);
+    const captioned = layoutScreen(composeScreen({ ...base, peopleCaption: "1:1 15:00" }), 1440, 796);
+    expect(plain["drawer:conductor"].y - plain["drawer:people"].y).toBe(112);
+    // 117 px icon + the 6 px notch above the next drawer: 136 clears both.
+    expect(captioned["drawer:conductor"].y - captioned["drawer:people"].y).toBe(136);
+  });
+
   it("the Conductor wears the count notch alone while its agents only work", () => {
     const working = fromWireSessionRow(SESSIONS[1]);
     const objects = composeScreen({
