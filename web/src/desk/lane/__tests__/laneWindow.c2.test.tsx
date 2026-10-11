@@ -407,7 +407,7 @@ describe("the agent's window", () => {
   it("Stop: Normal unarmed never arms by itself; YOLO arms per press, then kills", async () => {
     await openLane(fixture({ control: { mode: "neutral", armed: false, direct: false } }));
     fireEvent.click(screen.getByTestId("lane-stop"));
-    expect(screen.getByTestId("lane-stop-confirm").textContent).toBe("Stop · sure? (ends the agent's session)");
+    expect(screen.getByTestId("lane-stop-confirm").textContent).toBe("Stop · sure? (ends the coder's session)");
     fireEvent.click(screen.getByTestId("lane-stop-confirm"));
     await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toContain("ARM FIRST"));
     expect(posts("/arm")).toEqual([]);
