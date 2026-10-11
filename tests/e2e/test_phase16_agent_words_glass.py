@@ -16,7 +16,6 @@ to `.tmp/evidence-shots/p16-agent-words/`).
 """
 from __future__ import annotations
 
-import os
 import re
 import subprocess
 import time
@@ -61,11 +60,8 @@ BRIEF = (
     'host line".\nProject: proj-e5abdabc568b.\n\nConstraints and acceptance:\n- Control mode: YOLO.'
 )
 
-if os.environ.get("HOLDSPEAK_P16_SHOTS") == "1":
-    SHOTS = Path(__file__).resolve().parents[2] / "docs" / "internal" / "philo" / "phase-16" / "02-shots"
-    SHOTS.mkdir(parents=True, exist_ok=True)
-else:
-    SHOTS = evidence_dir("p16-agent-words")
+# Into .tmp/evidence-shots/ unless HOLDSPEAK_EVIDENCE_WRITE=1 (tests/_evidence.py).
+SHOTS = evidence_dir("docs/internal/philo/phase-16/02-shots")
 
 
 def _git(cwd: Path, *argv: str) -> str:

@@ -82,6 +82,46 @@ def test_no_test_writes_into_tracked_evidence() -> None:
     )
 
 
+def _shots_dirs_outside_evidence(tree: ast.Module) -> list[int]:
+    """PHILO-17 (mainreds3): a module-level shots directory (a name with
+    SHOT in it) that spells a tracked tree (pm/roadmap or docs/internal,
+    also in parts) without evidence_dir(). Phase shots under docs/internal
+    were rewritten by every run, and `"pm" / "roadmap"` slipped past the
+    fence above."""
+    lines = []
+    for stmt in ast.walk(tree):
+        if not isinstance(stmt, ast.Assign) or not any(
+            isinstance(t, ast.Name) and "SHOT" in t.id.upper() for t in stmt.targets
+        ):
+            continue
+        if isinstance(stmt.value, ast.Call) and getattr(stmt.value.func, "id", "") == "evidence_dir":
+            continue
+        parts = "/".join(
+            n.value for n in _div_operands(stmt.value) if isinstance(n, ast.Constant) and isinstance(n.value, str)
+        )
+        if "pm/roadmap" in parts or "docs/internal" in parts:
+            lines.append(stmt.lineno)
+    return lines
+
+
+def test_no_shots_dir_writes_into_tracked_trees() -> None:
+    offenders = []
+    for path in sorted(TESTS.rglob("*.py")):
+        rel = path.relative_to(REPO).as_posix()
+        if rel in ALLOWLIST or rel.startswith(("tests/_parked/", "tests/e2e/_parked/")):
+            continue
+        source = path.read_text(encoding="utf-8")
+        if "SHOT" not in source.upper():
+            continue
+        lines = _shots_dirs_outside_evidence(ast.parse(source, filename=rel))
+        if lines:
+            offenders.append(f"{rel}:{lines[0]}")
+    assert not offenders, (
+        f"EVIDENCE-WRITE: {len(offenders)} shots dir(s) point into pm/roadmap or docs/internal; "
+        "use tests._evidence.evidence_dir(\"<rel>\"):\n  " + "\n  ".join(offenders)
+    )
+
+
 def test_allowlist_files_exist() -> None:
     missing = [rel for rel in ALLOWLIST if not (REPO / rel).is_file()]
     assert not missing, f"EVIDENCE-WRITE allowlist names missing files: {missing}"

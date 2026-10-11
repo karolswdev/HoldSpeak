@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+
+from tests._evidence import evidence_dir
 from typing import Any
 
 import pytest
@@ -23,7 +25,8 @@ from .test_philo14_c2_lane_glass import KEY, TOKEN, _http, _open_lane, _seed
 
 pytest.importorskip("playwright.sync_api", reason="the Raw glass needs Playwright")
 
-SHOTS = Path(__file__).resolve().parents[2] / "docs" / "internal" / "philo" / "phase-15" / "20-shots"
+# Into .tmp/evidence-shots/ unless HOLDSPEAK_EVIDENCE_WRITE=1 (tests/_evidence.py).
+SHOTS = evidence_dir("docs/internal/philo/phase-15/20-shots")
 
 
 def _mint_cut(url: str, worktree: str, command: str, proposal_id: str) -> dict:
