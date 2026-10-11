@@ -772,12 +772,21 @@ class WatchService:
         now = now_iso or datetime.now(timezone.utc).isoformat(timespec="seconds")
 
         # 1. Fetch fresh snapshot via the admitted adapter path.
-        entities = self._fetch(principal, watch)
-        # HS-167-02: drain provider metadata (calls count) set by the
-        # snapshot adapter's thread-local before any other code runs.
-        from holdspeak.services.watch_sources import drain_fetch_meta
-        fetch_meta = drain_fetch_meta()
-        snapshot = normalize_snapshot(connector_id, entities)
+        # PHILO-17 evalerror: a read that fails records its cause on the
+        # watch, as `baseline_watch` does, for the owner's Evaluate and the
+        # scheduled sweep alike (both come through here). Needs you and the
+        # Room's source row read `last_error`; a success clears it (5d,
+        # `_mark_read`, `record_refresh`).
+        try:
+            entities = self._fetch(principal, watch)
+            # HS-167-02: drain provider metadata (calls count) set by the
+            # snapshot adapter's thread-local before any other code runs.
+            from holdspeak.services.watch_sources import drain_fetch_meta
+            fetch_meta = drain_fetch_meta()
+            snapshot = normalize_snapshot(connector_id, entities)
+        except Exception as exc:
+            self._repo.record_refresh_error(watch_id, str(exc))
+            raise
 
         # 1b. HS-200-43 F1: THE FIRST EVALUATION OF AN EMPTY BASELINE IS
         # SILENT.  `diff_snapshots` emits a discovered event for every

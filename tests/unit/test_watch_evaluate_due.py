@@ -302,6 +302,25 @@ class TestTransactionalBookkeeping:
         delta = abs((next_eval - expected_next).total_seconds())
         assert delta < 2
 
+    def test_failure_records_last_error_like_a_manual_evaluate(self, tmp_path) -> None:
+        """PHILO-17 evalerror: the sweep and the owner's Evaluate keep one
+        rule -- a failed read records its cause; a good read clears it."""
+        db = Database(tmp_path / "bk-fail-err.db")
+        _make_watch(db, "w-ferr")
+        _graduate_watch(db, "w-ferr", cadence_minutes=45,
+                        next_evaluation_at=_past_iso(5))
+        svc = _watch_svc(db, fetcher=_failing_fetcher("gh auth login"))
+        outcomes = svc.evaluate_due(OWNER)
+        assert outcomes[0]["outcome"] == "failed"
+        assert db.automations.get_watch("w-ferr")["last_error"] == "gh auth login"
+
+        entities = [{"number": 1, "state": "open", "title": "PR",
+                     "url": "http://gh/1"}]
+        db.automations.update_watch_spec("w-ferr", next_evaluation_at=_past_iso(1))
+        svc = _watch_svc(db, fetcher=_baseline_fetcher(entities))
+        assert svc.evaluate_due(OWNER)[0]["outcome"] in ("baselined", "evaluated")
+        assert db.automations.get_watch("w-ferr")["last_error"] is None
+
     def test_circuit_resets_on_success(self, tmp_path) -> None:
         """A successful evaluation resets the circuit to closed, streak=0."""
         db = Database(tmp_path / "circuit-reset.db")

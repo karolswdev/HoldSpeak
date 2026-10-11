@@ -27,6 +27,7 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any
 
+from holdspeak.db.automations import redact_source_error
 from holdspeak.connector_packs import github_cli
 from holdspeak.connector_runtime import PermissionGate
 from holdspeak.principals import Principal
@@ -252,7 +253,7 @@ class GitHubProviderAdapter:
             result = {
                 "state": STATE_DEGRADED,
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": f"gh auth probe failed: {str(exc)[:500]}",
+                "error_detail": f"gh auth probe failed: {redact_source_error(exc)[:500]}",
                 "display": {},
             }
             self._persist_connection(result)
@@ -281,7 +282,7 @@ class GitHubProviderAdapter:
             result = {
                 "state": STATE_DEGRADED,
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": combined.strip()[:500],
+                "error_detail": redact_source_error(combined).strip()[:500],
                 "display": {},
             }
 
@@ -367,13 +368,13 @@ class GitHubProviderAdapter:
             return {
                 "state": DISCOVERY_FAILED,
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": str(exc)[:500],
+                "error_detail": redact_source_error(exc)[:500],
                 "items": [],
                 "cursor": None,
             }
 
         if completed.returncode != 0:
-            detail = (completed.stderr or "").strip()[:500]
+            detail = redact_source_error(completed.stderr or "").strip()[:500]
             error_code = _classify_gh_error(detail)
             return {
                 "state": DISCOVERY_FAILED,
@@ -466,13 +467,13 @@ class GitHubProviderAdapter:
             return {
                 "valid": False,
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": str(exc)[:500],
+                "error_detail": redact_source_error(exc)[:500],
             }
 
         if completed.returncode == 0:
             return {"valid": True, "error_code": None, "error_detail": None}
 
-        detail = (completed.stderr or "").strip()[:500]
+        detail = redact_source_error(completed.stderr or "").strip()[:500]
         error_code = _classify_gh_error(detail)
         if "not found" in detail.lower() or "404" in detail:
             error_code = CODE_SCOPE_DENIED

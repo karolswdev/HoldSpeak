@@ -35,6 +35,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from holdspeak.db.automations import redact_source_error
 from holdspeak.connector_packs import acli_jira
 from holdspeak.connector_runtime import PermissionGate
 from holdspeak.principals import Principal
@@ -376,7 +377,7 @@ def _parse_acli_auth_status(output: str, expected_site: str, expected_email: str
             result["auth_type"] = auth_type
         return result
 
-    return {"match": False, "detail": f"Could not parse auth status output: {output[:200]}"}
+    return {"match": False, "detail": f"Could not parse auth status output: {redact_source_error(output)[:200]}"}
 
 
 class JiraProviderAdapter:
@@ -594,7 +595,7 @@ class JiraProviderAdapter:
                 "connection_ref": ref,
                 "account": {"site": site, "email": email},
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": f"acli auth switch failed: {str(exc)[:500]}",
+                "error_detail": f"acli auth switch failed: {redact_source_error(exc)[:500]}",
                 "recovery": None,
                 "capability_manifest": dict(_CAPABILITIES),
                 "capability_revision": _CAPABILITY_REVISION,
@@ -639,7 +640,7 @@ class JiraProviderAdapter:
                 "connection_ref": ref,
                 "account": {"site": site, "email": email},
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": f"acli auth switch failed: {switch_combined.strip()[:500]}",
+                "error_detail": f"acli auth switch failed: {redact_source_error(switch_combined).strip()[:500]}",
                 "recovery": None,
                 "capability_manifest": dict(_CAPABILITIES),
                 "capability_revision": _CAPABILITY_REVISION,
@@ -663,7 +664,7 @@ class JiraProviderAdapter:
                 "connection_ref": ref,
                 "account": {"site": site, "email": email},
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": f"acli auth status failed: {str(exc)[:500]}",
+                "error_detail": f"acli auth status failed: {redact_source_error(exc)[:500]}",
                 "recovery": None,
                 "capability_manifest": dict(_CAPABILITIES),
                 "capability_revision": _CAPABILITY_REVISION,
@@ -707,7 +708,7 @@ class JiraProviderAdapter:
                 "connection_ref": ref,
                 "account": {"site": site, "email": email},
                 "error_code": CODE_UNAVAILABLE,
-                "error_detail": f"acli auth status non-zero: {status_combined.strip()[:500]}",
+                "error_detail": f"acli auth status non-zero: {redact_source_error(status_combined).strip()[:500]}",
                 "recovery": None,
                 "capability_manifest": dict(_CAPABILITIES),
                 "capability_revision": _CAPABILITY_REVISION,
@@ -908,7 +909,7 @@ class JiraProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": f"acli auth switch failed: {str(exc)[:500]}",
+                    "error_detail": f"acli auth switch failed: {redact_source_error(exc)[:500]}",
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
@@ -933,7 +934,7 @@ class JiraProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": f"acli auth switch failed: {switch_combined.strip()[:500]}",
+                    "error_detail": f"acli auth switch failed: {redact_source_error(switch_combined).strip()[:500]}",
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
@@ -950,7 +951,7 @@ class JiraProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": f"acli auth status failed: {str(exc)[:500]}",
+                    "error_detail": f"acli auth status failed: {redact_source_error(exc)[:500]}",
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
@@ -975,7 +976,7 @@ class JiraProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": f"acli auth status non-zero: {status_combined.strip()[:500]}",
+                    "error_detail": f"acli auth status non-zero: {redact_source_error(status_combined).strip()[:500]}",
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
@@ -1091,14 +1092,14 @@ class JiraProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": str(exc)[:500],
+                    "error_detail": redact_source_error(exc)[:500],
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
                 }
 
             if completed.returncode != 0:
-                detail = ((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
+                detail = redact_source_error((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
                 code = CODE_AUTH_REQUIRED if _is_unauthenticated(detail) else CODE_UNAVAILABLE
                 return {
                     "state": DISCOVERY_FAILED,
@@ -1202,14 +1203,14 @@ class JiraProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": str(exc)[:500],
+                    "error_detail": redact_source_error(exc)[:500],
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
                 }
 
             if completed.returncode != 0:
-                detail = ((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
+                detail = redact_source_error((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_QUERY_INVALID,
@@ -1280,14 +1281,14 @@ class JiraProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": str(exc)[:500],
+                    "error_detail": redact_source_error(exc)[:500],
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
                 }
 
             if completed.returncode != 0:
-                detail = ((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
+                detail = redact_source_error((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_QUERY_INVALID,
@@ -1395,7 +1396,7 @@ class JiraProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": str(exc)[:500],
+                    "error_detail": redact_source_error(exc)[:500],
                     "connection_ref": canonical_ref,
                     "items": [],
                     "cursor": None,
@@ -1404,7 +1405,7 @@ class JiraProviderAdapter:
             if completed.returncode != 0:
                 detail = ((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()
                 # Strip the leading check-mark error prefix
-                clean = re.sub(r"^[✗✘]\s*Error:\s*", "", detail).strip()[:500]
+                clean = re.sub(r"^[✗✘]\s*Error:\s*", "", redact_source_error(detail)).strip()[:500]
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_QUERY_INVALID,
@@ -1560,7 +1561,7 @@ class JiraProviderAdapter:
             return {"state": DISCOVERY_FAILED, "error_code": CODE_UNAVAILABLE, "error_detail": "acli is not installed"}
 
         def failed(code: str, detail: str = "") -> dict[str, Any]:
-            return {"state": DISCOVERY_FAILED, "error_code": code, "error_detail": detail[:300]}
+            return {"state": DISCOVERY_FAILED, "error_code": code, "error_detail": redact_source_error(detail)[:300]}
 
         with _ACLI_LOCK:
             try:
@@ -1613,7 +1614,7 @@ class JiraProviderAdapter:
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": str(exc)[:500],
+                    "error_detail": redact_source_error(exc)[:500],
                     "connection_ref": canonical_ref,
                     "count": None,
                 }
@@ -1621,7 +1622,7 @@ class JiraProviderAdapter:
             combined = ((completed.stdout or "") + "\n" + (completed.stderr or "")).strip()
 
             if completed.returncode != 0:
-                clean = re.sub(r"^[✗✘]\s*Error:\s*", "", combined).strip()[:500]
+                clean = re.sub(r"^[✗✘]\s*Error:\s*", "", redact_source_error(combined)).strip()[:500]
                 return {
                     "state": DISCOVERY_FAILED,
                     "error_code": CODE_QUERY_INVALID,
@@ -1645,7 +1646,7 @@ class JiraProviderAdapter:
             return {
                 "state": DISCOVERY_FAILED,
                 "error_code": CODE_QUERY_INVALID,
-                "error_detail": f"Could not parse count output: {combined[:200]}",
+                "error_detail": f"Could not parse count output: {redact_source_error(combined)[:200]}",
                 "connection_ref": canonical_ref,
                 "count": None,
             }
@@ -1681,12 +1682,12 @@ class JiraProviderAdapter:
                     "project": None,
                     "issue_types": [],
                     "error_code": CODE_UNAVAILABLE,
-                    "error_detail": str(exc)[:500],
+                    "error_detail": redact_source_error(exc)[:500],
                     "connection_ref": canonical_ref,
                 }
 
             if completed.returncode != 0:
-                detail = ((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
+                detail = redact_source_error((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()[:500]
                 return {
                     "valid": False,
                     "project": None,
