@@ -87,6 +87,19 @@ export async function doorCreate(
   return decodeCreateResponse(raw);
 }
 
+/** PHILO-17 U10: the same source rows, added to a project that exists
+ *  (the Room's Add source): the Door's route with project_id. */
+export async function doorAddSources(
+  projectId: string,
+  sources: DoorSourcePayload[],
+): Promise<CreateResponse> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    "/api/projects/door",
+    { method: "POST", json: { project_id: projectId, sources } },
+  );
+  return decodeCreateResponse(raw);
+}
+
 /* ── Provider discovery (moved from setup/api to avoid importing a parked folder) ── */
 
 const PROVIDERS = "/api/providers";

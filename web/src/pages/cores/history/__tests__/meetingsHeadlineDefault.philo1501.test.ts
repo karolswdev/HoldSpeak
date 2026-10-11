@@ -41,7 +41,8 @@ describe("PHILO-15 01 — the Meetings headline on a default-only desk", () => {
       ...SUMMARISED,
       planned_route: { status: "unavailable", reason_code: "no assignment", selection_hash: null, legs: [] },
     };
-    expect(headline([row]).text).toBe("No engine for summaries");
+    // PHILO-17: every summary is stored, so the fact is plain, not an alarm.
+    expect(headline([row])).toEqual({ text: "No engine for summaries", accent: false });
   });
 
   it("reads OFF, not 'No engine', when the owner turned summaries off", () => {

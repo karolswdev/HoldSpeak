@@ -10,7 +10,7 @@
   },
   "period_end": "2026-09-25T07:19:00-11:00",
   "period_label": "SEP 24-25",
-  "period_start": "2026-09-24T17:00:00-11:00",
+  "period_start": "2026-09-24T00:00:00-11:00",
   "person_sections_state": "unavailable",
   "sections": {
     "broke": [
@@ -89,5 +89,6 @@
   "shelf": {
     "brief-break-pipeline-brief-philo6-00-philo6-01": "acknowledged"
   },
+  "stale": true,
   "title": "Brief \u00b7 Friday 25 Sep 2026"
 }

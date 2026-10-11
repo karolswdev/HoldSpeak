@@ -9,7 +9,7 @@
 // missing decision. Before the repair the Arrival and the Brief view showed
 // `Decision recorded` and `Summary requested` beside their failures, and
 // `Primitive: get decision did not complete`.
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
@@ -39,8 +39,15 @@ const IMPLEMENTATION = /Primitive|[A-Z][A-Za-z]*Service\b|[a-z]_[a-z]/;
 describe("PHILO-6-02 round 2: a failed operation never reads as a success", () => {
   beforeEach(() => {
     mocks.apiFetch.mockReset();
+    // The fixture is the real producer's (stale under its frozen clock); the
+    // view makes it again once, and the hub answers that POST with the brief
+    // it made (PHILO-17, Astra r2: a truthful response, never null).
     mocks.apiFetch.mockImplementation(async (path: string) =>
-      String(path) === "/api/brief/latest" ? brief : null,
+      String(path) === "/api/brief/latest"
+        ? brief
+        : String(path) === "/api/brief/generate"
+          ? { ...brief, stale: false }
+          : null,
     );
   });
 
@@ -64,6 +71,12 @@ describe("PHILO-6-02 round 2: a failed operation never reads as a success", () =
   it("the Brief view (the fold's destination) shows no success line and no implementation word", async () => {
     render(<BriefView header={null} />);
     await screen.findByText("Decision did not record");
+    // The settled view: the one rebuild ran and its brief is on the glass.
+    await waitFor(() =>
+      expect(mocks.apiFetch.mock.calls.filter(([path]) => path === "/api/brief/generate")).toHaveLength(1),
+    );
+    await screen.findByTestId("brief-refresh");
+    expect(screen.getByText("Decision did not record")).toBeInTheDocument();
     const text = document.body.textContent ?? "";
     expect(text).not.toMatch(SUCCESS);
     expect(text).not.toMatch(/Primitive|[A-Z][A-Za-z]*Service\./);

@@ -142,7 +142,8 @@ def test_started_at_defaults_to_the_import_moment(tmp_path, db):
     before = datetime.now()
 
     result = import_transcript(path, db=db, config=_config())
-    assert before <= result.state.started_at <= datetime.now()
+    # PHILO-17: the meeting ENDS at the import moment (never in the future).
+    assert before <= result.state.ended_at <= datetime.now()
     assert result.state.started_at != datetime.fromtimestamp(stamp)
 
 

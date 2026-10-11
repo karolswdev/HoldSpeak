@@ -27,7 +27,7 @@ import pytest
 
 from tests._evidence import evidence_dir
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import open_project_drawer, _api, _boot, _ensure_build, _normal_chair, _settle
 
 pytest.importorskip("playwright.sync_api", reason="the A0c glass needs Playwright")
 
@@ -113,7 +113,7 @@ def test_the_list_species_wear_the_32px_set(tmp_path: Path, monkeypatch: pytest.
                 _api(page, "PUT", f"/api/projects/{a2.PROJECT}/resources/note:n-risks", {}, token=TOKEN)
 
                 # 1. The drawer, icons first (the 64 stays), then its List.
-                page.goto(f"{url}/?token={TOKEN}&open=project:{a2.PROJECT}", wait_until="load")
+                open_project_drawer(page, url, a2.PROJECT, TOKEN)  # PHILO-17 U30: the parked drawer, by its key
                 _normal_chair(page)
                 drawer = page.locator(".drawer-window")
                 drawer.wait_for(timeout=T)

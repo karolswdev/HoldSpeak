@@ -23552,6 +23552,26 @@
         "tags": [
           "providers"
         ]
+      },
+      "post": {
+        "description": "Add a Confluence connection: body {site, email}.",
+        "operationId": "confluence_add_connection_api_providers_confluence_connections_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Confluence Add Connection Api Providers Confluence Connections Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Confluence Add Connection",
+        "tags": [
+          "providers"
+        ]
       }
     },
     "/api/providers/confluence/connections/{ref}/recheck": {
