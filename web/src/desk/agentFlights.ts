@@ -190,6 +190,8 @@ interface AgentFlightsState {
   sessions: CoderSessionRow[];
   flights: AgentFlight[];
   loaded: boolean;
+  /** PHILO-17 (phonepass): a first read has ended, read or failed. */
+  settled: boolean;
   load(): Promise<void>;
 }
 
@@ -200,6 +202,7 @@ export const useAgentFlights = create<AgentFlightsState>((set, get) => ({
   sessions: [],
   flights: [],
   loaded: false,
+  settled: false,
   load() {
     // A refresh that arrives while a read is out is kept: one trailing read
     // follows it, so a transition that happened mid-read is never lost.
@@ -219,6 +222,7 @@ export const useAgentFlights = create<AgentFlightsState>((set, get) => ({
       .catch(() => undefined)   // the last read stays; the next frame reads again
       .finally(() => {
         inflight = null;
+        if (!get().settled) set({ settled: true });
         if (again) {
           again = false;
           void get().load();

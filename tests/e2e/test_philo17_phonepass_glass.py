@@ -20,6 +20,16 @@ drawer wears its `1:1 HH:MM` caption).
    - the same Room with that read held 10 s, past the Room's 8 s cap: the
      body is drawn at the cap and Add sources fills its own place at the
      foot when the read lands.
+   - (Astra r2) a Project that already has sources (Add sources never
+     mounts) with its repository read held past the cap: SOURCES draws when
+     the read lands;
+   - (Astra r2) SOURCES and a section below it both held past the cap, the
+     lower one landing first (~10 s), SOURCES second (~11.5 s): the first one's
+     controls never move. The lower section is FILES: PEOPLE draws nothing
+     on this seed (`/api/projects/p-ledger/people` names no one);
+   - (Astra r2) one Room window changed from one Project to another, with
+     the second Project's Room read and its unfinished-asks read held (it
+     has one saved ask): no drawn control moves.
 2. The People caption touches nothing (1440 and 393): with a live agent
    flight (the Conductor wears its notch), the People icon's box (with its
    caption) intersects no other icon, lamp or count notch.
@@ -27,6 +37,7 @@ drawer wears its `1:1 HH:MM` caption).
 from __future__ import annotations
 
 import json
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -47,7 +58,7 @@ TOLERANCE = 2
 # Rows keyed by element identity. First seen = drawn (visible, on screen);
 # after that every frame counts wherever the row is (off screen too). A
 # row with no box (gone, display none) is skipped for that frame.
-RECORD_JS = r"""([sel, ms]) => { window.__rec = new Promise((resolve) => {
+RECORD_JS = r"""([sel, ms, anywhere]) => { window.__rec = new Promise((resolve) => {
   const ids = new WeakMap(); let n = 0; const rows = {}; const t0 = performance.now();
   const H = window.innerHeight;
   const tick = () => {
@@ -58,7 +69,7 @@ RECORD_JS = r"""([sel, ms]) => { window.__rec = new Promise((resolve) => {
       const y = Math.round(r.top);
       const k = ids.get(el);
       if (k === undefined) {
-        if (r.top >= H || r.bottom <= 0 || getComputedStyle(el).visibility !== 'visible') continue;
+        if ((!anywhere && (r.top >= H || r.bottom <= 0)) || getComputedStyle(el).visibility !== 'visible') continue;
         ids.set(el, ++n);
         const name = (el.getAttribute('data-testid') || el.id || (el.textContent || '').trim()).slice(0, 48);
         rows[n] = {name, first: y, at: now, worst: 0, last: y, worst_at: null};
@@ -80,7 +91,31 @@ ROOM_ROWS = ("#surface-project-memory .room-body button, #surface-project-memory
 
 
 def _moved(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [r for r in rows if r["worst"] > TOLERANCE]
+    # A late slot's `Loading…` line is a placeholder, not a control: it sits
+    # below every slot already drawn, so a slot that lands pushes it down.
+    return [r for r in rows if r["worst"] > TOLERANCE and r["name"] != "room-late-line"]
+
+
+HOLD_JS = r"""([source, ms]) => {
+  // Every answer of this read that arrives before the deadline waits for it:
+  // the read "lands" at the deadline, whoever asked first.
+  const pattern = new RegExp(source); const deadline = performance.now() + ms;
+  const prior = window.fetch;
+  window.fetch = async (input, init) => {
+    const url = typeof input === 'string' ? input : input.url;
+    const answer = await prior(input, init);
+    const wait = deadline - performance.now();
+    if (pattern.test(url) && wait > 0) await new Promise((r) => setTimeout(r, wait));
+    return answer;
+  };
+}"""
+
+
+def _hold_in_page(page: Any, source: str, seconds: float) -> None:
+    """Hold one read's answers in the page itself until `seconds` from now
+    (several holds run side by side; a Playwright route handler would hold
+    them in turn)."""
+    page.evaluate(HOLD_JS, [source, int(seconds * 1000)])
 
 
 def _hold(page: Any, pattern: str, seconds: float) -> None:
@@ -98,13 +133,14 @@ def _hold(page: Any, pattern: str, seconds: float) -> None:
 
 
 class TestRowsHoldStill(_Rig):
-    def _open_room(self, page: Any, width: int, ms: int) -> list[dict[str, Any]]:
+    def _open_room(self, page: Any, width: int, ms: int, query: str = "Payments",
+                   project: str = "p-ledger", anywhere: bool = False) -> list[dict[str, Any]]:
         self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
-        page.locator("[aria-controls=desk-palette-listbox]").fill("Payments")
-        opt = page.locator("[id='desk-palette-option-project.open.p-ledger']")
+        page.locator("[aria-controls=desk-palette-listbox]").fill(query)
+        opt = page.locator(f"[id='desk-palette-option-project.open.{project}']")
         opt.wait_for()
         page.wait_for_timeout(600)
-        page.evaluate(RECORD_JS, [ROOM_ROWS, ms])
+        page.evaluate(RECORD_JS, [ROOM_ROWS, ms, anywhere])
         self._press(page, opt, width)
         _room_opened(page)
         return page.evaluate(RESULT_JS)
@@ -123,7 +159,7 @@ class TestRowsHoldStill(_Rig):
                 # fence starts once the query is drawn, while its reads
                 # (memory search, debounced 250 ms) are still in flight.
                 page.locator("[aria-controls=desk-palette-listbox]").fill("Payments")
-                page.evaluate(RECORD_JS, [PALETTE_ROWS, 2500])
+                page.evaluate(RECORD_JS, [PALETTE_ROWS, 2500, False])
                 palette = page.evaluate(RESULT_JS)
                 page.screenshot(path=str(SHOTS / "palette-393.png"))
                 page.keyboard.press("Escape")
@@ -211,7 +247,7 @@ class TestRowsHoldStill(_Rig):
                 mode["counts"] = True
                 self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
                 page.locator("#desk-palette-listbox").wait_for()
-                page.evaluate(RECORD_JS, [PALETTE_ROWS, 4000])
+                page.evaluate(RECORD_JS, [PALETTE_ROWS, 4000, False])
                 rows = page.evaluate(RESULT_JS)
                 page.screenshot(path=str(SHOTS / "palette-limit-393.png"))
                 (SHOTS / "palette-limit-393.json").write_text(json.dumps(rows, indent=1) + "\n")
@@ -281,8 +317,7 @@ class TestCaptionTouchesNothing(_Rig):
             browser, page, errors = self._page(pw, width)
             try:
                 page.locator("[data-testid='desk-icon-caption-drawer:people']").wait_for(state="attached", timeout=20_000)
-                conductor = page.locator(".desk-screen .desk-icon[data-object-id='drawer:conductor'] "
-                                         ":is(.desk-icon-count, .desk-icon-lamp)")
+                conductor = page.locator(".desk-screen .desk-icon[data-object-id='drawer:conductor'] .desk-icon-count")
                 conductor.first.wait_for(state="attached", timeout=20_000)
                 page.wait_for_timeout(600)
                 _settle(page)
@@ -298,11 +333,103 @@ class TestCaptionTouchesNothing(_Rig):
                     page.screenshot(path=str(SHOTS / f"caption-{width}.png"),
                                     clip={"x": x, "y": y, "width": min(320, width - x), "height": 400})
                 assert people and found["caption"]["h"] > 0, found
-                assert any("drawer:conductor" in n["name"] for n in found["notches"]), found["notches"]
+                notch = [n for n in found["notches"] if n["name"].startswith("drawer:conductor") and "desk-icon-count" in n["name"]]
+                assert notch and notch[0]["w"] > 0 and notch[0]["h"] > 0, found["notches"]
                 cap = found["caption"]
                 assert cap["y"] + cap["h"] <= people["y"] + people["h"] + 0.5, found
                 hits = [o for o in found["others"] + found["notches"] if _meets(people, o)]
                 assert not hits, {"people": people, "touches": hits}
+                assert not errors, errors
+            finally:
+                browser.close()
+
+
+class TestLateSectionsHoldStill(_Rig):
+    """Astra r2 on #1094: the late-read cases the first gate missed."""
+
+    _open_room = TestRowsHoldStill._open_room
+
+    def test_sources_of_a_project_with_sources_draw_when_a_held_read_lands_393(self) -> None:
+        from playwright.sync_api import sync_playwright
+
+        made = _http(self.base, "POST", "/api/projects/door", {
+            "outcome": "Zephyr rollout",
+            "sources": [{"provider": "github", "scope": "acme/app", "watches": ["open_prs"]}],
+        })
+        pid = made.get("projectId")
+        assert pid, made
+        width = 393
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                page.add_style_tag(content=STILL)
+                _hold(page, f"**/api/projects/{pid}/repository", 10.0)
+                room = self._open_room(page, width, 13500, query="Zephyr", project=pid)
+                _settle(page)
+                page.screenshot(path=str(SHOTS / "room-sources-held-393.png"))
+                (SHOTS / "room-sources-held-393.json").write_text(json.dumps(room, indent=1) + "\n")
+                add = page.locator("#surface-project-memory [data-testid=room-add-source]")
+                assert add.count() and add.first.is_visible(), "SOURCES never drew after its read landed"
+                assert page.locator("#surface-project-memory [data-testid=room-add-sources]").count() == 0
+                assert not _moved(room), _moved(room)
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    def test_two_late_sections_land_below_each_other_393(self) -> None:
+        from playwright.sync_api import sync_playwright
+
+        width = 393
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                page.add_style_tag(content=STILL)
+                # The cap is 8 s after the Room's own read (~1 s after these
+                # holds start): FILES lands at ~10 s, SOURCES at ~11.5 s.
+                _hold_in_page(page, r"/api/connections$", 11.5)
+                _hold_in_page(page, r"/api/projects/p-ledger/resources$", 10.0)
+                # Both late sections stand at the foot, below the fold at 393:
+                # every drawn row counts here, on screen or not.
+                room = self._open_room(page, width, 15000, anywhere=True)
+                _settle(page)
+                page.screenshot(path=str(SHOTS / "room-two-late-393.png"))
+                (SHOTS / "room-two-late-393.json").write_text(json.dumps(room, indent=1) + "\n")
+                verb = [r for r in room if r["name"] == "room-files-info"]
+                assert verb, [r["name"] for r in room]
+                assert verb[0]["at"] > 8000, verb  # FILES was late (drawn after the cap)
+                assert verb[0]["worst"] <= TOLERANCE, verb
+                assert page.locator("#surface-project-memory [data-testid^='door-row-']").count()
+                assert not _moved(room), _moved(room)
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    def test_a_project_change_in_one_window_moves_no_drawn_row_393(self) -> None:
+        from playwright.sync_api import sync_playwright
+
+        projects = _http(self.base, "GET", "/api/projects").get("projects", [])
+        other = next(p for p in projects if p.get("id") != "p-ledger" and p.get("name"))
+        saved = _http(self.base, "POST", f"/api/projects/{other['id']}/ask-tasks",
+                      {"purpose": "Check the OTel rollout owner", "lens": "Project", "state": "saved"})
+        assert saved.get("task"), saved
+        width = 393
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                page.add_style_tag(content=STILL)
+                self._open_room(page, width, 3000)
+                page.locator("#surface-project-memory [data-testid=updates-verb]").wait_for()
+                page.wait_for_timeout(800)
+                _hold_in_page(page, rf"/api/projects/{re.escape(other['id'])}/room$", 2.0)
+                _hold_in_page(page, rf"/api/ask-tasks\?.*project_id={re.escape(other['id'])}", 4.0)
+                room = self._open_room(page, width, 7000, query=other["name"], project=other["id"])
+                _settle(page)
+                page.screenshot(path=str(SHOTS / "room-switch-393.png"))
+                (SHOTS / "room-switch-393.json").write_text(json.dumps(room, indent=1) + "\n")
+                head = page.locator("#surface-project-memory [data-testid=room-head]")
+                head.wait_for()
+                assert page.locator("#surface-project-memory").count() == 1, "the change opened a second Room window"
+                assert not _moved(room), _moved(room)
                 assert not errors, errors
             finally:
                 browser.close()

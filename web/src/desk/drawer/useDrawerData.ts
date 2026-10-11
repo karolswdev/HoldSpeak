@@ -39,6 +39,7 @@ export function useDrawerMembers(projectId: string, ctrl: ReturnType<typeof useP
   useAgentFlightsLive();
   const flights = useAgentFlights((s) => s.flights);
   const sessions = useAgentFlights((s) => s.sessions);
+  const flightsSettled = useAgentFlights((s) => s.settled);
   const items = useDesk((s) => s.items);
   const revision = useDrawers((s) => s.revision);
   const [people, setPeople] = useState<RoomPersonItem[]>([]);
@@ -114,7 +115,7 @@ export function useDrawerMembers(projectId: string, ctrl: ReturnType<typeof useP
     room: ctrl.room,
     loading: ctrl.loadStatus === "loading" && !ctrl.room,
     /** Every read the members come from has resolved once. */
-    settled: firstRead && ctrl.detailStatus === "ready",
+    settled: firstRead && flightsSettled && ctrl.detailStatus === "ready",
     failed,
     retry,
     head,
