@@ -20,6 +20,7 @@ from typing import Any
 
 from holdspeak.connector_packs import github_cli
 from holdspeak.connector_runtime import PermissionGate
+from holdspeak.db.automations import redact_source_error
 from holdspeak.delivery.pr_receipts import rollup_conclusion
 from holdspeak.principals import Principal
 from holdspeak.services.errors import ServiceError, ValidationError
@@ -104,7 +105,7 @@ class GitHubWatchSource:
             errors="replace", timeout=github_cli.DEFAULT_TIMEOUT_SECONDS,
         )
         if completed.returncode != 0:
-            detail = str(completed.stderr or "GitHub CLI query failed").strip()[:500]
+            detail = redact_source_error(completed.stderr or "GitHub CLI query failed").strip()[:500]
             raise ServiceError("connector_refresh_failed", detail)
         try:
             rows = json.loads(_answer(completed.stdout))
@@ -157,7 +158,7 @@ class GitHubWatchSource:
             errors="replace", timeout=github_cli.DEFAULT_TIMEOUT_SECONDS,
         )
         if completed.returncode != 0:
-            detail = str(completed.stderr or "GitHub CLI query failed").strip()[:500]
+            detail = redact_source_error(completed.stderr or "GitHub CLI query failed").strip()[:500]
             raise ServiceError("connector_refresh_failed", detail)
         try:
             rows = json.loads(_answer(completed.stdout))
@@ -205,7 +206,7 @@ class GitHubWatchSource:
             errors="replace", timeout=github_cli.DEFAULT_TIMEOUT_SECONDS,
         )
         if completed.returncode != 0:
-            detail = str(completed.stderr or "GitHub CLI query failed").strip()[:500]
+            detail = redact_source_error(completed.stderr or "GitHub CLI query failed").strip()[:500]
             raise ServiceError("connector_refresh_failed", detail)
         try:
             rows = json.loads(_answer(completed.stdout))
@@ -412,7 +413,7 @@ class JiraWatchSource:
             }
             se_code = code_map.get(error_code or "", "connector_refresh_failed")
             detail = result.get("error_detail") or result.get("query_invalid") or "Jira query failed"
-            raise ServiceError(se_code, str(detail)[:500])
+            raise ServiceError(se_code, redact_source_error(detail)[:500])
 
         # HS-167-02: store calls count on thread-local for the evaluate
         # caller to pick up and persist on the evaluation record.
@@ -695,7 +696,9 @@ class ConfluenceWatchSource:
             if error_code == CODE_UNSUPPORTED_BY_CLI:
                 raise ServiceError(
                     "unsupported_by_cli",
-                    result.get("error_detail") or "Operation not supported by acli confluence",
+                    redact_source_error(
+                        result.get("error_detail") or "Operation not supported by acli confluence",
+                    )[:500],
                 )
             code_map = {
                 "query_invalid": "connector_query_invalid",
@@ -704,7 +707,7 @@ class ConfluenceWatchSource:
             }
             se_code = code_map.get(error_code or "", "connector_refresh_failed")
             detail = result.get("error_detail") or "Confluence query failed"
-            raise ServiceError(se_code, str(detail)[:500])
+            raise ServiceError(se_code, redact_source_error(detail)[:500])
 
         return result.get("items", [])
 

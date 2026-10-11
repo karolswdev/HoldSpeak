@@ -348,3 +348,67 @@ class TestProjectServiceMaps:
         from holdspeak.services.project_service import _SUBJECT_TO_QUERY_KIND
         assert _SUBJECT_TO_QUERY_KIND["pull_request"] == "pull_requests"
         assert _SUBJECT_TO_QUERY_KIND["issue"] == "issues"
+
+
+# ── PHILO-17 evalerror (Astra r1): no credential in an adapter's error ──
+
+_SECRET_LINES = "\n".join([
+    "To get started with GitHub CLI, please run:  gh auth login",
+    "token ghp_AAAAbbbbCCCCddddEEEEffffGGGGhhhh1234",
+    "Authorization: Basic dXNlcjpodW50ZXIycGFzcw==",
+    "fetch https://octo:hunter2pass@github.com/acme/app.git",
+    "acli ATATT3xFfGF0abcdefghijklmnopqrstuvwxyz0123456789",
+])
+_SECRETS = ("ghp_AAAA", "dXNlcjpodW50ZXIycGFzcw", "hunter2pass", "ATATT3xFfGF0")
+
+
+def _no_secret(exc: ServiceError) -> None:
+    text = f"{exc.detail} {exc}"
+    assert [s for s in _SECRETS if s in text] == [], text
+
+
+@pytest.mark.parametrize("query_kind,query", [
+    ("pull_requests", {"repository": "acme/app"}),
+    ("issues", {"repository": "acme/app"}),
+    ("branch_ci", {"repository": "acme/app", "branch": "main"}),
+])
+def test_github_error_detail_is_redacted(query_kind, query) -> None:
+    def runner(*args, **kwargs):
+        return subprocess.CompletedProcess(args=args[0], returncode=4, stdout="", stderr=_SECRET_LINES)
+
+    with pytest.raises(ServiceError) as exc_info:
+        GitHubWatchSource(runner=runner).snapshot(OWNER, query_kind=query_kind, query=query)
+    assert exc_info.value.code == "connector_refresh_failed"
+    assert "gh auth login" in exc_info.value.detail
+    _no_secret(exc_info.value)
+
+
+def test_jira_error_detail_is_redacted() -> None:
+    adapter = _FakeAdapter(result={
+        "state": "failed", "error_code": "authentication_required",
+        "error_detail": _SECRET_LINES, "items": [],
+    })
+    with pytest.raises(ServiceError) as exc_info:
+        JiraWatchSource(adapter=adapter).snapshot(
+            OWNER, query_kind="issues", query={"connection_ref": "a.atlassian.net|u@x.com"},
+        )
+    _no_secret(exc_info.value)
+
+
+@pytest.mark.parametrize("error_code", ["authentication_required", "unsupported_by_cli"])
+def test_confluence_error_detail_is_redacted(error_code) -> None:
+    from holdspeak.services.confluence_provider import CODE_UNSUPPORTED_BY_CLI
+    from holdspeak.services.watch_sources import ConfluenceWatchSource
+
+    code = CODE_UNSUPPORTED_BY_CLI if error_code == "unsupported_by_cli" else error_code
+
+    class _Confluence:
+        def fetch_recent_blogs(self, principal, connection_ref, *, space_id, limit):
+            return {"state": "failed", "error_code": code, "error_detail": _SECRET_LINES, "items": []}
+
+    with pytest.raises(ServiceError) as exc_info:
+        ConfluenceWatchSource(adapter=_Confluence()).snapshot(
+            OWNER, query_kind="recent_blogs",
+            query={"connection_ref": "a.atlassian.net|u@x.com", "space_id": "42"},
+        )
+    _no_secret(exc_info.value)

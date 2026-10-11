@@ -10,8 +10,8 @@ route and the hub's MCP transport (one ``project.watch.evaluate`` path):
 
   * before Evaluate, Needs you has no GitHub source row;
   * the route answers 400 ``connector_refresh_failed``; MCP gives the same code;
-  * the stored error and the rendered Details hold none of the credentials
-    the runner's stderr carried;
+  * the HTTP message, the MCP error text, the stored error and the rendered
+    Details hold none of the credentials the runner's stderr carried;
   * after it, one grouped row ``GitHub · 2 sources`` reads ``Not signed in``
     with one Reconnect, and the raw runner line stays out of the list.
 """
@@ -117,6 +117,10 @@ def test_a_failed_evaluate_reaches_needs_you_as_its_grouped_row(
             }, token=TOKEN)
             assert mcp["result"]["isError"] is True, mcp
             assert json.loads(mcp["result"]["content"][0]["text"])["code"] == "connector_refresh_failed", mcp
+            # Neither answer gives the caller a secret (an agent reads MCP).
+            assert "gh auth login" in json.dumps(result["payload"]), result
+            assert [x for x in SECRETS if x in json.dumps(result["payload"])] == [], result
+            assert [x for x in SECRETS if x in json.dumps(mcp)] == [], mcp
 
             # Stored: the cause, no secret.
             from holdspeak.db import get_database
