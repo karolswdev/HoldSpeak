@@ -25,7 +25,9 @@ def test_welcome_route_serves_the_one_react_shell() -> None:
 
 def test_welcome_is_the_same_one_step_first_value_surface_as_the_desk() -> None:
     page = _page()
-    desk = (_REPO / "web/src/desk/components/EmptyDesk.tsx").read_text()
+    # PHILO-17: the empty Floor (EmptyDesk) is parked; the desk's live first
+    # value surface is the first run (desk/firstrun/FirstRun.tsx).
+    desk = (_REPO / "web/src/desk/firstrun/FirstRun.tsx").read_text()
     assert "FirstWords" in page and "FirstWords" in desk
     assert "STEPS" not in page and "Model" not in page
     assert 'navigate("/", { replace: true })' in page

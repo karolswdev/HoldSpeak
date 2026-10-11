@@ -381,13 +381,13 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
     # (``announces_changes``: the desk's windows) is walked for real on open
     # windows: its own frame is the announcement (a no-op sends none).
     window_service = hub.root.desk_window_service
-    for window_id in ("chair:needs", "chair:week", "chair:capture", "zone:walk"):
+    for window_id in ("chair:needs", "chair:week", "chair:capture", "workbench:walk"):
         window_service.open(window_id)
     self_announcing = {
         "windows.open": {"window_id": "chair:brief"},
         "windows.close": {"window_id": "chair:week"},
         "windows.raise": {"window_id": "chair:needs"},
-        "windows.arrange": {"rects": {"zone:walk": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}}},
+        "windows.arrange": {"rects": {"workbench:walk": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}}},
         "windows.seat": {"window_id": "chair:capture", "seated": True},
     }
     for name in writes:
