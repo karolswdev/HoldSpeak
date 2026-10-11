@@ -3,7 +3,9 @@
 // is one destination row; when it is the only destination it is picked, so
 // the preview and Send are open. In Settings -> Connections it has Check but
 // no Edit and no Remove. The hub side is tests/unit/test_builtin_send_folder.py;
-// the glass is tests/e2e/test_builtin_send_folder_glass.py.
+// the glass was tests/e2e/test_builtin_send_folder_glass.py (parked by the
+// test diet, 2026-10-11; its successors are tests/unit/test_desk_send.py
+// and web/src/desk/__tests__/send.app.test.tsx).
 
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";

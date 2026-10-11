@@ -1,0 +1,582 @@
+{
+ "_source": "Captured from a real MeetingWebServer (tests/e2e/glass_infra._boot, isolated HOME) seeded by tests/e2e/test_hs172_meeting_glass.py::_seed + _seed_queued (no engines seeded); GET bodies verbatim, keyed by request path. Regenerate with the same seed; never hand-edit a field a test reads.",
+ "_now": "2026-10-11T09:11:19.083",
+ "/api/meetings?limit=100": {
+  "meetings": [
+   {
+    "id": "m-ran",
+    "started_at": "2026-10-11T08:11:19.083217",
+    "ended_at": "2026-10-11T08:41:19.083217",
+    "title": "Standup",
+    "duration_seconds": 1800.0,
+    "segment_count": 5,
+    "action_item_count": 0,
+    "tags": [],
+    "intel_status": "complete",
+    "intel_status_detail": null,
+    "intel_model_host": "192.168.1.43",
+    "intel_duration_s": 41,
+    "capture_status": "finalized",
+    "capture_failure": null,
+    "capture_checkpoint_seconds": 0.0,
+    "transcription_status": "active",
+    "transcription_status_detail": null,
+    "provenance": "desktop",
+    "calendar_event_id": null,
+    "attendees": [
+     "Karol",
+     "Marek"
+    ],
+    "parked": false,
+    "transcriptWords": 30,
+    "unclearSpans": 0,
+    "needs_you_count": 3,
+    "has_summary": false,
+    "planned_route": {
+     "status": "unavailable",
+     "reason_code": "no assignment",
+     "selection_hash": null,
+     "legs": []
+    },
+    "run_receipt": null,
+    "last_refusal": null,
+    "intel_job": {
+     "status": "complete",
+     "attempts": 0,
+     "requested_at": "2026-10-11T08:40:38.083217",
+     "updated_at": "2026-10-11T08:41:19.083217",
+     "last_error": null,
+     "retry_scheduled": false,
+     "next_retry_at": null
+    }
+   },
+   {
+    "id": "m-queued",
+    "started_at": "2026-10-11T07:11:19.085682",
+    "ended_at": "2026-10-11T07:41:19.085682",
+    "title": "Sprint review",
+    "duration_seconds": 1800.0,
+    "segment_count": 3,
+    "action_item_count": 0,
+    "tags": [],
+    "intel_status": "queued",
+    "intel_status_detail": null,
+    "intel_model_host": null,
+    "intel_duration_s": null,
+    "capture_status": "finalized",
+    "capture_failure": null,
+    "capture_checkpoint_seconds": 0.0,
+    "transcription_status": "active",
+    "transcription_status_detail": null,
+    "provenance": "desktop",
+    "calendar_event_id": null,
+    "attendees": [
+     "Karol"
+    ],
+    "parked": false,
+    "transcriptWords": 9,
+    "unclearSpans": 0,
+    "needs_you_count": 0,
+    "has_summary": false,
+    "planned_route": {
+     "status": "unavailable",
+     "reason_code": "no assignment",
+     "selection_hash": null,
+     "legs": []
+    },
+    "run_receipt": null,
+    "last_refusal": null,
+    "intel_job": null
+   }
+  ],
+  "total": 2
+ },
+ "/api/meetings/facets": {
+  "speakers": [
+   "Karol",
+   "Marek"
+  ],
+  "tags": []
+ },
+ "/api/all-action-items": {
+  "action_items": []
+ },
+ "/api/meetings?parked=true": {
+  "meetings": [],
+  "total": 0
+ },
+ "/api/meetings/m-ran?include_parked=true": {
+  "id": "m-ran",
+  "parked": false,
+  "started_at": "2026-10-11T08:11:19.083217",
+  "ended_at": "2026-10-11T08:41:19.083217",
+  "duration": 1800.0,
+  "formatted_duration": "30:00",
+  "title": "Standup",
+  "tags": [],
+  "segments": [
+   {
+    "text": "Discussion point 0 about the migration",
+    "speaker": "Karol",
+    "speaker_id": null,
+    "start_time": 0.0,
+    "end_time": 360.0,
+    "is_bookmarked": false,
+    "device_id": null
+   },
+   {
+    "text": "Discussion point 1 about the migration",
+    "speaker": "Marek",
+    "speaker_id": null,
+    "start_time": 360.0,
+    "end_time": 720.0,
+    "is_bookmarked": false,
+    "device_id": null
+   },
+   {
+    "text": "Discussion point 2 about the migration",
+    "speaker": "Karol",
+    "speaker_id": null,
+    "start_time": 720.0,
+    "end_time": 1080.0,
+    "is_bookmarked": false,
+    "device_id": null
+   },
+   {
+    "text": "Discussion point 3 about the migration",
+    "speaker": "Marek",
+    "speaker_id": null,
+    "start_time": 1080.0,
+    "end_time": 1440.0,
+    "is_bookmarked": false,
+    "device_id": null
+   },
+   {
+    "text": "Discussion point 4 about the migration",
+    "speaker": "Karol",
+    "speaker_id": null,
+    "start_time": 1440.0,
+    "end_time": 1800.0,
+    "is_bookmarked": false,
+    "device_id": null
+   }
+  ],
+  "bookmarks": [],
+  "intel": null,
+  "intel_status": {
+   "state": "complete",
+   "detail": null,
+   "requested_at": "2026-10-11T08:40:38.083217",
+   "completed_at": "2026-10-11T08:41:19.083217"
+  },
+  "mic_label": "Me",
+  "remote_label": "Remote",
+  "web_url": null,
+  "capture_status": "finalized",
+  "capture_failure": null,
+  "transcription_status": "active",
+  "transcription_status_detail": null,
+  "capture_checkpoint_at": null,
+  "capture_checkpoint_seconds": 0.0,
+  "provenance": "desktop",
+  "calendar_event_id": null,
+  "transcriptWords": 30,
+  "unclearSpans": 0,
+  "sync_modified_at": "2026-10-11T09:11:19",
+  "devices": [],
+  "planned_route": {
+   "status": "unavailable",
+   "reason_code": "no assignment",
+   "selection_hash": null,
+   "legs": []
+  },
+  "run_receipt": null,
+  "last_refusal": null,
+  "intel_job": {
+   "status": "complete",
+   "attempts": 0,
+   "requested_at": "2026-10-11T08:40:38.083217",
+   "updated_at": "2026-10-11T08:41:19.083217",
+   "last_error": null,
+   "retry_scheduled": false,
+   "next_retry_at": null
+  },
+  "intel_model_host": "192.168.1.43",
+  "intel_duration_s": 41
+ },
+ "/api/meetings/m-ran/artifacts": {
+  "meeting_id": "m-ran",
+  "artifacts": []
+ },
+ "/api/meetings/m-ran/aftercare": {
+  "meeting_id": "m-ran",
+  "meeting_title": "Standup",
+  "meeting_date": "2026-10-11T08:11:19.083217",
+  "open_items": {
+   "total": 0,
+   "by_owner": []
+  },
+  "decisions": [],
+  "since_last_meeting": {
+   "previous_meeting": {
+    "id": "m-queued",
+    "title": "Sprint review",
+    "date": "2026-10-11T07:11:19.085682"
+   },
+   "new_decisions": [],
+   "new_actions": [],
+   "closed_actions": [],
+   "changed": false
+  },
+  "is_empty": true,
+  "triage": [],
+  "proposal_total": 3
+ },
+ "/api/meetings/m-ran/intent-timeline": {
+  "meeting_id": "m-ran",
+  "windows": [],
+  "transitions": []
+ },
+ "/api/meetings/m-ran/proposals": {
+  "meeting_id": "m-ran",
+  "proposals": []
+ },
+ "/api/meetings/m-ran/follow-through-proposals": {
+  "meeting_id": "m-ran",
+  "proposals": [
+   {
+    "id": "prop-c84bd4c7d6c2",
+    "meeting_id": "m-ran",
+    "project_id": null,
+    "kind": "decision",
+    "text": "cut-over on the 12th",
+    "owner_hint": null,
+    "due_hint": null,
+    "owner": null,
+    "due": null,
+    "owner_supplied": null,
+    "due_supplied": null,
+    "source_artifact_id": null,
+    "source_plugin": "decision_capture",
+    "segment_timestamp": null,
+    "speaker_label": null,
+    "model_host": "192.168.1.43",
+    "state": "proposed",
+    "original_text": null,
+    "decision_record_id": null,
+    "rationale": null,
+    "commitment_id": null,
+    "created_at": "2026-10-11T09:11:19.083217",
+    "decided_at": null,
+    "retry_key": null,
+    "extraction_revision": null,
+    "job_id": null,
+    "job_attempt": null,
+    "extraction_model": null,
+    "span_start": null,
+    "span_end": null,
+    "segment_index": null,
+    "claim_kind": "proposal",
+    "support": "unknown",
+    "support_record": null,
+    "acceptance": "unreviewed",
+    "unknowns": [],
+    "edited_at": null,
+    "text_edited": false,
+    "action_item_id": null,
+    "deferred_until": null
+   },
+   {
+    "id": "prop-21ff351d3772",
+    "meeting_id": "m-ran",
+    "project_id": null,
+    "kind": "action",
+    "text": "Marek owns the PostgreSQL migration",
+    "owner_hint": null,
+    "due_hint": "Fri",
+    "owner": null,
+    "due": "Fri",
+    "owner_supplied": null,
+    "due_supplied": null,
+    "source_artifact_id": null,
+    "source_plugin": "decision_capture",
+    "segment_timestamp": null,
+    "speaker_label": null,
+    "model_host": "192.168.1.43",
+    "state": "proposed",
+    "original_text": null,
+    "decision_record_id": null,
+    "rationale": null,
+    "commitment_id": null,
+    "created_at": "2026-10-11T09:11:19.083217",
+    "decided_at": null,
+    "retry_key": null,
+    "extraction_revision": null,
+    "job_id": null,
+    "job_attempt": null,
+    "extraction_model": null,
+    "span_start": null,
+    "span_end": null,
+    "segment_index": null,
+    "claim_kind": "proposal",
+    "support": "unknown",
+    "support_record": null,
+    "acceptance": "unreviewed",
+    "unknowns": [
+     {
+      "type": "owner",
+      "value": "unknown"
+     }
+    ],
+    "edited_at": null,
+    "text_edited": false,
+    "action_item_id": null,
+    "deferred_until": null
+   },
+   {
+    "id": "prop-4f3dd4cb1b41",
+    "meeting_id": "m-ran",
+    "project_id": null,
+    "kind": "action",
+    "text": "Ania owns the API spec",
+    "owner_hint": null,
+    "due_hint": "Fri",
+    "owner": null,
+    "due": "Fri",
+    "owner_supplied": null,
+    "due_supplied": null,
+    "source_artifact_id": null,
+    "source_plugin": "decision_capture",
+    "segment_timestamp": null,
+    "speaker_label": null,
+    "model_host": "192.168.1.43",
+    "state": "proposed",
+    "original_text": null,
+    "decision_record_id": null,
+    "rationale": null,
+    "commitment_id": null,
+    "created_at": "2026-10-11T09:11:19.083217",
+    "decided_at": null,
+    "retry_key": null,
+    "extraction_revision": null,
+    "job_id": null,
+    "job_attempt": null,
+    "extraction_model": null,
+    "span_start": null,
+    "span_end": null,
+    "segment_index": null,
+    "claim_kind": "proposal",
+    "support": "unknown",
+    "support_record": null,
+    "acceptance": "unreviewed",
+    "unknowns": [
+     {
+      "type": "owner",
+      "value": "unknown"
+     }
+    ],
+    "edited_at": null,
+    "text_edited": false,
+    "action_item_id": null,
+    "deferred_until": null
+   }
+  ]
+ },
+ "/api/decisions?scope=all&limit=500&meeting_id=m-ran": {
+  "decisions": [],
+  "page": {
+   "offset": 0,
+   "limit": 500,
+   "count": 0,
+   "total": 0
+  }
+ },
+ "/api/meetings/m-ran/intel-recovery": {
+  "meeting_id": "m-ran",
+  "visible": false,
+  "state": "complete",
+  "headline": "Meeting saved \u00b7 intelligence incomplete",
+  "completed": [
+   {
+    "label": "Meeting",
+    "detail": "Saved"
+   },
+   {
+    "label": "Transcript",
+    "detail": "5 saved segments"
+   }
+  ],
+  "planned_route": {
+   "status": "unavailable",
+   "reason_code": "no assignment",
+   "selection_hash": null,
+   "legs": []
+  },
+  "run_receipt": null,
+  "last_refusal": null,
+  "remaining": {
+   "label": "Summary, topics, action items, and routed artifacts",
+   "detail": "Meeting intelligence did not finish."
+  },
+  "job": {
+   "status": "complete",
+   "attempts": 0,
+   "requested_at": "2026-10-11T08:40:38.083217",
+   "updated_at": "2026-10-11T08:41:19.083217",
+   "last_error": null,
+   "retry_scheduled": false,
+   "next_retry_at": null,
+   "planned_route": null,
+   "run_receipt": null
+  },
+  "actions": {
+   "retry": false,
+   "skip": false
+  }
+ },
+ "/api/meetings/m-queued?include_parked=true": {
+  "id": "m-queued",
+  "parked": false,
+  "started_at": "2026-10-11T07:11:19.085682",
+  "ended_at": "2026-10-11T07:41:19.085682",
+  "duration": 1800.0,
+  "formatted_duration": "30:00",
+  "title": "Sprint review",
+  "tags": [],
+  "segments": [
+   {
+    "text": "Sprint topic 0",
+    "speaker": "Karol",
+    "speaker_id": null,
+    "start_time": 0.0,
+    "end_time": 600.0,
+    "is_bookmarked": false,
+    "device_id": null
+   },
+   {
+    "text": "Sprint topic 1",
+    "speaker": "Karol",
+    "speaker_id": null,
+    "start_time": 600.0,
+    "end_time": 1200.0,
+    "is_bookmarked": false,
+    "device_id": null
+   },
+   {
+    "text": "Sprint topic 2",
+    "speaker": "Karol",
+    "speaker_id": null,
+    "start_time": 1200.0,
+    "end_time": 1800.0,
+    "is_bookmarked": false,
+    "device_id": null
+   }
+  ],
+  "bookmarks": [],
+  "intel": null,
+  "intel_status": {
+   "state": "queued",
+   "detail": null,
+   "requested_at": null,
+   "completed_at": null
+  },
+  "mic_label": "Me",
+  "remote_label": "Remote",
+  "web_url": null,
+  "capture_status": "finalized",
+  "capture_failure": null,
+  "transcription_status": "active",
+  "transcription_status_detail": null,
+  "capture_checkpoint_at": null,
+  "capture_checkpoint_seconds": 0.0,
+  "provenance": "desktop",
+  "calendar_event_id": null,
+  "transcriptWords": 9,
+  "unclearSpans": 0,
+  "sync_modified_at": "2026-10-11T09:11:19",
+  "devices": [],
+  "planned_route": {
+   "status": "unavailable",
+   "reason_code": "no assignment",
+   "selection_hash": null,
+   "legs": []
+  },
+  "run_receipt": null,
+  "last_refusal": null,
+  "intel_job": null,
+  "intel_model_host": null
+ },
+ "/api/meetings/m-queued/artifacts": {
+  "meeting_id": "m-queued",
+  "artifacts": []
+ },
+ "/api/meetings/m-queued/aftercare": {
+  "meeting_id": "m-queued",
+  "meeting_title": "Sprint review",
+  "meeting_date": "2026-10-11T07:11:19.085682",
+  "open_items": {
+   "total": 0,
+   "by_owner": []
+  },
+  "decisions": [],
+  "since_last_meeting": null,
+  "is_empty": true,
+  "triage": [],
+  "proposal_total": 0
+ },
+ "/api/meetings/m-queued/intent-timeline": {
+  "meeting_id": "m-queued",
+  "windows": [],
+  "transitions": []
+ },
+ "/api/meetings/m-queued/proposals": {
+  "meeting_id": "m-queued",
+  "proposals": []
+ },
+ "/api/meetings/m-queued/follow-through-proposals": {
+  "meeting_id": "m-queued",
+  "proposals": []
+ },
+ "/api/decisions?scope=all&limit=500&meeting_id=m-queued": {
+  "decisions": [],
+  "page": {
+   "offset": 0,
+   "limit": 500,
+   "count": 0,
+   "total": 0
+  }
+ },
+ "/api/meetings/m-queued/intel-recovery": {
+  "meeting_id": "m-queued",
+  "visible": true,
+  "state": "queued",
+  "headline": "Meeting saved \u00b7 intelligence queued",
+  "completed": [
+   {
+    "label": "Meeting",
+    "detail": "Saved"
+   },
+   {
+    "label": "Transcript",
+    "detail": "3 saved segments"
+   }
+  ],
+  "planned_route": {
+   "status": "unavailable",
+   "reason_code": "no assignment",
+   "selection_hash": null,
+   "legs": []
+  },
+  "run_receipt": null,
+  "last_refusal": null,
+  "remaining": {
+   "label": "Summary, topics, action items, and routed artifacts",
+   "detail": "Meeting intelligence did not finish."
+  },
+  "job": null,
+  "actions": {
+   "retry": true,
+   "skip": true
+  }
+ }
+}
