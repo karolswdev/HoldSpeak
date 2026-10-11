@@ -26,12 +26,26 @@ export function RecordOrb() {
     const apply = (activity: unknown) =>
       useDesk.getState().applyRecordingActivity(activity);
     const unsub = subscribe("runtime_activity", (frame) => apply(frame.data));
+    // PHILO-17 (Astra r1): the live meeting's identity, also after a reload
+    // and for a meeting started elsewhere, so the Live meeting door opens
+    // that meeting's own window, never a second room beside it.
+    const offStarted = subscribe("meeting_started", (frame) => {
+      const id = String((frame.data as Record<string, unknown> | undefined)?.id ?? "");
+      if (id) useDesk.setState({ liveMeetingId: id });
+    });
     void apiFetch<any>("/api/state")
-      .then((snapshot) =>
-        apply(snapshot?.activity || snapshot?.runtime?.activity),
-      )
+      .then((snapshot) => {
+        apply(snapshot?.activity || snapshot?.runtime?.activity);
+        const id = String(snapshot?.meeting_id ?? "");
+        if (snapshot?.meeting_active === true && id && !useDesk.getState().liveMeetingId) {
+          useDesk.setState({ liveMeetingId: id });
+        }
+      })
       .catch(() => null);
-    return unsub;
+    return () => {
+      unsub();
+      offStarted();
+    };
   }, []);
 
   useEffect(() => {

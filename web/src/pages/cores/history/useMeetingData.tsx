@@ -99,6 +99,10 @@ export interface MeetingDecision {
 export function useMeetingData(
   meeting: Record<string, unknown> | null,
   onReceipt: (receipt: Receipt) => void,
+  /** PHILO-17 (Astra r1): a count the host bumps when the meeting's own
+   *  records may have moved (a Review confirm, a desk change) though the
+   *  meeting row did not: the decisions and proposals read again. */
+  revision = 0,
 ): MeetingData {
   const id = String(meeting?.id ?? "");
   const [detail, setDetail] = useState<Record<string, unknown> | null>(meeting);
@@ -164,6 +168,34 @@ export function useMeetingData(
       live = false;
     };
   }, [id, meeting]);
+  // PHILO-17 (Astra r1): Confirm in Review writes proposal and decision
+  // records, not the meeting row, so the reads above (keyed on the meeting
+  // object) never re-ran and Outcomes still said TO DECIDE. These reads
+  // follow the host's revision on their own; the meeting object (and the
+  // Send well's form) stays as it is.
+  useEffect(() => {
+    if (!id || revision === 0) return;
+    let live = true;
+    const mine = <T,>(apply: (value: T) => void) => (value: T) => {
+      if (live) apply(value);
+    };
+    void apiFetch<MeetingAftercareResponse>(`/api/meetings/${encodeURIComponent(id)}/aftercare`)
+      .then(mine(setAftercare)).catch(() => undefined);
+    void apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
+      .then(mine(setProposals)).catch(() => undefined);
+    void apiFetch<{ proposals: FollowThroughProposal[] }>(
+      `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
+    ).then(mine((res: { proposals?: FollowThroughProposal[] }) => setFtProposals(res.proposals ?? [])))
+      .catch(() => undefined);
+    void apiFetch<{ decisions?: MeetingDecision[] }>(
+      `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
+    ).then(mine((res: { decisions?: MeetingDecision[] }) =>
+      setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : [])))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [id, revision]);
   const { subscribe } = useRuntimeBus();
   useEffect(
     () =>

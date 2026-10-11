@@ -31,6 +31,14 @@ export const MEETING_OPEN_EVENT = "holdspeak:meeting-open";
 const meetingRequests = new Map<string, MeetingOpenRequest>();
 let meetingSeq = 0;
 
+/** The meeting a scope names (`meeting:<id>[?…]`), with no side effect. */
+export function meetingOfScope(scope: string | null | undefined): string | null {
+  const clean = (scope ?? "").trim();
+  if (!clean.startsWith("meeting:")) return null;
+  const id = clean.slice("meeting:".length).split("?", 1)[0];
+  return id || null;
+}
+
 /** `meeting:<id>[?view=…&segment=…]` → the window's object ref
  * `meeting:<id>`, or null when the scope names no meeting. A view or a
  * segment in the scope is kept for the window (`takeMeetingRequest`). */

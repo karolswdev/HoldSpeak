@@ -262,8 +262,10 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   );
 
   // The meeting's own window shows this room only while it records.
+  // PHILO-17 (Astra r1): the hub's idle state says `meeting_active: false`
+  // (runtime/activity.py); either word ends the room.
   const active = Boolean(
-    (meetingId && state.active !== false) ||
+    (meetingId && state.active !== false && state.meeting_active !== false) ||
       (state.active ?? state.meeting_active ?? state.status === "recording"),
   );
   // PHILO-17 speech: the live `duration` frame (a "MM:SS" string, one a

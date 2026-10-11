@@ -3,13 +3,17 @@
 Through the real hub on an isolated HOME, at 1440x900 and 393x852:
 
 * One meeting, five doors: the Needs-you row, the desk icon, the ⌘K hit
-  (the Search tap at 393), the Meetings list row, and a Project Room's FILES
-  row (a second meeting, filed in the Project). Each meeting opens in its own
+  (the Search tap at 393), the Meetings list row, and (once it is filed in
+  a Project) the Room's FILES row. Each meeting opens in its own
   window, ``pullout:meeting:<id>``: after every door there is exactly ONE
   such window on the glass and on the hub, and it is the front window (the
   second door brings it to the front; it never opens twice). The Meetings
-  window is the list: it holds no record.
-* Record -> Stop keeps the same window: the Record orb opens the new
+  window is the list: it holds no record. The hub holds the window as the
+  FRONT window; no bare `pullout:<id>` form exists.
+* A saved Meetings window scoped to a meeting (and a bare `pullout:<id>`
+  row) migrates on the hub to the meeting's one window; closed, it stays
+  closed after a reload, in two views.
+* Record -> Stop (the window's own Stop and the orb) keeps the same window: the Record orb opens the new
   meeting's window on the live room; Stop turns the SAME window
   (``pullout:meeting:<id>``) into the saved record. The capture device is
   the one stand-in: ``on_start`` / ``on_stop`` answer in place of a
@@ -44,7 +48,6 @@ SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-17/assets/meeting-window-
 SIZES = {1440: 900, 393: 852}
 T = 20_000
 ONE = "m-one"
-TWO = "m-two"
 LIVE = "m-live"
 PROJECT = "p-room"
 
@@ -74,15 +77,29 @@ def _save_meeting(meeting_id: str, title: str, hours_ago: float, intel_status: s
 
 
 class _Capture:
-    """The capture boundary: start answers the live meeting; stop saves it
-    through the real producer (as the recorder does) and answers stopped."""
+    """The capture boundary and the runtime's state, told truthfully: start
+    answers the live meeting and the state says it is live (the producer's
+    words, ``meeting_active``); stop saves the meeting through the real
+    producer (as the recorder does) and the state goes back to the runtime's
+    idle words (``meeting_active: False``, holdspeak/runtime/activity.py)."""
+
+    def __init__(self) -> None:
+        self.live = False
 
     def start(self) -> Any:
+        self.live = True
         return {"id": LIVE, "title": "Live sync", "started_at": datetime.now().astimezone().isoformat()}
 
     def stop(self) -> Any:
+        self.live = False
         _save_meeting(LIVE, "Live sync", 0.1, "disabled")
         return {"status": "stopped"}
+
+    def state(self) -> Any:
+        if self.live:
+            return {"id": LIVE, "meeting_id": LIVE, "meeting_active": True, "title": "Live sync",
+                    "formatted_duration": "00:01", "segments": []}
+        return {"id": "web-runtime", "meeting_active": False, "meeting_id": None, "segments": []}
 
 
 class TestOneMeetingOneWindow:
@@ -90,7 +107,8 @@ class TestOneMeetingOneWindow:
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         _ensure_build()
         capture = _Capture()
-        server, base = _boot(tmp_path, monkeypatch, token=TOKEN, on_start=capture.start, on_stop=capture.stop)
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN, on_start=capture.start, on_stop=capture.stop,
+                             get_state=capture.state)
         self.base, self.server = base, server
         from holdspeak.db import get_database
         from holdspeak.people import production_people_store
@@ -100,11 +118,10 @@ class TestOneMeetingOneWindow:
         db = get_database()
         # ONE: a meeting whose summary failed (a Needs-you member), loose on the desk.
         _save_meeting(ONE, "Platform sync", 2, "error")
-        # TWO: a meeting filed in a Project (its door is the Room's FILES).
+        # A Project: ONE is filed in it during the walk (its fifth door is the
+        # Room's FILES; a filed meeting leaves the loose desk).
         db.projects.create_project(project_id=PROJECT, name="Payments ledger cutover",
                                    description="Move settlement.", keywords=["ledger"])
-        _save_meeting(TWO, "Vendor review", 5, "disabled")
-        db.projects.associate_meeting_project(meeting_id=TWO, project_id=PROJECT, source="manual", confidence=1.0)
         # A person on the desk (loose: in no Project).
         store = production_people_store()
         store.initialize()
@@ -160,8 +177,11 @@ class TestOneMeetingOneWindow:
         self.page.keyboard.press("Enter")
         self.page.wait_for_timeout(600)
 
+    def _hub_rows(self) -> list[dict[str, Any]]:
+        return list(_http(self.base, "GET", "/api/desk/windows").get("windows") or [])
+
     def _hub_ids(self) -> list[str]:
-        return [w["id"] for w in _http(self.base, "GET", "/api/desk/windows").get("windows") or []]
+        return [w["id"] for w in self._hub_rows()]
 
     def _one_front(self, meeting_id: str, door: str) -> None:
         """Exactly one window for the meeting, on the glass and on the hub, in front."""
@@ -173,14 +193,18 @@ class TestOneMeetingOneWindow:
         on_glass = page.evaluate(
             "() => [...document.querySelectorAll('[id^=\"pullout:meeting:\"]')].map((w) => w.id)")
         assert on_glass.count(wid) == 1, f"{door}-{self.width}: {on_glass}"
+        # Never a second form of the same meeting's window (a bare id).
+        assert page.locator(f"[id='pullout:{meeting_id}']").count() == 0, door
         for _ in range(40):
-            hub = [i for i in self._hub_ids() if i.startswith("pullout:meeting:")]
-            if hub.count(wid) == 1:
+            rows = self._hub_rows()
+            mine = [r for r in rows if r["id"] == wid]
+            if len(mine) == 1 and mine[0]["front"]:
                 break
             page.wait_for_timeout(250)
-        assert hub.count(wid) == 1, f"{door}-{self.width}: hub {hub}"
-        # Never a second form of the same meeting's window (a bare id).
-        assert meeting_id not in [i.removeprefix("pullout:") for i in hub], hub
+        assert len(mine) == 1, f"{door}-{self.width}: hub {[r['id'] for r in rows]}"
+        # The hub holds it as the FRONT window, as this view shows it.
+        assert mine[0]["front"], f"{door}-{self.width}: hub front {[(r['id'], r['front']) for r in rows]}"
+        assert f"pullout:{meeting_id}" not in [r["id"] for r in rows], rows
         # The Meetings window is the list: it holds no record.
         assert page.locator("#surface-meetings [data-testid=meeting-open-transcript]").count() == 0, door
 
@@ -243,19 +267,59 @@ class TestOneMeetingOneWindow:
                 self._press(page.locator(f"#surface-meetings [data-testid='meeting-row-{ONE}'] .meetings-stream-row-body"))
                 self._one_front(ONE, "list")
 
-                # 5. The Project Room's FILES row: the filed meeting opens its own window.
+                # 5. The SAME meeting, filed in a Project now: the Room's FILES
+                # row fronts its one window.
+                _http(self.base, "POST", f"/api/projects/{PROJECT}/meetings/{ONE}", {})
                 self._palette("Payments ledger cutover")
                 self._press(page.locator("#desk-palette-listbox [role=option]", has_text="Payments ledger cutover"))
                 files = page.locator("#surface-project-memory [data-testid=room-files]")
                 files.wait_for(timeout=T)
-                self._press(files.get_by_text("Vendor review").first)
+                self._press(files.get_by_text("Platform sync").first)
                 self._press(files.locator("[data-testid=room-files-open]"))
-                self._one_front(TWO, "room")
-                # The list row of the same meeting fronts it, never a second window.
-                self._home(staged="review-meetings")
-                self._press(page.locator(f"#surface-meetings [data-testid='meeting-row-{TWO}'] .meetings-stream-row-body"))
-                self._one_front(TWO, "room-then-list")
-                self._shot("meeting-window-two")
+                self._one_front(ONE, "room")
+                self._shot("meeting-window-room")
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.parametrize("stop", ["window", "orb"])
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_record_then_stop_keeps_the_same_window(self, width: int, stop: str) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                self._press(page.get_by_role("button", name="Record a meeting"))
+                wid = f"pullout:meeting:{LIVE}"
+                win = page.locator(f"[id='{wid}']")
+                win.wait_for(timeout=T)
+                # The live room in the meeting's own window (the hub says live).
+                win.get_by_role("button", name="Stop meeting").wait_for(timeout=T)
+                self._shot(f"meeting-window-live-{stop}")
+                if stop == "window":
+                    self._press(win.get_by_role("button", name="Stop meeting"))
+                else:
+                    self._press(page.get_by_role("button", name="Stop recording"))
+                # The SAME window shows the saved record, its final transcript,
+                # and stays the record (a late live reply never brings the room back).
+                win.get_by_role("button", name="Open transcript").wait_for(timeout=T)
+                win.get_by_text("We move the cutover to Friday.").first.wait_for(timeout=T)
+                page.wait_for_timeout(2500)
+                assert win.get_by_role("button", name="Stop meeting").count() == 0
+                ids = page.evaluate("() => [...document.querySelectorAll('[id^=\"pullout:meeting:\"]')].map((w) => w.id)")
+                assert ids == [wid], ids
+                assert page.locator("#surface-live").count() == 0
+                rows = [r for r in self._hub_rows() if r["id"].startswith("pullout:meeting:")]
+                assert [r["id"] for r in rows] == [wid] and rows[0]["front"], rows
+                # A reload keeps the record (the hub is idle; nothing reads live).
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                win.get_by_role("button", name="Open transcript").wait_for(timeout=T)
+                assert win.get_by_role("button", name="Stop meeting").count() == 0
+                self._shot(f"meeting-window-stopped-{stop}")
                 assert not errors, errors
             finally:
                 browser.close()
@@ -263,27 +327,47 @@ class TestOneMeetingOneWindow:
     @pytest.mark.e2e
     @pytest.mark.timeout(600)
     @pytest.mark.parametrize("width", list(SIZES))
-    def test_record_then_stop_keeps_the_same_window(self, width: int) -> None:
+    def test_a_saved_meetings_window_migrates_on_the_hub(self, width: int) -> None:
+        """Astra r1: the hub's row of a Meetings window scoped to a meeting (and
+        a bare `pullout:<id>` row) migrates to the meeting's one window, once;
+        closed, it does not come back; two views agree."""
         from playwright.sync_api import sync_playwright
 
+        _http(self.base, "POST", "/api/desk/windows/surface-meetings/open", {"object_ref": f"meeting:{ONE}"})
+        _http(self.base, "POST", f"/api/desk/windows/pullout:{ONE}/open", {})
+        wid = f"pullout:meeting:{ONE}"
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width)
             try:
-                orb = page.get_by_role("button", name="Record a meeting")
-                self._press(orb)
-                wid = f"pullout:meeting:{LIVE}"
-                win = page.locator(f"[id='{wid}']")
-                win.wait_for(timeout=T)
-                # The live room in the meeting's own window.
-                win.get_by_role("button", name="Stop meeting").wait_for(timeout=T)
-                self._shot("meeting-window-live")
-                self._press(page.get_by_role("button", name="Stop recording"))
-                # The SAME window shows the saved record; no new window opened.
-                win.get_by_role("button", name="Open transcript").wait_for(timeout=T)
-                ids = page.evaluate("() => [...document.querySelectorAll('[id^=\"pullout:meeting:\"]')].map((w) => w.id)")
-                assert ids == [wid], ids
-                assert page.locator("#surface-live").count() == 0
-                self._shot("meeting-window-stopped")
+                page.locator(f"[id='{wid}']").wait_for(timeout=T)
+                for _ in range(40):
+                    ids = self._hub_ids()
+                    if wid in ids and "surface-meetings" not in ids and f"pullout:{ONE}" not in ids:
+                        break
+                    page.wait_for_timeout(250)
+                assert wid in ids and "surface-meetings" not in ids and f"pullout:{ONE}" not in ids, ids
+                assert page.locator("#surface-meetings").count() == 0
+                assert page.locator(f"[id='pullout:{ONE}']").count() == 0
+                # A second view (no cache) shows the same desk.
+                other = browser.new_context(viewport={"width": width, "height": SIZES[width]}).new_page()
+                other.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _normal_chair(other)
+                other.locator(f"[id='{wid}']").wait_for(state="attached", timeout=T)
+                assert other.locator("#surface-meetings").count() == 0
+                # Closed, it stays closed after a reload, in both views.
+                self._press(page.get_by_role("button", name=re.compile(r"^Close Platform sync")))
+                for _ in range(40):
+                    if wid not in self._hub_ids():
+                        break
+                    page.wait_for_timeout(250)
+                assert wid not in self._hub_ids(), self._hub_ids()
+                for view in (page, other):
+                    view.reload(wait_until="load")
+                    _normal_chair(view)
+                    view.wait_for_timeout(1500)
+                    assert view.locator(f"[id='{wid}']").count() == 0
+                    assert view.locator("#surface-meetings").count() == 0
+                assert not [i for i in self._hub_ids() if "meeting" in i or i == f"pullout:{ONE}"], self._hub_ids()
                 assert not errors, errors
             finally:
                 browser.close()

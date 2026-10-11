@@ -5,7 +5,7 @@
  * it stops, the SAME window shows the saved meeting (MeetingRecord, the
  * whole record the Meetings window's detail pane used to hold). No second
  * window opens. The old card body is parked (`_parked/MeetingPullout.tsx`). */
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useDesk } from "../store";
 import { SurfaceState } from "../surface";
@@ -19,30 +19,47 @@ const MeetingRecord = lazy(() =>
 );
 
 /** True while THIS meeting records: the desk started it (the store's live
- * meeting), or the hub says it is the live one when the window opens. */
-function useRecordingHere(meetingId: string): [boolean, () => void] {
+ * meeting), or the hub says it is the live one when the window opens.
+ *
+ * PHILO-17 (Astra r1): a Stop is final for this window. Once recording goes
+ * idle after this meeting was live here (the window's own Stop, the orb, the
+ * hub), the window latches to the record; and a hub reply asked before that
+ * idle (a slow first `/api/state`) is dropped, never read as live again. */
+export function useRecordingHere(meetingId: string): [boolean, () => void] {
   const deskLive = useDesk((s) => s.liveMeetingId === meetingId && s.recording !== "idle");
   const recording = useDesk((s) => s.recording);
   const [hubLive, setHubLive] = useState(false);
   const [stopped, setStopped] = useState(false);
+  const epoch = useRef(0);
+  const wasLive = useRef(false);
+  const live = !stopped && (deskLive || hubLive);
+  if (live) wasLive.current = true;
   useEffect(() => {
-    let live = true;
+    const asked = epoch.current;
+    let mounted = true;
     void apiFetch<Record<string, unknown>>("/api/state")
       .then((state) => {
-        const active = Boolean(state?.active ?? state?.meeting_active ?? state?.status === "recording");
-        const id = String(state?.id ?? state?.meeting_id ?? "");
-        if (live && active && id === meetingId) setHubLive(true);
+        if (!mounted || asked !== epoch.current) return;
+        const active = state?.meeting_active === true || state?.active === true || state?.status === "recording";
+        const id = String(state?.meeting_id ?? state?.id ?? "");
+        if (active && id === meetingId) setHubLive(true);
       })
       .catch(() => null);
     return () => {
-      live = false;
+      mounted = false;
     };
   }, [meetingId]);
-  // A stop anywhere (the orb, the hub) ends the live room here.
+  // A stop anywhere (the orb, the hub, this window) ends the live room here.
+  const previous = useRef(recording);
   useEffect(() => {
-    if (recording === "idle") setHubLive(false);
+    const was = previous.current;
+    previous.current = recording;
+    if (recording !== "idle" || was === "idle") return;
+    epoch.current += 1;
+    setHubLive(false);
+    if (wasLive.current) setStopped(true);
   }, [recording]);
-  return [!stopped && (deskLive || hubLive), () => setStopped(true)];
+  return [live, () => setStopped(true)];
 }
 
 export function MeetingWindow({ object: o, onClose }: PulloutContentProps) {

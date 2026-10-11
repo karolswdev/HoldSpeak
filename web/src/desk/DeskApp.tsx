@@ -155,6 +155,21 @@ function DeskFaces() {
     .map((pullout) => ({ ...pullout, object: objectByRef(items, pullout.id) ?? objectWindowStandIn(pullout.id) }))
     .filter((pullout) => Boolean(pullout.object));
 
+  // PHILO-17 ("A meeting opens in one window"): a meeting window saved under
+  // its bare id (the parked Floor opened `pullout:<id>`) becomes the one
+  // window `pullout:meeting:<id>` once the desk knows it is a meeting. The
+  // close and the open go to the hub as ordinary writes.
+  useEffect(() => {
+    for (const pullout of pullouts) {
+      if (pullout.id.includes(":")) continue;
+      const object = objectByRef(items, pullout.id);
+      if (object?.kind !== "meeting") continue;
+      const desk = useDesk.getState();
+      desk.closePullout(pullout.id);
+      desk.openPullout(`meeting:${object.id}`);
+    }
+  }, [items, pullouts]);
+
   useEffect(() => {
     // HS-140-02 stages Keep's note while first value owns HOME. Only the
     // server-authorized normal Desk reveal may consume and visibly open it.

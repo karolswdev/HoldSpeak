@@ -195,6 +195,7 @@ def _boot(
     acli_runner: Any = None,
     on_start: Any = None,
     on_stop: Any = None,
+    get_state: Any = None,
 ) -> tuple[Any, str]:
     """Boot a real MeetingWebServer with isolated DB and HOME.
 
@@ -210,6 +211,9 @@ def _boot(
         The capture boundary (PHILO-13-13 C3-W): what the hub's runtime
         answers when the face asks it to start or stop a meeting. Omitted,
         the real route refuses a start (501, no capture control).
+    get_state : Any, optional
+        The runtime's state (``/api/state``) for a rig whose capture
+        stand-in has a live meeting (PHILO-17). Omitted, the state is ``{}``.
     """
     global _current_token
     _current_token = token
@@ -274,7 +278,7 @@ def _boot(
         WebRuntimeCallbacks(
             on_bookmark=lambda *_: None,
             on_stop=on_stop or (lambda: None),
-            get_state=lambda: {},
+            get_state=get_state or (lambda: {}),
             on_start=on_start,
         ),
         auth_token=token,

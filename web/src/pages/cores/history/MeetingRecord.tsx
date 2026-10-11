@@ -5,7 +5,7 @@
 // transcript), its three faces (Outcomes, Review, Artifacts) as the
 // window's wings, and its foot verbs (Open transcript, Send, Add to
 // project, MD, SRT, Park).
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AddToProject } from "../../../desk/AddToProject";
 import { Button } from "../../../components/signal/Signal";
 import { apiBlob, apiFetch, readableError } from "../../../lib/api";
@@ -36,7 +36,10 @@ import { useDesk } from "../../../desk/store";
 import { MEETING_OPEN_EVENT, peekMeetingRequest, takeMeetingRequest, type MeetingOpenRequest } from "../../../desk/objectWindows";
 import { useCoreWings } from "../core-hooks";
 import type { MeetingDetailResponse } from "../core-types";
-import { clockTime, download, summaryIsOff, type DetailView } from "./helpers";
+import {
+  ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt, clockTime, download, intelStateOf,
+  summaryIsOff, type DetailView,
+} from "./helpers";
 import { MeetingDetail } from "./MeetingDetail";
 import { useSummaryRun } from "./useSummaryRun";
 
@@ -69,6 +72,9 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   const [segment, setSegment] = useState<number | null>(request?.segment ?? null);
   const [parking, setParking] = useState(false);
   const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
+  // PHILO-17 (Astra r1): the meeting's own records (decisions, proposals)
+  // read again on every signal, even when the meeting row did not change.
+  const [revision, setRevision] = useState(0);
 
   const load = useCallback(async () => {
     try {
@@ -117,7 +123,10 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
      summary's `aftercare_ready`, the return from a task, and window focus. */
   const { subscribe } = useRuntimeBus();
   useEffect(() => {
-    const refresh = () => void load();
+    const refresh = () => {
+      setRevision((n) => n + 1);
+      void load();
+    };
     const burst = burstTimer(refresh, 300);
     const offDeskChanged = subscribe("desk_changed", burst.bump);
     const offAftercare = subscribe("aftercare_ready", burst.bump);
@@ -138,7 +147,38 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
 
   const route = useMemo(() => readPlannedRoute(meeting), [meeting]);
   const summary = useSummaryRun(() => route, load);
-  const { receipt, setReceipt } = summary;
+  const { receipt, setReceipt, settleRun } = summary;
+  // PHILO-17 (Astra r1, from the list): the window adopts the durable run on
+  // its first read (a reopen during a run says QUEUED, a run that ended
+  // today says RAN), and a QUEUED receipt settles when the meeting's own
+  // state goes final, whoever finished it (the poll, a deferred worker).
+  const adopted = useRef(false);
+  const seenActive = useRef<string | null>(null);
+  useEffect(() => {
+    if (!meeting || adopted.current) return;
+    adopted.current = true;
+    const durable = adoptDurableRunReceipt([meeting]);
+    if (!durable) return;
+    if (durable.active && durable.receipt.run) {
+      seenActive.current = `${durable.receipt.run.meetingId}:${durable.receipt.run.jobId}`;
+    }
+    setReceipt((current) => current ?? durable.receipt);
+  }, [meeting, setReceipt]);
+  useEffect(() => {
+    const run = receipt?.run;
+    if (!run || !meeting || run.meetingId !== meetingId) return;
+    const state = intelStateOf(meeting.intel_status);
+    const key = `${run.meetingId}:${run.jobId}`;
+    if (ACTIVE_RUN_STATES.has(state)) {
+      seenActive.current = key;
+      return;
+    }
+    if (FINAL_RUN_STATES.has(state) && seenActive.current === key) {
+      seenActive.current = null;
+      const job = meeting.intel_job as Record<string, unknown> | null | undefined;
+      settleRun(run, state, typeof job?.updated_at === "string" ? job.updated_at : undefined);
+    }
+  }, [meeting, meetingId, receipt, settleRun]);
   // A later receipt (export, queued run) takes the slot from the park outcome.
   useEffect(() => {
     if (receipt) setParkOutcome(null);
@@ -235,7 +275,11 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         view={view}
         momentSegmentIndex={segment}
         onClose={onClose}
-        onDeleted={() => void load()}
+        onDeleted={() => {
+          setRevision((n) => n + 1);
+          void load();
+        }}
+        revision={revision}
         onReceipt={setReceipt}
         footerRunReceipt={receipt?.run && receipt.run.meetingId === meetingId ? receipt : null}
         runRefusal={summary.runRefusal?.meetingId === meetingId ? summary.runRefusal.refusal : null}

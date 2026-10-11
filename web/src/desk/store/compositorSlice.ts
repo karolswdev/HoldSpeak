@@ -4,7 +4,7 @@ import { coderOpenFirst } from "../lane/coderOpen";
 import { assertNever } from "../assertNever";
 import type { DeskState, PanelRect, SliceCreator } from "./types";
 import { SURFACE_APPLICATIONS } from "../applications";
-import { meetingWindowRef, personWindowRef } from "../objectWindows";
+import { meetingOfScope, meetingWindowRef, personWindowRef } from "../objectWindows";
 import {
   loadDeskWorkspace,
   saveDeskWorkspace,
@@ -69,16 +69,16 @@ const initialWindowsByIdRaw = Object.fromEntries(
 );
 // PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): a saved
 // Meetings window scoped to one meeting held that meeting's record. The
-// record is the meeting's own window now: the saved scope comes back as
-// `pullout:meeting:<id>`, and the Meetings window comes back as the list.
+// record is the meeting's own window now: the saved window comes back as
+// `pullout:meeting:<id>` (the hub's row migrates the same way, hubWindows.ts).
 const bootMeetingWindows: string[] = [];
 const initialWindowsById = Object.fromEntries(
-  Object.entries(initialWindowsByIdRaw).map(([id, instance]) => {
-    if (instance.applicationKey !== "review-meetings") return [id, instance];
-    const ref = meetingWindowRef(instance.scope);
-    if (!ref) return [id, instance];
-    bootMeetingWindows.push(ref);
-    return [id, { ...instance, scope: null }];
+  Object.entries(initialWindowsByIdRaw).filter(([, instance]) => {
+    if (instance.applicationKey !== "review-meetings") return true;
+    const meeting = meetingOfScope(instance.scope);
+    if (!meeting) return true;
+    bootMeetingWindows.push(`meeting:${meeting}`);
+    return false;
   }),
 );
 

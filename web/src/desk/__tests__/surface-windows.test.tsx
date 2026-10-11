@@ -80,9 +80,10 @@ describe("surface windows use the compositor workspace", () => {
     );
     vi.resetModules();
     const fresh = await import("../store");
-    // PHILO-17: the saved record comes back as the meeting's own window, and
-    // the Meetings window comes back as the list (no ghost).
-    expect(fresh.useDesk.getState().windowsById["surface-meetings"]?.scope).toBeNull();
+    // PHILO-17: the saved record comes back as the meeting's own window; the
+    // Meetings window that held it does not come back (the hub's row
+    // migrates the same way, Astra r1).
+    expect(fresh.useDesk.getState().windowsById["surface-meetings"]).toBeUndefined();
     expect(fresh.useDesk.getState().pullouts.map((p) => p.id)).toEqual(["meeting:m1"]);
   });
 
