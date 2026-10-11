@@ -363,6 +363,67 @@ def backfill_decisions(conn: sqlite3.Connection) -> dict[str, int]:
     return totals
 
 
+#: PHILO-17: true when the ``decisions`` row ``d`` is a confirmed ACTION.
+#: Confirming an action writes a ``decisions`` row and an action-kind record
+#: (proposal_bridge_service.py); no decision list or decision search shows it.
+#: A record written before the kind column reads its kind from its proposal.
+_CONFIRMED_ACTION_D = (
+    "EXISTS (SELECT 1 FROM decision_records r WHERE r.source_type = 'meeting'"
+    " AND r.source_id = d.id AND (r.kind = 'action' OR EXISTS ("
+    "SELECT 1 FROM follow_through_proposals fp"
+    " WHERE fp.decision_record_id = r.id AND fp.kind = 'action')))"
+)
+
+
+def confirmed_action_sql(col: str) -> str:
+    """``_CONFIRMED_ACTION_D`` for the ``decisions`` id column ``col``."""
+    return _CONFIRMED_ACTION_D.replace("r.source_id = d.id", f"r.source_id = {col}")
+
+
+#: PHILO-17: the desk's decisions, one list (static SQL; the statement sweep
+#: prepares it). Named values: :meeting, :decision (NULL for any), :current
+#: (1 = a standing state only), :q (words; every word must be in the row).
+_LEDGER = (
+    "WITH RECURSIVE words(w, rest) AS ("
+    " SELECT '', trim(lower(COALESCE(:q, ''))) || ' '"
+    " UNION ALL SELECT substr(rest, 1, instr(rest, ' ') - 1),"
+    " ltrim(substr(rest, instr(rest, ' ') + 1)) FROM words WHERE rest <> ''),"
+    " records AS ("
+    " SELECT r.source_type, r.source_id, r.id, r.lifecycle, r.created_at FROM decision_records r"
+    " WHERE r.deleted = 0 AND COALESCE(r.kind, 'decision') = 'decision'"
+    " AND NOT EXISTS (SELECT 1 FROM follow_through_proposals fp"
+    " WHERE fp.decision_record_id = r.id AND fp.kind = 'action')),"
+    " ledger AS ("
+    " SELECT 'meeting' AS source, d.id AS id, d.text AS text, d.rationale AS rationale,"
+    " d.decided_at AS decided_at,"
+    " COALESCE((SELECT x.lifecycle FROM records x WHERE x.source_type = 'meeting' AND x.source_id = d.id"
+    " ORDER BY x.created_at DESC, x.id DESC LIMIT 1), d.lifecycle) AS lifecycle,"
+    " d.source_meeting_id AS meeting_id, m.title AS meeting_title,"
+    " d.source_artifact_id AS source_artifact_id,"
+    " (SELECT x.id FROM records x WHERE x.source_type = 'meeting' AND x.source_id = d.id"
+    " ORDER BY x.created_at DESC, x.id DESC LIMIT 1) AS record_id"
+    " FROM decisions d LEFT JOIN meetings m ON m.id = d.source_meeting_id"
+    " WHERE d.deleted = 0 AND NOT " + _CONFIRMED_ACTION_D +
+    " UNION ALL"
+    " SELECT 'desk', dd.id, dd.title, NULL, COALESCE(dd.decided_at, dd.created_at),"
+    " COALESCE((SELECT x.lifecycle FROM records x WHERE x.source_type = 'desk' AND x.source_id = dd.id"
+    " ORDER BY x.created_at DESC, x.id DESC LIMIT 1), dd.status),"
+    " NULL, NULL, NULL,"
+    " (SELECT x.id FROM records x WHERE x.source_type = 'desk' AND x.source_id = dd.id"
+    " ORDER BY x.created_at DESC, x.id DESC LIMIT 1)"
+    " FROM desk_decisions dd WHERE dd.deleted = 0),"
+    " hits AS ("
+    " SELECT * FROM ledger"
+    " WHERE (:meeting IS NULL OR meeting_id = :meeting)"
+    " AND (:decision IS NULL OR id = :decision)"
+    " AND (:current = 0 OR lifecycle IN ('recorded', 'accepted', 'active', 'published'))"
+    " AND NOT EXISTS (SELECT 1 FROM words WHERE w <> '' AND instr(lower(COALESCE(text, '')"
+    " || ' ' || COALESCE(rationale, '') || ' ' || COALESCE(meeting_title, '')), w) = 0))"
+)
+_LEDGER_COUNT = _LEDGER + " SELECT COUNT(*) FROM hits"
+_LEDGER_PAGE = _LEDGER + " SELECT * FROM hits ORDER BY decided_at DESC, id DESC LIMIT :limit OFFSET :offset"
+
+
 class DecisionRepository(BaseRepository):
     """Query, reconcile, and transition durable decision records."""
 
@@ -490,6 +551,43 @@ class DecisionRepository(BaseRepository):
                 params,
             ).fetchall()
         return [self._row(row) for row in rows]
+
+    def ledger(
+        self,
+        *,
+        meeting_id: Optional[str] = None,
+        decision_id: Optional[str] = None,
+        query: Optional[str] = None,
+        current: bool = False,
+        limit: int = 200,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        """PHILO-17: every decision on the desk, newest first, for one list.
+
+        A meeting's decision (this table) names its meeting and that meeting's
+        title; a Desk decision (``desk_decisions``) names none. Each row names
+        the decision record made from it, when there is one, and its
+        ``lifecycle`` is the record's when a record exists (a record is
+        superseded or disputed on ``decision_records`` only). A confirmed
+        ACTION also writes a ``decisions`` row and an action-kind record
+        (proposal_bridge_service.py): that row is an action, never listed.
+        Answers one page and the total that matches.
+        """
+        bounded = max(1, min(int(limit), 500))
+        start = max(0, int(offset))
+        values = {
+            "meeting": None if meeting_id is None else str(meeting_id).strip(),
+            "decision": None if decision_id is None else str(decision_id).strip(),
+            "current": 1 if current else 0,
+            "q": str(query or "").strip(),
+        }
+        with self._connection() as conn:
+            total = conn.execute(_LEDGER_COUNT, values).fetchone()[0]
+            rows = conn.execute(_LEDGER_PAGE, {**values, "limit": bounded, "offset": start}).fetchall()
+        return {
+            "decisions": [dict(row) for row in rows],
+            "page": {"offset": start, "limit": bounded, "count": len(rows), "total": int(total)},
+        }
 
     def assert_promotable(self, decision_id: str) -> DecisionRecord:
         clean_id = str(decision_id or "").strip()

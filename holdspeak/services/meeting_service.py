@@ -980,6 +980,10 @@ class MeetingService:
             "capture_status": meeting.capture_status,
             "capture_failure": meeting.capture_failure,
             "capture_checkpoint_seconds": meeting.capture_checkpoint_seconds,
+            # PHILO-17 speech: a record-only meeting says why it has no
+            # transcript (`speech_not_set_up` when the speech model was missing).
+            "transcription_status": getattr(meeting, "transcription_status", "active"),
+            "transcription_status_detail": getattr(meeting, "transcription_status_detail", None),
             "provenance": meeting.provenance,
             "calendar_event_id": getattr(meeting, "calendar_event_id", None),
             "attendees": list(getattr(meeting, "attendees", []) or []),

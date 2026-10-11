@@ -1,0 +1,24 @@
+/* PHILO-17 speech — the "Speech is not set up" row (SpeechSetup.tsx). */
+.speech-setup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.speech-setup-line {
+  font: 400 13px/1.4 Inter, system-ui, sans-serif;
+  /* One true line, said as a sentence on every host (some hosts set caps). */
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+}
+
+.speech-setup-verbs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}

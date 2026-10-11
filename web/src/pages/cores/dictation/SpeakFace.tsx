@@ -50,6 +50,7 @@ import { onReturnToTask, rememberTaskFocus } from "../../../desk/returnToTask";
 import { DICTATION_FAILURES } from "../../../lib/dictationRecovery";
 import type { MicPhase } from "../../../lib/micSession";
 import { readHotkeyCustody, type HotkeyCustody } from "./hotkeyCustody";
+import { SpeechSetup, useSpeechSetup } from "../../../desk/firstrun/SpeechSetup";
 
 /** Whether a hostname is on a local/LAN network (RFC1918, loopback,
  *  link-local, CGNAT/Tailscale, or named local suffixes). Mirrors
@@ -299,9 +300,14 @@ export function SpeakFace() {
      recorded `global_hotkey_available` / `global_hotkey_error` and nothing
      read them: a refused grant made Right Option do nothing, silently. */
   const custody = readHotkeyCustody(deck.readinessData);
+  // PHILO-17 speech: the speech model is the first thing Talk needs.
+  const speech = useSpeechSetup();
 
   return (
     <div className="speak-face">
+      {/* 0. SPEECH (only when the speech model is not on this device) */}
+      <SpeechSetup setup={speech} onReady={deck.refreshReadiness} testId="speak-speech-setup" />
+
       {/* 1. THE TRANSPORT ROW */}
       <TransportRow
         deck={deck}

@@ -231,12 +231,93 @@ def whisper_on_disk(name: str, backend: str, *, home: Optional[Path] = None) -> 
     )
 
 
+#: The reason code a meeting with no transcript carries when the speech model
+#: was not on this device (the faces say "No transcript: speech is not set up").
+SPEECH_NOT_SET_UP = "speech_not_set_up"
+
+#: The two states in which speech can run on this device.
+SPEECH_READY_STATES = frozenset({"on_device", "on_device_unpinned"})
+
+
+def speech_readiness(name: str, backend: str, *, home: Optional[Path] = None) -> dict:
+    """The ONE speech-readiness truth (PHILO-17 speech): can speech run on this
+    device for this model and backend, with no load and no download?
+
+    Two facts, both read without loading or fetching anything:
+
+    * the backend library is here (``transcribe._resolve_backend``: the
+      platform and the importable modules; an ``auto`` resolves here);
+    * the loader finds the model's files on this disk.
+
+    ``state`` is one of:
+
+    * ``on_device``: the backend is here and the loader finds this (pinned)
+      model on this disk;
+    * ``on_device_unpinned``: the same, for the owner's own copy of a model
+      with no pins;
+    * ``will_download``: pinned files are missing; "Set up speech" gets them;
+    * ``not_covered``: no pins and no copy; setup cannot get this model;
+    * ``backend_unavailable``: the speech library cannot run here (``reason``
+      says why); a download does not help.
+
+    ``bytes`` is the size "Set up speech" downloads (0 when nothing is missing).
+    """
+    from .transcribe import TranscriberError, _resolve_backend
+
+    where = home or Path.home()
+    clean_name = str(name or "").strip() or "base"
+    asked = str(backend or "").strip().lower() or "auto"
+    try:
+        resolved = _resolve_backend(asked)
+    except TranscriberError as exc:
+        return {
+            "model": clean_name, "backend": asked, "state": "backend_unavailable",
+            "ready": False, "bytes": 0, "reason": str(exc),
+        }
+    pins = pinned_whisper(clean_name, resolved)
+    # The loader's own question: can it load this model from this disk?
+    if whisper_on_disk(clean_name, resolved, home=where):
+        state, missing = ("on_device" if pins else "on_device_unpinned"), 0
+    elif pins:
+        state = "will_download"
+        missing = sum(model.size for model in pins if not pinned_file_on_device(model, home=where))
+    else:
+        state, missing = "not_covered", 0
+    return {
+        "model": clean_name,
+        "backend": resolved,
+        "state": state,
+        "ready": state in SPEECH_READY_STATES,
+        "bytes": missing,
+    }
+
+
+def configured_speech_readiness(*, config=None, home: Optional[Path] = None) -> dict:
+    """``speech_readiness`` for the configured Whisper model (name + backend).
+
+    The faces with no admitted route (Speak, Runs on, Setup, the boot warm)
+    read this. A meeting reads ``speech_readiness`` for the model and backend
+    its admitted route froze (``MeetingSession``).
+    """
+    if config is None:
+        from .config import Config
+
+        config = Config.load()
+    model = getattr(config, "model", None)
+    name = str(getattr(model, "name", "") or "base")
+    return speech_readiness(name, str(getattr(model, "backend", "") or "auto"), home=home)
+
+
 __all__ = [
+    "SPEECH_NOT_SET_UP",
+    "SPEECH_READY_STATES",
+    "configured_speech_readiness",
     "local_whisper_dir",
     "pinned_file_on_device",
     "pinned_whisper",
     "pinned_whisper_dir",
     "repositories_for",
+    "speech_readiness",
     "whisper_on_disk",
     "whisper_root",
 ]
