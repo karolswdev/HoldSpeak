@@ -216,6 +216,13 @@ def _wire_provider(monkeypatch: pytest.MonkeyPatch, engine: Any) -> None:
     )
 
     _assign_deferred_queue_routes(_db())
+    # PHILO-17: "after every meeting" queues a summary at Import by itself.
+    # This walk's meeting station posts the owner's Run press and reads its
+    # outcome, so the setting is OFF here (the automatic path has its own
+    # fences: test_hs201_summary_face_glass, test_hs201_summary_producer_chain).
+    monkeypatch.setattr(
+        "holdspeak.services.meeting_backlog_service._configured_auto_mode", lambda: "off"
+    )
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
     monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
     monkeypatch.setattr(
