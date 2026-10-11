@@ -63,7 +63,7 @@ export type PrimitiveCapability =
   | "duplicate"
   | "delete"
   | "send"
-  /** Hand to agent (Conductor K2): a kind `agent.hand` takes (agent_brief BRIEF_KINDS). */
+  /** Hand to coder (Conductor K2): a kind `agent.hand` takes (agent_brief BRIEF_KINDS). */
   | "hand";
 
 /** Static metadata for each kind — drives the type-legible Desk language. */

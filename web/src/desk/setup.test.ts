@@ -82,6 +82,38 @@ describe("egressBadge agrees with the Trust window", () => {
     ).toBe("→ LAN · 192.168.1.43");
   });
 
+  // PHILO-17 (U16): a server on this Mac is this device, never "LAN · 127.0.0.1".
+  it("a loopback engine is this device, never LAN", () => {
+    for (const name of ["127.0.0.1:8899", "localhost:11434", "http://127.0.0.1:8899/v1"]) {
+      const badge = egressBadge({ trust: { last_egress: { id: "x", name, receipt: "r" } } });
+      expect(badge.text).toBe("⌂ This device");
+      expect(badge.scope).toBe("local");
+    }
+    const viaDestination = egressBadge({
+      trust: {
+        actuators_enabled: true,
+        transcript_egress: "configured",
+        configured_endpoints: ["http://127.0.0.1:8899/v1"],
+        destinations: [
+          { id: "meeting_intel", name: "Meeting summary", operation: "intel",
+            enabled: true, destination: "127.0.0.1:8899", boundary: "lan",
+            data_class: "meeting", authority_basis: "owner",
+            background_ability: "none", revoke_action: "disable" },
+        ],
+      },
+    });
+    expect(viaDestination.text).toBe("⌂ This device");
+    expect(viaDestination.text).not.toContain("LAN");
+  });
+
+  it("a host the transport does not pin as loopback is never this device (Astra r1 M1)", () => {
+    for (const name of ["dev.localhost:8080", "0.0.0.0:8080", "127.0.0.1.:8080", "127.00.0.1:8080", "localhost.:11434"]) {
+      const badge = egressBadge({ trust: { last_egress: { id: "x", name, receipt: "r" } } });
+      expect(badge.text, name).not.toBe("⌂ This device");
+      expect(badge.scope, name).not.toBe("local");
+    }
+  });
+
   it("names a LAN last egress as LAN, without the port", () => {
     expect(
       egressBadge({

@@ -36,7 +36,7 @@ import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useDesk } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
 import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
-import { conductorHead, conductorMembers, headWords, type ConductorMember } from "./members";
+import { canRun, conductorHead, conductorMembers, headWords, type ConductorMember } from "./members";
 import { answerMember, answers, openMember, stopMember, stops } from "./open";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
 import "../drawer/drawer.css";
@@ -99,17 +99,31 @@ export function MemberReceipt({ member }: { member: ConductorMember | null }) {
   return null;
 }
 
+/** PHILO-17 U32: where Install hooks is offered (the selected agent, or with
+ *  nothing selected any agent), one plain line in the body says why. */
+export function HooksLine({ member }: { member: ConductorMember | null }) {
+  const agents = useConductor((s) => s.detect?.agents);
+  const offered = member ? Boolean(member.detect && needsHooks(member.detect)) : (agents ?? []).some(needsHooks);
+  if (!offered) return null;
+  return (
+    <span className="surface-token cw-hooks-line" data-chip data-wrap data-testid="conductor-hooks-line">
+      {HOOKS_LINE}
+    </span>
+  );
+}
+
 /** PHILO-15 B34: with nothing selected, every ready agent that lacks hooks
  *  has its own Install hooks verb (it was hidden until a selection). */
 export function InstallHooksVerbs({ agents }: { agents: AgentRow[] }) {
   const installing = useConductor((s) => s.installing);
   return (
     <>
-      {agents.filter(needsHooks).map((row) => (
+      {agents.filter(needsHooks).map((row, index) => (
         <Button
           key={row.id}
           dense
-          variant="primary"
+          // Astra r1 (#1084): one primary per face; the next ones are secondary.
+          variant={index === 0 ? "primary" : "secondary"}
           data-testid="conductor-install-hooks"
           loading={installing === row.id}
           disabled={Boolean(installing) && installing !== row.id}
@@ -153,7 +167,7 @@ export function MemberVerbs({ member, onInfo }: { member: ConductorMember | null
             });
           }}
         >
-          Stop · sure? (ends the agent's session)
+          Stop · sure? (ends the coder's session)
         </Button>
       </>
     );
@@ -202,13 +216,19 @@ export function MemberVerbs({ member, onInfo }: { member: ConductorMember | null
 }
 
 /** Phase 16: the Conductor's one big fact: `2 at work`; with none at work,
- *  the asks; with neither, the agents ready. Never a zero. */
+ *  the asks; with neither, the agents ready. Never a zero. PHILO-17 U32:
+ *  ready means the agent can run (`canRun`), not only that it is on this Mac. */
 export function headFact(head: { atWork: number; ask: number }, members: readonly ConductorMember[]): string {
   if (head.atWork > 0) return `${head.atWork} at work`;
   if (head.ask > 0) return `${head.ask} ${head.ask === 1 ? "asks" : "ask"}`;
-  const ready = members.filter((m) => m.role === "ready").length;
-  return ready > 0 ? `${ready} ready` : "No agent";
+  const found = members.filter((m) => m.role === "ready" && m.detect?.installed);
+  const ready = found.filter((m) => canRun(m.detect!)).length;
+  if (ready > 0) return `${ready} ready`;
+  return found.length ? "No coder ready" : "No coder";
 }
+
+/** PHILO-17 U32: what hooks do, in one line, where Install hooks is offered. */
+export const HOOKS_LINE = "HOOKS · SEE THE CODER'S WORK · HAND IT WORK";
 
 /** `ASKED 6 MIN AGO`, `ASKED 3 H AGO`, `ASKED OCT 5`; `ASKS` with no age. */
 export function askedWord(when: string | undefined): string {
@@ -256,7 +276,7 @@ export function ConductorWindow() {
 
   const loading = (reads.flightsState === "idle" || reads.flightsState === "loading") && !members.length;
   const failed = [
-    reads.detectState === "failed" ? { part: "AGENTS", token: reads.detectFailure } : null,
+    reads.detectState === "failed" ? { part: "CODERS", token: reads.detectFailure } : null,
     reads.flightsState === "failed" ? { part: "SESSIONS", token: "" } : null,
   ].filter((f): f is { part: string; token: string } => f !== null);
   const retry = () => {
@@ -270,9 +290,9 @@ export function ConductorWindow() {
     setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
   const words = headWords(head);
   const byId = (id: string) => members.find((m) => m.id === id) ?? null;
-  // Phase 16: the harnesses this desk has (installed agents), and The ask:
+  // Phase 16: the coders this Mac has (installed), and The ask:
   // each live agent that asks (or holds a call), with its question.
-  const harnesses = (reads.detect?.agents ?? []).filter((a) => a.installed).length;
+  const installed = (reads.detect?.agents ?? []).filter((a) => a.installed).length;
   const asks = members
     .filter((m) => m.role === "live" && (m.live === "ask" || m.live === "held"))
     .map((member) => ({
@@ -320,7 +340,7 @@ export function ConductorWindow() {
                   lamp: w.endsWith(" ASK") ? ("ask" as const) : undefined,
                   text: w,
                 })),
-                harnesses > 0 ? { key: "harnesses", text: `${harnesses} ${harnesses === 1 ? "HARNESS" : "HARNESSES"}` } : null,
+                installed > 0 ? { key: "agents", text: `${installed} ${installed === 1 ? "CODER" : "CODERS"}` } : null,
               ]}
             />
           </AppHead>
@@ -342,7 +362,7 @@ export function ConductorWindow() {
           {loading ? (
             <SurfaceState loading />
           ) : !members.length && failed.length ? null : !members.length ? (
-            <SurfaceState empty emptyLabel="No agent found" />
+            <SurfaceState empty emptyLabel="No coder found" />
           ) : view === "icons" ? (
             <IconGrid well label="Conductor" onClear={() => setSelectedId(null)}>
               {members.map((m) => (
@@ -376,6 +396,7 @@ export function ConductorWindow() {
               }}
             />
           )}
+          <HooksLine member={selected} />
           {asks.length ? (
             <SurfaceSection label="The ask" data-testid="conductor-asks">
               <SurfaceLedger label="The ask" cols="kit">

@@ -410,9 +410,9 @@ class TestConnectAnEngineFromTheFace:
             # ── Undo, twice: the Default, then Meetings and its summary row
             #    (inherited before, so cleared back to inheritance) ──
             page.locator("[data-testid='runson-undo']").click()
-            wait_receipt(page, r"^UNDONE .*Default for AI work")
+            wait_receipt(page, r"^UNDONE .*Everything else")
             page.locator("[data-testid='runson-undo']").click()
-            wait_receipt(page, r"^UNDONE .*Meetings$")
+            wait_receipt(page, r"^UNDONE .*Meeting summaries$")
             roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
             summary_row = next(
                 row for row in roster["task_overrides"] if row["id"] == SUMMARY_CAPABILITY

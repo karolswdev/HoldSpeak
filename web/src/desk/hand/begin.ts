@@ -1,4 +1,4 @@
-/** PHILO-14 C3 — what a drop (or the drawer's Hand to agent verb) does.
+/** PHILO-14 C3 — what a drop (or the drawer's Hand to coder verb) does.
  *
  *  Muad'Dib's Phase 14 ruling on the Conductor's K5 modes: in YOLO the
  *  launch is one confirm line with the brief one press away; in Secure and

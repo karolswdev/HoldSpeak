@@ -4,8 +4,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, readableError } from "../../../lib/api";
-import type { StewardRun, StewardStep, StewardPolicy, StewardWatch } from "./model";
-import { isTerminal, isActive } from "./model";
+import type { StewardRun, StewardStep, StewardPolicy, StewardWatch, StewardPreset } from "./model";
+import { isTerminal, isActive, presetFields } from "./model";
 import * as stewardApi from "./api";
 
 export type StewardPosture = "off" | "list" | "detail" | "policy";
@@ -341,6 +341,12 @@ export function useStewardController(
     [],
   );
 
+  // ── Policy: PHILO-17 U31, one press sets a preset's fields ──
+  const applyPreset = useCallback((preset: StewardPreset) => {
+    setPolicyDraft((prev) => (prev ? { ...prev, ...presetFields(preset, prev) } : prev));
+    setPolicyError("");
+  }, []);
+
   // ── Policy: toggle effect kind ──
   const toggleEffectKind = useCallback(
     (kind: string) => {
@@ -402,6 +408,7 @@ export function useStewardController(
     savePolicy,
     updatePolicyDraft,
     toggleEffectKind,
+    applyPreset,
 
     // HS-164-05: watches (for grant text + circuit rendering)
     watches,

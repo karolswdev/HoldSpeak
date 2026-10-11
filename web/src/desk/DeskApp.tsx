@@ -202,7 +202,7 @@ function DeskFaces() {
       <ChairHome arrivalRequired={arrivalRequired} />
       {/* The Chair's primary Ask AI verb opens the one Ask panel. */}
       {!arrivalRequired && askOpen && <AskPanel />}
-      {/* Hand to agent (Conductor K3): the launch sheet, the Ask AI posture, on every face. */}
+      {/* Hand to coder (Conductor K3): the launch sheet, the Ask AI posture, on every face. */}
       {!arrivalRequired && <HandSheet />}
       {/* PHILO-14 C3: the drag's ghost and dotted path, over every window. */}
       {!arrivalRequired && <DragLayer />}

@@ -272,7 +272,7 @@ const KIND_PHRASE_MAP: Record<string, string> = {
   "watch.evaluated": "Check completed",
   "update.drafted": "Update drafted",
   "update.published": "Update published",
-  "steward.run": "Steward ran",
+  "steward.run": "Sources watched",
   "review.opened": "Review opened",
   "review.accepted": "Review accepted",
   "decision.recorded": "Decided",
@@ -1033,7 +1033,7 @@ function NeedsYouSection({
                 }
                 trailing={<>
                   {/* Conductor F2: an item in flight shows its flight and its
-                      verb; Hand to agent (Conductor K2e) only on an item no
+                      verb; Hand to coder (Conductor K2e) only on an item no
                       agent holds, before the row's Open, as drawn. */}
                   {isInFlight(flight)
                     ? <FlightVerbs flight={flight} title={item.title} />
@@ -1308,7 +1308,7 @@ function SourcesSection({
             </Button>
           ) : null}
           <Button dense variant="ghost" loading={stewardCtrl.loading} onClick={() => void stewardCtrl.enterSteward()} data-testid="steward-verb" data-verb="steward">
-            Steward
+            Watch sources
           </Button>
         </>
       }
@@ -1620,7 +1620,7 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
                       <span className="surface-token" data-chip data-testid="receipt-reason">{refusalWord(item.reason)}</span>
                     ) : null}
                     {egress.label ? (
-                      <EgressChip label={egress.label} scope={egress.scope} data-testid="receipt-egress" />
+                      <span data-testid="receipt-egress"><EgressChip label={egress.label} scope={egress.scope} /></span>
                     ) : null}
                     {item.timestamp ? (
                       <span className="surface-token" data-muted>{humanTime(item.timestamp)}</span>
@@ -2188,7 +2188,8 @@ export function RoomAskWell({
         {/* Condition 8: NOT SET = idle/muted tone (no scope), assigned = scope from assignment */}
         {modelLabel.host === "NOT SET" ? (
           <span className="room-ask-model-chip">
-            <EgressChip label="MODEL · NOT SET" className="room-egress-idle" title="No model assigned" />
+            {/* PHILO-17 U31: the plain fact, not MODEL · NOT SET. */}
+            <span className="surface-token" data-chip data-testid="room-ask-no-engine">No engine for answers</span>
             <Button
               dense
               variant="ghost"
@@ -2715,9 +2716,6 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
               <div className="room-section-rise" style={{ animationDelay: "100ms" }}>
                 <RoomPeopleSection projectId={ctrl.projectId} />
               </div>
-              <div className="room-section-rise" style={{ animationDelay: "110ms" }}>
-                <ReceiptsSection room={ctrl.room} />
-              </div>
               <div className="room-section-rise" style={{ animationDelay: "120ms" }}>
                 <SinceYouLookedSection room={ctrl.room} />
               </div>
@@ -2739,7 +2737,11 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
               </div>
             </>
           ) : (
-            <HistoryWing room={ctrl.room} todayCount={historyCounts.todayCount} weekCount={historyCounts.weekCount} />
+            <>
+              <HistoryWing room={ctrl.room} todayCount={historyCounts.todayCount} weekCount={historyCounts.weekCount} />
+              {/* PHILO-17 U31: the receipts are what happened: History holds them. */}
+              <ReceiptsSection room={ctrl.room} />
+            </>
           )}
         </div>
       ) : loading ? (

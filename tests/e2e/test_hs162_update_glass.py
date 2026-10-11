@@ -468,8 +468,8 @@ def test_stopwatch_and_retention(
 def test_degraded_model_fallback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
 ) -> None:
-    """No inference assignments -> Draft with model -> falls back to
-    deterministic with honest generator provenance + fallback_reason.
+    """No inference assignments -> the one Draft update verb drafts
+    deterministically and says No engine for drafts · Choose (PHILO-17 U31).
     Source rows still resolve (UPD-003 on glass)."""
     _ensure_build()
     from playwright.sync_api import sync_playwright
@@ -499,8 +499,12 @@ def test_degraded_model_fallback(
             page.get_by_test_id("updates-verb").click()
             page.get_by_test_id("update-posture").wait_for(timeout=10000)
 
-            # -- Draft with model (will fall back) --
-            page.get_by_test_id("update-verb-draft-model").click()
+            # -- PHILO-17 U31: no engine set: the one Draft update verb says so
+            # (No engine for drafts · Choose) and drafts from the Room's facts.
+            page.get_by_test_id("update-no-engine").wait_for(timeout=10000)
+            assert page.get_by_test_id("update-choose-engine").is_visible()
+            assert page.get_by_test_id("update-verb-draft-model").count() == 0
+            page.get_by_test_id("update-verb-draft-deterministic").click()
             editor = page.get_by_test_id("update-editor")
             editor.wait_for(timeout=20000)
 
@@ -509,16 +513,9 @@ def test_degraded_model_fallback(
             gen_label.wait_for(timeout=5000)
             assert "deterministic" in gen_label.inner_text().lower()
 
-            # -- Fallback reason: human sentence in warn tone --
-            fallback = page.get_by_test_id("update-fallback-reason")
-            fallback.wait_for(timeout=5000)
-            assert fallback.is_visible()
-            assert fallback.get_attribute("data-tone") == "warn"
-            fb_text = fallback.inner_text()
-            assert "drafted deterministically" in fb_text.lower(), (
-                f"Expected human fallback sentence, got: {fb_text!r}"
-            )
-            assert "model_unavailable" not in fb_text
+            # (PHILO-17 U31: the face no longer asks a missing engine to draft,
+            # so no fallback reason is owed here; the backend fallback stays
+            # fenced by its unit tests.)
 
             # -- HS-173-02: inline claim rows still resolve in degraded mode --
             claim_rows = page.get_by_test_id("update-inline-claim")

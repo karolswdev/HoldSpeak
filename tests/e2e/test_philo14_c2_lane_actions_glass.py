@@ -190,7 +190,7 @@ def test_stop_records_a_stopped_launch(lane) -> None:
     assert len(_tmux("list-panes", "-t", name, "-F", "#{pane_id}").split()) == 2
     page.locator("[data-testid='lane-stop']").click()
     confirm = page.locator("[data-testid='lane-stop-confirm']")
-    assert confirm.inner_text() == "Stop · sure? (ends the agent's session)"
+    assert confirm.inner_text() == "Stop · sure? (ends the coder's session)"
     calls: list[str] = []
     page.on("request", lambda r: calls.append(r.url) if r.method == "POST" and "/api/coders/" in r.url else None)
     confirm.click()

@@ -198,6 +198,8 @@ def test_the_conductor_drawer_at_1440_and_393(tmp_path: Path, monkeypatch) -> No
                 # runs here), never the client's: no `N OF M`.
                 assert " OF " not in head, head
                 assert "NOT READ" not in head, head
+                # PHILO-17 U32: "harness" is never on a face (coders).
+                assert "HARNESS" not in head.upper(), head
                 # Asking first in every view.
                 first = window.locator("[data-object-id]").first.get_attribute("data-object-id")
                 assert first == "launch:launch_c4_runbook", first
@@ -215,7 +217,7 @@ def test_the_conductor_drawer_at_1440_and_393(tmp_path: Path, monkeypatch) -> No
                     page.screenshot(path=str(SHOTS / "C4-conductor-selected-393.png"))
                     window.locator("[data-testid='conductor-stop']").click()
                     window.locator("[data-testid='conductor-stop-confirm']").wait_for(timeout=T)
-                    names = _verbs_in_frame(page, {"Back", "Stop · sure? (ends the agent's session)"})
+                    names = _verbs_in_frame(page, {"Back", "Stop · sure? (ends the coder's session)"})
                     assert "Answer" not in names and "Open" not in names, names
                     page.screenshot(path=str(SHOTS / "C4-conductor-stop-confirm-393.png"))
                     window.get_by_role("button", name="Back", exact=True).click()

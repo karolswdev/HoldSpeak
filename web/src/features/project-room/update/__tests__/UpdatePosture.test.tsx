@@ -4,7 +4,7 @@
 // unverified banner, generator provenance, fallback_reason.
 // Proves the mount: from the real Room, open the Update posture by real clicks.
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TitleSlotContext } from "../../../../desk/surface/title";
@@ -243,9 +243,12 @@ afterEach(() => {
 function setupUpdatePosture(opts: {
   listUpdates?: Record<string, unknown>[];
   draftResult?: Record<string, unknown>;
+  /** Astra r1 (#1084): a model draft answers with its own fixture. */
+  modelDraftResult?: Record<string, unknown>;
 } = {}) {
   const listUpdates = opts.listUpdates ?? [draftUpdateFixture()];
   const draftResult = opts.draftResult ?? draftUpdateFixture();
+  const modelDraftResult = opts.modelDraftResult ?? draftUpdateFixture({ id: "pupd-model-01", generator: "model:qwen" });
 
   apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
     // HS-169-03: room read marker
@@ -262,7 +265,8 @@ function setupUpdatePosture(opts: {
     }
     // Draft
     if (url.includes("/updates/draft")) {
-      return Promise.resolve({ success: true, update: draftResult });
+      const generator = (init?.json as { generator?: string } | undefined)?.generator;
+      return Promise.resolve({ success: true, update: generator === "model" ? modelDraftResult : draftResult });
     }
     // Save
     if (url.match(/\/api\/updates\/[^/]+$/) && init?.method === "PUT") {
@@ -603,15 +607,23 @@ describe("Published view: rendered document", () => {
 // ── FIVE VERBS: Draft, Regenerate, Save, Copy Markdown, Publish ──
 
 describe("Five verbs as separate controls", () => {
-  it("shows Draft and Draft-with-model in the list view", async () => {
+  // PHILO-17 U31: ONE Draft update verb; no engine: it drafts from the
+  // Room's facts and the chip says No engine for drafts with Choose.
+  it("shows one Draft update verb; with no engine, No engine for drafts · Choose", async () => {
     setupUpdatePosture({ listUpdates: [] });
     render(<WindowHarness scope="project:p1" />);
 
     fireEvent.click(await screen.findByTestId("updates-verb"));
     await waitFor(() => screen.getByTestId("update-posture"));
 
-    expect(screen.getByTestId("update-verb-draft-deterministic")).toBeTruthy();
-    expect(screen.getByTestId("update-verb-draft-model")).toBeTruthy();
+    const noEngine = await screen.findByTestId("update-no-engine");
+    expect(noEngine.textContent).toBe("No engine for drafts");
+    const verbs = screen.getAllByRole("button", { name: "Draft update" }).filter((b) => b.closest("[data-testid=update-posture]"));
+    expect(verbs).toHaveLength(1);
+    expect(verbs[0].getAttribute("data-testid")).toBe("update-verb-draft-deterministic");
+    expect(screen.queryByText("Draft with model")).toBeNull();
+    fireEvent.click(screen.getByTestId("update-choose-engine"));
+    expect(mockOpenSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "models");
   });
 
   it("shows Save, Regenerate, Copy Markdown, Publish in the editor for a draft", async () => {
@@ -654,7 +666,7 @@ describe("Five verbs as separate controls", () => {
 describe("Egress badge on model drafting", () => {
   // PHILO-15 B53: the chip names the host of the model assigned to update
   // drafts (a LAN box here), never a fixed LOCAL + CLOUD.
-  it("names the update-draft model's host next to Draft-with-model", async () => {
+  it("names the update-draft model's host next to Draft update", async () => {
     setupUpdatePosture({ listUpdates: [] });
     const base = apiFetch.getMockImplementation()!;
     apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
@@ -675,11 +687,85 @@ describe("Egress badge on model drafting", () => {
     await waitFor(() => screen.getByTestId("update-posture"));
 
     const modelAction = screen.getByTestId("update-draft-model-action");
-    const egressChip = modelAction.querySelector(".gadget-chip-egress");
-    expect(egressChip).toBeTruthy();
+    // The chip shows once the assignment read lands (PHILO-17 U31).
+    const egressChip = await waitFor(() => {
+      const chip = modelAction.querySelector(".gadget-chip-egress");
+      expect(chip).toBeTruthy();
+      return chip;
+    });
     await waitFor(() => expect(egressChip!.textContent).toContain("192.168.1.43"));
     expect(egressChip!.textContent).not.toMatch(/cloud/i);
+    // PHILO-17 U31: with an engine set, the one Draft update verb drafts with it.
+    expect(screen.getByTestId("update-verb-draft-model").textContent).toBe("Draft update");
+    expect(screen.queryByTestId("update-no-engine")).toBeNull();
     expect(apiFetch.mock.calls.some(([u]) => String(u).includes("/api/inference/assignments"))).toBe(true);
+  });
+});
+
+// ── Astra r1 (#1084): the one Draft verb, pressed in both modes ──
+
+describe("Draft update picks its generator from the engine read", () => {
+  const draftCall = () =>
+    apiFetch.mock.calls.find(([u, init]) => String(u).includes("/updates/draft") && (init as { method?: string } | undefined)?.method === "POST");
+  const withAssignment = (reply: () => Promise<unknown>) => {
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) =>
+      url.includes("/api/inference/assignments") ? reply() : base(url, init),
+    );
+  };
+  const LAN = () =>
+    Promise.resolve({
+      task_overrides: [{
+        id: "project.update_draft",
+        effective: { status: "assigned", assignment: { entries: [{ profile_id: "lan", label: "qwen", boundary: "private_network" }] } },
+      }],
+    });
+
+  it("no engine: Draft asks for a deterministic draft and shows it", async () => {
+    setupUpdatePosture({ listUpdates: [] });
+    withAssignment(() => Promise.resolve({ task_overrides: [] }));
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("updates-verb"));
+    await screen.findByTestId("update-no-engine");
+    fireEvent.click(screen.getByTestId("update-verb-draft-deterministic"));
+    await waitFor(() => screen.getByTestId("update-editor"));
+    expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("deterministic");
+    expect(screen.getByTestId("update-generator-label").textContent).toBe("Deterministic");
+  });
+
+  it("an engine set: Draft asks for a model draft and shows the model's draft", async () => {
+    setupUpdatePosture({ listUpdates: [] });
+    withAssignment(LAN);
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("updates-verb"));
+    const verb = await screen.findByTestId("update-verb-draft-model");
+    expect(verb.textContent).toBe("Draft update");
+    fireEvent.click(verb);
+    await waitFor(() => screen.getByTestId("update-editor"));
+    expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("model");
+    expect(screen.getByTestId("update-generator-label").textContent).toMatch(/^Model/);
+  });
+
+  it("while the engine is not read, Draft waits; a failed read says so with Try again", async () => {
+    setupUpdatePosture({ listUpdates: [] });
+    let fail = true;
+    let release: (v: unknown) => void = () => {};
+    withAssignment(() => (fail ? Promise.reject(new Error("hub down")) : new Promise((r) => { release = r; })));
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("updates-verb"));
+    await screen.findByTestId("update-engine-not-read");
+    const verb = screen.getByRole("button", { name: "Draft update" });
+    expect(verb).toBeDisabled();
+    fireEvent.click(verb);
+    expect(draftCall()).toBeUndefined();
+    // Try again: the read is pending, Draft still waits.
+    fail = false;
+    fireEvent.click(screen.getByTestId("update-engine-retry"));
+    await screen.findByTestId("update-engine-checking");
+    expect(screen.getByRole("button", { name: "Draft update" })).toBeDisabled();
+    await act(async () => { release(await LAN()); });
+    await waitFor(() => expect(screen.getByTestId("update-verb-draft-model")).not.toBeDisabled());
+    expect(draftCall()).toBeUndefined();
   });
 });
 

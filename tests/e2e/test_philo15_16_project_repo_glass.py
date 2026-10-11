@@ -12,7 +12,7 @@ on disk. Nothing leaves the machine.
   (nothing selected) reads REPOSITORY · owner/name · NOT CLONED.
 - The hand: the ConfirmLine names the clone (GITHUB.COM, CLONES owner/name),
   the owner flips the agent token to CODEX, Hand clones (CLONED) and
-  launches Codex. At 393 the drawer's Hand to agent verb reaches the same line.
+  launches Codex. At 393 the drawer's Hand to coder verb reaches the same line.
 - Add to Project ▸ on the meeting record puts a loose meeting in the Project;
   the drawer then lists it.
 
@@ -314,7 +314,7 @@ class TestProjectRepositoryGlass:
                 _api(page, "POST", f"/api/projects/{PROJECT}/repository", {"repository": REPO}, token=TOKEN)
                 drawer = self._drawer(page, PROJECT)
                 drawer.get_by_text(ACTION, exact=True).first.click()
-                drawer.get_by_role("button", name="Hand to agent").click()
+                drawer.get_by_role("button", name="Hand to coder").click()
                 line = self._line_to_codex(page, drawer, 393)
                 assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth")
                 self._assert_cloned_launch(page, line, 393)

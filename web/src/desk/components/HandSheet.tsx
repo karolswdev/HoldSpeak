@@ -1,5 +1,5 @@
 /* The launch sheet (the Conductor canvas K3a/K3b, ratified 2026-10-06):
- * Hand to agent opens this docked desk window in the Ask AI posture (the
+ * Hand to coder opens this docked desk window in the Ask AI posture (the
  * desk stays alive behind it; never a modal). It shows what the hand-off
  * will do BEFORE the press: the agent (Claude Code by the owner's ruling,
  * or Codex), the brief (its sources, bytes, the People cut, the acceptance
@@ -226,7 +226,7 @@ export function refusalToken(code: string, agent: AgentId): string {
     case "owner_required":
       return "OWNER ONLY";
     case "launch_cap_reached":
-      return "AGENT LIMIT REACHED";
+      return "CODER LIMIT REACHED";
     case "launch_profile_mismatch":
       // `agent` is the HELD launch's agent here (the sheet passes it).
       return `HELD FOR ${AGENT_NAME[agent].toUpperCase()}`;
@@ -416,8 +416,8 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     <DeskWindowFrame
       id={HAND_WINDOW_ID}
       glyph="⇥"
-      label="Hand to agent"
-      kindWord="Agent launch"
+      label="Hand to coder"
+      kindWord="Coder launch"
       className="desk-pullout desk-hand"
       defaultW={560}
       defaultH={660}
@@ -427,8 +427,8 @@ function Sheet({ origin }: { origin: HandOrigin }) {
       onClose={close}
     >
       <div className="desk-pullout-body desk-hand-body" data-testid="hand-sheet">
-        <SurfaceSection label="AGENT">
-          <ChoiceCardGroup name="hand-agent" value={agent} layout="row" ariaLabel="Agent" onChange={pick} disabled={frozen}>
+        <SurfaceSection label="CODER">
+          <ChoiceCardGroup name="hand-agent" value={agent} layout="row" ariaLabel="Coder" onChange={pick} disabled={frozen}>
             {AGENTS.map((a) => (
               <ChoiceCard
                 key={a}

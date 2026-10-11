@@ -1,7 +1,7 @@
 """PHILO-14 C2: the agent's lane window on a real hub (ratified board A-4 with
 C-4's station track).
 
-A real hub on an isolated HOME. What a Hand to agent launch leaves behind,
+A real hub on an isolated HOME. What a Hand to coder launch leaves behind,
 written through the product's producers as the Conductor F2 seed does
 (`docs/internal/philo/phase-14/canvas/harness/seed_f2.py`): an action item on
 a meeting, a real clone with a launch worktree and one commit on its branch

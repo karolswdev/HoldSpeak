@@ -206,6 +206,20 @@ describe("SurfaceSwitchboard (list, 393)", () => {
     expect(screen.queryByTestId("switchboard-tap-q27")).toBeNull();
   });
 
+  it("an open job that pins its engine shows that one, not the wire; none pinned shows its words (Astra r2 M2)", () => {
+    // The wire runs Meetings on q27; the job says it really runs on whisper.
+    const pinned = JOBS.map((j) => (j.id === "meetings" ? { ...j, shows: "whisper", runsOn: "Whisper small · on this Mac" } : j));
+    const { unmount } = render(<SurfaceSwitchboard layout="list" jobs={pinned} engines={ENGINES} wires={WIRES} selected="meetings" />);
+    const plate = () => document.querySelector(".switchboard.is-list > .switchboard-job.is-open + .switchboard-engine");
+    expect(plate()?.getAttribute("data-testid")).toBe("switchboard-engine-whisper");
+    unmount();
+    // OFF: no engine plate at all, the job's own words instead.
+    const off = JOBS.map((j) => (j.id === "meetings" ? { ...j, shows: null, runsOn: "OFF" } : j));
+    render(<SurfaceSwitchboard layout="list" jobs={off} engines={ENGINES} wires={WIRES} selected="meetings" />);
+    expect(plate()).toBeNull();
+    expect(screen.getByTestId("switchboard-shows-meetings").textContent).toBe("OFF");
+  });
+
   it("taps an alternative to patch the open job", () => {
     const onPatch = vi.fn();
     const engines = [...ENGINES, { id: "claude", emblem: "API", name: "Claude", tokens: ["$"], lamp: "ok" as const, draggable: true }];

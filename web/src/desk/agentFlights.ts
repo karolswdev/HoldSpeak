@@ -168,7 +168,7 @@ export function flightForItem(flights: readonly AgentFlight[], item: Parameters<
 
 /** An agent holds the item: STARTING, WORKING, WAITING, PR OPEN, or MERGED
  * with the close still awaiting the owner's confirmation (Secure). Such a row
- * shows its flight and not Hand to agent. */
+ * shows its flight and not Hand to coder. */
 export function isInFlight(flight: AgentFlight | null | undefined): flight is AgentFlight {
   if (!flight) return false;
   if (["starting", "working", "waiting", "pr_open"].includes(flight.state)) return true;

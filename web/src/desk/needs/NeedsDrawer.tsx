@@ -10,7 +10,7 @@
  *
  *  No ⚠, no AgentFlight chip, no filter strip, no coverage chip: a question
  *  is the `ask` lamp; an item an agent works names the agent on its fact
- *  line and never reads UNASSIGNED. Hand to agent is not a Needs row verb
+ *  line and never reads UNASSIGNED. Hand to coder is not a Needs row verb
  *  (ruling in the PR body): the object's own window and the Object menu
  *  carry it.
  */

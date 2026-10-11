@@ -26,6 +26,8 @@ export function peopleCount(segments: readonly Record<string, unknown>[]): numbe
 export function meetingStripItems(
   meeting: Record<string, unknown>,
   data: Pick<MeetingData, "detail" | "startedAt" | "durationS" | "segments">,
+  /** PHILO-17 (U16): the engine host the window's foot already names. */
+  saidOnFace?: string | null,
 ): StatusStripItem[] {
   const { detail, startedAt, durationS, segments } = data;
   const source = detail ?? meeting;
@@ -68,7 +70,11 @@ export function meetingStripItems(
   // Egress where egress happened: the summary's host, for RAN, RUNNING, QUEUED.
   if (["RAN", "RUNNING", "QUEUED"].includes(runToken.label) && rawHost) {
     const eg = egressFor(rawHost);
-    items.push({ key: "intel-host", text: <EgressChip label={eg.label} scope={eg.scope} /> });
+    // PHILO-17 (U16): the meeting says its engine once; the foot already
+    // names this host, so the strip does not repeat it.
+    if (eg.label !== saidOnFace) {
+      items.push({ key: "intel-host", text: <EgressChip label={eg.label} scope={eg.scope} /> });
+    }
   }
   const people = peopleCount(segments ?? []);
   if (people > 0) items.push({ key: "people", text: `${people} ${people === 1 ? "PERSON" : "PEOPLE"}` });
@@ -79,16 +85,19 @@ export function MeetingHeader({
   meeting,
   data,
   compact,
+  saidOnFace,
 }: {
   meeting: Record<string, unknown>;
   data: MeetingData;
+  /** PHILO-17 (U16): the engine host the window's foot already names. */
+  saidOnFace?: string | null;
   /** HS-200-12: on the review wing the display line belongs to the
    *  review (`5 to review`) and the meeting's name is in the window title
    *  bar (the subject, said once); the strip keeps only the facts. */
   compact?: boolean;
 }) {
   const title = String(data.detail?.title ?? meeting.title ?? "Meeting");
-  const strip = <StatusStrip className="meetings-detail-facts" items={meetingStripItems(meeting, data)} />;
+  const strip = <StatusStrip className="meetings-detail-facts" items={meetingStripItems(meeting, data, saidOnFace)} />;
   if (compact) {
     return (
       <div className="meetings-detail-head" data-compact>

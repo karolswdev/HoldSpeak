@@ -569,7 +569,9 @@ def test_prepare_face_states_coverage_before_the_run(
             # the profile's model label, never the engine kind.
             assert page.get_by_test_id("prepare-route").get_attribute("data-state") == "ready"
             assert page.get_by_test_id("prepare-route-model").inner_text().strip() == "QWEN3 35B"
-            assert "127.0.0.1" in page.get_by_test_id("prepare-route").inner_text()
+            # PHILO-17 U16: a loopback engine is THIS DEVICE (egressFor reads hostPlace).
+            assert "THIS DEVICE" in page.get_by_test_id("prepare-route").inner_text()
+            assert "127.0.0.1" not in page.get_by_test_id("prepare-route").inner_text()
             assert llm.posts == [], "the route probe sends nothing"
 
             captions = _section_captions(page)
@@ -740,7 +742,8 @@ def test_running_then_kept_brief_with_claims_and_not_read(
 
             # Egress where egress happened -- from the WIRE; the receipt names the model.
             egress = page.get_by_test_id("prepare-footer-egress").inner_text().strip()
-            assert egress == "127.0.0.1", egress
+            # PHILO-17 U16: the loopback model is THIS DEVICE, never a raw IP chip.
+            assert egress == "THIS DEVICE", egress
             receipt = page.get_by_test_id("prepare-footer-receipt").inner_text().strip()
             assert receipt.startswith("QWEN3 35B"), receipt
             assert _kernel_ops(tmp_path)[-1] == ("inference.invoke", "succeeded"), _kernel_ops(tmp_path)
@@ -851,7 +854,7 @@ def test_unavailable_model_refuses_and_keeps_the_purpose(
             assert ops and ops[-1][0] == "inference.invoke", ops
             sent = page.get_by_test_id("prepare-sent-token").inner_text().strip()
             assert sent == "SENT · 127.0.0.1 · NOT ANSWERED", sent
-            assert page.get_by_test_id("prepare-footer-egress").inner_text().strip() == "127.0.0.1"
+            assert page.get_by_test_id("prepare-footer-egress").inner_text().strip() == "THIS DEVICE"
             assert page.get_by_test_id("prepare-footer-receipt").inner_text().strip() == sent
             assert page.get_by_test_id("prepare-route").get_attribute("data-state") == "unreachable"
             assert _chip_words(page.get_by_test_id("prepare-route")) == "ENDPOINT UNREACHABLE"
@@ -930,7 +933,7 @@ def test_a_sent_and_answered_request_is_never_reported_as_nothing_sent(
             head = page.get_by_test_id("prepare-head").inner_text()
             assert "NOTHING SENT" not in head, head
             assert page.get_by_test_id("prepare-sent-token").inner_text().strip() == "SENT · 127.0.0.1 · NOTHING USABLE RECEIVED"
-            assert page.get_by_test_id("prepare-footer-egress").inner_text().strip() == "127.0.0.1"
+            assert page.get_by_test_id("prepare-footer-egress").inner_text().strip() == "THIS DEVICE"
             assert page.get_by_test_id("prepare-footer-receipt").inner_text().strip() == "SENT · 127.0.0.1 · NOTHING USABLE RECEIVED"
             assert _chip_words(page.get_by_test_id("prepare-route")) == "OUTPUT UNUSABLE"
             assert _api(page, "GET", f"/api/projects/{project_id}/briefs", token=TOKEN)["briefs"] == []
@@ -943,7 +946,7 @@ def test_a_sent_and_answered_request_is_never_reported_as_nothing_sent(
             page.get_by_test_id("prepare-verb").click()
             _wait_refused(page, timeout=90000)
             assert page.get_by_test_id("prepare-sent-token").inner_text().strip() == "SENT · 127.0.0.1 · NOT ANSWERED"
-            assert page.get_by_test_id("prepare-footer-egress").inner_text().strip() == "127.0.0.1"
+            assert page.get_by_test_id("prepare-footer-egress").inner_text().strip() == "THIS DEVICE"
             browser.close()
     finally:
         llm.stop()
