@@ -58,7 +58,8 @@ describe("RemoteAccessModule", () => {
     render(<RemoteAccessModule />);
 
     await waitFor(() => {
-      expect(screen.getByText("Streamable HTTP")).toBeTruthy();
+      expect(screen.getByText("Other devices")).toBeTruthy();
+      expect(screen.queryByText("Streamable HTTP")).toBeNull();
     });
 
     // CycleGadget select has OFF
@@ -85,7 +86,8 @@ describe("RemoteAccessModule", () => {
     render(<RemoteAccessModule />);
 
     await waitFor(() => {
-      expect(screen.getByText("Streamable HTTP")).toBeTruthy();
+      expect(screen.getByText("Other devices")).toBeTruthy();
+      expect(screen.queryByText("Streamable HTTP")).toBeNull();
     });
 
     // N CREDENTIALS on the toggle row: total count = 3

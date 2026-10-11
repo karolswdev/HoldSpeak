@@ -108,11 +108,24 @@ def test_config_newer_version_is_kept_and_flagged(tmp_path, caplog) -> None:
 def test_doctor_config_check_flags_newer_config(tmp_path, monkeypatch) -> None:
     path = tmp_path / "config.json"
     path.write_text(json.dumps({"config_version": CONFIG_VERSION + 1}))
-    monkeypatch.setattr(doctor, "CONFIG_FILE", path)
-    # _check_config imports CONFIG_VERSION and loads CONFIG_FILE via Config.load();
-    # point both at the temp file.
+    # _check_config reads the active config path at call time (the
+    # holdspeak.config facade); point it and the core at the temp file.
     monkeypatch.setattr("holdspeak.config.CONFIG_FILE", path)
     monkeypatch.setattr("holdspeak.config.core.CONFIG_FILE", path)
     check, _ = doctor._check_config()
     assert check.status == "WARN"
     assert "newer than this build" in check.detail
+
+
+def test_doctor_config_check_reads_the_repointed_file_after_import(tmp_path, monkeypatch) -> None:
+    """PHILO-17: doctor bound CONFIG_FILE at import. A hub that repointed the
+    config after doctor was imported (a second glass test on one xdist worker)
+    loaded its own file, but the Setup Config row said "not found"."""
+    path = tmp_path / "repointed" / "config.json"
+    path.parent.mkdir()
+    path.write_text(json.dumps({"config_version": CONFIG_VERSION}))
+    monkeypatch.setattr("holdspeak.config.CONFIG_FILE", path)
+    check, _ = doctor._check_config()
+    assert check.status == "PASS", check.detail
+    assert f"config version {CONFIG_VERSION}" in check.detail
+    assert str(path) in check.detail

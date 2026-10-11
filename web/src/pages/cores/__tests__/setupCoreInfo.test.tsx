@@ -55,3 +55,27 @@ describe("PHILO-17 U17: Setup opens the same Get ready cards", () => {
     closeFirstRun();
   });
 });
+
+describe("PHILO-17 U19: Setup leads with the failing check", () => {
+  it("puts a failing check first, then a warning, then the rest in order", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        json({
+          overall: "blocked",
+          first_run: false,
+          sections: [
+            { id: "python", label: "Python", status: "pass" },
+            { id: "ffmpeg", label: "ffmpeg", status: "warn" },
+            { id: "db", label: "Database", status: "pass" },
+            { id: "speech-model", label: "Speech model", status: "fail" },
+          ],
+        }),
+      ),
+    );
+    render(<SetupCore />);
+    await screen.findByText("Speech model");
+    const titles = Array.from(document.querySelectorAll(".surface-row-text > strong")).map((n) => n.textContent);
+    expect(titles).toEqual(["Speech model", "ffmpeg", "Python", "Database"]);
+  });
+});

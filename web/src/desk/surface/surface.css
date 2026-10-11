@@ -2279,8 +2279,20 @@ button.surface-edit-in-place:hover {
   gap: 0;
   padding: 0;
 }
+/* PHILO-17 U35: the headline and its one verb (Choose) on one line;
+   the engine names wrap inside the window, never past it. */
+.prefs-hub-lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 12px;
+  padding-right: 12px;
+  min-width: 0;
+}
 .prefs-hub-headline {
   padding: 16px 12px 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .prefs-hub-headline[data-warning] {
   color: var(--warn);

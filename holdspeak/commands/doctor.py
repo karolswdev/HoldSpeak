@@ -15,7 +15,8 @@ import sys
 from pathlib import Path
 
 from ..audio_devices import check_blackhole_setup, get_default_input_device
-from ..config import CONFIG_FILE, Config
+from ..config import Config
+from ..config.core import _active_config_file
 from ..hotkey import HotkeyListener
 from ..profile_key_store import ProfileKeyStoreError, resolve_profile_key
 from ..transcribe import TranscriberError, _resolve_backend
@@ -122,7 +123,11 @@ def _check_config() -> tuple[DoctorCheck, Config]:
     from ..config import CONFIG_VERSION
 
     config = Config.load()
-    config_path = CONFIG_FILE.expanduser()
+    # The config path is read at call time: Config.load() reads the active
+    # (possibly repointed) file, and a path bound at import time named a file
+    # the hub never read (the Setup Config row said "not found" when doctor
+    # was imported before the repoint, e.g. a second test on one xdist worker).
+    config_path = _active_config_file().expanduser()
     if not config_path.exists():
         return DoctorCheck(
             name="Config",

@@ -13,7 +13,6 @@ overflow, and shoot 1440 + 393.
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
@@ -48,7 +47,8 @@ def _navigate_to_system(page: Any, url: str) -> None:
         );
     }""")
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    page.locator('[data-testid="runtime-backend"]').wait_for(timeout=15_000)
+    # PHILO-17 U35: the identity tokens live in the System RAW fold (attached, folded).
+    page.locator('[data-testid="runtime-backend"]').wait_for(state="attached", timeout=15_000)
 
 
 def _shot(page: Any, name: str) -> Path:
@@ -110,6 +110,12 @@ def test_runtime_identity_healthy(
             _navigate_to_system(page, url)
 
             assert page.locator('[data-testid="runtime-repair"]').count() == 0
+            # PHILO-17 U35: build hashes and the schema are diagnostics: folded
+            # under RAW until he opens it.
+            assert not page.locator('[data-testid="runtime-schema"]').is_visible()
+            fold = page.locator("details.gadget-fold", has=page.locator('[data-testid="runtime-backend"]'))
+            fold.locator("summary").click()
+            page.locator('[data-testid="runtime-backend"]').wait_for(timeout=5_000)
             assert page.locator('[data-testid="runtime-schema"]').inner_text().startswith("SCHEMA ")
             assert page.locator('[data-testid="runtime-bundle"]').inner_text() != "NONE"
             assert page.locator('[data-testid="runtime-document"]').inner_text() != "NONE"
@@ -142,16 +148,18 @@ def test_runtime_identity_stale_bundle(
 
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
-    stamp = BUILT / ri.BUILD_STAMP_NAME
-    original = stamp.read_bytes() if stamp.exists() else None
     try:
         import holdspeak.db.core as db_core
 
         ri.reset_runtime_identity()
         ri.capture_runtime_identity(db_path=Path(db_core.DEFAULT_DB_PATH), force=True)
         rl.claim_database(Path(db_core.DEFAULT_DB_PATH), port=server.port)
-        # Rebuild the bundle under the running process.
-        stamp.write_text(json.dumps({"build_id": "0000rebuilt0000"}), encoding="utf-8")
+        # Rebuild the bundle under the running process. The hub reads the
+        # on-disk stamp through read_bundle_build_id; patch that read, never
+        # the shared stamp file: two xdist workers rewrote and "restored" it
+        # in parallel and left 0000rebuilt0000 behind (PHILO-17 words: the
+        # healthy leg then saw STALE BUNDLE).
+        monkeypatch.setattr(ri, "read_bundle_build_id", lambda directory=None: "0000rebuilt0000")
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
@@ -175,8 +183,6 @@ def test_runtime_identity_stale_bundle(
             _assert_clean(page, errors)
             browser.close()
     finally:
-        if original is not None:
-            stamp.write_bytes(original)
         rl.release_database()
         ri.reset_runtime_identity()
         server.stop()

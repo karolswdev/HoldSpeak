@@ -145,6 +145,18 @@ describe("RuntimeIdentityModule", () => {
     expect(fold!.contains(path)).toBe(true);
   });
 
+  it("PHILO-17 U35: the build hashes and schema live in the RAW fold; a repair finding stays on the face", async () => {
+    mockApiFetch.mockResolvedValueOnce(makeWire({ repair: ["SECOND WRITER"] }));
+    const { container } = render(<RuntimeIdentityModule />);
+
+    await waitFor(() => { expect(screen.getByTestId("runtime-backend")).toBeTruthy(); });
+    const fold = container.querySelector("details.gadget-fold")!;
+    for (const id of ["runtime-backend", "runtime-bundle", "runtime-document", "runtime-schema", "runtime-database"]) {
+      expect(fold.contains(screen.getByTestId(id))).toBe(true);
+    }
+    expect(fold.contains(screen.getByTestId("runtime-repair"))).toBe(false);
+  });
+
   it("every verb is the library Button — no raw <button> outside it", async () => {
     mockApiFetch.mockResolvedValueOnce(makeWire());
     const { container } = render(<RuntimeIdentityModule />);

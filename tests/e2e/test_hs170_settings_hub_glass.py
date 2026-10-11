@@ -1,7 +1,7 @@
 """HS-170-04 -- Settings Hub glass rig.
 
 Build-first via glass_infra._ensure_build. One leg on isolated HOME:
-  - Open Settings hub (empty install -> 'No default model' headline,
+  - Open Settings hub (empty install -> 'No engine yet' headline,
     Rhythm reads 'EVERY 15 MIN' — the heartbeat sweeps by default since
     HS-171 — Models reads 'NO DEFAULT').
   - Seed one connection + one loop and assert the rows update.
@@ -93,8 +93,9 @@ def test_settings_hub_cold(
             headline = page.locator(".prefs-hub-headline")
             headline.wait_for(timeout=10_000)
             headline_text = headline.text_content() or ""
-            assert "No default model" in headline_text, (
-                f"Expected 'No default model' headline, got: {headline_text}"
+            # PHILO-17 U35: a plain state (was "No default model").
+            assert "No engine yet" in headline_text, (
+                f"Expected 'No engine yet' headline, got: {headline_text}"
             )
 
             # Assert exactly one .surface-display.
@@ -287,5 +288,100 @@ def test_settings_hub_open_verb_opens_surface(
     finally:
         server.stop()
 
+    real_errors = [e for e in errors if "ResizeObserver" not in e]
+    assert not real_errors, f"Page errors: {real_errors}"
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Astra r1 on #1090: after setup, Settings › People edits his name and
+# the other names for him (the reopened You card shows them read-only).
+# ═══════════════════════════════════════════════════════════════════
+
+def _open_people(page: Any, url: str) -> None:
+    page.evaluate("""() => {
+        sessionStorage.setItem(
+            "hs.desk.staged-surface-open",
+            JSON.stringify({key: "configure-settings", scope: "people"})
+        );
+    }""")
+    page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+    page.locator("[data-testid='settings-owner-name'] input").wait_for(timeout=15_000)
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+@pytest.mark.parametrize("width", [1440, 393])
+def test_settings_people_edits_name_and_alias_after_setup(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    width: int,
+) -> None:
+    _ensure_build()
+    from playwright.sync_api import sync_playwright
+
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed", token=TOKEN)
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            _api(page, "PUT", "/api/settings", {"owner": {"name": "Karl", "aliases": []}}, token=TOKEN)
+            _open_people(page, url)
+
+            name = page.locator("[data-testid='settings-owner-name'] input")
+            assert name.input_value() == "Karl"
+            name.fill("Karol Sane")
+            name.blur()
+            alias = page.locator("[data-testid='settings-owner-aliases'] input")
+            alias.fill("Carol")
+            alias.press("Enter")
+            # The hook saves 600 ms after the last edit; read the hub until it holds both.
+            owner: dict[str, Any] = {}
+            for _ in range(40):
+                owner = _api(page, "GET", "/api/settings", token=TOKEN).get("owner") or {}
+                if owner.get("name") == "Karol Sane" and "Carol" in (owner.get("aliases") or []):
+                    break
+                page.wait_for_timeout(250)
+            assert owner.get("name") == "Karol Sane" and "Carol" in (owner.get("aliases") or []), owner
+
+            page.reload(wait_until="load")
+            _open_people(page, url)
+            name = page.locator("[data-testid='settings-owner-name'] input")
+            page.wait_for_function(
+                "() => document.querySelector(\"[data-testid='settings-owner-name'] input\").value === 'Karol Sane'",
+                timeout=10_000,
+            )
+            aliases = page.locator("[data-testid='settings-owner-aliases']")
+            try:
+                aliases.get_by_text("Carol", exact=True).wait_for(timeout=10_000)
+            except Exception:
+                _shot(page, f"settings-people-owner-FAIL-{width}")
+                owner = _api(page, "GET", "/api/settings", token=TOKEN).get("owner")
+                raise AssertionError(f"alias chip missing after reload: server owner={owner}")
+            assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            assert _shot(page, f"settings-people-owner-{width}").exists()
+
+            # PHILO-17 words: an edit then an immediate reload (well inside the
+            # 600 ms save delay) still lands: the page flushes it on pagehide.
+            alias = page.locator("[data-testid='settings-owner-aliases'] input")
+            alias.fill("Karolek")
+            alias.press("Enter")
+            page.reload(wait_until="commit")
+            page.wait_for_load_state("load")
+            owner = {}
+            for _ in range(20):
+                owner = _api(page, "GET", "/api/settings", token=TOKEN).get("owner") or {}
+                if "Karolek" in (owner.get("aliases") or []):
+                    break
+                page.wait_for_timeout(100)
+            assert owner.get("aliases") == ["Carol", "Karolek"], owner
+            browser.close()
+    finally:
+        server.stop()
     real_errors = [e for e in errors if "ResizeObserver" not in e]
     assert not real_errors, f"Page errors: {real_errors}"

@@ -1,6 +1,6 @@
 /** HS-112-03 — the Prefs Desk module: the desk's first destructive
- * verb confirms in-world with the kit's arming grammar (press → RESET
- * DESK? → press again), states in labels what resets and what
+ * verb confirms in-world with the kit's arming grammar (press → Reset
+ * the desk? → press again), states in labels what resets and what
  * survives, and receipts the hub's counts. No modal, no confirm(). */
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -25,22 +25,22 @@ describe("DeskModule (HS-112-03)", () => {
   it("states what resets and what survives, as labels", () => {
     render(<DeskModule />);
     expect(
-      screen.getByText(/TOMBSTONES EXISTING DESK OBJECTS · RESTORES FURNISHED DEFAULTS/),
+      screen.getByText(/CLEARS THE DESK · PUTS BACK THE DEFAULT ITEMS/),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/KEEPS · MEETINGS · JOURNAL · SETTINGS · RUNS-ON TARGETS/),
+      screen.getByText(/KEEPS · MEETINGS · JOURNAL · SETTINGS · RUNS ON/),
     ).toBeInTheDocument();
   });
 
   it("arms before it fires: first press asks, second press resets", async () => {
     const user = userEvent.setup();
     render(<DeskModule />);
-    await user.click(screen.getByRole("button", { name: "RESET TO SEED" }));
+    await user.click(screen.getByRole("button", { name: "Reset desk to defaults" }));
     expect(resetDesk).not.toHaveBeenCalled(); // armed, not fired
-    await user.click(screen.getByRole("button", { name: "TOMBSTONE DESK & RESTORE DEFAULTS?" }));
+    await user.click(screen.getByRole("button", { name: "Reset the desk?" }));
     expect(resetDesk).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "TOMBSTONED 7 · SEEDED 8",
+      "CLEARED 7 · ADDED 8",
     );
   });
 
@@ -48,8 +48,8 @@ describe("DeskModule (HS-112-03)", () => {
     resetDesk.mockResolvedValueOnce(null as never);
     const user = userEvent.setup();
     render(<DeskModule />);
-    await user.click(screen.getByRole("button", { name: "RESET TO SEED" }));
-    await user.click(screen.getByRole("button", { name: "TOMBSTONE DESK & RESTORE DEFAULTS?" }));
+    await user.click(screen.getByRole("button", { name: "Reset desk to defaults" }));
+    await user.click(screen.getByRole("button", { name: "Reset the desk?" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("RESET REFUSED");
   });
 });

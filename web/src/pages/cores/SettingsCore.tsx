@@ -16,6 +16,7 @@ import type {
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { documentBuildId } from "../../lib/buildId";
+import { useFlushOnLeave } from "../../lib/flushOnLeave";
 import { useResource } from "../pageSupport";
 import { SurfaceState } from "../../desk/surface/Surface";
 import {
@@ -70,6 +71,7 @@ import {
   DeskModule,
   MIR_PROFILE_OPTIONS,
   MODULE_ALIASES,
+  OtherDevicesChip,
   PREF_MODULES,
   PrefsFace,
   PrefStatusBar,
@@ -539,7 +541,7 @@ export type RuntimeIdentityWire = {
 const shortToken = (value: string, length = 12) =>
   value && value.length > length ? value.slice(0, length) : value;
 
-export function RuntimeIdentityModule() {
+export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {}) {
   const [wire, setWire] = useState<RuntimeIdentityWire | null>(null);
   const [error, setError] = useState("");
   const [nonce, setNonce] = useState(0);
@@ -552,16 +554,20 @@ export function RuntimeIdentityModule() {
     return () => { live = false; };
   }, [nonce]);
 
+  // PHILO-17 U35: the build hashes, the schema and the mesh name are
+  // diagnostics. They live in ONE RAW fold; only a repair finding (a stale
+  // bundle, a second writer) stays on the face, because it needs him.
   if (error) {
     return (
-      <GadgetGroup label="Runtime">
-        <GadgetRow label="Runtime">
+      <>
+        <div className="prefs-hub-chips" data-testid="runtime-unreadable">
           <StateChip state="failure" label="UNREADABLE" />
-        </GadgetRow>
-      </GadgetGroup>
+        </div>
+        {children ? <FoldGadget title="RAW">{children}</FoldGadget> : null}
+      </>
     );
   }
-  if (!wire) return null;
+  if (!wire) return children ? <FoldGadget title="RAW">{children}</FoldGadget> : null;
 
   const id = wire.identity ?? {};
   const served = id.frontend_build ?? "";
@@ -575,7 +581,7 @@ export function RuntimeIdentityModule() {
   const schema = id.schema_version_loaded ?? id.schema_version_expected;
 
   return (
-    <GadgetGroup label="Runtime">
+    <>
       {tokens.length ? (
         <div className="prefs-hub-chips" data-testid="runtime-repair">
           {tokens.map((token) => (
@@ -583,43 +589,43 @@ export function RuntimeIdentityModule() {
           ))}
         </div>
       ) : null}
-      <GadgetRow label="Backend">
-        <span className="surface-token" data-chip data-testid="runtime-backend">
-          {`${id.backend_version ?? "unknown"} · ${shortToken(id.backend_revision ?? "unknown")}`}
-        </span>
-      </GadgetRow>
-      <GadgetRow label="Bundle">
-        <span className="surface-token" data-chip data-testid="runtime-bundle">
-          {served ? shortToken(served) : "NONE"}
-        </span>
-      </GadgetRow>
-      <GadgetRow label="Document">
-        <span className="surface-token" data-chip data-testid="runtime-document">
-          {document_ ? shortToken(document_) : "NONE"}
-        </span>
-      </GadgetRow>
-      <GadgetRow label="Schema">
-        <span className="surface-token" data-chip data-testid="runtime-schema">
-          {schema == null ? "NONE" : `SCHEMA ${schema}`}
-        </span>
-      </GadgetRow>
-      <GadgetRow label="Database">
-        <span className="surface-token" data-chip data-testid="runtime-database">
-          {shortToken(id.database_id ?? "unknown", 8)}
-        </span>
-      </GadgetRow>
-      <GadgetRow label="Started">
-        <span className="surface-token" data-chip data-testid="runtime-started">
-          {humanTime(id.process_start ?? "")}
-        </span>
-      </GadgetRow>
-      <GadgetRow label="Identity">
-        <Button variant="secondary" dense onClick={() => setNonce((n) => n + 1)}>
-          Recheck
-        </Button>
-      </GadgetRow>
       <FoldGadget title="RAW" token={tokens.length ? String(tokens.length) : undefined}>
         <GadgetGroup label="Diagnostics">
+          <GadgetRow label="Backend">
+            <span className="surface-token" data-chip data-testid="runtime-backend">
+              {`${id.backend_version ?? "unknown"} · ${shortToken(id.backend_revision ?? "unknown")}`}
+            </span>
+          </GadgetRow>
+          <GadgetRow label="Bundle">
+            <span className="surface-token" data-chip data-testid="runtime-bundle">
+              {served ? shortToken(served) : "NONE"}
+            </span>
+          </GadgetRow>
+          <GadgetRow label="Document">
+            <span className="surface-token" data-chip data-testid="runtime-document">
+              {document_ ? shortToken(document_) : "NONE"}
+            </span>
+          </GadgetRow>
+          <GadgetRow label="Schema">
+            <span className="surface-token" data-chip data-testid="runtime-schema">
+              {schema == null ? "NONE" : `SCHEMA ${schema}`}
+            </span>
+          </GadgetRow>
+          <GadgetRow label="Database">
+            <span className="surface-token" data-chip data-testid="runtime-database">
+              {shortToken(id.database_id ?? "unknown", 8)}
+            </span>
+          </GadgetRow>
+          <GadgetRow label="Started">
+            <span className="surface-token" data-chip data-testid="runtime-started">
+              {humanTime(id.process_start ?? "")}
+            </span>
+          </GadgetRow>
+          <GadgetRow label="Identity">
+            <Button variant="secondary" dense onClick={() => setNonce((n) => n + 1)}>
+              Recheck
+            </Button>
+          </GadgetRow>
           <GadgetRow label="Config">
             <span className="surface-token" data-chip>{shortToken(id.config_revision ?? "unknown", 8)}</span>
           </GadgetRow>
@@ -642,8 +648,9 @@ export function RuntimeIdentityModule() {
             </GadgetRow>
           ))}
         </GadgetGroup>
+        {children}
       </FoldGadget>
-    </GadgetGroup>
+    </>
   );
 }
 
@@ -674,16 +681,9 @@ function SystemModule({
       </div>
       <div className="prefs-hub-chips" data-testid="system-hub-chips">
         <span className="surface-token" data-chip>{hubSystem.host}</span>
-        <span className="surface-token" data-chip>{hubSystem.mesh ? "MESH ON" : "MESH OFF"}</span>
-        {remoteOn
-          ? <StateChip state="success" label="REMOTE ON" />
-          : <span className="surface-token" data-chip>REMOTE OFF</span>}
+        <OtherDevicesChip on={remoteOn} />
       </div>
       <div className="prefs-rule" aria-hidden="true" />
-      <RuntimeIdentityModule />
-      <GadgetGroup label="Mesh">
-        {deviceName}
-      </GadgetGroup>
       <RemoteAccessModule
         onEnabledChange={setRemoteOn}
         grantAct={grantAct}
@@ -691,7 +691,14 @@ function SystemModule({
         onGrantAct={onGrantAct}
       />
       {deskModule}
-      {rawWell}
+      {/* PHILO-17 U35: one RAW fold holds the diagnostics (build hashes,
+          schema), the mesh name, and the device rows. */}
+      <RuntimeIdentityModule>
+        <GadgetGroup label="Mesh">
+          {deviceName}
+        </GadgetGroup>
+        {rawWell}
+      </RuntimeIdentityModule>
     </>
   );
 }
@@ -927,7 +934,9 @@ export function RemoteAccessModule({
   return (
     <GadgetGroup label="Remote access">
       {/* The toggle row */}
-      <GadgetRow label="Streamable HTTP">
+      {/* PHILO-17 U35: plain words (was "Streamable HTTP", the transport's
+          name); the select keeps its "Remote transport" name. */}
+      <GadgetRow label="Other devices">
         <CycleGadget
           label="Remote transport"
           value={enabled ? "ON" : "OFF"}
@@ -1387,7 +1396,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
       setWrittenAt(new Date().toTimeString().slice(0, 8));
       return true;
     } catch (error) {
-      setRefusal(readableError(error));
+      // The leave send moved the revision: this older save's refusal is
+      // expected, and the newer values already went out.
+      const supersededByLeave =
+        leaveSentRef.current && error instanceof ApiError && error.status === 409;
+      if (!supersededByLeave) setRefusal(readableError(error));
       writerFencedRef.current = true;
       removePendingJob(job.id);
       try {
@@ -1426,6 +1439,28 @@ function SettingsFace({ hero, scope }: CoreProps) {
     }, 700);
   };
   const update = (path: string[], next: unknown) => updateMany([[path, next]]);
+  // PHILO-17 words: a reload inside the 700 ms delay lost the edit. When the
+  // page hides, the unsent edits (and any queued behind a save in flight) go
+  // out NOW as one keepalive PUT of only the changed paths, never chained
+  // behind the queue (Astra r2 on #1090). It carries no revision, so it
+  // applies; an older full-document save still in flight carries the old
+  // revision, and the hub refuses it if it lands later.
+  const leaveSentRef = useRef(false);
+  useFlushOnLeave(() => {
+    clearTimeout(saveTimer.current);
+    const unsent = debouncedChangesRef.current;
+    const queued = pendingJobsRef.current.flatMap((job) => job.changes);
+    if (!unsent.length && pendingJobsRef.current.length < 2) return;
+    debouncedChangesRef.current = [];
+    const patch = mergeSettingsChanges({} as SettingsResponse, [...queued, ...unsent]);
+    leaveSentRef.current = true;
+    writerFencedRef.current = true;
+    void apiFetch("/api/settings", {
+      method: "PUT",
+      json: patch,
+      keepalive: true,
+    }).catch(() => undefined);
+  });
   const commitMany = async (changes: Array<[string[], unknown]>) => {
     installSettingsChanges(resource.data, changes, resource.setData);
     setRefusal("");
@@ -1859,7 +1894,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         );
       case "wallpaper":
         return <WallpaperModule />;
-      /* ── Meetings: display fact + intel row + capture + calendar + actuators + RAW ── */
+      /* ── Meetings: display fact + intel row + capture + calendar + RAW (incl. actuators) ── */
       case "meetings": {
         const autoVal = String(val(["meeting", "intelligence_auto"]) ?? "room_linked");
         const meetingsHub = (hub.data as Record<string, unknown>).meetings as Record<string, unknown> | undefined;
@@ -1994,6 +2029,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               <GadgetRow label="Mic device" fact="device name">
                 <StringGadget
                   label="Mic device"
+                  placeholder="System default"
                   value={String(val(["meeting", "mic_device"]) ?? "")}
                   onChange={(next) => update(["meeting", "mic_device"], next || null)}
                 />
@@ -2001,6 +2037,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               <GadgetRow label="System audio" fact="device name">
                 <StringGadget
                   label="System audio device"
+                  placeholder="Auto"
                   value={String(val(["meeting", "system_audio_device"]) ?? "")}
                   onChange={(next) => update(["meeting", "system_audio_device"], next || null)}
                 />
@@ -2170,11 +2207,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 />
               </ul>
             </SurfaceSection>
-            <GadgetGroup label="Actuators">
-              {check(["meeting", "allow_actuators"], "Allow actuators")}
-            </GadgetGroup>
-            {/* HS-139-04: all operator knobs fold behind one RAW well. */}
-            <FoldGadget title="RAW" token="20">
+            {/* HS-139-04: all operator knobs fold behind one RAW well.
+                PHILO-17 U35: Allow actuators is one of them (it sat on the
+                face), and the fold carries no hand-kept count. */}
+            <FoldGadget title="RAW">
               <GadgetGroup label="Capture">
                 {check(["meeting", "diarization_enabled"], "Diarization")}
                 {check(["meeting", "diarize_mic"], "Diarize mic")}
@@ -2249,6 +2285,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 {csv(["meeting", "disabled_plugins"], "Disabled plugins")}
               </GadgetGroup>
               <GadgetGroup label="Actuators">
+                {check(["meeting", "allow_actuators"], "Allow actuators")}
                 {csv(["meeting", "allowed_actuators"], "Allowed actuators")}
                 {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
               </GadgetGroup>
@@ -2368,7 +2405,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
           </>
         );
       }
-      /* ── System: display + device name + remote access + desk reset + devices RAW ── */
+      /* ── System: display + remote access + desk reset + one RAW (diagnostics, mesh, devices) ── */
       case "system": {
         const device = (data.device ?? {}) as Record<string, unknown>;
         const deviceCount = Object.keys(device).length;
@@ -2380,11 +2417,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
           deviceName={str(["mesh", "device_name"], "Device name")}
           deskModule={<DeskModule />}
           rawWell={deviceCount ? (
-            <FoldGadget title="RAW" token={String(deviceCount)}>
-              <GadgetGroup label="Device">
-                {walkerRows(device, ["device"])}
-              </GadgetGroup>
-            </FoldGadget>
+            <GadgetGroup label="Device">
+              {walkerRows(device, ["device"])}
+            </GadgetGroup>
           ) : null}
         />;
       }
@@ -2392,6 +2427,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
       case "people":
         return (
           <>
+            {/* PHILO-15 B57: his name and the other names for him, after
+                first run (the reopened You card shows them without an edit;
+                Astra r1 on #1090: this is the place he looks). */}
             <OwnerNameGroup />
             <PeopleAccessModule />
           </>

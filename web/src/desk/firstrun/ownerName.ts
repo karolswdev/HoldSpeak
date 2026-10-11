@@ -4,7 +4,8 @@
  * /api/settings`, section `owner: { name, aliases }`). The needs-you rule
  * reads them as "me" (holdspeak/services/needs_you_membership.py). */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { apiFetch, readableError } from "../../lib/api";
+import { ApiError, apiFetch, readableError } from "../../lib/api";
+import { useFlushOnLeave } from "../../lib/flushOnLeave";
 
 export interface OwnerSetting {
   name: string;
@@ -35,12 +36,80 @@ export function useOwnerName() {
   const timer = useRef(0);
   const latest = useRef<OwnerSetting>({ name: "", aliases: [] });
   const touched = useRef(false);
+  /** An edit not yet sent. */
+  const pending = useRef(false);
+  /** The settings revision the next PUT echoes (HS-130-07 opt-in guard). */
+  const revision = useRef<string | undefined>(undefined);
+  /** Astra r2 on #1090: ONE save in flight; a later edit waits and coalesces
+   *  to the newest value, so an older PUT never lands after a newer one. */
+  const inFlight = useRef(false);
+  const again = useRef(false);
+
+  const send = useCallback(async () => {
+    window.clearTimeout(timer.current);
+    if (inFlight.current) {
+      again.current = true;
+      return;
+    }
+    inFlight.current = true;
+    try {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        pending.current = false;
+        const owner = latest.current;
+        try {
+          const result = await apiFetch<{ settings?: { owner?: OwnerSetting; _revision?: string } }>("/api/settings", {
+            method: "PUT",
+            json: revision.current ? { owner, _revision: revision.current } : { owner },
+          });
+          revision.current = result.settings?._revision ?? revision.current;
+          setSaved(result.settings?.owner ?? owner);
+          setError("");
+          break;
+        } catch (caught) {
+          // Another write moved the settings (a Settings field, or the leave
+          // send below): take its revision and send the newest value again.
+          const payload = caught instanceof ApiError ? (caught.payload as { revision?: string } | null) : null;
+          if (caught instanceof ApiError && caught.status === 409 && payload?.revision && attempt === 0) {
+            revision.current = payload.revision;
+            continue;
+          }
+          setError(readableError(caught));
+          break;
+        }
+      }
+    } finally {
+      inFlight.current = false;
+      if (again.current) {
+        again.current = false;
+        void send();
+      }
+    }
+  }, []);
+
+  /** The page hides or the editor unmounts: send the newest unsent value NOW,
+   *  with keepalive, never queued behind a save in flight. It carries no
+   *  revision, so it applies; an older save in flight carries the old revision
+   *  and the hub refuses it if it lands later (newest wins either way). */
+  const sendNow = useCallback(() => {
+    if (!pending.current && !again.current) return;
+    window.clearTimeout(timer.current);
+    pending.current = false;
+    again.current = false;
+    revision.current = undefined;
+    void apiFetch("/api/settings", {
+      method: "PUT",
+      json: { owner: latest.current },
+      keepalive: true,
+    }).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     let live = true;
-    void apiFetch<{ owner?: Partial<OwnerSetting> }>("/api/settings")
+    void apiFetch<{ owner?: Partial<OwnerSetting>; _revision?: string }>("/api/settings")
       .then((settings) => {
-        if (!live || touched.current) return;
+        if (!live) return;
+        if (!revision.current && settings._revision) revision.current = settings._revision;
+        if (touched.current) return;
         const owner = {
           name: String(settings.owner?.name ?? ""),
           aliases: Array.isArray(settings.owner?.aliases) ? settings.owner!.aliases.map(String) : [],
@@ -53,29 +122,21 @@ export function useOwnerName() {
       .catch(() => undefined);
     return () => {
       live = false;
-      window.clearTimeout(timer.current);
+      // Astra r2: leaving the editor (« Settings) inside the delay sent nothing.
+      sendNow();
     };
-  }, []);
+  }, [sendNow]);
 
-  const save = useCallback(async () => {
-    window.clearTimeout(timer.current);
-    const owner = latest.current;
-    try {
-      const result = await apiFetch<{ settings?: { owner?: OwnerSetting } }>("/api/settings", {
-        method: "PUT",
-        json: { owner },
-      });
-      setSaved(result.settings?.owner ?? owner);
-      setError("");
-    } catch (caught) {
-      setError(readableError(caught));
-    }
-  }, []);
+  const save = send;
+
+  // PHILO-17 words: a reload inside the delay lost the edit. Send it now.
+  useFlushOnLeave(sendNow);
 
   const schedule = useCallback(
     (owner: OwnerSetting) => {
       touched.current = true;
       latest.current = owner;
+      pending.current = true;
       window.clearTimeout(timer.current);
       timer.current = window.setTimeout(() => void save(), SAVE_AFTER_MS);
     },
@@ -116,6 +177,6 @@ export function useOwnerName() {
     setName,
     addAliases,
     removeLastAlias,
-    flush: save,
+    flush: () => save(),
   };
 }

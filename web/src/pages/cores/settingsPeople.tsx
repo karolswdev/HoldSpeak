@@ -25,10 +25,11 @@ export type PeopleAccess = {
 
 type AccessReceipt = { ok: boolean; mode: string; code?: string; operationId?: string; at: string };
 
+// PHILO-17 U35: plain words (was OFF / READ / WRITE under "MCP access").
 const MODES = [
-  { value: "off", label: "OFF" },
-  { value: "read", label: "READ" },
-  { value: "write", label: "WRITE" },
+  { value: "off", label: "Off" },
+  { value: "read", label: "Read" },
+  { value: "write", label: "Read and write" },
 ];
 
 /** The source token: where the effective value comes from. */
@@ -131,7 +132,7 @@ export function PeopleAccessModule() {
   if (!access && !readError && !receipt) return null;
   const held = access?.source === "env";
   return (
-    <GadgetGroup label="MCP access">
+    <GadgetGroup label="Agents">
       {readError ? (
         <GadgetRow label="Access">
           <span data-testid="people-access-read-failed" data-code={readError}>
@@ -142,7 +143,7 @@ export function PeopleAccessModule() {
         </GadgetRow>
       ) : null}
       {access ? (<>
-      <GadgetRow label="Access">
+      <GadgetRow label="Agents can read your People notes" wide>
         <span data-testid="people-access">
           <FilterTokens
             label="People MCP access"
@@ -153,9 +154,9 @@ export function PeopleAccessModule() {
           />
         </span>
       </GadgetRow>
-      <GadgetRow label="Agents">
+      <GadgetRow label="Agents you start">
         <span className="surface-token" data-chip data-testid="people-access-agents">
-          {`AGENTS · ${access.agents.toUpperCase()}`}
+          {access.agents === "off" ? "OFF" : "READ"}
         </span>
         <span className="surface-token" data-chip data-muted data-wrap data-testid="people-access-source">
           {sourceToken(access)}
@@ -172,7 +173,7 @@ export function PeopleAccessModule() {
             {receipt.ok
               ? <StateChip state="success" label="SUCCEEDED" />
               : <StateChip state="failure" label="REFUSED" />}{" "}
-            <span className="surface-token" data-chip>{`ACCESS · ${receipt.mode.toUpperCase()}`}</span>{" "}
+            <span className="surface-token" data-chip>{`ACCESS · ${(MODES.find((m) => m.value === receipt.mode)?.label ?? receipt.mode).toUpperCase()}`}</span>{" "}
             {!receipt.ok && receipt.code ? (
               <span className="surface-token" data-chip>{receipt.code.toUpperCase()}</span>
             ) : null}{" "}
@@ -185,14 +186,12 @@ export function PeopleAccessModule() {
   );
 }
 
-/** The Settings hub row's cells: MCP · <effective> · AGENTS · <mode> (the row is in settingsPrefs). */
+/** The Settings hub row's cell (the row is in settingsPrefs). PHILO-17 U35:
+ *  one plain fact (was MCP · <effective> · AGENTS · <mode>). */
 export function PeopleHubCells() {
   const { access } = usePeopleAccess();
   if (!access) return null;
-  return (
-    <>
-      <span className="surface-token" data-chip>{`MCP · ${access.effective.toUpperCase()}`}</span>
-      <span className="surface-token" data-chip>{`AGENTS · ${access.agents.toUpperCase()}`}</span>
-    </>
-  );
+  // `agents` is what a started agent gets: read unless access is off.
+  const text = access.agents === "off" ? "Agents: off" : "Agents can read People";
+  return <span className="surface-token" data-chip data-testid="people-hub-access">{text}</span>;
 }
