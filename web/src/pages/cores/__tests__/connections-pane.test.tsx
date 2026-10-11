@@ -187,6 +187,7 @@ beforeEach(() => {
 describe("ConnectionsPane", () => {
   /* ── GitHub states ── */
 
+  // replaces (the face half): tests/e2e/test_hs168_connections_glass.py::test_connections_real_readiness
   describe("GitHub connected", () => {
     it("shows Connected chip, login summary, and quiet Recheck verb", async () => {
       renderPane();

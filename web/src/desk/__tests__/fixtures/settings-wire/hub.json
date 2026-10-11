@@ -1,0 +1,51 @@
+{
+  "answers": {
+    "engine": null,
+    "engineSet": null
+  },
+  "connections": {
+    "connected": 0
+  },
+  "meetings": {
+    "auto": "every",
+    "auto_record": "off",
+    "engine": null,
+    "engineSet": false,
+    "host": null,
+    "intelligence": true,
+    "lastRunAt": null,
+    "lastRunS": null,
+    "summariesOff": false
+  },
+  "models": {
+    "defaultSet": false,
+    "engines": 0,
+    "groupsSet": 0
+  },
+  "posture": "yolo",
+  "rhythm": {
+    "lastSweepAt": null,
+    "loops": 0,
+    "nextSweepAt": null,
+    "quiet": {
+      "end": 8,
+      "held": false,
+      "start": 22
+    },
+    "sweepEveryMinutes": 15
+  },
+  "sounds": {
+    "on": true
+  },
+  "system": {
+    "host": "THIS DEVICE",
+    "mesh": false,
+    "remote": false
+  },
+  "voice": {
+    "engineSet": false,
+    "live": true,
+    "target": "auto"
+  },
+  "writtenAt": 1791732730.5288444
+}

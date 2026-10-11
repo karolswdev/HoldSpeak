@@ -1,0 +1,19 @@
+{
+  "grant_id": "deskdeleg_122eda6c615a4bf1b965670191fffddb",
+  "operation_id": "op_3bdb838ac4f44c3d8fdfd88676c9dc48",
+  "receipt": {
+    "actor_identity": "owner-session",
+    "actor_kind": "owner",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "created_at": 1791733420.9590452,
+    "delegator_identity": "",
+    "delegator_kind": "",
+    "operation_id": "op_3bdb838ac4f44c3d8fdfd88676c9dc48",
+    "outcome": "succeeded",
+    "receipt_id": "rcpt_9d7650e3b67e445ea4420e60165b495c",
+    "result_ref": "desk-delegation:deskdeleg_122eda6c615a4bf1b965670191fffddb",
+    "state": "succeeded",
+    "target_ref": "agent:desk-agent"
+  },
+  "success": true
+}

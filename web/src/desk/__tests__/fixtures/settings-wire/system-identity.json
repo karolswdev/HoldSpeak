@@ -1,0 +1,24 @@
+{
+  "bundle_on_disk": "5bfbddbae2547777",
+  "diagnoses": [],
+  "identity": {
+    "backend_revision": "d41efaaeb00d9a6f502805570aead4c8793db914",
+    "backend_revision_source": "git",
+    "backend_version": "0.4.0",
+    "config_revision": "1298167d9b2a97f1",
+    "database_id": "ca89818434aff31a",
+    "database_path": "/Users/owner/hub.db",
+    "frontend_build": "5bfbddbae2547777",
+    "pid": 93691,
+    "process_start": "2026-10-11T15:32:10.844394+00:00",
+    "schema_version_expected": 85,
+    "schema_version_loaded": 85
+  },
+  "ownership": {
+    "held": null,
+    "lock_path": null,
+    "owner": null
+  },
+  "owns_database": false,
+  "repair": []
+}

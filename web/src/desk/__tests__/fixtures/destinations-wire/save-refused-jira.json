@@ -1,0 +1,21 @@
+{
+  "code": "jira_key_not_single",
+  "error_code": "jira_key_not_single",
+  "message": "A Jira destination names exactly one work item",
+  "operation_id": "op_fa26983f80d942cdafd4359ead9ed153",
+  "receipt": {
+    "actor_identity": "owner-session",
+    "actor_kind": "owner",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "created_at": 1791732950.7030451,
+    "delegator_identity": "",
+    "delegator_kind": "",
+    "operation_id": "op_fa26983f80d942cdafd4359ead9ed153",
+    "outcome": "jira_key_not_single",
+    "receipt_id": "rcpt_2d520ca5437d460d963806f030b34ecf",
+    "result_ref": "",
+    "state": "refused",
+    "target_ref": "desk:channel.save_destination"
+  },
+  "success": false
+}

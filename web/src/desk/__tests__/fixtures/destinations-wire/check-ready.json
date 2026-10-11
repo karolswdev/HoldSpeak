@@ -1,0 +1,24 @@
+{
+  "check": {
+    "resolved": "/Users/owner/home/Reports",
+    "state": "ready"
+  },
+  "destination": {
+    "account": {},
+    "badge": "local",
+    "builtin": false,
+    "channel": "file",
+    "connection": null,
+    "created_at": "2026-10-11T15:35:50+00:00",
+    "id": "chd_9cc52a732c7d2a7bc885a2bf",
+    "name": "Folder Reports",
+    "parked_at": null,
+    "state": "active",
+    "synced": false,
+    "target": {
+      "display": "~/Reports",
+      "folder": "/Users/owner/home/Reports"
+    },
+    "target_digest": "093f49781809e4b5e2885bc926535239eb650249dda997efa70ccd66c8c221b2"
+  }
+}

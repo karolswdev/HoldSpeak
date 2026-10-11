@@ -77,6 +77,8 @@ describe("recordingSlice", () => {
   // PHILO-13-04 (A3) — a refused start is not a recording. The hub answers
   // 501 when it has no recorder (holdspeak/web/routes/meetings/live.py); the
   // fetch resolves, so the slice must read `res.ok`.
+  // replaces (the face half): tests/e2e/test_philo13_04_faces_glass.py::TestFacesDoNotLie::test_a_refused_start_says_not_recording
+  // (the hub half: tests/integration/test_desk_capture.py)
   it("a refused start (501) stays idle, starts no timer and says Not recording", async () => {
     request.mockResolvedValueOnce(
       new Response(JSON.stringify({ success: false, error: "Meeting start control not supported" }), { status: 501 }),

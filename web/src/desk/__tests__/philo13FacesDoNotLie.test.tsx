@@ -31,6 +31,11 @@ function json(body: unknown, status = 200) {
 
 afterEach(() => vi.unstubAllGlobals());
 
+// replaces: tests/e2e/test_philo13_04_faces_glass.py::TestFacesDoNotLie::test_failures_are_plain_words_with_a_verb
+// replaces: tests/e2e/test_philo13_04_faces_glass.py::TestFacesDoNotLie::test_ask_with_no_model_names_the_fact
+// replaces: tests/e2e/test_philo13_04_faces_glass.py::TestFacesDoNotLie::test_people_try_again_rereads_the_person
+// replaces (with settings.app.test.tsx, chair/arrivalOneThing.test.tsx, history/__tests__/railSummaryStored.philo13.test.tsx):
+//   tests/e2e/test_philo13_04_faces_glass.py::TestFacesDoNotLie::test_each_face_names_its_fact
 describe("plain failure words (A.3, A.10, Tenet 4)", () => {
   it("names the failure and never carries the hub's own text", () => {
     const cause = new ApiError(503, "people_store_unavailable", { detail: "people_store_unavailable" });

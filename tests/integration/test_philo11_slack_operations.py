@@ -153,6 +153,7 @@ def test_save_check_preview_prepare_and_send_use_the_real_slack_producer(
     hub: Any, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture[str],
 ) -> None:
     caplog.set_level("DEBUG")
+    # replaces: tests/e2e/test_philo11_05b_meeting_faces_glass.py::TestMeetingFacesGlass::test_the_meeting_faces_and_slack_destinations (the hub half: save, check, preview, prepare, send, size refusal)
     api, memory, wire = hub
     key_ref = save_webhook(api)
     assert memory.values == {f"slack:{key_ref}": URL}

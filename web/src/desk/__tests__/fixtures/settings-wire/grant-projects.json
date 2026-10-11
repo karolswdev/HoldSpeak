@@ -1,0 +1,30 @@
+{
+  "projects": [
+    {
+      "context": {},
+      "created_at": "2026-10-11T09:43:41.797006",
+      "description": "",
+      "detection_threshold": 0.4,
+      "id": "proj-8520e67b0991",
+      "is_archived": false,
+      "keywords": [],
+      "meeting_count": 0,
+      "name": "Payments ledger cutover",
+      "team_members": [],
+      "updated_at": "2026-10-11T09:43:41.797006"
+    },
+    {
+      "context": {},
+      "created_at": "2026-10-11T09:43:41.805701",
+      "description": "",
+      "detection_threshold": 0.4,
+      "id": "proj-657e335a854f",
+      "is_archived": false,
+      "keywords": [],
+      "meeting_count": 0,
+      "name": "Staff hiring loop",
+      "team_members": [],
+      "updated_at": "2026-10-11T09:43:41.805701"
+    }
+  ]
+}

@@ -59,7 +59,7 @@ pass bar; if reality disagrees, that's a `FAIL` and a finding.
   - Expect: `_audio/*.wav` for 6 meetings + 6 dictation sets; `MANIFEST.json`; `*.script.txt` ground truth.
   - Result: ___  · Note:
 
-- [ ] **P-05 · Plumbing e2e green.** `HOLDSPEAK_DOGFOOD=1 uv run pytest -q tests/e2e/test_dogfood_plumbing_e2e.py`
+- [ ] **P-05 · Plumbing e2e green.** `uv run pytest -q tests/unit/test_dogfood_fixtures.py`
   - Expect: all pass (scenarios well-formed, repos load, transcripts parse).
   - Result: ___  · Note:
 

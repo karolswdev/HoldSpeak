@@ -1,0 +1,21 @@
+{
+  "active_count": 1,
+  "bind_host": null,
+  "credentials": [
+    {
+      "active": true,
+      "delegation": null,
+      "expires_at": 1791736330.8596942,
+      "id": "8db0ea2217f74439",
+      "identity": "sweep-runner",
+      "last_used_at": null,
+      "palette": "PROJECT",
+      "project_delegations": []
+    }
+  ],
+  "delegations": [],
+  "enabled": true,
+  "port": null,
+  "project_delegations": [],
+  "total_count": 1
+}

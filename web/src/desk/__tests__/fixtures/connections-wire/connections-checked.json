@@ -1,0 +1,112 @@
+{
+  "tools": [
+    {
+      "account": {
+        "login": "karol-test"
+      },
+      "checked_age_seconds": 0,
+      "egress_host": "github.com",
+      "error_detail": null,
+      "last_checked_at": "2026-10-11T15:32:11.150155+00:00",
+      "next_action": {
+        "kind": "recheck",
+        "label": "Recheck"
+      },
+      "provider_id": "github",
+      "recovery_hint": null,
+      "state": "connected"
+    },
+    {
+      "account": {
+        "email": "owner@example.com",
+        "site": "alpha.atlassian.net"
+      },
+      "checked_age_seconds": 7500,
+      "connections": [
+        {
+          "account": {
+            "email": "owner@example.com",
+            "site": "alpha.atlassian.net"
+          },
+          "checked_age_seconds": 7500,
+          "connection_ref": "alpha.atlassian.net|owner@example.com",
+          "egress_host": "alpha.atlassian.net",
+          "error_detail": null,
+          "last_checked_at": "2026-10-11T13:27:11.158443+00:00",
+          "recovery_hint": null,
+          "state": "connected"
+        },
+        {
+          "account": {
+            "email": "owner@example.com",
+            "site": "beta.atlassian.net"
+          },
+          "checked_age_seconds": null,
+          "connection_ref": "beta.atlassian.net|owner@example.com",
+          "egress_host": "beta.atlassian.net",
+          "error_detail": null,
+          "last_checked_at": null,
+          "recovery_hint": null,
+          "state": "never_checked"
+        }
+      ],
+      "egress_host": "alpha.atlassian.net",
+      "error_detail": null,
+      "last_checked_at": "2026-10-11T13:27:11.158443+00:00",
+      "next_action": {
+        "kind": "recheck",
+        "label": "Recheck"
+      },
+      "provider_id": "jira",
+      "recovery_hint": null,
+      "state": "connected"
+    },
+    {
+      "account": null,
+      "checked_age_seconds": null,
+      "connections": [],
+      "egress_host": null,
+      "error_detail": null,
+      "last_checked_at": null,
+      "next_action": {
+        "kind": "setup",
+        "label": "Set up"
+      },
+      "provider_id": "confluence",
+      "recovery_hint": "acli confluence auth login --site <site> --email <email> --token",
+      "state": "never_checked"
+    },
+    {
+      "account": null,
+      "checked_age_seconds": null,
+      "egress_host": null,
+      "error_detail": null,
+      "last_checked_at": null,
+      "next_action": {
+        "kind": "open_module",
+        "label": "Set up"
+      },
+      "provider_id": "calendar",
+      "recovery_hint": null,
+      "state": "not_configured"
+    },
+    {
+      "account": {
+        "assigned": 0,
+        "summary_host": null,
+        "total": 7
+      },
+      "checked_age_seconds": null,
+      "egress_host": null,
+      "error_detail": null,
+      "last_checked_at": null,
+      "next_action": {
+        "kind": "open_module",
+        "label": "Open Models"
+      },
+      "provider_id": "models",
+      "recovery_hint": null,
+      "state": "not_configured"
+    }
+  ]
+}

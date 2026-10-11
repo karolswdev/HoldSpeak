@@ -1,0 +1,159 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T20:37:24.103232Z",
+  "wire": {
+    "proposals": [
+      {
+        "agent": "agent",
+        "args_cut": true,
+        "args_head": "{\"command\":\"psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
+        "args_hidden": 90,
+        "args_sha256": "7af555d734f240dc818edfcf752d27af068a3b20c2cb3a5c9a562ea1cf3a2293",
+        "args_shown": "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
+        "created_at": 1791751043.963565,
+        "cwd": "/tmp/rig/home/dev/wt/hs-action-runbook",
+        "decided_at": null,
+        "decided_by": null,
+        "expires_at": 1791754643.963565,
+        "hold_reason": "OUTSIDE THE WORKTREE",
+        "id": "toolu_cut",
+        "operation": {
+          "actor": "agent",
+          "admitted_envelope_sha256": "sha256:a56d84b198d8b5e1ec78e6b5366a076a5c0bb898a6f9148d31206b49c5d647d0",
+          "args_len": 198,
+          "consequence": "execute_on_approval",
+          "data_classes": [
+            "tool_arguments_redacted"
+          ],
+          "destination": "/tmp/rig/home/dev/wt/hs-action-runbook",
+          "effect_class": "agent/tool_call_hold",
+          "family": "tool_gate",
+          "fixed_destination": true,
+          "kernel_operation_id": "op_8b83beb5d85548b386c63c5401e49a62",
+          "operation_id": "op_8b83beb5d85548b386c63c5401e49a62",
+          "project_scope": null,
+          "resource_scope": "Bash",
+          "tool_call": {
+            "launch_id": "launch_c2_runbook",
+            "read_rule": "",
+            "rule": "cwd_outside_worktree",
+            "scope": "outside",
+            "target": ""
+          },
+          "version": 2
+        },
+        "policy_snapshot": {
+          "authority_basis": "per_action_required",
+          "consequence": "execute_on_approval",
+          "eligible": true,
+          "hard_invariants": [
+            "authentication",
+            "secret_custody",
+            "destination_binding",
+            "payload_binding",
+            "pane_identity",
+            "audit_receipt",
+            "configuration_integrity",
+            "schema_safety"
+          ],
+          "mode": "yolo",
+          "next_state": "awaiting_authorization",
+          "outcome": "authorization_required",
+          "policy_version": "operation-policy/v2",
+          "precedence": [
+            "hard_invariants",
+            "revocation",
+            "scoped_grant",
+            "control_mode",
+            "feature_default"
+          ],
+          "reason_code": "yolo_outside_own_worktree",
+          "requires_authorization": true,
+          "requires_grant": false,
+          "requires_review": false,
+          "source": "config"
+        },
+        "reason": null,
+        "session_key": "claude:c1a0de00-runbook",
+        "state": "held",
+        "tool": "Bash"
+      },
+      {
+        "agent": "agent",
+        "args_cut": true,
+        "args_head": "{\"command\":\"cat > /tmp/hs_huge.txt <<'EOF'\\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "args_hidden": 65927,
+        "args_sha256": "05f72db5a00f49b0c4b6b8a6785de9a64ae049f9385c86c665c0c26722e8042d",
+        "args_shown": "cat > /tmp/hs_huge.txt <<'EOF'\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "created_at": 1791751043.975073,
+        "cwd": "/tmp/rig/home/dev/wt/hs-action-runbook",
+        "decided_at": null,
+        "decided_by": null,
+        "expires_at": 1791754643.975073,
+        "hold_reason": "OUTSIDE THE WORKTREE",
+        "id": "toolu_cut_huge",
+        "operation": {
+          "actor": "agent",
+          "admitted_envelope_sha256": "sha256:d54df2a20ade8989bc5ad6476f636f3b9bc44ddb1618a7180a7afd39d30e41a0",
+          "args_len": 66034,
+          "consequence": "execute_on_approval",
+          "data_classes": [
+            "tool_arguments_redacted"
+          ],
+          "destination": "/tmp/rig/home/dev/wt/hs-action-runbook",
+          "effect_class": "agent/tool_call_hold",
+          "family": "tool_gate",
+          "fixed_destination": true,
+          "kernel_operation_id": "op_301c1415337340d29ddcd28e6723df20",
+          "operation_id": "op_301c1415337340d29ddcd28e6723df20",
+          "project_scope": null,
+          "resource_scope": "Bash",
+          "tool_call": {
+            "launch_id": "launch_c2_runbook",
+            "read_rule": "",
+            "rule": "cwd_outside_worktree",
+            "scope": "outside",
+            "target": ""
+          },
+          "version": 2
+        },
+        "policy_snapshot": {
+          "authority_basis": "per_action_required",
+          "consequence": "execute_on_approval",
+          "eligible": true,
+          "hard_invariants": [
+            "authentication",
+            "secret_custody",
+            "destination_binding",
+            "payload_binding",
+            "pane_identity",
+            "audit_receipt",
+            "configuration_integrity",
+            "schema_safety"
+          ],
+          "mode": "yolo",
+          "next_state": "awaiting_authorization",
+          "outcome": "authorization_required",
+          "policy_version": "operation-policy/v2",
+          "precedence": [
+            "hard_invariants",
+            "revocation",
+            "scoped_grant",
+            "control_mode",
+            "feature_default"
+          ],
+          "reason_code": "yolo_outside_own_worktree",
+          "requires_authorization": true,
+          "requires_grant": false,
+          "requires_review": false,
+          "source": "config"
+        },
+        "reason": null,
+        "session_key": "claude:c1a0de00-runbook",
+        "state": "held",
+        "tool": "Bash"
+      }
+    ],
+    "state": "held"
+  }
+}

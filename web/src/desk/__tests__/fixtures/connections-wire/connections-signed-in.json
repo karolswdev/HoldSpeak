@@ -1,0 +1,83 @@
+{
+  "tools": [
+    {
+      "account": {
+        "login": "karolswdev"
+      },
+      "checked_age_seconds": null,
+      "checked_by": "gh_config",
+      "egress_host": "github.com",
+      "error_detail": null,
+      "last_checked_at": null,
+      "next_action": {
+        "kind": "recheck",
+        "label": "Recheck"
+      },
+      "provider_id": "github",
+      "recovery_hint": null,
+      "state": "signed_in"
+    },
+    {
+      "account": null,
+      "checked_age_seconds": null,
+      "connections": [],
+      "egress_host": null,
+      "error_detail": null,
+      "last_checked_at": null,
+      "next_action": {
+        "kind": "add_account",
+        "label": "Add account"
+      },
+      "provider_id": "jira",
+      "recovery_hint": "acli jira auth login --site <site> --email <email> --token",
+      "state": "never_checked"
+    },
+    {
+      "account": null,
+      "checked_age_seconds": null,
+      "connections": [],
+      "egress_host": null,
+      "error_detail": null,
+      "last_checked_at": null,
+      "next_action": {
+        "kind": "setup",
+        "label": "Set up"
+      },
+      "provider_id": "confluence",
+      "recovery_hint": "acli confluence auth login --site <site> --email <email> --token",
+      "state": "never_checked"
+    },
+    {
+      "account": null,
+      "checked_age_seconds": null,
+      "egress_host": null,
+      "error_detail": null,
+      "last_checked_at": null,
+      "next_action": {
+        "kind": "open_module",
+        "label": "Set up"
+      },
+      "provider_id": "calendar",
+      "recovery_hint": null,
+      "state": "not_configured"
+    },
+    {
+      "account": {
+        "assigned": 0,
+        "summary_host": null,
+        "total": 7
+      },
+      "checked_age_seconds": null,
+      "egress_host": null,
+      "error_detail": null,
+      "last_checked_at": null,
+      "next_action": {
+        "kind": "open_module",
+        "label": "Open Models"
+      },
+      "provider_id": "models",
+      "recovery_hint": null,
+      "state": "not_configured"
+    }
+  ]
+}

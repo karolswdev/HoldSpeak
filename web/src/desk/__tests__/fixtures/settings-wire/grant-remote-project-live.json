@@ -1,0 +1,51 @@
+{
+  "active_count": 2,
+  "bind_host": null,
+  "credentials": [
+    {
+      "active": true,
+      "delegation": {
+        "expires_at": 1791733421.4764569,
+        "grant_id": "deskdeleg_08e490b0450b45658f8623b7b5924370",
+        "state": "EXPIRED"
+      },
+      "expires_at": 1791776620.9496212,
+      "id": "4f24a8cb31314fa5",
+      "identity": "desk-agent",
+      "last_used_at": null,
+      "palette": "DESK",
+      "project_delegations": []
+    },
+    {
+      "active": true,
+      "delegation": null,
+      "expires_at": 1791737021.8114154,
+      "id": "e2f4d221d70a4527",
+      "identity": "sweep-runner",
+      "last_used_at": null,
+      "palette": "PROJECT",
+      "project_delegations": [
+        {
+          "expires_at": null,
+          "grant_id": "projdeleg_43429da642c6412c9ee234124cacd573",
+          "project_archived": false,
+          "project_id": "proj-8520e67b0991",
+          "project_name": "Payments ledger cutover",
+          "state": "LIVE"
+        }
+      ]
+    }
+  ],
+  "delegations": [
+    {
+      "expires_at": null,
+      "grant_id": "deskdeleg_4cb2766af42b4e45b0577c8352d9660c",
+      "identity": "orphan-agent",
+      "state": "LIVE"
+    }
+  ],
+  "enabled": true,
+  "port": null,
+  "project_delegations": [],
+  "total_count": 2
+}

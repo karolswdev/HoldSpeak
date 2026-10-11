@@ -88,6 +88,7 @@ describe("the SEND well", () => {
     expect(screen.queryByTestId("send-none")).toBeNull();
   });
 
+  // replaces (the SEND well leg): tests/e2e/test_finish_face_polish_glass.py::TestFinishFacePolish::test_the_named_faces_say_names_and_plain_reasons
   it("A1: the pick opens the preview and Send in place; the folder keeps its case", async () => {
     render(<Well />);
     const row = await screen.findByTestId("destination-row");

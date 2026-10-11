@@ -1,0 +1,25 @@
+{
+  "active_count": 1,
+  "bind_host": null,
+  "credentials": [
+    {
+      "active": true,
+      "delegation": {
+        "expires_at": null,
+        "grant_id": "deskdeleg_122eda6c615a4bf1b965670191fffddb",
+        "state": "REVOKED"
+      },
+      "expires_at": 1791776620.9496167,
+      "id": "4f24a8cb31314fa5",
+      "identity": "desk-agent",
+      "last_used_at": null,
+      "palette": "DESK",
+      "project_delegations": []
+    }
+  ],
+  "delegations": [],
+  "enabled": true,
+  "port": null,
+  "project_delegations": [],
+  "total_count": 1
+}

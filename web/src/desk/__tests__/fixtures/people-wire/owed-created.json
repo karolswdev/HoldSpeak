@@ -1,0 +1,26 @@
+{
+  "commitment": {
+    "accepted_at": null,
+    "body": "Send me the API migration estimate",
+    "commitment_id": null,
+    "created_at": "2026-10-11T20:37:19Z",
+    "direction": "report_owes",
+    "execution_links": [],
+    "history": [
+      {
+        "at": "2026-10-11T20:37:19Z",
+        "event": "recorded",
+        "source": "people",
+        "state": "open"
+      }
+    ],
+    "id": "9a371600-7b6a-4ebe-9bd1-c0de1d404abf",
+    "relationship_id": "13376da5-0528-4c28-882b-a4df2a786e9a",
+    "request_id": null,
+    "source": null,
+    "state": "open",
+    "topic": null,
+    "updated_at": "2026-10-11T20:37:19Z",
+    "visibility": "shared_intent"
+  }
+}
