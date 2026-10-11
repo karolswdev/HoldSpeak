@@ -18,7 +18,6 @@ import { Button } from "./signal/Signal";
 import { AddToProject } from "../desk/AddToProject";
 import { LampGadget } from "../desk/surface/gadgets";
 import { SurfaceState } from "../desk/surface/Surface";
-import { useChairState } from "../desk/chairState";
 import { useCompactViewport } from "../desk/useCompactViewport";
 import { useOnDeskChanged } from "../desk/useDeskChangedRefresh";
 import {
@@ -167,9 +166,8 @@ function QueueHud() {
 function AftercareNote() {
   const { subscribe } = useRuntimeBus();
   const signal = useAftercare();
-  const surface = useChairState((state) => state.surface);
   const compact = useCompactViewport();
-  const aftercareSlot = useAftercareSlot(surface, Boolean(signal));
+  const aftercareSlot = useAftercareSlot(Boolean(signal));
   // PHILO-14 A1c: the Chair says itself that it is the screen of objects.
   const chairScreen = useChairWindows((state) => state.screenMounted);
   const host: AftercareHost = !signal
@@ -180,7 +178,7 @@ function AftercareNote() {
         : aftercareSlot.dataset.aftercareWindowSlot
           ? "window"
           : "floor"
-      : surface === "chair" && (compact || chairScreen)
+      : compact || chairScreen
         ? null
         : "fixed";
   useLayoutEffect(() => {
@@ -280,7 +278,7 @@ function AftercareNote() {
   // PHILO-14 A1c (Muad'Dib's ruling): the same at 1440 on the Chair screen —
   // Capture opens for the card (ChairDesk), and a card whose Capture he
   // closed waits for it; it never floats over another window.
-  if (surface === "chair" && (compact || chairScreen)) return null;
+  if (compact || chairScreen) return null;
   return card;
 }
 
@@ -294,7 +292,7 @@ export function frontWindowAftercareSlot(): HTMLElement | null {
   );
 }
 
-function findAftercareSlot(surface: "chair" | "floor"): HTMLElement | null {
+function findAftercareSlot(): HTMLElement | null {
   if (typeof document === "undefined") return null;
   const activeWindow = frontWindowAftercareSlot();
   if (activeWindow) return activeWindow;
@@ -307,17 +305,11 @@ function findAftercareSlot(surface: "chair" | "floor"): HTMLElement | null {
     return shell?.style.display !== "none";
   });
   if (anyWindow) return anyWindow;
-  if (surface === "chair")
-    return document.querySelector<HTMLElement>('[data-aftercare-slot="before-capture"]');
-  return (
-    document.querySelector<HTMLElement>('[data-aftercare-floor-slot="top"]')
-  );
+  // PHILO-17: the Screen is the one desk (the Floor's slot is parked).
+  return document.querySelector<HTMLElement>('[data-aftercare-slot="before-capture"]');
 }
 
-function useAftercareSlot(
-  surface: "chair" | "floor",
-  active: boolean,
-): HTMLElement | null {
+function useAftercareSlot(active: boolean): HTMLElement | null {
   const [slot, setSlot] = useState<HTMLElement | null>(null);
 
   useLayoutEffect(() => {
@@ -328,7 +320,7 @@ function useAftercareSlot(
     let disposed = false;
     const update = () => {
       if (disposed) return;
-      const next = findAftercareSlot(surface);
+      const next = findAftercareSlot();
       setSlot((current) => (current === next ? current : next));
     };
     update();
@@ -344,14 +336,13 @@ function useAftercareSlot(
         "class",
         "data-aftercare-slot",
         "data-aftercare-window-slot",
-        "data-aftercare-floor-slot",
       ],
     });
     return () => {
       disposed = true;
       observer.disconnect();
     };
-  }, [active, surface]);
+  }, [active]);
 
   return slot;
 }

@@ -14,7 +14,6 @@ import {
   dismissAftercare,
   publishAftercare,
 } from "../../intelligenceAttention";
-import { useChairState } from "../../chairState";
 import { EMPTY_ITEMS } from "../../api";
 import { useDesk } from "../../store";
 
@@ -94,7 +93,6 @@ beforeEach(() => {
     if (path === "/api/settings") return { presence: { enabled: false } };
     return null;
   });
-  useChairState.setState({ surface: "chair" });
   useChairWindows.setState({ closed: {}, phone: "chair:week", captureInRing: false });
   useDesk.setState({
     items: EMPTY_ITEMS, divedZone: null, selectedIds: [], pullouts: [], editingId: null,

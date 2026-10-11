@@ -327,6 +327,21 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(keys().some((k) => k?.startsWith("people:"))).toBe(false);
   });
 
+  it("PHILO-17: the chosen place is the backdrop (its still); Quiet Desk is the floor alone", async () => {
+    localStorage.setItem("hs.desk.atmosphere", "night-train");
+    const view = render(<Screen />);
+    const desk = screen.getByTestId("desk-screen");
+    expect(desk.getAttribute("data-place")).toBe("night-train");
+    expect(desk.hasAttribute("data-place-still")).toBe(true);
+    expect(desk.style.getPropertyValue("--desk-place-still")).toContain("night-train.webp");
+    expect(desk.querySelector("canvas")).toBeNull();
+    view.unmount();
+    localStorage.setItem("hs.desk.atmosphere", "quiet-desk");
+    render(<Screen />);
+    expect(screen.getByTestId("desk-screen").hasAttribute("data-place-still")).toBe(false);
+    localStorage.removeItem("hs.desk.atmosphere");
+  });
+
   it("Astra's P3 (ruling): TALK is one press on the Chair at 1440", async () => {
     render(<Screen />);
     const talk = screen.getByTestId("desk-screen-talk");

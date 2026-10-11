@@ -3904,7 +3904,7 @@
       "sources": [
         {
           "path": "web/src/desk/components/DeskWindow.tsx",
-          "symbol": "entries={withSendTo(sendToEntry(id), headMenuEntries({",
+          "symbol": "entries={withSendTo(sendToEntry(id), withObject(windowObjectEntry(id, requestClose), headMenuEntries({",
           "claim": "the window menu leads with Send to ▸ from the window's own document"
         },
         {

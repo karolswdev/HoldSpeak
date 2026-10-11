@@ -282,32 +282,19 @@ def leg_hero_idle(shooter: Shooter, hub: Hub) -> None:
 
 
 def leg_floor_swap(shooter: Shooter, hub: Hub) -> None:
-    """The Floor swap both ways: Chair -> Floor -> Chair."""
-    section(f"floor swap @{shooter.width}")
+    """PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"):
+    there is no Floor to swap to. The leg proves the one desk: the Screen
+    is drawn and the Dock has no Chair/Floor toggle."""
+    section(f"one desk @{shooter.width}")
     goto(shooter, hub, "/")
     page = shooter.page
 
     toggle = page.locator('[data-testid="chair-floor-toggle"]')  # type: ignore[attr-defined]
-    check("floor toggle present", toggle.count() > 0)
-
-    if toggle.count():
-        # We should be on the Chair.
-        chair = page.locator('[data-testid="chair"]')  # type: ignore[attr-defined]
-        check("start on chair", chair.count() > 0)
-
-        # Click to swap to Floor.
-        toggle.click()  # type: ignore[attr-defined]
-        page.wait_for_timeout(1500)  # type: ignore[attr-defined]
-        shooter.shot("floor", "from-chair", "floor after swap from chair")
-
-        # Click to swap back to Chair.
-        toggle.click()  # type: ignore[attr-defined]
-        page.wait_for_timeout(1500)  # type: ignore[attr-defined]
-        chair_back = page.locator('[data-testid="chair"]')  # type: ignore[attr-defined]
-        check("back on chair after round-trip", chair_back.count() > 0)
-        shooter.shot("chair", "from-floor", "chair after swap from floor")
-
-    shooter.assert_clean("floor swap")
+    check("no floor toggle", toggle.count() == 0)
+    screen = page.locator('[data-testid="desk-screen"]')  # type: ignore[attr-defined]
+    check("the screen is the desk", screen.count() > 0)
+    shooter.shot("chair", "one-desk", "the one desk")
+    shooter.assert_clean("one desk")
 
 
 def leg_lanes_open(shooter: Shooter, hub: Hub) -> None:

@@ -61,7 +61,7 @@ const DESK_SRC = path.resolve(__dirname, "..");
 const SWEEP_FILES = [
   path.join(DESK_SRC, "verbRegistry.ts"),
   path.join(DESK_SRC, "tools.ts"),
-  path.join(DESK_SRC, "floorMenu.ts"),
+  path.join(DESK_SRC, "objectMenu.ts"),
   path.join(DESK_SRC, "components", "DeskChrome.tsx"),
   path.join(DESK_SRC, "components", "DeskToolShelf.tsx"),
   path.join(DESK_SRC, "windowMenuAdapter.tsx"),

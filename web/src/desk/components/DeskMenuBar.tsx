@@ -13,7 +13,6 @@ import "./chrome-menus.css";
 import { useEffect, useRef, useState } from "react";
 import { useDesk } from "../store";
 import { useSettleState } from "../settleState";
-import { useChairState } from "../chairState";
 import {
   VERBS,
   menuVerbs,
@@ -142,8 +141,6 @@ export function DeskMenuBar() {
   const selectedIds = useDesk((s) => s.selectedIds);
   // PHILO-15 11: the phone Go lists the projects.
   const projects = useDesk((s) => s.items.project);
-  // PHILO-8-01 — re-render on a face change: the Chair withholds zone verbs.
-  useChairState((s) => s.surface);
   // The Window menu lists the open windows: re-render on a registry change
   // and on a change of the front window.
   useAllOpenWindows();

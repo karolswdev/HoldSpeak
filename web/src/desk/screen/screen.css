@@ -17,6 +17,17 @@
   font-family: var(--font-sans);
   color: var(--wb-paper);
 }
+/* PHILO-17: the chosen place (Change places) is the backdrop: its still
+   picture under the floor's light, on the Workbench backdrop colour. */
+.desk-screen[data-place-still] {
+  /* The A1 floor's one light (tokens.css --desk-floor): bright top-left,
+     falling to the foot, over the picture. */
+  background:
+    radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.28) 100%),
+    var(--desk-place-still) center / cover no-repeat,
+    var(--wb-backdrop);
+}
 /* 1440: the icons stand where layout.ts puts them (A-1). */
 .desk-screen[data-layout="free"] > .desk-icon-grid {
   display: block;
@@ -94,4 +105,11 @@
   left: 20px;
   bottom: calc(var(--desk-dock-h, 76px) + 14px);
   z-index: 1;
+}
+/* PHILO-17 (Astra r2): the delete receipt's seat is desk-level (DeskApp):
+   fixed above the dock, above every window (a transient while it stands),
+   so the desk's scroll, a Chair window or a sheet never hide its Undo. */
+.desk-next > .desk-world-foot.desk-delete-foot {
+  position: fixed;
+  z-index: var(--desk-z-transient);
 }

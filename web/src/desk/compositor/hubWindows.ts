@@ -95,6 +95,11 @@ export const httpTransport: HubTransport = {
       method: "POST", json: { side, expected_revision: expected }, keepalive: true }),
 };
 
+/** PHILO-17: the retired window family (zones have no face). */
+export const RETIRED_PREFIX = "zone:";
+/** How many closes one retired row gets (a refused close re-reads first). */
+export const RETIRE_TRIES = 3;
+
 // ---- the local families: how a hub row opens and closes here ---------------
 
 interface Adapter {
@@ -211,7 +216,6 @@ export function adapterFor(id: string): Adapter | null {
     listAdapter("pullout:", id, () => d().pullouts, "id",
       (v) => useDesk.setState({ pullouts: [...d().pullouts, { id: v, origin: null }] }),
       (v) => d().closePullout(v)) ??
-    listAdapter("zone:", id, () => d().zoneWindows, "id", (v) => d().openZoneWindow(v), (v) => d().closeZoneWindow(v)) ??
     listAdapter("info:", id, () => d().infoWindows, "ref", (v) => d().openInfoWindow(v), (v) => d().closeInfoWindow(v)) ??
     listAdapter("roadmap:", id, () => d().roadmapWindows, "slug", (v) => d().openRoadmapWindow(v), (v) => d().closeRoadmapWindow(v)) ??
     listAdapter("repository:", id, () => d().repositoryWindows, "id", (v) => d().openRepositoryWindow(v), (v) => d().closeRepositoryWindow(v)) ??
@@ -227,7 +231,6 @@ export function adapterOpenIds(): string[] {
     ...CHAIR_WINDOW_IDS.filter((id) => !chair[id]),
     ...Object.keys(s.windowsById),
     ...s.pullouts.map((w) => `pullout:${w.id}`),
-    ...s.zoneWindows.map((w) => `zone:${w.id}`),
     ...s.infoWindows.map((w) => `info:${w.ref}`),
     ...s.roadmapWindows.map((w) => `roadmap:${w.slug}`),
     ...s.repositoryWindows.map((w) => `repository:${w.id}`),
@@ -392,12 +395,43 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
   const closedAt = new Map<string, number>();
   /** Ids whose write FAILED: the next read restores the hub's row for them. */
   const restore = new Set<string>();
+  /** Retired `zone:*` rows: closed on the hub (done), a close in flight
+   * (busy), and the closes tried per row (at most RETIRE_TRIES: a refused
+   * close re-reads and tries again with the hub's revision, never a loop). */
+  const retiredDone = new Set<string>();
+  const retireBusy = new Set<string>();
+  const retireTries = new Map<string, number>();
+  function retire(r: HubWindowRow): void {
+    const tries = retireTries.get(r.id) ?? 0;
+    if (retiredDone.has(r.id) || retireBusy.has(r.id) || tries >= RETIRE_TRIES) return;
+    retireTries.set(r.id, tries + 1);
+    retireBusy.add(r.id);
+    enqueue([r.id], {}, () =>
+      transport.verb(r.id, "close", { expected_revision: r.revision })
+        .then((answer) => {
+          retiredDone.add(r.id);
+          return answer;
+        })
+        .catch((err) => {
+          // Already gone on the hub: retired.
+          if (err instanceof ApiError && err.status === 404) retiredDone.add(r.id);
+          throw err;
+        })
+        .finally(() => retireBusy.delete(r.id)),
+    );
+  }
 
   /** Apply the hub's rows for `scope` (every id when "all"). An id with a
    * request in flight is left as it shows; a row is applied only when it is
    * newer than what this view applied; an id absent from the list closes here
    * only when the list was read after what this view applied. */
   function apply(list: HubWindowList, scope: Set<string> | "all"): void {
+    // PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"):
+    // zone windows are retired; no face draws a zone. A saved `zone:*` row
+    // is closed on the hub once and never opens or counts here.
+    const retired = list.windows.filter((r) => r.id.startsWith(RETIRED_PREFIX));
+    for (const r of retired) retire(r);
+    if (retired.length) list = { ...list, windows: list.windows.filter((r) => !r.id.startsWith(RETIRED_PREFIX)) };
     const byId = new Map(list.windows.map((r) => [r.id, r]));
     const free = (id: string) => (scope === "all" || scope.has(id)) && presentations.pending(id) === 0;
     // A row applies when it is newer than the row this view applied, and not
@@ -950,7 +984,6 @@ const BOOT_OPEN: readonly string[] = (() => {
     return [
       ...Object.keys(doc.windowsById ?? {}),
       ...Object.keys(doc.panel?.depth ?? {}),
-      ...(doc.zoneWindows ?? []).map((id) => `zone:${id}`),
       ...(lists?.pullouts ?? []).map((id) => `pullout:${id}`),
       ...(lists?.info ?? []).map((ref) => `info:${ref}`),
       ...(lists?.roadmap ?? []).map((slug) => `roadmap:${slug}`),
