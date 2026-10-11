@@ -194,7 +194,7 @@ describe("Runs on — paint and words", () => {
     render(<RunsOnCore />);
     await screen.findByTestId("switchboard");
     expect(screen.getAllByTestId(/^switchboard-job-/)).toHaveLength(7);
-    expect(screen.getByTestId("runson-fact").textContent).toBe("7 jobs · 3 engines");
+    expect(screen.getByTestId("runson-fact").textContent).toBe("3 engines");
     expect(screen.queryByTestId("switchboard-engine-openrouter")).toBeNull();
     // Wires already draw from the roster: speech, thoughts, default.
     expect(screen.getAllByTestId("switchboard-wire").map((w) => w.getAttribute("data-job"))).toEqual([
@@ -204,7 +204,7 @@ describe("Runs on — paint and words", () => {
     ]);
     await act(async () => finish(detection()));
     expect(await screen.findByTestId("switchboard-engine-openrouter")).toBeTruthy();
-    expect(screen.getByTestId("runson-fact").textContent).toBe("7 jobs · 4 engines");
+    expect(screen.getByTestId("runson-fact").textContent).toBe("4 engines");
   });
 
   it("draws one of five words per job, from the authority's fit (never reachability)", async () => {
@@ -221,6 +221,29 @@ describe("Runs on — paint and words", () => {
     for (const word of ["Use these", "Use this for summaries", "Adjust", "Cancel"]) {
       expect(screen.queryByRole("button", { name: word })).toBeNull();
     }
+  });
+
+  it("each card leads with what he gets and where it runs; task names are its details (PHILO-17 U16)", async () => {
+    await board();
+    const lead = (id: string) =>
+      screen.getByTestId(`switchboard-job-${id}`).querySelector(".switchboard-job-name")?.textContent;
+    // An own wire on this Mac; a LAN engine by its address; the default.
+    expect(lead("thoughts_notes")).toBe("Answers and thoughts → Qwen 3.5 4B · on this Mac");
+    expect(lead("speech_recognition")).toBe("Speech to text → Whisper small · on this Mac");
+    expect(lead("meetings")).toBe("Meeting summaries → qwen3.8 27B · on 192.168.1.43");
+    expect(lead("default")).toBe("Everything else → qwen3.8 27B · on 192.168.1.43");
+    expect(lead("writing_dictation")).toBe("Dictation clean-up → qwen3.8 27B · on 192.168.1.43");
+    expect(lead("background")).toContain("Drafts, nudges and memory → ");
+    // Task ids leave the face for the card's details.
+    const meetings = screen.getByTestId("switchboard-job-meetings");
+    expect(meetings.getAttribute("title")).toBe("Deferred meeting analysis · Meeting title · Live meeting analysis");
+    const face = screen.getByTestId("switchboard").textContent ?? "";
+    for (const gone of ["TASKS", "FOLLOWS DEFAULT", "EVERY JOB WITHOUT ITS OWN WIRE", "Default for AI work", "DEFERRED MEETING ANALYSIS", "THIS DEVICE ONLY"]) {
+      expect(face).not.toContain(gone);
+    }
+    // A job that rides the default says so in plain words.
+    expect(meetings.textContent).toContain("SAME AS EVERYTHING ELSE");
+    expect(screen.getByTestId("switchboard-job-thoughts_notes").textContent).not.toContain("SAME AS EVERYTHING ELSE");
   });
 
   it("a caller's scope opens on its job (hot wires)", async () => {
@@ -244,7 +267,7 @@ describe("Runs on — a drop writes", () => {
       ],
     });
     const receipt = await screen.findByTestId("runson-receipt");
-    expect(receipt.textContent).toMatch(/^PATCHED \d\d:\d\d · Thoughts & notes → qwen3.8 27B$/);
+    expect(receipt.textContent).toMatch(/^PATCHED \d\d:\d\d · Answers and thoughts → qwen3.8 27B$/);
     expect(screen.getByTestId("runson-egress").textContent).toContain("192.168.1.43");
     fireEvent.click(screen.getByTestId("runson-undo"));
     await waitFor(() => expect(m.writeChain).toHaveBeenCalledTimes(2));
@@ -299,7 +322,7 @@ describe("Runs on — a drop writes", () => {
       expectedRevision: 5,
     });
     expect(m.summary).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE \d\d:\d\d · Meetings$/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE \d\d:\d\d · Meeting summaries$/));
   });
 
   it("Meetings Undo of an OWN summary row gives it its own engine back, and says a refusal (C2, A.10)", async () => {
@@ -319,7 +342,7 @@ describe("Runs on — a drop writes", () => {
     await waitFor(() => expect(m.summary).toHaveBeenCalledTimes(2));
     expect(m.summary.mock.calls[1][0]).toMatchObject({ expectedAssignmentRevision: 5, profileId: "q4b", profileRevision: 2 });
     await waitFor(() =>
-      expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meetings · SUMMARIES CHANGED ELSEWHERE$/),
+      expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meeting summaries · SUMMARIES CHANGED ELSEWHERE$/),
     );
   });
 
@@ -355,7 +378,7 @@ describe("Runs on — a drop writes", () => {
     fireEvent.click(screen.getByTestId("runson-undo"));
     await waitFor(() => expect(m.summary).toHaveBeenCalledTimes(3));
     expect(m.summary.mock.calls[2][0]).toMatchObject({ expectedAssignmentRevision: 6, profileId: "openrouter" });
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meetings$/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meeting summaries$/));
     fireEvent.click(screen.getByTestId("runson-undo"));
     await waitFor(() =>
       expect(m.clearChain).toHaveBeenCalledWith({
@@ -364,7 +387,7 @@ describe("Runs on — a drop writes", () => {
         expectedRevision: 9,
       }),
     );
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meetings$/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meeting summaries$/));
     expect(screen.getByTestId("runson-receipt").textContent).not.toContain("CHANGED ELSEWHERE");
     expect(screen.queryByTestId("runson-undo")).toBeNull();
   });
@@ -378,7 +401,7 @@ describe("Runs on — a drop writes", () => {
       new ApiError(409, "Assignment changed.", { code: "inference_assignment_revision_conflict" }),
     );
     fireEvent.click(await screen.findByTestId("runson-undo"));
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("CHANGED ELSEWHERE · Thoughts & notes"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("CHANGED ELSEWHERE · Answers and thoughts"));
     expect(m.writeChain.mock.calls[1][0].expectedRevision).toBe(7);
     // The entry is gone: no second Undo can overwrite the other writer.
     expect(screen.queryByTestId("runson-undo")).toBeNull();
@@ -402,10 +425,10 @@ describe("Runs on — a drop writes", () => {
     await board();
     fireEvent.click(screen.getByTestId("switchboard-job-speech_recognition"));
     fireEvent.keyDown(screen.getByTestId("switchboard-engine-q27"), { key: "Enter" });
-    expect((await screen.findByTestId("runson-receipt")).textContent).toBe("REFUSED · SPEECH RECOGNITION · SPEECH ENGINES ONLY");
+    expect((await screen.findByTestId("runson-receipt")).textContent).toBe("REFUSED · SPEECH TO TEXT · SPEECH ENGINES ONLY");
     fireEvent.click(screen.getByTestId("switchboard-job-agents_tools"));
     fireEvent.keyDown(screen.getByTestId("switchboard-engine-q4b"), { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("REFUSED · AGENTS & TOOLS · WITHOUT AGENTS"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("REFUSED · AGENTS AND RECIPES · WITHOUT AGENTS"));
     expect(m.writeChain).not.toHaveBeenCalled();
   });
 });

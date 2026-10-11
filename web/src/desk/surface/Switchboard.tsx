@@ -35,7 +35,12 @@ export type SwitchLamp = "ok" | "busy" | "warn" | "broken" | "off";
 export interface SwitchJob {
   id: string;
   name: string;
-  /** The job's tasks, as one token line. */
+  /** PHILO-17 (U16): the card's lead in plain words (what the owner gets
+   *  and where it runs); the board shows it in place of the name. */
+  lead?: string;
+  /** The job's details (its tasks by name): the card's title, not its face. */
+  detail?: string;
+  /** The job's tokens, as one line (empty: no line). */
   tasks: string;
   state: SwitchState;
   /** The global head: every job with no wire of its own follows it. */
@@ -405,14 +410,15 @@ function SwitchboardBoard({
               data-testid={`switchboard-job-${job.id}`}
               data-job-id={job.id}
               data-state={job.state}
+              title={job.detail || undefined}
               onClick={(event) => {
                 if ((event.target as Element).closest("button")) return;
                 onSelect?.(selected === job.id ? null : job.id);
               }}
             >
-              <span className="switchboard-job-name">{job.name}</span>
+              <span className="switchboard-job-name">{job.lead ?? job.name}</span>
               {job.verb ? <span className="switchboard-job-verb">{job.verb}</span> : null}
-              <span className="switchboard-job-tasks">{job.tasks}</span>
+              {job.tasks ? <span className="switchboard-job-tasks">{job.tasks}</span> : null}
               {job.result ? (
                 <span className="switchboard-job-result" data-testid={`switchboard-result-${job.id}`}>
                   {job.result}
@@ -520,6 +526,7 @@ function SwitchboardList({
         <>
           <div
             className={"switchboard-job is-open " + STATE_CLASS[open.state]}
+            title={open.detail || undefined}
             data-testid={`switchboard-job-${open.id}`}
             data-job-id={open.id}
             data-state={open.state}
@@ -572,7 +579,7 @@ function SwitchboardList({
             onClick={() => onSelect?.(job.id)}
           >
             <span className="switchboard-job-name">{job.name}</span>
-            <span className="switchboard-job-tasks">{job.runsOn ?? job.tasks}</span>
+            {job.runsOn ?? job.tasks ? <span className="switchboard-job-tasks">{job.runsOn ?? job.tasks}</span> : null}
           </Button>
         ))}
       {found.length > 0 ? (

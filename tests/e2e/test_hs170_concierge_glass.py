@@ -246,7 +246,22 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
             assert page.locator('[role="dialog"]').count() == 0
             _no_raw_buttons(page)
             fact = page.get_by_test_id("runson-fact").inner_text()
-            assert fact.startswith("7 jobs"), fact
+            # PHILO-17 (U16): the one fact is what he has, never "7 jobs".
+            assert "jobs" not in fact and (fact.endswith("engine") or fact.endswith("engines") or fact == "No engine yet"), fact
+            # Each card leads with what he gets and where it runs; task ids
+            # are the card's details (its title), never its face.
+            lead = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-name").inner_text()
+            if width == 1440:
+                assert lead.startswith("Meeting summaries → ") and " · on " in lead, lead
+                assert "Everything else → " in page.locator("[data-testid='switchboard-job-default'] .switchboard-job-name").inner_text()
+            else:
+                # The phone list: the outcome name, its engine and place under it.
+                assert lead == "Meeting summaries", lead
+                where = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-tasks").inner_text()
+                assert " · ON " in where.upper(), where
+            jobs_text = page.get_by_test_id("switchboard").inner_text().upper()
+            for gone in ("TASKS", "FOLLOWS DEFAULT", "EVERY JOB WITHOUT ITS OWN WIRE", "DICTATION INTENT"):
+                assert gone not in jobs_text, gone
             assert float(page.get_by_test_id("runson-fact").evaluate("e => parseFloat(getComputedStyle(e).fontSize)")) >= 24
             words = page.locator("[data-testid^='switchboard-job-']").evaluate_all(
                 "els => els.map(e => e.getAttribute('data-state'))"
@@ -274,7 +289,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 receipt = page.get_by_test_id("runson-receipt")
                 receipt.wait_for()
                 page.wait_for_function(
-                    "() => /^PATCHED .* · Meetings → /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
+                    "() => /^PATCHED .* · Meeting summaries → /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
                 )
                 page.get_by_test_id("runson-undo").wait_for()
                 assert "192.168.77.43" in page.get_by_test_id("runson-egress").inner_text()
@@ -349,7 +364,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 _shot(page, "c1-list", width)
                 # Open Meetings and tap an engine to patch it.
                 page.get_by_test_id("switchboard-job-meetings").click()
-                page.get_by_text("Meetings · runs on").wait_for()
+                page.get_by_text("Meeting summaries · runs on").wait_for()
                 tap = page.locator("[data-testid^='switchboard-tap-']").first
                 with page.expect_response(lambda r: r.url.endswith("/api/inference/assignments/set")) as written:
                     tap.click()
@@ -411,7 +426,7 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
                 assert current.filter(has_text="qwen3.8 27B").count() == 1, (
                     "The inherited engine must appear under Meetings runs on, not only as an Or alternative"
                 )
-                assert "FOLLOWS DEFAULT" in (current.filter(has_text="qwen3.8 27B").first.text_content() or "")
+                assert "SAME AS EVERYTHING ELSE" in (current.filter(has_text="qwen3.8 27B").first.text_content() or "")
                 assert page.get_by_test_id("switchboard-tap-glass-lan-27b").count() == 0
                 return
 

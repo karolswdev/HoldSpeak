@@ -1,7 +1,7 @@
 // PHILO-16 (C) — Runs on: the Models window as a Switchboard.
 //
 // COMPOSITOR.md §12 "The exemplar: Runs on", canvas Board 2. Composed from
-// the kit: the AppHead (the one fact `N jobs · M engines` with its status
+// the kit: the AppHead (the one fact `M engines` with its status
 // strip), the Switchboard (the app's one species), and the Foot (the
 // receipt `PATCHED <time> · <job> → <engine>`, the egress chip of the last
 // engine used, Undo). A change applies on the drop; there is no Save.
@@ -30,11 +30,15 @@ import {
   DEFAULT_JOB,
   JOB_ORDER,
   SPEECH_JOB,
+  enginePlace,
+  jobName,
   jobState,
   jobOf,
+  leadLine,
   limitTokens,
   ownEntries,
   splitEngines,
+  taskDetail,
   taskLine,
   type BoardEngine,
 } from "./model";
@@ -221,15 +225,19 @@ export function RunsOnCore({ scope }: CoreProps) {
     ) : undefined;
     jobs.push({
       id: job,
-      name: job === DEFAULT_JOB ? "Default for AI work" : job === SPEECH_JOB ? "Speech" : row.label,
+      // PHILO-17 (U16): the card leads with what he gets and where it runs;
+      // the task names are the card's details.
+      name: jobName(job, row),
+      lead: leadLine(job, row, effective),
+      detail: taskDetail(job, roster),
       tasks: taskLine(job, roster, row),
       state: stateClass(word),
       isDefault: job === DEFAULT_JOB,
       verb: layout === "board" ? tryVerb : undefined,
-      runsOn: effective ? effective.name : word,
+      runsOn: effective ? `${effective.name} · on ${enginePlace(effective).words}` : word,
       // C4: the engine the job runs on now, even when it follows the default.
       current: effective?.key,
-      currentToken: effective && row.inherited_from === "global" && job !== DEFAULT_JOB ? "FOLLOWS DEFAULT" : undefined,
+      currentToken: effective && row.inherited_from === "global" && job !== DEFAULT_JOB ? "SAME AS EVERYTHING ELSE" : undefined,
       // The limitation is a token on the job (§12 rule 6), until a Try
       // answers in its place; a repair names itself there too.
       // Astra r1 (finding 5): the setup stays while speech is not ready, also
@@ -334,13 +342,13 @@ export function RunsOnCore({ scope }: CoreProps) {
   );
 
   /* ── the AppHead ── */
-  const jobCount = jobs.length;
   const engineCount = have.filter((e) => e.profileId).length;
   const ready = Object.values(words).filter((w) => w === "READY").length;
   const limited = Object.values(words).filter((w) => w === "LIMITED").length;
   const broken = Object.values(words).filter((w) => w === "BROKEN").length;
   const waiting = Object.values(words).filter((w) => w === "WAITING").length;
-  const fact = engineCount ? `${jobCount} jobs · ${engineCount} ${engineCount === 1 ? "engine" : "engines"}` : `${jobCount} jobs`;
+  // PHILO-17 (U16): the one fact is what he has, never a count of jobs.
+  const fact = engineCount ? `${engineCount} ${engineCount === 1 ? "engine" : "engines"}` : "No engine yet";
   const checked = detection?.checkedAt
     ? wireDate(detection.checkedAt)?.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
     : null;

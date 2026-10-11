@@ -44,6 +44,7 @@ import {
   accepts as acceptsRule,
   buildEngines,
   hostLabel,
+  jobName,
   jobForScope,
   limitTokens,
   offMachine,
@@ -317,7 +318,7 @@ export function useRunsOn(scope?: string) {
           entries: own.map((e) => ({ profile_id: e.profile_id, profile_revision: e.profile_revision })),
           produced: Number(written.revision ?? 0),
         };
-        const label = row.id === "global" ? "Default for AI work" : row.label;
+        const label = jobName(job, row);
         let text = `PATCHED ${clock()} · ${label} → ${engine.name}${asFallback ? " · FALLBACK" : ""}`;
         if (job === MEETINGS_JOB) {
           const before = det?.summaryAssignment ?? null;
@@ -352,7 +353,7 @@ export function useRunsOn(scope?: string) {
   );
 
   const refuse = useCallback((job: string, _key: string, reason: string) => {
-    const label = rowOf(job)?.label ?? job;
+    const label = jobName(job, rowOf(job));
     setReceipt({ text: `REFUSED · ${label.toUpperCase()} · ${reason}`, tone: "danger" });
   }, [rowOf]);
 
@@ -360,7 +361,7 @@ export function useRunsOn(scope?: string) {
     const step = undoStack[undoStack.length - 1];
     if (!step) return;
     const row = rowOf(step.job);
-    const label = step.job === DEFAULT_JOB ? "Default for AI work" : (row?.label ?? step.job);
+    const label = jobName(step.job, row);
     setBusy(true);
     // The step leaves the stack whatever happens: a refused Undo is not
     // retried against a row someone else now owns.

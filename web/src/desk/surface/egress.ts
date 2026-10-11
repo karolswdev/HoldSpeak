@@ -2,7 +2,7 @@
 // Maps a model host string to the label the EgressChip shows and the
 // scope colour it wears.  Four callers (ProjectRoomCore, MeetingHeader,
 // SettingsCore, SystemShade) collapsed here; the vocabulary is:
-//   THIS DEVICE        (local/LOCAL/this_device)
+//   THIS DEVICE        (local/LOCAL/this_device, and loopback: 127.x, localhost)
 //   <ip> · LAN         (RFC-1918 private IPs)
 //   REMOTE · <ip>      (origin=remote with a caller IP)
 //   <host>             (everything else — cloud hosts show as-is)
@@ -10,6 +10,57 @@
 const PRIVATE_IP_RE = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/;
 
 export type EgressScope = "local" | "cloud" | "remote" | undefined;
+
+/** The wire words a model record or a receipt uses for "on this machine". */
+const THIS_MACHINE = new Set(["local", "LOCAL", "this_device", "same_device", "THIS DEVICE"]);
+
+/** `http://127.0.0.1:8899/v1` -> `127.0.0.1`; a bare host stays as it is. */
+export function bareHost(value: string | null | undefined): string {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  try {
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(text)) return new URL(text).hostname.replace(/^\[|\]$/g, "");
+  } catch {
+    // fall through to the plain split
+  }
+  const host = text.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "").split("/")[0] ?? "";
+  // A bare IPv6 address (`::1`) has no port to strip.
+  if ((host.match(/:/g) ?? []).length > 1 && !host.startsWith("[")) return host;
+  if (host.startsWith("[")) return host.slice(1, host.indexOf("]") > 0 ? host.indexOf("]") : undefined);
+  return host.replace(/:\d+$/, "");
+}
+
+/** Loopback: the request never leaves this Mac. */
+export function isLoopbackHost(host: string): boolean {
+  const h = host.toLowerCase();
+  return h === "localhost" || h.endsWith(".localhost") || h === "::1" || h === "0.0.0.0" || /^127\.\d+\.\d+\.\d+$/.test(h);
+}
+
+export type HostPlace = "mac" | "lan" | "cloud";
+
+/**
+ * PHILO-17 (U16): the ONE place a host becomes words. Loopback and the wire
+ * words for "here" are this Mac; a private address (or a `lan` engine) is
+ * its own host name or IP; anything else is the provider's host. Runs on's
+ * lead lines and chips and every egress chip (egressFor) read it.
+ */
+export function hostPlace(
+  hostOrUrl: string | null | undefined,
+  kind?: string | null,
+): { place: HostPlace; host: string; words: string } {
+  const raw = String(hostOrUrl ?? "").trim();
+  const host = THIS_MACHINE.has(raw) ? "" : bareHost(raw);
+  if (THIS_MACHINE.has(raw) || (host && isLoopbackHost(host))) {
+    return { place: "mac", host: "", words: "this Mac" };
+  }
+  if (kind === "cloud") return { place: "cloud", host, words: host || "the internet" };
+  if (kind === "lan" || (host && PRIVATE_IP_RE.test(host))) {
+    return { place: "lan", host, words: host || "your network" };
+  }
+  if (!host) return { place: "mac", host: "", words: "this Mac" };
+  if (kind === "local" || kind === "preset") return { place: "mac", host: "", words: "this Mac" };
+  return { place: "cloud", host, words: host };
+}
 
 /**
  * Derive the egress label and scope for an EgressChip from a raw host
@@ -24,15 +75,11 @@ export function egressFor(host: string | null | undefined): {
   // HS-200-12: `same_device` is the deployment revision's boundary word
   // (holdspeak/deployment_revisions.py:97), the value a bound intel job
   // records as its host when the model runs here; it read as a cloud host.
-  if (host === "local" || host === "LOCAL" || host === "this_device" || host === "same_device") {
-    return { label: "THIS DEVICE", scope: "local" };
-  }
-  if (host === "THIS DEVICE") {
-    return { label: host, scope: "local" };
-  }
-  if (PRIVATE_IP_RE.test(host)) {
-    return { label: `${host} · LAN`, scope: "local" };
-  }
+  // PHILO-17 (U16): a loopback address (`127.0.0.1`) is this machine too;
+  // it read as a cloud host on the meeting, four times.
+  const place = hostPlace(host);
+  if (place.place === "mac") return { label: "THIS DEVICE", scope: "local" };
+  if (place.place === "lan") return { label: `${host} · LAN`, scope: "local" };
   return { label: host, scope: "cloud" };
 }
 

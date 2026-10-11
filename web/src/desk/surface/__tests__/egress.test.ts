@@ -1,6 +1,6 @@
 // HS-172-03 + HS-174-04 — egressFor + egressForEvent: the egress-label + scope mapper.
 import { describe, expect, it } from "vitest";
-import { egressFor, egressForEvent, receiptLabel } from "../egress";
+import { egressFor, egressForEvent, hostPlace, receiptLabel } from "../egress";
 
 describe("egressFor", () => {
   it("returns empty for null/undefined/empty", () => {
@@ -35,6 +35,32 @@ describe("egressFor", () => {
 });
 
 /* ── HS-174-04: egressForEvent — remote origin badge ── */
+
+describe("hostPlace — the one helper for host words (PHILO-17 U16)", () => {
+  it("loopback and the wire words for here are this Mac", () => {
+    for (const host of ["127.0.0.1", "http://127.0.0.1:8899/v1", "localhost", "http://localhost:11434", "::1", "http://[::1]:8080/v1", "local", "same_device", "THIS DEVICE"]) {
+      expect(hostPlace(host)).toEqual({ place: "mac", host: "", words: "this Mac" });
+    }
+    // A loopback server added as a network engine is still this Mac.
+    expect(hostPlace("http://127.0.0.1:8899/v1", "lan").words).toBe("this Mac");
+  });
+
+  it("a server on his network is its host name or IP", () => {
+    expect(hostPlace("http://192.168.1.43:8080/v1")).toEqual({ place: "lan", host: "192.168.1.43", words: "192.168.1.43" });
+    expect(hostPlace("studio.local", "lan")).toEqual({ place: "lan", host: "studio.local", words: "studio.local" });
+    expect(hostPlace("", "lan").words).toBe("your network");
+  });
+
+  it("a cloud engine is its provider's host", () => {
+    expect(hostPlace("openrouter.ai", "cloud")).toEqual({ place: "cloud", host: "openrouter.ai", words: "openrouter.ai" });
+    expect(hostPlace("https://api.openai.com/v1")).toEqual({ place: "cloud", host: "api.openai.com", words: "api.openai.com" });
+  });
+
+  it("egressFor reads it: 127.0.0.1 is THIS DEVICE, never a cloud host", () => {
+    expect(egressFor("127.0.0.1")).toEqual({ label: "THIS DEVICE", scope: "local" });
+    expect(egressFor("localhost")).toEqual({ label: "THIS DEVICE", scope: "local" });
+  });
+});
 
 describe("egressForEvent", () => {
   it("returns REMOTE + caller IP with scope remote for origin=remote", () => {

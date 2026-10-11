@@ -525,6 +525,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     () => readPlannedRoute(meetingRows.find((row) => readPlannedRoute(row))),
     [meetingRows],
   );
+  // PHILO-17 (U16): the foot names the summary engine; the rows and the
+  // open meeting do not say the same host again (one chip per face).
+  const footerHost = faceRoute && routeReady(faceRoute) ? egressFor(faceRoute.legs[0].host).label : null;
   const footerEgress = useMemo(() => {
     // Astra's counsel finding 4: a constant `<EgressChip />` is not
     // evidence of local execution. With no route read at all, the footer
@@ -652,6 +655,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
   const rail = (
     <CatalogRail
+      saidOnFace={footerHost}
       onTranscribe={transcribeMeeting}
       meetingRows={meetingRows}
       restoredId={restoredId}
@@ -668,6 +672,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
   const detailPane = (paneView: DetailView) => (
     <MeetingDetail
+      saidOnFace={footerHost}
       meeting={selected}
       onTranscribe={transcribeMeeting}
       view={paneView}

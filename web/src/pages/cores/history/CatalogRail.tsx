@@ -89,8 +89,11 @@ function MeetingStreamRow({
   isLead,
   restored = false,
   onTranscribe,
+  saidOnFace,
 }: {
   row: Record<string, unknown>;
+  /** PHILO-17 (U16): the engine host the face's foot already names. */
+  saidOnFace?: string | null;
   isSelected: boolean;
   /** PHILO-17 transcribe: start Transcribe on an audio-only meeting. */
   onTranscribe?: (id: string) => Promise<unknown>;
@@ -280,7 +283,7 @@ function MeetingStreamRow({
             POST response's `host` straight to the glass and printed the
             wire word `same_device` at a person (caught by the HS-170 S-3
             rig). One egress chip per row, through the one mapper. */}
-        <RunAttempts receipt={runReceipt} testId="row-attempts" />
+        <RunAttempts receipt={runReceipt} testId="row-attempts" saidOnFace={saidOnFace} />
         {state.verb === "Run summary" || state.verb === "Retry" || isRunning ? (
           <RouteDisclosure route={plannedRoute} testId="row-route" />
         ) : null}
@@ -339,8 +342,12 @@ export function CatalogRail({
   narrowed,
   restoredId = null,
   onTranscribe,
+  saidOnFace,
 }: {
   meetingRows: Record<string, unknown>[];
+  /** PHILO-17 (U16): the engine host the face's foot already names; a row
+   *  does not say it again. */
+  saidOnFace?: string | null;
   /** PHILO-17 transcribe: start Transcribe on an audio-only meeting. */
   onTranscribe?: (id: string) => Promise<unknown>;
   /** PHILO-13-02 — the meeting Restore just brought back. */
@@ -391,6 +398,7 @@ export function CatalogRail({
               isLead={leadId === String(row.id)}
               restored={restoredId === String(row.id)}
               onTranscribe={onTranscribe}
+              saidOnFace={saidOnFace}
               runningId={runningId}
               drainerAbsent={drainerAbsent}
               refusal={

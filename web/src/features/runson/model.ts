@@ -2,6 +2,7 @@
 // board's jobs, engines and wires. Pure; the controller and the tests share it.
 
 import type { Repair } from "../concierge/api";
+import { hostPlace } from "../../desk/surface/egress";
 import type { Detection, Roster, RosterEntry, RosterRow, RunsOnEngine } from "./api";
 import { stateWord, type StateWord } from "./stateWord";
 
@@ -11,7 +12,7 @@ export const SPEECH_JOB = "speech_recognition";
 export const MEETINGS_JOB = "meetings";
 export const THOUGHTS_JOB = "thoughts_notes";
 
-/** The canvas order; the Default for AI work closes the column. */
+/** The canvas order; Everything else (the default) closes the column. */
 export const JOB_ORDER = [
   SPEECH_JOB,
   "writing_dictation",
@@ -22,10 +23,22 @@ export const JOB_ORDER = [
   DEFAULT_JOB,
 ] as const;
 
-const JOB_NAMES: Record<string, string> = {
-  [SPEECH_JOB]: "Speech",
-  [DEFAULT_JOB]: "Default for AI work",
+/** PHILO-17 (U16): a job is named for what the owner gets, never for the
+ *  internal group (`Writing & dictation`, `Default for AI work`). */
+export const JOB_NAMES: Record<string, string> = {
+  [SPEECH_JOB]: "Speech to text",
+  writing_dictation: "Dictation clean-up",
+  [THOUGHTS_JOB]: "Answers and thoughts",
+  [MEETINGS_JOB]: "Meeting summaries",
+  agents_tools: "Agents and recipes",
+  background: "Drafts, nudges and memory",
+  [DEFAULT_JOB]: "Everything else",
 };
+
+/** The job's outcome name; an unknown group keeps the roster's label. */
+export function jobName(job: string, row?: { label?: string } | null): string {
+  return JOB_NAMES[job] ?? (row?.label || job);
+}
 
 export function rosterId(job: string): string {
   return job === DEFAULT_JOB ? "global" : job;
@@ -86,10 +99,27 @@ export function offMachine(engine: BoardEngine): boolean {
   return engine.emblem !== "MAC";
 }
 
+/** Where one engine runs, from the one host helper (desk/surface/egress.ts
+ *  hostPlace): its address when it has one, else its host, read with its
+ *  emblem's kind. */
+export function enginePlace(engine: BoardEngine): ReturnType<typeof hostPlace> {
+  const kind = engine.emblem === "API" ? "cloud" : engine.emblem === "LAN" ? "lan" : "local";
+  return hostPlace(engine.baseUrl || engine.host, kind);
+}
+
 /** The host an egress chip names for one engine. */
 export function hostLabel(engine: BoardEngine): string {
-  if (engine.emblem === "MAC") return "THIS DEVICE";
-  return (engine.host || "NOT SET").toUpperCase();
+  const place = enginePlace(engine);
+  if (place.place === "mac") return "THIS DEVICE";
+  return (place.host || engine.host || "NOT SET").toUpperCase();
+}
+
+/** PHILO-17 (U16): the job card's lead, in plain words: what the owner
+ *  gets and where it runs (`Meeting summaries → Qwen 27B · on this Mac`). */
+export function leadLine(job: string, row: { label?: string } | null | undefined, engine: BoardEngine | undefined): string {
+  const name = jobName(job, row);
+  if (!engine) return `${name} → no engine`;
+  return `${name} → ${engine.name} · on ${enginePlace(engine).words}`;
 }
 
 export function sizeToken(bytes: number | null | undefined): string | null {
@@ -255,13 +285,16 @@ export function jobState(
   return stateWord(row.status);
 }
 
-/** The job's tasks, as one token line. */
-export function taskLine(job: string, roster: Roster | null, row: RosterRow | undefined): string {
-  if (job === DEFAULT_JOB) return "EVERY JOB WITHOUT ITS OWN WIRE";
-  const labels = (roster?.tasks ?? []).filter((t) => t.group.id === job).map((t) => t.label);
-  const parts = labels.slice(0, 2);
-  if (labels.length > 2) parts.push(`${labels.length} TASKS`);
-  if (job === SPEECH_JOB) parts.push("THIS DEVICE ONLY");
-  if (row && row.inherited_from === "global") parts.push("FOLLOWS DEFAULT");
-  return parts.join(" · ").toUpperCase();
+/** The job's tasks, by name: the card's details (its title), never its
+ *  face. */
+export function taskDetail(job: string, roster: Roster | null): string {
+  if (job === DEFAULT_JOB) return "Every job with no engine of its own";
+  return (roster?.tasks ?? []).filter((t) => t.group.id === job).map((t) => t.label).join(" · ");
+}
+
+/** The token line under the lead: only what the lead cannot say. */
+export function taskLine(job: string, _roster: Roster | null, row: RosterRow | undefined): string {
+  const parts: string[] = [];
+  if (row && row.inherited_from === "global") parts.push("SAME AS EVERYTHING ELSE");
+  return parts.join(" · ");
 }
