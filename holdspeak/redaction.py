@@ -31,24 +31,30 @@ _AUTH_VALUE = re.compile(
 #: A URL with a user and a password, redacted up to the ``@``, or to the end
 #: of the text when a cut took the ``@host`` away (#1093). A ``host:port``
 #: is not userinfo: a run of digits after the ``:`` that ends the URL or the
-#: text stays, so ``http://127.0.0.1:8080`` keeps its diagnosis. The scheme
-#: is bounded (at most 32 characters) so a long ``a-a-a-...`` run cannot
-#: make the scan quadratic.
+#: text stays, so ``http://127.0.0.1:8080`` keeps its diagnosis. Only the
+#: scheme is bounded (at most 32 characters, so a long ``a-a-a-...`` run
+#: cannot make the scan quadratic); the user and the password are not, so a
+#: long password is never abandoned (Astra r2).
 _URL_USERINFO = re.compile(
-    r"(?i)(?<![A-Za-z0-9+.-])([a-z][a-z0-9+.-]{0,31}://)[^\s/@:]{1,256}:"
-    r"(?![0-9]{1,5}(?:[/?#\s]|\Z))[^\s/@]{0,512}(@|\Z)"
+    r"(?i)(?<![A-Za-z0-9+.-])([a-z][a-z0-9+.-]{0,31}://)[^\s/@:]+:"
+    r"(?![0-9]{1,5}(?:[/?#\s]|\Z))[^\s/@]*(@|\Z)"
 )
 #: ``Basic dXNlcjpwYXNz`` with no header name (``curl -H 'Basic ...'``).
 _BASIC = re.compile(r"(?<![A-Za-z])(basic\s+)([A-Za-z0-9+/]{8,}={0,2})(?![A-Za-z0-9+/=])", re.IGNORECASE)
 #: A label in quotes, as JSON or a Python dict prints it: ``"api_key":"..."``,
-#: ``'password': '...'``, ``"access_token": bare``. The memory redactor needs
-#: the ``:`` straight after the label, so the closing quote hid these.
+#: ``'password': '...'``, ``"access_token": bare``, and the same with escaped
+#: quotes (``\\"api_key\\":\\"...\\"``, a JSON text inside a JSON string).
+#: The memory redactor needs the ``:`` straight after the label, so the
+#: closing quote hid these. The value parts are unbounded and linear: a
+#: match starts only at a quote before a label, so no bound is needed and a
+#: long value is never abandoned (Astra r2). An unclosed quoted value runs
+#: to the end of the line: a cut text keeps none of it.
 _QUOTED_LABEL = re.compile(
-    r"""(?i)(["'])([A-Za-z0-9_-]{0,40}(?:token|password|passwd|secret|api[_-]?key|apikey|credential))\1"""
-    r"""(\s{0,8}[:=]\s{0,8})("(?:[^"\\\n]|\\.){0,4096}"|'[^'\n]{0,4096}'|[^\s,}\]]{1,4096})"""
+    r"""(?i)(\\?["'])([A-Za-z0-9_-]*(?:token|password|passwd|secret|api[_-]?key|apikey|credential))\1"""
+    r"""(\s*[:=]\s*)(\\"(?:[^"\\\n]|\\(?!"))*(?:\\")?|"(?:[^"\\\n]|\\.)*"?|'[^'\n]*'?|[^\s,}\]]+)"""
 )
 #: Values after a quoted label that are not secrets.
-_PLAIN_VALUES = frozenset({"null", "none", "true", "false", '""', "''"})
+_PLAIN_VALUES = frozenset({"null", "none", "true", "false", ""})
 _DIGIT = re.compile(r"\d")
 
 #: The ``connector_watches.last_error`` column cap.
@@ -75,10 +81,15 @@ def _basic(match: re.Match[str]) -> str:
 
 def _quoted_label(match: re.Match[str]) -> str:
     value = match.group(4)
-    if value.casefold() in _PLAIN_VALUES or value.isdigit():
+    core = value.strip("\\\"'")
+    if core.casefold() in _PLAIN_VALUES or core.isdigit():
         return match.group(0)
-    quote = value[:1] if value[:1] in {'"', "'"} else ""
-    return match.group(1) + match.group(2) + match.group(1) + match.group(3) + quote + REDACTED + quote
+    head = match.group(1) + match.group(2) + match.group(1) + match.group(3)
+    for quote in ('\\"', '"', "'"):
+        if value.startswith(quote):
+            closed = len(value) >= 2 * len(quote) and value.endswith(quote)
+            return head + quote + REDACTED + (quote if closed else "")
+    return head + REDACTED
 
 
 def redact_secrets(text: object) -> str:
@@ -94,21 +105,37 @@ def redact_secrets(text: object) -> str:
     return redact(value)
 
 
-#: The most text one scan reads (P2 6: a bounded cost per call).
+#: The most text a redacted result keeps (P2 6).
 SCAN_BOUND = 65536
-_TRAILING_WORD = re.compile(r"\S+\Z")
+#: The most text one scan reads. The patterns are linear, so the WHOLE text
+#: up to this cap is redacted BEFORE any cut (Astra r2: a cut at 64k could
+#: split a quoted secret). Past the cap the text is cut at its last white
+#: space first, so the cut never leaves the head of a secret.
+HARD_CAP = 1024 * 1024
+
+
+def _cut_at_space(value: str, at: int) -> str:
+    """``value[:at]`` without its last word (a linear ``rfind``)."""
+    head = value[:at]
+    space = max(head.rfind(" "), head.rfind("\n"), head.rfind("\t"))
+    return head[: space + 1] if space >= 0 else ""
 
 
 def redact_bounded(text: object, bound: int = SCAN_BOUND) -> str:
-    """Like :func:`redact_secrets`, but a text longer than ``bound`` is cut
-    at ``bound`` first and ends in a marker. The last word before the cut is
-    dropped too, so the cut never leaves the head of a secret that no
-    pattern knows any more."""
+    """Like :func:`redact_secrets`, with a bounded result: the text (up to
+    :data:`HARD_CAP`) is redacted whole, then cut to ``bound`` with a
+    marker."""
     value = str(text if text is not None else "")
-    if len(value) <= bound:
-        return redact_secrets(value)
-    head = _TRAILING_WORD.sub("", value[:bound])
-    return redact_secrets(head) + f" [cut: {len(value) - len(head)} more characters]"
+    if len(value) > HARD_CAP:
+        value = _cut_at_space(value, HARD_CAP)
+        cut = True
+    else:
+        cut = False
+    out = redact_secrets(value)
+    if len(out) > bound or cut:
+        total = len(str(text if text is not None else ""))
+        return out[:bound] + f" [cut: {total} characters in all]"
+    return out
 
 
 def redact_error(text: object, limit: int | None = None) -> str:
@@ -127,6 +154,6 @@ def redact_source_error(error: object) -> str:
 
 
 __all__ = [
-    "REDACTED", "SCAN_BOUND", "SOURCE_ERROR_CAP", "redact_bounded", "redact_error", "redact_secrets",
+    "HARD_CAP", "REDACTED", "SCAN_BOUND", "SOURCE_ERROR_CAP", "redact_bounded", "redact_error", "redact_secrets",
     "redact_source_error",
 ]

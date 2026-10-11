@@ -345,7 +345,7 @@ def test_r1_pipeline_events_redact_before_the_cut() -> None:
     from holdspeak.services.observer import _failure, _truncate
 
     for text in (_crossing(8192), _crossing(65536)):
-        summary = _truncate({"error_detail": text.strip()})
+        summary = _truncate({"error_detail": text})
         error, _code, _ = _failure(RuntimeError(text))
         for out in (summary, error or ""):
             assert "hunter2pass" not in out and _JWT[:20] not in out, out[:200]
@@ -456,3 +456,73 @@ def test_r1_adversarial_input_finishes_fast() -> None:
         started = time.perf_counter()
         run()
         assert time.perf_counter() - started < 1.0
+
+
+# == Astra r2 on #1095 ======================================================
+
+def test_r2_the_observer_redacts_an_escaped_quoted_label_into_the_row(tmp_path: Any) -> None:
+    from holdspeak.services.observer import _truncate, observed
+    from holdspeak.services.sqlite_observer import SQLiteObserver
+
+    nested = {"error_detail": '{"api_key":"qwertyuiop123"}', "password": "hunter2pass"}
+    assert "qwertyuiop123" not in _truncate(nested) and "hunter2pass" not in _truncate(nested)
+    assert "qwertyuiop123" not in redact_secrets('{\\"api_key\\":\\"qwertyuiop123\\"}')
+    assert "qwertyuiop123" not in redact_secrets('{\\"api_key\\": \\"qwertyuiop123 and more\\"}')
+
+    db = Database(tmp_path / "events.db")
+
+    class Probe:
+        _observer = SQLiteObserver(db._connection)
+
+        @observed
+        def read(self, principal: Any, query: dict) -> dict:
+            return {"error_detail": '{"api_key":"qwertyuiop123"}'}
+
+        @observed
+        def fail(self, principal: Any) -> None:
+            raise RuntimeError('{"api_key":"qwertyuiop123"} {"token": "zxcvbnm0987654321"}')
+
+    Probe().read(OWNER, {"note": '{"password":"hunter2pass"}'})
+    with pytest.raises(RuntimeError):
+        Probe().fail(OWNER)
+    with db._connection() as conn:
+        rows = [dict(r) for r in conn.execute("SELECT * FROM pipeline_events")]
+    assert len(rows) == 2
+    dumped = json.dumps(rows, default=str)
+    for secret in ("qwertyuiop123", "hunter2pass", "zxcvbnm0987654321"):
+        assert secret not in dumped, dumped
+
+
+def test_r2_long_values_are_never_abandoned(tmp_path: Any) -> None:
+    from holdspeak.services.github_provider import GitHubProviderAdapter
+
+    password = "p" * 600
+    stderr = f"fatal: https://octo:{password}@github.com/acme/app.git\n" + '{"api_key":          "qwertyuiop123"}'
+    db = Database(tmp_path / "gh-long.db")
+    probe = GitHubProviderAdapter(db=db, runner=_completed(stderr)).connection_status(OWNER)
+    found = json.dumps([probe, _stored_error_details(db)])
+    assert "p" * 20 not in found, found[:300]
+    assert "qwertyuiop123" not in found, found
+    assert "p" * 20 not in redact_secrets(f"https://octo:{password}@x.com")
+    assert "qwertyuiop123" not in redact_secrets('"api_key" :           "qwertyuiop123"')
+
+
+def test_r2_the_64k_cut_never_splits_a_quoted_secret() -> None:
+    from holdspeak.redaction import redact_bounded
+
+    witness = " " * 65510 + '{"password":"alpha beta gamma"}'
+    out = redact_bounded(witness)
+    assert "beta" not in out and "gamma" not in out and "alpha" not in out, out[-200:]
+    assert "beta" not in redact_error(witness, 70000)
+
+
+def test_r2_the_cut_is_linear() -> None:
+    import time
+
+    from holdspeak.redaction import redact_bounded
+
+    for hostile in ("a" * 65535 + " " + "tail", " ".join(["a" * 5000] * 40), ("a" * 70000 + " ") * 3):
+        started = time.perf_counter()
+        redact_bounded(hostile)
+        redact_error(hostile, 500)
+        assert time.perf_counter() - started < 1.0, len(hostile)
