@@ -6,7 +6,7 @@ endpoint (its model discovery is the one stand-in, so nothing reaches
 api.openai.com), the Concierge's summary selection assigns it, and the hub's
 own reads (the meeting's planned route, ``/api/setup/status`` trust) name it.
 The Trust window and the egress badge drawn from this answer are fenced in
-``web/src/desk/__tests__/trust.app.test.tsx``.
+``web/src/desk/__tests__/trustWindow.app.test.tsx``.
 """
 from __future__ import annotations
 
