@@ -1,0 +1,226 @@
+/** The palette (⌘K), app file: what the browser walks of the palette proved,
+ * moved here by the test diet (2026-10-11).
+ *
+ * Most palette facts already sit in paletteMemory.test.tsx,
+ * paletteTwoLine.test.tsx and palette.philo1314.test.tsx; this file holds
+ * only the legs those files did not assert. Real store, real palette, real
+ * opener, real desk read (loadAll); the hub transport is the double, and
+ * each wire shape below is the hub's own answer, copied from a run of the
+ * real routes on an isolated hub (2026-10-11). */
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import chromeMenusCss from "../components/chrome-menus.css?raw";
+import tokensCss from "../../styles/tokens.css?raw";
+
+const apiFetch = vi.fn();
+vi.mock("../../lib/api", async () => {
+  const actual = await vi.importActual<typeof import("../../lib/api")>("../../lib/api");
+  return { ...actual, apiFetch: (...args: unknown[]) => apiFetch(...args) };
+});
+vi.mock("../shell", async () => {
+  const actual = await vi.importActual<typeof import("../shell")>("../shell");
+  return { ...actual, openSurface: () => true, openSurfaceOr: () => {} };
+});
+vi.mock("../setup", () => ({ loadSetup: vi.fn(() => Promise.resolve(null)) }));
+
+import { EMPTY_ITEMS, __resetHeldObjects, fromWireMeeting } from "../api";
+import type { Meeting, Note } from "../../lib/primitives";
+import { useDesk } from "../store";
+import { usePalette } from "../chromeState";
+import { DeskToolShelf, MEMORY_DEBOUNCE_MS } from "../components/DeskToolShelf";
+
+/* The hub's list row for a meeting whose speakers are Dana Okafor and Me
+ * (GET /api/meetings?limit=24, `db.meetings.save_meeting`, intel off). */
+const VENDOR_ROW = {
+  id: "m-vendor", started_at: "2026-10-11T04:00:00", ended_at: "2026-10-11T04:30:00",
+  title: "Vendor roadmap review", duration_seconds: 1800.0, segment_count: 2, action_item_count: 0, tags: [],
+  intel_status: "disabled", intel_status_detail: null, intel_model_host: null, intel_duration_s: null,
+  capture_status: "finalized", capture_failure: null, capture_checkpoint_seconds: 0.0,
+  transcription_status: "active", transcription_status_detail: null, provenance: "desktop",
+  calendar_event_id: null, attendees: ["Dana Okafor", "Me"], parked: false, transcriptWords: 9, unclearSpans: 0,
+  needs_you_count: 0, has_summary: false,
+  planned_route: { status: "unavailable", reason_code: "no assignment", selection_hash: null, legs: [] },
+  run_receipt: null, last_refusal: null, intel_job: null,
+};
+
+/* The hub's read of one meeting by id (GET /api/meetings/m-old-00). */
+const OLD_MEETING = {
+  id: "m-old-00", parked: false, started_at: "2026-08-30T09:00:00", ended_at: "2026-08-30T09:20:00",
+  duration: 1200.0, formatted_duration: "20:00", title: "Finance migration sync", tags: [],
+  segments: [{ text: "The numbat migration waits for finance.", speaker: "Me", speaker_id: null,
+    start_time: 1.0, end_time: 3.0, is_bookmarked: false, device_id: null }],
+  bookmarks: [], intel: null,
+  intel_status: { state: "disabled", detail: null, requested_at: null, completed_at: null },
+  mic_label: "Me", remote_label: "Remote", web_url: null, capture_status: "finalized", capture_failure: null,
+  transcription_status: "active", transcription_status_detail: null, capture_checkpoint_at: null,
+  capture_checkpoint_seconds: 0.0, provenance: "desktop", calendar_event_id: null, transcriptWords: 6,
+  unclearSpans: 0, sync_modified_at: "2026-10-11T09:26:30.286355", devices: [],
+  planned_route: { status: "unavailable", reason_code: "no assignment", selection_hash: null, legs: [] },
+  run_receipt: null, last_refusal: null, intel_job: null, intel_model_host: null,
+};
+
+/* The hub's memory hit for `numbat` (GET /api/memory/search). */
+const NUMBAT_HIT = {
+  kind: "meeting", source_ref: "meeting:m-old-00", title: "Finance migration sync",
+  snippet: "The <mark>numbat</mark> migration waits for finance.", occurred_at: "2026-08-30T15:00:00+00:00",
+  project_id: null, bm25: -0.4897364925095966, normalized_score: 1.0, kind_rank: 1, rank: 1,
+  retrieval_origin: "lexical", related_to: null, relationship: null, graph_score: 0.0,
+};
+
+let routes: Record<string, () => unknown> = {};
+
+beforeEach(() => {
+  __resetHeldObjects();
+  localStorage.clear();
+  usePalette.setState({ open: false });
+  routes = {};
+  apiFetch.mockReset();
+  apiFetch.mockImplementation((path: string) => {
+    const hit = routes[path] ?? routes[path.split("?")[0]];
+    return Promise.resolve(hit ? hit() : {});
+  });
+  useDesk.setState({
+    items: { ...EMPTY_ITEMS },
+    projects: [],
+    inferenceTargets: [],
+    models: [],
+    setup: null,
+    selectedIds: [],
+    panelOrder: [],
+    panelMin: [],
+    openPullout: vi.fn(),
+    refresh: vi.fn().mockResolvedValue(undefined),
+    openToolInspector: vi.fn(),
+    diveInto: vi.fn(),
+    focusPanel: vi.fn(),
+    restorePanel: vi.fn(),
+  });
+});
+
+async function settle(ms = 0) {
+  await act(async () => { await new Promise((r) => setTimeout(r, ms)); });
+}
+
+async function deck() {
+  render(<MemoryRouter><DeskToolShelf /></MemoryRouter>);
+  fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+  await settle();
+  return screen.getByRole("combobox", { name: "Search tools and Desk items" });
+}
+
+async function type(input: HTMLElement, q: string, wait = 0) {
+  fireEvent.change(input, { target: { value: q } });
+  await settle(wait);
+}
+
+const rows = () => screen.queryAllByRole("option");
+const top = () => rows().find((o) => o.className.includes("is-selected"));
+
+describe("the palette finds the right row and opens it", () => {
+  it("a word inside one of three thoughts lists that thought only", async () => {
+    // replaces: tests/e2e/test_philo13_14_palette_glass.py::TestPaletteKnowsHisWeek::test_the_palette_knows_his_week_and_does_verbs (leg 3)
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [
+      { kind: "note", id: "n-a", title: "Thought", bodyMarkdown: "Lunch on Friday with the team.", tags: [], createdAt: "" } as Note,
+      { kind: "note", id: "n-b", title: "Thought", bodyMarkdown: "Ask Jordan about the Kafka offsets before the cutover.", tags: [], createdAt: "" } as Note,
+      { kind: "note", id: "n-c", title: "Thought", bodyMarkdown: "Book the offsite room.", tags: [], createdAt: "" } as Note,
+    ] } });
+    const input = await deck();
+    await type(input, "kafka");
+    const ids = rows().map((o) => o.id.replace("desk-palette-option-", ""));
+    expect(ids[0]).toBe("note:n-b");
+    expect(ids).not.toContain("note:n-a");
+    expect(ids).not.toContain("note:n-c");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(useDesk.getState().openPullout).toHaveBeenCalledWith("note:n-b");
+  });
+
+  it("an attendee's name finds the meeting from the hub's list row, top, and one press opens it", async () => {
+    // replaces: tests/e2e/test_philo13_14_palette_glass.py::TestPaletteKnowsHisWeek::test_a_meeting_is_found_by_an_attendee
+    const meeting = fromWireMeeting(VENDOR_ROW) as Meeting;
+    // The premise: her name is in no field of the row but `attendees`.
+    const { attendees: _a, ...rest } = VENDOR_ROW;
+    expect(JSON.stringify(rest).toLowerCase()).not.toContain("dana");
+    useDesk.setState({ items: { ...EMPTY_ITEMS, meeting: [meeting] } });
+    const input = await deck();
+    await type(input, "Dana");
+    const first = top();
+    expect(first?.id).toBe("desk-palette-option-meeting:m-vendor");
+    expect(first?.textContent).toContain("Vendor roadmap review");
+    expect(first?.textContent).toContain("MEETING");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(useDesk.getState().openPullout).toHaveBeenCalledWith("meeting:m-vendor");
+  });
+
+  it("a meeting older than the desk's list opens from its MEMORY row, read by id first", async () => {
+    // replaces: tests/e2e/test_palette_memory_glass.py::TestPaletteFindsAWordInsideAMeeting::test_a_thing_older_than_its_desk_list_opens_from_its_memory_row[numbat-memory:meeting:m-old-00-...]
+    routes["/api/memory/search"] = () => ({ hits: [NUMBAT_HIT] });
+    routes["/api/meetings?limit=24"] = () => ({ meetings: [VENDOR_ROW] });   // the list does not hold it
+    routes["/api/meetings/m-old-00"] = () => OLD_MEETING;
+    const order: string[] = [];
+    const refresh = vi.fn(async () => {
+      order.push("refresh");
+      const { loadAll } = await import("../api");
+      useDesk.setState({ items: (await loadAll()).items });
+    });
+    useDesk.setState({ refresh, openPullout: vi.fn(() => { order.push("open"); }) });
+    const input = await deck();
+    await type(input, "numbat", MEMORY_DEBOUNCE_MS + 60);
+    fireEvent.click(screen.getByRole("option", { name: /Finance migration sync/ }));
+    await vi.waitFor(() => expect(useDesk.getState().openPullout).toHaveBeenCalledWith("meeting:m-old-00"));
+    expect(order).toEqual(["refresh", "open"]);
+    const held = useDesk.getState().items.meeting.find((m) => m.id === "m-old-00");
+    // The window draws the object's own words.
+    expect(held?.segments?.map((s) => s.text)).toEqual(["The numbat migration waits for finance."]);
+    expect(apiFetch.mock.calls.map(([p]) => p)).toContain("/api/meetings/m-old-00");
+  });
+});
+
+/* ── the selected plate, computed from the tokens (CSS legs) ── */
+function token(name: string): string {
+  const m = new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})\\b`).exec(tokensCss);
+  if (!m) throw new Error(`token ${name} has no hex value`);
+  return m[1];
+}
+function luminance(hex: string): number {
+  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+    .map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function contrast(a: string, b: string): number {
+  const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+}
+/** The declarations of the one rule whose selector list holds `selector`. */
+function ruleFor(selector: string): string {
+  for (const block of chromeMenusCss.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+    const selectors = block[1].replace(/\/\*[\s\S]*?\*\//g, "").split(",").map((s) => s.trim());
+    if (selectors.includes(selector)) return block[2];
+  }
+  throw new Error(`no rule for ${selector}`);
+}
+const varOf = (decls: string, prop: string) =>
+  new RegExp(`(?:^|[;\\s{])${prop}:\\s*var\\((--[\\w-]+)\\)`).exec(decls)?.[1] ?? null;
+
+describe("the selected palette plate (CSS)", () => {
+  // replaces: tests/e2e/test_palette_two_line_glass.py::TestPaletteTwoLineHit::test_keyword_and_meaning_hits_draw_two_lines (the `N OPEN` badge leg, Astra #1039)
+  const plate = varOf(ruleFor(".desk-next .desk-deck-row.is-selected"), "background");
+
+  it.each([".is-selected", ":hover:not(.is-ghost)", ":focus-visible:not(.is-ghost)"])(
+    "a badge on the %s plate has no wash and reads >= 4.5:1",
+    (state) => {
+      const decls = ruleFor(`.desk-next .desk-deck-row${state} .desk-deck-badge`);
+      expect(decls).toMatch(/background:\s*transparent/);
+      const ink = varOf(decls, "color");
+      expect(plate && ink).toBeTruthy();
+      expect(contrast(token(plate!), token(ink!))).toBeGreaterThanOrEqual(4.5);
+    },
+  );
+
+  it("the snippet is the sans face, on a line of its own", () => {
+    // replaces: tests/e2e/test_palette_two_line_glass.py::TestPaletteTwoLineHit::test_keyword_and_meaning_hits_draw_two_lines (the snippet font leg)
+    const decls = ruleFor(".desk-next .desk-deck-snippet");
+    expect(decls).toMatch(/font:[^;]*var\(--font-sans\)/);
+    expect(decls).toMatch(/flex:\s*1 0 100%/);
+  });
+});
