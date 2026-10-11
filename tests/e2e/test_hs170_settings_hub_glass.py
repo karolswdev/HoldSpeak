@@ -365,6 +365,21 @@ def test_settings_people_edits_name_and_alias_after_setup(
                 raise AssertionError(f"alias chip missing after reload: server owner={owner}")
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
             assert _shot(page, f"settings-people-owner-{width}").exists()
+
+            # PHILO-17 words: an edit then an immediate reload (well inside the
+            # 600 ms save delay) still lands: the page flushes it on pagehide.
+            alias = page.locator("[data-testid='settings-owner-aliases'] input")
+            alias.fill("Karolek")
+            alias.press("Enter")
+            page.reload(wait_until="commit")
+            page.wait_for_load_state("load")
+            owner = {}
+            for _ in range(20):
+                owner = _api(page, "GET", "/api/settings", token=TOKEN).get("owner") or {}
+                if "Karolek" in (owner.get("aliases") or []):
+                    break
+                page.wait_for_timeout(100)
+            assert owner.get("aliases") == ["Carol", "Karolek"], owner
             browser.close()
     finally:
         server.stop()

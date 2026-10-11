@@ -5,6 +5,7 @@
  * reads them as "me" (holdspeak/services/needs_you_membership.py). */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
+import { useFlushOnLeave } from "../../lib/flushOnLeave";
 
 export interface OwnerSetting {
   name: string;
@@ -35,6 +36,7 @@ export function useOwnerName() {
   const timer = useRef(0);
   const latest = useRef<OwnerSetting>({ name: "", aliases: [] });
   const touched = useRef(false);
+  const pending = useRef(false);
 
   useEffect(() => {
     let live = true;
@@ -57,13 +59,16 @@ export function useOwnerName() {
     };
   }, []);
 
-  const save = useCallback(async () => {
+  const save = useCallback(async (keepalive = false) => {
     window.clearTimeout(timer.current);
+    pending.current = false;
     const owner = latest.current;
     try {
       const result = await apiFetch<{ settings?: { owner?: OwnerSetting } }>("/api/settings", {
         method: "PUT",
         json: { owner },
+        // On page leave the request must outlive the page.
+        ...(keepalive ? { keepalive: true } : {}),
       });
       setSaved(result.settings?.owner ?? owner);
       setError("");
@@ -76,11 +81,17 @@ export function useOwnerName() {
     (owner: OwnerSetting) => {
       touched.current = true;
       latest.current = owner;
+      pending.current = true;
       window.clearTimeout(timer.current);
       timer.current = window.setTimeout(() => void save(), SAVE_AFTER_MS);
     },
     [save],
   );
+
+  // PHILO-17 words: a reload inside the delay lost the edit. Send it now.
+  useFlushOnLeave(() => {
+    if (pending.current) void save(true);
+  });
 
   const setName = useCallback(
     (next: string) => {
@@ -116,6 +127,6 @@ export function useOwnerName() {
     setName,
     addAliases,
     removeLastAlias,
-    flush: save,
+    flush: () => save(),
   };
 }

@@ -16,6 +16,7 @@ import type {
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { documentBuildId } from "../../lib/buildId";
+import { useFlushOnLeave } from "../../lib/flushOnLeave";
 import { useResource } from "../pageSupport";
 import { SurfaceState } from "../../desk/surface/Surface";
 import {
@@ -1358,7 +1359,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       (pending) => pending.id !== id,
     );
   };
-  const performSave = async (job: SettingsWriteJob) => {
+  const performSave = async (job: SettingsWriteJob, keepalive = false) => {
     // HS-200-41 (return-to-task, focus half): the control the owner was on
     // when this write began, captured BEFORE the await — see the
     // do-not-steal rule in `desk/returnToTask.ts`.
@@ -1381,6 +1382,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
           json: revisionRef.current
             ? { ...payload, _revision: revisionRef.current }
             : payload,
+          // PHILO-17 words: a flush on page leave outlives the page.
+          ...(keepalive ? { keepalive: true } : {}),
         },
       );
       const authoritative = result.settings ?? payload;
@@ -1409,12 +1412,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
       setSaving(false);
     }
   };
-  const save = (changes: Array<[string[], unknown]>): Promise<boolean> => {
+  const save = (changes: Array<[string[], unknown]>, keepalive = false): Promise<boolean> => {
     const job = { id: ++nextJobIdRef.current, changes };
     pendingJobsRef.current.push(job);
     const next = saveQueue.current.then(
-      () => performSave(job),
-      () => performSave(job),
+      () => performSave(job, keepalive),
+      () => performSave(job, keepalive),
     );
     saveQueue.current = next.then(
       () => undefined,
@@ -1434,6 +1437,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
     }, 700);
   };
   const update = (path: string[], next: unknown) => updateMany([[path, next]]);
+  // PHILO-17 words: a reload inside the 700 ms delay lost the edit. When the
+  // page hides, the pending edit is sent at once.
+  useFlushOnLeave(() => {
+    clearTimeout(saveTimer.current);
+    const pending = debouncedChangesRef.current;
+    debouncedChangesRef.current = [];
+    if (pending.length) void save(pending, true);
+  });
   const commitMany = async (changes: Array<[string[], unknown]>) => {
     installSettingsChanges(resource.data, changes, resource.setData);
     setRefusal("");
