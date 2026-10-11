@@ -341,8 +341,11 @@ describe("Mounted-path: full draft-to-publish walk", () => {
       expect(screen.getByTestId("update-posture")).toBeTruthy();
     });
 
-    // Click "Draft" to create a deterministic draft
-    const draftBtn = screen.getByTestId("update-verb-draft-deterministic");
+    // Click "Draft" to create a deterministic draft. Draft waits for the
+    // engine read (#1084): wait until that read answers "no engine".
+    await screen.findByTestId("update-no-engine");
+    const draftBtn = screen.getByTestId("update-verb-draft-deterministic") as HTMLButtonElement;
+    expect(draftBtn.disabled).toBe(false);
     fireEvent.click(draftBtn);
 
     // Editor opens with DeskEditor (mocked as textarea)
