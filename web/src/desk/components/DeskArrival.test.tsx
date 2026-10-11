@@ -28,13 +28,15 @@ describe("Phase 93 Desk arrival", () => {
   });
 
   // PHILO-17: the empty Floor (EmptyDesk) is parked with the Floor.
-  it("keeps every moved advanced route in the Desk tool shelf", () => {
+  it("keeps every moved advanced route in the Desk tool shelf", async () => {
     render(
       <MemoryRouter>
         <DeskToolShelf />
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    // PHILO-17 (palette-rank): the list draws once its ranking reads resolve.
+    await screen.findByRole("listbox", {}, { timeout: 2000 });
     expect(
       screen.getByRole("option", { name: /^New Note\b/ }),
     ).toBeInTheDocument();
@@ -55,7 +57,7 @@ describe("Phase 93 Desk arrival", () => {
     }
   });
 
-  it("finds a Desk object and opens its existing inspector", () => {
+  it("finds a Desk object and opens its existing inspector", async () => {
     const openPullout = vi.fn();
     useDesk.setState({
       items: {
@@ -70,6 +72,8 @@ describe("Phase 93 Desk arrival", () => {
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    // PHILO-17 (palette-rank): the list draws once its ranking reads resolve.
+    await screen.findByRole("listbox", {}, { timeout: 2000 });
     fireEvent.change(
       screen.getByRole("combobox", { name: "Search tools and Desk items" }),
       { target: { value: "release" } },
@@ -78,7 +82,7 @@ describe("Phase 93 Desk arrival", () => {
     expect(openPullout).toHaveBeenCalledWith("note:n1");
   });
 
-  it("discovers Project, Integration, and Runs on resources without Studio", () => {
+  it("discovers Project, Integration, and Runs on resources without Studio", async () => {
     const openToolInspector = vi.fn();
     useDrawers.setState({ drawers: [], infos: [] });
     const openRoom = vi.fn();
@@ -151,6 +155,8 @@ describe("Phase 93 Desk arrival", () => {
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    // PHILO-17 (palette-rank): the list draws once its ranking reads resolve.
+    await screen.findByRole("listbox", {}, { timeout: 2000 });
 
     // The cold deck keeps SETTINGS intentionally dense; every resource remains
     // discoverable through its own combobox query.
@@ -166,6 +172,8 @@ describe("Phase 93 Desk arrival", () => {
     expect(openToolInspector).not.toHaveBeenCalledWith("project", "orion");
 
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    // PHILO-17 (palette-rank): the list draws once its ranking reads resolve.
+    await screen.findByRole("listbox", {}, { timeout: 2000 });
     const reopenedSearch = screen.getByRole("combobox", {
       name: "Search tools and Desk items",
     });
@@ -178,7 +186,7 @@ describe("Phase 93 Desk arrival", () => {
     unregisterProject();
   });
 
-  it("reveals only ready actions that accept selected material", () => {
+  it("reveals only ready actions that accept selected material", async () => {
     const openPullout = vi.fn();
     useDesk.setState({
       items: {
@@ -223,6 +231,8 @@ describe("Phase 93 Desk arrival", () => {
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    // PHILO-17 (palette-rank): the list draws once its ranking reads resolve.
+    await screen.findByRole("listbox", {}, { timeout: 2000 });
 
     const action = screen.getByRole("option", {
       name: /Ask Scout about Release checklist/,
