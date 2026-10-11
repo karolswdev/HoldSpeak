@@ -78,7 +78,7 @@ def _migrate_writing_routes(db: Database, broker: Any) -> None:
 
 
 def _record_audio_only(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, route_model: str = "base"
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, route_model: str = "base", intel: bool = True
 ) -> tuple[Database, Any, Path, Any]:
     """Record a meeting while speech is not set up, through the real journal.
 
@@ -117,8 +117,8 @@ def _record_audio_only(
     session = MeetingSession(
         None,
         principal=MIGRATION_OWNER,
-        intel_enabled=True,
-        intel_deferred_enabled=True,
+        intel_enabled=intel,
+        intel_deferred_enabled=intel,
         transcriber_factory=lambda frozen: None,  # type: ignore[arg-type,return-value]
         transcription_backend="mlx",
         transcription_model_name=route_model,
@@ -406,3 +406,55 @@ def test_transcribe_is_one_owner_only_operation_on_http_and_mcp() -> None:
     assert descriptor.exposure == ("http:POST /api/meetings/{meeting_id}/transcribe", "mcp:meeting.transcribe")
     assert "meeting.transcribe" in {tool["name"] for tool in TOOLS}
     assert TOOL_AUTHORITY["meeting.transcribe"] == "work"
+
+
+@pytest.mark.parametrize("consent", [True, False])
+def test_a_transcribed_meeting_follows_the_summary_after_every_meeting_rule(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, consent: bool
+) -> None:
+    """#1064's rule, as at Stop and Import: with the owner's consent (a
+    chosen or local engine) the summary is queued with its disclosed route;
+    without it the meeting waits in the backlog and no job is made."""
+    # The web Record is capture-only (no live summary), as here: Stop
+    # queues no job over the empty transcript.
+    from tests.unit.test_hs172_loop_wire import assign_meeting_engine
+
+    db, stopped, _home, _config = _record_audio_only(tmp_path, monkeypatch, intel=False)
+    assign_meeting_engine(db)  # a summary engine: the route is ready
+    _speech(monkeypatch, ready=True)
+    woke: list[bool] = []
+    monkeypatch.setattr("holdspeak.services.meeting_backlog_service._configured_auto_mode", lambda: "every")
+    monkeypatch.setattr("holdspeak.services.meeting_backlog_service.backlog_consent",
+                        lambda _db: {"allowed": consent})
+    monkeypatch.setattr("holdspeak.intel_queue_conductor.wake_intel_queue_conductor", lambda: woke.append(True))
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM intel_jobs").fetchone()[0] == 0
+    from holdspeak.services import meeting_backlog_service
+
+    real = meeting_backlog_service.queue_after_save
+    outcomes: list[Any] = []
+
+    def spy(*args: Any, **kwargs: Any) -> Any:
+        try:
+            outcome = real(*args, **kwargs)
+        except Exception as exc:  # noqa: BLE001 — the fence names it
+            outcomes.append(repr(exc))
+            raise
+        outcomes.append(outcome)
+        return outcome
+
+    monkeypatch.setattr(meeting_backlog_service, "queue_after_save", spy)
+
+    _transcribe(MeetingService(db), stopped.id, _Factory(_ReplayTranscriber()))
+    _join_worker(stopped.id)
+
+    assert db.meetings.get_meeting(stopped.id).transcription_status == "complete"
+    with db._connection() as conn:
+        jobs = {str(r["meeting_id"]): str(r["status"]) for r in conn.execute("SELECT meeting_id, status FROM intel_jobs")}
+        marks = {str(r[0]) for r in conn.execute("SELECT meeting_id FROM meeting_summary_backlog")}
+    if consent:
+        assert outcomes == [{"queued": True, "reason": "queued"}], outcomes
+        assert jobs == {stopped.id: "queued"} and woke == [True]
+    else:
+        assert outcomes == [{"queued": False, "reason": "waiting_consent"}], outcomes
+        assert jobs == {} and marks == {stopped.id} and woke == []

@@ -113,6 +113,22 @@ def notify_desk_changed(kind: str, obj_id: str, op: str) -> None:
 
 
 
+def _queue_summary_after_transcribe(db: Database, meeting_id: str) -> None:
+    """The same automatic-summary rule as Stop and Import (#1064,
+    ``meeting_backlog_service.queue_after_save``): a chosen or local engine
+    queues the summary with its disclosed route; otherwise the meeting is
+    marked for the backlog. The transcript stands if this fails."""
+    try:
+        from .meeting_backlog_service import queue_after_save
+
+        if queue_after_save(db, meeting_id).get("queued"):
+            from ..intel_queue_conductor import wake_intel_queue_conductor
+
+            wake_intel_queue_conductor()
+    except Exception:  # noqa: BLE001 — the summary waits for a press.
+        _LOG.warning("summary after transcribe not queued for %s", meeting_id, exc_info=True)
+
+
 def _speech_construction(frozen: dict[str, str] | None, config: Config) -> dict[str, str]:
     """PHILO-17 transcribe: the model, backend and language Transcribe uses.
 
@@ -515,17 +531,17 @@ class MeetingService:
             )
             session.close("succeeded")
             closed = True
-            # The same summary rule as an import: no summary is asked here;
-            # the meeting lands with its "Run summary" verb. Astra r2: the
-            # completion write is inside the recovery, so a failed write
-            # releases the claim with its cause and keeps the retry marker.
+            # Astra r2: the completion write is inside the recovery, so a
+            # failed write releases the claim with its cause and keeps the
+            # retry marker.
             summary = (
-                "No summary yet. Ask for it on the meeting."
-                if config.meeting.intel_enabled and config.meeting.intel_deferred_enabled
+                "No summary yet." if config.meeting.intel_enabled
                 else "Meeting intelligence disabled in config."
             )
             if not meetings.complete_transcription(meeting_id, token, segments, intel_status_detail=summary):
                 _LOG.warning("meeting transcribe %s: the claim is gone; the result is not written", meeting_id)
+            elif config.meeting.intel_enabled:
+                _queue_summary_after_transcribe(self._db, meeting_id)
         except MeetingImportError as exc:
             _LOG.warning("meeting transcribe %s failed: %s", meeting_id, exc)
             release(exc.cause)
