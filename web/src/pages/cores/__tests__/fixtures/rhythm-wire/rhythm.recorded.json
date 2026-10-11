@@ -1,0 +1,1199 @@
+{
+ "change": {
+  "steps": [
+   {
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 0,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": []
+     },
+     "/api/settings/heartbeat": {
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": null,
+      "last_sweep_at": null,
+      "muted_projects": [],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 15
+     }
+    },
+    "name": "before"
+   },
+   {
+    "answer": {
+     "last_notified_count": 0,
+     "last_notified_items": {},
+     "last_notify_outcome": "",
+     "last_remote_run_at": null,
+     "last_sweep_at": null,
+     "muted_projects": [],
+     "next_sweep_at": null,
+     "notify": "edge",
+     "quiet_hours": {
+      "end": 8,
+      "start": 22
+     },
+     "remote_hosts": [],
+     "report_merged_prs": true,
+     "runs_on": "local",
+     "sweep_every_minutes": 30
+    },
+    "body": {
+     "sweep_every_minutes": 30
+    },
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 1,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": []
+     },
+     "/api/settings/heartbeat": {
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": null,
+      "last_sweep_at": null,
+      "muted_projects": [],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 30
+     }
+    },
+    "method": "PUT",
+    "name": "PUT /api/settings/heartbeat",
+    "path": "/api/settings/heartbeat"
+   }
+  ]
+ },
+ "mute": {
+  "project": "proj-4d07d14d4fef",
+  "steps": [
+   {
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 0,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": [
+       {
+        "context": {},
+        "created_at": "2026-10-11T16:23:52.123672",
+        "description": "",
+        "detection_threshold": 0.4,
+        "id": "proj-4d07d14d4fef",
+        "is_archived": false,
+        "keywords": [],
+        "meeting_count": 0,
+        "name": "Q4 Platform",
+        "team_members": [],
+        "updated_at": "2026-10-11T16:23:52.123672"
+       }
+      ]
+     },
+     "/api/settings/heartbeat": {
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": null,
+      "last_sweep_at": null,
+      "muted_projects": [],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 15
+     }
+    },
+    "name": "before"
+   },
+   {
+    "answer": {
+     "last_notified_count": 0,
+     "last_notified_items": {},
+     "last_notify_outcome": "",
+     "last_remote_run_at": null,
+     "last_sweep_at": null,
+     "muted_projects": [
+      "proj-4d07d14d4fef"
+     ],
+     "next_sweep_at": null,
+     "notify": "edge",
+     "quiet_hours": {
+      "end": 8,
+      "start": 22
+     },
+     "remote_hosts": [],
+     "report_merged_prs": true,
+     "runs_on": "local",
+     "sweep_every_minutes": 15
+    },
+    "body": {
+     "muted_projects": [
+      "proj-4d07d14d4fef"
+     ]
+    },
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 1,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": [
+       {
+        "context": {},
+        "created_at": "2026-10-11T16:23:52.123672",
+        "description": "",
+        "detection_threshold": 0.4,
+        "id": "proj-4d07d14d4fef",
+        "is_archived": false,
+        "keywords": [],
+        "meeting_count": 0,
+        "name": "Q4 Platform",
+        "team_members": [],
+        "updated_at": "2026-10-11T16:23:52.123672"
+       }
+      ]
+     },
+     "/api/settings/heartbeat": {
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": null,
+      "last_sweep_at": null,
+      "muted_projects": [
+       "proj-4d07d14d4fef"
+      ],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 15
+     }
+    },
+    "method": "PUT",
+    "name": "PUT /api/settings/heartbeat",
+    "path": "/api/settings/heartbeat"
+   },
+   {
+    "answer": {
+     "last_notified_count": 0,
+     "last_notified_items": {},
+     "last_notify_outcome": "",
+     "last_remote_run_at": null,
+     "last_sweep_at": null,
+     "muted_projects": [],
+     "next_sweep_at": null,
+     "notify": "edge",
+     "quiet_hours": {
+      "end": 8,
+      "start": 22
+     },
+     "remote_hosts": [],
+     "report_merged_prs": true,
+     "runs_on": "local",
+     "sweep_every_minutes": 15
+    },
+    "body": {
+     "muted_projects": []
+    },
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 1,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": [
+       {
+        "context": {},
+        "created_at": "2026-10-11T16:23:52.123672",
+        "description": "",
+        "detection_threshold": 0.4,
+        "id": "proj-4d07d14d4fef",
+        "is_archived": false,
+        "keywords": [],
+        "meeting_count": 0,
+        "name": "Q4 Platform",
+        "team_members": [],
+        "updated_at": "2026-10-11T16:23:52.123672"
+       }
+      ]
+     },
+     "/api/settings/heartbeat": {
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": null,
+      "last_sweep_at": null,
+      "muted_projects": [],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 15
+     }
+    },
+    "method": "PUT",
+    "name": "PUT /api/settings/heartbeat",
+    "path": "/api/settings/heartbeat"
+   }
+  ]
+ },
+ "quiet": {
+  "steps": [
+   {
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 0,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": []
+     },
+     "/api/settings/heartbeat": {
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": null,
+      "last_sweep_at": null,
+      "muted_projects": [],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 15
+     }
+    },
+    "name": "before"
+   },
+   {
+    "answer": {
+     "last_notified_count": 0,
+     "last_notified_items": {},
+     "last_notify_outcome": "",
+     "last_remote_run_at": null,
+     "last_sweep_at": null,
+     "muted_projects": [],
+     "next_sweep_at": null,
+     "notify": "edge",
+     "quiet_hours": {
+      "end": 11,
+      "start": 9
+     },
+     "remote_hosts": [],
+     "report_merged_prs": true,
+     "runs_on": "local",
+     "sweep_every_minutes": 15
+    },
+    "body": {
+     "quiet_hours": {
+      "end": 11,
+      "start": 9
+     }
+    },
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 1,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": []
+     },
+     "/api/settings/heartbeat": {
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": null,
+      "last_sweep_at": null,
+      "muted_projects": [],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "quiet_hours": {
+       "end": 11,
+       "start": 9
+      },
+      "remote_hosts": [],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 15
+     }
+    },
+    "method": "PUT",
+    "name": "PUT /api/settings/heartbeat",
+    "path": "/api/settings/heartbeat"
+   }
+  ]
+ },
+ "recordedBy": "scripts/record_chair_rhythm_fixture.py",
+ "runNow": {
+  "steps": [
+   {
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 0,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": []
+     },
+     "/api/settings/heartbeat": {
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": null,
+      "last_sweep_at": null,
+      "muted_projects": [],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 15
+     }
+    },
+    "name": "before"
+   },
+   {
+    "answer": {
+     "at": "2026-10-11T22:23:51+00:00",
+     "duration_ms": 6.9,
+     "errors": 0,
+     "follow_through": {
+      "cleaned": [],
+      "closed": [],
+      "confirm": [],
+      "kind": "follow_through",
+      "launches": 0,
+      "released": [],
+      "sources": []
+     },
+     "held": false,
+     "kind": "heartbeat.sweep",
+     "merged_prs": {
+      "kind": "merged_prs",
+      "recorded": 0,
+      "repositories": []
+     },
+     "notify": {
+      "complete": true,
+      "count": 1,
+      "escalatedItems": 0,
+      "fired": false,
+      "kind": "heartbeat.notify",
+      "lastNotifiedCount": 0,
+      "newItems": 1,
+      "outcome": "not_posted_in_rig",
+      "projectCount": 0
+     },
+     "outcomes": {
+      "counts": {},
+      "failed_watch_ids": [],
+      "total": 0
+     },
+     "quiet_overridden": false,
+     "rooms": 0,
+     "watches": 0,
+     "watches_baselined": 0,
+     "watches_deferred": 0
+    },
+    "body": {},
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 1,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": []
+     },
+     "/api/settings/heartbeat": {
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "not_posted_in_rig",
+      "last_remote_run_at": null,
+      "last_sweep_at": "2026-10-11T22:23:51+00:00",
+      "muted_projects": [],
+      "next_sweep_at": "2026-10-11T22:38:51+00:00",
+      "notify": "edge",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 15
+     }
+    },
+    "method": "POST",
+    "name": "POST /api/settings/heartbeat/run-now",
+    "path": "/api/settings/heartbeat/run-now"
+   }
+  ]
+ },
+ "runsOn": {
+  "steps": [
+   {
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 0,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": []
+     },
+     "/api/settings/heartbeat": {
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": "2026-10-11T22:23:52+00:00",
+      "last_sweep_at": null,
+      "muted_projects": [],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [
+       "192.168.1.43"
+      ],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 15
+     }
+    },
+    "name": "before"
+   },
+   {
+    "answer": {
+     "last_notified_count": 0,
+     "last_notified_items": {},
+     "last_notify_outcome": "",
+     "last_remote_run_at": "2026-10-11T22:23:52+00:00",
+     "last_sweep_at": null,
+     "muted_projects": [],
+     "next_sweep_at": null,
+     "notify": "edge",
+     "quiet_hours": {
+      "end": 8,
+      "start": 22
+     },
+     "remote_hosts": [
+      "192.168.1.43"
+     ],
+     "report_merged_prs": true,
+     "runs_on": "192.168.1.43",
+     "sweep_every_minutes": 15
+    },
+    "body": {
+     "runs_on": "192.168.1.43"
+    },
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 1,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-12T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-05T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": []
+     },
+     "/api/settings/heartbeat": {
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": "2026-10-11T22:23:52+00:00",
+      "last_sweep_at": null,
+      "muted_projects": [],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [
+       "192.168.1.43"
+      ],
+      "report_merged_prs": true,
+      "runs_on": "192.168.1.43",
+      "sweep_every_minutes": 15
+     }
+    },
+    "method": "PUT",
+    "name": "PUT /api/settings/heartbeat",
+    "path": "/api/settings/heartbeat"
+   }
+  ]
+ },
+ "schema": "rhythm-recorded@1"
+}

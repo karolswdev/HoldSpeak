@@ -220,3 +220,60 @@ def test_keyword_and_meaning_hits_carry_their_origin_snippet_and_day(
 
     meaning_meeting = hits.get("meeting:m-marek")
     assert meaning_meeting and meaning_meeting["retrieval_origin"] == "vector", meaning_meeting
+
+
+# ── Enter opens the note (was tests/e2e/test_palette_enter_opens_the_note_glass.py) ──
+
+ENTER_TITLE = "Ledger cutover risks"
+
+
+def _note_ids(hub: Hub) -> set[str]:
+    """Every note the hub holds now (a thought is a note too)."""
+    found = hub.client.get("/api/notes")
+    assert found.status_code == 200, found.text
+    return {n["id"] for n in found.json()["notes"]}
+
+
+def test_the_reads_a_note_window_makes_write_no_note_and_develop_keeps_one(hub: Hub) -> None:
+    """replaces: tests/e2e/test_palette_enter_opens_the_note_glass.py::TestEnterOpensTheFirstRow::test_enter_opens_the_note_the_first_row_names
+    (hub half: what the window reads makes no thought and no note; the
+    owner's Develop turns THAT note into a thought with no second note. The
+    palette's Enter and the window it draws are palette.app.test.tsx, on the
+    answers scripts/record_chrome_palette.py records from this same seed)."""
+    c = hub.client
+    note = c.post("/api/notes", json={"title": ENTER_TITLE, "body_markdown": "- rollback plan owner: Jordan", "tags": []})
+    assert note.status_code in (200, 201), note.text
+    note_id = note.json()["note"]["id"]
+    held = _note_ids(hub)
+    status = c.get(f"/api/thoughts/for-note/{note_id}").json()
+    assert status["ownership"] == "ordinary", status
+    assert _note_ids(hub) == held, "reading a note's thought status made a note"
+
+    pre = status["source_precondition"]
+    adopted = c.post("/api/thoughts/adopt", json={
+        "request_id": "palette-enter-unit", "note_id": note_id,
+        "expected_source_content_sha256": pre["content_sha256"],
+        "expected_source_last_modified": pre["last_modified"]})
+    assert adopted.status_code in (200, 201), adopted.text
+    thought = adopted.json()["thought"]
+    assert thought["working_note"]["id"] == note_id, thought    # the thought OF THAT NOTE
+    assert thought["working_note"]["title"] == ENTER_TITLE, thought
+    assert _note_ids(hub) == held, "Develop made a second note"
+
+    after = c.get(f"/api/thoughts/for-note/{note_id}").json()
+    assert after["ownership"] == "thought" and after["thought"]["id"] == thought["id"], after
+    assert c.get(f"/api/thoughts/{thought['id']}/workbench").status_code == 200
+    assert _note_ids(hub) == held, "the Thought window's reads made a note"
+
+
+def test_the_no_note_made_check_sees_a_thought_made_in_the_gap(hub: Hub) -> None:
+    """replaces: tests/e2e/test_palette_enter_opens_the_note_glass.py::TestEnterOpensTheFirstRow::test_the_check_fails_when_a_thought_is_made_in_the_gap
+    (the proof of the check: a REAL thought made by POST /api/thoughts, the
+    route a check of POST /api/notes alone did not see, adds a note to the
+    list the check reads)."""
+    hub.client.post("/api/notes", json={"title": ENTER_TITLE, "body_markdown": "x", "tags": []})
+    held = _note_ids(hub)
+    made = hub.client.post("/api/thoughts", json={"request_id": "palette-enter-injected",
+                                                  "raw_text": "A thought made elsewhere"})
+    assert made.status_code in (200, 201), made.text
+    assert len(_note_ids(hub)) == len(held) + 1, "the injected thought made no note: the check would be blind"

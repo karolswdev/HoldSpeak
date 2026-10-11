@@ -28,6 +28,7 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "tests" / "unit"))
 
+import test_desk_brief as brief_seeds  # noqa: E402
 import test_desk_needs_you as seeds  # noqa: E402
 
 from holdspeak.runtime import composition  # noqa: E402
@@ -166,6 +167,86 @@ def grouped() -> dict[str, Any]:
             _close()
 
 
+BRIEF_GETS = COMMON_GETS + ("/api/brief/latest",)
+
+
+def _summaries(name: str, *, off: bool) -> dict[str, Any]:
+    """PHILO-15 01: the LAN model as the global default (and, when `off`, an
+    imported meeting with summaries turned off). The reads before Generate,
+    Generate on the Brief, the reads after (one hub boot)."""
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _boot(name, mp)
+        try:
+            brief_seeds.assign_lan_default()
+            if off:
+                brief_seeds.seed_imported_meeting()
+                brief_seeds.turn_summaries_off()
+            before = _gets(hub, BRIEF_GETS)
+            generated = _post(hub, "/api/brief/generate")
+            return {"steps": [
+                {"name": "before", "gets": before},
+                {"name": "generate", "post": "/api/brief/generate", "answer": generated,
+                 "gets": _gets(hub, BRIEF_GETS)},
+            ]}
+        finally:
+            _close()
+
+
+def calendar() -> dict[str, Any]:
+    """HS-145: the meeting path pinned; no calendar (the Connect calendar offer,
+    with the Settings window's reads), then one source whose only event is
+    two hours ago, applied by the real ingest conductor (the quiet arrival)."""
+    from datetime import datetime, timezone
+
+    sys.path.insert(0, str(REPO))
+    from tests.e2e.glass_infra import seed_meeting_engines
+
+    from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
+
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _boot("calendar", mp)
+        try:
+            seed_meeting_engines()
+            none = _gets(hub, COMMON_GETS + SETTINGS_GETS + ("/api/calendar/sources",))
+            past = datetime.now(timezone.utc).replace(second=0, microsecond=0) - timedelta(hours=2)
+            ics = Path(tempfile.mkdtemp(prefix="needs-you-ics-")) / "empty-calendar.ics"
+            ics.write_text("\r\n".join([
+                "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//HoldSpeak//HS-145 polish//EN",
+                "BEGIN:VEVENT", "UID:hs145-past-only",
+                f"DTSTART:{past.strftime('%Y%m%dT%H%M%SZ')}",
+                f"DTEND:{(past + timedelta(minutes=30)).strftime('%Y%m%dT%H%M%SZ')}",
+                "SUMMARY:Past event only", "END:VEVENT", "END:VCALENDAR", "",
+            ]), encoding="utf-8")
+            response = hub.client.put("/api/settings", json={"calendar": {"sources": [
+                {"id": "hs145-fixture", "label": "Polish", "url": str(ics), "enabled": True}]}})
+            assert response.status_code == 200, response.text
+            assert CalendarIngestConductor().refresh() is True
+            return {"none": {"gets": none}, "quiet": {"gets": _gets(hub, COMMON_GETS)}}
+        finally:
+            _close()
+
+
+def eval_error() -> dict[str, Any]:
+    """PHILO-17 (evalerror): two live GitHub Watches, gh signed out with secrets
+    in its stderr; the owner's Evaluate (route) and an agent's (MCP), one boot."""
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _boot("eval-error", mp, gh_runner=seeds._signed_out_gh_with_secrets)
+        try:
+            sys.path.insert(0, str(REPO))
+            from tests.e2e.glass_infra import seed_meeting_engines
+
+            seed_meeting_engines()
+            seeds.seed_eval_error_room(hub)
+            before = _gets(hub, COMMON_GETS)
+            route, mcp = seeds.evaluate_both(hub)
+            assert route.status_code == 400 and mcp.status_code == 200, (route.text, mcp.text)
+            return {"secrets": list(seeds.EVAL_SECRETS),
+                    "steps": [{"name": "before", "gets": before},
+                              {"name": "evaluated", "gets": _gets(hub, COMMON_GETS)}]}
+        finally:
+            _close()
+
+
 def main() -> int:
     fixture = {
         "schema": "needs-you-recorded@1",
@@ -174,6 +255,10 @@ def main() -> int:
         "unfiled": unfiled(),
         "arrival": arrival(),
         "grouped": grouped(),
+        "lanDefault": _summaries("lan-default", off=False),
+        "summariesOff": _summaries("summaries-off", off=True),
+        "calendar": calendar(),
+        "evalError": eval_error(),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(fixture, indent=1, sort_keys=True, default=str) + "\n", encoding="utf-8")

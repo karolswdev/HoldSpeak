@@ -16,10 +16,26 @@ const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 
 vi.mock("../../lib/api", () => ({
   apiFetch: mocks.apiFetch,
+  ApiError: class ApiError extends Error {},
+  newDeliveryId: () => "speak:test",
   readableError: (e: unknown) => (e instanceof Error ? e.message : "failed"),
 }));
 vi.mock("../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({ state: "connected", lastFrame: null, subscribe: () => () => undefined }),
+}));
+// The Speak window (below) mounts the mic seams: no microphone in jsdom
+// (the pattern of pages/cores/__tests__/dictationWings.test.tsx).
+vi.mock("../../lib/micSession", () => ({
+  subscribeMicPhase: () => () => undefined,
+  micCaptureSupported: () => true,
+  micCaptureReason: () => null,
+}));
+vi.mock("../../lib/openMic", () => ({ openMicDrop: vi.fn(), openMicListen: vi.fn() }));
+vi.mock("../../lib/speakToFill", () => ({
+  speakToFillSupported: () => true,
+  speakToFillUnsupportedReason: () => "",
+  retryPendingTranscription: vi.fn(async () => null),
+  subscribeCaptureLevel: () => () => undefined,
 }));
 
 /** The readiness route's `target.overrides` (`_target_override_options`). */
@@ -177,3 +193,366 @@ describe("Speak Journal: the filtered board", () => {
 // - test_journal_live_frame_obeys_the_active_filter -> "drops a HOTKEY frame while the wing is filtered to BROWSER, and takes it under ALL (C2)"
 // - test_journal_pushes_without_a_reload -> "prepends a pushed entry and never doubles one already loaded"
 //   (the broadcast half: tests/unit/test_desk_speak.py::test_the_servers_recorder_broadcasts_each_stored_row)
+
+// ── The Speak window over the hub's recorded answers (the teach loop) ──────
+//
+// The successors of tests/e2e/test_hs170_speak_glass.py,
+// test_hs176_speak_glass.py and test_hs176_loop_glass.py (the test diet,
+// 2026-10-11). The window is the real DictationCore (its wings, its footer)
+// with the real SpeakFace, Journal and Learned. Only `apiFetch` is mocked, and
+// it answers from fixtures/speak-hub/loop.json: the real hub's answers to the
+// same loop (the dry-run, correct, corrections and journal routes, a durable
+// store, the correction loop on), recorded by
+// tests/unit/test_desk_speak.py::test_the_teach_loop_runs_on_the_real_routes.
+// Each press is replayed in the hub's order; every read after a press answers
+// what the hub answered after that press. A read the hub never answered (the
+// Concierge scan) rejects, as a closed route does.
+import { useState as useHostState, type ReactNode } from "react";
+import userEvent from "@testing-library/user-event";
+import { within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { DictationCore } from "../../pages/cores/DictationCore";
+import { WingSlotContext } from "../surface/wings";
+import LOOP from "./fixtures/speak-hub/loop.json";
+
+type Step = { step: string; call: string; body: unknown; status: number; answer: unknown; reads: Record<string, unknown> };
+const STEPS = LOOP.steps as unknown as Step[];
+const BOOT = LOOP.boot as unknown as Record<string, unknown>;
+
+let pressed = 0;
+let misses: string[] = [];
+let presses: { call: string; body: unknown }[] = [];
+
+function replayLoop() {
+  pressed = 0;
+  misses = [];
+  presses = [];
+  mocks.apiFetch.mockImplementation((url: string, init: { method?: string; json?: unknown } = {}) => {
+    const path = String(url);
+    const method = (init.method ?? "GET").toUpperCase();
+    const reads = pressed === 0 ? BOOT : STEPS[pressed - 1].reads;
+    const readKey = method === "GET" ? path : `${method} ${path}`;
+    if (readKey in reads) return Promise.resolve(structuredClone(reads[readKey]));
+    const next = STEPS[pressed];
+    if (method !== "GET" && next && next.call === `${method} ${path}`) {
+      pressed += 1;
+      presses.push({ call: next.call, body: init.json });
+      return Promise.resolve(structuredClone(next.answer));
+    }
+    misses.push(readKey);
+    return Promise.reject(new Error(`the hub recorded no answer for ${readKey}`));
+  });
+}
+
+function mountSpeak() {
+  function Host() {
+    const [slot, setSlot] = useHostState<ReactNode>(null);
+    return (
+      <WingSlotContext.Provider value={setSlot}>
+        <div data-testid="window-head">{slot}</div>
+        <DictationCore />
+      </WingSlotContext.Provider>
+    );
+  }
+  return render(<MemoryRouter><Host /></MemoryRouter>);
+}
+
+const HEARD = "Ship the queue for platform on schedule";
+const SAID = "Ship the Q4 platform on schedule";
+const AGAIN = "Ship the queue for platform in October";
+const SECRET_HEARD = "Set the token to placeholder";
+const SECRET_SAID = "Set the token to sk-live4f2a9c1b2d3e4f";
+
+async function latchDryRun() {
+  await userEvent.click(await screen.findByText("DRY RUN"));
+}
+
+/** Type one utterance in the well and land it (Ctrl+Enter, DRY RUN latched). */
+async function land(text: string) {
+  const well = await screen.findByLabelText("Utterance");
+  await userEvent.clear(well);
+  await userEvent.click(well);
+  await userEvent.paste(text);
+  await userEvent.keyboard("{Control>}{Enter}{/Control}");
+  const result = await screen.findByRole("region", { name: "Pipeline result" });
+  await waitFor(() => expect(result.querySelector(".speak-result-text")?.textContent ?? "").toContain(text.split(" ").slice(-1)[0] === "October" ? "October" : text.split(" ")[0]));
+  return result;
+}
+
+const footerText = () => document.querySelector(".surface-footer-layout")?.textContent ?? "";
+
+describe("the Speak window at rest, over the hub's cold answers", () => {
+  it("the placeholder, an ENGINE state chip in a known state, Details folded, and a footer of Review and Export with no placement", async () => {
+    // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_idle_1440
+    // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_details_folded
+    // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_footer_this_device
+    // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_unset_1440
+    replayLoop();
+    const { container } = mountSpeak();
+    const well = (await screen.findByLabelText("Utterance")) as HTMLTextAreaElement;
+    expect(well.getAttribute("placeholder")).toBe("Talk, or type here");
+
+    const engine = container.querySelector(".speak-engine")!;
+    expect(engine).toBeTruthy();
+    await waitFor(() => expect(engine.querySelector(".surface-state-chip")).toBeTruthy());
+    expect(["not-set", "ready", "pending", "unknown", "waiting"]).toContain(
+      container.querySelector(".speak-engine")!.getAttribute("data-engine-state"));
+
+    const trigger = container.querySelector(".surface-disclosure-trigger")!;
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(container.querySelector(".surface-disclosure-body")).toBeNull();
+
+    await waitFor(() => expect(footerText()).toContain("Review"));
+    expect(footerText()).toContain("Export");
+    expect(footerText()).not.toContain("THIS DEVICE");
+    // Nothing was pressed: the cold reads were all the hub's own.
+    expect(pressed).toBe(0);
+  });
+
+  it("the ENGINE row never claims READY when the engine scan fails", async () => {
+    // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_engine_never_ready_while_pending
+    // The browser rig answered /api/concierge/detect with a 503; this replay
+    // rejects it (the hub recorded no answer for it), the same failed scan.
+    replayLoop();
+    const { container } = mountSpeak();
+    await screen.findByLabelText("Utterance");
+    await waitFor(() => expect(misses).toContain("/api/concierge/detect"));
+    await waitFor(() => expect(container.querySelector(".speak-engine .surface-state-chip")).toBeTruthy());
+    const engine = container.querySelector(".speak-engine")!;
+    expect(engine.getAttribute("data-engine-state")).not.toBe("ready");
+    expect(engine.querySelector(".surface-state-chip")!.textContent).not.toContain("READY");
+  });
+});
+
+describe("the teach loop on the Speak window, replayed from the hub", () => {
+  it("land, Wrong, teach, refuse a secret, land again with the rule applied; the Journal and Learned wings; Forget; Review", async () => {
+    // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_landed_1440
+    // replaces: tests/e2e/test_hs176_speak_glass.py::test_speak_teach_loop_1440 (every board but the
+    //   teach well's no-truncation measure, which stays in the browser file)
+    // replaces: tests/e2e/test_hs176_loop_glass.py::test_speak_loop_1440 (every board but the Learned
+    //   row's geometry probe, which stays in the browser file)
+    replayLoop();
+    const { container } = mountSpeak();
+    await latchDryRun();
+
+    // ── 1. land: the RESULT row, OK and Wrong ──
+    let result = await land(HEARD);
+    expect(result.querySelector(".speak-result-text")!.textContent).toContain("Ship the queue");
+    expect(within(result).getByRole("button", { name: "OK" })).toBeTruthy();
+    // The press reached the hub as the dry run, with the typed words.
+    expect(presses[0]).toEqual({ call: "POST /api/dictation/dry-run", body: expect.objectContaining({ utterance: HEARD }) });
+
+    // ── 2. Wrong unfolds the teach row in place: FIELD at TEXT, the raw words ──
+    await userEvent.click(within(result).getByRole("button", { name: "Wrong" }));
+    const teach = await waitFor(() => {
+      const el = container.querySelector(".speak-teach");
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(teach.textContent).toContain("FIELD");
+    const field = within(teach).getByLabelText("Correction field") as HTMLSelectElement;
+    expect(field.value).toBe("text");
+    expect(Array.from(field.options).map((o) => o.textContent?.trim())).toEqual(["TEXT", "INTENT", "TARGET"]);
+    let said = within(teach).getByRole("textbox", { name: "What you said" }) as HTMLTextAreaElement;
+    expect(said.value).toBe(HEARD);
+    expect(said.tagName).toBe("TEXTAREA");
+    expect(teach.querySelectorAll(".desk-mic").length).toBeGreaterThanOrEqual(1);
+
+    // ── 3. FIELD at TARGET: the readiness route's six labels, never `auto` ──
+    await userEvent.selectOptions(field, "target");
+    const pick = (await within(teach).findByLabelText("Delivery target")) as HTMLSelectElement;
+    expect(Array.from(pick.options).map((o) => o.textContent?.trim())).toEqual(
+      ["Claude Code", "Codex CLI", "Terminal shell", "Browser", "Editor", "Chat"]);
+    expect(Array.from(pick.options).map((o) => o.value)).not.toContain("auto");
+    expect(within(teach).queryByRole("textbox", { name: "What you said" })).toBeNull();
+
+    // ── 4. back to TEXT, the one word edited, Teach: the receipt replaces the row ──
+    await userEvent.selectOptions(field, "text");
+    said = (await within(teach).findByRole("textbox", { name: "What you said" })) as HTMLTextAreaElement;
+    await userEvent.clear(said);
+    await userEvent.paste(SAID);
+    await userEvent.click(screen.getByRole("button", { name: "Teach correction" }));
+    let receipt = await waitFor(() => {
+      const el = container.querySelector(".speak-receipt");
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
+    expect(receipt.textContent).toContain("TAUGHT");
+    expect(receipt.textContent).toContain("queue for");
+    expect(receipt.textContent).toContain("Q4");
+    expect(container.querySelector(".speak-teach")).toBeNull();
+    expect(footerText()).not.toContain("TAUGHT");
+    expect(presses[1].call).toMatch(/^POST \/api\/dictation\/journal\/\d+\/correct$/);
+    expect(presses[1].body).toEqual({ kind: "text", heard: HEARD, said: SAID });
+
+    // ── 5. a secret-shaped teach is refused by name and writes nothing ──
+    result = await land(SECRET_HEARD);
+    await userEvent.click(within(result).getByRole("button", { name: "Wrong" }));
+    said = (await screen.findByRole("textbox", { name: "What you said" })) as HTMLTextAreaElement;
+    await userEvent.clear(said);
+    await userEvent.paste(SECRET_SAID);
+    await userEvent.click(screen.getByRole("button", { name: "Teach correction" }));
+    await waitFor(() => expect(container.querySelector(".speak-receipt")?.textContent ?? "").toContain("REFUSED"));
+    receipt = container.querySelector(".speak-receipt") as HTMLElement;
+    expect(receipt.textContent).toContain("SECRET");
+    expect(receipt.textContent).toContain("nothing written");
+    expect(footerText()).not.toContain("REFUSED");
+
+    // ── 6. speak it again: the rule fires and says so ──
+    result = await land(AGAIN);
+    expect(result.querySelector(".speak-result-text")!.textContent).toBe("Ship the Q4 platform in October");
+    const chip = await within(result).findByRole("button", { name: "Corrections applied" });
+    expect(chip.textContent?.trim()).toBe("APPLIED");
+    expect(container.querySelector(".speak-well .desk-mic")).toBeNull();
+    await userEvent.click(chip);
+    const disclosed = await waitFor(() => {
+      const el = container.querySelector(".speak-applied-body");
+      expect(el).toBeTruthy();
+      return el!.textContent ?? "";
+    });
+    for (const word of ["HEARD", "queue for", "SAID", "Q4", "TEXT"]) expect(disclosed).toContain(word);
+
+    // ── 7. the Journal wing: every landing, newest first; APPLIED, then TAUGHT ──
+    await userEvent.click(screen.getByRole("tab", { name: "Journal" }));
+    await waitFor(() => expect(container.querySelectorAll(".speak-journal .surface-ledger-row").length).toBe(3));
+    const rows = Array.from(container.querySelectorAll(".speak-journal .surface-ledger-row"));
+    expect(rows[0].textContent).toContain(AGAIN);
+    expect(rows[0].querySelector(".journal-mark")?.textContent).toContain("APPLIED");
+    expect(rows[2].textContent).toContain(HEARD);
+    expect(rows[2].querySelector(".journal-mark")?.textContent).toContain("TAUGHT");
+
+    // ── 8. the Learned wing: the one rule the desk now knows ──
+    await userEvent.click(screen.getByRole("tab", { name: "Learned" }));
+    await waitFor(() => expect(container.querySelectorAll(".speak-learned .surface-ledger-row").length).toBe(1));
+    const wing = container.querySelector(".speak-learned") as HTMLElement;
+    const row = wing.querySelector(".surface-ledger-row") as HTMLElement;
+    expect(row.querySelector(".learned-kind")?.textContent?.trim()).toBe("TEXT");
+    expect(row.querySelector(".surface-ledger-primary")?.textContent?.trim()).toBe("queue for");
+    expect(row.querySelector(".learned-value")?.textContent?.trim()).toBe("Q4");
+    expect(row.querySelector(".learned-cells")?.textContent).toContain("→");
+    expect(row.querySelector(".learned-applied")?.textContent?.trim()).toBe("1 APPLIED");
+    const body = wing.textContent ?? "";
+    for (const wire of ["claude_code", "dry_run", "snake", "similar", "SIMILAR", "LEARNED"]) expect(body).not.toContain(wire);
+    expect(Array.from(wing.querySelectorAll(".surface-ledger-count")).map((c) => c.textContent?.trim()).filter(Boolean)).toEqual([]);
+    const raw = Array.from(wing.querySelectorAll("button")).filter(
+      (b) => !b.classList.contains("btn") && !b.classList.contains("btn--chrome")
+        && !b.classList.contains("surface-ledger-line") && !b.classList.contains("desk-mic"));
+    expect(raw).toEqual([]);
+
+    // ── 9. Forget arms in place, then removes the rule: the wing stands quiet ──
+    const forget = row.querySelector(".learned-forget .btn") as HTMLElement;
+    expect(forget.textContent?.trim()).toBe("Forget");
+    await userEvent.click(forget);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect((wing.querySelector(".learned-forget .btn") as HTMLElement).textContent?.trim()).toBe("Forget?");
+    await userEvent.click(wing.querySelector(".learned-forget .btn") as HTMLElement);
+    await waitFor(() => expect(container.querySelector('.speak-learned .surface-state[data-kind="empty"]')).toBeTruthy());
+    const quiet = container.querySelector(".speak-learned") as HTMLElement;
+    expect(quiet.querySelectorAll(".surface-ledger-row")).toHaveLength(0);
+    expect(quiet.textContent).toContain("NOTHING LEARNED");
+    expect(quiet.textContent).not.toContain("APPLIED");
+    expect(quiet.textContent).not.toContain("0");
+    expect(quiet.textContent).not.toContain(".");
+    expect(presses.map((p) => p.call.replace(/\d+/g, "N"))).toEqual([
+      "POST /api/dictation/dry-run", "POST /api/dictation/journal/N/correct",
+      "POST /api/dictation/dry-run", "POST /api/dictation/journal/N/correct",
+      "POST /api/dictation/dry-run", "DELETE /api/dictation/corrections/N",
+    ]);
+
+    // ── 10. Review reviews: it crosses to the Journal wing, not the door ──
+    await userEvent.click(screen.getByRole("button", { name: "Review" }));
+    await waitFor(() => expect(container.querySelector(".speak-journal")).toBeTruthy());
+    expect(screen.getByRole("tab", { name: "Journal" }).getAttribute("aria-selected")).toBe("true");
+    expect(container.querySelector(".surface-door")).toBeNull();
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Speak", "Journal", "Blocks", "Learned"]);
+    // Every read the window made was one the hub answered, but the scan.
+    expect([...new Set(misses)]).toEqual(["/api/concierge/detect"]);
+  });
+});
+
+// ── The HOTKEY custody block over the hub's five recorded readiness answers ──
+//
+// The successor of tests/e2e/test_hs200_voice_custody_glass.py's face legs.
+// fixtures/speak-hub/custody.json holds the real readiness route's answer for
+// each of the browser rig's five platform states (the same seam: the three
+// permission probes and the runtime status), recorded by
+// tests/unit/test_desk_speak.py::test_the_readiness_route_carries_the_hotkey_custody.
+// Every other read the window makes answers from the loop's cold boot.
+import CUSTODY from "./fixtures/speak-hub/custody.json";
+
+const CUSTODY_READINESS = CUSTODY.readiness as unknown as Record<string, unknown>;
+let custodyState = "all_granted";
+
+function replayCustody(state: string) {
+  custodyState = state;
+  misses = [];
+  mocks.apiFetch.mockImplementation((url: string, init: { method?: string } = {}) => {
+    const path = String(url);
+    const method = (init.method ?? "GET").toUpperCase();
+    if (method === "GET" && path === "/api/dictation/readiness")
+      return Promise.resolve(structuredClone(CUSTODY_READINESS[custodyState]));
+    const key = method === "GET" ? path : `${method} ${path}`;
+    if (key in BOOT) return Promise.resolve(structuredClone(BOOT[key]));
+    misses.push(key);
+    return Promise.reject(new Error(`the hub recorded no answer for ${key}`));
+  });
+}
+
+async function custodyBlock() {
+  mountSpeak();
+  await screen.findByLabelText("Utterance");
+  return await screen.findByTestId("speak-hotkey");
+}
+
+describe("the HOTKEY custody block, from the hub's readiness answers", () => {
+  // replaces: tests/e2e/test_hs200_voice_custody_glass.py::test_hotkey_custody_block_1440 (the words and
+  //   the rows of each state; the one-right-edge and no-overflow measures stay in the browser file)
+  it("every grant refused: three rows, each with its System Settings path and DENIED; UNAVAILABLE; no modal", async () => {
+    replayCustody("all_denied");
+    const block = await custodyBlock();
+    for (const pid of ["microphone", "input_monitoring", "accessibility"]) {
+      const row = await screen.findByTestId(`speak-permission-${pid}`);
+      expect(row.textContent).toContain("SYSTEM SETTINGS");
+      expect(row.textContent).toContain("PRIVACY & SECURITY");
+      expect(row.textContent).toContain("DENIED");
+    }
+    expect(block.textContent).toContain("UNAVAILABLE");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("one refused: only that row draws, and the head says BLOCKED, never ACTIVE", async () => {
+    replayCustody("one_denied");
+    const block = await custodyBlock();
+    await screen.findByTestId("speak-permission-input_monitoring");
+    expect(screen.queryByTestId("speak-permission-microphone")).toBeNull();
+    expect(screen.queryByTestId("speak-permission-accessibility")).toBeNull();
+    const head = block.querySelector(".speak-hotkey-head")!;
+    expect(head.textContent).toContain("BLOCKED");
+    expect(head.textContent).not.toContain("ACTIVE");
+  });
+
+  it("never asked: NOT ASKED, with Accessibility read as DENIED beside it", async () => {
+    replayCustody("never_asked");
+    const block = await custodyBlock();
+    expect(block.textContent).toContain("NOT ASKED");
+    expect((await screen.findByTestId("speak-permission-accessibility")).textContent).toContain("DENIED");
+  });
+
+  it("the listener failed with every grant held: the reason token, never the exception, and no permission rows", async () => {
+    replayCustody("listener_failed");
+    const block = await custodyBlock();
+    expect((await screen.findByTestId("speak-hotkey-reason")).textContent).toBe("PYNPUT MISSING");
+    expect(block.textContent).not.toContain("pynput is not available");
+    expect(document.querySelectorAll('[data-testid^="speak-permission-"]')).toHaveLength(0);
+  });
+
+  it("granted, then Re-check: the block goes, and nothing green takes its place", async () => {
+    replayCustody("listener_failed");
+    await custodyBlock();
+    custodyState = "all_granted"; // he gives the grant on the machine
+    await userEvent.click(screen.getByTestId("speak-hotkey-recheck"));
+    await waitFor(() => expect(screen.queryByTestId("speak-hotkey")).toBeNull());
+    expect(document.querySelector(".speak-face")!.textContent).not.toContain("HOTKEY");
+  });
+});

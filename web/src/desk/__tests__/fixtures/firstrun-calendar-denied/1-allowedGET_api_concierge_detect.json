@@ -1,0 +1,81 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:25:06.451197Z",
+  "wire": {
+    "checkedAt": "2026-10-11T22:25:06.438327+00:00",
+    "engines": [
+      {
+        "downloadHost": "huggingface.co",
+        "host": "THIS DEVICE",
+        "id": "preset:preset_local_qwen35_4b_gguf_q4km",
+        "installed": false,
+        "kind": "preset",
+        "name": "Quick local Qwen",
+        "presetId": "preset_local_qwen35_4b_gguf_q4km",
+        "sizeBytes": 2740937888,
+        "state": "WAITING"
+      },
+      {
+        "downloadHost": "huggingface.co",
+        "host": "THIS DEVICE",
+        "id": "preset:preset_local_qwen35_08b_gguf_q4km",
+        "installed": false,
+        "kind": "preset",
+        "name": "Tiny local Qwen",
+        "presetId": "preset_local_qwen35_08b_gguf_q4km",
+        "sizeBytes": 532517120,
+        "state": "WAITING"
+      }
+    ],
+    "hardware": {
+      "capability": {
+        "accelerators": [
+          "metal"
+        ],
+        "apple_silicon": true,
+        "architecture": "arm64",
+        "logical_cpu_count": 12,
+        "sha256": "sha256:28c82ad0634fbe2be400b096a8c33868e646704aa3e2caff5f76ab7d80e86721",
+        "system": "darwin",
+        "total_memory_bytes": 34359738368,
+        "unified_memory": true
+      },
+      "detection": {
+        "reason": null,
+        "state": "available"
+      },
+      "observation": {
+        "available_memory_bytes": null,
+        "sha256": "sha256:3c8acfdecdc16a9cb020dedb32a4393104d0df7bc4898e69ab9eb645f267d7c9",
+        "storage_available_bytes": 271389106176
+      }
+    },
+    "lastApply": null,
+    "repairs": [],
+    "runtimes": [
+      {
+        "id": "llama_cpp_prompt_v1",
+        "state": "available"
+      },
+      {
+        "id": "mlx_text_v1",
+        "state": "unavailable"
+      },
+      {
+        "id": "openai_compatible_v1",
+        "state": "available"
+      }
+    ],
+    "summaryAssignment": {
+      "assignmentRevision": 0,
+      "boundary": null,
+      "capabilityId": "meeting.deferred_analysis",
+      "label": null,
+      "profileId": null,
+      "profileRevision": null,
+      "readiness": null,
+      "schema": "ConciergeSummaryAssignmentProjection@1",
+      "status": "unassigned"
+    }
+  }
+}

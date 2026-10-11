@@ -1,0 +1,4570 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_speak.py::test_the_teach_loop_runs_on_the_real_routes (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "boot": {
+  "/api/dictation/readiness": {
+   "ready": false,
+   "project": {
+    "name": "holdspeak",
+    "root": "/repo",
+    "anchor": "holdspeak",
+    "kb": {
+     "stack": null,
+     "task_focus": null,
+     "constraints": null
+    }
+   },
+   "egress_boundary": "local",
+   "config": {
+    "pipeline_enabled": true,
+    "max_total_latency_ms": 600,
+    "backend": "auto"
+   },
+   "blocks": {
+    "global": {
+     "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+     "exists": false,
+     "valid": true,
+     "count": 0,
+     "error": null
+    },
+    "project": {
+     "path": "/repo/.holdspeak/blocks.yaml",
+     "exists": true,
+     "valid": true,
+     "count": 1,
+     "error": null
+    },
+    "resolved_scope": "project",
+    "resolved": {
+     "path": "/repo/.holdspeak/blocks.yaml",
+     "exists": true,
+     "valid": true,
+     "count": 1,
+     "error": null
+    }
+   },
+   "project_kb": {
+    "path": "/repo/.holdspeak/project.yaml",
+    "exists": true,
+    "valid": true,
+    "keys": [
+     "constraints",
+     "stack",
+     "task_focus"
+    ],
+    "error": null
+   },
+   "project_context": {
+    "path": "/repo/.hs",
+    "exists": false
+   },
+   "runtime": {
+    "status": "missing_model",
+    "requested_backend": "auto",
+    "resolved_backend": "llama_cpp",
+    "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+    "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+    "model_exists": false,
+    "guidance": {
+     "kind": "missing_model",
+     "backend": "llama_cpp",
+     "title": "Add the llama_cpp model",
+     "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+     "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+     "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+     "commands": [
+      {
+       "label": "Create model directory",
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+      },
+      {
+       "label": "Download a suggested model",
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+      }
+     ],
+     "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+     "links": [
+      {
+       "label": "Dictation runtime setup",
+       "target": "/docs/dictation-runtime#llama-cpp"
+      }
+     ]
+    },
+    "counters": {
+     "model_loads": 0,
+     "classify_calls": 0,
+     "classify_failures": 0,
+     "constrained_retries": 0
+    },
+    "session": {
+     "llm_disabled_for_session": false,
+     "disabled_reason": null
+    },
+    "telemetry": {
+     "status": "fallback",
+     "summary": "fallback active",
+     "latency": {
+      "max_total_latency_ms": 600.0,
+      "cold_start_cap_ms": 3000.0
+     },
+     "counters": {
+      "model_loads": 0,
+      "classify_calls": 0,
+      "classify_failures": 0,
+      "constrained_retries": 0,
+      "classify_successes": 0
+     },
+     "session": {
+      "llm_disabled_for_session": false,
+      "disabled_reason": null
+     },
+     "fallbacks": [
+      {
+       "category": "runtime_unavailable",
+       "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+      }
+     ]
+    }
+   },
+   "hotkey": {
+    "platform": "darwin",
+    "supported": true,
+    "key": "alt_r",
+    "display": "⌥R",
+    "available": true,
+    "error": "",
+    "reason": "",
+    "permissions": [
+     {
+      "id": "microphone",
+      "label": "MICROPHONE",
+      "state": "granted",
+      "source": "AVCaptureDevice.authorizationStatusForMediaType",
+      "needed_for": "CAPTURE",
+      "path": [
+       "SYSTEM SETTINGS",
+       "PRIVACY & SECURITY",
+       "MICROPHONE"
+      ],
+      "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
+      "satisfied": true
+     },
+     {
+      "id": "input_monitoring",
+      "label": "INPUT MONITORING",
+      "state": "granted",
+      "source": "IOHIDCheckAccess",
+      "needed_for": "HOTKEY",
+      "path": [
+       "SYSTEM SETTINGS",
+       "PRIVACY & SECURITY",
+       "INPUT MONITORING"
+      ],
+      "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent",
+      "satisfied": true
+     },
+     {
+      "id": "accessibility",
+      "label": "ACCESSIBILITY",
+      "state": "granted",
+      "source": "AXIsProcessTrusted",
+      "needed_for": "TYPING",
+      "path": [
+       "SYSTEM SETTINGS",
+       "PRIVACY & SECURITY",
+       "ACCESSIBILITY"
+      ],
+      "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+      "satisfied": true
+     }
+    ],
+    "missing": [],
+    "needs_attention": false
+   },
+   "telemetry": {
+    "status": "fallback",
+    "summary": "fallback active",
+    "latency": {
+     "max_total_latency_ms": 600.0,
+     "cold_start_cap_ms": 3000.0
+    },
+    "counters": {
+     "model_loads": 0,
+     "classify_calls": 0,
+     "classify_failures": 0,
+     "constrained_retries": 0,
+     "classify_successes": 0
+    },
+    "session": {
+     "llm_disabled_for_session": false,
+     "disabled_reason": null
+    },
+    "fallbacks": [
+     {
+      "category": "runtime_unavailable",
+      "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+     }
+    ]
+   },
+   "depth": {
+    "runs": 0,
+    "stages": {},
+    "rewrite_pass_ms": [],
+    "budget_ms": 600.0,
+    "guidance": [],
+    "corrections": {
+     "enabled": true,
+     "size": 0,
+     "recent": []
+    }
+   },
+   "target": {
+    "id": "unknown",
+    "label": "Unknown",
+    "confidence": 0.0,
+    "source": "not_read",
+    "app_name": null,
+    "process_name": null,
+    "window_title": null,
+    "details": {
+     "matched": "not_read_in_rig"
+    },
+    "overrides": [
+     {
+      "id": "claude_code",
+      "label": "Claude Code"
+     },
+     {
+      "id": "codex_cli",
+      "label": "Codex CLI"
+     },
+     {
+      "id": "terminal_shell",
+      "label": "Terminal shell"
+     },
+     {
+      "id": "browser",
+      "label": "Browser"
+     },
+     {
+      "id": "editor",
+      "label": "Editor"
+     },
+     {
+      "id": "chat",
+      "label": "Chat"
+     }
+    ]
+   },
+   "agent_hooks": {
+    "claude": {
+     "fresh": false,
+     "latest_session": null
+    },
+    "codex": {
+     "fresh": false,
+     "latest_session": null
+    }
+   },
+   "warnings": [
+    {
+     "code": "runtime_model_missing",
+     "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+     "action": "Download the model or update the runtime model path.",
+     "section": "runtime",
+     "guidance": {
+      "kind": "missing_model",
+      "backend": "llama_cpp",
+      "title": "Add the llama_cpp model",
+      "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+      "commands": [
+       {
+        "label": "Create model directory",
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+       },
+       {
+        "label": "Download a suggested model",
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+       }
+      ],
+      "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+      "links": [
+       {
+        "label": "Dictation runtime setup",
+        "target": "/docs/dictation-runtime#llama-cpp"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "/api/dictation/blocks?scope=global": {
+   "scope": "global",
+   "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+   "exists": false,
+   "project": null,
+   "document": {
+    "version": 1,
+    "default_match_confidence": 0.6,
+    "blocks": []
+   }
+  },
+  "/api/dictation/corrections": {
+   "enabled": true,
+   "kinds": [
+    "intent",
+    "target",
+    "text"
+   ],
+   "size": 0,
+   "items": []
+  },
+  "/api/dictation/journal?limit=1": {
+   "enabled": true,
+   "retention": 500,
+   "count": 0,
+   "today": 0,
+   "items": []
+  },
+  "/api/dictation/journal?limit=50": {
+   "enabled": true,
+   "retention": 500,
+   "count": 0,
+   "today": 0,
+   "items": []
+  },
+  "/api/inference-targets": {
+   "version": 1,
+   "targets": [
+    {
+     "version": 1,
+     "id": "this_machine",
+     "profile_id": null,
+     "name": "This device",
+     "kind": "this_device",
+     "boundary": "same_device",
+     "owner": "you",
+     "transport": "in_process",
+     "data_scope": {
+      "sent": [
+       "instruction",
+       "selected_context",
+       "grounding"
+      ],
+      "returned": [
+       "generated_output"
+      ]
+     },
+     "engine": "configured_local_engine",
+     "model": "Qwen3.5-4B-Q4_K_M",
+     "context_limit": 16384,
+     "readiness": {
+      "state": "unavailable",
+      "available": false,
+      "reason": "not set up: Set up local AI downloads this model",
+      "recovery": {
+       "reason": "not set up: Set up local AI downloads this model",
+       "action": "choose_alternate_target",
+       "alternate_target_id": "this_machine"
+      }
+     },
+     "secret": {
+      "required": false,
+      "present": false
+     },
+     "endpoint": "",
+     "node": ""
+    }
+   ]
+  },
+  "/api/setup/local-ai": {
+   "state": "not_started",
+   "runtime": {
+    "package": "llama-cpp-python",
+    "revision": "0.3.35",
+    "minimum": "0.3.34",
+    "ready": true,
+    "reason": ""
+   },
+   "files": [
+    {
+     "key": "whisper",
+     "label": "whisper-base-mlx",
+     "filename": "config.json",
+     "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/config.json",
+     "size_bytes": 262,
+     "sha256": "737220a6d958b3ad48e78f840fa991556266983c84ea2ca40e413389c62e4c2f",
+     "on_device": false
+    },
+    {
+     "key": "whisper",
+     "label": "whisper-base-mlx",
+     "filename": "weights.npz",
+     "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/weights.npz",
+     "size_bytes": 143724204,
+     "sha256": "2f57d5f3ef473054c638961f90716f4ee415e8108de81313eccb2c5fd62eff0b",
+     "on_device": false
+    },
+    {
+     "key": "embed",
+     "label": "nomic-embed-text v1.5",
+     "filename": "nomic-embed-text-v1.5.Q8_0.gguf",
+     "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/0188c9bf409793f810680a5a431e7b899c46104c/nomic-embed-text-v1.5.Q8_0.gguf",
+     "size_bytes": 146146432,
+     "sha256": "3e24342164b3d94991ba9692fdc0dd08e3fd7362e0aacc396a9a5c54a544c3b7",
+     "on_device": false
+    },
+    {
+     "key": "starter",
+     "label": "Quick local Qwen",
+     "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+     "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf",
+     "size_bytes": 2740937888,
+     "sha256": "1d203c2196991da08bc5b191ab4727516f476f3167e3276f75a0c5257493aadb",
+     "on_device": false
+    }
+   ],
+   "bytes_total": 3030808786,
+   "bytes_done": 0,
+   "percent": 0,
+   "egress": {
+    "destination": "huggingface.co",
+    "what": "model file request",
+    "files": 4,
+    "bytes": 3030808786
+   },
+   "local_engine": {
+    "ready": false,
+    "profile_id": null,
+    "profile_revision": null,
+    "deployment_id": null
+   },
+   "speech": {
+    "model": "base",
+    "backend": "mlx",
+    "state": "will_download",
+    "ready": false,
+    "bytes": 143724466
+   },
+   "meaning_search": "off",
+   "error": "",
+   "error_code": ""
+  },
+  "POST /api/inference/assignments/editor": {
+   "schema": "AssignmentEditorProjection@1",
+   "scope": {
+    "kind": "capability",
+    "capability_id": "speech.rewrite"
+   },
+   "selected_capability": {
+    "id": "speech.rewrite",
+    "revision": 1,
+    "label": "Dictation rewrite",
+    "group": {
+     "id": "writing_dictation",
+     "label": "Writing & dictation"
+    },
+    "allowed_boundaries": [
+     "cloud",
+     "local",
+     "mesh",
+     "private_network"
+    ],
+    "fallback_dispositions": [
+     "context_overflow",
+     "invalid_typed_output",
+     "known_no_generation_transient",
+     "local_capacity_unavailable",
+     "provider_permanent"
+    ]
+   },
+   "draft_base_revision": 0,
+   "configured_assignment": null,
+   "effective": {
+    "status": "no_assignment",
+    "capability_id": "speech.rewrite",
+    "inherited_from": null,
+    "assignment": null,
+    "repair": "Choose default"
+   },
+   "candidates": [],
+   "retry_policy": {
+    "permitted_ids": [
+     "retry.text.standard"
+    ],
+    "default_id": "retry.text.standard"
+   }
+  }
+ },
+ "steps": [
+  {
+   "step": "land",
+   "call": "POST /api/dictation/dry-run",
+   "body": {
+    "utterance": "Ship the queue for platform on schedule"
+   },
+   "status": 200,
+   "answer": {
+    "project": {
+     "name": "holdspeak",
+     "root": "/repo",
+     "anchor": "holdspeak",
+     "kb": {
+      "stack": null,
+      "task_focus": null,
+      "constraints": null
+     }
+    },
+    "egress_boundary": "local",
+    "target": {
+     "id": "unknown",
+     "label": "Unknown",
+     "confidence": 0.0,
+     "source": "none",
+     "app_name": null,
+     "process_name": null,
+     "window_title": null,
+     "details": {}
+    },
+    "suggestion_status": "no_suggestion",
+    "journal_id": 1,
+    "learning": null,
+    "runtime_status": "loaded",
+    "runtime_detail": "backend=llama_cpp",
+    "blocks_count": 1,
+    "stages": [
+     {
+      "stage_id": "intent-router",
+      "elapsed_ms": 2.38475005608052,
+      "intent": {
+       "matched": false,
+       "block_id": null,
+       "confidence": 0.0,
+       "raw_label": null,
+       "extras": {}
+      },
+      "warnings": [
+       "classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+       "classify failed; returning no-match"
+      ],
+      "metadata": {
+       "taxonomy_size": 1,
+       "reason": "classify_failed"
+      },
+      "text": "Ship the queue for platform on schedule",
+      "telemetry": {
+       "stage_id": "intent-router",
+       "status": "fallback",
+       "reason": "classify_failed",
+       "fallback": true,
+       "fallback_category": "malformed_output",
+       "elapsed_ms": 2.38475005608052,
+       "changed": null,
+       "warning_count": 2
+      }
+     },
+     {
+      "stage_id": "kb-enricher",
+      "elapsed_ms": 0.0019579892978072166,
+      "intent": null,
+      "warnings": [],
+      "metadata": {
+       "reason": "no_match",
+       "applied_block": null
+      },
+      "text": "Ship the queue for platform on schedule",
+      "telemetry": {
+       "stage_id": "kb-enricher",
+       "status": "fallback",
+       "reason": "no_match",
+       "fallback": true,
+       "fallback_category": "no_match",
+       "elapsed_ms": 0.0019579892978072166,
+       "changed": null,
+       "warning_count": 0
+      }
+     }
+    ],
+    "final_text": "Ship the queue for platform on schedule",
+    "raw_text": "Ship the queue for platform on schedule",
+    "corrections_applied": [],
+    "total_elapsed_ms": 2.3966250009834766,
+    "warnings": [
+     "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+     "intent-router: classify failed; returning no-match"
+    ],
+    "telemetry": {
+     "status": "fallback",
+     "summary": "fallback: malformed_output",
+     "latency": {
+      "total_elapsed_ms": 2.3966250009834766,
+      "max_total_latency_ms": 600.0,
+      "over_budget": false
+     },
+     "stages": [
+      {
+       "stage_id": "intent-router",
+       "status": "fallback",
+       "reason": "classify_failed",
+       "fallback": true,
+       "fallback_category": "malformed_output",
+       "elapsed_ms": 2.38475005608052,
+       "changed": null,
+       "warning_count": 2
+      },
+      {
+       "stage_id": "kb-enricher",
+       "status": "fallback",
+       "reason": "no_match",
+       "fallback": true,
+       "fallback_category": "no_match",
+       "elapsed_ms": 0.0019579892978072166,
+       "changed": null,
+       "warning_count": 0
+      }
+     ],
+     "fallbacks": [
+      {
+       "stage_id": "intent-router",
+       "category": "malformed_output",
+       "reason": "classify_failed"
+      },
+      {
+       "stage_id": "kb-enricher",
+       "category": "no_match",
+       "reason": "no_match"
+      }
+     ],
+     "warning_count": 2
+    }
+   },
+   "reads": {
+    "/api/dictation/readiness": {
+     "ready": false,
+     "project": {
+      "name": "holdspeak",
+      "root": "/repo",
+      "anchor": "holdspeak",
+      "kb": {
+       "stack": null,
+       "task_focus": null,
+       "constraints": null
+      }
+     },
+     "egress_boundary": "local",
+     "config": {
+      "pipeline_enabled": true,
+      "max_total_latency_ms": 600,
+      "backend": "auto"
+     },
+     "blocks": {
+      "global": {
+       "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+       "exists": false,
+       "valid": true,
+       "count": 0,
+       "error": null
+      },
+      "project": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      },
+      "resolved_scope": "project",
+      "resolved": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      }
+     },
+     "project_kb": {
+      "path": "/repo/.holdspeak/project.yaml",
+      "exists": true,
+      "valid": true,
+      "keys": [
+       "constraints",
+       "stack",
+       "task_focus"
+      ],
+      "error": null
+     },
+     "project_context": {
+      "path": "/repo/.hs",
+      "exists": false
+     },
+     "runtime": {
+      "status": "missing_model",
+      "requested_backend": "auto",
+      "resolved_backend": "llama_cpp",
+      "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_exists": false,
+      "guidance": {
+       "kind": "missing_model",
+       "backend": "llama_cpp",
+       "title": "Add the llama_cpp model",
+       "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+       "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+       "commands": [
+        {
+         "label": "Create model directory",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+        },
+        {
+         "label": "Download a suggested model",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+        }
+       ],
+       "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+       "links": [
+        {
+         "label": "Dictation runtime setup",
+         "target": "/docs/dictation-runtime#llama-cpp"
+        }
+       ]
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 1,
+       "classify_failures": 1,
+       "constrained_retries": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "telemetry": {
+       "status": "fallback",
+       "summary": "fallback active",
+       "latency": {
+        "max_total_latency_ms": 600.0,
+        "cold_start_cap_ms": 3000.0
+       },
+       "counters": {
+        "model_loads": 0,
+        "classify_calls": 1,
+        "classify_failures": 1,
+        "constrained_retries": 0,
+        "classify_successes": 0
+       },
+       "session": {
+        "llm_disabled_for_session": false,
+        "disabled_reason": null
+       },
+       "fallbacks": [
+        {
+         "category": "runtime_unavailable",
+         "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+        }
+       ]
+      }
+     },
+     "hotkey": {
+      "platform": "darwin",
+      "supported": true,
+      "key": "alt_r",
+      "display": "⌥R",
+      "available": true,
+      "error": "",
+      "reason": "",
+      "permissions": [
+       {
+        "id": "microphone",
+        "label": "MICROPHONE",
+        "state": "granted",
+        "source": "AVCaptureDevice.authorizationStatusForMediaType",
+        "needed_for": "CAPTURE",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "MICROPHONE"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
+        "satisfied": true
+       },
+       {
+        "id": "input_monitoring",
+        "label": "INPUT MONITORING",
+        "state": "granted",
+        "source": "IOHIDCheckAccess",
+        "needed_for": "HOTKEY",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "INPUT MONITORING"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent",
+        "satisfied": true
+       },
+       {
+        "id": "accessibility",
+        "label": "ACCESSIBILITY",
+        "state": "granted",
+        "source": "AXIsProcessTrusted",
+        "needed_for": "TYPING",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "ACCESSIBILITY"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+        "satisfied": true
+       }
+      ],
+      "missing": [],
+      "needs_attention": false
+     },
+     "telemetry": {
+      "status": "fallback",
+      "summary": "fallback active",
+      "latency": {
+       "max_total_latency_ms": 600.0,
+       "cold_start_cap_ms": 3000.0
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 1,
+       "classify_failures": 1,
+       "constrained_retries": 0,
+       "classify_successes": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "fallbacks": [
+       {
+        "category": "runtime_unavailable",
+        "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+       }
+      ]
+     },
+     "depth": {
+      "runs": 1,
+      "stages": {
+       "intent-router": {
+        "p50": 2.4,
+        "p95": 2.4,
+        "count": 1
+       },
+       "kb-enricher": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "count": 1
+       }
+      },
+      "rewrite_pass_ms": [],
+      "budget_ms": 600.0,
+      "guidance": [],
+      "corrections": {
+       "enabled": true,
+       "size": 0,
+       "recent": []
+      }
+     },
+     "target": {
+      "id": "unknown",
+      "label": "Unknown",
+      "confidence": 0.0,
+      "source": "not_read",
+      "app_name": null,
+      "process_name": null,
+      "window_title": null,
+      "details": {
+       "matched": "not_read_in_rig"
+      },
+      "overrides": [
+       {
+        "id": "claude_code",
+        "label": "Claude Code"
+       },
+       {
+        "id": "codex_cli",
+        "label": "Codex CLI"
+       },
+       {
+        "id": "terminal_shell",
+        "label": "Terminal shell"
+       },
+       {
+        "id": "browser",
+        "label": "Browser"
+       },
+       {
+        "id": "editor",
+        "label": "Editor"
+       },
+       {
+        "id": "chat",
+        "label": "Chat"
+       }
+      ]
+     },
+     "agent_hooks": {
+      "claude": {
+       "fresh": false,
+       "latest_session": null
+      },
+      "codex": {
+       "fresh": false,
+       "latest_session": null
+      }
+     },
+     "warnings": [
+      {
+       "code": "runtime_model_missing",
+       "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "action": "Download the model or update the runtime model path.",
+       "section": "runtime",
+       "guidance": {
+        "kind": "missing_model",
+        "backend": "llama_cpp",
+        "title": "Add the llama_cpp model",
+        "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+        "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+        "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+        "commands": [
+         {
+          "label": "Create model directory",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+         },
+         {
+          "label": "Download a suggested model",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+         }
+        ],
+        "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+        "links": [
+         {
+          "label": "Dictation runtime setup",
+          "target": "/docs/dictation-runtime#llama-cpp"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "/api/dictation/blocks?scope=global": {
+     "scope": "global",
+     "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+     "exists": false,
+     "project": null,
+     "document": {
+      "version": 1,
+      "default_match_confidence": 0.6,
+      "blocks": []
+     }
+    },
+    "/api/dictation/corrections": {
+     "enabled": true,
+     "kinds": [
+      "intent",
+      "target",
+      "text"
+     ],
+     "size": 0,
+     "items": []
+    },
+    "/api/dictation/journal?limit=1": {
+     "enabled": true,
+     "retention": 500,
+     "count": 1,
+     "today": 1,
+     "items": [
+      {
+       "id": 1,
+       "created_at": "2026-10-11T22:24:45.022541+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform on schedule",
+       "final_text": "Ship the queue for platform on schedule",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 2.38475005608052,
+        "kb-enricher": 0.0019579892978072166
+       },
+       "total_ms": 2.3966250009834766,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": []
+      }
+     ]
+    },
+    "/api/dictation/journal?limit=50": {
+     "enabled": true,
+     "retention": 500,
+     "count": 1,
+     "today": 1,
+     "items": [
+      {
+       "id": 1,
+       "created_at": "2026-10-11T22:24:45.022541+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform on schedule",
+       "final_text": "Ship the queue for platform on schedule",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 2.38475005608052,
+        "kb-enricher": 0.0019579892978072166
+       },
+       "total_ms": 2.3966250009834766,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": []
+      }
+     ]
+    },
+    "/api/inference-targets": {
+     "version": 1,
+     "targets": [
+      {
+       "version": 1,
+       "id": "this_machine",
+       "profile_id": null,
+       "name": "This device",
+       "kind": "this_device",
+       "boundary": "same_device",
+       "owner": "you",
+       "transport": "in_process",
+       "data_scope": {
+        "sent": [
+         "instruction",
+         "selected_context",
+         "grounding"
+        ],
+        "returned": [
+         "generated_output"
+        ]
+       },
+       "engine": "configured_local_engine",
+       "model": "Qwen3.5-4B-Q4_K_M",
+       "context_limit": 16384,
+       "readiness": {
+        "state": "unavailable",
+        "available": false,
+        "reason": "not set up: Set up local AI downloads this model",
+        "recovery": {
+         "reason": "not set up: Set up local AI downloads this model",
+         "action": "choose_alternate_target",
+         "alternate_target_id": "this_machine"
+        }
+       },
+       "secret": {
+        "required": false,
+        "present": false
+       },
+       "endpoint": "",
+       "node": ""
+      }
+     ]
+    },
+    "/api/setup/local-ai": {
+     "state": "not_started",
+     "runtime": {
+      "package": "llama-cpp-python",
+      "revision": "0.3.35",
+      "minimum": "0.3.34",
+      "ready": true,
+      "reason": ""
+     },
+     "files": [
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "config.json",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/config.json",
+       "size_bytes": 262,
+       "sha256": "737220a6d958b3ad48e78f840fa991556266983c84ea2ca40e413389c62e4c2f",
+       "on_device": false
+      },
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "weights.npz",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/weights.npz",
+       "size_bytes": 143724204,
+       "sha256": "2f57d5f3ef473054c638961f90716f4ee415e8108de81313eccb2c5fd62eff0b",
+       "on_device": false
+      },
+      {
+       "key": "embed",
+       "label": "nomic-embed-text v1.5",
+       "filename": "nomic-embed-text-v1.5.Q8_0.gguf",
+       "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/0188c9bf409793f810680a5a431e7b899c46104c/nomic-embed-text-v1.5.Q8_0.gguf",
+       "size_bytes": 146146432,
+       "sha256": "3e24342164b3d94991ba9692fdc0dd08e3fd7362e0aacc396a9a5c54a544c3b7",
+       "on_device": false
+      },
+      {
+       "key": "starter",
+       "label": "Quick local Qwen",
+       "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+       "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf",
+       "size_bytes": 2740937888,
+       "sha256": "1d203c2196991da08bc5b191ab4727516f476f3167e3276f75a0c5257493aadb",
+       "on_device": false
+      }
+     ],
+     "bytes_total": 3030808786,
+     "bytes_done": 0,
+     "percent": 0,
+     "egress": {
+      "destination": "huggingface.co",
+      "what": "model file request",
+      "files": 4,
+      "bytes": 3030808786
+     },
+     "local_engine": {
+      "ready": false,
+      "profile_id": null,
+      "profile_revision": null,
+      "deployment_id": null
+     },
+     "speech": {
+      "model": "base",
+      "backend": "mlx",
+      "state": "will_download",
+      "ready": false,
+      "bytes": 143724466
+     },
+     "meaning_search": "off",
+     "error": "",
+     "error_code": ""
+    },
+    "POST /api/inference/assignments/editor": {
+     "schema": "AssignmentEditorProjection@1",
+     "scope": {
+      "kind": "capability",
+      "capability_id": "speech.rewrite"
+     },
+     "selected_capability": {
+      "id": "speech.rewrite",
+      "revision": 1,
+      "label": "Dictation rewrite",
+      "group": {
+       "id": "writing_dictation",
+       "label": "Writing & dictation"
+      },
+      "allowed_boundaries": [
+       "cloud",
+       "local",
+       "mesh",
+       "private_network"
+      ],
+      "fallback_dispositions": [
+       "context_overflow",
+       "invalid_typed_output",
+       "known_no_generation_transient",
+       "local_capacity_unavailable",
+       "provider_permanent"
+      ]
+     },
+     "draft_base_revision": 0,
+     "configured_assignment": null,
+     "effective": {
+      "status": "no_assignment",
+      "capability_id": "speech.rewrite",
+      "inherited_from": null,
+      "assignment": null,
+      "repair": "Choose default"
+     },
+     "candidates": [],
+     "retry_policy": {
+      "permitted_ids": [
+       "retry.text.standard"
+      ],
+      "default_id": "retry.text.standard"
+     }
+    }
+   }
+  },
+  {
+   "step": "teach",
+   "call": "POST /api/dictation/journal/1/correct",
+   "body": {
+    "kind": "text",
+    "heard": "Ship the queue for platform on schedule",
+    "said": "Ship the Q4 platform on schedule"
+   },
+   "status": 200,
+   "answer": {
+    "corrected": true,
+    "recorded": true,
+    "taught": true,
+    "correction_id": 1,
+    "size": 1,
+    "similar": 0,
+    "enabled": true,
+    "id": 1,
+    "kind": "text",
+    "key": "queue for",
+    "value": "Q4"
+   },
+   "reads": {
+    "/api/dictation/readiness": {
+     "ready": false,
+     "project": {
+      "name": "holdspeak",
+      "root": "/repo",
+      "anchor": "holdspeak",
+      "kb": {
+       "stack": null,
+       "task_focus": null,
+       "constraints": null
+      }
+     },
+     "egress_boundary": "local",
+     "config": {
+      "pipeline_enabled": true,
+      "max_total_latency_ms": 600,
+      "backend": "auto"
+     },
+     "blocks": {
+      "global": {
+       "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+       "exists": false,
+       "valid": true,
+       "count": 0,
+       "error": null
+      },
+      "project": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      },
+      "resolved_scope": "project",
+      "resolved": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      }
+     },
+     "project_kb": {
+      "path": "/repo/.holdspeak/project.yaml",
+      "exists": true,
+      "valid": true,
+      "keys": [
+       "constraints",
+       "stack",
+       "task_focus"
+      ],
+      "error": null
+     },
+     "project_context": {
+      "path": "/repo/.hs",
+      "exists": false
+     },
+     "runtime": {
+      "status": "missing_model",
+      "requested_backend": "auto",
+      "resolved_backend": "llama_cpp",
+      "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_exists": false,
+      "guidance": {
+       "kind": "missing_model",
+       "backend": "llama_cpp",
+       "title": "Add the llama_cpp model",
+       "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+       "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+       "commands": [
+        {
+         "label": "Create model directory",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+        },
+        {
+         "label": "Download a suggested model",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+        }
+       ],
+       "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+       "links": [
+        {
+         "label": "Dictation runtime setup",
+         "target": "/docs/dictation-runtime#llama-cpp"
+        }
+       ]
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 1,
+       "classify_failures": 1,
+       "constrained_retries": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "telemetry": {
+       "status": "fallback",
+       "summary": "fallback active",
+       "latency": {
+        "max_total_latency_ms": 600.0,
+        "cold_start_cap_ms": 3000.0
+       },
+       "counters": {
+        "model_loads": 0,
+        "classify_calls": 1,
+        "classify_failures": 1,
+        "constrained_retries": 0,
+        "classify_successes": 0
+       },
+       "session": {
+        "llm_disabled_for_session": false,
+        "disabled_reason": null
+       },
+       "fallbacks": [
+        {
+         "category": "runtime_unavailable",
+         "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+        }
+       ]
+      }
+     },
+     "hotkey": {
+      "platform": "darwin",
+      "supported": true,
+      "key": "alt_r",
+      "display": "⌥R",
+      "available": true,
+      "error": "",
+      "reason": "",
+      "permissions": [
+       {
+        "id": "microphone",
+        "label": "MICROPHONE",
+        "state": "granted",
+        "source": "AVCaptureDevice.authorizationStatusForMediaType",
+        "needed_for": "CAPTURE",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "MICROPHONE"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
+        "satisfied": true
+       },
+       {
+        "id": "input_monitoring",
+        "label": "INPUT MONITORING",
+        "state": "granted",
+        "source": "IOHIDCheckAccess",
+        "needed_for": "HOTKEY",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "INPUT MONITORING"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent",
+        "satisfied": true
+       },
+       {
+        "id": "accessibility",
+        "label": "ACCESSIBILITY",
+        "state": "granted",
+        "source": "AXIsProcessTrusted",
+        "needed_for": "TYPING",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "ACCESSIBILITY"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+        "satisfied": true
+       }
+      ],
+      "missing": [],
+      "needs_attention": false
+     },
+     "telemetry": {
+      "status": "fallback",
+      "summary": "fallback active",
+      "latency": {
+       "max_total_latency_ms": 600.0,
+       "cold_start_cap_ms": 3000.0
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 1,
+       "classify_failures": 1,
+       "constrained_retries": 0,
+       "classify_successes": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "fallbacks": [
+       {
+        "category": "runtime_unavailable",
+        "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+       }
+      ]
+     },
+     "depth": {
+      "runs": 1,
+      "stages": {
+       "intent-router": {
+        "p50": 2.4,
+        "p95": 2.4,
+        "count": 1
+       },
+       "kb-enricher": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "count": 1
+       }
+      },
+      "rewrite_pass_ms": [],
+      "budget_ms": 600.0,
+      "guidance": [],
+      "corrections": {
+       "enabled": true,
+       "size": 1,
+       "recent": [
+        "queue for"
+       ]
+      }
+     },
+     "target": {
+      "id": "unknown",
+      "label": "Unknown",
+      "confidence": 0.0,
+      "source": "not_read",
+      "app_name": null,
+      "process_name": null,
+      "window_title": null,
+      "details": {
+       "matched": "not_read_in_rig"
+      },
+      "overrides": [
+       {
+        "id": "claude_code",
+        "label": "Claude Code"
+       },
+       {
+        "id": "codex_cli",
+        "label": "Codex CLI"
+       },
+       {
+        "id": "terminal_shell",
+        "label": "Terminal shell"
+       },
+       {
+        "id": "browser",
+        "label": "Browser"
+       },
+       {
+        "id": "editor",
+        "label": "Editor"
+       },
+       {
+        "id": "chat",
+        "label": "Chat"
+       }
+      ]
+     },
+     "agent_hooks": {
+      "claude": {
+       "fresh": false,
+       "latest_session": null
+      },
+      "codex": {
+       "fresh": false,
+       "latest_session": null
+      }
+     },
+     "warnings": [
+      {
+       "code": "runtime_model_missing",
+       "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "action": "Download the model or update the runtime model path.",
+       "section": "runtime",
+       "guidance": {
+        "kind": "missing_model",
+        "backend": "llama_cpp",
+        "title": "Add the llama_cpp model",
+        "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+        "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+        "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+        "commands": [
+         {
+          "label": "Create model directory",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+         },
+         {
+          "label": "Download a suggested model",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+         }
+        ],
+        "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+        "links": [
+         {
+          "label": "Dictation runtime setup",
+          "target": "/docs/dictation-runtime#llama-cpp"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "/api/dictation/blocks?scope=global": {
+     "scope": "global",
+     "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+     "exists": false,
+     "project": null,
+     "document": {
+      "version": 1,
+      "default_match_confidence": 0.6,
+      "blocks": []
+     }
+    },
+    "/api/dictation/corrections": {
+     "enabled": true,
+     "kinds": [
+      "intent",
+      "target",
+      "text"
+     ],
+     "size": 1,
+     "items": [
+      {
+       "id": 1,
+       "kind": "text",
+       "key": "queue for",
+       "value": "Q4",
+       "created_at": "2026-10-11T22:24:45.045788+00:00",
+       "applied": 0
+      }
+     ]
+    },
+    "/api/dictation/journal?limit=1": {
+     "enabled": true,
+     "retention": 500,
+     "count": 1,
+     "today": 1,
+     "items": [
+      {
+       "id": 1,
+       "created_at": "2026-10-11T22:24:45.022541+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform on schedule",
+       "final_text": "Ship the queue for platform on schedule",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 2.38475005608052,
+        "kb-enricher": 0.0019579892978072166
+       },
+       "total_ms": 2.3966250009834766,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": true,
+       "correction_id": 1,
+       "taught_from": true,
+       "corrections_applied": []
+      }
+     ]
+    },
+    "/api/dictation/journal?limit=50": {
+     "enabled": true,
+     "retention": 500,
+     "count": 1,
+     "today": 1,
+     "items": [
+      {
+       "id": 1,
+       "created_at": "2026-10-11T22:24:45.022541+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform on schedule",
+       "final_text": "Ship the queue for platform on schedule",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 2.38475005608052,
+        "kb-enricher": 0.0019579892978072166
+       },
+       "total_ms": 2.3966250009834766,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": true,
+       "correction_id": 1,
+       "taught_from": true,
+       "corrections_applied": []
+      }
+     ]
+    },
+    "/api/inference-targets": {
+     "version": 1,
+     "targets": [
+      {
+       "version": 1,
+       "id": "this_machine",
+       "profile_id": null,
+       "name": "This device",
+       "kind": "this_device",
+       "boundary": "same_device",
+       "owner": "you",
+       "transport": "in_process",
+       "data_scope": {
+        "sent": [
+         "instruction",
+         "selected_context",
+         "grounding"
+        ],
+        "returned": [
+         "generated_output"
+        ]
+       },
+       "engine": "configured_local_engine",
+       "model": "Qwen3.5-4B-Q4_K_M",
+       "context_limit": 16384,
+       "readiness": {
+        "state": "unavailable",
+        "available": false,
+        "reason": "not set up: Set up local AI downloads this model",
+        "recovery": {
+         "reason": "not set up: Set up local AI downloads this model",
+         "action": "choose_alternate_target",
+         "alternate_target_id": "this_machine"
+        }
+       },
+       "secret": {
+        "required": false,
+        "present": false
+       },
+       "endpoint": "",
+       "node": ""
+      }
+     ]
+    },
+    "/api/setup/local-ai": {
+     "state": "not_started",
+     "runtime": {
+      "package": "llama-cpp-python",
+      "revision": "0.3.35",
+      "minimum": "0.3.34",
+      "ready": true,
+      "reason": ""
+     },
+     "files": [
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "config.json",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/config.json",
+       "size_bytes": 262,
+       "sha256": "737220a6d958b3ad48e78f840fa991556266983c84ea2ca40e413389c62e4c2f",
+       "on_device": false
+      },
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "weights.npz",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/weights.npz",
+       "size_bytes": 143724204,
+       "sha256": "2f57d5f3ef473054c638961f90716f4ee415e8108de81313eccb2c5fd62eff0b",
+       "on_device": false
+      },
+      {
+       "key": "embed",
+       "label": "nomic-embed-text v1.5",
+       "filename": "nomic-embed-text-v1.5.Q8_0.gguf",
+       "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/0188c9bf409793f810680a5a431e7b899c46104c/nomic-embed-text-v1.5.Q8_0.gguf",
+       "size_bytes": 146146432,
+       "sha256": "3e24342164b3d94991ba9692fdc0dd08e3fd7362e0aacc396a9a5c54a544c3b7",
+       "on_device": false
+      },
+      {
+       "key": "starter",
+       "label": "Quick local Qwen",
+       "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+       "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf",
+       "size_bytes": 2740937888,
+       "sha256": "1d203c2196991da08bc5b191ab4727516f476f3167e3276f75a0c5257493aadb",
+       "on_device": false
+      }
+     ],
+     "bytes_total": 3030808786,
+     "bytes_done": 0,
+     "percent": 0,
+     "egress": {
+      "destination": "huggingface.co",
+      "what": "model file request",
+      "files": 4,
+      "bytes": 3030808786
+     },
+     "local_engine": {
+      "ready": false,
+      "profile_id": null,
+      "profile_revision": null,
+      "deployment_id": null
+     },
+     "speech": {
+      "model": "base",
+      "backend": "mlx",
+      "state": "will_download",
+      "ready": false,
+      "bytes": 143724466
+     },
+     "meaning_search": "off",
+     "error": "",
+     "error_code": ""
+    },
+    "POST /api/inference/assignments/editor": {
+     "schema": "AssignmentEditorProjection@1",
+     "scope": {
+      "kind": "capability",
+      "capability_id": "speech.rewrite"
+     },
+     "selected_capability": {
+      "id": "speech.rewrite",
+      "revision": 1,
+      "label": "Dictation rewrite",
+      "group": {
+       "id": "writing_dictation",
+       "label": "Writing & dictation"
+      },
+      "allowed_boundaries": [
+       "cloud",
+       "local",
+       "mesh",
+       "private_network"
+      ],
+      "fallback_dispositions": [
+       "context_overflow",
+       "invalid_typed_output",
+       "known_no_generation_transient",
+       "local_capacity_unavailable",
+       "provider_permanent"
+      ]
+     },
+     "draft_base_revision": 0,
+     "configured_assignment": null,
+     "effective": {
+      "status": "no_assignment",
+      "capability_id": "speech.rewrite",
+      "inherited_from": null,
+      "assignment": null,
+      "repair": "Choose default"
+     },
+     "candidates": [],
+     "retry_policy": {
+      "permitted_ids": [
+       "retry.text.standard"
+      ],
+      "default_id": "retry.text.standard"
+     }
+    }
+   }
+  },
+  {
+   "step": "land_secret",
+   "call": "POST /api/dictation/dry-run",
+   "body": {
+    "utterance": "Set the token to placeholder"
+   },
+   "status": 200,
+   "answer": {
+    "project": {
+     "name": "holdspeak",
+     "root": "/repo",
+     "anchor": "holdspeak",
+     "kb": {
+      "stack": null,
+      "task_focus": null,
+      "constraints": null
+     }
+    },
+    "egress_boundary": "local",
+    "target": {
+     "id": "unknown",
+     "label": "Unknown",
+     "confidence": 0.0,
+     "source": "none",
+     "app_name": null,
+     "process_name": null,
+     "window_title": null,
+     "details": {}
+    },
+    "suggestion_status": "no_suggestion",
+    "journal_id": 2,
+    "learning": null,
+    "runtime_status": "loaded",
+    "runtime_detail": "backend=llama_cpp",
+    "blocks_count": 1,
+    "stages": [
+     {
+      "stage_id": "intent-router",
+      "elapsed_ms": 1.5971669927239418,
+      "intent": {
+       "matched": false,
+       "block_id": null,
+       "confidence": 0.0,
+       "raw_label": null,
+       "extras": {}
+      },
+      "warnings": [
+       "classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+       "classify failed; returning no-match"
+      ],
+      "metadata": {
+       "taxonomy_size": 1,
+       "reason": "classify_failed"
+      },
+      "text": "Set the token to placeholder",
+      "telemetry": {
+       "stage_id": "intent-router",
+       "status": "fallback",
+       "reason": "classify_failed",
+       "fallback": true,
+       "fallback_category": "malformed_output",
+       "elapsed_ms": 1.5971669927239418,
+       "changed": null,
+       "warning_count": 2
+      }
+     },
+     {
+      "stage_id": "kb-enricher",
+      "elapsed_ms": 0.001999898813664913,
+      "intent": null,
+      "warnings": [],
+      "metadata": {
+       "reason": "no_match",
+       "applied_block": null
+      },
+      "text": "Set the token to placeholder",
+      "telemetry": {
+       "stage_id": "kb-enricher",
+       "status": "fallback",
+       "reason": "no_match",
+       "fallback": true,
+       "fallback_category": "no_match",
+       "elapsed_ms": 0.001999898813664913,
+       "changed": null,
+       "warning_count": 0
+      }
+     }
+    ],
+    "final_text": "Set the token to placeholder",
+    "raw_text": "Set the token to placeholder",
+    "corrections_applied": [],
+    "total_elapsed_ms": 1.6598750371485949,
+    "warnings": [
+     "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+     "intent-router: classify failed; returning no-match"
+    ],
+    "telemetry": {
+     "status": "fallback",
+     "summary": "fallback: malformed_output",
+     "latency": {
+      "total_elapsed_ms": 1.6598750371485949,
+      "max_total_latency_ms": 600.0,
+      "over_budget": false
+     },
+     "stages": [
+      {
+       "stage_id": "intent-router",
+       "status": "fallback",
+       "reason": "classify_failed",
+       "fallback": true,
+       "fallback_category": "malformed_output",
+       "elapsed_ms": 1.5971669927239418,
+       "changed": null,
+       "warning_count": 2
+      },
+      {
+       "stage_id": "kb-enricher",
+       "status": "fallback",
+       "reason": "no_match",
+       "fallback": true,
+       "fallback_category": "no_match",
+       "elapsed_ms": 0.001999898813664913,
+       "changed": null,
+       "warning_count": 0
+      }
+     ],
+     "fallbacks": [
+      {
+       "stage_id": "intent-router",
+       "category": "malformed_output",
+       "reason": "classify_failed"
+      },
+      {
+       "stage_id": "kb-enricher",
+       "category": "no_match",
+       "reason": "no_match"
+      }
+     ],
+     "warning_count": 2
+    }
+   },
+   "reads": {
+    "/api/dictation/readiness": {
+     "ready": false,
+     "project": {
+      "name": "holdspeak",
+      "root": "/repo",
+      "anchor": "holdspeak",
+      "kb": {
+       "stack": null,
+       "task_focus": null,
+       "constraints": null
+      }
+     },
+     "egress_boundary": "local",
+     "config": {
+      "pipeline_enabled": true,
+      "max_total_latency_ms": 600,
+      "backend": "auto"
+     },
+     "blocks": {
+      "global": {
+       "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+       "exists": false,
+       "valid": true,
+       "count": 0,
+       "error": null
+      },
+      "project": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      },
+      "resolved_scope": "project",
+      "resolved": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      }
+     },
+     "project_kb": {
+      "path": "/repo/.holdspeak/project.yaml",
+      "exists": true,
+      "valid": true,
+      "keys": [
+       "constraints",
+       "stack",
+       "task_focus"
+      ],
+      "error": null
+     },
+     "project_context": {
+      "path": "/repo/.hs",
+      "exists": false
+     },
+     "runtime": {
+      "status": "missing_model",
+      "requested_backend": "auto",
+      "resolved_backend": "llama_cpp",
+      "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_exists": false,
+      "guidance": {
+       "kind": "missing_model",
+       "backend": "llama_cpp",
+       "title": "Add the llama_cpp model",
+       "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+       "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+       "commands": [
+        {
+         "label": "Create model directory",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+        },
+        {
+         "label": "Download a suggested model",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+        }
+       ],
+       "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+       "links": [
+        {
+         "label": "Dictation runtime setup",
+         "target": "/docs/dictation-runtime#llama-cpp"
+        }
+       ]
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 2,
+       "classify_failures": 2,
+       "constrained_retries": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "telemetry": {
+       "status": "fallback",
+       "summary": "fallback active",
+       "latency": {
+        "max_total_latency_ms": 600.0,
+        "cold_start_cap_ms": 3000.0
+       },
+       "counters": {
+        "model_loads": 0,
+        "classify_calls": 2,
+        "classify_failures": 2,
+        "constrained_retries": 0,
+        "classify_successes": 0
+       },
+       "session": {
+        "llm_disabled_for_session": false,
+        "disabled_reason": null
+       },
+       "fallbacks": [
+        {
+         "category": "runtime_unavailable",
+         "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+        }
+       ]
+      }
+     },
+     "hotkey": {
+      "platform": "darwin",
+      "supported": true,
+      "key": "alt_r",
+      "display": "⌥R",
+      "available": true,
+      "error": "",
+      "reason": "",
+      "permissions": [
+       {
+        "id": "microphone",
+        "label": "MICROPHONE",
+        "state": "granted",
+        "source": "AVCaptureDevice.authorizationStatusForMediaType",
+        "needed_for": "CAPTURE",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "MICROPHONE"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
+        "satisfied": true
+       },
+       {
+        "id": "input_monitoring",
+        "label": "INPUT MONITORING",
+        "state": "granted",
+        "source": "IOHIDCheckAccess",
+        "needed_for": "HOTKEY",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "INPUT MONITORING"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent",
+        "satisfied": true
+       },
+       {
+        "id": "accessibility",
+        "label": "ACCESSIBILITY",
+        "state": "granted",
+        "source": "AXIsProcessTrusted",
+        "needed_for": "TYPING",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "ACCESSIBILITY"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+        "satisfied": true
+       }
+      ],
+      "missing": [],
+      "needs_attention": false
+     },
+     "telemetry": {
+      "status": "fallback",
+      "summary": "fallback active",
+      "latency": {
+       "max_total_latency_ms": 600.0,
+       "cold_start_cap_ms": 3000.0
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 2,
+       "classify_failures": 2,
+       "constrained_retries": 0,
+       "classify_successes": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "fallbacks": [
+       {
+        "category": "runtime_unavailable",
+        "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+       }
+      ]
+     },
+     "depth": {
+      "runs": 2,
+      "stages": {
+       "intent-router": {
+        "p50": 2.0,
+        "p95": 2.3,
+        "count": 2
+       },
+       "kb-enricher": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "count": 2
+       }
+      },
+      "rewrite_pass_ms": [],
+      "budget_ms": 600.0,
+      "guidance": [],
+      "corrections": {
+       "enabled": true,
+       "size": 1,
+       "recent": [
+        "queue for"
+       ]
+      }
+     },
+     "target": {
+      "id": "unknown",
+      "label": "Unknown",
+      "confidence": 0.0,
+      "source": "not_read",
+      "app_name": null,
+      "process_name": null,
+      "window_title": null,
+      "details": {
+       "matched": "not_read_in_rig"
+      },
+      "overrides": [
+       {
+        "id": "claude_code",
+        "label": "Claude Code"
+       },
+       {
+        "id": "codex_cli",
+        "label": "Codex CLI"
+       },
+       {
+        "id": "terminal_shell",
+        "label": "Terminal shell"
+       },
+       {
+        "id": "browser",
+        "label": "Browser"
+       },
+       {
+        "id": "editor",
+        "label": "Editor"
+       },
+       {
+        "id": "chat",
+        "label": "Chat"
+       }
+      ]
+     },
+     "agent_hooks": {
+      "claude": {
+       "fresh": false,
+       "latest_session": null
+      },
+      "codex": {
+       "fresh": false,
+       "latest_session": null
+      }
+     },
+     "warnings": [
+      {
+       "code": "runtime_model_missing",
+       "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "action": "Download the model or update the runtime model path.",
+       "section": "runtime",
+       "guidance": {
+        "kind": "missing_model",
+        "backend": "llama_cpp",
+        "title": "Add the llama_cpp model",
+        "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+        "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+        "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+        "commands": [
+         {
+          "label": "Create model directory",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+         },
+         {
+          "label": "Download a suggested model",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+         }
+        ],
+        "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+        "links": [
+         {
+          "label": "Dictation runtime setup",
+          "target": "/docs/dictation-runtime#llama-cpp"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "/api/dictation/blocks?scope=global": {
+     "scope": "global",
+     "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+     "exists": false,
+     "project": null,
+     "document": {
+      "version": 1,
+      "default_match_confidence": 0.6,
+      "blocks": []
+     }
+    },
+    "/api/dictation/corrections": {
+     "enabled": true,
+     "kinds": [
+      "intent",
+      "target",
+      "text"
+     ],
+     "size": 1,
+     "items": [
+      {
+       "id": 1,
+       "kind": "text",
+       "key": "queue for",
+       "value": "Q4",
+       "created_at": "2026-10-11T22:24:45.045788+00:00",
+       "applied": 0
+      }
+     ]
+    },
+    "/api/dictation/journal?limit=1": {
+     "enabled": true,
+     "retention": 500,
+     "count": 2,
+     "today": 2,
+     "items": [
+      {
+       "id": 2,
+       "created_at": "2026-10-11T22:24:45.070086+00:00",
+       "source": "dry_run",
+       "transcript": "Set the token to placeholder",
+       "final_text": "Set the token to placeholder",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 1.5971669927239418,
+        "kb-enricher": 0.001999898813664913
+       },
+       "total_ms": 1.6598750371485949,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": []
+      }
+     ]
+    },
+    "/api/dictation/journal?limit=50": {
+     "enabled": true,
+     "retention": 500,
+     "count": 2,
+     "today": 2,
+     "items": [
+      {
+       "id": 2,
+       "created_at": "2026-10-11T22:24:45.070086+00:00",
+       "source": "dry_run",
+       "transcript": "Set the token to placeholder",
+       "final_text": "Set the token to placeholder",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 1.5971669927239418,
+        "kb-enricher": 0.001999898813664913
+       },
+       "total_ms": 1.6598750371485949,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": []
+      },
+      {
+       "id": 1,
+       "created_at": "2026-10-11T22:24:45.022541+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform on schedule",
+       "final_text": "Ship the queue for platform on schedule",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 2.38475005608052,
+        "kb-enricher": 0.0019579892978072166
+       },
+       "total_ms": 2.3966250009834766,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": true,
+       "correction_id": 1,
+       "taught_from": true,
+       "corrections_applied": []
+      }
+     ]
+    },
+    "/api/inference-targets": {
+     "version": 1,
+     "targets": [
+      {
+       "version": 1,
+       "id": "this_machine",
+       "profile_id": null,
+       "name": "This device",
+       "kind": "this_device",
+       "boundary": "same_device",
+       "owner": "you",
+       "transport": "in_process",
+       "data_scope": {
+        "sent": [
+         "instruction",
+         "selected_context",
+         "grounding"
+        ],
+        "returned": [
+         "generated_output"
+        ]
+       },
+       "engine": "configured_local_engine",
+       "model": "Qwen3.5-4B-Q4_K_M",
+       "context_limit": 16384,
+       "readiness": {
+        "state": "unavailable",
+        "available": false,
+        "reason": "not set up: Set up local AI downloads this model",
+        "recovery": {
+         "reason": "not set up: Set up local AI downloads this model",
+         "action": "choose_alternate_target",
+         "alternate_target_id": "this_machine"
+        }
+       },
+       "secret": {
+        "required": false,
+        "present": false
+       },
+       "endpoint": "",
+       "node": ""
+      }
+     ]
+    },
+    "/api/setup/local-ai": {
+     "state": "not_started",
+     "runtime": {
+      "package": "llama-cpp-python",
+      "revision": "0.3.35",
+      "minimum": "0.3.34",
+      "ready": true,
+      "reason": ""
+     },
+     "files": [
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "config.json",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/config.json",
+       "size_bytes": 262,
+       "sha256": "737220a6d958b3ad48e78f840fa991556266983c84ea2ca40e413389c62e4c2f",
+       "on_device": false
+      },
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "weights.npz",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/weights.npz",
+       "size_bytes": 143724204,
+       "sha256": "2f57d5f3ef473054c638961f90716f4ee415e8108de81313eccb2c5fd62eff0b",
+       "on_device": false
+      },
+      {
+       "key": "embed",
+       "label": "nomic-embed-text v1.5",
+       "filename": "nomic-embed-text-v1.5.Q8_0.gguf",
+       "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/0188c9bf409793f810680a5a431e7b899c46104c/nomic-embed-text-v1.5.Q8_0.gguf",
+       "size_bytes": 146146432,
+       "sha256": "3e24342164b3d94991ba9692fdc0dd08e3fd7362e0aacc396a9a5c54a544c3b7",
+       "on_device": false
+      },
+      {
+       "key": "starter",
+       "label": "Quick local Qwen",
+       "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+       "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf",
+       "size_bytes": 2740937888,
+       "sha256": "1d203c2196991da08bc5b191ab4727516f476f3167e3276f75a0c5257493aadb",
+       "on_device": false
+      }
+     ],
+     "bytes_total": 3030808786,
+     "bytes_done": 0,
+     "percent": 0,
+     "egress": {
+      "destination": "huggingface.co",
+      "what": "model file request",
+      "files": 4,
+      "bytes": 3030808786
+     },
+     "local_engine": {
+      "ready": false,
+      "profile_id": null,
+      "profile_revision": null,
+      "deployment_id": null
+     },
+     "speech": {
+      "model": "base",
+      "backend": "mlx",
+      "state": "will_download",
+      "ready": false,
+      "bytes": 143724466
+     },
+     "meaning_search": "off",
+     "error": "",
+     "error_code": ""
+    },
+    "POST /api/inference/assignments/editor": {
+     "schema": "AssignmentEditorProjection@1",
+     "scope": {
+      "kind": "capability",
+      "capability_id": "speech.rewrite"
+     },
+     "selected_capability": {
+      "id": "speech.rewrite",
+      "revision": 1,
+      "label": "Dictation rewrite",
+      "group": {
+       "id": "writing_dictation",
+       "label": "Writing & dictation"
+      },
+      "allowed_boundaries": [
+       "cloud",
+       "local",
+       "mesh",
+       "private_network"
+      ],
+      "fallback_dispositions": [
+       "context_overflow",
+       "invalid_typed_output",
+       "known_no_generation_transient",
+       "local_capacity_unavailable",
+       "provider_permanent"
+      ]
+     },
+     "draft_base_revision": 0,
+     "configured_assignment": null,
+     "effective": {
+      "status": "no_assignment",
+      "capability_id": "speech.rewrite",
+      "inherited_from": null,
+      "assignment": null,
+      "repair": "Choose default"
+     },
+     "candidates": [],
+     "retry_policy": {
+      "permitted_ids": [
+       "retry.text.standard"
+      ],
+      "default_id": "retry.text.standard"
+     }
+    }
+   }
+  },
+  {
+   "step": "teach_secret",
+   "call": "POST /api/dictation/journal/2/correct",
+   "body": {
+    "kind": "text",
+    "heard": "Set the token to placeholder",
+    "said": "Set the token to sk-live4f2a9c1b2d3e4f"
+   },
+   "status": 200,
+   "answer": {
+    "corrected": false,
+    "recorded": false,
+    "taught": false,
+    "correction_id": null,
+    "size": 1,
+    "similar": 0,
+    "enabled": true,
+    "reason": "secret"
+   },
+   "reads": {
+    "/api/dictation/readiness": {
+     "ready": false,
+     "project": {
+      "name": "holdspeak",
+      "root": "/repo",
+      "anchor": "holdspeak",
+      "kb": {
+       "stack": null,
+       "task_focus": null,
+       "constraints": null
+      }
+     },
+     "egress_boundary": "local",
+     "config": {
+      "pipeline_enabled": true,
+      "max_total_latency_ms": 600,
+      "backend": "auto"
+     },
+     "blocks": {
+      "global": {
+       "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+       "exists": false,
+       "valid": true,
+       "count": 0,
+       "error": null
+      },
+      "project": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      },
+      "resolved_scope": "project",
+      "resolved": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      }
+     },
+     "project_kb": {
+      "path": "/repo/.holdspeak/project.yaml",
+      "exists": true,
+      "valid": true,
+      "keys": [
+       "constraints",
+       "stack",
+       "task_focus"
+      ],
+      "error": null
+     },
+     "project_context": {
+      "path": "/repo/.hs",
+      "exists": false
+     },
+     "runtime": {
+      "status": "missing_model",
+      "requested_backend": "auto",
+      "resolved_backend": "llama_cpp",
+      "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_exists": false,
+      "guidance": {
+       "kind": "missing_model",
+       "backend": "llama_cpp",
+       "title": "Add the llama_cpp model",
+       "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+       "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+       "commands": [
+        {
+         "label": "Create model directory",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+        },
+        {
+         "label": "Download a suggested model",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+        }
+       ],
+       "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+       "links": [
+        {
+         "label": "Dictation runtime setup",
+         "target": "/docs/dictation-runtime#llama-cpp"
+        }
+       ]
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 2,
+       "classify_failures": 2,
+       "constrained_retries": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "telemetry": {
+       "status": "fallback",
+       "summary": "fallback active",
+       "latency": {
+        "max_total_latency_ms": 600.0,
+        "cold_start_cap_ms": 3000.0
+       },
+       "counters": {
+        "model_loads": 0,
+        "classify_calls": 2,
+        "classify_failures": 2,
+        "constrained_retries": 0,
+        "classify_successes": 0
+       },
+       "session": {
+        "llm_disabled_for_session": false,
+        "disabled_reason": null
+       },
+       "fallbacks": [
+        {
+         "category": "runtime_unavailable",
+         "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+        }
+       ]
+      }
+     },
+     "hotkey": {
+      "platform": "darwin",
+      "supported": true,
+      "key": "alt_r",
+      "display": "⌥R",
+      "available": true,
+      "error": "",
+      "reason": "",
+      "permissions": [
+       {
+        "id": "microphone",
+        "label": "MICROPHONE",
+        "state": "granted",
+        "source": "AVCaptureDevice.authorizationStatusForMediaType",
+        "needed_for": "CAPTURE",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "MICROPHONE"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
+        "satisfied": true
+       },
+       {
+        "id": "input_monitoring",
+        "label": "INPUT MONITORING",
+        "state": "granted",
+        "source": "IOHIDCheckAccess",
+        "needed_for": "HOTKEY",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "INPUT MONITORING"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent",
+        "satisfied": true
+       },
+       {
+        "id": "accessibility",
+        "label": "ACCESSIBILITY",
+        "state": "granted",
+        "source": "AXIsProcessTrusted",
+        "needed_for": "TYPING",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "ACCESSIBILITY"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+        "satisfied": true
+       }
+      ],
+      "missing": [],
+      "needs_attention": false
+     },
+     "telemetry": {
+      "status": "fallback",
+      "summary": "fallback active",
+      "latency": {
+       "max_total_latency_ms": 600.0,
+       "cold_start_cap_ms": 3000.0
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 2,
+       "classify_failures": 2,
+       "constrained_retries": 0,
+       "classify_successes": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "fallbacks": [
+       {
+        "category": "runtime_unavailable",
+        "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+       }
+      ]
+     },
+     "depth": {
+      "runs": 2,
+      "stages": {
+       "intent-router": {
+        "p50": 2.0,
+        "p95": 2.3,
+        "count": 2
+       },
+       "kb-enricher": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "count": 2
+       }
+      },
+      "rewrite_pass_ms": [],
+      "budget_ms": 600.0,
+      "guidance": [],
+      "corrections": {
+       "enabled": true,
+       "size": 1,
+       "recent": [
+        "queue for"
+       ]
+      }
+     },
+     "target": {
+      "id": "unknown",
+      "label": "Unknown",
+      "confidence": 0.0,
+      "source": "not_read",
+      "app_name": null,
+      "process_name": null,
+      "window_title": null,
+      "details": {
+       "matched": "not_read_in_rig"
+      },
+      "overrides": [
+       {
+        "id": "claude_code",
+        "label": "Claude Code"
+       },
+       {
+        "id": "codex_cli",
+        "label": "Codex CLI"
+       },
+       {
+        "id": "terminal_shell",
+        "label": "Terminal shell"
+       },
+       {
+        "id": "browser",
+        "label": "Browser"
+       },
+       {
+        "id": "editor",
+        "label": "Editor"
+       },
+       {
+        "id": "chat",
+        "label": "Chat"
+       }
+      ]
+     },
+     "agent_hooks": {
+      "claude": {
+       "fresh": false,
+       "latest_session": null
+      },
+      "codex": {
+       "fresh": false,
+       "latest_session": null
+      }
+     },
+     "warnings": [
+      {
+       "code": "runtime_model_missing",
+       "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "action": "Download the model or update the runtime model path.",
+       "section": "runtime",
+       "guidance": {
+        "kind": "missing_model",
+        "backend": "llama_cpp",
+        "title": "Add the llama_cpp model",
+        "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+        "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+        "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+        "commands": [
+         {
+          "label": "Create model directory",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+         },
+         {
+          "label": "Download a suggested model",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+         }
+        ],
+        "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+        "links": [
+         {
+          "label": "Dictation runtime setup",
+          "target": "/docs/dictation-runtime#llama-cpp"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "/api/dictation/blocks?scope=global": {
+     "scope": "global",
+     "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+     "exists": false,
+     "project": null,
+     "document": {
+      "version": 1,
+      "default_match_confidence": 0.6,
+      "blocks": []
+     }
+    },
+    "/api/dictation/corrections": {
+     "enabled": true,
+     "kinds": [
+      "intent",
+      "target",
+      "text"
+     ],
+     "size": 1,
+     "items": [
+      {
+       "id": 1,
+       "kind": "text",
+       "key": "queue for",
+       "value": "Q4",
+       "created_at": "2026-10-11T22:24:45.045788+00:00",
+       "applied": 0
+      }
+     ]
+    },
+    "/api/dictation/journal?limit=1": {
+     "enabled": true,
+     "retention": 500,
+     "count": 2,
+     "today": 2,
+     "items": [
+      {
+       "id": 2,
+       "created_at": "2026-10-11T22:24:45.070086+00:00",
+       "source": "dry_run",
+       "transcript": "Set the token to placeholder",
+       "final_text": "Set the token to placeholder",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 1.5971669927239418,
+        "kb-enricher": 0.001999898813664913
+       },
+       "total_ms": 1.6598750371485949,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": []
+      }
+     ]
+    },
+    "/api/dictation/journal?limit=50": {
+     "enabled": true,
+     "retention": 500,
+     "count": 2,
+     "today": 2,
+     "items": [
+      {
+       "id": 2,
+       "created_at": "2026-10-11T22:24:45.070086+00:00",
+       "source": "dry_run",
+       "transcript": "Set the token to placeholder",
+       "final_text": "Set the token to placeholder",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 1.5971669927239418,
+        "kb-enricher": 0.001999898813664913
+       },
+       "total_ms": 1.6598750371485949,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": []
+      },
+      {
+       "id": 1,
+       "created_at": "2026-10-11T22:24:45.022541+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform on schedule",
+       "final_text": "Ship the queue for platform on schedule",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 2.38475005608052,
+        "kb-enricher": 0.0019579892978072166
+       },
+       "total_ms": 2.3966250009834766,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": true,
+       "correction_id": 1,
+       "taught_from": true,
+       "corrections_applied": []
+      }
+     ]
+    },
+    "/api/inference-targets": {
+     "version": 1,
+     "targets": [
+      {
+       "version": 1,
+       "id": "this_machine",
+       "profile_id": null,
+       "name": "This device",
+       "kind": "this_device",
+       "boundary": "same_device",
+       "owner": "you",
+       "transport": "in_process",
+       "data_scope": {
+        "sent": [
+         "instruction",
+         "selected_context",
+         "grounding"
+        ],
+        "returned": [
+         "generated_output"
+        ]
+       },
+       "engine": "configured_local_engine",
+       "model": "Qwen3.5-4B-Q4_K_M",
+       "context_limit": 16384,
+       "readiness": {
+        "state": "unavailable",
+        "available": false,
+        "reason": "not set up: Set up local AI downloads this model",
+        "recovery": {
+         "reason": "not set up: Set up local AI downloads this model",
+         "action": "choose_alternate_target",
+         "alternate_target_id": "this_machine"
+        }
+       },
+       "secret": {
+        "required": false,
+        "present": false
+       },
+       "endpoint": "",
+       "node": ""
+      }
+     ]
+    },
+    "/api/setup/local-ai": {
+     "state": "not_started",
+     "runtime": {
+      "package": "llama-cpp-python",
+      "revision": "0.3.35",
+      "minimum": "0.3.34",
+      "ready": true,
+      "reason": ""
+     },
+     "files": [
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "config.json",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/config.json",
+       "size_bytes": 262,
+       "sha256": "737220a6d958b3ad48e78f840fa991556266983c84ea2ca40e413389c62e4c2f",
+       "on_device": false
+      },
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "weights.npz",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/weights.npz",
+       "size_bytes": 143724204,
+       "sha256": "2f57d5f3ef473054c638961f90716f4ee415e8108de81313eccb2c5fd62eff0b",
+       "on_device": false
+      },
+      {
+       "key": "embed",
+       "label": "nomic-embed-text v1.5",
+       "filename": "nomic-embed-text-v1.5.Q8_0.gguf",
+       "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/0188c9bf409793f810680a5a431e7b899c46104c/nomic-embed-text-v1.5.Q8_0.gguf",
+       "size_bytes": 146146432,
+       "sha256": "3e24342164b3d94991ba9692fdc0dd08e3fd7362e0aacc396a9a5c54a544c3b7",
+       "on_device": false
+      },
+      {
+       "key": "starter",
+       "label": "Quick local Qwen",
+       "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+       "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf",
+       "size_bytes": 2740937888,
+       "sha256": "1d203c2196991da08bc5b191ab4727516f476f3167e3276f75a0c5257493aadb",
+       "on_device": false
+      }
+     ],
+     "bytes_total": 3030808786,
+     "bytes_done": 0,
+     "percent": 0,
+     "egress": {
+      "destination": "huggingface.co",
+      "what": "model file request",
+      "files": 4,
+      "bytes": 3030808786
+     },
+     "local_engine": {
+      "ready": false,
+      "profile_id": null,
+      "profile_revision": null,
+      "deployment_id": null
+     },
+     "speech": {
+      "model": "base",
+      "backend": "mlx",
+      "state": "will_download",
+      "ready": false,
+      "bytes": 143724466
+     },
+     "meaning_search": "off",
+     "error": "",
+     "error_code": ""
+    },
+    "POST /api/inference/assignments/editor": {
+     "schema": "AssignmentEditorProjection@1",
+     "scope": {
+      "kind": "capability",
+      "capability_id": "speech.rewrite"
+     },
+     "selected_capability": {
+      "id": "speech.rewrite",
+      "revision": 1,
+      "label": "Dictation rewrite",
+      "group": {
+       "id": "writing_dictation",
+       "label": "Writing & dictation"
+      },
+      "allowed_boundaries": [
+       "cloud",
+       "local",
+       "mesh",
+       "private_network"
+      ],
+      "fallback_dispositions": [
+       "context_overflow",
+       "invalid_typed_output",
+       "known_no_generation_transient",
+       "local_capacity_unavailable",
+       "provider_permanent"
+      ]
+     },
+     "draft_base_revision": 0,
+     "configured_assignment": null,
+     "effective": {
+      "status": "no_assignment",
+      "capability_id": "speech.rewrite",
+      "inherited_from": null,
+      "assignment": null,
+      "repair": "Choose default"
+     },
+     "candidates": [],
+     "retry_policy": {
+      "permitted_ids": [
+       "retry.text.standard"
+      ],
+      "default_id": "retry.text.standard"
+     }
+    }
+   }
+  },
+  {
+   "step": "land_again",
+   "call": "POST /api/dictation/dry-run",
+   "body": {
+    "utterance": "Ship the queue for platform in October"
+   },
+   "status": 200,
+   "answer": {
+    "project": {
+     "name": "holdspeak",
+     "root": "/repo",
+     "anchor": "holdspeak",
+     "kb": {
+      "stack": null,
+      "task_focus": null,
+      "constraints": null
+     }
+    },
+    "egress_boundary": "local",
+    "target": {
+     "id": "unknown",
+     "label": "Unknown",
+     "confidence": 0.0,
+     "source": "none",
+     "app_name": null,
+     "process_name": null,
+     "window_title": null,
+     "details": {}
+    },
+    "suggestion_status": "no_suggestion",
+    "journal_id": 3,
+    "learning": null,
+    "runtime_status": "loaded",
+    "runtime_detail": "backend=llama_cpp",
+    "blocks_count": 1,
+    "stages": [
+     {
+      "stage_id": "intent-router",
+      "elapsed_ms": 1.5252090524882078,
+      "intent": {
+       "matched": false,
+       "block_id": null,
+       "confidence": 0.0,
+       "raw_label": null,
+       "extras": {}
+      },
+      "warnings": [
+       "classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+       "classify failed; returning no-match"
+      ],
+      "metadata": {
+       "taxonomy_size": 1,
+       "reason": "classify_failed"
+      },
+      "text": "Ship the Q4 platform in October",
+      "telemetry": {
+       "stage_id": "intent-router",
+       "status": "fallback",
+       "reason": "classify_failed",
+       "fallback": true,
+       "fallback_category": "malformed_output",
+       "elapsed_ms": 1.5252090524882078,
+       "changed": null,
+       "warning_count": 2
+      }
+     },
+     {
+      "stage_id": "kb-enricher",
+      "elapsed_ms": 0.001250067725777626,
+      "intent": null,
+      "warnings": [],
+      "metadata": {
+       "reason": "no_match",
+       "applied_block": null
+      },
+      "text": "Ship the Q4 platform in October",
+      "telemetry": {
+       "stage_id": "kb-enricher",
+       "status": "fallback",
+       "reason": "no_match",
+       "fallback": true,
+       "fallback_category": "no_match",
+       "elapsed_ms": 0.001250067725777626,
+       "changed": null,
+       "warning_count": 0
+      }
+     }
+    ],
+    "final_text": "Ship the Q4 platform in October",
+    "raw_text": "Ship the queue for platform in October",
+    "corrections_applied": [
+     1
+    ],
+    "total_elapsed_ms": 1.5549169620499015,
+    "warnings": [
+     "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+     "intent-router: classify failed; returning no-match"
+    ],
+    "telemetry": {
+     "status": "fallback",
+     "summary": "fallback: malformed_output",
+     "latency": {
+      "total_elapsed_ms": 1.5549169620499015,
+      "max_total_latency_ms": 600.0,
+      "over_budget": false
+     },
+     "stages": [
+      {
+       "stage_id": "intent-router",
+       "status": "fallback",
+       "reason": "classify_failed",
+       "fallback": true,
+       "fallback_category": "malformed_output",
+       "elapsed_ms": 1.5252090524882078,
+       "changed": null,
+       "warning_count": 2
+      },
+      {
+       "stage_id": "kb-enricher",
+       "status": "fallback",
+       "reason": "no_match",
+       "fallback": true,
+       "fallback_category": "no_match",
+       "elapsed_ms": 0.001250067725777626,
+       "changed": null,
+       "warning_count": 0
+      }
+     ],
+     "fallbacks": [
+      {
+       "stage_id": "intent-router",
+       "category": "malformed_output",
+       "reason": "classify_failed"
+      },
+      {
+       "stage_id": "kb-enricher",
+       "category": "no_match",
+       "reason": "no_match"
+      }
+     ],
+     "warning_count": 2
+    }
+   },
+   "reads": {
+    "/api/dictation/readiness": {
+     "ready": false,
+     "project": {
+      "name": "holdspeak",
+      "root": "/repo",
+      "anchor": "holdspeak",
+      "kb": {
+       "stack": null,
+       "task_focus": null,
+       "constraints": null
+      }
+     },
+     "egress_boundary": "local",
+     "config": {
+      "pipeline_enabled": true,
+      "max_total_latency_ms": 600,
+      "backend": "auto"
+     },
+     "blocks": {
+      "global": {
+       "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+       "exists": false,
+       "valid": true,
+       "count": 0,
+       "error": null
+      },
+      "project": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      },
+      "resolved_scope": "project",
+      "resolved": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      }
+     },
+     "project_kb": {
+      "path": "/repo/.holdspeak/project.yaml",
+      "exists": true,
+      "valid": true,
+      "keys": [
+       "constraints",
+       "stack",
+       "task_focus"
+      ],
+      "error": null
+     },
+     "project_context": {
+      "path": "/repo/.hs",
+      "exists": false
+     },
+     "runtime": {
+      "status": "missing_model",
+      "requested_backend": "auto",
+      "resolved_backend": "llama_cpp",
+      "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_exists": false,
+      "guidance": {
+       "kind": "missing_model",
+       "backend": "llama_cpp",
+       "title": "Add the llama_cpp model",
+       "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+       "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+       "commands": [
+        {
+         "label": "Create model directory",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+        },
+        {
+         "label": "Download a suggested model",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+        }
+       ],
+       "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+       "links": [
+        {
+         "label": "Dictation runtime setup",
+         "target": "/docs/dictation-runtime#llama-cpp"
+        }
+       ]
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 3,
+       "classify_failures": 3,
+       "constrained_retries": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "telemetry": {
+       "status": "fallback",
+       "summary": "fallback active",
+       "latency": {
+        "max_total_latency_ms": 600.0,
+        "cold_start_cap_ms": 3000.0
+       },
+       "counters": {
+        "model_loads": 0,
+        "classify_calls": 3,
+        "classify_failures": 3,
+        "constrained_retries": 0,
+        "classify_successes": 0
+       },
+       "session": {
+        "llm_disabled_for_session": false,
+        "disabled_reason": null
+       },
+       "fallbacks": [
+        {
+         "category": "runtime_unavailable",
+         "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+        }
+       ]
+      }
+     },
+     "hotkey": {
+      "platform": "darwin",
+      "supported": true,
+      "key": "alt_r",
+      "display": "⌥R",
+      "available": true,
+      "error": "",
+      "reason": "",
+      "permissions": [
+       {
+        "id": "microphone",
+        "label": "MICROPHONE",
+        "state": "granted",
+        "source": "AVCaptureDevice.authorizationStatusForMediaType",
+        "needed_for": "CAPTURE",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "MICROPHONE"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
+        "satisfied": true
+       },
+       {
+        "id": "input_monitoring",
+        "label": "INPUT MONITORING",
+        "state": "granted",
+        "source": "IOHIDCheckAccess",
+        "needed_for": "HOTKEY",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "INPUT MONITORING"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent",
+        "satisfied": true
+       },
+       {
+        "id": "accessibility",
+        "label": "ACCESSIBILITY",
+        "state": "granted",
+        "source": "AXIsProcessTrusted",
+        "needed_for": "TYPING",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "ACCESSIBILITY"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+        "satisfied": true
+       }
+      ],
+      "missing": [],
+      "needs_attention": false
+     },
+     "telemetry": {
+      "status": "fallback",
+      "summary": "fallback active",
+      "latency": {
+       "max_total_latency_ms": 600.0,
+       "cold_start_cap_ms": 3000.0
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 3,
+       "classify_failures": 3,
+       "constrained_retries": 0,
+       "classify_successes": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "fallbacks": [
+       {
+        "category": "runtime_unavailable",
+        "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+       }
+      ]
+     },
+     "depth": {
+      "runs": 3,
+      "stages": {
+       "intent-router": {
+        "p50": 1.6,
+        "p95": 2.3,
+        "count": 3
+       },
+       "kb-enricher": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "count": 3
+       }
+      },
+      "rewrite_pass_ms": [],
+      "budget_ms": 600.0,
+      "guidance": [],
+      "corrections": {
+       "enabled": true,
+       "size": 1,
+       "recent": [
+        "queue for"
+       ]
+      }
+     },
+     "target": {
+      "id": "unknown",
+      "label": "Unknown",
+      "confidence": 0.0,
+      "source": "not_read",
+      "app_name": null,
+      "process_name": null,
+      "window_title": null,
+      "details": {
+       "matched": "not_read_in_rig"
+      },
+      "overrides": [
+       {
+        "id": "claude_code",
+        "label": "Claude Code"
+       },
+       {
+        "id": "codex_cli",
+        "label": "Codex CLI"
+       },
+       {
+        "id": "terminal_shell",
+        "label": "Terminal shell"
+       },
+       {
+        "id": "browser",
+        "label": "Browser"
+       },
+       {
+        "id": "editor",
+        "label": "Editor"
+       },
+       {
+        "id": "chat",
+        "label": "Chat"
+       }
+      ]
+     },
+     "agent_hooks": {
+      "claude": {
+       "fresh": false,
+       "latest_session": null
+      },
+      "codex": {
+       "fresh": false,
+       "latest_session": null
+      }
+     },
+     "warnings": [
+      {
+       "code": "runtime_model_missing",
+       "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "action": "Download the model or update the runtime model path.",
+       "section": "runtime",
+       "guidance": {
+        "kind": "missing_model",
+        "backend": "llama_cpp",
+        "title": "Add the llama_cpp model",
+        "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+        "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+        "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+        "commands": [
+         {
+          "label": "Create model directory",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+         },
+         {
+          "label": "Download a suggested model",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+         }
+        ],
+        "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+        "links": [
+         {
+          "label": "Dictation runtime setup",
+          "target": "/docs/dictation-runtime#llama-cpp"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "/api/dictation/blocks?scope=global": {
+     "scope": "global",
+     "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+     "exists": false,
+     "project": null,
+     "document": {
+      "version": 1,
+      "default_match_confidence": 0.6,
+      "blocks": []
+     }
+    },
+    "/api/dictation/corrections": {
+     "enabled": true,
+     "kinds": [
+      "intent",
+      "target",
+      "text"
+     ],
+     "size": 1,
+     "items": [
+      {
+       "id": 1,
+       "kind": "text",
+       "key": "queue for",
+       "value": "Q4",
+       "created_at": "2026-10-11T22:24:45.045788+00:00",
+       "applied": 1
+      }
+     ]
+    },
+    "/api/dictation/journal?limit=1": {
+     "enabled": true,
+     "retention": 500,
+     "count": 3,
+     "today": 3,
+     "items": [
+      {
+       "id": 3,
+       "created_at": "2026-10-11T22:24:45.114936+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform in October",
+       "final_text": "Ship the Q4 platform in October",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 1.5252090524882078,
+        "kb-enricher": 0.001250067725777626
+       },
+       "total_ms": 1.5549169620499015,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": [
+        1
+       ]
+      }
+     ]
+    },
+    "/api/dictation/journal?limit=50": {
+     "enabled": true,
+     "retention": 500,
+     "count": 3,
+     "today": 3,
+     "items": [
+      {
+       "id": 3,
+       "created_at": "2026-10-11T22:24:45.114936+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform in October",
+       "final_text": "Ship the Q4 platform in October",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 1.5252090524882078,
+        "kb-enricher": 0.001250067725777626
+       },
+       "total_ms": 1.5549169620499015,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": [
+        1
+       ]
+      },
+      {
+       "id": 2,
+       "created_at": "2026-10-11T22:24:45.070086+00:00",
+       "source": "dry_run",
+       "transcript": "Set the token to placeholder",
+       "final_text": "Set the token to placeholder",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 1.5971669927239418,
+        "kb-enricher": 0.001999898813664913
+       },
+       "total_ms": 1.6598750371485949,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": []
+      },
+      {
+       "id": 1,
+       "created_at": "2026-10-11T22:24:45.022541+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform on schedule",
+       "final_text": "Ship the queue for platform on schedule",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 2.38475005608052,
+        "kb-enricher": 0.0019579892978072166
+       },
+       "total_ms": 2.3966250009834766,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": true,
+       "correction_id": 1,
+       "taught_from": true,
+       "corrections_applied": []
+      }
+     ]
+    },
+    "/api/inference-targets": {
+     "version": 1,
+     "targets": [
+      {
+       "version": 1,
+       "id": "this_machine",
+       "profile_id": null,
+       "name": "This device",
+       "kind": "this_device",
+       "boundary": "same_device",
+       "owner": "you",
+       "transport": "in_process",
+       "data_scope": {
+        "sent": [
+         "instruction",
+         "selected_context",
+         "grounding"
+        ],
+        "returned": [
+         "generated_output"
+        ]
+       },
+       "engine": "configured_local_engine",
+       "model": "Qwen3.5-4B-Q4_K_M",
+       "context_limit": 16384,
+       "readiness": {
+        "state": "unavailable",
+        "available": false,
+        "reason": "not set up: Set up local AI downloads this model",
+        "recovery": {
+         "reason": "not set up: Set up local AI downloads this model",
+         "action": "choose_alternate_target",
+         "alternate_target_id": "this_machine"
+        }
+       },
+       "secret": {
+        "required": false,
+        "present": false
+       },
+       "endpoint": "",
+       "node": ""
+      }
+     ]
+    },
+    "/api/setup/local-ai": {
+     "state": "not_started",
+     "runtime": {
+      "package": "llama-cpp-python",
+      "revision": "0.3.35",
+      "minimum": "0.3.34",
+      "ready": true,
+      "reason": ""
+     },
+     "files": [
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "config.json",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/config.json",
+       "size_bytes": 262,
+       "sha256": "737220a6d958b3ad48e78f840fa991556266983c84ea2ca40e413389c62e4c2f",
+       "on_device": false
+      },
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "weights.npz",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/weights.npz",
+       "size_bytes": 143724204,
+       "sha256": "2f57d5f3ef473054c638961f90716f4ee415e8108de81313eccb2c5fd62eff0b",
+       "on_device": false
+      },
+      {
+       "key": "embed",
+       "label": "nomic-embed-text v1.5",
+       "filename": "nomic-embed-text-v1.5.Q8_0.gguf",
+       "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/0188c9bf409793f810680a5a431e7b899c46104c/nomic-embed-text-v1.5.Q8_0.gguf",
+       "size_bytes": 146146432,
+       "sha256": "3e24342164b3d94991ba9692fdc0dd08e3fd7362e0aacc396a9a5c54a544c3b7",
+       "on_device": false
+      },
+      {
+       "key": "starter",
+       "label": "Quick local Qwen",
+       "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+       "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf",
+       "size_bytes": 2740937888,
+       "sha256": "1d203c2196991da08bc5b191ab4727516f476f3167e3276f75a0c5257493aadb",
+       "on_device": false
+      }
+     ],
+     "bytes_total": 3030808786,
+     "bytes_done": 0,
+     "percent": 0,
+     "egress": {
+      "destination": "huggingface.co",
+      "what": "model file request",
+      "files": 4,
+      "bytes": 3030808786
+     },
+     "local_engine": {
+      "ready": false,
+      "profile_id": null,
+      "profile_revision": null,
+      "deployment_id": null
+     },
+     "speech": {
+      "model": "base",
+      "backend": "mlx",
+      "state": "will_download",
+      "ready": false,
+      "bytes": 143724466
+     },
+     "meaning_search": "off",
+     "error": "",
+     "error_code": ""
+    },
+    "POST /api/inference/assignments/editor": {
+     "schema": "AssignmentEditorProjection@1",
+     "scope": {
+      "kind": "capability",
+      "capability_id": "speech.rewrite"
+     },
+     "selected_capability": {
+      "id": "speech.rewrite",
+      "revision": 1,
+      "label": "Dictation rewrite",
+      "group": {
+       "id": "writing_dictation",
+       "label": "Writing & dictation"
+      },
+      "allowed_boundaries": [
+       "cloud",
+       "local",
+       "mesh",
+       "private_network"
+      ],
+      "fallback_dispositions": [
+       "context_overflow",
+       "invalid_typed_output",
+       "known_no_generation_transient",
+       "local_capacity_unavailable",
+       "provider_permanent"
+      ]
+     },
+     "draft_base_revision": 0,
+     "configured_assignment": null,
+     "effective": {
+      "status": "no_assignment",
+      "capability_id": "speech.rewrite",
+      "inherited_from": null,
+      "assignment": null,
+      "repair": "Choose default"
+     },
+     "candidates": [],
+     "retry_policy": {
+      "permitted_ids": [
+       "retry.text.standard"
+      ],
+      "default_id": "retry.text.standard"
+     }
+    }
+   }
+  },
+  {
+   "step": "forget",
+   "call": "DELETE /api/dictation/corrections/1",
+   "body": null,
+   "status": 200,
+   "answer": {
+    "removed": true,
+    "size": 0
+   },
+   "reads": {
+    "/api/dictation/readiness": {
+     "ready": false,
+     "project": {
+      "name": "holdspeak",
+      "root": "/repo",
+      "anchor": "holdspeak",
+      "kb": {
+       "stack": null,
+       "task_focus": null,
+       "constraints": null
+      }
+     },
+     "egress_boundary": "local",
+     "config": {
+      "pipeline_enabled": true,
+      "max_total_latency_ms": 600,
+      "backend": "auto"
+     },
+     "blocks": {
+      "global": {
+       "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+       "exists": false,
+       "valid": true,
+       "count": 0,
+       "error": null
+      },
+      "project": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      },
+      "resolved_scope": "project",
+      "resolved": {
+       "path": "/repo/.holdspeak/blocks.yaml",
+       "exists": true,
+       "valid": true,
+       "count": 1,
+       "error": null
+      }
+     },
+     "project_kb": {
+      "path": "/repo/.holdspeak/project.yaml",
+      "exists": true,
+      "valid": true,
+      "keys": [
+       "constraints",
+       "stack",
+       "task_focus"
+      ],
+      "error": null
+     },
+     "project_context": {
+      "path": "/repo/.hs",
+      "exists": false
+     },
+     "runtime": {
+      "status": "missing_model",
+      "requested_backend": "auto",
+      "resolved_backend": "llama_cpp",
+      "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "model_exists": false,
+      "guidance": {
+       "kind": "missing_model",
+       "backend": "llama_cpp",
+       "title": "Add the llama_cpp model",
+       "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+       "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+       "commands": [
+        {
+         "label": "Create model directory",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+        },
+        {
+         "label": "Download a suggested model",
+         "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+        }
+       ],
+       "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+       "links": [
+        {
+         "label": "Dictation runtime setup",
+         "target": "/docs/dictation-runtime#llama-cpp"
+        }
+       ]
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 3,
+       "classify_failures": 3,
+       "constrained_retries": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "telemetry": {
+       "status": "fallback",
+       "summary": "fallback active",
+       "latency": {
+        "max_total_latency_ms": 600.0,
+        "cold_start_cap_ms": 3000.0
+       },
+       "counters": {
+        "model_loads": 0,
+        "classify_calls": 3,
+        "classify_failures": 3,
+        "constrained_retries": 0,
+        "classify_successes": 0
+       },
+       "session": {
+        "llm_disabled_for_session": false,
+        "disabled_reason": null
+       },
+       "fallbacks": [
+        {
+         "category": "runtime_unavailable",
+         "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+        }
+       ]
+      }
+     },
+     "hotkey": {
+      "platform": "darwin",
+      "supported": true,
+      "key": "alt_r",
+      "display": "⌥R",
+      "available": true,
+      "error": "",
+      "reason": "",
+      "permissions": [
+       {
+        "id": "microphone",
+        "label": "MICROPHONE",
+        "state": "granted",
+        "source": "AVCaptureDevice.authorizationStatusForMediaType",
+        "needed_for": "CAPTURE",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "MICROPHONE"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
+        "satisfied": true
+       },
+       {
+        "id": "input_monitoring",
+        "label": "INPUT MONITORING",
+        "state": "granted",
+        "source": "IOHIDCheckAccess",
+        "needed_for": "HOTKEY",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "INPUT MONITORING"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent",
+        "satisfied": true
+       },
+       {
+        "id": "accessibility",
+        "label": "ACCESSIBILITY",
+        "state": "granted",
+        "source": "AXIsProcessTrusted",
+        "needed_for": "TYPING",
+        "path": [
+         "SYSTEM SETTINGS",
+         "PRIVACY & SECURITY",
+         "ACCESSIBILITY"
+        ],
+        "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+        "satisfied": true
+       }
+      ],
+      "missing": [],
+      "needs_attention": false
+     },
+     "telemetry": {
+      "status": "fallback",
+      "summary": "fallback active",
+      "latency": {
+       "max_total_latency_ms": 600.0,
+       "cold_start_cap_ms": 3000.0
+      },
+      "counters": {
+       "model_loads": 0,
+       "classify_calls": 3,
+       "classify_failures": 3,
+       "constrained_retries": 0,
+       "classify_successes": 0
+      },
+      "session": {
+       "llm_disabled_for_session": false,
+       "disabled_reason": null
+      },
+      "fallbacks": [
+       {
+        "category": "runtime_unavailable",
+        "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+       }
+      ]
+     },
+     "depth": {
+      "runs": 3,
+      "stages": {
+       "intent-router": {
+        "p50": 1.6,
+        "p95": 2.3,
+        "count": 3
+       },
+       "kb-enricher": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "count": 3
+       }
+      },
+      "rewrite_pass_ms": [],
+      "budget_ms": 600.0,
+      "guidance": [],
+      "corrections": {
+       "enabled": true,
+       "size": 0,
+       "recent": []
+      }
+     },
+     "target": {
+      "id": "unknown",
+      "label": "Unknown",
+      "confidence": 0.0,
+      "source": "not_read",
+      "app_name": null,
+      "process_name": null,
+      "window_title": null,
+      "details": {
+       "matched": "not_read_in_rig"
+      },
+      "overrides": [
+       {
+        "id": "claude_code",
+        "label": "Claude Code"
+       },
+       {
+        "id": "codex_cli",
+        "label": "Codex CLI"
+       },
+       {
+        "id": "terminal_shell",
+        "label": "Terminal shell"
+       },
+       {
+        "id": "browser",
+        "label": "Browser"
+       },
+       {
+        "id": "editor",
+        "label": "Editor"
+       },
+       {
+        "id": "chat",
+        "label": "Chat"
+       }
+      ]
+     },
+     "agent_hooks": {
+      "claude": {
+       "fresh": false,
+       "latest_session": null
+      },
+      "codex": {
+       "fresh": false,
+       "latest_session": null
+      }
+     },
+     "warnings": [
+      {
+       "code": "runtime_model_missing",
+       "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+       "action": "Download the model or update the runtime model path.",
+       "section": "runtime",
+       "guidance": {
+        "kind": "missing_model",
+        "backend": "llama_cpp",
+        "title": "Add the llama_cpp model",
+        "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
+        "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+        "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+        "commands": [
+         {
+          "label": "Create model directory",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+         },
+         {
+          "label": "Download a suggested model",
+          "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+         }
+        ],
+        "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+        "links": [
+         {
+          "label": "Dictation runtime setup",
+          "target": "/docs/dictation-runtime#llama-cpp"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "/api/dictation/blocks?scope=global": {
+     "scope": "global",
+     "path": "/tmp/rig/home/.config/holdspeak/blocks.yaml",
+     "exists": false,
+     "project": null,
+     "document": {
+      "version": 1,
+      "default_match_confidence": 0.6,
+      "blocks": []
+     }
+    },
+    "/api/dictation/corrections": {
+     "enabled": true,
+     "kinds": [
+      "intent",
+      "target",
+      "text"
+     ],
+     "size": 0,
+     "items": []
+    },
+    "/api/dictation/journal?limit=1": {
+     "enabled": true,
+     "retention": 500,
+     "count": 3,
+     "today": 3,
+     "items": [
+      {
+       "id": 3,
+       "created_at": "2026-10-11T22:24:45.114936+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform in October",
+       "final_text": "Ship the Q4 platform in October",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 1.5252090524882078,
+        "kb-enricher": 0.001250067725777626
+       },
+       "total_ms": 1.5549169620499015,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": [
+        1
+       ]
+      }
+     ]
+    },
+    "/api/dictation/journal?limit=50": {
+     "enabled": true,
+     "retention": 500,
+     "count": 3,
+     "today": 3,
+     "items": [
+      {
+       "id": 3,
+       "created_at": "2026-10-11T22:24:45.114936+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform in October",
+       "final_text": "Ship the Q4 platform in October",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 1.5252090524882078,
+        "kb-enricher": 0.001250067725777626
+       },
+       "total_ms": 1.5549169620499015,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": [
+        1
+       ]
+      },
+      {
+       "id": 2,
+       "created_at": "2026-10-11T22:24:45.070086+00:00",
+       "source": "dry_run",
+       "transcript": "Set the token to placeholder",
+       "final_text": "Set the token to placeholder",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 1.5971669927239418,
+        "kb-enricher": 0.001999898813664913
+       },
+       "total_ms": 1.6598750371485949,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": false,
+       "correction_id": null,
+       "taught_from": false,
+       "corrections_applied": []
+      },
+      {
+       "id": 1,
+       "created_at": "2026-10-11T22:24:45.022541+00:00",
+       "source": "dry_run",
+       "transcript": "Ship the queue for platform on schedule",
+       "final_text": "Ship the queue for platform on schedule",
+       "project_root": "/repo",
+       "intent": null,
+       "block_id": null,
+       "target_profile": "unknown",
+       "stage_ms": {
+        "intent-router": 2.38475005608052,
+        "kb-enricher": 0.0019579892978072166
+       },
+       "total_ms": 2.3966250009834766,
+       "rewrite_pass_ms": [],
+       "confidence": 0.0,
+       "warnings": [
+        "intent-router: classify failed: SpeechProviderFailure: holdspeak.dictation-intent-classify:failed",
+        "intent-router: classify failed; returning no-match"
+       ],
+       "corrected": true,
+       "correction_id": 1,
+       "taught_from": true,
+       "corrections_applied": []
+      }
+     ]
+    },
+    "/api/inference-targets": {
+     "version": 1,
+     "targets": [
+      {
+       "version": 1,
+       "id": "this_machine",
+       "profile_id": null,
+       "name": "This device",
+       "kind": "this_device",
+       "boundary": "same_device",
+       "owner": "you",
+       "transport": "in_process",
+       "data_scope": {
+        "sent": [
+         "instruction",
+         "selected_context",
+         "grounding"
+        ],
+        "returned": [
+         "generated_output"
+        ]
+       },
+       "engine": "configured_local_engine",
+       "model": "Qwen3.5-4B-Q4_K_M",
+       "context_limit": 16384,
+       "readiness": {
+        "state": "unavailable",
+        "available": false,
+        "reason": "not set up: Set up local AI downloads this model",
+        "recovery": {
+         "reason": "not set up: Set up local AI downloads this model",
+         "action": "choose_alternate_target",
+         "alternate_target_id": "this_machine"
+        }
+       },
+       "secret": {
+        "required": false,
+        "present": false
+       },
+       "endpoint": "",
+       "node": ""
+      }
+     ]
+    },
+    "/api/setup/local-ai": {
+     "state": "not_started",
+     "runtime": {
+      "package": "llama-cpp-python",
+      "revision": "0.3.35",
+      "minimum": "0.3.34",
+      "ready": true,
+      "reason": ""
+     },
+     "files": [
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "config.json",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/config.json",
+       "size_bytes": 262,
+       "sha256": "737220a6d958b3ad48e78f840fa991556266983c84ea2ca40e413389c62e4c2f",
+       "on_device": false
+      },
+      {
+       "key": "whisper",
+       "label": "whisper-base-mlx",
+       "filename": "weights.npz",
+       "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/weights.npz",
+       "size_bytes": 143724204,
+       "sha256": "2f57d5f3ef473054c638961f90716f4ee415e8108de81313eccb2c5fd62eff0b",
+       "on_device": false
+      },
+      {
+       "key": "embed",
+       "label": "nomic-embed-text v1.5",
+       "filename": "nomic-embed-text-v1.5.Q8_0.gguf",
+       "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/0188c9bf409793f810680a5a431e7b899c46104c/nomic-embed-text-v1.5.Q8_0.gguf",
+       "size_bytes": 146146432,
+       "sha256": "3e24342164b3d94991ba9692fdc0dd08e3fd7362e0aacc396a9a5c54a544c3b7",
+       "on_device": false
+      },
+      {
+       "key": "starter",
+       "label": "Quick local Qwen",
+       "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+       "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf",
+       "size_bytes": 2740937888,
+       "sha256": "1d203c2196991da08bc5b191ab4727516f476f3167e3276f75a0c5257493aadb",
+       "on_device": false
+      }
+     ],
+     "bytes_total": 3030808786,
+     "bytes_done": 0,
+     "percent": 0,
+     "egress": {
+      "destination": "huggingface.co",
+      "what": "model file request",
+      "files": 4,
+      "bytes": 3030808786
+     },
+     "local_engine": {
+      "ready": false,
+      "profile_id": null,
+      "profile_revision": null,
+      "deployment_id": null
+     },
+     "speech": {
+      "model": "base",
+      "backend": "mlx",
+      "state": "will_download",
+      "ready": false,
+      "bytes": 143724466
+     },
+     "meaning_search": "off",
+     "error": "",
+     "error_code": ""
+    },
+    "POST /api/inference/assignments/editor": {
+     "schema": "AssignmentEditorProjection@1",
+     "scope": {
+      "kind": "capability",
+      "capability_id": "speech.rewrite"
+     },
+     "selected_capability": {
+      "id": "speech.rewrite",
+      "revision": 1,
+      "label": "Dictation rewrite",
+      "group": {
+       "id": "writing_dictation",
+       "label": "Writing & dictation"
+      },
+      "allowed_boundaries": [
+       "cloud",
+       "local",
+       "mesh",
+       "private_network"
+      ],
+      "fallback_dispositions": [
+       "context_overflow",
+       "invalid_typed_output",
+       "known_no_generation_transient",
+       "local_capacity_unavailable",
+       "provider_permanent"
+      ]
+     },
+     "draft_base_revision": 0,
+     "configured_assignment": null,
+     "effective": {
+      "status": "no_assignment",
+      "capability_id": "speech.rewrite",
+      "inherited_from": null,
+      "assignment": null,
+      "repair": "Choose default"
+     },
+     "candidates": [],
+     "retry_policy": {
+      "permitted_ids": [
+       "retry.text.standard"
+      ],
+      "default_id": "retry.text.standard"
+     }
+    }
+   }
+  }
+ ]
+}

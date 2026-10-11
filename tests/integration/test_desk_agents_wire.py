@@ -431,3 +431,60 @@ def test_the_conductor_reads_three_launches_and_the_ask(hub: str, tmp_path: Path
     _fence("onboarding-agents.isolated", detect, tmp_path, hub)
     # Open on a launched agent reads its lane (Get Info and the lane window).
     _fence("lane.c4-runbook", _get(hub, "/api/agent/launches/launch_c4_runbook/lane"), tmp_path, hub)
+
+
+# ── the lane's draft chip on the Default for AI work (PHILO-17 final lane A) ──
+
+AGENTS_FIXTURES = REPO / "web" / "src" / "desk" / "__tests__" / "fixtures"
+
+
+def _keep(folder: str, name: str, payload: Any, tmp_path: Path, url: str) -> None:
+    """The same fence as `_fence`, for a scenario folder under fixtures/
+    (agents.app.test.tsx reads it with the same `{captured_at, wire}` form)."""
+    scrubbed = _scrub(payload, tmp_path, url)
+    path = AGENTS_FIXTURES / folder / f"{name}.wire.json"
+    if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        path.parent.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        path.write_text(json.dumps({
+            "_": f"The hub's own answer, captured by {Path(__file__).relative_to(REPO)}; "
+                 "HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+            "captured_at": stamp,
+            "wire": scrubbed,
+        }, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
+    assert path.exists(), f"no stored answer {path}; run with HOLDSPEAK_WIRE_WRITE=1"
+    diffs = _same_shape(_shape(json.loads(path.read_text())["wire"]), _shape(scrubbed))
+    assert not diffs, f"{folder}/{path.name}: the stored answer is not the hub's shape: {diffs[:10]}"
+
+
+def test_the_lane_draft_inherits_the_default_for_ai_work(hub: str, tmp_path: Path) -> None:
+    """replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_the_lane_draft_chip_names_the_default (hub half)
+
+    The state "Set up local AI" leaves: one LAN model as the GLOBAL default,
+    nothing exact for Cadence drafts. The drafts' capability has no override
+    and inherits the global default; the lane and the assignments are
+    recorded for the face (agents.app.test.tsx, the draft chip).
+    """
+    from holdspeak.db import get_database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services import agent_responder
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.e2e.agents_lane_rig import _seed
+    from tests.unit.test_phase143_inference_assignments import _profile
+
+    _seed(tmp_path / "home")
+    db = get_database()
+    _profile(db, "qwen3-8-27b", model="qwen3.8-27b", boundary="private_network")
+    InferenceAssignmentService(db).set_assignment(
+        Principal(PrincipalKind.OWNER, "lane-default-owner"),
+        {"command_id": "lane-default", "expected_revision": 0, "scope": {"kind": "global"},
+         "entries": [{"profile_id": "qwen3-8-27b", "profile_revision": 1}]},
+    )
+    roster = _get(hub, "/api/inference/assignments")
+    [row] = [r for r in roster["task_overrides"] if r["id"] == agent_responder.CAPABILITY]
+    assert row["has_override"] is False and row["effective"]["inherited_from"] == "global", row
+    _keep("agents-default", "inference-assignments", roster, tmp_path, hub)
+    lane = _get(hub, "/api/agent/launches/launch_c2_runbook/lane")
+    assert lane["wait"]["draft"]["text"], lane["wait"]
+    _keep("agents-default", "lane", lane, tmp_path, hub)
+    _keep("agents-default", "coders-sessions", _get(hub, "/api/coders/sessions?include_ended=false"), tmp_path, hub)

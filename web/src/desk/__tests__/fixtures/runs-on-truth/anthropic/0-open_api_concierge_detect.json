@@ -1,0 +1,145 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_runs_on_hub.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:22:16.686049Z",
+  "wire": {
+    "checkedAt": "2026-10-11T22:22:16.684224+00:00",
+    "engines": [
+      {
+        "baseUrl": "https://api.anthropic.com/v1",
+        "fits": {
+          "agents_tools": {
+            "state": "UNKNOWN"
+          },
+          "background": {
+            "state": "UNKNOWN"
+          },
+          "meetings": {
+            "state": "UNKNOWN"
+          },
+          "speech_recognition": {
+            "state": "UNKNOWN"
+          },
+          "thoughts_notes": {
+            "state": "UNKNOWN"
+          },
+          "writing_dictation": {
+            "state": "UNKNOWN"
+          }
+        },
+        "host": "api.anthropic.com",
+        "id": "cloud:cloud-anthropic",
+        "keySet": false,
+        "kind": "cloud",
+        "legacyLabel": "Claude",
+        "name": "Claude sonnet",
+        "profileId": "cloud-anthropic",
+        "quantToken": null,
+        "state": "NOT_SUPPORTED"
+      },
+      {
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "fits": {
+          "agents_tools": {
+            "state": "UNKNOWN"
+          },
+          "background": {
+            "state": "UNKNOWN"
+          },
+          "meetings": {
+            "state": "UNKNOWN"
+          },
+          "speech_recognition": {
+            "state": "UNKNOWN"
+          },
+          "thoughts_notes": {
+            "state": "UNKNOWN"
+          },
+          "writing_dictation": {
+            "state": "UNKNOWN"
+          }
+        },
+        "host": "openrouter.ai",
+        "id": "cloud:cloud-openrouter",
+        "keySet": false,
+        "kind": "cloud",
+        "legacyLabel": "OpenRouter Qwen",
+        "name": "Qwen3",
+        "profileId": "cloud-openrouter",
+        "quantToken": null,
+        "state": "NOT_SET"
+      },
+      {
+        "downloadHost": "huggingface.co",
+        "host": "THIS DEVICE",
+        "id": "preset:preset_local_qwen35_4b_gguf_q4km",
+        "installed": false,
+        "kind": "preset",
+        "name": "Quick local Qwen",
+        "presetId": "preset_local_qwen35_4b_gguf_q4km",
+        "sizeBytes": 2740937888,
+        "state": "WAITING"
+      },
+      {
+        "downloadHost": "huggingface.co",
+        "host": "THIS DEVICE",
+        "id": "preset:preset_local_qwen35_08b_gguf_q4km",
+        "installed": false,
+        "kind": "preset",
+        "name": "Tiny local Qwen",
+        "presetId": "preset_local_qwen35_08b_gguf_q4km",
+        "sizeBytes": 532517120,
+        "state": "WAITING"
+      }
+    ],
+    "hardware": {
+      "capability": {
+        "accelerators": [
+          "metal"
+        ],
+        "apple_silicon": true,
+        "architecture": "arm64",
+        "logical_cpu_count": 12,
+        "sha256": "sha256:28c82ad0634fbe2be400b096a8c33868e646704aa3e2caff5f76ab7d80e86721",
+        "system": "darwin",
+        "total_memory_bytes": 34359738368,
+        "unified_memory": true
+      },
+      "detection": {
+        "reason": null,
+        "state": "available"
+      },
+      "observation": {
+        "available_memory_bytes": null,
+        "sha256": "sha256:efc06e8a30ca5812323f19cb57e5d715da9c27e30d5b9d68e4b3d44dc0045a59",
+        "storage_available_bytes": 271447040000
+      }
+    },
+    "lastApply": null,
+    "repairs": [],
+    "runtimes": [
+      {
+        "id": "llama_cpp_prompt_v1",
+        "state": "available"
+      },
+      {
+        "id": "mlx_text_v1",
+        "state": "unavailable"
+      },
+      {
+        "id": "openai_compatible_v1",
+        "state": "available"
+      }
+    ],
+    "summaryAssignment": {
+      "assignmentRevision": 0,
+      "boundary": null,
+      "capabilityId": "meeting.deferred_analysis",
+      "label": null,
+      "profileId": null,
+      "profileRevision": null,
+      "readiness": null,
+      "schema": "ConciergeSummaryAssignmentProjection@1",
+      "status": "unassigned"
+    }
+  }
+}

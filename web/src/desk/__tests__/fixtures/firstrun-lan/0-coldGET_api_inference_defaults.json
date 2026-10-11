@@ -1,0 +1,431 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:25:05.464745Z",
+  "wire": {
+    "capabilities": [
+      {
+        "group": "agents_tools",
+        "id": "agent.code",
+        "inherited_from": null,
+        "label": "Agent code",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "agents_tools",
+        "id": "agent.plan",
+        "inherited_from": null,
+        "label": "Agent plan",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "agents_tools",
+        "id": "agent.tool_turn",
+        "inherited_from": null,
+        "label": "Agent tool turn",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "thoughts_notes",
+        "id": "ask.answer",
+        "inherited_from": null,
+        "label": "Ask answer",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "background",
+        "id": "background.cadence_draft",
+        "inherited_from": null,
+        "label": "Cadence draft",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "background",
+        "id": "background.rails_summary",
+        "inherited_from": null,
+        "label": "Rails summary",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "background",
+        "id": "calendar.snapshot_extract",
+        "inherited_from": null,
+        "label": "Calendar snapshot extraction",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "thoughts_notes",
+        "id": "chat.turn",
+        "inherited_from": null,
+        "label": "Desk chat",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "background",
+        "id": "decision.promotion_draft",
+        "inherited_from": null,
+        "label": "Decision promotion draft",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "background",
+        "id": "delivery.pr_review_draft",
+        "inherited_from": null,
+        "label": "Pull request review draft",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.auto_title",
+        "inherited_from": null,
+        "label": "Meeting title",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.bookmark_label",
+        "inherited_from": null,
+        "label": "Meeting bookmark label",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.deferred_analysis",
+        "inherited_from": null,
+        "label": "Deferred meeting analysis",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.live_analysis",
+        "inherited_from": null,
+        "label": "Live meeting analysis",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.action_owner_enforcer",
+        "inherited_from": null,
+        "label": "Meeting plugin: action owner enforcer",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.adr_drafter",
+        "inherited_from": null,
+        "label": "Meeting plugin: adr drafter",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.customer_signal_extractor",
+        "inherited_from": null,
+        "label": "Meeting plugin: customer signal extractor",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.decision_announcement_drafter",
+        "inherited_from": null,
+        "label": "Meeting plugin: decision announcement drafter",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.decision_capture",
+        "inherited_from": null,
+        "label": "Meeting plugin: decision capture",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.dependency_mapper",
+        "inherited_from": null,
+        "label": "Meeting plugin: dependency mapper",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.incident_timeline",
+        "inherited_from": null,
+        "label": "Meeting plugin: incident timeline",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.mermaid_architecture",
+        "inherited_from": null,
+        "label": "Meeting plugin: mermaid architecture",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.milestone_planner",
+        "inherited_from": null,
+        "label": "Meeting plugin: milestone planner",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.project_detector",
+        "inherited_from": null,
+        "label": "Meeting plugin: project detector",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.requirements_extractor",
+        "inherited_from": null,
+        "label": "Meeting plugin: requirements extractor",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.risk_heatmap",
+        "inherited_from": null,
+        "label": "Meeting plugin: risk heatmap",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.runbook_delta",
+        "inherited_from": null,
+        "label": "Meeting plugin: runbook delta",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.scope_guard",
+        "inherited_from": null,
+        "label": "Meeting plugin: scope guard",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "meetings",
+        "id": "meeting.plugin.stakeholder_update_drafter",
+        "inherited_from": null,
+        "label": "Meeting plugin: stakeholder update drafter",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "background",
+        "id": "memory.consolidate",
+        "inherited_from": null,
+        "label": "Memory observations",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "background",
+        "id": "memory.embed",
+        "inherited_from": null,
+        "label": "Memory embedding",
+        "lamp": null,
+        "reason": "embedding_model_needed",
+        "state": "needs_setup"
+      },
+      {
+        "group": "background",
+        "id": "memory.extract",
+        "inherited_from": null,
+        "label": "Memory facts",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "background",
+        "id": "memory.page",
+        "inherited_from": null,
+        "label": "Memory pages",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "agents_tools",
+        "id": "project.brief_prepare",
+        "inherited_from": null,
+        "label": "Project preparation brief",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "agents_tools",
+        "id": "project.update_draft",
+        "inherited_from": null,
+        "label": "Project update draft",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "agents_tools",
+        "id": "project_doc.suggest_update",
+        "inherited_from": null,
+        "label": "Project document suggestion",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "agents_tools",
+        "id": "recipe.run",
+        "inherited_from": null,
+        "label": "Recipe run",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "agents_tools",
+        "id": "sequence.step",
+        "inherited_from": null,
+        "label": "Sequence step",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "writing_dictation",
+        "id": "speech.intent_classify",
+        "inherited_from": null,
+        "label": "Dictation intent",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "writing_dictation",
+        "id": "speech.rewrite",
+        "inherited_from": null,
+        "label": "Dictation rewrite",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "writing_dictation",
+        "id": "speech.target_classify",
+        "inherited_from": null,
+        "label": "Dictation target",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "speech_recognition",
+        "id": "speech.transcribe",
+        "inherited_from": "capability",
+        "label": "Speech transcription",
+        "lamp": "local",
+        "reason": null,
+        "state": "assigned"
+      },
+      {
+        "group": "thoughts_notes",
+        "id": "thought.interview",
+        "inherited_from": null,
+        "label": "Thought development",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "agents_tools",
+        "id": "voice.reference_resolve",
+        "inherited_from": null,
+        "label": "Voice reference resolution",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "agents_tools",
+        "id": "workbench.item",
+        "inherited_from": null,
+        "label": "Workbench item",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "agents_tools",
+        "id": "workflow.node",
+        "inherited_from": null,
+        "label": "Workflow node",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      }
+    ],
+    "default": {
+      "cleared_by_owner": false,
+      "lamp": null,
+      "made_by": null,
+      "receipt_id": null,
+      "status": "needs_setup"
+    },
+    "proposals": [],
+    "schema": "InferenceDefaultsState@1"
+  }
+}

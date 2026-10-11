@@ -111,6 +111,7 @@ def _isolate(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 @contextlib.contextmanager
 def _hub(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, gh_runner: Any = None, lifespan: bool = False,
+    acli_runner: Any = None,
 ) -> Iterator[Hub]:
     """The hub's whole app. ``lifespan`` runs its startup (the PR poll, the
     intel drainer) for the legs that need the hub's own timers."""
@@ -122,6 +123,8 @@ def _hub(
 
     _isolate(tmp_path, monkeypatch)
     kwargs: dict[str, Any] = {"gh_runner": gh_runner} if gh_runner is not None else {}
+    if acli_runner is not None:
+        kwargs["acli_runner"] = acli_runner
     server = MeetingWebServer(
         WebRuntimeCallbacks(on_bookmark=lambda *_: None, on_stop=lambda: None, get_state=lambda: {}),
         auth_token=TOKEN,
@@ -799,8 +802,16 @@ def test_the_merge_poll_tells_the_open_room_once_the_pr_merges_and_not_before(
         monkeypatch.setattr(hub.server._ws, "broadcast", capture)
         _seed_merge_launch(hub.db, launches)
 
+        # The hub's other startup beats (the scheduled-recording reconcile, a
+        # workbench tick) can land in this window on a busy worker; they are
+        # not the PR poll's word and are left out (seen 2026-10-11 whenever
+        # another hub test ran first in the same process).
+        other_beats = {("scheduled_recording", "reconcile"), ("workbench", "tick")}
+
         def desk_changed() -> list[dict[str, Any]]:
-            return [f for f in frames if f.get("type") == "desk_changed"]
+            return [f for f in frames if f.get("type") == "desk_changed"
+                    and not all((c.get("kind"), c.get("op")) in other_beats
+                                for c in (f.get("data") or {}).get("changes") or [{}])]
 
         # PR #1 open: the poll reads it (one gh pr view a poll) and says nothing.
         frames.clear()
@@ -1431,3 +1442,210 @@ def test_a_project_carries_work_across_two_working_days(
 
     finally:
         release_database()
+
+
+# ── the unattended steward (HS-164-06): two conductor ticks, two runs ──
+#
+# The seeds and the gh fixture runner are copied verbatim from
+# tests/e2e/test_hs164_unattended_glass.py (parked by the test diet), so the
+# recorder (scripts/record_room_wires.py) and this test drive the same desk.
+
+HS164_GH_AUTH_CONNECTED = {"stdout": json.dumps({"username": "testuser"}), "returncode": 0}
+HS164_GH_REPO_LIST = json.dumps([{"name": "HoldSpeak", "owner": {"login": "testuser"}, "visibility": "public"}])
+HS164_GH_PR_VALIDATE_OK = json.dumps([{"number": 1}])
+HS164_GH_PR_SNAPSHOT_BASELINE = json.dumps([
+    {"number": 100, "title": "feat: add payment gateway", "url": "https://github.com/testuser/HoldSpeak/pull/100",
+     "state": "OPEN", "isDraft": False, "reviewRequests": [{"login": "reviewer1"}], "reviewDecision": "",
+     "statusCheckRollup": [{"conclusion": "SUCCESS"}], "headRefOid": "aaaa1111aaaa",
+     "updatedAt": "2026-08-30T10:00:00Z"},
+    {"number": 101, "title": "fix: correct ledger rounding", "url": "https://github.com/testuser/HoldSpeak/pull/101",
+     "state": "OPEN", "isDraft": False, "reviewRequests": [], "reviewDecision": "APPROVED",
+     "statusCheckRollup": [{"conclusion": "SUCCESS"}], "headRefOid": "bbbb2222bbbb",
+     "updatedAt": "2026-08-30T11:00:00Z"},
+])
+# Changed snapshot: PR 100 checks failed, PR 101 merged.
+HS164_GH_PR_SNAPSHOT_TICK1 = json.dumps([
+    {"number": 100, "title": "feat: add payment gateway", "url": "https://github.com/testuser/HoldSpeak/pull/100",
+     "state": "OPEN", "isDraft": False, "reviewRequests": [{"login": "reviewer1"}], "reviewDecision": "",
+     "statusCheckRollup": [{"conclusion": "FAILURE"}], "headRefOid": "cccc3333cccc",
+     "updatedAt": "2026-08-31T10:00:00Z"},
+    {"number": 101, "title": "fix: correct ledger rounding", "url": "https://github.com/testuser/HoldSpeak/pull/101",
+     "state": "MERGED", "isDraft": False, "reviewRequests": [], "reviewDecision": "APPROVED",
+     "statusCheckRollup": [{"conclusion": "SUCCESS"}], "headRefOid": "bbbb2222bbbb",
+     "updatedAt": "2026-08-31T11:00:00Z"},
+])
+# Second change: PR 100 checks now pass again, new PR 102.
+HS164_GH_PR_SNAPSHOT_TICK2 = json.dumps([
+    {"number": 100, "title": "feat: add payment gateway", "url": "https://github.com/testuser/HoldSpeak/pull/100",
+     "state": "OPEN", "isDraft": False, "reviewRequests": [], "reviewDecision": "APPROVED",
+     "statusCheckRollup": [{"conclusion": "SUCCESS"}], "headRefOid": "dddd4444dddd",
+     "updatedAt": "2026-09-01T10:00:00Z"},
+    {"number": 102, "title": "chore: update dependencies", "url": "https://github.com/testuser/HoldSpeak/pull/102",
+     "state": "OPEN", "isDraft": False, "reviewRequests": [{"login": "reviewer2"}], "reviewDecision": "",
+     "statusCheckRollup": [{"conclusion": "SUCCESS"}], "headRefOid": "eeee5555eeee",
+     "updatedAt": "2026-09-01T11:00:00Z"},
+])
+
+
+def hs164_fixture_runner(fixture_path: Path) -> Any:
+    """Canned response runner (re-reads the file on every call)."""
+    def runner(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        cmd = args[0] if args else kwargs.get("args", [])
+        cmd_str = " ".join(str(c) for c in cmd)
+        with open(fixture_path) as f:
+            fixture = json.load(f)
+        if "auth status" in cmd_str:
+            entry = fixture.get("auth_status", {})
+        elif "repo list" in cmd_str:
+            entry = fixture.get("repo_list", {})
+        elif ("pr list" in cmd_str and "-R" in cmd_str
+              and "--limit" in cmd_str and "1" in cmd_str):
+            entry = fixture.get("pr_validate", {})
+        elif "pr list" in cmd_str:
+            entry = fixture.get("pr_list", {})
+        else:
+            entry = {"returncode": 1, "stderr": f"no fixture match: {cmd_str}"}
+        return subprocess.CompletedProcess(
+            args=cmd, returncode=entry.get("returncode", 0),
+            stdout=entry.get("stdout", ""), stderr=entry.get("stderr", ""),
+        )
+    return runner
+
+
+def hs164_write_fixture(path: Path, pr_list: dict[str, Any]) -> None:
+    path.write_text(json.dumps({
+        "auth_status": HS164_GH_AUTH_CONNECTED,
+        "repo_list": {"stdout": HS164_GH_REPO_LIST, "returncode": 0},
+        "pr_validate": {"stdout": HS164_GH_PR_VALIDATE_OK, "returncode": 0},
+        "pr_list": pr_list,
+    }, indent=2))
+
+
+def hs164_seed_room(hub: Hub) -> str:
+    """The project, its three items (one overdue high-severity risk) and the
+    steward policy with unattended ON (the glass's own wire calls)."""
+    pid = hub.ok("POST", "/api/projects", {
+        "name": "Unattended Glass Project", "description": "Seeded for HS-164-06 unattended glass.",
+        "command_id": "hs164-glass-create-proj"})["project"]["id"]
+    base = f"/api/projects/{pid}/items"
+    past_due = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
+    hub.ok("POST", base, {
+        "item_type": "risk", "title": "PCI compliance deadline at risk", "lifecycle": "open", "severity": "high",
+        "due_at": past_due, "summary": "Compliance docs overdue; 30-day deadline approaching",
+        "details": {"likelihood": "high", "impact": "critical", "mitigation": "Escalate to compliance team this week"}})
+    hub.ok("POST", base, {"item_type": "workstream", "title": "Q4 Payments Platform Integration",
+                          "lifecycle": "active", "summary": "Integrate payment gateway with event sourcing"})
+    hub.ok("POST", base, {"item_type": "dependency", "title": "Infrastructure team load test environment",
+                          "lifecycle": "at_risk", "summary": "Black Friday load test env provisioning stalled",
+                          "details": {"direction": "upstream", "counterpart_ref": "team:infrastructure"}})
+    hub.ok("PUT", f"/api/projects/{pid}/steward/policy", {
+        "eligible_effect_kinds": ["refresh_sources", "create_proposals", "apply_proposal_effects", "draft_update",
+                                  "create_door_item"],
+        "max_retries": 3, "max_actions_per_run": 10, "cooldown_seconds": 0, "enabled": True,
+        "unattended_enabled": True})
+    return pid
+
+
+def hs164_seed_graduated_watch(db: Any, project_id: str, watch_id: str = "cw_glass_unattended_001") -> str:
+    """A graduated watch (state active, due now, baseline established) bound
+    to the project, with a rule that runs the steward on any PR change, and
+    its baseline snapshot."""
+    from holdspeak.services.reaction_service import normalize_snapshot
+
+    now_iso = datetime.now().isoformat()
+    past_iso = (datetime.now() - timedelta(minutes=5)).isoformat()
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO connector_watches (
+                id, name, connector_id, query_kind, query_json, project_id, state, revision, enabled,
+                evaluation_cadence_minutes, next_evaluation_at, baseline_state, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (watch_id, "PR review queue (glass)", "gh", "pull_requests",
+             json.dumps({"repository": "testuser/HoldSpeak", "state": "open"}), project_id, "active", 1, 1, 1,
+             past_iso, "established", now_iso, now_iso),
+        )
+        conn.execute(
+            """INSERT INTO project_sources (id, project_id, source_ref, label, semantic_role, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (f"psrc_{watch_id}", project_id, f"watch:{watch_id}", "PR review queue (glass)", "watch", now_iso,
+             now_iso),
+        )
+        condition = {"schema": "WatchCondition@1", "operator": "any", "clauses": [
+            {"field": "state", "comparison": "changed"}, {"field": "head_sha", "comparison": "changed"},
+            {"field": "checks", "comparison": "changed"}, {"field": "review_decision", "comparison": "changed"},
+            {"field": "review_requested", "comparison": "changed"}]}
+        conn.execute(
+            """INSERT INTO watch_rules (id, watch_id, ordinal, condition_schema, condition_json, action_schema,
+                                        action_json, enabled, revision)
+               VALUES (?, ?, 0, 'WatchCondition@1', ?, 'WatchAction@1', ?, 1, 0)""",
+            (f"wrule_{watch_id}", watch_id, json.dumps(condition),
+             json.dumps([{"schema": "WatchAction@1", "kind": "project.steward.run_once"}])),
+        )
+    snapshot = normalize_snapshot("gh", json.loads(HS164_GH_PR_SNAPSHOT_BASELINE))
+    with db._connection() as conn:
+        conn.execute("UPDATE connector_watches SET snapshot_json=? WHERE id=?",
+                     (json.dumps(snapshot, sort_keys=True, separators=(",", ":")), watch_id))
+    return watch_id
+
+
+def hs164_due_now(db: Any, watch_id: str) -> None:
+    past_iso = (datetime.now() - timedelta(minutes=5)).isoformat()
+    with db._connection() as conn:
+        conn.execute("UPDATE connector_watches SET next_evaluation_at=? WHERE id=?", (past_iso, watch_id))
+
+
+@contextlib.contextmanager
+def hs164_conductor(hub: Hub) -> Iterator[Any]:
+    """The hub's own composed scheduler services (the instances its startup
+    hands the conductor, ``web_server.py`` set_scheduler_services), ticked by
+    this test alone: no lifespan, so no background conductor."""
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.runtime import composition
+
+    root = composition.installed()
+    watch_service, steward_service = root.watch_service, root.project_steward_service
+    assert watch_service is not None and steward_service is not None, "the hub composed no scheduler services"
+    owner = Principal(PrincipalKind.OWNER, "local-steward-conductor")
+    yield lambda: (watch_service.evaluate_due(owner), steward_service.run_due(owner))
+
+
+def hs164_door_texts(hub: Hub) -> list[str]:
+    board = hub.ok("GET", "/api/door").get("board", {})
+    return [it.get("text", "") for bucket in ("now", "waiting", "unassigned", "overdue")
+            for it in board.get(bucket, [])]
+
+
+def test_two_conductor_ticks_make_two_completed_unattended_runs_with_no_duplicate_door_item(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Gate A on the hub: a watched repository changes twice; each conductor
+    tick evaluates the watch and starts a run; both runs complete with their
+    steps, both carry the conductor's identity, and the Door holds no item
+    twice.
+
+    replaces: tests/e2e/test_hs164_unattended_glass.py::test_gate_a_two_unattended_runs (the hub half; the
+    Scheduled chips and the run detail are steward.app.test.tsx's)
+    """
+    fixture = tmp_path / "gh_fixture.json"
+    hs164_write_fixture(fixture, {"stdout": HS164_GH_PR_SNAPSHOT_BASELINE, "returncode": 0})
+    with _hub(tmp_path, monkeypatch, gh_runner=hs164_fixture_runner(fixture)) as hub, \
+            hs164_conductor(hub) as tick:
+        pid = hs164_seed_room(hub)
+        watch_id = hs164_seed_graduated_watch(hub.db, pid)
+        started: list[str] = []
+        for snapshot in (HS164_GH_PR_SNAPSHOT_TICK1, HS164_GH_PR_SNAPSHOT_TICK2):
+            hs164_write_fixture(fixture, {"stdout": snapshot, "returncode": 0})
+            hs164_due_now(hub.db, watch_id)
+            evaluated, ran = tick()
+            assert any(o.get("outcome") in ("evaluated", "probe_half_open") for o in evaluated), evaluated
+            assert any(o.get("outcome") == "run_started" for o in ran), ran
+            started.append(next(o["run_id"] for o in ran if o.get("outcome") == "run_started"))
+        assert len(set(started)) == 2, started
+        runs = hub.ok("GET", f"/api/projects/{pid}/steward/runs")["runs"]
+        completed = [r for r in runs if r.get("state") == "completed"]
+        assert len(completed) >= 2, runs
+        assert {r.get("requested_by") for r in runs} == {"principal:local-steward-conductor"}, runs
+        for run_id in started:
+            assert hub.ok("GET", f"/api/steward/runs/{run_id}").get("steps"), run_id
+        texts = hs164_door_texts(hub)
+        assert len(texts) == len(set(texts)), texts

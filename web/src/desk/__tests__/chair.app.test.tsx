@@ -413,3 +413,48 @@ describe("The week: the viewer's local clock", () => {
     expect(nextWord({ label: "Cutover dry run", at: "2026-10-08T03:32:00Z" })).toBe("NEXT · 21:32 · Cutover dry run");
   });
 });
+
+// ── PHILO-15 05: the Brief generated itself; an unread source says PARTIAL ──
+// The hub's own answers (scripts/record_chair_brief_fixture.py, run in
+// America/Denver): `scheduled` after the real cadence tick at 06:00 on the
+// shipped defaults; `partial` after MondayBriefService.generate for SERVICE
+// heartbeat (two sources the rule cannot read). The hub halves are
+// tests/unit/test_philo15_05_brief_generates_itself.py:56 and :164.
+import { recordedGet } from "../../test/recordedHub";
+import BRIEF from "./fixtures/chair-brief/brief.recorded.json";
+
+describe("The Brief window on the recorded hub", () => {
+  function replayBrief(gets: Record<string, unknown>) {
+    const brief = gets["/api/brief/latest"] as { generated_at: string };
+    // The viewer's clock: one hour after the brief was made, the same day.
+    vi.setSystemTime(new Date(new Date(brief.generated_at).getTime() + 3600_000));
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => recordedGet(gets, String(path)) as never);
+  }
+
+  it("the scheduled brief: the date line says GENERATED and 06:00; Generate stays for a re-run", async () => {
+    // replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_the_brief_generated_itself (the face half; the 393 Go ▸ Brief route is phoneRing.test.tsx:198-206)
+    const gets = BRIEF.scheduled.gets as Record<string, unknown>;
+    const waiting = ((gets["/api/brief/latest"] as Json).sections.waiting as Json[]).map((i) => i.text);
+    expect(waiting.some((t: string) => t.startsWith("No engine"))).toBe(true);
+    expect(waiting.some((t: string) => t.startsWith("NOT READ"))).toBe(false);
+    replayBrief(gets);
+    render(<ChairHome />);
+    const date = await screen.findByTestId("arrival-brief-date", undefined, { timeout: 3000 });
+    expect(date.textContent).toContain("GENERATED");
+    expect(date.textContent).toContain("06:00");
+    expect(date.textContent).not.toContain("PARTIAL");
+    expect(screen.getByTestId("arrival-brief-generate").textContent).toBe("Generate");
+  });
+
+  it("a brief with unread sources: the date line ends · PARTIAL and the body names NOT READ · AI models and · Decisions", async () => {
+    // replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_a_brief_with_an_unread_source_says_partial (the face half)
+    replayBrief(BRIEF.partial.gets as Record<string, unknown>);
+    render(<ChairHome />);
+    const date = await screen.findByTestId("arrival-brief-date", undefined, { timeout: 3000 });
+    expect(date.textContent).toContain("GENERATED");
+    expect(date.textContent).toMatch(/ · PARTIAL$/);
+    const body = screen.getByTestId("arrival-brief").textContent ?? "";
+    expect(body).toContain("NOT READ · AI models");
+    expect(body).toContain("NOT READ · Decisions");
+  });
+});
