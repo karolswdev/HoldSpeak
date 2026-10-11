@@ -7,7 +7,7 @@ import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
 import { Button } from "../../components/signal/Signal";
 import { DeskFilingStrip } from "../components/DeskFilingStrip";
-import { Material } from "../surface/Material";
+import { Material, hasNoteDoor } from "../surface/Material";
 import { SurfaceState } from "../surface/Surface";
 import { countToken } from "../surface/count";
 import { PadGadget } from "../surface/gadgets";
@@ -481,7 +481,9 @@ export function NotePullout({
         >
           Dictate about this
         </Button>
-        {status?.ownership === "ordinary" ? <Button variant="primary" dense disabled={adopting} onClick={() => void adopt()}>{adopting ? "Developing…" : "Develop this thought"}</Button> : null}
+        {/* PHILO-17 U18: a note whose body holds door buttons (Start here) keeps
+            those as its main verbs; Develop this thought steps back. */}
+        {status?.ownership === "ordinary" ? <Button variant={hasNoteDoor(body) ? "ghost" : "primary"} dense disabled={adopting} onClick={() => void adopt()}>{adopting ? "Developing…" : "Develop this thought"}</Button> : null}
       </>} />
     </>
   );

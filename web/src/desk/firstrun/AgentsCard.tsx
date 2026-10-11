@@ -17,6 +17,9 @@ import {
   type AgentsStep,
 } from "./agentsStep";
 
+/** PHILO-17: what the hooks do, in one plain line. */
+export const AGENTS_LINE = "Hooks tell HoldSpeak when Claude Code or Codex works, waits or stops.";
+
 /** A wire code as words for a token (never raw snake_case on a face). */
 export function codeWords(code: string): string {
   return code.replace(/_/g, " ").toUpperCase();
@@ -102,6 +105,7 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
     return (
       <Card
         title="Agents"
+        line={AGENTS_LINE}
         testId="firstrun-agents"
         selected
         state={<StateChip state="success" label={`${countToken(installed, "AGENT")} READY`} icon="●" />}
@@ -122,6 +126,7 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
   return (
     <Card
       title="Agents"
+      line={AGENTS_LINE}
       testId="firstrun-agents"
       lit={lit}
       state={

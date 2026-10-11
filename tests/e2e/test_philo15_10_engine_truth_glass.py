@@ -246,7 +246,7 @@ class TestColdFirstRun:
             page.locator("[data-testid='concierge-add-submit']:not([disabled])").wait_for(timeout=30_000)
             page.locator("[data-testid='concierge-add-submit']").click()
             page.locator("[data-testid='firstrun-lan-receipt']").wait_for(timeout=30_000)
-            assert "DEFAULT SET" in (page.locator("[data-testid='firstrun-lan-receipt']").text_content() or "")
+            assert "NOW THE DEFAULT" in (page.locator("[data-testid='firstrun-lan-receipt']").text_content() or "")
             # A server on this machine is THIS DEVICE, never "LAN".
             assert "THIS DEVICE" in (card.text_content() or "")
             assert "LAN ·" not in (card.text_content() or "")

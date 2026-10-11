@@ -1,9 +1,11 @@
-/* The first-run card: ChoiceCardShell with a title and one state slot. */
+/* The first-run card: ChoiceCardShell with a title, one state slot, and
+ * (PHILO-17) one plain line that says what the card does. */
 import type { ReactNode } from "react";
 import { ChoiceCardShell } from "../surface";
 
 export function Card({
   title,
+  line,
   state,
   lit,
   selected,
@@ -13,6 +15,8 @@ export function Card({
   children,
 }: {
   title: string;
+  /** One plain line: what this card does for him. */
+  line?: string;
   state?: ReactNode;
   lit?: boolean;
   selected?: boolean;
@@ -37,7 +41,10 @@ export function Card({
         </span>
       }
     >
-      <div className="firstrun-card-body">{children}</div>
+      <div className="firstrun-card-body">
+        {line ? <p className="firstrun-card-line">{line}</p> : null}
+        {children}
+      </div>
     </ChoiceCardShell>
   );
 }

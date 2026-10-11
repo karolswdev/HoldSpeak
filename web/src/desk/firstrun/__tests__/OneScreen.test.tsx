@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   open: vi.fn(),
   start: vi.fn(),
   retry: vi.fn(),
+  setup: null as null | { first_run: boolean },
 }));
 
 vi.mock("../../../lib/api", async (importOriginal) => ({
@@ -29,7 +30,7 @@ vi.mock("../../../lib/api", async (importOriginal) => ({
 }));
 vi.mock("../../store", () => ({
   useDesk: Object.assign(() => undefined, {
-    getState: () => ({ refresh: mocks.refresh, armEventRecording: mocks.arm, openAsk: mocks.openAsk }),
+    getState: () => ({ refresh: mocks.refresh, armEventRecording: mocks.arm, openAsk: mocks.openAsk, setup: mocks.setup }),
   }),
 }));
 vi.mock("../../shell", () => ({ openSurfaceOr: mocks.open }));
@@ -55,6 +56,7 @@ import { cantReadReason, hostOf, meetingClock, nextMeeting } from "../calendarSt
 import { readyItems } from "../Ready";
 import { readDurableDraft, clearDurableDraft } from "../../../lib/durableDraft";
 import { clearFirstValueKeepNoteId } from "../../firstValue";
+import { openFirstRun, useFirstRunOpen } from "../reopen";
 
 const MB = 1_000_000;
 const WORDS = "Send the cutover plan to Priya before Friday.";
@@ -129,6 +131,7 @@ const soon = () => new Date(Date.now() + 2 * 3600_000).toISOString();
 
 beforeEach(() => {
   calls.length = 0;
+  mocks.setup = null;
   clearDurableDraft("desk-ask");
   clearFirstValueKeepNoteId();
   hub = {
@@ -457,6 +460,23 @@ describe("Connections card", () => {
     await within(conn).findByText("NOT ACTIVE IN GH");
     expect(within(conn).queryByRole("button", { name: /Use GitHub/ })).toBeNull();
   });
+
+  it("PHILO-17: an installed tool with no sign-in shows its sign-in command with Copy, then Check again", async () => {
+    hub.connections = { candidates: [], tools: { gh: { installed: true }, acli: { installed: false } } };
+    render(<FirstRun />);
+    const conn = await screen.findByTestId("firstrun-connections");
+    const well = await within(conn).findByTestId("firstrun-signin-gh");
+    expect(well.textContent).toContain("gh auth login");
+    expect(within(well).getByRole("button", { name: /Copy/ })).toBeTruthy();
+    expect(conn.textContent).toContain("ACLI NOT INSTALLED");
+    expect(conn.textContent).not.toContain("NO SIGN-IN ·");
+    expect(conn.textContent).not.toContain("GH · NO SIGN-IN");
+    const before = calls.filter((c) => c.path === "/api/onboarding/connections").length;
+    await act(async () => {
+      fireEvent.click(within(conn).getByRole("button", { name: "Check again" }));
+    });
+    await waitFor(() => expect(calls.filter((c) => c.path === "/api/onboarding/connections").length).toBe(before + 1));
+  });
 });
 
 async function finishC1() {
@@ -508,6 +528,8 @@ describe("Ready", () => {
     expect(within(card("firstrun-you")).queryByRole("textbox")).toBeNull();
     expect(within(card("firstrun-you")).getByText("Karol Sane")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Continue later" })).toBeNull();
+    // PHILO-17: all set -> "Open my desk"; the start verbs keep the primary.
+    expect(screen.getByRole("button", { name: "Open my desk" }).className).not.toContain("btn--primary");
     // One display element: the Ready heading (his words stepped down).
     expect(document.querySelectorAll(".surface-display")).toHaveLength(1);
 
@@ -542,7 +564,16 @@ describe("Ready", () => {
     await screen.findByRole("heading", { name: "Get ready" });
     expect(screen.queryByTestId("firstrun-ready")).toBeNull();
     expect(card("firstrun-calendar").getAttribute("data-lit")).toBe("true");
-    expect(screen.getByRole("button", { name: "Continue later" })).toBeTruthy();
+    // PHILO-17: the C1 cards are done, so the exit is "Open my desk" (primary).
+    expect(screen.queryByRole("button", { name: "Continue later" })).toBeNull();
+    const open = screen.getByRole("button", { name: "Open my desk" });
+    expect(open.className).toContain("btn--primary");
+    await act(async () => {
+      fireEvent.click(open);
+    });
+    await waitFor(() =>
+      expect(calls.some((c) => c.path === "/api/setup/onboarding" && (c.json as { disposition: string }).disposition === "completed")).toBe(true),
+    );
   });
 
   it("the strip says only what is true", () => {
@@ -658,5 +689,63 @@ describe("Astra #876 review fences", () => {
     expect(cal.getAttribute("data-selected")).toBeNull();
     expect(screen.queryByTestId("firstrun-ready")).toBeNull();
     expect(screen.getByRole("heading", { name: "Get ready" })).toBeTruthy();
+  });
+});
+
+describe("PHILO-17 U17/U18 — first run opened again, plain card words", () => {
+  it("opened again after a first dictation: First words is done, the exit is Open my desk, and it closes", async () => {
+    mocks.setup = { first_run: false };
+    hub.ai = aiStatus(true);
+    hub.owner = { name: "Karol Sane", aliases: [] };
+    openFirstRun();
+    render(<FirstRun />);
+    const open = await screen.findByRole("button", { name: "Open my desk" });
+    expect(open.className).toContain("btn--primary");
+    expect(screen.queryByRole("button", { name: "Continue later" })).toBeNull();
+    expect(card("firstrun-first-words").getAttribute("data-selected")).toBe("true");
+    expect(within(card("firstrun-first-words")).getByRole("status", { name: "HEARD" })).toBeTruthy();
+    expect(card("firstrun-first-words").getAttribute("data-lit")).toBeNull();
+    await act(async () => {
+      fireEvent.click(open);
+    });
+    await waitFor(() =>
+      expect(calls.some((c) => c.path === "/api/setup/onboarding" && (c.json as { disposition: string }).disposition === "completed")).toBe(true),
+    );
+    expect(useFirstRunOpen.getState().open).toBe(false);
+  });
+
+  it("not done: the exit stays Continue later", async () => {
+    render(<FirstRun />);
+    await screen.findByRole("heading", { name: "Get ready" });
+    expect(screen.getByRole("button", { name: "Continue later" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Open my desk" })).toBeNull();
+  });
+
+  it("every card says what it does in one plain line, with no unexplained token", async () => {
+    hub.connections = { candidates: [], tools: { gh: { installed: true }, acli: { installed: true } } };
+    render(<FirstRun />);
+    await screen.findByTestId("firstrun-signin-acli");
+    for (const id of ["firstrun-local-ai", "firstrun-you", "firstrun-first-words", "firstrun-calendar", "firstrun-connections", "firstrun-agents"]) {
+      const lines = card(id).querySelectorAll(".firstrun-card-line");
+      expect(lines, id).toHaveLength(1);
+      expect((lines[0].textContent ?? "").length, id).toBeGreaterThan(10);
+    }
+    expect(card("firstrun-agents").textContent).toContain("Hooks tell HoldSpeak");
+    const face = screen.getByTestId("firstrun").textContent ?? "";
+    for (const token of ["MY SERVER", "TOOLS UNKNOWN", "DEFAULT SET", "· NO SIGN-IN", "arrival"]) {
+      expect(face).not.toContain(token);
+    }
+  });
+
+  it("Calendar says OR only when another choice is on the card", async () => {
+    const view = render(<FirstRun />);
+    let cal = await screen.findByTestId("firstrun-calendar");
+    expect(within(cal).getByText("CALENDAR URL")).toBeTruthy();
+    expect(cal.textContent).not.toContain("OR A CALENDAR URL");
+    view.unmount();
+    hub.calendar = { macos: { state: "full_access", can_request: false }, candidates: [MAC_CAL], sources: 0 };
+    render(<FirstRun />);
+    cal = await screen.findByTestId("firstrun-calendar");
+    await within(cal).findByText("OR A CALENDAR URL");
   });
 });

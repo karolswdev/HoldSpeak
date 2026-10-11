@@ -6,6 +6,8 @@ The eight 158..166 glass rigs import from here; every rig builds first
 """
 from __future__ import annotations
 
+import re
+
 import os
 import subprocess
 from pathlib import Path
@@ -700,7 +702,8 @@ def _normal_chair(page: Any) -> None:
     chair = page.locator(".chair")
     chair.wait_for()
     if chair.evaluate("element => element.classList.contains('chair-first-value')"):
-        page.get_by_role("button", name="Continue later", exact=True).click()
+        # PHILO-17: the foot says "Open my desk" once the cards are done.
+        page.get_by_role("button", name=re.compile(r"^(Continue later|Open my desk)$")).click()
     page.locator(".chair:not(.chair-first-value)").wait_for()
 
 

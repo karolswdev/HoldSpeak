@@ -11,7 +11,7 @@ const { copySpy, flushThoughtEditor } = vi.hoisted(() => ({ copySpy: vi.fn(), fl
 
 vi.mock("../surface/SurfaceFooter", () => ({ SurfaceFooter: ({ receipt, verbs }: { receipt?: unknown; verbs: unknown }) => <footer>{receipt as any}{verbs as any}</footer> }));
 vi.mock("../components/DeskFilingStrip", () => ({ DeskFilingStrip: () => null }));
-vi.mock("../surface/Material", () => ({ Material: ({ children }: { children: unknown }) => <>{children}</> }));
+vi.mock("../surface/Material", () => ({ Material: ({ children }: { children: unknown }) => <>{children}</>, hasNoteDoor: (text: string) => /\]\(door:/.test(text) }));
 vi.mock("../surface/Surface", () => ({ SurfaceState: () => null }));
 vi.mock("./editors", () => ({ INLINE_EDITOR_CONTENT: {} }));
 vi.mock("./editors/ThoughtNoteEditor", async () => {
@@ -210,6 +210,23 @@ describe("NotePullout adoption recovery", () => {
     await waitFor(() => expect(flushThoughtEditor).toHaveBeenCalledTimes(1));
     expect(completeThought).not.toHaveBeenCalled();
     expect(screen.queryByText("We couldn't confirm completion on this hub. Your thought is still here. Retry Finish Thought.")).not.toBeInTheDocument();
+  });
+
+  it("PHILO-17 U18: a note with door buttons keeps Develop this thought as a ghost verb", async () => {
+    const doors = { ...ordinary, note: { ...ordinary.note, body_markdown: "- [Dictate](door:dictate) Speak." } };
+    vi.mocked(thoughtForNote).mockResolvedValue(doors);
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()} />);
+    const develop = await screen.findByRole("button", { name: "Develop this thought" });
+    expect(develop.className).not.toContain("btn--primary");
+  });
+
+  it("an ordinary note keeps Develop this thought as its primary verb", async () => {
+    vi.mocked(thoughtForNote).mockResolvedValue(ordinary);
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()} />);
+    const develop = await screen.findByRole("button", { name: "Develop this thought" });
+    expect(develop.className).toContain("btn--primary");
   });
 
   it("keeps the request id and names a generic adoption failure without claiming a change", async () => {

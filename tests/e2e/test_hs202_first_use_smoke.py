@@ -265,20 +265,33 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                     sockets.append(socket)
                     socket.on("framesent", lambda data: frames.append(data) if isinstance(data, bytes) else None)
             page.on("websocket", watch)
-            page.goto(base + "/welcome?token=" + TOKEN)
-            talk = _loaded(page.get_by_role("button", name="Click to dictate", exact=True))
-            assert _hit(talk), "First Words speech door is unreachable"
-            talk.click()
-            page.get_by_role("button", name="Stop listening", exact=True).wait_for()
-            assert sockets, "Speech did not open its production WebSocket"
-            if not frames:
-                sockets[0].wait_for_event("framesent", predicate=lambda data: isinstance(data, bytes), timeout=5000)
-            page.get_by_role("button", name="Stop listening", exact=True).click()
-            expect(page.get_by_role("textbox", name="Your dictated text")).to_have_value(WORDS)
-            assert len(received) == 1 and frames
-            page.get_by_role("button", name="Keep as Note", exact=True).click()
-            first_note = page.get_by_role("region", name="First dictation", exact=True)
-            _loaded(first_note.get_by_text(WORDS, exact=True))
+            # PHILO-17 U17: /welcome opens the Get ready cards; the First
+            # words card is the same production WebSocket path the parked
+            # /welcome page used. Its button waits for speech on this device,
+            # so the rig reports speech on device for this job only.
+            import holdspeak.whisper_models as whisper_models
+
+            real_readiness = whisper_models.speech_readiness
+            whisper_models.speech_readiness = lambda *a, **k: {"state": "on_device", "bytes": 0}
+            try:
+                page.goto(base + "/welcome?token=" + TOKEN)
+                words_card = page.get_by_test_id("firstrun-first-words")
+                talk = _loaded(words_card.get_by_role("button", name="◖ Dictate one sentence", exact=True))
+                expect(talk).to_be_enabled(timeout=15_000)
+                talk.scroll_into_view_if_needed()
+                assert _hit(talk, fit=False), "First Words speech door is unreachable"
+                talk.click()
+                page.get_by_role("button", name="Stop listening", exact=True).wait_for()
+                assert sockets, "Speech did not open its production WebSocket"
+                if not frames:
+                    sockets[0].wait_for_event("framesent", predicate=lambda data: isinstance(data, bytes), timeout=5000)
+                page.get_by_role("button", name="Stop listening", exact=True).click()
+                expect(words_card.get_by_text(WORDS)).to_be_visible()
+                assert len(received) == 1 and frames
+                words_card.get_by_role("button", name="Keep as note", exact=True).click()
+                expect(words_card.get_by_role("status", name="HEARD", exact=True)).to_be_visible()
+            finally:
+                whisper_models.speech_readiness = real_readiness
             shot("fixture-speech-kept")
             print("PASS: fixture speech became visible text and a kept note; PCM samples", received[0])
 

@@ -31,6 +31,9 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
   const { macos, rows, inUse, busy, failure } = step;
   const receipt = inUse ? calendarReceipt(step.week, step.next) : "";
   const found = stateCount("FOUND", rows.length);
+  // PHILO-17: "OR" only when another choice is on the card above the link.
+  const asking = Boolean(macos?.can_request && !inUse);
+  const another = rows.length > 0 || asking;
   const add = async () => {
     if (!host || busy) return;
     if (await step.addUrl(url.trim())) setUrl("");
@@ -38,6 +41,7 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
   return (
     <Card
       title="Calendar"
+      line="Reads your meetings, so HoldSpeak can record the next one."
       testId="firstrun-calendar"
       lit={lit}
       selected={inUse}
@@ -149,7 +153,7 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
       {receipt ? <Receipt status="ok" label={receipt} /> : null}
       {!inUse ? (
         <label className="firstrun-field firstrun-stretch">
-          <span className="firstrun-caption">OR A CALENDAR URL</span>
+          <span className="firstrun-caption">{another ? "OR A CALENDAR URL" : "CALENDAR URL"}</span>
           <span className="firstrun-urlrow">
             <StringGadget
               label="Calendar URL"

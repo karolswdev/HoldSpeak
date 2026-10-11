@@ -303,8 +303,17 @@ def test_slash_completion_and_prompt_insert(hub: dict) -> None:
     url = hub["url"]
     db = hub["db"]
 
-    # Ensure desk is seeded (creates prompt notes too)
+    # Ensure desk is seeded. PHILO-17 U18: the fresh-desk seed no longer
+    # carries prompt notes (Weekly update is parked; 1:1 prep is a note with a
+    # People door), so this fence makes the two prompts it picks from.
     _api_direct(url, "POST", "/api/desk/seed")
+    for title, body in (
+        ("Weekly update", "Summarize what happened this week."),
+        ("1:1 prep", "Prepare for my next 1:1."),
+    ):
+        made = _api_direct(url, "POST", "/api/notes",
+                           {"title": title, "body_markdown": body, "tags": ["prompt"]})
+        assert made["status"] in (200, 201), f"Failed to make prompt note {title}: {made}"
 
     # Verify prompt notes exist via API
     r = _api_direct(url, "GET", "/api/notes?tag=prompt")

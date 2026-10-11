@@ -4,7 +4,7 @@
  * press reaches (GITHUB.COM, the Atlassian site). */
 import { Button } from "../../components/signal/Signal";
 import { EgressChip, StateChip, SurfaceLedgerRow } from "../surface";
-import { stateWords } from "../../pages/cores/connections/ConnectionsPane";
+import { CommandWell, stateWords } from "../../pages/cores/connections/ConnectionsPane";
 import { Card } from "./Card";
 import { stateCount } from "./calendarStep";
 import {
@@ -14,6 +14,13 @@ import {
   type ConnectionCandidate,
   type ConnectionsStep,
 } from "./connectionsStep";
+
+/** PHILO-17: the sign-in command for a tool that is installed but has no
+ * sign-in (the same commands Settings › Connections shows). */
+export const SIGN_IN_COMMAND: Record<"gh" | "acli", string> = {
+  gh: "gh auth login",
+  acli: "acli jira auth login --site <site> --email <email> --token",
+};
 
 /** Why a row has no verb, as one token. */
 function noVerbToken(row: ConnectionCandidate, step: ConnectionsStep): string {
@@ -39,6 +46,7 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
   return (
     <Card
       title="Connections"
+      line="Uses your GitHub and Jira sign-ins to read and send project work."
       testId="firstrun-connections"
       lit={lit}
       selected={allDone}
@@ -125,10 +133,23 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
           })}
         </ul>
       ) : step.loaded && !step.unread ? (
-        // PHILO-15 11 (B29): one tool per line ("NO SIGN-IN ACLI" read as one token).
-        <span className="firstrun-tokens" data-stack data-testid="firstrun-connections-tools">
-          <span className="surface-token">{step.tools.gh?.installed ? "GH · NO SIGN-IN" : "GH NOT INSTALLED"}</span>
-          <span className="surface-token">{step.tools.acli?.installed ? "ACLI · NO SIGN-IN" : "ACLI NOT INSTALLED"}</span>
+        // PHILO-15 11 (B29): one tool per line. PHILO-17: an installed tool
+        // with no sign-in shows its sign-in command with Copy; then Check again.
+        <span className="firstrun-tokens firstrun-signin-wells" data-stack data-testid="firstrun-connections-tools">
+          {(["gh", "acli"] as const).map((tool) =>
+            step.tools[tool]?.installed ? (
+              <span key={tool} className="firstrun-signin-well" data-testid={`firstrun-signin-${tool}`}>
+                <CommandWell hint={SIGN_IN_COMMAND[tool]} />
+              </span>
+            ) : (
+              <span key={tool} className="surface-token">{`${tool.toUpperCase()} NOT INSTALLED`}</span>
+            ),
+          )}
+          {step.tools.gh?.installed || step.tools.acli?.installed ? (
+            <Button dense variant="secondary" onClick={() => void step.read()} data-testid="firstrun-connections-check">
+              Check again
+            </Button>
+          ) : null}
         </span>
       ) : null}
     </Card>

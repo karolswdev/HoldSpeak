@@ -307,7 +307,7 @@ describe("FirstRun — Use a server on my network", () => {
     render(<FirstRun />);
     await screen.findByRole("button", { name: /^Set up local AI · / });
     const receipt = await useTheBox();
-    expect(receipt.textContent).toContain("USING · QWEN3.8-27B · SUMMARIES · DEFAULT SET");
+    expect(receipt.textContent).toContain("USING · QWEN3.8-27B · SUMMARIES · NOW THE DEFAULT");
     expect(calls.find((c) => c.path === "/api/concierge/summary-selection")?.json).toMatchObject({ setDefault: true });
     expect(calls.find((c) => c.path === "/api/setup/discover-models")?.json).toMatchObject({ check_tools: true });
     await waitFor(() => expect(screen.getByRole("status", { name: "LAN · 192.168.1.43" })).toBeTruthy());

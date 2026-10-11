@@ -1,16 +1,14 @@
-import { useNavigate } from "react-router-dom";
-import { FirstWords } from "../desk/components/FirstWords";
+import { useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { openFirstRun } from "../desk/firstrun/reopen";
 
-/** Compatibility arrival route: the first-value surface now lives on the Desk,
- * but old bookmarks land on the same one-step experience instead of a wizard. */
+/** PHILO-17 U17: the old /welcome address opens the SAME Get ready cards
+ * the fresh desk shows (its First words card is the sentence this page
+ * had). The separate page is parked in pages/_parked/WelcomePage.tsx. */
 export default function WelcomePage() {
-  const navigate = useNavigate();
-  return (
-    <main className="welcome-shell" id="main" tabIndex={-1}>
-      <div className="welcome-mark">◍ HoldSpeak</div>
-      <section className="welcome-card">
-        <FirstWords onDismiss={() => navigate("/", { replace: true })} />
-      </section>
-    </main>
-  );
+  useEffect(() => {
+    openFirstRun();
+  }, []);
+  // Keep the URL token/context through the hand-off, as demoted routes do.
+  return <Navigate to={{ pathname: "/", search: window.location.search }} replace />;
 }

@@ -25,12 +25,14 @@ def test_welcome_route_serves_the_one_react_shell() -> None:
 
 def test_welcome_is_the_same_one_step_first_value_surface_as_the_desk() -> None:
     page = _page()
-    # PHILO-17: the empty Floor (EmptyDesk) is parked; the desk's live first
-    # value surface is the first run (desk/firstrun/FirstRun.tsx).
+    # PHILO-17 U17: /welcome opens the SAME Get ready cards the desk shows
+    # (desk/firstrun/FirstRun.tsx; its First words card is this page's
+    # sentence); the separate FirstWords page is parked.
     desk = (_REPO / "web/src/desk/firstrun/FirstRun.tsx").read_text()
-    assert "FirstWords" in page and "FirstWords" in desk
+    assert "openFirstRun()" in page and 'pathname: "/"' in page
+    assert "FirstWordsCard" in desk and "closeFirstRun()" in desk
     assert "STEPS" not in page and "Model" not in page
-    assert 'navigate("/", { replace: true })' in page
+    assert (_REPO / "web/src/pages/_parked/WelcomePage.tsx").exists()
 
 
 def test_basic_value_precedes_optional_runs_on_setup() -> None:

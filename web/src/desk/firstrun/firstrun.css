@@ -82,6 +82,29 @@
   align-self: stretch;
 }
 
+/* PHILO-17: one plain line per card, what the card does (body step). */
+.firstrun-card-line {
+  margin: 0;
+  font: 400 13px/1.45 Inter, system-ui, sans-serif;
+  color: var(--text-muted);
+}
+
+/* PHILO-17 (owner walk A: "card colours mean nothing"; orange read as a
+   warning): on first run ONE colour means done, the green of the success
+   chips. The next press keeps a neutral ring, not a colour. */
+.firstrun .surface-choice-card[data-selected] {
+  border-color: color-mix(in srgb, var(--ok) 70%, transparent);
+  background: color-mix(in srgb, var(--ok) 7%, var(--surface-1));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ok) 35%, transparent);
+}
+
+.firstrun .surface-choice-card[data-lit] {
+  border-color: var(--text-muted);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--text) 30%, transparent),
+    0 0 24px color-mix(in srgb, var(--text) 10%, transparent);
+}
+
 .firstrun-ledger {
   list-style: none;
   margin: 0;
@@ -276,4 +299,18 @@
   flex: 1 1 100%;
   min-width: 0;
   max-width: 100%;
+}
+
+/* PHILO-17: a sign-in command well spans the card (the code wraps at 393). */
+.firstrun-signin-wells {
+  align-self: stretch;
+}
+
+.firstrun-signin-well {
+  align-self: stretch;
+  min-width: 0;
+}
+
+.firstrun-signin-well .connections-command-code {
+  overflow-wrap: anywhere;
 }

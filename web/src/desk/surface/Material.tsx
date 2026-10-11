@@ -3,7 +3,30 @@
 // never as markdown source in a box. A deliberately small renderer:
 // headings, lists, paragraphs, bold/italic/code/links — built as React
 // nodes (no innerHTML), unknown syntax falls back to plain text.
+//
+// PHILO-17 U18: a door link `[Record a meeting](door:record-live)` is the
+// library Button that opens that door on the desk. Only the doors named in
+// NOTE_DOORS are buttons (no dead verbs); any other door link is bold text.
 import type { ReactNode } from "react";
+import { Button } from "../../components/signal/Signal";
+import { openSurfaceOr } from "../shell";
+
+/** The doors a note may open. Each one is a real opener the desk has. */
+export const NOTE_DOORS: Record<string, () => void> = {
+  "record-live": () => openSurfaceOr("record-live", "/live"),
+  dictate: () => openSurfaceOr("dictate", "/dictation"),
+  needs: () => void import("../screen/open").then((m) => m.openNeedsYouDrawer()),
+  "open-people": () => openSurfaceOr("open-people", "/"),
+};
+
+function noteDoor(name: string): (() => void) | undefined {
+  return Object.prototype.hasOwnProperty.call(NOTE_DOORS, name) ? NOTE_DOORS[name] : undefined;
+}
+
+/** True when the text has a door link the desk can open. */
+export function hasNoteDoor(text: string): boolean {
+  return [...text.matchAll(/\]\(door:([a-z-]+)\)/g)].some((m) => Boolean(noteDoor(m[1])));
+}
 
 const INLINE_RE =
   /(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|(?<![A-Za-z0-9])_[^_\s][^_]*_(?![A-Za-z0-9])|`[^`]+`|\[[^\]]+\]\([^)\s]+\))/g;
@@ -23,8 +46,13 @@ function inline(text: string): ReactNode[] {
     else if (tok.startsWith("[")) {
       const text_ = tok.slice(1, tok.indexOf("]"));
       const href = tok.slice(tok.indexOf("(") + 1, -1);
+      const door = href.startsWith("door:") ? noteDoor(href.slice(5)) : undefined;
       out.push(
-        /^https?:\/\//.test(href) ? (
+        door ? (
+          <Button key={key++} dense variant="secondary" className="surface-material-door" onClick={door}>
+            {text_}
+          </Button>
+        ) : /^https?:\/\//.test(href) ? (
           <a key={key++} href={href} target="_blank" rel="noreferrer">
             {text_}
           </a>
