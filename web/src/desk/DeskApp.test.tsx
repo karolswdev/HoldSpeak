@@ -120,7 +120,7 @@ vi.mock("./conductor", () => ({ ConductorWindows: marker("conductor-windows") })
 vi.mock("./drawer", () => ({ DrawerWindows: marker("drawer-windows") }));
 vi.mock("./hand", () => ({ DragLayer: marker("drag-layer") }));
 vi.mock("./lane/LaneWindow", () => ({ LaneWindow: marker("lane-window") }));
-vi.mock("./deleteReceipt", () => ({ DeskDeleteHost: marker("delete-host") }));
+vi.mock("./deleteReceipt", () => ({ DeskDeleteHost: marker("delete-host"), DeskDeleteSeat: marker("delete-seat") }));
 // returningWindows subscribes to the TrustWindow store at import: mock the mount.
 vi.mock("./returningWindows", () => ({ ReturningWindows: marker("returning-windows") }));
 vi.mock("./components/InlineEditor", () => ({ InlineEditor: marker("inline-editor") }));
@@ -314,6 +314,8 @@ describe("DeskApp arrival state", () => {
     expect(screen.getByTestId("normal-chair")).toBeInTheDocument();
     expect(screen.queryByTestId("atmosphere")).not.toBeInTheDocument();
     expect(screen.queryByTestId("world-stage")).not.toBeInTheDocument();
+    // Astra r2: the delete receipt's seat is desk-level, never inside the Screen.
+    expect(screen.getByTestId("desk-delete-foot")).toContainElement(screen.getByTestId("delete-seat"));
   });
 
   it("mounts Get Info windows on the one desk (the Floor used to)", () => {

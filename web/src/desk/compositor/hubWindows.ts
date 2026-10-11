@@ -97,6 +97,8 @@ export const httpTransport: HubTransport = {
 
 /** PHILO-17: the retired window family (zones have no face). */
 export const RETIRED_PREFIX = "zone:";
+/** How many closes one retired row gets (a refused close re-reads first). */
+export const RETIRE_TRIES = 3;
 
 // ---- the local families: how a hub row opens and closes here ---------------
 
@@ -374,8 +376,31 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
   const closedAt = new Map<string, number>();
   /** Ids whose write FAILED: the next read restores the hub's row for them. */
   const restore = new Set<string>();
-  /** Retired `zone:*` rows this view has asked the hub to close. */
-  const retiring = new Set<string>();
+  /** Retired `zone:*` rows: closed on the hub (done), a close in flight
+   * (busy), and the closes tried per row (at most RETIRE_TRIES: a refused
+   * close re-reads and tries again with the hub's revision, never a loop). */
+  const retiredDone = new Set<string>();
+  const retireBusy = new Set<string>();
+  const retireTries = new Map<string, number>();
+  function retire(r: HubWindowRow): void {
+    const tries = retireTries.get(r.id) ?? 0;
+    if (retiredDone.has(r.id) || retireBusy.has(r.id) || tries >= RETIRE_TRIES) return;
+    retireTries.set(r.id, tries + 1);
+    retireBusy.add(r.id);
+    enqueue([r.id], {}, () =>
+      transport.verb(r.id, "close", { expected_revision: r.revision })
+        .then((answer) => {
+          retiredDone.add(r.id);
+          return answer;
+        })
+        .catch((err) => {
+          // Already gone on the hub: retired.
+          if (err instanceof ApiError && err.status === 404) retiredDone.add(r.id);
+          throw err;
+        })
+        .finally(() => retireBusy.delete(r.id)),
+    );
+  }
 
   /** Apply the hub's rows for `scope` (every id when "all"). An id with a
    * request in flight is left as it shows; a row is applied only when it is
@@ -386,11 +411,7 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     // zone windows are retired; no face draws a zone. A saved `zone:*` row
     // is closed on the hub once and never opens or counts here.
     const retired = list.windows.filter((r) => r.id.startsWith(RETIRED_PREFIX));
-    for (const r of retired) {
-      if (retiring.has(r.id)) continue;
-      retiring.add(r.id);
-      enqueue([r.id], {}, () => transport.verb(r.id, "close", { expected_revision: r.revision }));
-    }
+    for (const r of retired) retire(r);
     if (retired.length) list = { ...list, windows: list.windows.filter((r) => !r.id.startsWith(RETIRED_PREFIX)) };
     const byId = new Map(list.windows.map((r) => [r.id, r]));
     const free = (id: string) => (scope === "all" || scope.has(id)) && presentations.pending(id) === 0;

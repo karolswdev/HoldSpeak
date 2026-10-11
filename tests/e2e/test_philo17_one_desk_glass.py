@@ -14,6 +14,10 @@ Through the real hub on an isolated HOME at 1440x900 (mouse) and 393x852
 * an off-desk kind keeps Delete (Astra r1): a Sequence opened from Search,
   its window menu ``Object ▸ Delete`` -> the window closes, the receipt is
   readable on the desk, the hub answers 404 after the Undo window;
+* Undo stays in view after a window Delete with a Chair window already open
+  (Astra r2): Needs you first, then the Sequence's Object ▸ Delete; the
+  receipt is on the glass (in the viewport, it owns its centre), Undo
+  restores, the hub still has the Sequence;
 * a saved zone window never returns (Astra r1): a workspace and a hub row
   that say ``zone:<id>`` is open boot with no zone window, the hub row is
   closed, and Get Info shows the zone as a fact (no button, no window).
@@ -34,6 +38,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle
+from .chair_windows import open_chair_window
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the one-desk glass needs Playwright")
@@ -275,9 +280,16 @@ class TestOneDesk:
                 nid = (note.get("note") or note)["id"]
                 _api(page, "PUT", f"/api/directories/{zid}/members/note:{nid}", {}, token=TOKEN)
                 win = f"zone:{zid}"
-                # A saved zone window: the workspace cache and the hub row both say open.
-                status, _ = _api_allow_error(page, "POST", f"/api/desk/windows/{win}/open", {}, token=TOKEN)
-                assert status in (200, 201), status
+                # A new zone window is refused on the hub (Astra r2: the family is retired).
+                status, payload = _api_allow_error(page, "POST", f"/api/desk/windows/{win}/open", {}, token=TOKEN)
+                assert status == 400 and (payload or {}).get("error") == "window_retired", (status, payload)
+                # A zone window saved before the ruling: the hub row (as the old
+                # service wrote it) and the workspace cache both say open.
+                with self.db._connection() as conn:  # noqa: SLF001
+                    conn.execute(
+                        "INSERT INTO desk_windows (id, app, object_ref, depth, minimized, revision) VALUES (?, ?, ?, ?, ?, ?)",
+                        (win, "zone", zid, 50, 0, 1),
+                    )
                 page.evaluate("""([key, zid, win]) => { const raw = localStorage.getItem(key);
                     const doc = raw ? JSON.parse(raw) : { version: 1 }; doc.version = 1;
                     doc.zoneWindows = [zid]; doc.panel = doc.panel || {}; doc.panel.depth = { ...(doc.panel.depth || {}), [win]: 9 };
@@ -302,6 +314,63 @@ class TestOneDesk:
                 assert page.locator(".desk-info-window button:has-text('Payments')").count() == 0
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"one-desk-zone-retired-{width}.png"))
+                assert not [e for e in errors if "ResizeObserver" not in e and "Failed to fetch" not in e], errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_window_delete_keeps_undo_in_view_with_a_chair_window_open(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        phone = width <= 720
+        with sync_playwright() as pw:
+            browser, page, errors = self._desk(pw, width)
+            try:
+                made = _api(page, "POST", "/api/chains", {"name": "Undo sequence", "steps": []}, token=TOKEN)
+                chain_id = made["chain"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.locator("[data-testid=desk-screen]").wait_for(state="attached", timeout=T)
+                # A Chair window first: at 393 it fills the work area over the Screen.
+                open_chair_window(page, "Needs you")
+                field = page.locator("[aria-controls=desk-palette-listbox]")
+                if not field.is_visible():
+                    page.locator("[aria-controls=desk-tool-shelf]").first.click()
+                field.fill("Undo sequence")
+                self._tap(page, page.locator(f"[id='desk-palette-option-chain:{chain_id}']"), phone, 900)
+                win = f"pullout:sequence:{chain_id}"
+                page.locator(f"[id='{win}']").wait_for(timeout=T)
+                page.wait_for_timeout(900)
+                self._window_menu(page, win, phone)
+                obj = page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Object')").first
+                obj.wait_for(timeout=T)
+                if phone:
+                    self._tap(page, obj, phone)
+                else:
+                    obj.hover()
+                    page.wait_for_timeout(700)
+                self._tap(page, page.locator("[role=menu] [role^=menuitem]:has-text('Delete')").last, phone, 900)
+                page.locator(f"[id='{win}']").wait_for(state="detached", timeout=T)
+                # The Chair window is still open; the receipt and its Undo are on the glass.
+                assert page.locator(".desk-window-shell.chair-window[aria-label='Needs you']").first.is_visible()
+                page.wait_for_function(
+                    "() => (document.querySelector('.undo-receipt')?.innerText || '').includes('Removed')", timeout=T)
+                _settle(page)
+                seen = page.evaluate("""() => { const b = document.querySelector('.undo-receipt-btn');
+                    if (!b) return null; const r = b.getBoundingClientRect();
+                    const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                    return {inView: r.width > 0 && r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth,
+                            own: !!hit && (hit === b || b.contains(hit))}; }""")
+                assert seen and seen["inView"] and seen["own"], seen
+                page.screenshot(path=str(SHOTS / f"one-desk-undo-over-chair-{width}.png"))
+                self._tap(page, page.locator(".undo-receipt-btn"), phone, 600)
+                page.wait_for_function(
+                    "() => (document.querySelector('.undo-receipt')?.innerText || '').includes('Restored')", timeout=T)
+                page.wait_for_timeout(10_000)  # past the 8 s window
+                status, _ = _api_allow_error(page, "GET", f"/api/chains/{chain_id}", token=TOKEN)
+                assert status == 200, status
                 assert not [e for e in errors if "ResizeObserver" not in e and "Failed to fetch" not in e], errors
             finally:
                 browser.close()

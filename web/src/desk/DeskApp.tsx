@@ -40,7 +40,7 @@ import { objectByRef } from "./world";
 import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
 import { useSettleState } from "./settleState";
-import { DeskDeleteHost } from "./deleteReceipt";
+import { DeskDeleteHost, DeskDeleteSeat } from "./deleteReceipt";
 import { DrawerWindows } from "./drawer";
 import { ConductorWindows } from "./conductor";
 import "./desk.css";
@@ -253,6 +253,15 @@ function DeskFaces() {
       {!arrivalRequired && <ConductorWindows />}
       {!arrivalRequired && <LaneWindow />}
       {!arrivalRequired && <AttentionDrawer />}
+      {/* PHILO-17 (Astra r2): the delete receipt's seat (the Floor's, #665)
+          is desk-level, fixed above the dock and above every window, so its
+          Undo is in view wherever Delete was pressed (a Chair window or a
+          sheet over the Screen at 393 never hides it). */}
+      {!arrivalRequired && (
+        <div className="desk-world-foot desk-delete-foot" data-testid="desk-delete-foot">
+          <DeskDeleteSeat />
+        </div>
+      )}
       {/* Recovery remains direct and in-place: FirstWords opens Setup through
           this existing surface registry without restoring the whole Desk. */}
       <SurfaceWindows

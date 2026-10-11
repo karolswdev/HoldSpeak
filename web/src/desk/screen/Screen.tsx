@@ -20,7 +20,6 @@ import { MicButton } from "../components/MicButton";
 import { useDesk } from "../store";
 import { WorkMenu } from "../components/DeskMenu";
 import { objectMenuEntries } from "../objectMenu";
-import { DeskDeleteSeat } from "../deleteReceipt";
 import { objectByRef } from "../world";
 import { DeskIcon, IconGrid, iconsInRect, type GridRect } from "../surface";
 import { useCompactViewport } from "../useCompactViewport";
@@ -223,11 +222,6 @@ export function Screen() {
         />
       ) : null}
       <HandConfirmSlot host={SCREEN_HOST} className="desk-screen-hand" />
-      {/* PHILO-17: the delete receipt's seat (the Floor's, #665): the desk's
-          foot, above the dock. Delete is offered where its Undo is read. */}
-      <div className="desk-world-foot" data-testid="desk-screen-foot">
-        <DeskDeleteSeat />
-      </div>
       {compact ? null : (
         // Astra's P3 on #939 (ruling): TALK is one press on the Chair. The
         // Capture window's own control, at the screen's foot-left.

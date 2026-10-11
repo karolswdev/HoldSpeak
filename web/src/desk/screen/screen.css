@@ -106,8 +106,10 @@
   bottom: calc(var(--desk-dock-h, 76px) + 14px);
   z-index: 1;
 }
-/* PHILO-17: the delete receipt's seat (the Floor's foot, #665) stays in
-   view while the desk scrolls (the 393 grid scrolls inside .desk-screen). */
-.desk-next .desk-screen > .desk-world-foot {
+/* PHILO-17 (Astra r2): the delete receipt's seat is desk-level (DeskApp):
+   fixed above the dock, above every window (a transient while it stands),
+   so the desk's scroll, a Chair window or a sheet never hide its Undo. */
+.desk-next > .desk-world-foot.desk-delete-foot {
   position: fixed;
+  z-index: var(--desk-z-transient);
 }
