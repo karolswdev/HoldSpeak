@@ -385,3 +385,135 @@ describe("PHILO-15-09 B04 — the Brief window title is dated", () => {
       expect(win.querySelector(".desk-window-title")?.textContent).toBe("Brief · Wednesday 7 Oct 2026"));
   });
 });
+
+// PHILO-17 briefcover (Astra r1 on #1080): the REAL Chair producer. A Chair
+// window hidden by the phone's one-window ring (or iconified) is still open:
+// it keeps its plane, so back at 1440 it does not jump above the window he
+// was using; a close leaves the order and forgets an unsaved rect.
+describe("PHILO-17 briefcover — hidden is not closed", () => {
+  const order = () => [...useDesk.getState().panelOrder];
+
+  async function chairAndMeetings() {
+    const { DeskWindowFrame } = await import("../../components/DeskWindow");
+    const view = render(<ChairHome />);
+    await screen.findByRole("region", { name: "Brief" });
+    render(<DeskWindowFrame id="surface-meetings" title="Meetings" open onClose={() => {}}>m</DeskWindowFrame>);
+    act(() => useDesk.getState().focusPanel("surface-meetings"));
+    return view;
+  }
+
+  it("the Chair mounting after a window he opened (a staged open) goes behind it", async () => {
+    const { DeskWindowFrame } = await import("../../components/DeskWindow");
+    act(() => useDesk.getState().focusPanel("surface-meetings"));
+    render(<DeskWindowFrame id="surface-meetings" title="Meetings" open onClose={() => {}}>m</DeskWindowFrame>);
+    render(<ChairHome />);
+    await screen.findByRole("region", { name: "Brief" });
+    await waitFor(() => expect(order().at(-1)).toBe("surface-meetings"));
+    expect(frontWindowId()).toBe("surface-meetings");
+    // Among the Chair's own planes Needs you leads.
+    const chair = order().filter((id) => id.startsWith("chair:"));
+    expect(chair.at(-1)).toBe("chair:needs");
+  });
+
+  it("393 then 1440: the Chair's windows keep their planes; Meetings stays in front", async () => {
+    const view = await chairAndMeetings();
+    const before = order();
+    expect(before.at(-1)).toBe("surface-meetings");
+    setCompact(true);
+    view.rerender(<ChairHome />);
+    await waitFor(() => expect(region("Brief")).toBeNull());
+    expect(order()).toEqual(before);
+    setCompact(false);
+    view.rerender(<ChairHome />);
+    await screen.findByRole("region", { name: "Brief" });
+    expect(order()).toEqual(before);
+  });
+
+  it("iconify, then close from the Dock: the close retires it and forgets the unsaved rect; a saved rect stays", async () => {
+    const { closeChairWindow } = await import("../chairWindows");
+    render(<ChairHome />);
+    await screen.findByRole("region", { name: "Brief" });
+    const rect = { x: 700, y: 60, w: 500, h: 400 };
+    act(() => {
+      useDesk.getState().setPanelRect("chair:brief", rect); // the first seat: unsaved
+      useDesk.getState().setPanelRect("chair:week", rect, true); // his arrangement: saved
+    });
+    fireEvent.click(within(region("Brief")!).getByRole("button", { name: "Iconify Brief" }));
+    fireEvent.click(within(region("The week")!).getByRole("button", { name: "Iconify The week" }));
+    await waitFor(() => expect(useDesk.getState().panelMin).toEqual(expect.arrayContaining(["chair:brief", "chair:week"])));
+    expect(order()).toEqual(expect.arrayContaining(["chair:brief", "chair:week"]));
+    act(() => {
+      closeChairWindow("chair:brief");
+      closeChairWindow("chair:week");
+    });
+    const s = useDesk.getState();
+    expect(s.panelDepth).not.toHaveProperty("chair:brief");
+    expect(s.panelDepth).not.toHaveProperty("chair:week");
+    expect(s.panelRects["chair:brief"]).toBeUndefined();
+    expect(s.panelRects["chair:week"]).toEqual(rect);
+  });
+
+  it("393: a window hidden by the ring, then closed, leaves the order", async () => {
+    const { closeChairWindow } = await import("../chairWindows");
+    const view = render(<ChairHome />);
+    await screen.findByRole("region", { name: "Brief" });
+    setCompact(true);
+    view.rerender(<ChairHome />);
+    await waitFor(() => expect(region("Brief")).toBeNull());
+    expect(order()).toContain("chair:brief");
+    act(() => closeChairWindow("chair:brief"));
+    expect(order()).not.toContain("chair:brief");
+  });
+
+  it("with the hub: a resize sends no raise, and a hidden window shows another view's raise", async () => {
+    const { createHubWindows } = await import("../../compositor/hubWindows");
+    const view = await chairAndMeetings();
+    const ids = ["chair:needs", "chair:week", "chair:capture", "chair:brief", "surface-meetings"];
+    const local = order();
+    let revision = 10;
+    const rows = new Map(ids.map((id) => [id, {
+      id, app: id.startsWith("chair:") ? "chair" : "surface", object_ref: null, x: null, y: null, w: null, h: null,
+      depth: local.indexOf(id) + 1, minimized: false, zoomed: false, zoom: null, arranged: false, room: null,
+      front: false, revision: 1,
+    }]));
+    const calls: string[] = [];
+    const hub = createHubWindows({
+      settleMs: 0,
+      view: () => ({ x: 10, y: 38, w: 1420, h: 772 }),
+      compact: () => false,
+      cacheOpen: [],
+      transport: {
+        list: async () => ({ windows: [...rows.values()], stage_shelf: "left", revision, adopted: true,
+          registry: { static: Object.fromEntries(ids.map((id) => [id, "x"])), families: {} } }),
+        verb: async (id, verb) => {
+          calls.push(`${verb} ${id}`);
+          return { ...rows.get(id)!, revision: ++revision };
+        },
+        arrange: async () => ({ windows: [] }),
+        shelf: async (side) => ({ stage_shelf: side, revision: 1 }),
+      },
+    });
+    try {
+      await hub.start();
+      await hub.idle();
+      window.dispatchEvent(new Event("pointerdown"));
+      calls.length = 0;
+      setCompact(true);
+      view.rerender(<ChairHome />);
+      await waitFor(() => expect(region("Brief")).toBeNull());
+      // Another view raises Brief while it is hidden here.
+      rows.set("chair:brief", { ...rows.get("chair:brief")!, depth: 99, revision: ++revision });
+      hub.onFrame({ kind: "windows", id: "chair:brief" });
+      await hub.idle();
+      setCompact(false);
+      view.rerender(<ChairHome />);
+      await screen.findByRole("region", { name: "Brief" });
+      hub.sync();
+      await hub.idle();
+      expect(calls.filter((c) => c.startsWith("raise"))).toEqual([]);
+      expect(order().at(-1)).toBe("chair:brief");
+    } finally {
+      hub.stop();
+    }
+  });
+});

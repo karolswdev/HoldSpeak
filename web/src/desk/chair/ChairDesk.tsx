@@ -84,6 +84,7 @@ function ChairWindow({
       // moment) is not closed: the window keeps its plane, so back at 1440 it
       // does not jump above the window he is using.
       keepsPlane={() => !useChairWindows.getState().closed[spec.id]}
+      presentsBehind
       dockChip="iconified"
       escapeCloses={false}
       entrance={false}
