@@ -21,6 +21,7 @@ import { ApiError, apiFetch } from "../../lib/api";
 import { ChairHome } from "../chair/ChairHome";
 import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
 import { nextWord } from "../needs/needsFace";
+import WEEK_STRIP from "./wire/door.week-strip.wire.json";
 
 vi.mock("../../lib/api", async (original) => ({
   ...(await original<typeof import("../../lib/api")>()),
@@ -76,22 +77,17 @@ function armed(recordingId: string, armsAt: string, state = "idle"): Json {
 
 const ROOM = { project_id: "proj-q4", project_name: "Q4 Platform" };
 
-/** The glass rig's `_seed_week_strip`: three events today, one armed and linked. */
+/** The glass rig's `_seed_week_strip`: three events today, one armed and
+ *  linked. The hub's own answer for that seed (the real DoorService at the
+ *  same clock), recorded and fenced by tests/unit/test_desk_chair.py (the
+ *  test diet's SCAR LAW). */
 function weekStripDoor(): Json {
-  return door([
-    event("ev-standup", "Standup", "2026-10-07T17:00:00+00:00", {
-      meeting_url: "https://teams.example.com/standup",
-      ...armed("rec-standup", "2026-10-07T16:55:00Z"),
-      ...ROOM,
-    }),
-    event("ev-design", "Design review", "2026-10-07T19:00:00+00:00"),
-    event("ev-ania", "1:1 Ania", "2026-10-07T21:00:00+00:00"),
-  ], week({ WED: 3 }));
+  return structuredClone(WEEK_STRIP.wire) as Json;
 }
 
 function door(upcoming: Json[], weekData: Json, calendarConfigured = true): Json {
   return {
-    board: { overdue: [], now: [], waiting: [], active: [] },
+    board: { overdue: [], now: [], waiting: [], active: [], unassigned: [] },
     upcoming,
     counts: { overdue: 0, now: 0, waiting: 0, active: 0, upcoming_today: upcoming.length },
     calendar_configured: calendarConfigured,
@@ -142,6 +138,24 @@ afterEach(() => {
 
 afterAll(() => {
   delete process.env.TZ;
+});
+
+describe("The typed rows have the hub's fields (the SCAR LAW)", () => {
+  it("event(), armed() and door() carry exactly the recorded answer's keys", () => {
+    const keys = (o: Json) => Object.keys(o).sort();
+    const recorded = WEEK_STRIP.wire as Json;
+    const [standup, design] = recorded.upcoming as Json[];
+    expect(keys(event("x", "X", "2026-10-07T17:00:00+00:00", { ...armed("r", "2026-10-07T16:55:00Z"), ...ROOM })))
+      .toEqual(keys(standup));
+    expect(keys(event("x", "X", "2026-10-07T19:00:00+00:00"))).toEqual(keys(design));
+    expect(keys(standup.armed)).toEqual(keys(armed("r", "t").armed));
+    const typed = door([], week({ WED: 3 }));
+    expect(keys(typed)).toEqual(keys(recorded));
+    expect(keys(typed.board)).toEqual(keys(recorded.board));
+    expect(keys(typed.counts)).toEqual(keys(recorded.counts));
+    expect(keys(typed.week)).toEqual(keys(recorded.week));
+    expect(keys(typed.week.days[0])).toEqual(keys(recorded.week.days[0]));
+  });
 });
 
 describe("The week: the zone pin holds", () => {

@@ -57,6 +57,14 @@ import { readyItems } from "../Ready";
 import { readDurableDraft, clearDurableDraft } from "../../../lib/durableDraft";
 import { clearFirstValueKeepNoteId } from "../../firstValue";
 import { openFirstRun, useFirstRunOpen } from "../reopen";
+import { inventedFields, recorded } from "../../../test/wireShape";
+import LOCAL_AI_WIRE from "../../../test/wire/setup-local-ai.wire.json";
+import SETTINGS_WIRE from "../../../test/wire/settings.owner.wire.json";
+import NOTE_WIRE from "../../../test/wire/notes-create.wire.json";
+import CALENDAR_WIRE from "../../../test/wire/onboarding-calendar.wire.json";
+import CONNECTIONS_WIRE from "../../../test/wire/onboarding-connections.wire.json";
+import DOOR_WIRE from "../../../test/wire/door.fresh.wire.json";
+import SOURCES_WIRE from "../../../test/wire/calendar-sources.wire.json";
 
 const MB = 1_000_000;
 const WORDS = "Send the cutover plan to Priya before Friday.";
@@ -205,6 +213,28 @@ beforeEach(() => {
 });
 
 const card = (id: string) => screen.getByTestId(id);
+
+describe("the typed hub bodies carry only the hub's fields (the SCAR LAW)", () => {
+  // The hub's own answers: tests/integration/test_face_wire_fences.py::test_first_run_reads.
+  // The candidate rows (a Mac calendar, a signed-in GitHub or Jira account)
+  // need an account on the machine, so they are not recorded here.
+  it("local AI, settings, a kept note, the calendar, the connections, the Door and the sources", async () => {
+    const hubLocal = recorded<{ files: unknown[] }>(LOCAL_AI_WIRE);
+    for (const ready of [false, true]) {
+      const { files, ...rest } = aiStatus(ready);
+      expect(inventedFields(rest, hubLocal)).toEqual([]);
+      for (const file of files) expect(inventedFields(file, hubLocal.files[0])).toEqual([]);
+    }
+    hub.sources = [source("https://cal.example.com/a.ics")];
+    const get = (path: string, init?: unknown) => mocks.apiFetch(path, init);
+    expect(inventedFields(await get("/api/settings"), recorded(SETTINGS_WIRE))).toEqual([]);
+    expect(inventedFields(await get("/api/notes", { method: "POST" }), recorded(NOTE_WIRE))).toEqual([]);
+    expect(inventedFields(await get("/api/onboarding/calendar"), recorded(CALENDAR_WIRE))).toEqual([]);
+    expect(inventedFields(await get("/api/onboarding/connections"), recorded(CONNECTIONS_WIRE))).toEqual([]);
+    expect(inventedFields(await get("/api/door"), recorded(DOOR_WIRE))).toEqual([]);
+    expect(inventedFields(await get("/api/calendar/sources"), recorded(SOURCES_WIRE))).toEqual([]);
+  });
+});
 
 describe("calendar helpers", () => {
   it("reads a typed link's host; webcal reads as https; http is no host", () => {

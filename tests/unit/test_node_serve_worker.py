@@ -95,6 +95,30 @@ class TestLinkLoop:
         persisted = json.loads((tmp_path / "cursor_edge.json").read_text())
         assert persisted == {"cursor": 2}
 
+    def test_a_kill_while_the_cursor_is_written_keeps_the_last_cursor(
+        self, hub, state, tmp_path, monkeypatch
+    ):
+        """The cursor is written to a sibling file and renamed over the old
+        one: a kill before the rename keeps the last cursor, never an empty
+        file (test_node_link_two_process read '' after a SIGKILL under -n 8)."""
+        import os as os_module
+
+        worker = _worker(hub, state, tmp_path)
+        worker.hello()
+        worker.emit({"kind": "rail.cursor", "detail": {"tick": 1}})
+        worker.heartbeat()
+        cursor_file = tmp_path / "cursor_edge.json"
+        assert json.loads(cursor_file.read_text()) == {"cursor": 1}
+
+        def killed(*_args, **_kwargs):
+            raise SystemExit("killed before the rename")
+
+        monkeypatch.setattr(os_module, "replace", killed)
+        worker.cursor = 2
+        with pytest.raises(SystemExit):
+            worker._save_cursor()
+        assert json.loads(cursor_file.read_text()) == {"cursor": 1}
+
     def test_kill_restart_resumes_without_duplicate_or_gap(self, hub, state, tmp_path):
         first = _worker(hub, state, tmp_path)
         first.hello()

@@ -40,7 +40,10 @@ _DB_URL = re.compile(
     r"\b(?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|redis|amqp)://[^\s:/@]+:[^\s@/]+@\S+",
     re.IGNORECASE,
 )
-_CARD = re.compile(r"(?<![\d-])\d(?:[ -]?\d){12,18}(?![\d-])")
+#: A card number stands alone: never a digit run inside a word, such as the
+#: hex of an id (``op_b1be06986e<15 digits>adf01a4`` lost its middle to
+#: ``[redacted]`` in an MCP error answer: the -n 8 flake, test diet 2026-10-11).
+_CARD = re.compile(r"(?<![\w-])\d(?:[ -]?\d){12,18}(?![\w-])")
 
 
 def _luhn(digits: str) -> bool:

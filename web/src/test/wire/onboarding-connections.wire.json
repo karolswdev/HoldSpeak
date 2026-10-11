@@ -1,0 +1,17 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:54:22.963165Z",
+  "wire": {
+    "candidates": [],
+    "tools": {
+      "acli": {
+        "detected_from": "/tmp/rig/.config/acli",
+        "installed": true
+      },
+      "gh": {
+        "detected_from": "/tmp/rig/.config/gh/hosts.yml",
+        "installed": true
+      }
+    }
+  }
+}

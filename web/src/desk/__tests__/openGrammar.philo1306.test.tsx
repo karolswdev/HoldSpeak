@@ -17,6 +17,9 @@ import { __resetOwnerCache, takeRoomProposalRequest } from "../openObject";
 import { useDrawers } from "../drawer/store";
 import { asHub } from "../../test/hubNeedsYou";
 import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
+// The hub's own people_commitment card (its words are `text`, never `title`),
+// recorded and fenced by tests/integration/test_desk_chair.py (the SCAR LAW).
+import COMMITMENT_CARD from "./wire/door-people-commitment.wire.json";
 
 // PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
 beforeEach(() => openChairWindows());
@@ -66,10 +69,7 @@ const at = (h: number) => new Date(today.getFullYear(), today.getMonth(), today.
 
 const DOOR = {
   board: {
-    now: [
-      { id: "people:com-1", source: "people_commitment", target_ref: "people:rel-priya", title: "Review the rollout plan before Friday",
-        lawful_verbs: [{ name: "people.commitment.transition", arguments: { card_id: "people:com-1", verb: "done" } }] },
-    ],
+    now: [COMMITMENT_CARD.wire],
   },
   counts: {},
   calendar_configured: true,
@@ -207,18 +207,26 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
     expect(arch.getAttribute("role")).toBeNull();
   });
 
-  it("a commitment row is its object in the Needs-you drawer: no row open; Open opens its person", async () => {
+  it("a commitment row is its object in the Needs-you drawer: no row open; Done runs its transition", async () => {
     // PHILO-14 A5 (board A-5): a Needs-you row is the object with its own
     // verbs; the row itself is not a button (the Chair row's open moved to
     // the object's own window). Rows the Brief and the week draw still open.
+    // The test diet: the hub's card carries its words as `text` and a verb
+    // the Desk runs (people.commitment.transition by commitment_id), so the
+    // row's verb is Done. The old typed card had `title` and a `card_id`
+    // argument the hub never sends, so its verb fell back to Open.
     render(<ChairHome />);
-    const name = await screen.findByText("Review the rollout plan before Friday");
+    const card = COMMITMENT_CARD.wire;
+    const name = await screen.findByText(card.text);
     const row = name.closest(".needs-row") as HTMLElement;
     expect(row).toBeTruthy();
     expect(row.getAttribute("role")).toBeNull();
-    // The card names its person and the Desk cannot run its verb: Open opens the person.
-    fireEvent.click(within(row).getByRole("button", { name: "Open: Review the rollout plan before Friday" }));
-    expect(openPrimitive).toHaveBeenCalledWith("people:rel-priya");
+    fireEvent.click(within(row).getByRole("button", { name: `Done: ${card.text}` }));
+    const commitmentId = card.lawful_verbs[0].arguments.commitment_id;
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
+      `/api/people/commitments/${encodeURIComponent(commitmentId)}/transition`,
+      expect.objectContaining({ method: "POST", json: { verb: "done" } }),
+    ));
   });
 });
 

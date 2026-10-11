@@ -8,17 +8,16 @@ vi.mock("../../shell", () => ({ openSurfaceOr: mocks.open }));
 vi.mock("../../screen/open", () => ({ openNeedsYouDrawer: mocks.needs }));
 
 import { Material, hasNoteDoor } from "../Material";
+import START_HERE_WIRE from "../../../test/wire/note.start-here.wire.json";
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 
-const START_HERE = `HoldSpeak does three jobs for you.
-
-- [Record a meeting](door:record-live) HoldSpeak writes the summary, the decisions and the actions.
-- [Dictate](door:dictate) Speak, and HoldSpeak types your words.
-- [Review what needs you](door:needs) See the actions and decisions that wait for you.`;
+// The fresh desk's Start here note as the hub serves it (holdspeak/seeds/fresh-desk.yaml,
+// recorded by tests/integration/test_face_wire_fences.py::test_start_here_note).
+const START_HERE = START_HERE_WIRE.wire.note.body_markdown;
 
 describe("Material door links", () => {
   it("renders the three jobs as library Buttons that open their doors", async () => {

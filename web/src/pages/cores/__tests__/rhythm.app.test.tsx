@@ -24,6 +24,11 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { BriefView } from "../../../desk/pullouts/views/BriefView";
 import { CadenceCore } from "../CadenceCore";
+import { inventedFields, recorded } from "../../../test/wireShape";
+import HEARTBEAT_WIRE from "../../../test/wire/heartbeat.wire.json";
+import STATUS_WIRE from "../../../test/wire/cadence-status.wire.json";
+import DOOR_WIRE from "../../../test/wire/door.fresh.wire.json";
+import BRIEF_WIRE from "../../../test/wire/brief-latest.generated.wire.json";
 
 function json(body: unknown) {
   return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
@@ -34,11 +39,9 @@ const HEARTBEAT = {
   muted_projects: [], last_sweep_at: null, next_sweep_at: null, runs_on: null, last_remote_run_at: null,
 };
 
-const STATUS = {
-  enabled: false, pressure: "normal", tick_interval_seconds: 60,
-  quiet_hours: { start: 22, end: 8 }, max_nudges_per_day: 3,
-  brief_job: { enabled: true, hour: 6 }, policies: 0, counts: {}, egress: "local",
-};
+// The hub's own /api/cadence/status (its `egress` is {label, scope}; the
+// typed copy said "local").
+const STATUS = recorded(STATUS_WIRE);
 
 function item(id: string, section: string, text: string, sourceRef: string | null, detail: string | null = null) {
   return { id, section, text, detail, source_ref: sourceRef, priority: 50, created_at: null };
@@ -195,5 +198,17 @@ describe("The Brief detail the Rhythm row names", () => {
     const clone = container.cloneNode(true) as HTMLElement;
     clone.querySelectorAll(".send-preview-body").forEach((n) => n.remove());
     expect(clone.textContent).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
+});
+
+describe("The typed hub bodies carry only the hub's fields (the SCAR LAW)", () => {
+  // The hub's own answers: tests/integration/test_face_wire_fences.py::test_rhythm_reads.
+  it("heartbeat, cadence status, the Door and the Brief", () => {
+    expect(inventedFields(HEARTBEAT, recorded(HEARTBEAT_WIRE))).toEqual([]);
+    expect(inventedFields(STATUS, recorded(STATUS_WIRE))).toEqual([]);
+    expect(inventedFields(DOOR_WITH_CALENDAR, recorded(DOOR_WIRE))).toEqual([]);
+    expect(inventedFields(brief([]), recorded(BRIEF_WIRE))).toEqual([]);
+    const hubBrief = recorded<{ sections: { waiting: unknown[] } }>(BRIEF_WIRE);
+    expect(inventedFields(item("x", "waiting", "t", "blocker:summary", "d"), hubBrief.sections.waiting[0])).toEqual([]);
   });
 });

@@ -41,7 +41,9 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         server.stop()
 
 
-def test_the_rows_the_chair_opens_carry_their_objects(hub: Any) -> None:
+def test_the_rows_the_chair_opens_carry_their_objects(hub: Any, tmp_path: Path) -> None:
+    from tests.integration.test_desk_agents_wire import _fence
+
     base, ids = hub
     priya = ids["priya"]
 
@@ -58,14 +60,17 @@ def test_the_rows_the_chair_opens_carry_their_objects(hub: Any) -> None:
     assert "person_relationship_id" not in sync
 
     # Needs you: Priya's accepted request is a commitment card that names her.
-    # The hub writes the card's words as `text` (FollowThroughCard.text); the
-    # face reads `title || text` (web/src/desk/needsYou.ts), so the
-    # openGrammar fixture's `title` reaches the same row by its fallback.
+    # The hub writes the card's words as `text` (FollowThroughCard.text), never
+    # `title`. The openGrammar face test replays this card as the hub sent it:
+    # web/src/desk/__tests__/wire/door-people-commitment.wire.json, fenced
+    # here (HOLDSPEAK_WIRE_WRITE=1 rewrites it).
     cards = [c for lane in door["board"].values() for c in lane]
     commitment = [c for c in cards if c.get("text") == COMMITMENT]
     assert commitment, [c.get("text") for c in cards]
     assert commitment[0]["source"] == "people_commitment"
     assert commitment[0]["target_ref"] == f"people:{priya}"
+    assert "title" not in commitment[0]
+    _fence("door-people-commitment", commitment[0], tmp_path, base, by="tests/integration/test_desk_chair.py")
 
     # Brief: the decision row's source_ref resolves to that decision.
     brief = _http(base, "GET", "/api/brief/latest")

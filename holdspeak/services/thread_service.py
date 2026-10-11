@@ -2727,6 +2727,9 @@ class ThreadService:
             "profile_override": thread.profile_override,
             "directory_id": thread.directory_id,
             "call_mode": thread.call_mode,
+            # threads.ts getThread reads it (null: no parent); the row keeps
+            # '' for none (test diet 2026-10-11).
+            "parent_thread_id": thread.parent_thread_id or None,
             # The head reads the saved status on a reload (threads.ts getThread);
             # without it only the live frames carried it (test diet 2026-10-11).
             "status_line": thread.status_line,

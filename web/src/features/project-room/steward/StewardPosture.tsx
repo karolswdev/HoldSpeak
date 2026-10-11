@@ -731,14 +731,19 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
 export function StewardPosture({
   ctrl,
   onOpenReview,
+  onOpenUpdate,
 }: {
   ctrl: StewardController;
   /** PHILO-9-03 (F3): open the review the run's COMPARE opened, by its id. */
   onOpenReview?: (reviewId: string) => void;
+  /** The test diet: an `update:<id>` receipt opens that update in this
+   *  Room's Update posture (the drafted or prepared update). */
+  onOpenUpdate?: (updateId: string) => void;
 }) {
   const onOpenRef = useCallback((ref: string) => {
-    openRef(ref);
-  }, []);
+    if (ref.startsWith("update:") && onOpenUpdate) onOpenUpdate(ref.slice("update:".length));
+    else openRef(ref);
+  }, [onOpenUpdate]);
   const postureRef = useRef<HTMLDivElement>(null);
   useScrollHint(postureRef, null, "y");
 

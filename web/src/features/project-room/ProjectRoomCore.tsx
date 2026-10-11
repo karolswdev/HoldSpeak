@@ -2636,8 +2636,11 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   // the owner back to it.
   useEffect(() => {
     if (!proposalRequest.seq || revealedSeq.current === proposalRequest.seq) return;
+    // The selected row's line carries the testid and `aria-current`; the
+    // `data-selected` mark is on its `li` (desk/surface/Surface.tsx
+    // SurfaceLedgerRow), so the old `[data-testid][data-selected]` never matched.
     const row = roomBodyRef.current?.querySelector<HTMLElement>(
-      "[data-testid=proposal-row][data-selected]",
+      "[data-testid=proposal-row][aria-current=true]",
     );
     if (!row) return;
     revealedSeq.current = proposalRequest.seq;
@@ -2707,6 +2710,10 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           onOpenReview={(reviewId: string) => {
             stewardCtrl.exitSteward();
             void reviewCtrl.enterReview(reviewId);
+          }}
+          onOpenUpdate={(updateId: string) => {
+            stewardCtrl.exitSteward();
+            void openLinkedUpdate(updateId);
           }}
         />
       </>

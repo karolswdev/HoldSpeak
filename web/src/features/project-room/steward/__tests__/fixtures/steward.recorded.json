@@ -1,0 +1,2068 @@
+{
+ "completed": {
+  "detail": {
+   "operation_id": "op_8492e173233e4a41910d3870f6fab68c",
+   "receipt": {
+    "actor_identity": "owner-session",
+    "actor_kind": "owner",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "created_at": 1791757027.795321,
+    "delegator_identity": "",
+    "delegator_kind": "",
+    "operation_id": "op_8492e173233e4a41910d3870f6fab68c",
+    "outcome": "completed",
+    "receipt_id": "rcpt_06463ad2271a49c58ef6f51e456d96e7",
+    "result_ref": "steward_run:pstrun_bcf8031a021e51b5b0632cb5191fdb81",
+    "state": "succeeded",
+    "target_ref": "project:proj-c8c3397e3b1b"
+   },
+   "run": {
+    "completed_at": "2026-10-11T22:17:07+00:00",
+    "created_at": "2026-10-11T22:17:07+00:00",
+    "id": "pstrun_bcf8031a021e51b5b0632cb5191fdb81",
+    "phase": "record",
+    "policy_id": "pstpol_4e6dfaece65544d0a9cb80eb07579913",
+    "project_id": "proj-c8c3397e3b1b",
+    "requested_by": "principal:owner-session",
+    "started_at": "2026-10-11T22:17:07+00:00",
+    "state": "completed",
+    "stop_requested_at": null,
+    "summary": {
+     "outcome": "completed",
+     "phase_results": {
+      "act": {
+       "actions_taken": 4,
+       "effect_receipts": [
+        {
+         "attempt": 1,
+         "effect_kind": "refresh_sources",
+         "outcome": "applied",
+         "result": {
+          "coverage": {
+           "native:decisions": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:followthrough": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:meetings": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:resources": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           }
+          },
+          "effect": "refresh_sources",
+          "partial": false
+         },
+         "step_id": "pststep_db085ac0d6474a619e11f02aa3c20775"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_proposals",
+         "outcome": "applied",
+         "result": {
+          "effect": "create_proposals",
+          "proposal_count": 0,
+          "review_id": "prev_e469556f2738404cadedd18f074e0527"
+         },
+         "step_id": "pststep_0b20ca08507646c2a9bb0fb96b4b3da5"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "draft_update",
+         "outcome": "applied",
+         "result": {
+          "effect": "draft_update",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "lifecycle": "draft",
+          "update_id": "pupd_2150bfc5aa82464e8479c9845bbbabb4"
+         },
+         "step_id": "pststep_ab8f1884b7724ac5a181abf4d529953c"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_door_item",
+         "outcome": "applied",
+         "result": {
+          "door_item_id": "ai_a75d26cfe0c54e8fae00258378c4384e",
+          "effect": "create_door_item",
+          "source_item_id": "pitem_252fb14c6bb64c6d88e3c4da821b5d79",
+          "source_item_type": "risk",
+          "source_severity": "high"
+         },
+         "step_id": "pststep_411a3b5a1d5641c6afe59d5e0c1930b6"
+        }
+       ],
+       "effects_skipped": [
+        {
+         "effect_kind": "apply_proposal_effects",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "github_comment",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "prepare_send",
+         "reason": "not_in_eligible_effect_kinds"
+        }
+       ]
+      },
+      "compare": {
+       "proposal_count": 0,
+       "proposals": [],
+       "review_id": "prev_e469556f2738404cadedd18f074e0527"
+      },
+      "observe": {
+       "coverage": {
+        "native:decisions": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:followthrough": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:meetings": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:resources": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        }
+       }
+      },
+      "propose": {
+       "proposal_count": 0,
+       "proposals": [],
+       "review_id": "prev_e469556f2738404cadedd18f074e0527"
+      },
+      "record": {
+       "event_recorded": true
+      },
+      "verify": {
+       "actions_taken": 4,
+       "effect_receipts": [
+        {
+         "attempt": 1,
+         "effect_kind": "refresh_sources",
+         "outcome": "applied",
+         "result": {
+          "coverage": {
+           "native:decisions": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:followthrough": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:meetings": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:resources": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           }
+          },
+          "effect": "refresh_sources",
+          "partial": false
+         },
+         "step_id": "pststep_db085ac0d6474a619e11f02aa3c20775"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_proposals",
+         "outcome": "applied",
+         "result": {
+          "effect": "create_proposals",
+          "proposal_count": 0,
+          "review_id": "prev_e469556f2738404cadedd18f074e0527"
+         },
+         "step_id": "pststep_0b20ca08507646c2a9bb0fb96b4b3da5"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "draft_update",
+         "outcome": "applied",
+         "result": {
+          "effect": "draft_update",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "lifecycle": "draft",
+          "update_id": "pupd_2150bfc5aa82464e8479c9845bbbabb4"
+         },
+         "step_id": "pststep_ab8f1884b7724ac5a181abf4d529953c"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_door_item",
+         "outcome": "applied",
+         "result": {
+          "door_item_id": "ai_a75d26cfe0c54e8fae00258378c4384e",
+          "effect": "create_door_item",
+          "source_item_id": "pitem_252fb14c6bb64c6d88e3c4da821b5d79",
+          "source_item_type": "risk",
+          "source_severity": "high"
+         },
+         "step_id": "pststep_411a3b5a1d5641c6afe59d5e0c1930b6"
+        }
+       ],
+       "effects_skipped": [
+        {
+         "effect_kind": "apply_proposal_effects",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "github_comment",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "prepare_send",
+         "reason": "not_in_eligible_effect_kinds"
+        }
+       ],
+       "has_real_effects": true,
+       "proposal_count": 0,
+       "review_id": "prev_e469556f2738404cadedd18f074e0527",
+       "source_count": 4,
+       "verified_effects": 4
+      }
+     },
+     "phases_completed": [
+      "observe",
+      "compare",
+      "propose",
+      "act",
+      "verify",
+      "record"
+     ]
+    },
+    "updated_at": "2026-10-11T22:17:07+00:00",
+    "watermark": ""
+   },
+   "steps": [
+    {
+     "effect_kind": "phase:observe",
+     "error": null,
+     "expected": {},
+     "id": "pststep_c91f8093967c41cb836177be3338e88e",
+     "idempotency_key": "pstrun_bcf8031a021e51b5b0632cb5191fdb81:observe",
+     "observed": {
+      "coverage": {
+       "native:decisions": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:followthrough": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:meetings": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:resources": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       }
+      }
+     },
+     "phase": "observe",
+     "receipt": {},
+     "seq": 0,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "phase:compare",
+     "error": null,
+     "expected": {},
+     "id": "pststep_3710dade272f4869909d5a0fb887ed4f",
+     "idempotency_key": "pstrun_bcf8031a021e51b5b0632cb5191fdb81:compare",
+     "observed": {
+      "proposal_count": 0,
+      "proposals": [],
+      "review_id": "prev_e469556f2738404cadedd18f074e0527"
+     },
+     "phase": "compare",
+     "receipt": {},
+     "seq": 1,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "phase:propose",
+     "error": null,
+     "expected": {},
+     "id": "pststep_addb52ca603f4f2fba7007838d9ffcec",
+     "idempotency_key": "pstrun_bcf8031a021e51b5b0632cb5191fdb81:propose",
+     "observed": {
+      "proposal_count": 0,
+      "proposals": [],
+      "review_id": "prev_e469556f2738404cadedd18f074e0527"
+     },
+     "phase": "propose",
+     "receipt": {},
+     "seq": 2,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "phase:act",
+     "error": null,
+     "expected": {},
+     "id": "pststep_3c3d77d0592c4416ba3a85f118593f6b",
+     "idempotency_key": "pstrun_bcf8031a021e51b5b0632cb5191fdb81:act",
+     "observed": {
+      "actions_taken": 4,
+      "effect_receipts": [
+       {
+        "attempt": 1,
+        "effect_kind": "refresh_sources",
+        "outcome": "applied",
+        "result": {
+         "coverage": {
+          "native:decisions": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:followthrough": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:meetings": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:resources": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          }
+         },
+         "effect": "refresh_sources",
+         "partial": false
+        },
+        "step_id": "pststep_db085ac0d6474a619e11f02aa3c20775"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "create_proposals",
+        "outcome": "applied",
+        "result": {
+         "effect": "create_proposals",
+         "proposal_count": 0,
+         "review_id": "prev_e469556f2738404cadedd18f074e0527"
+        },
+        "step_id": "pststep_0b20ca08507646c2a9bb0fb96b4b3da5"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "draft_update",
+        "outcome": "applied",
+        "result": {
+         "effect": "draft_update",
+         "generator": "deterministic",
+         "generator_host": null,
+         "generator_model": null,
+         "lifecycle": "draft",
+         "update_id": "pupd_2150bfc5aa82464e8479c9845bbbabb4"
+        },
+        "step_id": "pststep_ab8f1884b7724ac5a181abf4d529953c"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "create_door_item",
+        "outcome": "applied",
+        "result": {
+         "door_item_id": "ai_a75d26cfe0c54e8fae00258378c4384e",
+         "effect": "create_door_item",
+         "source_item_id": "pitem_252fb14c6bb64c6d88e3c4da821b5d79",
+         "source_item_type": "risk",
+         "source_severity": "high"
+        },
+        "step_id": "pststep_411a3b5a1d5641c6afe59d5e0c1930b6"
+       }
+      ],
+      "effects_skipped": [
+       {
+        "effect_kind": "apply_proposal_effects",
+        "reason": "not_in_eligible_effect_kinds"
+       },
+       {
+        "effect_kind": "github_comment",
+        "reason": "not_in_eligible_effect_kinds"
+       },
+       {
+        "effect_kind": "prepare_send",
+        "reason": "not_in_eligible_effect_kinds"
+       }
+      ]
+     },
+     "phase": "act",
+     "receipt": {},
+     "seq": 3,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "refresh_sources",
+     "error": null,
+     "expected": {
+      "effect": "refresh_sources",
+      "project_id": "proj-c8c3397e3b1b"
+     },
+     "id": "pststep_db085ac0d6474a619e11f02aa3c20775",
+     "idempotency_key": "pstrun_bcf8031a021e51b5b0632cb5191fdb81:refresh_sources",
+     "observed": {
+      "coverage": {
+       "native:decisions": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:followthrough": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:meetings": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:resources": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       }
+      },
+      "effect": "refresh_sources",
+      "partial": false
+     },
+     "phase": "act",
+     "receipt": {
+      "attempt": 1,
+      "effect_kind": "refresh_sources",
+      "outcome": "applied"
+     },
+     "seq": 4,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "create_proposals",
+     "error": null,
+     "expected": {
+      "effect": "create_proposals",
+      "prior_review_id": "prev_e469556f2738404cadedd18f074e0527",
+      "project_id": "proj-c8c3397e3b1b"
+     },
+     "id": "pststep_0b20ca08507646c2a9bb0fb96b4b3da5",
+     "idempotency_key": "pstrun_bcf8031a021e51b5b0632cb5191fdb81:create_proposals",
+     "observed": {
+      "effect": "create_proposals",
+      "proposal_count": 0,
+      "review_id": "prev_e469556f2738404cadedd18f074e0527"
+     },
+     "phase": "act",
+     "receipt": {
+      "attempt": 1,
+      "effect_kind": "create_proposals",
+      "outcome": "applied"
+     },
+     "seq": 5,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "draft_update",
+     "error": null,
+     "expected": {
+      "effect": "draft_update",
+      "project_id": "proj-c8c3397e3b1b"
+     },
+     "id": "pststep_ab8f1884b7724ac5a181abf4d529953c",
+     "idempotency_key": "pstrun_bcf8031a021e51b5b0632cb5191fdb81:draft_update",
+     "observed": {
+      "effect": "draft_update",
+      "generator": "deterministic",
+      "generator_host": null,
+      "generator_model": null,
+      "lifecycle": "draft",
+      "update_id": "pupd_2150bfc5aa82464e8479c9845bbbabb4"
+     },
+     "phase": "act",
+     "receipt": {
+      "attempt": 1,
+      "effect_kind": "draft_update",
+      "outcome": "applied",
+      "ref": "update:pupd_2150bfc5aa82464e8479c9845bbbabb4"
+     },
+     "seq": 6,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "create_door_item",
+     "error": null,
+     "expected": {
+      "effect": "create_door_item",
+      "project_id": "proj-c8c3397e3b1b"
+     },
+     "id": "pststep_411a3b5a1d5641c6afe59d5e0c1930b6",
+     "idempotency_key": "pstrun_bcf8031a021e51b5b0632cb5191fdb81:create_door_item",
+     "observed": {
+      "door_item_id": "ai_a75d26cfe0c54e8fae00258378c4384e",
+      "effect": "create_door_item",
+      "source_item_id": "pitem_252fb14c6bb64c6d88e3c4da821b5d79",
+      "source_item_type": "risk",
+      "source_severity": "high"
+     },
+     "phase": "act",
+     "receipt": {
+      "attempt": 1,
+      "effect_kind": "create_door_item",
+      "outcome": "applied",
+      "ref": "action_item:ai_a75d26cfe0c54e8fae00258378c4384e"
+     },
+     "seq": 7,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "phase:verify",
+     "error": null,
+     "expected": {},
+     "id": "pststep_406e6a075e184fcdb483eb383a58d251",
+     "idempotency_key": "pstrun_bcf8031a021e51b5b0632cb5191fdb81:verify",
+     "observed": {
+      "actions_taken": 4,
+      "effect_receipts": [
+       {
+        "attempt": 1,
+        "effect_kind": "refresh_sources",
+        "outcome": "applied",
+        "result": {
+         "coverage": {
+          "native:decisions": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:followthrough": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:meetings": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:resources": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          }
+         },
+         "effect": "refresh_sources",
+         "partial": false
+        },
+        "step_id": "pststep_db085ac0d6474a619e11f02aa3c20775"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "create_proposals",
+        "outcome": "applied",
+        "result": {
+         "effect": "create_proposals",
+         "proposal_count": 0,
+         "review_id": "prev_e469556f2738404cadedd18f074e0527"
+        },
+        "step_id": "pststep_0b20ca08507646c2a9bb0fb96b4b3da5"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "draft_update",
+        "outcome": "applied",
+        "result": {
+         "effect": "draft_update",
+         "generator": "deterministic",
+         "generator_host": null,
+         "generator_model": null,
+         "lifecycle": "draft",
+         "update_id": "pupd_2150bfc5aa82464e8479c9845bbbabb4"
+        },
+        "step_id": "pststep_ab8f1884b7724ac5a181abf4d529953c"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "create_door_item",
+        "outcome": "applied",
+        "result": {
+         "door_item_id": "ai_a75d26cfe0c54e8fae00258378c4384e",
+         "effect": "create_door_item",
+         "source_item_id": "pitem_252fb14c6bb64c6d88e3c4da821b5d79",
+         "source_item_type": "risk",
+         "source_severity": "high"
+        },
+        "step_id": "pststep_411a3b5a1d5641c6afe59d5e0c1930b6"
+       }
+      ],
+      "effects_skipped": [
+       {
+        "effect_kind": "apply_proposal_effects",
+        "reason": "not_in_eligible_effect_kinds"
+       },
+       {
+        "effect_kind": "github_comment",
+        "reason": "not_in_eligible_effect_kinds"
+       },
+       {
+        "effect_kind": "prepare_send",
+        "reason": "not_in_eligible_effect_kinds"
+       }
+      ],
+      "has_real_effects": true,
+      "proposal_count": 0,
+      "review_id": "prev_e469556f2738404cadedd18f074e0527",
+      "source_count": 4,
+      "verified_effects": 4
+     },
+     "phase": "verify",
+     "receipt": {},
+     "seq": 8,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "phase:record",
+     "error": null,
+     "expected": {},
+     "id": "pststep_6ba0991accb04f16a0eadf7a2e78256c",
+     "idempotency_key": "pstrun_bcf8031a021e51b5b0632cb5191fdb81:record",
+     "observed": {
+      "event_recorded": true
+     },
+     "phase": "record",
+     "receipt": {},
+     "seq": 9,
+     "state": "completed"
+    }
+   ]
+  },
+  "start": {
+   "operation_id": "op_8492e173233e4a41910d3870f6fab68c",
+   "receipt": null,
+   "run_id": "pstrun_bcf8031a021e51b5b0632cb5191fdb81",
+   "state": "claimed",
+   "success": true
+  }
+ },
+ "getPolicy": {
+  "policy": {
+   "bounds": {},
+   "cooldown_seconds": 0,
+   "created_at": "2026-10-11T22:17:07+00:00",
+   "eligible_effect_kinds": [
+    "refresh_sources",
+    "create_proposals",
+    "draft_update",
+    "create_door_item"
+   ],
+   "enabled": true,
+   "id": "pstpol_4e6dfaece65544d0a9cb80eb07579913",
+   "max_actions_per_run": 10,
+   "max_retries": 3,
+   "project_id": "proj-c8c3397e3b1b",
+   "unattended_enabled": false,
+   "updated_at": "2026-10-11T22:17:07+00:00",
+   "yolo_flags": {}
+  }
+ },
+ "list": {
+  "runs": [
+   {
+    "completed_at": "2026-10-11T22:17:07+00:00",
+    "created_at": "2026-10-11T22:17:07+00:00",
+    "id": "pstrun_bcf8031a021e51b5b0632cb5191fdb81",
+    "phase": "record",
+    "policy_id": "pstpol_4e6dfaece65544d0a9cb80eb07579913",
+    "project_id": "proj-c8c3397e3b1b",
+    "requested_by": "principal:owner-session",
+    "started_at": "2026-10-11T22:17:07+00:00",
+    "state": "completed",
+    "stop_requested_at": null,
+    "summary": {
+     "outcome": "completed",
+     "phase_results": {
+      "act": {
+       "actions_taken": 4,
+       "effect_receipts": [
+        {
+         "attempt": 1,
+         "effect_kind": "refresh_sources",
+         "outcome": "applied",
+         "result": {
+          "coverage": {
+           "native:decisions": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:followthrough": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:meetings": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:resources": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           }
+          },
+          "effect": "refresh_sources",
+          "partial": false
+         },
+         "step_id": "pststep_db085ac0d6474a619e11f02aa3c20775"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_proposals",
+         "outcome": "applied",
+         "result": {
+          "effect": "create_proposals",
+          "proposal_count": 0,
+          "review_id": "prev_e469556f2738404cadedd18f074e0527"
+         },
+         "step_id": "pststep_0b20ca08507646c2a9bb0fb96b4b3da5"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "draft_update",
+         "outcome": "applied",
+         "result": {
+          "effect": "draft_update",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "lifecycle": "draft",
+          "update_id": "pupd_2150bfc5aa82464e8479c9845bbbabb4"
+         },
+         "step_id": "pststep_ab8f1884b7724ac5a181abf4d529953c"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_door_item",
+         "outcome": "applied",
+         "result": {
+          "door_item_id": "ai_a75d26cfe0c54e8fae00258378c4384e",
+          "effect": "create_door_item",
+          "source_item_id": "pitem_252fb14c6bb64c6d88e3c4da821b5d79",
+          "source_item_type": "risk",
+          "source_severity": "high"
+         },
+         "step_id": "pststep_411a3b5a1d5641c6afe59d5e0c1930b6"
+        }
+       ],
+       "effects_skipped": [
+        {
+         "effect_kind": "apply_proposal_effects",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "github_comment",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "prepare_send",
+         "reason": "not_in_eligible_effect_kinds"
+        }
+       ]
+      },
+      "compare": {
+       "proposal_count": 0,
+       "proposals": [],
+       "review_id": "prev_e469556f2738404cadedd18f074e0527"
+      },
+      "observe": {
+       "coverage": {
+        "native:decisions": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:followthrough": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:meetings": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:resources": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        }
+       }
+      },
+      "propose": {
+       "proposal_count": 0,
+       "proposals": [],
+       "review_id": "prev_e469556f2738404cadedd18f074e0527"
+      },
+      "record": {
+       "event_recorded": true
+      },
+      "verify": {
+       "actions_taken": 4,
+       "effect_receipts": [
+        {
+         "attempt": 1,
+         "effect_kind": "refresh_sources",
+         "outcome": "applied",
+         "result": {
+          "coverage": {
+           "native:decisions": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:followthrough": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:meetings": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:resources": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           }
+          },
+          "effect": "refresh_sources",
+          "partial": false
+         },
+         "step_id": "pststep_db085ac0d6474a619e11f02aa3c20775"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_proposals",
+         "outcome": "applied",
+         "result": {
+          "effect": "create_proposals",
+          "proposal_count": 0,
+          "review_id": "prev_e469556f2738404cadedd18f074e0527"
+         },
+         "step_id": "pststep_0b20ca08507646c2a9bb0fb96b4b3da5"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "draft_update",
+         "outcome": "applied",
+         "result": {
+          "effect": "draft_update",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "lifecycle": "draft",
+          "update_id": "pupd_2150bfc5aa82464e8479c9845bbbabb4"
+         },
+         "step_id": "pststep_ab8f1884b7724ac5a181abf4d529953c"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_door_item",
+         "outcome": "applied",
+         "result": {
+          "door_item_id": "ai_a75d26cfe0c54e8fae00258378c4384e",
+          "effect": "create_door_item",
+          "source_item_id": "pitem_252fb14c6bb64c6d88e3c4da821b5d79",
+          "source_item_type": "risk",
+          "source_severity": "high"
+         },
+         "step_id": "pststep_411a3b5a1d5641c6afe59d5e0c1930b6"
+        }
+       ],
+       "effects_skipped": [
+        {
+         "effect_kind": "apply_proposal_effects",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "github_comment",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "prepare_send",
+         "reason": "not_in_eligible_effect_kinds"
+        }
+       ],
+       "has_real_effects": true,
+       "proposal_count": 0,
+       "review_id": "prev_e469556f2738404cadedd18f074e0527",
+       "source_count": 4,
+       "verified_effects": 4
+      }
+     },
+     "phases_completed": [
+      "observe",
+      "compare",
+      "propose",
+      "act",
+      "verify",
+      "record"
+     ]
+    },
+    "updated_at": "2026-10-11T22:17:07+00:00",
+    "watermark": ""
+   },
+   {
+    "completed_at": "2026-10-11T22:17:07+00:00",
+    "created_at": "2026-10-11T22:17:07+00:00",
+    "id": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504",
+    "phase": "record",
+    "policy_id": "pstpol_4e6dfaece65544d0a9cb80eb07579913",
+    "project_id": "proj-c8c3397e3b1b",
+    "requested_by": "principal:owner-session",
+    "started_at": "2026-10-11T22:17:07+00:00",
+    "state": "completed",
+    "stop_requested_at": null,
+    "summary": {
+     "outcome": "completed",
+     "phase_results": {
+      "act": {
+       "actions_taken": 3,
+       "effect_receipts": [
+        {
+         "attempt": 1,
+         "effect_kind": "refresh_sources",
+         "outcome": "applied",
+         "result": {
+          "coverage": {
+           "native:decisions": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:followthrough": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:meetings": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:resources": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "psrc_record_gone": {
+            "error": {
+             "code": "watch_not_found",
+             "message": "Watch w-gone not found"
+            },
+            "state": "failed"
+           }
+          },
+          "effect": "refresh_sources",
+          "partial": false
+         },
+         "step_id": "pststep_0c29d8bcddf74049b08c1dda7aa47aff"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_proposals",
+         "outcome": "applied",
+         "result": {
+          "effect": "create_proposals",
+          "proposal_count": 0,
+          "review_id": "prev_e469556f2738404cadedd18f074e0527"
+         },
+         "step_id": "pststep_f2795352ffc34451a8463ceb3a93715b"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "draft_update",
+         "outcome": "applied",
+         "result": {
+          "effect": "draft_update",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "lifecycle": "draft",
+          "update_id": "pupd_3e1b4955b930472ea6bcc526d1fcec5b"
+         },
+         "step_id": "pststep_3bc44075620447fcb420f8c233c5635b"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_door_item",
+         "outcome": "skipped",
+         "result": {
+          "effect": "create_door_item",
+          "reason": "no_eligible_items",
+          "skipped": true
+         },
+         "step_id": "pststep_18765d3fc9314e31ba3355901e7bf378"
+        }
+       ],
+       "effects_skipped": [
+        {
+         "effect_kind": "apply_proposal_effects",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "github_comment",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "prepare_send",
+         "reason": "not_in_eligible_effect_kinds"
+        }
+       ]
+      },
+      "compare": {
+       "proposal_count": 0,
+       "proposals": [],
+       "review_id": "prev_e469556f2738404cadedd18f074e0527"
+      },
+      "observe": {
+       "coverage": {
+        "native:decisions": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:followthrough": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:meetings": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:resources": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "psrc_record_gone": {
+         "error": {
+          "code": "watch_not_found",
+          "message": "Watch w-gone not found"
+         },
+         "state": "failed"
+        }
+       }
+      },
+      "propose": {
+       "proposal_count": 0,
+       "proposals": [],
+       "review_id": "prev_e469556f2738404cadedd18f074e0527"
+      },
+      "record": {
+       "event_recorded": true
+      },
+      "verify": {
+       "actions_taken": 3,
+       "effect_receipts": [
+        {
+         "attempt": 1,
+         "effect_kind": "refresh_sources",
+         "outcome": "applied",
+         "result": {
+          "coverage": {
+           "native:decisions": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:followthrough": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:meetings": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:resources": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "psrc_record_gone": {
+            "error": {
+             "code": "watch_not_found",
+             "message": "Watch w-gone not found"
+            },
+            "state": "failed"
+           }
+          },
+          "effect": "refresh_sources",
+          "partial": false
+         },
+         "step_id": "pststep_0c29d8bcddf74049b08c1dda7aa47aff"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_proposals",
+         "outcome": "applied",
+         "result": {
+          "effect": "create_proposals",
+          "proposal_count": 0,
+          "review_id": "prev_e469556f2738404cadedd18f074e0527"
+         },
+         "step_id": "pststep_f2795352ffc34451a8463ceb3a93715b"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "draft_update",
+         "outcome": "applied",
+         "result": {
+          "effect": "draft_update",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "lifecycle": "draft",
+          "update_id": "pupd_3e1b4955b930472ea6bcc526d1fcec5b"
+         },
+         "step_id": "pststep_3bc44075620447fcb420f8c233c5635b"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_door_item",
+         "outcome": "skipped",
+         "result": {
+          "effect": "create_door_item",
+          "reason": "no_eligible_items",
+          "skipped": true
+         },
+         "step_id": "pststep_18765d3fc9314e31ba3355901e7bf378"
+        }
+       ],
+       "effects_skipped": [
+        {
+         "effect_kind": "apply_proposal_effects",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "github_comment",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "prepare_send",
+         "reason": "not_in_eligible_effect_kinds"
+        }
+       ],
+       "has_real_effects": true,
+       "proposal_count": 0,
+       "review_id": "prev_e469556f2738404cadedd18f074e0527",
+       "source_count": 5,
+       "verified_effects": 3
+      }
+     },
+     "phases_completed": [
+      "observe",
+      "compare",
+      "propose",
+      "act",
+      "verify",
+      "record"
+     ]
+    },
+    "updated_at": "2026-10-11T22:17:07+00:00",
+    "watermark": ""
+   }
+  ]
+ },
+ "partial": {
+  "detail": {
+   "operation_id": "op_91684de358e441c6817e56b2e128a5e6",
+   "receipt": {
+    "actor_identity": "owner-session",
+    "actor_kind": "owner",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "created_at": 1791757027.911253,
+    "delegator_identity": "",
+    "delegator_kind": "",
+    "operation_id": "op_91684de358e441c6817e56b2e128a5e6",
+    "outcome": "completed",
+    "receipt_id": "rcpt_f3a03a29f78f455281755e70a6d3313e",
+    "result_ref": "steward_run:pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504",
+    "state": "succeeded",
+    "target_ref": "project:proj-c8c3397e3b1b"
+   },
+   "run": {
+    "completed_at": "2026-10-11T22:17:07+00:00",
+    "created_at": "2026-10-11T22:17:07+00:00",
+    "id": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504",
+    "phase": "record",
+    "policy_id": "pstpol_4e6dfaece65544d0a9cb80eb07579913",
+    "project_id": "proj-c8c3397e3b1b",
+    "requested_by": "principal:owner-session",
+    "started_at": "2026-10-11T22:17:07+00:00",
+    "state": "completed",
+    "stop_requested_at": null,
+    "summary": {
+     "outcome": "completed",
+     "phase_results": {
+      "act": {
+       "actions_taken": 3,
+       "effect_receipts": [
+        {
+         "attempt": 1,
+         "effect_kind": "refresh_sources",
+         "outcome": "applied",
+         "result": {
+          "coverage": {
+           "native:decisions": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:followthrough": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:meetings": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:resources": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "psrc_record_gone": {
+            "error": {
+             "code": "watch_not_found",
+             "message": "Watch w-gone not found"
+            },
+            "state": "failed"
+           }
+          },
+          "effect": "refresh_sources",
+          "partial": false
+         },
+         "step_id": "pststep_0c29d8bcddf74049b08c1dda7aa47aff"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_proposals",
+         "outcome": "applied",
+         "result": {
+          "effect": "create_proposals",
+          "proposal_count": 0,
+          "review_id": "prev_e469556f2738404cadedd18f074e0527"
+         },
+         "step_id": "pststep_f2795352ffc34451a8463ceb3a93715b"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "draft_update",
+         "outcome": "applied",
+         "result": {
+          "effect": "draft_update",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "lifecycle": "draft",
+          "update_id": "pupd_3e1b4955b930472ea6bcc526d1fcec5b"
+         },
+         "step_id": "pststep_3bc44075620447fcb420f8c233c5635b"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_door_item",
+         "outcome": "skipped",
+         "result": {
+          "effect": "create_door_item",
+          "reason": "no_eligible_items",
+          "skipped": true
+         },
+         "step_id": "pststep_18765d3fc9314e31ba3355901e7bf378"
+        }
+       ],
+       "effects_skipped": [
+        {
+         "effect_kind": "apply_proposal_effects",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "github_comment",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "prepare_send",
+         "reason": "not_in_eligible_effect_kinds"
+        }
+       ]
+      },
+      "compare": {
+       "proposal_count": 0,
+       "proposals": [],
+       "review_id": "prev_e469556f2738404cadedd18f074e0527"
+      },
+      "observe": {
+       "coverage": {
+        "native:decisions": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:followthrough": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:meetings": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:resources": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "psrc_record_gone": {
+         "error": {
+          "code": "watch_not_found",
+          "message": "Watch w-gone not found"
+         },
+         "state": "failed"
+        }
+       }
+      },
+      "propose": {
+       "proposal_count": 0,
+       "proposals": [],
+       "review_id": "prev_e469556f2738404cadedd18f074e0527"
+      },
+      "record": {
+       "event_recorded": true
+      },
+      "verify": {
+       "actions_taken": 3,
+       "effect_receipts": [
+        {
+         "attempt": 1,
+         "effect_kind": "refresh_sources",
+         "outcome": "applied",
+         "result": {
+          "coverage": {
+           "native:decisions": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:followthrough": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:meetings": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:resources": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "psrc_record_gone": {
+            "error": {
+             "code": "watch_not_found",
+             "message": "Watch w-gone not found"
+            },
+            "state": "failed"
+           }
+          },
+          "effect": "refresh_sources",
+          "partial": false
+         },
+         "step_id": "pststep_0c29d8bcddf74049b08c1dda7aa47aff"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_proposals",
+         "outcome": "applied",
+         "result": {
+          "effect": "create_proposals",
+          "proposal_count": 0,
+          "review_id": "prev_e469556f2738404cadedd18f074e0527"
+         },
+         "step_id": "pststep_f2795352ffc34451a8463ceb3a93715b"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "draft_update",
+         "outcome": "applied",
+         "result": {
+          "effect": "draft_update",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "lifecycle": "draft",
+          "update_id": "pupd_3e1b4955b930472ea6bcc526d1fcec5b"
+         },
+         "step_id": "pststep_3bc44075620447fcb420f8c233c5635b"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_door_item",
+         "outcome": "skipped",
+         "result": {
+          "effect": "create_door_item",
+          "reason": "no_eligible_items",
+          "skipped": true
+         },
+         "step_id": "pststep_18765d3fc9314e31ba3355901e7bf378"
+        }
+       ],
+       "effects_skipped": [
+        {
+         "effect_kind": "apply_proposal_effects",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "github_comment",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "prepare_send",
+         "reason": "not_in_eligible_effect_kinds"
+        }
+       ],
+       "has_real_effects": true,
+       "proposal_count": 0,
+       "review_id": "prev_e469556f2738404cadedd18f074e0527",
+       "source_count": 5,
+       "verified_effects": 3
+      }
+     },
+     "phases_completed": [
+      "observe",
+      "compare",
+      "propose",
+      "act",
+      "verify",
+      "record"
+     ]
+    },
+    "updated_at": "2026-10-11T22:17:07+00:00",
+    "watermark": ""
+   },
+   "steps": [
+    {
+     "effect_kind": "phase:observe",
+     "error": null,
+     "expected": {},
+     "id": "pststep_a72189fb80f84b65bd7f26464dcee991",
+     "idempotency_key": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504:observe",
+     "observed": {
+      "coverage": {
+       "native:decisions": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:followthrough": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:meetings": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:resources": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "psrc_record_gone": {
+        "error": {
+         "code": "watch_not_found",
+         "message": "Watch w-gone not found"
+        },
+        "state": "failed"
+       }
+      }
+     },
+     "phase": "observe",
+     "receipt": {},
+     "seq": 0,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "phase:compare",
+     "error": null,
+     "expected": {},
+     "id": "pststep_d793b60938c148578948ae9b69cf2479",
+     "idempotency_key": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504:compare",
+     "observed": {
+      "proposal_count": 0,
+      "proposals": [],
+      "review_id": "prev_e469556f2738404cadedd18f074e0527"
+     },
+     "phase": "compare",
+     "receipt": {},
+     "seq": 1,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "phase:propose",
+     "error": null,
+     "expected": {},
+     "id": "pststep_5717b447ba6a4120a65aa204448a5056",
+     "idempotency_key": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504:propose",
+     "observed": {
+      "proposal_count": 0,
+      "proposals": [],
+      "review_id": "prev_e469556f2738404cadedd18f074e0527"
+     },
+     "phase": "propose",
+     "receipt": {},
+     "seq": 2,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "phase:act",
+     "error": null,
+     "expected": {},
+     "id": "pststep_87530da6e7174f44ae9c60f793f99462",
+     "idempotency_key": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504:act",
+     "observed": {
+      "actions_taken": 3,
+      "effect_receipts": [
+       {
+        "attempt": 1,
+        "effect_kind": "refresh_sources",
+        "outcome": "applied",
+        "result": {
+         "coverage": {
+          "native:decisions": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:followthrough": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:meetings": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:resources": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "psrc_record_gone": {
+           "error": {
+            "code": "watch_not_found",
+            "message": "Watch w-gone not found"
+           },
+           "state": "failed"
+          }
+         },
+         "effect": "refresh_sources",
+         "partial": false
+        },
+        "step_id": "pststep_0c29d8bcddf74049b08c1dda7aa47aff"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "create_proposals",
+        "outcome": "applied",
+        "result": {
+         "effect": "create_proposals",
+         "proposal_count": 0,
+         "review_id": "prev_e469556f2738404cadedd18f074e0527"
+        },
+        "step_id": "pststep_f2795352ffc34451a8463ceb3a93715b"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "draft_update",
+        "outcome": "applied",
+        "result": {
+         "effect": "draft_update",
+         "generator": "deterministic",
+         "generator_host": null,
+         "generator_model": null,
+         "lifecycle": "draft",
+         "update_id": "pupd_3e1b4955b930472ea6bcc526d1fcec5b"
+        },
+        "step_id": "pststep_3bc44075620447fcb420f8c233c5635b"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "create_door_item",
+        "outcome": "skipped",
+        "result": {
+         "effect": "create_door_item",
+         "reason": "no_eligible_items",
+         "skipped": true
+        },
+        "step_id": "pststep_18765d3fc9314e31ba3355901e7bf378"
+       }
+      ],
+      "effects_skipped": [
+       {
+        "effect_kind": "apply_proposal_effects",
+        "reason": "not_in_eligible_effect_kinds"
+       },
+       {
+        "effect_kind": "github_comment",
+        "reason": "not_in_eligible_effect_kinds"
+       },
+       {
+        "effect_kind": "prepare_send",
+        "reason": "not_in_eligible_effect_kinds"
+       }
+      ]
+     },
+     "phase": "act",
+     "receipt": {},
+     "seq": 3,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "refresh_sources",
+     "error": null,
+     "expected": {
+      "effect": "refresh_sources",
+      "project_id": "proj-c8c3397e3b1b"
+     },
+     "id": "pststep_0c29d8bcddf74049b08c1dda7aa47aff",
+     "idempotency_key": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504:refresh_sources",
+     "observed": {
+      "coverage": {
+       "native:decisions": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:followthrough": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:meetings": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "native:resources": {
+        "inserted": 0,
+        "no_op": 0,
+        "state": "ok"
+       },
+       "psrc_record_gone": {
+        "error": {
+         "code": "watch_not_found",
+         "message": "Watch w-gone not found"
+        },
+        "state": "failed"
+       }
+      },
+      "effect": "refresh_sources",
+      "partial": false
+     },
+     "phase": "act",
+     "receipt": {
+      "attempt": 1,
+      "effect_kind": "refresh_sources",
+      "outcome": "applied"
+     },
+     "seq": 4,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "create_proposals",
+     "error": null,
+     "expected": {
+      "effect": "create_proposals",
+      "prior_review_id": "prev_e469556f2738404cadedd18f074e0527",
+      "project_id": "proj-c8c3397e3b1b"
+     },
+     "id": "pststep_f2795352ffc34451a8463ceb3a93715b",
+     "idempotency_key": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504:create_proposals",
+     "observed": {
+      "effect": "create_proposals",
+      "proposal_count": 0,
+      "review_id": "prev_e469556f2738404cadedd18f074e0527"
+     },
+     "phase": "act",
+     "receipt": {
+      "attempt": 1,
+      "effect_kind": "create_proposals",
+      "outcome": "applied"
+     },
+     "seq": 5,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "draft_update",
+     "error": null,
+     "expected": {
+      "effect": "draft_update",
+      "project_id": "proj-c8c3397e3b1b"
+     },
+     "id": "pststep_3bc44075620447fcb420f8c233c5635b",
+     "idempotency_key": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504:draft_update",
+     "observed": {
+      "effect": "draft_update",
+      "generator": "deterministic",
+      "generator_host": null,
+      "generator_model": null,
+      "lifecycle": "draft",
+      "update_id": "pupd_3e1b4955b930472ea6bcc526d1fcec5b"
+     },
+     "phase": "act",
+     "receipt": {
+      "attempt": 1,
+      "effect_kind": "draft_update",
+      "outcome": "applied",
+      "ref": "update:pupd_3e1b4955b930472ea6bcc526d1fcec5b"
+     },
+     "seq": 6,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "create_door_item",
+     "error": null,
+     "expected": {
+      "effect": "create_door_item",
+      "project_id": "proj-c8c3397e3b1b"
+     },
+     "id": "pststep_18765d3fc9314e31ba3355901e7bf378",
+     "idempotency_key": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504:create_door_item",
+     "observed": {
+      "effect": "create_door_item",
+      "reason": "no_eligible_items",
+      "skipped": true
+     },
+     "phase": "act",
+     "receipt": {
+      "attempt": 1,
+      "effect_kind": "create_door_item",
+      "outcome": "skipped"
+     },
+     "seq": 7,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "phase:verify",
+     "error": null,
+     "expected": {},
+     "id": "pststep_9c518bedaa974a8597fc9ee50f5bfd31",
+     "idempotency_key": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504:verify",
+     "observed": {
+      "actions_taken": 3,
+      "effect_receipts": [
+       {
+        "attempt": 1,
+        "effect_kind": "refresh_sources",
+        "outcome": "applied",
+        "result": {
+         "coverage": {
+          "native:decisions": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:followthrough": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:meetings": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "native:resources": {
+           "inserted": 0,
+           "no_op": 0,
+           "state": "ok"
+          },
+          "psrc_record_gone": {
+           "error": {
+            "code": "watch_not_found",
+            "message": "Watch w-gone not found"
+           },
+           "state": "failed"
+          }
+         },
+         "effect": "refresh_sources",
+         "partial": false
+        },
+        "step_id": "pststep_0c29d8bcddf74049b08c1dda7aa47aff"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "create_proposals",
+        "outcome": "applied",
+        "result": {
+         "effect": "create_proposals",
+         "proposal_count": 0,
+         "review_id": "prev_e469556f2738404cadedd18f074e0527"
+        },
+        "step_id": "pststep_f2795352ffc34451a8463ceb3a93715b"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "draft_update",
+        "outcome": "applied",
+        "result": {
+         "effect": "draft_update",
+         "generator": "deterministic",
+         "generator_host": null,
+         "generator_model": null,
+         "lifecycle": "draft",
+         "update_id": "pupd_3e1b4955b930472ea6bcc526d1fcec5b"
+        },
+        "step_id": "pststep_3bc44075620447fcb420f8c233c5635b"
+       },
+       {
+        "attempt": 1,
+        "effect_kind": "create_door_item",
+        "outcome": "skipped",
+        "result": {
+         "effect": "create_door_item",
+         "reason": "no_eligible_items",
+         "skipped": true
+        },
+        "step_id": "pststep_18765d3fc9314e31ba3355901e7bf378"
+       }
+      ],
+      "effects_skipped": [
+       {
+        "effect_kind": "apply_proposal_effects",
+        "reason": "not_in_eligible_effect_kinds"
+       },
+       {
+        "effect_kind": "github_comment",
+        "reason": "not_in_eligible_effect_kinds"
+       },
+       {
+        "effect_kind": "prepare_send",
+        "reason": "not_in_eligible_effect_kinds"
+       }
+      ],
+      "has_real_effects": true,
+      "proposal_count": 0,
+      "review_id": "prev_e469556f2738404cadedd18f074e0527",
+      "source_count": 5,
+      "verified_effects": 3
+     },
+     "phase": "verify",
+     "receipt": {},
+     "seq": 8,
+     "state": "completed"
+    },
+    {
+     "effect_kind": "phase:record",
+     "error": null,
+     "expected": {},
+     "id": "pststep_93a6f4b0c2574cfebf1b257ae4fce2e7",
+     "idempotency_key": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504:record",
+     "observed": {
+      "event_recorded": true
+     },
+     "phase": "record",
+     "receipt": {},
+     "seq": 9,
+     "state": "completed"
+    }
+   ]
+  },
+  "start": {
+   "operation_id": "op_91684de358e441c6817e56b2e128a5e6",
+   "receipt": null,
+   "run_id": "pstrun_d1e3e4a42d3f5e37b7d67bc10c8b6504",
+   "state": "claimed",
+   "success": true
+  }
+ },
+ "policy": {
+  "operation_id": "op_926977ee762147a7905d0dcacd734d37",
+  "policy": {
+   "bounds": {},
+   "cooldown_seconds": 0,
+   "created_at": "2026-10-11T22:17:07+00:00",
+   "eligible_effect_kinds": [
+    "refresh_sources",
+    "create_proposals",
+    "draft_update",
+    "create_door_item"
+   ],
+   "enabled": true,
+   "id": "pstpol_4e6dfaece65544d0a9cb80eb07579913",
+   "max_actions_per_run": 10,
+   "max_retries": 3,
+   "project_id": "proj-c8c3397e3b1b",
+   "unattended_enabled": false,
+   "updated_at": "2026-10-11T22:17:07+00:00",
+   "yolo_flags": {}
+  },
+  "receipt": {
+   "actor_identity": "owner-session",
+   "actor_kind": "owner",
+   "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+   "created_at": 1791757027.750898,
+   "delegator_identity": "",
+   "delegator_kind": "",
+   "operation_id": "op_926977ee762147a7905d0dcacd734d37",
+   "outcome": "succeeded",
+   "receipt_id": "rcpt_725e9bd0dbe049a6b2dd22442f6f34ee",
+   "result_ref": "project:proj-c8c3397e3b1b",
+   "state": "succeeded",
+   "target_ref": "project:proj-c8c3397e3b1b"
+  },
+  "success": true
+ },
+ "projectId": "proj-c8c3397e3b1b",
+ "recordedBy": "scripts/record_steward_fixture.py",
+ "schema": "steward-recorded@1",
+ "updates": {
+  "latest_published_update_id": null,
+  "updates": [
+   {
+    "body_md": "## Progress\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Risk: Vendor contract lapses -- open, due 2026-01-15\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+    "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"source_version\":\"project:proj-c8c3397e3b1b@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"source_version\":\"project:proj-c8c3397e3b1b@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"source_version\":\"project:proj-c8c3397e3b1b@r2\"},\"text\":\"Risk: Vendor contract lapses -- open, due 2026-01-15\"}]",
+    "created_at": "2026-10-11T22:17:07+00:00",
+    "deliveries": [],
+    "draft_revision": 2,
+    "fallback_reason": null,
+    "fallback_receipt": null,
+    "generator": "deterministic",
+    "generatorHost": null,
+    "generatorModel": null,
+    "generator_host": null,
+    "generator_model": null,
+    "id": "pupd_3e1b4955b930472ea6bcc526d1fcec5b",
+    "lifecycle": "draft",
+    "project_id": "proj-c8c3397e3b1b",
+    "project_revision": 2,
+    "published_at": null,
+    "review_id": "prev_e469556f2738404cadedd18f074e0527",
+    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_e469556f2738404cadedd18f074e0527\",\"week_source_refs\":[]}",
+    "updated_at": "2026-10-11T22:17:07+00:00"
+   },
+   {
+    "body_md": "## Progress\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Risk: Vendor contract lapses -- open, due 2026-01-15\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+    "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"source_version\":\"project:proj-c8c3397e3b1b@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"source_version\":\"project:proj-c8c3397e3b1b@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_252fb14c6bb64c6d88e3c4da821b5d79\"],\"source_version\":\"project:proj-c8c3397e3b1b@r2\"},\"text\":\"Risk: Vendor contract lapses -- open, due 2026-01-15\"}]",
+    "created_at": "2026-10-11T22:17:07+00:00",
+    "deliveries": [],
+    "draft_revision": 1,
+    "fallback_reason": null,
+    "fallback_receipt": null,
+    "generator": "deterministic",
+    "generatorHost": null,
+    "generatorModel": null,
+    "generator_host": null,
+    "generator_model": null,
+    "id": "pupd_2150bfc5aa82464e8479c9845bbbabb4",
+    "lifecycle": "superseded",
+    "project_id": "proj-c8c3397e3b1b",
+    "project_revision": 2,
+    "published_at": null,
+    "review_id": "prev_e469556f2738404cadedd18f074e0527",
+    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_e469556f2738404cadedd18f074e0527\",\"week_source_refs\":[]}",
+    "updated_at": "2026-10-11T22:17:07+00:00"
+   }
+  ]
+ },
+ "watches": {
+  "watches": [
+   {
+    "baseline_state": "",
+    "circuit_failure_streak": 0,
+    "circuit_opened_at": null,
+    "circuit_state": "closed",
+    "connector_id": "gh",
+    "created_at": "2026-10-11 22:17:07",
+    "enabled": true,
+    "evaluation_cadence_minutes": 60,
+    "id": "w-gh-record",
+    "intent": "",
+    "last_error": null,
+    "last_evaluated_at": null,
+    "last_success_at": null,
+    "last_test_at": null,
+    "mode": "",
+    "name": "gh pull_requests",
+    "next_evaluation_at": null,
+    "project_id": "proj-c8c3397e3b1b",
+    "provider_connection_id": null,
+    "query": {
+     "repository": "acme/payments"
+    },
+    "query_kind": "pull_requests",
+    "revision": 0,
+    "schema_version": "",
+    "snapshot": [],
+    "state": "",
+    "subject_kind": "",
+    "test_result_json": null,
+    "test_state": "",
+    "trigger_json": "{}",
+    "trigger_kind": "",
+    "updated_at": "2026-10-11 22:17:07"
+   }
+  ]
+ }
+}

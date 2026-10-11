@@ -21,26 +21,22 @@ const EPOCH_ACTIVE = Math.floor(Date.now() / 1000) + 86400; // tomorrow
 const EPOCH_EXPIRED = Math.floor(Date.now() / 1000) - 86400; // yesterday
 const EPOCH_LAST_USED = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
 
+// The hub's own answers (tests/integration/test_remote_settings_wire.py, the
+// test diet's SCAR LAW): the palette is the issued NAME, a string.
+import REMOTE_OFF from "./wire/remote-settings.off.wire.json";
+import REMOTE_ISSUED from "./wire/remote-settings.issued.wire.json";
+import REMOTE_ONE from "./wire/remote-settings.one-credential.wire.json";
+
 function makeRemoteWire(overrides: Record<string, unknown> = {}) {
-  return {
-    enabled: false,
-    bind_host: null,
-    port: null,
-    credentials: [],
-    active_count: 0,
-    total_count: 0,
-    ...overrides,
-  };
+  return { ...structuredClone(REMOTE_OFF.wire), ...overrides };
 }
 
 function makeCred(id: string, overrides: Record<string, unknown> = {}) {
   return {
+    ...structuredClone(REMOTE_ONE.wire.credentials[0]),
     id,
     identity: `cred-${id}`,
-    palette: ["project"],
     expires_at: EPOCH_ACTIVE,
-    last_used_at: null,
-    active: true,
     ...overrides,
   };
 }
@@ -126,11 +122,10 @@ describe("RemoteAccessModule", () => {
     // Mock the POST to issue credential
     const issuedToken = "hs_agent_test1234567890abcdef";
     mockApiFetch.mockResolvedValueOnce({
+      ...structuredClone(REMOTE_ISSUED.wire),
       token: issuedToken,
       id: "new-cred-id",
       identity: "test-runner",
-      palette: "PROJECT",
-      expires_at: EPOCH_ACTIVE,
     });
     // Mock the refetch after issue
     const credsAfterIssue = [makeCred("new-cred-id", { identity: "test-runner" })];

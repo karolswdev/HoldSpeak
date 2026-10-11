@@ -892,6 +892,14 @@ def _assistant_with_text(service: ThreadService, db, text: str) -> tuple[str, st
     t = service.create(title="Keep as note")
     result = asyncio.run(service.start_turn(OWNER, t["id"], "Keep this"))
     mid = result["assistant_message_id"]
+    # The turn streams on a daemon thread (start_turn returns at once). Wait
+    # for it to end: a keep or a parts read while it still writes reads the
+    # text half-written, and a second read differs (the -n 8 flake, test diet
+    # 2026-10-11).
+    deadline = time.monotonic() + 15
+    while (msg := db.threads.get_message(mid)) is None or msg.streaming:
+        assert time.monotonic() < deadline, "the turn did not end within 15 s"
+        time.sleep(0.02)
     if not any(p.text for p in db.threads.get_parts(mid)):
         db.threads.append_part(mid, kind="text", text=text)
     return t["id"], mid

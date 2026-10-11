@@ -304,6 +304,17 @@ def test_defense_redacts_each_secret_shape(secret: str) -> None:
         assert piece not in text
 
 
+def test_defense_keeps_an_id_whose_hex_holds_a_card_shaped_digit_run() -> None:
+    """An operation id's hex can hold a Luhn-valid run of 13 to 19 digits
+    (here 378282246310005). It is part of the id, never a card: redacting it
+    broke the id an agent's refusal names (test diet 2026-10-11)."""
+    op = "op_b1be06986e378282246310005adf01a4"
+    assert redact(op) == op
+    assert redact(f'{{"operation_id": "{op}"}}') == f'{{"operation_id": "{op}"}}'
+    # The same digits standing alone are still a card.
+    assert redact("card 378282246310005 here") == f"card {REDACTED} here"
+
+
 def test_defense_keeps_plain_text_and_numbers_that_are_not_cards() -> None:
     plain = "The cutover is on 2026-11-03 and costs 1234 5678 9012 3456 euros for 400 seats."
     assert redact(plain) == plain  # the 16 digits fail the Luhn check

@@ -40,6 +40,12 @@ vi.mock("../../../lib/micStreamSession", async (importOriginal) => ({
 }));
 
 import { FirstRun } from "../FirstRun";
+import { inventedFields, recorded } from "../../../test/wireShape";
+import LOCAL_AI_WIRE from "../../../test/wire/setup-local-ai.wire.json";
+import SETTINGS_WIRE from "../../../test/wire/settings.owner.wire.json";
+import NOTE_WIRE from "../../../test/wire/notes-create.wire.json";
+import CALENDAR_WIRE from "../../../test/wire/onboarding-calendar.wire.json";
+import CONNECTIONS_WIRE from "../../../test/wire/onboarding-connections.wire.json";
 import { ApiError } from "../../../lib/api";
 
 const MB = 1_000_000;
@@ -88,6 +94,22 @@ beforeEach(() => {
     if (path === "/api/onboarding/calendar") return { macos: { state: "unavailable", can_request: false }, candidates: [], sources: 0 };
     if (path === "/api/onboarding/connections") return { candidates: [], tools: { gh: { installed: false }, acli: { installed: false } } };
     return {};
+  });
+});
+
+describe("the typed hub bodies carry only the hub's fields (the SCAR LAW)", () => {
+  // The hub's own answers: tests/integration/test_face_wire_fences.py::test_first_run_reads.
+  it("local AI, settings, a kept note, the calendar and the connections", async () => {
+    const hubLocal = recorded<{ files: unknown[] }>(LOCAL_AI_WIRE);
+    for (const typed of [status(), status({ landed: true }), status({ all: true })]) {
+      const { files, ...rest } = typed;
+      expect(inventedFields(rest, hubLocal)).toEqual([]);
+      for (const file of files) expect(inventedFields(file, hubLocal.files[0])).toEqual([]);
+    }
+    expect(inventedFields(await mocks.apiFetch("/api/settings"), recorded(SETTINGS_WIRE))).toEqual([]);
+    expect(inventedFields(await mocks.apiFetch("/api/notes", { method: "POST" }), recorded(NOTE_WIRE))).toEqual([]);
+    expect(inventedFields(await mocks.apiFetch("/api/onboarding/calendar"), recorded(CALENDAR_WIRE))).toEqual([]);
+    expect(inventedFields(await mocks.apiFetch("/api/onboarding/connections"), recorded(CONNECTIONS_WIRE))).toEqual([]);
   });
 });
 

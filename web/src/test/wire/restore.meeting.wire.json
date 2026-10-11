@@ -1,0 +1,50 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:54:23.229866Z",
+  "wire": {
+    "meeting": {
+      "bookmarks": [],
+      "calendar_event_id": null,
+      "capture_checkpoint_at": null,
+      "capture_checkpoint_seconds": 0.0,
+      "capture_failure": null,
+      "capture_status": "finalized",
+      "devices": [],
+      "duration": 456863.228887,
+      "ended_at": null,
+      "formatted_duration": "126:54:23",
+      "id": "m-park",
+      "intel": null,
+      "intel_job": null,
+      "intel_model_host": null,
+      "intel_status": {
+        "completed_at": null,
+        "detail": null,
+        "requested_at": null,
+        "state": "disabled"
+      },
+      "last_refusal": null,
+      "mic_label": "Me",
+      "parked": false,
+      "planned_route": {
+        "legs": [],
+        "reason_code": "no assignment",
+        "selection_hash": null,
+        "status": "unavailable"
+      },
+      "provenance": "desktop",
+      "remote_label": "Remote",
+      "run_receipt": null,
+      "segments": [],
+      "started_at": "2026-10-06T10:00:00",
+      "sync_modified_at": "2026-10-11T16:54:23.213087",
+      "tags": [],
+      "title": "Vendor call",
+      "transcriptWords": null,
+      "transcription_status": "active",
+      "transcription_status_detail": null,
+      "unclearSpans": 0,
+      "web_url": null
+    }
+  }
+}

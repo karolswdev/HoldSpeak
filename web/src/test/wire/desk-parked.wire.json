@@ -1,0 +1,37 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:54:23.220282Z",
+  "wire": {
+    "items": [
+      {
+        "home": {
+          "workbench_id": "wb-1",
+          "workbench_name": "Ops"
+        },
+        "id": "wbi-park",
+        "kind": "workbench_item",
+        "name": "Item wbi-park",
+        "ref": "workbench_item:wbi-park",
+        "when": "2026-10-11T22:54:23Z"
+      },
+      {
+        "home": {},
+        "id": "p-old",
+        "kind": "project",
+        "name": "Old migration",
+        "ref": "project:p-old",
+        "when": "2026-10-11T16:54:23.213867"
+      },
+      {
+        "home": {},
+        "id": "m-park",
+        "kind": "meeting",
+        "name": "Vendor call",
+        "ref": "meeting:m-park",
+        "when": "2026-10-06T10:00:00"
+      }
+    ],
+    "not_read": [],
+    "partial": []
+  }
+}
