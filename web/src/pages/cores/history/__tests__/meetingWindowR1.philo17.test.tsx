@@ -156,3 +156,50 @@ describe("PHILO-17 desk sweep: the record holds still while its first reads land
     expect(container.querySelector("[aria-busy='true']:not(button)")).toBeNull();
   });
 });
+
+describe("PHILO-17 (Astra r1 on #1108): each first read ends on its own", () => {
+  it("a failed detail read does not draw the body while another first read is out", async () => {
+    let releaseDecisions: (value: unknown) => void = () => undefined;
+    let details = 0;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const url = String(path);
+      if (isDetail(url) && ++details > 1) throw new Error("detail down");
+      if (isDetail(url)) return meeting("ready") as never;
+      if (url.startsWith("/api/decisions")) return new Promise((resolve) => { releaseDecisions = resolve; }) as never;
+      return {} as never;
+    });
+    const { container } = render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
+    await waitFor(() => expect(details).toBeGreaterThan(1));
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+    expect(container.querySelector("[data-settling]")).toBeTruthy();
+    await act(async () => {
+      releaseDecisions({ decisions: [] });
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    await waitFor(() => expect(container.querySelector("[data-settling]")).toBeNull());
+  });
+
+  it("a revision read of the records never ends the detail's first read", async () => {
+    let releaseDetail: (value: unknown) => void = () => undefined;
+    let details = 0;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const url = String(path);
+      if (isDetail(url) && ++details === 2) return new Promise((resolve) => { releaseDetail = resolve; }) as never;
+      if (isDetail(url)) return meeting("ready") as never;
+      return {} as never;
+    });
+    const { container } = render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
+    await waitFor(() => expect(details).toBeGreaterThan(1));
+    await act(async () => {
+      emit("desk_changed");
+      await new Promise((r) => setTimeout(r, 400));
+    });
+    // The records read again and ended; the detail read is still out.
+    expect(container.querySelector("[data-settling]")).toBeTruthy();
+    await act(async () => {
+      releaseDetail(meeting("ready"));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    await waitFor(() => expect(container.querySelector("[data-settling]")).toBeNull());
+  });
+});

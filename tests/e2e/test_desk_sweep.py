@@ -520,9 +520,13 @@ OVERLAP_JS = r"""(sel) => {""" + _COMMON_JS + r"""
     const inside = (x, y) => x.p.L >= y.p.L - 1 && x.p.R <= y.p.R + 1 && x.p.T >= y.p.T - 1 && x.p.B <= y.p.B + 1;
     if ((inside(a, b) && b.c.matches('textarea, input')) || (inside(b, a) && a.c.matches('textarea, input'))) continue;
     // the one ratified waiver (test_philo13_13_dock_glass._read; the species
-    // glass `pager`): at 393 the next page of the Dock's shelf scrolls under
-    // its sticky More AppIcons gadget, drawn over it on purpose
-    const pager = (x, y) => x.c.matches('.desk-dock > .desk-dock-more') && y.c.closest('.desk-dock') === x.c.parentElement;
+    // glass `pager`): at the phone width ONLY (the gadget is the phone's,
+    // dock.css), the next page of the Dock's shelf (an AppIcon of the shelf
+    // itself) scrolls under its sticky More AppIcons gadget, drawn over it on
+    // purpose. At 1440, or against any other control, an overlap fails.
+    const phone = matchMedia('(max-width: 720px)').matches;
+    const pager = (x, y) => phone && x.c.matches('.desk-dock > .desk-dock-more')
+      && y.c.matches('.desk-dock > .desk-dock-launch') && y.c.parentElement === x.c.parentElement;
     if (pager(a, b) || pager(b, a)) continue;
     out.push(`${name(a.c)} x ${name(b.c)} (${Math.round(w)}x${Math.round(h)} px)`);
   }
@@ -874,6 +878,35 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             elif wid:
                 sweep.wings()
         _verdict(case_id, width, sweep.failures)
+    finally:
+        ctx.close()
+
+
+# The Dock waiver is the ratified geometry only (Astra r1 on #1108): a planted
+# More overlap fails at 1440, and a planted overlap with a control that is not
+# a shelf AppIcon fails at 393. The waived pair passes at 393 only.
+_PLANTED_DOCK = """<style>body{margin:0} .desk-dock{position:fixed;left:0;right:0;bottom:0;height:56px;overflow:hidden}
+.desk-dock > *{position:absolute;top:0;height:56px;width:85px;padding:0;border:0}</style>
+<div class="desk-dock"><button class="desk-dock-launch" style="left:0">Meetings</button>
+<button class="desk-dock-launch" style="left:340px">Delivery</button>
+<span class="desk-dock-chip" style="left:%dpx"><button class="desk-dock-main">Notes</button></span>
+<button class="desk-dock-more" aria-label="More AppIcons" style="left:344px;width:49px">▸</button></div>"""
+
+
+@pytest.mark.parametrize(("width", "chip_left", "expect"), [
+    (393, 0, []),  # the shelf's next page under More: waived
+    (1440, 0, ["Delivery x More AppIcons"]),  # never at 1440
+    (393, 344, ["Notes x More AppIcons"]),  # not a shelf AppIcon
+])
+def test_dock_pager_waiver_is_the_ratified_geometry(pw_browser: Any, width: int, chip_left: int,
+                                                    expect: list[str]) -> None:
+    ctx = pw_browser.new_context(viewport={"width": width, "height": SIZES[width]})
+    try:
+        page = ctx.new_page()
+        page.set_content(_PLANTED_DOCK % (chip_left or 100))
+        found = page.evaluate(OVERLAP_JS, None)
+        overlaps = [o.split(" (")[0] for o in found if "More AppIcons" in o]
+        assert overlaps == expect, found
     finally:
         ctx.close()
 

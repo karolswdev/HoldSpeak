@@ -1,7 +1,7 @@
 // HS-172 — extracted from MeetingDetail: the parallel API fetches and
 // derived row arrays. Now also fetches follow-through proposals.
 import { preloadMeetingSendWell } from "../../../meetings/MeetingSendWellLazy";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   MeetingDetailResponse,
   MeetingArtifactsResponse,
@@ -94,6 +94,12 @@ export interface MeetingData {
  *  (the Room's cap, roomReads.ts ROOM_READS_CAP_MS). */
 export const MEETING_READS_CAP_MS = 8000;
 
+/** The record's first reads, by name (useMeetingData). */
+const FIRST_READS = [
+  "detail", "sendWell", "artifacts", "aftercare", "timeline", "proposals", "authority", "ftProposals", "decisions",
+] as const;
+type FirstRead = (typeof FIRST_READS)[number];
+
 /** PHILO-17: one decision the meeting recorded (a ledger row of
  *  `GET /api/decisions?scope=all&meeting_id=`: never a confirmed action; its
  *  lifecycle is its record's when it has one). */
@@ -125,10 +131,19 @@ export function useMeetingData(
   const [meetingDecisions, setMeetingDecisions] = useState<MeetingDecision[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  // The meeting whose first reads ended (or capped): a new object for the
-  // same meeting (a list refresh) keeps the body drawn; another meeting waits.
-  const [readFor, setReadFor] = useState("");
-  const firstRead = readFor === id;
+  // PHILO-17 (the desk sweep; Astra r1 on #1108): each first read, by name,
+  // for this meeting. A read counts once it ended (read or failed); a records
+  // read superseded by a newer one (a desk change) counts when the newer one
+  // of the SAME name ends. A new object for the same meeting (a list refresh)
+  // keeps what has ended; another meeting starts again.
+  const [ended, setEnded] = useState<{ id: string; names: readonly string[] }>({ id: "", names: [] });
+  const markEnded = useCallback((forId: string, name: FirstRead) => {
+    setEnded((cur) => {
+      if (cur.id !== forId) return { id: forId, names: [name] };
+      return cur.names.includes(name) ? cur : { id: forId, names: [...cur.names, name] };
+    });
+  }, []);
+  const firstRead = ended.id === id && FIRST_READS.every((name) => ended.names.includes(name));
   // PHILO-17 (Astra r2): ONE freshness rule for the meeting's own records
   // (aftercare, proposals, follow-through proposals, decisions), read by the
   // first read and again on every revision: only the newest request writes.
@@ -150,52 +165,60 @@ export function useMeetingData(
     const mine = <T,>(apply: (value: T) => void) => (value: T) => {
       if (live) apply(value);
     };
+    // Each read ends on its own (allSettled): a failure never ends the others.
+    const end = (name: FirstRead) => () => { if (live) markEnded(id, name); };
+    const endNewest = (name: FirstRead) => () => {
+      if (live && records === recordsSeq.current) markEnded(id, name);
+    };
     setDetail(meeting);
     setError("");
-    void Promise.all([
-      apiFetch<MeetingDetailResponse>(`/api/meetings/${encodeURIComponent(id)}`).then(
-        mine(setDetail),
-      ),
-      // The Send well's own chunk: the body waits for it too (it drew a
-      // frame late and moved the rows under it).
-      preloadMeetingSendWell(),
-      apiFetch<MeetingArtifactsResponse>(`/api/meetings/${encodeURIComponent(id)}/artifacts`)
-        .then(mine(setArtifacts))
-        .catch(() => { if (live) setArtifacts({}); }),
-      apiFetch<MeetingAftercareResponse>(`/api/meetings/${encodeURIComponent(id)}/aftercare`)
-        .then(mine(newest(setAftercare)))
-        .catch(() => { if (live && records === recordsSeq.current) setAftercare({}); }),
-      apiFetch<MeetingTimelineResponse>(
-        `/api/meetings/${encodeURIComponent(id)}/intent-timeline`,
-      )
-        .then(mine(setTimeline))
-        .catch(() => { if (live) setTimeline({}); }),
-      apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
-        .then(mine(newest(setProposals)))
-        .catch(() => { if (live && records === recordsSeq.current) setProposals({}); }),
-      apiFetch<AuthorityPolicyResponse>("/api/authority/policy")
-        .then(mine(setAuthority))
-        .catch(() => { if (live) setAuthority({}); }),
-      apiFetch<{ proposals: FollowThroughProposal[] }>(
-        `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
-      )
-        .then(mine(newest((res: { proposals?: FollowThroughProposal[] }) =>
-          setFtProposals(res.proposals ?? []))))
-        .catch(() => { if (live && records === recordsSeq.current) setFtProposals([]); }),
-      apiFetch<{ decisions?: MeetingDecision[] }>(
-        `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
-      )
-        .then(mine(newest((res: { decisions?: MeetingDecision[] }) =>
-          setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : []))))
-        .catch(() => { if (live && records === recordsSeq.current) setMeetingDecisions([]); }),
-    ]).catch((reason) => { if (live) setError(readableError(reason)); })
-      // A newer read of the records (a desk change) supersedes this one's
-      // records (`newest`): the body then waits for that read instead.
-      .finally(() => { if (live && records === recordsSeq.current) setReadFor(id); });
+    void apiFetch<MeetingDetailResponse>(`/api/meetings/${encodeURIComponent(id)}`)
+      .then(mine(setDetail))
+      .catch((reason) => { if (live) setError(readableError(reason)); })
+      .finally(end("detail"));
+    // The Send well's own chunk: the body waits for it too (it drew a
+    // frame late and moved the rows under it).
+    void preloadMeetingSendWell().finally(end("sendWell"));
+    void apiFetch<MeetingArtifactsResponse>(`/api/meetings/${encodeURIComponent(id)}/artifacts`)
+      .then(mine(setArtifacts))
+      .catch(() => { if (live) setArtifacts({}); })
+      .finally(end("artifacts"));
+    void apiFetch<MeetingAftercareResponse>(`/api/meetings/${encodeURIComponent(id)}/aftercare`)
+      .then(mine(newest(setAftercare)))
+      .catch(() => { if (live && records === recordsSeq.current) setAftercare({}); })
+      .finally(endNewest("aftercare"));
+    void apiFetch<MeetingTimelineResponse>(
+      `/api/meetings/${encodeURIComponent(id)}/intent-timeline`,
+    )
+      .then(mine(setTimeline))
+      .catch(() => { if (live) setTimeline({}); })
+      .finally(end("timeline"));
+    void apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
+      .then(mine(newest(setProposals)))
+      .catch(() => { if (live && records === recordsSeq.current) setProposals({}); })
+      .finally(endNewest("proposals"));
+    void apiFetch<AuthorityPolicyResponse>("/api/authority/policy")
+      .then(mine(setAuthority))
+      .catch(() => { if (live) setAuthority({}); })
+      .finally(end("authority"));
+    void apiFetch<{ proposals: FollowThroughProposal[] }>(
+      `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
+    )
+      .then(mine(newest((res: { proposals?: FollowThroughProposal[] }) =>
+        setFtProposals(res.proposals ?? []))))
+      .catch(() => { if (live && records === recordsSeq.current) setFtProposals([]); })
+      .finally(endNewest("ftProposals"));
+    void apiFetch<{ decisions?: MeetingDecision[] }>(
+      `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
+    )
+      .then(mine(newest((res: { decisions?: MeetingDecision[] }) =>
+        setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : []))))
+      .catch(() => { if (live && records === recordsSeq.current) setMeetingDecisions([]); })
+      .finally(endNewest("decisions"));
     return () => {
       live = false;
     };
-  }, [id, meeting]);
+  }, [id, meeting, markEnded]);
   // PHILO-17 (Astra r1): Confirm in Review writes proposal and decision
   // records, not the meeting row, so the reads above (keyed on the meeting
   // object) never re-ran and Outcomes still said TO DECIDE. These reads
@@ -208,27 +231,28 @@ export function useMeetingData(
     const mine = <T,>(apply: (value: T) => void) => (value: T) => {
       if (live && records === recordsSeq.current) apply(value);
     };
-    // A newer read of the records that ended also ends the wait for the
-    // record's body (a stalled first read never holds it to the cap).
-    void Promise.all([
-      apiFetch<MeetingAftercareResponse>(`/api/meetings/${encodeURIComponent(id)}/aftercare`)
-        .then(mine(setAftercare)).catch(() => undefined),
-      apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
-        .then(mine(setProposals)).catch(() => undefined),
-      apiFetch<{ proposals: FollowThroughProposal[] }>(
-        `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
-      ).then(mine((res: { proposals?: FollowThroughProposal[] }) => setFtProposals(res.proposals ?? [])))
-        .catch(() => undefined),
-      apiFetch<{ decisions?: MeetingDecision[] }>(
-        `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
-      ).then(mine((res: { decisions?: MeetingDecision[] }) =>
-        setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : [])))
-        .catch(() => undefined),
-    ]).then(() => { if (live && records === recordsSeq.current) setReadFor(id); });
+    // A newer read ends the first read of its OWN name only (Astra r1 on
+    // #1108): the detail, artifacts and the rest still hold the body.
+    const endNewest = (name: FirstRead) => () => {
+      if (live && records === recordsSeq.current) markEnded(id, name);
+    };
+    void apiFetch<MeetingAftercareResponse>(`/api/meetings/${encodeURIComponent(id)}/aftercare`)
+      .then(mine(setAftercare)).catch(() => undefined).finally(endNewest("aftercare"));
+    void apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
+      .then(mine(setProposals)).catch(() => undefined).finally(endNewest("proposals"));
+    void apiFetch<{ proposals: FollowThroughProposal[] }>(
+      `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
+    ).then(mine((res: { proposals?: FollowThroughProposal[] }) => setFtProposals(res.proposals ?? [])))
+      .catch(() => undefined).finally(endNewest("ftProposals"));
+    void apiFetch<{ decisions?: MeetingDecision[] }>(
+      `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
+    ).then(mine((res: { decisions?: MeetingDecision[] }) =>
+      setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : [])))
+      .catch(() => undefined).finally(endNewest("decisions"));
     return () => {
       live = false;
     };
-  }, [id, revision]);
+  }, [id, revision, markEnded]);
   const { subscribe } = useRuntimeBus();
   useEffect(
     () =>

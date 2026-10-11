@@ -500,8 +500,6 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   useStore();
   const dests = useDestinations();
   const reportRead = useContext(SendWellReadContext);
-  const wellRead = (dests.data !== null || dests.failed) && (sendsRead.data !== null || sendsRead.failed);
-  useLayoutEffect(() => { reportRead?.(wellRead); }, [reportRead, wellRead]);
   const conns = useConnections();
   const ref = doc.ref;
   // B2: the kept pick returns, onto a listed destination only. With no kept pick
@@ -530,6 +528,12 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   const changedAt = pickedOutcome?.kind === "refused"
     && (pickedOutcome.code === "preview_changed" || pickedOutcome.code === "payload_changed") ? pickedOutcome.at : 0;
   useEffect(() => { if (changedAt) setPreviewTry((n) => n + 1); }, [changedAt]);
+  // The well's first reads: its destinations, its sends, and the preview of
+  // the destination it picked on its own (Astra r1 on #1108: the preview drew
+  // above the meeting's Decide and Transcript after the body was shown).
+  const previewRead = !picked || (preview !== null && preview.ref === ref && preview.id === picked);
+  const wellRead = (dests.data !== null || dests.failed) && (sendsRead.data !== null || sendsRead.failed) && previewRead;
+  useLayoutEffect(() => { reportRead?.(wellRead); }, [reportRead, wellRead]);
 
   const sends = mergeKnown(ref, sendsRead.data ?? []);
   const reload = sendsRead.reload;

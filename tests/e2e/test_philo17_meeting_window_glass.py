@@ -456,3 +456,78 @@ class TestOneMeetingOneWindow:
                 assert not errors, errors
             finally:
                 browser.close()
+
+    # PHILO-17 (the desk sweep; Astra r1 on #1108): a recorded meeting WITH a
+    # summary draws its Send well, and the well picks the built-in folder on
+    # its own and reads its preview. The record's body is drawn only once that
+    # preview has landed (held 2 s here): nothing above Decide moves after.
+    _HOLD_PREVIEW_JS = """(() => {
+      window.__preview = {asked: 0, done: null};
+      const f = window.fetch.bind(window);
+      window.fetch = (input, init) => {
+        const u = typeof input === 'string' ? input : (input && input.url) || '';
+        if (!u.includes('/api/channels/preview')) return f(input, init);
+        window.__preview.asked += 1;
+        return new Promise((r) => setTimeout(r, 2000)).then(() => f(input, init))
+          .finally(() => { window.__preview.done = performance.now(); });
+      };
+    })()"""
+    _WATCH_JS = """([id, ms]) => new Promise((resolve) => {
+      const t0 = performance.now(); let shownAt = null; const first = new Map(); let worst = [];
+      const tick = () => {
+        const w = document.getElementById(id);
+        const decide = w && w.querySelector('[data-testid=meeting-decide]');
+        if (w && decide && !w.querySelector('[data-settling]')) {
+          if (shownAt === null) shownAt = performance.now();
+          const limit = decide.getBoundingClientRect().bottom;
+          for (const el of w.querySelectorAll('button, [role=button], [data-testid], input, textarea')) {
+            const r = el.getBoundingClientRect();
+            if (!r.width || !r.height || r.top > limit) continue;
+            if (!first.has(el)) { first.set(el, [r.left, r.top]); continue; }
+            const [x, y] = first.get(el); const d = Math.max(Math.abs(r.left - x), Math.abs(r.top - y));
+            if (d > 2) worst.push((el.getAttribute('data-testid') || el.textContent || '').trim().slice(0, 30) + ' ' + Math.round(d));
+          }
+        }
+        if (performance.now() - t0 < ms) requestAnimationFrame(tick);
+        else resolve({shownAt, previewDone: window.__preview.done, asked: window.__preview.asked, moved: [...new Set(worst)]});
+      };
+      requestAnimationFrame(tick);
+    })"""
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(300)
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_meeting_with_a_summary_holds_still_while_its_send_preview_lands(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        from holdspeak.db import get_database
+        from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+        mid = "m-sum"
+        start = (datetime.now() - timedelta(hours=1)).replace(microsecond=0)
+        get_database().meetings.save_meeting(MeetingState(
+            id=mid, started_at=start, ended_at=start + timedelta(minutes=30), title="Ledger sync",
+            segments=[TranscriptSegment(text="We move the cutover to Friday.", speaker="Me", start_time=1.0, end_time=4.0)],
+            intel=IntelSnapshot(timestamp=1.0, topics=["cutover"], summary="The cutover moves to Friday.", action_items=[]),
+            intel_status="completed"))
+        wid = f"pullout:meeting:{mid}"
+        _http(self.base, "POST", f"/api/desk/windows/{urllib.request.quote(wid, safe='')}/open", {})
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            try:
+                ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1,
+                                          has_touch=width < 720, reduced_motion="reduce")
+                page = ctx.new_page()
+                page.add_init_script(self._HOLD_PREVIEW_JS)
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _normal_chair(page)
+                page.locator(f"[id='{wid}']").wait_for(timeout=T)
+                seen = page.evaluate(self._WATCH_JS, [wid, 6000])
+                page.screenshot(path=str(SHOTS / f"summary-meeting-preview-held-{width}.png"))
+            finally:
+                browser.close()
+        assert seen["asked"] >= 1, f"the well picked no destination on its own: {seen}"
+        assert seen["shownAt"] is not None, f"the record body was never drawn: {seen}"
+        assert seen["previewDone"] is not None and seen["shownAt"] >= seen["previewDone"] - 50, (
+            f"the body was drawn before its Send preview landed: {seen}")
+        assert not seen["moved"], f"rows above Decide moved after the body was drawn: {seen}"

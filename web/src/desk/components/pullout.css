@@ -773,7 +773,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   }
   .desk-next .desk-window-shell.is-sheet :is(.desk-pullout-body, .desk-surface-body) .gadget-arrows button + button {
     border-top: 0;
-    border-left: 1px solid var(--border);
+    border-left: 1px solid var(--wb-ink);
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head {
     margin: 0;

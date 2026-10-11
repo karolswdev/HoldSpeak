@@ -137,24 +137,39 @@ export function openChairWindow(id: string): void {
   else useDesk.getState().focusPanel(id);
 }
 
-/** PHILO-17 (the desk sweep): a Chair window the HUB opened (an agent, a
- * route, another view). It opens here as the hub says, and it is passive: it
- * takes no focus. At 393 the phone draws only the window `phone` names, so a
- * hub-opened window takes the work area when no open Chair window holds it;
- * else it waits in the ring behind the one the owner looks at. */
-export function openChairWindowFromHub(id: string): void {
-  if (!chairWindowSpec(id)) return;
-  const compact = compactNow();
-  useChairWindows.setState((s) => {
-    const closed = { ...s.closed, [id]: false };
-    const free = !s.phone || s.closed[s.phone];
-    if (!compact || !free) return { closed };
-    return {
-      closed,
-      phone: id,
-      captureInRing: s.captureInRing || id === "chair:capture",
-    };
-  });
+/** PHILO-17 (the desk sweep; Astra r1 on #1108): a Chair window the HUB
+ * opened (an agent, a route, another view). It opens here as the hub says,
+ * and it is passive: it never covers the owner's work. At 393 the phone
+ * shows one window at a time:
+ *   - with no window active there, the hub-opened window takes the work area
+ *     (the phone draws only the Chair window `phone` names);
+ *   - with a window of ANY family active there (a meeting, an application,
+ *     the Chair window `phone` names), it waits behind that window. The
+ *     answer names that window: the compositor keeps the new window's plane
+ *     below it (hubWindows.ts `heldBehind`). It is drawn when that window
+ *     closes, unless a Chair window already holds the ring.
+ * At 1440 every window is drawn: nothing waits. Returns the window it waits
+ * behind, or null. */
+export function openChairWindowFromHub(id: string): string | null {
+  if (!chairWindowSpec(id)) return null;
+  if (!compactNow()) {
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, [id]: false } }));
+    return null;
+  }
+  const s = useChairWindows.getState();
+  const desk = useDesk.getState();
+  const order = Object.keys(desk.panelDepth).sort((a, b) => desk.panelDepth[a] - desk.panelDepth[b]);
+  // The window the phone shows now: the front open, un-iconified window; a
+  // Chair window counts only when it is the phone's (the ring hides the rest).
+  const active = [...order].reverse().find((w) =>
+    w !== id && !desk.panelMin.includes(w)
+    && (!w.startsWith("chair:") || (s.phone === w && !s.closed[w]))) ?? null;
+  const ringHeld = Boolean(s.phone) && s.phone !== id && !s.closed[s.phone];
+  useChairWindows.setState((now) => ({
+    closed: { ...now.closed, [id]: false },
+    ...(ringHeld ? {} : { phone: id, captureInRing: now.captureInRing || id === "chair:capture" }),
+  }));
+  return active;
 }
 
 /** Close a Chair window. At 393 the next open Chair window takes the work
