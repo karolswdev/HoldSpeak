@@ -368,6 +368,29 @@ class TestOneMeetingOneWindow:
                     assert view.locator(f"[id='{wid}']").count() == 0
                     assert view.locator("#surface-meetings").count() == 0
                 assert not [i for i in self._hub_ids() if "meeting" in i or i == f"pullout:{ONE}"], self._hub_ids()
+                # Astra r2: a THIRD view boots with the OLD cache (the scoped
+                # Meetings window it had before the migration). The hub holds no
+                # window for the meeting: the cached window closes, and no new
+                # hub row is written.
+                old = json.dumps({
+                    "version": 1,
+                    "windowsById": {"surface-meetings": {
+                        "id": "surface-meetings", "kind": "surface", "applicationKey": "review-meetings",
+                        "scope": f"meeting:{ONE}", "persistence": "workspace"}},
+                    "panel": {"rects": {}, "order": ["surface-meetings"], "max": []},
+                    "zoneWindows": [], "zoneViewPrefs": {},
+                })
+                third_ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]})
+                third_ctx.add_init_script(
+                    "if (!sessionStorage.getItem('p17-old-cache')) { sessionStorage.setItem('p17-old-cache', '1');"
+                    f" localStorage.setItem('hs.desk.workspace.v1', {json.dumps(old)}); }}")
+                third = third_ctx.new_page()
+                third.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _normal_chair(third)
+                third.wait_for_timeout(2500)
+                assert third.locator(f"[id='{wid}']").count() == 0
+                assert third.locator("#surface-meetings").count() == 0
+                assert not [i for i in self._hub_ids() if "meeting" in i], self._hub_ids()
                 assert not errors, errors
             finally:
                 browser.close()
@@ -410,7 +433,9 @@ class TestOneMeetingOneWindow:
                 # The summary finishes: the hub announces the meeting's aftercare
                 # on its one bus (the queue's own frame; the run is the stand-in).
                 self.server.broadcast("aftercare_ready", {
-                    "meeting_id": ONE, "title": "Platform sync", "open_total": 1, "proposal_total": 1,
+                    # The hub's own counts (this meeting has no proposals; a card
+                    # that came with proposals leaves when the hub reads none).
+                    "meeting_id": ONE, "title": "Platform sync", "open_total": 1, "proposal_total": 0,
                 })
                 page.wait_for_timeout(1500)
                 state = page.evaluate("""(id) => {
@@ -421,6 +446,12 @@ class TestOneMeetingOneWindow:
                             captureFront: !!cap && cap.classList.contains('is-front')};
                 }""", wid)
                 assert state == {"front": True, "shown": True, "captureFront": False}, f"{width}: {state}"
+                # The card itself landed in the meeting window's own seat.
+                seat = page.locator(f"[id='{wid}'] [data-aftercare-window-slot='top']")
+                page.wait_for_function(
+                    "(id) => (document.getElementById(id)?.querySelector('[data-aftercare-window-slot=\"top\"]')?.innerText || '').includes('Platform sync')",
+                    arg=wid, timeout=T)
+                assert "Platform sync" in seat.inner_text()
                 self._shot("meeting-window-aftercare")
                 assert not errors, errors
             finally:

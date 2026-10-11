@@ -63,6 +63,36 @@ describe("Astra r1: the meeting window's own records follow the hub", () => {
     expect(screen.getByText("Freeze the old ledger")).toBeTruthy();
   });
 
+  it("Astra r2: an older first read that lands last never brings TO DECIDE back", async () => {
+    let releaseFirst: (value: unknown) => void = () => undefined;
+    let reads = 0;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const url = String(path);
+      if (isDetail(url)) return meeting("ready") as never;
+      if (url.endsWith("/follow-through-proposals")) {
+        reads += 1;
+        if (reads === 1) {
+          // The first read stalls; it holds the state from before the confirm.
+          return new Promise((resolve) => { releaseFirst = resolve; }) as never;
+        }
+        return { proposals: [{ id: "p1", kind: "decision", text: "Freeze the old ledger", state: "confirmed" }] } as never;
+      }
+      return {} as never;
+    });
+    render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
+    await waitFor(() => expect(reads).toBe(1));
+    await act(async () => {
+      emit("desk_changed");
+      await new Promise((r) => setTimeout(r, 400));
+    });
+    await waitFor(() => expect(screen.getByText("Freeze the old ledger")).toBeTruthy());
+    await act(async () => {
+      releaseFirst({ proposals: [{ id: "p1", kind: "decision", text: "Freeze the old ledger", state: "proposed" }] });
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(screen.queryByText("TO DECIDE")).toBeNull();
+  });
+
   it("adopts a durable run as QUEUED and settles it when the meeting goes final", async () => {
     let intel = "running";
     vi.mocked(apiFetch).mockImplementation(async (path: string) =>

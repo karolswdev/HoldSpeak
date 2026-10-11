@@ -1,6 +1,6 @@
 // HS-172 — extracted from MeetingDetail: the parallel API fetches and
 // derived row arrays. Now also fetches follow-through proposals.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   MeetingDetailResponse,
   MeetingArtifactsResponse,
@@ -115,8 +115,16 @@ export function useMeetingData(
   const [meetingDecisions, setMeetingDecisions] = useState<MeetingDecision[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  // PHILO-17 (Astra r2): ONE freshness rule for the meeting's own records
+  // (aftercare, proposals, follow-through proposals, decisions), read by the
+  // first read and again on every revision: only the newest request writes.
+  const recordsSeq = useRef(0);
   useEffect(() => {
     if (!id) return;
+    const records = ++recordsSeq.current;
+    const newest = <T,>(apply: (value: T) => void) => (value: T) => {
+      if (records === recordsSeq.current) apply(value);
+    };
     /* HS-202-02 (Astra's counsel finding 3 on PR #595, one layer deeper
        than it pointed) — every read here is for THIS record. A response
        that lands after the owner opened another meeting must be dropped,
@@ -138,31 +146,31 @@ export function useMeetingData(
         .then(mine(setArtifacts))
         .catch(() => { if (live) setArtifacts({}); }),
       apiFetch<MeetingAftercareResponse>(`/api/meetings/${encodeURIComponent(id)}/aftercare`)
-        .then(mine(setAftercare))
-        .catch(() => { if (live) setAftercare({}); }),
+        .then(mine(newest(setAftercare)))
+        .catch(() => { if (live && records === recordsSeq.current) setAftercare({}); }),
       apiFetch<MeetingTimelineResponse>(
         `/api/meetings/${encodeURIComponent(id)}/intent-timeline`,
       )
         .then(mine(setTimeline))
         .catch(() => { if (live) setTimeline({}); }),
       apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
-        .then(mine(setProposals))
-        .catch(() => { if (live) setProposals({}); }),
+        .then(mine(newest(setProposals)))
+        .catch(() => { if (live && records === recordsSeq.current) setProposals({}); }),
       apiFetch<AuthorityPolicyResponse>("/api/authority/policy")
         .then(mine(setAuthority))
         .catch(() => { if (live) setAuthority({}); }),
       apiFetch<{ proposals: FollowThroughProposal[] }>(
         `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
       )
-        .then(mine((res: { proposals?: FollowThroughProposal[] }) =>
-          setFtProposals(res.proposals ?? [])))
-        .catch(() => { if (live) setFtProposals([]); }),
+        .then(mine(newest((res: { proposals?: FollowThroughProposal[] }) =>
+          setFtProposals(res.proposals ?? []))))
+        .catch(() => { if (live && records === recordsSeq.current) setFtProposals([]); }),
       apiFetch<{ decisions?: MeetingDecision[] }>(
         `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
       )
-        .then(mine((res: { decisions?: MeetingDecision[] }) =>
-          setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : [])))
-        .catch(() => { if (live) setMeetingDecisions([]); }),
+        .then(mine(newest((res: { decisions?: MeetingDecision[] }) =>
+          setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : []))))
+        .catch(() => { if (live && records === recordsSeq.current) setMeetingDecisions([]); }),
     ]).catch((reason) => { if (live) setError(readableError(reason)); });
     return () => {
       live = false;
@@ -176,8 +184,9 @@ export function useMeetingData(
   useEffect(() => {
     if (!id || revision === 0) return;
     let live = true;
+    const records = ++recordsSeq.current;
     const mine = <T,>(apply: (value: T) => void) => (value: T) => {
-      if (live) apply(value);
+      if (live && records === recordsSeq.current) apply(value);
     };
     void apiFetch<MeetingAftercareResponse>(`/api/meetings/${encodeURIComponent(id)}/aftercare`)
       .then(mine(setAftercare)).catch(() => undefined);

@@ -27,23 +27,41 @@ export type RecordingSlice = Pick<
   | "recordingExternal"
   | "recordingStartedAt"
   | "liveMeetingId"
+  | "recordingEpoch"
   | "applyRecordingActivity"
+  | "applyRecordingSnapshot"
   | "startRecording"
   | "stopRecording"
 >;
 
-export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => ({
+export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => {
+  /** PHILO-17 (Astra r2): ONE freshness rule for the recording state. Every
+   * transition moves the epoch; a read asked before the last transition (a
+   * slow `/api/state`) is older than what the desk knows and is dropped. */
+  const move = (patch: Partial<DeskState>) =>
+    set({ ...patch, recordingEpoch: get().recordingEpoch + 1 });
+  return {
   recording: "idle",
+  recordingEpoch: 0,
   recordingExternal: false,
   recordingStartedAt: null,
   liveMeetingId: null,
+
+  applyRecordingSnapshot(activity, askedAt, liveMeetingId) {
+    // A snapshot asked before the last transition is stale (a Start or a
+    // Stop happened while it was in flight): it never moves the desk.
+    if (askedAt !== get().recordingEpoch) return;
+    get().applyRecordingActivity(activity);
+    if (liveMeetingId && get().recording === "recording" && !get().liveMeetingId) set({ liveMeetingId });
+  },
 
   applyRecordingActivity(activity) {
     if (!activity || typeof activity !== "object") return;
     const s = String("state" in activity ? activity.state || "" : "").toLowerCase();
     if (s === "meeting_live") {
       const started = get().recording === "recording";
-      set({
+      if (started) return; // no transition: the epoch stays
+      move({
         recording: "recording",
         recordingExternal: started
           ? get().recordingExternal
@@ -52,7 +70,7 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
       });
     } else if (s === "idle" || s === "complete") {
       if (get().recording === "recording")
-        set({
+        move({
           recording: "idle",
           recordingExternal: false,
           recordingStartedAt: null,
@@ -63,12 +81,12 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
 
   async startRecording() {
     if (get().recording !== "idle") return;
-    set({ recording: "busy", recordingStartedAt: Date.now() });
+    move({ recording: "busy", recordingStartedAt: Date.now() });
     meetingsBeforeRecording = new Set(
       get().items.meeting.map((m) => String(m.id)),
     );
     const refuse = (status: number | null, cause: unknown) => {
-      set({ recording: "idle", recordingStartedAt: null });
+      move({ recording: "idle", recordingStartedAt: null });
       const why = recordStartRefusal(status);
       reportWriteFailure(
         "START RECORDING",
@@ -101,13 +119,13 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
     } catch {
       // No body: the recorder runs; the window opens from the Meetings list.
     }
-    set({ recording: "recording", recordingExternal: false, liveMeetingId: meetingId || null });
+    move({ recording: "recording", recordingExternal: false, liveMeetingId: meetingId || null });
     if (meetingId) get().openPullout(`meeting:${meetingId}`);
   },
 
   async stopRecording() {
     if (get().recording !== "recording") return;
-    set({ recording: "busy" });
+    move({ recording: "busy" });
     try {
       const res = await apiRequest("/api/meeting/stop", { method: "POST" });
       // 409 = nothing is live on the hub: idle is the truth. Any other
@@ -115,7 +133,7 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
       if (!res.ok && res.status !== 409) throw res;
       clearWriteFailure();
     } catch (error) {
-      set({ recording: "recording" });
+      move({ recording: "recording" });
       reportWriteFailure(
         "STOP RECORDING",
         error,
@@ -130,7 +148,7 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
       // closure silently no-op.
       return;
     }
-    set({
+    move({
       recording: "idle",
       recordingExternal: false,
       recordingStartedAt: null,
@@ -141,4 +159,5 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
     const fresh = after.find((id) => !meetingsBeforeRecording.has(id));
     if (fresh) get().markNew(fresh);
   },
-});
+};
+};

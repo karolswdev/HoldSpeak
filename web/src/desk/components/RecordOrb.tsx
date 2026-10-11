@@ -33,13 +33,17 @@ export function RecordOrb() {
       const id = String((frame.data as Record<string, unknown> | undefined)?.id ?? "");
       if (id) useDesk.setState({ liveMeetingId: id });
     });
+    // PHILO-17 (Astra r2): the snapshot is asked at an epoch; a Start or a
+    // Stop while it is in flight makes it stale, and it never moves the desk.
+    const askedAt = useDesk.getState().recordingEpoch;
     void apiFetch<any>("/api/state")
       .then((snapshot) => {
-        apply(snapshot?.activity || snapshot?.runtime?.activity);
         const id = String(snapshot?.meeting_id ?? "");
-        if (snapshot?.meeting_active === true && id && !useDesk.getState().liveMeetingId) {
-          useDesk.setState({ liveMeetingId: id });
-        }
+        useDesk.getState().applyRecordingSnapshot(
+          snapshot?.activity || snapshot?.runtime?.activity,
+          askedAt,
+          snapshot?.meeting_active === true && id ? id : null,
+        );
       })
       .catch(() => null);
     return () => {

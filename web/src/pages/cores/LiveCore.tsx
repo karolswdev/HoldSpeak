@@ -288,12 +288,13 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       if (path.endsWith("start")) {
         const startedId = String((value.meeting as Record<string, unknown> | undefined)?.id ?? "");
         if (!meetingId && startedId) {
-          useDesk.setState({
+          useDesk.setState((st) => ({
             recording: "recording",
             recordingExternal: false,
             recordingStartedAt: Date.now(),
             liveMeetingId: startedId,
-          });
+            recordingEpoch: st.recordingEpoch + 1,
+          }));
           useDesk.getState().openPullout(`meeting:${startedId}`);
           useDesk.getState().closeSurfaceWindow("record-live");
           return;
@@ -314,7 +315,10 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
         if (stoppedId) setRetainedMeetingId(stoppedId);
         setState((current) => ({ ...current, active: false }));
         if (meetingId) {
-          useDesk.setState({ recording: "idle", recordingExternal: false, recordingStartedAt: null, liveMeetingId: null });
+          useDesk.setState((st) => ({
+            recording: "idle", recordingExternal: false, recordingStartedAt: null, liveMeetingId: null,
+            recordingEpoch: st.recordingEpoch + 1,
+          }));
           onStopped?.();
         }
       }

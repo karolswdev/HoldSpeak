@@ -30,16 +30,17 @@ export function useRecordingHere(meetingId: string): [boolean, () => void] {
   const recording = useDesk((s) => s.recording);
   const [hubLive, setHubLive] = useState(false);
   const [stopped, setStopped] = useState(false);
-  const epoch = useRef(0);
   const wasLive = useRef(false);
   const live = !stopped && (deskLive || hubLive);
   if (live) wasLive.current = true;
   useEffect(() => {
-    const asked = epoch.current;
+    // PHILO-17 (Astra r2): the desk's one freshness rule (the recording
+    // epoch): a reply asked before a Start or a Stop is stale.
+    const asked = useDesk.getState().recordingEpoch;
     let mounted = true;
     void apiFetch<Record<string, unknown>>("/api/state")
       .then((state) => {
-        if (!mounted || asked !== epoch.current) return;
+        if (!mounted || asked !== useDesk.getState().recordingEpoch) return;
         const active = state?.meeting_active === true || state?.active === true || state?.status === "recording";
         const id = String(state?.meeting_id ?? state?.id ?? "");
         if (active && id === meetingId) setHubLive(true);
@@ -55,7 +56,6 @@ export function useRecordingHere(meetingId: string): [boolean, () => void] {
     const was = previous.current;
     previous.current = recording;
     if (recording !== "idle" || was === "idle") return;
-    epoch.current += 1;
     setHubLive(false);
     if (wasLive.current) setStopped(true);
   }, [recording]);

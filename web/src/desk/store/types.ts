@@ -201,6 +201,9 @@ export interface DeskState {
   /** PHILO-17: the meeting this desk started and is recording; its window
    * (`pullout:meeting:<id>`) shows the live room until it stops. */
   liveMeetingId: string | null;
+  /** PHILO-17 (Astra r2): moves on every recording transition; a read asked
+   * at an older epoch is stale. */
+  recordingEpoch: number;
   /** HS-136-03: scheduled recording state visible on the Chair. */
   scheduledRecordings: ScheduledRecording[];
   /** HS-136-03: arming countdown state (hub-authoritative). */
@@ -370,6 +373,9 @@ export interface DeskState {
   setDragging(id: string | null): void;
   /** Reduce a runtime_activity frame (or /api/state seed) into orb state. */
   applyRecordingActivity(activity: unknown): void;
+  /** A `/api/state` read asked at epoch `askedAt`: applied only if no
+   * transition happened since. */
+  applyRecordingSnapshot(activity: unknown, askedAt: number, liveMeetingId?: string | null): void;
   /** Start the hub recorder in place (never a browser mic). */
   startRecording(): Promise<void>;
   /** Stop the hub recorder; the finished meeting materializes NEW. */
