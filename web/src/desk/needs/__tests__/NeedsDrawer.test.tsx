@@ -20,6 +20,11 @@ import { openCoderSession, openSurfaceOr } from "../../shell";
 import { useDesk } from "../../store";
 import { NeedsDrawer, useSourceReceipt } from "../NeedsDrawer";
 import { useArmingOutcome } from "../arming";
+import { useState as useHarnessState, type ReactNode } from "react";
+import { ProjectRoomCore } from "../../../features/project-room/ProjectRoomCore";
+import { TitleSlotContext } from "../../surface/title";
+import { WingSlotContext } from "../../surface/wings";
+import { useDrawers } from "../../drawer/store";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -959,5 +964,89 @@ describe("NeedsDrawer groups the sources of one cause (PHILO-17)", () => {
     const group = screen.getByTestId("needs-source-row");
     fireEvent.click(within(group).getByRole("button", { name: "Reconnect: GitHub · 3 sources" }));
     expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "integration:github");
+  });
+});
+
+// The test diet (2026-10-11): the Needs you -> Room seam of the A2b paths glass.
+// replaces: tests/e2e/test_philo14_a2b_paths_glass.py::TestA2bPathsGlass::test_a_proposal_row_opens_the_room_with_the_proposal_selected
+// The Needs you row (the hub's aggregate row, needs_you_aggregate._proposal_fields)
+// and the Room (its NEEDS YOU proposal row, project_service.py `source: "proposal"`)
+// are both mounted; his press on the row body opens the Room through the shell
+// and the Room selects THAT proposal, its Confirm on the row; no drawer opens.
+describe("A2b: a proposal row in Needs you opens the Room with the proposal selected", () => {
+  const PROPOSAL = "Run the dry run on Nov 3";
+  const now = new Date().toISOString();
+  const roomNeeds = (id: string, text: string) => ({
+    source: "proposal", kind: "proposal", title: text, why: "PROPOSED · Ledger cutover sync", since: now, url: null,
+    verb: "confirm", verbHref: `/api/proposals/${id}/confirm`, severity: "info", proposal_id: id, proposal_kind: "action",
+    host: null, speaker_label: null, due_hint: null, owner_hint: null, original_text: text, meeting_id: "m-sync",
+    action_item_id: null, meeting_title: "Ledger cutover sync", meeting_started_at: now, created_at: now,
+  });
+  const ROOM = {
+    project_id: "p-ledger", revision: 1, observed_at: now,
+    project: { id: "p-ledger", name: "Payments ledger cutover", is_archived: false, meeting_count: 1, created_at: now, updated_at: now, target_at: null, revision: 1 },
+    items: { state: "ok", focus: [], totals_by_type: {}, total: 0 },
+    meetings: { state: "ok", count: 1, latest: null },
+    resources: { state: "ok", count: 0, latest: null },
+    changes: { state: "ok", recent: [] },
+    review: { state: "absent", reason: "not_yet_built" },
+    needsYou: { state: "ok", count: 2, items: [roomNeeds("prop-other", "Name the rollback owner"), roomNeeds("prop-dry", PROPOSAL)] },
+    sources: { state: "ok", items: [], count: 0, nextCheckAt: null },
+    health: { state: "ok", assessment: "on_track", reason: null, inputs: { overdue: 0, ciFailing: false, reviewWaitingDays: null, targetPassed: false } },
+    sinceRead: { state: "ok", readAt: null, groups: [] },
+    decisions: { state: "ok", items: [] },
+    commitments: { state: "ok", items: [] },
+    target: { state: "absent", reason: "x" },
+    updates: { state: "absent", reason: "x" },
+    steward: { state: "absent", reason: "x" },
+  };
+  const NEEDS = {
+    count: 2, blockers: [], failedMeetings: [], coverage: [], complete: true,
+    items: [
+      { id: "proposal:prop-dry", ref: PROPOSAL, kind: "proposal", source: "proposal", title: PROPOSAL,
+        why: "PROPOSED · Ledger cutover sync", severity: "info", projectId: "p-ledger", projectName: "Payments ledger cutover",
+        proposalId: "prop-dry", proposalKind: "action", proposalHost: null, proposalDue: null,
+        meetingTitle: "Ledger cutover sync", meetingId: "m-sync" },
+      { id: "proposal:prop-budget", ref: "Cut the budget", kind: "proposal", source: "proposal", title: "Cut the budget",
+        why: "PROPOSED · Budget sync", severity: "info", projectId: "p-infra", projectName: "Infra budget",
+        proposalId: "prop-budget", proposalKind: "action", proposalHost: null, proposalDue: null,
+        meetingTitle: "Budget sync", meetingId: "m-infra" },
+    ],
+  };
+
+  function Room() {
+    const [, setWings] = useHarnessState<ReactNode>(null);
+    return (
+      <TitleSlotContext.Provider value={() => {}}>
+        <WingSlotContext.Provider value={setWings}>
+          <ProjectRoomCore scope="project:p-ledger" />
+        </WingSlotContext.Provider>
+      </TitleSlotContext.Provider>
+    );
+  }
+
+  it("the row body opens the Room; the Room selects that proposal with its Confirm; no drawer", async () => {
+    useDrawers.setState({ drawers: [], infos: [] } as never);
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const value = String(path);
+      if (value.startsWith("/api/desk/needs-you")) return NEEDS as never;
+      if (value === "/api/door") return DOOR as never;
+      if (value.startsWith("/api/projects/p-ledger/room") && !value.includes("/room/read")) return ROOM as never;
+      return {} as never;
+    });
+    render(<><NeedsDrawer /><Room /></>);
+    await screen.findByText("2 need you");
+    await waitFor(() => expect(screen.getAllByTestId("proposal-row")).toHaveLength(2));
+    expect(document.querySelector("li[data-selected] [data-testid=proposal-row]")).toBeNull();
+
+    const needsRow = row(PROPOSAL);
+    expect(needsRow.getAttribute("data-opens")).toBe("true");
+    fireEvent.click(needsRow.querySelector(".needs-row-name")!);
+
+    await waitFor(() => expect(document.querySelectorAll("li[data-selected] [data-testid=proposal-row]")).toHaveLength(1));
+    const selected = document.querySelector("li[data-selected]") as HTMLElement;
+    expect(selected.textContent).toContain(PROPOSAL);
+    expect(within(selected).getAllByTestId("proposal-confirm")).toHaveLength(1);
+    expect(useDrawers.getState().drawers).toEqual([]);
   });
 });

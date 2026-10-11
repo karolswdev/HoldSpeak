@@ -486,3 +486,35 @@ describe("HS-172: No violations", () => {
     }
   });
 });
+
+// The test diet (2026-10-11): the Room half of the PHILO-11-05a record glass.
+// replaces: tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_record_wells_in_the_room_and_intelligence
+// (the Room's DECISIONS & COMMITMENTS row unfolds in place and holds its
+// record's well; the well's send is fenced in desk/surface/send/__tests__/SendWell.test.tsx)
+describe("PHILO-11-05a: a Room decision row holds its record's SEND well", () => {
+  it("the row unfolds in place; its well's document is decision_record:<the row's record id>", async () => {
+    // The row's id is the record id (project_service.py: decisions items `id: rid`).
+    const record = {
+      id: "record-85f927aa", text: "Freeze the old ledger on Nov 3", at: "2026-09-05T09:41:00", url: null,
+      lifecycle: "active", kind: "decision", source_type: "meeting", source_id: "dec-1",
+    };
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room") && !url.includes("/room/read")) {
+        return Promise.resolve({ ...roomWithProposals(), decisions: { state: "ok", items: [record] }, commitments: { state: "ok", items: [] } });
+      }
+      if (url.startsWith("/api/channels/destinations")) return Promise.resolve({ destinations: [] });
+      if (url.startsWith("/api/channels/sends")) return Promise.resolve({ sends: [] });
+      if (url.includes("/proposals")) return Promise.resolve(proposalsApiResponse());
+      if (url.includes("/suggested-sources")) return Promise.resolve(suggestedSourcesApiResponse());
+      return Promise.resolve({});
+    });
+    render(<WindowHarness scope="project:p1" />);
+    const row = await screen.findByTestId("decision-row");
+    expect(document.querySelector("[data-seat=decision-record]")).toBeNull();
+    fireEvent.click(row);
+    await waitFor(() => expect(document.querySelector("[data-seat=decision-record] [data-testid=send-well]")).not.toBeNull(), { timeout: 5000 });
+    expect(document.querySelector("[data-seat=decision-record] [data-testid=send-well]")?.getAttribute("data-doc"))
+      .toBe("decision_record:record-85f927aa");
+    expect(document.querySelectorAll("[data-testid=send-well]")).toHaveLength(1);
+  });
+});
