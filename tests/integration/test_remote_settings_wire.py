@@ -45,7 +45,12 @@ def _ok(response: Any) -> Any:
 
 
 def test_the_remote_settings_answers_are_the_hubs(hub: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak.principals import AgentCredentialStore
+
     monkeypatch.setattr(wire, "WIRE_DIR", WIRE_DIR)
+    # The hub's credential store is one per process; a store of its own keeps
+    # credentials other tests issued in this worker out of the answer.
+    monkeypatch.setattr(hub.server.app.state, "agent_credentials", AgentCredentialStore())
     off = _ok(hub.client.get("/api/settings/remote"))
     _ok(hub.client.put("/api/settings/remote", json={"enabled": True, "bind_host": "100.64.0.2", "port": 8765}))
     issued = _ok(hub.client.post("/api/settings/remote/credentials",
