@@ -540,3 +540,56 @@ export function circuitStateTone(state: string): string | undefined {
   if (state === "half_open") return "warn";
   return undefined;
 }
+
+/* ── PHILO-17 U31: the three presets of Watch sources ──
+ *
+ * Each preset sets the existing policy fields; nothing new is stored.
+ * Off: it does not run on its own (Run once still works; `enabled` stays,
+ * a RAW detail). Tell me: it runs on its own, reads the
+ * sources, makes proposals and Door rows, and changes nothing else. Do it:
+ * it also applies its proposals, drafts updates and prepares sends. It
+ * never posts a GitHub comment on its own (an egress the owner presses).
+ * A policy that matches no preset reads "custom" (the RAW detail shows it). */
+
+export type StewardPreset = "off" | "tell" | "do";
+
+export const PRESET_TELL_KINDS: readonly string[] = ["refresh_sources", "create_proposals", "create_door_item"];
+export const PRESET_DO_KINDS: readonly string[] = [
+  "refresh_sources",
+  "create_proposals",
+  "apply_proposal_effects",
+  "draft_update",
+  "create_door_item",
+  "prepare_send",
+];
+
+export const STEWARD_PRESETS: readonly { value: StewardPreset; label: string; summary: string }[] = [
+  { value: "off", label: "Off", summary: "Watch only when I press Run once" },
+  { value: "tell", label: "Tell me", summary: "Watch the sources and tell me what changed" },
+  { value: "do", label: "Do it", summary: "Watch the sources and do the work. Never send." },
+];
+
+type PresetFields = { enabled: boolean; unattended_enabled: boolean; eligible_effect_kinds: string[] };
+
+function sameKinds(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && [...a].sort().join() === [...b].sort().join();
+}
+
+/** The preset a policy draft matches, or "custom". */
+export function presetOf(draft: PresetFields): StewardPreset | "custom" {
+  if (!draft.unattended_enabled) return "off";
+  if (!draft.enabled) return "custom";
+  if (sameKinds(draft.eligible_effect_kinds, PRESET_TELL_KINDS)) return "tell";
+  if (sameKinds(draft.eligible_effect_kinds, PRESET_DO_KINDS)) return "do";
+  return "custom";
+}
+
+/** The policy fields a preset sets. Off keeps the effect kinds as they are. */
+export function presetFields(preset: StewardPreset, draft: PresetFields): PresetFields {
+  if (preset === "off") return { ...draft, unattended_enabled: false };
+  return {
+    enabled: true,
+    unattended_enabled: true,
+    eligible_effect_kinds: [...(preset === "tell" ? PRESET_TELL_KINDS : PRESET_DO_KINDS)],
+  };
+}

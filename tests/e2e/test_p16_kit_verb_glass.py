@@ -64,7 +64,7 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
             _settle(page)
             verbs = window.evaluate(MEASURE)
             words = {v["word"] for v in verbs}
-            assert {"Icons", "List", "Room", "History", "Steward", "Get Info", "Open"} <= words, verbs
+            assert {"Icons", "List", "Room", "History", "Watch sources", "Get Info", "Open"} <= words, verbs
             if width == 1440:
                 heights = {v["h"] for v in verbs}
                 assert heights == {28.0}, verbs

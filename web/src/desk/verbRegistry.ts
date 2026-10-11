@@ -221,12 +221,14 @@ export const VERBS: Verb[] = [
   },
   {
     id: "desk.new-agent",
-    label: "New Agent",
+    // PHILO-17 U32: a persona for Ask (Role, System prompt), not a coding
+    // agent; the Conductor holds the coding agents.
+    label: "New assistant",
     menu: "desk",
     scope: "floor",
     group: "new",
     glyph: KIND_GLYPH.recipe,
-    keywords: ["create", "recipe"],
+    keywords: ["create", "recipe", "agent", "persona"],
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("recipe"),
   },

@@ -10,9 +10,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../api";
 import { useDesk } from "../../store";
 import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../../agentFlights";
-import { ConductorWindow } from "../ConductorWindow";
+import { ConductorWindow, HOOKS_LINE, headFact } from "../ConductorWindow";
 import { ConductorInfoWindow } from "../ConductorInfoWindow";
-import { closeReceipt, conductorHead, conductorMembers, headWords } from "../members";
+import { canRun, closeReceipt, conductorHead, conductorMembers, headWords, readyMember } from "../members";
 import { __resetConductor, useConductor } from "../store";
 import { laneSessionKey as laneSessionKeyOf } from "../../lane/laneStore";
 
@@ -382,6 +382,34 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(done.textContent).toMatch(/^HOOKS INSTALLED · CLAUDE CODE · \d\d:\d\d$/);
     await waitFor(() => expect(screen.queryByRole("button", { name: "Install hooks · Claude Code" })).toBeNull());
     expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
+  });
+
+  // PHILO-17 U32 (walk D 8): "3 ready · 3 HARNESSES" beside NO HOOKS · SIGN-IN UNKNOWN.
+  it("ready counts only agents that can run; the strip says CODING AGENTS; hooks are said in one line", async () => {
+    const claude = DETECT.agents[0];
+    const rows = [
+      { ...claude },
+      { ...claude, id: "codex", label: "Codex", hooks: "missing" },
+      { ...claude, id: "pi", label: "pi", signed_in: "unknown" },
+    ] as never[];
+    expect(rows.map((r) => canRun(r))).toEqual([true, false, false]);
+    expect(headFact({ atWork: 0, ask: 0 }, rows.map((r) => readyMember(r)))).toBe("1 ready");
+    expect(headFact({ atWork: 0, ask: 0 }, rows.slice(1).map((r) => readyMember(r)))).toBe("No agent ready");
+    expect(headFact({ atWork: 0, ask: 0 }, [])).toBe("No agent");
+
+    sessionsReply = () => ({ sessions: [], flights: [], history: [], launches: { live: 0, cap: 3 } });
+    detectReply = () => ({ ...DETECT, agents: rows });
+    render(<ConductorWindow />);
+    const head = await screen.findByTestId("conductor-head");
+    await waitFor(() => expect(head.textContent).toContain("1 ready"));
+    expect(head.textContent).toContain("3 CODING AGENTS");
+    expect(head.textContent).not.toMatch(/harness/i);
+    // Nothing selected, Codex lacks hooks: Install hooks with its one line.
+    expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
+    expect(screen.getByTestId("conductor-hooks-line").textContent).toBe(HOOKS_LINE);
+    // A selected agent with its hooks in: no line.
+    fireEvent.click(screen.getByRole("button", { name: /^Claude Code, AGENT$/ }));
+    expect(screen.queryByTestId("conductor-hooks-line")).toBeNull();
   });
 
   it("a failed sessions read is NOT READ with Retry, never an empty drawer", async () => {

@@ -817,9 +817,9 @@ function readDraftEntry(capability: string): Promise<AssignmentEntry | null> {
  * Concierge assign through mutating `/api` requests, which announce it). */
 export function useDraftEgress(
   enabled: boolean,
-  /** PHILO-15 B53: the Room's "Draft with model" names its own model's host. */
+  /** PHILO-15 B53: the Room's Draft update names its own model's host. */
   capability: string = DRAFT_CAPABILITY,
-): { label: string; scope?: "local" | "mixed" | "cloud" | "remote" } {
+): { label: string; scope?: "local" | "mixed" | "cloud" | "remote"; assigned?: boolean } {
   const targets = useDesk((s) => s.inferenceTargets);
   const [entry, setEntry] = useState<AssignmentEntry | null | undefined>(undefined);
   const seq = useRef(0);
@@ -844,7 +844,8 @@ export function useDraftEgress(
     if (enabled) read();
   });
   return useMemo(() => {
-    if (!entry) return { label: "NOT SET" };
+    // PHILO-17 U31: `assigned` says if an engine is set (undefined: not read yet).
+    if (!entry) return { label: "NOT SET", assigned: entry === undefined ? undefined : false };
     const target = targets.find((t) => t.profile_id === entry.profile_id || t.id === entry.profile_id);
     let host = "";
     if (target?.endpoint) {
@@ -862,7 +863,7 @@ export function useDraftEgress(
     // No host to read: the chip names the model (its label), and its scope is
     // the entry's own boundary, so a LAN default never reads as cloud.
     const lan = !host && ["private_network", "mesh"].includes(String(entry.boundary ?? target?.boundary ?? ""));
-    return { label: (egress.label || "NOT SET").toUpperCase(), scope: lan ? "local" : egress.scope };
+    return { label: (egress.label || "NOT SET").toUpperCase(), scope: lan ? "local" : egress.scope, assigned: true };
   }, [entry, targets]);
 }
 

@@ -11,7 +11,7 @@ import { RecipeEditor } from "./RecipeEditor";
 export const EDITOR_LABELS: Record<PrimitiveKind, string> = {
   note: "Note",
   kb: "Knowledge",
-  recipe: "Agent",
+  recipe: "Assistant",
   workflow: "Workflow",
   decision: "Decision",
   meeting: "Meeting",

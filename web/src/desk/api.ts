@@ -767,7 +767,7 @@ export async function loadAll(): Promise<LoadResult> {
           .map(fromWireRecipe).filter((x): x is Persona => x !== null);
         status.recipe = "live";
       })
-      .catch((e) => fail("recipe", "Agents", e)),
+      .catch((e) => fail("recipe", "Assistants", e)),
     apiFetch<Record<string, unknown>>("/api/kbs")
       .then((d) => {
         items.kb = wireArray(d, "kbs").filter((k) => !wireBool(k, "deleted")).map(fromWireKb).filter((x): x is KB => x !== null);

@@ -313,7 +313,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
               data-testid="drawer-sources"
               actions={(
                 <Button dense variant="ghost" data-testid="drawer-steward" onClick={() => openProjectRoomAt(projectId, "steward")}>
-                  Steward
+                  Watch sources
                 </Button>
               )}
             >

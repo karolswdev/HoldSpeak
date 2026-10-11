@@ -44,6 +44,7 @@ import {
 import "./update-posture.css";
 import { ListChips, PublishedWells } from "../../channels/SendWell";
 import { useDraftEgress } from "../../../desk/lane/LaneWindow";
+import { openSurfaceOr } from "../../../desk/shell";
 
 /** The capability that drafts a project update (`project_update_service`). */
 const UPDATE_DRAFT_CAPABILITY = "project.update_draft";
@@ -499,7 +500,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
   const onOpenRef = useCallback((ref: string) => {
     openRef(ref);
   }, []);
-  // PHILO-15 B53: "Draft with model" names the host of the model assigned
+  // PHILO-15 B53: Draft update names the host of the model assigned
   // to update drafts (`192.168.1.43 · LAN`, `THIS DEVICE`, a cloud host),
   // never a fixed LOCAL + CLOUD.
   const modelEgress = useDraftEgress(ctrl.posture === "list", UPDATE_DRAFT_CAPABILITY);
@@ -517,28 +518,40 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
           <Button dense variant="ghost" onClick={ctrl.exitUpdates}>
             Close
           </Button>
-          <Button
-            dense
-            loading={ctrl.draftBusy}
-            onClick={() => void ctrl.draft("deterministic")}
-            data-testid="update-verb-draft-deterministic"
-          >
-            Draft
-          </Button>
+          {/* PHILO-17 U31: ONE Draft update verb. With an engine set for
+              update drafts it drafts with that engine (its host on the chip);
+              with none it drafts from the Room's own facts, and the chip says
+              so with Choose (Runs on). */}
           <span className="update-draft-model-action" data-testid="update-draft-model-action">
             <Button
               dense
+              variant="primary"
               loading={ctrl.draftBusy}
-              onClick={() => void ctrl.draft("model")}
-              data-testid="update-verb-draft-model"
+              onClick={() => void ctrl.draft(modelEgress.assigned ? "model" : "deterministic")}
+              data-testid={modelEgress.assigned ? "update-verb-draft-model" : "update-verb-draft-deterministic"}
+              data-verb="draft-update"
             >
-              Draft with model
+              Draft update
             </Button>
-            <EgressChip
-              label={modelEgress.label}
-              scope={modelEgress.scope}
-              title={`UPDATE DRAFTS · ${modelEgress.label}`}
-            />
+            {modelEgress.assigned ? (
+              <EgressChip
+                label={modelEgress.label}
+                scope={modelEgress.scope}
+                title={`UPDATE DRAFTS · ${modelEgress.label}`}
+              />
+            ) : modelEgress.assigned === false ? (
+              <>
+                <span className="surface-token" data-chip data-testid="update-no-engine">No engine for drafts</span>
+                <Button
+                  dense
+                  variant="ghost"
+                  data-testid="update-choose-engine"
+                  onClick={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
+                >
+                  Choose
+                </Button>
+              </>
+            ) : null}
           </span>
         </SurfaceVerbs>
 

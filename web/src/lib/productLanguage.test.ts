@@ -73,7 +73,7 @@ describe("product language contract", () => {
 
   it("adapts legacy wires without exposing their label", () => {
     expect(canonicalProductTerm("recipe")).toBe("persona");
-    expect(productLabel("recipe")).toBe("Agent"  /* HS-100-10 */);
+    expect(productLabel("recipe")).toBe("Assistant"  /* PHILO-17 U32 */);
     expect(productLabel("directory", true)).toBe("Zones");
     expect(productLabel("profile")).toBe("Runs on");
   });

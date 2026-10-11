@@ -603,15 +603,23 @@ describe("Published view: rendered document", () => {
 // ── FIVE VERBS: Draft, Regenerate, Save, Copy Markdown, Publish ──
 
 describe("Five verbs as separate controls", () => {
-  it("shows Draft and Draft-with-model in the list view", async () => {
+  // PHILO-17 U31: ONE Draft update verb; no engine: it drafts from the
+  // Room's facts and the chip says No engine for drafts with Choose.
+  it("shows one Draft update verb; with no engine, No engine for drafts · Choose", async () => {
     setupUpdatePosture({ listUpdates: [] });
     render(<WindowHarness scope="project:p1" />);
 
     fireEvent.click(await screen.findByTestId("updates-verb"));
     await waitFor(() => screen.getByTestId("update-posture"));
 
-    expect(screen.getByTestId("update-verb-draft-deterministic")).toBeTruthy();
-    expect(screen.getByTestId("update-verb-draft-model")).toBeTruthy();
+    const noEngine = await screen.findByTestId("update-no-engine");
+    expect(noEngine.textContent).toBe("No engine for drafts");
+    const verbs = screen.getAllByRole("button", { name: "Draft update" }).filter((b) => b.closest("[data-testid=update-posture]"));
+    expect(verbs).toHaveLength(1);
+    expect(verbs[0].getAttribute("data-testid")).toBe("update-verb-draft-deterministic");
+    expect(screen.queryByText("Draft with model")).toBeNull();
+    fireEvent.click(screen.getByTestId("update-choose-engine"));
+    expect(mockOpenSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "models");
   });
 
   it("shows Save, Regenerate, Copy Markdown, Publish in the editor for a draft", async () => {
@@ -654,7 +662,7 @@ describe("Five verbs as separate controls", () => {
 describe("Egress badge on model drafting", () => {
   // PHILO-15 B53: the chip names the host of the model assigned to update
   // drafts (a LAN box here), never a fixed LOCAL + CLOUD.
-  it("names the update-draft model's host next to Draft-with-model", async () => {
+  it("names the update-draft model's host next to Draft update", async () => {
     setupUpdatePosture({ listUpdates: [] });
     const base = apiFetch.getMockImplementation()!;
     apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
@@ -675,10 +683,17 @@ describe("Egress badge on model drafting", () => {
     await waitFor(() => screen.getByTestId("update-posture"));
 
     const modelAction = screen.getByTestId("update-draft-model-action");
-    const egressChip = modelAction.querySelector(".gadget-chip-egress");
-    expect(egressChip).toBeTruthy();
+    // The chip shows once the assignment read lands (PHILO-17 U31).
+    const egressChip = await waitFor(() => {
+      const chip = modelAction.querySelector(".gadget-chip-egress");
+      expect(chip).toBeTruthy();
+      return chip;
+    });
     await waitFor(() => expect(egressChip!.textContent).toContain("192.168.1.43"));
     expect(egressChip!.textContent).not.toMatch(/cloud/i);
+    // PHILO-17 U31: with an engine set, the one Draft update verb drafts with it.
+    expect(screen.getByTestId("update-verb-draft-model").textContent).toBe("Draft update");
+    expect(screen.queryByTestId("update-no-engine")).toBeNull();
     expect(apiFetch.mock.calls.some(([u]) => String(u).includes("/api/inference/assignments"))).toBe(true);
   });
 });

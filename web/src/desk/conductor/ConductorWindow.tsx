@@ -36,7 +36,7 @@ import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useDesk } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
 import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
-import { conductorHead, conductorMembers, headWords, type ConductorMember } from "./members";
+import { canRun, conductorHead, conductorMembers, headWords, type ConductorMember } from "./members";
 import { answerMember, answers, openMember, stopMember, stops } from "./open";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
 import "../drawer/drawer.css";
@@ -97,6 +97,15 @@ export function MemberReceipt({ member }: { member: ConductorMember | null }) {
     );
   }
   return null;
+}
+
+/** PHILO-17 U32: where Install hooks is offered (the selected agent, or with
+ *  nothing selected any agent), one plain line in the body says why. */
+export function HooksLine({ member }: { member: ConductorMember | null }) {
+  const agents = useConductor((s) => s.detect?.agents);
+  const offered = member ? Boolean(member.detect && needsHooks(member.detect)) : (agents ?? []).some(needsHooks);
+  if (!offered) return null;
+  return <p className="cw-hooks-line" data-testid="conductor-hooks-line">{HOOKS_LINE}</p>;
 }
 
 /** PHILO-15 B34: with nothing selected, every ready agent that lacks hooks
@@ -202,13 +211,19 @@ export function MemberVerbs({ member, onInfo }: { member: ConductorMember | null
 }
 
 /** Phase 16: the Conductor's one big fact: `2 at work`; with none at work,
- *  the asks; with neither, the agents ready. Never a zero. */
+ *  the asks; with neither, the agents ready. Never a zero. PHILO-17 U32:
+ *  ready means the agent can run (`canRun`), not only that it is on this Mac. */
 export function headFact(head: { atWork: number; ask: number }, members: readonly ConductorMember[]): string {
   if (head.atWork > 0) return `${head.atWork} at work`;
   if (head.ask > 0) return `${head.ask} ${head.ask === 1 ? "asks" : "ask"}`;
-  const ready = members.filter((m) => m.role === "ready").length;
-  return ready > 0 ? `${ready} ready` : "No agent";
+  const found = members.filter((m) => m.role === "ready" && m.detect?.installed);
+  const ready = found.filter((m) => canRun(m.detect!)).length;
+  if (ready > 0) return `${ready} ready`;
+  return found.length ? "No agent ready" : "No agent";
 }
+
+/** PHILO-17 U32: what hooks do, in one line, where Install hooks is offered. */
+export const HOOKS_LINE = "Hooks let HoldSpeak see what the agent does and hand it work";
 
 /** `ASKED 6 MIN AGO`, `ASKED 3 H AGO`, `ASKED OCT 5`; `ASKS` with no age. */
 export function askedWord(when: string | undefined): string {
@@ -270,9 +285,9 @@ export function ConductorWindow() {
     setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
   const words = headWords(head);
   const byId = (id: string) => members.find((m) => m.id === id) ?? null;
-  // Phase 16: the harnesses this desk has (installed agents), and The ask:
+  // Phase 16: the coding agents this Mac has (installed), and The ask:
   // each live agent that asks (or holds a call), with its question.
-  const harnesses = (reads.detect?.agents ?? []).filter((a) => a.installed).length;
+  const installed = (reads.detect?.agents ?? []).filter((a) => a.installed).length;
   const asks = members
     .filter((m) => m.role === "live" && (m.live === "ask" || m.live === "held"))
     .map((member) => ({
@@ -320,7 +335,7 @@ export function ConductorWindow() {
                   lamp: w.endsWith(" ASK") ? ("ask" as const) : undefined,
                   text: w,
                 })),
-                harnesses > 0 ? { key: "harnesses", text: `${harnesses} ${harnesses === 1 ? "HARNESS" : "HARNESSES"}` } : null,
+                installed > 0 ? { key: "agents", text: `${installed} ${installed === 1 ? "CODING AGENT" : "CODING AGENTS"}` } : null,
               ]}
             />
           </AppHead>
@@ -376,6 +391,7 @@ export function ConductorWindow() {
               }}
             />
           )}
+          <HooksLine member={selected} />
           {asks.length ? (
             <SurfaceSection label="The ask" data-testid="conductor-asks">
               <SurfaceLedger label="The ask" cols="kit">

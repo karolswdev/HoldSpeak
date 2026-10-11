@@ -139,6 +139,13 @@ export function closeReceipt(flight: AgentFlight): string {
   return words.join(" · ");
 }
 
+/** PHILO-17 U32: an agent can run only when it is on this Mac, its hooks are
+ *  in, and it is signed in (pi signs in to nothing: its row reads `yes`).
+ *  The head counts these as ready; NO HOOKS or SIGN-IN UNKNOWN is not ready. */
+export function canRun(row: AgentRow): boolean {
+  return row.installed && row.hooks === "installed" && row.signed_in === "yes";
+}
+
 /** The ready rows: version, hooks, sign-in from the detect read. */
 export function readyMember(row: AgentRow): ConductorMember {
   const id = `agent:${row.id}`;

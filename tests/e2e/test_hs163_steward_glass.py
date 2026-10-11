@@ -1028,6 +1028,8 @@ def test_run_history_and_policy(
             posture = page.get_by_test_id("steward-posture")
             assert posture.get_attribute("data-phase") == "policy"
 
+            # PHILO-17 U31: the policy detail is under RAW (presets on top).
+            page.locator("[data-testid='steward-policy'] .steward-policy-raw > summary").click()
             # Policy toggles visible
             effects = page.get_by_test_id("steward-policy-effects")
             effects.wait_for(timeout=5000)
@@ -1035,7 +1037,7 @@ def test_run_history_and_policy(
 
             # The CheckGadget renders aria-label, not visible text.
             # Verify an enabled checkbox exists via aria-label.
-            enabled_checkbox = policy_posture.locator('input[aria-label="Steward enabled"]')
+            enabled_checkbox = policy_posture.locator('input[aria-label="Watch on"]')
             assert enabled_checkbox.count() >= 1, "Enabled toggle checkbox should be present"
 
             # SHOT: policy editor

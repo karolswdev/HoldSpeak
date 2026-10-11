@@ -17,7 +17,7 @@ it). Every record is made by the product's own verb.
   is still there after the old read and the new read have both landed.
 * New Decision asks the name first (PHILO-13-08): no record before the name;
   after the name its window opens inside 1.5 s.
-* The palette is the same door (1440, the Chair): New Agent, Enter.
+* The palette is the same door (1440, the Chair): New assistant, Enter.
 
 """
 from __future__ import annotations
@@ -59,7 +59,7 @@ WINDOW_IDS = "() => [...document.querySelectorAll('.desk-window')].map((w) => w.
 VERBS = [
     ("New Note", "/api/notes", True),
     ("New Knowledge", "/api/kbs", True),
-    ("New Agent", "/api/recipes", True),
+    ("New assistant", "/api/recipes", True),
     ("New Thread", "/api/threads", False),
 ]
 
@@ -209,12 +209,12 @@ class TestEveryNewVerbOpensItsWindow:
                     # The palette is the same door.
                     before, sent = page.evaluate(WINDOW_IDS), len(posts)
                     page.locator("[aria-controls=desk-tool-shelf]").first.click()
-                    page.locator("[aria-controls=desk-palette-listbox]").fill("New Agent")
+                    page.locator("[aria-controls=desk-palette-listbox]").fill("New assistant")
                     page.locator("[id='desk-palette-option-desk.new-agent'][aria-selected=true]").wait_for()
                     page.keyboard.press("Enter")
-                    win = self._new_window(page, before, "New Agent from the palette")
+                    win = self._new_window(page, before, "New assistant from the palette")
                     assert posts[sent:].count("/api/recipes") == 1, posts[sent:]
-                    proof.append("palette New Agent: one POST /api/recipes, its window in front")
+                    proof.append("palette New assistant: one POST /api/recipes, its window in front")
 
                 (SHOTS / f"proof-{face}-{width}.txt").write_text("\n".join(proof) + "\n")
                 real = [e for e in errors if "ResizeObserver" not in e]
@@ -234,7 +234,7 @@ class TestEveryNewVerbOpensItsWindow:
             browser, page, errors, posts = self._page(pw, width)
             try:
                 proof: list[str] = []
-                legs = [("New Note", "/api/notes", "notes"), ("New Agent", "/api/recipes", "recipes"),
+                legs = [("New Note", "/api/notes", "notes"), ("New assistant", "/api/recipes", "recipes"),
                         ("New Thread", "/api/threads", "threads")]
                 for label, path, key in legs:
                     before, sent, kept = page.evaluate(WINDOW_IDS), len(posts), count(page, path, key)
