@@ -269,14 +269,14 @@ function DeskFaces() {
       )}
       {/* Recovery remains direct and in-place: FirstWords opens Setup through
           this existing surface registry without restoring the whole Desk. */}
-      {/* A first run he opened again keeps his windows: they wait off glass
-          (recovery-only would clear them) and come back when he leaves it. */}
-      {serverArrival || !firstRunOpen ? (
-        <SurfaceWindows
-          key={serverArrival ? "first-value-recovery" : "desk"}
-          firstValueRecoveryOnly={serverArrival}
-        />
-      ) : null}
+      {/* First run (owed or opened again) registers only its recovery doors
+          (Setup, Runs on). Opened again, his desk windows are kept: they wait
+          off glass and come back when he leaves first run. */}
+      <SurfaceWindows
+        key={serverArrival ? "first-value-recovery" : firstRunOpen ? "first-run-reopened" : "desk"}
+        firstValueRecoveryOnly={arrivalRequired}
+        keepDeskWindows={!serverArrival && firstRunOpen}
+      />
       {!arrivalRequired && <TrustWindow />}
       {!arrivalRequired && <Dock center={<RecordOrb />} />}
       {!arrivalRequired && <SnapGhost />}
