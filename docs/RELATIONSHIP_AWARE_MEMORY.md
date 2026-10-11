@@ -85,13 +85,13 @@ Set the models in the **Models** window.
 | Place | What it shows |
 | --- | --- |
 | **Search** (`⌘K`) | Two-line hits: the matching passage, a token that names the retriever, and the day. |
-| **Desk memory** window (**Go** menu) | A recall over the whole Desk or one Project. See below. |
+| **Memory** window (**Go** menu) | A recall over the whole Desk or one Project. See below. |
 | Project Room | Standing pages for that Project. |
 | Brief | Standing pages for the desk. |
 | Model prompts | Source blocks that HoldSpeak adds to a request. See below. |
 | MCP and HTTP | The same data for other clients. |
 
-## The Desk memory recall
+## The Memory recall
 
 A recall returns sections, not one flat list.
 A superseded or disputed Decision never looks current.
@@ -160,7 +160,7 @@ Other routes:
 
 | Route or tool | Use |
 | --- | --- |
-| `GET /api/memory/recall` | The Desk memory recall. Takes `query`, `filter`, `limit`, and `recent`. |
+| `GET /api/memory/recall` | The Memory recall. Takes `query`, `filter`, `limit`, and `recent`. |
 | `GET /api/memory/pages` | Standing pages. Takes `scope` (`desk` or `project`) and `project_id`. |
 | `memory.observations` | Beliefs with evidence and history. |
 | `memory.page` | One standing page. |

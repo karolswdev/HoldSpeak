@@ -1,10 +1,15 @@
-// PARKED (PHILO-17 doors, 2026-10-10): the Dock's People tile carried the
-// next 1:1 time ("1:1 15:00", desk-dock-people-state). People left the Dock
-// (its door is the People drawer on the desk and Go), so this read left the
-// Dock with it. Cut unchanged from components/window/Dock.tsx; nothing
-// imports it. The drawer can pick it up if the owner wants the mark back.
-import { apiFetch } from "../../../lib/api";
-import { nextOneOnOneLabel, type DockRelationshipRead } from "../../components/window/dockState";
+/** PHILO-17 (doors) — the next 1:1 on the People drawer.
+ *
+ *  The Dock's People tile carried the next 1:1 time (`1:1 15:00`). People
+ *  left the Dock (its door is the drawer on the desk and Go), so the mark
+ *  moved with it: the same read, People readiness first, then the
+ *  relationships and (when the list rows do not carry it) their briefs.
+ *  Nothing shows when People is not ready, a read fails, or there is no
+ *  next 1:1. */
+import { useCallback, useEffect, useRef, useState } from "react";
+import { apiFetch } from "../../lib/api";
+import { useOnDeskChanged } from "../useDeskChangedRefresh";
+import { formatDockTime, nextOneOnOneLabel, type DockRelationshipRead } from "../components/window/dockState";
 
 function wireRows<T>(body: unknown, key: string): T[] {
   if (Array.isArray(body)) return body as T[];
@@ -78,3 +83,25 @@ export async function readPeopleProjection(): Promise<PeopleProjectionRead> {
   };
 }
 
+
+/** The People drawer's caption: `1:1 15:00`, or null (nothing to show). */
+export function useNextOneOnOne(): string | null {
+  const [label, setLabel] = useState<string | null>(null);
+  // The newest read wins: an older answer that lands late is dropped.
+  const generation = useRef(0);
+  const read = useCallback(() => {
+    const mine = ++generation.current;
+    readPeopleProjection()
+      .then((people) => {
+        if (mine !== generation.current) return;
+        if (people.readiness !== "ready" || !people.complete || !people.nextOneOnOne) setLabel(null);
+        else setLabel(`1:1 ${formatDockTime(people.nextOneOnOne)}`);
+      })
+      .catch(() => {
+        if (mine === generation.current) setLabel(null);
+      });
+  }, []);
+  useEffect(read, [read]);
+  useOnDeskChanged(read);
+  return label;
+}

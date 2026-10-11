@@ -194,7 +194,7 @@ describe("H-C3 Dock rendering", () => {
     await waitFor(() => expect(screen.getByTestId("desk-dock-send-state")).toHaveTextContent("SEND FAILED"));
     expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull();
     expect(mocks.refreshNeedsYou).toHaveBeenCalledWith(true);
-    // PHILO-17 (doors): People left the Dock; its 1:1 read is parked.
+    // PHILO-17 (doors): People left the Dock; its 1:1 read moved to the People drawer (screen/nextOneOnOne.ts).
     expect(screen.queryByTestId("desk-dock-people-state")).toBeNull();
     expect(mocks.apiFetch).not.toHaveBeenCalledWith("/api/people/readiness");
   });

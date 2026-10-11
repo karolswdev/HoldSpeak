@@ -30,6 +30,9 @@ export interface ScreenObject {
   count?: number;
   badge?: string;
   ariaExtra?: string;
+  /** PHILO-17 (doors): a short line under the name (the People drawer's
+   *  next 1:1, `1:1 15:00`). */
+  caption?: string;
   /** A read for this drawer failed: it wears NOT READ and a Retry. */
   notRead?: { retry: { type: "project"; id: string } | { type: "people" } };
   target: ScreenTarget;
@@ -66,6 +69,8 @@ export interface ScreenInputs {
   unknownMeetings?: boolean;
   /** People could not be read. */
   peopleNotRead?: boolean;
+  /** The next 1:1 (`1:1 15:00`); null or absent draws nothing. */
+  peopleCaption?: string | null;
 }
 
 const NOT_READ = { tone: "fail" as const, label: "NOT READ" };
@@ -160,6 +165,7 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
     // The People drawer is the ledger; one person (loose, below) is the badge.
     ...sprites("people", "people"),
     lamp: input.peopleNotRead ? NOT_READ : undefined,
+    caption: input.peopleCaption || undefined,
     notRead: input.peopleNotRead ? { retry: { type: "people" } } : undefined,
     target: { type: "people" },
   });

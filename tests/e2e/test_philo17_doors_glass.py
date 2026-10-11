@@ -79,12 +79,36 @@ SHELLS_JS = r"""() => [...document.querySelectorAll('.desk-window-shell:not([dat
   .map((s) => s.getAttribute('aria-label') || (s.classList.contains('conductor-window') ? 'Conductor' : ''))"""
 
 
-def _seed() -> None:
+def _seed() -> str:
+    """Three projects, and one report whose 1:1 series is linked to an event
+    in 3 hours (the People drawer's next 1:1). Returns that time as HH:MM."""
+    import time as _time
+    from datetime import datetime, timedelta, timezone
+
     from holdspeak.db import get_database
+    from holdspeak.people import production_people_store
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.people_service import PeopleService
 
     db = get_database()
     for i, name in enumerate(PROJECTS):
         db.projects.create_project(project_id=f"p-door-{i}", name=name, description="", keywords=[])
+    start = (datetime.now(timezone.utc) + timedelta(hours=3)).replace(second=0, microsecond=0)
+    iso = start.isoformat().replace("+00:00", "Z")
+    end = (start + timedelta(minutes=30)).isoformat().replace("+00:00", "Z")
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO calendar_events (id, uid, title, starts_at, ends_at, last_seen_at, subscription_revision,"
+            " source_id, source_label) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ("ev-door-1on1", "uid-avery-1on1", "Avery / Karol 1:1", iso, end, _time.time(), "r1", "door-cal", "Work"))
+        conn.commit()
+    owner = Principal(PrincipalKind.OWNER, "karol")
+    store = production_people_store()
+    store.initialize()
+    people = PeopleService(store)
+    rel = people.create_relationship(owner, {"display_name": "Avery Chen", "relationship_kind": "direct_report"})
+    people.link_calendar_series(owner, rel["id"], "uid-avery-1on1", "door-cal", "Avery / Karol 1:1")
+    return start.astimezone().strftime("%H:%M")
 
 
 def _row(page: Any, label: str) -> Any:
@@ -102,7 +126,7 @@ class TestDoors:
         monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
         _ensure_build()
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-        _seed()
+        self.next_1on1 = _seed()
         self.base = base
         try:
             yield
@@ -128,6 +152,21 @@ class TestDoors:
         for old in ("Desk memory", "List view"):
             if old in words:
                 fails[f"D5 no '{old}' ({where})"] = [line for line in words.splitlines() if old in line][:3]
+
+    def _one_on_one(self, page: Any, width: int, fails: dict[str, Any]) -> None:
+        """The People drawer shows the next 1:1 (it left the Dock with People)."""
+        want = f"1:1 {self.next_1on1}"
+        caption = page.locator("[data-testid='desk-icon-caption-drawer:people']")
+        try:
+            caption.wait_for(timeout=T)
+            text = caption.inner_text().strip()
+        except Exception as exc:  # noqa: BLE001
+            text = f"missing: {str(exc)[:80]}"
+        if text != want:
+            fails[f"{width} the People drawer shows the next 1:1"] = {"want": want, "got": text}
+        label = page.locator(".desk-screen [data-object-id='drawer:people']").get_attribute("aria-label") or ""
+        if want not in label:
+            fails[f"{width} the People drawer says the next 1:1"] = label
 
     def _opens(self, page: Any, door: Callable[[], None], name: str) -> list[str]:
         self._fresh(page)
@@ -168,6 +207,7 @@ class TestDoors:
                 if not any(label.startswith("Missed") for label in dock["launchers"]):
                     fails["D1 the Missed launcher"] = dock["launchers"]
                 page.screenshot(path=str(SHOTS / "1440-dock.png"))
+                self._one_on_one(page, 1440, fails)
 
                 # ── D2: Go and the HoldSpeak menu ───────────────────────────
                 go = self._menu(page, "go")
@@ -257,6 +297,7 @@ class TestDoors:
                 page.on("pageerror", lambda e: errors.append(str(e)[:200]))
                 page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
                 self._fresh(page)
+                self._one_on_one(page, 393, fails)
                 go = self._menu(page, "go")
                 if go != PHONE_GO:
                     fails["D4 393 Go keeps the B21 shape without Settings"] = go
