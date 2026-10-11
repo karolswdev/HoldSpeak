@@ -244,6 +244,48 @@ function subscribeResizeClamp() {
   };
 }
 
+/** PHILO-17 snapjump: while a window title drag holds the pointer, a
+ * native drag (a desk icon's drag-to-send) never starts, and the icon's own
+ * drag handler never runs (no hand, no dimmed icon). `nativeDragHolder` is
+ * the window that holds; any pointer, mouse or touch ending, a cancel, or
+ * the window closing releases it. */
+let nativeDragHolder: string | null = null;
+let nativeDragGuard = false;
+function holdNativeDrag(id: string, held: boolean): void {
+  if (held) nativeDragHolder = id;
+  else releaseNativeDrag(id);
+  if (nativeDragGuard || typeof document === "undefined") return;
+  nativeDragGuard = true;
+  document.addEventListener(
+    "dragstart",
+    (e) => {
+      if (!nativeDragHolder) return;
+      e.preventDefault();
+      // The capture phase on the document runs before React's root
+      // listener: the icon's onDragStart never sees this drag.
+      e.stopPropagation();
+    },
+    true,
+  );
+  const release = () => {
+    nativeDragHolder = null;
+  };
+  for (const type of ["pointerup", "pointercancel", "mouseup", "touchend", "touchcancel"])
+    document.addEventListener(type, release, true);
+}
+
+function releaseNativeDrag(id: string): void {
+  if (nativeDragHolder === id) nativeDragHolder = null;
+}
+
+/** PHILO-17 snapjump: a drag that ends by a real release (pointerup, or
+ * a mouseup/touchend where pointer events are absent). A lost pointer
+ * capture or a cancel is not a release: it never tiles the window. */
+function releasedHere(event: Event | undefined): boolean {
+  const type = event?.type ?? "";
+  return type === "pointerup" || type === "mouseup" || type === "touchend";
+}
+
 /** The desk-window physics (Phase 93). Module-private since HS-95-02:
  * every window adopts it through `DeskWindowFrame`, never by hand. */
 function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
@@ -510,8 +552,11 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opts.fitContent, arranged, open]);
 
+  // A window that closes or goes away mid-drag lets go of the hold.
+  useEffect(() => () => releaseNativeDrag(id), [id, open]);
+
   const dragBind = useDrag(
-    ({ event, first, last, movement: [mx, my], memo }) => {
+    ({ event, first, last, xy: [px, py], movement: [mx, my], memo }) => {
       // Buttons and inputs inside the head keep their own gestures.
       if (first) {
         const t = event?.target as HTMLElement | null;
@@ -523,6 +568,11 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         if (mode === "stage" || mode === "expose") return { skip: true };
       }
       if (memo?.skip) return memo;
+      // PHILO-17 snapjump: while the title drag holds the pointer, no
+      // native drag starts. The first step moves the window out from under
+      // the press point; a draggable desk icon under that point started a
+      // native drag, Chrome cancelled the pointer, and the drag died.
+      holdNativeDrag(id, !last);
       const base: PanelRect = memo?.base ?? measure();
       if (Math.abs(mx) + Math.abs(my) > 3) {
         // Nothing animates under the pointer (the raise lift, an arrange).
@@ -531,19 +581,20 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         // A snap region shows its landing tile as a live ghost while
         // dragging (HS-97-05); releasing inside it lands exactly there
         // (HS-95-03); anywhere else parks the dragged rect as before.
-        const ev = event as PointerEvent | undefined;
-        const tile =
-          ev && typeof ev.clientX === "number"
-            ? snapForPointer(
-                ev.clientX,
-                ev.clientY,
-                window.innerWidth || 1280,
-                window.innerHeight || 800,
-              )
-            : null;
+        // PHILO-17 snapjump: the pointer is the gesture's last pointer
+        // (`xy`), never the end event's own clientX, and only a real
+        // release (pointerup) tiles. A lost capture or a cancel carries
+        // clientX 0, clientY 0 in Chrome: that read as the top-left corner
+        // and tiled the window into its quarter on the first step.
+        const tile = snapForPointer(
+          px,
+          py,
+          window.innerWidth || 1280,
+          window.innerHeight || 800,
+        );
         publishGhost(last ? null : tile);
         writeRect(
-          (last ? tile : null) ??
+          (last && releasedHere(event) ? tile : null) ??
             clampRect(
               { ...base, x: base.x + mx, y: base.y + my },
               minW,
