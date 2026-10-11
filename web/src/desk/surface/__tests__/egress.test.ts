@@ -1,6 +1,7 @@
 // HS-172-03 + HS-174-04 — egressFor + egressForEvent: the egress-label + scope mapper.
 import { describe, expect, it } from "vitest";
 import { bareHost, egressFor, egressForEvent, hostPlace, isLoopbackHost, receiptLabel } from "../egress";
+import spellings from "../../../../../tests/fixtures/loopback_spellings.json";
 
 describe("egressFor", () => {
   it("returns empty for null/undefined/empty", () => {
@@ -56,20 +57,12 @@ describe("hostPlace — the one helper for host words (PHILO-17 U16)", () => {
     expect(hostPlace("0:0:0:0:0:0:0:1").place).toBe("mac");
   });
 
-  it("parser parity: every spelling is classified as holdspeak/loopback_http.py classifies it (Astra r2 M3)", () => {
-    // The right-hand values are `is_loopback_engine_host(h)` from the backend
-    // (Python 3.14), printed on 2026-10-10: strict dotted quad, no leading
-    // zeros, valid IPv6 loopback only, a scope id allowed, no trailing dot.
-    const backend: [string, boolean][] = [
-      ["127.00.0.1", false], [":::1", false], ["::1", true], ["0:0:0:0:0:0:0:1", true], ["::0:1", true],
-      ["0::1", true], ["127.1.2.3", true], ["::ffff:127.0.0.1", true], ["::ffff:7f00:1", true], ["0000::1", true],
-      ["00000::1", false], ["127.0.0.1.", false], ["localhost.", false], ["LOCALHOST", true], ["[::1]", true],
-      ["1::1", false], ["::", false], ["0.0.0.0", false], ["127.0.0.256", false], ["127.0.0", false],
-      ["dev.localhost", false], ["::1%lo0", true], ["1:2:3:4:5:6:7:8:9", false], ["::ffff:10.0.0.1", false],
-      ["127.0.0.01", false], ["0127.0.0.1", false], ["::1:", false], ["1:0:0:0:0:0:0:1", false],
-      ["0:0:0:0:0:0:0:0:1", false],
-    ];
-    for (const [host, loopback] of backend) expect(isLoopbackHost(host), host).toBe(loopback);
+  it("parser parity: every spelling is classified as the backend classifies it (Astra r2 M3)", () => {
+    // One table, read here and by tests/unit/test_loopback_spellings_parity.py
+    // against holdspeak/loopback_http.py and holdspeak/intel/providers.py.
+    for (const { host, loopback } of spellings.loopback) expect(isLoopbackHost(host), host).toBe(loopback);
+    const place: Record<string, string> = { local: "mac", private_network: "lan", cloud: "cloud" };
+    for (const { url, boundary } of spellings.boundary) expect(hostPlace(url).place, url).toBe(place[boundary]);
   });
 
   it("classifies the RAW spelling, before any URL normalisation (Astra r2 M3)", () => {
