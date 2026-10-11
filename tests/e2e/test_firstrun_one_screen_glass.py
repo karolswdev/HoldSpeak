@@ -270,7 +270,8 @@ def test_first_run_one_screen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, w
             # a link the hub cannot read: CAN'T READ · SERVER REFUSED
             field = cal.get_by_role("textbox", name="Calendar URL", exact=True)
             field.fill(f"{ics.base}/gone.ics")
-            expect(cal.locator(".firstrun-field .gadget-chip-egress")).to_have_text("127.0.0.1")
+            # PHILO-17 runsonwords (#1083): a loopback host is THIS DEVICE.
+            expect(cal.locator(".firstrun-field .gadget-chip-egress")).to_have_text("THIS DEVICE")
             shot("cal", cal)
             cal.get_by_role("button", name="Add", exact=True).click()
             failed = cal.get_by_test_id("firstrun-calendar-cant-read")
