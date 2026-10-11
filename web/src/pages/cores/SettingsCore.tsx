@@ -1359,7 +1359,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       (pending) => pending.id !== id,
     );
   };
-  const performSave = async (job: SettingsWriteJob, keepalive = false) => {
+  const performSave = async (job: SettingsWriteJob) => {
     // HS-200-41 (return-to-task, focus half): the control the owner was on
     // when this write began, captured BEFORE the await — see the
     // do-not-steal rule in `desk/returnToTask.ts`.
@@ -1382,8 +1382,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
           json: revisionRef.current
             ? { ...payload, _revision: revisionRef.current }
             : payload,
-          // PHILO-17 words: a flush on page leave outlives the page.
-          ...(keepalive ? { keepalive: true } : {}),
         },
       );
       const authoritative = result.settings ?? payload;
@@ -1398,7 +1396,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
       setWrittenAt(new Date().toTimeString().slice(0, 8));
       return true;
     } catch (error) {
-      setRefusal(readableError(error));
+      // The leave send moved the revision: this older save's refusal is
+      // expected, and the newer values already went out.
+      const supersededByLeave =
+        leaveSentRef.current && error instanceof ApiError && error.status === 409;
+      if (!supersededByLeave) setRefusal(readableError(error));
       writerFencedRef.current = true;
       removePendingJob(job.id);
       try {
@@ -1412,12 +1414,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
       setSaving(false);
     }
   };
-  const save = (changes: Array<[string[], unknown]>, keepalive = false): Promise<boolean> => {
+  const save = (changes: Array<[string[], unknown]>): Promise<boolean> => {
     const job = { id: ++nextJobIdRef.current, changes };
     pendingJobsRef.current.push(job);
     const next = saveQueue.current.then(
-      () => performSave(job, keepalive),
-      () => performSave(job, keepalive),
+      () => performSave(job),
+      () => performSave(job),
     );
     saveQueue.current = next.then(
       () => undefined,
@@ -1438,12 +1440,26 @@ function SettingsFace({ hero, scope }: CoreProps) {
   };
   const update = (path: string[], next: unknown) => updateMany([[path, next]]);
   // PHILO-17 words: a reload inside the 700 ms delay lost the edit. When the
-  // page hides, the pending edit is sent at once.
+  // page hides, the unsent edits (and any queued behind a save in flight) go
+  // out NOW as one keepalive PUT of only the changed paths, never chained
+  // behind the queue (Astra r2 on #1090). It carries no revision, so it
+  // applies; an older full-document save still in flight carries the old
+  // revision, and the hub refuses it if it lands later.
+  const leaveSentRef = useRef(false);
   useFlushOnLeave(() => {
     clearTimeout(saveTimer.current);
-    const pending = debouncedChangesRef.current;
+    const unsent = debouncedChangesRef.current;
+    const queued = pendingJobsRef.current.flatMap((job) => job.changes);
+    if (!unsent.length && pendingJobsRef.current.length < 2) return;
     debouncedChangesRef.current = [];
-    if (pending.length) void save(pending, true);
+    const patch = mergeSettingsChanges({} as SettingsResponse, [...queued, ...unsent]);
+    leaveSentRef.current = true;
+    writerFencedRef.current = true;
+    void apiFetch("/api/settings", {
+      method: "PUT",
+      json: patch,
+      keepalive: true,
+    }).catch(() => undefined);
   });
   const commitMany = async (changes: Array<[string[], unknown]>) => {
     installSettingsChanges(resource.data, changes, resource.setData);

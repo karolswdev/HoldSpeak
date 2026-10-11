@@ -53,3 +53,83 @@ describe("useOwnerName flushes on page leave", () => {
     Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" });
   });
 });
+
+describe("Astra r2 on #1090: owner saves are newest-wins", () => {
+  it("A in flight → edit B → hide → A lands after B: the hub keeps B", async () => {
+    // A tiny hub: last-writer-wins without a revision, 409 on a stale one.
+    const hub = { owner: { name: "Karl", aliases: [] as string[] }, revision: "r1" };
+    let rev = 1;
+    const held: Array<() => void> = [];
+    vi.stubGlobal("fetch", vi.fn((_url: string, init?: RequestInit) => {
+      const method = (init?.method || "GET").toUpperCase();
+      if (method === "GET") {
+        return Promise.resolve(new Response(JSON.stringify({ owner: hub.owner, _revision: hub.revision }),
+          { status: 200, headers: { "content-type": "application/json" } }));
+      }
+      const body = JSON.parse(String(init!.body));
+      calls.push({ method, body, keepalive: init?.keepalive });
+      const apply = () => {
+        if (body._revision && body._revision !== hub.revision) {
+          return new Response(JSON.stringify({ success: false, error: "stale", revision: hub.revision }),
+            { status: 409, headers: { "content-type": "application/json" } });
+        }
+        hub.owner = body.owner;
+        hub.revision = `r${++rev}`;
+        return new Response(JSON.stringify({ settings: { owner: hub.owner, _revision: hub.revision } }),
+          { status: 200, headers: { "content-type": "application/json" } });
+      };
+      // The first PUT (A) is held until the test releases it; later ones land at once.
+      if (calls.filter((c) => c.method === "PUT").length === 1) {
+        return new Promise<Response>((resolve) => held.push(() => resolve(apply())));
+      }
+      return Promise.resolve(apply());
+    }));
+    vi.useFakeTimers();
+    render(<Probe />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+    act(() => { owner.setName("Karol A"); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(600); }); // A sent, held
+    expect(puts()).toHaveLength(1);
+    act(() => { owner.setName("Karol B"); });
+    await act(async () => { window.dispatchEvent(new Event("pagehide")); }); // B sent now
+    expect(puts()[1]).toMatchObject({ body: { owner: { name: "Karol B" } }, keepalive: true });
+    expect(hub.owner.name).toBe("Karol B");
+
+    await act(async () => { held[0](); await vi.advanceTimersByTimeAsync(0); }); // A lands after B
+    expect(hub.owner.name).toBe("Karol B");
+  });
+
+  it("a new edit while a save is in flight waits, then sends only the newest value", async () => {
+    const releases: Array<() => void> = [];
+    vi.stubGlobal("fetch", vi.fn((_url: string, init?: RequestInit) => {
+      const method = (init?.method || "GET").toUpperCase();
+      const ok = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+      if (method === "GET") return Promise.resolve(ok({ owner: { name: "Karl", aliases: [] } }));
+      const body = JSON.parse(String(init!.body));
+      calls.push({ method, body, keepalive: init?.keepalive });
+      return new Promise<Response>((resolve) => releases.push(() => resolve(ok({ settings: body }))));
+    }));
+    vi.useFakeTimers();
+    render(<Probe />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    act(() => { owner.setName("One"); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(600); });
+    act(() => { owner.setName("Two"); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(600); });
+    act(() => { owner.setName("Three"); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(600); });
+    expect(puts()).toHaveLength(1); // one in flight
+    await act(async () => { releases[0](); await vi.advanceTimersByTimeAsync(0); });
+    expect(puts().map((c) => (c.body as { owner: { name: string } }).owner.name)).toEqual(["One", "Three"]);
+  });
+
+  it("Enter an alias, then leave the editor at once (« Settings): the alias is sent", async () => {
+    const view = render(<Probe />);
+    await act(async () => { await Promise.resolve(); });
+    act(() => { owner.addAliases("Carol"); });
+    expect(puts()).toEqual([]);
+    view.unmount();
+    expect(puts()).toEqual([{ method: "PUT", body: { owner: { name: "Karl", aliases: ["Carol"] } }, keepalive: true }]);
+  });
+});
