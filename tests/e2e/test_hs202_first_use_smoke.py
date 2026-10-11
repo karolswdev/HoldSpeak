@@ -670,7 +670,10 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             expect(field).to_have_attribute("aria-activedescendant", target.get_attribute("id"))
             field.press("Enter")
             meeting = page.get_by_role("region", name=MEETING_TITLE, exact=True)
-            _loaded(meeting.get_by_text(engine.result.summary, exact=True))
+            # PHILO-17: the meeting's own window holds the whole record (its
+            # Send well previews the same words); the summary is its slab.
+            summary = _loaded(meeting.get_by_test_id("meeting-summary-text"))
+            expect(summary).to_have_text(engine.result.summary)
             restarted = _api(page, "GET", "/api/meetings/" + meeting_id, token=TOKEN)
             assert restarted["run_receipt"] == receipt
             print("PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub")

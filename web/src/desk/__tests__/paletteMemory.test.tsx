@@ -97,8 +97,9 @@ describe("the palette finds a word inside a meeting", () => {
     expect(row.textContent).not.toContain("<mark>");
     expect(row.textContent).toContain("MEETING");
     fireEvent.click(row);
-    // The meeting is not in the store: it is held and loaded, then opened.
-    await vi.waitFor(() => expect(opened.surfaces).toContainEqual(["review-meetings", "meeting:m-77"]));
+    // The meeting is not in the store: it is held and loaded, then opened
+    // in its own window (PHILO-17).
+    await vi.waitFor(() => expect(useDesk.getState().openPullout).toHaveBeenCalledWith("meeting:m-77"));
     expect(useDesk.getState().refresh).toHaveBeenCalled();
   });
 

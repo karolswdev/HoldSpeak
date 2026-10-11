@@ -12,7 +12,7 @@ from holdspeak.kernel.runtime import _configure
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from tests.unit.test_meeting_deferred_admission import FakeHost, FakeIntel, _Route
 from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
-from .glass_infra import _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import clear_hub_windows, _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
 
@@ -92,6 +92,9 @@ def test_summary_and_receipt_survive_real_hub_restart_on_both_glasses(tmp_path, 
             for width in (1440, 393):
                 page.set_viewport_size({"width": width, "height": 900 if width == 1440 else 852})
                 _normal_chair(page)
+                # One hub is one desk: the 1440 pass's meeting window comes back
+                # over the list at 393 (PHILO-17 meeting window).
+                clear_hub_windows(page, TOKEN)
                 page.evaluate("""() => {
                     localStorage.removeItem('hs.desk.workspace.v1');
                     sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key:'review-meetings'}));
@@ -100,7 +103,7 @@ def test_summary_and_receipt_survive_real_hub_restart_on_both_glasses(tmp_path, 
                 _normal_chair(page)
                 row = page.get_by_test_id(f"meeting-row-{meeting.id}")
                 row.locator(".meetings-stream-row-body").click()
-                page.locator("#surface-meetings").get_by_text(
+                page.locator(f"[id='pullout:meeting:{meeting.id}']").get_by_text(
                     "We agreed to send the budget report.", exact=True
                 ).wait_for()
                 _settle(page)

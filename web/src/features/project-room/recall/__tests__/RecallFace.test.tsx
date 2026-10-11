@@ -7,7 +7,8 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../../lib/api";
-import { openProjectRoom, openSurfaceOr } from "../../../../desk/shell";
+import { openPrimitive, openProjectRoom, openSurfaceOr } from "../../../../desk/shell";
+import { takeMeetingRequest } from "../../../../desk/objectWindows";
 import { RecallFace } from "../RecallFace";
 import { useDrawers } from "../../../../desk/drawer/store";
 import { displayLine, missLine, searchedToken } from "../model";
@@ -20,6 +21,7 @@ vi.mock("../../../../desk/shell", async (original) => ({
   ...await original<typeof import("../../../../desk/shell")>(),
   openSurfaceOr: vi.fn(),
   openProjectRoom: vi.fn(),
+  openPrimitive: vi.fn(),
 }));
 vi.mock("../../../../desk/components/MicButton", () => ({
   MicButton: ({ label }: { label: string }) => (
@@ -171,7 +173,10 @@ describe("RecallFace (HS-200-13)", () => {
     render(<RecallFace />);
     await search();
     fireEvent.click(screen.getByRole("button", { name: "Open source: MTG 09-07" }));
-    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/meetings", "meeting:m-sun?segment=2");
+    // PHILO-17: the meeting's own window, at the moment (row 2).
+    expect(openPrimitive).toHaveBeenCalledWith("meeting:m-sun");
+    expect(takeMeetingRequest("m-sun")?.segment).toBe(2);
+    void openSurfaceOr;
     fireEvent.click(screen.getAllByRole("button", { name: "Open the Project: Q4 platform" })[0]);
     // PHILO-17 U30: a Project opens its Room (one home), never a drawer.
     expect(openProjectRoom).toHaveBeenCalledWith("p-q4");

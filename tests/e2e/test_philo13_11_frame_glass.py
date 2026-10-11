@@ -338,12 +338,15 @@ class TestTheFrame:
                     failures["chair"] = self._fails(m, width, False)
                     page.screenshot(path=str(SHOTS / f"build-C1-1-the-desk-{tag}.png"))
                     # A window with wings that do not fit: the strip menu (C1-2e).
-                    _stage(page, "review-meetings")
-                    page.locator(".desk-window-shell[aria-label='Meetings']").wait_for()
+                    # PHILO-17: the Meetings window is the list (two wings that
+                    # fit); Speak keeps four wings and a door, which fold.
+                    _stage(page, "dictate")
+                    meeting_window = page.locator(".desk-window-shell[aria-label='Speak']")
+                    meeting_window.wait_for()
                     m = self._measure(page, width, "meetings", facts)
                     failures["meetings"] = self._fails(m, width, True)
                     page.screenshot(path=str(SHOTS / f"build-C1-2a-window-gadgets-{tag}.png"))
-                    strip = page.locator(".desk-window-shell[aria-label='Meetings'] .surface-strip-menu")
+                    strip = meeting_window.locator(".surface-strip-menu")
                     if strip.count() != 1:
                         # §3a: four wings and a gear door do not fit one 393 row
                         failures["meetings"]["F3 the wings fold into the strip menu"] = {"strip_menus": strip.count()}

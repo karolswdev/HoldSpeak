@@ -3,11 +3,20 @@
  * Red on 10af6575: open Priya on Prep, choose Now, open the same 1:1 again —
  * the scope string is unchanged (`people:r1:prep`), so the lens effect never
  * re-ran and People stayed on Now (PeopleCore.tsx:310).
+ *
+ * PHILO-17 (2b): the open lands in the person's own window
+ * (PersonWindowBody); the fence follows it there.
  */
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { PeopleCore } from "../PeopleCore";
+import { PersonWindowBody } from "../PeopleCore";
 import { openPerson } from "../../../desk/openObject";
+import { personWindowRef } from "../../../desk/objectWindows";
+
+vi.mock("../../../desk/shell", async (original) => ({
+  ...(await original<typeof import("../../../desk/shell")>()),
+  openPrimitive: vi.fn(),
+}));
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -27,7 +36,9 @@ describe("PHILO-13-06: a repeat Prep open re-applies Prep", () => {
     };
     vi.stubGlobal("fetch", vi.fn(async (input: string) => (handlers[String(input)] ?? (() => json({})))()));
 
-    render(<PeopleCore scope="people:r1:prep" />);
+    // The 1:1 row's open: THAT person, on Prep.
+    personWindowRef("people:r1:prep");
+    render(<PersonWindowBody relationshipId="r1" />);
     await waitFor(() => expect(selectedLens()).toBe("Prep"));
 
     fireEvent.click(screen.getByRole("tab", { name: "Now" }));

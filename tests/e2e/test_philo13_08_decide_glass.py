@@ -25,7 +25,6 @@ from typing import Any
 
 import pytest
 
-from .chair_windows import open_chair_window
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
@@ -154,7 +153,8 @@ class TestDecideGlass:
         page.get_by_test_id("meetings-headline").wait_for(timeout=T)
         page.wait_for_timeout(600)
         self._press(page.get_by_test_id(f"meeting-row-{MEETING}").locator(".meetings-stream-row-body"))
-        well = page.get_by_test_id("meeting-decide-well").first
+        # PHILO-17: the row opens the meeting's own window, with the record.
+        well = page.locator(f"[id='pullout:meeting:{MEETING}'] [data-testid=meeting-decide-well]").first
         well.wait_for(timeout=T)
         return well
 
@@ -191,45 +191,28 @@ class TestDecideGlass:
         return gestures
 
     def _switch_to(self, page: Any, meeting_id: str) -> None:
-        """Select another meeting in the SAME Meetings record."""
-        if not self.touch:
-            # A Meetings reload draws the list's loading line in place of the
-            # rows (SurfaceState, Surface.tsx:232), so a row can detach under
-            # the press right after a decision lands. He presses the row once
-            # it is drawn again.
-            row = page.get_by_test_id(f"meeting-row-{meeting_id}").locator(".meetings-stream-row-body")
-            for attempt in range(3):
-                try:
-                    row.wait_for(timeout=T)
-                    self._press(row)
-                    return
-                except Exception as error:  # noqa: BLE001 - only a detach is retried
-                    if "not attached" not in str(error) or attempt == 2:
-                        raise
-                    page.wait_for_timeout(300)
-            return
-        # 393: one window at a time, and the record folds its list. He sends
-        # Meetings to the back (it stays open, the same record), steps to the
-        # Chair's week and presses Open on the other meeting: the Meetings
-        # window comes back with that meeting selected (HistoryCore's scope).
-        title = MEETING_B_TITLE if meeting_id == MEETING_B else MEETING_TITLE
-        self._press(page.get_by_role("button", name="To back Meetings", exact=True))
+        """Open another meeting from the Meetings list. PHILO-17 ("A meeting
+        opens in one window"): each meeting is its own window; the list row
+        opens it (or brings it to the front)."""
+        page.locator(".desk-dock").get_by_role("button", name="Meetings", exact=True).click()
         page.wait_for_timeout(400)
-        # PHILO-14 A1 (#939): the Chair's windows start closed; he opens The
-        # week from Go (a no-op when it is already shown).
-        open_chair_window(page, "The week")
-        opener = page.locator("li, .surface-row", has_text=title).get_by_test_id("arrival-meeting-open").first
-        for _ in range(6):
-            if opener.count() and opener.is_visible():
+        # A Meetings reload draws the list's loading line in place of the
+        # rows (SurfaceState, Surface.tsx:232), so a row can detach under
+        # the press right after a decision lands. He presses the row once
+        # it is drawn again.
+        row = page.get_by_test_id(f"meeting-row-{meeting_id}").locator(".meetings-stream-row-body")
+        for attempt in range(3):
+            try:
+                row.wait_for(timeout=T)
+                self._press(row)
                 break
-            front = page.evaluate("""() => [...document.querySelectorAll('.desk-window-shell')]
-                .filter((w) => w.checkVisibility() && w.getBoundingClientRect().width > 0 && w.getAttribute('aria-label') !== 'Meetings')
-                .map((w) => w.getAttribute('aria-label'))[0] || null""")
-            assert front, "no Chair window to step past"
-            self._press(page.get_by_role("button", name=f"To back {front}", exact=True))
-            page.wait_for_timeout(400)
-        self._press(opener)
-        page.locator(".desk-window-shell[aria-label='Meetings']").wait_for(timeout=T)
+            except Exception as error:  # noqa: BLE001 - only a detach is retried
+                if "not attached" not in str(error) or attempt == 2:
+                    raise
+                page.wait_for_timeout(300)
+        page.wait_for_function(
+            "(id) => document.getElementById(id)?.classList.contains('is-front')",
+            arg=f"pullout:meeting:{meeting_id}", timeout=T)
 
     def _read_back(self, page: Any, decision_id: str, project_id: str) -> dict[str, Any]:
         hub = _api(page, "GET", f"/api/decisions/{decision_id}", token=TOKEN)["decision"]
@@ -291,7 +274,7 @@ class TestDecideGlass:
                 project_id = self._project(page)
                 page.goto(f"{self.base}/?token={TOKEN}&open=meeting:{MEETING}", wait_until="load")
                 _normal_chair(page)
-                well = page.locator(".desk-pullout [data-testid=meeting-decide-well]").first
+                well = page.locator(f"[id='pullout:meeting:{MEETING}'] [data-testid=meeting-decide-well]").first
                 well.wait_for(timeout=T)
                 self._shot(page, "05-meeting-window-decide", width)
 
@@ -363,11 +346,9 @@ class TestDecideGlass:
                 self._press(well.get_by_role("button", name="Decide", exact=True))
                 well.get_by_role("textbox", name="Decision title").fill("Typed under A")
                 self._shot(page, "09-draft-under-a", width)
-                # He opens meeting B in the same record: the list row at 1440;
-                # at 393 the list folds behind the record, so the Chair's Open.
+                # He opens meeting B: its own window (PHILO-17), from the list.
                 self._switch_to(page, MEETING_B)
-                page.get_by_text(MEETING_B_TITLE, exact=True).last.wait_for(timeout=T)
-                well_b = page.get_by_test_id("meeting-decide-well").first
+                well_b = page.locator(f"[id='pullout:meeting:{MEETING_B}'] [data-testid=meeting-decide-well]").first
                 well_b.wait_for(timeout=T)
                 assert well_b.get_by_role("textbox", name="Decision title").count() == 0, \
                     "A's unfinished title is in B's well"
@@ -385,11 +366,12 @@ class TestDecideGlass:
                 assert rows[0]["context"].startswith(f"Meeting: {MEETING_B_TITLE}"), rows
                 # Back on A: A's own draft returns and files under A.
                 self._switch_to(page, MEETING)
-                box = page.get_by_test_id("meeting-decide-well").first.get_by_role("textbox", name="Decision title")
+                well_a = page.locator(f"[id='pullout:meeting:{MEETING}'] [data-testid=meeting-decide-well]").first
+                box = well_a.get_by_role("textbox", name="Decision title")
                 box.wait_for(timeout=T)
                 assert box.input_value() == "Typed under A"
                 self._shot(page, "11-back-on-a-own-draft", width)
-                self._press(page.get_by_test_id("meeting-decide-well").first.get_by_role("button", name="Save", exact=True))
+                self._press(well_a.get_by_role("button", name="Save", exact=True))
                 page.wait_for_function("() => !document.querySelector('[data-testid=decide-naming]')", timeout=T)
                 rows = _decision_rows(self.db)
                 by_title = {r["title"]: r["tags"] for r in rows}

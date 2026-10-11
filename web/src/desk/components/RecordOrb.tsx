@@ -10,7 +10,6 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDesk } from "../store";
-import { openSurfaceOr } from "../shell";
 import { SYSTEM } from "../systemSprites";
 import { Button } from "../../components/signal/Signal";
 
@@ -27,12 +26,30 @@ export function RecordOrb() {
     const apply = (activity: unknown) =>
       useDesk.getState().applyRecordingActivity(activity);
     const unsub = subscribe("runtime_activity", (frame) => apply(frame.data));
+    // PHILO-17 (Astra r1): the live meeting's identity, also after a reload
+    // and for a meeting started elsewhere, so the Live meeting door opens
+    // that meeting's own window, never a second room beside it.
+    const offStarted = subscribe("meeting_started", (frame) => {
+      const id = String((frame.data as Record<string, unknown> | undefined)?.id ?? "");
+      if (id) useDesk.setState({ liveMeetingId: id });
+    });
+    // PHILO-17 (Astra r2): the snapshot is asked at an epoch; a Start or a
+    // Stop while it is in flight makes it stale, and it never moves the desk.
+    const askedAt = useDesk.getState().recordingEpoch;
     void apiFetch<any>("/api/state")
-      .then((snapshot) =>
-        apply(snapshot?.activity || snapshot?.runtime?.activity),
-      )
+      .then((snapshot) => {
+        const id = String(snapshot?.meeting_id ?? "");
+        useDesk.getState().applyRecordingSnapshot(
+          snapshot?.activity || snapshot?.runtime?.activity,
+          askedAt,
+          snapshot?.meeting_active === true && id ? id : null,
+        );
+      })
       .catch(() => null);
-    return unsub;
+    return () => {
+      unsub();
+      offStarted();
+    };
   }, []);
 
   useEffect(() => {
@@ -65,9 +82,9 @@ export function RecordOrb() {
             return;
           }
           if (state !== "idle") return;
+          // PHILO-17: the start opens the new meeting's own window (the
+          // live room; on Stop the same window shows the saved meeting).
           void useDesk.getState().startRecording();
-          // Recording never leaves the desk: the live window rides along.
-          openSurfaceOr("record-live", "/live");
         }}
         aria-label={recording ? "Stop recording" : "Record a meeting"}
         title={recording ? "Stop recording" : "Record a meeting"}

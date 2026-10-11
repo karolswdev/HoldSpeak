@@ -7,6 +7,10 @@ Button, so Escape reached the window's own Escape-closes handler
 an isolated HOME at 393 touch: tap the strip menu, press Escape; the menu is
 gone and Meetings is still the front window. A second Escape still closes the
 window (the window's rule is unchanged).
+
+PHILO-17 ("A meeting opens in one window"): the Meetings window is the list
+now, and its two wings fit one 393 row; the window whose wings still fold is
+Speak (four wings and a door, the shape Meetings had). The fence follows it.
 """
 from __future__ import annotations
 
@@ -35,14 +39,14 @@ def test_escape_closes_the_strip_menu_not_the_window(tmp_path: Path, monkeypatch
             page.set_default_timeout(20_000)
             page.goto(f"{base}/?token={TOKEN}", wait_until="load")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
-            page.evaluate("sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key: 'review-meetings'}))")
+            page.evaluate("sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key: 'dictate'}))")
             page.reload(wait_until="load")
             _normal_chair(page)
-            window = page.locator(".desk-window-shell[aria-label='Meetings']")
+            window = page.locator(".desk-window-shell[aria-label='Speak']")
             window.wait_for()
             _settle(page)
             strip = window.locator(".desk-wings-menu")
-            assert strip.count() == 1, "at 393 the Meetings wings fold into one strip menu"
+            assert strip.count() == 1, "at 393 the Speak wings fold into one strip menu"
             box = strip.bounding_box()
             page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
             page.locator(".desk-menu-list").first.wait_for()
@@ -61,5 +65,5 @@ def test_escape_closes_the_strip_menu_not_the_window(tmp_path: Path, monkeypatch
         server.stop()
 
     assert menu_open == 0, "the first Escape left the strip menu open"
-    assert still_open and front == "Meetings", f"the first Escape closed the window (front now {front!r})"
+    assert still_open and front == "Speak", f"the first Escape closed the window (front now {front!r})"
     assert closed_after_second, "a second Escape no longer closes the window"

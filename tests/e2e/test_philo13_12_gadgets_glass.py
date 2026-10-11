@@ -171,8 +171,9 @@ class TestTheGadgets:
             return
         # a ghosted row carries its reason after the name ("Zoom · Fills the screen")
         got = [(r["label"].split(" · ")[0], r["keycap"]) for r in menu["rows"]]
-        # PHILO-16 §5: Zoom ⌘⇧Z, To back ⌘⇧` (⌃M and ⌃B stay bound one release).
-        want = [("Iconify", "⌘M"), ("Zoom", "⌘⇧Z"), ("To back", "⌘⇧`"), ("Close window", "⌘W"),
+        # PHILO-16 §5: Zoom ⌘⇧Z, To back ⌘⇧`. PHILO-17 windows (#1070, U27):
+        # the menus show ⌃M and ⌃W (a browser tab keeps the ⌘ keys).
+        want = [("Iconify", "⌃M"), ("Zoom", "⌘⇧Z"), ("To back", "⌘⇧`"), ("Close window", "⌃W"),
                 ("Desk", None), ("Go", None)]
         if width < 720:
             # PHILO-15 11 (B21): a phone has no ⌘ key, so no row at 393 draws
@@ -309,11 +310,11 @@ class TestTheGadgets:
                 reloaded = _rect(self._stack(page), "Meetings")
                 if reloaded != sized or zoom.get_attribute("aria-pressed") != "true":
                     fails["G2 the zoomed rect survives a reload"] = {"sized": sized, "reloaded": reloaded}
-                # G4 ⌃M: zoom back by key.
-                page.keyboard.press("Control+m")
+                # G4 ⌘⇧Z: zoom back by key (PHILO-17 #1070: ⌃M is Iconify now).
+                page.keyboard.press("Meta+Shift+z")
                 page.wait_for_timeout(300)
                 if zoom.get_attribute("aria-pressed") != "false" or _rect(self._stack(page), "Meetings") != prior:
-                    fails["G4 ⌃M runs Zoom"] = _rect(self._stack(page), "Meetings")
+                    fails["G4 ⌘⇧Z runs Zoom"] = _rect(self._stack(page), "Meetings")
 
                 # G3 the right button in the BODY of Meetings (the front window).
                 box = meetings.bounding_box()

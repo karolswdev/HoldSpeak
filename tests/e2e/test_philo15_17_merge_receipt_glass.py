@@ -190,10 +190,12 @@ class TestMergeReachesTheUpdate:
                 # 3. The update: Draft with model names no LOCAL + CLOUD; send it.
                 page.locator("[data-testid=updates-verb]").click()
                 page.locator("[data-testid=update-posture]").wait_for()
-                chip = page.locator("[data-testid=update-draft-model-action] .gadget-chip-egress")
-                chip.wait_for()
+                # PHILO-17 conductor (#1084): with no engine for drafts the
+                # action says "No engine for drafts" + Choose, not a host chip.
+                action = page.locator("[data-testid=update-draft-model-action]")
+                action.locator(".gadget-chip-egress, [data-testid=update-no-engine]").first.wait_for()
                 page.wait_for_timeout(500)
-                assert "LOCAL + CLOUD" not in (chip.text_content() or "").upper()
+                assert "LOCAL + CLOUD" not in (action.text_content() or "").upper()
 
                 page.locator("[data-testid=update-list]").wait_for()
                 page.locator(f"[data-testid=update-list-item]:has([data-update-id='{uid}'])").first.click()

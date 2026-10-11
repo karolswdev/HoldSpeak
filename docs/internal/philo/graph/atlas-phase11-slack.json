@@ -9481,9 +9481,9 @@
           "claim": "The Meetings record renders the well for a stored summary."
         },
         {
-          "path": "web/src/desk/pullouts/MeetingPullout.tsx",
-          "symbol": "<MeetingSendWell meetingId={o.id} title={String(detail.title ?? o.title ?? \"Meeting\")}",
-          "claim": "The meeting window renders the same well."
+          "path": "web/src/pages/cores/history/MeetingRecord.tsx",
+          "symbol": "<MeetingDetail saidOnFace={footerHost}",
+          "claim": "The meeting window renders the same well: its body is the Meetings record (PHILO-17, one window per meeting)."
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",

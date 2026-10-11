@@ -217,7 +217,8 @@ class TestFacesDoNotLie:
                 self._press(page, row, width)
                 # A3-W: the rail now says SUMMARY STORED too (its hidden compact
                 # line at 393), so the record's own head is the locator.
-                head = meetings.locator(".meetings-detail-head")
+                # PHILO-17: the record is in the meeting's own window.
+                head = page.locator(".desk-object-window .meetings-detail-head")
                 # Phase 16 (the kit's StatusStrip; coordinator R2): a meeting
                 # holding its summary says SUMMARISED (the ok lamp + word).
                 head.get_by_text("SUMMARISED").first.wait_for()

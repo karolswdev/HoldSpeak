@@ -34,9 +34,9 @@ export function DeskStartActions({ compact = false }: { compact?: boolean }) {
             void useDesk.getState().stopRecording();
             return;
           }
+          // PHILO-17: the start opens the new meeting's own window (the
+          // live room; on Stop the same window shows the saved meeting).
           void useDesk.getState().startRecording();
-          // Recording never leaves the desk: the live window opens with it.
-          openSurfaceOr("record-live", "/live");
         }}
       >
         <span className="desk-start-record" aria-hidden="true" />{" "}

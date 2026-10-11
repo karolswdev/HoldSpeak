@@ -3,7 +3,7 @@
  * adding a new PrimitiveKind without a registry entry is a type error. */
 import type { PrimitiveKind } from "../../lib/primitives";
 import type { PulloutContent } from "./types";
-import { MeetingPullout } from "./MeetingPullout";
+import { MeetingWindow } from "./MeetingWindow";
 import { ArtifactPullout } from "./ArtifactPullout";
 import { NotePullout } from "./NotePullout";
 import { KbPullout } from "./KbPullout";
@@ -24,7 +24,7 @@ import { PeoplePullout } from "./PeoplePullout";
  * keeps the registry exhaustive for kinds that deliberately have no detail.
  */
 export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
-  meeting: MeetingPullout,
+  meeting: MeetingWindow,
   artifact: ArtifactPullout,
   note: NotePullout,
   kb: KbPullout,

@@ -287,7 +287,16 @@ def test_receipt_verbs_own_their_areas(hub, width: int) -> None:
         status, _ = hub.api("POST", "/api/brief/generate", {})
         assert status in (200, 201), status
         _search(page, "Show today's brief", "[id='desk-palette-option-desk.intelligence-brief']")
-        page.locator(".intelligence-brief-sf-primary").first.click()
+        # PHILO-17 summaries (#1064): a setup row ("No engine for summaries")
+        # can lead the list; select the decision's own row.
+        page.locator("[data-testid=brief-sf-row] .intelligence-brief-sf-primary",
+                     has_text="Receipt hit material").first.click()
+        # The row opens the decision in its own window (PHILO-13-06 B1); at
+        # 393 that window is the front sheet. Bring the Brief back to the
+        # front from its Dock tile: its footer is the receipt under test.
+        page.locator(".desk-window-shell[aria-label='Receipt hit material']").first.wait_for(timeout=15000)
+        page.locator(".desk-dock [aria-label^='Intelligence']").first.click()
+        page.locator(".desk-window-shell.is-front[aria-label='Intelligence']").wait_for(timeout=15000)
         _fault(page, "POST", "/api/brief/items/")
         page.get_by_role("button", name="Acknowledge").first.click()
         _probe(page, ".surface-footer-receipt", "brief-footer", width, failures)

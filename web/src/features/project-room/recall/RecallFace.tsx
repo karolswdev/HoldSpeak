@@ -34,7 +34,7 @@
  */
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { openSurfaceOr } from "../../../desk/shell";
+import { openSourceRef } from "../../../desk/surface/citations";
 import {
   FilterTokens,
   SurfaceFooter,
@@ -179,7 +179,7 @@ function DecisionCardView({
             variant="ghost"
             aria-label={`Open source: ${card.source.token.split(" · ")[0]}`}
             data-testid="recall-open-source"
-            onClick={() => openSurfaceOr("review-meetings", "/meetings", card.source!.scope)}
+            onClick={() => openSourceRef(card.source!.scope)}
           >
             Open source
           </Button>

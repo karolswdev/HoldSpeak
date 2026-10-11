@@ -168,7 +168,18 @@ def _monkeypatch(monkeypatch: Any, repairs: list[dict[str, Any]]) -> None:
         "runtimes": [{"id": "mlx_whisper_v1", "state": "available"}],
         "checkedAt": "2026-09-06T09:41:00Z",
     }
-    monkeypatch.setattr(cs, "detect", lambda **_: dict(detection))
+    projection = cs.summary_assignment_projection
+
+    def _detect(**kw: Any) -> dict[str, Any]:
+        # The owner route's detect carries the summary route (PHILO-17
+        # runsonwords #1083 withholds the Meetings card until it is known).
+        out = dict(detection)
+        if kw.get("assignment_service") is not None and kw.get("principal") is not None:
+            out["summaryAssignment"] = projection(
+                assignment_service=kw["assignment_service"], principal=kw["principal"], db=kw.get("db"))
+        return out
+
+    monkeypatch.setattr(cs, "detect", _detect)
     monkeypatch.setattr(cs, "propose", lambda **_: PROPOSAL)
     monkeypatch.setattr(cs, "repairs", lambda **_: [dict(r) for r in repairs])
 

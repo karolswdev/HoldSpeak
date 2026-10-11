@@ -24,6 +24,7 @@ vi.mock("../../shell", async () => {
     ...actual,
     openSurfaceOr: (key: string) => shell.opened.push(key),
     openProjectRoom: (id: string) => shell.opened.push(`room:${id}`),
+    openPrimitive: (ref: string) => shell.opened.push(ref),
   };
 });
 
@@ -117,7 +118,8 @@ describe("the Parked drawer", () => {
     const openWb = vi.spyOn(useDesk.getState(), "openWorkbenchWindow").mockImplementation(() => undefined);
     render(<ParkedDrawer origin={null} />);
     fireEvent.doubleClick(await screen.findByRole("button", { name: /^Vendor call/ }));
-    expect(shell.opened).toEqual(["review-meetings"]);
+    // PHILO-17: a parked meeting opens in its own window.
+    expect(shell.opened).toEqual(["meeting:m-1"]);
     fireEvent.doubleClick(rowOf(/^Draft the runbook/));
     expect(openWb).toHaveBeenCalledWith("wb-1");
     // PHILO-17 U30: a parked Project opens its Room (one home), never a drawer.

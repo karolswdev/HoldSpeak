@@ -821,3 +821,24 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     min-width: 44px;
   }
 }
+
+/* PHILO-17 ("A meeting opens in one window"): the meeting window's foot holds
+   the record's verbs (Open transcript, Send, Add to Project, MD, SRT, Park)
+   and its receipts (a park outcome with Restore or Retry). Two rows: the
+   egress and the receipt, then the verbs, so a long receipt never runs
+   under a verb and no verb leaves the window. A narrow window keeps the
+   shared narrow foot (surface-footer.css). */
+.desk-next .desk-object-window .surface-footer {
+  height: auto;
+}
+@container surface (min-width: 421px) {
+  .desk-next .desk-object-window .surface-footer-layout:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
+    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-areas: "egress receipt" "verbs verbs";
+    row-gap: 4px;
+    padding: 4px 0;
+  }
+  .desk-next .desk-object-window .surface-footer-layout:has(> .surface-footer-verbs > .surface-footer-verbs-group) > .surface-footer-receipt {
+    justify-content: flex-start;
+  }
+}

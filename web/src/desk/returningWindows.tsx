@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import { useDesk } from "./store";
 import { keptWindow, rememberWindow } from "./deskMemory";
 import { objectByRef } from "./world";
+import { objectWindowStandIn } from "./objectWindows";
 import { useDeliveryDossier } from "./deliveryDossier";
 import { useDeliveryTerminal, type OpenTarget } from "./deliveryTerminal";
 import { useMissionControl } from "./missioncontrol";
@@ -139,6 +140,10 @@ function afterFirstRead(): void {
   if (Object.values(s.status ?? {}).some((state) => state === "unreachable")) return;
   pruned = true;
   for (const id of restoredPullouts) {
+    // PHILO-17: a meeting's or a person's own window reads its own object
+    // (the desk holds the newest meetings only; a person is never a desk
+    // item), so "not in the desk's items" is not "gone" for them.
+    if (objectWindowStandIn(id)) continue;
     if (s.pullouts.some((p) => p.id === id) && !objectByRef(s.items, id)) s.closePullout(id);
   }
   const editor = pendingEditor;

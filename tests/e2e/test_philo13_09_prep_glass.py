@@ -302,7 +302,9 @@ class TestOneOnOneFindsItsPerson:
                 row.wait_for()
                 self._press(page, row, width)
                 walk["row_taps"] = 1
-                people = page.locator("#surface-people")
+                # PHILO-17 (2b): the row opens THAT person, in her own window.
+                person = f"[id='pullout:people:{self.ids['rid']}']"
+                people = page.locator(person)
                 people.get_by_test_id("people-prep-lens").wait_for()
                 people.get_by_test_id("prep-owed").wait_for()
                 page.wait_for_timeout(400)
@@ -318,12 +320,12 @@ class TestOneOnOneFindsItsPerson:
                 walk["projects"] = people.get_by_test_id("prep-projects").inner_text()
                 walk["prep_iso"] = ISO.findall(people.inner_text())
                 walk["prep_header"] = people.get_by_test_id("people-next-1on1").inner_text()
-                walk["readable"] = _rendered_text_faults(page, "#surface-people")
+                walk["readable"] = _rendered_text_faults(page, person)
                 page.screenshot(path=str(SHOTS / f"B4-04-chair-row-prep-{width}.png"))
                 # the whole Prep, scrolled, for the owner
                 people.get_by_test_id("prep-projects").scroll_into_view_if_needed()
                 _settle(page)
-                walk["readable_scrolled"] = _rendered_text_faults(page, "#surface-people")
+                walk["readable_scrolled"] = _rendered_text_faults(page, person)
                 page.screenshot(path=str(SHOTS / f"B4-05-prep-owed-projects-{width}.png"))
 
                 # 5. The owed action -> its meeting, the front window.
@@ -332,7 +334,7 @@ class TestOneOnOneFindsItsPerson:
                 try:
                     page.wait_for_function(
                         """(title) => [...document.querySelectorAll('.desk-window-shell, .desk-window, .desk-pullout')]
-                            .some((w) => w.classList.contains('is-front') && !(w.getAttribute('aria-label') || '').startsWith('People')
+                            .some((w) => w.classList.contains('is-front') && !(w.getAttribute('aria-label') || '').startsWith('Priya Sharma')
                               && (w.innerText || '').includes(title))""",
                         arg=self.ids["title"], timeout=10_000)
                 except Exception:  # noqa: BLE001 -- recorded below
@@ -378,7 +380,7 @@ class TestOneOnOneFindsItsPerson:
         if walk.get("chair_windows_fresh") != 0:
             fails["the fresh Chair opens with no Chair window"] = walk.get("chair_windows_fresh")
         if walk.get("row_taps") != 1 or walk.get("lens_after_row") != "Prep" or \
-                not any(t.startswith("People") for t in walk.get("front_after_row", [])):
+                not any(t.startswith("Priya Sharma") for t in walk.get("front_after_row", [])):
             fails["Chair 1:1 row -> Priya on Prep in 1 gesture"] = [walk.get("front_after_row"), walk.get("lens_after_row")]
         if "Review the dry-run report" not in walk.get("agenda", ""):
             fails["Prep shows the agenda"] = walk.get("agenda")
@@ -396,6 +398,6 @@ class TestOneOnOneFindsItsPerson:
             if not faults.get("scopes") or faults.get("clipped") or faults.get("overlaps"):
                 fails[f"nothing clipped or overlapping ({key})"] = faults
         owed_front = walk.get("front_after_owed") or []
-        if not any(not w["title"].startswith("People") and self.ids["title"] in w["text"] for w in owed_front):
+        if not any(not w["title"].startswith("Priya Sharma") and self.ids["title"] in w["text"] for w in owed_front):
             fails["the owed action opens its meeting"] = owed_front
         assert not fails, json.dumps(fails, indent=1)

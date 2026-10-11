@@ -4,6 +4,10 @@ HS-132-12: HS-117-09 decomposed ``HistoryCore.tsx`` into ``cores/history/*``.
 The wing/door/receipt-section roster is now declared in ``history/helpers.ts``
 (which names itself "part of the phase-91 archive lock"), and the proposal
 governance moved into ``history/useMeetingData.tsx``.
+
+PHILO-17 ("A meeting opens in one window"): the Meetings window is the list
+(``HistoryCore.tsx``: Import, the bounded catalog); one open meeting is its
+own window (``history/MeetingRecord.tsx``: the record, its export and Park).
 """
 from pathlib import Path
 
@@ -35,7 +39,8 @@ def test_history_uses_bounded_archive_and_detail_sections() -> None:
     ):
         assert section in detail, section
     assert "proposalRows" in (_HISTORY / "useMeetingData.tsx").read_text()
-    assert "MeetingDetail" in shell and "ImportSection" in shell
+    record = (_HISTORY / "MeetingRecord.tsx").read_text()
+    assert "ImportSection" in shell and "MeetingDetail" in record
 
 
 def test_history_keeps_approval_and_export_governance() -> None:
@@ -46,8 +51,11 @@ def test_history_keeps_approval_and_export_governance() -> None:
     assert 'policy.outcome === "refused"' in data
     assert "row.policy_snapshot" in data and "row.operation" in data
     assert "commitment" in data and "authority_basis" in data
-    # Export still goes through the blob verb on the shell's footer.
-    assert "apiBlob" in shell
+    record = (_HISTORY / "MeetingRecord.tsx").read_text()
+    # Export still goes through the blob verb on the record's footer (the
+    # meeting's own window, PHILO-17); the list keeps no export.
+    assert "apiBlob" in record and "apiBlob" not in shell
     # PHILO-13-02: the footer's destructive verb is Park (one press, Restore
     # undoes it), in place of the confirmed Delete.
-    assert "parkMeeting(" in shell and "onClick={() => void parkSelected()}" in shell
+    assert "parkMeeting(" in record and "onClick={() => void park()}" in record
+    assert "deleteMeeting" not in record

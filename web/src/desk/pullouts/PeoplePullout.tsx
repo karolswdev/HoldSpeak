@@ -1,29 +1,30 @@
 /** HS-151-07 — People pullout content.
- * Shows thread TITLES only — People content never leaves the encrypted store.
- * The "Threads" section lists threads whose thread_refs name this person. */
+ *
+ * PHILO-17 (2b): a person icon opens THAT person, in their own window
+ * (`pullout:people:<relationship id>`), on the People RelationshipPane; the
+ * People drawer stays the roster. The People desk object itself (`people`)
+ * is the roster application, never this window. */
+import { lazy, Suspense } from "react";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { SurfaceState } from "../surface/Surface";
-import { ThreadsSection } from "./shared/ThreadsSection";
 import type { PulloutContentProps } from "./types";
 
-export function PeoplePullout({ object: o }: PulloutContentProps) {
-  if (o.ref.kind !== "people") {
+const PersonWindowBody = lazy(() =>
+  import("../../pages/cores/PeopleCore").then((m) => ({ default: m.PersonWindowBody })),
+);
+
+export function PeoplePullout({ object: o, onClose }: PulloutContentProps) {
+  if (o.kind !== "people" || o.id === "people") {
     return (
       <>
-        <div className="desk-pullout-body desk-surface-body">
-          <SurfaceState empty emptyLabel="Not a person" emptyGlyph="?" />
-        </div>
+        <SurfaceState empty emptyLabel="Not a person" emptyGlyph="?" />
         <SurfaceFooter />
       </>
     );
   }
-
   return (
-    <>
-      <div className="desk-pullout-body desk-surface-body">
-        <ThreadsSection refId={o.id} />
-      </div>
-      <SurfaceFooter />
-    </>
+    <Suspense fallback={<SurfaceState loading />}>
+      <PersonWindowBody relationshipId={o.id} onClose={onClose} />
+    </Suspense>
   );
 }

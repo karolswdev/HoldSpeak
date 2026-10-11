@@ -37,6 +37,7 @@ from .glass_infra import (
     _boot,
     _ensure_build,
     _normal_chair,
+    clear_hub_windows,
     seed_meeting_engines,
 )
 
@@ -124,6 +125,9 @@ def test_the_import_reaches_the_open_record_with_no_reload(tmp_path, monkeypatch
                     page, "PUT", "/api/setup/onboarding",
                     {"disposition": "completed"}, token=TOKEN,
                 )
+                # One hub is one desk: the 1440 pass's meeting window would come
+                # back over the list at 393 (PHILO-16 B; PHILO-17 meeting window).
+                clear_hub_windows(page, TOKEN)
                 page.evaluate(
                     """() => {
                         localStorage.removeItem('hs.desk.workspace.v1');

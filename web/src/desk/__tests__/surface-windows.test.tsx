@@ -27,7 +27,7 @@ afterEach(__resetSurfaces);
 describe("surface windows use the compositor workspace", () => {
   it("opening writes normalized application instances with scope", () => {
     useDesk.getState().openSurfaceWindow("dictate");
-    useDesk.getState().openSurfaceWindow("review-meetings", "meeting:m1");
+    useDesk.getState().openSurfaceWindow("open-project-memory", "project:p1");
     const raw = JSON.parse(localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "{}");
     expect(raw.version).toBe(1);
     expect(raw.windowsById["surface-dictation"]).toMatchObject({
@@ -36,7 +36,20 @@ describe("surface windows use the compositor workspace", () => {
       applicationKey: "dictate",
       scope: null,
     });
-    expect(raw.windowsById["surface-meetings"].scope).toBe("meeting:m1");
+    expect(raw.windowsById["surface-project-memory"].scope).toBe("project:p1");
+  });
+
+  it("PHILO-17: a meeting scope opens the meeting's own window, never the Meetings list", () => {
+    useDesk.setState({ pullouts: [] });
+    useDesk.getState().openSurfaceWindow("review-meetings", "meeting:m1?view=review");
+    useDesk.getState().openSurfaceWindow("review-meetings", "meeting:m1");
+    expect(useDesk.getState().windowsById["surface-meetings"]).toBeUndefined();
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual(["meeting:m1"]);
+    // A person scope opens THAT person; the roster scope stays the People window.
+    useDesk.getState().openSurfaceWindow("open-people", "people:rel-1:prep");
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual(["meeting:m1", "people:rel-1"]);
+    useDesk.getState().openSurfaceWindow("open-people", "people:project:p1");
+    expect(useDesk.getState().windowsById["surface-people"]?.scope).toBe("people:project:p1");
   });
 
   it("closing drops the key from storage", () => {
@@ -67,8 +80,11 @@ describe("surface windows use the compositor workspace", () => {
     );
     vi.resetModules();
     const fresh = await import("../store");
-    expect(fresh.useDesk.getState().windowsById["surface-meetings"]?.scope)
-      .toBe("meeting:m1");
+    // PHILO-17: the saved record comes back as the meeting's own window; the
+    // Meetings window that held it does not come back (the hub's row
+    // migrates the same way, Astra r1).
+    expect(fresh.useDesk.getState().windowsById["surface-meetings"]).toBeUndefined();
+    expect(fresh.useDesk.getState().pullouts.map((p) => p.id)).toEqual(["meeting:m1"]);
   });
 
   it("a corrupt workspace starts with nothing open", async () => {

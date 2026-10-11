@@ -1,40 +1,35 @@
 // HS-170-04 — the Meetings face, rewritten to the settled design.
-// Board: display headline + Record/Import + stream rows + SurfaceSplit detail.
+// PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): the Meetings
+// window is the LIST (headline, Record/Import, search, filters, the stream).
+// A row opens the meeting in its own window (`pullout:meeting:<id>`), which
+// holds the whole record (history/MeetingRecord.tsx).
 import { SPEECH_SETUP_EVENT } from "../../desk/firstrun/SpeechSetup";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
-import { AddToProject } from "../../desk/AddToProject";
-import type { CoreProps, MeetingsListResponse, MeetingDetailResponse } from "./core-types";
+import { openSourceRef } from "../../desk/surface/citations";
+import type { CoreProps, MeetingsListResponse } from "./core-types";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch, apiBlob, readableError } from "../../lib/api";
+import { apiFetch } from "../../lib/api";
 import { asRows } from "../pageSupport";
 import { useResource } from "../pageSupport";
-import { SurfaceSplit } from "../../desk/surface/Surface";
 import {
   countToken,
   ParkReceipt,
   ParkedStrip,
-  parkClock,
-  parkedOutcome,
   restoredOutcome,
   restoreFailedOutcome,
-  notParkedOutcome,
   type ParkOutcome,
   type ParkedRow,
 } from "../../desk/surface";
-import { fetchParkedMeetings, parkMeeting, restoreMeeting } from "../../desk/api";
-import { writeFailureReason } from "../../desk/hooks/useWriteReceipt";
+import { fetchParkedMeetings, restoreMeeting } from "../../desk/api";
 import { EgressChip, StringGadget, CheckGadget } from "../../desk/surface/gadgets";
 import { StateChip } from "../../desk/surface/patterns/StateChip";
 import {
-  postSummaryRun,
   readPlannedRoute,
   routeOff,
   routeReady,
   routeReasonToken,
-  type PlannedRoute,
-  type SummaryRefusal,
 } from "../../meetings/summaryRoute";
 import { egressFor } from "../../desk/surface/egress";
 import { useCoreWings } from "./core-hooks";
@@ -42,70 +37,40 @@ import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
 import { renderHeroSlot } from "./core-layout";
-import { readMeetingIntel } from "../../meetings/MeetingSummarySlab";
 import {
-  WINGS, clockTime, ledgerDate, download, needsIntelligence, summaryIsOff, meetingsHeadline,
-  hasOpenMeetingActions, finishedRunReceipt, intelStateOf,
-  ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt, type RunIdentity,
-  type Receipt, type DetailView,
-  MeetingDetail, ImportSection, CatalogRail, DoorSection,
+  ledgerDate, meetingsHeadline, hasOpenMeetingActions, intelStateOf,
+  ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt,
+  ImportSection, CatalogRail, DoorSection,
 } from "./history";
+import { useSummaryRun } from "./history/useSummaryRun";
 
-/** Phase 16: a foot verb brings a well on the open record into view (and,
- *  for Send, puts the focus on its first control). */
-function revealOnRecord(anchorId: string, focus = false): void {
-  const el = document.getElementById(anchorId);
-  if (!el) return;
-  el.scrollIntoView?.({ block: "start", behavior: "smooth" });
-  if (focus) el.querySelector<HTMLElement>("button:not(:disabled), input, textarea")?.focus({ preventScroll: true });
+/** PHILO-17: the list window's faces: the list, and Record (import). */
+const LIST_WINGS = [
+  { id: "outcomes", label: "Meetings" },
+  { id: "record", label: "Record" },
+];
+
+/** A row opens its meeting's own window (an open one comes to the front). */
+function openMeetingWindow(row: Record<string, unknown> | null): void {
+  if (row?.id) openSourceRef(`meeting:${String(row.id)}`);
 }
 
 export function HistoryCore({ hero, scope }: CoreProps) {
-  const requestedMeetingScope =
-    scope && scope.startsWith("meeting:")
-      ? scope.slice("meeting:".length)
-      : null;
-  const [requestedMeetingId, requestedMeetingQuery = ""] =
-    requestedMeetingScope?.split("?", 2) ?? [null, ""];
-  const requestedMomentSegment = requestedMeetingQuery
-    ? Number(new URLSearchParams(requestedMeetingQuery).get("segment"))
-    : null;
-  // PHILO-15 08 (B13): `meeting:<id>?view=review` opens the meeting on its
-  // Review wing, where its proposals are.
-  const requestedView: DetailView =
-    new URLSearchParams(requestedMeetingQuery ?? "").get("view") === "review" ? "review" : "outcomes";
-  const wings = useCoreWings(WINGS, "outcomes", "Meeting plumbing");
-  const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
-  const markReadyRead = useCallback((meetingId: string) => {
-    void apiFetch(`/api/meetings/${encodeURIComponent(meetingId)}/ready/read`, {
-      method: "POST",
-    }).catch((reason) => {
-      setReceipt({
-        text: `READY READ FAILED · ${readableError(reason)}`,
-        tone: "danger",
-      });
-    });
-  }, []);
-  const openMeeting = useCallback((row: Record<string, unknown> | null) => {
-    setSelected(row);
-    if (row?.id) markReadyRead(String(row.id));
-  }, [markReadyRead]);
-  const [receipt, setReceipt] = useState<Receipt | null>(null);
-  // PHILO-13-02 (A1-F): Park, never delete. One press, no confirm (Restore
-  // undoes it); the outcome is a receipt in the footer's receipt slot.
-  const [parking, setParking] = useState(false);
+  // PHILO-17: a meeting scope belongs to the meeting's own window (the store
+  // routes it there); one that reaches this list is passed on, once.
+  const forwarded = useRef<string | null>(null);
+  useEffect(() => {
+    if (!scope?.startsWith("meeting:") || forwarded.current === scope) return;
+    forwarded.current = scope;
+    openSourceRef(scope);
+  }, [scope]);
+  const wings = useCoreWings(LIST_WINGS, "outcomes", "Meeting plumbing");
+  // PHILO-13-02: Restore of a parked meeting; the outcome is a receipt in
+  // the footer's receipt slot.
   const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
   const [parked, setParked] = useState<ParkedRow[]>([]);
   const [parkedOn, setParkedOn] = useState(false);
   const [restoredId, setRestoredId] = useState<string | null>(null);
-  const parkTimes = useRef(new Map<string, string>());
-  const [openedRequestedMeetingId, setOpenedRequestedMeetingId] = useState<
-    string | null
-  >(null);
-  const [requestedMeetingError, setRequestedMeetingError] = useState("");
-  // HS-200-12: `Open evidence` on the review wing lands on the outcomes face
-  // scrolled to the proposal's segment.
-  const [evidenceSegment, setEvidenceSegment] = useState<number | null>(null);
 
   // Intelligence run state
   // HS-200-42 (counsel N1): the same drainer fact the Chair reads, from the
@@ -113,12 +78,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // is about to run. `null` = no frame yet = unknown, never reported absent.
   const queueFrame = useRuntimeFrame<{ drainer?: string }>("runtime_queue");
   const drainerAbsent = queueFrame?.drainer === "absent";
-  const [runningId, setRunningId] = useState<string | null>(null);
-  // HS-201-04: the hub's 409 refusal, kept as a refusal (code + plain
-  // reason + the fresh route), never as an error surface.
-  const [runRefusal, setRunRefusal] = useState<
-    { meetingId: string; refusal: SummaryRefusal } | null
-  >(null);
 
   // HS-170-04: search (StringGadget with mic in the list head)
   const [searchQuery, setSearchQuery] = useState("");
@@ -155,11 +114,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const doorActions = useResource<Record<string, unknown>>("/api/all-action-items", {});
   const doorSpeakers = useResource<Record<string, unknown>>("/api/speakers", {});
   // HS-200-03 follow-through: the Rooms list lives at /api/projects.
-  // "/api/meetings/projects" matched no route (only
-  // /api/meetings/{meeting_id}/projects and /api/meetings/facets exist),
-  // so every /meetings arrival logged a console 404 and the door's
-  // PROJECTS section drew from an error. Caught by
-  // tests/e2e/test_hs144_door_glass.py::test_meetings_deep_link_waits_for_registered_surface_x15.
   const doorProjects = useResource<Record<string, unknown>>("/api/projects", {});
   const doorIntel = useResource<Record<string, unknown>>("/api/intel/jobs", {});
   const doorPlugin = useResource<Record<string, unknown>>("/api/plugin-jobs", {});
@@ -169,18 +123,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     [meetings.data],
   );
 
-  // PHILO-13-02: the parked meetings, read through H-A1's client. A row
-  // parked here shows its park time; one parked earlier shows its date.
+  // PHILO-13-02: the parked meetings, read through H-A1's client.
   const loadParked = useCallback(async () => {
     try {
       const rows = await fetchParkedMeetings();
-      setParked(
-        rows.map((m) => ({
-          id: m.id,
-          title: m.title,
-          at: parkTimes.current.get(m.id) ?? ledgerDate(m.startedAt),
-        })),
-      );
+      setParked(rows.map((m) => ({ id: m.id, title: m.title, at: ledgerDate(m.startedAt) })));
     } catch {
       // The strip keeps its last read; the list's own state says the rest.
     }
@@ -191,29 +138,21 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   useEffect(() => {
     if (!parked.length) setParkedOn(false);
   }, [parked.length]);
-  // PHILO-15-07 (B15): a `QUEUED hh:mm` receipt is bound to its run
-  // (meeting id + job id, Astra r1 on #982). It turns into `RAN · hh:mm` only
-  // for that run: from the poll below, or when a refreshed list row shows
-  // the meeting active and then final (a row read before the run started
-  // still holds the PREVIOUS run's final state and never counts).
-  // Astra iteration 2: the settled receipt KEEPS its run identity, so the
-  // Review wing (which shows only a receipt bound to its meeting) sees the
-  // completion too.
-  const settleRun = useCallback((run: RunIdentity, state: string, at?: string) => {
-    setReceipt((current) =>
-      current?.run &&
-      current.run.meetingId === run.meetingId &&
-      current.run.jobId === run.jobId
-        ? { ...finishedRunReceipt(state, at || new Date().toISOString()), run: current.run }
-        : current,
-    );
-  }, []);
+
+  // A row's Run summary (the record's own run lives in its window).
+  const reloadMeetings = meetings.reload;
+  const summary = useSummaryRun(
+    (meetingId) => readPlannedRoute(meetingRows.find((item) => String(item.id) === meetingId)),
+    () => void reloadMeetings(),
+  );
+  const { receipt, setReceipt, settleRun, runningId, runRefusal } = summary;
+
+  // PHILO-15-07 (B15): a `QUEUED hh:mm` receipt is bound to its run. It
+  // turns into `RAN · hh:mm` only for that run: from the poll, or when a
+  // refreshed list row shows the meeting active and then final.
   const seenActive = useRef<string | null>(null);
   // Astra iteration 2 (reload): the face's first read of the rows adopts the
-  // durable run state, so a reload never forgets the timed receipt. An active
-  // run becomes a bound `QUEUED hh:mm` (and settles below when it ends); with
-  // none active, the newest durable run receipt says `RAN · hh:mm` (or
-  // `FAILED · hh:mm`) at the time the hub recorded it.
+  // durable run state, so a reload never forgets the timed receipt.
   const adoptedDurable = useRef(false);
   useEffect(() => {
     if (adoptedDurable.current || meetingRows.length === 0) return;
@@ -224,7 +163,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       seenActive.current = `${adopted.receipt.run.meetingId}:${adopted.receipt.run.jobId}`;
     }
     setReceipt((current) => current ?? adopted.receipt);
-  }, [meetingRows]);
+  }, [meetingRows, setReceipt]);
   useEffect(() => {
     const run = receipt?.run;
     if (!run) return;
@@ -242,14 +181,13 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       settleRun(run, state, typeof job?.updated_at === "string" ? job.updated_at : undefined);
     }
   }, [meetingRows, receipt, settleRun]);
-  // A later receipt (export, queued run) takes the slot from the park outcome.
+  // A later receipt (a queued run) takes the slot from the restore outcome.
   useEffect(() => {
     if (receipt) setParkOutcome(null);
   }, [receipt]);
 
   // HS-201-11: the HAS OPEN ACTIONS facet is drawn only when an open
-  // action exists for it to find. `/api/all-action-items` already reaches
-  // this face for the gear door and answers OPEN items alone.
+  // action exists for it to find.
   const openActionsFacetDrawn = useMemo(
     () =>
       facets.has_open_actions ||
@@ -257,156 +195,24 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     [facets.has_open_actions, doorActions.data],
   );
 
-  // Open requested meeting from scope
-  const requestedMeeting = useMemo(
-    () =>
-      requestedMeetingId
-        ? (meetingRows.find(
-            (row) => String(row.id) === requestedMeetingId,
-          ) ?? null)
-        : null,
-    [meetingRows, requestedMeetingId],
-  );
-  useEffect(() => {
-    if (
-      !requestedMeetingId ||
-      openedRequestedMeetingId === requestedMeetingScope ||
-      meetings.loading
-    )
-      return;
-    // The whole scope (id and view) is the request: asking again for the
-    // open meeting's Review wing still lands there.
-    setOpenedRequestedMeetingId(requestedMeetingScope);
-    setRequestedMeetingError("");
-    wings.setView(requestedView);
-    if (requestedMeeting) {
-      setSelected(requestedMeeting);
-      markReadyRead(requestedMeetingId);
-      return;
-    }
-    void apiFetch<MeetingDetailResponse>(
-      `/api/meetings/${encodeURIComponent(requestedMeetingId)}`,
-    )
-      .then((detail) => {
-        setSelected(detail);
-        markReadyRead(requestedMeetingId);
-      })
-      .catch((reason) => setRequestedMeetingError(readableError(reason)));
-  }, [
-    meetings.loading,
-    openedRequestedMeetingId,
-    requestedMeeting,
-    markReadyRead,
-    requestedMeetingId,
-    requestedMeetingScope,
-    requestedView,
-  ]);
-
   /* ── the face re-reads itself (HS-202-02 job 2) ──
-     The sober eye set the engine and the record did not change; he ran
-     the summary and the record did not change; a browser reload was the
-     only thing that moved either (04-sober-eye.md, rank 2). This face
-     subscribed to one frame, `runtime_queue`, which names neither event,
-     and the open record is a snapshot object that only a click replaced —
-     so even a ledger reload could not repaint it.
-
-     What actually carries the news:
-      - an assignment write publishes NO server frame
-        (holdspeak/services/inference_assignment_service.py), so the
-        signal is the client's `holdspeak:settings-updated` return event,
-        the one ChairHome has read since HS-201-01;
-      - a deferred intel job's completion publishes `aftercare_ready`
-        (holdspeak/intel_queue_conductor.py:96).
-     `desk_changed` and window focus cover everything else. */
-  const selectedId = selected ? String(selected.id ?? "") : "";
-  const reloadMeetings = meetings.reload;
-  /* HS-202-02 (Astra's counsel finding 3) — two rules here, both learned
-     the hard way:
-
-     1. the response is only for the record still OPEN. Start refreshing A,
-        select B, let A resolve, and an unconditional `setSelected` put A
-        back on the glass under B's row.
-     2. MERGE, never replace. The ledger row and `/api/meetings/{id}` are
-        different shapes — the detail path carries raw dicts and no
-        `transcriptWords` (`services/meeting_service.py:788`), which the
-        face's own `needsIntelligence` gate reads. Replacing the row with
-        the detail silently withdrew `Run summary` from a meeting that had
-        just gained a transcript (caught by the first-use smoke's
-        `import-refresh` leg). The reloaded LIST row is the same shape the
-        click put there, so it is preferred; the detail read is the
-        fallback for a deep-linked meeting the list does not hold. */
-  const keepOpen = useCallback(
-    (id: string, patch: Record<string, unknown>) =>
-      setSelected((current) => {
-        if (!current || String(current.id ?? "") !== id) return current;
-        return { ...current, ...patch };
-      }),
-    [],
-  );
-  const refreshFace = useCallback(async () => {
-    const list = await reloadMeetings();
-    if (!selectedId) return;
-    const row = asRows(list ?? {}, ["meetings"]).find(
-      (item) => String(item.id) === selectedId,
-    );
-    if (row) {
-      keepOpen(selectedId, row);
-      return;
-    }
-    try {
-      const fresh = await apiFetch<MeetingDetailResponse>(
-        `/api/meetings/${encodeURIComponent(selectedId)}`,
-      );
-      keepOpen(selectedId, fresh as Record<string, unknown>);
-    } catch {
-      // The ledger still reloaded; the record keeps what it has and the
-      // next signal tries again. A failed re-read is never an error face.
-    }
-  }, [keepOpen, reloadMeetings, selectedId]);
-
-  /* HS-202-02 — the open record FOLLOWS the ledger, whatever moved it.
-     `refreshFace` merges only into a record that is already open, so a
-     list read that was in flight when the owner clicked (or a re-read the
-     search box started) lands its fresh rows AFTER `selected` was frozen,
-     and no later frame arrives to reconcile them. The record then wears a
-     snapshot the ledger beside it has already replaced. Guarded twice:
-     by id, so a row for a record the owner left is dropped, and by
-     content, so an unchanged row keeps the same object and the record's
-     own reads are not re-fetched on every reload. */
+     `desk_changed`, a deferred summary's `aftercare_ready`, the return from
+     a task and window focus re-read the list. The subscription is held for
+     the life of the face (a ref keeps the reload current). */
+  const reloadRef = useRef(reloadMeetings);
+  reloadRef.current = reloadMeetings;
+  // PHILO-17 (the autoflow lane): a summary that starts after an import moves
+  // the queue, not the desk. The list reads again on the queue frame too, so
+  // its row says what the meeting's window says (RUNNING, never IMPORTING).
   useEffect(() => {
-    if (!selectedId) return;
-    const row = meetingRows.find((item) => String(item.id) === selectedId);
-    if (!row) return;
-    setSelected((current) => {
-      if (!current || String(current.id ?? "") !== selectedId) return current;
-      const moved = Object.keys(row).some(
-        (key) => JSON.stringify(current[key]) !== JSON.stringify(row[key]),
-      );
-      return moved ? { ...current, ...row } : current;
-    });
-  }, [meetingRows, selectedId]);
-
+    if (queueFrame) void reloadRef.current();
+  }, [queueFrame]);
   const { subscribe: subscribeFrames } = useRuntimeBus();
-  /* HS-202-02 (the first-use smoke's `import-refresh` leg) — the
-     subscription is held for the life of the face, and the debounce with
-     it. `refreshFace` changes whenever the open record changes, so an
-     effect that listed it as a dependency tore itself down and
-     `clearTimeout`-ed the pending refresh every time the owner clicked a
-     row. The import worker announces the desk change the instant the
-     transcript lands (`services/meeting_service.py:285`) — before the
-     owner opens the row it just changed — so THAT announcement was the
-     one the click cancelled: the ledger was never re-read, the record
-     kept the `importing` snapshot the click had taken, and `Run summary`
-     stayed off the record until a reopen. The ref keeps the callback
-     current without making the subscription depend on it. */
-  const refreshRef = useRef(refreshFace);
-  refreshRef.current = refreshFace;
   useEffect(() => {
-    const refresh = () => void refreshRef.current();
+    const refresh = () => void reloadRef.current();
     const burst = burstTimer(refresh, 300);
-    const bump = burst.bump;
-    const offDeskChanged = subscribeFrames("desk_changed", bump);
-    const offAftercare = subscribeFrames("aftercare_ready", bump);
+    const offDeskChanged = subscribeFrames("desk_changed", burst.bump);
+    const offAftercare = subscribeFrames("aftercare_ready", burst.bump);
     const offReturn = onReturnToTask(refresh);
     window.addEventListener("focus", refresh);
     // PHILO-17 transcribe: speech set up in any window changes the
@@ -422,121 +228,17 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     };
   }, [subscribeFrames]);
 
-  // Run the summary of a meeting
-  const handleRunIntelligence = useCallback(async (
-    meetingId: string,
-    displayed?: PlannedRoute | null,
-  ) => {
-    setRunningId(meetingId);
-    setRunRefusal(null);
-    // HS-201-04 (lane A's interlock): the route the face DISCLOSED is the
-    // route the request binds — the same object, never a second lookup.
-    // Astra's counsel finding 1: reading it from the list row sent an EMPTY
-    // hash for a deep-linked meeting the list never loaded, while the
-    // record displayed its own fetched route beside the verb.
-    const row = meetingRows.find((item) => String(item.id) === meetingId);
-    const route = displayed ?? readPlannedRoute(row);
-    try {
-      const outcome = await postSummaryRun<{
-        jobId: string;
-        state: string;
-        host: string;
-        drainer?: string;
-      }>(
-        `/api/meetings/${encodeURIComponent(meetingId)}/intelligence/run`,
-        route,
-      );
-      if (!outcome.ok) {
-        // A refusal is a refusal, with its plain reason — never an error
-        // surface, and it never erases the receipt of an earlier real run.
-        setRunningId(null);
-        setRunRefusal({ meetingId, refusal: outcome.refusal });
-        setReceipt({
-          text: `REFUSED · ${outcome.refusal.plainReason}`,
-          tone: "danger",
-        });
-        void refreshFace();
-        return;
-      }
-      const result = outcome.result;
-      const run: RunIdentity = { meetingId, jobId: String(result.jobId ?? meetingId) };
-      setReceipt({ text: `QUEUED ${clockTime(new Date().toISOString())}`, run });
-      // HS-200-42: when the route says no drainer exists, polling every 3s for
-      // 120s is a lie told forty times — nothing in the hub will move this job.
-      // Stop the poll and refresh the row once.
-      //
-      // `runningId` is deliberately LEFT SET: where the run egresses is a
-      // fact the click established and it is owed to the user whether or
-      // not a drainer exists (HS-170 S-3). HS-201-04 moved that fact to the
-      // row's own disclosed route (`row-route`), which says it through the
-      // one egress mapper instead of echoing the POST response's raw host.
-      // The row's token stays honest: NOT DRAINING rather than RUNNING.
-      if (result.drainer !== "running") {
-        void refreshFace();
-        return;
-      }
-      // Poll for completion
-      const poll = setInterval(async () => {
-        try {
-          const statusResp = await apiFetch<MeetingDetailResponse>(
-            `/api/meetings/${encodeURIComponent(meetingId)}`,
-          );
-          const intelStatus = statusResp?.intel_status;
-          const state = typeof intelStatus === "object" && intelStatus !== null
-            ? String((intelStatus as Record<string, unknown>).state ?? "")
-            : String(intelStatus ?? "");
-          if (state !== "queued" && state !== "running" && state !== "pending") {
-            clearInterval(poll);
-            setRunningId(null);
-            // PHILO-15-07 (B15): this run's receipt (and only this run's)
-            // follows it to the final state. It said `QUEUED 10:59` after
-            // the summary RAN.
-            settleRun(run, state);
-            void refreshFace();
-          }
-        } catch {
-          clearInterval(poll);
-          setRunningId(null);
-        }
-      }, 3000);
-      // Safety timeout
-      setTimeout(() => {
-        clearInterval(poll);
-        setRunningId((current) => {
-          if (current === meetingId) {
-            void refreshFace();
-            return null;
-          }
-          return current;
-        });
-      }, 120_000);
-    } catch (reason) {
-      setRunningId(null);
-      const msg = readableError(reason);
-      setReceipt({ text: `REFUSED · ${msg}`, tone: "danger" });
-    }
-  }, [meetings, meetingRows, settleRun]);
-
   // HS-201-04 (UX-CANON A.9, audit "where the host is shown"): the footer
-  // chip was a prop-less constant that always read "This device". It reads
-  // the same disclosed route every run verb on this face reads — the
+  // reads the same disclosed route every run verb on this face reads — the
   // SERVICE route for the next summary — and says so when there is none.
   const faceRoute = useMemo(
     () => readPlannedRoute(meetingRows.find((row) => readPlannedRoute(row))),
     [meetingRows],
   );
-  // HS-200-12: the review wing draws its own footer (egress where the
-  // extraction happened, the receipt, `Accept reviewed`).
-  const reviewOwnsFooter = wings.view === "review" && Boolean(selected) && !wings.doorOpen;
-  // PHILO-17 (U16): the foot names the summary engine; the rows and the
-  // open meeting do not say the same host again (one chip per face). Astra
-  // r1 (M3): only while that foot is mounted; under Review it is not.
-  const footerHost =
-    !reviewOwnsFooter && faceRoute && routeReady(faceRoute) ? egressFor(faceRoute.legs[0].host).label : null;
+  // PHILO-17 (U16): the foot names the summary engine; the rows do not say
+  // the same host again (one chip per face).
+  const footerHost = faceRoute && routeReady(faceRoute) ? egressFor(faceRoute.legs[0].host).label : null;
   const footerEgress = useMemo(() => {
-    // Astra's counsel finding 4: a constant `<EgressChip />` is not
-    // evidence of local execution. With no route read at all, the footer
-    // says nothing; with an unresolved one it says the reason.
     if (!faceRoute) return null;
     if (!routeReady(faceRoute)) {
       // PHILO-13-04 (A3): a missing route is the AVAILABLE fact, not a
@@ -569,11 +271,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const verbs = (
     <>
       {/* HS-201-04 (Astra's counsel finding 5; UX-CANON: one filled primary
-          per face). The Meetings face already draws a filled primary on the
-          row and the record that need a summary — the thing the headline is
-          pointing at. `Record meeting` is the way IN to this face, offered
-          again on the Chair's own capture bar as its filled verb, so here it
-          is the default species and the run verb keeps the primary. */}
+          per face). The run verb on a row keeps the primary; `Record
+          meeting` is the default species. */}
       <Button
         dense
         onClick={() => openSurfaceOr("record-live", "/live", scope)}
@@ -593,54 +292,14 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     </>
   );
 
-  // Footer export verbs
-  const exportMeeting = async (format: string) => {
-    if (!selected) return;
-    const id = String(selected.id);
-    try {
-      download(
-        await apiBlob(
-          `/api/meetings/${encodeURIComponent(id)}/export?format=${format}`,
-        ),
-        `holdspeak-meeting-${id}.${format === "markdown" ? "md" : format}`,
-      );
-      setReceipt({
-        text: `EXPORTED ${format === "markdown" ? "MD" : format.toUpperCase()} ${clockTime(new Date().toISOString())}`,
-      });
-    } catch (reason) {
-      setReceipt({
-        text: `REFUSED · ${readableError(reason)}`,
-        tone: "danger",
-      });
-    }
-  };
-  // PHILO-13-02 (A1-F) — Park and Restore (C1-5a–e).
+  // PHILO-13-02 (A1-F) — Restore (C1-5a–e).
   const showParkOutcome = (outcome: ParkOutcome) => {
     setReceipt(null);
     setParkOutcome(outcome);
   };
-  const parkSelected = async () => {
-    if (!selected) return;
-    const id = String(selected.id);
-    setParking(true);
-    try {
-      await parkMeeting(id);
-      const at = parkClock();
-      parkTimes.current.set(id, at);
-      setSelected(null);
-      showParkOutcome(parkedOutcome([id], at));
-      void meetings.reload();
-      void loadParked();
-    } catch (reason) {
-      showParkOutcome(notParkedOutcome(writeFailureReason(reason)));
-    } finally {
-      setParking(false);
-    }
-  };
   const restoreParked = async (ids: string[]) => {
     try {
       await Promise.all(ids.map((id) => restoreMeeting(id)));
-      for (const id of ids) parkTimes.current.delete(id);
       showParkOutcome(restoredOutcome(ids));
       setParkedOn(false);
       setRestoredId(ids[ids.length - 1] ?? null);
@@ -655,7 +314,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // (202); the face reads itself again now and on the worker's desk_changed.
   const transcribeMeeting = async (id: string) => {
     await apiFetch(`/api/meetings/${encodeURIComponent(id)}/transcribe`, { method: "POST" });
-    await refreshFace();
+    await reloadMeetings();
   };
 
   const rail = (
@@ -665,65 +324,15 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       meetingRows={meetingRows}
       restoredId={restoredId}
       meetings={meetings}
-      selected={selected}
-      setSelected={openMeeting}
-      onRunIntelligence={(id, route) => void handleRunIntelligence(id, route)}
+      selected={null}
+      setSelected={openMeetingWindow}
+      onRunIntelligence={(id, route) => void summary.run(id, route)}
       runningId={runningId}
       drainerAbsent={drainerAbsent}
       runRefusal={runRefusal}
-      narrowed={Boolean(selected)}
     />
   );
 
-  const detailPane = (paneView: DetailView) => (
-    <MeetingDetail
-      saidOnFace={footerHost}
-      meeting={selected}
-      onTranscribe={transcribeMeeting}
-      view={paneView}
-      momentSegmentIndex={evidenceSegment ?? requestedMomentSegment}
-      onClose={() => setSelected(null)}
-      onDeleted={() => void meetings.reload()}
-      onReceipt={setReceipt}
-      footerRunReceipt={
-        receipt?.run && selected && receipt.run.meetingId === String(selected.id)
-          ? receipt
-          : null
-      }
-      runRefusal={
-        runRefusal && selected && runRefusal.meetingId === String(selected.id)
-          ? runRefusal.refusal
-          : null
-      }
-      onRunIntelligence={
-        // HS-201-04: a FAILED record's Retry is owned by the summary slab
-        // (`MeetingIntelRecovery`), which runs it through the recovery
-        // route with the same disclosed hash. NEEDS YOU must not draw a
-        // SECOND Retry/Skip pair beside it (tenet 3, one verb per job).
-        /* HS-202-02 (coordinator item 9): `needsIntelligence` reads
-           `transcriptWords`, a LIST-only field. The open record's own
-           transcript comes from the detail read, so a row clicked while
-           its import was still running withheld `Run summary` even after
-           the transcript was plainly on the glass. The gate here asks
-           only whether the summary is OFF; `NeedsYouTable` owns the
-           `hasTranscript` half and reads the real segments
-           (`history/NeedsYouTable.tsx:51-56`). */
-        selected && (summaryIsOff(selected) || paneView === "review")
-          ? (displayed: PlannedRoute | null) =>
-              void handleRunIntelligence(String(selected.id), displayed)
-          : undefined
-      }
-      onReview={() => {
-        wings.setDoorOpen(false);
-        wings.setView("review");
-      }}
-      onOpenEvidence={(segmentIndex) => {
-        setEvidenceSegment(segmentIndex);
-        wings.setDoorOpen(false);
-        wings.setView("outcomes");
-      }}
-    />
-  );
   const face = wings.doorOpen ? (
     <DoorSection
       actions={doorActions}
@@ -740,27 +349,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       onImported={() => void meetings.reload()}
       scope={scope}
     />
-  ) : wings.view === "artifacts" ? (
-    selected ? (
-      detailPane("artifacts")
-    ) : (
-      rail
-    )
-  ) : wings.view === "review" ? (
-    selected ? (
-      detailPane("review")
-    ) : (
-      rail
-    )
   ) : (
     <>
       {/* HS-170-04: the headline (display step, ONE per face) */}
-      {/* Phase 16 (§C: the display step once per window): while a meeting
-          is open its title is the window's one big fact (the detail's
-          AppHead); the list's headline steps down to a strip token. */}
-      <div className="meetings-headline" data-accent={headline.accent || undefined}
-        data-quiet={selected ? "true" : undefined}>
-        <span className={selected ? "kit-strip-token meetings-headline-quiet" : "surface-display"} data-testid="meetings-headline">
+      <div className="meetings-headline" data-accent={headline.accent || undefined}>
+        <span className="surface-display" data-testid="meetings-headline">
           {headline.text}
         </span>
       </div>
@@ -780,11 +373,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         />
       </div>
 
-      {/* HS-170-04: server-side facets (token toggles on the caption row).
-          HS-201-11: a filter that can match nothing is not drawn -- the
-          desk held one meeting with zero actions and still offered
-          `HAS OPEN ACTIONS`. It stays on the face while it is ON, so the
-          owner always has the way back. */}
+      {/* HS-170-04: server-side facets. HS-201-11: a filter that can match
+          nothing is not drawn; it stays while it is ON (the way back). */}
       {openActionsFacetDrawn ? (
         <div className="meetings-facets" data-testid="meetings-facets">
           <CheckGadget
@@ -806,33 +396,16 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         data-testid="meetings-parked"
       />
 
-      {/* The stream + detail split */}
-      <div className="surface-split-railed">
-        <SurfaceSplit
-          main={parkedOn ? null : rail}
-          detailOpen={Boolean(selected)}
-          detail={detailPane("outcomes")}
-        />
-      </div>
+      {/* The stream: a row opens the meeting's own window. */}
+      {parkedOn ? null : <div className="surface-split-railed">{rail}</div>}
     </>
   );
 
   return (
     <>
       {renderHeroSlot(hero, null)}
-      {requestedMeetingError ? (
-        <div className="surface-state-error">
-          <span>{requestedMeetingError}</span>
-          <Button dense variant="ghost" onClick={() => {
-            setRequestedMeetingError("");
-            setOpenedRequestedMeetingId(null);
-          }}>
-            Retry
-          </Button>
-        </div>
-      ) : null}
       {face}
-      {reviewOwnsFooter ? null : <SurfaceFooter
+      <SurfaceFooter
         egress={footerEgress}
         receipt={
           parkOutcome ? (
@@ -861,46 +434,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
             </span>
           )
         }
-        verbs={
-          selected && wings.view !== "record" ? (
-            <span className="surface-footer-verbs-group">
-              {/* Phase 16 (the canvas window "Cutover sync"): the foot's
-                  Open transcript and Send (the meeting's one filled
-                  primary) bring their wells into view on the record. */}
-              {wings.view === "outcomes" && !wings.doorOpen ? (
-                <>
-                  <Button dense variant="ghost" data-testid="meeting-open-transcript"
-                    onClick={() => revealOnRecord(`meeting-${selectedId}-transcript`)}>
-                    Open transcript
-                  </Button>
-                  {selected.has_summary === true || String(readMeetingIntel(selected)?.summary ?? "").trim() ? (
-                    <Button dense variant="primary" data-testid="meeting-send"
-                      onClick={() => revealOnRecord(`meeting-${selectedId}-send`, true)}>
-                      Send
-                    </Button>
-                  ) : null}
-                </>
-              ) : null}
-              {/* PHILO-15 16 (B37): the meeting joins a Project. */}
-              <AddToProject meetingId={selectedId} onReceipt={(next) => setReceipt(next.tone === "danger" ? { text: next.text, tone: "danger" } : { text: next.text })} />
-              <Button dense variant="ghost" onClick={() => void exportMeeting("markdown")}>
-                MD
-              </Button>
-              <Button dense variant="ghost" onClick={() => void exportMeeting("srt")}>
-                SRT
-              </Button>
-              <Button
-                dense
-                variant="ghost"
-                disabled={parking}
-                onClick={() => void parkSelected()}
-              >
-                Park
-              </Button>
-            </span>
-          ) : null
-        }
-      />}
+      />
     </>
   );
 }

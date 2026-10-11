@@ -193,7 +193,8 @@ class TestTwoFailures:
             writes: list[str] = []
             page.on("request", lambda r: writes.append(r.url) if r.url.endswith("/api/inference/assignments/set") else None)
             plate = page.get_by_test_id("switchboard-engine-old-box")
-            for group, label in (("thoughts_notes", "THOUGHTS & NOTES"), ("agents_tools", "AGENTS & TOOLS")):
+            # PHILO-17 runsonwords (#1083): a job is named for what he gets.
+            for group, label in (("thoughts_notes", "ANSWERS AND THOUGHTS"), ("agents_tools", "AGENTS AND RECIPES")):
                 if width == 393:
                     # The phone list never offers an engine a job refuses.
                     page.get_by_test_id(f"switchboard-job-{group}").click()

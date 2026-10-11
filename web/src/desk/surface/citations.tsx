@@ -1,11 +1,12 @@
 // HS-111-05 — the citation token, promoted out of ProjectMemoryCore so
 // "openable citation" has exactly ONE rendering (the HS-109-04 grounding
 // receipt's source_refs). A citation is a quiet mono token that OPENS the
-// underlying object: meetings through the Meetings surface, everything
-// else through the primitive opener. Ask and Project Memory both speak
+// underlying object through the primitive opener (a meeting in its own
+// window, PHILO-17). Ask and Project Memory both speak
 // this species; a third rendering is a defect.
 import { openRef } from "../openObject";
-import { openPrimitive, openSurfaceOr } from "../shell";
+import { openPrimitive } from "../shell";
+import { meetingWindowRef } from "../objectWindows";
 import { Button } from "../../components/signal/Signal";
 
 /** The honest "grounded on N" arithmetic: matches minus overflow —
@@ -43,8 +44,12 @@ export function sourceLabel(ref: string): string {
 
 export function openSourceRef(ref: string) {
   if (!refOpensWindow(ref)) return;
+  // PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): a meeting
+  // opens its own window, `pullout:meeting:<id>`; an open one comes to the
+  // front. A view or a transcript row in the ref is the window's place.
   if (ref.startsWith("meeting:")) {
-    openSurfaceOr("review-meetings", "/history", ref);
+    const windowRef = meetingWindowRef(ref);
+    if (windowRef) openPrimitive(windowRef);
     return;
   }
   // Thread search hits carry a fragment: thread:<id>#<message_id>.

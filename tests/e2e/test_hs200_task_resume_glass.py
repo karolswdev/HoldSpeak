@@ -1098,6 +1098,13 @@ def test_a_full_unfinished_list_leaves_the_room_standing(
             _open_room(page, project_id)
             page.get_by_test_id("room-unfinished").wait_for(timeout=15000)
             assert _rows(page).count() == 5
+            # PHILO-17 sources (#1068, U10): a Room with no source opens Add
+            # source at once, and the well goes into the flow while it is
+            # open. This leg measures the Room in use: close it first.
+            cancel = page.get_by_test_id("room-add-sources-cancel")
+            if cancel.count():
+                cancel.click()
+                page.get_by_test_id("room-add-sources").wait_for(state="detached", timeout=10000)
 
             page.evaluate(
                 """() => { const b = document.querySelector('.desk-surface-body');

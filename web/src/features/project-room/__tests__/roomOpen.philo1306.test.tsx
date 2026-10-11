@@ -9,7 +9,7 @@ import { EMPTY_ITEMS } from "../../../desk/api";
 import { TitleSlotContext } from "../../../desk/surface/title";
 import { WingSlotContext } from "../../../desk/surface/wings";
 import { useDesk } from "../../../desk/store";
-import { openSurfaceOr } from "../../../desk/shell";
+import { openPrimitive, openSurfaceOr } from "../../../desk/shell";
 import { ProjectRoomCore } from "../ProjectRoomCore";
 
 vi.mock("../../../desk/ask", async () => {
@@ -228,7 +228,9 @@ describe("PHILO-13-06: a Room activity row opens its object", () => {
     const opens = screen.getAllByTestId("history-entry-open");
     expect(opens).toHaveLength(1);
     fireEvent.click(opens[0]);
-    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:p13-cutover-sync");
+    // PHILO-17: the meeting opens in its own window.
+    expect(openPrimitive).toHaveBeenCalledWith("meeting:p13-cutover-sync");
+    void openSurfaceOr;
   });
 });
 

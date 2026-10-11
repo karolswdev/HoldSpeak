@@ -13,7 +13,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
 import { forgetExecutedReceipts } from "../../../meetings/summaryRoute";
-import { HistoryCore } from "../HistoryCore";
+import { MeetingRecord } from "../history/MeetingRecord";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -51,7 +51,7 @@ function wire() {
     const url = String(path);
     // The LIST does not contain this meeting — the whole point.
     if (url.startsWith("/api/meetings?")) return { meetings: [] } as never;
-    if (url === "/api/meetings/m-deep") return DEEP_LINKED as never;
+    if (url.split("?")[0] === "/api/meetings/m-deep") return DEEP_LINKED as never;
     if (url.startsWith("/api/meetings/m-deep/")) return {} as never;
     return {} as never;
   });
@@ -65,7 +65,8 @@ describe("HS-201-04 a deep-linked meeting sends the route it showed", () => {
 
   it("puts the DISPLAYED selection hash on the run request", async () => {
     wire();
-    render(<HistoryCore scope="meeting:m-deep" />);
+    // PHILO-17: a deep link opens the meeting's own window.
+    render(<MeetingRecord meetingId="m-deep" onClose={() => undefined} />);
 
     // The record shows the detail's own route beside its verb.
     const chip = await screen.findByTestId("detail-route");

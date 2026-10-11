@@ -236,28 +236,30 @@ class TestMeetingAfterRun:
                     "[data-testid='meeting-row-m-ran'] .meetings-stream-row-body"
                 )
                 row_body.click()
-                detail = page.locator(".surface-split-detail .surface-display")
+                # PHILO-17: the row opens the meeting's own window.
+                record = page.locator("[id='pullout:meeting:m-ran']")
+                detail = record.locator(".surface-display").first
                 detail.wait_for(timeout=8_000)
                 _settle(page)
 
                 # Verify SUMMARISED + 41 S + host in the header strip (Phase 16)
-                facts = page.locator(".meetings-detail-facts").text_content() or ""
+                facts = record.locator(".meetings-detail-facts").text_content() or ""
                 assert "SUMMARISED" in facts, f"SUMMARISED not in detail facts at {width}: {facts}"
                 assert "41 S" in facts, f"41 S duration not in detail facts: {facts}"
                 assert "192.168.1.43" in facts, f"Host chip not in detail facts: {facts}"
 
                 # Phase 16: the 3 proposals are the Decisions and Commitments
                 # ledgers (the kit's Sections over kind-plated rows).
-                decisions = page.locator("[data-testid='meeting-decisions']")
-                commitments = page.locator("[data-testid='meeting-commitments']")
+                decisions = record.locator("[data-testid='meeting-decisions']")
+                commitments = record.locator("[data-testid='meeting-commitments']")
                 expect(decisions).to_be_visible(timeout=5_000)
                 assert decisions.locator("h3").text_content() == "Decisions · 1"
                 assert commitments.locator("h3").text_content() == "Commitments · 2"
                 needs_text = (decisions.text_content() or "") + (commitments.text_content() or "")
 
                 # Confirm and Dismiss buttons
-                confirm_btns = page.locator("[data-testid='proposal-confirm-btn']")
-                dismiss_btns = page.locator("[data-testid='proposal-dismiss-btn']")
+                confirm_btns = record.locator("[data-testid='proposal-confirm-btn']")
+                dismiss_btns = record.locator("[data-testid='proposal-dismiss-btn']")
                 assert confirm_btns.count() == 3, (
                     f"Expected 3 Confirm buttons, got {confirm_btns.count()}"
                 )
@@ -350,23 +352,25 @@ class TestMeetingQueued:
                 "[data-testid='meeting-row-m-queued'] .meetings-stream-row-body"
             )
             row_body.click()
-            detail = page.locator(".surface-split-detail .surface-display")
+            # PHILO-17: the row opens the meeting's own window.
+            record = page.locator("[id='pullout:meeting:m-queued']")
+            detail = record.locator(".surface-display").first
             detail.wait_for(timeout=8_000)
             _settle(page)
 
             # Header shows QUEUED chip
-            facts = page.locator(".meetings-detail-facts").text_content() or ""
+            facts = record.locator(".meetings-detail-facts").text_content() or ""
             assert "QUEUED" in facts, f"QUEUED not in detail facts: {facts}"
 
             # No REMAINING text (legacy panel suppressed)
-            body_text = page.locator(".surface-split-detail").text_content() or ""
+            body_text = record.text_content() or ""
             assert "REMAINING" not in body_text, (
                 f"Legacy REMAINING text found in queued detail: {body_text[:200]}"
             )
 
             # No clipped elements in the detail
             clipped = page.evaluate("""() => {
-                const detail = document.querySelector('.surface-split-detail');
+                const detail = document.getElementById('pullout:meeting:m-queued');
                 if (!detail) return [];
                 const clipped = [];
                 for (const el of detail.querySelectorAll('*')) {
@@ -379,7 +383,7 @@ class TestMeetingQueued:
             assert len(clipped) == 0, f"Clipped elements in queued detail: {clipped}"
 
             # Skip verb present
-            skip_btn = page.locator("[data-testid='detail-skip-btn']")
+            skip_btn = record.locator("[data-testid='detail-skip-btn']")
             assert skip_btn.count() >= 1, "Skip button absent on queued meeting"
 
             # Screenshot

@@ -246,26 +246,27 @@ class TestOneOpenGrammar:
                 # (`needs-row`; the name is the body, the verbs are apart).
                 commitment = page.locator(".desk-window-shell[aria-label='Needs you'] [data-testid='needs-row']",
                                           has_text=COMMITMENT).first.locator(".needs-row-name")
-                self._open(page, width, commitment, "People", "Priya Nair", "commitment row -> its person", walk)
+                self._open(page, width, commitment, "Priya Nair", "Priya Nair", "commitment row -> its person", walk)
                 page.screenshot(path=str(SHOTS / f"B1-02-commitment-person-{width}.png"))
 
                 # 3. the 1:1 row -> Priya on Prep
                 self._chair_window(page, width, "The week", walk)
                 one = page.locator("[data-testid='arrival-meeting-row']", has_text=ONE_ON_ONE).first
-                self._open(page, width, one, "People", "Priya Nair", "1:1 row -> Priya on Prep", walk)
+                self._open(page, width, one, "Priya Nair", "Priya Nair", "1:1 row -> Priya on Prep", walk)
                 walk["lens_after_1on1"] = self._lens(page)
                 walk["j1_gestures"] = walk["row_taps"] + walk["frame_taps"]
 
                 # Astra's pass: Prep -> Now -> the same 1:1 row again lands on Prep
                 # (the scope is unchanged; the open is a new request).
-                people = page.locator(".desk-window-shell[aria-label='People'], .desk-window[aria-label='People']").first
+                # PHILO-17 (2b): a person opens THAT person, in her own window.
+                people = page.locator(".desk-window-shell[aria-label='Priya Nair'], .desk-window[aria-label='Priya Nair']").first
                 self._press(page, people.get_by_role("tab", name="Now"), width)
                 page.wait_for_timeout(400)
                 reopen: dict[str, Any] = {"lens_after_now": self._lens(page), "row_taps": 0, "frame_taps": 0,
                                           "dead": 0, "steps": []}
                 self._chair_window(page, width, "The week", reopen)
                 one = page.locator("[data-testid='arrival-meeting-row']", has_text=ONE_ON_ONE).first
-                self._open(page, width, one, "People", "Priya Nair", "1:1 row again -> Prep", reopen)
+                self._open(page, width, one, "Priya Nair", "Priya Nair", "1:1 row again -> Prep", reopen)
                 page.wait_for_timeout(300)
                 reopen["lens"] = self._lens(page)
                 walk["reopen_prep"] = reopen
@@ -322,7 +323,7 @@ class TestOneOpenGrammar:
                 page.locator("[data-testid='verb-open-person']").wait_for()
                 bp: dict[str, Any] = {"row_taps": 0, "frame_taps": 0, "dead": 0, "steps": []}
                 self._open(page, width, page.locator("[data-testid='verb-open-person']").first,
-                           "People", "Avery Chen", "Brief -> Open person", bp)
+                           "Avery Chen", "Avery Chen", "Brief -> Open person", bp)
                 walk["brief_people"] = bp
                 page.screenshot(path=str(SHOTS / f"B1-07-brief-open-person-{width}.png"))
             finally:
@@ -369,7 +370,7 @@ class TestOneOpenGrammar:
                 assert fresh.locator(".desk-window-shell.chair-window").count() == 0, j3["windows_before"]
                 self._chair_window(fresh, width, "The week", j3)
                 one = fresh.locator("[data-testid='arrival-meeting-row']", has_text=ONE_ON_ONE).first
-                self._open(fresh, width, one, "People", "Priya Nair", "J3: 1:1 row -> Priya on Prep", j3)
+                self._open(fresh, width, one, "Priya Nair", "Priya Nair", "J3: 1:1 row -> Priya on Prep", j3)
                 j3["lens"] = self._lens(fresh)
                 fresh.screenshot(path=str(SHOTS / f"B1-05-j3-prep-{width}.png"))
             finally:

@@ -341,8 +341,11 @@ describe("Mounted-path: full draft-to-publish walk", () => {
       expect(screen.getByTestId("update-posture")).toBeTruthy();
     });
 
-    // Click "Draft" to create a deterministic draft
-    const draftBtn = screen.getByTestId("update-verb-draft-deterministic");
+    // Click "Draft" to create a deterministic draft. Draft waits for the
+    // engine read (#1084): wait until that read answers "no engine".
+    await screen.findByTestId("update-no-engine");
+    const draftBtn = screen.getByTestId("update-verb-draft-deterministic") as HTMLButtonElement;
+    expect(draftBtn.disabled).toBe(false);
     fireEvent.click(draftBtn);
 
     // Editor opens with DeskEditor (mocked as textarea)
@@ -505,11 +508,8 @@ describe("Source rows: deduplicated refs and open source", () => {
     expect(meetingChip!.textContent).toBe("MTG M-01");
     fireEvent.click(meetingChip!);
 
-    expect(mockOpenSurfaceOr).toHaveBeenCalledWith(
-      "review-meetings",
-      "/history",
-      "meeting:m-01",
-    );
+    // PHILO-17: the meeting opens in its own window.
+    expect(mockOpenPrimitive).toHaveBeenCalledWith("meeting:m-01");
   });
 
   it("clicking a decision ref opens the primitive", async () => {

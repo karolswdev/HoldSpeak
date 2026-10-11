@@ -34,8 +34,10 @@ vi.mock("../../intelligenceAttention", async () => {
 
 const openSurfaceOr = vi.hoisted(() => vi.fn());
 
+const openPrimitive = vi.hoisted(() => vi.fn());
 vi.mock("../../shell", () => ({
   openSurfaceOr,
+  openPrimitive,
 }));
 
 vi.mock("../../hooks/useWriteReceipt", () => ({
@@ -269,9 +271,8 @@ describe("BriefView person sections", () => {
     });
     fireEvent.click(screen.getByTestId("verb-open-person"));
 
-    // PHILO-13-06 (B1): the key that dispatches (`open-people`) on that
-    // relationship's scope; the old key `people` dispatched nowhere.
-    expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:rel-ewa");
+    // PHILO-17 (2b): THAT person, in their own window.
+    expect(openPrimitive).toHaveBeenCalledWith("people:rel-ewa");
   });
 
   it("receipt items still show Acknowledge/Defer/Speak verbs", async () => {

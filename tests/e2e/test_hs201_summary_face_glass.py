@@ -103,7 +103,12 @@ RECORD_HOST_JS = """([scope, label]) => {
 }"""
 
 
-def _wait_record_host(page: Any, label: str, scope: str = "#surface-meetings", timeout: int = 30_000) -> None:
+# PHILO-17 ("A meeting opens in one window"): the record is the meeting's own
+# window, the front one when its row (or any door) opened it.
+RECORD = ".desk-object-window.is-front"
+
+
+def _wait_record_host(page: Any, label: str, scope: str = RECORD, timeout: int = 30_000) -> None:
     page.wait_for_function(RECORD_HOST_JS, arg=[scope, label], timeout=timeout)
 
 
@@ -265,7 +270,7 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
 
             # ── station 3: the record AFTER the run: the text and the hosts ──
             open_meetings(first_id)
-            meetings_surface = page.locator("#surface-meetings")
+            meetings_surface = page.locator(RECORD)
             summary_text = meetings_surface.get_by_test_id("meeting-summary-text")
             summary_text.wait_for(timeout=15_000)
             assert (summary_text.text_content() or "").strip() == engine.result.summary
@@ -294,7 +299,7 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
             print(f"REVIEW {ran.text_content()!r}")
             _shot(page, "review-summary-ran")
             page.get_by_role("tab", name="Outcomes").click()
-            page.locator("#surface-meetings").get_by_test_id(
+            page.locator(RECORD).get_by_test_id(
                 "meeting-summary-text"
             ).wait_for(timeout=15_000)
 
@@ -461,7 +466,7 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
                     break
             assert opened, "no Open verb on the Chair after the restart"
             moves += 1
-            found = page.locator("#surface-meetings").get_by_test_id(
+            found = page.locator(RECORD).get_by_test_id(
                 "meeting-summary-text"
             )
             try:
@@ -487,9 +492,11 @@ def _assert_canon(page) -> None:
     found = page.evaluate(
         """() => {
             const out = {primaries: [], zeros: [], runVerbs: []};
+            // One filled primary per WINDOW (PHILO-17: the list and the
+            // meeting are two windows now): the most any one window draws.
             for (const win of document.querySelectorAll('.desk-surface-window')) {
-              for (const b of win.querySelectorAll('.btn--primary'))
-                out.primaries.push(b.textContent || '');
+              const own = [...win.querySelectorAll('.btn--primary')].map((b) => b.textContent || '');
+              if (own.length > out.primaries.length) out.primaries = own;
               // How many run verbs the face offers at all: the probe must
               // be measuring a rail that COULD draw more than one primary.
               for (const b of win.querySelectorAll('.meetings-stream button')) {
@@ -534,8 +541,9 @@ def _assert_no_overlap(page) -> None:
     """
     overlap = page.evaluate(
         """() => {
-            const meetingsWindow = document.querySelector('#surface-meetings')
-              ?.closest('.desk-surface-window');
+            // PHILO-17: the record is the meeting's own window.
+            const meetingsWindow = document.querySelector('.desk-object-window.is-front')
+              ?? document.querySelector('#surface-meetings')?.closest('.desk-surface-window');
             if (!meetingsWindow) return ['Meetings window not found'];
             const footer = meetingsWindow.querySelector('.surface-footer');
             const bad = [];
@@ -803,7 +811,7 @@ def test_import_transcribes_then_queues_the_disclosed_summary(
             page.get_by_test_id(f"meeting-row-{imported.id}").locator(
                 ".meetings-stream-row-body"
             ).click()
-            meetings_surface = page.locator("#surface-meetings")
+            meetings_surface = page.locator(RECORD)
             summary_text = meetings_surface.get_by_test_id("meeting-summary-text")
             summary_text.wait_for(timeout=15_000)
             assert (summary_text.text_content() or "").strip() == engine.result.summary

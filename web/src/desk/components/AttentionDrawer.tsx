@@ -18,6 +18,7 @@ import { openIntelligence } from "../intelligenceNavigation";
 import { CycleGadget, FoldGadget, StringGadget } from "../surface/gadgets";
 import { SurfaceCode, SurfaceState } from "../surface/Surface";
 import { openPrimitive, openSurfaceWhenReady } from "../shell";
+import { openSourceRef } from "../surface/citations";
 import {
   DeskWindowFrame,
   announceLauncher,
@@ -186,7 +187,7 @@ export function AttentionDrawer() {
               <Button
                 dense
                 onClick={() => {
-                  openSurfaceWhenReady("review-meetings", `meeting:${aftercare.meetingId}`);
+                  openSourceRef(`meeting:${aftercare.meetingId}`);
                   dismissAftercare();
                 }}
               >

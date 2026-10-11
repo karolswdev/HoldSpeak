@@ -221,6 +221,7 @@ export function MeetingDetail({
   footerRunReceipt,
   onTranscribe,
   saidOnFace,
+  revision = 0,
 }: {
   meeting: Record<string, unknown> | null;
   /** PHILO-17 (U16): the engine host the window's foot already names. */
@@ -247,9 +248,11 @@ export function MeetingDetail({
   /** PHILO-15-07 (B15): this meeting's summary-run receipt (QUEUED → RAN);
    *  the Review wing draws its own footer, so it shows it there. */
   footerRunReceipt?: Receipt | null;
+  /** PHILO-17: bumped by the meeting window when its records may have moved. */
+  revision?: number;
 }) {
   const id = String(meeting?.id ?? "");
-  const data = useMeetingData(meeting, onReceipt);
+  const data = useMeetingData(meeting, onReceipt, revision);
   const {
     detail,
     setDetail,
