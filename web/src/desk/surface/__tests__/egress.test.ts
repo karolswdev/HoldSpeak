@@ -1,6 +1,7 @@
 // HS-172-03 + HS-174-04 — egressFor + egressForEvent: the egress-label + scope mapper.
 import { describe, expect, it } from "vitest";
-import { egressFor, egressForEvent, receiptLabel } from "../egress";
+import { bareHost, egressFor, egressForEvent, hostPlace, isLoopbackHost, receiptLabel } from "../egress";
+import spellings from "../../../../../tests/fixtures/loopback_spellings.json";
 
 describe("egressFor", () => {
   it("returns empty for null/undefined/empty", () => {
@@ -35,6 +36,65 @@ describe("egressFor", () => {
 });
 
 /* ── HS-174-04: egressForEvent — remote origin badge ── */
+
+describe("hostPlace — the one helper for host words (PHILO-17 U16)", () => {
+  it("loopback and the wire words for here are this Mac", () => {
+    for (const host of ["127.0.0.1", "http://127.0.0.1:8899/v1", "localhost", "http://localhost:11434", "::1", "http://[::1]:8080/v1", "local", "same_device", "THIS DEVICE"]) {
+      expect(hostPlace(host)).toEqual({ place: "mac", host: "", words: "this Mac" });
+    }
+    // A loopback server added as a network engine is still this Mac.
+    expect(hostPlace("http://127.0.0.1:8899/v1", "lan").words).toBe("this Mac");
+  });
+
+  it("only what the transport pins as loopback is this Mac (loopback_http.py; Astra r1 M1)", () => {
+    for (const host of ["dev.localhost", "http://dev.localhost:8080/v1", "0.0.0.0", "http://0.0.0.0:8080", "127.0.0.256", "::"]) {
+      expect(hostPlace(host).place, host).not.toBe("mac");
+      expect(egressFor(host).label, host).not.toBe("THIS DEVICE");
+    }
+    // A host the transport does not pin is never this Mac, whatever the kind says.
+    expect(hostPlace("http://dev.localhost:8080/v1", "local").place).not.toBe("mac");
+    expect(hostPlace("127.1.2.3").place).toBe("mac");
+    expect(hostPlace("0:0:0:0:0:0:0:1").place).toBe("mac");
+  });
+
+  it("parser parity: every spelling is classified as the backend classifies it (Astra r2 M3)", () => {
+    // One table, read here and by tests/unit/test_loopback_spellings_parity.py
+    // against holdspeak/loopback_http.py and holdspeak/intel/providers.py.
+    for (const { host, loopback } of spellings.loopback) expect(isLoopbackHost(host), host).toBe(loopback);
+    const place: Record<string, string> = { local: "mac", private_network: "lan", cloud: "cloud" };
+    for (const { url, boundary } of spellings.boundary) expect(hostPlace(url).place, url).toBe(place[boundary]);
+  });
+
+  it("classifies the RAW spelling, before any URL normalisation (Astra r2 M3)", () => {
+    expect(bareHost("http://127.0.0.1.:8080/v1")).toBe("127.0.0.1.");
+    expect(bareHost("http://u:p@[::1]:8/x")).toBe("::1");
+    expect(bareHost("http://127.00.0.1:8080/v1")).toBe("127.00.0.1");
+    // Lead, badge and attempt all read hostPlace: these are never this Mac.
+    for (const url of ["http://127.0.0.1.:8080/v1", "http://localhost.:11434", "http://127.00.0.1:8080", "http://[:::1]:8080"]) {
+      expect(hostPlace(url).place, url).not.toBe("mac");
+      expect(hostPlace(url, "local").place, url).not.toBe("mac");
+      expect(egressFor(bareHost(url)).label, url).not.toBe("THIS DEVICE");
+    }
+    // The backend calls a trailing-dot loopback the private network.
+    expect(hostPlace("http://127.0.0.1.:8080/v1").place).toBe("lan");
+  });
+
+  it("a server on his network is its host name or IP", () => {
+    expect(hostPlace("http://192.168.1.43:8080/v1")).toEqual({ place: "lan", host: "192.168.1.43", words: "192.168.1.43" });
+    expect(hostPlace("studio.local", "lan")).toEqual({ place: "lan", host: "studio.local", words: "studio.local" });
+    expect(hostPlace("", "lan").words).toBe("your network");
+  });
+
+  it("a cloud engine is its provider's host", () => {
+    expect(hostPlace("openrouter.ai", "cloud")).toEqual({ place: "cloud", host: "openrouter.ai", words: "openrouter.ai" });
+    expect(hostPlace("https://api.openai.com/v1")).toEqual({ place: "cloud", host: "api.openai.com", words: "api.openai.com" });
+  });
+
+  it("egressFor reads it: 127.0.0.1 is THIS DEVICE, never a cloud host", () => {
+    expect(egressFor("127.0.0.1")).toEqual({ label: "THIS DEVICE", scope: "local" });
+    expect(egressFor("localhost")).toEqual({ label: "THIS DEVICE", scope: "local" });
+  });
+});
 
 describe("egressForEvent", () => {
   it("returns REMOTE + caller IP with scope remote for origin=remote", () => {

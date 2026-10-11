@@ -100,14 +100,23 @@ export function RouteDisclosure({
 export function RunAttempts({
   receipt,
   testId = "summary-attempts",
+  saidOnFace,
 }: {
   receipt: RunReceipt | null | undefined;
   testId?: string;
+  /** PHILO-17 (U16): the egress label the face already says (its foot). A
+   *  succeeded attempt on that same host is not said again; a failed one,
+   *  or one on another host, still is. */
+  saidOnFace?: string | null;
 }) {
   if (!receipt || receipt.attempts.length === 0) return null;
+  const shown = receipt.attempts.filter(
+    (attempt) => !saidOnFace || attempt.outcome !== "succeeded" || egressFor(attempt.host).label !== saidOnFace,
+  );
+  if (shown.length === 0) return null;
   return (
     <span className="summary-route" data-testid={testId}>
-      {receipt.attempts.map((attempt, index) => {
+      {shown.map((attempt, index) => {
         const contacted = egressFor(attempt.host);
         const failed = attempt.outcome !== "succeeded";
         return (

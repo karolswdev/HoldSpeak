@@ -220,8 +220,11 @@ export function MeetingDetail({
   runRefusal,
   footerRunReceipt,
   onTranscribe,
+  saidOnFace,
 }: {
   meeting: Record<string, unknown> | null;
+  /** PHILO-17 (U16): the engine host the window's foot already names. */
+  saidOnFace?: string | null;
   /** PHILO-17 transcribe: start Transcribe on this audio-only meeting. */
   onTranscribe?: (id: string) => Promise<unknown>;
   /** "outcomes" (the face), "review" (HS-200-12, posture 4) or "artifacts". */
@@ -277,7 +280,7 @@ export function MeetingDetail({
 
   return (
     <SurfaceSection>
-      <MeetingHeader meeting={meeting} data={data} compact={view === "review"} />
+      <MeetingHeader meeting={meeting} data={data} compact={view === "review"} saidOnFace={saidOnFace} />
       {/* PHILO-17 transcribe: an audio-only meeting's one verb, under the
           strip that says "NO TRANSCRIPT · SPEECH NOT SET UP". */}
       {onTranscribe ? (
@@ -361,7 +364,7 @@ export function MeetingDetail({
           />
           {/* HS-201-04: the summary is shown on the record, with its
               meeting — the result first, the transcript under it. */}
-          <MeetingSummarySlab intel={summaryIntel} receipt={runReceipt} />
+          <MeetingSummarySlab intel={summaryIntel} receipt={runReceipt} saidOnFace={saidOnFace} />
           {/* PHILO-11-05 (canvas C1, C4): SUMMARY, then SEND; no summary, no well.
               The old aftercare Slack rows are gone (R7): the digest and the
               follow-up are forms of this one well. */}

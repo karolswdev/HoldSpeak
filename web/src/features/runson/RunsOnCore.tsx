@@ -1,7 +1,7 @@
 // PHILO-16 (C) — Runs on: the Models window as a Switchboard.
 //
 // COMPOSITOR.md §12 "The exemplar: Runs on", canvas Board 2. Composed from
-// the kit: the AppHead (the one fact `N jobs · M engines` with its status
+// the kit: the AppHead (the one fact `M engines` with its status
 // strip), the Switchboard (the app's one species), and the Foot (the
 // receipt `PATCHED <time> · <job> → <engine>`, the egress chip of the last
 // engine used, Undo). A change applies on the drop; there is no Save.
@@ -29,12 +29,18 @@ import { MeaningSearchRow } from "../concierge/MeaningSearchRow";
 import {
   DEFAULT_JOB,
   JOB_ORDER,
+  MEETINGS_JOB,
   SPEECH_JOB,
+  enginePlace,
+  jobName,
   jobState,
   jobOf,
+  leadEngine,
+  leadLine,
   limitTokens,
   ownEntries,
   splitEngines,
+  taskDetail,
   taskLine,
   type BoardEngine,
 } from "./model";
@@ -203,6 +209,21 @@ export function RunsOnCore({ scope }: CoreProps) {
     const word = jobState(job, row, engines, repairs);
     words[job] = word;
     const effective = ctrl.engineForJob(job);
+    // Astra r1 (M2): the lead names the route the job really takes (for
+    // summaries, the capability's own assignment).
+    // Astra r2 (M1): until detection says the summary route, it is withheld.
+    const lead = leadEngine(job, effective, detection, engines, ctrl.detectionFailed);
+    const leadKnown = typeof lead === "object" && lead ? lead : undefined;
+    // The words under the name on the phone list (and its open card).
+    const leadWhere = leadKnown
+      ? `${leadKnown.name} · on ${enginePlace(leadKnown).words}`
+      : lead === null
+        ? "OFF"
+        : lead === "checking"
+          ? "CHECKING…"
+          : lead === "unknown"
+            ? "NOT KNOWN"
+            : word;
     const result = ctrl.results[job];
     const jobRepair = repairs.find((r) => r.groups.includes(job));
     const listening = job === SPEECH_JOB && ctrl.listening;
@@ -221,20 +242,38 @@ export function RunsOnCore({ scope }: CoreProps) {
     ) : undefined;
     jobs.push({
       id: job,
-      name: job === DEFAULT_JOB ? "Default for AI work" : job === SPEECH_JOB ? "Speech" : row.label,
+      // PHILO-17 (U16): the card leads with what he gets and where it runs;
+      // the task names are the card's details.
+      name: jobName(job, row),
+      lead: leadLine(job, row, lead),
+      detail: taskDetail(job, roster),
       tasks: taskLine(job, roster, row),
       state: stateClass(word),
       isDefault: job === DEFAULT_JOB,
       verb: layout === "board" ? tryVerb : undefined,
-      runsOn: effective ? effective.name : word,
+      runsOn: leadWhere,
+      // Astra r2 (M2): the open card on the phone shows the summary route,
+      // not the Meetings wire (OFF and an unknown route show no engine).
+      shows: job === MEETINGS_JOB ? (leadKnown ? leadKnown.key : null) : undefined,
       // C4: the engine the job runs on now, even when it follows the default.
       current: effective?.key,
-      currentToken: effective && row.inherited_from === "global" && job !== DEFAULT_JOB ? "FOLLOWS DEFAULT" : undefined,
+      // For summaries: only while their capability has no head of its own.
+      currentToken:
+        effective &&
+        row.inherited_from === "global" &&
+        job !== DEFAULT_JOB &&
+        !(job === MEETINGS_JOB && roster?.tasks.find((t) => t.id === "meeting.deferred_analysis")?.has_override)
+          ? "SAME AS EVERYTHING ELSE"
+          : undefined,
       // The limitation is a token on the job (§12 rule 6), until a Try
       // answers in its place; a repair names itself there too.
       // Astra r1 (finding 5): the setup stays while speech is not ready, also
       // after a Try it answered (its answer cannot repair a missing model).
-      result: job === SPEECH_JOB && speech.notSetUp ? (
+      result: lead === "unknown" ? (
+        <Button dense variant="secondary" data-testid="runson-read-again" onClick={ctrl.readAgain}>
+          Try again
+        </Button>
+      ) : job === SPEECH_JOB && speech.notSetUp ? (
         <SpeechSetup setup={speech} primary={false} testId="runson-speech-setup" />
       ) : result ? (
         <span data-tone={result.tone === "danger" ? "danger" : result.tone === "idle" ? "idle" : undefined}>{result.tokens.join(" · ")}</span>
@@ -334,13 +373,13 @@ export function RunsOnCore({ scope }: CoreProps) {
   );
 
   /* ── the AppHead ── */
-  const jobCount = jobs.length;
   const engineCount = have.filter((e) => e.profileId).length;
   const ready = Object.values(words).filter((w) => w === "READY").length;
   const limited = Object.values(words).filter((w) => w === "LIMITED").length;
   const broken = Object.values(words).filter((w) => w === "BROKEN").length;
   const waiting = Object.values(words).filter((w) => w === "WAITING").length;
-  const fact = engineCount ? `${jobCount} jobs · ${engineCount} ${engineCount === 1 ? "engine" : "engines"}` : `${jobCount} jobs`;
+  // PHILO-17 (U16): the one fact is what he has, never a count of jobs.
+  const fact = engineCount ? `${engineCount} ${engineCount === 1 ? "engine" : "engines"}` : "No engine yet";
   const checked = detection?.checkedAt
     ? wireDate(detection.checkedAt)?.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
     : null;

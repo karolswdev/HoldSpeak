@@ -525,6 +525,14 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     () => readPlannedRoute(meetingRows.find((row) => readPlannedRoute(row))),
     [meetingRows],
   );
+  // HS-200-12: the review wing draws its own footer (egress where the
+  // extraction happened, the receipt, `Accept reviewed`).
+  const reviewOwnsFooter = wings.view === "review" && Boolean(selected) && !wings.doorOpen;
+  // PHILO-17 (U16): the foot names the summary engine; the rows and the
+  // open meeting do not say the same host again (one chip per face). Astra
+  // r1 (M3): only while that foot is mounted; under Review it is not.
+  const footerHost =
+    !reviewOwnsFooter && faceRoute && routeReady(faceRoute) ? egressFor(faceRoute.legs[0].host).label : null;
   const footerEgress = useMemo(() => {
     // Astra's counsel finding 4: a constant `<EgressChip />` is not
     // evidence of local execution. With no route read at all, the footer
@@ -652,6 +660,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
   const rail = (
     <CatalogRail
+      saidOnFace={footerHost}
       onTranscribe={transcribeMeeting}
       meetingRows={meetingRows}
       restoredId={restoredId}
@@ -668,6 +677,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
   const detailPane = (paneView: DetailView) => (
     <MeetingDetail
+      saidOnFace={footerHost}
       meeting={selected}
       onTranscribe={transcribeMeeting}
       view={paneView}
@@ -714,10 +724,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       }}
     />
   );
-  // HS-200-12: the review wing draws its own footer (egress where the
-  // extraction happened, the receipt, `Accept reviewed`).
-  const reviewOwnsFooter = wings.view === "review" && Boolean(selected) && !wings.doorOpen;
-
   const face = wings.doorOpen ? (
     <DoorSection
       actions={doorActions}
