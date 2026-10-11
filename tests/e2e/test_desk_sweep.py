@@ -78,8 +78,8 @@ from holdspeak.services.desk_window_service import window_app  # noqa: E402
 from holdspeak.services.errors import ValidationError  # noqa: E402
 
 from ._hs173_seed import seed_health_room  # noqa: E402
-from . import test_hs158_room_glass as hs158  # noqa: E402
-from . import test_philo13_06_open_glass as open13  # noqa: E402
+from . import room_seed_rig as hs158  # noqa: E402
+from . import open_rig as open13  # noqa: E402
 from .glass_infra import (  # noqa: E402
     _api,
     _boot,
@@ -90,7 +90,7 @@ from .glass_infra import (  # noqa: E402
 )
 from .test_hs202_05_first_use_type_floor import _FAINT_JS, _MEASURE, GATED_CONTRAST  # noqa: E402
 from .test_philo14_b2_material_glass import LAMP_WORDS, MATERIAL_JS  # noqa: E402
-from .test_philo14_c4_conductor_glass import _seed as _seed_agents  # noqa: E402
+from .conductor_rig import _seed as _seed_agents  # noqa: E402
 from .test_philo17_meeting_window_glass import _save_meeting  # noqa: E402
 from .test_route_preflight import PAGE_ROUTES  # noqa: E402
 
