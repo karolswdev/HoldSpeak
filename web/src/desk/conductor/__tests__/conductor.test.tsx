@@ -373,6 +373,9 @@ describe("PHILO-14 C4 the Conductor window", () => {
     // Nothing selected: one verb per agent (it was hidden until a selection).
     const claude = await screen.findByRole("button", { name: "Install hooks · Claude Code" });
     expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
+    // Astra r1 (#1084): one primary per face; the next Install hooks is secondary.
+    expect(claude.className).toContain("btn--primary");
+    expect(screen.getByRole("button", { name: "Install hooks · Codex" }).className).toContain("btn--secondary");
     detectReply = () => ({ ...both, agents: [{ ...both.agents[0], hooks: "installed" }, both.agents[1]] });
     await act(async () => {
       fireEvent.click(claude);

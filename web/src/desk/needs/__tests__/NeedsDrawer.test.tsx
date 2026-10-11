@@ -254,13 +254,13 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     ]);
   });
 
-  it("draws no ⚠, no flight chip, no chip species, no Hand to agent", async () => {
+  it("draws no ⚠, no flight chip, no chip species, no Hand to coder", async () => {
     await mount();
     const drawer = screen.getByTestId("needs-drawer");
     expect(drawer.textContent).not.toContain("⚠");
     expect(drawer.querySelector("[data-testid='flight-chip']")).toBeNull();
     expect(drawer.querySelector(".state-chip, .signal-chip, [class*='StateChip'], [class*='state-chip']")).toBeNull();
-    expect(screen.queryByText("Hand to agent")).toBeNull();
+    expect(screen.queryByText("Hand to coder")).toBeNull();
     // ONE filled primary on the face: the first row's Answer.
     expect(drawer.querySelectorAll(".btn--primary").length).toBe(1);
     expect(within(row("Claude Code: rollback runbook")).getByText("Answer").className).toContain("btn--primary");

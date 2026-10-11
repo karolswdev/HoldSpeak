@@ -564,9 +564,9 @@ export const PRESET_DO_KINDS: readonly string[] = [
 ];
 
 export const STEWARD_PRESETS: readonly { value: StewardPreset; label: string; summary: string }[] = [
-  { value: "off", label: "Off", summary: "Watch only when I press Run once" },
-  { value: "tell", label: "Tell me", summary: "Watch the sources and tell me what changed" },
-  { value: "do", label: "Do it", summary: "Watch the sources and do the work. Never send." },
+  { value: "off", label: "Off", summary: "Run once only" },
+  { value: "tell", label: "Tell me", summary: "Watch · tell me · change nothing" },
+  { value: "do", label: "Do it", summary: "Watch · do the work · never send" },
 ];
 
 type PresetFields = { enabled: boolean; unattended_enabled: boolean; eligible_effect_kinds: string[] };

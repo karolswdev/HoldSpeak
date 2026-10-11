@@ -1748,7 +1748,7 @@ function NeedsYouRow({
           onCommitWell={(well) => { setCommitDraft(""); setCommitWell(well); }}
         />
         {/* Conductor F2: an item in flight shows its flight and its verb;
-            Hand to agent (Conductor K2d) only on an item no agent holds. */}
+            Hand to coder (Conductor K2d) only on an item no agent holds. */}
         {isInFlight(flight)
           ? <FlightVerbs flight={flight} title={item.title} />
           : <HandRowVerb item={item} />}

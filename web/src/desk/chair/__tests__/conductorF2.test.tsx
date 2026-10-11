@@ -134,17 +134,17 @@ describe("Conductor F2 on the Chair", () => {
     expect(openCoderSession).toHaveBeenCalledWith("claude:c1");
   });
 
-  it("F1 x F2: an in-flight row is the agent's: no Hand to agent, no owner to name", async () => {
+  it("F1 x F2: an in-flight row is the agent's: no Hand to coder, no owner to name", async () => {
     render(<ChairHome />);
     await waitFor(() => expect(needsRow("Write the rollback runbook")?.querySelector(".gadget-lamp")?.textContent)
       .toBe("ASKS · 2 MIN"));
     const row = needsRow("Write the rollback runbook")!;
-    expect(within(row).queryByRole("button", { name: /^Hand to agent/ })).toBeNull();
+    expect(within(row).queryByRole("button", { name: /^Hand to coder/ })).toBeNull();
     expect(within(row).queryByRole("button", { name: /^Name an owner/ })).toBeNull();
     expect(row.textContent).not.toMatch(/UNASSIGNED|OWNER · UNKNOWN/);
   });
 
-  it("F1 x F2: with no flight the same row asks for an owner (Hand to agent lives on the object)", async () => {
+  it("F1 x F2: with no flight the same row asks for an owner (Hand to coder lives on the object)", async () => {
     vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
       const url = String(path);
       if (url === "/api/inference/assignments")
@@ -159,7 +159,7 @@ describe("Conductor F2 on the Chair", () => {
     await waitFor(() => expect(needsRow("Write the rollback runbook")).toBeTruthy());
     const row = needsRow("Write the rollback runbook")!;
     expect(within(row).getByRole("button", { name: "Name an owner: Write the rollback runbook" })).toBeTruthy();
-    expect(within(row).queryByRole("button", { name: /^Hand to agent/ })).toBeNull();
+    expect(within(row).queryByRole("button", { name: /^Hand to coder/ })).toBeNull();
   });
 
   // PHILO-14 C4: the AGENTS section is PARKED; every live session (a handed

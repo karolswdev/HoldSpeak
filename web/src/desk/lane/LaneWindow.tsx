@@ -147,7 +147,7 @@ function LaneFrame({ launchId }: { launchId: string }) {
       id={LANE_WINDOW_ID}
       title={title}
       label={title}
-      kindWord="Agent lane"
+      kindWord="Coder lane"
       glyph="▮"
       className="desk-pullout is-lane"
       minW={360}
@@ -819,18 +819,30 @@ export function useDraftEgress(
   enabled: boolean,
   /** PHILO-15 B53: the Room's Draft update names its own model's host. */
   capability: string = DRAFT_CAPABILITY,
-): { label: string; scope?: "local" | "mixed" | "cloud" | "remote"; assigned?: boolean } {
+): {
+  label: string;
+  scope?: "local" | "mixed" | "cloud" | "remote";
+  /** PHILO-17 U31: true an engine is set, false none is, undefined not read yet. */
+  assigned?: boolean;
+  /** The first read failed: nothing is known (Try again with `retry`). */
+  failed?: boolean;
+  retry?: () => void;
+} {
   const targets = useDesk((s) => s.inferenceTargets);
   const [entry, setEntry] = useState<AssignmentEntry | null | undefined>(undefined);
+  const [readFailed, setReadFailed] = useState(false);
   const seq = useRef(0);
   const read = useCallback(() => {
     const mine = ++seq.current;
+    setReadFailed(false);
     void readDraftEntry(capability)
       .then((e) => {
         if (seq.current === mine) setEntry(e);
       })
       .catch(() => {
-        // The last read stays on the glass when a re-read fails.
+        // The last read stays on the glass when a re-read fails; with no
+        // read yet, the failure is said (never taken as "no engine").
+        if (seq.current === mine) setReadFailed(true);
       });
   }, [capability]);
   useEffect(() => {
@@ -845,7 +857,8 @@ export function useDraftEgress(
   });
   return useMemo(() => {
     // PHILO-17 U31: `assigned` says if an engine is set (undefined: not read yet).
-    if (!entry) return { label: "NOT SET", assigned: entry === undefined ? undefined : false };
+    if (entry === undefined) return { label: "NOT SET", assigned: undefined, failed: readFailed, retry: read };
+    if (!entry) return { label: "NOT SET", assigned: false, retry: read };
     const target = targets.find((t) => t.profile_id === entry.profile_id || t.id === entry.profile_id);
     let host = "";
     if (target?.endpoint) {
@@ -863,8 +876,8 @@ export function useDraftEgress(
     // No host to read: the chip names the model (its label), and its scope is
     // the entry's own boundary, so a LAN default never reads as cloud.
     const lan = !host && ["private_network", "mesh"].includes(String(entry.boundary ?? target?.boundary ?? ""));
-    return { label: (egress.label || "NOT SET").toUpperCase(), scope: lan ? "local" : egress.scope, assigned: true };
-  }, [entry, targets]);
+    return { label: (egress.label || "NOT SET").toUpperCase(), scope: lan ? "local" : egress.scope, assigned: true, retry: read };
+  }, [entry, targets, readFailed, read]);
 }
 
 /** Test seam (the chip keeps no cache since PHILO-15 05 r1). */

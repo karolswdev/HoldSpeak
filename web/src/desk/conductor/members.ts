@@ -241,7 +241,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       facts: {
         where: flight?.projectName || undefined,
         from: flight?.title || row.name,
-        owner: `${titleOf(row.agent)} (agent)`,
+        owner: `${titleOf(row.agent)} (coder)`,
         state: lamp,
         made: launchId ? madeWord(reads.launchedAt[launchId], now) || undefined : undefined,
       },
@@ -276,7 +276,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       facts: {
         where: flight.projectName || undefined,
         from: flight.title,
-        owner: `${titleOf(flight.agent)} (agent)`,
+        owner: `${titleOf(flight.agent)} (coder)`,
         state: lamp,
         made: madeWord(at, now) || undefined,
       },
@@ -312,7 +312,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       facts: {
         where: flight.projectName || undefined,
         from: flight.title,
-        owner: `${titleOf(flight.agent)} (agent)`,
+        owner: `${titleOf(flight.agent)} (coder)`,
         state,
         made: madeWord(reads.launchedAt[flight.launchId], now) || undefined,
       },

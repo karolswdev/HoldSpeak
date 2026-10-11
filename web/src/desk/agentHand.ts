@@ -1,4 +1,4 @@
-/* Hand to agent (docs/internal/CONDUCTOR.md step 2; the Conductor canvas
+/* Hand to coder (docs/internal/CONDUCTOR.md step 2; the Conductor canvas
  * K2/K3, ratified 2026-10-06): one item to a coding agent.
  *
  * Every entry (the Object menu, the object context menu, ⌘K, a Door row, a

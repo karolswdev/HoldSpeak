@@ -105,7 +105,11 @@ export function HooksLine({ member }: { member: ConductorMember | null }) {
   const agents = useConductor((s) => s.detect?.agents);
   const offered = member ? Boolean(member.detect && needsHooks(member.detect)) : (agents ?? []).some(needsHooks);
   if (!offered) return null;
-  return <p className="cw-hooks-line" data-testid="conductor-hooks-line">{HOOKS_LINE}</p>;
+  return (
+    <span className="surface-token cw-hooks-line" data-chip data-testid="conductor-hooks-line">
+      {HOOKS_LINE}
+    </span>
+  );
 }
 
 /** PHILO-15 B34: with nothing selected, every ready agent that lacks hooks
@@ -114,11 +118,12 @@ export function InstallHooksVerbs({ agents }: { agents: AgentRow[] }) {
   const installing = useConductor((s) => s.installing);
   return (
     <>
-      {agents.filter(needsHooks).map((row) => (
+      {agents.filter(needsHooks).map((row, index) => (
         <Button
           key={row.id}
           dense
-          variant="primary"
+          // Astra r1 (#1084): one primary per face; the next ones are secondary.
+          variant={index === 0 ? "primary" : "secondary"}
           data-testid="conductor-install-hooks"
           loading={installing === row.id}
           disabled={Boolean(installing) && installing !== row.id}
@@ -223,7 +228,7 @@ export function headFact(head: { atWork: number; ask: number }, members: readonl
 }
 
 /** PHILO-17 U32: what hooks do, in one line, where Install hooks is offered. */
-export const HOOKS_LINE = "Hooks let HoldSpeak see what the coder does and hand it work";
+export const HOOKS_LINE = "HOOKS · SEE THE CODER'S WORK · HAND IT WORK";
 
 /** `ASKED 6 MIN AGO`, `ASKED 3 H AGO`, `ASKED OCT 5`; `ASKS` with no age. */
 export function askedWord(when: string | undefined): string {

@@ -1008,18 +1008,36 @@ describe("Policy: visible labels on toggles", () => {
     expect(raw?.querySelector("summary")?.textContent).toContain("RAW");
     expect(raw?.hasAttribute("open")).toBe(false);
 
-    fireEvent.click(radios[1]); // Tell me
-    expect(radios[1].checked).toBe(true);
-    expect(screen.getByTestId("steward-footer-receipt").textContent).toBe("WATCH SOURCES · TELL ME");
-    fireEvent.click(screen.getByTestId("steward-verb-save-policy"));
-    await waitFor(() => {
-      const put = apiFetch.mock.calls.find(([u, init]) => String(u).includes("/steward/policy") && (init as { method?: string } | undefined)?.method === "PUT");
-      expect(put).toBeTruthy();
-      const body = (put![1] as { json: Record<string, unknown> & { eligible_effect_kinds: string[] } }).json;
-      expect(body.enabled).toBe(true);
-      expect(body.unattended_enabled).toBe(true);
-      expect([...body.eligible_effect_kinds].sort()).toEqual(["create_door_item", "create_proposals", "refresh_sources"]);
-    });
+    // Astra r1 (#1084): every preset's SAVED fields, pressed one by one.
+    const puts = () =>
+      apiFetch.mock.calls.filter(([u, init]) => String(u).includes("/steward/policy") && (init as { method?: string } | undefined)?.method === "PUT");
+    const lastBody = () => (puts().at(-1)![1] as { json: { enabled: boolean; unattended_enabled: boolean; eligible_effect_kinds: string[] } }).json;
+    const press = async (index: number, word: string) => {
+      const before = puts().length;
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Watch sources" })).getAllByRole("radio")[index]);
+      expect(screen.getByTestId("steward-footer-receipt").textContent).toBe(`WATCH SOURCES · ${word}`);
+      fireEvent.click(screen.getByTestId("steward-verb-save-policy"));
+      await waitFor(() => expect(puts().length).toBe(before + 1));
+      return lastBody();
+    };
+
+    const tell = await press(1, "TELL ME");
+    expect(tell.enabled).toBe(true);
+    expect(tell.unattended_enabled).toBe(true);
+    expect([...tell.eligible_effect_kinds].sort()).toEqual(["create_door_item", "create_proposals", "refresh_sources"]);
+
+    const doIt = await press(2, "DO IT");
+    expect(doIt.enabled).toBe(true);
+    expect(doIt.unattended_enabled).toBe(true);
+    expect([...doIt.eligible_effect_kinds].sort()).toEqual(
+      ["apply_proposal_effects", "create_door_item", "create_proposals", "draft_update", "prepare_send", "refresh_sources"],
+    );
+    expect(doIt.eligible_effect_kinds).not.toContain("github_comment");
+
+    const off = await press(0, "OFF");
+    expect(off.unattended_enabled).toBe(false);
+    expect(off.enabled).toBe(true); // Run once still works
+    expect([...off.eligible_effect_kinds].sort()).toEqual([...doIt.eligible_effect_kinds].sort());
   });
 
   it("each effect kind toggle has its human label visible", async () => {

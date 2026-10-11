@@ -190,7 +190,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
     useDrawers.getState().openInfo(member ?? projectInfoMember(projectId, name), projectId);
   };
   // PHILO-14 C3: drop to hand. A work item drags out of the icons; an agent
-  // here takes it; the selection's Hand to agent is the same hand by press
+  // here takes it; the selection's Hand to coder is the same hand by press
   // (the keyboard path, and the only one at 393).
   const host = drawerHost(projectId);
   const drag = useDropHand((s) => s.drag);
@@ -272,7 +272,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
             <IconGrid well label={name} onClear={() => setSelectedId(null)}>
               {members.map((m) => {
                 // No drag gesture at 393 in any view (Astra P3 on #946): the hand
-                // there is the footer's Hand to agent.
+                // there is the footer's Hand to coder.
                 const hand = compact ? null : handOf(m);
                 return (
                   <DeskIcon
@@ -363,7 +363,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
             </Button>
             {selectedHand ? (
               <Button dense variant="ghost" onClick={handSelected} data-testid="drawer-hand">
-                Hand to agent
+                Hand to coder
               </Button>
             ) : null}
             <Button dense variant="secondary" disabled={!selected || !memberOpens(selected)} onClick={() => open(selected)}>

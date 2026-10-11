@@ -19,9 +19,5 @@
   .desk-next .cw-footer .surface-footer-verbs > .btn { max-width: 100%; white-space: normal; }
 }
 .desk-next .cw-receipt { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-/* PHILO-17 U32: the one line that says what hooks do, under the agents. */
-.desk-next .cw-hooks-line {
-  margin: 8px 0 0;
-  font: 400 13px/1.4 var(--font-sans);
-  color: var(--text-muted);
-}
+/* PHILO-17 U32: what hooks do, as one token under the coders. */
+.desk-next .cw-hooks-line { display: inline-flex; margin-top: 8px; }

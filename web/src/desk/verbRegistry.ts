@@ -486,11 +486,11 @@ export const VERBS: Verb[] = [
     },
   },
   {
-    // Hand to agent (Conductor K2, the canvas ratified 2026-10-06): one
+    // Hand to coder (Conductor K2, the canvas ratified 2026-10-06): one
     // registry verb reaches the Object menu, the object context menu and ⌘K.
     // It opens the launch sheet on every hand-off (the owner's ruling).
     id: "object.hand-to-agent",
-    label: "Hand to agent",
+    label: "Hand to coder",
     menu: "object",
     scope: "object",
     glyph: "⇥",

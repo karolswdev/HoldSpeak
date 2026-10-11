@@ -523,11 +523,17 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
               with none it drafts from the Room's own facts, and the chip says
               so with Choose (Runs on). */}
           <span className="update-draft-model-action" data-testid="update-draft-model-action">
+            {/* Astra r1 (#1084): while the engine is not read, Draft waits; a
+                failed read says so with Try again. Never silently deterministic. */}
             <Button
               dense
               variant="primary"
               loading={ctrl.draftBusy}
-              onClick={() => void ctrl.draft(modelEgress.assigned ? "model" : "deterministic")}
+              disabled={modelEgress.assigned === undefined}
+              onClick={() => {
+                if (modelEgress.assigned === undefined) return;
+                void ctrl.draft(modelEgress.assigned ? "model" : "deterministic");
+              }}
               data-testid={modelEgress.assigned ? "update-verb-draft-model" : "update-verb-draft-deterministic"}
               data-verb="draft-update"
             >
@@ -539,6 +545,15 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
                 scope={modelEgress.scope}
                 title={`UPDATE DRAFTS · ${modelEgress.label}`}
               />
+            ) : modelEgress.failed ? (
+              <>
+                <span className="surface-token" data-chip data-tone="fail" role="status" data-testid="update-engine-not-read">ENGINE NOT READ</span>
+                <Button dense variant="ghost" data-testid="update-engine-retry" onClick={() => modelEgress.retry?.()}>
+                  Try again
+                </Button>
+              </>
+            ) : modelEgress.assigned === undefined ? (
+              <span className="surface-token" data-chip data-testid="update-engine-checking">CHECKING ENGINE…</span>
             ) : modelEgress.assigned === false ? (
               <>
                 <span className="surface-token" data-chip data-testid="update-no-engine">No engine for drafts</span>

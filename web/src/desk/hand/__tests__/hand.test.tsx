@@ -3,7 +3,7 @@
 // agent icon. YOLO: the confirm line (preview → Brief ▸ → Hand → receipt);
 // Secure / Normal: the launch sheet, on the agent the drop named. A refusal
 // reads on the line as the sheet reads it. At 393 there is no drag: the
-// drawer's Hand to agent verb reaches the same line.
+// drawer's Hand to coder verb reaches the same line.
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../lib/api";
@@ -444,7 +444,7 @@ describe("PHILO-15 16 the sheet carries the clone through a launch refusal", () 
 });
 
 describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
-  it("icons do not lift; the drawer list's Hand to agent opens the confirm line over the list", async () => {
+  it("icons do not lift; the drawer list's Hand to coder opens the confirm line over the list", async () => {
     setCompact(true);
     render(
       <>
@@ -455,9 +455,9 @@ describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
     const row = await within(drawer()).findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
     for (const el of document.querySelectorAll(".desk-screen .desk-icon")) expect(el).not.toHaveAttribute("draggable", "true");
     // The verb is withheld until a handable object is selected.
-    expect(within(drawer()).queryByRole("button", { name: "Hand to agent" })).toBeNull();
+    expect(within(drawer()).queryByRole("button", { name: "Hand to coder" })).toBeNull();
     fireEvent.click(row);
-    fireEvent.click(within(drawer()).getByRole("button", { name: "Hand to agent" }));
+    fireEvent.click(within(drawer()).getByRole("button", { name: "Hand to coder" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     // Over the list (the line comes before it).
@@ -489,11 +489,11 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
     expect(within(line).getByTestId("hand-confirm-agent")).toBeDisabled();
   });
 
-  it("393: the drawer's Hand to agent verb reaches the same token", async () => {
+  it("393: the drawer's Hand to coder verb reaches the same token", async () => {
     setCompact(true);
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
     fireEvent.click(await within(drawer()).findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ }));
-    fireEvent.click(within(drawer()).getByRole("button", { name: "Hand to agent" }));
+    fireEvent.click(within(drawer()).getByRole("button", { name: "Hand to coder" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));

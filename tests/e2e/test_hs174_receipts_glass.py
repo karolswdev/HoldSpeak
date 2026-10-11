@@ -283,16 +283,19 @@ def test_room_receipts_1440(
     PID = "proj-174-receipts"
     _seed_project(PID, "Q4 Platform")
 
-    # Seed two pipeline events scoped to the project (project_id in args_summary)
+    # Seed two Room WRITES scoped to the project (project_id in args_summary).
+    # Astra r1 (#1084): PHILO-9-01 made the Room's receipts its writes only
+    # (ROOM_WRITE_METHODS); the old run_sweep / project_run_steward seeds drew
+    # no row, and the fence passed hollow. A remote write and a local one.
     _seed_pipeline_event(
-        service="HeartbeatService", method="run_sweep",
+        service="ProjectService", method="update_project",
         origin="remote", caller="192.168.1.43",
         caller_identity="sweep-runner",
-        result_summary=f'{{"watches":4,"rooms":2,"held":false,"project_id":"{PID}"}}',
+        result_summary=f'{{"id":"{PID}"}}',
         args_summary=f'{{"project_id":"{PID}"}}',
     )
     _seed_pipeline_event(
-        service="StewardService", method="project_run_steward",
+        service="ProjectService", method="create_item",
         origin="local", caller="",
         result_summary='{"status":"completed"}',
         args_summary=f'{{"project_id":"{PID}"}}',
@@ -312,12 +315,16 @@ def test_room_receipts_1440(
         _open_room(page, PID)
         _settle(page)
 
-        # Look for RECEIPTS section
+        # PHILO-17 U31: the receipts live under History (Astra r1 #1084: select
+        # it, and fail when no row is drawn).
+        page.get_by_role("tab", name="History").first.click()
         receipts = page.locator('[data-testid="receipt-row"]')
-        if receipts.count() > 0:
-            # At least one receipt row rendered
+        receipts.first.wait_for(timeout=15_000)
+        assert receipts.count() >= 1, "no receipt row under History"
+        if True:
             egress_chips = page.locator('[data-testid="receipt-egress"]')
-            if egress_chips.count() > 0:
+            assert egress_chips.count() > 0, "the remote write has no egress chip"
+            if True:
                 all_text = " ".join(
                     egress_chips.nth(i).text_content() or ""
                     for i in range(egress_chips.count())
@@ -350,12 +357,12 @@ def test_room_receipts_393(
     _seed_project(PID, "Q4 Platform")
 
     _seed_pipeline_event(
-        service="HeartbeatService", method="run_sweep",
+        service="ProjectService", method="update_project",
         origin="remote", caller="192.168.1.43",
         args_summary=f'{{"project_id":"{PID}"}}',
     )
     _seed_pipeline_event(
-        service="StewardService", method="project_run_steward",
+        service="ProjectService", method="create_item",
         origin="local", caller="",
         args_summary=f'{{"project_id":"{PID}"}}',
     )
@@ -373,6 +380,11 @@ def test_room_receipts_393(
 
         _open_room(page, PID)
         _settle(page)
+        # PHILO-17 U31: the receipts live under History.
+        page.get_by_role("tab", name="History").first.click()
+        receipts = page.locator('[data-testid="receipt-row"]')
+        receipts.first.wait_for(timeout=15_000)
+        assert receipts.count() >= 1, "no receipt row under History"
 
         _room_shot(page, "build-room-receipts-393", 393)
         _assert_clean(page, errors)

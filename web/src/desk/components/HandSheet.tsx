@@ -1,5 +1,5 @@
 /* The launch sheet (the Conductor canvas K3a/K3b, ratified 2026-10-06):
- * Hand to agent opens this docked desk window in the Ask AI posture (the
+ * Hand to coder opens this docked desk window in the Ask AI posture (the
  * desk stays alive behind it; never a modal). It shows what the hand-off
  * will do BEFORE the press: the agent (Claude Code by the owner's ruling,
  * or Codex), the brief (its sources, bytes, the People cut, the acceptance
@@ -416,7 +416,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     <DeskWindowFrame
       id={HAND_WINDOW_ID}
       glyph="⇥"
-      label="Hand to agent"
+      label="Hand to coder"
       kindWord="Agent launch"
       className="desk-pullout desk-hand"
       defaultW={560}

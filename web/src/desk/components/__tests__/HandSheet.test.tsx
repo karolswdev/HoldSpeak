@@ -1,4 +1,4 @@
-/* Hand to agent (the Conductor canvas K2/K3, ratified 2026-10-06): the
+/* Hand to coder (the Conductor canvas K2/K3, ratified 2026-10-06): the
  * launch sheet with the hub faked in the shape of
  * POST /api/agent/hand/preview and POST /api/agent/hand; the row origin
  * rules; the registry verb (Object menu, context menu, ⌘K). */
@@ -188,7 +188,7 @@ describe("the words", () => {
   });
 });
 
-describe("Hand to agent: where the verb reaches", () => {
+describe("Hand to coder: where the verb reaches", () => {
   it("the kinds agent.hand takes, and the row origins", () => {
     expect(handKindOf("decision")).toBe("decision");
     expect(handKindOf("note")).toBe("note");
@@ -213,12 +213,12 @@ describe("Hand to agent: where the verb reaches", () => {
     expect(handOriginOfRow({ title: "PAY-418", source: "jira", kind: "issue", watchId: "w" })).toBeNull();
   });
 
-  it("R4: the Room issue row wears Hand to agent and opens the sheet for issue:<watch>.<entity>", () => {
+  it("R4: the Room issue row wears Hand to coder and opens the sheet for issue:<watch>.<entity>", () => {
     const { container } = render(
       <HandRowVerb item={{ title: "PAY-418 Reconciliation job slow", source: "jira", kind: "issue", watchId: "watch-r4-jira", entityId: "PAY-418" }} />,
     );
     expect(container.querySelectorAll("[data-testid=hand-row-verb]").length).toBe(1);
-    fireEvent.click(screen.getByRole("button", { name: "Hand to agent: PAY-418 Reconciliation job slow" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hand to coder: PAY-418 Reconciliation job slow" }));
     expect(useAgentHand.getState().origin).toMatchObject({ kind: "issue", id: "watch-r4-jira.PAY-418" });
   });
 
@@ -228,7 +228,7 @@ describe("Hand to agent: where the verb reaches", () => {
       <HandRowVerb item={{ title: "#418", source: "github" }} />
     </>);
     expect(container.querySelectorAll("[data-testid=hand-row-verb]").length).toBe(1);
-    fireEvent.click(screen.getByRole("button", { name: "Hand to agent: Write the rollback runbook" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hand to coder: Write the rollback runbook" }));
     expect(useAgentHand.getState().origin).toMatchObject({ kind: "action", id: "ai_1" });
   });
 

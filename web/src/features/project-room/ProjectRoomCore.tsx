@@ -1033,7 +1033,7 @@ function NeedsYouSection({
                 }
                 trailing={<>
                   {/* Conductor F2: an item in flight shows its flight and its
-                      verb; Hand to agent (Conductor K2e) only on an item no
+                      verb; Hand to coder (Conductor K2e) only on an item no
                       agent holds, before the row's Open, as drawn. */}
                   {isInFlight(flight)
                     ? <FlightVerbs flight={flight} title={item.title} />
@@ -1620,7 +1620,7 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
                       <span className="surface-token" data-chip data-testid="receipt-reason">{refusalWord(item.reason)}</span>
                     ) : null}
                     {egress.label ? (
-                      <EgressChip label={egress.label} scope={egress.scope} data-testid="receipt-egress" />
+                      <span data-testid="receipt-egress"><EgressChip label={egress.label} scope={egress.scope} /></span>
                     ) : null}
                     {item.timestamp ? (
                       <span className="surface-token" data-muted>{humanTime(item.timestamp)}</span>
