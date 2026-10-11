@@ -9,6 +9,7 @@ import { plainFailure } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
 import { openSourceRef } from "../../desk/surface/citations";
 import { PERSON_OPEN_EVENT, refOpener, type PersonOpenRequest } from "../../desk/openObject";
+import { peekPersonLens, takePersonLens } from "../../desk/objectWindows";
 import { composePeoplePrep, readPeoplePrep, type PeoplePrepData, type PrepCalendarEvent } from "../../desk/people/prepData";
 import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
@@ -397,7 +398,10 @@ type NowConcern = "prs" | "assignments" | "commitments" | null;
  *  person, on the RelationshipPane, not the People roster. A lens a door
  *  asks for comes in as a request (`PERSON_OPEN_EVENT`); a store that is
  *  not ready says so and offers its one verb, as the People window does. */
-export function PersonWindowBody({ relationshipId, initialLens = null, onClose }: { relationshipId: string; initialLens?: Lens | null; onClose?(): void }) {
+export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: string; onClose?(): void }) {
+  // The lens a door asked for before this window could hear it, once.
+  const [initialLens] = useState<Lens | null>(() => peekPersonLens(relationshipId));
+  useEffect(() => { takePersonLens(relationshipId); }, [relationshipId]);
   const [readiness, setReadiness] = useState<Readiness | null>(null);
   const [detail, setDetail] = useState<RelationshipDetail | null>(null);
   const [error, setError] = useState("");
@@ -407,6 +411,7 @@ export function PersonWindowBody({ relationshipId, initialLens = null, onClose }
     const onOpen = (event: Event) => {
       const request = (event as CustomEvent<PersonOpenRequest>).detail;
       if (request?.relationshipId !== relationshipId || !request.lens) return;
+      takePersonLens(relationshipId);
       setLensRequest({ lens: request.lens as Lens, seq: request.seq });
     };
     window.addEventListener(PERSON_OPEN_EVENT, onOpen);

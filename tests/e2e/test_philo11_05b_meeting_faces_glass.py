@@ -176,6 +176,10 @@ class TestMeetingFacesGlass:
         self._stage(page, "review-meetings")
         row = page.get_by_test_id(f"meeting-row-{meeting_id}")
         row.wait_for(timeout=T)
+        # The hub restores the Chair's windows beside the staged Meetings; the
+        # owner brings Meetings forward from its Dock door (as the park glass).
+        page.locator(".desk-dock").get_by_role("button", name="Meetings", exact=True).click()
+        page.wait_for_timeout(400)
         row.locator(".meetings-stream-row-body").click()
         page.locator(".meetings-detail-head").wait_for(timeout=T)
         page.wait_for_timeout(900)

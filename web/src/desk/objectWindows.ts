@@ -59,6 +59,12 @@ export function meetingWindowRef(scope: string | null | undefined): string | nul
   return `meeting:${id}`;
 }
 
+/** The place a door asked for `meetingId`'s window, without taking it (a
+ * render may run again; the window takes it in an effect). */
+export function peekMeetingRequest(meetingId: string): MeetingOpenRequest | null {
+  return meetingRequests.get(meetingId) ?? null;
+}
+
 /** The place a door asked for `meetingId`'s window, once per request. */
 export function takeMeetingRequest(meetingId: string): MeetingOpenRequest | null {
   const request = meetingRequests.get(meetingId) ?? null;
@@ -94,6 +100,11 @@ export function personWindowRef(scope: string | null | undefined): string | null
     }));
   }
   return `people:${id}`;
+}
+
+/** The lens a door asked for, without taking it (see peekMeetingRequest). */
+export function peekPersonLens(relationshipId: string): PersonLens | null {
+  return personLenses.get(relationshipId) ?? null;
 }
 
 /** The lens a door asked for `relationshipId`'s window, once per request. */

@@ -33,7 +33,7 @@ import { burstTimer } from "../../../desk/burstTimer";
 import { onReturnToTask } from "../../../desk/returnToTask";
 import { useWindowTitle } from "../../../desk/surface/title";
 import { useDesk } from "../../../desk/store";
-import { MEETING_OPEN_EVENT, takeMeetingRequest, type MeetingOpenRequest } from "../../../desk/objectWindows";
+import { MEETING_OPEN_EVENT, peekMeetingRequest, takeMeetingRequest, type MeetingOpenRequest } from "../../../desk/objectWindows";
 import { useCoreWings } from "../core-hooks";
 import type { MeetingDetailResponse } from "../core-types";
 import { clockTime, download, summaryIsOff, type DetailView } from "./helpers";
@@ -58,7 +58,9 @@ function revealOnRecord(anchorId: string, focus = false): void {
 
 export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClose(): void }) {
   // The place a door asked for (a Review wing, a transcript row), once.
-  const [request] = useState<MeetingOpenRequest | null>(() => takeMeetingRequest(meetingId));
+  // Peeked in render (a render may run again), taken once it is shown.
+  const [request] = useState<MeetingOpenRequest | null>(() => peekMeetingRequest(meetingId));
+  useEffect(() => { takeMeetingRequest(meetingId); }, [meetingId]);
   const wings = useCoreWings(MEETING_WINGS, request?.view ?? "outcomes");
   const [meeting, setMeeting] = useState<Record<string, unknown> | null>(null);
   const [loadError, setLoadError] = useState("");
@@ -75,8 +77,16 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         `/api/meetings/${encodeURIComponent(meetingId)}?include_parked=true`,
       );
       // MERGE, never replace (HS-202-02): a field the first read carried
-      // stays until a read carries it again.
-      setMeeting((current) => ({ ...(current ?? {}), ...(fresh as Record<string, unknown>) }));
+      // stays until a read carries it again. An unchanged read keeps the
+      // same object, so the record's own reads (and an open Send well's
+      // form) are not reset on every desk change.
+      setMeeting((current) => {
+        const next = fresh as Record<string, unknown>;
+        if (current && Object.keys(next).every((key) => JSON.stringify(current[key]) === JSON.stringify(next[key]))) {
+          return current;
+        }
+        return { ...(current ?? {}), ...next };
+      });
       setLoadError("");
     } catch (reason) {
       setLoadError(readableError(reason));

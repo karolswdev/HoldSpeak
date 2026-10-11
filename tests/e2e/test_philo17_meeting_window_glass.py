@@ -134,7 +134,7 @@ class TestOneMeetingOneWindow:
             page.evaluate("""(key) => sessionStorage.setItem("hs.desk.staged-surface-open", JSON.stringify({key}))""", staged)
             page.reload(wait_until="load")
         _normal_chair(page)
-        page.locator("[data-testid=desk-screen]").wait_for(timeout=T)
+        page.locator("[data-testid=desk-screen]").wait_for(state="attached", timeout=T)
         page.wait_for_timeout(1200)
 
     def _press(self, loc: Any) -> None:
@@ -146,6 +146,14 @@ class TestOneMeetingOneWindow:
             self.page.touchscreen.tap(b["x"] + b["width"] / 2, b["y"] + b["height"] / 2)
         else:
             loc.click()
+        self.page.wait_for_timeout(600)
+
+    def _open_icon(self, key: str) -> None:
+        """A desk icon opens on Enter (a press only selects it)."""
+        icon = self.page.locator(f"[data-testid=desk-screen] [data-object-id='{key}']").first
+        icon.wait_for(state="attached", timeout=T)
+        icon.focus()
+        self.page.keyboard.press("Enter")
         self.page.wait_for_timeout(600)
 
     def _hub_ids(self) -> list[str]:
@@ -201,7 +209,7 @@ class TestOneMeetingOneWindow:
             browser, page, errors = self._page(pw, width)
             try:
                 # 1. The Needs-you row (the failed summary): Summarize opens the meeting.
-                self._press(page.locator("[data-object-id='drawer:needs']"))
+                self._open_icon("drawer:needs")
                 row = page.locator("[data-testid='needs-row']", has_text="Platform sync").first
                 row.wait_for(timeout=T)
                 self._press(row.locator("[data-verb=summarize]"))
@@ -215,10 +223,7 @@ class TestOneMeetingOneWindow:
                 self._shot("meeting-window-needs")
 
                 # 2. The desk icon: the open window comes to the front, never twice.
-                icon = page.locator(f".desk-screen [data-object-id='meeting:{ONE}']").first
-                icon.focus()
-                page.keyboard.press("Enter")
-                page.wait_for_timeout(600)
+                self._open_icon(f"meeting:{ONE}")
                 self._one_front(ONE, "icon")
 
                 # 3. The ⌘K hit (the Search tap at 393).
@@ -288,10 +293,7 @@ class TestOneMeetingOneWindow:
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width)
             try:
-                icon = page.locator(f".desk-screen [data-object-id='people:{self.person}']").first
-                icon.wait_for(timeout=T)
-                icon.focus()
-                page.keyboard.press("Enter")
+                self._open_icon(f"people:{self.person}")
                 wid = f"pullout:people:{self.person}"
                 win = page.locator(f"[id='{wid}']")
                 win.locator("[data-testid=person-window]").wait_for(timeout=T)

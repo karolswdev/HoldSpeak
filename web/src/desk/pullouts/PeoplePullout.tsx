@@ -4,10 +4,9 @@
  * (`pullout:people:<relationship id>`), on the People RelationshipPane; the
  * People drawer stays the roster. The People desk object itself (`people`)
  * is the roster application, never this window. */
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { SurfaceState } from "../surface/Surface";
-import { takePersonLens } from "../objectWindows";
 import type { PulloutContentProps } from "./types";
 
 const PersonWindowBody = lazy(() =>
@@ -15,8 +14,6 @@ const PersonWindowBody = lazy(() =>
 );
 
 export function PeoplePullout({ object: o, onClose }: PulloutContentProps) {
-  // The lens a door asked for, taken once when the window opens.
-  const [lens] = useState(() => takePersonLens(o.id));
   if (o.kind !== "people" || o.id === "people") {
     return (
       <>
@@ -27,7 +24,7 @@ export function PeoplePullout({ object: o, onClose }: PulloutContentProps) {
   }
   return (
     <Suspense fallback={<SurfaceState loading />}>
-      <PersonWindowBody relationshipId={o.id} initialLens={lens} onClose={onClose} />
+      <PersonWindowBody relationshipId={o.id} onClose={onClose} />
     </Suspense>
   );
 }
