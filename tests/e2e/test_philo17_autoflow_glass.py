@@ -15,6 +15,7 @@ At 1440 and at 393.
 """
 from __future__ import annotations
 
+import re
 import threading
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,7 @@ from typing import Any
 import pytest
 
 from holdspeak.kernel.runtime import _configure
+from tests._evidence import evidence_dir
 from tests.unit.test_meeting_deferred_admission import FakeHost, FakeIntel, _Route
 
 from .glass_infra import (
@@ -30,6 +32,7 @@ from .glass_infra import (
     _boot,
     _ensure_build,
     _normal_chair,
+    _settle,
     clear_hub_windows,
     seed_meeting_engines,
 )
@@ -39,6 +42,7 @@ pytestmark = [pytest.mark.timeout(600, method="thread"), pytest.mark.chair_windo
 
 TOKEN = "philo17-autoflow"
 SIZES = ((1440, 900), (393, 852))
+SHOTS = evidence_dir("pm/evidence/philo17-autoflow")
 
 
 class _HeldIntel(FakeIntel):
@@ -48,10 +52,15 @@ class _HeldIntel(FakeIntel):
     def __init__(self) -> None:
         super().__init__()
         self.gate = threading.Event()
+        self.timed_out = False
 
     def analyze(self, transcript: str, *, stream: bool = False, memory_context: str = "") -> Any:
         self.entered.set()
-        self.gate.wait(60)
+        if not self.gate.wait(60):
+            # Astra r1: a gate that times out FAILS the case; it never
+            # answers by itself (the test asserts `timed_out` is False).
+            self.timed_out = True
+            raise RuntimeError("the provider gate was never released")
         return super().analyze(transcript, stream=stream, memory_context=memory_context)
 
 
@@ -130,13 +139,30 @@ def test_summary_after_every_meeting_reaches_the_open_record_by_itself(tmp_path:
                 # ── open the record while the run is still going ──
                 row = page.get_by_test_id(f"meeting-row-{meeting_id}")
                 row.wait_for(timeout=20_000)
-                row.locator(".meetings-stream-row-body").click()
-                page.locator(".meetings-detail-head").wait_for(timeout=15_000)
+                with page.expect_response(
+                    lambda r: r.request.method == "GET"
+                    and r.url.split("?")[0].endswith(f"/api/meetings/{meeting_id}")
+                ) as opened:
+                    row.locator(".meetings-stream-row-body").click()
+                # Astra r1: the record's OWN detail read answered with no
+                # summary, and the face draws the pending state from it.
+                pending = opened.value.json()
+                assert not ((pending.get("intel") or {}).get("summary")), pending.get("intel")
+                head = page.locator(".meetings-detail-head")
+                head.wait_for(timeout=15_000)
+                page.wait_for_function(
+                    "() => /RUNNING|QUEUED/.test(document.querySelector('.meetings-detail-head')?.textContent || '')",
+                    timeout=15_000,
+                )
+                surface = page.locator("#surface-meetings")
+                assert surface.get_by_test_id("meeting-summary-text").count() == 0
                 assert db.meetings.get_meeting(meeting_id).intel is None  # not yet
+                SHOTS.mkdir(parents=True, exist_ok=True)
+                _settle(page)
+                page.screenshot(path=str(SHOTS / f"record-pending-{width}.png"))
 
                 # ── let the run finish; the open record catches up by itself ──
                 engine.gate.set()
-                surface = page.locator("#surface-meetings")
                 summary_text = surface.get_by_test_id("meeting-summary-text")
                 summary_text.wait_for(timeout=60_000)
                 assert (summary_text.text_content() or "").strip() == engine.result.summary
@@ -152,6 +178,11 @@ def test_summary_after_every_meeting_reaches_the_open_record_by_itself(tmp_path:
                 assert receipt["selection_hash"] == planned["selection_hash"], receipt
                 assert receipt["attempts"][0]["host"] == host, receipt
                 assert navigations == [], navigations  # no reload, no navigation
+                assert not engine.timed_out
+                # The completion transition, from the pending state drawn above.
+                assert not re.search(r"RUNNING|QUEUED", head.text_content() or "")
+                _settle(page)
+                page.screenshot(path=str(SHOTS / f"record-completed-{width}.png"))
                 print(f"PASS {width}: summary and host {host} in the open record by the running conductor")
                 _assert_clean(page, errors)
                 page.close()
