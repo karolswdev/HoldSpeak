@@ -435,9 +435,10 @@ class TestCompositor:
         assert not fails, fails
 
     def test_astra_round2_1440(self) -> None:
-        """Astra round 2 (c67c80974), her case from UNARRANGED: a fresh People
-        window -> Stage -> Zoom -> unzoom returns its pre-Stage rect, and no
-        Stage rect lands in panel.rects (Zoom never measures a box in flight)."""
+        """Astra round 2 (c67c80974): a fresh People window -> Stage -> Zoom ->
+        unzoom returns its pre-Stage rect, and no Stage rect lands in
+        panel.rects (Zoom never measures a box in flight). PHILO-17: the fresh
+        window's first seat is saved (it was unarranged before)."""
         from playwright.sync_api import sync_playwright
 
         fails: dict[str, Any] = {}
@@ -452,9 +453,12 @@ class TestCompositor:
                 if _fronts(wins) != ["People"]:
                     fails["People is front"] = _fronts(wins)
                 before = _by(wins, "People")["rect"]
+                # PHILO-17 (U28c): a window's first seat is saved, so People
+                # starts ARRANGED at the rect it shows; Stage must not change it.
                 doc = page.evaluate(PANEL_JS)
-                if "surface-people" in doc["rects"]:
-                    fails["People starts unarranged"] = doc["rects"]["surface-people"]
+                first = doc["rects"].get("surface-people")
+                if first is not None and [first["x"], first["y"], first["w"], first["h"]] != before:
+                    fails["People's saved first seat is the rect it shows"] = {"saved": first, "shown": before}
                 page.locator(f"{people} .desk-pullout-title").first.click()
                 page.keyboard.press("Meta+Enter")
                 wins = _wins(page)

@@ -1,8 +1,8 @@
 // PHILO-14 A1 (Muad'Dib's ruling on #939): a window that opens on a full
 // desk is never stacked: it cascades 24/24 off the window placed last and
 // leaves every title bar partly in view.
-import { describe, expect, it } from "vitest";
-import { placeWindow } from "../windowGeometry";
+import { afterEach, describe, expect, it } from "vitest";
+import { iconColumnRight, placeWindow } from "../windowGeometry";
 
 describe("placeWindow on a saturated desk", () => {
   it("cascades 24/24 off the last placed window, hiding no title bar whole", () => {
@@ -22,5 +22,64 @@ describe("placeWindow on a saturated desk", () => {
     }
     // 24 to the right of the window placed last (clamped into the band)
     expect(at.x).toBe(last.x + 24);
+  });
+});
+
+// PHILO-17 U28a: every app opened at its CSS home (24,72), on top of the
+// Chair's icon column, and two in a row sat exactly on each other.
+describe("placeWindow clear of the icon column", () => {
+  const home = { x: 24, y: 72, w: 640, h: 600 };
+
+  it("opens right of the icon column", () => {
+    const at = placeWindow(home, [], 1440, 900, 420, 220, 144);
+    expect(at.x).toBeGreaterThanOrEqual(144);
+  });
+
+  it("a second window does not sit on the first", () => {
+    const first = placeWindow(home, [], 1440, 900, 420, 220, 144);
+    const second = placeWindow(home, [first], 1440, 900, 420, 220, 144);
+    expect(second.x).toBeGreaterThanOrEqual(144);
+    expect([second.x, second.y]).not.toEqual([first.x, first.y]);
+  });
+
+  it("a window too wide to clear the column stays on the screen", () => {
+    const at = placeWindow({ ...home, w: 1400 }, [], 1440, 900, 420, 220, 144);
+    expect(at.x).toBeGreaterThanOrEqual(10);
+    expect(at.x + at.w).toBeLessThanOrEqual(1430);
+  });
+});
+
+// Astra r1 on #1070: the Chair's drawers take a second column when they do
+// not fit (screen/layout.ts, 120 px apart); the loose objects start 70 px
+// right of the last drawer column. The floor clears every drawer column.
+describe("iconColumnRight", () => {
+  const icon = (left: number, top: number, placed = true) => {
+    const cell = document.createElement("div");
+    if (placed) cell.className = "desk-screen-cell desk-screen-placed";
+    const el = document.createElement("button");
+    el.className = "desk-icon";
+    el.getBoundingClientRect = () => ({ left, top, right: left + 112, bottom: top + 96, width: 112, height: 96, x: left, y: top, toJSON: () => ({}) }) as DOMRect;
+    cell.append(el);
+    document.body.append(cell);
+  };
+  afterEach(() => document.body.replaceChildren());
+
+  it("clears two drawer columns and stops before the loose objects", () => {
+    icon(20, 40);
+    icon(20, 152);
+    icon(140, 40); // the second drawer column
+    icon(322, 40); // a loose object, 70 px past the drawers
+    expect(iconColumnRight()).toBe(140 + 112 + 12);
+  });
+
+  it("a Floor grid that flows edge to edge keeps only its first column clear", () => {
+    icon(0, 40, false);
+    icon(116, 40, false);
+    icon(232, 40, false);
+    expect(iconColumnRight()).toBe(112 + 12);
+  });
+
+  it("no icon: the margin", () => {
+    expect(iconColumnRight()).toBe(10);
   });
 });

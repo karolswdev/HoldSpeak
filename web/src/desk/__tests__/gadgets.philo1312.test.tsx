@@ -125,16 +125,17 @@ describe("zoom: two remembered rects", () => {
     expect(doc.panel.max).toContain("w-a");
   });
 
-  it("⌃M zooms the front window and zooms it back", () => {
+  // PHILO-17 (U27): ⌃M is Iconify now (the browser keeps ⌘M); Zoom is ⌘⇧Z.
+  it("⌘⇧Z zooms the front window and zooms it back", () => {
     render(<Two />);
     act(() => useDesk.getState().focusPanel("w-a"));
     act(() => {
-      dispatchKey(new KeyboardEvent("keydown", { key: "m", ctrlKey: true, cancelable: true }));
+      dispatchKey(new KeyboardEvent("keydown", { key: "Z", metaKey: true, shiftKey: true, cancelable: true }));
     });
     expect(useDesk.getState().panelMax).toContain("w-a");
     expect(useDesk.getState().panelMin).not.toContain("w-a");
     act(() => {
-      dispatchKey(new KeyboardEvent("keydown", { key: "m", ctrlKey: true, cancelable: true }));
+      dispatchKey(new KeyboardEvent("keydown", { key: "Z", metaKey: true, shiftKey: true, cancelable: true }));
     });
     expect(useDesk.getState().panelMax).not.toContain("w-a");
   });
@@ -159,8 +160,9 @@ describe("the right button: the window's menu bar with Amiga-key caps", () => {
     const caps = Array.from(menu.querySelectorAll(".desk-menu-keycaps")).map((k) =>
       k.getAttribute("aria-label"),
     );
-    // PHILO-16 §5: Zoom ⌘⇧Z, To back ⌘⇧` (⌃M, ⌃B stay bound one release).
-    expect(caps.slice(0, 4)).toEqual(["⌘M", "⌘⇧Z", "⌘⇧`", "⌘W"]);
+    // PHILO-16 §5: Zoom ⌘⇧Z, To back ⌘⇧`. PHILO-17 (U27): Iconify ⌃M and
+    // Close ⌃W (a browser tab keeps ⌘M and ⌘W).
+    expect(caps.slice(0, 4)).toEqual(["⌃M", "⌘⇧Z", "⌘⇧`", "⌃W"]);
   });
 
   it("To back from the menu sends THIS window back", () => {
