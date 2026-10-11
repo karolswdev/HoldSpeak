@@ -17,16 +17,15 @@ import { ChairHome } from "../chair/ChairHome";
 import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
 import { openIntelligence } from "../intelligenceNavigation";
 import { IntelligencePullout } from "../pullouts/IntelligencePullout";
-import { openPrimitive } from "../shell";
+import { __resetSurfaces } from "../shell";
+import { SurfaceWindows } from "../components/SurfaceWindows";
+import { recordedGet } from "../../test/recordedHub";
+import RECORDED from "./fixtures/needsYou.recorded.json";
 import { useDesk } from "../store";
 
 vi.mock("../../lib/api", async (original) => ({
   ...await original<typeof import("../../lib/api")>(),
   apiFetch: vi.fn(),
-}));
-vi.mock("../shell", async (original) => ({
-  ...(await original<typeof import("../shell")>()),
-  openPrimitive: vi.fn(),
 }));
 vi.mock("../thoughts", () => ({ unfinishedThoughts: async () => ({ items: [] }) }));
 vi.mock("../components/MicButton", () => ({ MicButton: () => null }));
@@ -39,7 +38,7 @@ const ROSTER = { schema: "InferenceAssignmentSummary@1", rows: [], task_override
 
 beforeEach(() => {
   vi.mocked(apiFetch).mockReset();
-  vi.mocked(openPrimitive).mockReset();
+  __resetSurfaces();
   (globalThis as { __resetNeedsYou?: () => void }).__resetNeedsYou?.();
   openChairWindows();
 });
@@ -198,7 +197,11 @@ describe("Needs you: the head counts what needs him; Waiting lists the rest", ()
     fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "Ranked" }));
     const decision = rowNamed("R1 adopt the release checklist")!;
     fireEvent.click(within(decision).getByRole("button", { name: "Review: R1 adopt the release checklist" }));
-    await waitFor(() => expect(openPrimitive).toHaveBeenCalledWith("decision:philo13-a2-decision"));
+    // The real opener (shell.ts openPrimitive) runs against the real desk store:
+    // the decision's own window opens, in front.
+    await waitFor(() =>
+      expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("decision:philo13-a2-decision"),
+      { timeout: 3000 });
   });
 });
 
@@ -258,5 +261,76 @@ describe("Needs you: proposal rows on arrival", () => {
     expect(posted).toEqual(["/api/proposals/prop-a/confirm"]);
     expect(rowNamed("Marek owns the PostgreSQL migration")).toBeUndefined();
     expect(rowNamed("cut-over on the 12th")).toBeTruthy();
+  });
+});
+
+// ── PHILO-15 08: Confirm and Defer on an unfiled meeting's rows ───────────
+// The hub's own answers before and after each press, from ONE hub boot
+// (scripts/record_needs_you_fixture.py `unfiled`: confirm the action, then
+// defer the decision). The face re-reads after each press; the test serves
+// what the hub answered at that moment.
+describe("Needs you: Confirm and Defer on a meeting in no Project", () => {
+  it("Confirm turns the action into a waiting row; Defer takes the decision off the face", async () => {
+    // replaces: tests/e2e/test_philo15_08_confirm_unfiled_glass.py::TestConfirmFromAnUnfiledMeeting::test_confirm_an_action_item_from_its_needs_row (the face half)
+    // replaces: tests/e2e/test_philo15_08_confirm_unfiled_glass.py::TestConfirmFromAnUnfiledMeeting::test_defer_holds_back_the_whole_obligation (the face half)
+    const { action, decision, steps } = RECORDED.unfiled;
+    let at = 0;
+    const posted: string[] = [];
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string }) => {
+      const value = String(path);
+      if (init?.method === "POST") {
+        posted.push(value);
+        const next = steps.findIndex((step, i) => i > at && step.post === value);
+        if (next < 0) throw new Error(`unrecorded POST ${value}`);
+        at = next;
+        return structuredClone(steps[next].answer) as never;
+      }
+      return recordedGet(steps[at].gets, value) as never;
+    });
+    render(<ChairHome />);
+    await waitFor(() => expect(rowNamed(action)).toBeTruthy(), { timeout: 3000 });
+    const counted = () => needsRows().map((r) => r.querySelector(".needs-row-name")?.textContent);
+    expect(lampOf(rowNamed(action)!)).toBe("TO CONFIRM");
+    expect(counted()).toContain(decision);
+
+    // Confirm: the hub accepts the action; it now waits on its owner, Priya Shah.
+    fireEvent.click(screen.getByRole("button", { name: `Confirm: ${action}` }));
+    await waitFor(() => expect(counted()).not.toContain(action));
+    expect(posted).toEqual([steps[1].post]);
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "Waiting" }));
+    const waiting = await screen.findByTestId("needs-waiting");
+    const held = [...waiting.querySelectorAll<HTMLElement>('[data-testid="needs-row"]')]
+      .find((r) => r.querySelector(".needs-row-name")?.textContent === action);
+    expect(held, "the confirmed action is listed under Waiting").toBeTruthy();
+    expect(held!.textContent).toMatch(/WAITING ON PRIYA/i);
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "Ranked" }));
+
+    // Defer: the decision leaves the face.
+    await waitFor(() => expect(rowNamed(decision)).toBeTruthy());
+    fireEvent.click(within(rowNamed(decision)!).getByRole("button", { name: `Defer: ${decision}` }));
+    await waitFor(() => expect(rowNamed(decision)).toBeUndefined());
+    expect(posted).toEqual([steps[1].post, steps[2].post]);
+  });
+});
+
+// ── PHILO-17: Reconnect lands on Settings, GitHub focused ─────────────────
+describe("Needs you: Reconnect opens Settings on the GitHub row", () => {
+  it("the real opener opens the Settings window scoped to GitHub, and focus is in the GitHub row", async () => {
+    // replaces: tests/e2e/test_philo17_needs_you_grouped_glass.py::test_one_row_per_cause_and_repair_on_the_real_hub (the Reconnect leg)
+    // The hub's answers on the browser test's seed (30 signed-out GitHub sources),
+    // and the Settings window's own reads, recorded (`grouped`). Nothing mocks the
+    // opener: NeedsDrawer's Reconnect -> shell.ts openSurfaceOr -> the surface
+    // SurfaceWindows registered -> SettingsCore (scope integration:github, its
+    // focusProvider at SettingsCore.tsx:2388) -> ConnectionsPane's focus.
+    const misses: string[] = [];
+    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+      recordedGet(RECORDED.grouped.gets, path, misses) as never);
+    useDesk.setState({ windowsById: {} } as never);
+    render(<><SurfaceWindows /><ChairHome /></>);
+    const reconnect = await screen.findByRole("button", { name: /^Reconnect: GitHub · 30 sources$/ }, { timeout: 3000 });
+    fireEvent.click(reconnect);
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("integration:github"));
+    const row = await screen.findByTestId("connections-github", undefined, { timeout: 5000 });
+    await waitFor(() => expect(row.contains(document.activeElement)).toBe(true), { timeout: 3000 });
   });
 });

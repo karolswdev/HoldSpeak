@@ -15,7 +15,8 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
-import { asHub } from "../../test/hubNeedsYou";
+import { recordedGet } from "../../test/recordedHub";
+import RECORDED from "./fixtures/needsYou.recorded.json";
 
 vi.mock("../../lib/api", async (original) => ({
   ...(await original<typeof import("../../lib/api")>()),
@@ -28,18 +29,13 @@ vi.mock("../../runtime/RuntimeBus", () => ({
   useRuntimeFrame: () => null,
 }));
 
-/** A cold HOME: no engine is assigned, nothing needs him yet. */
+/** A cold HOME: the hub's own answers on a fresh HOME and database, recorded by
+ *  scripts/record_needs_you_fixture.py (`cold`). The roster's summary row carries
+ *  the producer's `effective.status: "no_assignment"` and its `queue` projection
+ *  (inference_assignment_service.py `_queue_projection`), so the Chair's row reads
+ *  the queue branch of meetingPathBlocker.ts. */
 function coldHub() {
-  vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
-    const p = String(path);
-    if (p === "/api/inference/assignments")
-      return {
-        schema: "InferenceAssignmentSummary@1", rows: [], issue_count: 0,
-        task_overrides: [{ id: "meeting.deferred_analysis", has_override: false, effective: { status: "unassigned" } }],
-      };
-    if (p.startsWith("/api/door")) return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
-    return null;
-  }));
+  vi.mocked(apiFetch).mockImplementation(async (path: string) => recordedGet(RECORDED.cold.gets, path) as never);
 }
 
 const region = (name: string) => screen.queryByRole("region", { name });
@@ -94,7 +90,8 @@ describe("Chair app: the fresh arrival", () => {
       expect(row, "the SETUP row of the cold HOME").toBeTruthy();
       return row as HTMLElement;
     });
-    expect(setup.textContent).toContain("No engine");
+    // The recorded roster: speech has an engine, the summary queue has none.
+    expect(setup.textContent).toContain("No engine for summaries");
     expect(setup.textContent).toContain("Choose an engine");
 
     await pick("Brief");
@@ -102,5 +99,28 @@ describe("Chair app: the fresh arrival", () => {
     await pick("The week");
     await pick("Capture");
     expect(within(region("Capture")!).getByTestId("arrival-capture-bar")).toBeTruthy();
+  });
+});
+
+// Astra r2 (#1101) MUST 4: the roster shape is the producer's. On the desk the
+// Chair draws the hub's own `blockers` (needsYou.ts reads them from
+// GET /api/desk/needs-you; the hub computes them in
+// holdspeak/services/needs_you_membership.py `meeting_path_blockers`), so the
+// replay above covers the production row. The browser statement of the same
+// rule, meetingPathBlocker.ts, runs where the desk composes needs-you from its
+// sources (`computeNeedsYou`); here it reads the SAME recorded roster, and its
+// queue branch decides.
+describe("Chair app: the cold roster through meetingPathBlockers", () => {
+  it("the recorded cold roster (effective no_assignment, queue no_assignment) blocks summaries only", async () => {
+    const { meetingPathBlockers, SUMMARY_CAPABILITY } = await import("../chair/meetingPathBlocker");
+    const roster = RECORDED.cold.gets["/api/inference/assignments"];
+    const summary = roster.task_overrides.find((t: { id: string }) => t.id === SUMMARY_CAPABILITY);
+    expect(summary.effective.status).toBe("no_assignment");
+    expect(summary.queue.status).toBe("no_assignment");
+    expect(meetingPathBlockers(roster as never)).toEqual([
+      { key: "summary", label: "No engine for summaries", verb: "Choose an engine" },
+    ]);
+    // The hub's own answer on the same HOME says the same.
+    expect(RECORDED.cold.gets["/api/desk/needs-you?fresh=1"].blockers).toEqual(meetingPathBlockers(roster as never));
   });
 });
