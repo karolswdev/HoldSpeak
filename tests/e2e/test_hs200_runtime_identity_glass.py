@@ -48,7 +48,8 @@ def _navigate_to_system(page: Any, url: str) -> None:
         );
     }""")
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    page.locator('[data-testid="runtime-backend"]').wait_for(timeout=15_000)
+    # PHILO-17 U35: the identity tokens live in the System RAW fold (attached, folded).
+    page.locator('[data-testid="runtime-backend"]').wait_for(state="attached", timeout=15_000)
 
 
 def _shot(page: Any, name: str) -> Path:
@@ -110,6 +111,12 @@ def test_runtime_identity_healthy(
             _navigate_to_system(page, url)
 
             assert page.locator('[data-testid="runtime-repair"]').count() == 0
+            # PHILO-17 U35: build hashes and the schema are diagnostics: folded
+            # under RAW until he opens it.
+            assert not page.locator('[data-testid="runtime-schema"]').is_visible()
+            fold = page.locator("details.gadget-fold", has=page.locator('[data-testid="runtime-backend"]'))
+            fold.locator("summary").click()
+            page.locator('[data-testid="runtime-backend"]').wait_for(timeout=5_000)
             assert page.locator('[data-testid="runtime-schema"]').inner_text().startswith("SCHEMA ")
             assert page.locator('[data-testid="runtime-bundle"]').inner_text() != "NONE"
             assert page.locator('[data-testid="runtime-document"]').inner_text() != "NONE"

@@ -23,6 +23,19 @@ import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 /** The doctor's "Speech model" check (holdspeak/commands/doctor.py). */
 const SPEECH_SECTION = "speech-model";
 
+const CHECK_RANK: Record<string, number> = { fail: 0, warn: 1 };
+
+/** PHILO-17 U19: failing checks first, then warnings; a stable sort keeps
+ *  the doctor's order inside each rank. */
+export function sortChecks<T extends { status?: unknown }>(sections: T[]): T[] {
+  return sections
+    .map((section, index) => ({ section, index }))
+    .sort((a, b) =>
+      (CHECK_RANK[String(a.section.status)] ?? 2) - (CHECK_RANK[String(b.section.status)] ?? 2)
+      || a.index - b.index)
+    .map(({ section }) => section);
+}
+
 export function SetupCore({ hero }: CoreProps) {
   const resource = useResource<SetupStatus>("/api/setup/status", {});
   const [testing, setTesting] = useState(false);
@@ -30,7 +43,9 @@ export function SetupCore({ hero }: CoreProps) {
     ok: boolean;
     detail: string;
   } | null>(null);
-  const sections = asRows(resource.data.sections, []);
+  // PHILO-17 U19: the face leads with what fails. A failing check comes
+  // first, then a warning, then the rest in the doctor's order.
+  const sections = sortChecks(asRows(resource.data.sections, []));
   // PHILO-17 speech: the speech row carries its one verb, the same download
   // the first-run page runs.
   const speech = useSpeechSetup();

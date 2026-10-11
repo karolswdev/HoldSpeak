@@ -166,6 +166,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             # switch is not a working path; each row also carries whether its
             # work has an engine. A missing key means unknown.
             group_engine: dict[str, bool] = {}
+            answers_fact: dict[str, Any] = {"engineSet": None, "engine": None}
             if ctx.model_library_service is not None:
                 try:
                     lib = ctx.model_library_service.get_library(p)
@@ -199,6 +200,26 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                         group_engine[wire_key] = resolved.get("status") == "assigned"
                     except Exception:
                         pass  # unknown: the face makes no engine claim
+                # PHILO-17 U35: the headline names the engine that answers an
+                # Ask. The assignment route decides only after the route
+                # migration (AskService._routed_assignments_active); before it
+                # the answer is unknown and the face names no engine.
+                try:
+                    asn_db = getattr(ctx.inference_assignment_service, "_db", None)
+                    with asn_db._connection() as _conn:
+                        routed = _conn.execute(
+                            "SELECT 1 FROM inference_assignment_migrations "
+                            "WHERE family='thoughts-writing-route-assignments'"
+                        ).fetchone() is not None
+                    if routed:
+                        resolved = ctx.inference_assignment_service.resolve_effective(
+                            p, capability_id="ask.answer")
+                        answers_fact["engineSet"] = resolved.get("status") == "assigned"
+                        entries = ((resolved.get("assignment") or {}).get("entries") or [])
+                        if answers_fact["engineSet"] and entries:
+                            answers_fact["engine"] = str(entries[0].get("label") or "") or None
+                except Exception:
+                    pass  # unknown: the face makes no engine claim
 
             # PHILO-15 B33: the summary engine is the ROUTE the queue takes
             # (exact, group, global default; OFF first), the same answer
@@ -309,6 +330,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 "meetings": {
                     "intelligence": intel_on,
                     "engineSet": group_engine.get("meetings"),
+                    "engine": summary_fact.get("profile"),
                     "summariesOff": bool(summary_fact.get("off")),
                     "auto": config.meeting.intelligence_auto,
                     "auto_record": config.meeting.auto_record,
@@ -316,6 +338,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                     "lastRunAt": last_run_at,
                     "lastRunS": last_run_s,
                 },
+                "answers": answers_fact,
                 "rhythm": heartbeat_rhythm,
                 "sounds": {"on": sounds_on},
                 "system": {

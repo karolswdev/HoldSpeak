@@ -1,7 +1,7 @@
 """HS-170-04 -- Settings Hub glass rig.
 
 Build-first via glass_infra._ensure_build. One leg on isolated HOME:
-  - Open Settings hub (empty install -> 'No default model' headline,
+  - Open Settings hub (empty install -> 'No engine yet' headline,
     Rhythm reads 'EVERY 15 MIN' — the heartbeat sweeps by default since
     HS-171 — Models reads 'NO DEFAULT').
   - Seed one connection + one loop and assert the rows update.
@@ -93,8 +93,9 @@ def test_settings_hub_cold(
             headline = page.locator(".prefs-hub-headline")
             headline.wait_for(timeout=10_000)
             headline_text = headline.text_content() or ""
-            assert "No default model" in headline_text, (
-                f"Expected 'No default model' headline, got: {headline_text}"
+            # PHILO-17 U35: a plain state (was "No default model").
+            assert "No engine yet" in headline_text, (
+                f"Expected 'No engine yet' headline, got: {headline_text}"
             )
 
             # Assert exactly one .surface-display.

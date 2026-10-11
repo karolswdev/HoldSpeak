@@ -102,11 +102,12 @@ class TestSettingsRemoteAccess:
                 ".gadget-group-label", has_text="Remote access"
             ).count() >= 1, f"Remote access section absent at {width}"
 
-            # Streamable HTTP row present
+            # The toggle row, in plain words (PHILO-17 U35: was "Streamable HTTP")
             module_text = page.locator(".desk-surface-body").text_content() or ""
-            assert "Streamable HTTP" in module_text, (
-                f"Streamable HTTP label missing at {width}"
+            assert "Other devices" in module_text, (
+                f"Other devices label missing at {width}"
             )
+            assert "Streamable HTTP" not in module_text
 
             # CycleGadget present with OFF
             remote_select = page.locator(
@@ -178,11 +179,12 @@ class TestSettingsRemoteAccess:
             # Wait for the Issue credential button to appear (remote is ON)
             page.locator(".btn", has_text="Issue credential").wait_for(timeout=8_000)
 
-            # Hub chips must reflect REMOTE ON after the toggle lands
+            # Hub chips must reflect remote ON after the toggle lands
+            # (PHILO-17 U35: plain words, was REMOTE ON)
             chips_el = page.locator("[data-testid='system-hub-chips']")
             chips_text = chips_el.text_content() or ""
-            assert "REMOTE ON" in chips_text, (
-                f"Hub chips did not update to REMOTE ON at {width}: {chips_text}"
+            assert "Other devices: on" in chips_text, (
+                f"Hub chips did not update to Other devices: on at {width}: {chips_text}"
             )
 
             # Screenshot: remote ON, no credentials

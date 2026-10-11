@@ -82,7 +82,8 @@ describe("B33: the Settings hub reads the summary route", () => {
   });
   it("no route and no default: the warning stays", () => {
     face(hub({ meetings: { intelligence: true, engineSet: false, auto: "every" } }));
-    expect(screen.getByText("No default model")).toBeTruthy();
+    // PHILO-17 U35: the warning is a plain state, "No engine yet" (was "No default model").
+    expect(screen.getByText("No engine yet")).toBeTruthy();
     expect(screen.getByText("SUMMARY · NO ENGINE")).toBeTruthy();
     expect(screen.getByRole("status", { name: "NO DEFAULT" }).getAttribute("data-state")).toBe("warning");
   });

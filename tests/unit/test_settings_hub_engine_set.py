@@ -76,3 +76,45 @@ def test_summary_selection_turns_the_meetings_engine_fact_on(tmp_path: Path) -> 
     assert after["meetings"]["engineSet"] is True
     # The selection is for the summary capability only; speech has no engine.
     assert after["voice"]["engineSet"] is False
+    # PHILO-17 U35: the headline names the engine; the hub sends its label.
+    assert after["meetings"]["engine"] == "Hub Summary Profile"
+    assert before["meetings"]["engine"] is None
+    # No route migration on this desk: the Answers engine is unknown, never "none".
+    assert after["answers"] == {"engineSet": None, "engine": None}
+
+
+def test_answers_engine_names_the_ask_assignment_after_the_route_migration(tmp_path: Path) -> None:
+    """PHILO-17 U35: "Answers: <engine>" reads the ask.answer assignment."""
+    from tests.unit.test_phase143_inference_assignments import _set
+
+    db = Database(tmp_path / "hub.db")
+    _profile(db, "hub-answer-profile", claims=("language", _result_claim("ask.answer")))
+    service = InferenceAssignmentService(db)
+    ctx = WebContext(
+        get_state=lambda: {},
+        inference_setup_service=_Setup(db, tmp_path / "home"),
+        inference_assignment_service=service,
+    )
+    ctx.settings_service = _NoSettings()
+    ctx.credential_service = object()
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def principal(request: Request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
+
+    app.include_router(build_settings_router(ctx))
+    client = TestClient(app)
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO inference_assignment_migrations (family, marker_revision, source_sha256, "
+            "result_json, result_sha256, committed_at) VALUES (?,?,?,?,?,?)",
+            ("thoughts-writing-route-assignments", 1, "0" * 64, "{}", "0" * 64, "2026-10-11T00:00:00+00:00"),
+        )
+    assert client.get("/api/settings/hub").json()["answers"] == {"engineSet": False, "engine": None}
+
+    _set(service, "hub-answer-one", {"kind": "capability", "capability_id": "ask.answer"}, "hub-answer-profile")
+    assert client.get("/api/settings/hub").json()["answers"] == {
+        "engineSet": True, "engine": "Hub Answer Profile",
+    }

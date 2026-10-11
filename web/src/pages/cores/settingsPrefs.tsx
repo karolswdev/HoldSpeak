@@ -303,24 +303,26 @@ export function DeskModule() {
       setRefused(true);
       return;
     }
-    setReceipt(`TOMBSTONED ${counts.tombstoned} · SEEDED ${counts.seeded}`);
+    setReceipt(`CLEARED ${counts.tombstoned} · ADDED ${counts.seeded}`);
   };
   return (
-    <GadgetGroup label="Reset to seed">
+    <GadgetGroup label="Desk">
+      {/* PHILO-17 U35: plain words (was RESET TO SEED · TOMBSTONES
+          EXISTING DESK OBJECTS); the consequence is one token each. */}
       <div className="prefs-egress-line">
-        <span className="gadget-fact">
-          TOMBSTONES EXISTING DESK OBJECTS · RESTORES FURNISHED DEFAULTS
+        <span className="gadget-fact" data-testid="desk-reset-clears">
+          CLEARS THE DESK · PUTS BACK THE DEFAULT ITEMS
         </span>
       </div>
       <div className="prefs-egress-line">
-        <span className="gadget-fact">
-          KEEPS · MEETINGS · JOURNAL · SETTINGS · RUNS-ON TARGETS
+        <span className="gadget-fact" data-testid="desk-reset-keeps">
+          KEEPS · MEETINGS · JOURNAL · SETTINGS · RUNS ON
         </span>
       </div>
       <div className="prefs-egress-line">
         <ConfirmVerb
-          label="RESET TO SEED"
-          confirmLabel="TOMBSTONE DESK & RESTORE DEFAULTS?"
+          label="Reset desk to defaults"
+          confirmLabel="Reset the desk?"
           busy={busy}
           onConfirm={() => void fire()}
         />
@@ -349,7 +351,9 @@ export type SettingsHubWire = {
   voice: { live: boolean; target: string; engineSet?: boolean };
   /** PHILO-15 B33: `engineSet` is the summary ROUTE the queue takes (exact,
    *  group, global default); `summariesOff` the owner's explicit OFF. */
-  meetings: { intelligence: boolean; engineSet?: boolean; summariesOff?: boolean; auto?: string; host?: string; lastRunAt?: string | null; lastRunS?: number | null };
+  meetings: { intelligence: boolean; engineSet?: boolean; engine?: string | null; summariesOff?: boolean; auto?: string; host?: string; lastRunAt?: string | null; lastRunS?: number | null };
+  /** PHILO-17 U35: the engine that answers an Ask; `engineSet` null = unknown. */
+  answers?: { engineSet?: boolean | null; engine?: string | null };
   rhythm: {
     loops: number;
     sweepEveryMinutes?: number;
@@ -394,10 +398,25 @@ export const INTELLIGENCE_AUTO_OPTIONS = [
 
 /* ── the drawer face ── */
 
-/** The hub headline: the one fact that most needs him (UX-CANON C). */
-function hubHeadline(hub: SettingsHubWire): { text: string; warning: boolean } {
-  if (!hub.models.defaultSet && !workHasEngine(hub)) return { text: "No default model", warning: true };
-  return { text: "All set", warning: false };
+/** The hub headline: the one fact that most needs him (UX-CANON C).
+ *  PHILO-17 U35: a plain state of what he gets ("Summaries: <engine> ·
+ *  Answers: <engine>"), never "No default model" (an operator's word). With
+ *  no engine for any work: "No engine yet", and Choose opens Runs on. */
+export function hubHeadline(hub: SettingsHubWire): { text: string; warning: boolean; choose: boolean } {
+  const answersSet = hub.answers?.engineSet === true;
+  if (!hub.models.defaultSet && !workHasEngine(hub) && !answersSet) {
+    return { text: "No engine yet", warning: true, choose: true };
+  }
+  const parts: string[] = [];
+  let missing = false;
+  const meetings = hub.meetings;
+  if (meetings?.summariesOff) parts.push("Summaries: off");
+  else if (meetings?.engineSet === false) { parts.push("Summaries: no engine"); missing = true; }
+  else if (meetings?.engine) parts.push(`Summaries: ${meetings.engine}`);
+  if (hub.answers?.engineSet === false) { parts.push("Answers: no engine"); missing = true; }
+  else if (answersSet && hub.answers?.engine) parts.push(`Answers: ${hub.answers.engine}`);
+  if (!parts.length) return { text: "All set", warning: false, choose: false };
+  return { text: parts.join(" · "), warning: missing, choose: missing };
 }
 
 /** PHILO-15 B33: some work runs on an engine now (the summary route, or the
@@ -450,12 +469,19 @@ export function PrefsFace({
 
   return (
     <div className="prefs-face prefs-hub">
-      <span
-        className="surface-display prefs-hub-headline"
-        data-warning={headline.warning || undefined}
-      >
-        {headline.text}
-      </span>
+      <div className="prefs-hub-lead">
+        <span
+          className="surface-display prefs-hub-headline"
+          data-warning={headline.warning || undefined}
+        >
+          {headline.text}
+        </span>
+        {headline.choose ? (
+          <Button dense onClick={() => onOpen("models")} data-testid="settings-hub-choose">
+            Choose
+          </Button>
+        ) : null}
+      </div>
       <SurfaceLedger count="" cols="hub">
         {/* PHILO-16 (C): Runs on, ONE row (the Models and Assignments rows
             both opened the same window). Its facts: the engines, and the
@@ -591,7 +617,7 @@ export function PrefsFace({
           trailing={openVerb("wallpaper")}
           cells={<span className="surface-token" data-chip>{resolveAtmosphere(atmosphereId).name}</span>}
         />
-        {/* People: MCP · <effective> · AGENTS · <mode> (Conductor R7, K7a). */}
+        {/* People: Agents can read People | Agents: off (Conductor R7, K7a; PHILO-17 U35). */}
         <SurfaceLedgerRow
           primary="People"
           expands={false}
@@ -599,7 +625,8 @@ export function PrefsFace({
           trailing={openVerb("people")}
           cells={<PeopleHubCells />}
         />
-        {/* System: THIS DEVICE + MESH OFF|ON + REMOTE OFF|ON */}
+        {/* System: THIS DEVICE + Other devices: off|on (PHILO-17 U35: was
+            MESH OFF · REMOTE OFF; the mesh name is a RAW fact now). */}
         <SurfaceLedgerRow
           primary="System"
           expands={false}
@@ -607,10 +634,7 @@ export function PrefsFace({
           trailing={openVerb("system")}
           cells={<>
             <span className="surface-token" data-chip>{hub.system.host}</span>
-            <span className="surface-token" data-chip>{hub.system.mesh ? "MESH ON" : "MESH OFF"}</span>
-            {hub.system.remote
-              ? <StateChip state="success" label="REMOTE ON" />
-              : <span className="surface-token" data-chip>REMOTE OFF</span>}
+            <OtherDevicesChip on={Boolean(hub.system.remote)} />
           </>}
         />
       </SurfaceLedger>
@@ -632,7 +656,15 @@ export function PrefsFace({
   );
 }
 
-/* ── the footer status bar: « PREFS | receipt | DEFAULTS (§3.6) ── */
+/** PHILO-17 U35: remote access in plain words, on the hub row and the
+ *  System face alike. */
+export function OtherDevicesChip({ on }: { on: boolean }) {
+  return on
+    ? <StateChip state="success" label="Other devices: on" />
+    : <span className="surface-token" data-chip>Other devices: off</span>;
+}
+
+/* ── the footer status bar: « Settings | receipt | DEFAULTS (§3.6) ── */
 
 export type PrefReceipt = {
   saving: boolean;
@@ -687,7 +719,7 @@ export function PrefStatusBar({
     <SurfaceFooter receipt={grantReceipt ?? undefined} verbs={<>
       {onBack ? (
         <Button variant="ghost" dense className="prefs-back" onClick={onBack}>
-          « PREFS
+          <span aria-hidden="true">«</span> Settings
         </Button>
       ) : (
         <EgressChip />
