@@ -20,9 +20,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { thoughtForNote, type NoteThoughtStatus, type Thought } from "../thoughts";
 import { NotePullout } from "../pullouts/NotePullout";
 import { ThoughtWorkspaceWindow } from "../thought-workspace/ThoughtWorkspaceWindow";
-import { FootSlotContext } from "../surface/foot";
-import { TitleSlotContext } from "../surface/title";
-import { WingSlotContext } from "../surface/wings";
+import { FootSlotContext, TitleSlotContext, WingSlotContext } from "../surface";
 
 function PulloutFrame({
   o,

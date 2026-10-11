@@ -8,7 +8,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useDesk } from "../store";
-import { SurfaceState } from "../surface/Surface";
+import { SurfaceState } from "../surface";
 import type { PulloutContentProps } from "./types";
 
 const LiveCore = lazy(() =>

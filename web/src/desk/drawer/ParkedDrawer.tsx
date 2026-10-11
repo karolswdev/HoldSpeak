@@ -30,7 +30,7 @@ import {
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { restoreMeeting, restoreProject, restoreWorkbenchItem } from "../api";
 import { openProjectRoom } from "../shell";
-import { openSourceRef } from "../surface/citations";
+import { openSourceRef } from "../surface";
 import { useDesk } from "../store";
 import { useOnDeskChanged } from "../useDeskChangedRefresh";
 import { drawerReceipt } from "./DrawerWindow";

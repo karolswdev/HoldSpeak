@@ -201,6 +201,12 @@ export function HistoryCore({ hero, scope }: CoreProps) {
      the life of the face (a ref keeps the reload current). */
   const reloadRef = useRef(reloadMeetings);
   reloadRef.current = reloadMeetings;
+  // PHILO-17 (the autoflow lane): a summary that starts after an import moves
+  // the queue, not the desk. The list reads again on the queue frame too, so
+  // its row says what the meeting's window says (RUNNING, never IMPORTING).
+  useEffect(() => {
+    if (queueFrame) void reloadRef.current();
+  }, [queueFrame]);
   const { subscribe: subscribeFrames } = useRuntimeBus();
   useEffect(() => {
     const refresh = () => void reloadRef.current();
