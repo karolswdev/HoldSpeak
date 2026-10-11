@@ -545,6 +545,12 @@ def _mint_through_the_real_producers(tmp_path: Path) -> None:
         # REAL decision/action plugins put back; the one double is the
         # provider's completion text.
         db, engine = _outcomes_rig(rig, mp)
+        # PHILO-17: "after every meeting" queues a summary at Import by itself.
+        # This mint wants ONE summarized meeting (the gesture's run below) and
+        # one never summarized, so the setting is OFF while it mints.
+        mp.setattr(
+            "holdspeak.services.meeting_backlog_service._configured_auto_mode", lambda: "off"
+        )
         source = rig / "meeting.wav"
         shutil.copyfile(SOURCE, source)
         stored = _import(db, source, A3W_STORED, "Checkout latency review",
