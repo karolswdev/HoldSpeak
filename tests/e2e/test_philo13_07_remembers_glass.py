@@ -356,8 +356,23 @@ class TestSliceTwoReturns(_Rig):
                 page.locator(".desk-pullout [data-testid=doc-forms] select").first.select_option("meeting_digest")
                 self._press(page, well.get_by_role("button", name="Decide", exact=True), width)
                 well.get_by_role("textbox", name="Decision title").fill(self.DECIDE)
-                # 2. the Delivery board from the Dock
-                self._press(page, page.get_by_role("button", name="Delivery", exact=True).first, width)
+                # 2. the Delivery board from the Dock. At 393 the shelf pages:
+                # More until the launcher is on the visible page (PHILO-17
+                # doors: fewer tiles moved where it lands).
+                delivery = page.get_by_role("button", name="Delivery", exact=True).first
+                if width < 720:
+                    for _ in range(6):
+                        if delivery.evaluate("""(el) => { const d = el.closest('.desk-dock');
+                            const m = d.querySelector('.desk-dock-more'); const r = el.getBoundingClientRect();
+                            const edge = m && getComputedStyle(m).display !== 'none' ? m.getBoundingClientRect().left : d.getBoundingClientRect().right;
+                            return r.left >= d.getBoundingClientRect().left - 0.5 && r.right <= edge + 0.5; }"""):
+                            break
+                        self._press(page, page.locator(".desk-dock .desk-dock-more"), width)
+                        page.wait_for_timeout(450)
+                    box = delivery.bounding_box()
+                    page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+                else:
+                    self._press(page, delivery, width)
                 page.locator(".desk-dlv-board").wait_for()
                 # 3. the Trust window from the privacy badge
                 self._press(page, page.locator("[aria-label^='Privacy and trust']").first, width)

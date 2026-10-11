@@ -25,6 +25,7 @@ under HOLDSPEAK_EVIDENCE_WRITE=1 (``.tmp/evidence-shots/`` otherwise).
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -184,8 +185,10 @@ class TestTitleBarB:
                     failures[board] = _fails(m, width)
                     return m
 
-                # People on Priya in front (the boards' document window)
-                press(page.locator(".desk-dock [aria-label^='People']").first)
+                # People on Priya in front (the boards' document window).
+                # PHILO-17 (doors): People opens from Go (and its desk drawer).
+                press(page.locator(".desk-verbbar-item[data-menu-id='go'] button"))
+                press(page.locator("[role^=menuitem]").filter(has=page.locator(".desk-menu-label", has_text=re.compile(r"^People$"))).last)
                 people = page.locator(".desk-window-shell[aria-label='People']")
                 people.wait_for()
                 page.wait_for_timeout(800)

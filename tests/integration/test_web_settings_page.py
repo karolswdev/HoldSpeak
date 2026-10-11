@@ -63,7 +63,8 @@ def test_desk_menu_opens_settings_in_world() -> None:
     assert "MARK_APPLICATION_COMMANDS" in chrome
     applications = (_REPO / "web" / "src" / "desk" / "applications.ts").read_text()
     settings = applications.split('action: "configure-settings"', 1)[1].split("  {", 1)[0]
-    assert "mark: true" in settings
+    # PHILO-17 (doors): the HoldSpeak menu row and its place in that menu.
+    assert "mark: 1" in settings
     registry = (_REPO / "web" / "src" / "desk" / "verbRegistry.ts").read_text()
     assert "applicationForAction" in registry
     assert 'id: `go.${tool.action}`' in registry
