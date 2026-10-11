@@ -1,0 +1,196 @@
+{
+ "connected": {
+  "/api/connections": {
+   "tools": [
+    {
+     "account": null,
+     "checked_age_seconds": null,
+     "egress_host": "github.com",
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "recheck",
+      "label": "Recheck"
+     },
+     "provider_id": "github",
+     "recovery_hint": null,
+     "state": "never_checked"
+    },
+    {
+     "account": null,
+     "checked_age_seconds": null,
+     "connections": [],
+     "egress_host": null,
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "add_account",
+      "label": "Add account"
+     },
+     "provider_id": "jira",
+     "recovery_hint": "acli jira auth login --site <site> --email <email> --token",
+     "state": "never_checked"
+    },
+    {
+     "account": {
+      "email": "karolsane@gmail.com",
+      "site": "karolswdev.atlassian.net"
+     },
+     "checked_age_seconds": 0,
+     "connections": [
+      {
+       "account": {
+        "email": "karolsane@gmail.com",
+        "site": "karolswdev.atlassian.net"
+       },
+       "checked_age_seconds": 0,
+       "connection_ref": "karolswdev.atlassian.net|karolsane@gmail.com",
+       "egress_host": "karolswdev.atlassian.net",
+       "error_detail": null,
+       "last_checked_at": "2026-10-11 22:38:57",
+       "recovery_hint": "acli confluence auth login --site karolswdev.atlassian.net --email karolsane@gmail.com --token",
+       "state": "connected"
+      }
+     ],
+     "egress_host": "karolswdev.atlassian.net",
+     "error_detail": null,
+     "last_checked_at": "2026-10-11 22:38:57",
+     "next_action": null,
+     "provider_id": "confluence",
+     "recovery_hint": null,
+     "state": "connected"
+    },
+    {
+     "account": null,
+     "checked_age_seconds": null,
+     "egress_host": null,
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "open_module",
+      "label": "Set up"
+     },
+     "provider_id": "calendar",
+     "recovery_hint": null,
+     "state": "not_configured"
+    },
+    {
+     "account": {
+      "assigned": 0,
+      "summary_host": null,
+      "total": 7
+     },
+     "checked_age_seconds": null,
+     "egress_host": null,
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "open_module",
+      "label": "Open Models"
+     },
+     "provider_id": "models",
+     "recovery_hint": null,
+     "state": "not_configured"
+    }
+   ]
+  }
+ },
+ "not_connected": {
+  "/api/connections": {
+   "tools": [
+    {
+     "account": null,
+     "checked_age_seconds": null,
+     "egress_host": "github.com",
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "recheck",
+      "label": "Recheck"
+     },
+     "provider_id": "github",
+     "recovery_hint": null,
+     "state": "never_checked"
+    },
+    {
+     "account": null,
+     "checked_age_seconds": null,
+     "connections": [],
+     "egress_host": null,
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "add_account",
+      "label": "Add account"
+     },
+     "provider_id": "jira",
+     "recovery_hint": "acli jira auth login --site <site> --email <email> --token",
+     "state": "never_checked"
+    },
+    {
+     "account": {
+      "email": "karolsane@gmail.com",
+      "site": "karolswdev.atlassian.net"
+     },
+     "checked_age_seconds": 0,
+     "connections": [
+      {
+       "account": {
+        "email": "karolsane@gmail.com",
+        "site": "karolswdev.atlassian.net"
+       },
+       "checked_age_seconds": 0,
+       "connection_ref": "karolswdev.atlassian.net|karolsane@gmail.com",
+       "egress_host": "karolswdev.atlassian.net",
+       "error_detail": null,
+       "last_checked_at": "2026-10-11 22:38:57",
+       "recovery_hint": "acli confluence auth login --site karolswdev.atlassian.net --email karolsane@gmail.com --token",
+       "state": "owner_action_required"
+      }
+     ],
+     "egress_host": null,
+     "error_detail": null,
+     "last_checked_at": "2026-10-11 22:38:57",
+     "next_action": null,
+     "provider_id": "confluence",
+     "recovery_hint": null,
+     "state": "owner_action_required"
+    },
+    {
+     "account": null,
+     "checked_age_seconds": null,
+     "egress_host": null,
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "open_module",
+      "label": "Set up"
+     },
+     "provider_id": "calendar",
+     "recovery_hint": null,
+     "state": "not_configured"
+    },
+    {
+     "account": {
+      "assigned": 0,
+      "summary_host": null,
+      "total": 7
+     },
+     "checked_age_seconds": null,
+     "egress_host": null,
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "open_module",
+      "label": "Open Models"
+     },
+     "provider_id": "models",
+     "recovery_hint": null,
+     "state": "not_configured"
+    }
+   ]
+  }
+ },
+ "recordedBy": "scripts/record_room_wires.py",
+ "schema": "room-recorded@1"
+}

@@ -330,3 +330,71 @@ describe("Needs you: Reconnect opens Settings on the GitHub row", () => {
     await waitFor(() => expect(row.contains(document.activeElement)).toBe(true), { timeout: 3000 });
   });
 });
+
+// ── HS-145: no calendar offers Connect; a quiet calendar asks nothing ─────
+// The hub's own answers on the browser test's seed (the meeting path pinned;
+// then one calendar source whose only event is two hours ago, applied by the
+// real ingest conductor), recorded by scripts/record_needs_you_fixture.py
+// (`calendar`). The hub half is tests/unit/test_desk_calendar.py.
+describe("Needs you: the calendar offer and the quiet calendar", () => {
+  it("no calendar: the foot offers NO CALENDAR · Connect calendar; the press opens Settings on Meetings, at its Connect row", async () => {
+    // replaces: tests/e2e/test_hs145_door_polish_glass.py::test_hs145_connect_calendar_affordance_and_quiet_state (the no-calendar leg)
+    const misses: string[] = [];
+    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+      recordedGet(RECORDED.calendar.none.gets, path, misses) as never);
+    useDesk.setState({ windowsById: {} } as never);
+    render(<><SurfaceWindows /><ChairHome /></>);
+    const offer = await screen.findByTestId("needs-no-calendar", undefined, { timeout: 3000 });
+    expect(offer.textContent).toContain("NO CALENDAR");
+    expect(head()).toBe("Nothing needs you");
+    fireEvent.click(within(offer).getByRole("button", { name: "Connect calendar" }));
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("meetings"));
+    await screen.findByTestId("calendar-connect-row", undefined, { timeout: 5000 });
+  });
+
+  it("a configured calendar with only a past event: Nothing needs you, no offer, no NEXT line", async () => {
+    // replaces: tests/e2e/test_hs145_door_polish_glass.py::test_hs145_connect_calendar_affordance_and_quiet_state (the quiet leg)
+    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+      recordedGet(RECORDED.calendar.quiet.gets, path) as never);
+    expect(RECORDED.calendar.quiet.gets["/api/door"].calendar_configured).toBe(true);
+    render(<ChairHome />);
+    await waitFor(() => expect(head()).toBe("Nothing needs you"), { timeout: 3000 });
+    // The drawer read the configured Door (the no-calendar test proves the
+    // same read draws the offer when the Door says false).
+    await waitFor(() => expect(vi.mocked(apiFetch).mock.calls.some(([p]) => String(p) === "/api/door")).toBe(true));
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+    expect(screen.queryByTestId("needs-no-calendar")).toBeNull();
+    expect(document.querySelector('[data-verb="connect-calendar"]')).toBeNull();
+    expect(screen.queryByTestId("needs-next")).toBeNull();
+  });
+});
+
+// ── PHILO-17 (evalerror): a failed Evaluate reaches Needs you ─────────────
+// The hub's own answers after the owner's Evaluate (route) and an agent's
+// (MCP) on two live GitHub Watches with gh signed out, its stderr carrying
+// synthetic credentials (scripts/record_needs_you_fixture.py `evalError`).
+// The hub half is tests/unit/test_desk_needs_you.py::test_a_failed_evaluate_is_stored_and_reaches_needs_you_without_a_secret.
+describe("Needs you: a failed Evaluate is one grouped GitHub row", () => {
+  it("GitHub · 2 sources reads Not signed in with one Reconnect; Details lists both; no secret, no gh auth login", async () => {
+    // replaces: tests/e2e/test_philo17_evaluate_error_glass.py::test_a_failed_evaluate_reaches_needs_you_as_its_grouped_row (the face half)
+    const { secrets, steps } = RECORDED.evalError;
+    const before = steps[0].gets["/api/desk/needs-you?fresh=1"];
+    expect(before.coverage.filter((c: { state: string }) => c.state === "failed")).toEqual([]);
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => recordedGet(steps[1].gets, path) as never);
+    render(<ChairHome />);
+    const reconnect = await screen.findByRole("button", { name: "Reconnect: GitHub · 2 sources" }, { timeout: 3000 });
+    const sources = [...document.querySelectorAll<HTMLElement>('[data-testid="needs-source-row"]')];
+    expect(sources.map((r) => r.querySelector(".needs-row-name")?.textContent?.trim())).toEqual(["GitHub · 2 sources"]);
+    const group = sources[0];
+    expect(group.contains(reconnect)).toBe(true);
+    expect(group.querySelector(".needs-row-fact")?.textContent?.trim()).toBe("Not signed in");
+    expect(within(group).getAllByRole("button", { name: "Reconnect: GitHub · 2 sources" })).toHaveLength(1);
+    expect(screen.getByTestId("needs-list").textContent).not.toContain("gh auth login");
+
+    fireEvent.click(within(group).getByRole("button", { name: "Details: GitHub · 2 sources" }));
+    const detail = await screen.findByTestId("needs-detail");
+    expect(detail.querySelectorAll("li")).toHaveLength(2);
+    const shown = screen.getByTestId("needs-drawer").textContent ?? "";
+    expect(secrets.filter((x: string) => shown.includes(x))).toEqual([]);
+  });
+});

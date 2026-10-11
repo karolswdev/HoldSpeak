@@ -1,0 +1,212 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:25:05.596218Z",
+  "wire": {
+    "_calendar_sources": [],
+    "_calendar_subscription": {
+      "egress": false,
+      "host": "",
+      "kind": "disabled",
+      "refresh_seconds": 900
+    },
+    "_placement": {
+      "meeting": {
+        "boundary": "local",
+        "engine": "local",
+        "model": "Qwen3.5-4B-Q4_K_M",
+        "node": "",
+        "placement_reason": "",
+        "placement_source": "provider",
+        "provider_honored": true,
+        "provider_intent": "local",
+        "runnable": false,
+        "runnable_reason": "No language model on this hub. Pick one in Settings under Intelligence.",
+        "target_id": "",
+        "target_name": ""
+      }
+    },
+    "_revision": "c7e3ea89d107a4bb",
+    "_runtime_status": {
+      "counters": {
+        "classify_calls": 0,
+        "classify_failures": 0,
+        "constrained_retries": 0,
+        "model_loads": 0
+      },
+      "session": {
+        "disabled_reason": null,
+        "llm_disabled_for_session": false
+      }
+    },
+    "_secrets": {
+      "companion_webhook_url": {
+        "configured": false
+      },
+      "device_psk": {
+        "configured": false
+      },
+      "failure_webhook_credential": {
+        "configured": false
+      },
+      "failure_webhook_url": {
+        "configured": false
+      },
+      "telegram_bot_token": {
+        "configured": false
+      },
+      "telegram_pairing_code": {
+        "configured": false
+      },
+      "web_token": {
+        "configured": false
+      }
+    },
+    "cadence": {
+      "brief_enabled": true,
+      "brief_hour": 6,
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "pressure": "normal",
+      "quiet_hours_end": 8,
+      "quiet_hours_start": 22,
+      "tick_interval_seconds": 300,
+      "use_llm": false
+    },
+    "cadence_telegram": {
+      "allowed_chat_ids": [],
+      "enabled": false
+    },
+    "calendar": {
+      "sources": [],
+      "subscription": ""
+    },
+    "config_version": 1,
+    "control_mode": "yolo",
+    "device": {},
+    "dictation": {
+      "macros": {
+        "enabled": false,
+        "items": []
+      },
+      "pipeline": {
+        "corrections_enabled": true,
+        "enabled": true,
+        "journal_enabled": true,
+        "journal_retention": 500,
+        "max_total_latency_ms": 600,
+        "rewrite_passes": 1,
+        "stages": [
+          "intent-router",
+          "kb-enricher"
+        ],
+        "target_detect_llm_below": 0.8,
+        "target_detect_llm_enabled": false,
+        "target_profile_override": "auto"
+      },
+      "preview_before_type": false,
+      "runtime": {
+        "backend": "auto",
+        "eviction_idle_seconds": 0,
+        "llama_cpp_model_path": "~/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+        "mlx_model": "",
+        "n_ctx": 2048,
+        "n_gpu_layers": -1,
+        "n_threads": null,
+        "openai_compatible_timeout_seconds": 8.0,
+        "profile_id": null,
+        "warm_on_start": false
+      },
+      "spoken_symbols": []
+    },
+    "hotkey": {
+      "display": "⌥R",
+      "key": "alt_r"
+    },
+    "meeting": {
+      "allow_actuators": true,
+      "allowed_actuators": [
+        "*"
+      ],
+      "auto_export": false,
+      "auto_record": "off",
+      "auto_record_lead_minutes": 5,
+      "companion_github_repo": "",
+      "cross_meeting_recognition": true,
+      "diarization_enabled": false,
+      "diarize_mic": false,
+      "disabled_plugins": [],
+      "export_format": "markdown",
+      "intel_cloud_reasoning_effort": null,
+      "intel_cloud_store": false,
+      "intel_deferred_enabled": true,
+      "intel_enabled": false,
+      "intel_profile_id": null,
+      "intel_provider": "local",
+      "intel_realtime_model": "~/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "intel_retry_base_seconds": 30,
+      "intel_retry_failure_webhook_header_name": null,
+      "intel_retry_max_attempts": 6,
+      "intel_retry_max_seconds": 900,
+      "intel_summary_model": null,
+      "intel_temperature": 0.2,
+      "intelligence_auto": "every",
+      "intent_hysteresis_windows": 1,
+      "intent_router_enabled": true,
+      "intent_score_threshold": 0.6,
+      "intent_segment_probe_enabled": false,
+      "intent_step_seconds": 30,
+      "intent_window_seconds": 90,
+      "mic_device": null,
+      "mic_label": "Me",
+      "mir_enabled": true,
+      "remote_label": "Remote",
+      "routing_profile": "balanced",
+      "similarity_threshold": 0.75,
+      "system_audio_device": null,
+      "webhook_allowed_hosts": [
+        "*"
+      ]
+    },
+    "mesh": {
+      "device_name": ""
+    },
+    "model": {
+      "backend": "auto",
+      "language": "auto",
+      "local_model_preload_authority": "",
+      "name": "base",
+      "transcribe_timeout_seconds": 120.0,
+      "warm_on_start": true
+    },
+    "owner": {
+      "aliases": [],
+      "name": ""
+    },
+    "people": {
+      "mcp_access": "write"
+    },
+    "presence": {
+      "enabled": false,
+      "mascot": false
+    },
+    "rails_observer": {
+      "enabled": false,
+      "poll_seconds": 30,
+      "profile_id": null,
+      "tail": 20
+    },
+    "thoughts": {
+      "inference_target_id": null
+    },
+    "ui": {
+      "desk_sounds": true
+    },
+    "wake_word": {
+      "action": "preview",
+      "armed_window_seconds": 8.0,
+      "enabled": false,
+      "model": "hey_jarvis",
+      "threshold": 0.5
+    }
+  }
+}

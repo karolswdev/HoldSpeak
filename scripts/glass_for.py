@@ -79,7 +79,7 @@ AREAS: dict[str, tuple[str, ...]] = {
     "authority": ("grant", "policy", "unattended"),
     "grant": ("grant",),
 }
-SMOKE = ("test_graph_walk_smoke.py", "test_hs202_first_use_smoke.py", "test_route_preflight.py")
+SMOKE = ("test_graph_walk_smoke.py", "test_hs202_first_use_smoke.py", "test_desk_sweep.py::test_every_html_route_loads_clean")
 SHARED_RIG = {"tests/e2e/conftest.py", "tests/e2e/glass_infra.py"}
 # File names too common to be a citation.
 COMMON_NAMES = {"index.ts", "index.tsx", "__init__.py", "types.ts", "api.ts", "conftest.py", "core.py"}

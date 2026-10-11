@@ -1,0 +1,144 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:25:05.597337Z",
+  "wire": {
+    "checkedAt": "2026-10-11T22:25:05.522289+00:00",
+    "engines": [
+      {
+        "audioCapable": false,
+        "baseUrl": "http://127.0.0.1:8099/v1",
+        "fits": {
+          "agents_tools": {
+            "blocked": [
+              "Agents"
+            ],
+            "state": "LIMITED"
+          },
+          "background": {
+            "blocked": [
+              "Calendar",
+              "Memory"
+            ],
+            "state": "LIMITED"
+          },
+          "meetings": {
+            "state": "READY"
+          },
+          "speech_recognition": {
+            "blocked": [
+              "Speech"
+            ],
+            "state": "INCOMPATIBLE"
+          },
+          "thoughts_notes": {
+            "state": "READY"
+          },
+          "writing_dictation": {
+            "state": "READY"
+          }
+        },
+        "host": "127.0.0.1",
+        "id": "local:library_provider_engine-127-0-0-1-8099",
+        "kind": "local",
+        "legacyLabel": "127.0.0.1:8099",
+        "name": "stub Qwen",
+        "profileId": "engine-127-0-0-1-8099",
+        "profileRevision": 1,
+        "quantToken": null,
+        "state": "READY"
+      },
+      {
+        "downloadHost": "huggingface.co",
+        "host": "THIS DEVICE",
+        "id": "preset:preset_local_qwen35_4b_gguf_q4km",
+        "installed": false,
+        "kind": "preset",
+        "name": "Quick local Qwen",
+        "presetId": "preset_local_qwen35_4b_gguf_q4km",
+        "sizeBytes": 2740937888,
+        "state": "WAITING"
+      },
+      {
+        "downloadHost": "huggingface.co",
+        "host": "THIS DEVICE",
+        "id": "preset:preset_local_qwen35_08b_gguf_q4km",
+        "installed": false,
+        "kind": "preset",
+        "name": "Tiny local Qwen",
+        "presetId": "preset_local_qwen35_08b_gguf_q4km",
+        "sizeBytes": 532517120,
+        "state": "WAITING"
+      }
+    ],
+    "hardware": {
+      "capability": {
+        "accelerators": [
+          "metal"
+        ],
+        "apple_silicon": true,
+        "architecture": "arm64",
+        "logical_cpu_count": 12,
+        "sha256": "sha256:28c82ad0634fbe2be400b096a8c33868e646704aa3e2caff5f76ab7d80e86721",
+        "system": "darwin",
+        "total_memory_bytes": 34359738368,
+        "unified_memory": true
+      },
+      "detection": {
+        "reason": null,
+        "state": "available"
+      },
+      "observation": {
+        "available_memory_bytes": null,
+        "sha256": "sha256:3fb4ee9a8b2c4609f134ae9547fac95156b6e9189d29d328add4453cf130da90",
+        "storage_available_bytes": 271396720640
+      }
+    },
+    "lastApply": null,
+    "repairs": [
+      {
+        "baseUrl": "",
+        "control": "engine_picker",
+        "detail": "This engine does not accept this input.",
+        "engineId": "",
+        "groupLabels": [
+          "Speech recognition"
+        ],
+        "groups": [
+          "speech_recognition"
+        ],
+        "host": "",
+        "id": "tool-incompatible:127.0.0.1:8099",
+        "presetId": "",
+        "scope": "local",
+        "subject": "127.0.0.1:8099",
+        "token": "TOOL INCOMPATIBLE",
+        "verb": "Choose"
+      }
+    ],
+    "runtimes": [
+      {
+        "id": "llama_cpp_prompt_v1",
+        "state": "available"
+      },
+      {
+        "id": "mlx_text_v1",
+        "state": "unavailable"
+      },
+      {
+        "id": "openai_compatible_v1",
+        "state": "available"
+      }
+    ],
+    "summaryAssignment": {
+      "assignmentRevision": 1,
+      "boundary": "local",
+      "capabilityId": "meeting.deferred_analysis",
+      "label": "127.0.0.1:8099",
+      "profileId": "engine-127-0-0-1-8099",
+      "profileRevision": 1,
+      "readiness": "ready",
+      "schema": "ConciergeSummaryAssignmentProjection@1",
+      "status": "assigned"
+    }
+  }
+}

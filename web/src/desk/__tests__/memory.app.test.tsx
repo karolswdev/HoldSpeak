@@ -245,3 +245,128 @@ describe("Memory on the Desk: standing pages where the work lives", () => {
     expect(section.textContent).not.toContain("Cutover");
   });
 });
+
+// ── HS-200-13: recall of a superseded chain, Carry, Name an owner ──────────
+//
+// The successor of tests/e2e/test_hs200_continuity_glass.py's recall legs
+// (the test diet, 2026-10-11). fixtures/memory-continuity/recall.json holds
+// the real hub's answers on that rig's own seed (two meetings, Saturday's
+// decision superseded by Sunday's, one owed commitment), recorded by
+// tests/unit/test_desk_memory.py::test_the_recall_minute_reads_the_current_decision_carries_it_and_names_an_owner:
+// the recent read, the search, the carry and the follow-through answers, and
+// the search after each press. A read the hub was not asked rejects.
+import RECALL from "./fixtures/memory-continuity/recall.json";
+
+const NEW_TEXT = "Freeze window is Sunday 02:00, not Saturday";
+const OLD_TEXT = "Freeze window is Saturday 02:00";
+const NEW_WHY = "Payments cannot drain the queue before 02:00 on a weekday.";
+const CMT_TEXT = "Priya confirms the freeze window";
+
+function replayRecall() {
+  let after: "searched" | "after_carry" | "after_name" = "searched";
+  const misses: string[] = [];
+  const presses: { path: string; body: unknown }[] = [];
+  apiFetch.mockImplementation((url: string, init: { method?: string; json?: unknown } = {}) => {
+    const path = String(url);
+    const method = (init.method ?? "GET").toUpperCase();
+    if (method === "POST" && path === RECALL.carry.path) {
+      presses.push({ path, body: init.json });
+      after = "after_carry";
+      return Promise.resolve(structuredClone(RECALL.carry.answer));
+    }
+    if (method === "POST" && path === "/api/follow-through/complete") {
+      presses.push({ path, body: init.json });
+      after = "after_name";
+      return Promise.resolve(structuredClone(RECALL.name_owner.answer));
+    }
+    if (method === "GET" && path === "/api/coders/sessions?include_ended=false")
+      return Promise.resolve(structuredClone(RECALL.coders_sessions));
+    if (method === "GET" && path.startsWith("/api/memory/recall?")) {
+      const q = new URLSearchParams(path.split("?")[1]);
+      if (q.get("recent") === "1") return Promise.resolve(structuredClone(RECALL.recent));
+      if (q.get("query") === "freeze window") return Promise.resolve(structuredClone(RECALL[after]));
+      if (q.get("query") === "unfindablequasar") return Promise.resolve(structuredClone(RECALL.miss));
+    }
+    misses.push(`${method} ${path}`);
+    return Promise.reject(new Error(`the hub recorded no answer for ${method} ${path}`));
+  });
+  return { misses, presses };
+}
+
+describe("Desk memory (HS-200-13): the current decision first, carried; the owed commitment named", () => {
+  it("recent on open; the search: CURRENT first with its why and source, SUPERSEDED under it, OWED with typed unknowns; Carry; Name an owner; the miss", async () => {
+    // replaces: tests/e2e/test_hs200_continuity_glass.py::TestContinuityGlass::test_recall_1440 (every leg but
+    //   the computed opacity, the type steps, the 393 filter fold and the viewport measures, which stay in
+    //   the browser file; the "recall minute" is a measurement, not a fence)
+    const { presses, misses } = replayRecall();
+    render(<ProjectMemoryCore />);
+    // Opened with no query, the face reads the desk's recent memory.
+    const results = await screen.findByTestId("recall-results");
+    expect(results.getAttribute("aria-label")).toBe("Recent on this desk");
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search the Desk" }), { target: { value: "freeze window" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
+    await waitFor(() => expect(screen.getAllByTestId("recall-card")).toHaveLength(2));
+    const cards = screen.getAllByTestId("recall-card");
+    expect(cards.map((c) => c.getAttribute("data-state"))).toEqual(["current", "superseded"]);
+    expect((screen.getByTestId("recall-display").textContent ?? "").trim()).toBe("5 remembered");
+    expect(screen.getByTestId("recall-display").getAttribute("data-accent")).toBe("true");
+    expect(screen.getByTestId("recall-ref-token").textContent).toBe("REF · FREEZE WINDOW");
+    expect(screen.getByTestId("recall-searched-token").textContent ?? "").toMatch(/^SEARCHED /);
+
+    const current = cards[0];
+    expect(within(current).getByTestId("recall-card-title").textContent).toBe(NEW_TEXT);
+    expect(within(current).getAllByTestId("recall-axis").map((a) => a.textContent)).toEqual(["DECISION", "SUPPORTED", "ACCEPTED"]);
+    expect(within(current).getByTestId("recall-dec-token").textContent).toBe("DEC 09-07");
+    expect(within(current).getByTestId("recall-rationale").textContent).toBe(NEW_WHY);
+    expect(within(current).getByTestId("recall-source-token").textContent).toBe("MTG 09-07 · 11:31");
+    expect(within(current).getByRole("button", { name: "Open source: MTG 09-07" })).toBeTruthy();
+    expect(within(within(current).getByRole("group", { name: "Project" })).getByRole("button", { name: "Open the Project: Q4 Platform" })).toBeTruthy();
+
+    const superseded = cards[1];
+    expect(within(superseded).getByTestId("recall-card-title").textContent).toBe(OLD_TEXT);
+    expect(within(superseded).getByTestId("recall-superseded-by").textContent).toBe("SUPERSEDED BY DEC 09-07");
+    expect(within(superseded).getByTestId("recall-dec-token").textContent).toBe("DEC 09-02");
+    expect(within(superseded).queryByRole("button", { name: "Carry into brief" })).toBeNull();
+
+    const owed = screen.getByTestId("recall-owed-row");
+    expect(within(owed).getByTestId("recall-owed-title").textContent).toBe(CMT_TEXT);
+    expect(within(owed).getByTestId("recall-due-token").textContent).toBe("DUE · UNKNOWN");
+    expect(within(owed).getByTestId("recall-owner-token").textContent).toBe("OWNER · UNKNOWN");
+    expect((within(owed).getByTestId("recall-owed-verb").textContent ?? "").trim()).toBe("Name an owner");
+    expect(within(owed).queryByRole("button", { name: `Mark done: ${CMT_TEXT}` })).toBeNull();
+    const body = screen.getByTestId("desk-memory-body").textContent ?? "";
+    for (const section of ["CURRENT 1", "SUPERSEDED 1", "OWED 1", "MEETINGS 2"]) expect(body).toContain(section);
+
+    // ── Carry into brief: the one primary; the hub's answer marks it CARRIED ──
+    const carry = screen.getByRole("button", { name: "Carry into brief" });
+    expect(carry.className).toContain("btn--primary");
+    fireEvent.click(carry);
+    await waitFor(() => expect(screen.getByTestId("recall-carry").hasAttribute("data-carried")).toBe(true));
+    expect((screen.getByTestId("recall-carry").textContent ?? "").trim()).toBe("CARRIED");
+    expect(presses[0]).toEqual({ path: RECALL.carry.path, body: RECALL.carry.body });
+    expect(document.querySelectorAll(".desk-surface-body .btn--primary, .btn--primary").length).toBeLessThanOrEqual(1);
+
+    // ── Name an owner: the well unfolds under the row, no modal; Save; Set a date ──
+    fireEvent.click(within(screen.getByTestId("recall-owed-row")).getByTestId("recall-owed-verb"));
+    await screen.findByTestId("recall-owed-well");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.change(screen.getByRole("textbox", { name: "Owner" }), { target: { value: "Priya" } });
+    fireEvent.click(screen.getByRole("button", { name: `Save owner: ${CMT_TEXT}` }));
+    await waitFor(() => expect(screen.getByTestId("recall-owed-row").getAttribute("data-next-action")).toBe("set_date"));
+    expect(screen.queryByTestId("recall-owner-token")).toBeNull();
+    expect(presses[1]).toEqual({ path: "/api/follow-through/complete", body: RECALL.name_owner.body });
+
+    // ── the miss: one true line, the five filters kept, no Clear, no card ──
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search the Desk" }), { target: { value: "unfindablequasar" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
+    await screen.findByTestId("recall-miss");
+    expect((screen.getByTestId("recall-display").textContent ?? "").trim()).toBe("Nothing matches");
+    expect(screen.getByTestId("recall-display").getAttribute("data-accent")).toBeNull();
+    expect(screen.getByTestId("recall-miss").textContent?.trim()).toBe("▤One project searched, it does not hold this");
+    expect(within(screen.getByRole("group", { name: "Filter the memory" })).getAllByRole("button")).toHaveLength(5);
+    expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+    expect(screen.queryAllByTestId("recall-card")).toHaveLength(0);
+    expect(misses).toEqual([]);
+  });
+});

@@ -446,3 +446,195 @@ describe("Runs on — a stranger connects an engine and the face keeps his choic
     expect(screen.getByTestId("runson-receipt").textContent).not.toContain("CHANGED ELSEWHERE");
   });
 });
+
+/* ── the recorded hub (PHILO-17 test diet, final lane A) ──
+ *
+ * The SCAR LAW: these describes replay the hub's OWN answers, captured on a
+ * real hub by tests/integration/test_desk_runs_on_hub.py (HOLDSPEAK_WIRE_WRITE=1
+ * rewrites them; every pytest run fences their shape against the hub). One
+ * scenario is one boot: the reads the window makes on open, the answer to each
+ * press, and the reads after it. A read the recording does not hold fails. */
+
+const RECORDED = import.meta.glob("./fixtures/runs-on-truth/**/*.json", { eager: true, import: "default" }) as Record<
+  string,
+  { wire: unknown }
+>;
+
+function recorded(scenario: string, name: string): unknown {
+  const file = RECORDED[`./fixtures/runs-on-truth/${scenario}/${name}.json`];
+  if (!file) throw new Error(`no recorded answer ${scenario}/${name}`);
+  return structuredClone(file.wire);
+}
+
+/** Replays one scenario. `presses` maps a POST path to [its answer, the stage
+ *  the hub is in after it]. */
+class RecordedHub {
+  stage: string;
+  calls: Array<{ method: string; path: string; body: unknown }> = [];
+  misses: string[] = [];
+  constructor(
+    readonly scenario: string,
+    first: string,
+    readonly presses: Record<string, [string, string | null]> = {},
+  ) {
+    this.stage = first;
+  }
+  answer(method: string, path: string, body: unknown): [number, unknown] {
+    this.calls.push({ method, path, body });
+    if (method === "GET") {
+      try {
+        return [200, recorded(this.scenario, `${this.stage}${path.replace(/\//g, "_")}`)];
+      } catch {
+        this.misses.push(`${method} ${path}`);
+        return [404, {}];
+      }
+    }
+    const press = this.presses[path];
+    if (!press) {
+      this.misses.push(`${method} ${path}`);
+      return [404, {}];
+    }
+    if (press[1]) this.stage = press[1];
+    return [200, recorded(this.scenario, press[0])];
+  }
+}
+
+function replay(hub: RecordedHub) {
+  vi.stubGlobal("fetch", vi.fn(async (input: string, init: RequestInit = {}) => {
+    const method = init.method ?? "GET";
+    const body = typeof init.body === "string" ? JSON.parse(init.body) : undefined;
+    const [status, payload] = hub.answer(method, String(input), body);
+    return new Response(JSON.stringify(payload), { status, headers: { "content-type": "application/json" } });
+  }));
+}
+
+async function openRecorded(rec: RecordedHub) {
+  replay(rec);
+  render(<RunsOnCore />);
+  await screen.findByTestId("switchboard");
+  await waitFor(() => expect(rec.calls.some((c) => c.path === "/api/concierge/detect")).toBe(true));
+}
+
+describe("Runs on — the engine tells the truth (recorded hub)", () => {
+  const ENGINE = "http://127.0.0.1:8099/v1";
+  const KEY = "engine-127-0-0-1-8099";
+
+  it("Check names TOOLS; Add keeps the window (ADDED); the Default patch says PATCHED; Agents reads LIMITED with WITHOUT AGENTS", async () => {
+    // replaces: tests/e2e/test_philo15_10_engine_truth_glass.py::TestEngineTruth::test_ready_means_ready_and_every_press_leaves_a_receipt
+    // (the hub half is tests/integration/test_desk_runs_on_hub.py::test_ready_means_ready_and_a_default_engine_is_limited_where_it_serves_part,
+    // which records these answers. The receipt-under-Undo pixel leg is geometry: it stays in test_philo15_12_ugly_glass.py B27.)
+    const rec = new RecordedHub("engine-truth", "0-open", {
+      "/api/setup/discover-models": ["check", null],
+      "/api/inference/model-library/define-endpoint": ["define", "1-added"],
+      "/api/inference/assignments/set": ["set-default", "2-patched"],
+    });
+    await openRecorded(rec);
+
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    const field = within(screen.getByTestId("concierge-add-engine-row")).getAllByRole("textbox")[0];
+    fireEvent.change(field, { target: { value: ENGINE } });
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    expect((await screen.findByTestId("concierge-add-tools")).textContent).toBe("TOOLS");
+
+    fireEvent.click(screen.getByTestId("concierge-add-submit"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED .* · stub-qwen · 127\.0\.0\.1:8099$/));
+    await screen.findByTestId(`switchboard-engine-${KEY}`);
+    expect(screen.getAllByTestId("runson-root")).toHaveLength(1);
+
+    fireEvent.click(screen.getByTestId("switchboard-job-default"));
+    fireEvent.keyDown(screen.getByTestId(`switchboard-engine-${KEY}`), { key: "Enter" });
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^PATCHED /));
+    const set = rec.calls.filter((c) => c.path === "/api/inference/assignments/set");
+    expect(set).toHaveLength(1);
+    expect((set[0].body as { scope: unknown }).scope).toEqual({ kind: "global" });
+    expect(screen.getAllByTestId("runson-root")).toHaveLength(1);
+
+    // The board after the hub's own reads: READY only where the whole job runs.
+    const agents = screen.getByTestId("switchboard-job-agents_tools");
+    await waitFor(() => expect(agents.getAttribute("data-state")).toBe("limited"));
+    expect(agents.textContent?.toUpperCase()).toContain("WITHOUT AGENTS");
+    expect(screen.getByTestId("switchboard-job-thoughts_notes").getAttribute("data-state")).toBe("ready");
+    expect(screen.getByTestId("switchboard").textContent).not.toContain("structured result");
+    expect(screen.queryByTestId("switchboard-job-chat_practice")).toBeNull();
+    expect(rec.misses).toEqual([]);
+  });
+});
+
+/** The board measures its container (Switchboard.tsx useSwitchboardLayout);
+ *  jsdom measures 0, so the phone list is asked for by giving it 393 px. */
+function atPhoneWidth() {
+  return vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    width: 393, height: 852, top: 0, left: 0, right: 393, bottom: 852, x: 0, y: 0, toJSON: () => ({}),
+  } as DOMRect);
+}
+
+describe("Runs on — a record-less engine is refused on the drop (recorded hub)", () => {
+  it("each job names the refusal with its token, and nothing is written", async () => {
+    // replaces: tests/e2e/test_philo15_10_engine_truth_glass.py::TestTwoFailures::test_every_failed_group_is_named_with_its_token [1440]
+    // (hub half: test_desk_runs_on_hub.py::test_a_record_less_engine_is_on_the_board_with_no_revision_and_the_hub_refuses_a_write_for_it)
+    const rec = new RecordedHub("no-record", "0-open");
+    await openRecorded(rec);
+    const plate = await screen.findByTestId("switchboard-engine-old-box");
+    for (const [job, label] of [["thoughts_notes", "ANSWERS AND THOUGHTS"], ["agents_tools", "AGENTS AND RECIPES"]]) {
+      fireEvent.click(screen.getByTestId(`switchboard-job-${job}`));
+      fireEvent.keyDown(plate, { key: "Enter" });
+      await waitFor(() =>
+        expect(screen.getByTestId("runson-receipt").textContent).toMatch(new RegExp(`^REFUSED · ${label} · NO MODEL RECORD$`)),
+      );
+    }
+    expect(rec.calls.filter((c) => c.method !== "GET")).toEqual([]);
+    expect(rec.misses).toEqual([]);
+  });
+
+  it("the phone list never offers it to a job", async () => {
+    // replaces: tests/e2e/test_philo15_10_engine_truth_glass.py::TestTwoFailures::test_every_failed_group_is_named_with_its_token [393]
+    const spy = atPhoneWidth();
+    try {
+      const rec = new RecordedHub("no-record", "0-open");
+      await openRecorded(rec);
+      await waitFor(() => expect(screen.getByTestId("switchboard").getAttribute("data-layout")).toBe("list"));
+      for (const job of ["thoughts_notes", "agents_tools"]) {
+        fireEvent.click(screen.getByTestId(`switchboard-job-${job}`));
+        await screen.findByText(/ · runs on$/i); // the job's card is open
+        expect(screen.queryByTestId("switchboard-tap-old-box")).toBeNull();
+      }
+      expect(rec.calls.filter((c) => c.method !== "GET")).toEqual([]);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+describe("Runs on — Anthropic reads NOT SUPPORTED YET (recorded hub)", () => {
+  it("never READY, no verb, a broken lamp, and a job refuses it; the phone list never offers it", async () => {
+    // replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_the_runs_on_anthropic_plate_reads_not_supported_yet
+    // (on the hub's own detect rows: hub half test_desk_runs_on_hub.py::test_an_anthropic_profile_reads_not_supported_on_the_hub)
+    const rec = new RecordedHub("anthropic", "0-open");
+    await openRecorded(rec);
+    const plate = await screen.findByTestId("switchboard-engine-cloud-anthropic");
+    expect(plate.textContent).toContain("NOT SUPPORTED YET");
+    expect(plate.textContent).not.toContain("READY");
+    expect(plate.querySelectorAll("button")).toHaveLength(0);
+    expect(screen.getByTestId("switchboard-lamp-cloud-anthropic").getAttribute("data-lamp")).toBe("broken");
+    fireEvent.click(screen.getByTestId("switchboard-job-thoughts_notes"));
+    fireEvent.keyDown(plate, { key: "Enter" });
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/REFUSED .* NOT SUPPORTED/));
+    expect(rec.calls.filter((c) => c.method !== "GET")).toEqual([]);
+    expect(rec.misses).toEqual([]);
+  });
+
+  it("at 393 the job list offers no tap for it", async () => {
+    // replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_the_runs_on_anthropic_plate_reads_not_supported_yet [393]
+    const spy = atPhoneWidth();
+    try {
+      const rec = new RecordedHub("anthropic", "0-open");
+      await openRecorded(rec);
+      await waitFor(() => expect(screen.getByTestId("switchboard").getAttribute("data-layout")).toBe("list"));
+      fireEvent.click(screen.getByTestId("switchboard-job-thoughts_notes"));
+      await screen.findByText(/ · runs on$/i); // the job's card is open
+      expect(screen.queryByTestId("switchboard-tap-cloud-anthropic")).toBeNull();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});

@@ -96,3 +96,62 @@ def test_a_confirmed_snapshot_puts_its_events_on_the_door_rail(hub: Hub) -> None
     ]
     assert sorted(item["title"] for item in rail) == ["Glass Review", "Glass Standup"], door.json().get("upcoming")
     assert {item.get("source_label", "") for item in rail} == {"O365 SNAPSHOT"}
+
+
+# ── HS-145: no calendar offers Connect; a quiet calendar asks nothing ─────
+
+
+def test_no_calendar_then_a_quiet_calendar_on_the_door_and_needs_you(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """replaces: tests/e2e/test_hs145_door_polish_glass.py::test_hs145_connect_calendar_affordance_and_quiet_state (hub half)
+
+    The glass rig's seed: the meeting path pinned (no SETUP row), then one
+    calendar source whose only event is two hours ago. Before the source:
+    /api/door says calendar_configured false. After it: the settings answer
+    names one file source, the real ingest conductor applies it, the Door says
+    configured with no upcoming item, and Needs you is complete and empty
+    (the face's `Nothing needs you`, with no NEXT line)."""
+    from datetime import datetime, timezone
+
+    from holdspeak.db import reset_database
+    from test_desk_needs_you import _boot as boot_isolated
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tests.e2e.glass_infra import seed_meeting_engines
+
+    hub = boot_isolated(tmp_path, monkeypatch)
+    try:
+        seed_meeting_engines()
+        door = hub.client.get("/api/door").json()
+        assert door["calendar_configured"] is False, door
+
+        past = datetime.now(timezone.utc).replace(second=0, microsecond=0) - timedelta(hours=2)
+        fixture = tmp_path / "empty-calendar.ics"
+        fixture.write_text("\r\n".join([
+            "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//HoldSpeak//HS-145 polish//EN",
+            "BEGIN:VEVENT", "UID:hs145-past-only",
+            f"DTSTART:{past.strftime('%Y%m%dT%H%M%SZ')}",
+            f"DTEND:{(past + timedelta(minutes=30)).strftime('%Y%m%dT%H%M%SZ')}",
+            "SUMMARY:Past event only", "END:VEVENT", "END:VCALENDAR", "",
+        ]), encoding="utf-8")
+        saved = hub.client.put("/api/settings", json={"calendar": {"sources": [
+            {"id": "hs145-fixture", "label": "Polish", "url": str(fixture), "enabled": True}]}})
+        assert saved.status_code == 200, saved.text
+        sources = saved.json()["settings"]["_calendar_sources"]
+        assert [s["kind"] for s in sources] == ["file"], sources
+
+        from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
+
+        assert CalendarIngestConductor().refresh() is True
+        door = hub.client.get("/api/door").json()
+        assert door["calendar_configured"] is True, door
+        assert door["upcoming"] == [], door["upcoming"]
+
+        needs = hub.client.get("/api/desk/needs-you?fresh=1").json()
+        assert needs["complete"] is True, needs.get("coverage")
+        assert needs["count"] == 0, needs
+        assert needs.get("next") in (None, {}), needs.get("next")
+    finally:
+        reset_database()
+        composition.install(composition.bare(label="pytest"))

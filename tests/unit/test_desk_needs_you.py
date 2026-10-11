@@ -500,3 +500,164 @@ def test_arrival_confirm_removes_exactly_that_proposal_and_files_the_obligation(
 
     confirmed = _ok(hub.client.get("/api/projects/proj-a/proposals?state=confirmed"))["proposals"]
     assert {p["id"] for p in confirmed} >= {by_kind["action"]["id"], by_kind["decision"]["id"]}
+
+
+# ── honest faces: a Room's meeting action is counted once on the desk ─────
+
+
+def _seed_honest_faces(hub: Hub) -> None:
+    """tests/e2e/test_honest_faces_glass.py::_seed, verbatim (real producers):
+    a Project with two meetings, each with one unowned action item; the first
+    meeting also records a decision, and its lifecycle row gets a record."""
+    from holdspeak.db.decisions import backfill_decisions
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.decision_record_service import DecisionRecordService
+
+    db = hub.db
+    owner = Principal(PrincipalKind.OWNER, "karol")
+    db.projects.create_project(
+        project_id="p-ledger", name="Payments ledger cutover",
+        description="Move settlement to the new ledger by Nov 5.",
+        keywords=["payments", "ledger", "cutover"],
+    )
+    now = datetime.now()
+    for mid, title, hours_ago, action, decisions in (
+        ("m-standup", "Ledger cutover sync", 2, "Write the rollback runbook",
+         ["Freeze the old ledger on Nov 5"]),
+        ("m-arch", "Architecture review: tracing", 26, "Pilot OTel in billing", []),
+    ):
+        start = (now - timedelta(hours=hours_ago)).replace(microsecond=0)
+        summary = "Dual-write is stable. The team agreed to freeze the old ledger on Nov 5."
+        db.meetings.save_meeting(MeetingState(
+            id=mid, started_at=start, ended_at=start + timedelta(minutes=30), title=title,
+            segments=[TranscriptSegment(text="Dual-write is stable.", speaker="Me",
+                                        start_time=1.0, end_time=4.0)],
+            intel=IntelSnapshot(timestamp=1.0, topics=["cutover"], summary=summary, action_items=[{
+                "id": f"{mid}-a1", "task": action, "owner": None, "due": None,
+                "status": "pending", "review_state": "accepted",
+                "source_timestamp": None, "created_at": start.isoformat()}]),
+            intel_status="completed",
+        ))
+        db.projects.associate_meeting_project(
+            meeting_id=mid, project_id="p-ledger", source="manual", confidence=1.0)
+        if decisions:
+            db.plugins.record_artifact(
+                artifact_id=f"{mid}-decisions", meeting_id=mid, artifact_type="decisions",
+                title="Meeting decisions", plugin_id="honest-faces",
+                structured_json={"decisions": [
+                    {"decision": d, "rationale": "Agreed in the meeting."} for d in decisions]},
+            )
+    with db._connection() as conn:
+        backfill_decisions(conn)
+    lifecycle = db.decisions.list(meeting_id="m-standup")[0]
+    DecisionRecordService(db).create_from_meeting(owner, lifecycle.id)
+
+
+def test_a_rooms_meeting_action_is_one_door_card_on_the_desk(hub: Hub) -> None:
+    """replaces: tests/e2e/test_honest_faces_glass.py::test_room_actions_are_not_counted_twice_on_the_desk
+
+    After a sweep, the desk's answer holds each meeting action ONE time, as
+    its Door card; the Room rows (`roomItems`) carry no action row; no ref
+    and no title repeats."""
+    _seed_honest_faces(hub)
+    _ok(hub.client.post("/api/settings/heartbeat/run-now"))
+    aggregate = _needs(hub)
+    assert not [row for row in aggregate["roomItems"] if row.get("kind") == "action_item"], aggregate["roomItems"]
+    actions = [row for row in aggregate["items"] if row.get("kind") == "action_item"]
+    assert sorted(row["title"] for row in actions) == ["Pilot OTel in billing", "Write the rollback runbook"], actions
+    assert all(row.get("_isDoor") for row in actions), actions
+    refs = [row["ref"] for row in actions]
+    assert len(refs) == len(set(refs)), refs
+    titles = [row["title"] for row in aggregate["items"]]
+    assert len(titles) == len(set(titles)), titles
+
+
+# ── PHILO-17 (evalerror): a failed Evaluate reaches Needs you ──────────────
+# The seed of tests/e2e/test_philo17_evaluate_error_glass.py: a gh runner that
+# answers as a signed-out gh does, its stderr carrying synthetic credentials;
+# two live, graduated GitHub Watches in one Room.
+
+EVAL_CREDENTIAL_LINES = (
+    "token ghp_AAAAbbbbCCCCddddEEEEffffGGGGhhhh1234",
+    "Authorization: Basic dXNlcjpodW50ZXIycGFzcw==",
+    "fetch https://octo:hunter2pass@github.com/acme/app.git",
+    "GET https://api.github.com/x?token=qwertyuiop123",
+    "acli ATATT3xFfGF0abcdefghijklmnopqrstuvwxyz0123456789",
+)
+EVAL_SECRETS = ("ghp_AAAA", "dXNlcjpodW50ZXIycGFzcw", "hunter2pass", "qwertyuiop123", "ATATT3xFfGF0")
+EVAL_WATCHES = ("w-eval-a", "w-eval-b")
+
+
+def _signed_out_gh_with_secrets(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+    cmd = args[0] if args else kwargs.get("args", [])
+    return subprocess.CompletedProcess(args=cmd, returncode=4, stdout="",
+                                       stderr="\n".join((SIGNED_OUT, *EVAL_CREDENTIAL_LINES)))
+
+
+def seed_eval_error_room(hub: Hub) -> str:
+    """The Room and its two live Watches (state active, read five minutes ago, no error)."""
+    room = _ok(hub.client.post("/api/projects", json={
+        "name": "Payments ledger", "description": "PHILO-17 evaluate error",
+        "command_id": "p17-evalerror-room"}))["project"]["id"]
+    checked = _utc_naive(-timedelta(minutes=5))
+    for n, watch_id in enumerate(EVAL_WATCHES):
+        with hub.db._connection() as conn:
+            conn.execute(
+                "INSERT INTO connector_watches "
+                "(id, connector_id, query_kind, name, query_json, snapshot_json, enabled, last_success_at, "
+                " last_error, project_id, state, created_at, updated_at) "
+                "VALUES (?, 'gh', 'pull_requests', ?, ?, '[]', 1, ?, NULL, ?, 'active', datetime('now'), datetime('now'))",
+                (watch_id, f"gh acme/repo-{n}", json.dumps({"repository": f"acme/repo-{n}"}, sort_keys=True),
+                 checked, room),
+            )
+    return room
+
+
+def evaluate_both(hub: Hub) -> tuple[Any, Any]:
+    """The owner's Evaluate on the first Watch (the route), an agent's on the second (MCP)."""
+    route = hub.client.post(f"/api/watches/{EVAL_WATCHES[0]}/evaluate", json={})
+    mcp = hub.client.post("/api/mcp", json={
+        "jsonrpc": "2.0", "id": "evalerror", "method": "tools/call",
+        "params": {"name": "project.watch.evaluate", "arguments": {"watch_id": EVAL_WATCHES[1]}}})
+    return route, mcp
+
+
+def _github_failed(hub: Hub) -> list[dict[str, Any]]:
+    return [c for c in _needs(hub)["coverage"] if c.get("provider") == "github" and c["state"] == "failed"]
+
+
+def test_a_failed_evaluate_is_stored_and_reaches_needs_you_without_a_secret(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """replaces: tests/e2e/test_philo17_evaluate_error_glass.py::test_a_failed_evaluate_reaches_needs_you_as_its_grouped_row (hub half)"""
+    from holdspeak.db import reset_database
+
+    hub = _boot(tmp_path, monkeypatch, gh_runner=_signed_out_gh_with_secrets)
+    try:
+        seed_eval_error_room(hub)
+        assert _github_failed(hub) == []
+
+        route, mcp = evaluate_both(hub)
+        assert route.status_code == 400, route.text
+        assert route.json()["code"] == "connector_refresh_failed", route.text
+        assert mcp.status_code == 200, mcp.text
+        result = mcp.json()["result"]
+        assert result["isError"] is True, result
+        assert json.loads(result["content"][0]["text"])["code"] == "connector_refresh_failed", result
+        assert "gh auth login" in route.text
+        assert [x for x in EVAL_SECRETS if x in route.text] == [], route.text
+        assert [x for x in EVAL_SECRETS if x in mcp.text] == [], mcp.text
+
+        for watch_id in EVAL_WATCHES:
+            stored = hub.db.automations.get_watch(watch_id)["last_error"]
+            assert "gh auth login" in stored, stored
+            assert [x for x in EVAL_SECRETS if x in stored] == [], stored
+
+        failed = _github_failed(hub)
+        assert sorted(c["source_id"] for c in failed) == [f"watch:{w}" for w in EVAL_WATCHES], failed
+        assert {c["cause"] for c in failed} == {"Not signed in"}, failed
+        assert [x for x in EVAL_SECRETS if x in json.dumps(_needs(hub))] == []
+    finally:
+        reset_database()
+        composition.install(composition.bare(label="pytest"))

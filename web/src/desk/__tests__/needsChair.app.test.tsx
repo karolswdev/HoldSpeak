@@ -124,3 +124,58 @@ describe("Chair app: the cold roster through meetingPathBlockers", () => {
     expect(RECORDED.cold.gets["/api/desk/needs-you?fresh=1"].blockers).toEqual(meetingPathBlockers(roster as never));
   });
 });
+
+// ── PHILO-15 01: a Default for AI work clears "No engine for summaries" ──
+// The hub's own answers (scripts/record_needs_you_fixture.py `lanDefault` and
+// `summariesOff`, the browser test's seeds: the LAN model as the GLOBAL
+// default; for OFF, an imported meeting and summaries turned off). One hub
+// boot each: the reads before Generate, Generate, the reads after. The hub
+// half is tests/unit/test_desk_brief.py.
+const FALSE_ROW = "No engine for summaries";
+
+type Step = { name: string; gets: Record<string, unknown>; post?: string; answer?: unknown };
+
+function replay(steps: Step[], posted: string[]) {
+  let at = 0;
+  vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string }) => {
+    const value = String(path);
+    if (init?.method === "POST") {
+      posted.push(value);
+      const next = steps.findIndex((step, i) => i > at && step.post === value);
+      if (next < 0) throw new Error(`unrecorded POST ${value}`);
+      at = next;
+      return structuredClone(steps[next].answer) as never;
+    }
+    return recordedGet(steps[at].gets, value) as never;
+  });
+}
+
+describe("Chair app: a Default for AI work asks nothing about summaries", () => {
+  it.each([
+    ["the LAN model is the global default", "lanDefault", "No changes"],
+    ["summaries are off over an imported meeting", "summariesOff", "Meeting recorded: Imported vendor call"],
+  ] as const)("%s: Needs you draws no SETUP row; Generate draws the brief with no false row", async (_name, key, drawn) => {
+    // replaces: tests/e2e/test_philo15_01_default_clears_summaries_glass.py::TestDefaultClearsSummaries::test_needs_you_and_brief_draw_no_false_row (the face half)
+    // replaces: tests/e2e/test_philo15_01_default_clears_summaries_glass.py::TestSummariesOff::test_off_reads_off_and_asks_nothing (the face half; the Meetings headline is meetingsHeadlineDefault.philo1501.test.ts)
+    const steps = (RECORDED as unknown as Record<string, { steps: Step[] }>)[key].steps;
+    const posted: string[] = [];
+    replay(steps, posted);
+    vi.resetModules();
+    const { openChairWindows } = await import("../chair/__tests__/fixtures/openChairWindows");
+    openChairWindows();
+    const { ChairHome } = await import("../chair/ChairHome");
+    render(<ChairHome />);
+    await waitFor(() => expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"), { timeout: 3000 });
+    const needs = region("Needs you")!;
+    expect(needs.querySelectorAll('[data-object-id^="blocker:"]')).toHaveLength(0);
+    expect(needs.textContent).not.toContain(FALSE_ROW);
+    expect(needs.textContent).not.toContain("Summary failed");
+
+    const brief = region("Brief")!;
+    fireEvent.click(within(brief).getByTestId("arrival-brief-generate"));
+    await waitFor(() => expect(region("Brief")!.textContent).toContain(drawn), { timeout: 3000 });
+    expect(posted).toEqual(["/api/brief/generate"]);
+    expect(document.body.textContent).not.toContain(FALSE_ROW);
+    expect(document.body.textContent).not.toContain("Summary failed");
+  });
+});

@@ -24,6 +24,12 @@ import { WingSlotContext } from "../../../../desk/surface/wings";
 import { useDesk } from "../../../../desk/store";
 import { EMPTY_ITEMS } from "../../../../desk/api";
 import { ProjectRoomCore } from "../../ProjectRoomCore";
+import { ApiError } from "../../../../lib/api";
+// The final diet lane's recorded wires (scripts/record_room_wires.py: the real
+// hub through TestClient on each browser test's own seed; nothing typed).
+import GATE from "./room-steward-wires/hs164_gate.json";
+import CIRCUIT from "./room-steward-wires/hs164_circuit.json";
+import P173 from "./room-steward-wires/policy173.json";
 
 vi.mock("../../../../desk/components/DeskEditor", () => ({
   DeskEditor: ({ value, onChange, ariaLabel }: { value: string; onChange: (v: string) => void; ariaLabel?: string }) => (
@@ -261,5 +267,151 @@ describe("Watch sources: history and policy", () => {
     await screen.findByTestId("steward-detail");
     await waitFor(() => expect(screen.getByTestId("steward-run-state").textContent).toBe("Completed"));
     for (const word of visibleWords(posture)) expect(word).not.toMatch(RAW_ID);
+  });
+});
+
+/* ── The final diet lane: whole recorded Rooms, replayed ──────────────
+ * A GET answers by its exact path, a press by `METHOD path`; a read the
+ * recording does not hold is a failed read, listed in `misses`, which every
+ * test asserts empty. */
+
+const misses: string[] = [];
+const sent: Array<{ key: string; json?: Json }> = [];
+let hubGets: Record<string, unknown> = {};
+
+function hubAnswer(value: unknown): Promise<unknown> {
+  if (value && typeof value === "object" && "__status" in (value as Json)) {
+    const { __status, body } = value as { __status: number; body: Json };
+    return Promise.reject(new ApiError(__status, String(body?.message ?? `HTTP ${__status}`), body));
+  }
+  return Promise.resolve(JSON.parse(JSON.stringify(value)));
+}
+
+function replay(gets: Record<string, unknown>, presses: Record<string, (json?: Json) => unknown> = {}) {
+  hubGets = gets;
+  misses.length = 0;
+  sent.length = 0;
+  apiFetch.mockImplementation((url: string, init: { method?: string; json?: Json } = {}) => {
+    const method = init.method ?? "GET";
+    sent.push({ key: `${method} ${url}`, json: init.json });
+    const press = presses[`${method} ${url}`];
+    if (press) return Promise.resolve(press(init.json)).then(hubAnswer);
+    const key = method === "GET" ? url : `${method} ${url}`;
+    if (key in hubGets) return hubAnswer(hubGets[key]);
+    misses.push(`${method} ${url}`);
+    return Promise.reject(new ApiError(404, `not recorded: ${method} ${url}`, {}));
+  });
+}
+
+function RoomOf({ pid }: { pid: string }) {
+  const [wings, setWings] = useState<ReactNode>(null);
+  return (
+    <TitleSlotContext.Provider value={() => {}}>
+      <WingSlotContext.Provider value={setWings}>
+        <div>{wings}</div>
+        <ProjectRoomCore scope={`project:${pid}`} />
+      </WingSlotContext.Provider>
+    </TitleSlotContext.Provider>
+  );
+}
+
+async function enterSteward(pid: string): Promise<HTMLElement> {
+  render(<RoomOf pid={pid} />);
+  fireEvent.click(await screen.findByTestId("steward-verb"));
+  const posture = await screen.findByTestId("steward-posture");
+  await waitFor(() => expect(posture.getAttribute("data-phase")).toBe("list"));
+  return posture;
+}
+
+async function enterPolicy(): Promise<HTMLElement> {
+  fireEvent.click(screen.getByTestId("steward-verb-policy"));
+  return screen.findByTestId("steward-policy");
+}
+
+describe("HS-164-06: unattended runs say Scheduled", () => {
+  // replaces: tests/e2e/test_hs164_unattended_glass.py::test_gate_a_two_unattended_runs (the face; the two
+  //   ticks are tests/integration/test_desk_project_room.py::test_two_conductor_ticks_make_two_completed_unattended_runs_with_no_duplicate_door_item)
+  // replaces: tests/e2e/test_hs164_unattended_glass.py::test_dedup_across_ticks (DUP: tests/unit/test_steward_run_due.py::TestSameWatermarkDedup::test_second_effect_same_watermark_resolves)
+  // replaces: tests/e2e/test_hs164_unattended_glass.py::test_opt_out_mid_cadence (DUP: tests/unit/test_steward_run_due.py::TestNoOptInSkip::test_no_optin_skips)
+  it("two conductor runs in the history, each SCHEDULED; the first opens Completed, Scheduled, with its plan; no raw id", async () => {
+    replay(GATE.gets);
+    const posture = await enterSteward(GATE.pid);
+    const rows = screen.getAllByTestId("steward-list-item");
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    const chips = screen.getAllByTestId("steward-run-provenance").map((c) => (c.textContent ?? "").trim().toLowerCase());
+    expect(chips.filter((t) => t === "scheduled").length).toBeGreaterThanOrEqual(2);
+    fireEvent.click(rows[0]);
+    await screen.findByTestId("steward-detail");
+    await waitFor(() => expect(screen.getByTestId("steward-run-state").textContent?.trim().toLowerCase()).toBe("completed"));
+    expect(screen.getByTestId("steward-run-provenance").textContent?.trim().toLowerCase()).toBe("scheduled");
+    expect(screen.getByTestId("steward-run-plan").querySelectorAll(".surface-plan-step").length).toBeGreaterThanOrEqual(1);
+    for (const word of visibleWords(posture)) expect(word).not.toMatch(RAW_ID);
+    expect(misses).toEqual([]);
+  });
+});
+
+describe("HS-164-06: a source whose circuit opened, and healed", () => {
+  // replaces: tests/e2e/test_hs164_unattended_glass.py::test_circuit_open_and_recovery (the face; the circuit
+  //   itself: tests/unit/test_steward_conductor.py::TestCircuitOpenIntervention::test_circuit_open_emits_intervention and
+  //   TestCadenceProjections::test_degraded_loop_healed_on_circuit_close)
+  it("Policy shows the circuit open with its failure streak; after the healing tick, no circuit row", async () => {
+    replay(CIRCUIT.opened);
+    const view = render(<RoomOf pid={CIRCUIT.pid} />);
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await screen.findByTestId("steward-posture");
+    await enterPolicy();
+    await screen.findByTestId("steward-circuit-row");
+    expect(screen.getAllByTestId("steward-circuit-state")[0].textContent?.trim().toLowerCase()).toBe("circuit open");
+    const streak = screen.queryAllByTestId("steward-circuit-streak");
+    expect(streak.length).toBeGreaterThanOrEqual(1);
+    expect(streak[0].textContent?.toLowerCase()).toContain("failure");
+    expect(misses).toEqual([]);
+    view.unmount();
+
+    replay(CIRCUIT.healed);
+    render(<RoomOf pid={CIRCUIT.pid} />);
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await screen.findByTestId("steward-posture");
+    const policy = await enterPolicy();
+    expect(screen.queryAllByTestId("steward-circuit-row")).toHaveLength(0);
+    for (const word of visibleWords(policy)) expect(word).not.toMatch(RAW_ID);
+    expect(misses).toEqual([]);
+  });
+});
+
+describe("HS-173-04: the Reviewer nudge row, checked and saved", () => {
+  // replaces: tests/e2e/test_hs173_policy_glass.py::test_sixth_row_unchecked_with_badge_1440
+  // replaces: tests/e2e/test_hs173_policy_glass.py::test_check_reveals_template_and_save
+  // replaces: tests/e2e/test_hs173_policy_glass.py::test_policy_stacking_393 (its one assert, the row's label, is a DOM fact)
+  const { pid, before, save, after } = P173;
+  const putKey = `PUT /api/projects/${pid}/steward/policy`;
+  const boxes = () => Array.from(screen.getByTestId("steward-policy-effects").querySelectorAll<HTMLInputElement>('input[type="checkbox"]'));
+
+  it("a new project: Reviewer nudge unchecked with GITHUB.COM and PER-NUDGE APPROVAL; checked, Save, Back, Policy: still checked with its text", async () => {
+    replay(before, { [putKey]: () => { hubGets = { ...before, ...after }; return save.answer; } });
+    await enterSteward(pid);
+    await enterPolicy();
+    expect(screen.getByTestId("steward-policy-kind-label-github_comment").textContent).toBe("Reviewer nudge");
+    const egress = Array.from(screen.getByTestId("steward-policy-effects").querySelectorAll(".gadget-chip-egress"))
+      .map((c) => c.textContent ?? "");
+    expect(egress.some((t) => t.includes("GITHUB.COM"))).toBe(true);
+    expect(screen.getByTestId("steward-policy-nudge-approval").textContent).toContain("PER-NUDGE APPROVAL");
+    expect(boxes().length).toBeGreaterThanOrEqual(6);
+    expect(boxes()[5].checked).toBe(false);
+    expect(screen.queryByTestId("steward-policy-nudge-template")).toBeNull();
+
+    fireEvent.click(boxes()[5]);
+    await screen.findByTestId("steward-policy-nudge-template");
+    fireEvent.click(screen.getByTestId("steward-verb-save-policy"));
+    await waitFor(() => expect(sent.filter((c) => c.key === putKey)).toHaveLength(1));
+    // The face sent exactly the body the hub answered (the recording's request).
+    expect(sent.find((c) => c.key === putKey)?.json).toEqual(save.request);
+
+    fireEvent.click(within(screen.getByTestId("steward-policy")).getByRole("button", { name: "Back" }));
+    await waitFor(() => expect(screen.getByTestId("steward-posture").getAttribute("data-phase")).toBe("list"));
+    await enterPolicy();
+    await waitFor(() => expect(boxes()[5].checked).toBe(true));
+    expect(screen.getByTestId("steward-policy-nudge-template")).toBeTruthy();
+    expect(misses).toEqual([]);
   });
 });
