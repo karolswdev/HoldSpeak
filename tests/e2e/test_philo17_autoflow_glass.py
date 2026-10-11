@@ -94,15 +94,11 @@ def test_summary_after_every_meeting_reaches_the_open_record_by_itself(tmp_path:
                 page.goto(f"{url}/?token={TOKEN}", wait_until="load")
                 _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
                 clear_hub_windows(page, TOKEN)
-                page.evaluate(
-                    """() => {
-                        localStorage.removeItem('hs.desk.workspace.v1');
-                        sessionStorage.setItem('hs.desk.staged-surface-open',
-                            JSON.stringify({key:'review-meetings'}));
-                    }"""
-                )
                 page.reload(wait_until="load")
                 _normal_chair(page)
+                # The owner's own door: the Dock's Meetings (a gesture, so the
+                # window comes to the front over the Chair's windows).
+                page.locator(".desk-dock").get_by_role("button", name="Meetings", exact=True).click()
                 page.locator(".meetings-head-verbs").wait_for(timeout=15_000)
                 page.on(
                     "framenavigated",
