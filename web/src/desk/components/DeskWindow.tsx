@@ -332,10 +332,16 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       // same pass (a reload, the hub opening several windows at once) that
       // the registry does not list yet; before, they all took the home seat.
       const plane = (wid: string) => s.panelDepth[wid] ?? Number.MIN_SAFE_INTEGER;
+      // A window with no rect (a Chair window on its CSS seat) counts at the
+      // place it shows: before, a new window could open over its title bar.
+      const shown = (wid: string): PanelRect | undefined => {
+        const r = shellEls.get(wid)?.getBoundingClientRect();
+        return r && r.width && r.height ? { x: r.left, y: r.top, w: r.width, h: r.height } : undefined;
+      };
       const others = [...new Set([...registrySnapshot.map((w) => w.id), ...Object.keys(s.panelDepth)])]
         .filter((wid) => wid !== id && !s.panelMin.includes(wid))
         .sort((a, b) => plane(a) - plane(b))
-        .map((wid) => s.panelRects[wid])
+        .map((wid) => s.panelRects[wid] ?? shown(wid))
         .filter((r): r is PanelRect => Boolean(r));
       const seed = measure();
       // Lazy cores may still be a Suspense fallback at measure time; a
@@ -367,7 +373,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
           rightX + seed.w <= vw - MARGIN ? rightX : Math.max(MARGIN, leftX);
         seed.y = origin.y - 56;
       }
-      const placed = placeWindow(seed, others, vw, vh, minW, minH, iconColumnRight());
+      // The icon-column floor is for windows opening on the generic home
+      // (24,72). A Chair window's first seat is the designed Phase-13
+      // arrangement (Needs you left, Brief and The week right; chair.css):
+      // shifting it right put Needs you over The week's title bar.
+      const floor = id.startsWith("chair:") ? MARGIN : iconColumnRight();
+      const placed = placeWindow(seed, others, vw, vh, minW, minH, floor);
       // PHILO-17 (U28c): the first seat is kept (saved, and sent to the hub
       // with the open), so a reload and every other view show the window
       // where it opened. Not for a content-sized card (its height stays the

@@ -29,6 +29,7 @@ from typing import Any
 
 import pytest
 
+from .chair_windows import open_chair_window
 from .glass_infra import _boot, _ensure_build, _normal_chair, _settle, _room_through_drawer
 from .test_philo13_06_open_glass import COMMITMENT, _seed
 from tests._evidence import evidence_dir
@@ -238,15 +239,17 @@ class TestTheDeskRemembers(_Rig):
                 assert not before["writes"], "nothing was saved or sent before the reload"
                 assert not any("Intelligence" in t for t in titles), "the closed Intelligence window came back"
                 if width >= 720:
-                    # PHILO-14 A1 (#939, Astra's P2): saved positions are restored;
-                    # unsaved ones are placed again (C1-1 seat / cascade). The
-                    # moved Room comes back exactly; the untouched People window
-                    # was never saved and lands whole in the band, hiding no
-                    # other window's title bar.
+                    # PHILO-14 A1 (#939, Astra's P2): saved positions are restored.
+                    # The moved Room comes back exactly. PHILO-17 (U28c): a
+                    # window's first seat is saved too, so the untouched People
+                    # window comes back at the place it opened (before, it was
+                    # placed again and could land elsewhere); it is whole in the
+                    # band and hides no other window's title bar.
                     assert room_after == room_rect, (room_rect, room_after)
                     people_id = next(w["id"] for w in after_windows if w["title"] == "People")
-                    assert people_id not in before["workspace"]["panel"]["rects"], before["workspace"]["panel"]
+                    people_before = next(w["rect"] for w in before["windows"] if w["id"] == people_id)
                     pr = next(w["rect"] for w in after_windows if w["id"] == people_id)
+                    assert pr == people_before, (people_before, pr)
                     assert pr[0] >= 0 and pr[1] >= 0 and pr[0] + pr[2] <= 1440 and pr[1] + pr[3] <= 900, pr
                     for other in after_windows:
                         if other["id"] == people_id:
@@ -363,6 +366,12 @@ class TestSliceTwoReturns(_Rig):
                 if width <= 720:  # Capture opens from the Speak AppIcon at 393 (R2)
                     self._press(page, page.locator(".desk-dock [aria-label^='Speak']").first, width)
                     page.locator(".desk-window-shell.chair-window[aria-label='Capture']").wait_for()
+                else:
+                    # PHILO-17: the Delivery board opened in front may cover
+                    # Capture's body, never its title bar; a press on the
+                    # title bar brings Capture forward, as he would.
+                    page.locator(".desk-window-shell.chair-window[aria-label='Capture'] .desk-pullout-title").first.click()
+                    page.wait_for_timeout(300)
                 self._press(page, page.get_by_test_id("arrival-schedule").first, width)
                 title = page.locator("[id='schedule:__create__'] input[aria-label='Title']")
                 title.wait_for()
