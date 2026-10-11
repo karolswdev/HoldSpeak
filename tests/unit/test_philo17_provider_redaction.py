@@ -296,3 +296,163 @@ def test_the_dictation_runtime_error_holds_no_secret() -> None:
     with pytest.raises(RuntimeError) as caught:
         backend.rewrite("hello")
     assert _leaks(str(caught.value)) == [], str(caught.value)
+
+
+# == Astra r1 on #1095 ======================================================
+
+#: MUST 1: JSON-quoted labels, single or double quotes, quoted or bare value.
+QUOTED_FIELDS = (
+    '{"api_key":"qwertyuiop123"}',
+    "{'password': 'hunter2pass'}",
+    '{"access_token": zxcvbnm0987654321}',
+    '{"client_secret" : "ATATT3xFfGF0-short"}',
+)
+QUOTED_SECRETS = ("qwertyuiop123", "hunter2pass", "zxcvbnm0987654321", "ATATT3xFfGF0-short")
+
+
+def test_r1_quoted_json_labels_are_redacted_through_the_github_producer(
+    tmp_path: Any, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from holdspeak.mcp.families import project as family
+    from holdspeak.services.github_provider import GitHubProviderAdapter
+
+    stderr = "gh broke\n" + "\n".join(QUOTED_FIELDS)
+    db = Database(tmp_path / "github-quoted.db")
+    adapter = GitHubProviderAdapter(db=db, runner=_completed(stderr))
+    monkeypatch.setattr(family, "_github_adapter", lambda: adapter)
+    probe = family.dispatch("provider.github_connection", {}, OWNER)
+    stored = _stored_error_details(db)
+    found = json.dumps([probe, stored])
+    assert [s for s in QUOTED_SECRETS if s in found] == [], found
+    assert "gh broke" in probe["error_detail"]
+    discover = family.dispatch("provider.github_discover", {}, OWNER)
+    assert [s for s in QUOTED_SECRETS if s in json.dumps(discover)] == [], discover
+    # A count or a flag after a label is not a secret shape the label can hide.
+    assert redact_secrets('{"max_tokens": 512}') == '{"max_tokens": 512}'
+
+
+#: MUST 2: a secret that crosses an old cut boundary.
+_JWT = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJvd25lcjEyMyJ9.c2lnbmF0dXJlMDEyMzQ1Ng"
+
+
+def _crossing(position: int) -> str:
+    """Spaces up to just before ``position``, then a JWT that runs across it
+    and a URL password after it. Folding the spaces brings both to the front."""
+    return " " * (position - 30) + _JWT + " https://octo:" + "hunter2pass" * 4 + "@github.com"
+
+
+def test_r1_pipeline_events_redact_before_the_cut() -> None:
+    from holdspeak.services.observer import _failure, _truncate
+
+    for text in (_crossing(8192), _crossing(65536)):
+        summary = _truncate({"error_detail": text.strip()})
+        error, _code, _ = _failure(RuntimeError(text))
+        for out in (summary, error or ""):
+            assert "hunter2pass" not in out and _JWT[:20] not in out, out[:200]
+
+
+@pytest.mark.parametrize("provider", ["sendgrid", "resend"])
+def test_r1_the_email_receipt_redacts_before_the_parser_cut(
+    tmp_path: Any, monkeypatch: pytest.MonkeyPatch, provider: str,
+) -> None:
+    from holdspeak.services import channel_email
+
+    message = _crossing(500)
+    if provider == "sendgrid":
+        body = json.dumps({"errors": [{"message": message, "field": None}]}).encode()
+        excerpt = "; ".join(m for _f, m in channel_email.sendgrid_errors(body) if m)
+        outcome = channel_email.SendGridProvider().interpret(400, {}, body)
+    else:
+        body = json.dumps({"statusCode": 422, "name": "validation_error", "message": message}).encode()
+        excerpt = channel_email.resend_error(body, 422)[1]
+        outcome = channel_email.ResendProvider().interpret(422, {}, body)
+    for out in (excerpt, json.dumps(outcome.proof)):
+        assert "hunter2pass" not in out and _JWT[:20] not in out, out[:300]
+
+
+#: MUST 3: uvicorn's loggers go through the redactor too.
+def test_r1_uvicorn_error_lines_are_redacted() -> None:
+    import io
+    import logging
+
+    from holdspeak.logging_config import install_log_redaction
+
+    install_log_redaction()
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    handler.setFormatter(logging.Formatter("%(levelname)s %(message)s"))
+    for name in ("uvicorn.error", "uvicorn.access"):
+        target = logging.getLogger(name)
+        target.addHandler(handler)
+        try:
+            try:
+                raise RuntimeError(STDERR)
+            except RuntimeError:
+                target.exception("request failed: %s", "api_key=zxcvbnm0987654321")
+        finally:
+            target.removeHandler(handler)
+    text = stream.getvalue()
+    assert "Traceback" in text and "request failed" in text
+    assert _leaks(text) == [], text
+
+
+def test_r1_the_hub_installs_log_redaction_before_uvicorn() -> None:
+    import inspect
+
+    from holdspeak import web_server
+
+    source = inspect.getsource(web_server)
+    assert source.index("install_log_redaction()") < source.index("log_config=None")
+
+
+#: MUST 4: git stderr in a factory worktree command and its audit row.
+def test_r1_factory_worktree_stderr_is_redacted_to_the_receipt(tmp_path: Any) -> None:
+    from holdspeak.delivery.factory_launch import execute_worktree_create
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    db = Database(tmp_path / "steer.db")
+    stderr = "fatal: unable to access: Authorization: Basic dXNlcjpwYXNz\ncurl -H 'Basic dXNlcjpwYXNz'"
+    result = execute_worktree_create(
+        {"name": "lane-a", "branch": "lane-a", "repo_path": str(repo), "path": str(tmp_path / "lane-a")},
+        runner=lambda argv, cwd=None: subprocess.CompletedProcess(argv, 128, stdout="", stderr=stderr),
+        audit=db.steering.record,
+    )
+    assert result["status"] == "error", result
+    assert "dXNlcjpwYXNz" not in result["detail"], result
+    rows = db.steering.list(limit=5)
+    assert rows and all("dXNlcjpwYXNz" not in json.dumps(row.to_dict() if hasattr(row, "to_dict") else row,
+                                                           default=str) for row in rows), rows
+    # The steering audit itself, whoever calls it.
+    db.steering.record(session_key="s", agent="a", pane_id=None, text="Basic dXNlcjpwYXNz", grounding=[],
+                       submit=False, outcome="error", detail="Basic dXNlcjpwYXNz")
+    assert "dXNlcjpwYXNz" not in json.dumps([r.to_dict() if hasattr(r, "to_dict") else r
+                                             for r in db.steering.list(limit=5)], default=str)
+
+
+#: P2 5: diagnostics stay.
+def test_r1_diagnostics_stay_readable() -> None:
+    for text in ("http://127.0.0.1:8080", "connect to http://localhost:11434 refused",
+                 "Basic Authentication failed", "BASIC AUTHENTICATION FAILED", "basic authentication failed",
+                 "Basic Authorization required"):
+        assert redact_secrets(text) == text, text
+    assert "dXNlcjpwYXNz" not in redact_secrets("Basic dXNlcjpwYXNz")
+    assert "hunter2pass" not in redact_secrets("https://octo:hunter2pass@github.com")
+
+
+#: P2 6: bounded cost on adversarial input.
+def test_r1_adversarial_input_finishes_fast() -> None:
+    import logging
+    import time
+
+    from holdspeak.logging_config import RedactingFormatter
+    from holdspeak.services.observer import _failure, _truncate
+
+    hostile = ("a-" * 100_000)[:200_000]
+    record = logging.LogRecord("holdspeak.x", logging.ERROR, __file__, 1, "%s", (hostile,), None)
+    for run in (lambda: redact_secrets(hostile), lambda: redact_error(hostile, 500),
+                lambda: RedactingFormatter("%(message)s").format(record),
+                lambda: _failure(RuntimeError(hostile)), lambda: _truncate({"x": hostile})):
+        started = time.perf_counter()
+        run()
+        assert time.perf_counter() - started < 1.0

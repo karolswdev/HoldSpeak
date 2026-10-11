@@ -48,6 +48,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
+from ..redaction import redact_error
 from .. import coder_factory, coder_steering
 from ..coder_steering import Runner
 from ..logging_config import get_logger
@@ -241,12 +242,14 @@ def _default_git_runner(argv: list[str], cwd: Optional[str] = None):
 
 
 def _scrub(detail: str, *roots: Any) -> str:
-    """Client-safe error text: filesystem roots replaced, bounded."""
+    """Client-safe error text: filesystem roots replaced, credentials
+    redacted (PHILO-17 redact: git can echo a Basic header or a password in
+    a remote URL), then bounded."""
     text = str(detail or "")
     for root in roots:
         if root:
             text = text.replace(str(root), "<root>")
-    return text[:300]
+    return redact_error(text, 300)
 
 
 # ── Agent Profiles (§9: node-configured argv templates) ──────────────

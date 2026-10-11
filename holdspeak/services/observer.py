@@ -11,7 +11,10 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
-from holdspeak.redaction import redact_error, redact_secrets
+from holdspeak.redaction import redact_bounded, redact_error
+
+#: The most of an exception's text one pipeline event keeps (redacted first).
+FAILURE_LIMIT = 4096
 
 
 _correlation_id: contextvars.ContextVar[str] = contextvars.ContextVar("_correlation_id")
@@ -69,12 +72,10 @@ def _truncate(value: Any, limit: int = 2048) -> str:
             summary = "<unserializable>"
 
     # PHILO-17 redact: agents read pipeline events (MCP ``pipeline://events``),
-    # so no credential a provider echoed is recorded. Redact before the cut;
-    # the scan reads four times the limit, so a secret that crosses the scan's
-    # end lies past the cut anyway.
-    long = len(summary) > limit
-    summary = redact_secrets(summary[: limit * 4])
-    if long or len(summary) > limit:
+    # so no credential a provider echoed is recorded. Redact first (the scan
+    # is bounded at 64k, far past this cut), then cut.
+    summary = redact_bounded(summary)
+    if len(summary) > limit:
         return summary[: limit - 1] + "…"
     return summary
 
@@ -128,7 +129,7 @@ def _failure(exc: BaseException) -> tuple[str | None, str | None, str]:
     outcome = getattr(exc, "observed_outcome", None)
     if outcome:
         return None, None, _truncate({"outcome": str(outcome), "code": code})
-    return redact_error(repr(exc)), code, ""
+    return redact_error(repr(exc), FAILURE_LIMIT), code, ""
 
 
 def observed(fn: Any) -> Any:

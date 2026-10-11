@@ -84,7 +84,9 @@ class SteeringAuditRepository(BaseRepository):
         digest = hashlib.sha256(str(text).encode("utf-8", "replace")).hexdigest()
         # PHILO-14 C0: the hash is over the real text; the stored head and
         # detail are secret-redacted on the whole text before the cut.
-        from ..memory.defense import redact
+        # PHILO-17 redact: the shared redactor (the memory set plus any
+        # Authorization scheme, bare Basic and URL passwords).
+        from ..redaction import redact_bounded as redact
 
         head = redact(str(text))[:TEXT_HEAD_CHARS]
         detail = redact(detail) if detail else detail

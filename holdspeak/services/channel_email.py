@@ -236,7 +236,8 @@ def sendgrid_errors(raw: bytes) -> tuple[tuple[str, str], ...]:
     found = data.get("errors") if isinstance(data, dict) else None
     if not isinstance(found, list):
         return ()
-    return tuple((str(item.get("field") or "")[:80], str(item.get("message") or "")[:500])
+    # PHILO-17 redact (Astra r1 MUST 2): redact the whole message, then cut.
+    return tuple((redact_secrets(item.get("field") or "")[:80], redact_secrets(item.get("message") or "")[:500])
                  for item in found[:10] if isinstance(item, dict))
 
 
@@ -343,7 +344,7 @@ def resend_error(raw: bytes, status: int) -> Optional[tuple[str, str]]:
     answered, name, message = data.get("statusCode"), data.get("name"), data.get("message")
     if type(answered) is not int or answered != int(status) or not isinstance(name, str) or not isinstance(message, str):
         return None
-    return name[:80], message[:500]
+    return redact_secrets(name)[:80], redact_secrets(message)[:500]  # redact, then cut
 
 
 def resend_id(raw: bytes) -> str:
