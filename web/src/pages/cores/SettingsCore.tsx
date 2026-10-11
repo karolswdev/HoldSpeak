@@ -57,7 +57,7 @@ import { TtsSettingsBlock } from "./settingsTts";
 // PARKED (HS-170-03): CapabilityAssignmentsCore — reached via Concierge Adjust.
 // import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
 import { WallpaperModule } from "./settingsWallpaper";
-import { PeopleAccessModule } from "./settingsPeople";
+import { OwnerNameGroup, PeopleAccessModule } from "./settingsPeople";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
@@ -2400,9 +2400,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
       case "people":
         return (
           <>
-            {/* PHILO-17 U35: his name and the other names for him live on
-                ONE place, the first-run You card (Setup › Get ready opens
-                it again). OwnerNameGroup is parked in settingsPeople. */}
+            {/* PHILO-15 B57: his name and the other names for him, after
+                first run (the reopened You card shows them without an edit;
+                Astra r1 on #1090: this is the place he looks). */}
+            <OwnerNameGroup />
             <PeopleAccessModule />
           </>
         );

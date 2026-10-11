@@ -404,7 +404,10 @@ export const INTELLIGENCE_AUTO_OPTIONS = [
  *  no engine for any work: "No engine yet", and Choose opens Runs on. */
 export function hubHeadline(hub: SettingsHubWire): { text: string; warning: boolean; choose: boolean } {
   const answersSet = hub.answers?.engineSet === true;
-  if (!hub.models.defaultSet && !workHasEngine(hub) && !answersSet) {
+  // Astra r1 on #1090: the owner's OFF is a choice and an unknown Answers
+  // route is no claim; neither makes "No engine yet". That state is only
+  // for a desk where every KNOWN route is empty.
+  if (!hub.meetings?.summariesOff && !hub.models.defaultSet && !workHasEngine(hub) && !answersSet) {
     return { text: "No engine yet", warning: true, choose: true };
   }
   const parts: string[] = [];

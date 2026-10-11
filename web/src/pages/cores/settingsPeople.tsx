@@ -66,9 +66,7 @@ export function usePeopleAccess() {
   return { access, setAccess, readError, reload };
 }
 
-/* PARKED (PHILO-17 U35): the first-run You card is the one place for the
- * name and aliases; Settings › People no longer renders this group.
- * PHILO-15 B57 (owed since 2026-10-04): his name and the other names for
+/* PHILO-15 B57 (owed since 2026-10-04): his name and the other names for
  * him, after first run. The needs-you rule reads them as "me", and a
  * one-letter mishearing of the name ("Carol" for "Karol") still counts. */
 export function OwnerNameGroup() {

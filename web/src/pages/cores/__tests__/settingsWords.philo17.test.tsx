@@ -52,6 +52,21 @@ describe("the hub headline is a plain state of what he gets", () => {
     fireEvent.click(screen.getByTestId("settings-hub-choose"));
     expect(onOpen).toHaveBeenCalledWith("models");
   });
+  // Astra r1 on #1090: no other ready engine masks these two (no default,
+  // no voice engine, no answer engine).
+  const bare = { models: { engines: 0, groupsSet: 0, defaultSet: false }, voice: { live: false, target: "auto", engineSet: false } };
+  it("the owner's OFF with Answers unknown and nothing else ready: Summaries: off, never No engine yet", () => {
+    expect(hubHeadline(hub({ ...bare, meetings: { intelligence: true, engineSet: false, summariesOff: true }, answers: { engineSet: null, engine: null } })))
+      .toEqual({ text: "Summaries: off", warning: false, choose: false });
+  });
+  it("the owner's OFF with no answer engine: Summaries: off · Answers: no engine, and Choose", () => {
+    expect(hubHeadline(hub({ ...bare, meetings: { intelligence: true, engineSet: false, summariesOff: true }, answers: { engineSet: false, engine: null } })))
+      .toEqual({ text: "Summaries: off · Answers: no engine", warning: true, choose: true });
+  });
+  it("Answers unknown, summaries on the route only, nothing else ready: names the summary engine, never No engine yet", () => {
+    expect(hubHeadline(hub({ ...bare, answers: { engineSet: null, engine: null } })))
+      .toEqual({ text: "Summaries: Qwen 27B", warning: false, choose: false });
+  });
   it("an unknown answer engine is left out, never called missing", () => {
     expect(hubHeadline(hub({ answers: { engineSet: null, engine: null } })).text).toBe("Summaries: Qwen 27B");
   });
