@@ -221,6 +221,14 @@ describe("HS-201-04 the disclosure beside the verb", () => {
     expect(text).toContain("192.168.1.43");
     expect(text).toContain("FAILED");
     expect(text).not.toContain("api.example.com");
+    // A host the transport does not pin as loopback is not THIS DEVICE, so a
+    // THIS DEVICE foot never hides it (Astra r1 M1).
+    const offBox = {
+      ...SUCCEEDED_RECEIPT,
+      attempts: [{ leg_ordinal: 1, host: "dev.localhost", outcome: "succeeded", operation_id: "op_1" }],
+    };
+    rerender(<RunAttempts receipt={readRunReceipt({ run_receipt: offBox })} saidOnFace="THIS DEVICE" />);
+    expect(screen.getByTestId("summary-attempts").textContent).toContain("dev.localhost");
   });
 });
 

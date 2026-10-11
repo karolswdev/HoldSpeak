@@ -106,6 +106,14 @@ describe("egressBadge agrees with the Trust window", () => {
     expect(viaDestination.text).not.toContain("LAN");
   });
 
+  it("a host the transport does not pin as loopback is never this device (Astra r1 M1)", () => {
+    for (const name of ["dev.localhost:8080", "0.0.0.0:8080"]) {
+      const badge = egressBadge({ trust: { last_egress: { id: "x", name, receipt: "r" } } });
+      expect(badge.text, name).not.toBe("⌂ This device");
+      expect(badge.scope, name).not.toBe("local");
+    }
+  });
+
   it("names a LAN last egress as LAN, without the port", () => {
     expect(
       egressBadge({

@@ -364,7 +364,7 @@ export function MeetingDetail({
           />
           {/* HS-201-04: the summary is shown on the record, with its
               meeting — the result first, the transcript under it. */}
-          <MeetingSummarySlab intel={summaryIntel} receipt={runReceipt} />
+          <MeetingSummarySlab intel={summaryIntel} receipt={runReceipt} saidOnFace={saidOnFace} />
           {/* PHILO-11-05 (canvas C1, C4): SUMMARY, then SEND; no summary, no well.
               The old aftercare Slack rows are gone (R7): the digest and the
               follow-up are forms of this one well. */}

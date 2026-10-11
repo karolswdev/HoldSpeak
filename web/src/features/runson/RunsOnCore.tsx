@@ -34,6 +34,7 @@ import {
   jobName,
   jobState,
   jobOf,
+  leadEngine,
   leadLine,
   limitTokens,
   ownEntries,
@@ -207,6 +208,9 @@ export function RunsOnCore({ scope }: CoreProps) {
     const word = jobState(job, row, engines, repairs);
     words[job] = word;
     const effective = ctrl.engineForJob(job);
+    // Astra r1 (M2): the lead names the route the job really takes (for
+    // summaries, the capability's own assignment).
+    const lead = leadEngine(job, effective, detection?.summaryAssignment, engines);
     const result = ctrl.results[job];
     const jobRepair = repairs.find((r) => r.groups.includes(job));
     const listening = job === SPEECH_JOB && ctrl.listening;
@@ -228,13 +232,13 @@ export function RunsOnCore({ scope }: CoreProps) {
       // PHILO-17 (U16): the card leads with what he gets and where it runs;
       // the task names are the card's details.
       name: jobName(job, row),
-      lead: leadLine(job, row, effective),
+      lead: leadLine(job, row, lead),
       detail: taskDetail(job, roster),
       tasks: taskLine(job, roster, row),
       state: stateClass(word),
       isDefault: job === DEFAULT_JOB,
       verb: layout === "board" ? tryVerb : undefined,
-      runsOn: effective ? `${effective.name} · on ${enginePlace(effective).words}` : word,
+      runsOn: lead ? `${lead.name} · on ${enginePlace(lead).words}` : lead === null ? "OFF" : word,
       // C4: the engine the job runs on now, even when it follows the default.
       current: effective?.key,
       currentToken: effective && row.inherited_from === "global" && job !== DEFAULT_JOB ? "SAME AS EVERYTHING ELSE" : undefined,

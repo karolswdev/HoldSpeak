@@ -43,9 +43,12 @@ export function MeetingSummarySlab({
   intel,
   receipt,
   facts,
+  saidOnFace,
 }: {
   intel: MeetingIntel | null;
   receipt: RunReceipt | null;
+  /** PHILO-17 (U16): the engine host a chip already names on this face. */
+  saidOnFace?: string | null;
   facts?: ReactNode;
 }) {
   const summary = String(intel?.summary ?? "").trim();
@@ -56,7 +59,7 @@ export function MeetingSummarySlab({
       head={
         <span className="summary-well-head">
           <span>SUMMARY</span>
-          <RunAttempts receipt={receipt} testId="summary-record-attempts" />
+          <RunAttempts receipt={receipt} testId="summary-record-attempts" saidOnFace={saidOnFace} />
         </span>
       }
     >

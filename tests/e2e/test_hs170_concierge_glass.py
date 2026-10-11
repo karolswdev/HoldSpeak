@@ -211,13 +211,14 @@ def _rig(tmp_path: Path, monkeypatch: Any) -> tuple[Any, str, list[ThreadingHTTP
     return server, url, [lan, found, local], ticks
 
 
-def _seed(page: Any, local_port: int) -> None:
+def _seed(page: Any, local_port: int) -> tuple[tuple[str, int], tuple[str, int]]:
     lan = _define(page, LAN_BASE, "qwen3.8-27b", "glass-lan-27b", "qwen3.8 27B")
     local = _define(page, f"http://127.0.0.1:{local_port}/v1", "qwen3.5-4b", "glass-mac-4b", "Qwen 3.5 4B")
     _speech_engine()
     _wire(page, None, [lan])
     _wire(page, "thoughts_notes", [local])
     _wire(page, "speech_recognition", [("whisper-small", 1)])
+    return lan, local
 
 
 def _no_raw_buttons(page: Any) -> None:
@@ -400,7 +401,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
 
 
 @pytest.mark.parametrize(
-    "case", ["lost_update", "meeting_undo", "inherited_mobile", "stale_confirmation", "host_moves", "download_failure"]
+    "case", ["lost_update", "meeting_undo", "inherited_mobile", "stale_confirmation", "host_moves", "download_failure", "summary_override"]
 )
 def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str) -> None:
     server, url, fakes, ticks = _rig(tmp_path, monkeypatch)
@@ -413,10 +414,37 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _api(page, "POST", "/api/desk/seed", token=TOKEN)
             _normal_chair(page)
-            _seed(page, fakes[2].server_address[1])
+            lan, local = _seed(page, fakes[2].server_address[1])
+            if case == "summary_override":
+                # Astra r1 (M2), through the real producer: the Meetings
+                # group runs on this Mac, but the summary capability has its
+                # own head on the LAN engine. Summaries leave the machine.
+                _wire(page, "meetings", [local])
+                _api(page, "POST", "/api/inference/assignments/set", {
+                    "command_id": "glass-wire-summary",
+                    "expected_revision": 0,
+                    "scope": {"kind": "capability", "capability_id": "meeting.deferred_analysis"},
+                    "entries": [{"profile_id": lan[0], "profile_revision": lan[1]}],
+                }, token=TOKEN)
             _open_runs_on(page)
             page.get_by_test_id("switchboard-found-cap").wait_for(timeout=15_000)
             receipt = "() => document.querySelector('[data-testid=runson-receipt]')?.textContent || ''"
+
+            if case == "summary_override":
+                detect = _api(page, "GET", "/api/concierge/detect", token=TOKEN)
+                assert detect["summaryAssignment"]["profileId"] == lan[0], detect["summaryAssignment"]
+                lead = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-name")
+                page.wait_for_function(
+                    "() => /192\\.168\\.77\\.43/.test(document.querySelector(\"[data-testid='switchboard-job-meetings'] .switchboard-job-name\")?.textContent || '')",
+                    timeout=15_000,
+                )
+                text = lead.inner_text()
+                assert text == "Meeting summaries → Qwen3.8 27B · on 192.168.77.43", text
+                assert "this Mac" not in text
+                # The Meetings wire itself still draws to the Mac engine.
+                wire = page.locator("[data-testid='switchboard-wire'][data-job='meetings'][data-order='0']")
+                assert wire.get_attribute("data-engine") == local[0]
+                return
 
             if case == "inherited_mobile":
                 page.get_by_test_id("switchboard-job-meetings").click()

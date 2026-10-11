@@ -246,6 +246,34 @@ describe("Runs on — paint and words", () => {
     expect(screen.getByTestId("switchboard-job-thoughts_notes").textContent).not.toContain("SAME AS EVERYTHING ELSE");
   });
 
+  it("the summaries lead names the summary route, not the Meetings wire (Astra r1 M2)", async () => {
+    // A local Meetings wire, and a cloud summary override: summaries leave
+    // this Mac, so the lead must say where they go.
+    const local = roster();
+    local.rows = local.rows.map((r) =>
+      r.id === "meetings"
+        ? { ...r, inherited_from: "group", assignment: { revision: 1, entries: [Q4B], issues: [] }, expected_revision: 1 }
+        : r,
+    );
+    m.readRoster.mockResolvedValue(local);
+    const cloud = detection();
+    cloud.summaryAssignment = { ...cloud.summaryAssignment!, profileId: "openrouter", profileRevision: 1, label: "OpenRouter", boundary: "cloud" };
+    m.readDetection.mockResolvedValue(cloud);
+    await board();
+    const lead = () => screen.getByTestId("switchboard-job-meetings").querySelector(".switchboard-job-name")?.textContent;
+    await waitFor(() => expect(lead()).toBe("Meeting summaries → OpenRouter · on openrouter.ai"));
+  });
+
+  it("summaries off: the lead says off", async () => {
+    const off = detection();
+    off.summaryAssignment = { ...off.summaryAssignment!, status: "off", profileId: null, profileRevision: null, label: null };
+    m.readDetection.mockResolvedValue(off);
+    await board();
+    expect(screen.getByTestId("switchboard-job-meetings").querySelector(".switchboard-job-name")?.textContent).toBe(
+      "Meeting summaries → off",
+    );
+  });
+
   it("a caller's scope opens on its job (hot wires)", async () => {
     await board("summary");
     expect(screen.getByTestId("switchboard-job-meetings").className).toContain("is-selected");

@@ -30,10 +30,17 @@ export function bareHost(value: string | null | undefined): string {
   return host.replace(/:\d+$/, "");
 }
 
-/** Loopback: the request never leaves this Mac. */
+/** Loopback: the request never leaves this Mac. Mirrors the transport's
+ *  contract exactly (holdspeak/loopback_http.py is_loopback_engine_host):
+ *  the word `localhost`, or a loopback IP literal (127.0.0.0/8, ::1). Not
+ *  `*.localhost` and not `0.0.0.0`: the transport does not pin those, so a
+ *  face must not call them this Mac. */
 export function isLoopbackHost(host: string): boolean {
-  const h = host.toLowerCase();
-  return h === "localhost" || h.endsWith(".localhost") || h === "::1" || h === "0.0.0.0" || /^127\.\d+\.\d+\.\d+$/.test(h);
+  const h = host.trim().replace(/^\[|\]$/g, "").toLowerCase();
+  if (h === "localhost") return true;
+  if (/^127\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(h)) return h.split(".").every((part) => Number(part) <= 255);
+  if (h === "0:0:0:0:0:0:0:1") return true;
+  return h.includes("::") && /^(0{0,4}:){2,7}0{0,3}1$/.test(h);
 }
 
 export type HostPlace = "mac" | "lan" | "cloud";
@@ -57,8 +64,9 @@ export function hostPlace(
   if (kind === "lan" || (host && PRIVATE_IP_RE.test(host))) {
     return { place: "lan", host, words: host || "your network" };
   }
-  if (!host) return { place: "mac", host: "", words: "this Mac" };
-  if (kind === "local" || kind === "preset") return { place: "mac", host: "", words: "this Mac" };
+  // No address at all: an in-process engine (MLX, a file) the backend named
+  // local. A host that is not loopback is never this Mac, whatever the kind.
+  if (!host && (kind === "local" || kind === "preset" || !kind)) return { place: "mac", host: "", words: "this Mac" };
   return { place: "cloud", host, words: host };
 }
 

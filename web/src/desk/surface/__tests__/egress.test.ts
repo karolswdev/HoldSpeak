@@ -45,6 +45,17 @@ describe("hostPlace — the one helper for host words (PHILO-17 U16)", () => {
     expect(hostPlace("http://127.0.0.1:8899/v1", "lan").words).toBe("this Mac");
   });
 
+  it("only what the transport pins as loopback is this Mac (loopback_http.py; Astra r1 M1)", () => {
+    for (const host of ["dev.localhost", "http://dev.localhost:8080/v1", "0.0.0.0", "http://0.0.0.0:8080", "127.0.0.256", "::"]) {
+      expect(hostPlace(host).place, host).not.toBe("mac");
+      expect(egressFor(host).label, host).not.toBe("THIS DEVICE");
+    }
+    // A host the transport does not pin is never this Mac, whatever the kind says.
+    expect(hostPlace("http://dev.localhost:8080/v1", "local").place).not.toBe("mac");
+    expect(hostPlace("127.1.2.3").place).toBe("mac");
+    expect(hostPlace("0:0:0:0:0:0:0:1").place).toBe("mac");
+  });
+
   it("a server on his network is its host name or IP", () => {
     expect(hostPlace("http://192.168.1.43:8080/v1")).toEqual({ place: "lan", host: "192.168.1.43", words: "192.168.1.43" });
     expect(hostPlace("studio.local", "lan")).toEqual({ place: "lan", host: "studio.local", words: "studio.local" });
