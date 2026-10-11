@@ -36,7 +36,7 @@ from .glass_infra import (
     clear_hub_windows,
     seed_meeting_engines,
 )
-from .test_hs201_summary_face_glass import FIXTURE_WAV, _chip_label, _FixtureImportTranscriber
+from .test_hs201_summary_face_glass import FIXTURE_WAV, _chip_label, _FixtureImportTranscriber, _wait_record_host
 
 pytestmark = [pytest.mark.timeout(600, method="thread"), pytest.mark.chair_windows_open]
 
@@ -166,13 +166,7 @@ def test_summary_after_every_meeting_reaches_the_open_record_by_itself(tmp_path:
                 summary_text = surface.get_by_test_id("meeting-summary-text")
                 summary_text.wait_for(timeout=60_000)
                 assert (summary_text.text_content() or "").strip() == engine.result.summary
-                attempts = surface.get_by_test_id("summary-record-attempts")
-                attempts.wait_for(timeout=30_000)
-                page.wait_for_function(
-                    "([sel, label]) => (document.querySelector(sel)?.textContent || '').includes(label)",
-                    arg=["#surface-meetings [data-testid=summary-record-attempts]", _chip_label(host)],
-                    timeout=30_000,
-                )
+                _wait_record_host(page, _chip_label(host))
                 receipt = db.intel.get_run_receipt(meeting_id)
                 assert receipt["outcome"] == "succeeded", receipt
                 assert receipt["selection_hash"] == planned["selection_hash"], receipt

@@ -26,7 +26,7 @@ from .glass_infra import (
 )
 from .test_hs201_09_connect_engine_glass import _StubHandler
 from .test_hs201_one_thing_glass import _quiet_concierge
-from .test_hs201_summary_face_glass import _FixtureImportTranscriber, _chip_label
+from .test_hs201_summary_face_glass import _FixtureImportTranscriber, _chip_label, _wait_record_host
 from tests._evidence import evidence_dir
 from .chair_windows import go_group, open_chair_window
 from .runs_on import close_runs_on, engine_key_for, patch, wait_board
@@ -564,9 +564,12 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                   s.display!=='none' && Number(s.opacity)>0;
               };
               const text=document.querySelector('[data-testid=meeting-summary-text]');
-              const attempts=document.querySelector('[data-testid=summary-record-attempts]');
-              return drawn(text) && text.textContent.trim()===summary &&
-                drawn(attempts) && attempts.textContent.includes(host);
+              // PHILO-17 U16: the host is said ONCE: on the slab, or on the
+              // window foot when the foot already names it.
+              const win=text && (text.closest('.desk-surface-window') || document);
+              const said=win ? ['[data-testid=summary-record-attempts]', '.surface-footer-egress']
+                .map(sel => win.querySelector(sel)).filter(el => drawn(el) && el.textContent.includes(host)) : [];
+              return drawn(text) && text.textContent.trim()===summary && said.length===1;
             }""", "The open record shows the completed summary and actual host without a reload",
                 [engine.result.summary, _chip_label(host)])
             # A stale/missing result is expected today; a visible lie is not.
@@ -582,15 +585,21 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 _meetings(page, recovery=not meetings_ok)
                 page.get_by_test_id("meeting-row-" + meeting_id).locator(".meetings-stream-row-body").click()
             expect(page.get_by_test_id("meeting-summary-text")).to_have_text(engine.result.summary)
-            assert _chip_label(host) in _loaded(page.get_by_test_id("summary-record-attempts")).inner_text()
+            _wait_record_host(page, _chip_label(host), scope=".desk-surface-window:has([data-testid=meeting-summary-text])")
             print("PASS: the persisted summary and run receipt agree with the planned host")
             # PHILO-16 R2 (Astra item 2): `drawn` proves layout; the owner must
             # SEE it. After the real-signal wait, the record is scrolled to the
             # attempts row and the summary, and both must sit in the viewport.
-            for test_id in ("summary-record-attempts", "meeting-summary-text"):
-                page.get_by_test_id(test_id).scroll_into_view_if_needed()
-            in_view = page.evaluate("""() => ['summary-record-attempts', 'meeting-summary-text'].map(id => {
-              const el=document.querySelector(`[data-testid=${id}]`);
+            # PHILO-17 U16: the host row is the slab's attempts, or (when the
+            # foot names the host) the window foot.
+            host_row = "summary-record-attempts" if page.get_by_test_id("summary-record-attempts").count() else None
+            for test_id in (host_row, "meeting-summary-text"):
+                if test_id:
+                    page.get_by_test_id(test_id).scroll_into_view_if_needed()
+            in_view = page.evaluate("""() => [document.querySelector('[data-testid=summary-record-attempts]') ? 'summary-record-attempts' : 'foot', 'meeting-summary-text'].map(id => {
+              const el = id === 'foot'
+                ? document.querySelector('.desk-surface-window:has([data-testid=meeting-summary-text]) .surface-footer-egress')
+                : document.querySelector(`[data-testid=${id}]`);
               if (!el) return [id, false];
               const r=el.getBoundingClientRect();
               return [id, r.width>0 && r.height>0 && r.top>=0 && r.left>=0 &&
