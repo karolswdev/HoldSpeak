@@ -888,7 +888,7 @@ def _meeting_import(registry: operations.OperationRegistry, meetings: Any, princ
         result = registry.invoke(principal, "meeting.import", arguments, held={
             "tmp_path": held_path,
             "config": Config.load(),
-            "transcriber_factory": import_route._frozen_transcriber_factory,
+            "transcriber_factory": import_route._transcriber_factory,
         })
     except Exception:
         held_path.unlink(missing_ok=True)
@@ -1120,7 +1120,7 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
 
         return ops().invoke(principal, "meeting.transcribe", {"meeting_id": str(args.get("meeting_id") or "")}, held={
             "config": Config.load(),
-            "transcriber_factory": import_route._transcriber_factory,
+            "transcriber_factory": import_route._frozen_transcriber_factory,
         })
     if name == "meeting.start_capture":
         config = args.get("config")

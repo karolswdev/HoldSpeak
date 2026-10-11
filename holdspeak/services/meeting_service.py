@@ -117,8 +117,12 @@ def _speech_construction(frozen: dict[str, str] | None, config: Config) -> dict[
     """PHILO-17 transcribe: the model, backend and language Transcribe uses.
 
     The admitted speech route's frozen evidence when the session froze one
-    (``SpeechSession.frozen_transcriber_arguments``); Config only when it
-    froze none, the same fallback a live meeting takes.
+    (``SpeechSession.frozen_transcriber_arguments``). Config only when it
+    froze none: a SpeechSession freezes a route only when the speech AND the
+    writing routes are migrated (``speech_session/session.py``
+    new_speech_route). That fallback is SpeechSession compatibility debt; a
+    live MeetingSession freezes speech from its own bundle
+    (``meeting_session/intel_admission.py``) and has no such fallback.
     """
     if frozen:
         return {
@@ -393,8 +397,9 @@ class MeetingService:
         UPDATE claims the meeting, so two calls (REST and MCP) start one job,
         and every later write names that claim; (3) readiness is asked, and
         the transcriber built, for the model and backend the ADMITTED speech
-        route froze (Config only when the session froze no route, as a live
-        meeting does), and nothing is built before readiness says yes; (4) the
+        route froze (Config only when the session froze no route: inherited
+        SpeechSession compatibility debt, see ``_speech_construction``), and
+        nothing is built before readiness says yes; (4) the
         result writes only the fields Transcribe owns, so a rename or new tags
         during the run are kept.
         """
@@ -478,6 +483,21 @@ class MeetingService:
         from ..meeting_import import transcribe_kept_audio
 
         meetings = self._db.meetings
+        closed = False
+
+        def release(cause: str) -> None:
+            # Token-scoped: a failure after another run finished changes nothing.
+            if not closed:
+                try:
+                    session.cancel_and_close()
+                except Exception:  # noqa: BLE001
+                    _LOG.warning("meeting transcribe %s: session close failed", meeting_id, exc_info=True)
+            try:
+                meetings.release_transcription(meeting_id, token, cause=cause)
+            except Exception:  # noqa: BLE001 — the hub start releases it.
+                _LOG.error("meeting transcribe %s: could not release its claim (%s)",
+                           meeting_id, cause, exc_info=True)
+
         try:
             transcriber = transcriber_factory(dict(construct))
             segments = transcribe_kept_audio(
@@ -489,23 +509,12 @@ class MeetingService:
                     meeting_id, token, f"Transcribing — window {done} of {total}."
                 ),
             )
-        except MeetingImportError as exc:
-            _LOG.warning("meeting transcribe %s failed: %s", meeting_id, exc)
-            session.cancel_and_close()
-            meetings.release_transcription(meeting_id, token, cause=exc.cause)
-        except Exception:  # noqa: BLE001 — the meeting keeps its audio and its verb.
-            _LOG.warning("meeting transcribe %s failed", meeting_id, exc_info=True)
-            session.cancel_and_close()
-            meetings.release_transcription(meeting_id, token, cause="UNEXPECTED ERROR")
-        except BaseException:
-            _LOG.warning("meeting transcribe %s cancelled", meeting_id, exc_info=True)
-            session.cancel_and_close()
-            meetings.release_transcription(meeting_id, token, cause="CANCELLED")
-            raise
-        else:
             session.close("succeeded")
+            closed = True
             # The same summary rule as an import: no summary is asked here;
-            # the meeting lands with its "Run summary" verb.
+            # the meeting lands with its "Run summary" verb. Astra r2: the
+            # completion write is inside the recovery, so a failed write
+            # releases the claim with its cause and keeps the retry marker.
             summary = (
                 "No summary yet. Ask for it on the meeting."
                 if config.meeting.intel_enabled and config.meeting.intel_deferred_enabled
@@ -513,8 +522,88 @@ class MeetingService:
             )
             if not meetings.complete_transcription(meeting_id, token, segments, intel_status_detail=summary):
                 _LOG.warning("meeting transcribe %s: the claim is gone; the result is not written", meeting_id)
+        except MeetingImportError as exc:
+            _LOG.warning("meeting transcribe %s failed: %s", meeting_id, exc)
+            release(exc.cause)
+        except Exception:  # noqa: BLE001 — the meeting keeps its audio and its verb.
+            _LOG.warning("meeting transcribe %s failed", meeting_id, exc_info=True)
+            release("UNEXPECTED ERROR")
+        except BaseException:
+            _LOG.warning("meeting transcribe %s cancelled", meeting_id, exc_info=True)
+            release("CANCELLED")
+            raise
         finally:
             notify_desk_changed("meeting", meeting_id, "update")
+
+    def _enrich_transcribe_speech(self, payloads: list[dict[str, Any]]) -> None:
+        """PHILO-17 transcribe (Astra r2): an audio-only meeting carries
+        ``transcribe_speech``, the readiness of the model Transcribe WILL use
+        (the speech route the operation admits, not Config), so the face shows
+        the verb only when the operation can run. Read once per call, disk
+        and route reads only (no admission, no load)."""
+        from .. import whisper_models
+
+        audio_only = [
+            payload for payload in payloads
+            if payload.get("transcription_status") == "record_only"
+            and (payload.get("transcription_status_detail") or {}).get("reason_code")
+            == whisper_models.SPEECH_NOT_SET_UP
+        ]
+        if not audio_only:
+            return
+        readiness = self.transcribe_speech_readiness()
+        for payload in audio_only:
+            payload["transcribe_speech"] = dict(readiness)
+
+    def transcribe_speech_readiness(self) -> dict[str, Any]:
+        """The readiness of the speech model ``meeting.transcribe`` will use."""
+        from .. import whisper_models
+
+        construct = self._planned_speech_construction()
+        if construct is None:
+            return {"model": "", "backend": "", "state": "route_unavailable", "ready": False, "bytes": 0}
+        try:
+            return whisper_models.speech_readiness(construct["model_name"], construct["backend"])
+        except Exception:  # noqa: BLE001 — a disk question never breaks a read.
+            _LOG.warning("transcribe speech readiness failed", exc_info=True)
+            return {"model": construct["model_name"], "backend": construct["backend"],
+                    "state": "unknown", "ready": False, "bytes": 0}
+
+    def _planned_speech_construction(self) -> dict[str, str] | None:
+        """The model and backend a Transcribe admitted now would freeze: the
+        assigned ``speech.transcribe`` route when the desk is migrated (the
+        same resolution the admission freezes), else Config (the inherited
+        SpeechSession fallback, ``_speech_construction``). None: the route
+        cannot resolve, so the admission would refuse too."""
+        from ..config import Config
+
+        with self._db._connection() as conn:
+            families = {
+                str(row[0]) for row in conn.execute(
+                    "SELECT family FROM inference_assignment_migrations WHERE family IN "
+                    "('speech-recognition-route-assignments', 'thoughts-writing-route-assignments')"
+                ).fetchall()
+            }
+        if len(families) < 2:
+            return _speech_construction(None, Config.load())
+        try:
+            from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY, InferenceRoutePlanService
+
+            revisions = InferenceRoutePlanService(self._db).resolve_deployments(
+                ROUTE_PLANNING_AUTHORITY, capability_id="speech.transcribe"
+            )
+        except Exception:  # noqa: BLE001
+            _LOG.info("transcribe speech route did not resolve", exc_info=True)
+            return None
+        if not revisions:
+            return None
+        revision = revisions[0][0]
+        engine = str(revision.engine)
+        return {
+            "model_name": str(revision.model).removeprefix(f"builtin-whisper-{engine}-"),
+            "backend": engine,
+            "language": "",
+        }
 
     def recover_interrupted_imports(self) -> int:
         """PHILO-15-03: at hub start no import worker is alive, so a row still
@@ -635,6 +724,7 @@ class MeetingService:
         else:
             total = len(meetings) if filtered else self._db.meetings.get_meeting_count(parked=parked)
         payloads = [self._summary_payload(meeting) for meeting in meetings]
+        self._enrich_transcribe_speech(payloads)
         self._enrich_calendar_origin(payloads)
         self._enrich_intel_status(payloads)
         return {
@@ -661,6 +751,7 @@ class MeetingService:
         if meeting is None:
             raise NotFound("meeting", resolved_id)
         payload = meeting.to_dict()
+        self._enrich_transcribe_speech([payload])
         self._enrich_calendar_origin([payload])
         # HS-172-02: intel host + duration on the detail payload.
         self._enrich_intel_status([payload])

@@ -241,6 +241,48 @@ def test_readiness_and_the_transcriber_follow_the_admitted_route_not_config(
     assert db.meetings.get_meeting(stopped.id).transcription_status == "complete"
 
 
+def test_the_meeting_payload_says_the_readiness_of_the_route_transcribe_will_use(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Astra r2: the face reads the meeting's own `transcribe_speech`, asked
+    for the route's `base`, never Config's `large`."""
+    db, stopped, _home, _config = _record_audio_only(tmp_path, monkeypatch, route_model="base")
+    monkeypatch.setattr("holdspeak.config.Config.load", lambda *a, **k: _intel_config(model="large"))
+    asked = _speech(monkeypatch, ready={"base": True, "large": False})
+    service = MeetingService(db)
+
+    detail = service.get_meeting(_owner(), stopped.id)
+    listed = next(row for row in service.list_meetings(_owner())["meetings"] if row["id"] == stopped.id)
+
+    assert detail["transcribe_speech"]["ready"] is True
+    assert listed["transcribe_speech"]["ready"] is True
+    assert set(asked) == {("base", "mlx")}
+
+
+def test_a_failed_completion_write_releases_the_claim_and_keeps_the_retry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import sqlite3
+
+    db, stopped, _home, _config = _record_audio_only(tmp_path, monkeypatch)
+    _speech(monkeypatch, ready=True)
+
+    def broken(*_args: Any, **_kwargs: Any) -> bool:
+        raise sqlite3.OperationalError("database is locked")
+
+    monkeypatch.setattr(db.meetings, "complete_transcription", broken)
+    _transcribe(MeetingService(db), stopped.id, _Factory(_ReplayTranscriber()))
+    _join_worker(stopped.id)
+
+    meeting = db.meetings.get_meeting(stopped.id)
+    assert meeting.intel_status != "importing"
+    assert meeting.transcription_status == "record_only"
+    detail = meeting.transcription_status_detail
+    assert detail["reason_code"] == "speech_not_set_up"
+    assert detail["last_error"] == "UNEXPECTED ERROR"
+    assert "claim" not in detail
+
+
 def test_a_live_capture_is_refused(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     db, stopped, _home, _config = _record_audio_only(tmp_path, monkeypatch)
     live = db.meetings.get_meeting(stopped.id)

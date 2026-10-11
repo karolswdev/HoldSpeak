@@ -101,6 +101,23 @@ describe("AudioOnlyVerb — the rendered verb", () => {
     expect(mocks.apiFetch).not.toHaveBeenCalled();
   });
 
+  it("route and Config disagree: the meeting's own readiness decides (route base ready, Config large missing)", async () => {
+    ready = false; // the setup read (Config `large`) says speech is not set up
+    const row = { ...AUDIO_ONLY, transcribe_speech: { model: "base", backend: "mlx", state: "on_device", ready: true } };
+    render(<AudioOnlyVerb row={row} onTranscribe={vi.fn()} setUpSpeech testId="t" />);
+    expect((await screen.findByTestId("t-verb")).textContent).toBe("Transcribe");
+    expect(screen.queryByTestId("t-speech-setup-verb")).toBeNull();
+  });
+
+  it("route and Config disagree the other way: no Transcribe the operation would refuse", async () => {
+    ready = true; // the setup read (Config) says ready
+    const row = { ...AUDIO_ONLY, transcribe_speech: { model: "large", backend: "mlx", state: "will_download", ready: false } };
+    render(<AudioOnlyVerb row={row} onTranscribe={vi.fn()} setUpSpeech testId="t" />);
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/setup/local-ai"));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByText("Transcribe")).toBeNull();
+  });
+
   it("the last failed Transcribe says its cause beside the verb", async () => {
     ready = true;
     const failed = { ...AUDIO_ONLY, transcription_status_detail: { ...AUDIO_ONLY.transcription_status_detail, last_error: "NO SPEECH FOUND" } };

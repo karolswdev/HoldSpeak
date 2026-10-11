@@ -1,5 +1,6 @@
 // HS-170-04 — the Meetings face, rewritten to the settled design.
 // Board: display headline + Record/Import + stream rows + SurfaceSplit detail.
+import { SPEECH_SETUP_EVENT } from "../../desk/firstrun/SpeechSetup";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
@@ -408,7 +409,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     const offAftercare = subscribeFrames("aftercare_ready", bump);
     const offReturn = onReturnToTask(refresh);
     window.addEventListener("focus", refresh);
+    // PHILO-17 transcribe: speech set up in any window changes the
+    // meetings' own Transcribe readiness (`transcribe_speech`).
+    window.addEventListener(SPEECH_SETUP_EVENT, refresh);
     return () => {
+      window.removeEventListener(SPEECH_SETUP_EVENT, refresh);
       burst.cancel();
       offDeskChanged();
       offAftercare();

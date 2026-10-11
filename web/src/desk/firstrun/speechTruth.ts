@@ -43,15 +43,27 @@ export function transcribeLastError(row: Record<string, unknown> | null | undefi
   return typeof cause === "string" && cause ? cause : null;
 }
 
-/** The one verb an audio-only meeting shows: `Transcribe` when speech is
- *  ready, `Set up speech` when the read says it is not, else nothing (the
- *  read is pending or the meeting has its transcript). */
+/** The meeting's own Transcribe readiness (Astra r2 on #1073): the hub's
+ *  `transcribe_speech` on the meeting payload, read for the speech model the
+ *  `meeting.transcribe` operation WILL use (its admitted route), not Config.
+ *  null when the payload does not carry it. */
+export function transcribeSpeechReady(row: Record<string, unknown> | null | undefined): boolean | null {
+  const speech = row?.transcribe_speech;
+  if (typeof speech !== "object" || speech === null) return null;
+  return (speech as Record<string, unknown>).ready === true;
+}
+
+/** The one verb an audio-only meeting shows: `Transcribe` when the speech
+ *  model Transcribe will use is ready (the meeting's own readiness; the
+ *  setup read only when the payload does not carry it), `Set up speech`
+ *  when the setup read says speech is not set up, else nothing. */
 export function audioOnlyVerb(
   row: Record<string, unknown> | null | undefined,
   speech: { ready: boolean; notSetUp: boolean },
 ): "transcribe" | "set_up_speech" | null {
   if (!speechWasMissing(row)) return null;
-  if (speech.ready) return "transcribe";
+  const ready = transcribeSpeechReady(row) ?? speech.ready;
+  if (ready) return "transcribe";
   if (speech.notSetUp) return "set_up_speech";
   return null;
 }

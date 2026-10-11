@@ -282,11 +282,10 @@ def _p_meeting_import(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return result
 
 
-def _p_meeting_transcribe(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
-    """PHILO-17: an audio-only meeting (its audio in the real journal), speech ready."""
+def _audio_only_meeting(hub: Hub, monkeypatch: Any, tmp_path: Path, meeting_id: str = "m-audio-only") -> str:
+    """PHILO-17: an ended audio-only meeting, its audio in the real journal, speech ready."""
     import numpy as np
 
-    from holdspeak.config import Config
     from holdspeak.meeting_capture_journal import MeetingCaptureJournal
     from holdspeak.meeting_session import MeetingState
 
@@ -295,7 +294,7 @@ def _p_meeting_transcribe(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
         "holdspeak.whisper_models.speech_readiness",
         lambda name, backend, **_kw: {"model": name, "backend": backend, "state": "on_device", "ready": True, "bytes": 0},
     )
-    meeting = MeetingState(id="m-audio-only", started_at=datetime.now(), segments=[])
+    meeting = MeetingState(id=meeting_id, started_at=datetime.now(), segments=[])
     meeting.ended_at = datetime.now()
     meeting.capture_status = "finalized"
     meeting.transcription_status = "record_only"
@@ -304,14 +303,47 @@ def _p_meeting_transcribe(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     journal = MeetingCaptureJournal(meeting.id)
     journal.append("mic", np.full(16_000, 0.1, dtype=np.float32))
     journal.finalize()
+    return meeting_id
+
+
+def test_mcp_transcribe_builds_its_transcriber_from_the_frozen_construction(hub: Hub, monkeypatch, tmp_path) -> None:
+    """Astra r2 P1: the ACTUAL MCP caller hands Transcribe the factory that
+    takes the frozen construction (a dict), not the import's Config factory."""
+    from holdspeak.web.routes import meeting_import as import_route
+
+    meeting_id = _audio_only_meeting(hub, monkeypatch, tmp_path, "m-mcp-transcribe")
+    built: list[dict[str, str]] = []
+
+    class Stub:
+        def transcribe(self, _audio: Any, **_kwargs: Any) -> str:
+            return "mcp words"
+
+    def frozen_factory(construct: dict[str, str]) -> Any:
+        built.append({"model_name": construct["model_name"], "backend": construct["backend"]})
+        return Stub()
+
+    monkeypatch.setattr(import_route, "_frozen_transcriber_factory", frozen_factory)
+    monkeypatch.setattr(import_route, "_transcriber_factory", lambda cfg: pytest.fail("the import factory ran"))
+    is_error, started = hub.mcp("meeting.transcribe", {"meeting_id": meeting_id})
+    assert is_error is False, started
+    done = _wait_imported(hub, meeting_id, timeout=60.0)
+    assert [s["text"] for s in done["segments"]] == ["mcp words"]
+    assert len(built) == 1 and built[0]["model_name"]
+
+
+def _p_meeting_transcribe(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    """PHILO-17: an audio-only meeting (its audio in the real journal), speech ready."""
+    from holdspeak.config import Config
+
+    meeting_id = _audio_only_meeting(hub, monkeypatch, tmp_path)
 
     class _Replay:
         def transcribe(self, _audio: Any, **_kwargs: Any) -> str:
             return "shape"
 
-    result = hub.root.operations.invoke(OWNER, "meeting.transcribe", {"meeting_id": meeting.id}, held={
+    result = hub.root.operations.invoke(OWNER, "meeting.transcribe", {"meeting_id": meeting_id}, held={
         "config": Config.load(), "transcriber_factory": lambda construct: _Replay()})
-    _wait_imported(hub, meeting.id)
+    _wait_imported(hub, meeting_id)
     return result
 
 
