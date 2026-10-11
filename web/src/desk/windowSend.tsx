@@ -268,7 +268,8 @@ export function pickFor(winId: string, destinationId: string, waited = 0): void 
     window.setTimeout(() => pickFor(winId, destinationId, waited + 1), 100);
     return;
   }
-  useDesk.getState().focusPanel(winId);
+  // An open asks for the front, also from the Dock (restore = show + raise).
+  useDesk.getState().restorePanel(winId);
   const destination = { id: destinationId, state: "active" as const };
   if (d.kind === "project") {
     const b = resolve({ kind: "project", id: d.id, latestPublishedUpdateId: d.update, destination });

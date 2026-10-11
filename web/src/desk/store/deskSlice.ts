@@ -146,21 +146,23 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
   },
   openAsk() {
     set({ askOpen: true, editingId: null });
-    get().focusPanel("ask");
+    // PHILO-17 (doors, Astra r2): an open asks for the front, also from the
+    // Dock (an iconified or phone-hidden window): restore = show + raise.
+    get().restorePanel("ask");
   },
   closeAsk() {
     set({ askOpen: false });
   },
   openChat(personaId) {
     set({ chatPersonaId: personaId, editingId: null });
-    get().focusPanel("chat");
+    get().restorePanel("chat");
   },
   closeChat() {
     set({ chatPersonaId: null });
   },
   openToolInspector(kind, id) {
     set({ toolInspector: { kind, id }, editingId: null });
-    get().focusPanel("inspector");
+    get().restorePanel("inspector");
   },
   closeToolInspector() {
     set({ toolInspector: null });

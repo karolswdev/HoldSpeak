@@ -111,6 +111,36 @@ def _seed() -> str:
     return start.astimezone().strftime("%H:%M")
 
 
+def _press(page: Any, target: Any) -> None:
+    """A real gesture: a finger tap on a phone page, a mouse click on a desk."""
+    if (page.viewport_size or {}).get("width", 1440) < 720:
+        target.tap()
+    else:
+        target.click()
+
+
+# Is this Dock control fully on the shelf's visible page (left of More)?
+ON_SHELF_JS = r"""(el) => {
+  const d = el.closest('.desk-dock'); const more = d.querySelector('.desk-dock-more');
+  const r = el.getBoundingClientRect(), b = d.getBoundingClientRect();
+  const edge = more && getComputedStyle(more).display !== 'none' ? more.getBoundingClientRect().left : b.right;
+  return r.width > 0 && r.left >= b.left - 0.5 && r.right <= edge + 0.5;
+}"""
+
+
+def _press_dock(page: Any, selector: str) -> None:
+    """Press a Dock control as the phone does: page the shelf with More
+    (a real tap) until the control is on the visible page, then tap it."""
+    target = page.locator(selector).first
+    for _ in range(6):
+        if target.evaluate(ON_SHELF_JS):
+            _press(page, target)
+            return
+        _press(page, page.locator(".desk-dock .desk-dock-more"))
+        page.wait_for_timeout(450)
+    raise AssertionError(f"{selector} never came onto the Dock's visible page")
+
+
 def _row(page: Any, label: str) -> Any:
     """The menu row whose label is `label` (its name also carries a keycap)."""
     return page.locator("[role^=menuitem]").filter(
@@ -141,9 +171,9 @@ class TestDoors:
 
     def _menu(self, page: Any, which: str) -> list[str]:
         if which == "mark":
-            page.locator(".desk-mark").click()
+            _press(page, page.locator(".desk-mark"))
         else:
-            page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+            _press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"))
         page.locator(".desk-menu-list").first.wait_for()
         return page.evaluate(ROWS_JS, 0)
 
@@ -175,8 +205,8 @@ class TestDoors:
         phone = width < 720
 
         def dom_click(selector: str) -> Callable[[], None]:
-            # A DOM click: at 393 the Dock pages its seats.
-            return lambda: page.locator(selector).first.evaluate("el => el.click()")
+            # A real press; at 393 the shelf is paged with More first.
+            return lambda: _press_dock(page, selector)
 
         def drawer(key: str) -> Callable[[], None]:
             def run() -> None:
@@ -189,18 +219,18 @@ class TestDoors:
             def run() -> None:
                 self._menu(page, "go")
                 for label in path:
-                    _row(page, label).click()
+                    _press(page, _row(page, label))
             return run
 
         def mark_row(label: str) -> Callable[[], None]:
             def run() -> None:
                 self._menu(page, "mark")
-                _row(page, label).click()
+                _press(page, _row(page, label))
             return run
 
         def missed_memory() -> None:
-            page.locator(".desk-dock [data-launcher='attention']").first.evaluate("el => el.click()")
-            page.get_by_role("group", name="Missed").get_by_role("button", name="Memory", exact=True).click()
+            _press_dock(page, ".desk-dock [data-launcher='attention']")
+            _press(page, page.get_by_role("group", name="Missed").get_by_role("button", name="Memory", exact=True))
 
         settings = "#surface-settings"
         # (door, how, the loaded content, what must NOT be there)
@@ -254,20 +284,42 @@ class TestDoors:
             shell = page.locator(f".desk-window-shell[aria-label='{room}']")
             shell.wait_for(timeout=T)
             if phone:
-                page.keyboard.press("Control+m")
+                # The phone's own way: a Chair window takes the work area and
+                # the window in front falls to its Dock tile (393 has no
+                # Iconify gadget).
+                go_row("Needs you")()
+                page.locator(".desk-window-shell[aria-label='Needs you']").wait_for(timeout=T)
             else:
-                page.locator(f"[aria-label='Iconify {room}']").first.click()
+                _press(page, page.locator(f"[aria-label='Iconify {room}']").first)
             seat = page.locator(".desk-dock [data-seat='surface-project-memory']")
             seat.wait_for(timeout=T)
             if not (seat.get_attribute("aria-label") or "").startswith(room):
                 fails[f"D6 {width} the Room's tile names it"] = seat.get_attribute("aria-label")
             page.screenshot(path=str(SHOTS / f"{width}-room-seated.png"))
-            seat.evaluate("el => el.click()")
+            _press_dock(page, ".desk-dock [data-seat='surface-project-memory']")
             page.locator("#surface-project-memory").wait_for(state="visible", timeout=T)
             page.locator(".desk-dock [data-seat='surface-project-memory']").wait_for(state="detached", timeout=T)
         except Exception as exc:  # noqa: BLE001
             fails[f"D6 {width} Room open → iconify → restore from its tile"] = {
                 "error": str(exc)[:200], "shells": page.evaluate(SHELLS_JS)}
+
+        # ── D7 (Astra r2): Go ▸ Ask AI, Go ▸ Capture, Go ▸ Ask AI shows Ask ──
+        if phone:
+            try:
+                self._fresh(page)
+                ask = page.locator(".desk-ask")
+                go_row("Ask AI")()
+                ask.wait_for(state="visible", timeout=T)
+                go_row("Capture")()
+                page.locator(".desk-window-shell[aria-label='Capture']").wait_for(state="visible", timeout=T)
+                ask.wait_for(state="hidden", timeout=T)
+                go_row("Ask AI")()
+                ask.wait_for(state="visible", timeout=T)
+                page.locator(".desk-ask textarea, .desk-ask [role=textbox]").first.wait_for(state="visible", timeout=T)
+                page.screenshot(path=str(SHOTS / "393-ask-back.png"))
+            except Exception as exc:  # noqa: BLE001
+                fails["D7 393 Go ▸ Ask AI after Capture shows Ask again"] = {
+                    "error": str(exc)[:200], "shells": page.evaluate(SHELLS_JS)}
 
     def test_one_door_per_application(self) -> None:
         from playwright.sync_api import sync_playwright
