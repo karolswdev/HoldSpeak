@@ -305,7 +305,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     await renderDesk();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    expect(await within(line).findByText("AGENT LIMIT REACHED")).toBeTruthy();
+    expect(await within(line).findByText("CODER LIMIT REACHED")).toBeTruthy();
     expect(within(line).getByRole("button", { name: "Hand" })).toBeDisabled();
   });
 
@@ -319,7 +319,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
     expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent(
-      "NOT LAUNCHED · AGENT LIMIT REACHED",
+      "NOT LAUNCHED · CODER LIMIT REACHED",
     );
     world.hand = () => ({ status: "launched", launch_id: "launch-2", instruction_state: "paste_failed" });
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
@@ -436,7 +436,7 @@ describe("PHILO-15 16 the sheet carries the clone through a launch refusal", () 
     expect(before).toHaveAttribute("data-state", "to_clone");
     expect(before).toHaveTextContent("CLONES acme/ledger");
     fireEvent.click(await screen.findByTestId("hand-launch"));
-    expect(await screen.findByTestId("hand-launch-refused")).toHaveTextContent("NOT LAUNCHED · AGENT LIMIT REACHED");
+    expect(await screen.findByTestId("hand-launch-refused")).toHaveTextContent("NOT LAUNCHED · CODER LIMIT REACHED");
     const after = screen.getByTestId("hand-clone");
     expect(after).toHaveAttribute("data-state", "cloned");
     expect(after).toHaveTextContent("CLONED · acme/ledger · 09:05");
@@ -605,7 +605,7 @@ describe("PHILO-15 16 B38: the first hand clones the Project's repository", () =
     const line = await within(drawer()).findByTestId("hand-confirm");
     expect(await within(line).findByTestId("hand-confirm-clone")).toHaveAttribute("data-state", "to_clone");
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
-    expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent("NOT LAUNCHED · AGENT LIMIT REACHED");
+    expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent("NOT LAUNCHED · CODER LIMIT REACHED");
     const clone = within(line).getByTestId("hand-confirm-clone");
     expect(clone).toHaveAttribute("data-state", "cloned");
     expect(clone).toHaveTextContent("CLONED · karolswdev/holdspeak-dayone-rehearsal-1558 · 18:06");

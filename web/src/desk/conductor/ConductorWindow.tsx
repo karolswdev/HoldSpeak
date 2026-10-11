@@ -106,7 +106,7 @@ export function HooksLine({ member }: { member: ConductorMember | null }) {
   const offered = member ? Boolean(member.detect && needsHooks(member.detect)) : (agents ?? []).some(needsHooks);
   if (!offered) return null;
   return (
-    <span className="surface-token cw-hooks-line" data-chip data-testid="conductor-hooks-line">
+    <span className="surface-token cw-hooks-line" data-chip data-wrap data-testid="conductor-hooks-line">
       {HOOKS_LINE}
     </span>
   );

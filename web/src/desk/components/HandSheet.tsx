@@ -226,7 +226,7 @@ export function refusalToken(code: string, agent: AgentId): string {
     case "owner_required":
       return "OWNER ONLY";
     case "launch_cap_reached":
-      return "AGENT LIMIT REACHED";
+      return "CODER LIMIT REACHED";
     case "launch_profile_mismatch":
       // `agent` is the HELD launch's agent here (the sheet passes it).
       return `HELD FOR ${AGENT_NAME[agent].toUpperCase()}`;
@@ -417,7 +417,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
       id={HAND_WINDOW_ID}
       glyph="⇥"
       label="Hand to coder"
-      kindWord="Agent launch"
+      kindWord="Coder launch"
       className="desk-pullout desk-hand"
       defaultW={560}
       defaultH={660}
@@ -427,8 +427,8 @@ function Sheet({ origin }: { origin: HandOrigin }) {
       onClose={close}
     >
       <div className="desk-pullout-body desk-hand-body" data-testid="hand-sheet">
-        <SurfaceSection label="AGENT">
-          <ChoiceCardGroup name="hand-agent" value={agent} layout="row" ariaLabel="Agent" onChange={pick} disabled={frozen}>
+        <SurfaceSection label="CODER">
+          <ChoiceCardGroup name="hand-agent" value={agent} layout="row" ariaLabel="Coder" onChange={pick} disabled={frozen}>
             {AGENTS.map((a) => (
               <ChoiceCard
                 key={a}
