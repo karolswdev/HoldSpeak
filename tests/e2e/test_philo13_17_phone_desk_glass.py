@@ -563,10 +563,13 @@ class TestThePhoneDesk:
                     fails.append("1440: the screen title became a switcher")
                 page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
                 page.wait_for_timeout(400)
-                subs = page.locator(".desk-verbbar-menu [role=menuitem][aria-haspopup=menu]").count()
+                # PHILO-17 doors (#1078): Go at 1440 carries exactly two
+                # submenus, Projects and Tools; nothing else nests.
+                subs = page.locator(".desk-verbbar-menu [role=menuitem][aria-haspopup=menu]").evaluate_all(
+                    "els => els.map((e) => (e.querySelector('.desk-menu-label') || e).textContent.trim())")
                 facts["go_submenus"] = subs
-                if subs:
-                    fails.append(f"1440: Go carries {subs} submenus")
+                if subs != ["Projects", "Tools"]:
+                    fails.append(f"1440: Go carries submenus {subs}")
                 page.keyboard.press("Escape")
                 page.wait_for_timeout(300)
                 self._board(page, width, "C7-1-the-frame", facts, fails, chevron=False)

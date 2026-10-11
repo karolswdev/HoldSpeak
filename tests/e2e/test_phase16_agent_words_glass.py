@@ -27,7 +27,7 @@ import pytest
 
 from tests._evidence import evidence_dir
 
-from .glass_infra import _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows
 
 pytest.importorskip("playwright.sync_api", reason="the agent-words glass needs Playwright")
 
@@ -314,6 +314,9 @@ def test_an_agents_words_render_on_the_lane_and_the_needs_row(tmp_path: Path, mo
                 page.on("pageerror", lambda e: errors.append(str(e)))
                 page.goto(f"{url}/?token={TOKEN}", wait_until="load")
                 _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                # One hub is one desk (Phase 16 B): the 1440 pass left its
+                # windows on the hub; each width starts on an empty desk.
+                clear_hub_windows(page, TOKEN)
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 _settle(page)
