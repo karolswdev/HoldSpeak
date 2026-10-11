@@ -245,30 +245,37 @@ function subscribeResizeClamp() {
 }
 
 /** PHILO-17 snapjump: while a window title drag holds the pointer, a
- * native drag (a desk icon's drag-to-send) never starts. One capture
- * listener for every window; `held` is the switch. */
-let nativeDragHeld = false;
+ * native drag (a desk icon's drag-to-send) never starts, and the icon's own
+ * drag handler never runs (no hand, no dimmed icon). `nativeDragHolder` is
+ * the window that holds; any pointer, mouse or touch ending, a cancel, or
+ * the window closing releases it. */
+let nativeDragHolder: string | null = null;
 let nativeDragGuard = false;
-function holdNativeDrag(held: boolean): void {
-  nativeDragHeld = held;
+function holdNativeDrag(id: string, held: boolean): void {
+  if (held) nativeDragHolder = id;
+  else releaseNativeDrag(id);
   if (nativeDragGuard || typeof document === "undefined") return;
   nativeDragGuard = true;
   document.addEventListener(
     "dragstart",
     (e) => {
-      if (nativeDragHeld) e.preventDefault();
+      if (!nativeDragHolder) return;
+      e.preventDefault();
+      // The capture phase on the document runs before React's root
+      // listener: the icon's onDragStart never sees this drag.
+      e.stopPropagation();
     },
     true,
   );
-  // A window that closes mid-drag never sees its gesture end: any release
-  // lets native drags start again.
-  document.addEventListener(
-    "pointerup",
-    () => {
-      nativeDragHeld = false;
-    },
-    true,
-  );
+  const release = () => {
+    nativeDragHolder = null;
+  };
+  for (const type of ["pointerup", "pointercancel", "mouseup", "touchend", "touchcancel"])
+    document.addEventListener(type, release, true);
+}
+
+function releaseNativeDrag(id: string): void {
+  if (nativeDragHolder === id) nativeDragHolder = null;
 }
 
 /** PHILO-17 snapjump: a drag that ends by a real release (pointerup, or
@@ -545,6 +552,9 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opts.fitContent, arranged, open]);
 
+  // A window that closes or goes away mid-drag lets go of the hold.
+  useEffect(() => () => releaseNativeDrag(id), [id, open]);
+
   const dragBind = useDrag(
     ({ event, first, last, xy: [px, py], movement: [mx, my], memo }) => {
       // Buttons and inputs inside the head keep their own gestures.
@@ -562,7 +572,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       // native drag starts. The first step moves the window out from under
       // the press point; a draggable desk icon under that point started a
       // native drag, Chrome cancelled the pointer, and the drag died.
-      holdNativeDrag(!last);
+      holdNativeDrag(id, !last);
       const base: PanelRect = memo?.base ?? measure();
       if (Math.abs(mx) + Math.abs(my) > 3) {
         // Nothing animates under the pointer (the raise lift, an arrange).
