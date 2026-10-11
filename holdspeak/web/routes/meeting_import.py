@@ -8,7 +8,6 @@ from __future__ import annotations
 import shutil
 import tempfile
 from datetime import datetime
-from holdspeak.timestamps import local_wall
 from pathlib import Path
 from typing import Optional
 
@@ -88,10 +87,12 @@ def build_meeting_import_router(ctx) -> APIRouter:
             tmp_path.unlink(missing_ok=True)
             return JSONResponse({"error": "The uploaded file is empty."}, status_code=400)
 
+        # PHILO-17 (Astra r2): no stated start stays absent to the import,
+        # which ends the meeting at the import moment (start = now - duration).
         started_at = (
             datetime.fromtimestamp(started_at_ms / 1000.0)
             if started_at_ms
-            else local_wall()
+            else None
         )
         tag_list = [tag.strip() for tag in (tags or "").split(",") if tag.strip()]
         try:
@@ -106,7 +107,7 @@ def build_meeting_import_router(ctx) -> APIRouter:
                     "title": title,
                     "speaker": speaker,
                     "tags": tag_list,
-                    "occurred_at": started_at.isoformat(),
+                    "occurred_at": started_at.isoformat() if started_at else None,
                 },
                 held={
                     "tmp_path": tmp_path,

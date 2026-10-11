@@ -31,7 +31,6 @@ from pathlib import Path
 import pytest
 
 from holdspeak.kernel.runtime import _configure
-from .test_hs201_summary_face_glass import _chip_label
 from .glass_infra import (
     _api,
     _assert_clean,
@@ -183,41 +182,36 @@ def test_the_import_reaches_the_open_record_with_no_reload(tmp_path, monkeypatch
                     page.wait_for_timeout(100)
                 else:  # pragma: no cover - the import must finish
                     pytest.fail("the import never saved a transcript")
-                assert db.meetings.get_meeting(meeting_id).intel_status == "disabled"
                 detail = _api(
                     page, "GET", f"/api/meetings/{meeting_id}", token=TOKEN
                 )
                 planned = detail["planned_route"]
                 assert planned["status"] == "ready", planned
                 host = planned["legs"][0]["host"]
+                # PHILO-17 ruling: "after every meeting" queued the summary at
+                # Import, on the disclosed route (the owner chose the engine).
+                job = db.intel.get_latest_intel_job(meeting_id)
+                assert job is not None, "Import queued no summary"
+                assert job.planned_route["selection_hash"] == planned["selection_hash"], job.planned_route
 
                 row.first.locator(".meetings-stream-row-body").click()
                 page.locator(".meetings-detail-head").wait_for(timeout=15_000)
 
                 # ── the fence: the record catches up by itself ──
                 _wait_for_the_record(page,
-                    """([words, host]) => {
-                        const seen = el => {
-                          if (!el) return false;
-                          const r = el.getBoundingClientRect();
-                          const s = getComputedStyle(el);
-                          return r.width > 0 && r.height > 0 &&
-                            s.visibility === 'visible' && s.display !== 'none';
-                        };
-                        const verb = document.querySelector(
-                          '[data-testid=detail-run-intelligence-btn]');
-                        const route = document.querySelector('[data-testid=detail-route]');
-                        return document.body.innerText.includes(words) &&
-                          seen(verb) && seen(route) &&
-                          route.innerText.includes(host);
+                    """([words]) => {
+                        // PHILO-17: the summary is queued, so the record owes
+                        // no Run summary verb; it catches up to its words.
+                        const head = document.querySelector('.meetings-detail-head');
+                        return document.body.innerText.includes(words) && Boolean(head);
                     }""",
-                    arg=[WORDS, _chip_label(host)],
+                    arg=[WORDS],
                     timeout=CATCH_UP_MS,
                 )
                 assert navigations == [], navigations
                 print(
-                    f"PASS {width}: the imported record shows its transcript, "
-                    f"Run summary and host {host} with no reload "
+                    f"PASS {width}: the imported record shows its transcript "
+                    f"with no reload; its summary is queued on host {host} "
                     f"(meeting {meeting_id})"
                 )
                 _assert_clean(page, errors)

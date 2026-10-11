@@ -515,7 +515,7 @@ def test_the_next_mornings_scheduled_brief_carries_last_evening(tmp_path, db, mo
     """The cadence path untouched (regenerate=False, key-free): Wednesday's
     Brief exists; the evening's decision and done action land after it; the
     clock passes midnight (no Brief before its hour) and 07:10 Thursday makes
-    Thursday's Brief, which covers Wednesday 17:00 through 07:10."""
+    Thursday's Brief, which covers Wednesday 00:00 (PHILO-17) through 07:10."""
     from holdspeak.services.follow_through_service import FollowThroughService
     from holdspeak.services.proposal_bridge_service import ProposalBridgeService
 
@@ -554,7 +554,7 @@ def test_the_next_mornings_scheduled_brief_carries_last_evening(tmp_path, db, mo
 
     latest = MondayBriefService(db).get_latest(OWNER)
     assert latest.period_end.startswith("2026-10-08T07:10")
-    assert latest.period_start.startswith("2026-10-07T17:00")
+    assert latest.period_start.startswith("2026-10-07T00:00")
     rows = _rows(latest)
     assert rows["Decision confirmed: Squash merges only on the rehearsal repository"].detail == "Wed 21:14"
     assert rows["Action done: Fix the login timeout"].detail == "Wed 21:40"

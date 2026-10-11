@@ -51,6 +51,9 @@ def test_exact_id_read_keeps_an_older_brief_after_a_newer_brief_exists(rig) -> N
     previous_latest_response = hub.client.get("/api/brief/latest")
     assert previous_latest_response.status_code == 200, previous_latest_response.text
     previous_latest = previous_latest_response.json()
+    # PHILO-17: ``stale`` is a read-time fact of the LATEST read (the view
+    # rebuilds a stale brief); the brief itself is the rest of the payload.
+    previous_latest.pop("stale", None)
     assert previous_latest == first
 
     hub.db.desk_decisions.upsert(

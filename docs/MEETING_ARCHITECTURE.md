@@ -94,8 +94,10 @@ stateDiagram-v2
 ```
 
 `persistence.py` saves the database row and a JSON copy in `~/.local/share/holdspeak/meetings`.
-After a stop, `_maybe_auto_enqueue_intel` in `holdspeak/runtime/routing_glue.py` enqueues the summary job.
-It does so when the meeting has segments and the `intelligence_auto` setting allows it.
+After a stop, `queue_after_save` in `holdspeak/services/meeting_backlog_service.py` enqueues the summary job.
+It does so when the meeting has segments, the summary route is ready, the `intelligence_auto` setting allows it,
+and the owner chose the engine (or it runs on this machine). The job carries the disclosed route and its selection hash.
+With no ready route, or an engine the owner did not choose, the meeting waits in the summary backlog.
 The `aftercare_ready` event goes out when the digest has content. That happens at save and when a summary job finishes.
 
 ## Summary job
@@ -110,7 +112,7 @@ flowchart LR
     F --> G[mark ready, emit aftercare_ready]
 ```
 
-- Two triggers enqueue a job. `intelligence_auto` enqueues after a stop. The **Run summary** verb, `POST /api/meetings/{meeting_id}/intelligence/run`, enqueues on request.
+- Two triggers enqueue a job. `intelligence_auto` enqueues after a stop or an import. The **Run summary** verb, `POST /api/meetings/{meeting_id}/intelligence/run`, enqueues on request.
 - The hub drains the queue (`intel_queue_conductor`). It checks the queue every 15 seconds. A new job wakes it at once.
 - A job freezes its route plan when it starts. A run request carries `expected_selection_hash`.
   The hub refuses with `409` when the route changed. No provider is contacted before that check.
@@ -135,13 +137,14 @@ flowchart TD
 
 `import_meeting` and `import_transcript` share one persistence tail, `_persist_import`.
 
-- The tail builds a normal `MeetingState` and saves it. It enqueues nothing. The meeting arrives
-  with `intel_status` set to `disabled` and the **Run summary** verb. Only the owner starts a summary.
+- The tail builds a normal `MeetingState` and saves it. Then it queues the summary by the same rule as a stop
+  (`queue_after_save`). When that rule does not hold, the meeting arrives with `intel_status` set to `disabled`
+  and the **Run summary** verb.
 - Audio import uses one speaker label (`Recording` by default). It does not keep the source audio.
   WAV decodes in Python. Other formats need `ffmpeg`.
 - Transcript import keeps cue times and speaker names from the file. A `.txt` file gets evenly spaced times.
   The default speaker label is `Transcript`.
-- The start time is the import time, unless the caller passes `started_at`.
+- The meeting ends at the import time and starts its length earlier, unless the caller passes `started_at`.
 - The tail sets `transcription_status` to `complete`.
 
 ## Handoff to intelligence

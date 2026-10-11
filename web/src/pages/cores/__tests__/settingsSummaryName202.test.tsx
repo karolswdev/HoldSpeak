@@ -50,6 +50,13 @@ describe("the Settings hub's Meetings row (F06)", () => {
     expect(document.body.textContent ?? "").not.toMatch(/INTELLIGENCE/);
   });
 
+  // PHILO-17: the idle ring read as an empty checkbox beside "AFTER ...".
+  it("draws a check, not an empty ring, when the summary runs by itself", () => {
+    face(true);
+    const chip = screen.getByTestId("settings-hub-summary-chip");
+    expect(chip.querySelector(".surface-state-chip-icon")?.textContent).toBe("✓");
+  });
+
   it("says SUMMARY SET OFF, never INTELLIGENCE OFF", () => {
     face(false);
     expect(screen.getByText("SUMMARY SET OFF")).toBeInTheDocument();

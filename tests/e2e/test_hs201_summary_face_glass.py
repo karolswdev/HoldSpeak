@@ -586,7 +586,7 @@ def _shot_10(page, name: str) -> None:
     page.set_viewport_size({"width": 1440, "height": 900})
 
 
-def test_import_transcribes_and_stops_then_the_summary_is_asked_for(
+def test_import_transcribes_then_queues_the_disclosed_summary(
     tmp_path, monkeypatch
 ):
     from holdspeak.db import get_database
@@ -714,20 +714,28 @@ def test_import_transcribes_and_stops_then_the_summary_is_asked_for(
             assert imported is not None, "the import never produced a transcript"
             print(f"IMPORTED {imported.id} segments={len(imported.segments)}")
 
-            # ── the fence: it transcribed, and it stopped ──
-            assert db.intel.list_intel_jobs() == [], db.intel.list_intel_jobs()
-            assert db.intel.get_latest_intel_job(imported.id) is None
-            assert engine.analyzed == [], engine.analyzed
-            assert imported.intel is None
-            assert imported.intel_status == "disabled", imported.intel_status
+            # ── the fence (PHILO-17 ruling, superseding HS-201-10 for an
+            # engine the owner chose): "after every meeting" queues ONE job at
+            # Import, carrying the disclosed route's selection hash; the run
+            # leaves a receipt naming the host. An engine the owner did not
+            # choose is never queued (tests/unit/test_finish_defaults.py::
+            # test_stop_and_import_never_send_to_an_engine_the_owner_did_not_choose).
+            detail = _api(
+                page, "GET", f"/api/meetings/{imported.id}", token=IMPORT_TOKEN
+            )
+            planned = detail["planned_route"]
+            assert planned["status"] == "ready", planned
+            host = planned["legs"][0]["host"]
+            job = db.intel.get_latest_intel_job(imported.id)
+            assert job is not None, "Import queued no summary"
+            assert job.planned_route["selection_hash"] == planned["selection_hash"], job.planned_route
             # Defects 10 and 11: dated the import moment, transcript final.
             assert imported.started_at > datetime.now() - timedelta(minutes=10)
             assert imported.transcription_status == "complete", (
                 imported.transcription_status
             )
             print(
-                f"AFTER IMPORT jobs={db.intel.list_intel_jobs()} "
-                f"analyzed={engine.analyzed} intel_status={imported.intel_status} "
+                f"AFTER IMPORT job={job.status} hash={planned['selection_hash']} host={host} "
                 f"started_at={imported.started_at} "
                 f"transcription_status={imported.transcription_status}"
             )
@@ -742,50 +750,14 @@ def test_import_transcribes_and_stops_then_the_summary_is_asked_for(
             assert "1 MIN" not in row_words, row_words
             today = _ledger_date(datetime.now())
             assert today in row_words, (today, row_words)
-            run_verb = row.get_by_test_id("run-intelligence-btn")
-            run_verb.wait_for(timeout=15_000)
-            detail = _api(
-                page, "GET", f"/api/meetings/{imported.id}", token=IMPORT_TOKEN
-            )
-            planned = detail["planned_route"]
-            assert planned["status"] == "ready", planned
-            host = planned["legs"][0]["host"]
-            assert _chip_label(host) in (
-                row.get_by_test_id("row-route").text_content() or ""
-            )
-            assert detail.get("run_receipt") is None, detail.get("run_receipt")
-            print(f"PLANNED host={host} hash={planned['selection_hash']}")
             _shot_10(page, "import-row-length")
 
-            # ── station 3: the record, with the verb and the planned host ──
-            row.locator(".meetings-stream-row-body").click()
-            page.locator(".meetings-detail-head").wait_for(timeout=15_000)
-            route_chip = page.get_by_test_id("detail-route")
-            route_chip.wait_for(timeout=15_000)
-            assert _chip_label(host) in (route_chip.text_content() or "")
-            page.get_by_test_id("detail-run-intelligence-btn").wait_for(timeout=15_000)
-            head = page.locator(".meetings-detail-head").text_content() or ""
-            print(f"DETAIL HEAD {head}")
-            assert "3 S" in head, head
-            assert "1 MIN" not in head, head
-            _shot_10(page, "import-done")
-
-            # ── station 4: ask for it, and read the receipt ──
-            requests.clear()
-            page.get_by_test_id("detail-run-intelligence-btn").click()
-            page.wait_for_timeout(600)
-            run_post = [r for r in requests if r["path"].endswith("/intelligence/run")][-1]
-            assert run_post["path"] == f"/api/meetings/{imported.id}/intelligence/run"
-            assert json.loads(run_post["body"])["expected_selection_hash"] == (
-                planned["selection_hash"]
-            ), run_post
-            print(f"RUN POST {run_post}")
-
+            # ── station 3: the queued run, and its receipt ──
             _drain(db, imported.id)
             produced = db.meetings.get_meeting(imported.id)
             assert produced.intel is not None, "no summary was produced"
             assert produced.intel.summary == engine.result.summary
-            assert engine.analyzed, "the provider was never contacted by the gesture"
+            assert engine.analyzed, "the provider was never contacted by the queued run"
             receipt = _api(
                 page, "GET", f"/api/meetings/{imported.id}/intel-recovery",
                 token=IMPORT_TOKEN,
