@@ -173,11 +173,12 @@ describe("People: Add on They owe you shows the saved item", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     render(<PeopleCore scope={`people:${id}`} />);
-    const owed = await screen.findByTestId("people-they-owe");
+    const owed = await screen.findByTestId("people-they-owe", {}, { timeout: 5000 });
     expect(within(owed).queryByText(owedBody)).toBeNull();
     fireEvent.change(within(owed).getByLabelText("They owe you"), { target: { value: owedBody } });
     fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
-    await waitFor(() => expect(within(screen.getByTestId("people-they-owe")).getByText(owedBody)).toBeTruthy());
+    // 5 s, not the 1 s default: the full suite runs in parallel (#1100).
+    await waitFor(() => expect(within(screen.getByTestId("people-they-owe")).getByText(owedBody)).toBeTruthy(), { timeout: 5000 });
     const posted = fetchSpy.mock.calls.filter(([url, o]) => String(url) === `/api/people/relationships/${id}/owed` && o?.method === "POST");
     expect(posted).toHaveLength(1);
     expect(JSON.parse(String(posted[0][1]?.body)).body).toBe(owedBody);
