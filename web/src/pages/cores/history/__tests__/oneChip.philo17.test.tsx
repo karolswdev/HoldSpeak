@@ -4,11 +4,15 @@
 // its summary slab do not repeat a succeeded run on that host. A failed
 // attempt and a different host stay. Under Review the window foot is not
 // mounted, so nothing is suppressed against it.
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+//
+// PHILO-17 meetingwin: the open meeting is its own window (MeetingRecord);
+// its foot is the window foot. The list and the window are fenced apart.
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { WingSlotContext } from "../../../../desk/surface/wings";
 import { HistoryCore } from "../../HistoryCore";
+import { MeetingRecord } from "../MeetingRecord";
 import { apiFetch } from "../../../../lib/api";
 import { forgetExecutedReceipts } from "../../../../meetings/summaryRoute";
 
@@ -52,7 +56,7 @@ function meeting(attempts: Attempt[], intelHost: string) {
 function hub(row: Record<string, unknown>) {
   vi.mocked(apiFetch).mockImplementation(async (path: string) => {
     if (path.startsWith("/api/meetings?")) return { meetings: [row] } as never;
-    if (path === "/api/meetings/a") return row as never;
+    if (path.split("?")[0] === "/api/meetings/a") return row as never;
     if (path.endsWith("/outcome-review")) {
       return {
         meeting_id: "a", title: "Standup", started_at: "2026-10-10T10:00:00", project: null,
@@ -64,12 +68,12 @@ function hub(row: Record<string, unknown>) {
   });
 }
 
-function Shell() {
+function Shell({ open = false }: { open?: boolean }) {
   const [wings, setWings] = useState<ReactNode>(null);
   return (
     <WingSlotContext.Provider value={setWings}>
       {wings}
-      <HistoryCore />
+      {open ? <MeetingRecord meetingId="a" onClose={() => undefined} /> : <HistoryCore />}
     </WingSlotContext.Provider>
   );
 }
@@ -86,9 +90,10 @@ it("list and open meeting: a succeeded loopback run is one THIS DEVICE chip, nev
   await waitFor(() => expect(chips().filter((c) => c.includes("THIS DEVICE"))).toHaveLength(1));
   expect(chips().join(" ")).not.toContain("127.0.0.1");
   expect(screen.queryByTestId("row-attempts")).toBeNull();
+  cleanup();
 
-  // Open the meeting: its strip and summary slab do not say it again.
-  fireEvent.click(within(screen.getByTestId("meeting-row-a")).getByRole("button", { name: /Standup/ }));
+  // The meeting's own window: its strip and summary slab do not say it again.
+  render(<Shell open />);
   await screen.findByTestId("meeting-summary-text");
   expect(chips().filter((c) => c.includes("THIS DEVICE"))).toHaveLength(1);
   expect(screen.queryByTestId("summary-record-attempts")).toBeNull();
@@ -100,9 +105,7 @@ it("a failed leg and a different host stay on the open meeting", async () => {
     { leg_ordinal: 1, host: "127.0.0.1", outcome: "failed", operation_id: "op_1" },
     { leg_ordinal: 2, host: "api.example.com", outcome: "succeeded", operation_id: "op_2" },
   ], "api.example.com"));
-  render(<Shell />);
-  await screen.findByTestId("meeting-row-a");
-  fireEvent.click(within(screen.getByTestId("meeting-row-a")).getByRole("button", { name: /Standup/ }));
+  render(<Shell open />);
   await screen.findByTestId("meeting-summary-text");
   const slab = screen.getByTestId("summary-record-attempts").textContent ?? "";
   expect(slab).toContain("THIS DEVICE");
@@ -114,9 +117,7 @@ it("a failed leg and a different host stay on the open meeting", async () => {
 
 it("Review: the window foot is not mounted, so nothing is suppressed against it", async () => {
   hub(meeting([{ leg_ordinal: 1, host: "127.0.0.1", outcome: "succeeded", operation_id: "op_1" }], "127.0.0.1"));
-  render(<Shell />);
-  await screen.findByTestId("meeting-row-a");
-  fireEvent.click(within(screen.getByTestId("meeting-row-a")).getByRole("button", { name: /Standup/ }));
+  render(<Shell open />);
   await screen.findByTestId("meeting-summary-text");
   fireEvent.click(screen.getByRole("tab", { name: /Review/i }));
   await screen.findByTestId("review-receipt");

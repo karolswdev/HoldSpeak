@@ -4,6 +4,11 @@
 // token is absent at zero; Restore brings the meeting back, marked; a refused
 // Restore names it with Retry.
 //
+// PHILO-17 ("A meeting opens in one window"): Park is on the meeting's own
+// window (MeetingRecord), the PARKED token and Restore are on the Meetings
+// list (HistoryCore). The hub's desk change re-reads the list; here a window
+// focus stands in for it.
+//
 // Rehomed fence: the old `Delete` / `Delete?` confirm verb and the
 // `DELETED hh:mm` receipt are retired with the words (the hub's DELETE route
 // now parks; H-A1, #727).
@@ -11,6 +16,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch, ApiError } from "../../../../lib/api";
 import { HistoryCore } from "../../HistoryCore";
+import { MeetingRecord } from "../MeetingRecord";
 
 vi.mock("../../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../../lib/api")>()),
@@ -69,16 +75,29 @@ function wireHub(): Hub {
       }
       return { meeting: row } as never;
     }
-    if (url.match(/^\/api\/meetings\/[^/?]+$/)) return { meeting: active.get(url.split("/").pop()!) } as never;
+    const read = url.match(/^\/api\/meetings\/([^/?]+)(\?include_parked=true)?$/);
+    if (read) return (active.get(read[1]) ?? parked.get(read[1]) ?? {}) as never;
     return {} as never;
   });
   return hub;
 }
 
+/** The Meetings list and Hiring debrief's own window, side by side. */
+function renderDesk() {
+  return render(<><HistoryCore /><MeetingRecord meetingId="m-2" onClose={() => undefined} /></>);
+}
+
+/** The hub's desk change after a write: the list reads again. */
+function hubChanged() {
+  window.dispatchEvent(new Event("focus"));
+}
+
 async function selectAndPark(title: string) {
-  fireEvent.click(await screen.findByText(title));
+  await screen.findAllByText(title);
   fireEvent.click(await screen.findByRole("button", { name: "Park" }));
-  return screen.findByTestId("meetings-park-receipt");
+  const receipt = await screen.findByTestId("meeting-park-receipt");
+  hubChanged();
+  return receipt;
 }
 
 describe("PHILO-13-02 Park and Restore on Meetings", () => {
@@ -86,7 +105,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
 
   it("Park is one press: no confirm, the hub parks, the receipt says PARKED + Restore", async () => {
     const hub = wireHub();
-    render(<HistoryCore />);
+    renderDesk();
     expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();
     const receipt = await selectAndPark("Hiring debrief");
     expect(hub.calls.filter((c) => c.method === "DELETE").map((c) => c.path)).toEqual([
@@ -102,8 +121,8 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
 
   it("the PARKED token is absent at zero; on, it lists the parked rows with Restore", async () => {
     wireHub();
-    render(<HistoryCore />);
-    await screen.findByText("Hiring debrief");
+    renderDesk();
+    await screen.findAllByText("Hiring debrief");
     expect(screen.queryByText(/^PARKED \d+$/)).toBeNull();
     await selectAndPark("Hiring debrief");
     const token = await screen.findByText("PARKED 1");
@@ -117,7 +136,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
 
   it("Restore brings the meeting back, marked, with RESTORED hh:mm; the token goes", async () => {
     const hub = wireHub();
-    render(<HistoryCore />);
+    renderDesk();
     await selectAndPark("Hiring debrief");
     fireEvent.click(await screen.findByText("PARKED 1"));
     const row = await screen.findByTestId("parked-row");
@@ -133,22 +152,23 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
 
   it("a refused Restore names it with Retry; Retry restores", async () => {
     const hub = wireHub();
-    render(<HistoryCore />);
+    renderDesk();
     const receipt = await selectAndPark("Hiring debrief");
     hub.refuseRestore = true;
     fireEvent.click(within(receipt).getByRole("button", { name: "Restore" }));
     await waitFor(() =>
-      expect(screen.getByTestId("meetings-park-receipt").textContent).toContain(
+      expect(screen.getByTestId("meeting-park-receipt").textContent).toContain(
         "NOT RESTORED · THE HUB DID NOT ACCEPT THE CHANGE",
       ),
     );
-    const failed = screen.getByTestId("meetings-park-receipt");
+    const failed = screen.getByTestId("meeting-park-receipt");
     expect(within(failed).getByRole("status").getAttribute("data-tone")).toBe("danger");
     hub.refuseRestore = false;
     fireEvent.click(within(failed).getByRole("button", { name: "Retry" }));
     await waitFor(() =>
-      expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^RESTORED \d\d:\d\d$/),
+      expect(screen.getByTestId("meeting-park-receipt").textContent).toMatch(/^RESTORED \d\d:\d\d$/),
     );
+    hubChanged();
     await screen.findByTestId("meeting-row-m-2");
   });
 });

@@ -10,6 +10,7 @@ import { deskQueryClient } from "../../../../lib/queryClient";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { MeetingHeader } from "../MeetingHeader";
 import { HistoryCore } from "../../HistoryCore";
+import { MeetingRecord } from "../MeetingRecord";
 import { apiFetch } from "../../../../lib/api";
 import { forgetExecutedReceipts } from "../../../../meetings/summaryRoute";
 
@@ -102,7 +103,8 @@ function Shell() {
   return (
     <WingSlotContext.Provider value={setWings}>
       {wings}
-      <HistoryCore scope="meeting:a" />
+      {/* PHILO-17: the meeting's own window holds its record and Review. */}
+      <MeetingRecord meetingId="a" onClose={() => undefined} />
     </WingSlotContext.Provider>
   );
 }
@@ -116,7 +118,7 @@ it("the full parent → Review transition shows QUEUED then RAN in Review, and R
       states.a = "queued";
       return { state: "queued", drainer: "running", jobId: "job-a" } as never;
     }
-    if (path === "/api/meetings/a") {
+    if (path.split("?")[0] === "/api/meetings/a") {
       return { ...row("a", states.a), segments: [{ text: "Priya owns the migration.", start_time: 0, end_time: 8 }] } as never;
     }
     if (path.endsWith("/outcome-review")) {
@@ -132,8 +134,7 @@ it("the full parent → Review transition shows QUEUED then RAN in Review, and R
     return {} as never;
   });
   render(<Shell />);
-  await screen.findByTestId("meeting-row-a");
-  fireEvent.click(screen.getByRole("tab", { name: /Review/i }));
+  fireEvent.click(await screen.findByRole("tab", { name: /Review/i }));
   fireEvent.click(await screen.findByRole("button", { name: "Re-read: Transcript" }));
   await waitFor(() => expect(screen.getByTestId("review-receipt")).toHaveTextContent(/^QUEUED /));
   const readsBefore = reviewReads;

@@ -11,7 +11,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "../../lib/api";
-import { openSurfaceOr } from "../shell";
+import { openPrimitive, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { ChairHome } from "./ChairHome";
 import { openChairWindows } from "./__tests__/fixtures/openChairWindows";
@@ -32,6 +32,7 @@ vi.mock("../../runtime/RuntimeBus", () => ({
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
   openSurfaceOr: vi.fn(),
+  openPrimitive: vi.fn(),
 }));
 
 const mockedApiFetch = vi.mocked(apiFetch);
@@ -164,16 +165,12 @@ describe("HS-201-04 the Chair's summary run", () => {
     expect(refusal.getAttribute("title")).toContain("The summary route changed");
   });
 
-  it("opens the meeting with the `meeting:<id>` grammar History parses", async () => {
+  it("opens the meeting in its own window (PHILO-17: `meeting:<id>`)", async () => {
     wire();
     seatMeeting({ intelStatus: "complete" });
     render(<ChairHome />);
     const open = await screen.findByRole("button", { name: "Open" });
     fireEvent.click(open);
-    expect(mockedOpen).toHaveBeenCalledWith(
-      "review-meetings",
-      "/meetings",
-      "meeting:m-1",
-    );
+    expect(vi.mocked(openPrimitive)).toHaveBeenCalledWith("meeting:m-1");
   });
 });

@@ -508,11 +508,8 @@ describe("Source rows: deduplicated refs and open source", () => {
     expect(meetingChip!.textContent).toBe("MTG M-01");
     fireEvent.click(meetingChip!);
 
-    expect(mockOpenSurfaceOr).toHaveBeenCalledWith(
-      "review-meetings",
-      "/history",
-      "meeting:m-01",
-    );
+    // PHILO-17: the meeting opens in its own window.
+    expect(mockOpenPrimitive).toHaveBeenCalledWith("meeting:m-01");
   });
 
   it("clicking a decision ref opens the primitive", async () => {

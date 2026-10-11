@@ -1621,7 +1621,7 @@
       "sha256": "0ceb46e1b2c8942dc600815c60a04155b22f2c4a61a24a6d834d844242bb0da3"
     },
     {
-      "path": "web/src/desk/pullouts/MeetingPullout.tsx",
+      "path": "web/src/desk/pullouts/_parked/MeetingPullout.tsx",
       "sha256": "fdae7dd7db59f5a5a50ee70720145b3026a591c21d194475fd92d610bdaaab37"
     },
     {
@@ -16543,7 +16543,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/MeetingPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/MeetingPullout.tsx",
           "line": 115,
           "anchor": "onChanged={async () => { const meeting = await apiRequest( `/api/meetings/${encodeURIComponent(o.id)}`, ); setDetail(await meeting.json()); await useDesk.getState().refresh(); }}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -16751,7 +16751,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/MeetingPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/MeetingPullout.tsx",
           "line": 66,
           "anchor": "onOpen={() => openPullout(a.id)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -16879,7 +16879,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/MeetingPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/MeetingPullout.tsx",
           "line": 104,
           "anchor": "onResolved={async (result) => { if (result.deleted) { closePullout(o.id); } else if (result.meeting) { setDetail(result.meeting as MeetingDetail); } await useDesk.getState().refresh(); }}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -27663,7 +27663,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/MeetingPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/MeetingPullout.tsx",
           "line": 183,
           "symbol": "MeetingPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40159,7 +40159,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/MeetingPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/MeetingPullout.tsx",
           "line": 192,
           "symbol": "MeetingPullout",
           "claim": "The production JSX source declares onClick at this control site."

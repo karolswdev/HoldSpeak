@@ -21,6 +21,7 @@
  * One transport (the hub's HTTP routes and its one bus); no second store. */
 import { ApiError, apiFetch } from "../../lib/api";
 import { SURFACE_APPLICATIONS } from "../applications";
+import { meetingOfScope } from "../objectWindows";
 import { CHAIR_WINDOW_IDS, closeChairWindow, useChairWindows } from "../chair/chairWindows";
 import { workBand } from "../components/window/windowGeometry";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "../conductor/store";
@@ -94,6 +95,20 @@ export const httpTransport: HubTransport = {
     apiFetch("/api/desk/windows/stage-shelf", {
       method: "POST", json: { side, expected_revision: expected }, keepalive: true }),
 };
+
+/** PHILO-17: the meeting a saved Meetings window row was scoped to (it
+ * migrates to that meeting's own window), or null. */
+export function migratedMeeting(row: { id: string; object_ref: string | null }): string | null {
+  const meetings = SURFACE_APPLICATIONS.find((a) => a.action === "review-meetings")?.windowId;
+  if (row.id === meetings) return meetingOfScope(row.object_ref);
+  // A meeting window saved under its bare id (the parked Floor's
+  // `pullout:<id>`), once the desk knows the id is a meeting.
+  if (row.id.startsWith("pullout:")) {
+    const bare = row.id.slice("pullout:".length);
+    if (bare && !bare.includes(":") && (useDesk.getState().items.meeting ?? []).some((m) => m.id === bare)) return bare;
+  }
+  return null;
+}
 
 /** PHILO-17: the retired window family (zones have no face). */
 export const RETIRED_PREFIX = "zone:";
@@ -403,6 +418,11 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
   const retiredDone = new Set<string>();
   const retireBusy = new Set<string>();
   const retireTries = new Map<string, number>();
+  /** Migrated rows whose meeting window this view opened (PHILO-17). */
+  const migratedOpen = new Set<string>();
+  /** The meeting windows this view opened for a migrated row: this view's
+   * own opens (they go to the hub), never closed as stale cache. */
+  const migratedTo = new Set<string>();
   function retire(r: HubWindowRow): void {
     const tries = retireTries.get(r.id) ?? 0;
     if (retiredDone.has(r.id) || retireBusy.has(r.id) || tries >= RETIRE_TRIES) return;
@@ -431,10 +451,29 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     // PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"):
     // zone windows are retired; no face draws a zone. A saved `zone:*` row
     // is closed on the hub once and never opens or counts here.
-    const retired = list.windows.filter((r) => r.id.startsWith(RETIRED_PREFIX));
+    // PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): a saved
+    // Meetings window scoped to one meeting held that meeting's record; the
+    // record is the meeting's own window now. The hub's row migrates once:
+    // it is closed at its revision (as a retired row) and the meeting's
+    // window opens here, which goes to the hub as its own row.
+    const migrating = list.windows.filter((r) => migratedMeeting(r) !== null);
+    for (const r of migrating) {
+      const meeting = migratedMeeting(r)!;
+      // Once per row and view, and never past the close's attempt limit (a
+      // refused close never reopens the meeting on every read).
+      const first = !migratedOpen.has(r.id) && !retiredDone.has(r.id) && (retireTries.get(r.id) ?? 0) < RETIRE_TRIES;
+      if (first) migratedOpen.add(r.id);
+      if (first) {
+        migratedTo.add(`pullout:meeting:${meeting}`);
+        useDesk.getState().openPullout(`meeting:${meeting}`);
+      }
+    }
+    const retired = list.windows.filter((r) => r.id.startsWith(RETIRED_PREFIX) || migratedMeeting(r) !== null);
     for (const r of retired) retire(r);
-    if (retired.length) list = { ...list, windows: list.windows.filter((r) => !r.id.startsWith(RETIRED_PREFIX)) };
+    if (retired.length) list = { ...list, windows: list.windows.filter((r) => !retired.includes(r)) };
     const byId = new Map(list.windows.map((r) => [r.id, r]));
+    // A migrated meeting window is protected only until the hub holds it.
+    for (const id of migratedTo) if (byId.has(id)) migratedTo.delete(id);
     const free = (id: string) => (scope === "all" || scope.has(id)) && presentations.pending(id) === 0;
     // A row applies when it is newer than the row this view applied, and not
     // older than a close it applied. After a FAILED write (`restore`) the
@@ -452,7 +491,7 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     // itself before the hub answered (the arrival's Needs you, a staged
     // surface, a link) is this view's own open: it goes to the hub.
     const gone = [...ids].filter(
-      (id) => free(id) && known(id) && !byId.has(id) && list.revision > (applied.get(id) ?? -1)
+      (id) => !migratedTo.has(id) && free(id) && known(id) && !byId.has(id) && list.revision > (applied.get(id) ?? -1)
         && list.revision > (closedAt.get(id) ?? -1) && (!seeding || cacheOpen.has(id)),
     );
     for (const r of list.windows) if (free(r.id)) restore.delete(r.id);
@@ -983,7 +1022,15 @@ const BOOT_OPEN: readonly string[] = (() => {
     const doc = bootDeskWorkspace();
     const lists = doc.windows;
     const chairClosed = doc.chair ? new Set(doc.chair.closed) : null;
+    // PHILO-17 (Astra r2): a cached scoped Meetings window comes back as the
+    // meeting's own window (compositorSlice's boot migration); that window is
+    // the cache's too, so a hub that no longer holds it closes it here.
+    const migrated = Object.values(doc.windowsById ?? {}).flatMap((w) => {
+      const meeting = w.applicationKey === "review-meetings" ? meetingOfScope(w.scope) : null;
+      return meeting ? [`pullout:meeting:${meeting}`] : [];
+    });
     return [
+      ...migrated,
       ...Object.keys(doc.windowsById ?? {}),
       ...Object.keys(doc.panel?.depth ?? {}),
       ...(lists?.pullouts ?? []).map((id) => `pullout:${id}`),

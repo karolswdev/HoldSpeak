@@ -4183,7 +4183,7 @@
         },
         {
           "path": "web/src/desk/store/compositorSlice.ts",
-          "symbol": "pullouts: reopened(\"id\", initialWindowLists.pullouts)",
+          "symbol": "pullouts: reopened(\"id\", [",
           "claim": "the meeting window returns after a reload"
         }
       ],

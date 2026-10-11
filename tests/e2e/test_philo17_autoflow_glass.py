@@ -154,8 +154,18 @@ def test_summary_after_every_meeting_reaches_the_open_record_by_itself(tmp_path:
                     "() => /RUNNING|QUEUED/.test(document.querySelector('.meetings-detail-head')?.textContent || '')",
                     timeout=15_000,
                 )
-                surface = page.locator("#surface-meetings")
+                # PHILO-17 ("A meeting opens in one window"): the record is the
+                # meeting's own window.
+                record = f"[id='pullout:meeting:{meeting_id}']"
+                surface = page.locator(record)
                 assert surface.get_by_test_id("meeting-summary-text").count() == 0
+                # The list reads the same state as the record (the coordinator's
+                # catch: the row said IMPORTING while the record said RUNNING).
+                page.wait_for_function(
+                    """(id) => /RUNNING|QUEUED|NOT DRAINING/.test(document.querySelector(
+                        `[data-testid=meeting-row-${id}] [data-testid=state-token]`)?.textContent || '')""",
+                    arg=meeting_id, timeout=15_000,
+                )
                 assert db.meetings.get_meeting(meeting_id).intel is None  # not yet
                 SHOTS.mkdir(parents=True, exist_ok=True)
                 _settle(page)
@@ -166,7 +176,7 @@ def test_summary_after_every_meeting_reaches_the_open_record_by_itself(tmp_path:
                 summary_text = surface.get_by_test_id("meeting-summary-text")
                 summary_text.wait_for(timeout=60_000)
                 assert (summary_text.text_content() or "").strip() == engine.result.summary
-                _wait_record_host(page, _chip_label(host))
+                _wait_record_host(page, _chip_label(host), scope=record)
                 receipt = db.intel.get_run_receipt(meeting_id)
                 assert receipt["outcome"] == "succeeded", receipt
                 assert receipt["selection_hash"] == planned["selection_hash"], receipt

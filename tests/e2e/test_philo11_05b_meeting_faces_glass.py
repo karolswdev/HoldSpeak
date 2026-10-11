@@ -64,7 +64,9 @@ FOLDER = "Team folder"
 # The well in the Meetings record. The Chair's meeting rows (Arrival, The week)
 # draw the same well in their own windows, so the record's window is named.
 MR = ".desk-window:has(.meetings-detail-head) [data-seat=meeting]"
-MW = ".desk-pullout [data-seat=meeting]"         # the well in the meeting window
+# PHILO-17 ("A meeting opens in one window"): the record IS the meeting's own
+# window (`pullout:meeting:<id>`); the row opens it and so does `?open=`.
+MW = ".desk-object-window [data-seat=meeting]"   # the well in the meeting window
 DS = "[data-testid=destinations]"
 
 
@@ -174,6 +176,10 @@ class TestMeetingFacesGlass:
         self._stage(page, "review-meetings")
         row = page.get_by_test_id(f"meeting-row-{meeting_id}")
         row.wait_for(timeout=T)
+        # The hub restores the Chair's windows beside the staged Meetings; the
+        # owner brings Meetings forward from its Dock door (as the park glass).
+        page.locator(".desk-dock").get_by_role("button", name="Meetings", exact=True).click()
+        page.wait_for_timeout(400)
         row.locator(".meetings-stream-row-body").click()
         page.locator(".meetings-detail-head").wait_for(timeout=T)
         page.wait_for_timeout(900)
@@ -568,6 +574,11 @@ class TestMeetingFacesGlass:
                               "receipt": t1_receipt}
 
                 # ── C6: the meeting window -- the same well, its history ──
+                # PHILO-17: each meeting is its own window; the hub holds the
+                # ones opened above, so the desk starts empty here.
+                from .glass_infra import clear_hub_windows
+
+                clear_hub_windows(page, TOKEN)
                 page.evaluate("() => localStorage.removeItem('hs.desk.workspace.v1')")
                 page.goto(f"{self.base}/?token={TOKEN}&open=meeting:{ids['sync']}", wait_until="load")
                 _normal_chair(page)

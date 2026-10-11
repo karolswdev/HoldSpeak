@@ -138,10 +138,11 @@ describe("PHILO-13-05 close means gone", () => {
     expect(screen.queryByRole("button", { name: "Close Refactor run" })).toBeNull();
   });
 
-  it("a meeting resolved as deleted closes its card opened as meeting:m1", () => {
+  it("a meeting resolved as deleted closes its card opened as meeting:m1", async () => {
     renderList();
     act(() => useDesk.getState().openPullout("meeting:m1"));
-    fireEvent.click(screen.getByRole("button", { name: "Resolve as deleted" }));
+    // PHILO-17: the meeting window reads its record first (lazy body).
+    fireEvent.click(await screen.findByRole("button", { name: "Resolve as deleted" }, { timeout: 4000 }));
     expect(useDesk.getState().pullouts).toEqual([]);
     expect(screen.queryByRole("button", { name: "Close Q3 kickoff" })).toBeNull();
   });

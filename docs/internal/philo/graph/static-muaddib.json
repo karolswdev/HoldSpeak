@@ -22695,7 +22695,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/MeetingPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/MeetingPullout.tsx",
      "line": 183,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -22716,7 +22716,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/MeetingPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/MeetingPullout.tsx",
      "line": 192,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"

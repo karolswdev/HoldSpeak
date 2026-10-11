@@ -291,7 +291,9 @@ def _open_review_wing(page: Any, url: str, meeting_id: str) -> None:
     page.reload(wait_until="load")
     _normal_chair(page)
     page.locator(".desk-surface-window").first.wait_for(timeout=12_000)
-    page.locator(".surface-split-detail .surface-display").first.wait_for(timeout=12_000)
+    # PHILO-17 ("A meeting opens in one window"): the deep link opens the
+    # meeting's own window, which holds the record.
+    page.locator(f"[id='pullout:meeting:{meeting_id}'] .surface-display").first.wait_for(timeout=12_000)
     page.get_by_role("tab", name="Review").click()
     page.locator("[data-testid='meeting-review']").wait_for(timeout=12_000)
     _settle(page)

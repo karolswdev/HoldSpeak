@@ -20,6 +20,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { thoughtForNote, type NoteThoughtStatus, type Thought } from "../thoughts";
 import { NotePullout } from "../pullouts/NotePullout";
 import { ThoughtWorkspaceWindow } from "../thought-workspace/ThoughtWorkspaceWindow";
+import { FootSlotContext, TitleSlotContext, WingSlotContext } from "../surface";
 
 function PulloutFrame({
   o,
@@ -59,6 +60,15 @@ function PulloutFrame({
         }
     : null;
 
+  // PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): a meeting
+  // and a person are whole windows. Their body publishes its wings, its
+  // title and its foot into the frame, as an application window does
+  // (SurfaceWindowHost).
+  const hosted = o.kind === "meeting" || o.kind === "people";
+  const [wings, setWings] = useState<ReactNode>(null);
+  const [foot, setFoot] = useState<HTMLElement | null>(null);
+  const [titleOverride, setTitleOverride] = useState<string | null>(null);
+
   const Content = PULLOUT_CONTENT[o.kind];
   // A thread with no title is named by the first words of its first message
   // (the open thread holds its messages; the Desk list does not).
@@ -66,7 +76,9 @@ function PulloutFrame({
     o.kind === "thread"
       ? (s.threads[o.id]?.messages.find((m) => m.role === "user")?.parts.find((p) => p.text?.trim())?.text ?? "")
       : "");
-  const name = o.kind === "thread" ? primitiveName("thread", o.ref, o.id, firstMessage) : o.title;
+  const name = o.kind === "thread"
+    ? primitiveName("thread", o.ref, o.id, firstMessage)
+    : (hosted && titleOverride) || o.title;
 
   return (
     <DeskWindowFrame
@@ -74,7 +86,10 @@ function PulloutFrame({
       glyph="▤"
       label={name}
       kindWord={kindWord(o.kind)}
-      className="desk-pullout is-card"
+      // A whole window wears the application window's material, as the
+      // Meetings window's record did.
+      className={hosted ? "desk-surface-window desk-object-window" : "desk-pullout is-card"}
+      wings={hosted ? wings : undefined}
       // B24 (Astra r1): a kind with a declared size opens AT that size; a
       // content-fitted card would drop the height until it is arranged.
       fitContent={!PULLOUT_SIZE[o.kind]}
@@ -93,17 +108,6 @@ function PulloutFrame({
               {egress.text}
             </span>
           )}
-          {o.kind === "meeting" && (
-            <Button
-              dense
-              variant="ghost"
-              onClick={() =>
-                openSurfaceOr("review-meetings", "/history", resourceRef)
-              }
-            >
-              Review meeting
-            </Button>
-          )}
           {o.kind === "workflow" && (
             <Button
               dense
@@ -118,7 +122,22 @@ function PulloutFrame({
         </>
       }
     >
-      {overrideContent ?? (o.kind === "note"
+      {hosted ? (
+        <FootSlotContext.Provider value={foot}>
+          <div className="desk-surface-body">
+            {/* The aftercare card's seat (as SurfaceWindowHost): a card for
+                this meeting lands in its own window, and at 393 Capture never
+                takes the front from it (ChairDesk, frontWindowAftercareSlot). */}
+            {o.kind === "meeting" ? <div data-aftercare-window-slot="top" data-meeting-id={o.id} /> : null}
+            <TitleSlotContext.Provider value={setTitleOverride}>
+              <WingSlotContext.Provider value={setWings}>
+                <Content object={o} onClose={() => closePullout(pulloutId)} />
+              </WingSlotContext.Provider>
+            </TitleSlotContext.Provider>
+          </div>
+          <footer ref={setFoot} className="desk-surface-foot surface-footer" />
+        </FootSlotContext.Provider>
+      ) : overrideContent ?? (o.kind === "note"
         ? <NotePullout object={o} onClose={() => closePullout(pulloutId)} initialStatus={noteStatus} onThoughtOwned={onThoughtOwned} />
         : <Content object={o} onClose={() => closePullout(pulloutId)} />)}
     </DeskWindowFrame>

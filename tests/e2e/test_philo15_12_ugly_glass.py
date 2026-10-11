@@ -263,34 +263,32 @@ class TestPhilo15Lane12Ugly:
             browser, page, errors = self._open(pw, width)
             try:
                 self._seed_meeting()
+                # PHILO-17 ("A meeting opens in one window"): the record is the
+                # meeting's own window; it takes the window body's whole width.
                 self._stage(page, "review-meetings", "meeting:p15-12-m")
-                detail = page.locator(".surface-split-detail").first
+                win = page.locator("[id='pullout:meeting:p15-12-m']")
+                detail = win.locator(".desk-surface-body > .surface-section").first
                 detail.locator(".surface-display").first.wait_for(timeout=T)
                 page.wait_for_timeout(800)
                 _settle(page)
 
                 def measure(tag: str) -> dict[str, Any]:
-                    split = page.locator(".surface-split-railed .surface-split").first
-                    s = split.evaluate(BOX_JS)
+                    body = win.locator(".desk-surface-body").first.evaluate(
+                        "(e) => { const st = getComputedStyle(e); const b = e.getBoundingClientRect();"
+                        " return {x: b.left, w: e.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight)}; }")
                     d = detail.evaluate(BOX_JS)
-                    main = page.locator(".surface-split-railed .surface-split-main").first
-                    m = main.evaluate("(e) => { const b = e.getBoundingClientRect(); const st = getComputedStyle(e);"
-                                      " return {x: b.left, y: b.top, w: b.width, h: b.height, btm: b.bottom, display: st.display}; }")
-                    facts = {"split": s, "detail": d, "rail": m}
+                    facts = {"body": body, "detail": d}
                     self.facts[f"B22_{tag}"] = facts
-                    # The record takes the split's whole width.
-                    assert d["w"] >= s["w"] - 2, facts
-                    # The rail is never a column beside it: hidden, or a strip above.
-                    if m["display"] != "none" and m["h"] > 0:
-                        assert m["btm"] <= d["y"] + 1, facts
-                        assert m["w"] >= s["w"] - 2, facts
+                    # The record takes the window body's whole width; no rail
+                    # column beside it (the list is its own window now).
+                    assert d["w"] >= body["w"] - 2, facts
+                    assert win.locator(".surface-split-main").count() == 0, facts
                     return facts
 
                 measure("normal")
-                win = page.locator(".desk-surface-window").filter(has=detail).first
                 self._shot(page, "B22-record", width, win)
                 if width > 720:
-                    page.get_by_role("button", name="Zoom Meetings").click()
+                    win.get_by_role("button", name=f"Zoom {TITLE}").click()
                     page.wait_for_timeout(700)
                     _settle(page)
                     page.mouse.wheel(0, 600)

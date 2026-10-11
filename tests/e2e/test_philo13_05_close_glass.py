@@ -269,7 +269,8 @@ class TestCloseMeansGone:
                 option = page.locator("[id='desk-palette-option-meeting:p13-tombstone']")
                 option.wait_for()
                 self._press(page, option, width)
-                card = page.locator(f".desk-pullout[aria-label='{title}']")
+                # PHILO-17: the meeting is its own window (the whole record).
+                card = page.locator(f".desk-object-window[aria-label='{title}']")
                 card.wait_for()
                 incoming = card.get_by_role("button", name="Use incoming")
                 incoming.wait_for()

@@ -9,35 +9,28 @@
  * Intelligence. */
 import { apiFetch } from "../lib/api";
 import { openIntelligence } from "./intelligenceNavigation";
-import { openAgentLane, openCoderSession, openProjectRoom, openSurfaceOr } from "./shell";
+import { openAgentLane, openCoderSession, openPrimitive, openProjectRoom } from "./shell";
 import { openSourceRef } from "./surface";
+import { personWindowRef, type PersonLens } from "./objectWindows";
 
 export type Opener = () => void;
 
 /** The People lenses a row may open on (`PeopleCore` scope grammar). */
-export type PersonLens = "now" | "prep";
+export type { PersonLens, PersonOpenRequest } from "./objectWindows";
+export { PERSON_OPEN_EVENT } from "./objectWindows";
 
 /** The People surface on one relationship: `people:<id>[:<lens>]`. */
 export function personScope(relationshipId: string, lens?: PersonLens): string {
   return `people:${relationshipId}${lens ? `:${lens}` : ""}`;
 }
 
-/** PHILO-13-06 (Astra's pass): every explicit open of a person on a lens is
- * one request, counted. An open with an unchanged scope (the same 1:1 row
- * tapped again after he chose Now) still re-applies the lens: the People
- * window hears the request, not only the scope. */
-export const PERSON_OPEN_EVENT = "holdspeak:person-open";
-export type PersonOpenRequest = { relationshipId: string; lens?: PersonLens; seq: number };
-let personOpenSeq = 0;
-
+/** PHILO-17 (2b): a person opens THAT person, in their own window
+ * (`pullout:people:<id>`); the People drawer stays the roster. A lens in the
+ * open is one request, counted (PHILO-13-06): an open window moves to it. */
 export function openPerson(relationshipId: string, lens?: PersonLens): void {
-  openSurfaceOr("open-people", "/", personScope(relationshipId, lens));
-  personOpenSeq += 1;
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent<PersonOpenRequest>(PERSON_OPEN_EVENT, {
-      detail: { relationshipId, lens, seq: personOpenSeq },
-    }));
-  }
+  const ref = personWindowRef(personScope(relationshipId, lens));
+  if (!ref) return;
+  openPrimitive(ref);
 }
 
 /** PHILO-13-14 (C4) — `Draft update for <project>`: the Room opens and goes to

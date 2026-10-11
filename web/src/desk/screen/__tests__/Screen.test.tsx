@@ -21,12 +21,14 @@ const shell = vi.hoisted(() => ({
   openProjectRoom: vi.fn(),
   openSurfaceOr: vi.fn(),
   openCoderSession: vi.fn(),
+  openPrimitive: vi.fn(),
 }));
 vi.mock("../../shell", async (original) => ({
   ...(await original<typeof import("../../shell")>()),
   openProjectRoom: shell.openProjectRoom,
   openSurfaceOr: shell.openSurfaceOr,
   openCoderSession: shell.openCoderSession,
+  openPrimitive: shell.openPrimitive,
 }));
 const openMeeting = vi.hoisted(() => vi.fn());
 vi.mock("../../openObject", async (original) => {
@@ -258,7 +260,9 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     fireEvent.doubleClick(icon(/^Vendor call/));
     expect(openMeeting).toHaveBeenCalledWith("meeting:m-vendor");
     fireEvent.keyDown(icon(/^Avery Chen/), { key: "Enter" });
-    expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:p-avery");
+    // PHILO-17 (2b): a person icon opens THAT person, in their own window.
+    expect(shell.openPrimitive).toHaveBeenCalledWith("people:p-avery");
+    expect(shell.openSurfaceOr).not.toHaveBeenCalledWith("open-people", "/", "people:p-avery");
     fireEvent.keyDown(icon(/^Claude Code: rollback runbook/), { key: "Enter" });
     expect(shell.openCoderSession).toHaveBeenCalledWith("claude:c1");
   });

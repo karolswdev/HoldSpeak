@@ -168,7 +168,7 @@ export function ChairDesk(props: ChairDeskProps) {
     seenCard.current = key;
     if (!arrived) return;
     if (first) keepCaptureForCard();
-    else if (!frontWindowAftercareSlot()) openCaptureForCard();
+    else if (!frontWindowAftercareSlot(aftercare?.meetingId)) openCaptureForCard();
   }, [aftercare]);
   // PHILO-14 A1c: at 1440 Capture floats with a seat placed while it held
   // only the capture bar (100 px). While the card stands in it, Capture

@@ -406,35 +406,37 @@ class TestThePhoneDesk:
                 page.keyboard.press("Escape")
                 page.wait_for_timeout(300)
 
-                # S6 (Muad'Dib's ruling 2026-10-03): the meeting's own record is in front in
-                # Meetings, which hosts the card's slot: the card lands there, Capture
-                # does not open, and Meetings stays in front.
+                # S6 (Muad'Dib's ruling 2026-10-03; PHILO-17 "A meeting opens in one
+                # window"): the meeting's own record is in front, in the meeting's own
+                # window, which hosts its card's slot: the card lands there, Capture
+                # does not open, and the record stays in front.
                 self._tap(page, page.get_by_test_id("desk-screen-switcher"), width, 500)
                 self._tap(page, page.locator(".desk-screen-switcher-menu [role=menuitemcheckbox]", has_text="Meetings"), width, 900)
                 self._tap(page, page.get_by_test_id(f"meeting-row-{CARD_MEETING}").locator(".meetings-stream-row-body"), width, 1500)
-                if self._front(page)["front"] != ["Meetings"]:
-                    fails.append(f"S6: Meetings is not in front before the card {self._front(page)['front']}")
-                record = page.locator(".desk-window-shell[aria-label='Meetings'] [data-testid=meeting-summary-text]",
-                                      has_text="Contract draft by Friday.")
+                own = f"[id='pullout:meeting:{CARD_MEETING}']"
+                card_title = page.locator(own).get_attribute("aria-label")
+                if self._front(page)["front"] != [card_title]:
+                    fails.append(f"S6: the meeting's own window is not in front before the card {self._front(page)['front']}")
+                record = page.locator(f"{own} [data-testid=meeting-summary-text]", has_text="Contract draft by Friday.")
                 try:
                     record.first.wait_for(state="attached", timeout=8000)
                     facts["own_record_open"] = True
                 except Exception:  # noqa: BLE001 -- the fence below names it
                     facts["own_record_open"] = False
-                    fails.append("S6: the card meeting's own record is not open in Meetings")
+                    fails.append("S6: the card meeting's own record is not open in its window")
                 facts["aftercare_event"] = self._send_card()
                 page.wait_for_timeout(1800)
                 f = self._board(page, width, "C7-6e-aftercare-own-record-in-front", facts, fails)
-                in_meetings = page.evaluate("""() => !!document.querySelector(
-                    ".desk-window-shell[aria-label='Meetings'] [data-aftercare-window-slot] .ambient-aftercare")""")
+                in_meetings = page.evaluate("""(sel) => !!document.querySelector(
+                    sel + " [data-aftercare-window-slot] .ambient-aftercare")""", own)
                 facts["own_record_card_in_meetings"] = in_meetings
-                if f["front"] != ["Meetings"] or not in_meetings or f["card_in_capture"]:
-                    fails.append(f"S6: front {f['front']}, card in Meetings {in_meetings}, in Capture {f['card_in_capture']}")
+                if f["front"] != [card_title] or not in_meetings or f["card_in_capture"]:
+                    fails.append(f"S6: front {f['front']}, card in its window {in_meetings}, in Capture {f['card_in_capture']}")
                 if facts["own_record_open"]:
                     record.first.scroll_into_view_if_needed()
                     page.wait_for_timeout(300)
                     page.screenshot(path=str(SHOTS / f"C7-6f-aftercare-own-record-still-open-{width}.png"))
-                    if self._front(page)["front"] != ["Meetings"]:
+                    if self._front(page)["front"] != [card_title]:
                         fails.append("S6: the record left the front after the card")
                 self._tap(page, page.locator(".ambient-aftercare").get_by_role("button", name="Dismiss"), width, 800)
                 if page.locator(".ambient-aftercare").count():

@@ -23,13 +23,25 @@
  *    never `intel_complete` (that one is live-session only).
  * `desk_changed` and window focus are subscribed too, for everything else
  * that moves the desk.
+ *
+ * PHILO-17 ("A meeting opens in one window"): the record lives in the
+ * meeting's own window (history/MeetingRecord.tsx); the fences below follow
+ * it there. The list-side races (a click inside a debounce, a list read that
+ * lands after a click) have no seat: the window reads its own meeting when it
+ * opens and on every signal.
  */
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
 import { announceTaskReturn } from "../../../desk/returnToTask";
 import { HistoryCore } from "../HistoryCore";
+import { MeetingRecord } from "../history/MeetingRecord";
+import { openPrimitive } from "../../../desk/shell";
 
+vi.mock("../../../desk/shell", async (original) => ({
+  ...(await original<typeof import("../../../desk/shell")>()),
+  openPrimitive: vi.fn(),
+}));
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
   apiFetch: vi.fn(),
@@ -86,18 +98,23 @@ const detail = () => ({
   run_receipt: null,
 });
 
+/** Answers the detail read (the window asks `?include_parked=true`). */
+const isDetail = (url: string, id = "m-1") => url.split("?")[0] === `/api/meetings/${id}`;
+
 function wire() {
   vi.mocked(apiFetch).mockImplementation(async (path: string) => {
     const url = String(path);
     if (url.startsWith("/api/meetings?"))
       return { meetings: [detail()] } as never;
-    if (url === "/api/meetings/m-1") {
+    if (isDetail(url)) {
       detailReads += 1;
       return detail() as never;
     }
     return {} as never;
   });
 }
+
+const openRecord = (id = "m-1") => render(<MeetingRecord meetingId={id} onClose={() => undefined} />);
 
 describe("the open meeting record re-reads itself (HS-202-02)", () => {
   beforeEach(() => {
@@ -109,276 +126,153 @@ describe("the open meeting record re-reads itself (HS-202-02)", () => {
   });
 
   it("shows the run verb after the engine is assigned, with no reload", async () => {
-    render(<HistoryCore scope="meeting:m-1" />);
-
+    openRecord();
     // Cold: the hub has no assignment, so the face states that and offers
     // no run verb.
     await screen.findByTestId("detail-route-unavailable");
     expect(screen.queryByTestId("detail-run-intelligence-btn")).toBeNull();
-
     // The owner repairs the engine in the Concierge; its Apply announces
     // the return to this task.
     route = READY_ROUTE;
     act(() => {
       announceTaskReturn();
     });
-
-    expect(
-      await screen.findByTestId("detail-run-intelligence-btn"),
-    ).toBeVisible();
+    expect(await screen.findByTestId("detail-run-intelligence-btn")).toBeVisible();
   });
 
   it("re-reads the record when the hub says a run finished", async () => {
-    render(<HistoryCore scope="meeting:m-1" />);
+    openRecord();
     await screen.findByTestId("detail-route-unavailable");
     const before = detailReads;
-
     route = READY_ROUTE;
     act(() => {
       emit("aftercare_ready");
     });
-
     await waitFor(() => expect(detailReads).toBeGreaterThan(before));
-    expect(
-      await screen.findByTestId("detail-run-intelligence-btn"),
-    ).toBeVisible();
+    expect(await screen.findByTestId("detail-run-intelligence-btn")).toBeVisible();
   });
 
   it("re-reads the record on the desk_changed frame", async () => {
-    render(<HistoryCore scope="meeting:m-1" />);
+    openRecord();
     await screen.findByTestId("detail-route-unavailable");
     const before = detailReads;
-
     act(() => {
       emit("desk_changed");
     });
-
     await waitFor(() => expect(detailReads).toBeGreaterThan(before));
   });
 });
 
-/* ── Astra's counsel finding 3 on PR #595 ──
- * "Start refreshing A, select B, then resolve A: the unconditional
- * `setSelected(fresh)` restores A." The refresh must answer only for the
- * record that is open NOW. */
+/* ── Astra's counsel finding 3 on PR #595, in the one-window world ──
+ * A slow read for meeting A never lands on meeting B: each window reads
+ * its own meeting. */
 describe("a slow refresh never restores a record the owner left", () => {
-  it("drops a response for a record that is no longer selected", async () => {
+  it("a stalled read of one meeting never lands in another meeting's window", async () => {
     let releaseA: ((value: unknown) => void) | null = null;
+    let stall = false;
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       const url = String(path);
-      if (url.startsWith("/api/meetings?"))
-        return { meetings: [detail(), { ...detail(), id: "m-2", title: "The other meeting" }] } as never;
-      if (url === "/api/meetings/m-1")
-        // A's re-read hangs until the test lets it go.
+      if (isDetail(url) && stall)
         return new Promise((resolve) => {
           releaseA = resolve;
         }) as never;
-      if (url === "/api/meetings/m-2")
-        return { ...detail(), id: "m-2", title: "The other meeting" } as never;
+      if (isDetail(url)) return detail() as never;
+      if (isDetail(url, "m-2")) return { ...detail(), id: "m-2", title: "The other meeting" } as never;
       return {} as never;
     });
-
-    render(<HistoryCore scope="meeting:m-1" />);
-    await screen.findByTestId("detail-route-unavailable");
-
+    render(<><MeetingRecord meetingId="m-1" onClose={() => undefined} /><MeetingRecord meetingId="m-2" onClose={() => undefined} /></>);
+    const titles = () => [...document.querySelectorAll(".meetings-detail-head .surface-display")].map((e) => e.textContent);
+    await waitFor(() => expect(titles()).toEqual(["Imported meeting", "The other meeting"]));
     // A refresh for A starts and stalls.
+    stall = true;
     act(() => {
       emit("desk_changed");
     });
     await waitFor(() => expect(releaseA).not.toBeNull());
-
-    // The owner opens B while A is still in flight.
-    const rowB = document.querySelector(
-      '[data-testid="meeting-row-m-2"] .meetings-stream-row-body',
-    );
-    expect(rowB, "the ledger draws the second meeting").toBeTruthy();
-    fireEvent.click(rowB as Element);
-    const openTitle = () =>
-      document.querySelector(".meetings-detail-head .surface-display")
-        ?.textContent ?? "";
-    await waitFor(() => expect(openTitle()).toBe("The other meeting"));
-
-    // A finally answers. B must stay on the glass.
     await act(async () => {
-      releaseA?.({ ...detail(), id: "m-1", title: "Imported meeting" });
+      releaseA?.({ ...detail(), title: "Imported meeting, read again" });
     });
-
-    expect(openTitle()).toBe("The other meeting");
+    await waitFor(() => expect(titles()).toEqual(["Imported meeting, read again", "The other meeting"]));
   });
 });
 
 /* ── coordinator item 9 / the first-use smoke's `import-refresh` leg ──
- * An import lands a transcript on a row the owner already opened. The
- * refresh must not COST the record anything: the ledger row and
- * `/api/meetings/{id}` are different shapes, and replacing one with the
- * other withdrew `Run summary` from the meeting that had just earned it. */
+ * The refresh must not COST the record anything: a detail payload with no
+ * `transcriptWords` never withdraws `Run summary`. */
 describe("a refresh never withdraws what the record had", () => {
   it("keeps Run summary when the detail payload omits transcriptWords", async () => {
-    const importing = {
-      ...detail(),
-      intel_status: { state: "disabled" },
-      transcriptWords: 0,
-      planned_route: READY_ROUTE,
-    };
-    const transcribed = { ...importing, transcriptWords: 9 };
-    let listRow: Record<string, unknown> = importing;
+    const segments = [{ text: "The quick brown fox.", speaker: "Me", start_time: 0, end_time: 1 }];
+    const transcribed = { ...detail(), transcriptWords: 9, segments, planned_route: READY_ROUTE };
+    let first = true;
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       const url = String(path);
-      if (url.startsWith("/api/meetings?")) return { meetings: [listRow] } as never;
-      if (url === "/api/meetings/m-1") {
+      if (isDetail(url)) {
         detailReads += 1;
+        if (first) {
+          first = false;
+          return transcribed as never;
+        }
         // The detail path carries raw dicts: NO transcriptWords.
         const { transcriptWords: _drop, ...raw } = transcribed;
         return raw as never;
       }
       return {} as never;
     });
-
-    render(<HistoryCore scope="meeting:m-1" />);
-    await waitFor(() =>
-      expect(
-        document.querySelector(".meetings-detail-head .surface-display"),
-      ).toBeTruthy(),
-    );
-    expect(screen.queryByTestId("detail-run-intelligence-btn")).toBeNull();
-
-    // The import finishes: the hub announces the desk change.
-    listRow = transcribed;
+    openRecord();
+    expect(await screen.findByTestId("detail-run-intelligence-btn")).toBeVisible();
     act(() => {
       emit("desk_changed");
     });
-
-    expect(
-      await screen.findByTestId("detail-run-intelligence-btn"),
-    ).toBeVisible();
+    await waitFor(() => expect(detailReads).toBeGreaterThan(1));
+    expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible();
   });
 });
 
-/* ── the first-use smoke's `import-refresh` leg, one layer under the
- *    merge rule above ──
+/* ── the first-use smoke's `import-refresh` leg ──
  * The import worker announces the desk change the INSTANT the transcript
- * lands (`services/meeting_service.py:285`), which is before the owner
- * clicks the row it just changed. Opening a record changes `selectedId`,
- * which changes `refreshFace`, which re-ran the subscription effect —
- * and its cleanup cleared the announcement's pending debounce. The
- * announced refresh therefore never ran: the ledger was never re-read,
- * the open record kept the `importing` snapshot the click had taken, and
- * `Run summary` (gated on `summaryIsOff(selected)`) never appeared
- * without a reopen. */
+ * lands, which can be before the owner opens the meeting. The window reads
+ * the meeting when it opens, so it is current whatever came first. */
 describe("the announced refresh survives the owner opening a record", () => {
-  it("catches the record up when the frame arrived before the click", async () => {
-    const importing = {
-      ...detail(),
-      intel_status: "importing",
-      intel_status_detail: "Transcribing…",
-      transcriptWords: null,
-      planned_route: READY_ROUTE,
-    };
+  it("catches the record up when the frame arrived before the open", async () => {
     const transcribed = {
       ...detail(),
       intel_status: "disabled",
       transcriptWords: 9,
       planned_route: READY_ROUTE,
-      segments: [
-        { text: "The quick brown fox.", speaker: "Me", start_time: 0, end_time: 1 },
-      ],
+      segments: [{ text: "The quick brown fox.", speaker: "Me", start_time: 0, end_time: 1 }],
     };
-    let listRow: Record<string, unknown> = importing;
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
-      const url = String(path);
-      if (url.startsWith("/api/meetings?")) return { meetings: [listRow] } as never;
-      if (url === "/api/meetings/m-1") {
-        detailReads += 1;
-        return listRow as never;
-      }
-      return {} as never;
-    });
-
-    render(<HistoryCore />);
-    const rowBody = await waitFor(() => {
-      const found = document.querySelector(
-        '[data-testid="meeting-row-m-1"] .meetings-stream-row-body',
-      );
-      expect(found, "the ledger draws the importing row").toBeTruthy();
-      return found as Element;
-    });
-
-    // The import finishes while nothing is open; the hub announces it.
-    listRow = transcribed;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+      (isDetail(String(path)) ? transcribed : {}) as never);
     act(() => {
       emit("desk_changed");
     });
-    // The owner opens the row that is still on the glass, INSIDE the
-    // announcement's debounce window.
-    fireEvent.click(rowBody);
-    await waitFor(() =>
-      expect(document.querySelector(".meetings-detail-head")).toBeTruthy(),
-    );
-
+    openRecord();
     expect(
       await screen.findByTestId("detail-run-intelligence-btn", {}, { timeout: 4000 }),
     ).toBeVisible();
   });
 });
 
-/* ── the residual race under the one above ──
- * `refreshFace` merges only into a record that is ALREADY open. A list
- * read that was in flight when the owner clicked -- or one the search box
- * started -- lands its fresh rows afterwards, with no frame following to
- * reconcile them, and the open record keeps a snapshot the ledger beside
- * it has already replaced. The open record must follow the ledger. */
-describe("the open record follows the ledger", () => {
-  it("takes the new row's fields when the rows change under it", async () => {
-    const importing = {
-      ...detail(),
-      title: "Still importing",
-      intel_status: "importing",
-      transcriptWords: null,
-      planned_route: READY_ROUTE,
+/* ── the residual race, in the one-window world ──
+ * The open record never keeps a snapshot the hub has replaced: a window
+ * focus (no frame behind it) reads the meeting again. */
+describe("the open record follows the hub", () => {
+  it("takes the new fields when the meeting changes under it", async () => {
+    let current: Record<string, unknown> = {
+      ...detail(), title: "Still importing", intel_status: "importing", transcriptWords: null, planned_route: READY_ROUTE,
     };
-    const transcribed = {
-      ...detail(),
-      title: "The transcribed meeting",
-      intel_status: "disabled",
-      transcriptWords: 9,
-      planned_route: READY_ROUTE,
-      segments: [
-        { text: "The quick brown fox.", speaker: "Me", start_time: 0, end_time: 1 },
-      ],
-    };
-    let listRow: Record<string, unknown> = importing;
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
-      const url = String(path);
-      if (url.startsWith("/api/meetings?")) return { meetings: [listRow] } as never;
-      if (url === "/api/meetings/m-1") {
-        detailReads += 1;
-        return listRow as never;
-      }
-      return {} as never;
-    });
-
-    render(<HistoryCore />);
-    const rowBody = await waitFor(() => {
-      const found = document.querySelector(
-        '[data-testid="meeting-row-m-1"] .meetings-stream-row-body',
-      );
-      expect(found, "the ledger draws the importing row").toBeTruthy();
-      return found as Element;
-    });
-    fireEvent.click(rowBody);
-    const openTitle = () =>
-      document.querySelector(".meetings-detail-head .surface-display")
-        ?.textContent ?? "";
+    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+      (isDetail(String(path)) ? current : {}) as never);
+    openRecord();
+    const openTitle = () => document.querySelector(".meetings-detail-head .surface-display")?.textContent ?? "";
     await waitFor(() => expect(openTitle()).toBe("Still importing"));
-    expect(screen.queryByTestId("detail-run-intelligence-btn")).toBeNull();
-
-    // The ledger re-reads itself with NO frame behind it: the owner types
-    // in the search box, which changes the list's own url.
-    listRow = transcribed;
-    fireEvent.change(screen.getByPlaceholderText("Search meetings"), {
-      target: { value: "transcribed" },
+    current = {
+      ...detail(), title: "The transcribed meeting", intel_status: "disabled", transcriptWords: 9, planned_route: READY_ROUTE,
+      segments: [{ text: "The quick brown fox.", speaker: "Me", start_time: 0, end_time: 1 }],
+    };
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
     });
-
     await waitFor(() => expect(openTitle()).toBe("The transcribed meeting"));
     expect(
       await screen.findByTestId("detail-run-intelligence-btn", {}, { timeout: 4000 }),
@@ -395,7 +289,7 @@ describe("C1 readiness acknowledgement", () => {
     wire();
   });
 
-  it("ACKs readiness when the owner opens a real Meetings row", async () => {
+  it("a real Meetings row opens the meeting's own window", async () => {
     render(<HistoryCore />);
     const rowBody = await waitFor(() => {
       const found = document.querySelector(
@@ -404,19 +298,12 @@ describe("C1 readiness acknowledgement", () => {
       expect(found, "the real Meetings ledger draws the row").toBeTruthy();
       return found as Element;
     });
-
     fireEvent.click(rowBody);
-    await waitFor(() =>
-      expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m-1/ready/read", {
-        method: "POST",
-      }),
-    );
-    expect(document.querySelector(".meetings-detail-head")).toBeTruthy();
+    expect(openPrimitive).toHaveBeenCalledWith("meeting:m-1");
   });
 
-  it("ACKs readiness when a deep link opens the meeting", async () => {
-    render(<HistoryCore scope="meeting:m-1" />);
-
+  it("ACKs readiness when the meeting's window opens (every door)", async () => {
+    openRecord();
     await waitFor(() =>
       expect(document.querySelector(".meetings-detail-head")).toBeTruthy(),
     );

@@ -32,6 +32,7 @@ from .glass_infra import (
     _normal_chair,
     _ensure_build,
     _settle,
+    clear_hub_windows,
     seed_meeting_engines,
     REPO,
 )
@@ -250,6 +251,9 @@ class TestMeetingsGlass:
                 _api(page, "PUT", "/api/setup/onboarding",
                      {"disposition": "completed"}, token=TOKEN)
                 _normal_chair(page)
+                # One hub is one desk: the 1440 pass's meeting window would
+                # come back at 393 (PHILO-16 B).
+                clear_hub_windows(page, TOKEN)
 
                 # Open the meetings surface
                 _open_surface(page, "review-meetings")
@@ -279,7 +283,7 @@ class TestMeetingsGlass:
                 expect(no_transcript.first).to_be_visible(timeout=3_000)
 
                 # ── Assert: 0 SEG never appears ──
-                win = page.locator(".desk-surface-window")
+                win = page.locator("#surface-meetings")
                 page_text = win.text_content() or ""
                 assert "0 SEG" not in page_text, (
                     f"'0 SEG' found in page at {width}"
@@ -290,7 +294,7 @@ class TestMeetingsGlass:
                     f"'INTERRUPTED' not found at {width} for dead capture"
                 )
                 state_tokens_text = page.evaluate("""() => {
-                    const body = document.querySelector('.desk-surface-body');
+                    const body = document.querySelector('#surface-meetings .desk-surface-body');
                     if (!body) return '';
                     const tokens = body.querySelectorAll('[data-testid="state-token"]');
                     return Array.from(tokens).map(t => t.textContent).join('|');
@@ -301,7 +305,7 @@ class TestMeetingsGlass:
 
                 # ── Assert: no raw <button> in the face body ──
                 raw_buttons = page.evaluate("""() => {
-                    const body = document.querySelector('.desk-surface-body');
+                    const body = document.querySelector('#surface-meetings .desk-surface-body');
                     if (!body) return [];
                     const all = body.querySelectorAll('button');
                     const raw = [];
@@ -359,8 +363,11 @@ class TestMeetingsGlass:
                     )
                     design_body.click()
 
+                    # PHILO-17 ("A meeting opens in one window"): the row opens
+                    # the meeting's own window; the record is there.
+                    record = page.locator("[id='pullout:meeting:m-saved-outcomes']")
                     # Wait for detail to render (the display title is the signal)
-                    detail_display = page.locator(".surface-split-detail .surface-display")
+                    detail_display = record.locator(".surface-display").first
                     detail_display.wait_for(timeout=8_000)
                     _settle(page)
 
@@ -370,21 +377,21 @@ class TestMeetingsGlass:
                     )
 
                     # Assert: NEEDS YOU 3 with 3 outcome rows
-                    needs_head = page.locator(".meetings-detail-needs-head .surface-caption")
+                    needs_head = record.locator(".meetings-detail-needs-head .surface-caption")
                     expect(needs_head).to_be_visible(timeout=5_000)
                     needs_text = needs_head.text_content() or ""
                     # PHILO-13-03: the meeting's proposals are TO REVIEW.
                     assert needs_text.strip() == "TO REVIEW 3", (
                         f"Expected 'TO REVIEW 3', got '{needs_text}'"
                     )
-                    outcome_rows = page.locator(".meetings-detail-outcome-row")
+                    outcome_rows = record.locator(".meetings-detail-outcome-row")
                     assert outcome_rows.count() == 3, (
                         f"Expected 3 outcome rows, got {outcome_rows.count()}"
                     )
 
                     # S-5: Each outcome row has Decide / Dismiss verbs
-                    decide_btns = page.locator(".meetings-detail-outcome-verb .btn", has_text="Decide")
-                    dismiss_btns = page.locator(".meetings-detail-outcome-verb .btn", has_text="Dismiss")
+                    decide_btns = record.locator(".meetings-detail-outcome-verb .btn", has_text="Decide")
+                    dismiss_btns = record.locator(".meetings-detail-outcome-verb .btn", has_text="Dismiss")
                     assert decide_btns.count() == 3, (
                         f"Expected 3 'Decide' buttons, got {decide_btns.count()}"
                     )
@@ -393,13 +400,13 @@ class TestMeetingsGlass:
                     )
 
                     # Assert: proposal preview text renders
-                    detail_text_full = page.locator(".surface-split-detail").text_content() or ""
+                    detail_text_full = record.text_content() or ""
                     assert "Decide: the PostgreSQL migration date" in detail_text_full, (
                         f"Expected proposal preview text in detail, got: {detail_text_full[:200]}"
                     )
 
                     # Assert: speaker tokens in transcript
-                    speaker_tokens = page.locator("[data-testid='transcript-speaker']")
+                    speaker_tokens = record.locator("[data-testid='transcript-speaker']")
                     assert speaker_tokens.count() >= 2, (
                         f"Expected speaker tokens in transcript, got {speaker_tokens.count()}"
                     )
