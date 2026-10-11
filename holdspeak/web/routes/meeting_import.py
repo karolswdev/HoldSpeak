@@ -34,6 +34,22 @@ def _default_transcriber_factory(config: Config):
 _transcriber_factory = _default_transcriber_factory
 
 
+def _default_frozen_transcriber_factory(construct: dict):
+    """PHILO-17 transcribe: build the transcriber from the ADMITTED speech
+    route's model, backend and language (never Config after admission)."""
+    from ...transcribe import Transcriber
+
+    return Transcriber(
+        model_name=construct["model_name"],
+        backend=construct["backend"],
+        language=construct.get("language") or "auto",
+    )
+
+
+# Tests monkeypatch this to inject a fake transcriber for Transcribe.
+_frozen_transcriber_factory = _default_frozen_transcriber_factory
+
+
 def build_meeting_import_router(ctx) -> APIRouter:
     router = APIRouter()
 
@@ -127,7 +143,7 @@ def build_meeting_import_router(ctx) -> APIRouter:
                 _principal(request),
                 "meeting.transcribe",
                 {"meeting_id": meeting_id},
-                held={"config": Config.load(), "transcriber_factory": _transcriber_factory},
+                held={"config": Config.load(), "transcriber_factory": _frozen_transcriber_factory},
             )
         except operations.OperationOwnerRequired as refused:
             return JSONResponse({"error": refused.detail, "code": refused.code}, status_code=403)

@@ -292,10 +292,12 @@ def _p_meeting_transcribe(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
 
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setattr(
-        "holdspeak.whisper_models.configured_speech_readiness",
-        lambda **_kw: {"model": "base", "backend": "mlx", "state": "on_device", "ready": True, "bytes": 0},
+        "holdspeak.whisper_models.speech_readiness",
+        lambda name, backend, **_kw: {"model": name, "backend": backend, "state": "on_device", "ready": True, "bytes": 0},
     )
     meeting = MeetingState(id="m-audio-only", started_at=datetime.now(), segments=[])
+    meeting.ended_at = datetime.now()
+    meeting.capture_status = "finalized"
     meeting.transcription_status = "record_only"
     meeting.transcription_status_detail = {"reason_code": "speech_not_set_up"}
     hub.db.meetings.save_meeting(meeting)
@@ -308,7 +310,7 @@ def _p_meeting_transcribe(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
             return "shape"
 
     result = hub.root.operations.invoke(OWNER, "meeting.transcribe", {"meeting_id": meeting.id}, held={
-        "config": Config.load(), "transcriber_factory": lambda cfg: _Replay()})
+        "config": Config.load(), "transcriber_factory": lambda construct: _Replay()})
     _wait_imported(hub, meeting.id)
     return result
 

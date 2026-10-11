@@ -99,7 +99,7 @@ def test_an_audio_only_meeting_is_transcribed_in_place(tmp_path: Path, monkeypat
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     db = get_database()
     _configure(db)
-    monkeypatch.setattr(import_route, "_transcriber_factory", lambda _cfg: _ReplayTranscriber())
+    monkeypatch.setattr(import_route, "_frozen_transcriber_factory", lambda _construct: _ReplayTranscriber())
     _seed_audio_only(db)
     errors: list[str] = []
     try:

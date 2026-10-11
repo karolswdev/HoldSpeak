@@ -27,8 +27,6 @@ from ..meeting_import import (
     import_transcript,
     humanize_title,
     is_transcript_filename,
-    kept_audio_bytes,
-    transcribe_saved_meeting,
     validate_format,
 )
 from ..meeting_session import MeetingState
@@ -113,6 +111,27 @@ def notify_desk_changed(kind: str, obj_id: str, op: str) -> None:
     notify(kind, obj_id, op)
 
 
+
+
+def _speech_construction(frozen: dict[str, str] | None, config: Config) -> dict[str, str]:
+    """PHILO-17 transcribe: the model, backend and language Transcribe uses.
+
+    The admitted speech route's frozen evidence when the session froze one
+    (``SpeechSession.frozen_transcriber_arguments``); Config only when it
+    froze none, the same fallback a live meeting takes.
+    """
+    if frozen:
+        return {
+            "model_name": str(frozen["model_name"]),
+            "backend": str(frozen["backend"]),
+            "language": str(frozen.get("language") or "auto"),
+        }
+    model = getattr(config, "model", None)
+    return {
+        "model_name": str(getattr(model, "name", "") or "base"),
+        "backend": str(getattr(model, "backend", "") or "auto"),
+        "language": str(getattr(model, "language", "") or "auto"),
+    }
 
 
 class MeetingService:
@@ -365,104 +384,137 @@ class MeetingService:
         *,
         meeting_id: str,
         config: Config,
-        transcriber_factory: Callable[[Config], Any],
+        transcriber_factory: Callable[[dict[str, str]], Any],
     ) -> dict[str, str]:
-        """``meeting.transcribe`` (PHILO-17): turn a record-only meeting's kept
-        audio into its transcript, in the background, on the SAME meeting.
+        """``meeting.transcribe`` (PHILO-17): turn an ended, audio-only meeting's
+        kept audio into its transcript, in the background, on the SAME meeting.
 
-        Only a meeting saved with audio only because speech was not set up
-        (``speech_not_set_up``), and only when speech is ready now: no model
-        load is tried before that, so nothing downloads by surprise. Progress
-        is the import's (``intel_status = importing``, "Transcribing — window
-        N of M."); one desk_changed frame when the worker ends.
+        Astra r1 on #1073: (1) a live capture is refused; (2) ONE conditional
+        UPDATE claims the meeting, so two calls (REST and MCP) start one job,
+        and every later write names that claim; (3) readiness is asked, and
+        the transcriber built, for the model and backend the ADMITTED speech
+        route froze (Config only when the session froze no route, as a live
+        meeting does), and nothing is built before readiness says yes; (4) the
+        result writes only the fields Transcribe owns, so a rename or new tags
+        during the run are kept.
         """
         from .. import whisper_models
+        from ..meeting_import import kept_audio_windows
+        from ..speech_session import admit_speech_session
 
         state = self._db.meetings.get_meeting(meeting_id)
         if state is None:
             raise NotFound("meeting", meeting_id)
+        if state.capture_status == "recording" or state.ended_at is None:
+            raise ConflictError("This meeting is still recording. Stop it first.", code="capture_live")
         detail = dict(state.transcription_status_detail or {})
         if state.transcription_status != "record_only" or detail.get("reason_code") != whisper_models.SPEECH_NOT_SET_UP:
             raise ConflictError("This meeting has no kept audio to transcribe.", code="not_audio_only")
         if state.intel_status == "importing":
             raise ConflictError("This meeting is transcribing now.", code="transcribing")
-        if kept_audio_bytes(meeting_id) <= 0:
+        windows = kept_audio_windows(meeting_id)
+        if windows <= 0:
             raise ConflictError("This meeting has no kept audio to transcribe.", code="no_audio_kept")
-        if not whisper_models.configured_speech_readiness(config=config)["ready"]:
+        token = uuid.uuid4().hex
+        if not self._db.meetings.claim_transcription(meeting_id, token):
+            raise ConflictError("This meeting is transcribing now.", code="transcribing")
+        session = None
+        try:
+            session = admit_speech_session(
+                kind="dictation.session",
+                principal=principal,
+                insertion_aim="recording-import",
+                config_snapshot=config,
+                registry_snapshot=self._db,
+                deadline_seconds=max(300.0, 120.0 * windows),
+                child_budget=4 * windows + 4,
+            )
+            construct = _speech_construction(session.frozen_transcriber_arguments(), config)
+            ready = bool(whisper_models.speech_readiness(construct["model_name"], construct["backend"])["ready"])
+        except BaseException as exc:
+            if session is not None:
+                session.cancel_and_close()
+            self._db.meetings.release_transcription(meeting_id, token)
+            if isinstance(exc, Exception):
+                _LOG.warning("meeting transcribe %s not admitted: %s", meeting_id, exc)
+                raise ConflictError("Speech cannot run now. Check speech in Runs on.", code="speech_not_admitted") from exc
+            raise
+        if not ready:
+            session.cancel_and_close()
+            self._db.meetings.release_transcription(meeting_id, token)
             raise ConflictError("Speech is not set up. Set up speech first.", code=whisper_models.SPEECH_NOT_SET_UP)
-        state.intel_status = "importing"
-        state.intel_status_detail = "Preparing transcription…"
-        self._db.meetings.save_meeting(state)
         try:
             threading.Thread(
                 target=self._run_transcribe_job,
                 kwargs={
-                    "principal": principal,
-                    "config": config,
                     "meeting_id": meeting_id,
+                    "token": token,
+                    "session": session,
+                    "construct": construct,
+                    "labels": {"mic": state.mic_label or "Me", "system": state.remote_label or "Remote"},
+                    "config": config,
                     "transcriber_factory": transcriber_factory,
                 },
                 daemon=True,
                 name=f"meeting-transcribe-{meeting_id}",
             ).start()
         except BaseException:
-            self._fail_transcribe(meeting_id, "TRANSCRIBE DID NOT START")
+            session.cancel_and_close()
+            self._db.meetings.release_transcription(meeting_id, token, cause="TRANSCRIBE DID NOT START")
             raise
         return {"meeting_id": meeting_id, "status": "transcribing"}
 
     def _run_transcribe_job(
         self,
         *,
-        principal: Principal,
-        config: Config,
         meeting_id: str,
-        transcriber_factory: Callable[[Config], Any],
+        token: str,
+        session: Any,
+        construct: dict[str, str],
+        labels: dict[str, str],
+        config: Config,
+        transcriber_factory: Callable[[dict[str, str]], Any],
     ) -> None:
+        from ..meeting_import import transcribe_kept_audio
+
+        meetings = self._db.meetings
         try:
-            transcriber = transcriber_factory(config)
-
-            def on_progress(done: int, total: int) -> None:
-                self._set_import_status(
-                    meeting_id, "importing", f"Transcribing — window {done} of {total}."
-                )
-
-            transcribe_saved_meeting(
-                meeting_id, db=self._db, transcriber=transcriber, config=config,
-                progress=on_progress, principal=principal,
+            transcriber = transcriber_factory(dict(construct))
+            segments = transcribe_kept_audio(
+                meeting_id,
+                transcriber=transcriber,
+                admission=session.transcription(),
+                labels=labels,
+                progress=lambda done, total: meetings.note_transcription_progress(
+                    meeting_id, token, f"Transcribing — window {done} of {total}."
+                ),
             )
         except MeetingImportError as exc:
             _LOG.warning("meeting transcribe %s failed: %s", meeting_id, exc)
-            self._fail_transcribe(meeting_id, exc.cause)
+            session.cancel_and_close()
+            meetings.release_transcription(meeting_id, token, cause=exc.cause)
         except Exception:  # noqa: BLE001 — the meeting keeps its audio and its verb.
             _LOG.warning("meeting transcribe %s failed", meeting_id, exc_info=True)
-            self._fail_transcribe(meeting_id, "UNEXPECTED ERROR")
+            session.cancel_and_close()
+            meetings.release_transcription(meeting_id, token, cause="UNEXPECTED ERROR")
         except BaseException:
             _LOG.warning("meeting transcribe %s cancelled", meeting_id, exc_info=True)
-            self._fail_transcribe(meeting_id, "CANCELLED")
+            session.cancel_and_close()
+            meetings.release_transcription(meeting_id, token, cause="CANCELLED")
             raise
+        else:
+            session.close("succeeded")
+            # The same summary rule as an import: no summary is asked here;
+            # the meeting lands with its "Run summary" verb.
+            summary = (
+                "No summary yet. Ask for it on the meeting."
+                if config.meeting.intel_enabled and config.meeting.intel_deferred_enabled
+                else "Meeting intelligence disabled in config."
+            )
+            if not meetings.complete_transcription(meeting_id, token, segments, intel_status_detail=summary):
+                _LOG.warning("meeting transcribe %s: the claim is gone; the result is not written", meeting_id)
         finally:
             notify_desk_changed("meeting", meeting_id, "update")
-
-    def _fail_transcribe(self, meeting_id: str, cause: str) -> bool:
-        """A failed Transcribe leaves the meeting as it was: record-only, its
-        audio kept, the verb offered again. The cause is on the record."""
-        try:
-            state = self._db.meetings.get_meeting(meeting_id)
-            if state is None:
-                return False
-            state.intel_status = "disabled"
-            state.intel_status_detail = None
-            state.transcription_status = "record_only"
-            state.transcription_status_detail = {
-                **dict(state.transcription_status_detail or {}),
-                "last_error": cause,
-            }
-            self._db.meetings.save_meeting(state)
-            return True
-        except Exception:  # noqa: BLE001
-            _LOG.error("meeting transcribe %s: could not write its failed status (%s)",
-                       meeting_id, cause, exc_info=True)
-            return False
 
     def recover_interrupted_imports(self) -> int:
         """PHILO-15-03: at hub start no import worker is alive, so a row still
@@ -475,7 +527,7 @@ class MeetingService:
         # PHILO-17 transcribe: an interrupted Transcribe goes back to its
         # record-only state; the audio is kept and the verb is offered again.
         for meeting_id in self._db.meetings.list_interrupted_transcribe_ids():
-            if self._fail_transcribe(meeting_id, "INTERRUPTED BY A RESTART"):
+            if self._db.meetings.release_transcription(meeting_id, None, cause="INTERRUPTED BY A RESTART"):
                 recovered += 1
         return recovered
 

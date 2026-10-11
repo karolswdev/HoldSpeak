@@ -436,7 +436,7 @@ MEETING_IMPORT = OperationDescriptor(
 MEETING_TRANSCRIBE = OperationDescriptor(
     name="meeting.transcribe",
     version=1,
-    description="Transcribe a saved meeting that kept its audio only because speech was not set up. Writes the transcript into the same meeting in the background. Refused while speech is not set up.",
+    description="Transcribe an ended meeting that kept its audio only because speech was not set up. Writes the transcript into the same meeting in the background, with the admitted speech route. One run per meeting. Refused while speech is not set up.",
     args_schema={
         "type": "object",
         "properties": {"meeting_id": {"type": "string"}},
@@ -448,7 +448,7 @@ MEETING_TRANSCRIBE = OperationDescriptor(
     result="{meeting_id, status: transcribing}",
     refusals=_CONTRACT_REFUSALS + (
         "owner_required", "NotFound: unknown meeting",
-        "ConflictError: not_audio_only | transcribing | no_audio_kept | speech_not_set_up",
+        "ConflictError: capture_live | not_audio_only | transcribing | no_audio_kept | speech_not_admitted | speech_not_set_up",
     ),
     completion="asynchronous; read meeting.read until intel_status leaves importing (a failure keeps the meeting record_only with transcription_status_detail.last_error); one desk_changed frame (kind meeting, op update) when the worker ends",
     exposure=("http:POST /api/meetings/{meeting_id}/transcribe", "mcp:meeting.transcribe"),
