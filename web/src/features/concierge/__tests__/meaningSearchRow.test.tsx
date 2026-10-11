@@ -71,6 +71,9 @@ describe("MeaningSearchRow", () => {
   });
 
   it("a failure the hub reports has a name, a reason and Try again", async () => {
+    // replaces: tests/e2e/test_meaning_search_row_glass.py::test_a_wrong_file_is_named_and_the_whole_reason_is_on_the_glass
+    // (the hub's real hash refusal: tests/unit/test_meaning_search_turn_on.py::test_a_file_with_a_different_hash_is_refused;
+    // the "not clipped" half is the generic sweep's, T3)
     mocks.apiFetch
       .mockResolvedValueOnce(status({
         error: "The file was not correct. Press Try again to download it again.", error_code: "integrity",
@@ -110,6 +113,34 @@ describe("MeaningSearchRow", () => {
     fireEvent.click(screen.getByTestId("meaning-search-verb"));
     await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("DOWNLOADING 1%"));
     expect(mocks.apiFetch.mock.calls[2]).toEqual(["/api/memory/meaning-search/turn-on", { method: "POST" }]);
+  });
+
+  it("Turn off stops a download in flight (one POST, the row reads OFF)", async () => {
+    // replaces: tests/e2e/test_meaning_search_row_glass.py::test_off_and_downloading (the Turn off leg)
+    mocks.apiFetch
+      .mockResolvedValueOnce(status({ state: "downloading", percent: 37 }))
+      .mockResolvedValue(status({}));
+    render(<ul><MeaningSearchRow /></ul>);
+    expect((await screen.findByTestId("meaning-search-state")).textContent).toContain("DOWNLOADING 37%");
+    expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Turn off");
+    fireEvent.click(screen.getByTestId("meaning-search-verb"));
+    await waitFor(() => expect(screen.getByTestId("meaning-search-state").getAttribute("data-state")).toBe("off"));
+    expect(mocks.apiFetch.mock.calls[1]).toEqual(["/api/memory/meaning-search/turn-off", { method: "POST" }]);
+  });
+
+  it("the hub's 401 says the whole way forward", async () => {
+    // replaces: tests/e2e/test_meaning_search_row_glass.py::test_a_refused_press_is_named_with_a_way_forward
+    // (the page forgetting the refused token is fenced in lib/auth.test.ts)
+    mocks.apiFetch
+      .mockResolvedValueOnce(status({}))
+      .mockImplementationOnce(async () => { throw new ApiError(401, "missing_right: owner", { missing_right: "owner" }); });
+    render(<ul><MeaningSearchRow /></ul>);
+    fireEvent.click(await screen.findByTestId("meaning-search-verb"));
+    const alert = await screen.findByTestId("meaning-search-error");
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(alert.textContent).toBe("Only the owner can do this. Open this desk as the owner. Then press Try again.");
+    expect(screen.getByTestId("meaning-search-state").textContent).toContain("NOT PERMITTED");
+    expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Try again");
   });
 
   it("a status read that fails says so and offers Try again", async () => {

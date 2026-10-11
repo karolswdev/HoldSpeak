@@ -1,0 +1,159 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T15:42:09.052535Z",
+  "wire": {
+    "proposals": [
+      {
+        "agent": "agent",
+        "args_cut": false,
+        "args_head": "{\"command\":\"ls /etc\"}",
+        "args_hidden": 0,
+        "args_sha256": "8b179ee5f946713f586e72fcf034432cbf5d6536e1358fc9fc9d4cc0b15e3129",
+        "args_shown": "ls /etc",
+        "created_at": 1791733329.033657,
+        "cwd": "/tmp/rig/wt",
+        "decided_at": null,
+        "decided_by": null,
+        "expires_at": 1791733929.033657,
+        "hold_reason": "OUTSIDE THE WORKTREE",
+        "id": "toolu_glass_approve",
+        "operation": {
+          "actor": "agent",
+          "admitted_envelope_sha256": "sha256:1280a34ac439e136918c2fd80e3c582ba46581e8730a45280184bbbfaf354a60",
+          "args_len": 7,
+          "consequence": "execute_on_approval",
+          "data_classes": [
+            "tool_arguments_redacted"
+          ],
+          "destination": "/tmp/rig/wt",
+          "effect_class": "agent/tool_call_hold",
+          "family": "tool_gate",
+          "fixed_destination": true,
+          "kernel_operation_id": "op_678881e9969440559ef18bef20b1b0d1",
+          "operation_id": "op_678881e9969440559ef18bef20b1b0d1",
+          "project_scope": null,
+          "resource_scope": "Bash",
+          "tool_call": {
+            "launch_id": "launch_glassr1",
+            "read_rule": "",
+            "rule": "path_outside_worktree",
+            "scope": "outside",
+            "target": ""
+          },
+          "version": 2
+        },
+        "policy_snapshot": {
+          "authority_basis": "per_action_required",
+          "consequence": "execute_on_approval",
+          "eligible": true,
+          "hard_invariants": [
+            "authentication",
+            "secret_custody",
+            "destination_binding",
+            "payload_binding",
+            "pane_identity",
+            "audit_receipt",
+            "configuration_integrity",
+            "schema_safety"
+          ],
+          "mode": "yolo",
+          "next_state": "awaiting_authorization",
+          "outcome": "authorization_required",
+          "policy_version": "operation-policy/v2",
+          "precedence": [
+            "hard_invariants",
+            "revocation",
+            "scoped_grant",
+            "control_mode",
+            "feature_default"
+          ],
+          "reason_code": "yolo_outside_own_worktree",
+          "requires_authorization": true,
+          "requires_grant": false,
+          "requires_review": false,
+          "source": "config"
+        },
+        "reason": null,
+        "session_key": "claude:glass-r1",
+        "state": "held",
+        "tool": "Bash"
+      },
+      {
+        "agent": "agent",
+        "args_cut": true,
+        "args_head": "{\"command\":\"psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
+        "args_hidden": 90,
+        "args_sha256": "7af555d734f240dc818edfcf752d27af068a3b20c2cb3a5c9a562ea1cf3a2293",
+        "args_shown": "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
+        "created_at": 1791733329.043605,
+        "cwd": "/tmp/rig/wt",
+        "decided_at": null,
+        "decided_by": null,
+        "expires_at": 1791733929.043605,
+        "hold_reason": "OUTSIDE THE WORKTREE",
+        "id": "toolu_glass_cut",
+        "operation": {
+          "actor": "agent",
+          "admitted_envelope_sha256": "sha256:a5371bd09552061b26c415f38c36d8451e30fce0da6a9d73c5b6d1b9a853adc3",
+          "args_len": 198,
+          "consequence": "execute_on_approval",
+          "data_classes": [
+            "tool_arguments_redacted"
+          ],
+          "destination": "/tmp/rig/wt",
+          "effect_class": "agent/tool_call_hold",
+          "family": "tool_gate",
+          "fixed_destination": true,
+          "kernel_operation_id": "op_59c07e46421043a38ab3c5e5521c13a3",
+          "operation_id": "op_59c07e46421043a38ab3c5e5521c13a3",
+          "project_scope": null,
+          "resource_scope": "Bash",
+          "tool_call": {
+            "launch_id": "launch_glassr1",
+            "read_rule": "",
+            "rule": "path_outside_worktree",
+            "scope": "outside",
+            "target": ""
+          },
+          "version": 2
+        },
+        "policy_snapshot": {
+          "authority_basis": "per_action_required",
+          "consequence": "execute_on_approval",
+          "eligible": true,
+          "hard_invariants": [
+            "authentication",
+            "secret_custody",
+            "destination_binding",
+            "payload_binding",
+            "pane_identity",
+            "audit_receipt",
+            "configuration_integrity",
+            "schema_safety"
+          ],
+          "mode": "yolo",
+          "next_state": "awaiting_authorization",
+          "outcome": "authorization_required",
+          "policy_version": "operation-policy/v2",
+          "precedence": [
+            "hard_invariants",
+            "revocation",
+            "scoped_grant",
+            "control_mode",
+            "feature_default"
+          ],
+          "reason_code": "yolo_outside_own_worktree",
+          "requires_authorization": true,
+          "requires_grant": false,
+          "requires_review": false,
+          "source": "config"
+        },
+        "reason": null,
+        "session_key": "claude:glass-r1",
+        "state": "held",
+        "tool": "Bash"
+      }
+    ],
+    "state": "held"
+  }
+}

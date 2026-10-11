@@ -1,0 +1,150 @@
+{
+  "trust": {
+    "actuators_enabled": true,
+    "auth_token_set": false,
+    "configured_endpoints": [],
+    "destinations": [
+      {
+        "authority_basis": "Assigned summary route",
+        "background_ability": "Only runs for an explicit summary request",
+        "boundary": "unavailable",
+        "data_class": "Meeting transcript",
+        "destination": "Summary route unavailable",
+        "enabled": false,
+        "id": "meeting_intel",
+        "last_receipt": null,
+        "name": "Meeting summary",
+        "operation": "Generate meeting summary",
+        "revoke_action": "Change the summary assignment"
+      },
+      {
+        "authority_basis": "Enabled pipeline and Runs on selection",
+        "background_ability": "Only runs for an explicit dictation request",
+        "boundary": "Configured runtime destination",
+        "data_class": "Final dictation text and selected context",
+        "destination": "This machine",
+        "enabled": false,
+        "id": "dictation_runtime",
+        "last_receipt": null,
+        "name": "Dictation intelligence",
+        "operation": "Rewrite final dictation",
+        "revoke_action": "Use a model on this device for dictation, or stop the rewrite. Then no text goes out."
+      },
+      {
+        "authority_basis": "Configured credential plus per-action approval",
+        "background_ability": "No; sends only after approval",
+        "boundary": "One configured webhook destination",
+        "data_class": "The exact previewed digest or card text",
+        "destination": "Slack channel destinations",
+        "enabled": false,
+        "id": "slack",
+        "last_receipt": null,
+        "name": "Slack",
+        "operation": "Send approved text",
+        "revoke_action": "Delete the Slack secret in Settings"
+      },
+      {
+        "authority_basis": "Configured credential plus per-action approval",
+        "background_ability": "No; sends only after approval",
+        "boundary": "One configured webhook destination",
+        "data_class": "The exact previewed card text",
+        "destination": "Not configured",
+        "enabled": false,
+        "id": "companion_webhook",
+        "last_receipt": null,
+        "name": "Custom webhook",
+        "operation": "POST approved text",
+        "revoke_action": "Delete the custom webhook secret in Settings"
+      },
+      {
+        "authority_basis": "Configured repository plus per-action approval",
+        "background_ability": "No; files only after approval",
+        "boundary": "The configured repository through local gh",
+        "data_class": "The exact previewed issue title and body",
+        "destination": "Not configured",
+        "enabled": false,
+        "id": "github",
+        "last_receipt": null,
+        "name": "GitHub issues",
+        "operation": "Create approved issue",
+        "revoke_action": "Clear the repository or log out of gh"
+      },
+      {
+        "authority_basis": "Configured bot token and pairing policy",
+        "background_ability": "May receive commands while the bot is enabled",
+        "boundary": "The paired Telegram bot",
+        "data_class": "Commands, status, and explicitly requested output",
+        "destination": "Not configured",
+        "enabled": false,
+        "id": "telegram",
+        "last_receipt": null,
+        "name": "Telegram control",
+        "operation": "Receive paired commands and send responses",
+        "revoke_action": "Delete the Telegram bot token in Settings"
+      },
+      {
+        "authority_basis": "Explicit webhook configuration",
+        "background_ability": "May send after sustained deferred-job failures",
+        "boundary": "One configured alert webhook",
+        "data_class": "Queue counts and failure rates; never transcript text",
+        "destination": "Not configured",
+        "enabled": false,
+        "id": "failure_webhook",
+        "last_receipt": null,
+        "name": "Failure alerts",
+        "operation": "POST sustained-failure alert",
+        "revoke_action": "Delete the failure webhook secret in Settings"
+      },
+      {
+        "authority_basis": "You press Send",
+        "background_ability": "No. Each send needs your press",
+        "boundary": "This device",
+        "data_class": "The document you send",
+        "destination": "~/Documents/HoldSpeak/Sent",
+        "enabled": false,
+        "id": "channel:holdspeak-folder",
+        "last_receipt": null,
+        "name": "HoldSpeak folder",
+        "operation": "Send a document",
+        "revoke_action": "Nothing leaves this device",
+        "saved": true
+      },
+      {
+        "authority_basis": "You press Send",
+        "background_ability": "No. Each send needs your press",
+        "boundary": "This device",
+        "data_class": "The document you send",
+        "destination": "~/Documents/HoldSpeak/Team updates",
+        "enabled": false,
+        "id": "channel:chd_498be4e50e48f3feffd1a761",
+        "last_receipt": null,
+        "name": "Team updates",
+        "operation": "Send a document",
+        "revoke_action": "Park the destination in Settings, Connections",
+        "saved": true
+      },
+      {
+        "authority_basis": "You press Send",
+        "background_ability": "No. Each send needs your press",
+        "boundary": "Outside this device",
+        "data_class": "The document you send",
+        "destination": "~/Dropbox/Team updates",
+        "enabled": true,
+        "id": "channel:chd_64c9f0a6756e5e99764be8d9",
+        "last_receipt": null,
+        "name": "Synced updates",
+        "operation": "Send a document",
+        "revoke_action": "Park the destination in Settings, Connections",
+        "saved": true
+      }
+    ],
+    "egress_detail": "Live analysis is off for Record. Dictation and manual summary can use a remote route.",
+    "last_egress": null,
+    "summary": "1 external destination enabled.",
+    "transcript_egress": "none",
+    "web_bind": "127.0.0.1",
+    "webhook_allowed_hosts": [
+      "*"
+    ]
+  }
+}

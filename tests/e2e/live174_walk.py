@@ -428,7 +428,7 @@ def _step_settings_system(page: Any, out_dir: Path, w: int, token: str,
     remote_on = remote_state.get("remote_on", False)
 
     # Open Settings hub, then click into the System module (the way
-    # test_hs174_remote_settings_glass.py does: click the System row's
+    # settings_rig._open_system_module does: click the System row's
     # Open, then wait for the "Remote access" GadgetGroup label).
     _open_surface(page, token, "configure-settings")
     _settle(page)

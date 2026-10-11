@@ -1,0 +1,85 @@
+{
+  "destinations": [
+    {
+      "account": {},
+      "badge": "local",
+      "builtin": true,
+      "channel": "file",
+      "connection": null,
+      "created_at": "2026-10-11T15:35:50+00:00",
+      "id": "holdspeak-folder",
+      "name": "HoldSpeak folder",
+      "parked_at": "2026-10-11 15:35:50",
+      "state": "parked",
+      "synced": false,
+      "target": {
+        "builtin": "documents",
+        "display": "~/Documents/HoldSpeak/Sent",
+        "folder": "/Users/owner/home/Documents/HoldSpeak/Sent"
+      },
+      "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af"
+    },
+    {
+      "account": {},
+      "badge": "cloud",
+      "builtin": false,
+      "channel": "file",
+      "connection": null,
+      "created_at": "2026-10-11T15:35:50+00:00",
+      "id": "chd_eb8f9e2fa8e5883a18ea894e",
+      "name": "Folder Drive",
+      "parked_at": null,
+      "state": "active",
+      "synced": true,
+      "target": {
+        "display": "~/Drive",
+        "folder": "/Users/owner/home/Drive"
+      },
+      "target_digest": "106c428658e2730f6858167ef5d1435afc7b5b5fc5b79257035648e7687d0cb4"
+    },
+    {
+      "account": {},
+      "badge": "local",
+      "builtin": false,
+      "channel": "file",
+      "connection": null,
+      "created_at": "2026-10-11T15:35:50+00:00",
+      "id": "chd_9cc52a732c7d2a7bc885a2bf",
+      "name": "Folder Reports",
+      "parked_at": null,
+      "state": "active",
+      "synced": false,
+      "target": {
+        "display": "~/Reports",
+        "folder": "/Users/owner/home/Reports"
+      },
+      "target_digest": "093f49781809e4b5e2885bc926535239eb650249dda997efa70ccd66c8c221b2"
+    },
+    {
+      "account": {
+        "from_email": "karol@acme.io",
+        "from_name": "",
+        "key_ref": "sendgrid-karol-acme.io",
+        "provider": "sendgrid"
+      },
+      "badge": "cloud",
+      "builtin": false,
+      "channel": "email",
+      "connection": null,
+      "created_at": "2026-10-11T15:35:50+00:00",
+      "id": "chd_53fd3bad2b67baf14a3b57f4",
+      "name": "Email lena@acme.io",
+      "parked_at": null,
+      "state": "active",
+      "synced": false,
+      "target": {
+        "cc": [],
+        "to": [
+          "lena@acme.io",
+          "tomas@acme.io"
+        ]
+      },
+      "target_digest": "a38c3e82df92f761c3a4d2c4ff1cb9b42ebd97d0b1d5338581cd81dc5f2b4c1c"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "active_count": 1,
+  "bind_host": null,
+  "credentials": [
+    {
+      "active": true,
+      "delegation": null,
+      "expires_at": 1791776620.949616,
+      "id": "4f24a8cb31314fa5",
+      "identity": "desk-agent",
+      "last_used_at": null,
+      "palette": "DESK",
+      "project_delegations": []
+    }
+  ],
+  "delegations": [],
+  "enabled": true,
+  "port": null,
+  "project_delegations": [],
+  "total_count": 1
+}

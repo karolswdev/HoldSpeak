@@ -1,0 +1,34 @@
+{
+  "applies_to": "future_operations_only",
+  "control_mode": "yolo",
+  "control_mode_description": "Runs eligible configured work without HoldSpeak approval prompts.",
+  "control_mode_label": "YOLO",
+  "hard_invariants": [
+    "authentication",
+    "secret_custody",
+    "destination_binding",
+    "payload_binding",
+    "pane_identity",
+    "audit_receipt",
+    "configuration_integrity",
+    "schema_safety"
+  ],
+  "policy_version": "operation-policy/v2",
+  "precedence": [
+    "hard_invariants",
+    "revocation",
+    "scoped_grant",
+    "control_mode",
+    "feature_default"
+  ],
+  "source": "config",
+  "supported_families": [
+    "coder_steering",
+    "dictation_commit",
+    "external_write",
+    "sync_cadence",
+    "tool_gate"
+  ],
+  "unsupported_family_behavior": "refused",
+  "version": 2
+}

@@ -1,0 +1,343 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T15:42:10.616854Z",
+  "wire": {
+    "answers": [],
+    "attempt_events": [
+      {
+        "from": null,
+        "occurred_at": "2026-10-11T15:42:10.479244Z",
+        "reason": "created:launch",
+        "to": "working"
+      }
+    ],
+    "control": {
+      "armed": false,
+      "direct": false,
+      "expires_in_seconds": null,
+      "mode": "yolo",
+      "pane": false,
+      "pane_id": null
+    },
+    "events": [
+      {
+        "detail": {
+          "source": "startup"
+        },
+        "event": "SessionStart",
+        "head": null,
+        "id": 1,
+        "text": null,
+        "tool": null,
+        "ts": "2026-10-11T15:42:09.301704Z"
+      },
+      {
+        "detail": {},
+        "event": "UserPromptSubmit",
+        "head": null,
+        "id": 2,
+        "text": "Write the ledger rollback runbook.",
+        "tool": null,
+        "ts": "2026-10-11T15:42:09.303451Z"
+      },
+      {
+        "detail": {
+          "tool_use_id": "t1"
+        },
+        "event": "PostToolUse",
+        "head": "ledger/freeze.py",
+        "id": 3,
+        "text": null,
+        "tool": "Read",
+        "ts": "2026-10-11T15:42:09.304148Z"
+      },
+      {
+        "detail": {
+          "tool_use_id": "t2"
+        },
+        "event": "PostToolUse",
+        "head": null,
+        "id": 4,
+        "text": null,
+        "tool": "Grep",
+        "ts": "2026-10-11T15:42:09.304788Z"
+      },
+      {
+        "detail": {
+          "tool_use_id": "t3"
+        },
+        "event": "PostToolUse",
+        "head": "docs/runbooks/README.md",
+        "id": 5,
+        "text": null,
+        "tool": "Read",
+        "ts": "2026-10-11T15:42:09.305406Z"
+      },
+      {
+        "detail": {},
+        "event": "Stop",
+        "head": null,
+        "id": 6,
+        "text": "I will draft the runbook from the freeze decision and the Nov 12 rollback window.",
+        "tool": null,
+        "ts": "2026-10-11T15:42:09.306002Z"
+      },
+      {
+        "detail": {
+          "tool_use_id": "t4"
+        },
+        "event": "PostToolUse",
+        "head": "docs/ledger-rollback.md",
+        "id": 7,
+        "text": null,
+        "tool": "Write",
+        "ts": "2026-10-11T15:42:09.306626Z"
+      },
+      {
+        "detail": {
+          "tool_use_id": "t5"
+        },
+        "event": "PostToolUse",
+        "head": "pytest tests/runbooks -q",
+        "id": 8,
+        "text": null,
+        "tool": "Bash",
+        "ts": "2026-10-11T15:42:09.307240Z"
+      },
+      {
+        "detail": {},
+        "event": "Notification",
+        "head": null,
+        "id": 9,
+        "text": "The runbook needs a rollback owner. Jordan or Avery?",
+        "tool": null,
+        "ts": "2026-10-11T15:42:10.477597Z"
+      }
+    ],
+    "events_next_after": null,
+    "follow_through": {
+      "cleanup": null,
+      "close": null,
+      "done": false,
+      "merged": null,
+      "pr": {
+        "checks": [
+          {
+            "name": "ci / 0",
+            "state": "success",
+            "url": ""
+          },
+          {
+            "name": "ci / 1",
+            "state": "success",
+            "url": ""
+          },
+          {
+            "name": "ci / 2",
+            "state": "success",
+            "url": ""
+          },
+          {
+            "name": "ci / 3",
+            "state": "success",
+            "url": ""
+          },
+          {
+            "name": "ci / 4",
+            "state": "success",
+            "url": ""
+          },
+          {
+            "name": "ci / 5",
+            "state": "success",
+            "url": ""
+          },
+          {
+            "name": "ci / e2e",
+            "state": "in_progress",
+            "url": ""
+          }
+        ],
+        "ci": "pending",
+        "number": 413,
+        "review_decision": "",
+        "state": "open",
+        "title": null,
+        "url": "https://github.com/acme/payments-ledger/pull/413"
+      },
+      "pr_state": "pr_open"
+    },
+    "gated": [
+      {
+        "args_cut": false,
+        "args_head": "{\"command\":\"psql -h staging-ledger -c 'select count(*) from entries'\"}",
+        "args_hidden": 0,
+        "args_shown": "psql -h staging-ledger -c 'select count(*) from entries'",
+        "created_at": 1791733330.493268,
+        "decided_at": 1791733330.606017,
+        "decided_by": "owner-session",
+        "hold_reason": "OUTSIDE THE WORKTREE",
+        "id": "toolu_psql",
+        "policy": {
+          "authority_basis": "per_action_required",
+          "consequence": "execute_on_approval",
+          "eligible": true,
+          "hard_invariants": [
+            "authentication",
+            "secret_custody",
+            "destination_binding",
+            "payload_binding",
+            "pane_identity",
+            "audit_receipt",
+            "configuration_integrity",
+            "schema_safety"
+          ],
+          "mode": "yolo",
+          "next_state": "awaiting_authorization",
+          "outcome": "authorization_required",
+          "policy_version": "operation-policy/v2",
+          "precedence": [
+            "hard_invariants",
+            "revocation",
+            "scoped_grant",
+            "control_mode",
+            "feature_default"
+          ],
+          "reason_code": "not_a_holdspeak_launch",
+          "requires_authorization": true,
+          "requires_grant": false,
+          "requires_review": false,
+          "source": "config"
+        },
+        "reason": null,
+        "state": "approved",
+        "tool": "Bash",
+        "was_held": true
+      },
+      {
+        "args_cut": true,
+        "args_head": "{\"command\":\"psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
+        "args_hidden": 90,
+        "args_shown": "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
+        "created_at": 1791733330.6124969,
+        "decided_at": null,
+        "decided_by": null,
+        "hold_reason": "OUTSIDE THE WORKTREE",
+        "id": "toolu_cut",
+        "policy": {
+          "authority_basis": "per_action_required",
+          "consequence": "execute_on_approval",
+          "eligible": true,
+          "hard_invariants": [
+            "authentication",
+            "secret_custody",
+            "destination_binding",
+            "payload_binding",
+            "pane_identity",
+            "audit_receipt",
+            "configuration_integrity",
+            "schema_safety"
+          ],
+          "mode": "yolo",
+          "next_state": "awaiting_authorization",
+          "outcome": "authorization_required",
+          "policy_version": "operation-policy/v2",
+          "precedence": [
+            "hard_invariants",
+            "revocation",
+            "scoped_grant",
+            "control_mode",
+            "feature_default"
+          ],
+          "reason_code": "not_a_holdspeak_launch",
+          "requires_authorization": true,
+          "requires_grant": false,
+          "requires_review": false,
+          "source": "config"
+        },
+        "reason": null,
+        "state": "held",
+        "tool": "Bash",
+        "was_held": true
+      }
+    ],
+    "launch": {
+      "agent": "claude",
+      "attempt_id": "att_7e525f96f54f4098",
+      "branch": "hs/write-the-rollback-runbook",
+      "brief_sent_at": null,
+      "brief_text": "Write the ledger rollback runbook.\n\nSources: the freeze decision; the Nov 12 window.\nChecks: the runbook names an owner.",
+      "control_mode": "normal",
+      "failure": null,
+      "gate": "gated",
+      "instruction_state": "sent",
+      "launch_id": "launch_c2_runbook",
+      "launched_at": "2026-10-11T15:22:10.479646Z",
+      "origin_ref": {
+        "id": "m-cutover-a1",
+        "kind": "action"
+      },
+      "profile_id": "claude-default",
+      "queued_rebrief": null,
+      "queued_rebriefs": [],
+      "rebriefs": [],
+      "session_key": "claude:c1a0de00-runbook",
+      "state": "launched",
+      "stopped": null,
+      "story_ref": null,
+      "tmux_session": "hs-runbook",
+      "worktree_path": "~/dev/wt/hs-action-runbook"
+    },
+    "session": {
+      "created_at": "2026-10-11T15:42:09.301704Z",
+      "event_count": 9,
+      "last_tool_name": "Bash",
+      "lifecycle": "waiting",
+      "model": null,
+      "state": "waiting",
+      "updated_at": "2026-10-11T15:42:10.477597Z"
+    },
+    "usage": null,
+    "wait": {
+      "answer_state": "drafted",
+      "draft": {
+        "reason": "it names a person",
+        "text": "Jordan owns it. Avery reviews.",
+        "verdict": "real"
+      },
+      "kind": "TO ANSWER",
+      "question": "The runbook needs a rollback owner. Jordan or Avery?",
+      "started": "2026-10-11T15:42:10.477597Z",
+      "turn_end": "asks",
+      "wait_id": "2026-10-11T15:42:10.477597Z#9",
+      "wait_kind": "answer"
+    },
+    "worktree": {
+      "base": "origin/main",
+      "branch": "hs/write-the-rollback-runbook",
+      "commits": [
+        {
+          "at": 1791733330,
+          "sha": "64f3aa2",
+          "subject": "Draft the ledger rollback runbook"
+        }
+      ],
+      "files": [
+        {
+          "path": "docs/ledger-rollback.md",
+          "status": "A"
+        },
+        {
+          "path": "freeze.py",
+          "status": "A"
+        }
+      ],
+      "read_at": 1791733330.58554,
+      "uncommitted": {
+        "modified": 0,
+        "staged": 0,
+        "untracked": 0
+      }
+    }
+  }
+}

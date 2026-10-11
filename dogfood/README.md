@@ -65,7 +65,7 @@ Whisper/GGUF are reused, not re-downloaded. Wipe and restart any time:
 
 - **Tier 1 — Plumbing** (`setup.sh --tier1`): no LLM, no mic. Fast and
   deterministic. The opt-in pytest covers the deterministic core:
-  `HOLDSPEAK_DOGFOOD=1 uv run pytest -q tests/e2e/test_dogfood_plumbing_e2e.py`.
+  `uv run pytest -q tests/unit/test_dogfood_fixtures.py`.
 - **Tier 2 — Real metal** (`setup.sh`, default): real `say` → Whisper → intel
   on `.43`. Proves the LLM-shaped features actually produce output. Override the
   endpoint with `DOGFOOD_INTEL_BASE_URL` / `DOGFOOD_INTEL_MODEL`.

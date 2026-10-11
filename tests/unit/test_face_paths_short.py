@@ -73,6 +73,7 @@ def test_a_folder_outside_home_keeps_its_whole_path(hub: Hub, tmp_path: Path) ->
 
 
 def test_setup_checks_show_home_paths_with_a_tilde_and_no_wire_boundary(home: Path) -> None:
+    """replaces (the Setup and paths legs): tests/e2e/test_finish_face_polish_glass.py::TestFinishFacePolish::test_the_named_faces_say_names_and_plain_reasons"""
     from holdspeak.setup_status import build_setup_status
 
     status = build_setup_status(database=None)

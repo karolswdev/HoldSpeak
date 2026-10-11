@@ -1,0 +1,23 @@
+{
+  "destinations": [
+    {
+      "account": {},
+      "badge": "local",
+      "builtin": true,
+      "channel": "file",
+      "connection": null,
+      "created_at": "2026-10-11T15:35:50+00:00",
+      "id": "holdspeak-folder",
+      "name": "HoldSpeak folder",
+      "parked_at": "2026-10-11 15:35:50",
+      "state": "parked",
+      "synced": false,
+      "target": {
+        "builtin": "documents",
+        "display": "~/Documents/HoldSpeak/Sent",
+        "folder": "/Users/owner/home/Documents/HoldSpeak/Sent"
+      },
+      "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af"
+    }
+  ]
+}

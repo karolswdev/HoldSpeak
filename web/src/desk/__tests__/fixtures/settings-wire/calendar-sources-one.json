@@ -1,0 +1,19 @@
+{
+  "auto_record": "room_linked",
+  "auto_record_lead_minutes": 5,
+  "matched_this_week": 0,
+  "snapshot_egress": null,
+  "sources": [
+    {
+      "egress": false,
+      "event_count": 0,
+      "host": null,
+      "id": "src-work",
+      "label": "WORK",
+      "last_read": null,
+      "last_read_at": null,
+      "status": "idle",
+      "type": "ICS"
+    }
+  ]
+}

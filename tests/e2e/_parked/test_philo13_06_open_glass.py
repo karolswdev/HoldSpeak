@@ -1,0 +1,330 @@
+"""PHILO-13-06 (B1) -- ONE OPEN GRAMMAR, walked on glass.
+
+The owner's fork 2 (2026-10-01): "Opens its own window". Every named row
+opens its object in its own window. Through the real hub on an isolated
+HOME, at 1440x900 (mouse) and 393x852 (touch), seeded with the canvas week
+(Avery, Sam, Jordan, Priya; meetings; decisions; the brief) and a calendar,
+all minted through the real producers: the Chair glass seed
+(test_philo13_11_chair_glass._seed), the People routes (Priya's request,
+accepted; the 1:1 series linked to Priya, people.py:193-204), an ICS file in
+this HOME through PUT /api/settings and the real ingest conductor, the
+calendar link route (the sync event to its Room), and POST
+/api/brief/generate after the week exists.
+
+J1 (the morning) walked end to end, one gesture per press or tap:
+  1. Brief window: the brief row `Review decision: ...` -> that decision's window.
+  2. Needs you window: Priya's commitment row (the drawer row's body,
+     PHILO-14 A5 testid `needs-row`) -> People on Priya.
+  3. The week window: `1:1 Priya / Karol` -> People on Priya, on Prep.
+A dead tap is a press after which the object it names is not the front
+window. J3 prep: from a fresh Chair, the 1:1 row alone -> Priya on Prep.
+
+At 393 one Chair window shows at a time (PHILO-13-11, C1-6a): reaching the
+Brief and The week windows takes Go > Chair > <window>. Those frame taps are
+counted apart from the row taps and reported as they are; the open grammar
+is fenced on the row taps (0 dead, one tap per open).
+
+Shots go to pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-06-shots/
+under HOLDSPEAK_EVIDENCE_WRITE=1 (``.tmp/evidence-shots/`` otherwise).
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from .glass_infra import _boot, _ensure_build, _normal_chair, _settle
+from .open_rig import COMMITMENT, ONE_ON_ONE, TOKEN, _seed  # noqa: F401 -- the seed moved to the rig
+from tests._evidence import evidence_dir
+
+# PHILO-14 A1: the Chair is the screen of objects. J1 reads its windows as the
+# desk remembers them open (`chair_windows_open`, tests/conftest.py); J3 starts
+# FRESH (no remembered windows) and opens The week by the owner's gestures.
+
+pytest.importorskip("playwright.sync_api", reason="the open-grammar glass needs Playwright")
+
+SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-06-shots")
+SIZES = {1440: 900, 393: 852}
+
+
+WINDOWS_JS = r"""() => [...document.querySelectorAll('.desk-window-shell, .desk-window, .desk-pullout')]
+  .filter((w) => { const r = w.getBoundingClientRect(); const cs = getComputedStyle(w);
+    return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity) > 0.05; })
+  .map((w) => ({title: (w.getAttribute('aria-label') || '').trim(), front: w.classList.contains('is-front'),
+    text: (w.innerText || '').replace(/\s+/g, ' ').slice(0, 400)}))
+  .filter((w, i, all) => w.title && all.findIndex((x) => x.title === w.title) === i)"""
+
+
+class TestOneOpenGrammar:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        keyfile = tmp_path / "people.key"
+        keyfile.write_text("{}")
+        keyfile.chmod(0o600)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
+        _ensure_build()
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        self.home = tmp_path / "home"
+        self.base = base
+        self.ids = _seed(self.home, base)
+        try:
+            yield
+        finally:
+            server.stop()
+
+    def _page(self, pw: Any, width: int, fresh: bool = False) -> tuple[Any, Any, list[str]]:
+        browser = pw.chromium.launch(headless=True)
+        ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                  device_scale_factor=1, has_touch=width < 720, is_mobile=False)
+        page = ctx.new_page()
+        page.set_default_timeout(30_000)
+        errors: list[str] = []
+        page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+        page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+        _normal_chair(page)
+        if fresh:
+            # PHILO-14 A1 (#939): a fresh desk is the screen; no Chair window is open.
+            page.locator("[data-testid=desk-screen]").wait_for(timeout=15_000)
+        else:
+            page.locator(".desk-window-shell[aria-label='Needs you']").wait_for(timeout=15_000)
+        page.wait_for_timeout(1500)
+        _settle(page)
+        return browser, page, errors
+
+    @staticmethod
+    def _press(page: Any, loc: Any, width: int) -> None:
+        loc.scroll_into_view_if_needed()
+        if width < 720:
+            box = loc.bounding_box()
+            assert box, "nothing to tap"
+            page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        else:
+            loc.click(timeout=8_000)
+
+    def _chair_window(self, page: Any, width: int, name: str, walk: dict[str, Any]) -> None:
+        """At 393, Go > <name> (two frame taps); at 1440 a press on any part that shows."""
+        shell = page.locator(f".desk-window-shell[aria-label='{name}']")
+        if shell.count() and shell.first.is_visible() and shell.first.evaluate("e => e.classList.contains('is-front')"):
+            return
+        if width > 720 and shell.count():
+            # PHILO-14 A1 (#939): the Chair windows float and stack like every
+            # desk window; a press on any part of a window that shows brings it
+            # to the front (one frame tap), as on Workbench.
+            point = shell.first.evaluate("""(e) => { const r = e.getBoundingClientRect();
+                for (let y = r.top + 6; y < r.bottom - 6; y += 16)
+                  for (let x = r.left + 6; x < r.right - 6; x += 16) {
+                    const t = document.elementFromPoint(x, y);
+                    if (t && e.contains(t) && !t.closest('button, a, input, [role=button]')) return [x, y];
+                  }
+                return null; }""")
+            if point:
+                page.mouse.click(point[0], point[1])
+                walk["frame_taps"] += 1
+                _settle(page)
+                return
+        menu = "go" if width <= 720 else "window"
+        # PHILO-14 A1 (#939): at 393 the Chair's windows are Go's first rows
+        # (two taps); at 1440 Window > Chair > <name>.
+        steps = [page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button")]
+        if menu == "window":
+            steps.append(page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')"))
+        steps.append(page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"))
+        for loc in steps:
+            loc.first.wait_for()
+            self._press(page, loc.first, width)
+            page.wait_for_timeout(250)
+            walk["frame_taps"] += 1
+        shell.wait_for()
+        _settle(page)
+
+    def _open(self, page: Any, width: int, row: Any, expect_title: str, expect_text: str,
+              what: str, walk: dict[str, Any]) -> dict[str, Any]:
+        """One row gesture; dead unless the named object is the front window."""
+        before = page.evaluate(WINDOWS_JS)
+        self._press(page, row, width)
+        try:
+            page.wait_for_function(
+                """([title, text]) => [...document.querySelectorAll('.desk-window-shell, .desk-window, .desk-pullout')]
+                    .some((w) => w.classList.contains('is-front') && (w.getAttribute('aria-label') || '').includes(title)
+                      && (w.innerText || '').includes(text))""",
+                arg=[expect_title, expect_text], timeout=8_000)
+        except Exception:  # noqa: BLE001 -- recorded as a dead tap below
+            pass
+        page.wait_for_timeout(500)
+        _settle(page)
+        after = page.evaluate(WINDOWS_JS)
+        front = [w for w in after if w["front"]]
+        ok = any(expect_title in w["title"] and expect_text in w["text"] for w in front)
+        step = {"what": what, "dead": not ok, "front": [w["title"] for w in front],
+                "opened": [w["title"] for w in after if w["title"] not in {b["title"] for b in before}]}
+        walk["row_taps"] += 1
+        walk["dead"] += 0 if ok else 1
+        walk["steps"].append(step)
+        return step
+
+    @staticmethod
+    def _lens(page: Any) -> str | None:
+        return page.evaluate("""() => { const t = document.querySelector('.people-lenses [role=tab][aria-selected=true]');
+            return t ? t.textContent.trim() : null; }""")
+
+    @pytest.mark.chair_windows_open
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_j1_opens_in_their_own_windows(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        walk: dict[str, Any] = {"width": width, "touch": width < 720, "row_taps": 0, "frame_taps": 0,
+                                "dead": 0, "steps": []}
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                page.screenshot(path=str(SHOTS / f"B1-00-chair-{width}.png"))
+                # 1. the brief row -> its decision
+                self._chair_window(page, width, "Brief", walk)
+                brief_row = page.locator("[data-testid='arrival-brief-row']", has_text=self.ids["decision_title"]).first
+                assert brief_row.get_attribute("role") == "button", "the brief row offers its open"
+                self._open(page, width, brief_row, self.ids["decision_title"], self.ids["decision_title"],
+                           "brief row -> the decision", walk)
+                page.screenshot(path=str(SHOTS / f"B1-01-brief-row-decision-{width}.png"))
+
+                # 2. Priya's commitment row -> People on Priya
+                self._chair_window(page, width, "Needs you", walk)
+                # PHILO-14 A5: the Needs-you drawer row's body is its open
+                # (`needs-row`; the name is the body, the verbs are apart).
+                commitment = page.locator(".desk-window-shell[aria-label='Needs you'] [data-testid='needs-row']",
+                                          has_text=COMMITMENT).first.locator(".needs-row-name")
+                self._open(page, width, commitment, "Priya Nair", "Priya Nair", "commitment row -> its person", walk)
+                page.screenshot(path=str(SHOTS / f"B1-02-commitment-person-{width}.png"))
+
+                # 3. the 1:1 row -> Priya on Prep
+                self._chair_window(page, width, "The week", walk)
+                one = page.locator("[data-testid='arrival-meeting-row']", has_text=ONE_ON_ONE).first
+                self._open(page, width, one, "Priya Nair", "Priya Nair", "1:1 row -> Priya on Prep", walk)
+                walk["lens_after_1on1"] = self._lens(page)
+                walk["j1_gestures"] = walk["row_taps"] + walk["frame_taps"]
+
+                # Astra's pass: Prep -> Now -> the same 1:1 row again lands on Prep
+                # (the scope is unchanged; the open is a new request).
+                # PHILO-17 (2b): a person opens THAT person, in her own window.
+                people = page.locator(".desk-window-shell[aria-label='Priya Nair'], .desk-window[aria-label='Priya Nair']").first
+                self._press(page, people.get_by_role("tab", name="Now"), width)
+                page.wait_for_timeout(400)
+                reopen: dict[str, Any] = {"lens_after_now": self._lens(page), "row_taps": 0, "frame_taps": 0,
+                                          "dead": 0, "steps": []}
+                self._chair_window(page, width, "The week", reopen)
+                one = page.locator("[data-testid='arrival-meeting-row']", has_text=ONE_ON_ONE).first
+                self._open(page, width, one, "Priya Nair", "Priya Nair", "1:1 row again -> Prep", reopen)
+                page.wait_for_timeout(300)
+                reopen["lens"] = self._lens(page)
+                walk["reopen_prep"] = reopen
+                page.screenshot(path=str(SHOTS / f"B1-03b-prep-now-reopen-{width}.png"))
+                page.screenshot(path=str(SHOTS / f"B1-03-one-on-one-prep-{width}.png"))
+
+                # The sync row's Room: the event linked to its project opens the Room.
+                self._chair_window(page, width, "The week", walk)
+                sync = page.locator("[data-testid='arrival-meeting-row']", has_text="Ledger cutover sync").first
+                # (at 393 the Room's head carries its wings, not its name: the title is the proof)
+                room = self._open(page, width, sync, "Payments ledger cutover", "",
+                                  "calendar row -> its Room", walk)
+                walk["room_step"] = room
+                page.screenshot(path=str(SHOTS / f"B1-04-calendar-room-{width}.png"))
+
+                # Intelligence BRIEF: the row opens; Open person opens People on Priya
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1200)
+                intel = page.locator(".desk-dock-launch[aria-label^='Intelligence']")
+                if intel.count():
+                    self._press(page, intel.first, width)
+                else:  # the Dock names it differently on this frame: the palette verb
+                    page.keyboard.press("Meta+K")
+                    page.keyboard.type("Intelligence")
+                    page.keyboard.press("Enter")
+                page.locator("[data-testid='brief-lookback-rows'], [data-testid='person-sections']").first.wait_for()
+                walk["intel_people"] = page.locator("[data-testid='person-sections']").count()
+                sf = page.locator("[data-testid='brief-sf-row'] .intelligence-brief-sf-primary",
+                                  has_text=self.ids["decision_title"]).first
+                ib: dict[str, Any] = {"row_taps": 0, "frame_taps": 0, "dead": 0, "steps": []}
+                self._open(page, width, sf, self.ids["decision_title"], self.ids["decision_title"],
+                           "Intelligence BRIEF row -> the decision", ib)
+                walk["intelligence"] = ib
+                walk["intel_footer"] = page.evaluate("""() => { const f = [...document.querySelectorAll('.desk-pullout')]
+                    .find((w) => (w.getAttribute('aria-label') || '').includes('Intelligence'));
+                    const r = f && f.querySelector('.surface-footer-receipt, [data-testid=surface-footer-receipt]');
+                    return r ? r.textContent.trim() : (f ? (f.innerText.match(/SELECTED[^\\n]*/) || [null])[0] : null); }""")
+                page.screenshot(path=str(SHOTS / f"B1-06-intelligence-brief-row-{width}.png"))
+
+                # Brief -> People: select a person, Open person -> People on that relationship
+                # One window at a time at 393. PHILO-14 A1 (#939): at 1440 too, the
+                # Chair's windows now float on the screen (no tiles), so the decision
+                # the row raised stands over the Intelligence window: close it (one
+                # frame tap) to see Intelligence again. The J1 budget is unchanged.
+                if True:
+                    close = page.locator(f".desk-pullout[aria-label*='{self.ids['decision_title'][:20]}'] "
+                                         "[aria-label^='Close ']").first
+                    self._press(page, close, width)
+                    walk["frame_taps"] += 1
+                    page.wait_for_timeout(600)
+                person = page.locator("[data-testid^='person-row-']", has_text="Avery Chen").first
+                self._press(page, person, width)
+                page.locator("[data-testid='verb-open-person']").wait_for()
+                bp: dict[str, Any] = {"row_taps": 0, "frame_taps": 0, "dead": 0, "steps": []}
+                self._open(page, width, page.locator("[data-testid='verb-open-person']").first,
+                           "Avery Chen", "Avery Chen", "Brief -> Open person", bp)
+                walk["brief_people"] = bp
+                page.screenshot(path=str(SHOTS / f"B1-07-brief-open-person-{width}.png"))
+            finally:
+                facts = {**walk, "errors": errors}
+                (SHOTS / f"B1-walk-{width}.json").write_text(json.dumps(facts, indent=1))
+                browser.close()
+
+        print(json.dumps(walk, indent=1))
+        fails: dict[str, Any] = {}
+        if walk["dead"]:
+            fails["J1 dead taps 0"] = [s for s in walk["steps"] if s["dead"]]
+        j1_rows = [s for s in walk["steps"] if s["what"] != "calendar row -> its Room"]
+        if len(j1_rows) != 3:
+            fails["J1 three row gestures"] = j1_rows
+        # PHILO-14 A1 (#939): the Chair is a screen of floating windows (no
+        # tiles), so a Chair window the last open covered takes one press to
+        # raise: three rows plus at most one raise each (was: 3, the tiles).
+        if width > 720 and walk.get("j1_gestures", 99) > 6:
+            fails["J1 <= 6 gestures at 1440"] = walk.get("j1_gestures")
+        if walk.get("lens_after_1on1") != "Prep":
+            fails["the 1:1 opens Prep"] = walk.get("lens_after_1on1")
+        reopen = walk.get("reopen_prep") or {}
+        if reopen.get("lens_after_now") != "Now" or reopen.get("dead") or reopen.get("lens") != "Prep":
+            fails["Prep -> Now -> reopen lands on Prep"] = reopen
+        if (walk.get("brief_people") or {}).get("dead", 1):
+            fails["Brief -> Open person opens People on that relationship"] = walk.get("brief_people")
+        if (walk.get("intelligence") or {}).get("dead", 1):
+            fails["Intelligence BRIEF row opens"] = walk.get("intelligence")
+        assert not fails, json.dumps(fails, indent=1)
+
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_j3_prep_from_a_fresh_chair(self, width: int) -> None:
+        """J3 prep: a fresh browser (no remembered windows; NOT marked
+        `chair_windows_open`). The screen shows; The week opens by the owner's
+        gesture (Window > Chair > The week at 1440, Go > The week at 393, the
+        frame taps counted apart); then the 1:1 row alone -> Priya on Prep."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, fresh, errors = self._page(pw, width, fresh=True)
+            j3: dict[str, Any] = {"width": width, "row_taps": 0, "frame_taps": 0, "dead": 0, "steps": []}
+            try:
+                j3["windows_before"] = [w["title"] for w in fresh.evaluate(WINDOWS_JS)]
+                assert fresh.locator(".desk-window-shell.chair-window").count() == 0, j3["windows_before"]
+                self._chair_window(fresh, width, "The week", j3)
+                one = fresh.locator("[data-testid='arrival-meeting-row']", has_text=ONE_ON_ONE).first
+                self._open(fresh, width, one, "Priya Nair", "Priya Nair", "J3: 1:1 row -> Priya on Prep", j3)
+                j3["lens"] = self._lens(fresh)
+                fresh.screenshot(path=str(SHOTS / f"B1-05-j3-prep-{width}.png"))
+            finally:
+                (SHOTS / f"B1-walk-j3-{width}.json").write_text(json.dumps({**j3, "errors": errors}, indent=1))
+                browser.close()
+        print(json.dumps(j3, indent=1))
+        assert not j3["dead"] and j3["row_taps"] == 1 and j3["lens"] == "Prep", j3
+        # the window menu's taps: Window > Chair > The week (1440), Go > The week (393)
+        assert j3["frame_taps"] == (3 if width > 720 else 2), j3

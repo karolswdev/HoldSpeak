@@ -28,7 +28,7 @@ from tests._evidence import evidence_dir
 
 from .glass_infra import open_project_drawer, _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
 from .test_philo14_a2_drawer_glass import PROJECT, _seed as _seed_drawer
-from .test_philo14_c4_conductor_glass import _seed as _seed_agents
+from .conductor_rig import _seed as _seed_agents
 
 pytest.importorskip("playwright.sync_api", reason="the material glass needs Playwright")
 

@@ -289,7 +289,7 @@ class TestRhythmFace:
         })
         _api(page, "POST", "/api/settings/heartbeat/run-now", {})
 
-        # Open Settings hub (the way test_hs170_settings_hub_glass.py does)
+        # Open Settings hub (the way settings_rig._navigate_to_settings_hub does)
         page.evaluate("""() => {
             sessionStorage.setItem(
                 "hs.desk.staged-surface-open",

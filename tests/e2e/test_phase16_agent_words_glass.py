@@ -4,7 +4,7 @@ Owner catch 2026-10-08 on `docs/internal/philo/phase-16/01-shots/08-lane-asks-14
 "why is the agent's answer not rendered nicely here? The '**bold**', the ``,
 and all the other things."
 
-The rig is the lane glass's (`test_philo14_c2_lane_glass.py`): a real hub on
+The rig is the lane glass's (`agents_lane_rig.py`, from the parked lane glass): a real hub on
 an isolated HOME, a launch with its worktree and its session's hook events,
 written through the product's producers. The agent's words are the owner's
 shot, word for word (`evidence/hub-lane.json`, events[7].text); the SENT line

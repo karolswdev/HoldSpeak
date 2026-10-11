@@ -1,0 +1,18 @@
+{
+  "operation_id": "op_4e18080c18f543b19bac13937fd59758",
+  "receipt": {
+    "actor_identity": "owner-session",
+    "actor_kind": "owner",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "created_at": 1791733420.963089,
+    "delegator_identity": "",
+    "delegator_kind": "",
+    "operation_id": "op_4e18080c18f543b19bac13937fd59758",
+    "outcome": "succeeded",
+    "receipt_id": "rcpt_ab62338e028244f8b92005ac3107a678",
+    "result_ref": "agent:desk-agent",
+    "state": "succeeded",
+    "target_ref": "agent:desk-agent"
+  },
+  "success": true
+}

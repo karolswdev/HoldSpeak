@@ -175,6 +175,7 @@ def _age_ok(entry: dict[str, Any]) -> None:
 
 
 def test_each_remote_row_returns_its_own_stored_time(rig) -> None:
+    """replaces (the hub half, a gh double in place of the owner's real login): tests/e2e/test_hs168_connections_glass.py::test_connections_real_readiness"""
     hub, _gh, _acli = rig
     _seed_checked(hub)
     gh_row = _stored(hub, "wpc_github")

@@ -1,0 +1,7 @@
+{
+  "agents": "read",
+  "effective": "write",
+  "env_var": null,
+  "mode": "write",
+  "source": "config"
+}

@@ -1,0 +1,20 @@
+{
+  "key_ref": "sendgrid-karol-acme.io",
+  "operation_id": "op_df39244b2bab42c5ab62c98bc9a2c88d",
+  "provider": "sendgrid",
+  "receipt": {
+    "actor_identity": "owner-session",
+    "actor_kind": "owner",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "created_at": 1791732950.70856,
+    "delegator_identity": "",
+    "delegator_kind": "",
+    "operation_id": "op_df39244b2bab42c5ab62c98bc9a2c88d",
+    "outcome": "succeeded",
+    "receipt_id": "rcpt_d3a228b56d6a4ed5b015a165b530d963",
+    "result_ref": "email_key:sendgrid:sendgrid-karol-acme.io",
+    "state": "succeeded",
+    "target_ref": "desk:channel.save_email_key"
+  },
+  "saved": true
+}

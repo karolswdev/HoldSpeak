@@ -49,6 +49,10 @@ const WELL_INPUT = { name: "Calendar URL or file path" };
 // DEVICE · verbs Edit / Disable|Enable / Remove) with ONE connect well
 // under the Connect calendar row (Add) or under a source row (Edit).
 // Every behaviour the old group protected is asserted below on the new DOM.
+//
+// replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_section
+// (rows, verbs, EVENTS, LAST READ, SNAPSHOT, the snapshot egress chip, Edit well, Remove confirm;
+// the auto-record and CALENDAR placement legs are in web/src/desk/__tests__/settings.app.test.tsx)
 describe("Meetings calendar source rows", () => {
   beforeEach(() => {
     vi.useFakeTimers();

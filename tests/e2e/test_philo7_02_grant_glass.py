@@ -28,7 +28,7 @@ import holdspeak.principals as principals
 from holdspeak.principals import AgentCredentialStore
 
 from .glass_infra import REPO, _api, _api_allow_error, _boot, _ensure_build, _settle
-from .test_hs174_remote_settings_glass import _navigate_to_settings_hub, _open_system_module
+from .settings_rig import _navigate_to_settings_hub, _open_system_module
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the grant glass needs Playwright")

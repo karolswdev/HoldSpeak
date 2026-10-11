@@ -66,6 +66,7 @@ describe("the Settings hub's Meetings row (F06)", () => {
 
 // Inventory 2026-10-03 (UX-CANON A.10): the hub said "Voice LIVE" and
 // "SUMMARY SET ON" with no engine, beside the headline "No default model".
+// replaces (with settings.app.test.tsx): tests/e2e/test_honest_faces_glass.py::test_settings_names_the_missing_engine
 describe("the Settings hub names a missing engine", () => {
   function faceWith(patch: Partial<ReturnType<typeof hub>>) {
     return render(

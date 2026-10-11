@@ -111,6 +111,8 @@ def select(paths: list[str]) -> tuple[list[str], dict[str, str]]:
         if path in SHARED_RIG:
             return ["tests/e2e"], {"tests/e2e": f"{path} is the shared rig"}
         name = Path(path).name
+        if path.startswith("tests/e2e/_parked/"):
+            continue  # parked browser tests are not collected (tests/e2e/_parked/conftest.py)
         if path.startswith("tests/e2e/") and name.startswith("test_") and (REPO / path).exists():
             why.setdefault(path, "changed")
             continue

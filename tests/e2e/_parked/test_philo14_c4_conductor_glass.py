@@ -1,0 +1,180 @@
+"""PHILO-14 C4: the Conductor drawer on a real hub (ratified boards A-1, A-4).
+
+A real hub on an isolated HOME, seeded as the Conductor F2 seed does
+(`docs/internal/philo/phase-14/canvas/harness/seed_f2.py`), through the
+product's producers: three action items on a meeting, two hook-reported
+sessions (Claude Code asks "The runbook needs a rollback owner. Jordan or
+Avery?", Codex works), and three launches on the ledger with their Work
+attempts: the runbook bound to Claude Code, the reconciliation job bound to
+Codex, the freeze flag with PR #412 open on its follow-through. No agent
+runs; nothing leaves the machine.
+
+The Dock's Conductor (1440) and the `/conductor` address (393) open the
+Conductor window; it lists the ready agents and the three launched agents
+with their lamps, asking first; its head says `2 at work` with `1 ASK` (no
+`N OF M`: the hub counts no running tmux session here). At 393 every verb of
+the selected asking agent and of its Stop confirmation is whole in the
+window, 44 px, the element at its centre. Open on the asking agent opens its
+lane, read before its question is asserted. Shots to `.tmp/evidence-shots/p14-c4/`.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from tests._evidence import evidence_dir
+
+from .glass_infra import _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
+
+pytest.importorskip("playwright.sync_api", reason="the Conductor glass needs Playwright")
+
+from .conductor_rig import QUESTION, TOKEN, _seed  # noqa: F401  (the rig: tests/e2e/conductor_rig.py)
+
+SHOTS = evidence_dir("p14-c4")
+T = 20_000
+
+
+def _verbs_in_frame(page: Any, expected: set[str]) -> list[str]:
+    verbs = page.locator(".conductor-window .surface-footer-verbs button").evaluate_all(
+        """(els) => {
+            const frame = document.querySelector('.conductor-window').getBoundingClientRect();
+            return els.map((el) => {
+                const r = el.getBoundingClientRect();
+                const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                return {name: el.textContent.trim(), left: r.left, right: r.right, top: r.top, bottom: r.bottom,
+                        height: r.height, hit: !!hit && el.contains(hit),
+                        frame: {left: frame.left, right: frame.right, top: frame.top, bottom: frame.bottom}};
+            });
+        }""")
+    names = [v["name"] for v in verbs]
+    assert expected <= set(names), names
+    for v in verbs:
+        f = v["frame"]
+        assert v["left"] >= f["left"] and v["right"] <= f["right"], v
+        assert v["top"] >= f["top"] and v["bottom"] <= f["bottom"], v
+        assert v["right"] <= 393 and v["bottom"] <= 852, v
+        assert v["height"] >= 44, v
+        assert v["hit"], v
+    return names
+
+
+@pytest.mark.timeout(240)
+def test_the_conductor_drawer_at_1440_and_393(tmp_path: Path, monkeypatch) -> None:
+    _ensure_build()
+    import holdspeak.agent_context as agent_context_pkg
+    import holdspeak.delivery.factory_launch as factory_launch
+    from holdspeak.agent_context import event_log
+
+    state = tmp_path / "home" / ".holdspeak"
+    state.mkdir(parents=True)
+    monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", state / "agent_launches.json")
+    monkeypatch.setattr(agent_context_pkg, "AGENT_CONTEXT_FILE", state / "agent_sessions.json")
+    monkeypatch.setattr(event_log, "default_spool_dir", lambda: state / "agent-events")
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+    try:
+        _seed(tmp_path / "home")
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            for width, height in ((1440, 900), (393, 852)):
+                page = browser.new_page(viewport={"width": width, "height": height})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                # PHILO-16 (16b): one hub is one desk; this page starts on an empty desk.
+                from .glass_infra import clear_hub_windows
+
+                clear_hub_windows(page, TOKEN)
+                if width == 1440:
+                    page.reload(wait_until="load")
+                    _normal_chair(page)
+                    _settle(page)
+                    # PHILO-17 (doors): the Conductor's door is its desk
+                    # drawer (and Go), not a Dock tile.
+                    assert page.locator(".desk-dock [data-app='conductor']").count() == 0
+                    assert page.locator(".desk-dock [data-app='surface-companion']").count() == 0
+                    drawer = page.locator(".desk-screen [data-object-id='drawer:conductor']")
+                    drawer.wait_for(timeout=T)
+                    assert (drawer.get_attribute("aria-label") or "").startswith("Conductor")
+                    drawer.dblclick()
+                else:
+                    # The Conductor's address opens the same window.
+                    page.goto(f"{url}/conductor", wait_until="load")
+                    _normal_chair(page)
+                    _settle(page)
+                window = page.locator(".conductor-window")
+                window.wait_for(timeout=T)
+                asking = window.locator("[data-object-id='launch:launch_c4_runbook']")
+                asking.wait_for(timeout=T)
+                for name in ("Claude Code: rollback runbook", "Codex: reconciliation job", "Claude Code: ledger freeze flag"):
+                    # PHILO-15 B40 (ruling): an icon label is at most two lines, cut in
+                    # the middle by fitName; the whole name is its title and aria-label.
+                    assert window.locator(f"[title='{name}'], [aria-label^='{name}']").count() > 0, name
+                two_lines = window.locator(".desk-icon-name").evaluate_all(
+                    "(els) => els.map((e) => [e.title, Math.round(e.getBoundingClientRect().height),"
+                    " parseFloat(getComputedStyle(e).lineHeight) || 16])")
+                for title, height, line in two_lines:
+                    assert height <= line * 2 + 4, (title, height, line)
+                # The ready agents (whatever this Mac has installed: the hub's own read).
+                assert window.locator("[data-object-id='agent:claude']").count() == 1
+                assert window.locator("[data-object-id='agent:codex']").count() == 1
+                labels = {
+                    "launch:launch_c4_runbook": "ASKS",
+                    "launch:launch_c4_recon": "WORKS",
+                    "launch:launch_c4_flag": "PR #412",
+                }
+                for object_id, lamp in labels.items():
+                    member = window.locator(f"[data-object-id='{object_id}']")
+                    text = (member.get_attribute("aria-label") or "") + (member.text_content() or "")
+                    assert lamp in text, (object_id, text)
+                head = window.locator("[data-testid='conductor-head']").text_content() or ""
+                # Phase 16: `2 at work` is the window's one big fact (the
+                # AppHead); the ask is a lamp token on the strip beside it.
+                fact = window.locator("[data-testid='conductor-head'] .kit-disp").text_content() or ""
+                assert fact == "2 at work" and "1 ASK" in head, (fact, head)
+                # The cap is the hub's count (`live_launches`: no tmux session
+                # runs here), never the client's: no `N OF M`.
+                assert " OF " not in head, head
+                assert "NOT READ" not in head, head
+                # PHILO-17 U32: "harness" is never on a face (coders).
+                assert "HARNESS" not in head.upper(), head
+                # Asking first in every view.
+                first = window.locator("[data-object-id]").first.get_attribute("data-object-id")
+                assert first == "launch:launch_c4_runbook", first
+                page.wait_for_timeout(400)
+                page.screenshot(path=str(SHOTS / f"C4-conductor-{width}.png"))
+                if width == 393:
+                    assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")
+
+                asking.click()
+                if width == 393:
+                    # Astra r1 P1: every verb of the selected asking agent, and of
+                    # its Stop confirmation, is whole inside the WINDOW's box, 44 px
+                    # tall, and the element at its own centre.
+                    _verbs_in_frame(page, {"Get Info", "Stop", "Answer", "Open"})
+                    page.screenshot(path=str(SHOTS / "C4-conductor-selected-393.png"))
+                    window.locator("[data-testid='conductor-stop']").click()
+                    window.locator("[data-testid='conductor-stop-confirm']").wait_for(timeout=T)
+                    names = _verbs_in_frame(page, {"Back", "Stop · sure? (ends the coder's session)"})
+                    assert "Answer" not in names and "Open" not in names, names
+                    page.screenshot(path=str(SHOTS / "C4-conductor-stop-confirm-393.png"))
+                    window.get_by_role("button", name="Back", exact=True).click()
+
+                # Open on the asking agent: its lane window, read before it is read.
+                window.get_by_role("button", name="Open", exact=True).click()
+                lane = page.locator(".is-lane")
+                lane.wait_for(timeout=T)
+                lane.locator("[data-testid='lane-rail']").wait_for(timeout=T)
+                lane.get_by_text(QUESTION).first.wait_for(timeout=T)
+                if width == 1440:
+                    page.wait_for_timeout(300)
+                    page.screenshot(path=str(SHOTS / f"C4-conductor-lane-{width}.png"))
+                _assert_clean(page, errors)
+                page.close()
+            browser.close()
+    finally:
+        server.stop()

@@ -54,6 +54,7 @@ describe("RemoteAccessModule", () => {
   });
 
   it("shows only the toggle row when OFF; no credentials, no Issue", async () => {
+    // replaces: tests/e2e/test_hs174_remote_settings_glass.py::TestSettingsRemoteAccess::test_remote_off_state (with settings.app.test.tsx)
     mockApiFetch.mockResolvedValueOnce(makeRemoteWire({ enabled: false }));
     render(<RemoteAccessModule />);
 
