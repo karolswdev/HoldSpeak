@@ -287,6 +287,9 @@ describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
     mocks.people.readiness = { readiness: "ready" };
     mocks.people.readinessError = null;
     mocks.runtime.state = "connected";
+    mocks.apiRequest.mockReset();
+    mocks.desk.recording = "idle";
+    mocks.desk.recordingStartedAt = null;
     __resetSurfaces();
   });
 
@@ -322,6 +325,44 @@ describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
     expect(screen.getByRole("button", { name: /^Intelligence/ })).toHaveAttribute("data-app", "intelligence:desk");
     expect(screen.getByRole("button", { name: "Meetings" })).toHaveAttribute("data-app", "surface-meetings");
     expect(screen.getByRole("button", { name: "More AppIcons" })).toBeTruthy();
+  });
+
+  // replaces: tests/e2e/test_philo13_13_dock_glass.py::TestLiveDock::test_the_dock_shows_his_day_live_and_stays_through_an_outage (the REC leg)
+  it("a refused start (the hub's 501) shows no REC; the start the hub confirms shows REC hh:mm in the rec tone", async () => {
+    const producer = makeRecordingProducer();
+    Object.assign(producer, { openPullout: vi.fn() });
+    mocks.apiRequest.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: false, error: "No microphone is available" }), { status: 501 }),
+    );
+    await producer.startRecording();
+    mirrorRecording(producer);
+    const view = render(<Dock />);
+    expect(producer.recording).toBe("idle");
+    expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull();
+
+    mocks.apiRequest.mockResolvedValueOnce(new Response(JSON.stringify({
+      success: true,
+      meeting: { id: "c3w-live", title: "Live", started_at: new Date().toISOString() },
+    }), { status: 200 }));
+    await producer.startRecording();
+    mirrorRecording(producer);
+    view.rerender(<Dock />);
+    const tag = screen.getByTestId("desk-dock-meetings-state");
+    expect(tag.textContent).toMatch(/^REC \d\d:\d\d$/);
+    expect(tag).toHaveAttribute("data-tone", "rec");
+  });
+
+  // replaces: tests/e2e/test_philo13_13_dock_glass.py::TestLiveDock::test_the_dock_shows_his_day_live_and_stays_through_an_outage (the OFFLINE leg)
+  it("offline: READY and REC leave with the hub; no tag and no count claims freshness", async () => {
+    mocks.durable.readyRows.push({ id: "c3w-ready", title: "Ledger cutover sync", ready_at: "2026-10-03T12:00:00Z" });
+    const view = render(<Dock />);
+    expect(await screen.findByTestId("desk-dock-meetings-state")).toHaveTextContent("READY 1");
+    mocks.runtime.state = "offline";
+    view.rerender(<Dock />);
+    expect(await screen.findByTestId("desk-dock-offline")).toHaveTextContent(/^OFFLINE · AS OF \d\d:\d\d$/);
+    for (const id of ["desk-dock-meetings-state", "desk-dock-send-state", "desk-dock-people-state"])
+      expect(screen.queryByTestId(id), id).toBeNull();
+    expect(document.querySelectorAll(".desk-dock .desk-dock-badge")).toHaveLength(0);
   });
 
   it("offline: one OFFLINE · AS OF status heads the shelf; no tag, no count", async () => {
