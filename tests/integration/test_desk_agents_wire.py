@@ -59,9 +59,15 @@ def _shape(value: Any) -> Any:
 
 def _same_shape(stored: Any, live: Any, at: str = "$") -> list[str]:
     """Where the stored shape is not the live one. A ``null`` on either side
-    matches any value: what this Mac has installed (an agent's path and
-    version) is null on another machine, and that is not a lie about a field."""
+    matches a LEAF (a string, number or bool): what this Mac has installed (an
+    agent's path and version) is null on another machine, and that is not a
+    lie about a field. A null never matches an object or a list (Astra r1 on
+    #1100): a whole subtree opposite a null is a field the other side lacks."""
     if stored == "null" or live == "null":
+        other = live if stored == "null" else stored
+        if isinstance(other, (dict, list)):
+            return [f"{at}: stored {'null' if stored == 'null' else type(stored).__name__}, "
+                    f"hub {'null' if live == 'null' else type(live).__name__}"]
         return []
     if isinstance(stored, dict) and isinstance(live, dict):
         diffs = [f"{at}.{key}: only in the stored answer" for key in stored.keys() - live.keys()]
@@ -334,12 +340,13 @@ def test_raw_reads_a_cut_call_whole_and_approves_it(hub: str, tmp_path: Path) ->
     status, issued = _http(hub, "POST", "/api/principals/agents", TOKEN, {"identity": KEY})
     assert status == 201, issued
 
-    def mint(command: str, proposal_id: str) -> None:
+    def mint(command: str, proposal_id: str, *, with_full: bool = True) -> None:
         call = redact_call({"command": command})
         assert call.full, "a cut call carries its whole redacted text"
+        full = {"args_full": call.full} if with_full else {}
         status, body = _http(hub, "POST", "/api/gate/proposals", issued["credential"], {
             "id": proposal_id, "tool": "Bash", "args_sha256": call.sha256, "args_head": call.head,
-            "args_len": call.length, "args_full": call.full, "cwd": seed["worktree"], "ttl_seconds": 3600,
+            "args_len": call.length, **full, "cwd": seed["worktree"], "ttl_seconds": 3600,
             "classification": {"scope": "outside", "rule": "cwd_outside_worktree", "read_rule": "",
                                "push_branch": "", "root": seed["worktree"], "proposal_id": proposal_id,
                                "args_sha256": call.sha256},
@@ -351,26 +358,54 @@ def test_raw_reads_a_cut_call_whole_and_approves_it(hub: str, tmp_path: Path) ->
         f"cd {clone} && pwd && echo \"---BRANCH---\" && git branch --show-current && echo \"---STATUS---\" "
         "&& git status && echo \"---LOG---\" && git log --oneline -5"
     )
+    # Astra r1 on #1100: ONE boot holds every Raw call the face reads, each
+    # under its own id. A cut call with its whole text (Approve), a cut call
+    # the hook sent without it (the lane rig's way: never whole, Deny only),
+    # and an oversized call kept as a part (Deny only).
     mint(command, "toolu_cut_1440")
+    # The hook sent no whole text (the lane rig's mint_held_call body).
+    mint(LONG_CMD, "toolu_cut", with_full=False)
+    huge = "cat > /tmp/hs_huge.txt <<'EOF'\n" + ("x" * 99 + "\n") * 660 + "EOF"
+    mint(huge, "toolu_cut_huge")
+
+    held_lane = _get(hub, "/api/agent/launches/launch_c2_runbook/lane")
+    cut_ids = {g["id"] for g in held_lane["gated"] if g["args_cut"] and g["state"] == "held"}
+    assert cut_ids == {"toolu_cut_1440", "toolu_cut", "toolu_cut_huge"}, held_lane["gated"]
+    _fence("lane.raw-held", held_lane, tmp_path, hub)
+
     full = _get(hub, "/api/gate/proposals/toolu_cut_1440/command")
     assert full["command"] == command and full["whole"] is True, full
     assert full["hold_reason"].startswith("OUTSIDE THE WORKTREE"), full
     _fence("gate-command.whole", full, tmp_path, hub)
 
-    # Needs you: the cut call is a row with no Approve (argsCut).
-    rows = {row["id"]: row for row in _get(hub, "/api/desk/needs-you")["items"]}
-    assert rows["gate:toolu_cut_1440"]["argsCut"] is True
-
-    assert _decide(hub, "toolu_cut_1440", "approved")["state"] == "approved"
-    assert _get(hub, "/api/gate/proposals/toolu_cut_1440")["state"] == "approved"
+    # No whole text from the hook: the hub serves the head, never whole.
+    head_only = _get(hub, "/api/gate/proposals/toolu_cut/command")
+    assert head_only["whole"] is False and head_only["shown_chars"] < head_only["declared_chars"] == len(LONG_CMD), head_only
+    _fence("gate-command.head-only", head_only, tmp_path, hub)
 
     # An oversized call is kept as a part: never whole, Deny only on Raw.
-    huge = "cat > /tmp/hs_huge.txt <<'EOF'\n" + ("x" * 99 + "\n") * 660 + "EOF"
-    mint(huge, "toolu_cut_huge")
     part = _get(hub, "/api/gate/proposals/toolu_cut_huge/command")
     assert part["whole"] is False and part["shown_chars"] < part["declared_chars"] == len(huge), {
         k: part[k] for k in ("whole", "shown_chars", "declared_chars")}
     _fence("gate-command.part", part, tmp_path, hub)
+
+    # Needs you: the cut call is a row with no Approve (argsCut).
+    rows = {row["id"]: row for row in _get(hub, "/api/desk/needs-you")["items"]}
+    assert rows["gate:toolu_cut_1440"]["argsCut"] is True
+
+    # Approve as the face sends it; the hub's answer is the receipt.
+    status, decided = _http(hub, "POST", "/api/gate/proposals/toolu_cut_1440/decide", TOKEN,
+                            {"decision": "approved", "actor": "owner"})
+    assert status == 200 and decided["state"] == "approved" and decided["decided_at"], decided
+    _fence("gate-decide.approved", decided, tmp_path, hub)
+    assert _get(hub, "/api/gate/proposals/toolu_cut_1440")["state"] == "approved"
+
+    # The reads after the press: the lane no longer holds the approved call.
+    after_lane = _get(hub, "/api/agent/launches/launch_c2_runbook/lane")
+    after = {g["id"]: g["state"] for g in after_lane["gated"]}
+    assert after["toolu_cut_1440"] == "approved" and after["toolu_cut"] == "held", after
+    _fence("lane.raw-approved", after_lane, tmp_path, hub)
+    _fence("gate-proposals.raw-approved", _get(hub, "/api/gate/proposals?state=held"), tmp_path, hub)
 
 
 # ── the Conductor ──────────────────────────────────────────────────────

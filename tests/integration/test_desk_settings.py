@@ -211,7 +211,12 @@ def _invented(fixture: Any, live: Any, path: str = "$") -> list[str]:
                 out.extend(_invented(value, live[key], f"{path}.{key}"))
         return out
     if isinstance(fixture, list) and fixture and isinstance(live, list) and live:
-        return _invented(fixture[0], live[0], f"{path}[0]")
+        # Every element (Astra r1 on #1100), each against the live row in its
+        # place, or the hub's last row when the fixture holds more rows.
+        out = []
+        for i, item in enumerate(fixture):
+            out.extend(_invented(item, live[min(i, len(live) - 1)], f"{path}[{i}]"))
+        return out
     return []
 
 

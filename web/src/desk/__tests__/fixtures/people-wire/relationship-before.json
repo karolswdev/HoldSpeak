@@ -1,0 +1,81 @@
+{
+  "relationship": {
+    "cadence": "weekly",
+    "calendar_links": [
+      {
+        "label": "1:1 Priya / Karol",
+        "linked_at": "2026-10-11T20:37:18Z",
+        "source_id": "p13-06-week",
+        "uid": "p13-06-1on1"
+      }
+    ],
+    "commitments": [
+      {
+        "accepted_at": null,
+        "body": "Review the rollout plan before Friday",
+        "commitment_id": null,
+        "created_at": "2026-10-11T20:37:18+00:00",
+        "direction": "leader_owes",
+        "execution_links": [],
+        "history": [
+          {
+            "at": "2026-10-11T20:37:18Z",
+            "event": "accepted",
+            "source": "people",
+            "state": "open"
+          }
+        ],
+        "id": "1869296c-1737-4f67-b5b7-a7ed9fdbc3c0",
+        "relationship_id": "13376da5-0528-4c28-882b-a4df2a786e9a",
+        "request_id": "3403c588-32c2-46cd-9841-85f82d27e074",
+        "source": null,
+        "state": "open",
+        "topic": null,
+        "updated_at": "2026-10-11T20:37:18+00:00",
+        "visibility": "leader_private"
+      }
+    ],
+    "created_at": "2026-10-11T20:37:18Z",
+    "display_name": "Priya Nair",
+    "id": "13376da5-0528-4c28-882b-a4df2a786e9a",
+    "next_one_on_one": "2026-10-11T21:27:00Z",
+    "next_one_on_one_event": {
+      "ends_at": "2026-10-11T21:57:00Z",
+      "id": "ce_9c10340468f014f8daf20c79af0797dd035db75e24dc92a3541d961e0a3e5e37",
+      "source_id": "p13-06-week",
+      "source_label": "Work",
+      "starts_at": "2026-10-11T21:27:00Z",
+      "title": "1:1 Priya / Karol",
+      "uid": "p13-06-1on1"
+    },
+    "notes": [],
+    "owed_to_you": [],
+    "owner_aliases": null,
+    "project_refs": null,
+    "relationship_kind": "peer",
+    "requests": [
+      {
+        "accepted_at": null,
+        "body": "Review the rollout plan before Friday",
+        "commitment_id": null,
+        "created_at": "2026-10-11T20:37:18Z",
+        "direction": null,
+        "execution_links": null,
+        "history": null,
+        "id": "3403c588-32c2-46cd-9841-85f82d27e074",
+        "relationship_id": "13376da5-0528-4c28-882b-a4df2a786e9a",
+        "request_id": null,
+        "source": null,
+        "state": "accepted",
+        "topic": null,
+        "updated_at": "2026-10-11T20:37:18+00:00",
+        "visibility": "leader_private"
+      }
+    ],
+    "role_context": "Engineer",
+    "sessions": [],
+    "state": "active",
+    "timezone": "",
+    "updated_at": "2026-10-11T20:37:18+00:00"
+  }
+}

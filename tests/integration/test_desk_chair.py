@@ -106,3 +106,63 @@ def test_a_row_open_is_a_hub_window_on_top_and_in_front(hub: Any) -> None:
     assert again["front"] is True
     listed = _http(base, "GET", "/api/desk/windows")
     assert [w["id"] for w in listed["windows"]].count(person) == 1
+
+
+# ── People: Add on "They owe you", then the saved item (Astra r1 on #1100) ──
+
+PEOPLE_WIRE = Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "people-wire"
+OWED = "Send me the API migration estimate"
+
+
+def _people_invented(fixture: Any, live: Any, path: str = "$") -> list[str]:
+    """Every field the stored answer carries that the hub's answer does not,
+    at every depth and in every list element (SCAR LAW)."""
+    if isinstance(fixture, dict):
+        if not isinstance(live, dict):
+            return [f"{path} is an object, the hub sends {type(live).__name__}"]
+        out: list[str] = []
+        for key, value in fixture.items():
+            out += [f"{path}.{key}"] if key not in live else _people_invented(value, live[key], f"{path}.{key}")
+        return out
+    if isinstance(fixture, list) and fixture and isinstance(live, list) and live:
+        return [d for i, item in enumerate(fixture) for d in _people_invented(item, live[min(i, len(live) - 1)], f"{path}[{i}]")]
+    return []
+
+
+def test_they_owe_you_add_saves_and_the_next_read_carries_the_item(hub: Any, tmp_path: Path) -> None:
+    """The hub half of web/src/desk/__tests__/people.app.test.tsx "Add on They
+    owe you": the hub's own answers before the press, to the POST and after
+    it, recorded into fixtures/people-wire/ (HOLDSPEAK_WRITE_WIRE_FIXTURES=1)
+    and fenced here against invented fields on every run."""
+    import json
+    import os
+
+    base, ids = hub
+    rel = ids["priya"]
+    wire: dict[str, Any] = {
+        "readiness.json": _http(base, "GET", "/api/people/readiness"),
+        "relationships.json": _http(base, "GET", "/api/people/relationships"),
+        "relationship-before.json": _http(base, "GET", f"/api/people/relationships/{rel}"),
+        "one-on-ones.json": _http(base, "GET", f"/api/people/relationships/{rel}/one-on-ones"),
+        "brief.json": _http(base, "GET", f"/api/people/relationships/{rel}/brief"),
+        "door.json": _http(base, "GET", "/api/door"),
+        "projects.json": _http(base, "GET", "/api/projects"),
+    }
+    before = wire["relationship-before.json"]["relationship"]
+    assert OWED not in [o.get("body") for o in before.get("owed_to_you") or []]
+    wire["owed-created.json"] = _http(base, "POST", f"/api/people/relationships/{rel}/owed",
+                                      {"body": OWED, "visibility": "shared_intent"})
+    wire["relationship-after.json"] = after = _http(base, "GET", f"/api/people/relationships/{rel}")
+    owed = [o for o in after["relationship"].get("owed_to_you") or [] if o.get("body") == OWED]
+    assert owed and owed[0].get("state", "open") == "open", after["relationship"].get("owed_to_you")
+    assert OWED not in [c.get("body") for c in after["relationship"].get("commitments") or []]
+
+    text = json.dumps(wire).replace(str(tmp_path), "/Users/owner")
+    wire = json.loads(text)
+    if os.environ.get("HOLDSPEAK_WRITE_WIRE_FIXTURES") == "1":
+        PEOPLE_WIRE.mkdir(parents=True, exist_ok=True)
+        for name, body in wire.items():
+            (PEOPLE_WIRE / name).write_text(json.dumps(body, indent=2, sort_keys=True) + "\n")
+    for name, body in wire.items():
+        stored = json.loads((PEOPLE_WIRE / name).read_text())
+        assert not _people_invented(stored, body), (name, _people_invented(stored, body))

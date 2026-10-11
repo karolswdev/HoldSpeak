@@ -23,7 +23,10 @@
  * tests/unit/test_hs172_people_sources.py::TestBriefEnrichment proves the
  * producer writes it from the persisted watch snapshots.
  */
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PeopleCore, PersonWindowBody } from "../../pages/cores/PeopleCore";
 
@@ -126,5 +129,60 @@ describe("People: a person's own window (PHILO-17 2b)", () => {
     expect(head).toBeTruthy();
     expect(head!.textContent).not.toMatch(/\bBack\b/);
     expect(document.getElementById("surface-people")).toBeNull();
+  });
+});
+
+/* ── Add on "They owe you", then the saved item (Astra r1 on #1100) ────── */
+
+const PEOPLE_WIRE = join(dirname(fileURLToPath(import.meta.url)), "fixtures", "people-wire");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const recorded = (name: string): any => JSON.parse(readFileSync(join(PEOPLE_WIRE, `${name}.json`), "utf8"));
+
+describe("People: Add on They owe you shows the saved item", () => {
+  /** The hub's own answers from ONE boot (tests/integration/test_desk_chair.py::
+   * test_they_owe_you_add_saves_and_the_next_read_carries_the_item, fenced
+   * against invented fields): the reads before the press, the POST answer,
+   * and the relationship read after it.
+   *
+   * replaces: tests/e2e/test_philo13_09_prep_glass.py::TestPrepFindsItsPerson::test_the_one_on_one_finds_its_person (the They owe you add)
+   */
+  it("Add posts the item and the hub's next read draws it under They owe you", async () => {
+    const before = recorded("relationship-before");
+    const after = recorded("relationship-after");
+    const id: string = before.relationship.id;
+    const owedBody = "Send me the API migration estimate";
+    let saved = false;
+    const reads: Record<string, () => unknown> = {
+      "/api/people/readiness": () => recorded("readiness"),
+      "/api/people/relationships": () => recorded("relationships"),
+      [`/api/people/relationships/${id}`]: () => (saved ? after : before),
+      [`/api/people/relationships/${id}/one-on-ones`]: () => recorded("one-on-ones"),
+      [`/api/people/relationships/${id}/brief`]: () => recorded("brief"),
+      "/api/door": () => recorded("door"),
+      "/api/projects": () => recorded("projects"),
+    };
+    const fetchSpy = vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
+      const path = String(input);
+      if (opts?.method === "POST" && path === `/api/people/relationships/${id}/owed`) {
+        saved = true;
+        return json(recorded("owed-created"), 201);
+      }
+      const read = reads[path];
+      if (!read || (opts?.method && opts.method !== "GET")) throw new Error(`no recorded hub answer for ${opts?.method ?? "GET"} ${path}`);
+      return json(read());
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+    render(<PeopleCore scope={`people:${id}`} />);
+    const owed = await screen.findByTestId("people-they-owe");
+    expect(within(owed).queryByText(owedBody)).toBeNull();
+    fireEvent.change(within(owed).getByLabelText("They owe you"), { target: { value: owedBody } });
+    fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(within(screen.getByTestId("people-they-owe")).getByText(owedBody)).toBeTruthy());
+    const posted = fetchSpy.mock.calls.filter(([url, o]) => String(url) === `/api/people/relationships/${id}/owed` && o?.method === "POST");
+    expect(posted).toHaveLength(1);
+    expect(JSON.parse(String(posted[0][1]?.body)).body).toBe(owedBody);
+    expect(within(screen.getByTestId("people-they-owe")).getByText(/They owe you · 1/)).toBeTruthy();
+    // It is what they owe, never a request asked of him.
+    expect(fetchSpy.mock.calls.some(([url]) => String(url).endsWith("/requests"))).toBe(false);
   });
 });

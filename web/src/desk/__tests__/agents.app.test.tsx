@@ -204,40 +204,78 @@ describe("the agent's lane on the hub's lane answer", () => {
 });
 
 describe("Raw reads a cut call whole (PHILO-15 20)", () => {
-  /** replaces: tests/e2e/test_philo15_20_raw_approve_glass.py::test_raw_shows_a_cut_call_whole_and_approves_it_at_1440_and_393 */
-  it("Raw shows the hub's whole command with Deny and Approve; Approve decides it and leaves a receipt", async () => {
-    const whole = hubWire<{ command: string }>("gate-command.whole").wire;
-    await openLane(LANE_CUT.wire, {
-      "/api/gate/proposals/toolu_cut/command": whole,
-      "/api/gate/proposals/toolu_cut/decide": { state: "approved" },
+  // Astra r1 on #1100: every answer below is ONE hub boot's, each under its
+  // own proposal id (tests/integration/test_desk_agents_wire.py::
+  // test_raw_reads_a_cut_call_whole_and_approves_it): the lane holding three
+  // cut calls, each call's own command read, the decide answer, and the lane
+  // and held list the hub serves after the press.
+  const HELD = hubWire("lane.raw-held");
+  const AFTER = hubWire("lane.raw-approved");
+  const WHOLE = hubWire<{ command: string; whole: boolean }>("gate-command.whole");
+  const HEAD_ONLY = hubWire<{ command: string; whole: boolean }>("gate-command.head-only");
+  const PART = hubWire<{ whole: boolean; shown_chars: number; declared_chars: number }>("gate-command.part");
+  const DECIDED = hubWire<{ state: string; decided_at: number }>("gate-decide.approved");
+  const HELD_AFTER = hubWire("gate-proposals.raw-approved");
+
+  /** A fake hub with the recorded answers: the decide press flips it to the after reads. */
+  async function openRaw() {
+    let decided = false;
+    await openLane(HELD.wire);
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      const path = String(url);
+      if (path === "/api/gate/proposals/toolu_cut_1440/decide" && init?.method === "POST") {
+        decided = true;
+        return DECIDED.wire;
+      }
+      if (path.startsWith("/api/agent/launches/")) return decided ? AFTER.wire : HELD.wire;
+      if (path === "/api/gate/proposals/toolu_cut_1440/command") return WHOLE.wire;
+      if (path === "/api/gate/proposals/toolu_cut/command") return HEAD_ONLY.wire;
+      if (path === "/api/gate/proposals/toolu_cut_huge/command") return PART.wire;
+      if (path.startsWith("/api/gate/proposals")) return decided ? HELD_AFTER.wire : { proposals: [] };
+      if (path.startsWith("/api/inference/assignments")) return ASSIGNMENTS.wire;
+      throw new Error(`no captured hub answer for ${path}`);
     });
-    const cut = [...screen.getByTestId("lane-rail").querySelectorAll<HTMLElement>(".lane-rail-entry")]
-      .find((el) => (el.textContent ?? "").includes("+90 CHARS"))!;
-    fireEvent.click(within(cut).getByTestId("lane-raw-cut"));
-    const held = await screen.findByTestId("lane-raw-held");
-    await waitFor(() => expect(within(held).getByTestId("lane-raw-command").textContent).toBe(whole.command));
-    expect(held.querySelector(".lw-caption")?.textContent).toMatch(/^HELD · OUTSIDE THE WORKTREE/);
-    expect(within(held).getByTestId("lane-raw-deny")).toBeTruthy();
-    fireEvent.click(within(held).getByTestId("lane-raw-approve"));
-    await waitFor(() =>
-      expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_cut/decide", expect.objectContaining({
-        json: expect.objectContaining({ decision: "approved" }),
-      })),
-    );
-    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^APPROVED · \d\d:\d\d$/));
-    expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
+    act(() => useLane.getState().setRaw(true));
+    const cards = await screen.findAllByTestId("lane-raw-held");
+    expect(cards).toHaveLength(3);
+    await waitFor(() => expect(screen.getAllByTestId("lane-raw-command")).toHaveLength(3));
+  }
+  const cardFor = (text: string) =>
+    screen.getAllByTestId("lane-raw-held").find((el) => (within(el).queryByTestId("lane-raw-command")?.textContent ?? "") === text);
+
+  /** replaces: tests/e2e/test_philo15_20_raw_approve_glass.py::test_raw_shows_a_cut_call_whole_and_approves_it_at_1440_and_393 */
+  it("Approve shows only on the call the hub reads whole; a head-only call and a part offer Deny only", async () => {
+    expect(WHOLE.wire.whole).toBe(true);
+    expect(HEAD_ONLY.wire.whole).toBe(false);
+    expect(PART.wire.whole).toBe(false);
+    await openRaw();
+    const whole = cardFor(WHOLE.wire.command)!;
+    expect(whole.querySelector(".lw-caption")?.textContent).toMatch(/^HELD · OUTSIDE THE WORKTREE/);
+    expect(within(whole).getByTestId("lane-raw-approve")).toBeTruthy();
+    expect(within(whole).getByTestId("lane-raw-deny")).toBeTruthy();
+    const headOnly = cardFor(HEAD_ONLY.wire.command)!;
+    expect(headOnly.querySelector(".lw-caption")?.textContent).toContain("CUT ·");
+    expect(within(headOnly).queryByTestId("lane-raw-approve")).toBeNull();
+    expect(within(headOnly).getByTestId("lane-raw-deny")).toBeTruthy();
+    const part = screen.getAllByTestId("lane-raw-held")
+      .find((el) => (el.querySelector(".lw-caption")?.textContent ?? "").includes(`CUT · ${PART.wire.shown_chars} OF ${PART.wire.declared_chars} CHARS`))!;
+    expect(part).toBeTruthy();
+    expect(within(part).queryByTestId("lane-raw-approve")).toBeNull();
+    expect(within(part).getByTestId("lane-raw-deny")).toBeTruthy();
   });
 
-  /** replaces: tests/e2e/test_philo15_20_raw_approve_glass.py::test_raw_shows_a_cut_call_whole_and_approves_it_at_1440_and_393 (the oversized call) */
-  it("an oversized call kept as a part says CUT · n OF m CHARS and offers Deny only", async () => {
-    const part = hubWire<{ shown_chars: number; declared_chars: number }>("gate-command.part").wire;
-    expect(part.shown_chars).toBeLessThan(part.declared_chars);
-    await openLane(LANE_CUT.wire, { "/api/gate/proposals/toolu_cut/command": part });
-    act(() => useLane.getState().setRaw(true));
-    const held = await screen.findByTestId("lane-raw-held");
+  /** replaces: tests/e2e/test_philo15_20_raw_approve_glass.py::test_raw_shows_a_cut_call_whole_and_approves_it_at_1440_and_393 (Approve, then the next read) */
+  it("Approve decides it: the held card leaves on the hub's next lane read and the receipt stays", async () => {
+    await openRaw();
+    fireEvent.click(within(cardFor(WHOLE.wire.command)!).getByTestId("lane-raw-approve"));
     await waitFor(() =>
-      expect(held.querySelector(".lw-caption")?.textContent).toContain(`CUT · ${part.shown_chars} OF ${part.declared_chars} CHARS`));
-    expect(within(held).queryByTestId("lane-raw-approve")).toBeNull();
-    expect(within(held).getByTestId("lane-raw-deny")).toBeTruthy();
+      expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_cut_1440/decide", expect.objectContaining({
+        method: "POST", json: expect.objectContaining({ decision: "approved" }),
+      })),
+    );
+    await waitFor(() => expect(screen.getAllByTestId("lane-raw-held")).toHaveLength(2));
+    expect(cardFor(WHOLE.wire.command)).toBeUndefined();
+    expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^APPROVED · \d\d:\d\d$/);
+    expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
   });
 });

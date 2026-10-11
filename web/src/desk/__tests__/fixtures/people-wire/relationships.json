@@ -1,0 +1,67 @@
+{
+  "relationships": [
+    {
+      "cadence": "weekly",
+      "calendar_links": null,
+      "created_at": "2026-10-11T20:37:18Z",
+      "display_name": "Avery Chen",
+      "id": "d2797a58-c862-4900-94b1-e3f8bdab34f4",
+      "owner_aliases": null,
+      "project_refs": null,
+      "relationship_kind": "direct_report",
+      "role_context": "Engineer",
+      "state": "active",
+      "timezone": "",
+      "updated_at": "2026-10-11T20:37:18Z"
+    },
+    {
+      "cadence": "weekly",
+      "calendar_links": null,
+      "created_at": "2026-10-11T20:37:18Z",
+      "display_name": "Jordan Patel",
+      "id": "33497fac-9a6b-46e8-9198-1606775a189d",
+      "owner_aliases": null,
+      "project_refs": null,
+      "relationship_kind": "direct_report",
+      "role_context": "Engineer",
+      "state": "active",
+      "timezone": "",
+      "updated_at": "2026-10-11T20:37:18Z"
+    },
+    {
+      "cadence": "weekly",
+      "calendar_links": null,
+      "created_at": "2026-10-11T20:37:18Z",
+      "display_name": "Sam Rivera",
+      "id": "f0423c64-8c7e-46d5-9c66-97fb34980ac3",
+      "owner_aliases": null,
+      "project_refs": null,
+      "relationship_kind": "direct_report",
+      "role_context": "Engineer",
+      "state": "active",
+      "timezone": "",
+      "updated_at": "2026-10-11T20:37:18Z"
+    },
+    {
+      "cadence": "weekly",
+      "calendar_links": [
+        {
+          "label": "1:1 Priya / Karol",
+          "linked_at": "2026-10-11T20:37:18Z",
+          "source_id": "p13-06-week",
+          "uid": "p13-06-1on1"
+        }
+      ],
+      "created_at": "2026-10-11T20:37:18Z",
+      "display_name": "Priya Nair",
+      "id": "13376da5-0528-4c28-882b-a4df2a786e9a",
+      "owner_aliases": null,
+      "project_refs": null,
+      "relationship_kind": "peer",
+      "role_context": "Engineer",
+      "state": "active",
+      "timezone": "",
+      "updated_at": "2026-10-11T20:37:18+00:00"
+    }
+  ]
+}
