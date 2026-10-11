@@ -27,14 +27,18 @@ each, in place of one "this face renders cleanly" file per phase.
   with ``POST /api/desk/windows/{id}/open``. No menus.
 * The fences, at 1440x900 and 393x852, on the window and on each of its wings
   (opened through the window's own wing control):
-    drawn     the window opened on the hub is drawn and settles
+    drawn     the window opened on the hub settles and is visible: no
+              display none, opacity 0 or visibility hidden on it or above
+              it, and it is the thing at its own centre
     fit       the window is inside the viewport
     clean     no page error, no console error, no page-wide sideways scroll
-    readable  no clipped or overlapping text (glass_infra on-glass reader)
+    readable  no clipped or overlapping text (glass_infra on-glass reader);
+              a scope it cannot read fails
     contrast  faint and ember text at 4.5:1 (the HS-202-05 rule, _MEASURE)
     floor     no readable text under 12 px (the PHILO-13-18 rule, _MEASURE)
-    clipped   no text box whose scrollWidth exceeds its clientWidth without
-              a scroller (a single-line ellipsis is lawful, UX-CANON A.6)
+    clipped   no text run cut by ANY ancestor with overflow hidden or clip
+              (wholly cut text too), and no text box that spills its holder
+              without a scroller (a single-line ellipsis is lawful, A.6)
     overlap   no two interactive controls overlap (painted boxes)
     library   every verb is a library Button: no raw <button>
     material  the bevel grammar (test_philo14_b2_material_glass._assert_material)
@@ -42,12 +46,16 @@ each, in place of one "this face renders cleanly" file per phase.
     egress    every request goes to the hub's own origin (data:, blob: allowed)
   The bare desk (no window) is one more case, read over the whole screen.
 * Every HTML route the hub serves (test_route_preflight.PAGE_ROUTES, fenced
-  against the live app there) loads with no page error and no console error,
-  read after its window settles and the same 1.5 s watch.
+  against the live app there) draws what it is for: a standalone page its
+  visible content, every other address the desk and the window it opens
+  (shown, with text); and no page error or console error after the 1.5 s watch.
 * Known reds on main are listed in ``KNOWN_REDS`` and marked
-  ``xfail(strict=True, raises=KnownRed)``: a NEW red in the same case fails;
-  a known red that heals fails too, so the list only shrinks. A red that
-  shows on some runs only is listed with "MAYBE: " and gates neither way.
+  ``xfail(strict=True, raises=KnownRed)``. Each entry excuses ONE defect: a
+  fence key and a regex over one observation. Any other observation fails,
+  in any fence; a strict entry nothing matches fails as healed. A red that
+  shows on some runs only is ``maybe=True``: it excuses only its own matches.
+* Collection fails when the manifest yields fewer than MANIFEST_FLOOR rows,
+  or when the hub refuses a window for any reason but ``window_not_on_hub``.
 
 No fixed waits: condition waits only, except the 1.5 s no-move window.
 """
@@ -56,10 +64,11 @@ from __future__ import annotations
 import functools
 import json
 import os
+import re
 import subprocess
 import urllib.parse
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 import pytest
 
@@ -73,7 +82,6 @@ from . import test_hs158_room_glass as hs158  # noqa: E402
 from . import test_philo13_06_open_glass as open13  # noqa: E402
 from .glass_infra import (  # noqa: E402
     _api,
-    _assert_clean,
     _boot,
     _ensure_build,
     _normal_chair,
@@ -81,7 +89,7 @@ from .glass_infra import (  # noqa: E402
     clear_hub_windows_http,
 )
 from .test_hs202_05_first_use_type_floor import _FAINT_JS, _MEASURE, GATED_CONTRAST  # noqa: E402
-from .test_philo14_b2_material_glass import _assert_material  # noqa: E402
+from .test_philo14_b2_material_glass import LAMP_WORDS, MATERIAL_JS  # noqa: E402
 from .test_philo14_c4_conductor_glass import _seed as _seed_agents  # noqa: E402
 from .test_philo17_meeting_window_glass import _save_meeting  # noqa: E402
 from .test_route_preflight import PAGE_ROUTES  # noqa: E402
@@ -89,13 +97,13 @@ from .test_route_preflight import PAGE_ROUTES  # noqa: E402
 pytestmark = [pytest.mark.e2e]
 
 REPO = Path(__file__).resolve().parents[2]
+MANIFEST_FLOOR = 22
 TOKEN = "desk-sweep"
 SIZES = {1440: 900, 393: 852}
 T = 20_000
 STILL_MS = 1500
 TOLERANCE = 2
 PALETTE_QUERY = "ledger"  # a Project, meetings, a decision, a note of the seed
-MAYBE = "MAYBE: "
 
 
 class KnownRed(AssertionError):
@@ -110,6 +118,7 @@ import(process.argv[1]).then((m) => {
     action: a.action, windowId: a.windowId, label: a.label, href: a.href,
     subjectRef: a.subjectRef ?? null,
     scopes: (a.aliases ?? []).map((x) => x.scope).filter(Boolean),
+    aliases: (a.aliases ?? []).map((x) => ({key: x.key, scope: x.scope ?? null})),
   }))));
 });
 """
@@ -123,14 +132,28 @@ def _manifest() -> list[dict[str, Any]]:
         capture_output=True, text=True, timeout=60,
     )
     assert out.returncode == 0, f"could not read {source} in Node: {out.stderr}"
-    return json.loads(out.stdout)
+    apps = json.loads(out.stdout)
+    # No silent zero: a manifest that reads as empty (or loses most of its rows)
+    # would make a sweep that sees nothing and passes.
+    assert len(apps) >= MANIFEST_FLOOR, (
+        f"{source} yielded {len(apps)} applications, under the floor of {MANIFEST_FLOOR} "
+        f"(24 on 2026-10-11, less a margin of 2): the manifest read is broken, or rows were removed; "
+        f"lower MANIFEST_FLOOR only for a deliberate removal")
+    return apps
+
+
+#: The one refusal the sweep expects: a window the hub will not hold.
+NOT_ON_HUB_CODE = "window_not_on_hub"
 
 
 def window_app_on_hub(wid: str) -> bool:
+    """False only for the hub's deliberate refusal; any other refusal raises."""
     try:
         window_app(wid)
-    except ValidationError:
-        return False
+    except ValidationError as exc:
+        if exc.code == NOT_ON_HUB_CODE:
+            return False
+        raise
     return True
 
 
@@ -141,10 +164,8 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
     seen: set[tuple[str, str | None]] = set()
     for app in _manifest():
         wid = app["windowId"]
-        try:
-            window_app(wid)
-        except ValidationError as exc:
-            refused[wid] = str(exc)
+        if not window_app_on_hub(wid):  # any refusal but window_not_on_hub fails collection
+            refused[wid] = NOT_ON_HUB_CODE
             continue
         for scope in [None, app["subjectRef"], *app["scopes"]]:
             if (wid, scope) in seen:
@@ -166,70 +187,163 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
 
 
 CASES, NOT_ON_HUB_APPS = _cases()
-# The window an application's address opens (the manifest's `href`), for the
-# route test: a route waits for its window before it reads the errors.
-ROUTE_WINDOWS = {a["href"]: a["windowId"] for a in _manifest() if a["href"] not in ("/", None)}
 
-# ── known reds on main (filled from the first sweep; see the PR body) ─────
-# (case id, width) -> {fence key: the defect}. A fence key is the fence name,
-# or "<fence>@<wing>" for a wing. A defect that starts with "MAYBE: " shows on
-# some runs only (it depends on timing or the clock): it is neither a new red
-# when it shows nor a healed one when it does not.
-KNOWN_REDS: dict[tuple[str, int], dict[str, str]] = {
-    ("desk", 1440): {
-        "overlap": "MAYBE: the People drawer icon and the Conductor drawer icon overlap by 5 px on the desk screen "
-                   "(when the People caption `1:1 HH:MM` is wide enough)",
-        "readable": "MAYBE: the People drawer icon overlaps the Conductor icon, and its count badge 1 overlaps its caption",
-    },
-    ("desk", 393): {
-        "overlap": "the Dock's Delivery launcher and the More AppIcons control overlap (49x54 px)",
-    },
-    ("surface-places", 1440): {"overlap": "a Place card and its Favorite star are two controls drawn over each other (the star sits on the card Button)", "readable": "a Place card and its Favorite star are two controls drawn over each other (the star sits on the card Button)"},
-    ("surface-places", 393): {"overlap": "a Place card and its Favorite star are two controls drawn over each other (the star sits on the card Button)", "readable": "a Place card and its Favorite star are two controls drawn over each other (the star sits on the card Button)"},
-    ("surface-processes", 1440): {
-        "clipped": "Processes: the target CHANNEL.SAVE_DESTINATION is 225 px in a 160 px cell, clipped",
-        "readable": "Processes: CHANNEL.SAVE_DESTINATION runs over its neighbour Owner-session · Node:hub-project-writer",
-    },
-    ("surface-companion", 1440): {
-        "library@Delivery": "Agents, Delivery wing: raw <button class=desk-list-open> rows (DeliveryListSection.tsx:54)",
-        "still": "MAYBE: Agents: the Roster and How it connects sections move 44 px after the window settles (a late read)",
-    },
-    ("surface-companion", 393): {
-        "library@Delivery": "Agents, Delivery wing: raw <button class=desk-list-open> rows (DeliveryListSection.tsx:54)",
-    },
-    ("surface-components", 1440): {
-        "readable": "the Components catalog: receipt labels and topology node labels clip; at 393 the catalog body scrolls sideways", "readable@Record": "the Components catalog: receipt labels and topology node labels clip; at 393 the catalog body scrolls sideways",
-        "contrast": "the Components catalog: the ember state-chip icons (* and ●) read 1:1 on their ground", "contrast@Record": "the Components catalog: the ember state-chip icons (* and ●) read 1:1 on their ground",
-        "library": "the Components catalog: raw <button> demos (signal-btn Open popover, surface-topology-node This Mac / LAN Server / Cloud API)", "library@Record": "the Components catalog: raw <button> demos (signal-btn Open popover, surface-topology-node This Mac / LAN Server / Cloud API)",
-    },
-    ("surface-components", 393): {
-        "readable": "the Components catalog: receipt labels and topology node labels clip; at 393 the catalog body scrolls sideways", "readable@Record": "the Components catalog: receipt labels and topology node labels clip; at 393 the catalog body scrolls sideways",
-        "contrast": "the Components catalog: the ember state-chip icons (* and ●) read 1:1 on their ground", "contrast@Record": "the Components catalog: the ember state-chip icons (* and ●) read 1:1 on their ground",
-        "library": "the Components catalog: raw <button> demos (signal-btn Open popover, surface-topology-node This Mac / LAN Server / Cloud API)", "library@Record": "the Components catalog: raw <button> demos (signal-btn Open popover, surface-topology-node This Mac / LAN Server / Cloud API)",
-    },
-    ("surface-concierge", 1440): {
-        "still": "MAYBE: Runs on: the switchboard job rows (switchboard-job-*) move 84 px after the window settles",
-    },
-    ("meeting", 1440): {
-        "still": "MAYBE: the meeting window: meeting-decide and the transcript speakers move 113 px after the window settles",
-    },
-    ("surface-concierge", 393): {
-        "material": "Runs on at 393: the Dictation clean-up OFF Button has no bevel (box-shadow none)",
-    },
-    ("room", 1440): {
-        "readable": "MAYBE: Room: risk rows (Settlement latency under load, RISK, LIKELIHOOD HIGH, DUE SEP 15) read as overlapping "
-                    "the ask bar (Ask this project, Result, Choose); the reader does not read z-order, so this may be "
-                    "rows scrolled under an opaque bar",
-        "material@History": "Room, History wing: the GITHUB filter Button has no bevel (box-shadow none, not --bevel-raised)",
-        "still": "MAYBE: Room: the footer receipt (room-footer-receipt) moves 51 px after the window settles",
-        "overlap": "MAYBE: Room: the footer's Pause and Choose controls overlap (50x27 px) on some loads",
-    },
-    ("needs", 393): {
-        "drawn": "a chair:needs window opened on the hub is not drawn at 393: the phone draws only the Chair window "
-                 "its own cache names (chairWindows.ts `phone`); the hub adapter (hubWindows.ts adapterFor) clears "
-                 "`closed` and leaves `phone` empty",
-    },
-    ("room", 393): {"material@History": "Room, History wing: the GITHUB filter Button has no bevel (box-shadow none, not --bevel-raised)"},
+
+# ── the routes: what each served address must draw ───────────────────────
+# The pages that draw no desk screen, and what each must show (routes.tsx
+# PRODUCT_ROUTES: Presence draws its card; Welcome hands off to the Get ready
+# cards, which stand in place of the desk screen):
+STANDALONE_ROUTES = {"/presence": ".presence-card", "/welcome": ".firstrun-card-title"}
+# Addresses that land on the bare desk (App.tsx: `/desk` and `*` go to `/`).
+DESK_ROUTES = {"/": None, "/desk": None, "/workbench": None}
+
+
+def _route_windows() -> dict[str, str]:
+    """Each demoted address -> the window it opens: routes.tsx DEMOTED_ROUTES
+    (path -> application key), the key through the manifest (an action, or an
+    alias of one)."""
+    source = (REPO / "web" / "src" / "routes.tsx").read_text(encoding="utf-8")
+    block = source[source.index("export const DEMOTED_ROUTES"):]
+    pairs = re.findall(r'path:\s*"([^"]+)",\s*surface:\s*"([^"]+)"', block)
+    assert len(pairs) >= 15, f"routes.tsx DEMOTED_ROUTES read {len(pairs)} rows: the read is broken"
+    by_key: dict[str, str] = {}
+    for app in _manifest():
+        by_key.setdefault(app["action"], app["windowId"])
+        for alias in app["aliases"]:
+            by_key.setdefault(alias["key"], app["windowId"])
+    out = {}
+    for path, key in pairs:
+        assert key in by_key, f"routes.tsx sends {path} to {key!r}, which the manifest does not know"
+        out[path] = by_key[key]
+    return out
+
+
+ROUTE_WINDOWS = _route_windows()
+
+# ── known reds on main ─────────────────────────────────────────────────────
+# (case id, width) -> the defects, ONE observation each: a fence key (the fence,
+# or "<fence>@<wing>") and a regex that must match that one observation (an
+# element, an element pair, a text). Only matching observations are excused;
+# any other observation in the same fence fails. A strict defect that no
+# observation matches fails as healed. A MAYBE defect (it shows on some runs
+# only) excuses its own matches and is never "healed".
+
+
+class Red(NamedTuple):
+    key: str
+    match: str
+    why: str
+    maybe: bool = False
+
+
+_PLACES = "a Place card Button and its Favorite star are drawn over each other"
+_COMPONENTS = [  # the Components catalog (a demo surface), both widths, both wings
+    ("readable", r"clipped '(Started|Transcribed|Partial|Failed)' in surface-receipt-label$",
+     "receipt labels are cut by their own box (surface-receipt-label)"),
+    ("clipped", r"'(Started|Transcribed|Partial|Failed)' cut by \.surface-receipt-label \(y\)$",
+     "receipt labels are cut by their own box (surface-receipt-label)"),
+    ("readable", r"clipped '.+' in surface-topology-(map-area|node-label)$",
+     "the topology demo's labels are cut by the map and the node boxes"),
+    ("clipped", r"' cut by \.surface-topology-(map-area|node-label) \([xy]+\)$",
+     "the topology demo's labels are cut by the map and the node boxes"),
+    ("contrast", r"^'[*●]' 1:1 < 4\.5 \(ember, .*surface-state-chip",
+     "the ember state-chip icons (* and ●) read 1:1 on their ground"),
+    ("library", r'^<button class="signal-btn"> Open popover$', "a raw <button> demo: Open popover"),
+    ("library", r'^<button class="surface-topology-node"> (This Mac|LAN Server|Cloud API)$',
+     "the topology demo's nodes are raw <button>s"),
+]
+
+
+def _components(width: int) -> list[Red]:
+    rows = [Red(k + wing, m, w) for k, m, w in _COMPONENTS for wing in ("", "@Record")]
+    # The Record wing: the catalog's heading reads as overlapping the gadgets under it.
+    rows += [Red("readable@Record", rf"^overlap '{a}' x '{b}'$", "Components, Record wing: the catalog heading "
+                 "overlaps the gadget rows under it") for a, b in (
+        [("The gadget kit on the surface idiom", "PropGadget")] if width == 1440 else
+        [("The gadget kit on the surface idiom", "Level"), ("The gadget kit on the surface idiom", "Gallery scalar"),
+         ("0.60", "Primary verb")])]
+    if width == 393:
+        rows += [Red("readable" + wing, r"^clipped '.+' in desk-surface-body$",
+                     "the catalog body scrolls sideways at 393") for wing in ("", "@Record")]
+    return rows
+
+
+_ROOM_MATERIAL = [Red("material@History", rf"^Button '{b}' is not raised \(box-shadow none\)$",
+                      f"Room, History wing: the {b} filter Button has no bevel") for b in ("GITHUB", "JIRA", "ROOM")]
+
+KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
+    ("desk", 1440): [
+        Red("overlap", r"^People, DRAWER, 1:1 [\d:]+ x Conductor, DRAWER, ", "the People drawer icon overlaps the "
+            "Conductor icon by 5 px when its `1:1 HH:MM` caption is wide (depends on the clock)", maybe=True),
+        Red("readable", r"^overlap 'People, DRAWER, 1:1 [\d:]+' x 'Conductor, DRAWER, ",
+            "the same People x Conductor icon overlap", maybe=True),
+        Red("readable", r"^overlap '1' x 'People, DRAWER, 1:1 [\d:]+'$",
+            "the People icon's count badge 1 overlaps its caption", maybe=True),
+    ],
+    ("desk", 393): [Red("overlap", r"^Delivery x More AppIcons ",
+                        "the Dock's Delivery launcher and More AppIcons overlap (49x54 px)")],
+    ("surface-places", 1440): [
+        Red("overlap", rf"^{n}.* x Favorite {n} ", _PLACES) for n in
+        ("Rainy City", "Lantern Garden", "After-Hours Radio", "Midnight Archive")] + [
+        Red("readable", rf"^overlap '{n}.*' x 'Favorite {n}'$", _PLACES) for n in
+        ("Rainy City", "Lantern Garden", "After-Hours Radio", "Midnight Archive")],
+    ("surface-places", 393): [
+        Red("overlap", rf"^{n}.* x Favorite {n} ", _PLACES) for n in ("Rainy City", "Lantern Garden")] + [
+        Red("readable", rf"^overlap '{n}.*' x 'Favorite {n}'$", _PLACES) for n in ("Rainy City", "Lantern Garden")],
+    ("surface-processes", 1440): [
+        Red("clipped", r"^'CHANNEL\.SAVE_DESTINATION' spills \.surface-ledger-primary ",
+            "Processes: the target CHANNEL.SAVE_DESTINATION is 225 px in a 160 px cell"),
+        Red("readable", r"^overlap 'CHANNEL\.SAVE_DESTINATION' x 'Owner-session",
+            "Processes: CHANNEL.SAVE_DESTINATION runs over its neighbour Owner-session"),
+    ],
+    ("surface-companion", 1440): [
+        Red("library@Delivery", r'^<button class="desk-list-open"> action-',
+            "Agents, Delivery wing: raw <button class=desk-list-open> rows (DeliveryListSection.tsx:54)"),
+        Red("still", r"^(Roster|How it connects) moved \d+ px$",
+            "Agents: Roster and How it connects move 44 px after the window settles (a late read)", maybe=True),
+    ],
+    ("surface-companion", 393): [
+        Red("library@Delivery", r'^<button class="desk-list-open"> action-',
+            "Agents, Delivery wing: raw <button class=desk-list-open> rows (DeliveryListSection.tsx:54)"),
+    ],
+    ("surface-components", 1440): _components(1440),
+    ("surface-components", 393): _components(393),
+    ("surface-concierge", 1440): [
+        Red("still", r"^(switchboard-job-\w+|concierge-[\w-]+) moved \d+ px$",
+            "Runs on: the switchboard job rows move 84 px after the window settles", maybe=True),
+    ],
+    ("surface-concierge", 393): [
+        Red("material", r"^Button '[^']+OFF' is not raised \(box-shadow none\)$",
+            "Runs on at 393: the job switch Buttons (… OFF) have no bevel"),
+    ],
+    ("meeting", 1440): [
+        Red("still", r"^(meeting-decide(-well)?|transcript-speaker) moved \d+ px$",
+            "the meeting window: meeting-decide and the transcript speakers move after the window settles",
+            maybe=True),
+    ],
+    ("room", 1440): [
+        Red("readable", r"^overlap '(Settlement latency under load|Compliance team sign-off|RISK|LIKELIHOOD HIGH|"
+            r"DUE SEP 15)' x '(Ask this project|Speak to ask this project|Result|Choose)'$",
+            "Room: the risk rows read as overlapping the ask bar (the reader ignores z-order: the rows may be "
+            "scrolled under an opaque bar); where they sit depends on the late read", maybe=True),
+        # A late read (the sources row) lands after the window settles and moves the body
+        # down (295 px seen); what overlaps the ask bar then depends on when it lands.
+        Red("still", r"^(room-footer-receipt|room-add-source|steward-verb|source-scope|Pause|since-read-empty) "
+            r"moved \d+ px$", "Room: a late read moves the body after the window settles", maybe=True),
+        Red("readable", r"^overlap '(GH|org/repo|\d+ OPEN PRS|·|CI GREEN|CI RED)' x 'Ask this project'$",
+            "Room: the sources row reads as overlapping the ask bar after the late read lands", maybe=True),
+        Red("overlap", r"^Pause x Choose ", "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
+        Red("readable", r"^overlap '(Pause|Choose)' x '(Pause|Choose)'$",
+            "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
+        *_ROOM_MATERIAL,
+    ],
+    ("room", 393): [*_ROOM_MATERIAL],
+    ("needs", 393): [
+        Red("drawn", r"^chair:needs never settled: \{'window': None",
+            "a chair:needs window opened on the hub is not drawn at 393: the phone draws only the Chair window its "
+            "own cache names (chairWindows.ts `phone`); the hub adapter (hubWindows.ts adapterFor) clears `closed` "
+            "and leaves `phone` empty"),
+    ],
 }
 
 
@@ -237,10 +351,9 @@ def _params() -> list[Any]:
     out = []
     for case in CASES:
         for width in SIZES:
-            known = {k: v for k, v in KNOWN_REDS.get((case[0], width), {}).items() if not v.startswith(MAYBE)}
+            known = [r for r in KNOWN_REDS.get((case[0], width), []) if not r.maybe]
             marks = [pytest.mark.xfail(strict=True, raises=KnownRed,
-                                       reason="; ".join(f"{k}: {v}" for k, v in sorted(known.items())))] \
-                if known else []
+                                       reason="; ".join(f"{r.key}: {r.why}" for r in known))] if known else []
             out.append(pytest.param(case, width, id=f"{case[0]}-{width}", marks=marks))
     return out
 
@@ -326,6 +439,31 @@ UNSETTLED_JS = r"""(id) => {
       .map((a) => (a.animationName || a.transitionProperty || 'waapi') + ' on ' + String(a.effect.target && a.effect.target.className).slice(0, 40)).slice(0, 5)};
 }"""
 
+# drawn: the window is shown (no visibility:hidden, no opacity 0, no display
+# none on itself or any ancestor) and is the thing at its own centre (unless
+# a listed cover is there; none is listed today).
+COVERS: tuple[str, ...] = ()
+DRAWN_JS = r"""([sel, covers]) => {
+  const w = sel ? document.querySelector(sel) : null;
+  if (!w) return 'no element ' + sel;
+  for (let a = w; a; a = a.parentElement) {
+    const cs = getComputedStyle(a);
+    if (cs.display === 'none') return `display none on ${a.id || a.className || a.tagName}`;
+    if (Number(cs.opacity) <= 0.05) return `opacity ${cs.opacity} on ${a.id || a.className || a.tagName}`;
+  }
+  const cs = getComputedStyle(w);
+  if (cs.visibility !== 'visible') return `visibility ${cs.visibility}`;
+  const r = w.getBoundingClientRect();
+  if (r.width < 40 || r.height < 40) return `not drawn: ${Math.round(r.width)}x${Math.round(r.height)}`;
+  const x = Math.min(Math.max(r.left + r.width / 2, 0), innerWidth - 1);
+  const y = Math.min(Math.max(r.top + r.height / 2, 0), innerHeight - 1);
+  const hit = document.elementFromPoint(x, y);
+  if (!hit) return 'nothing at its centre';
+  if (w.contains(hit)) return null;
+  if (covers.some((c) => hit.closest(c))) return null;
+  return `covered at its centre by ${hit.id || hit.className || hit.tagName}`;
+}"""
+
 FIT_JS = r"""(id) => {
   const w = document.getElementById(id);
   if (!w) return 'no window';
@@ -347,25 +485,75 @@ _COMMON_JS = r"""
     || e.tagName.toLowerCase() + '.' + String(e.className).trim().split(/\s+/)[0]);
 """
 
-# clipped: a text holder whose content is wider than its box, with no
-# sideways scroller on it or above it, and no single-line ellipsis.
-CLIPPED_JS = r"""(sel) => {""" + _COMMON_JS + r"""
+# clipped: every visible text run, walked through ALL its ancestors (not
+# only the nearest clipping box): a box with overflow hidden or clip that cuts
+# the run on an axis clips it, wholly or in part (wholly clipped text is
+# reported, never dropped). A scroll container (auto, scroll) makes the run
+# reachable on its axis: from there up, the scroller's box stands for the
+# run on that axis. Lawful: a single-line ellipsis cut by its own box
+# (UX-CANON A.6), and a visually-hidden (sr-only) run.
+CLIPPED_JS = r"""(sel) => {
+  const scopes = sel ? [...document.querySelectorAll(sel)] : [document.body];
   const out = [];
-  for (const e of scope.querySelectorAll('*')) {
-    if (!visible(e)) continue;
-    if (![...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
-    if (e.scrollWidth <= e.clientWidth + 1 || e.clientWidth === 0) continue;
-    const cs = getComputedStyle(e);
-    if (['auto', 'scroll'].includes(cs.overflowX)) continue;
-    if (cs.textOverflow === 'ellipsis' && cs.whiteSpace === 'nowrap') continue;
-    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.tagName)) continue;
-    let scrolled = false;
-    for (let a = e.parentElement; a && a !== scope.parentElement; a = a.parentElement) {
-      if (['auto', 'scroll'].includes(getComputedStyle(a).overflowX) && a.scrollWidth > a.clientWidth + 1) { scrolled = true; break; }
+  const shown = (e) => { const cs = getComputedStyle(e);
+    return cs.visibility !== 'hidden' && cs.display !== 'none'
+      && (!e.checkVisibility || e.checkVisibility({contentVisibilityAuto: true, opacityProperty: true})); };
+  const srOnly = (e) => { for (let a = e; a && a !== document.body; a = a.parentElement) {
+      const r = a.getBoundingClientRect(), cs = getComputedStyle(a);
+      if ((r.width <= 1 || r.height <= 1) && cs.overflow !== 'visible') return true;
+      if (cs.clip === 'rect(0px, 0px, 0px, 0px)' || /inset\(50%|inset\(100%/.test(cs.clipPath)) return true; }
+    return false; };
+  const label = (a) => (a.id ? '#' + a.id : '') + (typeof a.className === 'string' && a.className.trim()
+    ? '.' + a.className.trim().split(/\s+/)[0] : (a.id ? '' : a.tagName.toLowerCase()));
+  for (const scope of scopes) {
+    const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const text = n.textContent.trim();
+      const el = n.parentElement;
+      if (!text || !el || !shown(el) || srOnly(el)) continue;
+      const range = document.createRange(); range.selectNodeContents(n);
+      const r = range.getBoundingClientRect();
+      if (r.width < 1 && r.height < 1) continue;
+      // A text box wider than its own holder with no scroller spills (it is
+      // not whole in its box even where nothing cuts it).
+      const hcs = getComputedStyle(el);
+      if (el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0 && !['auto', 'scroll'].includes(hcs.overflowX)
+          && !(hcs.textOverflow === 'ellipsis' && hcs.whiteSpace === 'nowrap')
+          && !['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) {
+        let scrolled = false;
+        for (let a = el.parentElement; a; a = a.parentElement) {
+          if (['auto', 'scroll'].includes(getComputedStyle(a).overflowX) && a.scrollWidth > a.clientWidth + 1) { scrolled = true; break; }
+        }
+        if (!scrolled) { out.push(`'${text.slice(0, 50)}' spills ${label(el)} (${el.scrollWidth} > ${el.clientWidth})`); continue; }
+      }
+      let L = r.left, R = r.right, T = r.top, B = r.bottom;
+      // An absolutely positioned box escapes the overflow of every static
+      // ancestor up to its containing block; a fixed one, up to a transform.
+      let escape = null;
+      for (let a = el; a && a !== document.documentElement; a = a.parentElement) {
+        const cs = getComputedStyle(a); const ar = a.getBoundingClientRect();
+        const contains = cs.transform !== 'none' || cs.filter !== 'none' || /paint|layout|strict|content/.test(cs.contain);
+        if (escape === 'absolute' && a !== el && (cs.position !== 'static' || contains)) escape = null;
+        if (escape === 'fixed' && a !== el && contains) escape = null;
+        if (escape && a !== el) { if (cs.position === 'fixed') escape = 'fixed'; continue; }
+        const ox = cs.overflowX, oy = cs.overflowY;
+        const cutX = ['hidden', 'clip'].includes(ox) && (L < ar.left - 1 || R > ar.right + 1);
+        const cutY = ['hidden', 'clip'].includes(oy) && (T < ar.top - 1 || B > ar.bottom + 1);
+        const ellipsis = cutX && !cutY && cs.textOverflow === 'ellipsis' && cs.whiteSpace === 'nowrap'
+          && (a === el || el.closest && a.contains(el));
+        if ((cutX || cutY) && !ellipsis) {
+          out.push(`'${text.slice(0, 50)}' cut by ${label(a)} (${cutX ? 'x' : ''}${cutY ? 'y' : ''})`);
+          break;
+        }
+        if (ellipsis) break;
+        if (['auto', 'scroll'].includes(ox)) { L = ar.left; R = ar.right; }
+        if (['auto', 'scroll'].includes(oy)) { T = ar.top; B = ar.bottom; }
+        if (cs.position === 'absolute') escape = 'absolute';
+        else if (cs.position === 'fixed') escape = 'fixed';
+      }
     }
-    if (!scrolled) out.push(`${name(e)} (${e.scrollWidth} > ${e.clientWidth})`);
   }
-  return out;
+  return [...new Set(out)];
 }"""
 
 # overlap: two interactive controls whose painted boxes cross.
@@ -468,6 +656,42 @@ PALETTE_JS = r"""() => {
 }"""
 
 
+def _material_faults(page: Any, face: str, root: str | None) -> list[str]:
+    """test_philo14_b2_material_glass._assert_material, every observation
+    (that helper stops at the first): the same reads, the same rules."""
+    m = page.evaluate(MATERIAL_JS, root)
+    if m is None:
+        return [f"{face}: no scope {root}"]
+    raised, sunken = m["raised"], m["sunken"]
+    out: list[str] = []
+    if "none" in (raised, sunken, m["soft"], m["softSunken"]):
+        out.append("a bevel token resolves to none")
+    for b in m["buttons"]:
+        if not b["shadow"].startswith((raised, m["wbRaised"])):
+            out.append(f"Button '{b['name']}' is not raised (box-shadow {b['shadow'][:40]})")
+    for t in m["tokens"]:
+        if not t["shadow"].startswith(m["softSunken"] if t["active"] else m["soft"]):
+            out.append(f"token '{t['name']}' has the wrong soft bevel")
+    for c in m["chips"]:
+        ok = (c["border"] == "0px" and c["bg"] in ("rgba(0, 0, 0, 0)", "transparent") and c["lampW"] == "10px"
+              and (c["lampShadow"] or "").startswith(raised) and (c["name"] or "").strip()
+              and (not c["word"] or c["name"] == c["word"])
+              and (c["word"] or c["state"] not in LAMP_WORDS or c["name"] == LAMP_WORDS[c["state"]]))
+        if not ok:
+            out.append(f"state chip '{c['name']}' breaks the lamp grammar")
+    for f in m["facts"]:
+        ok = (f["border"] == "rgba(0, 0, 0, 0)" and f["shadow"] == "none"
+              and f["bg"] in ("rgba(0, 0, 0, 0)", "transparent")
+              and (f["tone"] not in ("warn", "danger", "ok")
+                   or (f["lampW"] == "10px" and (f["lampShadow"] or "").startswith(raised))))
+        if not ok:
+            out.append(f"fact '{f['text']}' is not flat")
+    for shadow in m["bodies"]:
+        if not shadow.startswith(sunken):
+            out.append(f"a window body is not the well (box-shadow {shadow[:40]})")
+    return out
+
+
 def _contrast(a: list[float], b: list[float]) -> float:
     def lum(c: list[float]) -> float:
         ch = [v / 255 for v in c]
@@ -484,7 +708,7 @@ class _Case:
         self.page, self.base, self.wid = page, base, wid
         self.errors, self.requests = errors, requests
         self.sel = f'[id="{wid}"]' if wid else None
-        self.failures: dict[str, str] = {}
+        self.failures: dict[str, list[str]] = {}
         self.baseline: tuple[set[str], set[str]] = (set(), set())
 
     def settle(self) -> None:
@@ -504,32 +728,35 @@ class _Case:
         page, sel = self.page, self.sel
         at = f"@{wing}" if wing else ""
 
-        def fail(fence: str, detail: Any) -> None:
-            if detail:
-                self.failures[fence + at] = str(detail)[:1500]
+        def fail(fence: str, observations: Any) -> None:
+            if isinstance(observations, str):
+                observations = [observations]
+            observations = [str(o)[:400] for o in (observations or []) if o]
+            if observations:
+                self.failures.setdefault(fence + at, []).extend(observations)
 
+        scope = sel or "[data-testid=desk-screen], .desk-menubar"
+        fail("drawn", page.evaluate(DRAWN_JS, [sel or "[data-testid=desk-screen]", list(COVERS)]))
         if self.wid:
             fail("fit", page.evaluate(FIT_JS, self.wid))
-        faults = _rendered_text_faults(page, sel or "[data-testid=desk-screen], .desk-menubar", on_glass=True)
-        fail("readable", ([f"clipped {c}" for c in faults["clipped"]]
-                          + [f"overlap {o[:2]}" for o in faults["overlaps"]]))
+        faults = _rendered_text_faults(page, scope, on_glass=True)
+        if not faults["scopes"]:
+            fail("readable", f"no visible {scope}: nothing was read")
+        fail("readable", ([f"clipped '{c['text']}' in {c['in']}" for c in faults["clipped"]]
+                          + [f"overlap '{o[0]}' x '{o[1]}'" for o in faults["overlaps"]]))
         small, contrast = self.measure()
         fail("floor", sorted(small - self.baseline[0]))
         fail("contrast", sorted(contrast - self.baseline[1]))
-        fail("clipped", page.evaluate(CLIPPED_JS, sel))
+        fail("clipped", page.evaluate(CLIPPED_JS, scope))
         fail("overlap", page.evaluate(OVERLAP_JS, sel))
         fail("library", page.evaluate(LIBRARY_JS, sel))
-        try:
-            _assert_material(page, self.wid or "desk", sel)
-        except AssertionError as exc:
-            fail("material", exc)
+        fail("material", _material_faults(page, self.wid or "desk", sel))
         moved = [r for r in page.evaluate(RECORD_JS, [sel, STILL_MS]) if r["worst"] > TOLERANCE]
         fail("still", [f"{r['name']} moved {round(r['worst'])} px" for r in moved])
         # After the 1.5 s watch: an error a late read raises is counted too.
-        try:
-            _assert_clean(page, self.errors)
-        except AssertionError as exc:
-            fail("clean", exc or self.errors)
+        fail("clean", [e for e in self.errors if "ResizeObserver" not in e])
+        if not page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"):
+            fail("clean", "the page scrolls sideways")
         origin = urllib.parse.urlsplit(self.base).netloc
         fail("egress", sorted({u for u in self.requests
                                if not u.startswith(("data:", "blob:")) and urllib.parse.urlsplit(u).netloc != origin}))
@@ -550,7 +777,7 @@ class _Case:
             if _contrast(facts["selected"]["bg"], facts["selected"]["fg"]) < 4.5:
                 problems.append(f"the selected row reads under 4.5:1: {facts['selected']}")
         if problems:
-            self.failures["palette"] = str(problems)[:1500]
+            self.failures["palette"] = [str(p)[:400] for p in problems]
 
     def wings(self) -> None:
         """Each wing of the window, opened with the window's own wing control."""
@@ -576,7 +803,7 @@ class _Case:
                     page.locator(".desk-menu-list [role='menuitemcheckbox']", has_text=label).first.click()
                 self.settle()
             except Exception as exc:  # noqa: BLE001 -- a wing that cannot be opened is a red
-                self.failures[f"wing@{label}"] = f"could not open: {str(exc)[:300]}"
+                self.failures.setdefault(f"wing@{label}", []).append(f"could not open: {str(exc)[:300]}")
                 continue
             self.fences(label)
 
@@ -624,24 +851,34 @@ def _hub_open(base: str, wid: str, scope: str | None) -> None:
         assert resp.status < 300, resp.status
 
 
-def _verdict(case_id: str, width: int, failures: dict[str, str]) -> None:
+def _verdict(case_id: str, width: int, failures: dict[str, list[str]]) -> None:
     dump = os.environ.get("DESK_SWEEP_DUMP")  # a directory: one JSON per case (to refresh KNOWN_REDS)
     if dump:
         Path(dump).mkdir(parents=True, exist_ok=True)
         (Path(dump) / f"{case_id.replace('/', '_')}-{width}.json").write_text(json.dumps(failures, indent=1))
-    listed = KNOWN_REDS.get((case_id, width), {})
-    maybe = {k for k, v in listed.items() if v.startswith(MAYBE)}
-    known = {k: v for k, v in listed.items() if k not in maybe}
-    failures = {k: v for k, v in failures.items() if k not in maybe}
-    lines = lambda keys: "\n".join(f"  {k}: {failures.get(k, known.get(k))}" for k in sorted(keys))  # noqa: E731
-    new = set(failures) - set(known)
-    healed = set(known) - set(failures)
+    _judge(f"{case_id} at {width}", KNOWN_REDS.get((case_id, width), []), failures)
+
+
+def _judge(where: str, listed: list[Red], failures: dict[str, list[str]]) -> None:
+    """Each observation is excused only by a listed defect of its own fence
+    key whose regex matches it; a strict defect nothing matches is healed."""
+    new: list[str] = []
+    matched: set[int] = set()
+    for key, observations in sorted(failures.items()):
+        for obs in observations:
+            hits = [i for i, r in enumerate(listed) if r.key == key and re.search(r.match, obs)]
+            if hits:
+                matched.update(hits)
+            else:
+                new.append(f"  {key}: {obs}")
+    healed = [f"  {r.key}: {r.why} (/{r.match}/)" for i, r in enumerate(listed) if not r.maybe and i not in matched]
     if new:
-        raise AssertionError(f"{case_id} at {width}: new reds\n{lines(new)}")
+        raise AssertionError(f"{where}: new reds\n" + "\n".join(new))
     if healed:
-        raise AssertionError(f"{case_id} at {width}: healed, remove from KNOWN_REDS\n{lines(healed)}")
-    if known:
-        raise KnownRed(f"{case_id} at {width}: known reds\n{lines(known)}")
+        raise AssertionError(f"{where}: healed, remove from KNOWN_REDS\n" + "\n".join(healed))
+    strict = [r for r in listed if not r.maybe]
+    if strict:
+        raise KnownRed(f"{where}: known reds\n" + "\n".join(f"  {r.key}: {r.why}" for r in strict))
 
 
 @pytest.mark.timeout(240)
@@ -676,7 +913,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         try:
             sweep.settle()
         except AssertionError as exc:  # not drawn: no other fence can read it
-            sweep.failures["drawn"] = str(exc)[:1500]
+            sweep.failures["drawn"] = [str(exc)[:400]]
         else:
             sweep.fences()
             if palette:
@@ -690,39 +927,50 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
 
 ROUTE_KNOWN_REDS: dict[str, str] = {}
 
+VISIBLE_TEXT_JS = r"""(sel) => { const e = document.querySelector(sel); if (!e) return null;
+  const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 ? (e.innerText || '').trim() : null; }"""
+
 
 @pytest.mark.timeout(120)
 @pytest.mark.parametrize("route", [
     pytest.param(r, marks=[pytest.mark.xfail(strict=True, reason=ROUTE_KNOWN_REDS[r])] if r in ROUTE_KNOWN_REDS else [])
     for r in PAGE_ROUTES])
 def test_every_html_route_loads_clean(desk: dict[str, Any], pw_browser: Any, route: str) -> None:
-    """Every HTML route the hub serves loads with no page or console error
-    (the list is test_route_preflight.PAGE_ROUTES, fenced there against the
-    routes the live app serves)."""
+    """Every HTML route the hub serves (test_route_preflight.PAGE_ROUTES,
+    fenced there against the live app) draws what it is for, with no page or
+    console error: the standalone page its own visible content; every other
+    address the desk, and the window it opens, shown and not empty."""
     base = desk["base"]
+    kinds = [k for k, table in (("standalone", STANDALONE_ROUTES), ("desk", DESK_ROUTES),
+                                 ("window", ROUTE_WINDOWS)) if route in table]
+    assert len(kinds) == 1, f"{route}: the sweep has {kinds or 'no'} expectation for it; add one"
     clear_hub_windows_http(base, TOKEN)
     ctx, page, errors, _ = _page(pw_browser, 1440, base)
+    problems: list[str] = []
     try:
-        sep = "&" if "?" in route else "?"
-        page.goto(f"{base}{route}{sep}token={TOKEN}", wait_until="load")
-        wid = ROUTE_WINDOWS.get(route)
-        desk_route = True
-        try:  # Welcome and Presence draw no desk (web/src/routes.tsx PRODUCT_ROUTES)
-            page.locator("[data-testid=desk-screen]").wait_for(state="attached", timeout=5_000)
-        except Exception:  # noqa: BLE001
-            desk_route = False
-        if desk_route:
-            # A desk route: past the Chair, then its window (or the bare desk) settled.
-            _normal_chair(page)
-            if wid and window_app_on_hub(wid):
-                page.locator(f'[id="{wid}"]').wait_for(timeout=T)
-            page.wait_for_function(SETTLED_JS, arg=wid if wid and window_app_on_hub(wid) else None, timeout=T)
+        page.goto(f"{base}{route}?token={TOKEN}", wait_until="load")
+        if kinds == ["standalone"]:
+            sel = STANDALONE_ROUTES[route]
+            page.wait_for_function(f"() => ({VISIBLE_TEXT_JS})({sel!r})", timeout=T)
         else:
-            page.wait_for_function(
-                "() => document.readyState === 'complete' && !document.getAnimations().some((a) => a.playState === 'running'"
-                " && a.effect && a.effect.getTiming().iterations !== Infinity)", timeout=T)
+            page.locator("[data-testid=desk-screen]").wait_for(timeout=T)
+            _normal_chair(page)
+            wid = ROUTE_WINDOWS.get(route)
+            if wid and window_app_on_hub(wid):
+                sel = f'[id="{wid}"]'
+                page.locator(sel).wait_for(timeout=T)
+                page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
+            else:
+                sel = "[data-testid=desk-screen]"
+                page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
+            drawn = page.evaluate(DRAWN_JS, [sel, list(COVERS)])
+            if drawn:
+                problems.append(f"{sel}: {drawn}")
+        if not page.evaluate(VISIBLE_TEXT_JS, sel):
+            problems.append(f"{sel}: no visible text")
         # The same 1.5 s watch the window cases keep: a late error is counted.
         page.evaluate(RECORD_JS, [None, STILL_MS])
-        assert not [e for e in errors if "ResizeObserver" not in e], f"{route}: {errors}"
+        problems += [e for e in errors if "ResizeObserver" not in e]
+        assert not problems, f"{route}: {problems}"
     finally:
         ctx.close()
