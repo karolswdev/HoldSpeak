@@ -1,0 +1,345 @@
+{
+ "_source": "Captured from a real MeetingWebServer (tests/e2e/glass_infra._boot, isolated HOME) seeded by tests/e2e/test_philo17_transcribe_glass.py::_seed_audio_only + its speech_readiness double + _ReplayTranscriber; then POST /transcribe and the reads after it; GET bodies verbatim, keyed by request path. Regenerate with the same seed; never hand-edit a field a test reads.",
+ "_now": "2026-10-11T09:12:25.712",
+ "/api/meetings?limit=100": {
+  "meetings": [
+   {
+    "id": "p17-audio-only",
+    "started_at": "2026-10-11T09:10:25.712962",
+    "ended_at": "2026-10-11T09:12:25.712962",
+    "title": "Standup with audio only",
+    "duration_seconds": 120.0,
+    "segment_count": 0,
+    "action_item_count": 0,
+    "tags": [],
+    "intel_status": "disabled",
+    "intel_status_detail": null,
+    "intel_model_host": null,
+    "intel_duration_s": null,
+    "capture_status": "finalized",
+    "capture_failure": null,
+    "capture_checkpoint_seconds": 0.0,
+    "transcription_status": "record_only",
+    "transcription_status_detail": {
+     "family": "speech-recognition-route-assignments",
+     "reason_code": "speech_not_set_up",
+     "repair": "set_up_speech"
+    },
+    "provenance": "desktop",
+    "calendar_event_id": null,
+    "attendees": [],
+    "parked": false,
+    "transcriptWords": null,
+    "unclearSpans": 0,
+    "needs_you_count": 0,
+    "has_summary": false,
+    "planned_route": {
+     "status": "unavailable",
+     "reason_code": "no assignment",
+     "selection_hash": null,
+     "legs": []
+    },
+    "transcribe_speech": {
+     "model": "base",
+     "backend": "mlx",
+     "state": "on_device",
+     "ready": true,
+     "bytes": 0
+    },
+    "run_receipt": null,
+    "last_refusal": null,
+    "intel_job": null
+   }
+  ],
+  "total": 1
+ },
+ "/api/setup/local-ai": {
+  "state": "not_started",
+  "files": [
+   {
+    "key": "whisper",
+    "label": "whisper-base-mlx",
+    "filename": "config.json",
+    "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/config.json",
+    "size_bytes": 262,
+    "sha256": "737220a6d958b3ad48e78f840fa991556266983c84ea2ca40e413389c62e4c2f",
+    "on_device": false
+   },
+   {
+    "key": "whisper",
+    "label": "whisper-base-mlx",
+    "filename": "weights.npz",
+    "url": "https://huggingface.co/mlx-community/whisper-base-mlx/resolve/1e3e249fb8d01c655324bd6841b1deadffd6d04c/weights.npz",
+    "size_bytes": 143724204,
+    "sha256": "2f57d5f3ef473054c638961f90716f4ee415e8108de81313eccb2c5fd62eff0b",
+    "on_device": false
+   },
+   {
+    "key": "embed",
+    "label": "nomic-embed-text v1.5",
+    "filename": "nomic-embed-text-v1.5.Q8_0.gguf",
+    "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/0188c9bf409793f810680a5a431e7b899c46104c/nomic-embed-text-v1.5.Q8_0.gguf",
+    "size_bytes": 146146432,
+    "sha256": "3e24342164b3d94991ba9692fdc0dd08e3fd7362e0aacc396a9a5c54a544c3b7",
+    "on_device": false
+   },
+   {
+    "key": "starter",
+    "label": "Quick local Qwen",
+    "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+    "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf",
+    "size_bytes": 2740937888,
+    "sha256": "1d203c2196991da08bc5b191ab4727516f476f3167e3276f75a0c5257493aadb",
+    "on_device": false
+   }
+  ],
+  "bytes_total": 3030808786,
+  "bytes_done": 0,
+  "egress": {
+   "destination": "huggingface.co",
+   "what": "model file request",
+   "files": 4,
+   "bytes": 3030808786
+  },
+  "speech": {
+   "model": "base",
+   "backend": "mlx",
+   "state": "on_device",
+   "ready": true,
+   "bytes": 0
+  },
+  "error": ""
+ },
+ "/api/meetings/p17-audio-only?include_parked=true": {
+  "id": "p17-audio-only",
+  "parked": false,
+  "started_at": "2026-10-11T09:10:25.712962",
+  "ended_at": "2026-10-11T09:12:25.712962",
+  "duration": 120.0,
+  "formatted_duration": "02:00",
+  "title": "Standup with audio only",
+  "tags": [],
+  "segments": [],
+  "bookmarks": [],
+  "intel": null,
+  "intel_status": {
+   "state": "disabled",
+   "detail": null,
+   "requested_at": null,
+   "completed_at": null
+  },
+  "mic_label": "Me",
+  "remote_label": "Remote",
+  "web_url": null,
+  "capture_status": "finalized",
+  "capture_failure": null,
+  "transcription_status": "record_only",
+  "transcription_status_detail": {
+   "family": "speech-recognition-route-assignments",
+   "reason_code": "speech_not_set_up",
+   "repair": "set_up_speech"
+  },
+  "capture_checkpoint_at": null,
+  "capture_checkpoint_seconds": 0.0,
+  "provenance": "desktop",
+  "calendar_event_id": null,
+  "transcriptWords": null,
+  "unclearSpans": 0,
+  "sync_modified_at": "2026-10-11T09:12:25.713047",
+  "devices": [],
+  "transcribe_speech": {
+   "model": "base",
+   "backend": "mlx",
+   "state": "on_device",
+   "ready": true,
+   "bytes": 0
+  },
+  "planned_route": {
+   "status": "unavailable",
+   "reason_code": "no assignment",
+   "selection_hash": null,
+   "legs": []
+  },
+  "run_receipt": null,
+  "last_refusal": null,
+  "intel_job": null,
+  "intel_model_host": null
+ },
+ "/api/meetings/p17-audio-only/artifacts": {
+  "meeting_id": "p17-audio-only",
+  "artifacts": []
+ },
+ "/api/meetings/p17-audio-only/aftercare": {
+  "meeting_id": "p17-audio-only",
+  "meeting_title": "Standup with audio only",
+  "meeting_date": "2026-10-11T09:10:25.712962",
+  "open_items": {
+   "total": 0,
+   "by_owner": []
+  },
+  "decisions": [],
+  "since_last_meeting": null,
+  "is_empty": true,
+  "triage": [],
+  "proposal_total": 0
+ },
+ "/api/meetings/p17-audio-only/intent-timeline": {
+  "meeting_id": "p17-audio-only",
+  "windows": [],
+  "transitions": []
+ },
+ "/api/meetings/p17-audio-only/proposals": {
+  "meeting_id": "p17-audio-only",
+  "proposals": []
+ },
+ "/api/meetings/p17-audio-only/follow-through-proposals": {
+  "meeting_id": "p17-audio-only",
+  "proposals": []
+ },
+ "/api/decisions?scope=all&limit=500&meeting_id=p17-audio-only": {
+  "decisions": [],
+  "page": {
+   "offset": 0,
+   "limit": 500,
+   "count": 0,
+   "total": 0
+  }
+ },
+ "/api/meetings/p17-audio-only/intel-recovery": {
+  "meeting_id": "p17-audio-only",
+  "visible": false,
+  "state": "disabled",
+  "headline": "Meeting saved \u00b7 intelligence incomplete",
+  "completed": [
+   {
+    "label": "Meeting",
+    "detail": "Saved"
+   },
+   {
+    "label": "Transcript",
+    "detail": "0 saved segments"
+   }
+  ],
+  "planned_route": {
+   "status": "unavailable",
+   "reason_code": "no assignment",
+   "selection_hash": null,
+   "legs": []
+  },
+  "run_receipt": null,
+  "last_refusal": null,
+  "remaining": {
+   "label": "Summary, topics, action items, and routed artifacts",
+   "detail": "Meeting intelligence did not finish."
+  },
+  "job": null,
+  "actions": {
+   "retry": false,
+   "skip": false
+  }
+ },
+ "POST /transcribe": {
+  "status": 202,
+  "body": {
+   "meeting_id": "p17-audio-only",
+   "status": "transcribing"
+  }
+ },
+ "after:/api/meetings/p17-audio-only?include_parked=true": {
+  "id": "p17-audio-only",
+  "parked": false,
+  "started_at": "2026-10-11T09:10:25.712962",
+  "ended_at": "2026-10-11T09:12:25.712962",
+  "duration": 120.0,
+  "formatted_duration": "02:00",
+  "title": "Standup with audio only",
+  "tags": [],
+  "segments": [
+   {
+    "text": "we ship the speech fix on friday",
+    "speaker": "Me",
+    "speaker_id": null,
+    "start_time": 0.0,
+    "end_time": 2.7946875,
+    "is_bookmarked": false,
+    "device_id": null
+   }
+  ],
+  "bookmarks": [],
+  "intel": null,
+  "intel_status": {
+   "state": "disabled",
+   "detail": "No summary yet.",
+   "requested_at": null,
+   "completed_at": null
+  },
+  "mic_label": "Me",
+  "remote_label": "Remote",
+  "web_url": null,
+  "capture_status": "finalized",
+  "capture_failure": null,
+  "transcription_status": "complete",
+  "transcription_status_detail": null,
+  "capture_checkpoint_at": null,
+  "capture_checkpoint_seconds": 0.0,
+  "provenance": "desktop",
+  "calendar_event_id": null,
+  "transcriptWords": 7,
+  "unclearSpans": 0,
+  "sync_modified_at": "2026-10-11T09:12:25.713047",
+  "devices": [],
+  "planned_route": {
+   "status": "unavailable",
+   "reason_code": "no assignment",
+   "selection_hash": null,
+   "legs": []
+  },
+  "run_receipt": null,
+  "last_refusal": null,
+  "intel_job": null,
+  "intel_model_host": null
+ },
+ "after:/api/meetings?limit=100": {
+  "meetings": [
+   {
+    "id": "p17-audio-only",
+    "started_at": "2026-10-11T09:10:25.712962",
+    "ended_at": "2026-10-11T09:12:25.712962",
+    "title": "Standup with audio only",
+    "duration_seconds": 120.0,
+    "segment_count": 1,
+    "action_item_count": 0,
+    "tags": [],
+    "intel_status": "disabled",
+    "intel_status_detail": "No summary yet.",
+    "intel_model_host": null,
+    "intel_duration_s": null,
+    "capture_status": "finalized",
+    "capture_failure": null,
+    "capture_checkpoint_seconds": 0.0,
+    "transcription_status": "complete",
+    "transcription_status_detail": null,
+    "provenance": "desktop",
+    "calendar_event_id": null,
+    "attendees": [
+     "Me"
+    ],
+    "parked": false,
+    "transcriptWords": 7,
+    "unclearSpans": 0,
+    "needs_you_count": 0,
+    "has_summary": false,
+    "planned_route": {
+     "status": "unavailable",
+     "reason_code": "no assignment",
+     "selection_hash": null,
+     "legs": []
+    },
+    "run_receipt": null,
+    "last_refusal": null,
+    "intel_job": null
+   }
+  ],
+  "total": 1
+ }
+}
