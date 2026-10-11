@@ -10,11 +10,18 @@
 // replaces: tests/e2e/test_hs169_door_legs_glass.py::test_blank_project (the Door-closes half;
 //           the zero-watches half is tests/integration/test_desk_new_project.py)
 
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetSurfaces, stageSurfaceOpen } from "../../../../desk/shell";
 import { SurfaceWindows } from "../../../../desk/components/SurfaceWindows";
 import { useDesk } from "../../../../desk/store";
+import { registerSurface } from "../../../../desk/shell";
+import { DeskMenuBar } from "../../../../desk/components/DeskMenuBar";
+import { ApiError } from "../../../../lib/api";
+// The final diet lane's recorded wires (scripts/record_room_wires.py: the real
+// hub through TestClient on each browser test's own seed; nothing typed).
+import D174 from "./room-door-wires/door174.json";
+import S17 from "../../__tests__/room-wires/sources17.json";
 
 const apiFetch = vi.fn();
 vi.mock("../../../../lib/api", async () => {
@@ -95,5 +102,74 @@ describe("New Project: the Door", () => {
     expect(doorPosts()[0][1].json).toEqual({ outcome: "Blank project for glass test", sources: [] });
     expect(useDesk.getState().windowsById[DOOR_WINDOW]).toBeUndefined();
     expect(useDesk.getState().windowsById["surface-project-memory"]?.scope).toBe(`project:${NEW_PROJECT_ID}`);
+  });
+});
+
+/* ── The final diet lane: the hub's recorded answers, replayed ──────── */
+
+const misses: string[] = [];
+
+function replay(gets: Record<string, unknown>) {
+  misses.length = 0;
+  apiFetch.mockImplementation((url: string, init: { method?: string } = {}) => {
+    const method = init.method ?? "GET";
+    const key = method === "GET" ? url : `${method} ${url}`;
+    if (key in gets) {
+      const value = gets[key] as Record<string, unknown>;
+      if (value && "__status" in value) return Promise.reject(new ApiError(Number(value.__status), "recorded refusal", value.body));
+      return Promise.resolve(JSON.parse(JSON.stringify(value)));
+    }
+    misses.push(`${method} ${url}`);
+    return Promise.reject(new ApiError(404, `not recorded: ${method} ${url}`, {}));
+  });
+}
+
+describe("HS-174-07: the Door's Confluence row", () => {
+  // replaces: tests/e2e/test_hs174_door_confluence_glass.py::test_door_confluence_connected_1440
+  // replaces: tests/e2e/test_hs174_door_confluence_glass.py::test_door_confluence_connected_393 (a shot and a clean
+  //   console at 393: the console fence is here, the drawn/fit/clipped fences are the sweep's surface-project-setup case)
+  it("signed in: the C row offers RECENT BLOGS and PAGES BY ID and names the account; no console error", async () => {
+    const errors = vi.spyOn(console, "error");
+    replay(D174.connected);
+    await openTheDoor();
+    const row = await screen.findByTestId("door-row-confluence");
+    const text = row.textContent ?? "";
+    expect(text).toContain("RECENT BLOGS");
+    expect(text).toContain("PAGES BY ID");
+    expect(text).toContain("SIGNED IN AS KAROLSANE@GMAIL.COM");
+    expect(errors).not.toHaveBeenCalled();
+    expect(misses).toEqual([]);
+    errors.mockRestore();
+  });
+
+  // replaces: tests/e2e/test_hs174_door_confluence_glass.py::test_door_confluence_not_connected_1440
+  it("not signed in: the Door still draws, with no SIGNED IN claim; no console error", async () => {
+    const errors = vi.spyOn(console, "error");
+    replay(D174.not_connected);
+    await openTheDoor();
+    await waitFor(() => expect(misses.filter((m) => m !== "GET /api/connections")).toEqual([]));
+    expect(screen.getByTestId("door-root").textContent).not.toContain("SIGNED IN AS");
+    expect(errors).not.toHaveBeenCalled();
+    expect(misses).toEqual([]);
+    errors.mockRestore();
+  });
+});
+
+describe("PHILO-17 U30: Go ▸ Projects ▸ <name> opens the project's Room", () => {
+  // replaces: tests/e2e/test_philo17_sources_glass.py::test_room_add_source_and_sign_in (its Go ▸ Projects leg at 1440;
+  //   the Room half is room.app.test.tsx "PHILO-17 sources: the Room's SOURCES on a bare project")
+  it("the desk's projects come from the hub's /api/projects; the pick opens the Room, never a drawer", async () => {
+    replay({ "/api/projects": S17.before["/api/projects"] });
+    await useDesk.getState().refresh();
+    const opened: Array<string | undefined> = [];
+    const off = registerSurface("open-project-memory", (scope) => opened.push(scope));
+    render(<DeskMenuBar />);
+    fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
+    const go = screen.getByRole("menu", { name: "Go menu" });
+    fireEvent.click(within(go).getByRole("menuitem", { name: /^Projects\W*$/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /Ledger cutover/ }));
+    expect(opened).toEqual([`project:${S17.pid}`]);
+    expect(Object.keys(useDesk.getState().windowsById).filter((id) => id.includes("drawer"))).toEqual([]);
+    off();
   });
 });

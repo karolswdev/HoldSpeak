@@ -180,3 +180,107 @@ describe("Ask AI: the decision box sends the owner's decision", () => {
     expect(rowState()).toBe("denied");
   });
 });
+
+// ── HS-154 the call: the hub's recorded thread reads ─────────────────────────
+//
+// The successors of tests/e2e/test_hs154_call_glass.py's face legs (the test
+// diet, 2026-10-11). fixtures/speak-hub/call.json holds the real thread
+// route's answers, recorded by
+// tests/unit/test_desk_ask_ai.py::test_a_call_turn_lands_its_words_and_call_mode_persists:
+// a new thread (call_mode 0), the same thread after one turn through the real
+// kernel route with a fixture engine, its PATCH call_mode=1 answer and the read
+// after it, and the TTS status without the extra. Only fetch is mocked; the
+// window loads the thread itself (ThreadPullout's mount read).
+import CALL from "./fixtures/speak-hub/call.json";
+import { _resetForTest as resetTts } from "../../lib/tts";
+
+const TID = CALL.thread_id as string;
+let threadRead: unknown = CALL.fresh;
+
+function replayCall(first: unknown) {
+  calls = [];
+  threadRead = first;
+  vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+    const url = String(input);
+    const method = String(init.method ?? "GET").toUpperCase();
+    calls.push({ url, method, body: init.body ? JSON.parse(String(init.body)) : undefined });
+    let body: unknown;
+    if (method === "GET" && url.endsWith(`/api/threads/${TID}`)) body = threadRead;
+    else if (method === "PATCH" && url.endsWith(`/api/threads/${TID}`)) {
+      body = CALL.patch_call_on;
+      threadRead = CALL.call_on; // the hub's read after that PATCH
+    } else if (method === "GET" && url.endsWith("/api/tts/status")) body = CALL.tts_status;
+    else return Promise.reject(new TypeError("no hub answer recorded for this read"));
+    return Promise.resolve({
+      ok: true, status: 200,
+      headers: { get: () => "application/json" },
+      json: () => Promise.resolve(structuredClone(body)),
+      text: () => Promise.resolve(JSON.stringify(body)),
+    });
+  }));
+}
+
+function renderRecorded() {
+  return render(
+    <RuntimeBusProvider>
+      <ThreadPullout
+        object={{ kind: "thread", id: TID, title: "Call Loop Glass", ref: { kind: "thread", id: TID, title: "Call Loop Glass" } as any }}
+        onClose={() => {}}
+      />
+    </RuntimeBusProvider>,
+  );
+}
+
+describe("Ask AI: the call, over the hub's recorded thread", () => {
+  it("a turn the call sent lands its words as the user row, with the answer under it", async () => {
+    // replaces: tests/e2e/test_hs154_call_glass.py::test_call_loop_glass
+    // (the 393 no-overflow leg: tests/e2e/test_hs153_practice_glass.py::test_annotation_popover_and_chips,
+    //  kept for a real mouse drag, opens a thread with a user and an assistant row at 393 and fences it)
+    replayCall(CALL.after_turn);
+    renderRecorded();
+    expect(await screen.findByText("Hello from the call loop")).toBeInTheDocument();
+    expect(await screen.findByText(/Glass test response from the fake engine\./)).toBeInTheDocument();
+  });
+
+  it("the head's call chip reads OFF on a new thread; a press starts the call and the chip follows the hub", async () => {
+    // replaces: tests/e2e/test_hs154_call_glass.py::test_call_chip_glass
+    replayCall(CALL.fresh);
+    renderRecorded();
+    const chip = await screen.findByTestId("call-chip");
+    await waitFor(() => expect(chip.getAttribute("data-call-state")).toBe("off"));
+    fireEvent.click(chip);
+    await waitFor(() => expect(screen.getByTestId("call-chip").getAttribute("data-call-state")).not.toBe("off"));
+    expect(calls.find((c) => c.method === "PATCH")?.body).toEqual({ call_mode: 1 });
+    expect(useThreadStore.getState().threads[TID].thread.call_mode).toBe(1);
+  });
+
+  it("the speaker glyph on the finished answer speaks it with the browser voice, and stops", async () => {
+    // replaces: tests/e2e/test_hs154_call_glass.py::test_speaker_glyph_glass
+    resetTts();
+    const spoken: string[] = [];
+    let current: { onend: ((e: Event) => void) | null } | null = null;
+    vi.stubGlobal("speechSynthesis", {
+      speak(u: { text: string; onend: ((e: Event) => void) | null }) { spoken.push(u.text); current = u; },
+      cancel() { const u = current; current = null; u?.onend?.(new Event("end")); },
+      getVoices: () => [{ lang: "en-US", name: "Stub", localService: true, default: true, voiceURI: "stub" }],
+      pending: false, speaking: false, paused: false,
+      addEventListener() {}, removeEventListener() {},
+    });
+    vi.stubGlobal("SpeechSynthesisUtterance", class {
+      text: string; onend = null; onerror = null; voice = null;
+      constructor(text: string) { this.text = text; }
+    });
+    replayCall(CALL.after_turn);
+    renderRecorded();
+    const glyph = await screen.findByTestId("speaker-glyph");
+    expect(glyph.getAttribute("data-speaking")).toBe("false");
+    fireEvent.click(glyph);
+    await waitFor(() => expect(screen.getByTestId("speaker-glyph").getAttribute("data-speaking")).toBe("true"));
+    expect(spoken.join(" ")).toContain("Glass test response from the fake engine.");
+    // The hub has no TTS extra, so the voice is the browser's: no POST /api/tts.
+    expect(calls.some((c) => c.url.endsWith("/api/tts") && c.method === "POST")).toBe(false);
+    fireEvent.click(screen.getByTestId("speaker-glyph"));
+    await waitFor(() => expect(screen.getByTestId("speaker-glyph").getAttribute("data-speaking")).toBe("false"));
+    resetTts();
+  });
+});

@@ -1,7 +1,7 @@
 """The launch pre-flight route list covers every served HTML page route.
 
 The browser half (every listed route loads with zero page errors) stays in
-tests/e2e/test_route_preflight.py and imports PAGE_ROUTES from here.
+tests/e2e/test_desk_sweep.py and imports PAGE_ROUTES from here (the e2e preflight is parked).
 
 replaces: tests/e2e/test_route_preflight.py::test_preflight_covers_every_html_route
 """

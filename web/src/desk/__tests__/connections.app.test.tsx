@@ -135,3 +135,21 @@ describe("a sign-in read from gh's config", () => {
     expect(onFooterUpdate).toHaveBeenCalledWith({ egressHost: undefined, checkedAt: undefined });
   });
 });
+
+describe("the cold Connections face", () => {
+  it("an isolated HOME with no gh sign-in draws the GitHub, Calendar and Models cards, GitHub Never checked with its Recheck", async () => {
+    // replaces: tests/e2e/test_hs168_connections_glass.py::test_connections_cold_at_both_widths (the cards; the 1440/393 page-error fence is the sweep's surface-settings@integration:destinations case)
+    // replaces: tests/e2e/test_hs168_connections_glass.py::test_connections_fold_sign_in_state (an empty GH_CONFIG_DIR: the GitHub card is drawn)
+    // The hub's own cold answer (connections-cold.json, recorded and fenced by
+    // tests/integration/test_desk_connections.py::test_the_connections_wire_fixtures_carry_no_invented_field).
+    wire = clone(coldWire);
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
+    const gh = await screen.findByTestId("connections-github");
+    expect(chipWords(gh)).toBe("Never checked");
+    expect(within(gh).getByRole("button", { name: /Recheck/ })).toBeTruthy();
+    for (const id of ["connections-calendar", "connections-models", "connections-jira", "connections-confluence"])
+      expect(screen.getByTestId(id), id).toBeTruthy();
+    expect(chipWords(screen.getByTestId("connections-calendar"))).toBe("Not set up");
+    expect(reads).toEqual(["GET /api/connections"]);
+  });
+});

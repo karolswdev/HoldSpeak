@@ -121,3 +121,131 @@ def test_a_decision_he_made_is_not_a_needs_you_row(hub: Hub) -> None:
     assert needs.status_code == 200, needs.text
     body = needs.json()
     assert DECISION not in json.dumps(body), body
+
+
+# ── PHILO-15 01: a Default for AI work clears "No engine for summaries" ────
+# The seeds of tests/e2e/test_philo15_01_default_clears_summaries_glass.py,
+# verbatim: the LAN model as the GLOBAL default ("Set up local AI"), and,
+# for the OFF case, an imported meeting with no summary request and the
+# summary capability turned off by the owner.
+
+SUMMARY = "meeting.deferred_analysis"
+FALSE_ROW = "No engine for summaries"
+
+
+def assign_lan_default() -> None:
+    """The state "Set up local AI" leaves: one LAN model as the global default."""
+    from holdspeak.db import get_database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from test_phase143_inference_assignments import _profile, _result_claim
+
+    db = get_database()
+    _profile(
+        db,
+        "lan-qwen",
+        claims=("language", "structured_output", _result_claim(SUMMARY)),
+        modalities=("language", "text"),
+        model="qwen3.8-27b",
+        boundary="private_network",
+    )
+    InferenceAssignmentService(db).set_assignment(
+        Principal(PrincipalKind.OWNER, "philo15-owner"),
+        {
+            "command_id": "philo15-01-default",
+            "expected_revision": 0,
+            "scope": {"kind": "global"},
+            "entries": [{"profile_id": "lan-qwen", "profile_revision": 1}],
+        },
+    )
+
+
+def seed_imported_meeting() -> None:
+    """An imported transcript with no summary request: the ordinary OFF case."""
+    from holdspeak.db import get_database
+
+    db = get_database()
+    now = datetime.now()
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO meetings (id, started_at, ended_at, title, duration_seconds,"
+            " intel_status, capture_status, provenance) VALUES (?,?,?,?,?,'disabled','finalized','desktop')",
+            ("m-off-import", (now - timedelta(hours=2)).isoformat(),
+             (now - timedelta(hours=1, minutes=30)).isoformat(), "Imported vendor call", 1800.0),
+        )
+        for i in range(6):
+            conn.execute(
+                "INSERT INTO segments (meeting_id, text, speaker, start_time, end_time) VALUES (?,?,?,?,?)",
+                ("m-off-import", f"we agreed on the cutover plan part {i}", "Karol", float(i * 30), float((i + 1) * 30)),
+            )
+
+
+def turn_summaries_off() -> None:
+    from holdspeak.db import get_database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+    InferenceAssignmentService(get_database()).set_capability_off(
+        Principal(PrincipalKind.OWNER, "philo15-owner"), capability_id=SUMMARY,
+    )
+
+
+def _summary_row(hub: Hub) -> dict:
+    roster = hub.client.get("/api/inference/assignments")
+    assert roster.status_code == 200, roster.text
+    return next(r for r in roster.json()["task_overrides"] if r["id"] == SUMMARY)
+
+
+def _generated_brief(hub: Hub) -> dict:
+    generated = hub.client.post("/api/brief/generate")
+    assert generated.status_code == 200, generated.text
+    latest = hub.client.get("/api/brief/latest")
+    assert latest.status_code == 200, latest.text
+    return latest.json()
+
+
+def test_a_global_default_clears_the_summaries_row_from_needs_you_and_the_brief(hub: Hub) -> None:
+    """replaces: tests/e2e/test_philo15_01_default_clears_summaries_glass.py::TestDefaultClearsSummaries::test_needs_you_and_brief_draw_no_false_row (hub half)"""
+    assign_lan_default()
+    row = _summary_row(hub)
+    assert row["has_override"] is False, row
+    assert row["queue"]["status"] == "assigned", row
+    assert row["queue"]["inherited_from"] == "global", row
+
+    needs = hub.client.get("/api/desk/needs-you?fresh=1")
+    assert needs.status_code == 200, needs.text
+    body = needs.json()
+    assert FALSE_ROW not in json.dumps(body), body
+    assert not [b for b in body.get("blockers") or [] if b.get("key") in {"summary", "engines"}], body.get("blockers")
+
+    assert FALSE_ROW not in json.dumps(_generated_brief(hub))
+
+
+def test_summaries_off_reads_off_and_asks_nothing(hub: Hub) -> None:
+    """replaces: tests/e2e/test_philo15_01_default_clears_summaries_glass.py::TestSummariesOff::test_off_reads_off_and_asks_nothing (hub half)
+
+    The Meetings headline `Summaries off` over this wire is
+    web/src/pages/cores/history/__tests__/meetingsHeadlineDefault.philo1501.test.ts
+    ("reads OFF over an UNSUMMARISED imported meeting")."""
+    assign_lan_default()
+    seed_imported_meeting()
+    turn_summaries_off()
+    assert _summary_row(hub)["queue"]["status"] == "off"
+
+    needs = hub.client.get("/api/desk/needs-you?fresh=1")
+    assert needs.status_code == 200, needs.text
+    body = needs.json()
+    assert body.get("blockers") in ([], None), body.get("blockers")
+    text = json.dumps(body)
+    assert FALSE_ROW not in text and "Summary failed" not in text, body
+    assert not [m for m in body.get("failedMeetings") or [] if m.get("id") == "m-off-import"], body
+
+    brief = json.dumps(_generated_brief(hub))
+    assert FALSE_ROW not in brief and "Summary failed" not in brief, brief
+
+    meetings = hub.client.get("/api/meetings?limit=20")
+    assert meetings.status_code == 200, meetings.text
+    imported = next(m for m in meetings.json()["meetings"] if m["id"] == "m-off-import")
+    # The wire the Meetings headline reads: the planned route says OFF.
+    route = imported.get("planned_route") or imported.get("current_planned_route")
+    assert route and route["status"] == "unavailable" and route["reason_code"] == "summaries off", imported

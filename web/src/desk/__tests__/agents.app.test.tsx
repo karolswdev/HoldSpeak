@@ -279,3 +279,28 @@ describe("Raw reads a cut call whole (PHILO-15 20)", () => {
     expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
   });
 });
+
+/* ── PHILO-17 final lane A: the draft chip on the Default for AI work ──
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_lane_draft_inherits_the_default_for_ai_work (fixtures/agents-default). */
+function fixtureWire<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-default/${name}`);
+}
+
+describe("the lane's draft chip names the Default for AI work (PHILO-15 05)", () => {
+  /** replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_the_lane_draft_chip_names_the_default */
+  it("Cadence drafts inherit the global default: the chip names its model, never NOT SET", async () => {
+    const lane = fixtureWire("lane");
+    const assignments = fixtureWire("inference-assignments");
+    await openLane(lane.wire, { "/api/inference/assignments": assignments.wire });
+    const draft = screen.getByTestId("lane-ask").querySelector(".ask-well-draft")!;
+    await waitFor(() => expect(draft.textContent?.toUpperCase()).toContain("QWEN3 8 27B"));
+    expect(draft.textContent).not.toContain("NOT SET");
+  });
+
+  it("with no default at all the same chip says NOT SET (the fence can fail)", async () => {
+    await openLane(fixtureWire("lane").wire);
+    const draft = screen.getByTestId("lane-ask").querySelector(".ask-well-draft")!;
+    await waitFor(() => expect(draft.textContent).toContain("NOT SET"));
+  });
+});
