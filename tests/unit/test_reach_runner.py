@@ -524,6 +524,6 @@ class TestCLITokenFile:
 
 
 # ---------------------------------------------------------------------------
-# Integration: see tests/integration/test_hs174_runner_loopback.py
+# Integration: see tests/integration/test_reach_runner_loopback.py
 # (moved there now that the transport lane has landed)
 # ---------------------------------------------------------------------------
