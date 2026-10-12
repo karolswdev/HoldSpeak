@@ -20,6 +20,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Button } from "../../../components/signal/Signal";
 import "./topology-surface.css";
 
 // ── Public model ────────────────────────────────────────────────────
@@ -390,7 +391,11 @@ export function TopologySurface({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         style={{
-          transform: `translate(calc(50% + ${pan.x + offset.x}px), calc(50% + ${pan.y + offset.y}px))`,
+          // PHILO-17 (the desk sweep): the anchor holds, but the map never
+          // starts cut: the content's right edge stays inside the view when
+          // it fits (min), and its left edge always does (max). A map wider
+          // than the view still pans.
+          transform: `translate(calc(max(${8 - bounds.minX}px, min(50% + ${offset.x}px, 100% - ${bounds.maxX + 8}px)) + ${pan.x}px), calc(50% + ${pan.y + offset.y}px))`,
         }}
       >
         {/* SVG edge layer */}
@@ -451,12 +456,12 @@ export function TopologySurface({
           const isSelected = selected === node.id;
           const stateValue = node.state ?? "idle";
           return (
-            <button
+            <Button
+              variant="chrome"
               key={node.id}
               ref={(el) => {
                 nodeRefs.current[node.id] = el;
               }}
-              type="button"
               className="surface-topology-node"
               data-topology-node=""
               data-home={node.home || undefined}
@@ -495,7 +500,7 @@ export function TopologySurface({
                   {node.children}
                 </span>
               ) : null}
-            </button>
+            </Button>
           );
         })}
       </div>

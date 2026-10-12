@@ -26,7 +26,7 @@ import { refreshNeedsYou, useNeedsYou } from "../needsYou";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { AppHead, EgressChip, FilterBar, ScrollHint, StatusStrip, StringGadget, SurfaceFooter, SurfaceSection } from "../surface";
+import { AppHead, EgressChip, FilterBar, ScrollHint, StatusStrip, StringGadget, SurfaceFooter, SurfaceSection, SurfaceState } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
@@ -477,6 +477,10 @@ const FILTERS: Array<{ value: NeedsFilter; label: string }> = [
  *  (`Ranked hh:mm`). Every row is drawn (HS-200-15: no cap; B11: the head
  *  number is the rows drawn); the Ledger scrolls inside the window and
  *  ScrollHint says so (UX-CANON §B). */
+/** The drawer is drawn after this long even when a read is still out (the
+ *  Room's cap, roomReads.ts ROOM_READS_CAP_MS). */
+const NEEDS_READS_CAP_MS = 8000;
+
 export function NeedsDrawer() {
   const needs = useNeedsYou();
   const flights = useAgentFlights((s) => s.flights);
@@ -496,13 +500,29 @@ export function NeedsDrawer() {
   }, [live]);
   // The Door read: the next event and whether a calendar is connected.
   const computedAt = needs.room?.computedAt ?? null;
+  const [doorRead, setDoorRead] = useState(false);
   useEffect(() => {
     let alive = true;
     void apiFetch<DoorRead>("/api/door")
       .then((body) => { if (alive) setDoor(body ?? null); })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => { if (alive) setDoorRead(true); });
     return () => { alive = false; };
   }, [computedAt, needs.count]);
+  // PHILO-17 (the desk sweep, sweepreds r2): the drawer is drawn once its
+  // first reads end (the hub's answer and the Door read), or at the cap: the
+  // strip, the filter and the rows never move under his eye (UX-CANON D; the
+  // Room's pattern). Once drawn it stays drawn.
+  const needsRead = needs.room !== null || Object.keys(needs.errors).length > 0;
+  const [capped, setCapped] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setCapped(true), NEEDS_READS_CAP_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+  const [drawn, setDrawn] = useState(false);
+  const ready = capped || (needsRead && doorRead);
+  useLayoutEffect(() => { if (ready && !drawn) setDrawn(true); }, [ready, drawn]);
+  const settling = !(drawn || ready);
 
   const now = new Date();
   // The rows name their Project when two or more Projects need him (the
@@ -603,7 +623,9 @@ export function NeedsDrawer() {
   const listed = filter === "waiting" || filter === "muted";
 
   return (
-    <div className="needs-drawer kit-face" data-testid="needs-drawer">
+    <div className="needs-drawer kit-face" data-testid="needs-drawer"
+      data-settling={settling ? "true" : undefined} aria-busy={settling ? true : undefined}>
+      {settling ? <div className="needs-drawer-settling"><SurfaceState loading /></div> : null}
       {/* The Chair's head keeps its testids (the Chair-ready signal of the
           glass rigs): the drawer's head IS the Chair's display. */}
       <AppHead fact={head} data-testid="arrival-headline" factTestId="arrival-display">

@@ -30,7 +30,7 @@
  * row, R8). The update fills the `history` slot with its own DELIVERY N and
  * Mark delivered (features/channels/SendWell.tsx).
  */
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { ConfirmVerb, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceWell } from "../Surface";
 import { EgressChip } from "../gadgets";
@@ -488,11 +488,18 @@ function PreviewFailed({ pv, eg, onRetry }: {
 
 /** The SEND well of one document: its prepared sends, then its destinations.
  *  `head` sits first inside SEND (the meeting's form picker). */
+/** PHILO-17 (the desk sweep): a host that holds its body until its first
+ *  reads end (the meeting record) hears when this well's own first reads
+ *  (its destinations and its sends) have ended, read or failed. No host,
+ *  no report. */
+export const SendWellReadContext = createContext<((resolved: boolean) => void) | null>(null);
+
 export function SendWell({ doc, sendsRead, onSettled, head }: {
   doc: DocRef; sendsRead: Read<Send[]>; onSettled?: () => void; head?: ReactNode;
 }) {
   useStore();
   const dests = useDestinations();
+  const reportRead = useContext(SendWellReadContext);
   const conns = useConnections();
   const ref = doc.ref;
   // B2: the kept pick returns, onto a listed destination only. With no kept pick
@@ -521,6 +528,12 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   const changedAt = pickedOutcome?.kind === "refused"
     && (pickedOutcome.code === "preview_changed" || pickedOutcome.code === "payload_changed") ? pickedOutcome.at : 0;
   useEffect(() => { if (changedAt) setPreviewTry((n) => n + 1); }, [changedAt]);
+  // The well's first reads: its destinations, its sends, and the preview of
+  // the destination it picked on its own (Astra r1 on #1108: the preview drew
+  // above the meeting's Decide and Transcript after the body was shown).
+  const previewRead = !picked || (preview !== null && preview.ref === ref && preview.id === picked);
+  const wellRead = (dests.data !== null || dests.failed) && (sendsRead.data !== null || sendsRead.failed) && previewRead;
+  useLayoutEffect(() => { reportRead?.(wellRead); }, [reportRead, wellRead]);
 
   const sends = mergeKnown(ref, sendsRead.data ?? []);
   const reload = sendsRead.reload;

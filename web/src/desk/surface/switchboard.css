@@ -223,11 +223,17 @@
 }
 /* A whole-row tap is already 44 px tall: no halo, no halo margin. */
 .switchboard.is-list .switchboard-tap::after { display: none; }
+/* PHILO-17 (the desk sweep): a job row at 393 is a verb (it opens the
+   job), so it wears the raised plate of the grammar, not the jack's well. */
 .switchboard.is-list .switchboard-tap.switchboard-job {
   display: grid;
   padding: 7px 10px;
   border: 1px solid var(--sb-ink);
-  background: var(--sb-well);
+  background: var(--sb-field-hi);
+  box-shadow: var(--sb-raised);
+}
+.switchboard.is-list .switchboard-tap.switchboard-job:active {
+  box-shadow: var(--sb-sunken);
 }
 .switchboard.is-list .switchboard-engine-verb .btn { min-height: 44px; }
 

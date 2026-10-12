@@ -22,7 +22,7 @@
 import { ApiError, apiFetch } from "../../lib/api";
 import { SURFACE_APPLICATIONS } from "../applications";
 import { meetingOfScope } from "../objectWindows";
-import { CHAIR_WINDOW_IDS, closeChairWindow, useChairWindows } from "../chair/chairWindows";
+import { CHAIR_WINDOW_IDS, closeChairWindow, openChairWindowFromHub, useChairWindows } from "../chair/chairWindows";
 import { workBand } from "../components/window/windowGeometry";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "../conductor/store";
 import { useLane } from "../lane/laneStore";
@@ -119,8 +119,10 @@ export const RETIRE_TRIES = 3;
 
 interface Adapter {
   isOpen(): boolean;
-  /** Open here; `row` names the object when the window carries one. */
-  open(row?: HubWindowRow): void;
+  /** Open here; `row` names the object when the window carries one. A
+   * passive open that waits behind the owner's active window returns that
+   * window's id (the Chair at 393); the stacking keeps it below. */
+  open(row?: HubWindowRow): string | null | void;
   close(): void;
   /** The object the window shows here (the lane's `launch:<id>`), when the
    * same window can show another object. */
@@ -162,7 +164,9 @@ export function adapterFor(id: string): Adapter | null {
   if (CHAIR_WINDOW_IDS.includes(id)) {
     return {
       isOpen: () => !useChairWindows.getState().closed[id],
-      open: () => useChairWindows.setState((s) => ({ closed: { ...s.closed, [id]: false } })),
+      // At 393 the phone draws the Chair window `phone` names: a hub open
+      // names it there when nothing is active, or waits behind what is.
+      open: () => openChairWindowFromHub(id),
       close: () => closeChairWindow(id),
     };
   }
@@ -519,7 +523,8 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
       for (const row of accepted) {
         const adapter = adapterFor(row.id);
         if (!isOpenHere(row.id)) {
-          adapter?.open(row);
+          const behind = adapter?.open(row);
+          if (behind) heldBehind.set(row.id, { behind, revision: row.revision });
           mounted.push(row.id);
         }
         // The same window on another object (the lane on another launch).
@@ -650,6 +655,8 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
    * view stacks on its own (one no row can open, or one with a request in
    * flight) keeps its place just above the hub window it sat above. The
    * numbers are this view's (1..n); the ORDER is the hub's. */
+  /** Passive hub opens held below the owner's active window (id -> hold). */
+  const heldBehind = new Map<string, { behind: string; revision: number }>();
   function mergeStacking(local: Record<string, number>, gone: Set<string>): Record<string, number> {
     const governed = (id: string) => rows.has(id) && presentations.pending(id) === 0;
     const before = orderFromDepth(local).filter((id) => !gone.has(id));
@@ -668,6 +675,24 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
       .map((r) => r.id);
     const order = [...(anchored.get("") ?? [])];
     for (const id of hubOrder) order.push(id, ...(anchored.get(id) ?? []));
+    // PHILO-17 (Astra r1 on #1108): a passive hub open waits below the
+    // window that was active on the phone, until a newer write on it (his
+    // raise), or that window leaves (closed or iconified).
+    const minimized = useDesk.getState().panelMin;
+    for (const [id, hold] of [...heldBehind]) {
+      const row = rows.get(id);
+      const at = order.indexOf(id);
+      const under = order.indexOf(hold.behind);
+      if (!row || row.revision > hold.revision || presentations.pending(id) > 0 || at < 0 || under < 0
+        || minimized.includes(hold.behind)) {
+        heldBehind.delete(id);
+        continue;
+      }
+      if (at > under) {
+        order.splice(at, 1);
+        order.splice(under, 0, id);
+      }
+    }
     const depth: Record<string, number> = {};
     order.forEach((id, i) => {
       depth[id] = i + 1;

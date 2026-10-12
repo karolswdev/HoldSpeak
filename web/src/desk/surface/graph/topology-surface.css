@@ -167,7 +167,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
+  /* PHILO-17 (the desk sweep): 1.3, not 1: the clip cut the glyphs. */
+  font: 600 var(--desk-surface-detail-size, 12px) / 1.3 var(--font-mono);
   letter-spacing: var(--letter-spacing-label-compact);
   text-transform: uppercase;
   color: var(--text);

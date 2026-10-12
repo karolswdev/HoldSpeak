@@ -94,6 +94,10 @@
 .surface-receipt-label {
   overflow: hidden;
   text-overflow: ellipsis;
+  /* PHILO-17 (the desk sweep): the receipt's font sets line-height 1, and
+     the clip cut the glyphs' tops and feet; the line box holds the whole
+     glyph (the footer's rule, surface-footer.css). */
+  line-height: 1.3;
 }
 
 /* ── Receipt timestamp ── */

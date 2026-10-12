@@ -764,6 +764,19 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     min-height: 44px;
     min-width: 44px;
   }
+  /* PHILO-17 (the desk sweep): the stepper's two arrows own 44 x 44 each,
+     so at 393 they sit side by side; in the 14 px column they ran 30 px
+     past it and the body scrolled sideways. */
+  .desk-next .desk-window-shell.is-sheet :is(.desk-pullout-body, .desk-surface-body) .gadget-arrows {
+    flex-direction: row;
+    width: auto;
+  }
+  .desk-next .desk-window-shell.is-sheet :is(.desk-pullout-body, .desk-surface-body) .gadget-arrows button + button {
+    border-top: 0;
+    /* the seam is the aerogel inset edge, never a left rail (HS-101 rule 6) */
+    box-shadow: inset 1px 0 0 var(--desk-aerogel-edge), inset 1px 1px 0 var(--bevel-light),
+      inset -1px -1px 0 var(--bevel-dark);
+  }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head {
     margin: 0;
     flex-wrap: nowrap;

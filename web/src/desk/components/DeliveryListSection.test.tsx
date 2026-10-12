@@ -51,6 +51,8 @@ describe("delivery objects in the List view", () => {
     // The current-phase story appears; the phase-93 story does not (bounded).
     const open = screen.getByRole("button", { name: "HS-94-08" });
     expect(open).toBeInTheDocument();
+    // PHILO-17 sweep: the row's open verb is the library Button (chrome).
+    expect(open).toHaveClass("btn--chrome", "desk-list-open");
     expect(screen.queryByRole("button", { name: "HS-93-01" })).toBeNull();
     fireEvent.click(open);
     // Opening the row asks the hub for that Story's dossier (no route change).
