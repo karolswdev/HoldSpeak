@@ -5,6 +5,10 @@ Items 1 and 6 use a REAL hub process (spawned, killed with SIGKILL,
 restarted) — the two-process proof pattern from Phase 89/94, never a
 mock. The rest attack the state machine and the hook through the
 same seams an attacker on loopback would use.
+
+Items 4 and 5 are in tests/unit/test_coder_gate.py; item 8 (redaction) is
+tests/unit/test_gate_chokepoint.py and
+test_coder_gate.py::test_the_hook_posts_the_redaction_never_the_tool_input.
 """
 from __future__ import annotations
 
@@ -335,37 +339,3 @@ def test_item7_unarmed_inertness_latency_budget(tmp_path) -> None:
     assert decision.deny is None
     assert calls == []
     assert elapsed < 0.25  # generous; the fast path is pure dict/path work
-
-
-def test_item8_redaction_grep_census_over_the_gate_modules() -> None:
-    """Checklist 8: no full-argument payload anywhere — the hub-side
-    gate modules never name the full-payload fields, and the hook
-    posts only the digest + bounded head."""
-    for rel in ("holdspeak/db/gate.py", "holdspeak/web/routes/system/gate_routes.py"):
-        code = "\n".join(
-            line
-            for line in (REPO / rel).read_text(encoding="utf-8").splitlines()
-            if not line.lstrip().startswith("#")
-        )
-        assert "tool_input" not in code, f"{rel} touches the full payload"
-
-    hook_src = (REPO / "holdspeak/coder_gate.py").read_text(encoding="utf-8")
-    body_block = hook_src[hook_src.index("body = {") : hook_src.index("# Fail-closed")]
-    assert "args_sha256" in body_block and "args_head" in body_block
-    assert "tool_input" not in body_block  # the wire carries the redaction only
-
-
-# Items 4 (expiry race, injectable clock) and 5 (double decision,
-# first write wins) are pinned in tests/unit/test_coder_gate.py
-# (test_expiry_race_exactly_one_terminal_state,
-# test_double_decision_refused_with_standing_state,
-# test_route_double_decision_409_names_standing). This module records
-# their place in the checklist so the eight items read in one place.
-def test_items4_and_5_are_pinned_in_the_unit_suite() -> None:
-    text = (REPO / "tests/unit/test_coder_gate.py").read_text(encoding="utf-8")
-    for name in (
-        "test_expiry_race_exactly_one_terminal_state",
-        "test_double_decision_refused_with_standing_state",
-        "test_route_double_decision_409_names_standing",
-    ):
-        assert f"def {name}" in text

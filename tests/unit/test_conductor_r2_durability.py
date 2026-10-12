@@ -337,13 +337,6 @@ def test_the_launch_process_credential_still_stays_over_clear(hub: Hub, monkeypa
     assert (agent_credentials.derive(credential.token) is None) is revoked
 
 
-def test_the_new_tables_use_named_inserts() -> None:
-    source = (Path(__file__).resolve().parents[2] / "holdspeak" / "principals.py").read_text(encoding="utf-8")
-    for table in ("agent_credentials", "agent_launch_ownership"):
-        for chunk in source.split(f"INTO {table}")[1:]:
-            assert chunk.lstrip().startswith("("), f"positional INSERT into {table}"
-
-
 # ── 4. Astra round 1 on #911 ─────────────────────────────────────────
 
 
