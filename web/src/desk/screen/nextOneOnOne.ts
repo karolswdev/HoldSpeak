@@ -86,7 +86,15 @@ export async function readPeopleProjection(): Promise<PeopleProjectionRead> {
 
 /** The People drawer's caption: `1:1 15:00`, or null (nothing to show). */
 export function useNextOneOnOne(): string | null {
+  return useNextOneOnOneRead().label;
+}
+
+/** The caption and whether its first read is still out: the caption adds a
+ *  line to the drawer, so the Screen marks the People drawer busy until the
+ *  read ends (a late caption moved the Conductor drawer 24 px under load). */
+export function useNextOneOnOneRead(): { label: string | null; reading: boolean } {
   const [label, setLabel] = useState<string | null>(null);
+  const [reading, setReading] = useState(true);
   // The newest read wins: an older answer that lands late is dropped.
   const generation = useRef(0);
   const read = useCallback(() => {
@@ -94,14 +102,17 @@ export function useNextOneOnOne(): string | null {
     readPeopleProjection()
       .then((people) => {
         if (mine !== generation.current) return;
+        setReading(false);
         if (people.readiness !== "ready" || !people.complete || !people.nextOneOnOne) setLabel(null);
         else setLabel(`1:1 ${formatDockTime(people.nextOneOnOne)}`);
       })
       .catch(() => {
-        if (mine === generation.current) setLabel(null);
+        if (mine !== generation.current) return;
+        setReading(false);
+        setLabel(null);
       });
   }, []);
   useEffect(read, [read]);
   useOnDeskChanged(read);
-  return label;
+  return { label, reading };
 }

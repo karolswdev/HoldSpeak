@@ -390,7 +390,9 @@ export function Destinations() {
       </div>
     );
   }
-  if (rows === null) return null;
+  // The first read is out: nothing drawn yet, but still reading (aria-busy), so
+  // the group's late arrival is not read as a settled window moving.
+  if (rows === null) return <span hidden aria-busy="true" data-testid="dest-reading" />;
   const active = rows.filter((d) => d.state === "active");
   const parked = rows.filter((d) => d.state === "parked");
   const form = (

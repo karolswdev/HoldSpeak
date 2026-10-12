@@ -113,8 +113,16 @@ describe("Needs you: Name an owner and Review on a meeting's action items", () =
       now: [], waiting: [], overdue: [],
       unassigned: [producerCard("ai-owned", OWNED, "Priya"), producerCard("ai-other", "Book the room", null)],
     };
-    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
-      (String(path) === "/api/follow-through/board" ? board : null) as never);
+    // The hub's own answers for the Today view's reads too: a null meetings
+    // read is a lie the hub never tells, and Today's load threw on it after
+    // the test ended (an unhandled rejection under load).
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const value = String(path);
+      if (value === "/api/follow-through/board") return board as never;
+      if (value.startsWith("/api/meetings")) return { meetings: [] } as never;
+      if (value.startsWith("/api/desk/needs-you")) return { count: 0, projects: [], items: [], next: null, coverage: [], complete: true } as never;
+      return null as never;
+    });
     const openPullout = vi.fn();
     const realOpen = useDesk.getState().openPullout;
     useDesk.setState({ openPullout } as never);
