@@ -225,4 +225,22 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     expect(attempts.textContent).toContain("FAILED");
     expect(screen.queryByTestId("today-finish")).toBeNull();
   });
+
+  it("late in the day, the next meeting after midnight leads, with its day", async () => {
+    vi.setSystemTime(new Date(2026, 9, 12, 23, 40, 0));
+    const start = new Date(2026, 9, 13, 0, 30, 0);
+    hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [
+        { id: "ev1", source: "calendar_event", title: "1:1 Priya", starts_at: start.toISOString(), ends_at: new Date(2026, 9, 13, 1, 0).toISOString(),
+          person_label: "Priya Nair", person_relationship_id: "r1" },
+      ] }),
+      "/api/meetings?limit=40": () => json({ meetings: [] }),
+      "/api/desk/needs-you": () => json({ items: [] }),
+    });
+    render(<TodayView header={null} />);
+    const next = await screen.findByTestId("today-next");
+    expect(next.textContent).toContain("TUE");
+    expect(within(next).getByTestId("today-countdown").textContent).toBe("in 50 min");
+    expect(screen.queryByTestId("today-empty")).toBeNull();
+  });
 });
