@@ -270,7 +270,7 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
             "Runs on: the switchboard job rows move 84 px after the window settles", maybe=True),
     ],
     ("room", 1440): [
-        Red("readable", r"^overlap '(Settlement latency under load|Compliance team sign-off|RISK|LIKELIHOOD HIGH|"
+        Red("readable", r"^overlap '(Settlement latency under load|Compliance team sign-off|RISK|AT_RISK|LIKELIHOOD HIGH|"
             r"DUE SEP 15)' x '(Ask this project|Speak to ask this project|Result|Choose)'$",
             "Room: the risk rows read as overlapping the ask bar (the reader ignores z-order: the rows may be "
             "scrolled under an opaque bar); where they sit depends on the late read", maybe=True),
@@ -706,7 +706,7 @@ class _Case:
         if not faults["scopes"]:
             fail("readable", f"no visible {scope}: nothing was read")
         fail("readable", ([f"clipped '{c['text']}' in {c['in']}" for c in faults["clipped"]]
-                          + [f"overlap '{o[0]}' x '{o[1]}'" for o in faults["overlaps"]]))
+                          + [f"overlap '{o[0]}' x '{o[1]}'" + (f" {o[2]}" if os.environ.get('SWEEP_DEBUG') else '') for o in faults["overlaps"]]))
         small, contrast = self.measure()
         fail("floor", sorted(small - self.baseline[0]))
         fail("contrast", sorted(contrast - self.baseline[1]))

@@ -113,14 +113,14 @@
   box-shadow: var(--wb-sunken);
 }
 .desk-next .people-surface .surface-row-line {
-  min-height: 52px;
-  padding: 6px 10px;
+  min-height: 40px;
+  padding: 4px 8px;
 }
 .desk-next .people-surface .surface-row-glyph {
-  width: 32px;
+  width: 24px;
 }
 .desk-next .people-surface .surface-row-text strong {
-  font: 600 15px / 1.3 var(--font-sans);
+  font: 600 14px / 1.3 var(--font-sans);
   color: var(--wb-text);
 }
 .desk-next .people-surface .surface-row-text small {
@@ -160,8 +160,8 @@
   padding: 2px 0 4px;
 }
 .desk-next .people-top > .surface-display {
-  font: 750 30px / 1.1 var(--font-display);
-  letter-spacing: -0.01em;
+  font: 650 19px / 1.2 var(--font-display);
+  letter-spacing: 0;
   color: var(--wb-text);
 }
 /* PHILO-17 ALIVE r3: the add row, the row facts, the lock in the foot. */
@@ -184,7 +184,7 @@
   gap: 0 8px;
 }
 .people-row-fact {
-  font: 500 13px / 1.3 var(--font-sans);
+  font: 500 12px / 1.3 var(--font-sans);
   color: var(--wb-text);
   font-variant-numeric: tabular-nums;
 }

@@ -612,7 +612,7 @@ function PersonRow({ relationship, fact, selected, onSelect, onPlan }: { relatio
   const noOneOnOne = Boolean(fact) && !next && report;
   return <SurfaceRow
     selected={selected}
-    glyph={<Avatar name={relationship.display_name} size="md" />}
+    glyph={<Avatar name={relationship.display_name} />}
     title={relationship.display_name}
     detail={<><span className="people-role-chip" data-kind={relationship.relationship_kind ?? undefined}>{relationshipLabel(relationship.relationship_kind)}</span>{next ? <span className="people-row-fact" data-testid="people-row-next">{`1:1 ${oneOnOneWhen(next)}`}</span> : noOneOnOne ? <span className="people-row-fact" data-quiet="" data-testid="people-row-next">No 1:1 planned</span> : null}</>}
     meta={fact && (fact.youOwe || fact.owesYou) ? <span className="people-row-pills">

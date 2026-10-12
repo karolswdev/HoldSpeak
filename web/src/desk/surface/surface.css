@@ -4557,13 +4557,13 @@ button.surface-edit-in-place:hover {
 
 /* ── The kit's words: sentence case, sans, muted ink ── */
 .desk-next .kit-strip {
-  font: 500 13px / 1.4 var(--font-sans);
+  font: 500 12px / 1.4 var(--font-sans);
   letter-spacing: 0;
   text-transform: none;
   font-variant-numeric: tabular-nums;
 }
 .desk-next .surface-section-head h3 {
-  font: 650 14px / 1.3 var(--font-sans);
+  font: 650 13px / 1.3 var(--font-sans);
   letter-spacing: 0;
   text-transform: none;
   color: var(--wb-text);
@@ -4665,7 +4665,7 @@ button.surface-edit-in-place:hover {
 }
 .desk-next .meetings-stream-row {
   position: relative;
-  padding: 10px 12px;
+  padding: 7px 10px;
   border-top: 0;
   border-radius: 3px;
   transition:
@@ -4701,7 +4701,7 @@ button.surface-edit-in-place:hover {
   padding-right: 12px;
 }
 .desk-next .meetings-stream-row-body {
-  gap: 5px;
+  gap: 3px;
 }
 .desk-next .meetings-stream-row-head {
   display: flex;
@@ -4711,14 +4711,14 @@ button.surface-edit-in-place:hover {
   max-width: 100%;
 }
 .desk-next .meetings-stream-title {
-  font: 600 16px / 1.3 var(--font-sans);
+  font: 600 14px / 1.3 var(--font-sans);
   color: var(--wb-text);
   min-width: 0;
 }
 /* The meta line: sentence case, sans, muted ink (`Oct 11 · 30 min ·
    7 words`); the state stays a pill. */
 .desk-next .meetings-stream-fact {
-  font: 500 13px / 1.3 var(--font-sans);
+  font: 500 12px / 1.3 var(--font-sans);
   letter-spacing: 0;
   text-transform: lowercase;
   font-variant-numeric: tabular-nums;
@@ -4852,9 +4852,9 @@ button.surface-edit-in-place:hover {
   display: inline-grid;
   place-items: center;
   flex: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
   background: hsl(var(--app-hue, 210) 80% 84%);
   box-shadow:
     inset 1px 1px 0 rgba(255, 255, 255, 0.7),
@@ -4863,8 +4863,8 @@ button.surface-edit-in-place:hover {
     1px 2px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
 }
 .kit-apptile > img {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   image-rendering: pixelated;
 }
 .desk-next .meetings-top {
@@ -4872,8 +4872,8 @@ button.surface-edit-in-place:hover {
   gap: 8px 12px;
 }
 .desk-next .meetings-headline .surface-display {
-  font: 750 30px / 1.1 var(--font-display);
-  letter-spacing: -0.01em;
+  font: 650 19px / 1.2 var(--font-display);
+  letter-spacing: 0;
 }
 /* The week in tinted figures. */
 .kit-figures {
@@ -4885,7 +4885,7 @@ button.surface-edit-in-place:hover {
 }
 .kit-figures-caption {
   flex-basis: 100%;
-  font: 650 14px / 1.3 var(--font-sans);
+  font: 650 13px / 1.3 var(--font-sans);
   color: var(--wb-text);
 }
 .kit-figure {
@@ -4893,15 +4893,15 @@ button.surface-edit-in-place:hover {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: 6px 10px;
+  border-radius: 4px;
   background: color-mix(in srgb, var(--fig-hue) 14%, var(--alive-paper, #f8f5ee));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fig-hue) 30%, transparent);
   color: var(--wb-text);
-  font: 500 14px / 1.2 var(--font-sans);
+  font: 500 12px / 1.2 var(--font-sans);
 }
 .kit-figure > b {
-  font: 750 22px / 1 var(--font-display);
+  font: 700 15px / 1 var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 .kit-figure[data-tone="info"] { --fig-hue: var(--lamp-info); }
@@ -4927,7 +4927,7 @@ button.surface-edit-in-place:hover {
     flex-basis: 100%;
   }
   .desk-next .meetings-headline .surface-display {
-    font-size: 24px;
+    font-size: 18px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
