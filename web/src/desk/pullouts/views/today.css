@@ -332,7 +332,7 @@
 
 /* The stepper: four small plates on a dotted wire. The current step is
    lit (the selection blue, sunken like a held key); a done step is green. */
-.desk-next .today-stepper {
+.desk-next .today-next > .kit-steps {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
@@ -527,4 +527,31 @@
 }
 .desk-next .today-side {
   align-self: start;
+}
+
+/* PHILO-17 (Astra r1 on #1110): a source that could not be read, and the
+   route a summary run takes, before the press. */
+.desk-next .today-failed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+}
+.desk-next .today-row-route {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+.desk-next .today-node[data-kind="finish"] .today-row {
+  flex-wrap: wrap;
+}
+@container surface (max-width: 639.9px) {
+  .desk-next .today-row-route {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    order: 3;
+  }
 }
