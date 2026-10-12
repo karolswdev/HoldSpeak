@@ -60,8 +60,7 @@ Phase 73 desk locks (no modal roles on the desk, no browser mic in the
 desk tree, byte-stable position storage), the Phase 96 design-system
 locks (`npm run tokens:check` + `tokens:gate` — generated tokens and no
 raw values in component CSS, with the HS-97-01 unresolved-brace lock in
-the generator itself; `tests/unit/test_design_system_guard.py` — the
-state contract stays true), and the Phase 97 window-grammar floors
+the generator itself), and the Phase 97 window-grammar floors
 (placement, order persistence, focus depth, motion, ghost/edge physics,
 exposé/switcher, one dock — the physics floors chapter in
 DESIGN_SYSTEM.md, walk-proven by the `desk_gl_walk.py` grammar legs),
