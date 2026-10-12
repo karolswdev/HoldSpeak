@@ -13,6 +13,16 @@ from typing import Any
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _drop_the_database_singleton():
+    """Each test points the DB singleton at its own tmp file; drop it after,
+    so a later test in the same worker never inherits it."""
+    yield
+    from holdspeak.db import reset_database
+
+    reset_database()
+
+
 @pytest.fixture()
 def _isolated_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, Any]:
     """Boot an isolated DB + Config for the sources route."""
