@@ -4562,7 +4562,9 @@ button.surface-edit-in-place:hover {
   text-transform: none;
   font-variant-numeric: tabular-nums;
 }
-.desk-next .surface-section-head h3 {
+.desk-next .surface-section-head h3,
+.desk-next .desk-pullout-body .surface-section-head h3 {
+  margin: 0;
   font: 650 13px / 1.3 var(--font-sans);
   letter-spacing: 0;
   text-transform: none;

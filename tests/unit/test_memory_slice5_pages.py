@@ -1158,3 +1158,27 @@ def test_the_assigned_engine_writes_pages_through_the_runner_with_a_receipt(rout
             assert any(ref["opens"] for ref in sentence["refs"])
     # A default search is the same with pages in memory.
     assert {q: routed.db.memory.search(q).to_dict() for q in golden_default} == golden_default
+
+
+def test_pages_speak_to_the_owner_in_the_second_person() -> None:
+    """PHILO-17 (owner 2026-10-11: the pages said "The owner will..."): the
+    page prompt tells the engine to write to the reader as "you"."""
+    from holdspeak.memory.pages import SYSTEM_PROMPT, attributed
+
+    assert "second person" in SYSTEM_PROMPT
+    assert 'Never write "the owner"' in SYSTEM_PROMPT
+    # "you" is a stopword: a second-person sentence still rests on its
+    # third-person observation (attribution holds).
+    assert attributed("You will send the rollout plan to Dana.", ["The owner will send the rollout plan to Dana."])
+
+
+def test_a_page_from_an_older_writer_is_due_at_once(tmp_path: Path) -> None:
+    """PHILO-17: a writer bump (the pages now speak as "you") writes every
+    page again on the next run, inside the hour too."""
+    db = _desk(tmp_path)
+    _filed_note(db, "n1", "Atlas launch is 2026-10-01.", "atlas")
+    _built(db)
+    assert all(d["spec"].slug != CHANGED or d["scope"] != ATLAS for d in pending_pages(db))
+    with db._connection() as conn:
+        conn.execute("UPDATE memory_pages SET writer_version = writer_version - 1")
+    assert (ATLAS, CHANGED) in [(d["scope"], d["spec"].slug) for d in pending_pages(db)]

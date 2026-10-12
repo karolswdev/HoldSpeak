@@ -445,7 +445,7 @@
   margin: 0 0 var(--space-1);
   color: var(--text);
   font-family: var(--font-display);
-  font-size: 1.625rem;
+  font-size: 19px;
   font-weight: 650;
   line-height: 1.15;
 }
@@ -830,4 +830,11 @@
     max-height: min(82dvh, 42rem);
     border-inline: 0;
   }
+}
+
+/* PHILO-17: an empty brief is one quiet line. */
+.desk-next .intelligence-brief-quiet {
+  margin: 0;
+  font: 500 12px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
 }

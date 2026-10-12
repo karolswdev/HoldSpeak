@@ -387,7 +387,8 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
     </>
   ) : brief.is_empty ? (
     <>
-      <SurfaceState empty emptyLabel="No changes" />
+      {/* PHILO-17 (owner): one quiet line, never an empty well. */}
+      <p className="intelligence-brief-quiet" data-testid="brief-no-changes">No changes since the last brief</p>
       <StandingPagesSection pages={standingPages} />
     </>
   ) : (

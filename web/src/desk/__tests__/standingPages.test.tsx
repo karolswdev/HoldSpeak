@@ -7,7 +7,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
-import { StandingPage } from "../surface";
+import { RefTokens, StandingPage } from "../surface";
 import {
   StandingPagesSection,
   builtToken,
@@ -82,9 +82,9 @@ describe("StandingPage", () => {
 });
 
 describe("StandingPagesSection", () => {
-  it("draws the scope's pages under STANDING PAGES with the engine token", () => {
+  it("draws the scope's pages under Standing pages · N with the engine token", () => {
     render(<StandingPagesSection pages={[DECIDED, CHANGED]} now={NOW} onOpenRef={() => {}} />);
-    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("STANDING PAGES 2");
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("Standing pages · 2");
     expect(screen.getByTestId("standing-pages-model").textContent).toBe("PAGES BY QWEN3.8-27B · LAN");
     expect(screen.getAllByTestId("standing-page").map((p) => p.getAttribute("aria-label"))).toEqual(
       ["What did we decide", "What changed this week"],
@@ -105,7 +105,7 @@ describe("StandingPagesSection", () => {
     // Nothing draws the count: the only digits are the caption's page count,
     // the BUILT clock and the ref tokens.
     const drawn = (section.textContent ?? "")
-      .replace("STANDING PAGES 1", "").replace("QWEN3.8-27B", "").replace(/BUILT \d\d:\d\d/, "")
+      .replace("Standing pages · 1", "").replace("QWEN3.8-27B", "").replace(/BUILT \d\d:\d\d/, "")
       .replace(/DEC 10-01|MTG 10-01 · 14:25|read-only for 14 days|17 October/g, "");
     expect(drawn).not.toMatch(/\d/);
     expect(section.querySelectorAll("li")).toHaveLength(2);
@@ -160,5 +160,20 @@ describe("useStandingPages", () => {
   it("no project: no read at all", () => {
     render(<Probe scope="project" projectId={null} />);
     expect(apiFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("PHILO-17 RefTokens: one chip per source", () => {
+  const ref = (n: number, against = false) => ({ ref: `thread:t${n}`, token: `THREAD 10-1${n}`, opens: false, against });
+  it("draws a repeated source once", () => {
+    render(<RefTokens refs={[ref(1), ref(1), ref(1), ref(2)]} onOpen={() => {}} />);
+    expect(screen.getAllByTestId("memory-ref-plain").map((c) => c.textContent)).toEqual(["THREAD 10-11", "THREAD 10-12"]);
+  });
+  it("past three: the first two and +N, which opens the rest", () => {
+    render(<RefTokens refs={[ref(1), ref(2), ref(3), ref(4), ref(4)]} onOpen={() => {}} />);
+    expect(screen.getAllByTestId("memory-ref-plain")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Show 2 more sources" }));
+    expect(screen.getAllByTestId("memory-ref-plain")).toHaveLength(4);
+    expect(screen.queryByTestId("memory-ref-more")).toBeNull();
   });
 });

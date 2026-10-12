@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { INTELLIGENCE_NAVIGATE, type IntelligenceNavigation, type IntelligenceView } from "../intelligenceNavigation";
@@ -84,10 +84,7 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
   // a segment click moved the view while a dispatched drill filter stayed on,
   // hiding lanes nothing named.
   const [navigation, setNavigation] = useState<IntelligenceNavigation>(() => ({ view: initialView() }));
-  const [history, setHistory] = useState<IntelligenceNavigation[]>([]);
   const activeView = navigation.view;
-  const navigationRef = useRef(navigation);
-  navigationRef.current = navigation;
 
   useEffect(() => {
     window.localStorage.setItem(VIEW_STORAGE_KEY, activeView);
@@ -96,20 +93,8 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
   useEffect(() => {
     const navigate = (event: Event) => {
       const request = (event as CustomEvent<IntelligenceNavigation>).detail;
-      const current = navigationRef.current;
-      // HS-129-03 — the dock opens Brief by dispatching its current destination;
-      // that is not a drill and must not mint a phantom BACK step.
-      const sameDestination = request.view === current.view
-        && request.followThroughId === current.followThroughId
-        && request.overdueOnly === current.overdueOnly
-        && request.receiptId === current.receiptId
-        && request.decisionId === current.decisionId
-        && request.nonce === current.nonce
-        && request.receiptQuery === current.receiptQuery
-        && request.whyOnly === current.whyOnly
-        && request.receiptWorkRef === current.receiptWorkRef;
-      if (!sameDestination)
-        setHistory((history) => [...history, current]);
+      // PHILO-17 (owner): the tabs are the navigation, so a drill keeps no
+      // BACK step; the request is the view.
       setNavigation(request);
     };
     window.addEventListener(INTELLIGENCE_NAVIGATE, navigate);
@@ -118,12 +103,6 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
 
   if (object.kind !== "intelligence") return null;
 
-  const goBack = () => {
-    const previous = history.at(-1);
-    if (!previous) return;
-    setHistory((current) => current.slice(0, -1));
-    setNavigation(previous);
-  };
   // A segment click is navigation, not a modifier: it lands on the bare view
   // and takes every drill filter with it.
   const selectView = (view: IntelligenceView) => setNavigation({ view });
@@ -131,7 +110,7 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
     setNavigation((current) => ({ ...current, overdueOnly: undefined }));
   const header = (
     <div className="intelligence-header">
-      {history.length ? <Button dense variant="ghost" className="receipt-back" onClick={goBack}>BACK</Button> : null}
+      {/* PHILO-17 (owner): the tabs are the navigation; no BACK above them. */}
       <IntelligenceHeader activeView={activeView} selectView={selectView} />
       <FilterTokens navigation={navigation} clearOverdueOnly={clearOverdueOnly} />
     </div>
@@ -140,7 +119,6 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
   if (activeView === "today") return <TodayView header={header} />;
 
   if (activeView === "brief") return <BriefView header={header} onOpenFollowThrough={(followThroughId) => {
-    setHistory((current) => [...current, navigation]);
     setNavigation({ view: "follow-through", followThroughId });
   }} />;
 
@@ -151,7 +129,6 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
           {header}
           <section className="intelligence-view" aria-live="polite">
             <FollowThroughView overdueOnly={navigation.overdueOnly} focusCardId={navigation.followThroughId} onClearFilter={clearOverdueOnly} onOpenReceipts={(receiptId) => {
-              setHistory((current) => [...current, navigation]);
               setNavigation({ view: "receipts", receiptId });
             }} />
           </section>

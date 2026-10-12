@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { openRef } from "./openObject";
-import { StandingPage, SurfaceSection, countLabel, wireDate, type MemoryRefToken } from "./surface";
+import { StandingPage, SurfaceSection, wireDate, type MemoryRefToken } from "./surface";
 import { useMemoryChanges } from "./memoryChanges";
 
 export interface StandingPageWire {
@@ -149,9 +149,9 @@ export function StandingPagesSection({
   return (
     <div data-testid="standing-pages">
       <SurfaceSection
-        label={countLabel("STANDING PAGES", pages.length)}
+        label={`Standing pages · ${pages.length}`}
         className="standing-pages-section"
-        actions={by ? <span className="surface-token" data-testid="standing-pages-model">{by}</span> : undefined}
+        actions={by ? <span className="standing-pages-model" data-testid="standing-pages-model">{by}</span> : undefined}
       >
         <div className="standing-pages-grid">
           {pages.map((page) => (

@@ -515,3 +515,16 @@
   .desk-next .today-step-n,
   .desk-next .today-next { transition: none; }
 }
+
+/* PHILO-17 (coordinator: a dead band under the day): the spine well grows
+   to the window's foot; the side column keeps its own height. */
+.desk-next .today {
+  min-height: 100%;
+}
+.desk-next .today-grid {
+  flex: 1 1 auto;
+  align-items: stretch;
+}
+.desk-next .today-side {
+  align-self: start;
+}
