@@ -363,7 +363,7 @@ describe("HS-169-03: Room head", () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-head-chips");
 
-    expect(screen.getByText("AT RISK")).toBeTruthy();
+    expect(screen.getByText("At risk")).toBeTruthy();
     // The reason token sits in the chip row
     const chips = screen.getByTestId("room-head-chips");
     expect(chips.textContent).toContain("3 OVERDUE");
@@ -378,14 +378,15 @@ describe("HS-169-03: Room head", () => {
 
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-head-chips");
-    expect(screen.getByText("ON TRACK")).toBeTruthy();
+    expect(screen.getByText("On track")).toBeTruthy();
   });
 
   it("renders target date chip when present", async () => {
     render(<WindowHarness scope="project:p1" />);
     const chip = await screen.findByTestId("room-target-chip");
-    expect(chip.textContent).toContain("TARGET");
-    expect(chip.textContent).toContain("41 DAYS");
+    // PHILO-17 refit: plain words (the strip draws them in mono capitals).
+    expect(chip.textContent).toMatch(/target/i);
+    expect(chip.textContent).toMatch(/41 days/i);
   });
 
   it("renders OVERDUE when target is passed", async () => {
@@ -401,7 +402,7 @@ describe("HS-169-03: Room head", () => {
 
     render(<WindowHarness scope="project:p1" />);
     const chip = await screen.findByTestId("room-target-chip");
-    expect(chip.textContent).toContain("OVERDUE BY 34 DAYS");
+    expect(chip.textContent).toMatch(/overdue by 34 days/i);
     expect(chip.getAttribute("data-tone")).toBe("danger");
   });
 

@@ -267,18 +267,19 @@ describe("HS-172-03: Proposals in NEEDS YOU", () => {
     expect(mtgLeads.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("shows verbs Confirm, Edit, Dismiss on proposal rows", async () => {
+  it("shows Confirm and Dismiss on proposal rows; the title press edits", async () => {
     render(<WindowHarness scope="project:p1" />);
     await waitFor(() => expect(screen.queryAllByTestId("proposal-row")).toHaveLength(2));
 
     const verbs = screen.getAllByTestId("proposal-verbs");
     expect(verbs.length).toBe(2);
-    // Each verb set has Confirm, Edit, Dismiss
+    // PHILO-17 refit: Confirm and a quiet Dismiss; Edit is the title press.
     for (const verbSet of verbs) {
       expect(verbSet.textContent).toContain("Confirm");
-      expect(verbSet.textContent).toContain("Edit");
+      expect(verbSet.textContent).not.toContain("Edit");
       expect(verbSet.textContent).toContain("Dismiss");
     }
+    expect(screen.getAllByRole("button", { name: /^Edit: / })).toHaveLength(2);
   });
 
   it("shows caption with BY FRI, meeting title and date", async () => {

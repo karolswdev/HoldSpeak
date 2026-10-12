@@ -368,8 +368,11 @@ class TestLateSectionsHoldStill(_Rig):
                 _settle(page)
                 page.screenshot(path=str(SHOTS / "room-sources-held-393.png"))
                 (SHOTS / "room-sources-held-393.json").write_text(json.dumps(room, indent=1) + "\n")
+                # PHILO-17 refit: SOURCES is a fold; its tab shows, and the
+                # section (with Add source) is drawn inside it.
+                fold = page.locator("#surface-project-memory [data-testid=room-fold-sources]")
                 add = page.locator("#surface-project-memory [data-testid=room-add-source]")
-                assert add.count() and add.first.is_visible(), "SOURCES never drew after its read landed"
+                assert fold.count() and fold.first.is_visible() and add.count(), "SOURCES never drew after its read landed"
                 assert page.locator("#surface-project-memory [data-testid=room-add-sources]").count() == 0
                 assert not _moved(room), _moved(room)
                 assert not errors, errors

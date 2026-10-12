@@ -35,6 +35,7 @@ from ._doc_send_glass import Boards
 from .glass_infra import (_api, _api_allow_error, _boot, _ensure_build, _normal_chair, _room_opened, _settle,
                           park_builtin_folder)
 from .chair_windows import open_chair_window
+from .room_glass_helpers import open_room_folds
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the document SEND well glass needs Playwright")
@@ -740,6 +741,7 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 # PHILO-17 U30: the generic Open lands in the Room (one home).
                 _room_opened(page)
                 page.locator("[data-testid=room-body]").wait_for(timeout=T)
+                open_room_folds(page)  # PHILO-17 refit: Decisions and owed is a fold
                 page.locator("[data-testid=decision-row]").first.wait_for(timeout=T)
                 page.wait_for_timeout(1200)
                 _settle(page)

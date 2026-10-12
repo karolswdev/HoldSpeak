@@ -153,7 +153,7 @@ describe("ProjectRoomCore — room head (was: orientation band, WEB-NOW-001)", (
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-head-chips");
     // ON TRACK because the fixture has no risk inputs
-    expect(screen.getByText("ON TRACK")).toBeTruthy();
+    expect(screen.getByText("On track")).toBeTruthy();
   });
 
   // HS-169-03 SELECTOR EDIT: REV chip is gone (D1 cut).

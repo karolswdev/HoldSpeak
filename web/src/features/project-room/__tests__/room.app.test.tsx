@@ -336,16 +336,16 @@ describe("HS-173-03: HEALTH rows carry the wire's tones and tokens", () => {
     wire({ [room(pid)]: () => roomWith({ health: HEALTH_RED }) });
     render(<WindowHarness scope={`project:${pid}`} />);
     const review = await screen.findByTestId("health-row-review_wait");
-    expect(review.textContent).toContain("REVIEW WAIT");
+    expect(review.textContent).toMatch(/review wait/i);
     expect(review.textContent).toContain("2.5 D MEDIAN");
     expect(review.textContent).toContain("2 WAITING");
-    expect(screen.getByTestId("health-row-issue_aging").textContent).toContain("ISSUE AGING");
+    expect(screen.getByTestId("health-row-issue_aging").textContent).toMatch(/issue aging/i);
     expect(screen.getByTestId("health-row-issue_aging").textContent).toContain("1 > 14 D");
     expect(screen.getByTestId("health-row-ci").textContent).toContain("1 FLAKY");
     expect(screen.getByTestId("health-row-ci").textContent).toContain("QUEUE 2");
-    expect(screen.getByTestId("health-row-release").textContent).toContain("RELEASE");
+    expect(screen.getByTestId("health-row-release").textContent).toMatch(/release/i);
     expect(screen.getByTestId("health-row-release").textContent).toContain("1 BLOCKER");
-    const lead = (k: string) => screen.getByTestId(`health-row-${k}`).querySelector(".surface-state-chip")?.getAttribute("data-state");
+    const lead = (k: string) => screen.getByTestId(`health-row-${k}`).querySelector(".room-signal-lamp")?.getAttribute("data-state");
     expect([lead("review_wait"), lead("issue_aging"), lead("ci"), lead("release")])
       .toEqual(["failure", "warning", "warning", "failure"]);
     expect(screen.getByTestId("health-checked").textContent).toMatch(/^CHECKED /);

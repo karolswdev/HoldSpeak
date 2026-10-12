@@ -317,7 +317,8 @@ def test_saved_ask_draws_the_ratified_unfinished_row(
             # A.8 — no token for an absent fact: no recipe was saved.
             assert not any(t.startswith("RECIPE") for t in tokens), tokens
 
-            # ONE verb, and it is the face's filled primary.
+            # ONE verb, and it is quiet (PHILO-17 refit: the Room's one
+            # filled verb is Draft update).
             verbs = _rows(page).first.locator(".surface-task-resume-verbs button")
             names = [
                 (v.get_attribute("aria-label") or v.inner_text()).strip()
@@ -327,9 +328,7 @@ def test_saved_ask_draws_the_ratified_unfinished_row(
             assert "MORE" in " ".join(n.upper() for n in names[1:]), names
             resume = verbs.first
             assert not resume.is_disabled()
-            assert "btn--primary" in (resume.get_attribute("class") or "") or (
-                "primary" in (resume.get_attribute("class") or "")
-            ), resume.get_attribute("class")
+            assert "btn--primary" not in (resume.get_attribute("class") or ""), resume.get_attribute("class")
 
             # Every verb in the list carries an accessible name.
             for entry in _accessible_names(page, '[data-testid="room-unfinished"]'):
@@ -1135,7 +1134,9 @@ def test_a_full_unfinished_list_leaves_the_room_standing(
                 f"[hs200-41] FINDING sticky foot with 5 rows: "
                 f"{json.dumps(measured)} -> {share}% of the readable Room"
             )
-            assert measured["position"] == "sticky", measured
+            # PHILO-17 refit: the ask is in the flow (no sticky foot); the
+            # rest of this leg still holds: five rows never grow the well.
+            assert measured["position"] == "static", measured
             # The sticky foot is the WELL, and only the well: five rows must
             # not grow it. It stays inside the 96px `.room-body` reserves.
             assert measured["containerHeight"] <= 96, (
