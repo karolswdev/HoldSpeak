@@ -12,7 +12,6 @@ import pytest
 
 from tests.unit.test_hs201_record_speech_only import _speech_only_session
 
-
 pytestmark = pytest.mark.timeout(90, method="signal")
 
 

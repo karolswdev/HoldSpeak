@@ -8,11 +8,11 @@ from typing import Any
 
 import pytest
 
+from holdspeak.mcp import resources as resources_mod
 from holdspeak.mcp import server
 from holdspeak.mcp import tools as mcp_tools
-from holdspeak.mcp.server import handle_message
 from holdspeak.mcp.families import cadence as cadence_mod
-from holdspeak.mcp import resources as resources_mod
+from holdspeak.mcp.server import handle_message
 from holdspeak.principals import Principal, PrincipalKind
 
 OWNER = Principal(PrincipalKind.OWNER, "cadence-test")

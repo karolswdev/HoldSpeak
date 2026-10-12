@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import json
 import logging
-import time
 import threading
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -401,7 +401,10 @@ class TestMuteList:
 class TestBoundedOutcomes:
     def test_outcomes_summary_not_raw_list(self, db: Database) -> None:
         """N2: the receipt outcomes is a bounded summary dict, not the raw list."""
-        from holdspeak.services.heartbeat_service import HeartbeatService, _summarize_outcomes
+        from holdspeak.services.heartbeat_service import (
+            HeartbeatService,
+            _summarize_outcomes,
+        )
 
         raw = [
             {"watch_id": "w1", "outcome": "evaluated"},
