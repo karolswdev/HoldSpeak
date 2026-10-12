@@ -72,8 +72,39 @@ def _sentence(text: str) -> str:
     return text[:1].upper() + text[1:] if text else text
 
 
-def face_words(check: DoctorCheck) -> str:  # noqa: C901 - one table, read top to bottom
-    """The plain sentence for one check (never the wire's words)."""
+_MODEL_EXTENSIONS = re.compile(r"\.(gguf|bin|safetensors|ggml|onnx|mlx|pt|pth)$", re.I)
+
+
+def _model_name(text: str) -> str:
+    """A model's display name: never a path or an address (Astra MUST on
+    #1111). `/srv/models/q.gguf` → `q`; `http://x:8080/v1/m` → `m`; a name
+    with nothing left reads `a local model file`."""
+    value = str(text or "").strip().strip("'\"`")
+    if "://" in value:
+        value = value.split("://", 1)[1]
+        value = value.split("/", 1)[1] if "/" in value else ""
+    value = re.split(r"[\\/]", value.rstrip("/\\"))[-1] if value else ""
+    value = _MODEL_EXTENSIONS.sub("", value)
+    return value or "a local model file"
+
+
+def _no_paths(words: str) -> str:
+    """The face words never carry a filesystem path or a URL: any such token
+    is said by its last name (the raw fact keeps the whole of it)."""
+    def name(match: re.Match[str]) -> str:
+        return _model_name(match.group(0))
+
+    return re.sub(r"[A-Za-z][\w+.-]*://\S+|~?[\w.-]*[\\/]\S*", name, words)
+
+
+def face_words(check: DoctorCheck) -> str:
+    """The plain sentence for one check (never the wire's words, never a
+    path or a URL)."""
+    return _no_paths(_face_words(check))
+
+
+def _face_words(check: DoctorCheck) -> str:  # noqa: C901 - one table, read top to bottom
+    """The table behind `face_words`."""
     name, status, detail = check.name, str(check.status).upper(), str(check.detail or "")
     low = detail.lower()
     ok = status in ("PASS", "INFO")
@@ -153,7 +184,7 @@ def face_words(check: DoctorCheck) -> str:  # noqa: C901 - one table, read top t
             node = re.search(r"mesh node '([^']+)'", detail)
             model = re.search(r"model=(\S+)", detail)
             place = f"the device {node.group(1)}" if node else "your server"
-            return f"Runs on {place}" + (f" with {model.group(1)}" if model else "")
+            return f"Runs on {place}" + (f" with {_model_name(model.group(1))}" if model else "")
         if "openai_compatible" in low:
             return "Runs on an OpenAI-compatible server" if ok else "The server for clean-up is not set"
         engine = re.search(r"\((mlx|llama_cpp)[;)]", detail)
