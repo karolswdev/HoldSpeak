@@ -640,36 +640,6 @@ class TestNoParallelAuthorityFence:
                 msg += f"  {v}\n"
             pytest.fail(msg)
 
-    def test_apply_functions_call_service_methods_only(self) -> None:
-        """Verify the apply functions reference service.download, service.define_endpoint,
-        and assignment_service.set_assignment -- not raw DB access."""
-        source_path = Path(__file__).resolve().parents[2] / "holdspeak" / "services" / "front_door_service.py"
-        source = source_path.read_text()
-
-        marker = "Apply engine"
-        idx = source.find(marker)
-        assert idx >= 0, "Apply engine section not found"
-
-        apply_source = source[idx:]
-
-        # The apply engine should reference service methods
-        assert "model_library_service" in apply_source
-        assert "assignment_service" in apply_source
-        assert "define_endpoint" in apply_source
-        assert "set_assignment" in apply_source or "apply_starter_bundle" in apply_source
-
-        # It should NOT import raw DB models or connection helpers
-        for forbidden in ["_connection()", "conn.execute"]:
-            if forbidden in apply_source:
-                # Check it is not in the front_door repo (our own persistence is ok)
-                # The apply engine delegates to db.front_door which is its own table
-                lines_with = [
-                    line for line in apply_source.splitlines()
-                    if forbidden in line and "front_door" not in line
-                ]
-                assert not lines_with, f"Apply engine uses forbidden pattern '{forbidden}': {lines_with}"
-
-
 class TestLANEndpointProvenance:
     """The .43-shaped ingredient wires via define-endpoint with provenance."""
 

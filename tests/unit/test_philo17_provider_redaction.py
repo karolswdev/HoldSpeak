@@ -396,13 +396,38 @@ def test_r1_uvicorn_error_lines_are_redacted() -> None:
     assert _leaks(text) == [], text
 
 
-def test_r1_the_hub_installs_log_redaction_before_uvicorn() -> None:
-    import inspect
+def test_r1_the_hub_installs_log_redaction_before_uvicorn(monkeypatch: Any) -> None:
+    """The real ``MeetingWebServer.start``: when it builds the uvicorn config,
+    uvicorn's loggers already carry the redacting filter, and uvicorn is told
+    not to install its own logging config."""
+    import logging
+    from unittest.mock import MagicMock
 
-    from holdspeak import web_server
+    from holdspeak import logging_config, web_server
 
-    source = inspect.getsource(web_server)
-    assert source.index("install_log_redaction()") < source.index("log_config=None")
+    for name in logging_config._FOREIGN_LOGGERS:
+        logging.getLogger(name).removeFilter(logging_config._FILTER)
+    seen: dict[str, Any] = {}
+
+    class _Stop(Exception):
+        pass
+
+    def _config(app: Any, **kwargs: Any) -> Any:
+        seen["filtered"] = logging_config._FILTER in logging.getLogger("uvicorn.error").filters
+        seen["log_config"] = kwargs.get("log_config", "unset")
+        raise _Stop
+
+    monkeypatch.setattr(web_server.uvicorn, "Config", _config)
+    server = web_server.MeetingWebServer(web_server.WebRuntimeCallbacks(
+        on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={}),
+    ))
+    try:
+        with pytest.raises(_Stop):
+            server.start()
+    finally:
+        for sock in server._listen_sockets or []:
+            sock.close()
+    assert seen == {"filtered": True, "log_config": None}
 
 
 #: MUST 4: git stderr in a factory worktree command and its audit row.

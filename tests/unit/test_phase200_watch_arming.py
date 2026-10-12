@@ -26,7 +26,6 @@ from __future__ import annotations
 import json
 
 import hashlib
-import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -584,25 +583,28 @@ class TestManualEvaluationRecordsEffects:
 
 class TestSingleScheduler:
 
-    def test_workbench_conductor_does_not_call_evaluate_due(self) -> None:
-        """AC-6: the conductor's watch block is gone at the SOURCE level.
-
-        A source fence rather than a behavioural one because the fact
-        being guarded is an absence: the heartbeat is the single
-        scheduler, and a re-added conductor call would silently restore
-        the double-scheduler race that made the quiet-hours promise false.
-        """
+    def test_workbench_conductor_tick_does_not_evaluate_watches(self, tmp_path, monkeypatch) -> None:
+        """AC-6: one conductor tick over a real database never calls the
+        wired WatchService's ``evaluate_due``; the heartbeat is the single
+        scheduler (HS-200-43 R1)."""
+        import holdspeak.db as db_module
         import holdspeak.workbench_conductor as wc
 
-        source = Path(wc.__file__).read_text()
-        calls = re.findall(r"evaluate_due\s*\(", source)
-        assert calls == [], (
-            f"workbench_conductor.py calls evaluate_due {len(calls)} time(s); "
-            "the heartbeat is the single scheduler (HS-200-43 R1)"
-        )
-        # The seam itself stays -- steward.py and the MCP trigger read it.
-        assert hasattr(wc, "set_scheduler_services")
-        assert hasattr(wc, "get_scheduler_services")
+        db = Database(tmp_path / "tick.db")
+        monkeypatch.setattr(db_module, "get_database", lambda: db)
+        calls: list[object] = []
+
+        class _SpyWatchService:
+            def evaluate_due(self, *args, **kwargs):
+                calls.append((args, kwargs))
+                return []
+
+        wc.set_scheduler_services(_SpyWatchService(), None)
+        try:
+            wc.WorkbenchConductor()._tick_body()
+        finally:
+            wc.set_scheduler_services(None, None)
+        assert calls == []
 
     def test_heartbeat_prefers_the_app_wired_watch_service(self) -> None:
         """The single scheduler must run the fully-wired instance."""

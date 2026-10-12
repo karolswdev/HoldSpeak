@@ -362,7 +362,6 @@ class TestSnapshotEgress:
 
     def test_route_entries_resolution_is_the_dispatchs(self, tmp_path, monkeypatch):
         """The routed path and the face share ``_egress_from_route_entries``."""
-        import inspect
         from holdspeak.services import calendar_snapshot_service as svc
         db, config = _setup(tmp_path, monkeypatch)
         with db._connection() as conn:
@@ -375,9 +374,6 @@ class TestSnapshotEgress:
         entries = [{"boundary": "private_network", "deployment_revision_id": "dep1"}]
         assert svc._egress_from_route_entries(entries, db) == {"scope": "private_network", "host": "192.168.1.43"}
         assert svc._egress_from_route_entries([{"boundary": "local"}], db) == {"scope": "local"}
-        source = inspect.getsource(svc.extract_via_router)
-        assert "_egress_from_route_entries(entries)" in source
-        assert "_rank_vision_targets(db)" in source
 
     def test_payload_carries_snapshot_egress(self, tmp_path, monkeypatch):
         from holdspeak.web.routes.calendar_sources import read_calendar_sources
@@ -482,13 +478,6 @@ class TestSnapshotIcsRemoval:
         assert not gone.exists() and kept.exists() and mine.exists()
         assert len(self._receipts(db, "calendar.source.removed")) == 1
 
-    def test_route_wires_the_cleanup_after_a_successful_write(self):
-        import inspect
-        from holdspeak.web.routes.system import settings as route
-        source = inspect.getsource(route.build_settings_router)
-        assert "remove_generated_ics_for_removed_sources(before, _calendar_sources_snapshot())" in source
-        assert 'result.get("success", True)' in source
-
     def test_full_remove_through_the_settings_service(self, tmp_path, monkeypatch):
         """End to end on the wire: register a snapshot source through the
         service, then remove it the way the face does (PUT calendar.sources
@@ -523,6 +512,38 @@ class TestSnapshotIcsRemoval:
         assert not ics.exists() and mine.exists()
         assert len(self._receipts(db, "calendar.source.removed")) == 1
 
+
+    def test_put_settings_route_removes_the_generated_snapshot(self, tmp_path, monkeypatch):
+        """The hub route, not the helper: PUT /api/settings without the
+        SNAPSHOT source deletes its generated ICS and keeps the owner's file."""
+        from unittest.mock import MagicMock
+
+        from fastapi.testclient import TestClient
+
+        from holdspeak.config.integrations import CalendarConfig, CalendarSource
+        from holdspeak.services.calendar_snapshot_service import snapshot_dir
+        from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+        db, config = _setup(tmp_path, monkeypatch)
+        ics = snapshot_dir() / "snap-route.ics"
+        ics.parent.mkdir(parents=True, exist_ok=True)
+        ics.write_text("BEGIN:VCALENDAR\nEND:VCALENDAR\n")
+        mine = tmp_path / "work.ics"; mine.write_text("BEGIN:VCALENDAR\nEND:VCALENDAR\n")
+        config.calendar = CalendarConfig(sources=[
+            CalendarSource(id="snap-route", label="O365 SNAPSHOT", url=str(ics), enabled=True),
+            CalendarSource(id="file-mine", label="WORK", url=str(mine), enabled=True),
+        ])
+        config.save()
+
+        server = MeetingWebServer(WebRuntimeCallbacks(
+            on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={}),
+        ))
+        response = TestClient(server.app).put("/api/settings", json={
+            "calendar": {"sources": [{"id": "file-mine", "label": "WORK", "url": str(mine), "enabled": True}]},
+        })
+        assert response.status_code == 200, response.text
+        assert not ics.exists() and mine.exists()
+        assert len(self._receipts(db, "calendar.source.removed")) == 1
 
 def inspect_params(cls) -> set[str]:
     import inspect

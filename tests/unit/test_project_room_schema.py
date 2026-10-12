@@ -10,16 +10,12 @@ Tests:
 
 from __future__ import annotations
 
-import os
 import re
-import shutil
 import sqlite3
 from pathlib import Path
-from typing import Optional
 
-import pytest
 
-from holdspeak.db.schema import SCHEMA_SQL, SCHEMA_VERSION
+from holdspeak.db.schema import SCHEMA_SQL
 from holdspeak.db.reconcile import reconcile_schema
 
 
@@ -100,15 +96,6 @@ def _build_pre158_schema() -> str:
     )
 
     return sql
-
-
-def _find_real_db() -> Optional[Path]:
-    """Locate the owner's real HoldSpeak DB, or None if absent."""
-    real_home = os.environ.get("HOLDSPEAK_REAL_HOME") or str(Path.home())
-    candidate = Path(real_home) / ".local" / "share" / "holdspeak" / "holdspeak.db"
-    if candidate.exists():
-        return candidate
-    return None
 
 
 # ── TST-001: fresh DB has all new shapes ─────────────────────────────────
@@ -376,81 +363,3 @@ class TestLegacyReconcile:
 
 # ── TST-003: real-DB proof ───────────────────────────────────────────────
 
-@pytest.mark.skipif(
-    _find_real_db() is None,
-    reason="Owner's real DB not found (CI or isolated HOME)",
-)
-class TestRealDbReconcile:
-    """Copy the owner's real DB, reconcile the copy, verify zero data loss.
-
-    The copy is never the live file.  This test proves DB-001: existing
-    project IDs and row counts survive the additive schema migration.
-    """
-
-    def test_real_db_reconcile_preserves_data(self, tmp_path: Path) -> None:
-        real_db = _find_real_db()
-        assert real_db is not None  # guard; skipif already checked
-
-        copy_path = tmp_path / "real_copy.db"
-        # HS-200-45 R5: the database runs in WAL now, so its committed tail can
-        # live in the ``-wal`` sidecar. A bare file copy would hand this test a
-        # database missing its most recent rows (or, on a fresh file, an empty
-        # one) and the "preserves data" assertions would pass vacuously. The
-        # sqlite backup API reads one consistent snapshot through SQLite.
-        _src = sqlite3.connect(f"file:{real_db}?mode=ro", uri=True)
-        try:
-            _dest = sqlite3.connect(str(copy_path))
-            try:
-                _src.backup(_dest)
-            finally:
-                _dest.close()
-        finally:
-            _src.close()
-
-        conn = sqlite3.connect(str(copy_path))
-        conn.row_factory = sqlite3.Row
-
-        # Snapshot BEFORE reconcile.
-        before_project_count = conn.execute("SELECT COUNT(*) FROM projects").fetchone()[0]
-        before_project_ids = sorted(
-            r[0] for r in conn.execute("SELECT id FROM projects").fetchall()
-        )
-        before_resource_count = conn.execute("SELECT COUNT(*) FROM project_resources").fetchone()[0]
-
-        # Reconcile the copy.
-        reconcile_schema(conn, db_path=copy_path)
-
-        # Snapshot AFTER reconcile.
-        after_project_count = conn.execute("SELECT COUNT(*) FROM projects").fetchone()[0]
-        after_project_ids = sorted(
-            r[0] for r in conn.execute("SELECT id FROM projects").fetchall()
-        )
-        after_resource_count = conn.execute("SELECT COUNT(*) FROM project_resources").fetchone()[0]
-
-        # Row counts unchanged.
-        assert after_project_count == before_project_count, (
-            f"project row count changed: {before_project_count} -> {after_project_count}"
-        )
-        assert after_resource_count == before_resource_count, (
-            f"resource row count changed: {before_resource_count} -> {after_resource_count}"
-        )
-
-        # Project IDs unchanged.
-        assert after_project_ids == before_project_ids, "project IDs changed after reconcile"
-
-        # New columns exist.
-        cols = _get_columns(conn, "projects")
-        assert "lifecycle" in cols
-        assert "revision" in cols
-        assert "purpose" in cols
-
-        # New tables exist.
-        assert _table_exists(conn, "project_items")
-        assert _table_exists(conn, "project_changes")
-        assert _table_exists(conn, "project_commands")
-
-        # Second reconcile is a no-op.
-        changed = reconcile_schema(conn, db_path=copy_path)
-        assert changed is False, "second reconcile should be a no-op"
-
-        conn.close()

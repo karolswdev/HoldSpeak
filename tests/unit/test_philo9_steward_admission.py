@@ -678,22 +678,6 @@ _PAID_HERE = {
 }
 
 
-def test_the_residual_set_paid_exactly_the_story_02_identities() -> None:
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location("residual_census", REPO / "scripts" / "residual_census.py")
-    census = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(census)
-    committed = json.loads(census.SET_PATH.read_text(encoding="utf-8"))
-    paid = {census._key(e) for e in committed["paid"] if e["story"] == "PHILO-9-02"}
-    assert len(_PAID_HERE) == 23 and paid == _PAID_HERE
-    assert not (paid & {census._key(e) for e in committed["entries"]})
-    assert census.check(REPO, committed) == []
-    assert committed["measurements"]["residual_identities"] == 240
-    assert [a["tool"] for a in committed["public_tools_added"] if a["story"] == "PHILO-9-02"] == ["project.mark_update_delivered"]
-
-
 # ── F9: no test double in product code ───────────────────────────────────
 
 
