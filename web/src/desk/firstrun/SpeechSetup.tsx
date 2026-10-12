@@ -105,6 +105,10 @@ export function SpeechSetup({
     }
   }, [notSetUp, setup.ready, onReady]);
 
+  // While the first read is out the row is not drawn, but the face is still
+  // reading: it says so (aria-busy), so nothing reads it as settled before the
+  // row lands and moves what is under it (the desk sweep's still fence).
+  if (ai.read.kind === "loading") return <span hidden aria-busy="true" data-testid={`${testId}-reading`} />;
   if (!status || !notSetUp) return null;
   const running = status.state === "downloading";
   const failed = status.state === "failed";
