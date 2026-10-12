@@ -7,7 +7,7 @@ not observed instead of "No changes".
 
 Run:
     HOME=$(mktemp -d) uv run pytest -q -p no:cacheprovider \\
-        tests/integration/test_phase200_attention_coverage.py
+        tests/integration/test_attention_coverage.py
 """
 from __future__ import annotations
 

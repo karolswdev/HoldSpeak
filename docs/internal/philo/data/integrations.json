@@ -894,7 +894,7 @@
           }
         },
         {
-          "path": "tests/integration/test_phase143_sequence_workflow_restart.py",
+          "path": "tests/integration/test_sequence_workflow_restart.py",
           "node": "test_restart_reconstructs_the_same_frozen_sequence_node_attempt",
           "assertion": "Restart reuses the same frozen route and operation plan.",
           "execution": {
@@ -2374,7 +2374,7 @@
       ],
       "tests": [
         {
-          "path": "tests/integration/test_philo11_document_rig.py",
+          "path": "tests/integration/test_channel_document_rig.py",
           "node": "test_each_document_previews_prepares_and_lists_through_the_real_rig",
           "assertion": "Each real-produced kind previews, prepares, sends to a file, lists its ended send, and reads its receipt through the real subprocess hub; People content is present and the meeting transcript sentinel is absent.",
           "execution": {
@@ -2522,7 +2522,7 @@
           "assertion": "The real serializer and plan accept 39,000 characters and refuse 39,001 with size and limit."
         },
         {
-          "path": "tests/integration/test_philo11_slack_operations.py",
+          "path": "tests/integration/test_slack_channel.py",
           "node": "test_save_check_preview_prepare_and_send_use_the_real_slack_producer",
           "assertion": "A real-produced document sends frozen bytes through the hub, with owner-bound egress and no URL in durable or public material."
         }

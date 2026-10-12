@@ -5,7 +5,7 @@ accepted or kept work" is a critical defect by ACCEPTANCE.md's own list. So a
 cold installation must be able to back itself up, come back from that backup,
 and reopen the SAME records through the product.
 
-HS-200-02's `tests/integration/test_phase200_runtime_identity.py` rehearses the
+HS-200-02's `tests/integration/test_runtime_identity.py` rehearses the
 real 75 -> 76 upgrade across the boundary. This journey is the cold,
 version-independent half: whatever the current schema is, a round trip returns
 the same rows.
