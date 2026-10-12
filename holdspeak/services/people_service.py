@@ -112,9 +112,26 @@ class PeopleService:
             raise PeopleUnavailable("people_store_unavailable") from exc
         return self._readiness_view(state)
 
-    def list_relationships(self, principal: Any, *, include_archived: bool = False) -> list[dict[str, Any]]:
+    def list_relationships(
+        self, principal: Any, *, include_archived: bool = False, with_counts: bool = False,
+    ) -> list[dict[str, Any]]:
         self._require_ready_owner(principal, read=True)
-        return [self._relationship_view(item) for item in self._list("relationship", active_only=not include_archived)]
+        if not with_counts:
+            return [self._relationship_view(item) for item in self._list("relationship", active_only=not include_archived)]
+        # PHILO-17 (Astra r1 on #1110, MUST 4): what each person is owed and
+        # owes, counted from ONE read of the open commitments, so a face never
+        # reads every person's whole record to draw a total.
+        counts: dict[str, dict[str, int]] = {}
+        for item in self._open_commitments():
+            side = "you_owe_count" if _owed_by_leader(item) else "owes_you_count"
+            row = counts.setdefault(str(item.get("relationship_id") or ""), {"you_owe_count": 0, "owes_you_count": 0})
+            row[side] += 1
+        out = []
+        for item in self._list("relationship", active_only=not include_archived):
+            view = self._relationship_view(item)
+            view.update(counts.get(str(view.get("id") or ""), {"you_owe_count": 0, "owes_you_count": 0}))
+            out.append(view)
+        return out
 
     def create_relationship(self, principal: Any, payload: dict[str, Any]) -> dict[str, Any]:
         self._require_ready_owner(principal)

@@ -483,7 +483,7 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
                   <div key={item.id} className="intelligence-brief-sf-row intelligence-brief-blocker" data-testid="brief-blocker-row">
                     {/* PHILO-17: one quiet row: the words, then a compact verb
                         (the Meetings grammar). */}
-                    <span className="today-pill" data-tone="warn">{parsed.primary}</span>
+                    <span className="kit-pill" data-tone="warn">{parsed.primary}</span>
                     <Button dense onClick={() => openBlocker(blocker)} data-testid={`brief-blocker-verb-${blocker}`}>
                       {parsed.detail || "Choose engine"}
                     </Button>

@@ -6,7 +6,7 @@
  *  `/api/door` (today's calendar and armed recordings), `/api/meetings`
  *  (the meetings still to finish), `/api/desk/needs-you` (the proposals to
  *  decide) and `/api/people/relationships` (what is owed both ways). */
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openSurfaceOr } from "../../shell";
@@ -15,10 +15,11 @@ import { calendarOpener } from "../../openObject";
 import { useDesk } from "../../store";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { SurfaceFooter } from "../../surface/SurfaceFooter";
-import { Avatar } from "../../surface/kit";
+import { Avatar, Steps } from "../../surface/kit";
 import { meetingRowState } from "../../../pages/cores/history/helpers";
 import { useSummaryRun } from "../../../pages/cores/history/useSummaryRun";
-import { readPlannedRoute, routeReady } from "../../../meetings/summaryRoute";
+import { executedReceipt, readPlannedRoute, readRunReceipt, routeReady } from "../../../meetings/summaryRoute";
+import { RouteDisclosure, RunAttempts } from "../../../meetings/RouteDisclosure";
 import "./today.css";
 
 const SPRITES = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/32/`;
@@ -41,12 +42,6 @@ export type DayEvent = {
 type DoorRead = { upcoming?: DayEvent[]; calendar_configured?: boolean };
 type MeetingRow = Record<string, unknown>;
 type NeedsItem = { proposalId?: string; title?: string; proposalKind?: string; meetingTitle?: string; muted?: boolean; waiting?: boolean };
-type Relationship = { id: string };
-type Owing = { state?: string };
-interface RelationshipDetail {
-  commitments?: Owing[];
-  owed_to_you?: Owing[];
-}
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const SHORT_DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
@@ -91,19 +86,12 @@ const STEPS = ["Prep", "Record", "Summary", "Send follow-up"];
 
 function Stepper({ step }: { step: number }) {
   return (
-    <ol className="today-stepper" aria-label="Meeting steps">
-      {STEPS.map((label, index) => (
-        <li
-          key={label}
-          className="today-step"
-          data-state={index < step ? "done" : index === step ? "now" : "later"}
-          aria-current={index === step ? "step" : undefined}
-        >
-          <span className="today-step-n" aria-hidden="true">{index < step ? "✓" : index + 1}</span>
-          <span className="today-step-word">{label}</span>
-        </li>
-      ))}
-    </ol>
+    <Steps
+      label="Meeting steps"
+      steps={STEPS.map((label, index) => ({
+        key: label, label, state: index < step ? "done" : index === step ? "now" : "later",
+      }))}
+    />
   );
 }
 
@@ -118,6 +106,34 @@ function SpineNode({ time, kind, children, testId }: { time: ReactNode; kind: st
   );
 }
 
+/** PHILO-17 (Astra r1 on #1110, MUST 4): the owed totals from ONE bounded
+ *  read: the roster answer with its counts (`?counts=1`). A closed People
+ *  store is read as closed (no totals), never as zero. */
+async function readOwed(): Promise<{ state: "ok"; owed: { you: number; them: number } } | { state: "closed" } | { state: "failed" }> {
+  try {
+    const ready = await apiFetch<{ state?: string; readiness?: string }>("/api/people/readiness");
+    if ((ready.state ?? ready.readiness) !== "ready") return { state: "closed" };
+    const list = await apiFetch<{ relationships?: Array<{ you_owe_count?: number; owes_you_count?: number }> }>(
+      "/api/people/relationships?counts=1");
+    const owed = (list.relationships ?? []).reduce(
+      (sum, row) => ({ you: sum.you + (Number(row.you_owe_count) || 0), them: sum.them + (Number(row.owes_you_count) || 0) }),
+      { you: 0, them: 0 });
+    return { state: "ok", owed };
+  } catch {
+    return { state: "failed" };
+  }
+}
+
+/** A source that could not be read: one quiet line and Retry. */
+function ReadFailed({ what, onRetry, testId }: { what: string; onRetry: () => void; testId: string }) {
+  return (
+    <div className="today-failed" data-testid={testId} role="status">
+      <span className="kit-pill" data-tone="danger">{`Could not read ${what}`}</span>
+      <Button dense variant="ghost" onClick={onRetry}>Retry</Button>
+    </div>
+  );
+}
+
 export function TodayView({ header }: { header: ReactNode }) {
   const [now, setNow] = useState(() => new Date());
   const [door, setDoor] = useState<DoorRead | null>(null);
@@ -125,29 +141,41 @@ export function TodayView({ header }: { header: ReactNode }) {
   const [needs, setNeeds] = useState<NeedsItem[]>([]);
   const [owed, setOwed] = useState<{ you: number; them: number } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
+  // PHILO-17 (Astra r1 on #1110, MUST 3): a source that could not be read
+  // says so (with Retry); it never reads as empty.
+  const [failed, setFailed] = useState<{ door: boolean; meetings: boolean; needs: boolean; people: boolean }>(
+    { door: false, meetings: false, needs: false, people: false });
+  const [actError, setActError] = useState<{ key: string; text: string } | null>(null);
+
+  // One load at a time: a desk change while a load runs asks for ONE more
+  // load after it (MUST 4: coalesced).
+  const loading = useRef(false);
+  const again = useRef(false);
   const load = useCallback(async () => {
-    const [doorRead, meetingRead, needsRead] = await Promise.all([
-      apiFetch<DoorRead>("/api/door").catch(() => null),
-      apiFetch<{ meetings?: MeetingRow[] }>("/api/meetings?limit=40").catch(() => null),
-      apiFetch<{ items?: NeedsItem[] }>("/api/desk/needs-you").catch(() => null),
-    ]);
-    setDoor(doorRead ?? { upcoming: [], calendar_configured: false });
-    setMeetings(meetingRead?.meetings ?? []);
-    setNeeds(needsRead?.items ?? []);
+    if (loading.current) { again.current = true; return; }
+    loading.current = true;
     try {
-      // The People store is read only when it is open (a closed store
-      // answers 503, and the window draws no Owed then).
-      const ready = await apiFetch<{ state?: string; readiness?: string }>("/api/people/readiness");
-      if ((ready.state ?? ready.readiness) !== "ready") { setOwed(null); return; }
-      const list = await apiFetch<{ relationships?: Relationship[] }>("/api/people/relationships");
-      const details = await Promise.all((list.relationships ?? []).map((row) =>
-        apiFetch<{ relationship: RelationshipDetail }>(`/api/people/relationships/${encodeURIComponent(row.id)}`)
-          .then((read) => read.relationship).catch(() => null)));
-      const open = (items?: Array<{ state?: string }>) => (items ?? []).filter((item) => (item.state ?? "open") === "open").length;
-      setOwed(details.reduce((sum, d) => d ? { you: sum.you + open(d.commitments), them: sum.them + open(d.owed_to_you) } : sum, { you: 0, them: 0 }));
-    } catch {
-      setOwed(null);
+      do {
+        again.current = false;
+        const [doorRead, meetingRead, needsRead, owedRead] = await Promise.all([
+          apiFetch<DoorRead>("/api/door").then((v) => ({ ok: true as const, v }), () => ({ ok: false as const })),
+          apiFetch<{ meetings?: MeetingRow[] }>("/api/meetings?limit=40").then((v) => ({ ok: true as const, v }), () => ({ ok: false as const })),
+          apiFetch<{ items?: NeedsItem[] }>("/api/desk/needs-you").then((v) => ({ ok: true as const, v }), () => ({ ok: false as const })),
+          readOwed(),
+        ]);
+        if (doorRead.ok) setDoor(doorRead.v);
+        else setDoor((current) => current);
+        if (meetingRead.ok) setMeetings(meetingRead.v.meetings ?? []);
+        if (needsRead.ok) setNeeds(needsRead.v.items ?? []);
+        if (owedRead.state === "ok") setOwed(owedRead.owed);
+        else if (owedRead.state === "closed") setOwed(null);
+        setFailed({ door: !doorRead.ok, meetings: !meetingRead.ok, needs: !needsRead.ok, people: owedRead.state === "failed" });
+        setLoaded(true);
+      } while (again.current);
+    } finally {
+      loading.current = false;
     }
   }, []);
   useEffect(() => { void load(); }, [load]);
@@ -180,12 +208,19 @@ export function TodayView({ header }: { header: ReactNode }) {
   // ONE filled primary per window (UX-CANON): the next meeting's record
   // verb, else the first summary to make, else Connect calendar, else
   // Record now.
-  const lead = next ? "next" : finish.length ? "finish" : !calendar && door ? "calendar" : "record";
+  const lead = next ? "next" : finish.length ? "finish" : !calendar && door && !failed.door ? "calendar" : "record";
   const recordNow = () => openSurfaceOr("record-live", "/live");
 
-  const act = async (key: string, run: () => Promise<unknown>) => {
+  // A press that fails says so beside its verb (MUST 3).
+  const act = async (key: string, failText: string, run: () => Promise<unknown>) => {
     setBusy(key);
-    try { await run(); } finally { setBusy(null); void load(); }
+    setActError(null);
+    try {
+      const result = await run();
+      if (result === false) setActError({ key, text: failText });
+    } catch {
+      setActError({ key, text: failText });
+    } finally { setBusy(null); void load(); }
   };
 
   const title = (event: DayEvent) => event.title || event.event_title || "Meeting";
@@ -205,9 +240,16 @@ export function TodayView({ header }: { header: ReactNode }) {
               {String(row.title ?? "Meeting")}
             </Button>
             <span className="today-row-meta">
-              <span className="today-pill" data-tone={failed ? "danger" : "warn"}>{failed ? "Summary failed" : "No summary yet"}</span>
+              <span className="kit-pill" data-tone={failed ? "danger" : "warn"}>{failed ? "Summary failed" : "No summary yet"}</span>
             </span>
           </div>
+          {/* MUST 2 (Astra r1 on #1110): where the run goes, before the
+              press (the route and its fallbacks); after it, every place
+              the run reached (the attempt receipt). CatalogRail's grammar. */}
+          <span className="today-row-route">
+            <RunAttempts receipt={executedReceipt(id, summary.runRefusal?.meetingId === id ? summary.runRefusal.refusal.receipt : undefined, readRunReceipt(row))} testId="today-attempts" />
+            <RouteDisclosure route={summary.runRefusal?.meetingId === id ? summary.runRefusal.refusal.route : route} testId="today-route" />
+          </span>
           {routeReady(route) ? (
             <Button dense variant={lead === "finish" && index === 0 ? "primary" : "secondary"} loading={summary.runningId === id}
               onClick={() => void summary.run(id, route)} data-testid="today-make-summary">
@@ -228,6 +270,7 @@ export function TodayView({ header }: { header: ReactNode }) {
   const nextOpen = next ? calendarOpener(next) : null;
   const started = Boolean(nextStart && nextStart.getTime() <= now.getTime());
   const armed = Boolean(next && (next.armed || next.source === "scheduled_recording"));
+  const armsAt = next ? when(next.armed?.arms_at ?? next.starts_at) : null;
   const nextNode = next && nextStart ? (
     <SpineNode kind="next" testId="today-next" time={clock(nextStart)}>
       <article className="today-next" aria-label={`Next: ${title(next)}`}>
@@ -243,8 +286,12 @@ export function TodayView({ header }: { header: ReactNode }) {
             <span className="today-next-title">{title(next)}</span>
             <span className="today-row-meta">
               {next.person_label ? <><Avatar name={next.person_label} /> {next.person_label}</> : null}
-              {next.project_name ? <span className="today-pill" data-tone="info">{next.project_name}</span> : null}
-              {armed ? <span className="today-pill" data-tone="danger" data-live="">Armed</span> : null}
+              {next.project_name ? <span className="kit-pill" data-tone="info">{next.project_name}</span> : null}
+              {armed ? (
+                <span className="kit-pill" data-tone="danger" data-live="" data-testid="today-armed">
+                  {armsAt ? `Armed for ${clock(armsAt)}` : "Armed"}
+                </span>
+              ) : null}
             </span>
           </div>
         </div>
@@ -255,10 +302,11 @@ export function TodayView({ header }: { header: ReactNode }) {
             <Button dense variant="primary" onClick={recordNow} data-testid="today-record">Record</Button>
           ) : next.source === "calendar_event" ? (
             <Button dense variant="primary" loading={busy === "arm"} data-testid="today-arm"
-              onClick={() => void act("arm", () => useDesk.getState().armEventRecording(next.id))}>
+              onClick={() => void act("arm", "Not armed. Try again", () => useDesk.getState().armEventRecording(next.id))}>
               Record when it starts
             </Button>
           ) : null}
+          {actError?.key === "arm" ? <span className="kit-pill" data-tone="danger" role="status" data-testid="today-arm-failed">{actError.text}</span> : null}
         </div>
       </article>
     </SpineNode>
@@ -275,8 +323,8 @@ export function TodayView({ header }: { header: ReactNode }) {
             <span className="today-row-name">{title(event)}</span>
             <span className="today-row-meta">
               {event.person_label ? <span>{event.person_label}</span> : null}
-              {event.project_name ? <span className="today-pill" data-tone="info">{event.project_name}</span> : null}
-              {event.armed ? <span className="today-pill" data-tone="danger">Armed</span> : null}
+              {event.project_name ? <span className="kit-pill" data-tone="info">{event.project_name}</span> : null}
+              {event.armed ? <span className="kit-pill" data-tone="danger">Armed</span> : null}
             </span>
           </div>
           {open ? <Button dense variant="ghost" onClick={open}>Prep</Button> : null}
@@ -293,7 +341,13 @@ export function TodayView({ header }: { header: ReactNode }) {
     </li>
   );
 
-  const emptyNode = door && !next ? (
+  const doorFailedNode = failed.door ? (
+    <li className="today-section"><span /><span /><ReadFailed what="the calendar" onRetry={() => void load()} testId="today-door-failed" /></li>
+  ) : null;
+  const meetingsFailedNode = failed.meetings ? (
+    <li className="today-section"><span /><span /><ReadFailed what="the meetings" onRetry={() => void load()} testId="today-meetings-failed" /></li>
+  ) : null;
+  const emptyNode = door && !next && !failed.door ? (
     <SpineNode kind="empty" testId="today-empty" time="">
       <div className="today-row">
         <div className="today-row-text">
@@ -327,14 +381,18 @@ export function TodayView({ header }: { header: ReactNode }) {
         </div>
         <div className="today-grid">
           <ol className="today-spine" aria-label="Today">
+            {meetingsFailedNode}
             {pastToday}
             {finishNodes}
             {nowNode}
             {nextNode}
             {laterNodes}
+            {doorFailedNode}
             {emptyNode}
           </ol>
           <aside className="today-side" aria-label="Owed and to decide">
+            {failed.people ? <ReadFailed what="People" onRetry={() => void load()} testId="today-people-failed" /> : null}
+            {failed.needs ? <ReadFailed what="what to decide" onRetry={() => void load()} testId="today-needs-failed" /> : null}
             {owed && (owed.you || owed.them) ? (
               <section className="today-plate" data-testid="today-owed">
                 <h3 className="today-plate-cap">OWED</h3>
@@ -350,13 +408,14 @@ export function TodayView({ header }: { header: ReactNode }) {
                 <h3 className="today-plate-cap">TO DECIDE</h3>
                 <span className="today-decide-title">{decide.title}</span>
                 {decide.meetingTitle ? <span className="today-row-meta">{decide.meetingTitle}</span> : null}
+                {actError?.key === "decide" ? <span className="kit-pill" data-tone="danger" role="status" data-testid="today-decide-failed">{actError.text}</span> : null}
                 <div className="today-plate-verbs">
                   <Button dense disabled={busy === "decide"} data-testid="today-confirm"
-                    onClick={() => void act("decide", () => apiFetch(`/api/proposals/${encodeURIComponent(String(decide.proposalId))}/confirm`, { method: "POST" }))}>
+                    onClick={() => void act("decide", "Not confirmed. Try again", () => apiFetch(`/api/proposals/${encodeURIComponent(String(decide.proposalId))}/confirm`, { method: "POST" }))}>
                     Confirm
                   </Button>
                   <Button dense variant="ghost" disabled={busy === "decide"} data-testid="today-not-now"
-                    onClick={() => void act("decide", () => apiFetch(`/api/proposals/${encodeURIComponent(String(decide.proposalId))}/defer`, { method: "POST", json: {} }))}>
+                    onClick={() => void act("decide", "Not moved. Try again", () => apiFetch(`/api/proposals/${encodeURIComponent(String(decide.proposalId))}/defer`, { method: "POST", json: {} }))}>
                     Not now
                   </Button>
                 </div>

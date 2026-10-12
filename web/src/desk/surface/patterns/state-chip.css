@@ -12,14 +12,14 @@
    the word, a round lamp dot before it. The word stays (screen readers and
    tests read it); the colour now says the state before the word is read. */
 .desk-next .surface-state-chip {
-  --chip-tint: color-mix(in srgb, var(--wb-ink) 7%, transparent);
+  --chip-tint: var(--pill-neutral);
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 20px;
   padding: 1px 9px 1px 7px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--chip-tint);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 6%, transparent);
   font: 600 var(--desk-surface-label-size) / 1 var(--font-mono); /* PHILO-7-02: the 12 px floor (was 10px) */
@@ -54,7 +54,7 @@
 /* PHILO-15 B31 (Astra r2): the wrap variant. The words break between
    tokens and stay inside the card; the lamp keeps the first line. */
 .desk-next .surface-state-chip[data-wrap] {
-  border-radius: 10px;
+  border-radius: 0;
   white-space: normal;
   align-items: flex-start;
   max-width: 100%;
@@ -82,23 +82,23 @@
    read on --accent-text; --accent drew the word at 4.26:1, under C1's 4.5:1. */
 .desk-next .surface-state-chip[data-state="active"] {
   color: var(--accent-text);
-  --chip-tint: color-mix(in srgb, var(--lamp-ask) 22%, transparent);
+  --chip-tint: var(--pill-accent);
 }
 .desk-next .surface-state-chip[data-state="working"] {
   color: var(--info);
-  --chip-tint: color-mix(in srgb, var(--lamp-info) 20%, transparent);
+  --chip-tint: var(--pill-info);
 }
 .desk-next .surface-state-chip[data-state="success"] {
   color: var(--ok);
-  --chip-tint: color-mix(in srgb, var(--lamp-ok) 18%, transparent);
+  --chip-tint: var(--pill-ok);
 }
 .desk-next .surface-state-chip[data-state="warning"] {
   color: var(--warn);
-  --chip-tint: color-mix(in srgb, var(--lamp-warn) 24%, transparent);
+  --chip-tint: var(--pill-warn);
 }
 .desk-next .surface-state-chip[data-state="failure"] {
   color: var(--danger-signal);
-  --chip-tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent);
+  --chip-tint: var(--pill-danger);
 }
 .desk-next .surface-state-chip[data-state="unreachable"] {
   color: var(--text-faint);
@@ -119,4 +119,32 @@
   .desk-next .surface-state-chip[data-state="working"] .surface-state-chip-icon {
     animation: none;
   }
+}
+
+/* PHILO-17 (the suite: "a chip or token under 4.5:1", ● OK at 4.09): the
+   pill's tint is opaque over paper and its word is the state's INK, on any
+   ground (a window, its steel foot, the desk). Each ink reads 5.3:1 or more
+   on its tint. Square corners, so the pill owns its whole box (a
+   rounded end let a corner point fall through to the row). */
+.desk-next .surface-state-chip:not([data-bare])[data-state="success"] { color: var(--wb-ok-ink); }
+.desk-next .surface-state-chip:not([data-bare])[data-state="working"] { color: var(--wb-info-ink); }
+.desk-next .surface-state-chip:not([data-bare])[data-state="warning"] { color: var(--wb-warn-ink); }
+.desk-next .surface-state-chip:not([data-bare])[data-state="failure"] { color: var(--wb-danger-ink); }
+.desk-next .surface-state-chip:not([data-bare]):is([data-state="idle"], [data-state="unreachable"]) { color: var(--wb-muted); }
+.desk-next .surface-state-chip:not([data-bare])[data-state="active"] { --accent-text: var(--wb-ember-ink); }
+
+/* A pill never pokes out of its cell (at 393 a ledger cell is narrow, and
+   a clipped pill edge belonged to the row, not the pill): it is never
+   wider than its holder, and its words wrap inside it. */
+.desk-next .surface-state-chip:not([data-bare]) {
+  padding: 1px 6px 1px 5px;
+  max-width: 100%;
+}
+.desk-next .surface-ledger-line > .surface-state-chip:not([data-bare]) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+.desk-next .surface-ledger-line > .surface-state-chip:not([data-bare]) {
+  border-radius: 0;
 }
