@@ -70,23 +70,72 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
-/** PHILO-17 (owner ruling 2026-10-12, "shrink it"): a map wider than its
- *  box is fitted: the nodes come closer and narrower (never under
- *  MIN_NODE_W), so every node and edge is in view at the phone width. The
- *  words keep their size (12 px and up); only the layout shrinks. */
+/** PHILO-17 (owner ruling 2026-10-12, "shrink it"; Astra's post-merge
+ *  review of #1113): a map wider than its box is fitted, and the cards never
+ *  touch.
+ *   - "free": the layout as given (it fits), or brought closer, but never
+ *     closer than one card plus LABEL_GAP between two cards side by side,
+ *     so a flow label always has the gap to sit in.
+ *   - "stack": when two cards cannot stand side by side with that gap, the
+ *     cards reflow into ONE column, home first, with a row gap that holds
+ *     the flow label of the card under it; the edges run down the left
+ *     gutter.
+ *  The words keep their size (12 px and up); only the layout changes. A
+ *  fitted map is whole in its box, so it does not pan sideways. */
 const MIN_NODE_W = 128;
 const FIT_MARGIN = 24;
+/** The least room between two cards side by side: a wrapped label fits. */
+const LABEL_GAP = 104;
+/** The stack: the left gutter the edges run in, and the row gap a label sits in. */
+const STACK_GUTTER = 16;
+const STACK_ROW_GAP = 52;
 
-export function fitLayout(nodes: GraphNode[], viewW: number): { nodes: GraphNode[]; nodeW: number; fitted: boolean } {
-  if (!nodes.length || !viewW) return { nodes, nodeW: NODE_W, fitted: false };
+export type FitMode = "free" | "stack";
+export type Fit = { nodes: GraphNode[]; nodeW: number; fitted: boolean; mode: FitMode };
+
+export function fitLayout(nodes: GraphNode[], viewW: number): Fit {
+  if (!nodes.length || !viewW) return { nodes, nodeW: NODE_W, fitted: false, mode: "free" };
   const xs = nodes.map((n) => n.x);
   const minX = Math.min(...xs);
   const span = Math.max(...xs) - minX;
   const room = viewW - 2 * FIT_MARGIN;
-  if (span + NODE_W <= room) return { nodes, nodeW: NODE_W, fitted: false };
-  const nodeW = Math.max(MIN_NODE_W, Math.min(NODE_W, Math.round(room * 0.42)));
-  const f = span ? Math.max(0, Math.min(1, (room - nodeW) / span)) : 1;
-  return { nodes: nodes.map((n) => ({ ...n, x: minX + (n.x - minX) * f })), nodeW, fitted: true };
+  if (span + NODE_W <= room) return { nodes, nodeW: NODE_W, fitted: false, mode: "free" };
+  // Side by side, closer: the factor that fits, and the least one that
+  // keeps LABEL_GAP between every two cards that stand side by side.
+  const nodeW = MIN_NODE_W;
+  const fit = span ? Math.min(1, (room - nodeW) / span) : 1;
+  let need = 0;
+  for (const a of nodes) for (const b of nodes) {
+    const dx = Math.abs(a.x - b.x);
+    const sideBySide = dx > 0 && Math.abs(a.y - b.y) < NODE_H + LABEL_GAP;
+    if (sideBySide) need = Math.max(need, (nodeW + LABEL_GAP) / dx);
+  }
+  if (span && fit > 0 && need <= fit) {
+    return { nodes: nodes.map((n) => ({ ...n, x: minX + (n.x - minX) * fit })), nodeW, fitted: true, mode: "free" };
+  }
+  // One column, home first, then the rest as they read (top to bottom, left to right).
+  const order = [...nodes].sort((a, b) => Number(Boolean(b.home)) - Number(Boolean(a.home)) || a.y - b.y || a.x - b.x);
+  const stackW = Math.max(MIN_NODE_W, Math.min(NODE_W, room - STACK_GUTTER));
+  const placed = new Map(order.map((n, i) => [n.id, { ...n, x: STACK_GUTTER, y: i * (NODE_H + STACK_ROW_GAP) }]));
+  return { nodes: nodes.map((n) => placed.get(n.id)!), nodeW: stackW, fitted: true, mode: "stack" };
+}
+
+/** Where a flow's label sits: in the gap between two cards side by side, as
+ *  wide as the gap (it wraps); in the stack, in the row gap above its lower
+ *  card. Never on a card. */
+export function labelPlace(
+  from: GraphNode, to: GraphNode, w: number, mode: FitMode,
+): { left: number; top: number; maxWidth?: number; centred: boolean } {
+  if (mode === "stack") {
+    const lower = from.y > to.y ? from : to;
+    return { left: lower.x, top: lower.y - STACK_ROW_GAP + 6, maxWidth: w, centred: false };
+  }
+  const [l, r] = from.x <= to.x ? [from, to] : [to, from];
+  const gap = r.x - (l.x + w);
+  const y = (from.y + to.y + NODE_H) / 2;
+  if (gap >= LABEL_GAP) return { left: l.x + w + gap / 2, top: y, maxWidth: gap - 8, centred: true };
+  const mid = edgeMidpoint(from, to, w);
+  return { left: mid.x, top: mid.y, centred: true };
 }
 
 /** Compute the bounding box of all nodes + padding. */
@@ -120,7 +169,13 @@ function edgePath(
   from: GraphNode,
   to: GraphNode,
   w = NODE_W,
+  mode: FitMode = "free",
 ): string {
+  if (mode === "stack") {
+    // Out of the left side, down the gutter, into the left side.
+    const g = Math.min(from.x, to.x) - STACK_GUTTER / 2;
+    return `M${from.x},${from.y + NODE_H / 2} H${g} V${to.y + NODE_H / 2} H${to.x}`;
+  }
   const x1 = from.x + w / 2;
   const y1 = from.y + NODE_H / 2;
   const x2 = to.x + w / 2;
@@ -239,7 +294,7 @@ export function TopologySurface({
   );
 
   // ── Bounded pan ──
-  const bounds = useMemo(() => contentBounds(nodes, nodeW, fit.fitted ? FIT_MARGIN - 8 : 80), [nodes, nodeW, fit.fitted]);
+  const bounds = useMemo(() => contentBounds(nodes, nodeW, fit.fitted ? 0 : 80), [nodes, nodeW, fit.fitted]);
   const applyPan = useCallback(
     (dx: number, dy: number) => {
       setPan((prev) => {
@@ -250,15 +305,16 @@ export function TopologySurface({
         const contentW = bounds.maxX - bounds.minX;
         const contentH = bounds.maxY - bounds.minY;
         // Allow panning to show all content but not past it
-        const maxPanX = Math.max(0, (contentW - cw) / 2 + 80);
-        const maxPanY = Math.max(0, (contentH - ch) / 2 + 80);
+        // A fitted map is whole in its box: it never pans sideways (Astra).
+        const maxPanX = fit.fitted ? 0 : Math.max(0, (contentW - cw) / 2 + 80);
+        const maxPanY = fit.fitted ? 0 : Math.max(0, (contentH - ch) / 2 + 80);
         return {
           x: clamp(prev.x + dx, -maxPanX, maxPanX),
           y: clamp(prev.y + dy, -maxPanY, maxPanY),
         };
       });
     },
-    [bounds],
+    [bounds, fit.fitted],
   );
 
   // ── SVG dimensions ──
@@ -431,7 +487,12 @@ export function TopologySurface({
           // starts cut: the content's right edge stays inside the view when
           // it fits (min), and its left edge always does (max). A map wider
           // than the view still pans.
-          transform: `translate(calc(max(${8 - bounds.minX}px, min(50% + ${offset.x}px, 100% - ${bounds.maxX + 8}px)) + ${pan.x}px), calc(50% + ${pan.y + offset.y}px))`,
+          // A fitted map sits whole in its box: centred across, from the top,
+          // and the box is as tall as the map.
+          transform: fit.fitted
+            ? `translate(calc((100% - ${bounds.maxX - bounds.minX}px) / 2 - ${bounds.minX}px), ${FIT_MARGIN - bounds.minY}px)`
+            : `translate(calc(max(${8 - bounds.minX}px, min(50% + ${offset.x}px, 100% - ${bounds.maxX + 8}px)) + ${pan.x}px), calc(50% + ${pan.y + offset.y}px))`,
+          minHeight: fit.fitted ? bounds.maxY - bounds.minY + 2 * FIT_MARGIN : undefined,
         }}
       >
         {/* SVG edge layer */}
@@ -456,7 +517,7 @@ export function TopologySurface({
               <g key={flow.id} data-flow={flow.id}>
                 <path
                   className="surface-topology-edge"
-                  d={edgePath(from, to, nodeW)}
+                  d={edgePath(from, to, nodeW, fit.mode)}
                   data-active={isSelected || undefined}
                 />
               </g>
@@ -469,14 +530,17 @@ export function TopologySurface({
           const from = nodeMap.get(flow.from);
           const to = nodeMap.get(flow.to);
           if (!from || !to || !flow.labels.length) return null;
-          const mid = edgeMidpoint(from, to, nodeW);
+          const at = labelPlace(from, to, nodeW, fit.mode);
           return (
             <div
               key={`label-${flow.id}`}
               className="surface-topology-flow-label"
+              data-wrap={at.maxWidth ? "" : undefined}
+              data-centred={at.centred ? "" : undefined}
               style={{
-                left: mid.x,
-                top: mid.y,
+                left: at.left,
+                top: at.top,
+                maxWidth: at.maxWidth,
               }}
               aria-hidden="true"
             >
