@@ -526,7 +526,7 @@ export function PrefsFace({
               <span className="settings-plate-title">Which engine does each job</span>
               <span className="settings-pills" data-testid="settings-job-pills">
                 {jobs.map((job) => (
-                  <span key={job.key} className="settings-pill" data-tone={job.tone} title={job.title} data-testid={`settings-job-${job.key}`}>{job.word}</span>
+                  <span key={job.key} className="kit-pill" data-dot="" data-tone={job.tone === "idle" ? undefined : job.tone} title={job.title} data-testid={`settings-job-${job.key}`}>{job.word}</span>
                 ))}
               </span>
             </div>
@@ -547,8 +547,8 @@ export function PrefsFace({
               <span className="settings-plate-title">GitHub, Jira, Confluence, calendar</span>
               <span className="settings-pills">
                 {connected > 0
-                  ? <span className="settings-pill" data-tone="ok">{connected} connected</span>
-                  : <span className="settings-pill" data-tone="idle">None connected</span>}
+                  ? <span className="kit-pill" data-dot="" data-tone="ok">{connected} connected</span>
+                  : <span className="kit-pill" data-dot="">None connected</span>}
               </span>
             </div>
           </div>

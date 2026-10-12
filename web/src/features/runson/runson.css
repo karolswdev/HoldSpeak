@@ -134,31 +134,12 @@
   display: none;
 }
 .desk-next .runson-root .switchboard-job-pill {
-  --tint: color-mix(in srgb, var(--wb-ink) 8%, transparent);
-  --dot: var(--wb-steel-dim, #7f8591);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  /* The kit pill (kit.css); the engine name may wrap inside the card. */
   max-width: 100%;
-  min-height: 20px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--tint);
-  font: 600 12px / 1.2 var(--font-sans);
-  color: var(--wb-text);
+  white-space: normal;
   overflow-wrap: anywhere;
+  line-height: 1.2;
 }
-.desk-next .runson-root .switchboard-job-pill::before {
-  content: "";
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--dot);
-}
-.desk-next .runson-root .switchboard-job-pill[data-tone="ok"] { --tint: color-mix(in srgb, var(--lamp-ok) 20%, transparent); --dot: var(--lamp-ok); color: var(--wb-ok-ink); }
-.desk-next .runson-root .switchboard-job-pill[data-tone="warn"] { --tint: color-mix(in srgb, var(--lamp-warn) 26%, transparent); --dot: var(--lamp-warn); color: var(--wb-warn-ink); }
-.desk-next .runson-root .switchboard-job-pill[data-tone="danger"] { --tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent); --dot: var(--lamp-fail); color: var(--wb-danger-ink); }
 
 /* The captions: mono labels with intent. */
 .desk-next .runson-root .switchboard-cap {

@@ -102,7 +102,7 @@ function GuideRow({ check, lead, speech, onReady }: {
           <span className="guide-row-meta" title={fixWords ?? check.detail}>{check.detail}</span>
         ) : null}
       </div>
-      <span className="settings-pill" data-tone={pill.tone}>{pill.word}</span>
+      <span className="kit-pill" data-dot="" data-tone={pill.tone === "idle" ? undefined : pill.tone}>{pill.word}</span>
       {verb ? <span className="guide-row-verb">{verb}</span> : null}
       {more && check.raw ? <code className="guide-row-raw" data-testid={`guide-raw-${id}`}>{check.raw}</code> : null}
       {open && command ? <div className="guide-row-fix"><CommandWell hint={command} /></div> : null}

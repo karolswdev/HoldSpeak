@@ -142,38 +142,12 @@
   padding: 0 12px;
 }
 
-/* ── A pill: the state's soft tint and a round lamp dot ── */
+/* ── The pills: the kit pill (kit.css `.kit-pill`); only the row of them here ── */
 .desk-next .settings-pills {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-.desk-next .settings-pill {
-  --tint: color-mix(in srgb, var(--wb-ink) 8%, transparent);
-  --dot: var(--wb-steel-dim, #7f8591);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 22px;
-  padding: 0 9px;
-  border-radius: 999px;
-  background: var(--tint);
-  font: 600 12px / 1 var(--font-sans);
-  color: var(--wb-text);
-  white-space: nowrap;
-}
-.desk-next .settings-pill::before {
-  content: "";
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--dot);
-}
-.desk-next .settings-pill[data-tone="ok"] { --tint: color-mix(in srgb, var(--lamp-ok) 20%, transparent); --dot: var(--lamp-ok); color: var(--wb-ok-ink); }
-.desk-next .settings-pill[data-tone="warn"] { --tint: color-mix(in srgb, var(--lamp-warn) 26%, transparent); --dot: var(--lamp-warn); color: var(--wb-warn-ink); }
-.desk-next .settings-pill[data-tone="danger"] { --tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent); --dot: var(--lamp-fail); color: var(--wb-danger-ink); }
-.desk-next .settings-pill[data-tone="info"] { --tint: color-mix(in srgb, var(--lamp-info) 20%, transparent); --dot: var(--lamp-info); color: var(--wb-info-ink); }
 
 /* ── More settings: the fold ── */
 .desk-next .settings-home .settings-more {

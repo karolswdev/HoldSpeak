@@ -82,7 +82,7 @@ describe("B33: the Settings hub reads the summary route", () => {
     expect(screen.queryByText("No default model")).toBeNull();
     expect(screen.queryByText("SUMMARY · NO ENGINE")).toBeNull();
     // PHILO-17 REFIT: the default is the Runs on plate's Everything else pill.
-    expect(screen.getByTestId("settings-job-default").getAttribute("data-tone")).toBe("idle");
+    expect(screen.getByTestId("settings-job-default").getAttribute("data-tone")).toBeNull(); // neutral kit pill
   });
   it("no route and no default: the warning stays", () => {
     face(hub({ meetings: { intelligence: true, engineSet: false, auto: "every" } }));

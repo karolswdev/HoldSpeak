@@ -230,8 +230,8 @@ const PILL_TONE: Record<SwitchState, string> = {
   ready: "ok",
   limited: "warn",
   broken: "danger",
-  waiting: "idle",
-  off: "idle",
+  waiting: "",
+  off: "",
 };
 function JobLead({ job }: { job: SwitchJob }) {
   const text = job.lead ?? job.name;
@@ -243,7 +243,7 @@ function JobLead({ job }: { job: SwitchJob }) {
     <span className="switchboard-job-name">
       <span className="switchboard-job-word">{text.slice(0, at)}</span>
       <span className="switchboard-job-arrow" aria-hidden="true"> → </span>
-      <span className="switchboard-job-pill" data-tone={missing ? "warn" : PILL_TONE[job.state]}>{engine}</span>
+      <span className="kit-pill switchboard-job-pill" data-dot="" data-tone={missing ? "warn" : PILL_TONE[job.state] || undefined}>{engine}</span>
     </span>
   );
 }
@@ -621,7 +621,7 @@ function SwitchboardList({
           >
             <span className="switchboard-job-name">{job.name}</span>
             {job.runsOn ? (
-              <span className="switchboard-job-pill" data-tone={/^no engine$/i.test(job.runsOn) ? "warn" : PILL_TONE[job.state]}>{job.runsOn}</span>
+              <span className="kit-pill switchboard-job-pill" data-dot="" data-tone={/^no engine$/i.test(job.runsOn) ? "warn" : PILL_TONE[job.state] || undefined}>{job.runsOn}</span>
             ) : job.tasks ? <span className="switchboard-job-tasks">{job.tasks}</span> : null}
           </Button>
         ))}
