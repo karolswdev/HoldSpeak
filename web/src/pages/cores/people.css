@@ -628,3 +628,67 @@
   .desk-next .people-plate-row { transition: none; }
 }
 .desk-next .people-next-sep { display: none; }
+
+/* ── PHILO-17 REFIT pass 2: TO RAISE numbered on the 1:1 plate; the
+   prep plates below (Last time, Open work, On the desk). ── */
+.desk-next .people-raise-list { padding-left: 34px; }
+.desk-next .people-raise-list::before { left: 17px; }
+.desk-next .people-raise-row::before { display: none; }
+.desk-next .people-raise-n {
+  position: absolute;
+  left: -27px;
+  top: 50%;
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-ink);
+}
+.desk-next .people-raise-row:first-child .people-raise-n {
+  background: var(--wb-sel);
+  color: var(--wb-paper);
+}
+.desk-next .people-cap > b { margin-left: 2px; }
+.desk-next .people-more-grid > .people-plate:only-child { grid-column: 1 / -1; }
+.desk-next .people-work-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+  padding: 4px 6px;
+  border-radius: 3px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.desk-next .people-work-row:hover { background: #ffffff; box-shadow: var(--alive-lift); }
+.desk-next .people-work-row > .btn { flex: none; margin-left: auto; }
+.desk-next .people-last-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.desk-next .people-last-head > .btn { flex: none; }
+.desk-next .people-mono {
+  font: 700 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-text);
+}
+.desk-next .people-excerpt {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .people-work-row { transition: none; }
+}

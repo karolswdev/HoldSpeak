@@ -89,6 +89,8 @@ type OneOnOneBrief = {
   unlinked_meeting_count: number;
   watch_summary?: WatchSummary;
   last_meeting?: BriefLastMeeting | null;
+  /** The brief's memory: plaintext desk excerpts on this person's projects. */
+  memory?: { excerpts?: Array<{ ref: string; kind: string; title: string; text: string; project_id?: string }> } | null;
 };
 type RelationshipDetail = Relationship & {
   commitments?: Commitment[];
@@ -638,6 +640,24 @@ function isOverdue(due?: string | null): boolean {
   return at.getTime() < today.getTime();
 }
 
+/** `Thu Oct 8` (the day a meeting was held). */
+function dayLabel(isoDate: string): string {
+  const d = wireDate(isoDate);
+  return d ? d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "";
+}
+
+/** A memory kind in a plain word. */
+function kindWord(kind: string): string {
+  const k = String(kind || "").toLowerCase();
+  if (k.includes("decision")) return "Decision";
+  if (k.includes("meeting")) return "Meeting";
+  if (k.includes("note")) return "Note";
+  if (k.includes("item") || k.includes("action")) return "Action";
+  if (k.includes("page")) return "Page";
+  if (k.includes("update") || k.includes("send")) return "Update";
+  return "Note";
+}
+
 /** PHILO-17 REFIT: one row of a plate: the words, one pill, one verb. */
 function PlateRow({ title, onTitle, meta, verb, testId }: { title: string; onTitle?: () => void; meta?: ReactNode; verb?: ReactNode; testId?: string }) {
   return <li className="people-plate-row" data-testid={testId}>
@@ -759,7 +779,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
   const displayName = brief?.display_name ?? relationship.display_name;
   const toggle = (next: Exclude<NowConcern, null>) => setConcern((current) => (current === next ? null : next));
   const concernRows: ReactNode[] = [];
-  if (brief && prCount) concernRows.push(<li key="prs" className="people-raise-row" data-testid="prep-prs-row">
+  if (brief && prCount) concernRows.push(<li key="prs" className="people-work-row" data-testid="prep-prs-row">
     <span className="people-pill" data-tone={ws?.oldest_waiting_days && ws.oldest_waiting_days >= 3 ? "warn" : "info"} data-testid="prep-prs-label">{prsSummaryLabel(prCount, displayName)}</span>
     <span className="people-raise-tokens">
       {ws?.oldest_waiting_days ? <span className="people-prep-token" data-warning={ws.oldest_waiting_days >= 3 || undefined} data-testid="prep-prs-days">{ws.oldest_waiting_days}+ DAYS</span> : null}
@@ -767,7 +787,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
     </span>
     <Button dense variant="ghost" onClick={() => toggle("prs")} aria-expanded={concern === "prs"} data-testid="prep-prs-open">{concern === "prs" ? "Hide" : "Show"}</Button>
   </li>);
-  if (brief && assignCount) concernRows.push(<li key="assign" className="people-raise-row" data-testid="prep-assignments-row">
+  if (brief && assignCount) concernRows.push(<li key="assign" className="people-work-row" data-testid="prep-assignments-row">
     <span className="people-pill" data-tone={(ws?.open_assignments ?? []).some((a) => a.overdue) ? "warn" : "info"} data-testid="prep-assignments-label">{assignCount} {assignCount === 1 ? "ASSIGNMENT" : "ASSIGNMENTS"} OPEN</span>
     <span className="people-raise-tokens">
       <span className="people-prep-token" data-testid="prep-assignments-keys">{capTokens((ws?.open_assignments ?? []).map((a) => a.key).filter(Boolean))}</span>
@@ -775,22 +795,27 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
     </span>
     <Button dense variant="ghost" onClick={() => toggle("assignments")} aria-expanded={concern === "assignments"} data-testid="prep-assignments-open">{concern === "assignments" ? "Hide" : "Show"}</Button>
   </li>);
-  if (overdue.length) concernRows.push(<li key="overdue" className="people-raise-row" data-testid="prep-commitments-row">
+  if (overdue.length) concernRows.push(<li key="overdue" className="people-work-row" data-testid="prep-commitments-row">
     <span className="people-pill" data-tone="danger" data-testid="prep-commitments-label">{overdue.length} {overdue.length === 1 ? "COMMITMENT" : "COMMITMENTS"} OVERDUE</span>
     <span className="people-raise-tokens"><span className="people-prep-token">{overdue[0].body.length > 30 ? overdue[0].body.slice(0, 30) : overdue[0].body}</span></span>
-  </li>);
-  if (lm && lm.item_count > 0) concernRows.push(<li key="last" className="people-raise-row" data-testid="prep-meeting-row">
-    <span className="people-pill">LAST MEETING</span>
-    <span className="people-raise-tokens">
-      <span className="people-prep-token" data-testid="prep-meeting-items">{lm.item_count} {lm.item_count === 1 ? "ITEM" : "ITEMS"}</span>
-      {lm.open_count > 0 ? <span className="people-prep-token" data-testid="prep-meeting-open-count">{lm.open_count} OPEN</span> : null}
-    </span>
-    <Button dense variant="ghost" onClick={() => openSourceRef(`meeting:${lm.meeting_id}`)} data-testid="prep-meeting-open">Open meeting</Button>
   </li>);
   const agenda = prep?.agenda ?? [];
   const asked = (relationship.requests ?? []).filter((item) => item.state === "requested");
   const owedRows = (relationship.owed_to_you ?? []).filter((item) => (item.state ?? "open") === "open");
   const actions = prep?.openMeetingActions ?? [];
+  // LAST TIME: the newest meeting of the linked 1:1 series (the brief's
+  // linked_meetings, newest first), its decisions and open actions.
+  const last = brief?.linked_meetings?.[0] ?? null;
+  const lastId = last?.meeting_id ?? lm?.meeting_id ?? null;
+  const lastTitle = last?.title || lm?.title || "Meeting";
+  const lastLines: Array<{ key: string; kind: "decision" | "action"; text: string; meta?: string | null }> = last ? [
+    ...last.decisions.map((d) => ({ key: `d-${d.id}`, kind: "decision" as const, text: d.decision_text })),
+    ...last.open_action_items.map((a) => ({ key: `a-${a.id}`, kind: "action" as const, text: a.task, meta: [a.owner, a.due ? `BY ${shortDay(a.due)}` : null].filter(Boolean).join(" · ") || null })),
+  ] : [];
+  const showLast = Boolean(lastId && (lastLines.length || (lm && lm.item_count > 0)));
+  // ON THE DESK: what the plaintext desk holds on this person's projects
+  // (the brief's memory excerpts; its search words are the person's names).
+  const excerpts = (brief?.memory?.excerpts ?? []).filter((e) => (e.title || e.text).trim());
 
   return <div data-testid="people-prep-lens" className="people-prep">
     {failure ? <span className="people-failure" role="alert" data-testid="people-next-failure">
@@ -817,17 +842,15 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
           {prep.projects.map((project) => <Button key={project.id} variant="chrome" className="people-pill people-pill-link" data-tone="info" onClick={refOpener(`project:${project.id}`) ?? undefined}>{project.name}</Button>)}
         </span> : null}
 
-        {concernRows.length || agenda.length ? <div className="people-raise" data-testid="prep-summary-rows">
-          <span className="people-cap">TO RAISE</span>
-          <ul className="people-raise-list">
-            {concernRows}
-            {agenda.map((item) => <li key={item.id} className="people-raise-row" data-testid="prep-agenda">
-              <span className="people-raise-bead" aria-hidden="true" />
+        {agenda.length ? <div className="people-raise">
+          <span className="people-cap">TO RAISE<b>{agenda.length}</b></span>
+          <ol className="people-raise-list">
+            {agenda.map((item, index) => <li key={item.id} className="people-raise-row" data-testid="prep-agenda">
+              <span className="people-raise-n" aria-hidden="true">{index + 1}</span>
               <span className="people-raise-words">{item.body}</span>
               {item.rolled_from_id ? <span className="people-pill">Rolled</span> : null}
             </li>)}
-          </ul>
-          {concern && brief ? <ConcernDetail concern={concern} brief={brief} /> : null}
+          </ol>
         </div> : null}
 
         <div className="people-add people-agenda-add">
@@ -872,6 +895,43 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
         </div>
       </section>
     </div>
+
+    {showLast || concernRows.length || excerpts.length ? <div className="people-owe-grid people-more-grid">
+      {showLast && lastId ? <section className="people-plate" data-testid="prep-last">
+        <h3 className="people-cap">LAST TIME</h3>
+        <div className="people-last-head" data-testid="prep-meeting-row">
+          <span className="people-plate-text">
+            <span className="people-plate-title">{lastTitle}</span>
+            <span className="people-plate-meta">
+              {last?.started_at ? <span className="people-mono">{dayLabel(last.started_at)}</span> : null}
+              {lm && lm.item_count > 0 ? <span className="people-prep-token" data-testid="prep-meeting-items">{lm.item_count} {lm.item_count === 1 ? "ITEM" : "ITEMS"}</span> : null}
+              {lm && lm.open_count > 0 ? <span className="people-prep-token" data-testid="prep-meeting-open-count">{lm.open_count} OPEN</span> : null}
+            </span>
+          </span>
+          <Button dense variant="ghost" onClick={() => openSourceRef(`meeting:${lastId}`)} data-testid="prep-meeting-open">Open meeting</Button>
+        </div>
+        {lastLines.length ? <ul className="people-plate-rows">
+          {lastLines.slice(0, 4).map((line) => <PlateRow key={line.key} title={line.text}
+            meta={<><span className="people-pill" data-tone={line.kind === "decision" ? "ok" : "info"}>{line.kind === "decision" ? "Decision" : "Action"}</span>{line.meta ? <span>{line.meta}</span> : null}</>} />)}
+        </ul> : null}
+        {lastLines.length > 4 ? <span className="people-prep-token">+{lastLines.length - 4} MORE IN THE MEETING</span> : null}
+      </section> : null}
+
+      {concernRows.length ? <section className="people-plate" data-testid="prep-summary-rows">
+        <h3 className="people-cap">OPEN WORK</h3>
+        <ul className="people-plate-rows people-work-rows">{concernRows}</ul>
+        {concern && brief ? <ConcernDetail concern={concern} brief={brief} /> : null}
+      </section> : null}
+
+      {excerpts.length ? <section className="people-plate" data-testid="prep-memory">
+        <h3 className="people-cap">ON THE DESK</h3>
+        <ul className="people-plate-rows">
+          {excerpts.slice(0, 4).map((e, index) => <PlateRow key={e.ref || `${e.kind}-${index}`} title={e.title || e.text}
+            onTitle={e.ref ? () => openSourceRef(e.ref) : undefined}
+            meta={<><span className="people-pill">{kindWord(e.kind)}</span>{e.title && e.text ? <span className="people-excerpt">{e.text}</span> : null}</>} />)}
+        </ul>
+      </section> : null}
+    </div> : null}
 
     <SurfaceFooter
       egress={<EgressChip label="THIS DEVICE" scope="local" />}
