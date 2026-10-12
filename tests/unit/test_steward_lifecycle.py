@@ -2,7 +2,7 @@
 
 ``docs/internal/philo/phase-9/steward-beat/README.md`` section 7 names the
 fences; these are the ones one process can prove (L6, the real restart, is
-``test_philo9_steward_restart.py``). Every fence boots the real hub over an
+``test_steward_restart.py``). Every fence boots the real hub over an
 isolated database and reaches it through HTTP and ``/api/mcp``; a run is held
 in a REAL phase by holding its real collector (a hold, never a lying double:
 the collector's own answer is returned once released). Only public transports
