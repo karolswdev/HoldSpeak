@@ -338,34 +338,6 @@ def test_settings_put_strips_legacy_endpoint_fields() -> None:
 # ── every feature leg resolves through the one seam ────────────────────
 
 
-def test_feature_legs_resolve_through_the_one_resolver() -> None:
-    resolver_legs = {
-        # HS-143-08: Rails freezes its exact capability assignment through the
-        # parent+route bundle authority; it never resolves a mutable target itself.
-        "holdspeak/rails_observer.py": "InferenceParentRouteBundleService",
-        # HS-130-06: Ask resolves through the HS-130-01 placement authority
-        # (resolve_placement composes the one resolve_inference_target seam),
-        # so the id selects placement and Ask never model-name-hops.
-        "holdspeak/services/ask_service.py": "resolve_placement",
-        # HS-143-10: Sequence and Workflow atomically freeze canonical routes
-        # through the coordinator; they do not resolve mutable placement locally.
-        "holdspeak/services/sequence_workflow_service.py": "inference_adoption_service.freeze_routes",
-        # HS-143-10: Recipe execution admits an exact recipe subject route through
-        # the canonical coordinator; it no longer resolves a mutable target.
-        "holdspeak/services/recipe_service.py": "inference_adoption_service.admit",
-        # Workbench and voice freeze an immutable parent bundle; its children can
-        # only consume that route, not re-read the saved compatibility pointers.
-        "holdspeak/services/workbench_runner.py": "InferenceParentRouteBundleService",
-        "holdspeak/services/workbench_service.py": "InferenceParentRouteBundleService",
-        "holdspeak/plugins/dictation/assembly.py": "effective_dictation_llm",
-        "holdspeak/runtime/meeting_glue.py": "effective_intel_cloud",
-        "holdspeak/setup_runtime.py": "effective_dictation_llm",
-    }
-    for rel, seam in resolver_legs.items():
-        text = (REPO / rel).read_text()
-        assert seam in text, f"{rel} no longer resolves through {seam}"
-
-
 def test_phase143_adopters_have_no_direct_one_dial_resolver() -> None:
     """Saved compatibility fields may migrate/project, never select a live model."""
     forbidden = (

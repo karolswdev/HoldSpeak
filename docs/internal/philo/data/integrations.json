@@ -2258,17 +2258,6 @@
           "path": "tests/integration/test_web_companion_webhook.py",
           "node": "test_the_wire_events_ride_for_qlippy",
           "assertion": "Actuator proposed/result events include preview-only data suitable for Qlippy without payload secrets."
-        },
-        {
-          "path": "tests/integration/test_presence_qlippy_shell.py",
-          "node": "test_qlippy_is_react_owned_and_never_autonomous",
-          "assertion": "A static-source test checks the Qlippy function, subscription, event/action labels, apiFetch and useEffect strings. It does not exercise reachable approval behavior.",
-          "execution": {
-            "status": "passed",
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "cases": 1
-          }
         }
       ],
       "docs": [
