@@ -939,6 +939,49 @@ def test_a_held_first_read_moves_nothing(desk: dict[str, Any], pw_browser: Any, 
         ctx.close()
 
 
+# PHILO-17 (Astra on #1113): the fitted topology map keeps its cards apart
+# and its flow labels off the cards, at a 280 px phone, at 393 and at 1440,
+# and a fitted map is whole in its box (every card inside the map area).
+TOPOLOGY_JS = r"""() => {
+  const t = document.querySelector('#surface-components [data-testid=topology-surface]');
+  if (!t) return null;
+  t.scrollIntoView({block: 'center'});
+  const box = (e) => { const r = e.getBoundingClientRect(); return {L: r.left, T: r.top, R: r.right, B: r.bottom}; };
+  const hit = (a, b) => Math.min(a.R, b.R) - Math.max(a.L, b.L) > 0.5 && Math.min(a.B, b.B) - Math.max(a.T, b.T) > 0.5;
+  const cards = [...t.querySelectorAll('.surface-topology-node')].map((e) => ({name: e.getAttribute('aria-label'), ...box(e)}));
+  const labels = [...t.querySelectorAll('.surface-topology-flow-label')].map((e) => ({name: e.textContent.trim(), ...box(e)}));
+  const area = box(t.querySelector('.surface-topology-map-area'));
+  const out = [];
+  for (let i = 0; i < cards.length; i++) for (let j = i + 1; j < cards.length; j++)
+    if (hit(cards[i], cards[j])) out.push(`card ${cards[i].name} x card ${cards[j].name}`);
+  for (const l of labels) for (const c of cards) if (hit(l, c)) out.push(`label ${l.name} under card ${c.name}`);
+  for (const c of [...cards, ...labels]) if (c.L < area.L - 0.5 || c.R > area.R + 0.5 || c.T < area.T - 0.5 || c.B > area.B + 0.5)
+    out.push(`${c.name} outside the map ${JSON.stringify([c.L, c.R, c.T, c.B].map(Math.round))} in ${JSON.stringify([area.L, area.R, area.T, area.B].map(Math.round))}`);
+  return {out, cards: cards.length, labels: labels.length};
+}"""
+
+
+@pytest.mark.timeout(240)
+@pytest.mark.parametrize("width", [280, 393, 1440])
+def test_the_fitted_topology_keeps_cards_apart(desk: dict[str, Any], pw_browser: Any, width: int) -> None:
+    base = desk["base"]
+    clear_hub_windows_http(base, TOKEN)
+    _hub_open(base, "surface-components", None)
+    ctx = pw_browser.new_context(viewport={"width": width, "height": 852 if width < 720 else 900},
+                                 device_scale_factor=1, has_touch=width < 720, reduced_motion="reduce")
+    try:
+        page = ctx.new_page()
+        page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+        _normal_chair(page)
+        page.wait_for_function(SETTLED_JS, arg="surface-components", timeout=T)
+        page.locator("#surface-components [data-testid=topology-surface]").wait_for(timeout=T)
+        seen = page.evaluate(TOPOLOGY_JS)
+        assert seen and seen["cards"] == 3 and seen["labels"] == 2, seen
+        assert not seen["out"], f"{width}: {seen['out']}"
+    finally:
+        ctx.close()
+
+
 # The Dock waiver is the ratified geometry only (Astra r1 on #1108): a planted
 # More overlap fails at 1440, and a planted overlap with a control that is not
 # a shelf AppIcon fails at 393. The waived pair passes at 393 only.
