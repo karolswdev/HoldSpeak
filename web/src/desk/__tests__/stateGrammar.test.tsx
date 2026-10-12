@@ -18,7 +18,7 @@ const inspector = source("../components/DeskToolInspector.tsx");
 describe("HS-129-09 one state grammar", () => {
   it("routes the named loading, empty, and error legs through SurfaceState", () => {
     expect(companion).toMatch(/<SurfaceState\s+loading=\{recipes\.loading\}\s+empty=\{!recipes\.loading\}/s);
-    expect(companion).toMatch(/<SurfaceState\s+empty\s+emptyLabel="No sessions"/s);
+    expect(companion).toMatch(/<SurfaceState\s+loading=\{recipes\.loading\}\s+empty=\{!recipes\.loading\}\s+emptyLabel="No agents yet"/s);
     expect(companion).toMatch(/<SurfaceState\s+error=\{recipes\.error\}/s);
     expect(attention).toMatch(/store\.loading \?\s*\(\s*<SurfaceState loading/s);
     expect(capability).toMatch(/<SurfaceState error=\{readiness\.detail \|\| "Unavailable"\}/);
@@ -40,7 +40,9 @@ describe("HS-129-09 one state grammar", () => {
 
   it("keeps raw material behind RAW folds and reference material as rows", () => {
     expect(inspector).toMatch(/<FoldGadget title="RAW · SOURCE">\s*<pre>/s);
-    expect(companion).toMatch(/<FoldGadget title="RAW · QUESTION">\s*<pre/s);
+    // PHILO-17 THE REFIT: the Agents window shows a coder's question once,
+    // through AgentWords (agentWordsFence.test.tsx); no raw copy beside it.
+    expect(companion).not.toMatch(/<pre/);
     expect(coder).toMatch(/<FoldGadget title="RAW · SELECTED TEXT">\s*<SurfaceWell/s);
     expect(runtimeDocs).not.toContain("SurfaceCode");
     expect(runtimeDocs).toMatch(/<SurfaceRow title="INSTALL"/);

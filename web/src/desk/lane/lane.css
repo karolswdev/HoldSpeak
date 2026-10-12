@@ -97,3 +97,125 @@
   .desk-next .lw-footer .surface-footer-receipt { display: none; }
   .desk-next .lw-footer .surface-footer-verbs { flex-wrap: wrap; justify-content: flex-end; row-gap: 4px; }
 }
+
+/* ── PHILO-17 THE REFIT: the lane in Today's language ───────────────────
+   The head says what the coder does (19 px). A held call sits on a focus
+   plate with a Workbench title bar. The transcript is compact (13 px words,
+   12 px mono), on a dotted pixel rail in a sunken paper well. */
+.desk-next .is-lane .lw-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.desk-next .is-lane .lw-head-sprite {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 6px;
+  background: hsl(214 70% 86%);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .is-lane .lw-head-sprite > img { width: 28px; height: 28px; image-rendering: pixelated; }
+.desk-next .is-lane .lw-head-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.desk-next .is-lane .lw-head-title {
+  margin: 0;
+  font: 650 19px / 1.2 var(--font-display);
+  letter-spacing: 0;
+  color: var(--wb-text);
+}
+.desk-next .is-lane .lw-head-title[data-tone="warn"] { color: var(--wb-warn-ink); }
+.desk-next .is-lane .lw-head-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  min-width: 0;
+  font: 500 13px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .is-lane .lw-head-mono {
+  font: 600 12px / 1.3 var(--font-mono);
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+/* The held call: a raised plate with the title bar (the focus object). */
+.desk-next .is-lane .desk-pullout-body section.lw-plate,
+.desk-next .is-lane .lw-plate {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 0 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent), 4px 10px 22px color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.desk-next .is-lane .lw-plate-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--wb-ink);
+  background: var(--wb-stipple-fine), var(--wb-blue);
+  color: var(--wb-ink);
+}
+.desk-next .is-lane .lw-plate-label {
+  padding: 1px 6px;
+  border: 1px solid var(--wb-ink);
+  background: color-mix(in srgb, var(--lamp-warn) 45%, var(--wb-paper));
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.desk-next .is-lane .lw-plate-age {
+  margin-left: auto;
+  font: 700 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .is-lane .lw-plate-body { display: flex; flex-direction: column; gap: 6px; padding: 0 12px; min-width: 0; }
+.desk-next .is-lane .lw-plate-call {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--wb-ink) 35%, transparent);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+  font: 600 12px / 1.4 var(--font-mono);
+  color: var(--wb-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.desk-next .is-lane .lw-plate-why {
+  font: 700 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wb-warn-ink);
+}
+.desk-next .is-lane .lw-plate-verbs { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; padding: 0 12px; }
+
+/* The transcript: compact, on a dotted pixel rail, in a sunken paper well. */
+.desk-next .is-lane .lane-rail {
+  padding: 10px 10px 4px 0;
+  background: var(--alive-paper, #f8f5ee);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .is-lane .lane-rail-entry { grid-template-columns: 44px 16px minmax(0, 1fr); column-gap: 8px; padding: 0 0 6px; }
+.desk-next .is-lane .lane-rail-time { font: 600 12px / 18px var(--font-mono); font-variant-numeric: tabular-nums; }
+.desk-next .is-lane .lane-rail-node::before {
+  bottom: -6px;
+  opacity: 1;
+  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--wb-ink) 45%, transparent) 0 2px, transparent 2px 4px);
+}
+.desk-next .is-lane .lane-rail-node .lane-square { width: 10px; height: 10px; margin-top: 4px; }
+.desk-next .is-lane .lane-rail-text,
+.desk-next .is-lane .lane-rail-says,
+.desk-next .is-lane .lane-rail-quote { font-size: 13px; line-height: 18px; }
+.desk-next .is-lane .lane-rail-code { font-size: 12px; }
+.desk-next .is-lane .lane-rail-body { gap: 4px; }
+.desk-next .is-lane .lw-keys { flex: none; }

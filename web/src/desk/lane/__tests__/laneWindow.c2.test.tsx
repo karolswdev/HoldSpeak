@@ -459,7 +459,9 @@ describe("the agent's window", () => {
         method: "POST", json: expect.objectContaining({ decision: "approved" }),
       })),
     );
-    fireEvent.click(within(screen.getByTestId("lane-rail")).getByTestId("lane-deny"));
+    // PHILO-17 THE REFIT: Deny and Approve live on the held plate, not the rail.
+    expect(within(screen.getByTestId("lane-rail")).queryByTestId("lane-deny")).toBeNull();
+    fireEvent.click(within(well).getByTestId("lane-deny"));
     await waitFor(() =>
       expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
         json: expect.objectContaining({ decision: "denied" }),
@@ -486,14 +488,22 @@ describe("the agent's window", () => {
     expect(useLane.getState().raw).toBe(true);
   });
 
+  it("PHILO-17: an ask and a held call: Approve is the one filled primary; Answer is quieter", async () => {
+    await openLane(fixture());
+    expect(screen.getByTestId("lane-approve").className).toContain("btn--primary");
+    const answer = within(screen.getByTestId("lane-ask")).getByRole("button", { name: "Answer" });
+    expect(answer.className).not.toContain("btn--primary");
+    expect(document.querySelectorAll(".is-lane .btn--primary")).toHaveLength(1);
+  });
+
   it("DECIDING: one line, no field", async () => {
     await openLane(fixture({ wait: { question: QUESTION, kind: "DECIDING", started: null } }));
     expect(screen.getByTestId("lane-deciding").textContent).toContain(QUESTION);
     expect(screen.queryByRole("textbox", { name: "Answer" })).toBeNull();
   });
 
-  it("no wait: no well, no empty box", async () => {
-    await openLane(fixture({ wait: null }));
+  it("no wait and no held call: no well, no empty box", async () => {
+    await openLane(fixture({ wait: null, gated: [] }));
     expect(screen.queryByTestId("lane-ask")).toBeNull();
     expect(screen.queryByTestId("lane-approve-well")).toBeNull();
     expect(screen.queryByTestId("lane-deciding")).toBeNull();

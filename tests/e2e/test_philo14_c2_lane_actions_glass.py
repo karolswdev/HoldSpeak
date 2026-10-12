@@ -288,7 +288,8 @@ def test_unread_collections_remain_visible(lane, monkeypatch) -> None:
 def test_gate_call_from_the_route_is_approved_from_the_lane(lane) -> None:
     page, _hook, url, seed, _name = lane
     mint_held_call(url, seed["worktree"], command="cat /etc/review-file", proposal_id="toolu_review")
-    row = page.locator(".lane-rail-entry").filter(has_text="cat /etc/review-file")
+    # PHILO-17 THE REFIT: the held call is on the focus plate at the top of the lane.
+    row = page.locator("[data-testid='lane-approve-well']").filter(has_text="cat /etc/review-file")
     row.wait_for(timeout=15000)
     with page.expect_response(lambda r: "/toolu_review/decide" in r.url) as got:
         row.locator("[data-testid='lane-approve']").click()

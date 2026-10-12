@@ -2,7 +2,7 @@
 // Info and four kernel operations in-world. Proposals expose their complete
 // GitHub text before the owner approves or denies; no modal owns the loop.
 import "./delivery.css";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   attributionLabel,
@@ -13,6 +13,7 @@ import {
   type PrRow,
 } from "../prReceipts";
 import { DeskComposer } from "./DeskComposer";
+import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { FoldGadget } from "../surface/gadgets";
 import { SurfaceCode, SurfaceState, SurfaceWell } from "../surface/Surface";
 
@@ -102,18 +103,27 @@ export function PrReceiptsSection() {
                           <td>{prStateLabel(row)} <span className={`desk-pr-gate is-${rowGate || "ungated"}`}>{gateLabel}</span></td>
                           <td><span className={`desk-pr-attmeans is-${row.attribution}`} title={row.basis}>{attributionLabel(row)}</span></td>
                           <td>
+                            {/* PHILO-17 THE REFIT: one verb per row (Open PR); the
+                                rest live in the row's ⋯ menu (the library menu),
+                                an unavailable verb ghosted with its reason. */}
                             <span className="desk-shade-do desk-pr-verbs">
-                              <Button dense variant="ghost" onClick={() => void seeDiff(row)}>Diff</Button>
-                              <Button dense variant="ghost" onClick={() => patch(key, { info: !w.info })}>Info</Button>
-                              {(["send_agent", "draft_review", "post_comment", "post_status"] as const).map((name) => {
-                                const a = availability(row, name);
-                                const labels = { send_agent: "Send agent", draft_review: "Draft review", post_comment: "Post comment", post_status: "Post status" };
-                                const click = name === "draft_review"
-                                  ? () => void run(key, "Drafting", () => store.draftReview(row))
-                                  : () => patch(key, { action: name === "send_agent" ? "send" : name === "post_comment" ? "comment" : "status", text: name === "post_status" ? "Review in progress" : w.text, result: null });
-                                return <Button key={name} dense variant="ghost" disabled={!a.available || Boolean(w.busy)} title={a.available ? labels[name] : a.reason} onClick={click}>{labels[name]}</Button>;
-                              })}
-                              {Array.from(new Set((Object.values(row.verbs ?? {}) as Array<{ available: boolean; reason: string }>).filter((item) => !item.available && item.reason).map((item) => item.reason))).map((reason) => <small key={reason} className="desk-pr-refusal">{reason}</small>)}
+                              <Button dense variant="ghost" onClick={() => window.open(row.url, "_blank", "noopener,noreferrer")}>Open PR</Button>
+                              <RowMenu
+                                label={`More for #${row.number}`}
+                                entries={[
+                                  { type: "item", id: "diff", label: "Diff", onSelect: () => void seeDiff(row) },
+                                  { type: "item", id: "info", label: w.info ? "Hide info" : "Info", onSelect: () => patch(key, { info: !w.info }) },
+                                  { type: "sep", id: "sep" },
+                                  ...(["send_agent", "draft_review", "post_comment", "post_status"] as const).map((name): WorkMenuEntry => {
+                                    const a = availability(row, name);
+                                    const labels = { send_agent: "Send agent", draft_review: "Draft review", post_comment: "Post comment", post_status: "Post status" };
+                                    const click = name === "draft_review"
+                                      ? () => void run(key, "Drafting", () => store.draftReview(row))
+                                      : () => patch(key, { action: name === "send_agent" ? "send" : name === "post_comment" ? "comment" : "status", text: name === "post_status" ? "Review in progress" : w.text, result: null });
+                                    return { type: "item", id: name, label: labels[name], ghost: !a.available ? a.reason || "unavailable" : w.busy ? w.busy : null, onSelect: click };
+                                  }),
+                                ]}
+                              />
                             </span>
                           </td>
                         </tr>
@@ -216,5 +226,42 @@ export function PrReceiptsSection() {
         );
       })}
     </section>
+  );
+}
+
+/** The row's ⋯ menu: the library menu Button and the WorkMenu species. */
+function RowMenu({ label, entries }: { label: string; entries: WorkMenuEntry[] }) {
+  const [at, setAt] = useState<{ x: number; y: number; keys: boolean } | null>(null);
+  const ref = useRef<HTMLButtonElement | null>(null);
+  return (
+    <>
+      <Button
+        ref={ref}
+        dense
+        variant="ghost"
+        aria-haspopup="menu"
+        aria-expanded={Boolean(at)}
+        aria-label={label}
+        data-testid="pr-row-menu"
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          setAt(at ? null : { x: r.left, y: r.bottom, keys: e.detail === 0 });
+        }}
+      >
+        ⋯
+      </Button>
+      {at ? (
+        <WorkMenu
+          className="desk-head-menu"
+          label={label}
+          x={at.x}
+          y={at.y}
+          entries={entries}
+          autoFocus={at.keys}
+          returnFocus={() => ref.current?.focus()}
+          onClose={() => setAt(null)}
+        />
+      ) : null}
+    </>
   );
 }
