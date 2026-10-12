@@ -15,6 +15,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -69,8 +70,27 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
+/** PHILO-17 (owner ruling 2026-10-12, "shrink it"): a map wider than its
+ *  box is fitted: the nodes come closer and narrower (never under
+ *  MIN_NODE_W), so every node and edge is in view at the phone width. The
+ *  words keep their size (12 px and up); only the layout shrinks. */
+const MIN_NODE_W = 128;
+const FIT_MARGIN = 24;
+
+export function fitLayout(nodes: GraphNode[], viewW: number): { nodes: GraphNode[]; nodeW: number; fitted: boolean } {
+  if (!nodes.length || !viewW) return { nodes, nodeW: NODE_W, fitted: false };
+  const xs = nodes.map((n) => n.x);
+  const minX = Math.min(...xs);
+  const span = Math.max(...xs) - minX;
+  const room = viewW - 2 * FIT_MARGIN;
+  if (span + NODE_W <= room) return { nodes, nodeW: NODE_W, fitted: false };
+  const nodeW = Math.max(MIN_NODE_W, Math.min(NODE_W, Math.round(room * 0.42)));
+  const f = span ? Math.max(0, Math.min(1, (room - nodeW) / span)) : 1;
+  return { nodes: nodes.map((n) => ({ ...n, x: minX + (n.x - minX) * f })), nodeW, fitted: true };
+}
+
 /** Compute the bounding box of all nodes + padding. */
-function contentBounds(nodes: GraphNode[]): {
+function contentBounds(nodes: GraphNode[], w = NODE_W, pad = 80): {
   minX: number;
   minY: number;
   maxX: number;
@@ -84,10 +104,9 @@ function contentBounds(nodes: GraphNode[]): {
   for (const n of nodes) {
     if (n.x < minX) minX = n.x;
     if (n.y < minY) minY = n.y;
-    if (n.x + NODE_W > maxX) maxX = n.x + NODE_W;
+    if (n.x + w > maxX) maxX = n.x + w;
     if (n.y + NODE_H > maxY) maxY = n.y + NODE_H;
   }
-  const pad = 80;
   return {
     minX: minX - pad,
     minY: minY - pad,
@@ -100,10 +119,11 @@ function contentBounds(nodes: GraphNode[]): {
 function edgePath(
   from: GraphNode,
   to: GraphNode,
+  w = NODE_W,
 ): string {
-  const x1 = from.x + NODE_W / 2;
+  const x1 = from.x + w / 2;
   const y1 = from.y + NODE_H / 2;
-  const x2 = to.x + NODE_W / 2;
+  const x2 = to.x + w / 2;
   const y2 = to.y + NODE_H / 2;
   // Simple cubic bezier with a horizontal bias
   const dx = x2 - x1;
@@ -115,9 +135,10 @@ function edgePath(
 function edgeMidpoint(
   from: GraphNode,
   to: GraphNode,
+  w = NODE_W,
 ): { x: number; y: number } {
   return {
-    x: (from.x + to.x + NODE_W) / 2,
+    x: (from.x + to.x + w) / 2,
     y: (from.y + to.y + NODE_H) / 2,
   };
 }
@@ -175,7 +196,7 @@ const STATE_ICONS: Record<string, string> = {
 // ── Component ───────────────────────────────────────────────────────
 
 export function TopologySurface({
-  nodes,
+  nodes: givenNodes,
   flows,
   selectedId,
   onSelect,
@@ -185,6 +206,21 @@ export function TopologySurface({
 }: TopologySurfaceProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
+  // The box's width: a map wider than it is fitted (fitLayout).
+  const [viewW, setViewW] = useState(0);
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const read = () => setViewW(el.clientWidth);
+    read();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const fit = useMemo(() => fitLayout(givenNodes, viewW), [givenNodes, viewW]);
+  const nodes = fit.nodes;
+  const nodeW = fit.nodeW;
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [internalSelected, setInternalSelected] = useState<string | null>(null);
   const nodeRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -203,7 +239,7 @@ export function TopologySurface({
   );
 
   // ── Bounded pan ──
-  const bounds = useMemo(() => contentBounds(nodes), [nodes]);
+  const bounds = useMemo(() => contentBounds(nodes, nodeW, fit.fitted ? FIT_MARGIN - 8 : 80), [nodes, nodeW, fit.fitted]);
   const applyPan = useCallback(
     (dx: number, dy: number) => {
       setPan((prev) => {
@@ -363,7 +399,7 @@ export function TopologySurface({
     if (home) {
       // Place home node at ~30% from the left, vertically centered
       return {
-        x: -(home.x + NODE_W / 2) + 60,
+        x: -(home.x + nodeW / 2) + 60,
         y: -(home.y + NODE_H / 2),
       };
     }
@@ -371,7 +407,7 @@ export function TopologySurface({
       x: -(bounds.minX + bounds.maxX) / 2,
       y: -(bounds.minY + bounds.maxY) / 2,
     };
-  }, [bounds, nodes]);
+  }, [bounds, nodes, nodeW]);
 
   return (
     <div
@@ -420,7 +456,7 @@ export function TopologySurface({
               <g key={flow.id} data-flow={flow.id}>
                 <path
                   className="surface-topology-edge"
-                  d={edgePath(from, to)}
+                  d={edgePath(from, to, nodeW)}
                   data-active={isSelected || undefined}
                 />
               </g>
@@ -433,7 +469,7 @@ export function TopologySurface({
           const from = nodeMap.get(flow.from);
           const to = nodeMap.get(flow.to);
           if (!from || !to || !flow.labels.length) return null;
-          const mid = edgeMidpoint(from, to);
+          const mid = edgeMidpoint(from, to, nodeW);
           return (
             <div
               key={`label-${flow.id}`}
@@ -470,7 +506,7 @@ export function TopologySurface({
               style={{
                 left: node.x,
                 top: node.y,
-                width: NODE_W,
+                width: nodeW,
                 minHeight: NODE_H,
               }}
               tabIndex={isSelected ? 0 : -1}

@@ -250,24 +250,12 @@ class Red(NamedTuple):
     maybe: bool = False
 
 
-# The library's topology map is a pan surface: 500 px of demo nodes in a 363 px
-# view at 393. Its far nodes are reached by a drag; the reader reads them as cut.
-# Fitting it on a phone is a design decision (zoom to fit, or a stacked phone
-# layout), not a placement fix.
-_TOPOLOGY_393 = [
-    Red("readable", r"^clipped '.+' in surface-topology-map-area$",
-        "Components at 393: the topology demo is wider than the phone; its far nodes pan into view"),
-    Red("clipped", r"' cut by \.surface-topology-map-area \(x\)$",
-        "Components at 393: the topology demo is wider than the phone; its far nodes pan into view"),
-]
-
 #: The Room's one ask-bar red: an item row's box (its where-path holds
 #: `item-row`) under an ask-bar box (its where-path holds `room-ask`).
 ROOM_ITEM_UNDER_ASK = (r"^overlap '[^']+' x '[^']+' @\[(?:[^\]<]*<)*item-row(?:<[^\]]*)?\]"
                        r" x \[(?:[^\]<]*<)*room-ask[\w-]*(?:<[^\]]*)?\](?: \[\[.*)?$")
 
 KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
-    ("surface-components", 393): _TOPOLOGY_393,
     ("desk", 1440): [
         Red("overlap", r"^People, DRAWER, 1:1 [\d:]+ x Conductor, DRAWER, ", "the People drawer icon overlaps the "
             "Conductor icon by 5 px when its `1:1 HH:MM` caption is wide (depends on the clock)", maybe=True),
