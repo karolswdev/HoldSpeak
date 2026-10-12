@@ -1182,3 +1182,67 @@ def test_a_page_from_an_older_writer_is_due_at_once(tmp_path: Path) -> None:
     with db._connection() as conn:
         conn.execute("UPDATE memory_pages SET writer_version = writer_version - 1")
     assert (ATLAS, CHANGED) in [(d["scope"], d["spec"].slug) for d in pending_pages(db)]
+
+
+def _second_person(payload: dict) -> dict:
+    """An engine that obeys the v2 prompt: "The owner owes" -> "You owe"."""
+    return {"sentences": [
+        {"text": text.replace("The owner owes", "You owe")[:300], "refs": [label]}
+        for label, text in Pages.lines(payload).items()
+    ]}
+
+
+def _sentences(db: Database, scope: tuple[str, str], slug: str) -> list[str]:
+    page = _page(db, scope, slug)
+    return [s["text"] for s in (page or {}).get("sentences", [])]
+
+
+def _older_writer(db: Database) -> None:
+    with db._connection() as conn:
+        conn.execute("UPDATE memory_pages SET writer_version = writer_version - 1")
+
+
+def test_a_second_person_rewrite_keeps_the_owners_sentence(tmp_path: Path) -> None:
+    """PHILO-17 (Astra r1 on #1110, MUST 1): "The owner owes Dana ..." gives
+    a v2 page that keeps the sentence as "You owe Dana ..." (owe/owes is a
+    verb form of the same word, not a new claim)."""
+    db = _desk(tmp_path)
+    # (The scripted extractor learns "X is Y." facts: the first sentence
+    # makes the desk scope; the recall chunk carries the owner's sentence.)
+    _filed_note(db, "n1", "Rollout review is due. The owner owes Dana the rollout review.", None)
+    _built(db)
+    _older_writer(db)
+    writer = Pages()
+    writer.answer = _second_person
+    stats = write_pending(db, writer)
+    assert stats["pages"] >= 1, stats
+    kept = [t for slug in ("what-i-owe", CHANGED) for t in _sentences(db, DESK, slug)]
+    assert any("You owe Dana the rollout review." in t for t in kept), kept
+    assert not any("The owner" in t for t in kept), kept
+
+
+def test_a_rewrite_that_cuts_every_sentence_leaves_the_shown_page(tmp_path: Path) -> None:
+    from holdspeak.memory.pages import attributed
+
+    """PHILO-17 (Astra r1 on #1110, MUST 1): a rewrite whose every sentence
+    fails attribution never blanks the page; the old page stays shown."""
+    db = _desk(tmp_path)
+    _filed_note(db, "n1", "Hiring loop reply is owed.", None)
+    _built(db)
+    before = _sentences(db, DESK, CHANGED)
+    assert before
+    _older_writer(db)
+    writer = Pages()
+    writer.answer = lambda payload: {"sentences": [
+        {"text": "Atlas budget is 80.", "refs": [label]} for label in Pages.lines(payload)
+    ]}
+    stats = write_pending(db, writer)
+    assert stats["failed"] >= 1
+    assert _sentences(db, DESK, CHANGED) == before
+    # A plain "say only what the inputs say" second-person page still lands.
+    assert attributed("You plan the cutover.", ["The owner plans the cutover."])
+    assert not attributed("You own the cutover.", ["The owner plans the cutover."])
+    assert not attributed("Dana owe the review.", ["Dana owes the review."])
+    assert not attributed("You ow Dana.", ["The owner owes Dana."])
+    assert attributed("You fix the build.", ["The owner fixes the build."])
+    assert attributed("You carry the pager.", ["The owner carries the pager."])

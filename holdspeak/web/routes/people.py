@@ -95,9 +95,15 @@ def build_people_router(ctx: WebContext) -> APIRouter:
             raise _failure(exc) from exc
 
     @router.get("/relationships")
-    async def relationships(request: Request, include_archived: bool = False) -> dict[str, list[dict[str, Any]]]:
+    async def relationships(
+        request: Request, include_archived: bool = False, counts: bool = False,
+    ) -> dict[str, list[dict[str, Any]]]:
+        # PHILO-17 (MUST 4): `?counts=1` adds you_owe_count and owes_you_count
+        # to each row (the owner's faces: one bounded read for the totals).
         try:
-            return {"relationships": service.list_relationships(principal(request), include_archived=include_archived)}
+            return {"relationships": service.list_relationships(
+                principal(request), include_archived=include_archived, with_counts=counts,
+            )}
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 

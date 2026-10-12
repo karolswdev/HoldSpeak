@@ -484,7 +484,28 @@ def attributed(text: str, cited: list[str]) -> bool:
     2026-10-01").  A sentence that joins two inputs is cut: a cut serves
     less, never a wrong claim."""
     tokens = content_tokens(text)
-    return any(tokens <= content_tokens(item) for item in cited)
+    return any(_held_by(tokens, content_tokens(item)) for item in cited)
+
+
+def _held_by(tokens: set[str], held: set[str]) -> bool:
+    """Every token of the sentence is in the input.  PHILO-17 (Astra r1 on
+    #1110): the page speaks to the owner as "you", so where the input says
+    "the owner" a verb may lose its third-person ending ("The owner owes
+    Dana" → "You owe Dana": owe/owes, plan/plans, fix/fixes, carry/carries;
+    is/are and has/have are stopwords).  Only a verb form changes, never a
+    word: "owe" is held by "owes", not by any other token."""
+    if tokens <= held:
+        return True
+    if "owner" not in held:
+        return False
+    def agrees(t: str) -> bool:
+        if t in held or f"{t}s" in held:
+            return True
+        if t.endswith(("s", "x", "z", "ch", "sh", "o")) and f"{t}es" in held:
+            return True
+        return len(t) > 1 and t.endswith("y") and t[-2] not in "aeiou" and f"{t[:-1]}ies" in held
+
+    return all(agrees(t) for t in tokens)
 
 
 def _token_key(token: str) -> str:
@@ -873,14 +894,20 @@ def write_page(
         return {"state": "empty", "calls": 0, "sentences": 0, "cut": 0}
     with db._connection() as conn:
         prior = conn.execute(
-            "SELECT built_at FROM memory_pages WHERE id=?", (page_id(scope, spec.slug),)
+            "SELECT built_at, answer_md FROM memory_pages WHERE id=?", (page_id(scope, spec.slug),)
         ).fetchone()
     built_at = str(prior[0]) if prior is not None else None
+    shown = prior is not None and bool(str(prior[1] or "").strip())
     labels = {f"o{i}": str(o["text"]) for i, o in enumerate(observations, start=1)}
     labels.update({f"r{i}": str(r["text"]) for i, r in enumerate(recall, start=1)})
     payload = build_payload(spec, observations, recall)
     budget.calls += 1
     kept, cut = validate_output(writer.write(payload), labels)
+    if not kept and cut and shown:
+        # PHILO-17 (Astra r1 on #1110): a rewrite whose every sentence was
+        # cut never blanks a page the owner can read. The page that is shown
+        # stays; the job backs off like any bad answer.
+        raise PageOutputError(f"every sentence was cut ({cut}); the page that is shown stays")
     sentences = [
         {"text": item["text"], "cites": [_cites(label, observations, recall) for label in item["refs"]]}
         for item in kept
