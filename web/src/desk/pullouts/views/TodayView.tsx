@@ -142,6 +142,9 @@ export function TodayView({ header }: { header: ReactNode }) {
   const [owed, setOwed] = useState<{ you: number; them: number } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  // MUST 1 (Astra r1 on #1111): the last summary made from here keeps its
+  // receipt (every place the run reached) after its row leaves the spine.
+  const [justMade, setJustMade] = useState<{ id: string; title: string } | null>(null);
 
   // PHILO-17 (Astra r1 on #1110, MUST 3): a source that could not be read
   // says so (with Retry); it never reads as empty.
@@ -252,7 +255,7 @@ export function TodayView({ header }: { header: ReactNode }) {
           </span>
           {routeReady(route) ? (
             <Button dense variant={lead === "finish" && index === 0 ? "primary" : "secondary"} loading={summary.runningId === id}
-              onClick={() => void summary.run(id, route)} data-testid="today-make-summary">
+              onClick={() => { setJustMade({ id, title: String(row.title ?? "Meeting") }); void summary.run(id, route); }} data-testid="today-make-summary">
               Make the summary
             </Button>
           ) : (
@@ -341,6 +344,36 @@ export function TodayView({ header }: { header: ReactNode }) {
     </li>
   );
 
+  // The row as the latest read has it: the run's state and its receipt.
+  const madeRow = justMade ? meetings.find((row) => String(row.id) === justMade.id) ?? null : null;
+  const madeReceipt = justMade
+    ? executedReceipt(justMade.id,
+      summary.runRefusal?.meetingId === justMade.id ? summary.runRefusal.refusal.receipt : undefined,
+      readRunReceipt(madeRow))
+    : null;
+  const madeState = madeRow ? meetingRowState(madeRow) : null;
+  const madeDone = Boolean(madeRow && (madeRow.has_summary || madeState?.label === "SUMMARY STORED" || madeState?.label === "RAN"));
+  const madeFailed = madeState?.verb === "Retry";
+  const justMadeNode = justMade && (madeReceipt || madeRow) && !finish.some((row) => String(row.id) === justMade.id) ? (
+    <SpineNode kind="made" testId="today-just-made" time="">
+      <div className="today-row">
+        <div className="today-row-text">
+          <Button variant="chrome" className="today-row-title" onClick={() => openSourceRef(`meeting:${justMade.id}`)}>
+            {justMade.title}
+          </Button>
+          <span className="today-row-meta">
+            <span className="kit-pill" data-tone={madeDone ? "ok" : madeFailed ? "danger" : "info"} data-dot="" data-live={!madeDone && !madeFailed ? "" : undefined}>
+              {madeDone ? "Summary made" : madeFailed ? "Summary failed" : "Making the summary"}
+            </span>
+          </span>
+        </div>
+        <span className="today-row-route">
+          <RunAttempts receipt={madeReceipt} testId="today-made-attempts" />
+        </span>
+      </div>
+    </SpineNode>
+  ) : null;
+
   // The retry is named outside the JSX: the copy scanner reads an arrow's
   // `>` after a JSX tag as the start of text.
   const retry = () => void load();
@@ -384,6 +417,7 @@ export function TodayView({ header }: { header: ReactNode }) {
         </div>
         <div className="today-grid">
           <ol className="today-spine" aria-label="Today">
+            {justMadeNode}
             {meetingsFailedNode}
             {pastToday}
             {finishNodes}

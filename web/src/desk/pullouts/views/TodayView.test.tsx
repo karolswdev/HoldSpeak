@@ -188,4 +188,41 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     expect(route.textContent).toMatch(/api\.example\.com|CLOUD|FALLBACK|\+1/i);
     expect(within(row).getByRole("button", { name: "Make the summary" })).toBeTruthy();
   });
+
+  it("MUST 1 (Astra r1 on #1111): after the run, the hosts it reached stay shown", async () => {
+    const route = { status: "ready", reason_code: null, selection_hash: "sha256:abc", legs: [
+      { ordinal: 1, host: "192.168.1.43", boundary: "lan", profile_id: "p1", profile_revision: 1, deployment_revision_id: "d1" },
+      { ordinal: 2, host: "api.example.com", boundary: "cloud", profile_id: "p2", profile_revision: 1, deployment_revision_id: "d2" },
+    ] };
+    const failedRow = {
+      id: "m1", title: "Vendor sync", started_at: inMinutes(-60), transcriptWords: 40,
+      intel_status: "error", planned_route: route,
+    };
+    // The recorded completion: LAN refused the call, the cloud fallback made it.
+    const madeRow = {
+      ...failedRow, intel_status: "ready", has_summary: true,
+      run_receipt: { receipt_id: "rr1", job_id: "j1", meeting_id: "m1", selection_hash: "sha256:abc", outcome: "succeeded",
+        attempts: [
+          { leg_ordinal: 1, host: "192.168.1.43", outcome: "failed" },
+          { leg_ordinal: 2, host: "api.example.com", outcome: "succeeded" },
+        ] },
+    };
+    let ran = false;
+    hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
+      "/api/meetings?limit=40": () => json({ meetings: [ran ? madeRow : failedRow] }),
+      "/api/desk/needs-you": () => json({ items: [] }),
+      "/api/meetings/m1/intelligence/run": () => { ran = true; return json({ jobId: "j1", state: "queued", drainer: "absent" }); },
+    });
+    render(<TodayView header={null} />);
+    const row = await screen.findByTestId("today-finish");
+    fireEvent.click(within(row).getByRole("button", { name: "Make the summary" }));
+    const made = await screen.findByTestId("today-just-made");
+    await waitFor(() => expect(made).toHaveTextContent("Summary made"));
+    const attempts = within(made).getByTestId("today-made-attempts");
+    // Both places the run reached, the failed one with its outcome.
+    expect(attempts.querySelectorAll(".egress-chip, [data-scope]").length).toBeGreaterThanOrEqual(2);
+    expect(attempts.textContent).toContain("FAILED");
+    expect(screen.queryByTestId("today-finish")).toBeNull();
+  });
 });

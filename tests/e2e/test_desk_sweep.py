@@ -108,6 +108,15 @@ TOLERANCE = 2
 PALETTE_QUERY = "ledger"  # a Project, meetings, a decision, a note of the seed
 
 
+def _overlap(o: list[Any]) -> str:
+    """One overlap observation: the two words, then WHERE each box is (the
+    data-testids of its nearest marked ancestors), so a known red can name
+    the element by its identity (PHILO-17, Astra r1 on #1111)."""
+    where = o[3] if len(o) > 3 else ["", ""]
+    text = f"overlap '{o[0]}' x '{o[1]}' @[{where[0]}] x [{where[1]}]"
+    return text + (f" {o[2]}" if os.environ.get("SWEEP_DEBUG") else "")
+
+
 class KnownRed(AssertionError):
     """A red listed in KNOWN_REDS (the only failure the xfail accepts)."""
 
@@ -252,6 +261,11 @@ _TOPOLOGY_393 = [
         "Components at 393: the topology demo is wider than the phone; its far nodes pan into view"),
 ]
 
+#: The Room's one ask-bar red: an item row's box (its where-path holds
+#: `item-row`) under an ask-bar box (its where-path holds `room-ask`).
+ROOM_ITEM_UNDER_ASK = (r"^overlap '[^']+' x '[^']+' @\[(?:[^\]<]*<)*item-row(?:<[^\]]*)?\]"
+                       r" x \[(?:[^\]<]*<)*room-ask[\w-]*(?:<[^\]]*)?\](?: \[\[.*)?$")
+
 KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
     ("surface-components", 393): _TOPOLOGY_393,
     ("desk", 1440): [
@@ -259,7 +273,7 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
             "Conductor icon by 5 px when its `1:1 HH:MM` caption is wide (depends on the clock)", maybe=True),
         Red("readable", r"^overlap 'People, DRAWER, 1:1 [\d:]+' x 'Conductor, DRAWER, ",
             "the same People x Conductor icon overlap", maybe=True),
-        Red("readable", r"^overlap '1' x 'People, DRAWER, 1:1 [\d:]+'$",
+        Red("readable", r"^overlap '1' x 'People, DRAWER, 1:1 [\d:]+'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
             "the People icon's count badge 1 overlaps its caption", maybe=True),
     ],
     ("surface-concierge", 1440): [
@@ -270,10 +284,11 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
             "Runs on: the switchboard job rows move 84 px after the window settles", maybe=True),
     ],
     ("room", 1440): [
-        # PHILO-17: which item rows sit under the bar depends on the head's
-        # height (the type ruling made it shorter): any item word may.
-        Red("readable", r"^overlap '[^']+' x '(Ask this project|Speak to ask this project|Result|Choose|"
-            r"No engine for answers)'$",
+        # PHILO-17 (Astra r1 on #1111): an ITEM ROW (testid item-row) under
+        # the ask bar (testid room-ask-*); which rows sit there depends on the
+        # head's height. Named by identity: two ask-bar boxes, or any box that
+        # is not an item row, never match (test_room_red_is_item_rows_only).
+        Red("readable", ROOM_ITEM_UNDER_ASK,
             "Room: the risk rows read as overlapping the ask bar (the reader ignores z-order: the rows may be "
             "scrolled under an opaque bar); where they sit depends on the late read", maybe=True),
         # A late read (the sources row) lands after the window settles and moves the body
@@ -282,10 +297,10 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
         Red("still", r"^(room-add-source|steward-verb|source-scope|Pause|since-read-empty) "
             r"moved \d+ px$", "Room: a late read moves the body after the window settles (not reproduced "
             "on 2026-10-11 under held reads; kept until a run shows it)", maybe=True),
-        Red("readable", r"^overlap '(GH|org/repo|\d+ OPEN PRS|·|CI GREEN|CI RED)' x 'Ask this project'$",
+        Red("readable", r"^overlap '(GH|org/repo|\d+ OPEN PRS|·|CI GREEN|CI RED)' x 'Ask this project'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
             "Room: the sources row reads as overlapping the ask bar after the late read lands", maybe=True),
         Red("overlap", r"^Pause x Choose ", "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
-        Red("readable", r"^overlap '(Pause|Choose)' x '(Pause|Choose)'$",
+        Red("readable", r"^overlap '(Pause|Choose)' x '(Pause|Choose)'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
             "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
     ],
 }
@@ -708,7 +723,7 @@ class _Case:
         if not faults["scopes"]:
             fail("readable", f"no visible {scope}: nothing was read")
         fail("readable", ([f"clipped '{c['text']}' in {c['in']}" for c in faults["clipped"]]
-                          + [f"overlap '{o[0]}' x '{o[1]}'" + (f" {o[2]}" if os.environ.get('SWEEP_DEBUG') else '') for o in faults["overlaps"]]))
+                          + [_overlap(o) for o in faults["overlaps"]]))
         small, contrast = self.measure()
         fail("floor", sorted(small - self.baseline[0]))
         fail("contrast", sorted(contrast - self.baseline[1]))
@@ -1014,3 +1029,23 @@ def test_every_html_route_loads_clean(desk: dict[str, Any], pw_browser: Any, rou
         assert not problems, f"{route}: {problems}"
     finally:
         ctx.close()
+
+
+def test_room_red_is_item_rows_only() -> None:
+    """PHILO-17 (Astra r1 on #1111): the Room's ask-bar red excuses an item
+    row under the ask bar, and nothing else: two ask-bar boxes, or a box that
+    is not an item row, still fail."""
+    red = re.compile(ROOM_ITEM_UNDER_ASK)
+    assert red.search("overlap 'DUE SEP 1' x 'No engine for answers' @[item-row<items-section] x [room-ask-well]")
+    assert red.search("overlap 'Settlement latency' x 'Ask this project' @[item-row] x [room-ask-input-well<room-ask-well]")
+    # Two ask-bar boxes collide: never excused.
+    assert not red.search("overlap 'No engine for answers' x 'Ask this project' @[room-ask-well] x [room-ask-input-well<room-ask-well]")
+    # A box that is not an item row (a head chip, a source row): never excused.
+    assert not red.search("overlap 'AT RISK' x 'Ask this project' @[room-head] x [room-ask-well]")
+    assert not red.search("overlap 'x' x 'y' @[] x [room-ask-well]")
+    # The item row under something that is not the ask bar: never excused.
+    assert not red.search("overlap 'DUE SEP 1' x 'Pause' @[item-row] x [room-footer]")
+    # An item row's own token (item-token<item-row) is an item row.
+    assert red.search("overlap 'AT_RISK' x 'Choose' @[item-token<item-row<items-section] x [room-ask-input-well<room-ask-well]")
+    # The ask bar's own word against the ask field: two ask-bar boxes.
+    assert not red.search("overlap 'No engine for answers' x 'Ask this project' @[room-ask-no-engine<room-ask-input-well] x [room-ask-input-well<room-ask-well]")
