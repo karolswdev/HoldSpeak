@@ -1,30 +1,59 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-11T22:54:22.402004Z",
+  "captured_at": "2026-10-11T23:47:02.828953Z",
   "wire": {
-    "generated_at": "2026-10-11T16:54:22.351705-06:00",
-    "generated_label": "GENERATED OCT 11 16:54",
-    "headline": "1 thing waiting.",
-    "id": "brief-f73dde0230ac47ddb05f1fd2a55b984a",
+    "generated_at": "2026-10-11T17:47:02.772724-06:00",
+    "generated_label": "GENERATED OCT 11 17:47",
+    "headline": "2 meetings this week, 1 thing changed, 1 thing waiting.",
+    "id": "brief-4728b7341e074c28978c7360d81f2711",
     "is_empty": false,
     "ledger": {
       "operations": 0,
       "since": null
     },
-    "period_end": "2026-10-11T16:54:22.351705-06:00",
+    "period_end": "2026-10-11T17:47:02.772724-06:00",
     "period_label": "OCT 09-11",
     "period_start": "2026-10-09T00:00:00-06:00",
     "person_sections_state": "unavailable",
     "sections": {
       "broke": [],
-      "changed": [],
+      "changed": [
+        {
+          "created_at": "2026-10-11T23:46:02.771011+00:00",
+          "detail": "2 min · 17:46",
+          "id": "brief-item-a0377ea65f8446ce81de9fecf8a8e70c",
+          "priority": 50,
+          "section": "changed",
+          "source_ref": "meeting:m-standup",
+          "text": "Meeting recorded: Standup"
+        }
+      ],
       "decisions": [],
-      "this_week": [],
+      "this_week": [
+        {
+          "created_at": null,
+          "detail": null,
+          "id": "brief-cal-total-3083559943b2426393588a0fc93db316",
+          "priority": 60,
+          "section": "this_week",
+          "source_ref": "calendar:week",
+          "text": "2 meetings this week"
+        },
+        {
+          "created_at": null,
+          "detail": null,
+          "id": "brief-cal-next-6e17a7257c4d4cfd8563efccb0ad75ef",
+          "priority": 55,
+          "section": "this_week",
+          "source_ref": "calendar_event:ev-0",
+          "text": "Next: Sprint Planning at 17:49"
+        }
+      ],
       "waiting": [
         {
           "created_at": null,
           "detail": "Choose an engine",
-          "id": "brief-item-6040f102e6724fb4a1f1d1d06f0cab4a",
+          "id": "brief-item-b108f65bcb4a40dfb758b459ce88335e",
           "priority": 120,
           "section": "waiting",
           "source_ref": "blocker:summary",

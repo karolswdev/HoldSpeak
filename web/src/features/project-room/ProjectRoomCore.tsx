@@ -107,7 +107,7 @@ import { AddSourcesWell } from "./door/DoorCore";
 import "./project-room.css";
 import { RecallFace } from "./recall/RecallFace";
 import { DecisionRecordPreparedChip, DecisionRecordSendWells } from "../../desk/documentSendsLazy";
-import { fetchUpdates } from "./update/api";
+import { fetchUpdate, fetchUpdates } from "./update/api";
 import { Unreadable } from "../../desk/surface/send";
 import { retryRoomLink, useRoomSendLink } from "../../desk/windowSend";
 import { flightForItem, isInFlight, mergeReceipt, useAgentFlights, useAgentFlightsLive } from "../../desk/agentFlights";
@@ -2711,9 +2711,12 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
             stewardCtrl.exitSteward();
             void reviewCtrl.enterReview(reviewId);
           }}
-          onOpenUpdate={(updateId: string) => {
+          onOpenUpdate={async (updateId: string) => {
+            // Read the update first; the Steward posture stays on the
+            // receipt until the read lands (a failure is shown there).
+            const update = await fetchUpdate(updateId);
             stewardCtrl.exitSteward();
-            void openLinkedUpdate(updateId);
+            openUpdate(update);
           }}
         />
       </>

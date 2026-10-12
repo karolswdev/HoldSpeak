@@ -1,16 +1,16 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-11T22:54:22.978951Z",
+  "captured_at": "2026-10-11T23:47:03.471559Z",
   "wire": {
     "note": {
       "body_markdown": "Send the plan.",
-      "created_at": "2026-10-11T22:54:22Z",
+      "created_at": "2026-10-11T23:47:03Z",
       "deleted": false,
-      "id": "note_b4c03cd93c28",
-      "last_modified": "2026-10-11T22:54:22Z",
+      "id": "note_834e1623ff3b",
+      "last_modified": "2026-10-11T23:47:03Z",
       "tags": [],
       "title": "First words",
-      "updated_at": "2026-10-11T22:54:22Z"
+      "updated_at": "2026-10-11T23:47:03Z"
     }
   }
 }

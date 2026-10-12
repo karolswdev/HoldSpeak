@@ -469,14 +469,14 @@ describe("Step rows: human labels and receipt refs", () => {
     expect(refChips.map((el) => el.textContent)).toEqual(["Open update", "Open action item"]);
   });
 
-  it("the update receipt opens that update in the Room's Update posture", async () => {
+  it("the update receipt reads that update by id, then opens it in the Room's Update posture", async () => {
     const updateId = recordedRef("update:").slice("update:".length);
     setupStewardPosture({
       listRuns: [completedRunFixture()],
     });
     const stewardImpl = apiFetch.getMockImplementation()!;
     apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
-      if (url.match(/\/api\/projects\/[^/]+\/updates/)) return Promise.resolve(structuredClone(RECORDED.updates));
+      if (url === `/api/updates/${updateId}`) return Promise.resolve(structuredClone(RECORDED.update));
       return stewardImpl(url, init);
     });
     render(<WindowHarness scope="project:p1" />);
@@ -492,7 +492,62 @@ describe("Step rows: human labels and receipt refs", () => {
     // The Steward posture steps aside; the Update posture opens on that update.
     await waitFor(() => expect(screen.getByTestId("update-posture").getAttribute("data-phase")).toBe("editor"));
     expect(screen.queryByTestId("steward-posture")).toBeNull();
-    expect(apiFetch).toHaveBeenCalledWith(expect.stringMatching(/\/api\/projects\/p1\/updates/));
+    expect(apiFetch).toHaveBeenCalledWith(`/api/updates/${updateId}`);
+  });
+
+  it("an update that does not load: the receipt stays, the reason shows, Retry opens it", async () => {
+    // Astra r1 on #1107: the posture left before the read, and a failed read
+    // showed nothing.
+    const updateId = recordedRef("update:").slice("update:".length);
+    setupStewardPosture({
+      listRuns: [completedRunFixture()],
+    });
+    const stewardImpl = apiFetch.getMockImplementation()!;
+    let fail = true;
+    apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
+      if (url === `/api/updates/${updateId}`) {
+        return fail
+          ? Promise.reject(new ApiError(500, "The hub did not answer.", { code: "internal" }))
+          : Promise.resolve(structuredClone(RECORDED.update));
+      }
+      return stewardImpl(url, init);
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
+    await waitFor(() => screen.getByTestId("steward-detail"));
+    const updRef = () => screen.getAllByTestId("steward-receipt-ref")
+      .find((el) => el.getAttribute("data-ref") === `update:${updateId}`)!;
+    fireEvent.click(updRef());
+
+    const failure = await screen.findByTestId("steward-open-failure");
+    expect(failure.textContent).toContain("NOT OPENED · UPDATE DID NOT LOAD");
+    expect(screen.getByTestId("steward-detail")).toBeTruthy();
+    expect(screen.queryByTestId("update-posture")).toBeNull();
+
+    fail = false;
+    const retry = screen.getByTestId("steward-open-retry");
+    expect(retry.className).toContain("btn");
+    fireEvent.click(retry);
+    await waitFor(() => expect(screen.getByTestId("update-posture").getAttribute("data-phase")).toBe("editor"));
+    expect(screen.queryByTestId("steward-posture")).toBeNull();
+  });
+
+  it("an update that is gone says so", async () => {
+    const updateId = recordedRef("update:").slice("update:".length);
+    setupStewardPosture({ listRuns: [completedRunFixture()] });
+    const stewardImpl = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) =>
+      url === `/api/updates/${updateId}`
+        ? Promise.reject(new ApiError(404, "Not found", { code: "not_found" }))
+        : stewardImpl(url, init));
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
+    await waitFor(() => screen.getByTestId("steward-detail"));
+    fireEvent.click(screen.getAllByTestId("steward-receipt-ref").find((el) => el.getAttribute("data-ref") === `update:${updateId}`)!);
+    expect((await screen.findByTestId("steward-open-failure")).textContent).toContain("UPDATE NOT FOUND");
   });
 
   it("the Door item receipt opens the action item it filed in Follow-through", async () => {

@@ -1,8 +1,8 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-11T22:54:22.622579Z",
+  "captured_at": "2026-10-11T23:47:03.072568Z",
   "wire": {
-    "count": 2,
+    "count": 3,
     "enabled": true,
     "items": [
       {
@@ -10,8 +10,32 @@
         "confidence": null,
         "corrected": false,
         "correction_id": null,
+        "corrections_applied": [
+          7
+        ],
+        "created_at": "2026-10-11T23:47:03.066041+00:00",
+        "final_text": "Ship the Q4 platform in October",
+        "id": 3,
+        "intent": null,
+        "project_root": null,
+        "rewrite_pass_ms": [],
+        "source": "dictation",
+        "stage_ms": {},
+        "target_profile": null,
+        "taught_from": false,
+        "total_ms": 0.0,
+        "transcript": "Ship the Q4 platform in October",
+        "warnings": [
+          "dictation pipeline disabled"
+        ]
+      },
+      {
+        "block_id": null,
+        "confidence": null,
+        "corrected": false,
+        "correction_id": null,
         "corrections_applied": [],
-        "created_at": "2026-10-11T22:54:22.616949+00:00",
+        "created_at": "2026-10-11T23:47:03.065812+00:00",
         "final_text": "Draft the release note for the metrics change",
         "id": 2,
         "intent": null,
@@ -33,7 +57,7 @@
         "corrected": false,
         "correction_id": null,
         "corrections_applied": [],
-        "created_at": "2026-10-11T22:54:22.616348+00:00",
+        "created_at": "2026-10-11T23:47:03.065176+00:00",
         "final_text": "Cut the Q4 scope to the payments path",
         "id": 1,
         "intent": null,
@@ -51,6 +75,6 @@
       }
     ],
     "retention": 500,
-    "today": 2
+    "today": 3
   }
 }

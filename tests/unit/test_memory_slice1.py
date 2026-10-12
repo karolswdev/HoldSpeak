@@ -315,6 +315,51 @@ def test_defense_keeps_an_id_whose_hex_holds_a_card_shaped_digit_run() -> None:
     assert redact("card 378282246310005 here") == f"card {REDACTED} here"
 
 
+_CARD_NUMBER = "4111 1111 1111 1111"
+
+
+@pytest.mark.parametrize("text", [
+    f"_{_CARD_NUMBER}_",                    # Markdown emphasis
+    f"*{_CARD_NUMBER}*",
+    f"**{_CARD_NUMBER}**",
+    f"`{_CARD_NUMBER}`",
+    f"~~{_CARD_NUMBER}~~",
+    f"({_CARD_NUMBER})",
+    f'"{_CARD_NUMBER}"',
+    f"pay with {_CARD_NUMBER}.",
+    f"{_CARD_NUMBER} is the card",          # the text's start
+    f"first line\n{_CARD_NUMBER}\nlast",   # a line start
+    "card 4111-1111-1111-1111 here",        # dashes inside
+    "card 4111111111111111 here",           # no separators
+    f"card:{_CARD_NUMBER}",
+])
+def test_defense_redacts_a_card_at_every_boundary(text: str) -> None:
+    """Astra r1 on #1107: the id fix must not let a card by a Markdown mark,
+    a bracket, a quote or a line start through; it holds through memory
+    retain (redact_source)."""
+    from holdspeak.memory.retain import MemorySource, redact_source
+
+    out = redact(text)
+    assert REDACTED in out and "1111" not in out, out
+    title, units, held = redact_source(MemorySource(ref="note:x", kind="note", title="t", occurred_at=None,
+                                                    units=[("u", text)]))
+    assert held and "1111" not in units[0][1], units
+
+
+@pytest.mark.parametrize("ident", [
+    "op_b1be06986e378282246310005adf01a4",   # a Luhn-valid run inside hex
+    "op_cd4a229effd4111111111111f502d82f",
+    "ab4111111111111111cd",
+])
+def test_defense_keeps_a_card_shaped_run_inside_an_identifier(ident: str) -> None:
+    from holdspeak.memory.retain import MemorySource, redact_source
+
+    assert redact(ident) == ident
+    _title, units, held = redact_source(MemorySource(ref="note:x", kind="note", title="t", occurred_at=None,
+                                                     units=[("u", f"error {ident} refused")]))
+    assert not held and units[0][1] == f"error {ident} refused"
+
+
 def test_defense_keeps_plain_text_and_numbers_that_are_not_cards() -> None:
     plain = "The cutover is on 2026-11-03 and costs 1234 5678 9012 3456 euros for 400 seats."
     assert redact(plain) == plain  # the 16 digits fail the Luhn check

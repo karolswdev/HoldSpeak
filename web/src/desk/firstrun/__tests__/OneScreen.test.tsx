@@ -65,50 +65,48 @@ import CALENDAR_WIRE from "../../../test/wire/onboarding-calendar.wire.json";
 import CONNECTIONS_WIRE from "../../../test/wire/onboarding-connections.wire.json";
 import DOOR_WIRE from "../../../test/wire/door.fresh.wire.json";
 import SOURCES_WIRE from "../../../test/wire/calendar-sources.wire.json";
+import SETTINGS_PUT_WIRE from "../../../test/wire/settings.put.wire.json";
+import CHECK_OK_WIRE from "../../../test/wire/onboarding-calendar.check.wire.json";
+import CHECK_FAILED_WIRE from "../../../test/wire/onboarding-calendar.check-failed.wire.json";
+import WEEK_DOOR_WIRE from "../../__tests__/wire/door.week-strip.wire.json";
+import ACCESS_WIRE from "../../../test/wire/onboarding-calendar.access.wire.json";
+import USE_CALENDAR_WIRE from "../../../test/wire/onboarding-calendar.use.wire.json";
+import USE_CONNECTION_WIRE from "../../../test/wire/onboarding-connections.use.wire.json";
 
 const MB = 1_000_000;
 const WORDS = "Send the cutover plan to Priya before Friday.";
 
+/** The hub's own GET /api/setup/local-ai (the recorder pins an Apple-silicon
+ *  Mac with mlx-whisper), every file on the device or none. */
 function aiStatus(ready: boolean): LocalAiStatus {
+  const hub = recorded<LocalAiStatus & Record<string, any>>(LOCAL_AI_WIRE);
   return {
+    ...hub,
     state: ready ? "ready" : "not_started",
-    files: [
-      { key: "whisper", label: "whisper-base", size_bytes: 142 * MB, on_device: ready, url: "https://huggingface.co/a" },
-      { key: "starter", label: "Qwen3.5 4B", size_bytes: 2741 * MB, on_device: ready },
-    ],
-    bytes_total: 0,
-    bytes_done: 0,
-    egress: { destination: "huggingface.co" },
-    speech: { model: "base", backend: "mlx", state: ready ? "on_device" : "will_download" },
-    local_engine: { ready },
-    error: "",
+    files: hub.files.map((f) => ({ ...f, on_device: ready })),
+    speech: { ...hub.speech, state: ready ? "on_device" : "will_download", ready } as LocalAiStatus["speech"],
+    local_engine: { ...hub.local_engine, ready },
   };
 }
 
-const MAC_CAL = {
-  id: "eventkit:CAL-1",
-  kind: "macos",
-  label: "Work",
-  account: "karol@acme.com",
-  calendar_kind: "caldav",
-  lamp: "local",
-  egress_host: null,
-  in_use: false,
-  verb: "Use it",
-};
+/** The hub's own candidate rows (tests/integration/test_face_wire_fences.py:
+ *  EventKit granted with one calendar, gh and acli signed in). */
+const RECORDED_CANDIDATES = recorded<{ candidates: Record<string, any>[] }>(CONNECTIONS_WIRE).candidates;
+const MAC_CAL = recorded<{ candidates: Record<string, any>[] }>(CALENDAR_WIRE).candidates[0];
 
 function gh(over: Record<string, unknown> = {}) {
-  return {
-    id: "github:github.com:karolswdev", provider: "github", label: "karolswdev", account: "karolswdev",
-    site: "github.com", active: true, connected: false, lamp: "cloud", egress_host: "github.com", verb: "Use it", state: "signed_in",
-    ...over,
-  };
+  return { ...RECORDED_CANDIDATES.find((c) => c.provider === "github"), ...over };
 }
 function jira(over: Record<string, unknown> = {}) {
+  return { ...RECORDED_CANDIDATES.find((c) => c.provider === "jira"), ...over };
+}
+
+/** The recorded `tools` block with `installed` set per tool. */
+function toolsBlock(installed: { gh?: boolean; acli?: boolean }) {
+  const hub = recorded<{ tools: Record<string, any> }>(CONNECTIONS_WIRE).tools;
   return {
-    id: "jira:acme.atlassian.net|karol@acme.com", provider: "jira", label: "Karol", account: "karol@acme.com",
-    site: "acme.atlassian.net", active: true, connected: false, lamp: "cloud", egress_host: "acme.atlassian.net",
-    verb: "Use it", ...over,
+    gh: { ...hub.gh, installed: installed.gh ?? false },
+    acli: { ...hub.acli, installed: installed.acli ?? false },
   };
 }
 
@@ -119,7 +117,7 @@ interface Hub {
   access: () => Hub["calendar"];
   check: (url: string) => unknown;
   useCalendar: (id: string) => unknown;
-  connections: { candidates: Record<string, unknown>[]; tools: Record<string, { installed: boolean }> };
+  connections: { candidates: Record<string, unknown>[]; tools: Record<string, { installed: boolean } & Record<string, unknown>> };
   useConnection: (id: string) => unknown;
   door: { upcoming: unknown[]; week?: { total: number } };
   /** calendar.sources in config, as GET /api/settings carries them. */
@@ -145,21 +143,23 @@ beforeEach(() => {
   hub = {
     ai: aiStatus(false),
     owner: { name: "", aliases: [] },
-    calendar: { macos: { state: "unavailable", can_request: false }, candidates: [], sources: 0 },
-    access: () => hub.calendar,
-    check: () => ({ ok: false, error_class: "calendar_source_http_error" }),
+    calendar: { ...recorded<Hub["calendar"]>(CALENDAR_WIRE), macos: { state: "unavailable", can_request: false }, candidates: [], sources: 0 },
+    // The hub's access answer is the detect answer plus what was asked.
+    access: () => ({ ...hub.calendar, macos: { ...hub.calendar.macos, requested: hub.calendar.macos.state } }),
+    check: () => ({ ...recorded<Record<string, unknown>>(CHECK_FAILED_WIRE), error_class: "calendar_source_http_error", redirect_target: null }),
     useCalendar: (id) => {
       const added = source(id);
       hub.sources = [...hub.sources, added];
-      return { added: true, source: { id: added.id, url: id } };
+      const hubSource = recorded<{ source: Record<string, unknown> }>(USE_CALENDAR_WIRE).source;
+      return { ...recorded<Record<string, unknown>>(USE_CALENDAR_WIRE), source: { ...hubSource, id: added.id, url: id } };
     },
-    connections: { candidates: [], tools: { gh: { installed: false }, acli: { installed: false } } },
+    connections: { candidates: [], tools: toolsBlock({}) },
     useConnection: (id) => {
       hub.connections = {
         ...hub.connections,
         candidates: hub.connections.candidates.map((c) => (c.id === id ? { ...c, connected: true } : c)),
       };
-      return { candidate: id, provider: "github", entry: { state: "connected" } };
+      return { ...recorded<Record<string, unknown>>(USE_CONNECTION_WIRE), candidate: id };
     },
     door: { upcoming: [] },
     sources: [],
@@ -233,6 +233,18 @@ describe("the typed hub bodies carry only the hub's fields (the SCAR LAW)", () =
     expect(inventedFields(await get("/api/onboarding/connections"), recorded(CONNECTIONS_WIRE))).toEqual([]);
     expect(inventedFields(await get("/api/door"), recorded(DOOR_WIRE))).toEqual([]);
     expect(inventedFields(await get("/api/calendar/sources"), recorded(SOURCES_WIRE))).toEqual([]);
+    expect(inventedFields(await get("/api/settings", { method: "PUT" }), recorded(SETTINGS_PUT_WIRE))).toEqual([]);
+    expect(inventedFields(await get("/api/onboarding/calendar/check", { method: "POST", json: { url: "x" } }), recorded(CHECK_FAILED_WIRE))).toEqual([]);
+    // The typed upcoming rows these tests set, against the Door's recorded calendar rows.
+    hub.door = { upcoming: [{ id: "e1", source: "calendar_event", title: "Atlas weekly", starts_at: soon() }], week: { total: 14 } };
+    expect(inventedFields(await get("/api/door"), recorded(WEEK_DOOR_WIRE))).toEqual([]);
+    hub.connections = { candidates: [gh(), jira()], tools: toolsBlock({ gh: true, acli: true }) };
+    expect(inventedFields(await get("/api/onboarding/connections"), recorded(CONNECTIONS_WIRE))).toEqual([]);
+    hub.calendar = { macos: { state: "full_access", can_request: false }, candidates: [MAC_CAL], sources: 0 };
+    expect(inventedFields(await get("/api/onboarding/calendar"), recorded(CALENDAR_WIRE))).toEqual([]);
+    expect(inventedFields(await get("/api/onboarding/calendar/macos/access", { method: "POST" }), recorded(ACCESS_WIRE))).toEqual([]);
+    expect(inventedFields(await get("/api/onboarding/calendar/use", { method: "POST", json: { id: "eventkit:CAL-1" } }), recorded(USE_CALENDAR_WIRE))).toEqual([]);
+    expect(inventedFields(await get("/api/onboarding/connections/use", { method: "POST", json: { id: "github:github.com:karolswdev" } }), recorded(USE_CONNECTION_WIRE))).toEqual([]);
   });
 });
 
@@ -316,12 +328,11 @@ describe("Calendar card", () => {
 
   it("added: Add reads the link once, then uses it; the row names its host", async () => {
     const url = "https://outlook.office365.com/owa/calendar/a/calendar.ics";
-    hub.check = (u) => ({
-      url: u, host: "outlook.office365.com", lamp: "cloud", ok: true,
-      candidate: { id: u, kind: "ics", label: "Work (Outlook)", account: "outlook.office365.com", lamp: "cloud",
-        egress_host: "outlook.office365.com", in_use: false, verb: "Use it" },
-      events_next_days: 9, horizon_days: 14,
-    });
+    // The hub's own check answer for this link (a feed named "Work (Outlook)").
+    hub.check = (u) => {
+      const hubCheck = recorded<Record<string, any>>(CHECK_OK_WIRE);
+      return { ...hubCheck, url: u, candidate: { ...hubCheck.candidate, id: u }, events_next_days: 9 };
+    };
     render(<FirstRun />);
     const cal = await screen.findByTestId("firstrun-calendar");
     fireEvent.change(await within(cal).findByRole("textbox", { name: "Calendar URL" }), { target: { value: url } });
@@ -337,8 +348,7 @@ describe("Calendar card", () => {
   });
 
   it("failed: CAN'T READ and the plain reason, as tokens; a bad link is named too", async () => {
-    hub.check = () => ({ url: "x", host: "cal.example.com", lamp: "cloud", ok: false, error_class: "calendar_source_redirect",
-      redirect_target: "https://login.example.com/x" });
+    hub.check = () => ({ ...recorded<Record<string, unknown>>(CHECK_FAILED_WIRE), redirect_target: "https://login.example.com/x" });
     render(<FirstRun />);
     const cal = await screen.findByTestId("firstrun-calendar");
     const field = await within(cal).findByRole("textbox", { name: "Calendar URL" });
@@ -438,7 +448,7 @@ describe("Calendar card", () => {
 
 describe("Connections card", () => {
   it("found: each row names its host; Use it -> CONNECTED only when the hub says so", async () => {
-    hub.connections = { candidates: [gh(), jira()], tools: { gh: { installed: true }, acli: { installed: true } } };
+    hub.connections = { candidates: [gh(), jira()], tools: toolsBlock({ gh: true, acli: true }) };
     hub.sources = [source("eventkit:CAL-1")];
     render(<FirstRun />);
     const conn = await screen.findByTestId("firstrun-connections");
@@ -462,7 +472,7 @@ describe("Connections card", () => {
   });
 
   it("refused: the probe failed -> NOT CONNECTED and its reason; no CONNECTED", async () => {
-    hub.connections = { candidates: [gh()], tools: { gh: { installed: true } } };
+    hub.connections = { candidates: [gh()], tools: toolsBlock({ gh: true }) };
     hub.useConnection = () => ({ candidate: "x", provider: "github", entry: { state: "owner_action_required", error_detail: "gh is not signed in." } });
     render(<FirstRun />);
     const conn = await screen.findByTestId("firstrun-connections");
@@ -487,7 +497,7 @@ describe("Connections card", () => {
     expect(Array.from(tools.children, (c) => c.textContent)).toEqual(["GH NOT INSTALLED", "ACLI NOT INSTALLED"]);
     view.unmount();
 
-    hub.connections = { candidates: [gh({ active: false, verb: null, id: "github:github.com:other" })], tools: { gh: { installed: true } } };
+    hub.connections = { candidates: [gh({ active: false, verb: null, id: "github:github.com:other" })], tools: toolsBlock({ gh: true }) };
     render(<FirstRun />);
     conn = await screen.findByTestId("firstrun-connections");
     await within(conn).findByText("NOT ACTIVE IN GH");
@@ -495,7 +505,7 @@ describe("Connections card", () => {
   });
 
   it("PHILO-17: an installed tool with no sign-in shows its sign-in command with Copy, then Check again", async () => {
-    hub.connections = { candidates: [], tools: { gh: { installed: true }, acli: { installed: false } } };
+    hub.connections = { candidates: [], tools: toolsBlock({ gh: true }) };
     render(<FirstRun />);
     const conn = await screen.findByTestId("firstrun-connections");
     const well = await within(conn).findByTestId("firstrun-signin-gh");
@@ -535,7 +545,7 @@ describe("Ready", () => {
   it("every step done: Ready, Karol; the strip; Record the next meeting; every card selected", async () => {
     hub.calendar = { macos: { state: "full_access", can_request: false }, candidates: [{ ...MAC_CAL, in_use: true }], sources: 1 };
     hub.sources = [source("eventkit:CAL-1")];
-    hub.connections = { candidates: [gh({ connected: true }), jira({ connected: true })], tools: {} };
+    hub.connections = { candidates: [gh({ connected: true }), jira({ connected: true })], tools: toolsBlock({}) };
     hub.door = { upcoming: [{ id: "e1", source: "calendar_event", title: "Atlas weekly", starts_at: soon() }], week: { total: 14 } };
     await finishC1();
     expect(await screen.findByRole("heading", { name: "Ready, Karol" })).toBeTruthy();
@@ -664,7 +674,8 @@ describe("Astra #876 review fences", () => {
           week: { total: 2 },
         };
       }, 2000);
-      return { added: true, source: { id: added.id, url: id } };
+      const hubSource = recorded<{ source: Record<string, unknown> }>(USE_CALENDAR_WIRE).source;
+      return { ...recorded<Record<string, unknown>>(USE_CALENDAR_WIRE), source: { ...hubSource, id: added.id, url: id } };
     };
     await finishC1();
     await screen.findByRole("button", { name: /Record Design review/ });
@@ -691,7 +702,7 @@ describe("Astra #876 review fences", () => {
   it("P2: two signed-in GitHub hosts — one connection makes GitHub done; each host shows its true state", async () => {
     const ghe = gh({ id: "github:ghe.acme.com:karol", label: "karol", account: "karol", site: "ghe.acme.com", egress_host: "ghe.acme.com" });
     hub.sources = [source("eventkit:CAL-1")];
-    hub.connections = { candidates: [gh(), ghe], tools: { gh: { installed: true } } };
+    hub.connections = { candidates: [gh(), ghe], tools: toolsBlock({ gh: true }) };
     // The connector stores ONE GitHub connection: the pressed host only.
     hub.useConnection = (id) => {
       hub.connections = {
@@ -755,7 +766,7 @@ describe("PHILO-17 U17/U18 — first run opened again, plain card words", () => 
   });
 
   it("every card says what it does in one plain line, with no unexplained token", async () => {
-    hub.connections = { candidates: [], tools: { gh: { installed: true }, acli: { installed: true } } };
+    hub.connections = { candidates: [], tools: toolsBlock({ gh: true, acli: true }) };
     render(<FirstRun />);
     await screen.findByTestId("firstrun-signin-acli");
     for (const id of ["firstrun-local-ai", "firstrun-you", "firstrun-first-words", "firstrun-calendar", "firstrun-connections", "firstrun-agents"]) {

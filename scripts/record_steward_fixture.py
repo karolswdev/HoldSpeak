@@ -91,6 +91,10 @@ def record() -> dict[str, Any]:
                 "watches": _ok(hub.client.get(f"/api/projects/{pid}/watches")),
                 # The drafted updates (an `update:<id>` receipt opens one).
                 "updates": _ok(hub.client.get(f"/api/projects/{pid}/updates")),
+                # The one update a receipt's `update:<id>` opens (GET by id).
+                "update": _ok(hub.client.get("/api/updates/" + next(
+                    s["receipt"]["ref"] for s in completed["detail"]["steps"]
+                    if s["effect_kind"] == "draft_update").split(":", 1)[1])),
             }
         finally:
             from holdspeak.db import reset_database

@@ -86,14 +86,11 @@ function degradedGithub(): ConnectionTool {
   };
 }
 
-function notConfiguredGithub(): ConnectionTool {
-  return {
-    provider_id: "github",
-    state: "not_configured",
-    account: {},
-    last_checked_at: undefined,
-    egress_host: undefined,
-  };
+/** GitHub before any check: the hub's own row on a fresh HOME. The hub sends
+ *  `not_configured` only when it has no GitHub service, which a real hub
+ *  always has (connections_service.py `_not_configured_entry`). */
+function neverCheckedGithub(): ConnectionTool {
+  return recordedTool("github");
 }
 
 function connectedJira(): ConnectionTool {
@@ -253,14 +250,14 @@ describe("ConnectionsPane", () => {
     });
   });
 
-  describe("GitHub not_configured", () => {
-    it("shows Off chip and Recheck verb", async () => {
+  describe("GitHub never checked", () => {
+    it("shows Never checked and the Recheck verb", async () => {
       const response: ConnectionsResponse = {
-        tools: [notConfiguredGithub(), emptyJira(), connectedCalendar(), connectedModels()],
+        tools: [neverCheckedGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
       const card = await screen.findByTestId("connections-github");
-      expect(within(card).getByText("Off")).toBeInTheDocument();
+      expect(within(card).getByText("Never checked")).toBeInTheDocument();
       expect(within(card).getByText("Recheck")).toBeInTheDocument();
     });
   });

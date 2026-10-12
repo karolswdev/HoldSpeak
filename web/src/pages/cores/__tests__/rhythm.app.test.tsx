@@ -35,7 +35,7 @@ function json(body: unknown) {
 }
 
 type Json = Record<string, any>;
-const COLD = (RHYTHM.change.steps[0] as { gets: Record<string, Json> }).gets;
+const COLD = (RHYTHM.change.steps[0] as unknown as { gets: Record<string, Json> }).gets;
 const HEARTBEAT = structuredClone(COLD["/api/settings/heartbeat"]);
 const STATUS = structuredClone(COLD["/api/cadence/status"]);
 
@@ -201,7 +201,7 @@ describe("The typed hub bodies carry only the hub's fields (the SCAR LAW)", () =
   // themselves; the Door and the Brief carry typed values on recorded rows.
   it("the Door with a calendar and the Brief", () => {
     expect(inventedFields(DOOR_WITH_CALENDAR, COLD["/api/door"])).toEqual([]);
-    expect(inventedFields(brief([]), recorded(BRIEF_WIRE))).toEqual([]);
+    expect(inventedFields(brief(THIS_WEEK), recorded(BRIEF_WIRE))).toEqual([]);
     const hubBrief = recorded<{ sections: { waiting: unknown[] } }>(BRIEF_WIRE);
     expect(inventedFields(item("x", "waiting", "t", "blocker:summary", "d"), hubBrief.sections.waiting[0])).toEqual([]);
   });

@@ -287,6 +287,20 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to review the claim")
 
+    # ── GET /api/updates/{update_id} ───────────────────────────────
+
+    @router.get("/api/updates/{update_id}")
+    async def api_get_update(update_id: str, request: Request) -> Any:
+        """One update by id (a steward receipt's `update:<id>` opens it; the
+        Room's list is capped, so a lookup there could miss it)."""
+        try:
+            update = ctx.project_update_service.get_update(principal(request), update_id)
+            return JSONResponse({"update": _enrich_update(update)})
+        except NotFound as exc:
+            return JSONResponse({"code": exc.code, "message": exc.detail}, status_code=404)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get the update")
+
     # ── GET /api/updates/{update_id}/markdown ──────────────────────
 
     @router.get("/api/updates/{update_id}/markdown")
