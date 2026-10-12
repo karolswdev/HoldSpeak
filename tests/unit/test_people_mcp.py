@@ -309,3 +309,14 @@ def test_philo17_owed_to_you_reaches_agents_shared_only(
     assert [item["body"] for item in brief["owed_to_you"]] == ["Shared owed item"]
     assert brief["open_commitments"] == []
     assert "PRIVATE OWED SENTINEL" not in json.dumps(brief)
+
+
+def test_every_people_tool_result_is_sensitive_in_a_thread() -> None:
+    """The People fence: a thread marks every people.* result sensitive at
+    birth, so a cloud turn never sees it (tests/unit/test_thread_people_fence.py).
+    Replaces the per-tool classification pins of tests/unit/test_hs172_people_sources.py."""
+    from holdspeak.services.thread_tools import EXCLUDED_TOOLS, tool_sensitive
+
+    names = {tool["name"] for tool in people_family.TOOLS} - EXCLUDED_TOOLS
+    assert names
+    assert {name for name in names if not tool_sensitive(name)} == set()

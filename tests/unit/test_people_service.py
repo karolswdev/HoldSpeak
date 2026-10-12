@@ -272,3 +272,90 @@ def test_the_list_counts_owed_both_ways_in_one_read(service: PeopleService) -> N
     plain = service.list_relationships(OWNER)
     assert all("you_owe_count" not in row for row in plain)
     assert sam["id"] in {row["id"] for row in plain}
+
+
+# Moved from tests/unit/test_hs172_people_sources.py (fast diet, by service).
+# ==============================================================================
+# HS-172-04: The People resolver
+# ==============================================================================
+
+
+class TestPeopleResolver:
+    """resolve_relationship_by_watch_identity: alias, display_name, login."""
+
+    def test_alias_matches(self, service: PeopleService) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "Ania Kowalska"})
+        service.link_owner_alias(OWNER, rel["id"], "ania-k")
+        result = service.resolve_relationship_by_watch_identity("ania-k")
+        assert result["state"] == "ready"
+        assert result["relationship"]["id"] == rel["id"]
+
+    def test_display_name_matches(self, service: PeopleService) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "Marek Nowak"})
+        result = service.resolve_relationship_by_watch_identity("Marek Nowak")
+        assert result["state"] == "ready"
+        assert result["relationship"]["id"] == rel["id"]
+
+    def test_case_insensitive_alias(self, service: PeopleService) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "Ania"})
+        service.link_owner_alias(OWNER, rel["id"], "Ania-K")
+        result = service.resolve_relationship_by_watch_identity("ania-k")
+        assert result["relationship"]["id"] == rel["id"]
+
+    def test_case_insensitive_display_name(self, service: PeopleService) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "Marek Nowak"})
+        result = service.resolve_relationship_by_watch_identity("marek nowak")
+        assert result["relationship"]["id"] == rel["id"]
+
+    def test_no_match_returns_none(self, service: PeopleService) -> None:
+        service.create_relationship(OWNER, {"display_name": "Known Person"})
+        result = service.resolve_relationship_by_watch_identity("unknown-login")
+        assert result["state"] == "ready"
+        assert result["relationship"] is None
+
+    def test_archived_excluded(self, service: PeopleService) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "Archived"})
+        service.link_owner_alias(OWNER, rel["id"], "archived-login")
+        service.archive_relationship(OWNER, rel["id"])
+        result = service.resolve_relationship_by_watch_identity("archived-login")
+        assert result["relationship"] is None
+
+    def test_alias_takes_priority_over_display_name(self, service: PeopleService) -> None:
+        """When two people exist where one's alias matches and another's display_name
+        matches, the alias match wins (it is searched first)."""
+        rel_alias = service.create_relationship(OWNER, {"display_name": "Person A"})
+        service.link_owner_alias(OWNER, rel_alias["id"], "shared-string")
+        rel_display = service.create_relationship(OWNER, {"display_name": "shared-string"})
+        result = service.resolve_relationship_by_watch_identity("shared-string")
+        # Alias match wins.
+        assert result["relationship"]["id"] == rel_alias["id"]
+
+    def test_returns_only_id_no_name_leak(self, service: PeopleService) -> None:
+        """The resolver returns a relationship view -- but the ROUTE returns
+        only the id.  Verify the resolver itself returns a view (for internal use)
+        and that it contains an id."""
+        rel = service.create_relationship(OWNER, {"display_name": "Secret Person"})
+        service.link_owner_alias(OWNER, rel["id"], "secret-login")
+        result = service.resolve_relationship_by_watch_identity("secret-login")
+        # The resolver returns a relationship view for internal callers.
+        assert "id" in result["relationship"]
+        # The view shape is the standard one.
+        assert "display_name" in result["relationship"]
+
+    def test_empty_string_returns_none(self, service: PeopleService) -> None:
+        result = service.resolve_relationship_by_watch_identity("")
+        assert result["relationship"] is None
+
+    def test_github_login_as_alias(self, service: PeopleService) -> None:
+        """A GitHub login linked as an alias resolves correctly."""
+        rel = service.create_relationship(OWNER, {"display_name": "Karol"})
+        service.link_owner_alias(OWNER, rel["id"], "karolswdev")
+        result = service.resolve_relationship_by_watch_identity("karolswdev")
+        assert result["relationship"]["id"] == rel["id"]
+
+    def test_jira_display_name_as_alias(self, service: PeopleService) -> None:
+        """A Jira display name linked as an alias resolves correctly."""
+        rel = service.create_relationship(OWNER, {"display_name": "Ania"})
+        service.link_owner_alias(OWNER, rel["id"], "Ania Kowalska")
+        result = service.resolve_relationship_by_watch_identity("Ania Kowalska")
+        assert result["relationship"]["id"] == rel["id"]
