@@ -53,6 +53,15 @@ def test_an_applied_effect_receipt_names_the_object_it_made(recorded: dict[str, 
     assert skipped["receipt"]["outcome"] == "skipped" and "ref" not in skipped["receipt"]
 
 
+def test_the_run_list_is_newest_first_when_two_runs_start_in_one_second(recorded: dict[str, Any]) -> None:
+    """The recorder's two runs start within one second and created_at is to
+    the second: the list sorted them either way, and the shape fence below
+    compared the wrong run (main ab43627c6). rowid breaks the tie."""
+    runs = recorded["list"]["runs"]
+    assert [r["id"] for r in runs] == [recorded["partial"]["detail"]["run"]["id"],
+                                       recorded["completed"]["detail"]["run"]["id"]]
+
+
 def test_the_recorded_steward_answers_have_the_hubs_shape(recorded: dict[str, Any]) -> None:
     stored = json.loads(recorder.OUT.read_text())
     live = {"schema": "steward-recorded@1", "recordedBy": "scripts/record_steward_fixture.py", **recorded}
