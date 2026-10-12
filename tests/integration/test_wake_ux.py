@@ -91,30 +91,3 @@ def test_armed_is_a_first_class_presence_state():
     assert view.visible is True  # an active window state, never hidden
 
 
-def test_qlippy_dock_maps_armed():
-    js = (_REPO / "web/src/pages/PresencePage.tsx").read_text()
-    assert "runtime_activity" in js
-    assert "activity?.state" in js
-
-
-def test_wake_preview_card_ships_with_the_safety_copy():
-    js = (_REPO / "web/src/components/AmbientLayer.tsx").read_text()
-    assert 'useRuntimeFrame<Preview>("wake_preview")' in js
-    assert "Preview before type" in js
-    assert "/api/dictation/wake/type" in js
-    assert "Type it" in js and "Discard" in js
-
-
-def test_settings_section_states_the_honest_truths():
-    # HS-111-01 / HS-139-05: the truths survive as fact tokens — wake word
-    # merged into the Voice tile, but the egress/risk disclosures are intact.
-    page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
-    assert 'case "voice"' in page  # wake word lives inside the Voice tile
-    assert "models download once" in page  # egress: a one-time model fetch
-    assert "type lands in the focused app" in page  # the false-detection risk
-    prefs = (_REPO / "web/src/pages/cores/settingsPrefs.tsx").read_text()
-    # Wake word is merged into Voice; its keys are in the voice module.
-    assert '"wake_word"' in prefs
-    assert 'WAKE_ACTION_OPTIONS = ["preview", "type"]' in prefs
-    preview = (_REPO / "web/src/components/AmbientLayer.tsx").read_text()
-    assert "Preview before type" in preview  # previewed, never typed

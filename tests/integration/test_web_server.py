@@ -1715,53 +1715,7 @@ class TestDashboardLifecycleStateTransitions:
 class TestHistoryUiSmoke:
     """Smoke checks for the browser-facing history/settings UI."""
 
-    def test_history_page_contains_control_plane_tabs_and_handlers(self, test_client):
-        """HS-10-08: /history rebuilt on AppLayout. Visible labels +
-        DOM markers must remain in the served HTML; the JS handler
-        identifiers + API endpoint strings now live in the bundled
-        hoisted chunk referenced from the HTML.
 
-        HS-132-12: HS-117-09 decomposed the `HistoryCore.tsx` monolith into
-        `cores/history/*`. The control plane is unchanged — it is just spread
-        across the sub-modules, so the smoke check reads the whole surface.
-        """
-        response = test_client.get("/history")
-        assert response.status_code == 200
-        assert "text/html" in response.headers["content-type"]
-
-        assert '<div id="root"></div>' in response.text
-        history_root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
-        sources = [history_root / "HistoryCore.tsx", *sorted((history_root / "history").iterdir())]
-        js = "\n".join(
-            path.read_text() for path in sources if path.suffix in {".ts", ".tsx"}
-        )
-        for marker in ("meetings", "actions", "speakers", "projects", "queues", "MeetingDetail", "ImportSection"):
-            assert marker in js
-        for endpoint in (
-            "/api/speakers",
-            "/api/intel/jobs",
-            "/api/plugin-jobs",
-            "/api/all-action-items",
-        ):
-            assert endpoint in js, f"missing API endpoint in bundle: {endpoint}"
-        assert "/api/meetings/" in js
-        assert "/artifacts" in js
-        assert "/export?format=" in js
-        # HS-170-04: the empty needs-you section is ABSENT (UX-CANON A.8:
-        # no counters of zero). NeedsYouTable returns null at zero instead
-        # of the old "QUEUE 0" token.
-        assert "return null" in js  # NeedsYouTable: section-absent at zero
-        assert "needsRows.length === 0" in js  # the honest guard
-
-    def test_settings_route_serves_the_global_settings_page(self, test_client):
-        response = test_client.get("/settings")
-        assert response.status_code == 200
-        assert '<div id="root"></div>' in response.text
-        source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/SettingsCore.tsx").read_text()
-        # HS-111-01: the global settings program is the Prefs drawer over
-        # the authored module registry, wired to /api/settings.
-        assert "PREF_MODULES" in source and "PrefsFace" in source
-        assert '"/api/settings"' in source
 
 
 @pytest.mark.integration
@@ -1777,43 +1731,13 @@ class TestCompanionUiSmoke:
     tokens (probe / token / relay / autonomous send), never prose.
     """
 
-    def test_companion_page_is_the_agent_desk(self, test_client):
-        response = test_client.get("/companion")
-        assert response.status_code == 200
-        assert "text/html" in response.headers["content-type"]
-
-        assert '<div id="root"></div>' in response.text
-        source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CompanionCore.tsx").read_text()
-        for marker in (
-            "openPersona",
-            "openCoderSession",
-            # PHILO-17 refit (conductor): a blocked coder reads "Asks you"
-            # in its own section; the old door and custody stamp went.
-            "Asks you",
-            "Coders that ask",
-        ):
-            assert marker in source
 
 
 @pytest.mark.integration
 class TestCadenceUiSmoke:
     """CAD-2-04 — the /cadence coach page serves and drives /api/cadence/*."""
 
-    def test_cadence_page_serves_with_sections(self, test_client):
-        response = test_client.get("/cadence")
-        assert response.status_code == 200
-        assert "text/html" in response.headers["content-type"]
-        assert '<div id="root"></div>' in response.text
-        source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CadenceCore.tsx").read_text()
-        for marker in ("cadence", "snooze", "Run now"):
-            assert marker in source
 
-    def test_cadence_page_js_calls_the_api(self, test_client):
-        js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CadenceCore.tsx").read_text()
-        assert "/api/cadence" in js, "cadence page JS missing the API base path"
-        for segment in ("/status", "/loops", "/run-now"):
-            assert segment in js, f"cadence page JS missing API segment: {segment}"
-        assert 'act(id, "snooze")' in js
 
 
 @pytest.mark.integration

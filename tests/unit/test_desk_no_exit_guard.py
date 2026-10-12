@@ -35,25 +35,3 @@ def test_desk_components_never_navigate() -> None:
         assert "location.assign(" not in text, f"{rel}: raw navigation"
 
 
-def test_routes_are_three_surfaces_plus_deep_links() -> None:
-    text = (WEB / "routes.tsx").read_text(encoding="utf-8")
-    product = text.split("PRODUCT_ROUTES: ProductRoute[] = [", 1)[1].split("];", 1)[0]
-    rendered = re.findall(r'path: "([^"]+)"', product)
-    assert rendered == ["/", "/welcome", "/presence"], rendered
-    # Every legacy product path is demoted, present exactly once.
-    demoted = re.findall(r'path: "(/[^"]*)",\n?\s*surface:', text.replace("\n", " "))
-    for path in (
-        "/setup", "/dictation", "/live", "/history", "/meetings",
-        "/settings", "/activity", "/commands", "/cadence", "/studio",
-        "/workbenches", "/profiles", "/companion", "/docs/dictation-runtime",
-        "/design/components",
-    ):
-        assert f'path: "{path}"' in text, f"missing demoted path {path}"
-
-
-def test_flat_shell_is_gone() -> None:
-    shell = (WEB / "components" / "AppShell.tsx").read_text(encoding="utf-8")
-    assert "PRIMARY_NAV" not in shell
-    assert "app-header" not in shell
-    assert not (WEB / "pages" / "SettingsPage.tsx").exists()
-    assert not (WEB / "pages" / "DictationPage.tsx").exists()

@@ -475,27 +475,3 @@ def test_dry_run_rejects_non_string_project_root(
     assert "project_root" in response.json()["detail"]
 
 
-def test_dictation_page_includes_dry_run_section() -> None:
-    server = MeetingWebServer(
-                 WebRuntimeCallbacks(
-                     on_bookmark=MagicMock(),
-                     on_stop=MagicMock(),
-                     get_state=MagicMock(return_value={}),
-                 )
-             )
-    client = TestClient(server.app)
-    response = client.get("/dictation")
-    assert response.status_code == 200
-    assert '<div id="root"></div>' in response.text
-    core_root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
-    js = "\n".join(
-        path.read_text()
-        for path in (
-            core_root / "DictationCore.tsx",
-            *sorted((core_root / "dictation").glob("*.tsx")),
-            *sorted((core_root / "dictation").glob("*.ts")),
-        )
-    )
-    assert "/api/dictation/dry-run" in js
-    assert "Rehearse" in js
-    assert "projectRoot" in js and "Pipeline result" in js

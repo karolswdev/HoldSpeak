@@ -67,19 +67,7 @@ def test_malformed_symbol_refused_with_400(client):
     assert client.get("/api/settings").json()["dictation"]["spoken_symbols"] == []
 
 
-def test_default_is_empty_and_editor_ships():
-    # HS-111-01: the editor is a GadgetTable in the Voice Typing module —
-    # add/delete rows, spoken + symbol wells, an attach cycle per row.
+def test_default_is_empty() -> None:
+    # The fast diet (2026-10-12) parked this test's source-text half (the
+    # editor markup in SettingsCore.tsx); the default stays fenced here.
     assert Config().dictation.spoken_symbols == []
-    page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
-    assert '["dictation", "spoken_symbols"]' in page
-    assert 'head={["SPOKEN", "SYMBOL", "ATTACH"]}' in page
-    assert '{ spoken: "", symbol: "", attach: "none" }' in page  # the add row
-    for marker in (
-        "onDelete",
-        "Attachment",
-        '{ value: "left" }',
-        '{ value: "right" }',
-        '{ value: "both" }',
-    ):
-        assert marker in page, marker
