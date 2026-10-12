@@ -406,12 +406,12 @@ function RoomHead({
         {healthWord && healthTone ? (
           // PHILO-15 lane 12 (B25): an empty Project reads NEW (no health
           // claim with nothing to judge).
-          <span className="room-pill" data-tone={healthTone} data-lamp="" data-testid="room-health-word">
+          <span className="kit-pill" data-tone={healthTone} data-dot="" data-testid="room-health-word">
             {HEALTH_PLAIN[healthWord.word]}
           </span>
         ) : null}
         {room.project.isArchived ? (
-          <span className="room-pill" data-tone="danger" data-lamp="">ARCHIVED</span>
+          <span className="kit-pill" data-tone="danger" data-dot="">ARCHIVED</span>
         ) : null}
         <span className="room-head-strip" data-testid="room-head-chips">
           {health?.reason ? (
@@ -1161,7 +1161,7 @@ function ItemPills({ item }: { item: ItemRow }) {
   return (
     <span className="room-row-meta">
       {pills.map((t, i) => (
-        <span key={i} className="room-pill" data-tone={t.tone} data-lamp={t.tone ? "" : undefined} data-testid="item-token">
+        <span key={i} className="kit-pill" data-tone={t.tone} data-dot={t.tone ? "" : undefined} data-testid="item-token">
           {t.text}
         </span>
       ))}

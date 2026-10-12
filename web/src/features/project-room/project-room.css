@@ -698,32 +698,7 @@
   color: var(--wb-muted);
 }
 
-/* ── the pill: a soft tint, the word in the state's ink, a round lamp ── */
-.room-pill {
-  --tint: color-mix(in srgb, var(--wb-ink) 8%, transparent);
-  --lamp: var(--wb-steel);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 20px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--tint);
-  font: 600 12px / 1 var(--font-sans);
-  color: var(--wb-text);
-  white-space: nowrap;
-}
-.room-pill[data-lamp]::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--lamp);
-}
-.room-pill[data-tone="ok"] { --tint: color-mix(in srgb, var(--lamp-ok) 20%, transparent); --lamp: var(--lamp-ok); color: var(--wb-ok-ink); }
-.room-pill[data-tone="warn"] { --tint: color-mix(in srgb, var(--lamp-warn) 26%, transparent); --lamp: var(--lamp-warn); color: var(--wb-warn-ink); }
-.room-pill[data-tone="danger"] { --tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent); --lamp: var(--lamp-fail); color: var(--wb-danger-ink); }
-.room-pill[data-tone="info"] { --tint: color-mix(in srgb, var(--lamp-info) 20%, transparent); --lamp: var(--lamp-info); color: var(--wb-info-ink); }
+/* The pill is the kit's (kit.css `.kit-pill`). */
 
 /* ── the grid: the main column and the signals ── */
 .room-grid {
