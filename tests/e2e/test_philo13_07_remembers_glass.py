@@ -90,6 +90,12 @@ class _Rig:
     def _press(page: Any, loc: Any, width: int) -> None:
         loc.scroll_into_view_if_needed()
         if width < 720:
+            # A touch tap does not wait for the control to be enabled, as a
+            # click does. The Room's Draft update stays disabled until the
+            # engine read lands (UpdatePosture.tsx, "CHECKING ENGINE"); a tap
+            # before that did nothing and the editor never opened (2 of 3 runs).
+            from playwright.sync_api import expect
+            expect(loc).to_be_enabled(timeout=15_000)
             box = loc.bounding_box()
             assert box, "nothing to tap"
             page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)

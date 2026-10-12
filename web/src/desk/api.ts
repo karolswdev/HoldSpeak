@@ -712,6 +712,12 @@ async function loadHeld(kind: HeldKind, id: string, pulledArtifacts: unknown[]):
 }
 
 /** Load every kind — the same allSettled sweep the original desk ran. */
+/** The order the Desk names a failed read in (the reads' own order). */
+const LOAD_ORDER: readonly string[] = [
+  "meeting", "artifact", "note", "decision", "recipe", "kb", "directory", "chain",
+  "workflow", "workbench", "project", "thread", "roadmap", "repository",
+];
+
 export async function loadAll(): Promise<LoadResult> {
   let pulledArtifacts: unknown[] = [];
   const items: TypedItems = { ...EMPTY_ITEMS };
@@ -722,12 +728,32 @@ export async function loadAll(): Promise<LoadResult> {
   let models: HubModel[] = [];
   let error = "";
   let failed: LoadResult["failed"] = null;
+  // The reads run at once, so when the hub is gone they all reject at once,
+  // in no fixed order. The receipt names ONE read, and always the same one:
+  // the first in this order (Meetings), never the first to reject (the
+  // 393 dock glass saw READ ARTIFACTS / READ NOTES on some runs).
+  let failedRank = Number.POSITIVE_INFINITY;
+  let errorRank = Number.POSITIVE_INFINITY;
+  const rankOf = (kind: string) => {
+    const at = LOAD_ORDER.indexOf(kind);
+    return at < 0 ? LOAD_ORDER.length : at;
+  };
   const fail = (kind: PrimitiveKind | "profile" | "project", label: string, e: unknown) => {
     status[kind] = "unreachable";
-    if (!failed) failed = { label, cause: e };
+    const rank = rankOf(kind);
+    if (rank < failedRank) {
+      failedRank = rank;
+      failed = { label, cause: e };
+    }
     // PHILO-17 wayin: no token is no kind's fault; say the one sentence alone.
-    if (!error && e instanceof ApiError && e.status === 401) error = e.message;
-    if (!error) error = `${label}: ${e && typeof e === "object" && "message" in e ? (e as Error).message : String(e)}`;
+    if (e instanceof ApiError && e.status === 401) {
+      if (errorRank !== -1) { error = e.message; errorRank = -1; }
+      return;
+    }
+    if (rank < errorRank) {
+      errorRank = rank;
+      error = `${label}: ${e && typeof e === "object" && "message" in e ? (e as Error).message : String(e)}`;
+    }
   };
 
   await Promise.allSettled([

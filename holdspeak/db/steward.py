@@ -170,7 +170,7 @@ class StewardPolicyRepository(BaseRepository):
     ) -> Optional[dict[str, Any]]:
         row = conn.execute(
             "SELECT * FROM steward_policies WHERE project_id = ? "
-            "ORDER BY created_at DESC LIMIT 1",
+            "ORDER BY created_at DESC, rowid DESC LIMIT 1",
             (str(project_id).strip(),),
         ).fetchone()
         return dict(row) if row else None
@@ -427,7 +427,7 @@ class StewardRunRepository(BaseRepository):
         row = conn.execute(
             "SELECT * FROM steward_runs WHERE project_id = ? "
             "AND state IN ('queued', 'running', 'stopping') "
-            "ORDER BY created_at DESC LIMIT 1",
+            "ORDER BY created_at DESC, rowid DESC LIMIT 1",
             (str(project_id).strip(),),
         ).fetchone()
         return dict(row) if row else None
@@ -445,7 +445,7 @@ class StewardRunRepository(BaseRepository):
         rows = conn.execute(
             "SELECT * FROM steward_runs "
             "WHERE state IN ('queued', 'running', 'stopping') "
-            "ORDER BY created_at"
+            "ORDER BY created_at, rowid"
         ).fetchall()
         return [dict(r) for r in rows]
 
@@ -486,7 +486,10 @@ class StewardRunRepository(BaseRepository):
         rows = conn.execute(
             f"SELECT * FROM steward_runs "
             f"WHERE {' AND '.join(clauses)} "
-            f"ORDER BY created_at DESC LIMIT ?",
+            # created_at is to the second: two runs in one second sorted
+            # either way (the test diet's steward fence flake, 2026-10-12);
+            # rowid is the insert order.
+            f"ORDER BY created_at DESC, rowid DESC LIMIT ?",
             tuple(params),
         ).fetchall()
         return [dict(r) for r in rows]
@@ -962,7 +965,7 @@ class StewardCommandRepository(BaseRepository):
     ) -> list[dict[str, Any]]:
         rows = conn.execute(
             "SELECT * FROM steward_commands "
-            "WHERE run_id = ? ORDER BY created_at ASC LIMIT ?",
+            "WHERE run_id = ? ORDER BY created_at ASC, rowid ASC LIMIT ?",
             (str(run_id).strip(), max(1, int(limit))),
         ).fetchall()
         return [dict(r) for r in rows]
