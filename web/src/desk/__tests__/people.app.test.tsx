@@ -20,7 +20,7 @@
  * days_waiting, url, room_id, room_name; summary, key, status, url, overdue,
  * room_id, room_name), from the glass seed: two open PRs that ask ania-k
  * for review (5 and 2 days old), one Jira issue assigned to ania-k.
- * tests/unit/test_hs172_people_sources.py::TestBriefEnrichment proves the
+ * tests/unit/test_people_brief.py::TestBriefEnrichment proves the
  * producer writes it from the persisted watch snapshots.
  */
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";

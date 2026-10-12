@@ -1,5 +1,5 @@
 # Every operation sibling (`.op`, `.op.replayed`) in docs/internal/philo/graph/atlas*.json.
-# tests/unit/test_philo_graph_atlas.py fails when one of these leaves the atlas.
+# tests/unit/test_graph_atlas.py fails when one of these leaves the atlas.
 # A new sibling does not have to join this list. Remove a line only on purpose.
 case.a1.decision_face_create.opens_and_reopens.op
 case.a3.brief_next_day.decision_on_the_face.op

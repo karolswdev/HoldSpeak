@@ -269,7 +269,7 @@ def test_install_follows_codex_home_and_reads_back_ready(hub, tmp_path, monkeypa
     """Astra r1 finding 2: with CODEX_HOME set, the install writes there, never ~/.codex.
     Conductor R3: the press also trusts the hooks in Codex (a fake ``codex``
     app-server at the process boundary); only then is Codex ready."""
-    from tests.unit.test_conductor_r3_codex import make_fake_codex
+    from tests.unit.test_conductor_codex import make_fake_codex
 
     fake = make_fake_codex(tmp_path, monkeypatch)
     home = tmp_path / "home"

@@ -1,7 +1,7 @@
 """HS-171-03/05/06 tests: needs-you cache, notifications, brief recurring.
 
 Run: HOME=$(mktemp -d) uv run pytest -q -p no:cacheprovider \
-     tests/unit/test_hs171_aggregate_notify.py tests/unit -k "needs_you or brief or presence or notify"
+     tests/unit/test_needs_you_notify.py tests/unit -k "needs_you or brief or presence or notify"
 """
 from __future__ import annotations
 

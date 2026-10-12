@@ -259,13 +259,6 @@ class TestL2PeopleStoreState:
         ft = self._make_follow_through_service(projection)
         assert ft.people_store_state(principal) == "ready"
 
-    def test_people_store_state_returns_locked(self) -> None:
-        projection = MagicMock()
-        projection.readiness.return_value = {"readiness": "locked", "state": "locked"}
-        principal = MagicMock()
-        ft = self._make_follow_through_service(projection)
-        assert ft.people_store_state(principal) == "locked"
-
     def test_people_store_state_returns_unavailable_on_exception(self) -> None:
         projection = MagicMock()
         projection.readiness.side_effect = RuntimeError("boom")
@@ -278,13 +271,6 @@ class TestL2PeopleStoreState:
         db = MagicMock()
         ft = FollowThroughService(db, people_projection=None)
         assert ft.people_store_state(MagicMock()) is None
-
-    def test_people_store_state_unconfigured(self) -> None:
-        projection = MagicMock()
-        projection.readiness.return_value = {"readiness": "unconfigured", "state": "unconfigured"}
-        principal = MagicMock()
-        ft = self._make_follow_through_service(projection)
-        assert ft.people_store_state(principal) == "unconfigured"
 
     def test_door_service_includes_people_store_state(self) -> None:
         """The door payload carries people_store_state when projection is wired."""

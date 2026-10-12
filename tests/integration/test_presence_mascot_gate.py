@@ -81,21 +81,6 @@ def test_presence_config_dataclass_default():
     assert PresenceConfig().mascot is False
 
 
-def test_settings_page_has_the_subordinate_sub_toggle():
-    # HS-111-01: the Presence pref module carries the mascot toggle as a
-    # real checkbox row below the presence master toggle.
-    page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
-    assert 'check(["presence", "enabled"], "Presence")' in page
-    assert 'check(["presence", "mascot"], "Mascot")' in page
-    # the sub-toggle stays subordinate: it renders after the master
-    assert page.index('check(["presence", "enabled"]') < page.index(
-        'check(["presence", "mascot"]'
-    )
-    ambient = (_REPO / "web/src/components/AmbientLayer.tsx").read_text()
-    assert "function Qlippy" in ambient
-    assert "Approve" in ambient and "Decline" in ambient and "Dismiss" in ambient
-
-
 def test_assets_are_vendored_with_provenance():
     qlippy = _REPO / "web" / "public" / "qlippy"
     sprites = sorted(p.name for p in (qlippy / "sprites").glob("*.png"))

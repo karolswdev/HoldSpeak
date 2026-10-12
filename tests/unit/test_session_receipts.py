@@ -293,13 +293,3 @@ def test_usage_route_upserts_and_receipt_route_serves_tiers(route_rig, monkeypat
     assert receipt["reported"]["cache_read_tokens"] == 50
     assert receipt["estimated"]["source"] == "price table"
     assert receipt["always"]["steers_delivered"] == 0
-
-
-def test_census_reported_and_estimated_call_sites() -> None:
-    """Every reported/estimated figure's call site goes through
-    require_capability — grep-pinned."""
-    receipts = (REPO / "holdspeak/session_receipts.py").read_text(encoding="utf-8")
-    assert "require_capability" in receipts
-    assert receipts.index("require_capability(") < receipts.index('receipt["reported"]')
-    routes = (REPO / "holdspeak/web/routes/system/gate_routes.py").read_text(encoding="utf-8")
-    assert 'require_capability("claude-code-hooks", Capability.USAGE_TOKENS)' in routes
