@@ -34,7 +34,10 @@ if [ -n "$web" ]; then
   echo "== vitest related ($(printf '%s\n' "$web" | wc -l | tr -d ' ') files)"
   out="$(cd web && HOME="$H" uv run --project .. python ../scripts/test_lock.py -- ./node_modules/.bin/vitest related --run $web 2>&1)"; rc=$?
   printf '%s\n' "$out" | grep -E '^ FAIL|×|Test Files|Tests ' | sort -u | sed 's/^/   /'
-  [ "$rc" = 0 ] || fail=1
+  # vitest exits 1 on jsdom's unhandled "not implemented" errors (canvas)
+  # even when every test passes; judge by failed tests, as check_web_baseline does.
+  if printf '%s\n' "$out" | grep -qE '^ FAIL|Tests .*[0-9]+ failed|Test Files .*[0-9]+ failed'; then fail=1
+  elif ! printf '%s\n' "$out" | grep -qE 'Tests .*[0-9]+ passed'; then echo "   vitest did not report (rc=$rc)"; fail=1; fi
 fi
 
 py_tests="$(printf '%s\n' "$changed" | grep -E '^tests/(unit|integration|critical|web|mcp)/.*\.py$' || true)"
@@ -54,5 +57,5 @@ echo "== desk sweep + canon guards"
 HOME="$H" lock uv run pytest -q -n 8 --dist worksteal tests/e2e/test_desk_sweep.py tests/unit/test_interior_canon_guard.py tests/unit/test_ux_canon_ratchet.py 2>&1 | grep -E '^(FAILED|ERROR)|passed|failed' | tail -12 | sed 's/^/   /'
 [ "${PIPESTATUS[0]}" = 0 ] || fail=1
 
-if [ "$fail" = 0 ]; then echo "QUICK CHECK GREEN: merge, then main_watch runs the whole suite."; else echo "QUICK CHECK RED: fix before merging."; fi
+if [ "$fail" = 0 ]; then echo "QUICK CHECK GREEN: merge; the main watcher runs the whole suite."; else echo "QUICK CHECK RED: fix before merging."; fi
 exit "$fail"
