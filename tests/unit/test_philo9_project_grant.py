@@ -20,7 +20,7 @@ never an inserted row. Only the transports and the database are read.
   refused; an agent cannot stop another actor's run in the same project.
 * **The lifecycle** -- revoke, expiry and a credential revoke end the grant
   (the codes move to ``_revoked`` / ``_expired``); a credential reissue keeps
-  it (a real restart: ``test_philo9_project_grant_restart.py``).
+  it (a real restart: ``test_project_grant.py``).
 * **Owner only** -- grant and revoke are admitted with receipts; an agent is
   refused ``owner_principal_required`` with one; no MCP tool reaches them.
 * **The wire** -- ``GET /api/settings/remote``: the issued palette name (DESK
@@ -659,7 +659,7 @@ def test_an_agent_named_like_the_owner_cannot_stop_the_owners_run(hub: Hub, monk
 
 def test_an_agent_named_like_the_scheduler_cannot_stop_the_schedulers_run(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> None:
     from holdspeak.principals import Principal, PrincipalKind
-    from test_philo9_steward_lifecycle import _due_effect
+    from test_steward_lifecycle import _due_effect
 
     pid = _project(hub)
     _policy(hub, pid, unattended_enabled=True, eligible_effect_kinds=["draft_update"])
