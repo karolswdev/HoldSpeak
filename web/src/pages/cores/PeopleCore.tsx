@@ -440,7 +440,10 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       main={<Roster rowFacts={rowFacts} addOpen={addOpen} onCloseAdd={relationships.length ? () => setAdding(false) : undefined} onPlan={planOneOnOne} relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} duplicateOf={duplicateShown?.display_name ?? null} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />}
       detail={selected ? <RelationshipPane relationship={selected} initialLens={requestedLens} lensRequest={lensRequest} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); keepPlace(PEOPLE_PERSON_PLACE, ""); }} /> : undefined}
     />
-    <SurfaceFooter egress={<span className="people-lock" title="Encrypted · Local storage · Notes only" data-testid="people-lock"><span aria-hidden="true">⚿</span> Encrypted</span>} />
+    {/* One foot per window: with a person open, the Prep's foot (THIS
+        DEVICE, PREPARED) is the window's; two feet stacked and the second
+        was cut off at 393. */}
+    {selected ? null : <SurfaceFooter egress={<span className="people-lock" title="Encrypted · Local storage · Notes only" data-testid="people-lock"><span aria-hidden="true">⚿</span> Encrypted</span>} />}
   </div>;
 }
 

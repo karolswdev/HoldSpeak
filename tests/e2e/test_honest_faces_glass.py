@@ -193,6 +193,12 @@ def test_settings_names_the_missing_engine(desk):
     open_page, _ = desk
     for width, height in WIDTHS:
         page = open_page(width, height, "configure-settings")
+        # PHILO-17 refit settings: Runs on and Accounts lead; the hub rows
+        # (Voice, Meetings, ...) fold under More settings.
+        more = page.get_by_test_id("settings-more").first
+        more.wait_for(timeout=15000)
+        if more.get_attribute("aria-expanded") != "true":
+            more.click()
         page.get_by_text("SUMMARY · NO ENGINE").first.wait_for(timeout=15000)
         text = _text(page)
         assert "SUMMARY SET ON" not in text

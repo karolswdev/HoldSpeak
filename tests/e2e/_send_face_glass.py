@@ -129,7 +129,13 @@ VISIBLE = r"""(sels) => sels.map((sel) => {
 SEAT = r"""(sel) => { const el = document.querySelector(sel); if (!el) return;
   el.scrollIntoView({block: 'start'});
   let s = el.parentElement; while (s && !(s.scrollHeight > s.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(s).overflowY))) s = s.parentElement;
-  if (s) s.scrollTop = Math.max(0, s.scrollTop - 120); }"""
+  if (!s) return;
+  s.scrollTop = Math.max(0, s.scrollTop - 120);
+  // Near the end of the content the scroller cannot bring the element to
+  // its top, so the 120 px of context above pushed its foot out of view:
+  // scroll back until the foot shows (never past the element's head).
+  const er = el.getBoundingClientRect(), sr = s.getBoundingClientRect();
+  if (er.bottom > sr.bottom) s.scrollTop += Math.min(er.bottom - sr.bottom, Math.max(0, er.top - sr.top)); }"""
 
 
 def pointer_pass(page: Any, width: int, anchor: str) -> list[dict[str, Any]]:

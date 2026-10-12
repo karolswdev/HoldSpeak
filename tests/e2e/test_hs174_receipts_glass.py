@@ -316,6 +316,8 @@ def _room_receipts_leg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: i
         _settle(page)
 
         page.get_by_role("tab", name="History").first.click()
+        # PHILO-17 refit (room): the writes fold under the History stream.
+        page.locator('[data-testid="room-fold-writes"] summary').first.click()
         receipts = page.locator('[data-testid="receipt-row"]')
         receipts.first.wait_for(timeout=15_000)
         page.wait_for_function(

@@ -313,8 +313,11 @@ class TestSendFaceGlass(_Rig):
                 page.locator("[data-testid=dest-folder]").fill(str(payments))
                 page.wait_for_timeout(200)
                 assert page.locator("[data-testid=dest-name]").input_value() == "Folder Payments"
+                # PHILO-17 refit settings: the form sits lower in Connections;
+                # seat its middle so the folder and Save both show at 393.
                 shots.shoot(page, "b02-add-folder", ["[data-testid=dest-folder]", "[data-testid=dest-name]",
-                                                     "[data-testid=dest-save]"], anchor=DS)
+                                                     "[data-testid=dest-save]"], anchor=DS,
+                            seat="CENTER:[data-testid=dest-name]")
                 page.locator("[data-testid=dest-save]").click()
                 page.locator("[data-testid=dest-row]").first.wait_for(timeout=T)
                 page.locator("[aria-label^='Close Settings']").first.click()

@@ -188,10 +188,13 @@ class TestInstallHooksForEveryAgent:
             try:
                 page.goto(f"{self.base}/conductor?token={TOKEN}", wait_until="load")
                 window = page.locator(".conductor-window")
-                window.locator(".desk-icon, .object-list-row").first.wait_for(timeout=T)
+                # PHILO-17 refit (conductor): one row species; a ready coder
+                # that lacks hooks carries its own Install hooks verb.
+                window.get_by_test_id("conductor-row").first.wait_for(timeout=T)
                 _settle(page)
                 _shot(page, "b34-conductor-drawer", width)
-                verbs = window.locator(".surface-footer-verbs button").all_inner_texts()
+                verbs = window.get_by_test_id("conductor-install-hooks").evaluate_all(
+                    "els => els.map((b) => b.getAttribute('aria-label') || b.textContent.trim())")
 
                 assert "Install hooks · Claude Code" in verbs and "Install hooks · Codex" in verbs, verbs
                 window.get_by_role("button", name="Install hooks · Claude Code").click()
@@ -202,8 +205,8 @@ class TestInstallHooksForEveryAgent:
                 settings = json.loads((self.home / ".claude" / "settings.json").read_text())
                 assert settings.get("hooks"), settings
                 page.wait_for_function(
-                    "() => ![...document.querySelectorAll('.conductor-window .surface-footer-verbs button')]"
-                    ".some((b) => b.textContent.trim() === 'Install hooks · Claude Code')", timeout=T)
+                    "() => ![...document.querySelectorAll('.conductor-window [data-testid=conductor-install-hooks]')]"
+                    ".some((b) => b.getAttribute('aria-label') === 'Install hooks · Claude Code')", timeout=T)
                 assert not errors, errors
             finally:
                 browser.close()
@@ -483,11 +486,22 @@ class TestTwoLineDrawerLabels:
                 page.goto(f"{self.base}/conductor?token={TOKEN}", wait_until="load")
                 _normal_chair(page)
                 conductor = page.locator(".conductor-window")
-                conductor.locator("[data-object-id='launch:launch_b40']").first.wait_for(timeout=T)
-                self._icons(page, conductor, "Conductor view")
+                row = conductor.locator("[data-object-id='launch:launch_b40']").first
+                row.wait_for(timeout=T)
                 _settle(page)
                 _shot(page, "b40-conductor", width)
-                self._assert_two_lines(page, ".conductor-window", "Codex:")
+                # PHILO-17 refit (conductor): the Conductor is rows, not icons.
+                # The long task is the row's one-line title: whole as its
+                # name, cut with an ellipsis inside the row, never past it.
+                read = row.locator(".cw-row-title").evaluate("""(e) => {
+                  const cs = getComputedStyle(e), b = e.getBoundingClientRect();
+                  const r = e.closest('.cw-row').getBoundingClientRect();
+                  return { text: e.textContent, overflow: cs.textOverflow, wrap: cs.whiteSpace,
+                           inRow: b.left >= r.left - 1 && b.right <= r.right + 1 };
+                }""")
+                assert read["text"].startswith("Add a contributing file") and read["text"].endswith("test"), read
+                assert read["overflow"] == "ellipsis" and read["wrap"] == "nowrap", read
+                assert read["inRow"], read
                 assert not errors, errors
             finally:
                 browser.close()

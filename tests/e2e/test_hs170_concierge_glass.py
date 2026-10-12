@@ -251,19 +251,23 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
             assert "jobs" not in fact and (fact.endswith("engine") or fact.endswith("engines") or fact == "No engine yet"), fact
             # Each card leads with what he gets and where it runs; task ids
             # are the card's details (its title), never its face.
-            lead = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-name").inner_text()
+            # PHILO-17 refit: the engine is a pill and the arrow is not drawn;
+            # the lead still reads whole as text.
+            lead = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-name").text_content() or ""
             if width == 1440:
                 assert lead.startswith("Meeting summaries → ") and " · on " in lead, lead
-                assert "Everything else → " in page.locator("[data-testid='switchboard-job-default'] .switchboard-job-name").inner_text()
+                assert "Everything else → " in (page.locator("[data-testid='switchboard-job-default'] .switchboard-job-name").text_content() or "")
             else:
                 # The phone list: the outcome name, its engine and place under it.
                 assert lead == "Meeting summaries", lead
-                where = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-tasks").inner_text()
+                # PHILO-17 refit: the engine and place are the job's pill.
+                where = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-pill").inner_text()
                 assert " · ON " in where.upper(), where
             jobs_text = page.get_by_test_id("switchboard").inner_text().upper()
             for gone in ("TASKS", "FOLLOWS DEFAULT", "EVERY JOB WITHOUT ITS OWN WIRE", "DICTATION INTENT"):
                 assert gone not in jobs_text, gone
-            assert float(page.get_by_test_id("runson-fact").evaluate("e => parseFloat(getComputedStyle(e).fontSize)")) >= 24
+            # PHILO-17 meetings r2: every window's headline is 19 px.
+            assert float(page.get_by_test_id("runson-fact").evaluate("e => parseFloat(getComputedStyle(e).fontSize)")) >= 19
             words = page.locator("[data-testid^='switchboard-job-']").evaluate_all(
                 "els => els.map(e => e.getAttribute('data-state'))"
             )
@@ -438,7 +442,7 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
                     "() => /192\\.168\\.77\\.43/.test(document.querySelector(\"[data-testid='switchboard-job-meetings'] .switchboard-job-name\")?.textContent || '')",
                     timeout=15_000,
                 )
-                text = lead.inner_text()
+                text = lead.text_content() or ""
                 assert text == "Meeting summaries → Qwen3.8 27B · on 192.168.77.43", text
                 assert "this Mac" not in text
                 # The Meetings wire itself still draws to the Mac engine.

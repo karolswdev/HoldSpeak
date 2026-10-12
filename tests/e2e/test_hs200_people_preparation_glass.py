@@ -197,6 +197,11 @@ def _open_room(page: Any, project_id: str) -> None:
     )
     page.reload(wait_until="load")
     _normal_chair(page)
+    # PHILO-17 refit (room): People is a fold in the Room; open it.
+    fold = page.locator("[data-testid=room-fold-people] details").first
+    fold.wait_for(state="attached", timeout=15000)
+    if fold.get_attribute("open") is None:
+        page.locator("[data-testid=room-fold-people] summary").first.click()
     page.get_by_test_id("room-people-head-verb").wait_for(timeout=15000)
     _settle(page)
 
@@ -355,7 +360,9 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
             _people_body_check(page, width)
             _shot(page, "people-resolve", width)
             well.get_by_test_id("room-people-candidate").filter(has_text="Priya Sharma").click()
-            page.locator("section.surface-section h3", has_text="PEOPLE 2").first.wait_for(timeout=10000)
+            # PHILO-17 refit (room): inside its fold the section's own caption
+            # is not drawn (the fold's title names it); it still counts 2.
+            page.locator("section.surface-section h3", has_text="PEOPLE 2").first.wait_for(state="attached", timeout=10000)
             _settle(page)
             assert page.get_by_test_id("room-people-gaps").count() == 0, "no gap tokens once complete"
             assert page.get_by_test_id("room-people-unresolved-row").count() == 0

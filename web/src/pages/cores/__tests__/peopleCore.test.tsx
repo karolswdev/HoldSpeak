@@ -52,13 +52,18 @@ describe("PeopleCore encrypted local plane", () => {
       "/api/projects": () => json({ projects: [{ id: "p1", name: "Platform", description: "Platform work" }] }),
       "/api/door": () => json({ upcoming: [] }),
     });
-    render(<PeopleCore scope="people:r1" />);
-    // PHILO-17 ALIVE: the storage facts are a lock token in the foot; the
-    // words ride its title.
+    // PHILO-17 ALIVE: the storage facts are a lock token in the roster's
+    // foot; the words ride its title.
+    const roster = render(<PeopleCore />);
     const lock = await screen.findByTestId("people-lock");
     expect(lock.textContent).toContain("Encrypted");
     expect(lock.getAttribute("title")).toBe("Encrypted · Local storage · Notes only");
+    roster.unmount();
+    render(<PeopleCore scope="people:r1" />);
     await waitFor(() => expect(screen.getByRole("tab", { name: "Prep" })).toBeTruthy());
+    // One foot per window: with a person open, the Prep's foot stands alone.
+    await waitFor(() => expect(screen.queryByTestId("people-lock")).toBeNull());
+    expect(document.querySelectorAll(".surface-footer").length).toBe(1);
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
     expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();

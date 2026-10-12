@@ -192,6 +192,11 @@ class TestFacesDoNotLie:
                 self._press(page, page.locator(".desk-mark"), width)
                 self._press(page, page.locator("[role^=menuitem]").filter(has=page.locator(".desk-menu-label", has_text=re.compile(r"^Settings$"))).last, width)
                 settings = page.locator(".desk-window[aria-label='Settings']")
+                # PHILO-17 refit settings: the hub rows fold under More settings.
+                more = settings.get_by_test_id("settings-more").first
+                more.wait_for()
+                if more.get_attribute("aria-expanded") != "true":
+                    self._press(page, more, width)
                 # 2026-10-03 (inventory A defect 10): with the switch on and no
                 # engine the row names the missing engine, not SET ON.
                 settings.get_by_text(re.compile(r"SUMMARY (SET (ON|OFF)|· NO ENGINE)")).first.wait_for()

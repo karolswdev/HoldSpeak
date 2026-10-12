@@ -205,8 +205,9 @@ def test_the_material_on_six_faces(tmp_path: Path, monkeypatch: pytest.MonkeyPat
                 _shoot(page, "conductor", width)
                 _assert_material(page, f"conductor-{width}", ".conductor-window")
 
-                # 5. The asking agent's lane.
-                window.get_by_role("button", name="Open", exact=True).click()
+                # 5. The asking agent's lane (PHILO-17 refit: the ask plate's
+                # one verb, Answer, opens it).
+                asking.get_by_test_id("conductor-answer").click()
                 lane = page.locator(".is-lane")
                 lane.wait_for(timeout=T)
                 lane.locator("[data-testid='lane-rail']").wait_for(timeout=T)
