@@ -179,6 +179,12 @@ def test_week_strip_projection_carries_the_face_fields(db: Any, ics: str) -> Non
     """replaces: tests/e2e/test_hs175_arrival_glass.py::TestArrivalWeekStrip::test_arrival_week_strip (hub half)"""
     _seed_week_strip(db)
     door = _projection(db, ics)
+    # The face test replays this answer (web/src/desk/__tests__/chair.app.test.tsx,
+    # the test diet's SCAR LAW); HOLDSPEAK_WIRE_WRITE=1 rewrites it.
+    from tests.integration.test_desk_agents_wire import _fence
+
+    _fence("door.week-strip", json.loads(json.dumps(door, default=str)), Path(ics).parent,
+           "http://testserver", by="tests/unit/test_desk_chair.py")
 
     assert door["calendar_configured"] is True
     week = door["week"]

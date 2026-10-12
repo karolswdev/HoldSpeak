@@ -241,6 +241,12 @@ class TestTheLoop:
         assert new_draft["lifecycle"] == "draft"
         assert new_draft["draft_revision"] == 1
 
+        # 8b. GET by id reads that one update (a steward receipt opens it).
+        resp = client.get(f"/api/updates/{update_id}")
+        assert resp.status_code == 200, resp.text
+        one = resp.json()["update"]
+        assert (one["id"], one["lifecycle"], one["body_md"]) == (update_id, "published", edited_md)
+
         # 9. Markdown GET returns the published body (the edited text)
         resp = client.get(f"/api/updates/{update_id}/markdown")
         assert resp.status_code == 200
@@ -585,6 +591,12 @@ class TestNotFound:
             json={"generator": "deterministic"},
         )
         assert resp.status_code == 404
+
+    def test_get_unknown_update(self, rig) -> None:
+        _, client = rig
+        resp = client.get("/api/updates/nonexistent")
+        assert resp.status_code == 404
+        assert resp.json()["code"] == "not_found"
 
     def test_markdown_unknown_update(self, rig) -> None:
         _, client = rig

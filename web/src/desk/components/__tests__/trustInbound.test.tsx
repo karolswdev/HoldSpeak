@@ -50,9 +50,11 @@ describe("Trust window states the inbound fact (HS-201-01)", () => {
       },
     });
     render(<TrustWindow />);
+    // The whole line: before the read lands the window draws "no · Token:
+    // not set", which holds "no", so a wait for "no" alone passed before the
+    // read and the next line saw "not set" (the -n 8 flake, test diet 2026-10-11).
     await waitFor(() =>
-      expect(screen.getByTestId("trust-inbound").textContent).toContain("no"),
+      expect(screen.getByTestId("trust-inbound").textContent).toBe("no \u00b7 Token: set"),
     );
-    expect(screen.getByTestId("trust-inbound").textContent).toContain("Token: set");
   });
 });

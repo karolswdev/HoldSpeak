@@ -467,14 +467,19 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     fetchSpy.mock.calls.filter(([url, opts]) => String(url) === path && (opts as { method?: string } | undefined)?.method === "POST");
 
   it("Now records what they owe you, marks it done, and names requests 'Asked of you'", async () => {
+    // The person's read carries the added item once the Add has saved it.
+    const added: { id: string; body: string; state: string; direction: string }[] = [];
     const fetchSpy = spy({
       "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report" }] }),
-      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Maya Chen", commitments: [], requests: [], owed_to_you: [{ id: "o1", body: "Send the rollout plan", state: "open", direction: "report_owes" }, { id: "o2", body: "Old item", state: "done", direction: "report_owes" }] } }),
+      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Maya Chen", commitments: [], requests: [], owed_to_you: [{ id: "o1", body: "Send the rollout plan", state: "open", direction: "report_owes" }, { id: "o2", body: "Old item", state: "done", direction: "report_owes" }, ...added] } }),
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
       "/api/people/relationships/r1/brief": () => json({ brief: { relationship_id: "r1", open_commitments: [], agenda_items: [] } }),
       "/api/door": () => json({ upcoming: [] }),
-      "POST /api/people/relationships/r1/owed": () => json({ commitment: { id: "o3" } }, 201),
+      "POST /api/people/relationships/r1/owed": (opts) => {
+        added.push({ id: "o3", body: JSON.parse(String(opts?.body)).body, state: "open", direction: "report_owes" });
+        return json({ commitment: { id: "o3" } }, 201);
+      },
       "POST /api/people/commitments/o1/transition": () => json({ transition: { verb: "done" } }),
     });
     render(<PeopleCore scope="people:r1" />);
@@ -489,7 +494,13 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     await waitFor(() => expect(posts(fetchSpy, "/api/people/relationships/r1/owed")).toHaveLength(1));
     expect(JSON.parse(String(posts(fetchSpy, "/api/people/relationships/r1/owed")[0][1]?.body)).body).toBe("Send me the API migration estimate");
     expect(posts(fetchSpy, "/api/people/relationships/r1/requests")).toHaveLength(0);
-    fireEvent.click(within(owed).getByRole("button", { name: "Done" }));
+    // The Add refreshes the person: while the second read is out the pane
+    // draws the roster row (no "They owe you" items, no Done), then the read
+    // lands. Wait for the read that carries the added item, then press Done.
+    // A press in that gap found no Done: the -n 8 flake (test diet 2026-10-11).
+    await within(owed).findByText("Send me the API migration estimate");
+    const rollout = within(owed).getByText("Send the rollout plan").closest(".surface-row") as HTMLElement;
+    fireEvent.click(within(rollout).getByRole("button", { name: "Done" }));
     await waitFor(() => expect(posts(fetchSpy, "/api/people/commitments/o1/transition")).toHaveLength(1));
     expect(JSON.parse(String(posts(fetchSpy, "/api/people/commitments/o1/transition")[0][1]?.body)).verb).toBe("done");
   });

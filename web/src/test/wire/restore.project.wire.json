@@ -1,0 +1,26 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T23:47:04.965037Z",
+  "wire": {
+    "project": {
+      "changed_refs": [
+        "project:p-old"
+      ],
+      "context": {},
+      "created_at": "2026-10-11T17:47:04.952103",
+      "description": "",
+      "detection_threshold": 0.4,
+      "id": "p-old",
+      "is_archived": false,
+      "keywords": [],
+      "meeting_count": 0,
+      "name": "Old migration",
+      "project_id": "p-old",
+      "project_revision": 1,
+      "result_kind": "restored",
+      "team_members": [],
+      "updated_at": "2026-10-11T17:47:04.963307"
+    },
+    "success": true
+  }
+}

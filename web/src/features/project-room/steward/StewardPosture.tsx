@@ -3,7 +3,7 @@
 // RUNS ledger, POLICY as GadgetGroup with StepperGadgets.
 // R4: rate=counts-only, effect chips, grant tokens, label dedup, circuit glyph.
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
   EgressChip,
@@ -30,6 +30,7 @@ import {
   type PlanStep,
 } from "../../../desk/surface";
 import { openRef } from "../../../desk/openObject";
+import { ApiError } from "../../../lib/api";
 import { refusalWord } from "../../../desk/surface/egress";
 import type { StewardController } from "./useStewardController";
 import type { StewardPreset, StewardRun, StewardStep } from "./model";
@@ -237,14 +238,21 @@ function buildPlanSteps(steps: StewardStep[], run: StewardRun): PlanResult {
 
 /* ── Run detail view: ProgressPlan + effect/receipt chips ── */
 
+/** A receipt that did not open: its ref and the plain reason. */
+type OpenFailure = { ref: string; reason: string };
+
 function RunDetail({
   ctrl,
   onOpenRef,
   onOpenReview,
+  opening,
+  openFailure,
 }: {
   ctrl: StewardController;
   onOpenRef: (ref: string) => void;
   onOpenReview?: (reviewId: string) => void;
+  opening?: string | null;
+  openFailure?: OpenFailure | null;
 }) {
   const run = ctrl.currentRun;
   if (!run) return null;
@@ -321,11 +329,20 @@ function RunDetail({
               className="steward-receipt-ref"
               data-testid="steward-receipt-ref"
               data-ref={ref}
+              loading={opening === ref}
               onClick={() => onOpenRef(ref)}
             >
               {refHumanLabel(ref)}
             </Button>
           ))}
+        </div>
+      ) : null}
+      {openFailure ? (
+        <div className="steward-open-failure" role="alert" data-testid="steward-open-failure" data-ref={openFailure.ref}>
+          <StateChip state="failure" label={`NOT OPENED · ${openFailure.reason}`} />
+          <Button dense variant="ghost" data-testid="steward-open-retry" onClick={() => onOpenRef(openFailure.ref)}>
+            Retry
+          </Button>
         </div>
       ) : null}
 
@@ -731,14 +748,33 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
 export function StewardPosture({
   ctrl,
   onOpenReview,
+  onOpenUpdate,
 }: {
   ctrl: StewardController;
   /** PHILO-9-03 (F3): open the review the run's COMPARE opened, by its id. */
   onOpenReview?: (reviewId: string) => void;
+  /** The test diet: an `update:<id>` receipt opens that update in this
+   *  Room's Update posture (the drafted or prepared update). It resolves
+   *  once the update is open and rejects when it could not be read; the
+   *  posture stays on the receipt until then. */
+  onOpenUpdate?: (updateId: string) => Promise<void>;
 }) {
+  const [opening, setOpening] = useState<string | null>(null);
+  const [openFailure, setOpenFailure] = useState<OpenFailure | null>(null);
   const onOpenRef = useCallback((ref: string) => {
-    openRef(ref);
-  }, []);
+    if (!(ref.startsWith("update:") && onOpenUpdate)) {
+      openRef(ref);
+      return;
+    }
+    setOpening(ref);
+    setOpenFailure(null);
+    onOpenUpdate(ref.slice("update:".length))
+      .catch((err: unknown) => {
+        const gone = err instanceof ApiError && err.status === 404;
+        setOpenFailure({ ref, reason: gone ? "UPDATE NOT FOUND" : "UPDATE DID NOT LOAD" });
+      })
+      .finally(() => setOpening(null));
+  }, [onOpenUpdate]);
   const postureRef = useRef<HTMLDivElement>(null);
   useScrollHint(postureRef, null, "y");
 
@@ -825,7 +861,8 @@ export function StewardPosture({
     return (
       <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="detail">
         {ctrl.error ? <SurfaceState error={ctrl.error} /> : null}
-        <RunDetail ctrl={ctrl} onOpenRef={onOpenRef} onOpenReview={onOpenReview} />
+        <RunDetail ctrl={ctrl} onOpenRef={onOpenRef} onOpenReview={onOpenReview}
+          opening={opening} openFailure={openFailure} />
         <SurfaceFooter
           receipt={
             <span className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">

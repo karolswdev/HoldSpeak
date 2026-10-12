@@ -717,13 +717,41 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
         await waitFor(() => expect(selected()).not.toBeNull());
         expect(selected()!.textContent).toContain("cut-over on the 12th");
         expect(within(screen.getByTestId("wing-slot")).getByRole("tab", { name: "Room" }).getAttribute("aria-selected")).toBe("true");
-        await waitFor(() => expect(scrolled).toEqual([selected()]));
+        // The row's own mount scrolls it (nearest) and the Room's request
+        // reveal scrolls it (center): every scroll is the selected row.
+        await waitFor(() => expect(scrolled.length).toBeGreaterThan(0));
+        expect(scrolled.every((el) => el === selected())).toBe(true);
         expect(screen.queryByTestId("update-posture")).toBeNull();
       } finally {
         Element.prototype.scrollIntoView = original;
       }
     });
   }
+
+  it("the same proposal asked for again while its row is drawn scrolls it into view again", async () => {
+    // The test diet: the Room's once-per-request reveal looked for
+    // `[data-testid=proposal-row][data-selected]`, which never matched (the
+    // mark is on the li), so a second request for a row already selected
+    // and drawn scrolled nothing. Its line is `aria-current`.
+    const { openProjectProposal } = await import("../../../desk/openObject");
+    const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (this: Element) { scrolled.push(this); };
+    try {
+      wire(base());
+      render(<WindowHarness scope={`project:${pid}`} />);
+      await waitFor(() => expect(screen.getAllByTestId("proposal-row")).toHaveLength(2));
+      act(() => openProjectProposal(pid, proposalId));
+      await waitFor(() => expect(selected()).not.toBeNull());
+      await waitFor(() => expect(scrolled).toContain(selected()));
+      scrolled.length = 0;
+
+      act(() => openProjectProposal(pid, proposalId));
+      await waitFor(() => expect(scrolled).toEqual([selected()]));
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
 });
 
 /* ── round 2: recorded wire (2026-10-11, scratch rig dump_hub3.py on a booted hub) ──

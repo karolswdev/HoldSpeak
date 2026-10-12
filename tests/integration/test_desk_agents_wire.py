@@ -94,7 +94,7 @@ def _scrub(value: Any, tmp_path: Path, url: str) -> Any:
     return json.loads(text)
 
 
-def _fence(name: str, payload: Any, tmp_path: Path, url: str) -> None:
+def _fence(name: str, payload: Any, tmp_path: Path, url: str, by: str | None = None) -> None:
     """The stored answer has the hub's shape (or is rewritten on request)."""
     scrubbed = _scrub(payload, tmp_path, url)
     path = WIRE_DIR / f"{name}.wire.json"
@@ -102,7 +102,7 @@ def _fence(name: str, payload: Any, tmp_path: Path, url: str) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         path.write_text(json.dumps({
-            "_": f"The hub's own answer, captured by {Path(__file__).relative_to(REPO)}; "
+            "_": f"The hub's own answer, captured by {by or Path(__file__).relative_to(REPO)}; "
                  "HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
             "captured_at": stamp,
             "wire": scrubbed,

@@ -1,0 +1,116 @@
+{
+  "_": "The hub's own answer, captured by tests/unit/test_desk_chair.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:46:58.547224Z",
+  "wire": {
+    "board": {
+      "active": [],
+      "now": [],
+      "overdue": [],
+      "unassigned": [],
+      "waiting": []
+    },
+    "calendar_configured": true,
+    "counts": {
+      "active": 0,
+      "now": 0,
+      "overdue": 0,
+      "upcoming_today": 3,
+      "waiting": 0
+    },
+    "upcoming": [
+      {
+        "armed": {
+          "arms_at": "2026-10-07T16:55:00Z",
+          "recording_id": "rec-standup",
+          "state": "idle"
+        },
+        "armed_schedule_id": "rec-standup",
+        "ends_at": "2026-10-07T17:30:00+00:00",
+        "id": "ev-standup",
+        "location": null,
+        "meeting_url": "https://teams.example.com/standup",
+        "project_id": "proj-q4",
+        "project_name": "Q4 Platform",
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-07T17:00:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-standup",
+        "title": "Standup",
+        "uid": "uid-ev-standup"
+      },
+      {
+        "ends_at": "2026-10-07T20:00:00+00:00",
+        "id": "ev-design",
+        "location": null,
+        "meeting_url": null,
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-07T19:00:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-design",
+        "title": "Design review",
+        "uid": "uid-ev-design"
+      },
+      {
+        "ends_at": "2026-10-07T21:30:00+00:00",
+        "id": "ev-ania",
+        "location": null,
+        "meeting_url": null,
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-07T21:00:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-ania",
+        "title": "1:1 Ania",
+        "uid": "uid-ev-ania"
+      }
+    ],
+    "week": {
+      "days": [
+        {
+          "count": 0,
+          "date": "2026-10-05",
+          "dow": "MON"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-06",
+          "dow": "TUE"
+        },
+        {
+          "count": 3,
+          "date": "2026-10-07",
+          "dow": "WED"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-08",
+          "dow": "THU"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-09",
+          "dow": "FRI"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-10",
+          "dow": "SAT"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-11",
+          "dow": "SUN"
+        }
+      ],
+      "ends_at": "2026-10-12T06:00:00+00:00",
+      "has_calendar": true,
+      "starts_at": "2026-10-05T06:00:00+00:00",
+      "total": 3
+    }
+  }
+}

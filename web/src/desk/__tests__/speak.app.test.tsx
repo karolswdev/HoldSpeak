@@ -11,6 +11,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Journal } from "../../pages/cores/dictation/Journal";
+import { inventedFields, recorded } from "../../test/wireShape";
+import JOURNAL_WIRE from "../../test/wire/dictation-journal.wire.json";
+import READINESS_WIRE from "../../test/wire/dictation-readiness.target.wire.json";
 
 const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 
@@ -107,6 +110,17 @@ function token(container: HTMLElement, label: string): HTMLElement {
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+describe("The typed Journal bodies carry only the hub's fields (the SCAR LAW)", () => {
+  // The hub's own answers: tests/integration/test_face_wire_fences.py::test_journal_reads.
+  it("the row, the envelope and the readiness overrides", () => {
+    const hub = recorded<{ items: unknown[] }>(JOURNAL_WIRE);
+    expect(inventedFields(envelope(SEED), hub)).toEqual([]);
+    for (const row of SEED) expect(inventedFields(row, hub.items[0])).toEqual([]);
+    expect(Object.keys(SEED[0]).sort()).toEqual(Object.keys(hub.items[0] as object).sort());
+    expect(READINESS).toEqual(recorded(READINESS_WIRE));
+  });
 });
 
 describe("Speak Journal: the stream board", () => {

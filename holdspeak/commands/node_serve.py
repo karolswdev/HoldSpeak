@@ -142,11 +142,15 @@ class NodeLinkWorker:
             return 0
 
     def _save_cursor(self) -> None:
+        # Write a sibling file, then rename it over the cursor: a kill in the
+        # write never leaves the cursor file empty (an empty file read back
+        # as cursor 0 and replayed every event; the -n 8 flake, test diet
+        # 2026-10-11).
         try:
             self.cursor_path.parent.mkdir(parents=True, exist_ok=True)
-            self.cursor_path.write_text(
-                json.dumps({"cursor": self.cursor}) + "\n", encoding="utf-8"
-            )
+            tmp = self.cursor_path.with_name(self.cursor_path.name + ".tmp")
+            tmp.write_text(json.dumps({"cursor": self.cursor}) + "\n", encoding="utf-8")
+            os.replace(tmp, self.cursor_path)
         except OSError as exc:
             log.warning("could not persist node cursor: %s", exc)
 

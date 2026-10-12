@@ -24,30 +24,34 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { BriefView } from "../../../desk/pullouts/views/BriefView";
 import { CadenceCore } from "../CadenceCore";
+import { inventedFields, recorded } from "../../../test/wireShape";
+import BRIEF_WIRE from "../../../test/wire/brief-latest.generated.wire.json";
+// One recorded source for the Rhythm's reads (scripts/record_chair_rhythm_fixture.py):
+// the cold hub's heartbeat, cadence status, Door, loops, history and projects.
+import RHYTHM from "./fixtures/rhythm-wire/rhythm.recorded.json";
 
 function json(body: unknown) {
   return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
 }
 
-const HEARTBEAT = {
-  sweep_every_minutes: 15, quiet_hours: { start: 22, end: 8 }, notify: "edge",
-  muted_projects: [], last_sweep_at: null, next_sweep_at: null, runs_on: null, last_remote_run_at: null,
-};
+type Json = Record<string, any>;
+const COLD = (RHYTHM.change.steps[0] as unknown as { gets: Record<string, Json> }).gets;
+const HEARTBEAT = structuredClone(COLD["/api/settings/heartbeat"]);
+const STATUS = structuredClone(COLD["/api/cadence/status"]);
 
-const STATUS = {
-  enabled: false, pressure: "normal", tick_interval_seconds: 60,
-  quiet_hours: { start: 22, end: 8 }, max_nudges_per_day: 3,
-  brief_job: { enabled: true, hour: 6 }, policies: 0, counts: {}, egress: "local",
-};
-
+/** A Brief row: the recorded Brief's own row with these values. */
 function item(id: string, section: string, text: string, sourceRef: string | null, detail: string | null = null) {
-  return { id, section, text, detail, source_ref: sourceRef, priority: 50, created_at: null };
+  const row = recorded<{ sections: { waiting: Json[] } }>(BRIEF_WIRE).sections.waiting[0];
+  return { ...row, id, section, text, detail, source_ref: sourceRef, priority: 50, created_at: null };
 }
 
 /** The glass rig's seed after `POST /api/brief/generate`: 4 events this local
- *  week, one armed, one commitment due today; one SINCE FRIDAY item. */
+ *  week, one armed, one commitment due today; one SINCE FRIDAY item. The
+ *  hub's recorded Brief (tests/integration/test_face_wire_fences.py) with
+ *  these values. */
 function brief(thisWeek: unknown[]) {
   return {
+    ...recorded<Json>(BRIEF_WIRE),
     id: "brief-1",
     period_start: "2026-10-02T17:00:00+00:00",
     period_end: "2026-10-07T16:00:00+00:00",
@@ -61,12 +65,8 @@ function brief(thisWeek: unknown[]) {
     },
     generated_at: "2026-10-07T15:30:00+00:00",
     is_empty: false,
-    shelf: {},
-    ledger: { operations: 0 },
     period_label: "OCT 02-07",
     generated_label: "GENERATED OCT 07 15:30",
-    title: "Brief · Wednesday 7 Oct 2026",
-    stale: false,
   };
 }
 
@@ -83,22 +83,20 @@ function hub(over: { door?: unknown; brief?: unknown; heartbeat?: unknown } = {}
     const url = String(input);
     if (url.includes("/api/settings/heartbeat")) return json(over.heartbeat ?? HEARTBEAT);
     if (url.includes("/api/brief/latest")) return json(over.brief ?? null);
-    if (url.includes("/api/door")) return json(over.door ?? { calendar_configured: false });
-    if (url.includes("/api/projects")) return json({ projects: [] });
+    if (url.includes("/api/door")) return json(over.door ?? COLD["/api/door"]);
+    if (url.includes("/api/projects")) return json(COLD["/api/projects"]);
     if (url.includes("/api/cadence/status")) return json(STATUS);
-    if (url.includes("/api/cadence/loops")) return json({ loops: [] });
-    if (url.includes("/api/cadence/history")) return json({ nudges: [] });
+    if (url.includes("/api/cadence/loops")) return json(COLD["/api/cadence/loops"]);
+    if (url.includes("/api/cadence/history")) return json(COLD["/api/cadence/history?limit=20"]);
     return json({});
   }));
 }
 
-/** `door_service.get` with a calendar source (the strip parts the Rhythm ignores). */
+/** The recorded cold Door with a calendar source (the strip parts the Rhythm ignores). */
 const DOOR_WITH_CALENDAR = {
-  board: { overdue: [], now: [], waiting: [], active: [] },
-  upcoming: [],
-  counts: { overdue: 0, now: 0, waiting: 0, active: 0, upcoming_today: 0 },
+  ...structuredClone(COLD["/api/door"]),
   calendar_configured: true,
-  week: { days: [], total: 0, has_calendar: true, starts_at: "2026-10-05T06:00:00+00:00", ends_at: "2026-10-12T06:00:00+00:00" },
+  week: { ...COLD["/api/door"].week, has_calendar: true },
 };
 
 afterEach(() => vi.unstubAllGlobals());
@@ -198,6 +196,17 @@ describe("The Brief detail the Rhythm row names", () => {
   });
 });
 
+describe("The typed hub bodies carry only the hub's fields (the SCAR LAW)", () => {
+  // Heartbeat, status, loops, history and projects are the recorded answers
+  // themselves; the Door and the Brief carry typed values on recorded rows.
+  it("the Door with a calendar and the Brief", () => {
+    expect(inventedFields(DOOR_WITH_CALENDAR, COLD["/api/door"])).toEqual([]);
+    expect(inventedFields(brief(THIS_WEEK), recorded(BRIEF_WIRE))).toEqual([]);
+    const hubBrief = recorded<{ sections: { waiting: unknown[] } }>(BRIEF_WIRE);
+    expect(inventedFields(item("x", "waiting", "t", "blocker:summary", "d"), hubBrief.sections.waiting[0])).toEqual([]);
+  });
+});
+
 // ── HS-171-02 and HS-174-08: the Rhythm face over the hub's RECORDED answers ──
 // scripts/record_chair_rhythm_fixture.py boots the real hub on an isolated
 // HOME (the browser tests' seeds), and records, in one boot per scenario,
@@ -207,7 +216,6 @@ describe("The Brief detail the Rhythm row names", () => {
 // fails the test. The clock is faked for Date only and pinned in Denver.
 import { act, fireEvent } from "@testing-library/react";
 import { beforeEach } from "vitest";
-import RHYTHM from "./fixtures/rhythm-wire/rhythm.recorded.json";
 
 type Step = { name: string; gets: Record<string, unknown>; method?: string; path?: string; body?: unknown; answer?: unknown };
 

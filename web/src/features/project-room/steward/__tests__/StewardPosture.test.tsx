@@ -13,6 +13,9 @@ import { EMPTY_ITEMS } from "../../../../desk/api";
 import { ProjectRoomCore } from "../../ProjectRoomCore";
 import { computeVerticalScrollHint, isModelTouchingKind } from "../model";
 import { ApiError } from "../../../../lib/api";
+// The test diet (the SCAR LAW): the run, step, policy, watch and update
+// answers are the hub's own, recorded by scripts/record_steward_fixture.py.
+import RECORDED from "./fixtures/steward.recorded.json";
 
 // ── Mocks ──
 
@@ -135,28 +138,10 @@ function detailResponse(url: string) {
   return {};
 }
 
-/** A completed run fixture (wire shape from _serialize_run). */
+/** A completed run: the hub's recorded run (four effects applied, the
+ *  Room's four native sources). */
 function completedRunFixture(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "pstrun_abcdef1234567890",
-    project_id: "p1",
-    policy_id: null,
-    state: "completed",
-    phase: "record",
-    requested_by: "steward-test",
-    watermark: "",
-    summary: {
-      outcome: "completed",
-      phases_completed: ["observe", "compare", "propose", "act", "verify", "record"],
-      effects_applied: 2,
-    },
-    created_at: "2026-09-01T09:14:00",
-    updated_at: "2026-09-01T09:15:00",
-    started_at: "2026-09-01T09:14:01",
-    completed_at: "2026-09-01T09:15:00",
-    stop_requested_at: null,
-    ...overrides,
-  };
+  return { ...structuredClone(RECORDED.completed.detail.run), ...overrides };
 }
 
 /** A running run fixture (for polling). */
@@ -185,88 +170,36 @@ function interruptedRunFixture(overrides: Record<string, unknown> = {}) {
   });
 }
 
-/** Step fixtures (wire shape from _serialize_step). */
+type Wire = Record<string, unknown>;
+
+/** A completed step: the recorded run's refresh_sources step. */
 function completedStepFixture(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "pststep_step1234567890",
-    phase: "observe",
-    seq: 0,
-    state: "completed",
-    effect_kind: "refresh_sources",
-    idempotency_key: "pstrun_abcdef1234567890:observe",
-    expected: {},
-    observed: { ok: true },
-    receipt: { action: "observe", result: "ok", ref: "item:itm-001" },
-    error: null,
-    ...overrides,
-  };
+  const step = (RECORDED.completed.detail.steps as Wire[]).find((x) => x.effect_kind === "refresh_sources");
+  return { ...structuredClone(step as Wire), ...overrides };
 }
 
+/** The recorded run's steps: six phase checkpoints and four effects; the
+ *  draft_update receipt names `update:<id>`, the Door item's names
+ *  `action_item:<id>`. */
 function stepsForCompletedRun() {
-  return [
-    completedStepFixture({
-      id: "pststep_step001",
-      phase: "observe",
-      seq: 0,
-      effect_kind: "refresh_sources",
-      receipt: { action: "observe", result: "ok", ref: "item:itm-001" },
-    }),
-    completedStepFixture({
-      id: "pststep_step002",
-      phase: "propose",
-      seq: 1,
-      effect_kind: "create_proposals",
-      receipt: { action: "propose", result: "ok", ref: "decision:dec-001" },
-    }),
-    completedStepFixture({
-      id: "pststep_step003",
-      phase: "act",
-      seq: 2,
-      effect_kind: "draft_update",
-      receipt: { action: "act", result: "ok", ref: "update:upd-001" },
-    }),
-    completedStepFixture({
-      id: "pststep_step004",
-      phase: "act",
-      seq: 3,
-      effect_kind: "create_door_item",
-      receipt: { action: "act", result: "ok", ref: "observation:obs-001" },
-    }),
-  ];
+  return structuredClone(RECORDED.completed.detail.steps as Wire[]);
 }
 
-/** Policy fixture (wire shape from _serialize_policy). */
+function recordedRef(prefix: string): string {
+  const refs = stepsForCompletedRun().map((x) => (x.receipt as Wire).ref).filter(Boolean) as string[];
+  const ref = refs.find((r) => r.startsWith(prefix));
+  if (!ref) throw new Error(`the recorded run names no ${prefix} receipt`);
+  return ref;
+}
+
+/** The recorded policy (the hub's GET answer). */
 function policyFixture(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "pstpol_policy12345678",
-    project_id: "p1",
-    eligible_effect_kinds: ["refresh_sources", "draft_update"],
-    yolo_flags: {},
-    max_retries: 5,
-    max_actions_per_run: 20,
-    cooldown_seconds: 60,
-    bounds: { max_proposals: 10 },
-    enabled: true,
-    unattended_enabled: false,
-    created_at: "2026-09-01T08:00:00",
-    updated_at: "2026-09-01T08:00:00",
-    ...overrides,
-  };
+  return { ...structuredClone(RECORDED.getPolicy.policy as Wire), ...overrides };
 }
 
-/** Watch fixture (wire shape from list_watches). */
+/** The recorded Room's GitHub watch (the hub's list_watches row). */
 function watchFixture(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "cw_watch_001",
-    name: "GitHub PRs",
-    connector_id: "github",
-    state: "tested",
-    evaluation_cadence_minutes: 30,
-    circuit_state: "closed",
-    circuit_failure_streak: 0,
-    circuit_opened_at: null,
-    ...overrides,
-  };
+  return { ...structuredClone(RECORDED.watches.watches[0] as Wire), ...overrides };
 }
 
 // ── Lifecycle ──
@@ -527,56 +460,116 @@ describe("Step rows: human labels and receipt refs", () => {
 
     await waitFor(() => screen.getByTestId("steward-detail"));
 
+    // The recorded run: the drafted update and the Door item name what they
+    // made; refresh_sources and create_proposals make no one object.
     const refChips = screen.getAllByTestId("steward-receipt-ref");
-    expect(refChips.length).toBe(4);
-
-    // Item ref
-    const itemRef = refChips.find((el) => el.getAttribute("data-ref") === "item:itm-001");
-    expect(itemRef).toBeTruthy();
-    expect(itemRef!.textContent).toBe("Open item");
-
-    // Decision ref
-    const decRef = refChips.find((el) => el.getAttribute("data-ref") === "decision:dec-001");
-    expect(decRef).toBeTruthy();
-    expect(decRef!.textContent).toBe("Open decision");
-
-    // Update ref
-    const updRef = refChips.find((el) => el.getAttribute("data-ref") === "update:upd-001");
-    expect(updRef).toBeTruthy();
-    expect(updRef!.textContent).toBe("Open update");
-
-    // Observation ref
-    const obsRef = refChips.find((el) => el.getAttribute("data-ref") === "observation:obs-001");
-    expect(obsRef).toBeTruthy();
-    expect(obsRef!.textContent).toBe("Open observation");
+    expect(refChips.map((el) => el.getAttribute("data-ref"))).toEqual([
+      recordedRef("update:"), recordedRef("action_item:"),
+    ]);
+    expect(refChips.map((el) => el.textContent)).toEqual(["Open update", "Open action item"]);
   });
 
-  it("clicking a receipt ref opens via the house citation opener", async () => {
+  it("the update receipt reads that update by id, then opens it in the Room's Update posture", async () => {
+    const updateId = recordedRef("update:").slice("update:".length);
+    setupStewardPosture({
+      listRuns: [completedRunFixture()],
+    });
+    const stewardImpl = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
+      if (url === `/api/updates/${updateId}`) return Promise.resolve(structuredClone(RECORDED.update));
+      return stewardImpl(url, init);
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
+    await waitFor(() => screen.getByTestId("steward-detail"));
+
+    const updRef = screen.getAllByTestId("steward-receipt-ref")
+      .find((el) => el.getAttribute("data-ref") === `update:${updateId}`);
+    fireEvent.click(updRef!);
+
+    // The Steward posture steps aside; the Update posture opens on that update.
+    await waitFor(() => expect(screen.getByTestId("update-posture").getAttribute("data-phase")).toBe("editor"));
+    expect(screen.queryByTestId("steward-posture")).toBeNull();
+    expect(apiFetch).toHaveBeenCalledWith(`/api/updates/${updateId}`);
+  });
+
+  it("an update that does not load: the receipt stays, the reason shows, Retry opens it", async () => {
+    // Astra r1 on #1107: the posture left before the read, and a failed read
+    // showed nothing.
+    const updateId = recordedRef("update:").slice("update:".length);
+    setupStewardPosture({
+      listRuns: [completedRunFixture()],
+    });
+    const stewardImpl = apiFetch.getMockImplementation()!;
+    let fail = true;
+    apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
+      if (url === `/api/updates/${updateId}`) {
+        return fail
+          ? Promise.reject(new ApiError(500, "The hub did not answer.", { code: "internal" }))
+          : Promise.resolve(structuredClone(RECORDED.update));
+      }
+      return stewardImpl(url, init);
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
+    await waitFor(() => screen.getByTestId("steward-detail"));
+    const updRef = () => screen.getAllByTestId("steward-receipt-ref")
+      .find((el) => el.getAttribute("data-ref") === `update:${updateId}`)!;
+    fireEvent.click(updRef());
+
+    const failure = await screen.findByTestId("steward-open-failure");
+    expect(failure.textContent).toContain("NOT OPENED · UPDATE DID NOT LOAD");
+    expect(screen.getByTestId("steward-detail")).toBeTruthy();
+    expect(screen.queryByTestId("update-posture")).toBeNull();
+
+    fail = false;
+    const retry = screen.getByTestId("steward-open-retry");
+    expect(retry.className).toContain("btn");
+    fireEvent.click(retry);
+    await waitFor(() => expect(screen.getByTestId("update-posture").getAttribute("data-phase")).toBe("editor"));
+    expect(screen.queryByTestId("steward-posture")).toBeNull();
+  });
+
+  it("an update that is gone says so", async () => {
+    const updateId = recordedRef("update:").slice("update:".length);
+    setupStewardPosture({ listRuns: [completedRunFixture()] });
+    const stewardImpl = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) =>
+      url === `/api/updates/${updateId}`
+        ? Promise.reject(new ApiError(404, "Not found", { code: "not_found" }))
+        : stewardImpl(url, init));
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
+    await waitFor(() => screen.getByTestId("steward-detail"));
+    fireEvent.click(screen.getAllByTestId("steward-receipt-ref").find((el) => el.getAttribute("data-ref") === `update:${updateId}`)!);
+    expect((await screen.findByTestId("steward-open-failure")).textContent).toContain("UPDATE NOT FOUND");
+  });
+
+  it("the Door item receipt opens the action item it filed in Follow-through", async () => {
+    const actionId = recordedRef("action_item:").slice("action_item:".length);
+    const navigations: unknown[] = [];
+    const listen = (e: Event) => navigations.push((e as CustomEvent).detail);
+    window.addEventListener("holdspeak:intelligence-navigate", listen);
     setupStewardPosture({
       listRuns: [completedRunFixture()],
     });
     render(<WindowHarness scope="project:p1" />);
 
     fireEvent.click(await screen.findByTestId("steward-verb"));
-    await waitFor(() => screen.getByTestId("steward-posture"));
-
-    const items = await screen.findAllByTestId("steward-list-item");
-    fireEvent.click(items[0]);
-
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
     await waitFor(() => screen.getByTestId("steward-detail"));
 
-    const refChips = screen.getAllByTestId("steward-receipt-ref");
+    const doorRef = screen.getAllByTestId("steward-receipt-ref")
+      .find((el) => el.getAttribute("data-ref") === `action_item:${actionId}`);
+    fireEvent.click(doorRef!);
 
-    // Click the item ref -> openPrimitive
-    const itemRef = refChips.find((el) => el.getAttribute("data-ref") === "item:itm-001");
-    fireEvent.click(itemRef!);
-    expect(mockOpenPrimitive).toHaveBeenCalledWith("item:itm-001");
-
-    // Click the decision ref -> the one open grammar reads which decision
-    // it is, then opens it.
-    const decRef = refChips.find((el) => el.getAttribute("data-ref") === "decision:dec-001");
-    fireEvent.click(decRef!);
-    await waitFor(() => expect(mockOpenPrimitive).toHaveBeenCalledWith("decision:dec-001"));
+    await waitFor(() => expect(navigations).toEqual([{ view: "follow-through", followThroughId: actionId }]));
+    window.removeEventListener("holdspeak:intelligence-navigate", listen);
   });
 });
 
@@ -780,8 +773,8 @@ describe("History list: designed rows", () => {
 
     // Secondary line carries substance, not the state (state lives in the primary token)
     const summaries = screen.getAllByTestId("steward-list-summary");
-    // First row: completed with 2 effects -- secondary shows substance only
-    expect(summaries[0].textContent).toContain("2 effects");
+    // First row: completed with 4 effects -- secondary shows substance only
+    expect(summaries[0].textContent).toContain("4 effects");
     expect(summaries[0].textContent).not.toContain("Completed");
 
     // Second row: interrupted with reason -- secondary shows reason only
@@ -835,7 +828,7 @@ describe("History list: designed rows", () => {
 describe("Policy: round-trip", () => {
   it("enters policy view, shows fields, saves with PUT", async () => {
     setupStewardPosture({
-      policy: policyFixture(),
+      policy: policyFixture({ max_retries: 5, max_actions_per_run: 20, cooldown_seconds: 60 }),
     });
     render(<WindowHarness scope="project:p1" />);
 
@@ -1081,7 +1074,7 @@ describe("History list: secondary line substance", () => {
     await waitFor(() => screen.getByTestId("steward-posture"));
 
     const summary = screen.getByTestId("steward-list-summary");
-    expect(summary.textContent).toBe("2 effects");
+    expect(summary.textContent).toBe("4 effects");
   });
 
   it("secondary line shows reason for interrupted runs", async () => {
@@ -1115,33 +1108,14 @@ describe("History list: secondary line substance", () => {
 
 describe("Degraded coverage: visible warning", () => {
   it("shows PARTIAL COVERAGE chip when a source is not ok", async () => {
-    const degradedRun = completedRunFixture({
-      summary: {
-        outcome: "completed",
-        phases_completed: ["observe"],
-        effects_applied: 1,
-        phase_results: {
-          observe: {
-            coverage: {
-              "GitHub Issues": { state: "ok" },
-              "Jira Board": { state: "error" },
-              "Confluence": { state: "ok" },
-            },
-          },
-        },
-      },
-    });
-
+    // The recorded second run: a source bound to a watch that is gone
+    // answers the collector's own `failed` state.
+    const degradedRun = structuredClone(RECORDED.partial.detail.run as Wire);
     setupStewardPosture({
       listRuns: [degradedRun],
       runDetail: {
         run: degradedRun,
-        steps: [
-          completedStepFixture({
-            effect_kind: "refresh_sources",
-            observed: { partial: true, sources_ok: 2, sources_total: 3 },
-          }),
-        ],
+        steps: structuredClone(RECORDED.partial.detail.steps as Wire[]),
       },
     });
     render(<WindowHarness scope="project:p1" />);
@@ -1158,7 +1132,7 @@ describe("Degraded coverage: visible warning", () => {
     const degradedChip = screen.getByTestId("steward-coverage-degraded");
     expect(degradedChip).toBeTruthy();
     expect(degradedChip.textContent).toContain("PARTIAL COVERAGE");
-    expect(degradedChip.textContent).toContain("2 of 3 sources answered");
+    expect(degradedChip.textContent).toContain("4 of 5 sources answered");
     expect(degradedChip.getAttribute("data-tone")).toBe("warn");
   });
 
@@ -1190,21 +1164,7 @@ describe("Degraded coverage: visible warning", () => {
   });
 
   it("no degraded marker when all sources are ok", async () => {
-    const healthyRun = completedRunFixture({
-      summary: {
-        outcome: "completed",
-        phases_completed: ["observe"],
-        effects_applied: 2,
-        phase_results: {
-          observe: {
-            coverage: {
-              "GitHub Issues": { state: "ok" },
-              "Jira Board": { state: "ok" },
-            },
-          },
-        },
-      },
-    });
+    const healthyRun = completedRunFixture();
 
     setupStewardPosture({
       listRuns: [healthyRun],

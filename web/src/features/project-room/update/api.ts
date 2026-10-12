@@ -18,6 +18,14 @@ export async function fetchUpdates(
   return (raw.updates ?? []).map(decodeUpdate);
 }
 
+/** GET /api/updates/{id} — one update by id. */
+export async function fetchUpdate(updateId: string): Promise<ProjectUpdate> {
+  const raw = await apiFetch<{ update: Record<string, unknown> }>(
+    `/api/updates/${encodeURIComponent(updateId)}`,
+  );
+  return decodeUpdate(raw.update);
+}
+
 /** POST /api/projects/{id}/updates/draft — draft an update. */
 export async function draftUpdate(
   projectId: string,

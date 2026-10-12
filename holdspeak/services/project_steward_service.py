@@ -98,6 +98,20 @@ class BoundExceeded(Exception):
 from holdspeak.services.steward_contract import StewardAuthorityLost, StewardContract  # noqa: E402
 
 
+def _effect_ref(effect_kind: str, observed: dict[str, Any]) -> str | None:
+    """The object an applied effect made, as a ref the face opens (the test
+    diet, 2026-10-11): a drafted or prepared update is ``update:<id>`` (the
+    Room's Update posture); a Door item is the action item it filed,
+    ``action_item:<id>`` (Follow-through). Other effects make no one object."""
+    if observed.get("skipped"):
+        return None
+    if effect_kind in ("draft_update", "prepare_send") and observed.get("update_id"):
+        return f"update:{observed['update_id']}"
+    if effect_kind == "create_door_item" and observed.get("door_item_id"):
+        return f"action_item:{observed['door_item_id']}"
+    return None
+
+
 class ProjectStewardService(StewardContract):
     """Run coordination for the Project Steward (SS9.1, SS9.2).
 
@@ -1228,15 +1242,19 @@ class ProjectStewardService(StewardContract):
                 else:
                     outcome = "applied"
 
+                step_receipt: dict[str, Any] = {
+                    "effect_kind": effect_kind,
+                    "outcome": outcome,
+                    "attempt": attempt + 1,
+                }
+                ref = _effect_ref(effect_kind, observed)
+                if ref:
+                    step_receipt["ref"] = ref
                 self._db.steward_steps.update_step(
                     step_id,
                     state="completed",
                     observed_state_json=json.dumps(observed, default=str),
-                    receipt_json=json.dumps({
-                        "effect_kind": effect_kind,
-                        "outcome": outcome,
-                        "attempt": attempt + 1,
-                    }, default=str),
+                    receipt_json=json.dumps(step_receipt, default=str),
                 )
 
                 return {
