@@ -20,7 +20,7 @@
 }
 .desk-next .cw-receipt { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 /* PHILO-17 U32: what hooks do, as one token under the coders. */
-.desk-next .cw-hooks-line { display: inline-flex; margin-top: 8px; }
+.desk-next .cw-hooks-line { display: inline-flex; align-self: flex-start; max-width: 100%; margin-top: 4px; }
 
 /* ── PHILO-17 THE REFIT: the Conductor in Today's language ──────────────
    Compact type (13/12, the head 19), a paper well for each list, a raised
@@ -279,3 +279,6 @@
   text-transform: uppercase;
   color: var(--wb-warn-ink);
 }
+
+/* PHILO-17 pass 3: the hooks line is one pill on one line, at 393 too. */
+.desk-next .cw-pill.cw-hooks-line { overflow: hidden; text-overflow: ellipsis; }

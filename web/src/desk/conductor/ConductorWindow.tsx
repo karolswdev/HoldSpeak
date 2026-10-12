@@ -99,7 +99,7 @@ export function HooksLine({ member }: { member: ConductorMember | null }) {
   const offered = member ? Boolean(member.detect && needsHooks(member.detect)) : (agents ?? []).some(needsHooks);
   if (!offered) return null;
   return (
-    <span className="surface-token cw-hooks-line" data-chip data-wrap data-testid="conductor-hooks-line">
+    <span className="cw-pill cw-hooks-line" data-tone="info" data-testid="conductor-hooks-line">
       {HOOKS_LINE}
     </span>
   );
@@ -228,7 +228,7 @@ export function headFact(head: { atWork: number; ask: number }, members: readonl
 }
 
 /** PHILO-17 U32: what hooks do, in one line, where Install hooks is offered. */
-export const HOOKS_LINE = "HOOKS · SEE THE CODER'S WORK · HAND IT WORK";
+export const HOOKS_LINE = "Hooks: see the coder's work, hand it work";
 
 /** `ASKED 6 MIN AGO`, `ASKED 3 H AGO`, `ASKED OCT 5`; `ASKS` with no age. */
 export function askedWord(when: string | undefined): string {
@@ -353,8 +353,9 @@ function CoderRow({
 /** The call a launched coder holds at the gate (PHILO-17: approve in one
  *  press). Read from the launch's lane (its gated calls are not paged); a
  *  call the hub cannot show whole is never approved here (PHILO-14 A5). */
-export function useHeldCall(member: ConductorMember): LaneGated | null {
+export function useHeldCall(member: ConductorMember): { call: LaneGated | null; reread(): void } {
   const [call, setCall] = useState<LaneGated | null>(null);
+  const [tick, setTick] = useState(0);
   const launchId = member.launchId;
   useEffect(() => {
     if (!launchId) return;
@@ -371,8 +372,8 @@ export function useHeldCall(member: ConductorMember): LaneGated | null {
     return () => {
       live = false;
     };
-  }, [launchId, member.live, member.when]);
-  return call;
+  }, [launchId, member.live, member.when, tick]);
+  return { call, reread: () => setTick((n) => n + 1) };
 }
 
 /** A coder that asks: a raised plate with the title bar, the question, and
@@ -391,7 +392,7 @@ function AskPlate({
   selected: boolean;
   onSelect(): void;
 }) {
-  const call = useHeldCall(member);
+  const { call, reread } = useHeldCall(member);
   const [busy, setBusy] = useState(false);
   const held = member.live === "held" || Boolean(call);
   const decide = async (decision: "approved" | "denied") => {
@@ -401,6 +402,7 @@ function AskPlate({
       await useGate.getState().decide(call.id, decision);
     } finally {
       setBusy(false);
+      reread();
       void useConductor.getState().readFlights();
     }
   };

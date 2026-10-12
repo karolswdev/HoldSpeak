@@ -459,7 +459,9 @@ describe("the agent's window", () => {
         method: "POST", json: expect.objectContaining({ decision: "approved" }),
       })),
     );
-    fireEvent.click(within(screen.getByTestId("lane-rail")).getByTestId("lane-deny"));
+    // PHILO-17 THE REFIT: Deny and Approve live on the held plate, not the rail.
+    expect(within(screen.getByTestId("lane-rail")).queryByTestId("lane-deny")).toBeNull();
+    fireEvent.click(within(well).getByTestId("lane-deny"));
     await waitFor(() =>
       expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
         json: expect.objectContaining({ decision: "denied" }),
@@ -492,8 +494,8 @@ describe("the agent's window", () => {
     expect(screen.queryByRole("textbox", { name: "Answer" })).toBeNull();
   });
 
-  it("no wait: no well, no empty box", async () => {
-    await openLane(fixture({ wait: null }));
+  it("no wait and no held call: no well, no empty box", async () => {
+    await openLane(fixture({ wait: null, gated: [] }));
     expect(screen.queryByTestId("lane-ask")).toBeNull();
     expect(screen.queryByTestId("lane-approve-well")).toBeNull();
     expect(screen.queryByTestId("lane-deciding")).toBeNull();

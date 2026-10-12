@@ -169,10 +169,11 @@ describe("the agent's lane on the hub's lane answer", () => {
   });
 
   /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 (approve from the rail) */
-  it("Approve on the rail's held call decides it through the gate route; the next read has no Approve", async () => {
+  it("Approve on the held plate decides it through the gate route; the next read has no Approve", async () => {
     await openLane(LANE.wire, { "/api/gate/proposals/toolu_psql/decide": { state: "approved" } });
-    const held = [...screen.getByTestId("lane-rail").querySelectorAll<HTMLElement>(".lane-rail-entry")]
-      .find((el) => (el.textContent ?? "").includes("psql -h staging-ledger"))!;
+    // PHILO-17 THE REFIT: the held call is on the focus plate at the top of the lane.
+    const held = screen.getByTestId("lane-approve-well");
+    expect(held.textContent).toContain("psql -h staging-ledger");
     fireEvent.click(within(held).getByTestId("lane-approve"));
     await waitFor(() =>
       expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
@@ -187,14 +188,13 @@ describe("the agent's lane on the hub's lane answer", () => {
     const after = [...screen.getByTestId("lane-rail").querySelectorAll<HTMLElement>(".lane-rail-entry")]
       .filter((el) => (el.textContent ?? "").includes("psql -h staging-ledger -c"));
     expect(after.length).toBeGreaterThan(0);
-    for (const entry of after) expect(within(entry).queryByTestId("lane-approve")).toBeNull();
+    expect(screen.queryByTestId("lane-approve")).toBeNull();
   });
 
   /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 (the 198-char cut call) */
   it("a call the hook cut reads `… +90 CHARS` with Deny and Raw, never Approve", async () => {
     await openLane(LANE_CUT.wire);
-    const cut = [...screen.getByTestId("lane-rail").querySelectorAll<HTMLElement>(".lane-rail-entry")]
-      .find((el) => (el.textContent ?? "").includes("+90 CHARS"))!;
+    const cut = screen.getByTestId("lane-approve-well");
     expect(cut).toBeTruthy();
     expect(cut.textContent).toContain(LONG_CMD.slice(0, 100));
     expect(cut.textContent).toContain("… +90 CHARS");

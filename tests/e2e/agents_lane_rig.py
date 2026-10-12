@@ -182,11 +182,12 @@ def _open_lane(page: Any) -> Any:
     conductor.wait_for(timeout=15000)
     agent = conductor.locator("[data-object-id='launch:launch_c2_runbook']")
     agent.wait_for(timeout=20000)
-    # An icon names its lamp in its label (1440); a list row in its State cell (393).
+    # The plate names its state in its title bar (ASKS YOU).
     said = (agent.get_attribute("aria-label") or "") + (agent.text_content() or "")
     assert "ASKS" in said, said
-    agent.click()
-    conductor.get_by_role("button", name="Open", exact=True).click()
+    # PHILO-17 THE REFIT: the asking coder is a plate; its one verb (Answer)
+    # opens its lane on the ask well.
+    agent.get_by_role("button", name="Answer", exact=True).click()
     window = page.locator(".is-lane")
     window.wait_for(timeout=15000)
     page.locator("[data-testid='lane-rail']").wait_for(timeout=15000)

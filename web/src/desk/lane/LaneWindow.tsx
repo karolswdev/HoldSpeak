@@ -31,6 +31,7 @@ import {
   AskWell,
   EgressChip,
   FilesChanged,
+  FoldGadget,
   PaneWell,
   PRCard,
   StationTrack,
@@ -266,12 +267,18 @@ function LaneBody({
 
   return (
     <div className="desk-pullout-body lw-body" data-testid="lane-body" ref={bodyRef} onScroll={onScroll}>
+      <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} branch={branch ?? null} />
       <StationTrack data-testid="lane-track" label="Lane stations" stations={stations} />
       <LaneReceipts lane={lane} />
       {unreadParts(lane).map(([part, reason]) => (
         <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
       ))}
-      {lane.launch.stopped ? null : rebrief ? <RebriefWell /> : <WaitWell lane={lane} agent={agent} />}
+      {lane.launch.stopped ? null : rebrief ? <RebriefWell /> : (
+        <>
+          <HeldPlate lane={lane} agent={agent} />
+          <WaitWell lane={lane} agent={agent} />
+        </>
+      )}
       {compact ? (
         <div className="lw-col">
           {prCard}
@@ -306,14 +313,14 @@ function railEntries(lane: LaneWire, events: readonly LaneEvent[], briefOpen: bo
         ),
       };
     }
-    if (kind === "held" && gated && (gated.state === "held" || gated.state === "pending")) {
-      return { ...rest, verbs: <DecideVerbs call={gated} /> };
-    }
+    // PHILO-17 THE REFIT: a held call's Deny / Approve live on the held
+    // plate at the top of the lane (heldNow), not on the rail.
     return rest;
   });
 }
 
 function DecideVerbs({ call }: { call: LaneGated }) {
+  // The held plate's verbs: Approve is the lane's one first move.
   const [busy, setBusy] = useState(false);
   const decide = async (decision: "approved" | "denied") => {
     setBusy(true);
@@ -336,7 +343,7 @@ function DecideVerbs({ call }: { call: LaneGated }) {
           Raw
         </Button>
       ) : (
-        <Button dense variant="secondary" disabled={busy} onClick={() => void decide("approved")} data-testid="lane-approve">
+        <Button dense variant="primary" disabled={busy} onClick={() => void decide("approved")} data-testid="lane-approve">
           Approve
         </Button>
       )}
@@ -361,7 +368,8 @@ function WaitWell({ lane, agent }: { lane: LaneWire; agent: string }) {
   if (isNotRead(wait)) return <NotReadLine part="ASKS" reason={wait.not_read} />;
   if (!wait || !wait.question) return null;
   if (wait.kind === "TO ANSWER") return <AnswerWell lane={lane} wait={wait} agent={agent} />;
-  if (wait.kind === "TO APPROVE") return <ApproveWell wait={wait} agent={agent} gated={lane.gated} />;
+  // TO APPROVE: the held plate above says it (HeldPlate).
+  if (wait.kind === "TO APPROVE") return null;
   const turn = turnEndWord(wait);
   if (turn) {
     // PHILO-15 15: the agent's last words, as a fact; not a wait for you.
@@ -526,29 +534,80 @@ function ReceiptTokens({ tokens, tone, testId, words }: { tokens: string[]; tone
   );
 }
 
-/** TO APPROVE: the held call with Deny / Approve (the gate proposal). A
- * permission prompt the gate does not hold is answered in the pane: Raw. */
-function ApproveWell({ wait, agent, gated }: { wait: LaneWait; agent: string; gated: LaneWire["gated"] }) {
-  const held = Array.isArray(gated) ? [...gated].reverse().find((g) => g.state === "held" || g.state === "pending") : undefined;
-  const caption = [`${agent.toUpperCase()} ASKS`, waitAge(wait.started).toUpperCase()].filter(Boolean).join(" · ");
+/** The call the gate holds now (the newest held one the Control mode held). */
+export function heldNow(lane: LaneWire): LaneGated | undefined {
+  const gated = Array.isArray(lane.gated) ? lane.gated : [];
+  return [...gated].reverse().find((g) => (g.state === "held" || g.state === "pending") && g.was_held !== false);
+}
+
+/** PHILO-17 THE REFIT: what the coder does now, as the lane's one headline. */
+export function laneDoing(lane: LaneWire, agent: string): { word: string; tone: "ok" | "warn" | "info" | "idle" } {
+  const name = agent || "The coder";
+  if (lane.launch.stopped) return { word: `${name} stopped`, tone: "idle" };
+  const wait = isNotRead(lane.wait) ? null : lane.wait;
+  if (heldNow(lane) || wait?.kind === "TO APPROVE") return { word: `${name} wants approval`, tone: "warn" };
+  if (wait?.question && wait.kind === "TO ANSWER") return { word: `${name} asks you`, tone: "warn" };
+  if (wait?.question && wait.kind === "DECIDING") return { word: "HoldSpeak drafts the answer", tone: "info" };
+  const turn = wait ? turnEndWord(wait) : null;
+  if (turn === "DONE") return { word: `${name} is done`, tone: "ok" };
+  if (turn === "IDLE") return { word: `${name} is idle`, tone: "idle" };
+  const pr = lane.follow_through?.pr;
+  if (pr?.number != null && pr.state === "merged") return { word: `PR #${pr.number} merged`, tone: "ok" };
+  return { word: `${name} is working`, tone: "info" };
+}
+
+function LaneHead({ lane, agent, itemTitle, branch }: { lane: LaneWire; agent: string; itemTitle: string; branch: string | null }) {
+  const doing = laneDoing(lane, agent);
   return (
-    <section className="lw-ask" aria-label={`${agent} asks`} data-testid="lane-approve-well">
-      <p className="lw-caption">{caption}</p>
-      <AgentWords className="lw-ask-q" text={String(wait.question)} />
-      {held ? (
-        <div className="lw-ask-row">
-          <code className="lw-ev-code">{gatedHead(held)}</code>
-          <span className="lw-verbs">
-            <DecideVerbs call={held} />
-          </span>
-        </div>
-      ) : (
-        <div className="lw-verbs">
-          <Button dense variant="secondary" onClick={() => useLane.getState().setRaw(true)}>
+    <div className="lw-head" data-testid="lane-head">
+      <span className="lw-head-sprite" aria-hidden="true">
+        <img src={laneTitleSprite(lane.launch.agent, lane.launch.session_key ?? lane.launch.launch_id ?? "lane")} alt="" draggable={false} />
+      </span>
+      <div className="lw-head-text">
+        <h2 className="lw-head-title" data-tone={doing.tone}>{doing.word}</h2>
+        <span className="lw-head-meta">
+          {itemTitle ? <span>{itemTitle}</span> : null}
+          {branch ? <span className="lw-head-mono">{branch}</span> : null}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** The held call on a focus plate: the Workbench title bar, the call (its
+ * reason and command), Deny and Approve. A call the hub cannot show whole is
+ * never approved here: Raw shows it whole (PHILO-14 A5). A permission prompt
+ * the gate does not hold is answered in the pane: Raw. */
+function HeldPlate({ lane, agent }: { lane: LaneWire; agent: string }) {
+  const held = heldNow(lane);
+  const wait = isNotRead(lane.wait) ? null : lane.wait;
+  const asks = wait?.kind === "TO APPROVE" && wait.question ? wait : null;
+  if (!held && !asks) return null;
+  const age = waitAge(asks?.started ?? held?.created_at).toUpperCase();
+  return (
+    <section className="lw-plate" aria-label={`${agent} wants approval`} data-testid="lane-approve-well">
+      <header className="lw-plate-bar">
+        <span className="lw-plate-label">WANTS APPROVAL</span>
+        {age ? <span className="lw-plate-age">{age}</span> : null}
+      </header>
+      <div className="lw-plate-body">
+        {asks ? <AgentWords className="lw-ask-q" text={String(asks.question)} /> : null}
+        {held ? (
+          <code className="lw-plate-call" data-testid="lane-held-call">
+            {held.hold_reason ? <span className="lw-plate-why">{held.hold_reason}</span> : null}
+            {gatedHead(held)}
+          </code>
+        ) : null}
+      </div>
+      <div className="lw-plate-verbs">
+        {held ? (
+          <DecideVerbs call={held} />
+        ) : (
+          <Button dense variant="primary" onClick={() => useLane.getState().setRaw(true)}>
             Raw
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
 }
@@ -711,8 +770,11 @@ function RawPane() {
           </>
         }
       />
-      <ArmStrip />
-      {armed || postureAuthorized ? <KeyPalette /> : null}
+      {/* PHILO-17 THE REFIT: the pane's controls fold until asked for. */}
+      <FoldGadget title="Keys" className="lw-keys">
+        <ArmStrip />
+        {armed || postureAuthorized ? <KeyPalette /> : null}
+      </FoldGadget>
     </div>
   );
 }
