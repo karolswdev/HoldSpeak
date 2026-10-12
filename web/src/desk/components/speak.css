@@ -614,3 +614,527 @@
   .desk-next .speak-transport > .desk-mic.gadget-transport-key.is-listening { animation: none; }
   .desk-next .speak-transport .gadget-ledmeter-seg { transition: none; }
 }
+
+/* ═══ PHILO-17 REFIT — Speak in Today's language ═══════════════════
+   The head says ONE fact (ready, or how many things to fix). The Talk
+   plate is the focus object: a raised paper plate with a Workbench title
+   bar. The checks sit on a dotted pixel rail in a paper well, one raised
+   square bead each, lit by the check's state. Compact type: 13–14 body,
+   12 meta and mono, 19 the head. Colour and opacity move; nothing else. */
+.desk-next .speak-face {
+  gap: 12px;
+  padding-top: 2px;
+  padding-bottom: 16px;
+}
+
+/* ── The head ── */
+.desk-next .speak-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.desk-next .speak-fact {
+  margin: 0;
+  font: 650 19px / 1.2 var(--font-display);
+  letter-spacing: 0;
+  color: var(--wb-text);
+}
+.desk-next .speak-strip {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font: 600 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+}
+.desk-next .speak-kbd {
+  display: inline-block;
+  min-width: 22px;
+  padding: 1px 6px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1.3 var(--font-mono);
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: var(--wb-ink);
+}
+
+/* ── The Talk plate ── */
+.desk-next .speak-plate {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent), 4px 10px 22px color-mix(in srgb, var(--wb-ink) 14%, transparent);
+  transition: box-shadow 160ms ease;
+}
+.desk-next .speak-plate:hover {
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent), 6px 14px 28px color-mix(in srgb, var(--wb-ink) 20%, transparent);
+}
+.desk-next .speak-plate-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 26px;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--wb-ink);
+  background: var(--wb-stipple-fine), var(--wb-blue);
+  color: var(--wb-ink);
+}
+.desk-next .speak-plate-label {
+  padding: 1px 6px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.desk-next .speak-phase {
+  --tint: color-mix(in srgb, var(--wb-paper) 80%, transparent);
+  --lamp: var(--wb-steel-2, var(--wb-muted));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  min-height: 20px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--tint);
+  font: 600 12px / 1 var(--font-sans);
+  color: var(--wb-text);
+  white-space: nowrap;
+}
+.desk-next .speak-phase-lamp {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lamp);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-ink) 35%, transparent);
+}
+.desk-next .speak-phase[data-tone="idle"] { --lamp: var(--lamp-ok); }
+.desk-next .speak-phase[data-tone="ok"] { --lamp: var(--lamp-ok); color: var(--wb-ok-ink); }
+.desk-next .speak-phase[data-tone="info"] { --lamp: var(--lamp-info); color: var(--wb-info-ink); }
+.desk-next .speak-phase[data-tone="danger"] { --lamp: var(--lamp-fail); color: var(--wb-danger-ink); }
+.desk-next .speak-phase[data-tone="live"] { --lamp: var(--lamp-fail); color: var(--wb-danger-ink); }
+.desk-next .speak-phase[data-tone="live"] > .speak-phase-lamp,
+.desk-next .speak-phase[data-tone="info"] > .speak-phase-lamp {
+  animation: speak-lamp-breathe 1.2s ease-in-out infinite alternate;
+}
+@keyframes speak-lamp-breathe {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
+}
+.desk-next .speak-plate-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  min-width: 0;
+}
+
+/* The transport sits on the plate: no second frame around it. */
+.desk-next .speak-plate .speak-transport {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.desk-next .speak-plate .speak-transport > .desk-mic.gadget-transport-key {
+  width: 104px;
+  height: 56px;
+  font: 750 13px / 1 var(--font-sans);
+}
+.desk-next .speak-plate .speak-transport > .gadget-transport-key:not(.desk-mic) {
+  width: 56px;
+  height: 56px;
+}
+.desk-next .speak-plate .speak-transport .gadget-ledmeter-label {
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.desk-next .speak-plate .speak-transport .gadget-ledmeter-seg {
+  height: 22px;
+}
+
+/* The well: a paper well, the words at body size. */
+.desk-next .speak-plate .speak-well {
+  min-height: 56px;
+}
+.desk-next .speak-plate .speak-well textarea {
+  min-height: 44px;
+  font: 500 14px / 1.45 var(--font-sans);
+  color: var(--wb-text);
+}
+
+/* Where the words land: one quiet line on the plate. */
+.desk-next .speak-plate .speak-lands-in {
+  padding: 0;
+  border: 0;
+  gap: 8px;
+}
+.desk-next .speak-plate .speak-lands-in-caption,
+.desk-next .speak-plate .speak-lands-in-dot,
+.desk-next .speak-plate .speak-lands-in-latency {
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .speak-plate .speak-lands-in-target {
+  font: 600 13px / 1.2 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .speak-plate .speak-result {
+  padding: 8px 0 0;
+  border-top: 1px dashed color-mix(in srgb, var(--wb-ink) 30%, transparent);
+}
+.desk-next .speak-plate .speak-result-text {
+  font: 600 13px / 1.4 var(--font-sans);
+  color: var(--wb-text);
+}
+
+/* ── The checks: a paper well, a dotted rail, a bead per check ── */
+.desk-next .speak-checks {
+  --rail-x: 17px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 8px 8px 8px 0;
+  list-style: none;
+  background: var(--alive-paper, #f8f5ee);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+  min-width: 0;
+}
+.desk-next .speak-checks::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: var(--rail-x);
+  width: 2px;
+  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--wb-ink) 45%, transparent) 0 2px, transparent 2px 4px);
+  pointer-events: none;
+}
+.desk-next .speak-check {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: start;
+  min-width: 0;
+  border-radius: 3px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.desk-next .speak-check[hidden] {
+  display: none;
+}
+.desk-next .speak-check:hover {
+  background: #ffffff;
+  box-shadow: var(--alive-lift);
+}
+.desk-next .speak-check-bead {
+  justify-self: center;
+  margin-top: 10px;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  transition: background-color 120ms ease, box-shadow 160ms ease;
+}
+.desk-next .speak-check[data-tone="ok"] > .speak-check-bead { background: var(--lamp-ok); }
+.desk-next .speak-check[data-tone="warn"] > .speak-check-bead { background: var(--lamp-warn); }
+.desk-next .speak-check[data-tone="danger"] > .speak-check-bead { background: var(--lamp-fail); }
+.desk-next .speak-check[data-tone="idle"] > .speak-check-bead { background: var(--wb-field); }
+.desk-next .speak-check:hover > .speak-check-bead {
+  box-shadow: var(--wb-raised), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
+}
+.desk-next .speak-check > :not(.speak-check-bead) {
+  min-width: 0;
+}
+.desk-next .speak-check .speak-engine,
+.desk-next .speak-check .speak-hotkey {
+  padding: 4px 4px 4px 0;
+  border: 0;
+  min-height: 30px;
+}
+.desk-next .speak-check .speech-setup {
+  padding: 4px 4px 4px 0;
+  min-height: 30px;
+}
+.desk-next .speak-check .speak-engine-caption,
+.desk-next .speak-check .speak-engine-dot,
+.desk-next .speak-check .speak-engine-checking {
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-muted);
+}
+.desk-next .speak-check .speak-engine-name,
+.desk-next .speak-check .speak-hotkey-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 600 13px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-text);
+}
+.desk-next .speak-check .speak-hotkey-row {
+  padding-left: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .speak-phase > .speak-phase-lamp { animation: none; }
+  .desk-next .speak-plate,
+  .desk-next .speak-check,
+  .desk-next .speak-check-bead { transition: none; }
+}
+@container surface (max-width: 500px) {
+  .desk-next .speak-plate-body {
+    padding: 10px;
+  }
+  .desk-next .speak-plate .speak-transport > .desk-mic.gadget-transport-key {
+    width: 88px;
+    height: var(--size-key);
+  }
+  .desk-next .speak-plate .speak-transport > .gadget-transport-key:not(.desk-mic) {
+    width: var(--size-key);
+    height: var(--size-key);
+  }
+  .desk-next .speak-plate .speak-transport .gadget-ledmeter-seg {
+    height: 14px;
+  }
+  .desk-next .speak-check {
+    grid-template-columns: 30px minmax(0, 1fr);
+  }
+  .desk-next .speak-checks {
+    --rail-x: 14px;
+  }
+}
+
+/* REFIT r1b: the check rows read as words (sans 13 semibold), the bead sits
+   level with its row, and the at-rest pill can say "Not ready". */
+.desk-next .speak-check {
+  align-items: center;
+}
+.desk-next .speak-check-bead {
+  margin-top: 0;
+}
+.desk-next .speak-check .speak-engine-caption,
+.desk-next .speak-check .speech-setup-line {
+  font: 600 13px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-text);
+}
+.desk-next .speak-check .speak-engine-dot {
+  color: var(--wb-muted);
+}
+.desk-next .speak-check .speak-engine-name {
+  font-weight: 500;
+}
+.desk-next .speak-phase[data-tone="warn"] { --lamp: var(--lamp-warn); color: var(--wb-warn-ink); }
+
+/* REFIT r2: the Journal and Learned rows in Today's type: the words 13
+   semibold, the time and the facts mono 12 with tabular numerals; a row
+   lifts under the pointer. */
+.desk-next .speak-journal .surface-ledger-primary,
+.desk-next .speak-learned .surface-ledger-primary {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .speak-journal .surface-ledger-time,
+.desk-next .speak-journal .surface-ledger-cell,
+.desk-next .speak-learned .surface-ledger-cell {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-muted);
+}
+.desk-next .speak-journal .surface-ledger-line,
+.desk-next .speak-learned .surface-ledger-line {
+  border-radius: 3px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.desk-next .speak-journal .surface-ledger-line:hover,
+.desk-next .speak-learned .surface-ledger-line:hover {
+  background: #ffffff;
+  box-shadow: var(--alive-lift);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .speak-journal .surface-ledger-line,
+  .desk-next .speak-learned .surface-ledger-line { transition: none; }
+}
+
+/* REFIT r3: setup first. While speech is not on this device, the setup
+   plate leads (amber bead, the one primary verb) and Talk waits, dimmed. */
+.desk-next .speak-setup {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--wb-ink);
+  background: color-mix(in srgb, var(--lamp-warn) 14%, var(--wb-field-hi, var(--wb-paper)));
+  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.desk-next .speak-setup[hidden] {
+  display: none;
+}
+.desk-next .speak-setup::before {
+  content: "";
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--lamp-warn);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .speak-setup > .speech-setup {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.desk-next .speak-setup .speech-setup-line {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .speak-transport > .desk-mic.gadget-transport-key.speak-talk-waiting,
+.desk-next .speak-plate .speak-transport > .desk-mic.gadget-transport-key.speak-talk-waiting {
+  background: var(--wb-steel);
+  color: var(--wb-muted);
+  filter: saturate(0.4);
+  box-shadow: var(--wb-raised);
+  cursor: not-allowed;
+}
+
+/* REFIT r3: the Journal is a time spine (Today's grammar): mono times in a
+   gutter, a dotted pixel rail, one raised square bead per utterance, what
+   was said and where it landed, and ONE verb (Copy) shown on hover or
+   focus. Search and the source tokens fold behind `Search`. */
+.desk-next .speak-journal .surface-stream-entries {
+  position: relative;
+  margin: 0;
+  padding: 2px 0 6px;
+  list-style: none;
+}
+.desk-next .speak-journal .surface-stream-entries::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 66px;
+  width: 2px;
+  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--wb-ink) 45%, transparent) 0 2px, transparent 2px 4px);
+  pointer-events: none;
+}
+.desk-next .speak-journal .surface-stream-day-label {
+  margin: 6px 0 2px;
+  padding-left: 82px;
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-muted);
+}
+.desk-next .speak-journal .surface-ledger-line {
+  position: relative;
+  border-top: 0;
+  padding: 5px 6px;
+}
+.desk-next .speak-journal .surface-ledger-line::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 62px;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  transition: background-color 120ms ease, box-shadow 160ms ease;
+}
+.desk-next .speak-journal .surface-ledger-row:hover .surface-ledger-line::before {
+  background: var(--wb-sel);
+  box-shadow: var(--wb-raised), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
+}
+.desk-next .speak-journal .surface-ledger-time {
+  flex: 0 0 52px;
+  margin-right: 18px;
+  text-align: right;
+  font: 700 12px / 1.3 var(--font-mono);
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .speak-journal .journal-landed:not(:empty) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lamp-info) 18%, transparent);
+  font: 600 12px / 1 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--wb-info-ink);
+}
+.desk-next .speak-journal .journal-badge {
+  font-size: 12px;
+}
+.desk-next .speak-journal .journal-hover-verb {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.desk-next .speak-journal .surface-ledger-row:hover .journal-hover-verb,
+.desk-next .speak-journal .surface-ledger-row:focus-within .journal-hover-verb,
+.desk-next .speak-journal .surface-ledger-row[data-open] .journal-hover-verb {
+  opacity: 1;
+}
+.desk-next .speak-journal .journal-find {
+  display: flex;
+  justify-content: flex-end;
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .speak-journal .surface-stream-entries::before { left: 54px; }
+  .desk-next .speak-journal .surface-ledger-line::before { left: 50px; }
+  .desk-next .speak-journal .surface-ledger-time { flex-basis: 40px; }
+  .desk-next .speak-journal .surface-stream-day-label { padding-left: 70px; }
+  .desk-next .speak-journal .journal-cells { margin-left: 64px; }
+  /* No hover on a phone: the verb is always there. */
+  .desk-next .speak-journal .journal-hover-verb { opacity: 1; }
+}
+
+/* REFIT r3: Learned is a compact list, "heard → meant": the kind a small
+   steel tag, the arrow mono, the meaning in ink, Forget the one verb. */
+.desk-next .speak-learned .surface-ledger-line {
+  border-top: 0;
+}
+.desk-next .speak-learned .surface-ledger-row + .surface-ledger-row .surface-ledger-line {
+  border-top: 1px dashed color-mix(in srgb, var(--wb-ink) 18%, transparent);
+}
+.desk-next .speak-learned .learned-kind {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1.3 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--wb-ink);
+}
+.desk-next .speak-learned .learned-arrow {
+  font: 700 13px / 1 var(--font-mono);
+  color: var(--wb-muted);
+}
+.desk-next .speak-learned .learned-value {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-ok-ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .speak-journal .journal-hover-verb,
+  .desk-next .speak-journal .surface-ledger-line::before { transition: none; }
+}
