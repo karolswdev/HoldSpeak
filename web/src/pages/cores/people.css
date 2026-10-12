@@ -164,3 +164,42 @@
   letter-spacing: -0.01em;
   color: var(--wb-text);
 }
+/* PHILO-17 ALIVE r3: the add row, the row facts, the lock in the foot. */
+.desk-next .people-new {
+  padding: 8px;
+  border: 1px solid var(--wb-rule);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--wb-sel) 8%, var(--alive-paper, #f8f5ee));
+}
+.people-role-pick {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.desk-next .people-role-pick > .btn[aria-pressed="true"] {
+  background: var(--wb-sel);
+  color: var(--wb-paper);
+}
+.desk-next .people-surface .surface-row-text small {
+  gap: 0 8px;
+}
+.people-row-fact {
+  font: 500 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+  font-variant-numeric: tabular-nums;
+}
+.people-row-fact[data-quiet] {
+  color: var(--wb-muted);
+}
+.people-row-pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.people-lock {
+  font: 600 12px / 1 var(--font-sans);
+  color: var(--wb-ink-dim);
+  cursor: help;
+  white-space: nowrap;
+}

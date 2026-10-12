@@ -50,9 +50,11 @@ describe("PeopleCore encrypted local plane", () => {
       "/api/door": () => json({ upcoming: [] }),
     });
     render(<PeopleCore scope="people:r1" />);
-    await screen.findByText("Local storage");
-    expect(screen.getByText("Encrypted")).toBeTruthy();
-    expect(screen.getByText("Notes only")).toBeTruthy();
+    // PHILO-17 ALIVE: the storage facts are a lock token in the foot; the
+    // words ride its title.
+    const lock = await screen.findByTestId("people-lock");
+    expect(lock.textContent).toContain("Encrypted");
+    expect(lock.getAttribute("title")).toBe("Encrypted · Local storage · Notes only");
     await waitFor(() => expect(screen.getByRole("tab", { name: "1:1s" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
     expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
@@ -519,7 +521,10 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
       },
     });
     render(<PeopleCore />);
-    expect(await screen.findByRole("button", { name: "Add person" })).toBeTruthy();
+    // PHILO-17 ALIVE: one way to add. Add person opens the add row.
+    expect(screen.queryByTestId("people-add-row")).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Add person" }));
+    expect(screen.queryByRole("button", { name: "Add person" })).toBeNull();
     const name = screen.getByLabelText("Add person");
     fireEvent.change(name, { target: { value: "Sam Ortiz" } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
@@ -553,5 +558,29 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Info" }));
     expect(screen.queryByText("Role context")).toBeNull();
     expect(screen.queryByText("Not set")).toBeNull();
+  });
+
+  it("PHILO-17 ALIVE: a roster row says the next 1:1, owed both ways, and Plan for a report with none", async () => {
+    const soon = new Date(Date.now() + 2 * 86_400_000).toISOString();
+    spy({
+      "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
+      "/api/people/relationships": () => json({ relationships: [
+        { id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report" },
+        { id: "r2", display_name: "Sam Ortiz", relationship_kind: "direct_report" },
+      ] }),
+      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report", next_one_on_one: soon,
+        commitments: [{ id: "c1", body: "Review the doc", state: "open" }, { id: "c2", body: "Old", state: "done" }],
+        owed_to_you: [{ id: "o1", body: "Send the plan", visibility: "shared_intent", state: "open" }] } }),
+      "/api/people/relationships/r2": () => json({ relationship: { id: "r2", display_name: "Sam Ortiz", relationship_kind: "direct_report", next_one_on_one: null, commitments: [] } }),
+    });
+    render(<PeopleCore />);
+    const maya = (await screen.findByRole("button", { name: /Maya Chen/ })).closest("li")!;
+    await waitFor(() => expect(within(maya).getByTestId("people-row-next").textContent).toMatch(/^1:1 /));
+    expect(within(maya).getByText("You owe 1")).toBeTruthy();
+    expect(within(maya).getByText("Owes you 1")).toBeTruthy();
+    const sam = screen.getByRole("button", { name: /Sam Ortiz/ }).closest("li")!;
+    await waitFor(() => expect(within(sam).getByTestId("people-row-next").textContent).toBe("No 1:1 planned"));
+    expect(within(sam).getByRole("button", { name: "Plan" })).toBeTruthy();
+    expect(within(sam).queryByText(/You owe/)).toBeNull();
   });
 });

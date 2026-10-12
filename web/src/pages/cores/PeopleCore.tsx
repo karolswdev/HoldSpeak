@@ -28,7 +28,7 @@ import {
   SurfaceState,
 } from "../../desk/surface/Surface";
 import { countToken } from "../../desk/surface";
-import { AppTile, Avatar } from "../../desk/surface/kit";
+import { AppTile, Avatar, FigureStrip } from "../../desk/surface/kit";
 import { renderHeroSlot } from "./core-layout";
 import { useWindowTitle } from "../../desk/surface/title";
 import "./people.css";
@@ -156,9 +156,6 @@ function isProtectedFailure(cause: unknown): boolean {
 /** PHILO-13-07 (B2) — the People window's place: the person it was on. */
 const PEOPLE_PERSON_PLACE = "people/person";
 
-function facts() {
-  return <><span className="people-fact">Encrypted</span><span className="people-fact">Local storage</span><span className="people-fact">Notes only</span></>;
-}
 
 export function PeopleCore({ hero, scope }: CoreProps) {
   const [readiness, setReadiness] = useState<Readiness>({ readiness: "unconfigured" });
@@ -193,6 +190,12 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     return () => window.removeEventListener(PERSON_OPEN_EVENT, onOpen);
   }, []);
 
+  // PHILO-17 ALIVE: one way to add. Add person opens the add row at the
+  // top of the roster (it is open on an empty roster).
+  const [adding, setAdding] = useState(false);
+  // PHILO-17 ALIVE: what each row says (next 1:1, owed both ways), read
+  // from each person's own record. A failed read leaves the row plain.
+  const [rowFacts, setRowFacts] = useState<Record<string, RowFacts>>({});
   const clearProtected = useCallback(() => {
     setRelationships([]);
     setSelectedId(null);
@@ -246,6 +249,27 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   // it announces the return: the Room re-reads and focus lands back on
   // the verb the owner left -- and only then (the do-not-steal rule).
   useEffect(() => () => { if (taskFocusPending()) announceTaskReturn(); }, []);
+
+  useEffect(() => {
+    if (!relationships.length) { setRowFacts({}); return; }
+    let live = true;
+    void Promise.all(relationships.map(async (row) => {
+      try {
+        const read = await apiFetch<{ relationship: RelationshipDetail }>(`/api/people/relationships/${encodeURIComponent(row.id)}`);
+        return [row.id, rowFactsOf(read.relationship)] as const;
+      } catch {
+        return null;
+      }
+    })).then((pairs) => {
+      if (!live) return;
+      setRowFacts(Object.fromEntries(pairs.filter((pair): pair is readonly [string, RowFacts] => Boolean(pair))));
+    });
+    return () => { live = false; };
+  }, [relationships]);
+  const planOneOnOne = (id: string) => {
+    setLensRequest((current) => ({ lens: "one-on-ones", seq: (current?.seq ?? 0) + 1 }));
+    void select(id);
+  };
 
   const unavailable = stateOf(readiness) !== "ready";
   const openSettings = () => openSurfaceOr("configure-settings", "/settings", "people-security");
@@ -321,7 +345,8 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   }
   const selected = detail ?? relationships.find((row) => row.id === selectedId) ?? null;
   // PHILO-17: the head verb names what it does; on a person's page it is gone.
-  const verbs = unavailable || selected ? null : <Button dense variant="primary" onClick={() => document.getElementById("people-new-relationship")?.focus()}>Add person</Button>;
+  const addOpen = adding || !relationships.length;
+  const verbs = unavailable || selected || addOpen ? null : <Button dense variant="primary" onClick={() => { setAdding(true); window.setTimeout(() => document.getElementById("people-new-relationship")?.focus(), 0); }}>Add person</Button>;
 
   if (loading) return <SurfaceState loading />;
   if (unavailable) {
@@ -346,7 +371,14 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     </span>
   ) : null;
   // PHILO-17 ALIVE: the app tile and the one fact of the roster.
-  const owed = relationships.reduce((sum, row) => sum + Number(row.manager_commitment_count ?? 0), 0);
+  const factList = Object.values(rowFacts);
+  const owed = factList.reduce((sum, fact) => sum + fact.youOwe, 0);
+  const owedToYou = factList.reduce((sum, fact) => sum + fact.owesYou, 0);
+  const weekEnd = Date.now() + 7 * 86_400_000;
+  const oneOnOnesThisWeek = factList.filter((fact) => {
+    const at = fact.next ? wireDate(fact.next)?.getTime() ?? NaN : NaN;
+    return Number.isFinite(at) && at <= weekEnd;
+  }).length;
   const peopleHead = selected || !relationships.length ? null : (
     <div className="people-top" data-testid="people-headline">
       <AppTile sprite="people-ledger" hue={268} />
@@ -357,13 +389,19 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     </div>
   );
   return <div className="people-surface">
-    {renderHeroSlot(hero, verbs, failureRow ?? facts())}
+    {renderHeroSlot(hero, verbs, failureRow)}
     {peopleHead}
     <SurfaceSplit
       detailOpen={Boolean(selected)}
-      main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} duplicateOf={duplicateShown?.display_name ?? null} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />}
+      main={<Roster rowFacts={rowFacts} addOpen={addOpen} onCloseAdd={relationships.length ? () => setAdding(false) : undefined} onPlan={planOneOnOne} relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} duplicateOf={duplicateShown?.display_name ?? null} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />}
       detail={selected ? <RelationshipPane relationship={selected} initialLens={requestedLens} lensRequest={lensRequest} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); keepPlace(PEOPLE_PERSON_PLACE, ""); }} /> : undefined}
     />
+    {selected ? null : <FigureStrip caption="This week" data-testid="people-week" figures={[
+      { key: "one-on-ones", value: oneOnOnesThisWeek, label: oneOnOnesThisWeek === 1 ? "1:1 planned" : "1:1s planned", tone: "info" },
+      { key: "you-owe", value: owed, label: "you owe", tone: "warn" },
+      { key: "owed-to-you", value: owedToYou, label: "owed to you", tone: "ok" },
+    ]} />}
+    <SurfaceFooter egress={<span className="people-lock" title="Encrypted · Local storage · Notes only" data-testid="people-lock"><span aria-hidden="true">⚿</span> Encrypted</span>} />
   </div>;
 }
 
@@ -377,7 +415,11 @@ function sameName(relationships: Relationship[], name: string): Relationship | n
   return key ? relationships.find((row) => nameKey(row.display_name) === key) ?? null : null;
 }
 
-function Roster({ relationships, selectedId, newName, setNewName, newKind, setNewKind, busy, duplicateOf = null, onCreate, onSelect, projectFilter = null, onClearProjectFilter }: {
+function Roster({ rowFacts = {}, addOpen = true, onCloseAdd, onPlan, relationships, selectedId, newName, setNewName, newKind, setNewKind, busy, duplicateOf = null, onCreate, onSelect, projectFilter = null, onClearProjectFilter }: {
+  /** PHILO-17 ALIVE: what each row says, by relationship id. */
+  rowFacts?: Record<string, RowFacts>;
+  /** PHILO-17 ALIVE: the add row is open (Add person, or an empty roster). */
+  addOpen?: boolean; onCloseAdd?(): void; onPlan?(id: string): void;
   relationships: Relationship[]; selectedId: string | null; newName: string; setNewName(value: string): void; newKind: RelationshipKind; setNewKind(value: RelationshipKind): void; busy: boolean; onCreate(): void; onSelect(id: string): void;
   /** PHILO-17: the name already on the roster; the next Add adds it again. */
   duplicateOf?: string | null;
@@ -394,13 +436,16 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
     label={projectFilter ? countToken(ordered.length, "ON THIS PROJECT", "ON THIS PROJECT") ?? "THIS PROJECT" : "Relationships"}
     actions={projectFilter && scopedOut > 0 ? <Button dense variant="ghost" aria-label="Everyone: clear the Project scope" onClick={onClearProjectFilter} data-testid="people-roster-everyone">{countToken(scopedOut, "MORE", "MORE")} · Everyone</Button> : undefined}
   >
-    <div className="people-new">
-      <StringGadget label="Add person" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") onCreate(); }} />
-      <CycleGadget label="Relationship" value={newKind} onChange={(value) => setNewKind(value as RelationshipKind)} options={[{ value: "direct_report", label: "Direct report" }, { value: "peer", label: "Peer" }, { value: "extended", label: "Extended" }]} />
-      <Button dense disabled={!newName.trim() || busy} loading={busy} onClick={onCreate}>{duplicateOf ? "Add again" : "Add"}</Button>
-    </div>
+    {addOpen ? <div className="people-new" data-testid="people-add-row">
+      <StringGadget label="Add person" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") onCreate(); if (event.key === "Escape") onCloseAdd?.(); }} />
+      <span className="people-role-pick" role="group" aria-label="Relationship">
+        {ROLE_CHOICES.map((choice) => <Button key={choice.value} dense variant="ghost" className="people-role-choice" data-kind={choice.value} aria-pressed={newKind === choice.value} onClick={() => setNewKind(choice.value)}>{choice.label}</Button>)}
+      </span>
+      <Button dense variant="primary" disabled={!newName.trim() || busy} loading={busy} onClick={onCreate}>{duplicateOf ? "Add again" : "Add"}</Button>
+      {onCloseAdd ? <Button dense variant="ghost" onClick={onCloseAdd}>Done</Button> : null}
+    </div> : null}
     {duplicateOf ? <span className="surface-token people-duplicate" role="status" data-testid="people-duplicate">{duplicateOf} · Already here</span> : null}
-    {!ordered.length ? <div className="people-empty-roster" data-testid="people-empty-roster">{projectFilter ? <span className="surface-token" data-testid="people-roster-none-linked">NO ONE LINKED YET</span> : <p className="people-empty-lead">Add a person to start</p>}</div> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} glyph={<Avatar name={relationship.display_name} size="md" />} title={relationship.display_name} detail={<><span className="people-role-chip" data-kind={relationship.relationship_kind ?? undefined}>{relationshipLabel(relationship.relationship_kind)}</span>{relationship.next_one_on_one ? ` · ${shortWhen(relationship.next_one_on_one)}` : ""}</>} meta={relationship.manager_commitment_count ? <span className="surface-token" data-chip data-tone="warn">{`You owe ${relationship.manager_commitment_count}`}</span> : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
+    {!ordered.length ? <div className="people-empty-roster" data-testid="people-empty-roster">{projectFilter ? <span className="surface-token" data-testid="people-roster-none-linked">NO ONE LINKED YET</span> : <p className="people-empty-lead">Add a person to start</p>}</div> : <SurfaceRows>{ordered.map((relationship) => <PersonRow key={relationship.id} relationship={relationship} fact={rowFacts[relationship.id]} selected={selectedId === relationship.id} onSelect={onSelect} onPlan={onPlan} />)}</SurfaceRows>}
   </SurfaceSection>;
 }
 
@@ -531,6 +576,48 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
     {lens === "history" ? <HistoryLens relationship={relationship} /> : null}
     {lens === "info" ? <InfoLens relationship={relationship} onArchived={onArchived} onProtectedFailure={onProtectedFailure} /> : null}
   </div>;
+}
+
+/** PHILO-17 ALIVE: what one roster row says, from the person's record. */
+type RowFacts = { next: string | null; youOwe: number; owesYou: number };
+function rowFactsOf(detail: RelationshipDetail): RowFacts {
+  const open = (items?: Array<{ state?: string }> | null) => (items ?? []).filter((item) => (item.state ?? "open") === "open").length;
+  return { next: detail.next_one_on_one ?? null, youOwe: open(detail.commitments), owesYou: open(detail.owed_to_you) };
+}
+const ROLE_CHOICES: Array<{ value: RelationshipKind; label: string }> = [
+  { value: "direct_report", label: "Direct report" }, { value: "peer", label: "Peer" }, { value: "extended", label: "Extended" },
+];
+/** `Thu 10:00`, `Today 10:00`, `Oct 21 10:00`. */
+function oneOnOneWhen(isoDate: string): string {
+  const d = wireDate(isoDate);
+  if (!d) return "";
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOf(d) - startOf(new Date())) / 86_400_000);
+  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+  if (days === 0) return `Today ${time}`;
+  if (days === 1) return `Tomorrow ${time}`;
+  if (days > 1 && days < 7) return `${d.toLocaleDateString(undefined, { weekday: "short" })} ${time}`;
+  return `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} ${time}`;
+}
+
+/** PHILO-17 ALIVE: a roster row: the avatar, the name, the role chip, the
+ *  next 1:1 (or Plan for a report with none), owed both ways as pills. */
+function PersonRow({ relationship, fact, selected, onSelect, onPlan }: { relationship: Relationship; fact?: RowFacts; selected: boolean; onSelect(id: string): void; onPlan?(id: string): void }) {
+  const report = (relationship.relationship_kind ?? "direct_report") === "direct_report";
+  const next = fact?.next ?? relationship.next_one_on_one ?? null;
+  const noOneOnOne = Boolean(fact) && !next && report;
+  return <SurfaceRow
+    selected={selected}
+    glyph={<Avatar name={relationship.display_name} size="md" />}
+    title={relationship.display_name}
+    detail={<><span className="people-role-chip" data-kind={relationship.relationship_kind ?? undefined}>{relationshipLabel(relationship.relationship_kind)}</span>{next ? <span className="people-row-fact" data-testid="people-row-next">{`1:1 ${oneOnOneWhen(next)}`}</span> : noOneOnOne ? <span className="people-row-fact" data-quiet="" data-testid="people-row-next">No 1:1 planned</span> : null}</>}
+    meta={fact && (fact.youOwe || fact.owesYou) ? <span className="people-row-pills">
+      {fact.youOwe ? <span className="surface-token" data-chip data-tone="warn" data-plain="">{`You owe ${fact.youOwe}`}</span> : null}
+      {fact.owesYou ? <span className="surface-token" data-chip data-tone="ok" data-plain="">{`Owes you ${fact.owesYou}`}</span> : null}
+    </span> : undefined}
+    verbs={noOneOnOne && onPlan ? <Button dense variant="ghost" onClick={() => onPlan(relationship.id)}>Plan</Button> : undefined}
+    onOpen={() => onSelect(relationship.id)}
+  />;
 }
 
 function shortWhen(isoDate: string): string {
