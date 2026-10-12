@@ -7,7 +7,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   GadgetGroup,
   StateChip,
-  ProvenanceChip,
   EgressChip,
   Receipt,
   SurfaceWell,
@@ -219,10 +218,13 @@ function GitHubCard({
   tool,
   onRecheck,
   busy,
+  lead = false,
 }: {
   tool: ConnectionTool;
   onRecheck: () => void;
   busy: boolean;
+  /** PHILO-17 REFIT: this row holds the window's one primary. */
+  lead?: boolean;
 }) {
   const state = tool.state;
   const showFold = foldOpen(state);
@@ -244,7 +246,6 @@ function GitHubCard({
             label={stateWords(state, "github", tool)}
           />
         </span>
-        <ProvenanceChip source="gh" boundary="github.com" />
       </div>
       <div className="connections-tool-actions">
         {!showFold ? (
@@ -260,7 +261,7 @@ function GitHubCard({
         <div className="connections-fold">
           <CommandWell hint={hint} />
           <div className="connections-fold-actions">
-            <Button dense variant="primary" onClick={onRecheck} loading={busy}>
+            <Button dense variant={lead ? "primary" : "secondary"} onClick={onRecheck} loading={busy}>
               Recheck
             </Button>
             <EgressChip label="GITHUB.COM" scope="cloud" />
@@ -308,7 +309,6 @@ function JiraConnectionRow({
       <span className="connections-tool-summary">{conn.account.email}</span>
       <div className="connections-tool-chips">
         <StateChip state={chipState(state)} label={stateWords(state, "jira", conn)} />
-        <ProvenanceChip source="acli" boundary={site} />
       </div>
       <div className="connections-tool-actions">
         {!showFold ? (
@@ -324,7 +324,7 @@ function JiraConnectionRow({
         <div className="connections-fold">
           <CommandWell hint={hint} />
           <div className="connections-fold-actions">
-            <Button dense variant="primary" onClick={onRecheck} loading={busy}>
+            <Button dense variant="secondary" onClick={onRecheck} loading={busy}>
               Recheck
             </Button>
             <HostChip site={site} />
@@ -377,6 +377,30 @@ export function AddAccountFields({
   );
 }
 
+/** PHILO-17 REFIT: an account with no row yet shows one verb, Add account;
+ *  the Site and Email fields and the sign-in command unfold under it. */
+function AddAccountFold({
+  provider,
+  onAdd,
+  busy,
+}: {
+  provider: "jira" | "confluence";
+  onAdd: (site: string, email: string) => void;
+  busy: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <div className="connections-tool-actions">
+        <Button dense variant="ghost" aria-expanded={open} onClick={() => setOpen((value) => !value)} data-testid={`connections-add-open-${provider}`}>
+          {open ? "Cancel" : "Add account"}
+        </Button>
+      </div>
+      {open ? <AddAccountFields provider={provider} onAdd={onAdd} busy={busy} /> : null}
+    </>
+  );
+}
+
 function JiraCards({
   tool,
   onRecheck,
@@ -402,9 +426,8 @@ function JiraCards({
         <div className="connections-tool-chips">
           {/* PHILO-9-02 B1 (Codex Astra r1 finding 7): the empty card says the tool's own state. */}
           <StateChip state={chipState(tool.state)} label={stateWords(tool.state, "jira", tool)} />
-          <ProvenanceChip source="acli" />
         </div>
-        <AddAccountFields provider="jira" busy={busyRef === "jira"} onAdd={onAddAccount} />
+        <AddAccountFold provider="jira" busy={busyRef === "jira"} onAdd={onAddAccount} />
       </div>
     );
   }
@@ -449,7 +472,6 @@ function ConfluenceConnectionRow({
       <span className="connections-tool-summary">{conn.account.email}</span>
       <div className="connections-tool-chips">
         <StateChip state={chipState(state)} label={stateWords(state, "confluence", conn)} />
-        <ProvenanceChip source="acli" boundary={site} />
       </div>
       <div className="connections-tool-actions">
         {!showFold ? (
@@ -465,7 +487,7 @@ function ConfluenceConnectionRow({
         <div className="connections-fold">
           <CommandWell hint={hint} />
           <div className="connections-fold-actions">
-            <Button dense variant="primary" onClick={onRecheck} loading={busy}>
+            <Button dense variant="secondary" onClick={onRecheck} loading={busy}>
               Recheck
             </Button>
             <HostChip site={site} />
@@ -498,9 +520,8 @@ function ConfluenceCards({
         </span>
         <div className="connections-tool-chips">
           <StateChip state={chipState(tool.state)} label={stateWords(tool.state, "confluence", tool)} />
-          <ProvenanceChip source="acli" />
         </div>
-        <AddAccountFields provider="confluence" busy={busyRef === "confluence"} onAdd={onAddAccount} />
+        <AddAccountFold provider="confluence" busy={busyRef === "confluence"} onAdd={onAddAccount} />
       </div>
     );
   }
@@ -542,7 +563,6 @@ function CalendarCard({
       {summary ? <span className="connections-tool-summary">{summary}</span> : null}
       <div className="connections-tool-chips">
         <StateChip state={state} label={label} />
-        <ProvenanceChip source="local" />
       </div>
       <div className="connections-tool-actions">
         <Button dense variant="ghost" onClick={onOpen}>
@@ -584,7 +604,6 @@ function ModelsCard({
       <span className="connections-tool-summary">{summary}</span>
       <div className="connections-tool-chips">
         <StateChip state={state} label={label} />
-        <ProvenanceChip source="local" />
       </div>
       <div className="connections-tool-actions">
         <Button dense variant="ghost" onClick={onOpen}>
@@ -719,14 +738,16 @@ export function ConnectionsPane({
 
   const toolCount = tools.length || 5; // D1: always 5 if the wire returns them (GH, Jira, Confluence, Calendar, Models)
 
+  void toolCount;
   return (
-    <GadgetGroup label={`Tools ${toolCount}`}>
+    <GadgetGroup label="Accounts">
       <span ref={anchorRef} hidden />
       {github ? (
         <GitHubCard
           tool={github}
           onRecheck={() => void handleRecheck("github")}
           busy={recheckBusy === "github"}
+          lead={foldOpen(github.state)}
         />
       ) : null}
       {jira ? (

@@ -5,7 +5,7 @@
  * conductor/__tests__/conductor.test.tsx; B36's line in hand/__tests__/hand.test.tsx. */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
@@ -68,8 +68,12 @@ const hub = (patch: Partial<SettingsHubWire> = {}): SettingsHubWire => ({
   writtenAt: null,
   ...patch,
 });
-const face = (wire: SettingsHubWire) =>
-  render(<PrefsFace onOpen={vi.fn()} hub={wire} posture="neutral" onPosture={vi.fn()} precedence={[]} />);
+const face = (wire: SettingsHubWire) => {
+  const view = render(<PrefsFace onOpen={vi.fn()} hub={wire} posture="neutral" onPosture={vi.fn()} precedence={[]} />);
+  // PHILO-17 REFIT: the Meetings row folds under More settings.
+  fireEvent.click(screen.getByTestId("settings-more"));
+  return view;
+};
 
 describe("B33: the Settings hub reads the summary route", () => {
   it("summaries on the LAN box with no default: All set, no SUMMARY · NO ENGINE, NO DEFAULT is a quiet fact", () => {
@@ -77,15 +81,15 @@ describe("B33: the Settings hub reads the summary route", () => {
     expect(screen.getByText("All set")).toBeTruthy();
     expect(screen.queryByText("No default model")).toBeNull();
     expect(screen.queryByText("SUMMARY · NO ENGINE")).toBeNull();
-    const noDefault = screen.getByRole("status", { name: "NO DEFAULT" });
-    expect(noDefault.getAttribute("data-state")).toBe("idle");
+    // PHILO-17 REFIT: the default is the Runs on plate's Everything else pill.
+    expect(screen.getByTestId("settings-job-default").getAttribute("data-tone")).toBe("idle");
   });
   it("no route and no default: the warning stays", () => {
     face(hub({ meetings: { intelligence: true, engineSet: false, auto: "every" } }));
     // PHILO-17 U35: the warning is a plain state, "No engine yet" (was "No default model").
     expect(screen.getByText("No engine yet")).toBeTruthy();
     expect(screen.getByText("SUMMARY · NO ENGINE")).toBeTruthy();
-    expect(screen.getByRole("status", { name: "NO DEFAULT" }).getAttribute("data-state")).toBe("warning");
+    expect(screen.getByTestId("settings-job-default").getAttribute("data-tone")).toBe("warn");
   });
   it("the owner's OFF reads SUMMARIES OFF, not a missing engine", () => {
     face(hub({ meetings: { intelligence: true, engineSet: false, summariesOff: true, auto: "every" } }));

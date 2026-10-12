@@ -2389,13 +2389,16 @@ function SettingsFace({ hero, scope }: CoreProps) {
             />
             {/* PHILO-10-04 (B1): the Destinations group, under Tools. */}
             <Destinations />
-            <GadgetGroup label="Credentials">
-              <div className="prefs-egress-line">
-                <EgressChip />
-                <span className="gadget-fact">values stay on this hub</span>
-              </div>
-              {keepSecrets.map(secretRow)}
-            </GadgetGroup>
+            {/* PHILO-17 REFIT: keys and tokens are technical; they fold. */}
+            <FoldGadget title="Credentials" token={String(keepSecrets.length)}>
+              <GadgetGroup>
+                <div className="prefs-egress-line">
+                  <EgressChip />
+                  <span className="gadget-fact">values stay on this hub</span>
+                </div>
+                {keepSecrets.map(secretRow)}
+              </GadgetGroup>
+            </FoldGadget>
             {/* HS-139-04: operator-wiring secrets fold behind RAW. */}
             {rawSecrets.length ? (
               <FoldGadget title="RAW" token={String(rawSecrets.length)}>

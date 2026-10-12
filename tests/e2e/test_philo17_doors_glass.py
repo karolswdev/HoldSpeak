@@ -246,7 +246,7 @@ class TestDoors:
             ("Conductor (Go)", go_row("Conductor"), ".conductor-window", None),
             ("Change places (Dock)", dom_click(".desk-dock [aria-label='Change places']"),
              "#surface-places >> role=button[name='All places']", None),
-            ("Settings (HoldSpeak)", mark_row("Settings"), f"{settings} .surface-ledger-primary >> text=Meetings",
+            ("Settings (HoldSpeak)", mark_row("Settings"), f"{settings} [data-testid='settings-lead-engines']",
              f"{settings} [data-testid='connections-github']"),
             ("Runs on (HoldSpeak)", mark_row("Runs on"), "[data-testid='switchboard']", None),
             ("Connections (HoldSpeak)", mark_row("Connections"), f"{settings} [data-testid='connections-github']", None),

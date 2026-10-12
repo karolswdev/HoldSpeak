@@ -276,6 +276,8 @@ describe("ConnectionsPane", () => {
       // empty Jira is `never_checked` (the old typed `not_configured` row
       // read "Not set up", a state the hub never sends for it).
       expect(within(card).getByText("Never checked")).toBeInTheDocument();
+      // PHILO-17 REFIT: Add account unfolds the Site and Email inputs.
+      fireEvent.click(within(card).getByTestId("connections-add-open-jira"));
       // Ghost card has Site and Email inputs
       expect(within(card).getByLabelText("Site")).toBeInTheDocument();
       expect(within(card).getByLabelText("Email")).toBeInTheDocument();
@@ -563,6 +565,7 @@ describe("ConnectionsPane", () => {
       mockRecheckProvider.mockResolvedValue(null);
       renderPane({ tools: [connectedGithub(), emptyJira(), connectedCalendar(), connectedModels()] });
       const card = await screen.findByTestId("connections-jira");
+      fireEvent.click(within(card).getByTestId("connections-add-open-jira"));
       const inputs = card.querySelectorAll("input");
       fireEvent.change(inputs[0], { target: { value: "acme.atlassian.net" } });
       fireEvent.change(inputs[1], { target: { value: "me@acme.com" } });
@@ -577,6 +580,7 @@ describe("ConnectionsPane", () => {
       const conf: ConnectionTool = { provider_id: "confluence", state: "never_checked", account: {}, connections: [] };
       renderPane({ tools: [connectedGithub(), emptyJira(), conf, connectedCalendar(), connectedModels()] });
       const card = await screen.findByTestId("connections-confluence");
+      fireEvent.click(within(card).getByTestId("connections-add-open-confluence"));
       expect(within(card).getByText("Add")).toBeInTheDocument();
       expect(within(card).getByText(/acli confluence auth login/)).toBeInTheDocument();
     });

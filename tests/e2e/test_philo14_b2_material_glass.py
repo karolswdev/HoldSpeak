@@ -268,6 +268,7 @@ def test_a_held_filter_strip_is_flat(tmp_path: Path, monkeypatch: pytest.MonkeyP
             assert wire["source"] == "env" and wire["effective"] == "read", wire
             page.goto(f"{url}/settings", wait_until="load")
             _normal_chair(page)
+            page.locator("[data-testid='settings-more']").click()  # PHILO-17 REFIT: People folds under More settings
             row = page.locator(".surface-ledger-row", has=page.locator(".surface-ledger-primary", has_text="People"))
             row.get_by_role("button", name="Open", exact=True).click()
             strip = page.get_by_role("group", name="People MCP access", exact=True)

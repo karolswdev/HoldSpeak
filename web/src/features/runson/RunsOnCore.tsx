@@ -199,6 +199,11 @@ export function RunsOnCore({ scope }: CoreProps) {
   };
   const onBoard = (engineId: string) => engines.some((e) => !e.found && e.detectId === engineId);
 
+  // PHILO-17 REFIT: ONE filled primary. With no engine yet it is the first
+  // engine to download; with engines and no speech model, Set up speech.
+  const noEngine = !have.some((e) => e.profileId);
+  const leadDownload = noEngine ? have.find((e) => e.kind === "preset" && ctrl.downloads[e.key] == null)?.key : undefined;
+
   /* ── the jobs ── */
   const jobs: SwitchJob[] = [];
   const wires: SwitchWire[] = [];
@@ -274,7 +279,7 @@ export function RunsOnCore({ scope }: CoreProps) {
           Try again
         </Button>
       ) : job === SPEECH_JOB && speech.notSetUp ? (
-        <SpeechSetup setup={speech} primary={false} testId="runson-speech-setup" />
+        <SpeechSetup setup={speech} primary={!leadDownload} testId="runson-speech-setup" />
       ) : result ? (
         <span data-tone={result.tone === "danger" ? "danger" : result.tone === "idle" ? "idle" : undefined}>{result.tokens.join(" · ")}</span>
       ) : jobRepair ? (
@@ -331,7 +336,7 @@ export function RunsOnCore({ scope }: CoreProps) {
         // The file comes from the internet: the chip names that host.
         egress = <EgressChip label={(engine.downloadHost ?? "huggingface.co").toUpperCase()} scope="cloud" />;
         verb = (
-          <Button dense variant="secondary" data-testid={`runson-download-${engine.key}`} onClick={() => void ctrl.download(engine.key)}>
+          <Button dense variant={engine.key === leadDownload ? "primary" : "secondary"} data-testid={`runson-download-${engine.key}`} onClick={() => void ctrl.download(engine.key)}>
             Download
           </Button>
         );
