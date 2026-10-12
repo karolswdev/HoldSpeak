@@ -5032,3 +5032,94 @@ button.surface-edit-in-place:hover {
   font-weight: 650;
   line-height: 1.2;
 }
+
+/* ═══ PHILO-17 Meetings r3: Import, Review, Artifacts ═══════════════ */
+.desk-next .meetings-quiet {
+  margin: 4px 0;
+  font: 500 12px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+/* Import: two plates side by side, record now or bring one in. */
+.desk-next .meetings-import-plates {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 10px;
+  align-items: stretch;
+}
+.desk-next .meetings-import-record {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-field-hi);
+  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.desk-next .meetings-import-words {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .meetings-import-plates .surface-dropwell {
+  margin: 0;
+  border: 1px dashed color-mix(in srgb, var(--wb-ink) 55%, transparent);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+  transition: background-color 120ms ease;
+}
+.desk-next .meetings-import-plates .surface-dropwell:hover {
+  background: #ffffff;
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .meetings-import-plates {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Review: the head's facts are pills in sentence case (the words stay in
+   the DOM as written; a pill reads them in sentence case), no dots. */
+.desk-next .meetings-review-dot {
+  display: none;
+}
+.desk-next .meetings-review-tokens {
+  gap: 4px;
+}
+.desk-next .meetings-review-tokens > .surface-token,
+.desk-next .meetings-review-coverage-facts > .surface-token {
+  display: inline-block;
+  padding: 3px 8px;
+  background: var(--pill-neutral);
+  color: var(--wb-muted);
+  font: 600 12px / 1.2 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+.desk-next .meetings-review-tokens > .surface-token[data-tone="warn"],
+.desk-next .meetings-review-coverage-facts > .surface-token[data-tone="warn"] {
+  background: var(--pill-warn);
+  color: var(--wb-warn-ink);
+}
+.desk-next .meetings-review-tokens > .surface-token::first-letter,
+.desk-next .meetings-review-coverage-facts > .surface-token::first-letter,
+.desk-next .meetings-review .surface-caption::first-letter {
+  text-transform: uppercase;
+}
+.desk-next .meetings-review .surface-caption {
+  font: 650 13px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: lowercase;
+  color: var(--wb-text);
+}
+.desk-next .meetings-review .meetings-review-caption-value {
+  color: var(--wb-muted);
+  font-weight: 500;
+}
+.desk-next .meetings-review-coverage {
+  padding: 4px 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .meetings-review-coverage > .surface-caption {
+  margin: 6px 0 2px;
+}

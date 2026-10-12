@@ -201,7 +201,17 @@ export function TodayView({ header }: { header: ReactNode }) {
       const end = when(event.ends_at) ?? start;
       return start && end && startOfDay(start) === today && end.getTime() >= now.getTime();
     }), [door, today, now]);
-  const next = events[0] ?? null;
+  // Late in the day the next meeting may be after midnight: when today has
+  // none left, the next one within 12 hours leads (its time says the day).
+  const soon = useMemo(() => {
+    if (events.length) return null;
+    const limit = now.getTime() + 12 * 3_600_000;
+    return (door?.upcoming ?? []).find((event) => {
+      const start = when(event.starts_at);
+      return start && start.getTime() > now.getTime() && start.getTime() <= limit;
+    }) ?? null;
+  }, [door, events.length, now]);
+  const next = events[0] ?? soon;
   const later = events.slice(1);
   const finish = useMemo(() => toFinish(meetings, now), [meetings, now]);
   const decidable = needs.filter((item) => item.proposalId && !item.muted && !item.waiting);
@@ -275,7 +285,7 @@ export function TodayView({ header }: { header: ReactNode }) {
   const armed = Boolean(next && (next.armed || next.source === "scheduled_recording"));
   const armsAt = next ? when(next.armed?.arms_at ?? next.starts_at) : null;
   const nextNode = next && nextStart ? (
-    <SpineNode kind="next" testId="today-next" time={clock(nextStart)}>
+    <SpineNode kind="next" testId="today-next" time={startOfDay(nextStart) === today ? clock(nextStart) : <>{SHORT_DAYS[nextStart.getDay()]}<br />{clock(nextStart)}</>}>
       <article className="today-next" aria-label={`Next: ${title(next)}`}>
         <header className="today-next-bar">
           <span className="today-next-label">NEXT</span>
