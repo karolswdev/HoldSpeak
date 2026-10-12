@@ -341,11 +341,14 @@ export function TodayView({ header }: { header: ReactNode }) {
     </li>
   );
 
+  // The retry is named outside the JSX: the copy scanner reads an arrow's
+  // `>` after a JSX tag as the start of text.
+  const retry = () => void load();
   const doorFailedNode = failed.door ? (
-    <li className="today-section"><span /><span /><ReadFailed what="the calendar" onRetry={() => void load()} testId="today-door-failed" /></li>
+    <li className="today-section"><span /><span /><ReadFailed what="the calendar" onRetry={retry} testId="today-door-failed" /></li>
   ) : null;
   const meetingsFailedNode = failed.meetings ? (
-    <li className="today-section"><span /><span /><ReadFailed what="the meetings" onRetry={() => void load()} testId="today-meetings-failed" /></li>
+    <li className="today-section"><span /><span /><ReadFailed what="the meetings" onRetry={retry} testId="today-meetings-failed" /></li>
   ) : null;
   const emptyNode = door && !next && !failed.door ? (
     <SpineNode kind="empty" testId="today-empty" time="">

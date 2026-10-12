@@ -1787,10 +1787,10 @@ class TestCompanionUiSmoke:
         for marker in (
             "openPersona",
             "openCoderSession",
-            "BLOCKED",
-            "How it connects",
-            "autonomous_send",
-            "in memory, never in a payload",
+            # PHILO-17 refit (conductor): a blocked coder reads "Asks you"
+            # in its own section; the old door and custody stamp went.
+            "Asks you",
+            "Coders that ask",
         ):
             assert marker in source
 

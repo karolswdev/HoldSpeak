@@ -584,7 +584,7 @@
   background: #ffffff;
   box-shadow: var(--alive-lift);
 }
-.desk-next .people-plate-row:has(.btn:active, .btn--chrome:active) {
+.desk-next .people-plate-row:has(button:active) {
   background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
   box-shadow: var(--wb-sunken);
 }
@@ -605,8 +605,8 @@
   color: var(--wb-text);
   overflow-wrap: anywhere;
 }
-.desk-next .btn--chrome.people-plate-title { cursor: pointer; }
-.desk-next .btn--chrome.people-plate-title:hover { text-decoration: underline; text-underline-offset: 3px; }
+.desk-next button.people-plate-title { cursor: pointer; }
+.desk-next button.people-plate-title:hover { text-decoration: underline; text-underline-offset: 3px; }
 .desk-next .people-plate-meta {
   display: flex;
   align-items: center;
