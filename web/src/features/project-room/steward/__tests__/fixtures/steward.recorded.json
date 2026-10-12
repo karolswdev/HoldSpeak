@@ -1,30 +1,30 @@
 {
  "completed": {
   "detail": {
-   "operation_id": "op_83d8b14164174fd38954646782640ba1",
+   "operation_id": "op_d76f406b93f54bd78f73df4563028aa3",
    "receipt": {
     "actor_identity": "owner-session",
     "actor_kind": "owner",
     "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-    "created_at": 1791762564.668332,
+    "created_at": 1791828232.9580328,
     "delegator_identity": "",
     "delegator_kind": "",
-    "operation_id": "op_83d8b14164174fd38954646782640ba1",
+    "operation_id": "op_d76f406b93f54bd78f73df4563028aa3",
     "outcome": "completed",
-    "receipt_id": "rcpt_e52275f40e62489bb9ac65623b425112",
-    "result_ref": "steward_run:pstrun_c6de7492257f58ff8bc886a193182347",
+    "receipt_id": "rcpt_d3aebbf956c14873ad8240ad4c97cedf",
+    "result_ref": "steward_run:pstrun_4e87446065c15ca5a423f7bd7cde33fa",
     "state": "succeeded",
-    "target_ref": "project:proj-981f864bbd5a"
+    "target_ref": "project:proj-3c14b973cea9"
    },
    "run": {
-    "completed_at": "2026-10-11T23:49:24+00:00",
-    "created_at": "2026-10-11T23:49:24+00:00",
-    "id": "pstrun_c6de7492257f58ff8bc886a193182347",
+    "completed_at": "2026-10-12T18:03:52+00:00",
+    "created_at": "2026-10-12T18:03:52+00:00",
+    "id": "pstrun_4e87446065c15ca5a423f7bd7cde33fa",
     "phase": "record",
-    "policy_id": "pstpol_506f16b9b1b34ab29cdd57306a5122f7",
-    "project_id": "proj-981f864bbd5a",
+    "policy_id": "pstpol_033e35c693f14090bac859272a9e5f5f",
+    "project_id": "proj-3c14b973cea9",
     "requested_by": "principal:owner-session",
-    "started_at": "2026-10-11T23:49:24+00:00",
+    "started_at": "2026-10-12T18:03:52+00:00",
     "state": "completed",
     "stop_requested_at": null,
     "summary": {
@@ -63,7 +63,7 @@
           "effect": "refresh_sources",
           "partial": false
          },
-         "step_id": "pststep_91547ac3bccf458eb6280e6544d5af53"
+         "step_id": "pststep_761cb527a35e457387de8ca80f54e8fb"
         },
         {
          "attempt": 1,
@@ -72,9 +72,9 @@
          "result": {
           "effect": "create_proposals",
           "proposal_count": 0,
-          "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+          "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
          },
-         "step_id": "pststep_fa13eeeccdde4de585e8f79ad431e839"
+         "step_id": "pststep_452a0942700a43c89c87763caccc1958"
         },
         {
          "attempt": 1,
@@ -86,22 +86,22 @@
           "generator_host": null,
           "generator_model": null,
           "lifecycle": "draft",
-          "update_id": "pupd_4f77a2ffef614b2ebc3024dccad08f39"
+          "update_id": "pupd_66b6d4bd58484107a1b4ce542b0a6714"
          },
-         "step_id": "pststep_51a1faaec43f43f2ae960a68dd849700"
+         "step_id": "pststep_46e176f3f946490d8a737ae426f793bd"
         },
         {
          "attempt": 1,
          "effect_kind": "create_door_item",
          "outcome": "applied",
          "result": {
-          "door_item_id": "ai_0e3de0054b3c45f79fc4be75cb431205",
+          "door_item_id": "ai_2b3b7c8f94984c22b5115c0413a4cf52",
           "effect": "create_door_item",
-          "source_item_id": "pitem_a073e2261f19470ba7ddf9c5c00c8bbd",
+          "source_item_id": "pitem_a258e8dfd43c447892406737c4605b1f",
           "source_item_type": "risk",
           "source_severity": "high"
          },
-         "step_id": "pststep_84f03e7722e84e389ac458a215ffb7ad"
+         "step_id": "pststep_a367c638816c4585ad8c115bfd4b82b5"
         }
        ],
        "effects_skipped": [
@@ -122,7 +122,7 @@
       "compare": {
        "proposal_count": 0,
        "proposals": [],
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
       },
       "observe": {
        "coverage": {
@@ -151,7 +151,7 @@
       "propose": {
        "proposal_count": 0,
        "proposals": [],
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
       },
       "record": {
        "event_recorded": true
@@ -189,7 +189,7 @@
           "effect": "refresh_sources",
           "partial": false
          },
-         "step_id": "pststep_91547ac3bccf458eb6280e6544d5af53"
+         "step_id": "pststep_761cb527a35e457387de8ca80f54e8fb"
         },
         {
          "attempt": 1,
@@ -198,9 +198,9 @@
          "result": {
           "effect": "create_proposals",
           "proposal_count": 0,
-          "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+          "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
          },
-         "step_id": "pststep_fa13eeeccdde4de585e8f79ad431e839"
+         "step_id": "pststep_452a0942700a43c89c87763caccc1958"
         },
         {
          "attempt": 1,
@@ -212,22 +212,22 @@
           "generator_host": null,
           "generator_model": null,
           "lifecycle": "draft",
-          "update_id": "pupd_4f77a2ffef614b2ebc3024dccad08f39"
+          "update_id": "pupd_66b6d4bd58484107a1b4ce542b0a6714"
          },
-         "step_id": "pststep_51a1faaec43f43f2ae960a68dd849700"
+         "step_id": "pststep_46e176f3f946490d8a737ae426f793bd"
         },
         {
          "attempt": 1,
          "effect_kind": "create_door_item",
          "outcome": "applied",
          "result": {
-          "door_item_id": "ai_0e3de0054b3c45f79fc4be75cb431205",
+          "door_item_id": "ai_2b3b7c8f94984c22b5115c0413a4cf52",
           "effect": "create_door_item",
-          "source_item_id": "pitem_a073e2261f19470ba7ddf9c5c00c8bbd",
+          "source_item_id": "pitem_a258e8dfd43c447892406737c4605b1f",
           "source_item_type": "risk",
           "source_severity": "high"
          },
-         "step_id": "pststep_84f03e7722e84e389ac458a215ffb7ad"
+         "step_id": "pststep_a367c638816c4585ad8c115bfd4b82b5"
         }
        ],
        "effects_skipped": [
@@ -246,7 +246,7 @@
        ],
        "has_real_effects": true,
        "proposal_count": 0,
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57",
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
        "source_count": 4,
        "verified_effects": 4
       }
@@ -260,7 +260,7 @@
       "record"
      ]
     },
-    "updated_at": "2026-10-11T23:49:24+00:00",
+    "updated_at": "2026-10-12T18:03:52+00:00",
     "watermark": ""
    },
    "steps": [
@@ -268,8 +268,8 @@
      "effect_kind": "phase:observe",
      "error": null,
      "expected": {},
-     "id": "pststep_3f373e22d3ca4a0fb52256481f04da60",
-     "idempotency_key": "pstrun_c6de7492257f58ff8bc886a193182347:observe",
+     "id": "pststep_ee3b6c5406dc4a55aa52b57b0dd303a8",
+     "idempotency_key": "pstrun_4e87446065c15ca5a423f7bd7cde33fa:observe",
      "observed": {
       "coverage": {
        "native:decisions": {
@@ -303,12 +303,12 @@
      "effect_kind": "phase:compare",
      "error": null,
      "expected": {},
-     "id": "pststep_66c95f1be41e44c5986b2462a1fb907c",
-     "idempotency_key": "pstrun_c6de7492257f58ff8bc886a193182347:compare",
+     "id": "pststep_1ff5cf56ac1e41f2b62362aacf2b9c3e",
+     "idempotency_key": "pstrun_4e87446065c15ca5a423f7bd7cde33fa:compare",
      "observed": {
       "proposal_count": 0,
       "proposals": [],
-      "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+      "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
      },
      "phase": "compare",
      "receipt": {},
@@ -319,12 +319,12 @@
      "effect_kind": "phase:propose",
      "error": null,
      "expected": {},
-     "id": "pststep_f38877b275aa4f7bba12450e570ab348",
-     "idempotency_key": "pstrun_c6de7492257f58ff8bc886a193182347:propose",
+     "id": "pststep_97c5329f06a545e495c39c77db31095c",
+     "idempotency_key": "pstrun_4e87446065c15ca5a423f7bd7cde33fa:propose",
      "observed": {
       "proposal_count": 0,
       "proposals": [],
-      "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+      "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
      },
      "phase": "propose",
      "receipt": {},
@@ -335,8 +335,8 @@
      "effect_kind": "phase:act",
      "error": null,
      "expected": {},
-     "id": "pststep_85df284ce7444337bba0213ede2fc327",
-     "idempotency_key": "pstrun_c6de7492257f58ff8bc886a193182347:act",
+     "id": "pststep_51eef0b11bdf4ab9b3fbb55c90c8bdfd",
+     "idempotency_key": "pstrun_4e87446065c15ca5a423f7bd7cde33fa:act",
      "observed": {
       "actions_taken": 4,
       "effect_receipts": [
@@ -370,7 +370,7 @@
          "effect": "refresh_sources",
          "partial": false
         },
-        "step_id": "pststep_91547ac3bccf458eb6280e6544d5af53"
+        "step_id": "pststep_761cb527a35e457387de8ca80f54e8fb"
        },
        {
         "attempt": 1,
@@ -379,9 +379,9 @@
         "result": {
          "effect": "create_proposals",
          "proposal_count": 0,
-         "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+         "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
         },
-        "step_id": "pststep_fa13eeeccdde4de585e8f79ad431e839"
+        "step_id": "pststep_452a0942700a43c89c87763caccc1958"
        },
        {
         "attempt": 1,
@@ -393,22 +393,22 @@
          "generator_host": null,
          "generator_model": null,
          "lifecycle": "draft",
-         "update_id": "pupd_4f77a2ffef614b2ebc3024dccad08f39"
+         "update_id": "pupd_66b6d4bd58484107a1b4ce542b0a6714"
         },
-        "step_id": "pststep_51a1faaec43f43f2ae960a68dd849700"
+        "step_id": "pststep_46e176f3f946490d8a737ae426f793bd"
        },
        {
         "attempt": 1,
         "effect_kind": "create_door_item",
         "outcome": "applied",
         "result": {
-         "door_item_id": "ai_0e3de0054b3c45f79fc4be75cb431205",
+         "door_item_id": "ai_2b3b7c8f94984c22b5115c0413a4cf52",
          "effect": "create_door_item",
-         "source_item_id": "pitem_a073e2261f19470ba7ddf9c5c00c8bbd",
+         "source_item_id": "pitem_a258e8dfd43c447892406737c4605b1f",
          "source_item_type": "risk",
          "source_severity": "high"
         },
-        "step_id": "pststep_84f03e7722e84e389ac458a215ffb7ad"
+        "step_id": "pststep_a367c638816c4585ad8c115bfd4b82b5"
        }
       ],
       "effects_skipped": [
@@ -436,10 +436,10 @@
      "error": null,
      "expected": {
       "effect": "refresh_sources",
-      "project_id": "proj-981f864bbd5a"
+      "project_id": "proj-3c14b973cea9"
      },
-     "id": "pststep_91547ac3bccf458eb6280e6544d5af53",
-     "idempotency_key": "pstrun_c6de7492257f58ff8bc886a193182347:refresh_sources",
+     "id": "pststep_761cb527a35e457387de8ca80f54e8fb",
+     "idempotency_key": "pstrun_4e87446065c15ca5a423f7bd7cde33fa:refresh_sources",
      "observed": {
       "coverage": {
        "native:decisions": {
@@ -480,15 +480,15 @@
      "error": null,
      "expected": {
       "effect": "create_proposals",
-      "prior_review_id": "prev_2caed57fd3e74d5e9a02d51966382b57",
-      "project_id": "proj-981f864bbd5a"
+      "prior_review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
+      "project_id": "proj-3c14b973cea9"
      },
-     "id": "pststep_fa13eeeccdde4de585e8f79ad431e839",
-     "idempotency_key": "pstrun_c6de7492257f58ff8bc886a193182347:create_proposals",
+     "id": "pststep_452a0942700a43c89c87763caccc1958",
+     "idempotency_key": "pstrun_4e87446065c15ca5a423f7bd7cde33fa:create_proposals",
      "observed": {
       "effect": "create_proposals",
       "proposal_count": 0,
-      "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+      "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
      },
      "phase": "act",
      "receipt": {
@@ -504,24 +504,24 @@
      "error": null,
      "expected": {
       "effect": "draft_update",
-      "project_id": "proj-981f864bbd5a"
+      "project_id": "proj-3c14b973cea9"
      },
-     "id": "pststep_51a1faaec43f43f2ae960a68dd849700",
-     "idempotency_key": "pstrun_c6de7492257f58ff8bc886a193182347:draft_update",
+     "id": "pststep_46e176f3f946490d8a737ae426f793bd",
+     "idempotency_key": "pstrun_4e87446065c15ca5a423f7bd7cde33fa:draft_update",
      "observed": {
       "effect": "draft_update",
       "generator": "deterministic",
       "generator_host": null,
       "generator_model": null,
       "lifecycle": "draft",
-      "update_id": "pupd_4f77a2ffef614b2ebc3024dccad08f39"
+      "update_id": "pupd_66b6d4bd58484107a1b4ce542b0a6714"
      },
      "phase": "act",
      "receipt": {
       "attempt": 1,
       "effect_kind": "draft_update",
       "outcome": "applied",
-      "ref": "update:pupd_4f77a2ffef614b2ebc3024dccad08f39"
+      "ref": "update:pupd_66b6d4bd58484107a1b4ce542b0a6714"
      },
      "seq": 6,
      "state": "completed"
@@ -531,14 +531,14 @@
      "error": null,
      "expected": {
       "effect": "create_door_item",
-      "project_id": "proj-981f864bbd5a"
+      "project_id": "proj-3c14b973cea9"
      },
-     "id": "pststep_84f03e7722e84e389ac458a215ffb7ad",
-     "idempotency_key": "pstrun_c6de7492257f58ff8bc886a193182347:create_door_item",
+     "id": "pststep_a367c638816c4585ad8c115bfd4b82b5",
+     "idempotency_key": "pstrun_4e87446065c15ca5a423f7bd7cde33fa:create_door_item",
      "observed": {
-      "door_item_id": "ai_0e3de0054b3c45f79fc4be75cb431205",
+      "door_item_id": "ai_2b3b7c8f94984c22b5115c0413a4cf52",
       "effect": "create_door_item",
-      "source_item_id": "pitem_a073e2261f19470ba7ddf9c5c00c8bbd",
+      "source_item_id": "pitem_a258e8dfd43c447892406737c4605b1f",
       "source_item_type": "risk",
       "source_severity": "high"
      },
@@ -547,7 +547,7 @@
       "attempt": 1,
       "effect_kind": "create_door_item",
       "outcome": "applied",
-      "ref": "action_item:ai_0e3de0054b3c45f79fc4be75cb431205"
+      "ref": "action_item:ai_2b3b7c8f94984c22b5115c0413a4cf52"
      },
      "seq": 7,
      "state": "completed"
@@ -556,8 +556,8 @@
      "effect_kind": "phase:verify",
      "error": null,
      "expected": {},
-     "id": "pststep_9488aff20d8442168572479e1e6969d3",
-     "idempotency_key": "pstrun_c6de7492257f58ff8bc886a193182347:verify",
+     "id": "pststep_a75e94d571174315ad8bb0811f6f0878",
+     "idempotency_key": "pstrun_4e87446065c15ca5a423f7bd7cde33fa:verify",
      "observed": {
       "actions_taken": 4,
       "effect_receipts": [
@@ -591,7 +591,7 @@
          "effect": "refresh_sources",
          "partial": false
         },
-        "step_id": "pststep_91547ac3bccf458eb6280e6544d5af53"
+        "step_id": "pststep_761cb527a35e457387de8ca80f54e8fb"
        },
        {
         "attempt": 1,
@@ -600,9 +600,9 @@
         "result": {
          "effect": "create_proposals",
          "proposal_count": 0,
-         "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+         "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
         },
-        "step_id": "pststep_fa13eeeccdde4de585e8f79ad431e839"
+        "step_id": "pststep_452a0942700a43c89c87763caccc1958"
        },
        {
         "attempt": 1,
@@ -614,22 +614,22 @@
          "generator_host": null,
          "generator_model": null,
          "lifecycle": "draft",
-         "update_id": "pupd_4f77a2ffef614b2ebc3024dccad08f39"
+         "update_id": "pupd_66b6d4bd58484107a1b4ce542b0a6714"
         },
-        "step_id": "pststep_51a1faaec43f43f2ae960a68dd849700"
+        "step_id": "pststep_46e176f3f946490d8a737ae426f793bd"
        },
        {
         "attempt": 1,
         "effect_kind": "create_door_item",
         "outcome": "applied",
         "result": {
-         "door_item_id": "ai_0e3de0054b3c45f79fc4be75cb431205",
+         "door_item_id": "ai_2b3b7c8f94984c22b5115c0413a4cf52",
          "effect": "create_door_item",
-         "source_item_id": "pitem_a073e2261f19470ba7ddf9c5c00c8bbd",
+         "source_item_id": "pitem_a258e8dfd43c447892406737c4605b1f",
          "source_item_type": "risk",
          "source_severity": "high"
         },
-        "step_id": "pststep_84f03e7722e84e389ac458a215ffb7ad"
+        "step_id": "pststep_a367c638816c4585ad8c115bfd4b82b5"
        }
       ],
       "effects_skipped": [
@@ -648,7 +648,7 @@
       ],
       "has_real_effects": true,
       "proposal_count": 0,
-      "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57",
+      "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
       "source_count": 4,
       "verified_effects": 4
      },
@@ -661,8 +661,8 @@
      "effect_kind": "phase:record",
      "error": null,
      "expected": {},
-     "id": "pststep_af4003eac2484d708fc9a978246049c5",
-     "idempotency_key": "pstrun_c6de7492257f58ff8bc886a193182347:record",
+     "id": "pststep_59a80bf477634008abb38945e8c3f69d",
+     "idempotency_key": "pstrun_4e87446065c15ca5a423f7bd7cde33fa:record",
      "observed": {
       "event_recorded": true
      },
@@ -674,9 +674,9 @@
    ]
   },
   "start": {
-   "operation_id": "op_83d8b14164174fd38954646782640ba1",
+   "operation_id": "op_d76f406b93f54bd78f73df4563028aa3",
    "receipt": null,
-   "run_id": "pstrun_c6de7492257f58ff8bc886a193182347",
+   "run_id": "pstrun_4e87446065c15ca5a423f7bd7cde33fa",
    "state": "claimed",
    "success": true
   }
@@ -685,7 +685,7 @@
   "policy": {
    "bounds": {},
    "cooldown_seconds": 0,
-   "created_at": "2026-10-11T23:49:24+00:00",
+   "created_at": "2026-10-12T18:03:52+00:00",
    "eligible_effect_kinds": [
     "refresh_sources",
     "create_proposals",
@@ -693,26 +693,290 @@
     "create_door_item"
    ],
    "enabled": true,
-   "id": "pstpol_506f16b9b1b34ab29cdd57306a5122f7",
+   "id": "pstpol_033e35c693f14090bac859272a9e5f5f",
    "max_actions_per_run": 10,
    "max_retries": 3,
-   "project_id": "proj-981f864bbd5a",
+   "project_id": "proj-3c14b973cea9",
    "unattended_enabled": false,
-   "updated_at": "2026-10-11T23:49:24+00:00",
+   "updated_at": "2026-10-12T18:03:52+00:00",
    "yolo_flags": {}
   }
  },
  "list": {
   "runs": [
    {
-    "completed_at": "2026-10-11T23:49:24+00:00",
-    "created_at": "2026-10-11T23:49:24+00:00",
-    "id": "pstrun_c6de7492257f58ff8bc886a193182347",
+    "completed_at": "2026-10-12T18:03:53+00:00",
+    "created_at": "2026-10-12T18:03:53+00:00",
+    "id": "pstrun_0980b2359a655c02ae8383813684dc8c",
     "phase": "record",
-    "policy_id": "pstpol_506f16b9b1b34ab29cdd57306a5122f7",
-    "project_id": "proj-981f864bbd5a",
+    "policy_id": "pstpol_033e35c693f14090bac859272a9e5f5f",
+    "project_id": "proj-3c14b973cea9",
     "requested_by": "principal:owner-session",
-    "started_at": "2026-10-11T23:49:24+00:00",
+    "started_at": "2026-10-12T18:03:53+00:00",
+    "state": "completed",
+    "stop_requested_at": null,
+    "summary": {
+     "outcome": "completed",
+     "phase_results": {
+      "act": {
+       "actions_taken": 3,
+       "effect_receipts": [
+        {
+         "attempt": 1,
+         "effect_kind": "refresh_sources",
+         "outcome": "applied",
+         "result": {
+          "coverage": {
+           "native:decisions": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:followthrough": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:meetings": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:resources": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "psrc_record_gone": {
+            "error": {
+             "code": "watch_not_found",
+             "message": "Watch w-gone not found"
+            },
+            "state": "failed"
+           }
+          },
+          "effect": "refresh_sources",
+          "partial": false
+         },
+         "step_id": "pststep_ea1053c23e2f49349039635fa67eefa2"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_proposals",
+         "outcome": "applied",
+         "result": {
+          "effect": "create_proposals",
+          "proposal_count": 0,
+          "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
+         },
+         "step_id": "pststep_feda2400edfe48be83a56f3966db0e6d"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "draft_update",
+         "outcome": "applied",
+         "result": {
+          "effect": "draft_update",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "lifecycle": "draft",
+          "update_id": "pupd_130a35e7ebc34a69b21c1a3985821986"
+         },
+         "step_id": "pststep_156d978eaf4e41bcb1afc7df1493689d"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_door_item",
+         "outcome": "skipped",
+         "result": {
+          "effect": "create_door_item",
+          "reason": "no_eligible_items",
+          "skipped": true
+         },
+         "step_id": "pststep_61e1d2f3fa8a4887b896fdb95a7803dd"
+        }
+       ],
+       "effects_skipped": [
+        {
+         "effect_kind": "apply_proposal_effects",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "github_comment",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "prepare_send",
+         "reason": "not_in_eligible_effect_kinds"
+        }
+       ]
+      },
+      "compare": {
+       "proposal_count": 0,
+       "proposals": [],
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
+      },
+      "observe": {
+       "coverage": {
+        "native:decisions": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:followthrough": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:meetings": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "native:resources": {
+         "inserted": 0,
+         "no_op": 0,
+         "state": "ok"
+        },
+        "psrc_record_gone": {
+         "error": {
+          "code": "watch_not_found",
+          "message": "Watch w-gone not found"
+         },
+         "state": "failed"
+        }
+       }
+      },
+      "propose": {
+       "proposal_count": 0,
+       "proposals": [],
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
+      },
+      "record": {
+       "event_recorded": true
+      },
+      "verify": {
+       "actions_taken": 3,
+       "effect_receipts": [
+        {
+         "attempt": 1,
+         "effect_kind": "refresh_sources",
+         "outcome": "applied",
+         "result": {
+          "coverage": {
+           "native:decisions": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:followthrough": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:meetings": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "native:resources": {
+            "inserted": 0,
+            "no_op": 0,
+            "state": "ok"
+           },
+           "psrc_record_gone": {
+            "error": {
+             "code": "watch_not_found",
+             "message": "Watch w-gone not found"
+            },
+            "state": "failed"
+           }
+          },
+          "effect": "refresh_sources",
+          "partial": false
+         },
+         "step_id": "pststep_ea1053c23e2f49349039635fa67eefa2"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_proposals",
+         "outcome": "applied",
+         "result": {
+          "effect": "create_proposals",
+          "proposal_count": 0,
+          "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
+         },
+         "step_id": "pststep_feda2400edfe48be83a56f3966db0e6d"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "draft_update",
+         "outcome": "applied",
+         "result": {
+          "effect": "draft_update",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "lifecycle": "draft",
+          "update_id": "pupd_130a35e7ebc34a69b21c1a3985821986"
+         },
+         "step_id": "pststep_156d978eaf4e41bcb1afc7df1493689d"
+        },
+        {
+         "attempt": 1,
+         "effect_kind": "create_door_item",
+         "outcome": "skipped",
+         "result": {
+          "effect": "create_door_item",
+          "reason": "no_eligible_items",
+          "skipped": true
+         },
+         "step_id": "pststep_61e1d2f3fa8a4887b896fdb95a7803dd"
+        }
+       ],
+       "effects_skipped": [
+        {
+         "effect_kind": "apply_proposal_effects",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "github_comment",
+         "reason": "not_in_eligible_effect_kinds"
+        },
+        {
+         "effect_kind": "prepare_send",
+         "reason": "not_in_eligible_effect_kinds"
+        }
+       ],
+       "has_real_effects": true,
+       "proposal_count": 0,
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
+       "source_count": 5,
+       "verified_effects": 3
+      }
+     },
+     "phases_completed": [
+      "observe",
+      "compare",
+      "propose",
+      "act",
+      "verify",
+      "record"
+     ]
+    },
+    "updated_at": "2026-10-12T18:03:53+00:00",
+    "watermark": ""
+   },
+   {
+    "completed_at": "2026-10-12T18:03:52+00:00",
+    "created_at": "2026-10-12T18:03:52+00:00",
+    "id": "pstrun_4e87446065c15ca5a423f7bd7cde33fa",
+    "phase": "record",
+    "policy_id": "pstpol_033e35c693f14090bac859272a9e5f5f",
+    "project_id": "proj-3c14b973cea9",
+    "requested_by": "principal:owner-session",
+    "started_at": "2026-10-12T18:03:52+00:00",
     "state": "completed",
     "stop_requested_at": null,
     "summary": {
@@ -751,7 +1015,7 @@
           "effect": "refresh_sources",
           "partial": false
          },
-         "step_id": "pststep_91547ac3bccf458eb6280e6544d5af53"
+         "step_id": "pststep_761cb527a35e457387de8ca80f54e8fb"
         },
         {
          "attempt": 1,
@@ -760,9 +1024,9 @@
          "result": {
           "effect": "create_proposals",
           "proposal_count": 0,
-          "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+          "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
          },
-         "step_id": "pststep_fa13eeeccdde4de585e8f79ad431e839"
+         "step_id": "pststep_452a0942700a43c89c87763caccc1958"
         },
         {
          "attempt": 1,
@@ -774,22 +1038,22 @@
           "generator_host": null,
           "generator_model": null,
           "lifecycle": "draft",
-          "update_id": "pupd_4f77a2ffef614b2ebc3024dccad08f39"
+          "update_id": "pupd_66b6d4bd58484107a1b4ce542b0a6714"
          },
-         "step_id": "pststep_51a1faaec43f43f2ae960a68dd849700"
+         "step_id": "pststep_46e176f3f946490d8a737ae426f793bd"
         },
         {
          "attempt": 1,
          "effect_kind": "create_door_item",
          "outcome": "applied",
          "result": {
-          "door_item_id": "ai_0e3de0054b3c45f79fc4be75cb431205",
+          "door_item_id": "ai_2b3b7c8f94984c22b5115c0413a4cf52",
           "effect": "create_door_item",
-          "source_item_id": "pitem_a073e2261f19470ba7ddf9c5c00c8bbd",
+          "source_item_id": "pitem_a258e8dfd43c447892406737c4605b1f",
           "source_item_type": "risk",
           "source_severity": "high"
          },
-         "step_id": "pststep_84f03e7722e84e389ac458a215ffb7ad"
+         "step_id": "pststep_a367c638816c4585ad8c115bfd4b82b5"
         }
        ],
        "effects_skipped": [
@@ -810,7 +1074,7 @@
       "compare": {
        "proposal_count": 0,
        "proposals": [],
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
       },
       "observe": {
        "coverage": {
@@ -839,7 +1103,7 @@
       "propose": {
        "proposal_count": 0,
        "proposals": [],
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
       },
       "record": {
        "event_recorded": true
@@ -877,7 +1141,7 @@
           "effect": "refresh_sources",
           "partial": false
          },
-         "step_id": "pststep_91547ac3bccf458eb6280e6544d5af53"
+         "step_id": "pststep_761cb527a35e457387de8ca80f54e8fb"
         },
         {
          "attempt": 1,
@@ -886,9 +1150,9 @@
          "result": {
           "effect": "create_proposals",
           "proposal_count": 0,
-          "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+          "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
          },
-         "step_id": "pststep_fa13eeeccdde4de585e8f79ad431e839"
+         "step_id": "pststep_452a0942700a43c89c87763caccc1958"
         },
         {
          "attempt": 1,
@@ -900,22 +1164,22 @@
           "generator_host": null,
           "generator_model": null,
           "lifecycle": "draft",
-          "update_id": "pupd_4f77a2ffef614b2ebc3024dccad08f39"
+          "update_id": "pupd_66b6d4bd58484107a1b4ce542b0a6714"
          },
-         "step_id": "pststep_51a1faaec43f43f2ae960a68dd849700"
+         "step_id": "pststep_46e176f3f946490d8a737ae426f793bd"
         },
         {
          "attempt": 1,
          "effect_kind": "create_door_item",
          "outcome": "applied",
          "result": {
-          "door_item_id": "ai_0e3de0054b3c45f79fc4be75cb431205",
+          "door_item_id": "ai_2b3b7c8f94984c22b5115c0413a4cf52",
           "effect": "create_door_item",
-          "source_item_id": "pitem_a073e2261f19470ba7ddf9c5c00c8bbd",
+          "source_item_id": "pitem_a258e8dfd43c447892406737c4605b1f",
           "source_item_type": "risk",
           "source_severity": "high"
          },
-         "step_id": "pststep_84f03e7722e84e389ac458a215ffb7ad"
+         "step_id": "pststep_a367c638816c4585ad8c115bfd4b82b5"
         }
        ],
        "effects_skipped": [
@@ -934,7 +1198,7 @@
        ],
        "has_real_effects": true,
        "proposal_count": 0,
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57",
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
        "source_count": 4,
        "verified_effects": 4
       }
@@ -948,301 +1212,37 @@
       "record"
      ]
     },
-    "updated_at": "2026-10-11T23:49:24+00:00",
-    "watermark": ""
-   },
-   {
-    "completed_at": "2026-10-11T23:49:24+00:00",
-    "created_at": "2026-10-11T23:49:24+00:00",
-    "id": "pstrun_09be8e93a69c5bc8b648f485823be487",
-    "phase": "record",
-    "policy_id": "pstpol_506f16b9b1b34ab29cdd57306a5122f7",
-    "project_id": "proj-981f864bbd5a",
-    "requested_by": "principal:owner-session",
-    "started_at": "2026-10-11T23:49:24+00:00",
-    "state": "completed",
-    "stop_requested_at": null,
-    "summary": {
-     "outcome": "completed",
-     "phase_results": {
-      "act": {
-       "actions_taken": 3,
-       "effect_receipts": [
-        {
-         "attempt": 1,
-         "effect_kind": "refresh_sources",
-         "outcome": "applied",
-         "result": {
-          "coverage": {
-           "native:decisions": {
-            "inserted": 0,
-            "no_op": 0,
-            "state": "ok"
-           },
-           "native:followthrough": {
-            "inserted": 0,
-            "no_op": 0,
-            "state": "ok"
-           },
-           "native:meetings": {
-            "inserted": 0,
-            "no_op": 0,
-            "state": "ok"
-           },
-           "native:resources": {
-            "inserted": 0,
-            "no_op": 0,
-            "state": "ok"
-           },
-           "psrc_record_gone": {
-            "error": {
-             "code": "watch_not_found",
-             "message": "Watch w-gone not found"
-            },
-            "state": "failed"
-           }
-          },
-          "effect": "refresh_sources",
-          "partial": false
-         },
-         "step_id": "pststep_437272bb0fc54a2f825ce76f03e3a3e9"
-        },
-        {
-         "attempt": 1,
-         "effect_kind": "create_proposals",
-         "outcome": "applied",
-         "result": {
-          "effect": "create_proposals",
-          "proposal_count": 0,
-          "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
-         },
-         "step_id": "pststep_412e620ea4b4428a81d6205d69e449c8"
-        },
-        {
-         "attempt": 1,
-         "effect_kind": "draft_update",
-         "outcome": "applied",
-         "result": {
-          "effect": "draft_update",
-          "generator": "deterministic",
-          "generator_host": null,
-          "generator_model": null,
-          "lifecycle": "draft",
-          "update_id": "pupd_92f7099f909c4ed3a724a86b748d3452"
-         },
-         "step_id": "pststep_0da1afabda8d4396a258b29a623020e9"
-        },
-        {
-         "attempt": 1,
-         "effect_kind": "create_door_item",
-         "outcome": "skipped",
-         "result": {
-          "effect": "create_door_item",
-          "reason": "no_eligible_items",
-          "skipped": true
-         },
-         "step_id": "pststep_a95c8664321c4c5d95de46939766f330"
-        }
-       ],
-       "effects_skipped": [
-        {
-         "effect_kind": "apply_proposal_effects",
-         "reason": "not_in_eligible_effect_kinds"
-        },
-        {
-         "effect_kind": "github_comment",
-         "reason": "not_in_eligible_effect_kinds"
-        },
-        {
-         "effect_kind": "prepare_send",
-         "reason": "not_in_eligible_effect_kinds"
-        }
-       ]
-      },
-      "compare": {
-       "proposal_count": 0,
-       "proposals": [],
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
-      },
-      "observe": {
-       "coverage": {
-        "native:decisions": {
-         "inserted": 0,
-         "no_op": 0,
-         "state": "ok"
-        },
-        "native:followthrough": {
-         "inserted": 0,
-         "no_op": 0,
-         "state": "ok"
-        },
-        "native:meetings": {
-         "inserted": 0,
-         "no_op": 0,
-         "state": "ok"
-        },
-        "native:resources": {
-         "inserted": 0,
-         "no_op": 0,
-         "state": "ok"
-        },
-        "psrc_record_gone": {
-         "error": {
-          "code": "watch_not_found",
-          "message": "Watch w-gone not found"
-         },
-         "state": "failed"
-        }
-       }
-      },
-      "propose": {
-       "proposal_count": 0,
-       "proposals": [],
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
-      },
-      "record": {
-       "event_recorded": true
-      },
-      "verify": {
-       "actions_taken": 3,
-       "effect_receipts": [
-        {
-         "attempt": 1,
-         "effect_kind": "refresh_sources",
-         "outcome": "applied",
-         "result": {
-          "coverage": {
-           "native:decisions": {
-            "inserted": 0,
-            "no_op": 0,
-            "state": "ok"
-           },
-           "native:followthrough": {
-            "inserted": 0,
-            "no_op": 0,
-            "state": "ok"
-           },
-           "native:meetings": {
-            "inserted": 0,
-            "no_op": 0,
-            "state": "ok"
-           },
-           "native:resources": {
-            "inserted": 0,
-            "no_op": 0,
-            "state": "ok"
-           },
-           "psrc_record_gone": {
-            "error": {
-             "code": "watch_not_found",
-             "message": "Watch w-gone not found"
-            },
-            "state": "failed"
-           }
-          },
-          "effect": "refresh_sources",
-          "partial": false
-         },
-         "step_id": "pststep_437272bb0fc54a2f825ce76f03e3a3e9"
-        },
-        {
-         "attempt": 1,
-         "effect_kind": "create_proposals",
-         "outcome": "applied",
-         "result": {
-          "effect": "create_proposals",
-          "proposal_count": 0,
-          "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
-         },
-         "step_id": "pststep_412e620ea4b4428a81d6205d69e449c8"
-        },
-        {
-         "attempt": 1,
-         "effect_kind": "draft_update",
-         "outcome": "applied",
-         "result": {
-          "effect": "draft_update",
-          "generator": "deterministic",
-          "generator_host": null,
-          "generator_model": null,
-          "lifecycle": "draft",
-          "update_id": "pupd_92f7099f909c4ed3a724a86b748d3452"
-         },
-         "step_id": "pststep_0da1afabda8d4396a258b29a623020e9"
-        },
-        {
-         "attempt": 1,
-         "effect_kind": "create_door_item",
-         "outcome": "skipped",
-         "result": {
-          "effect": "create_door_item",
-          "reason": "no_eligible_items",
-          "skipped": true
-         },
-         "step_id": "pststep_a95c8664321c4c5d95de46939766f330"
-        }
-       ],
-       "effects_skipped": [
-        {
-         "effect_kind": "apply_proposal_effects",
-         "reason": "not_in_eligible_effect_kinds"
-        },
-        {
-         "effect_kind": "github_comment",
-         "reason": "not_in_eligible_effect_kinds"
-        },
-        {
-         "effect_kind": "prepare_send",
-         "reason": "not_in_eligible_effect_kinds"
-        }
-       ],
-       "has_real_effects": true,
-       "proposal_count": 0,
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57",
-       "source_count": 5,
-       "verified_effects": 3
-      }
-     },
-     "phases_completed": [
-      "observe",
-      "compare",
-      "propose",
-      "act",
-      "verify",
-      "record"
-     ]
-    },
-    "updated_at": "2026-10-11T23:49:24+00:00",
+    "updated_at": "2026-10-12T18:03:52+00:00",
     "watermark": ""
    }
   ]
  },
  "partial": {
   "detail": {
-   "operation_id": "op_f625b4ef6d7a46ecaf05d435e6185d2b",
+   "operation_id": "op_2643031522f34559b725b87616395b17",
    "receipt": {
     "actor_identity": "owner-session",
     "actor_kind": "owner",
     "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-    "created_at": 1791762564.786361,
+    "created_at": 1791828233.076331,
     "delegator_identity": "",
     "delegator_kind": "",
-    "operation_id": "op_f625b4ef6d7a46ecaf05d435e6185d2b",
+    "operation_id": "op_2643031522f34559b725b87616395b17",
     "outcome": "completed",
-    "receipt_id": "rcpt_2d163f24261b437d85e1a97070322c7c",
-    "result_ref": "steward_run:pstrun_09be8e93a69c5bc8b648f485823be487",
+    "receipt_id": "rcpt_f45dac7365cf48b2ae370b7bbfa6e451",
+    "result_ref": "steward_run:pstrun_0980b2359a655c02ae8383813684dc8c",
     "state": "succeeded",
-    "target_ref": "project:proj-981f864bbd5a"
+    "target_ref": "project:proj-3c14b973cea9"
    },
    "run": {
-    "completed_at": "2026-10-11T23:49:24+00:00",
-    "created_at": "2026-10-11T23:49:24+00:00",
-    "id": "pstrun_09be8e93a69c5bc8b648f485823be487",
+    "completed_at": "2026-10-12T18:03:53+00:00",
+    "created_at": "2026-10-12T18:03:53+00:00",
+    "id": "pstrun_0980b2359a655c02ae8383813684dc8c",
     "phase": "record",
-    "policy_id": "pstpol_506f16b9b1b34ab29cdd57306a5122f7",
-    "project_id": "proj-981f864bbd5a",
+    "policy_id": "pstpol_033e35c693f14090bac859272a9e5f5f",
+    "project_id": "proj-3c14b973cea9",
     "requested_by": "principal:owner-session",
-    "started_at": "2026-10-11T23:49:24+00:00",
+    "started_at": "2026-10-12T18:03:53+00:00",
     "state": "completed",
     "stop_requested_at": null,
     "summary": {
@@ -1288,7 +1288,7 @@
           "effect": "refresh_sources",
           "partial": false
          },
-         "step_id": "pststep_437272bb0fc54a2f825ce76f03e3a3e9"
+         "step_id": "pststep_ea1053c23e2f49349039635fa67eefa2"
         },
         {
          "attempt": 1,
@@ -1297,9 +1297,9 @@
          "result": {
           "effect": "create_proposals",
           "proposal_count": 0,
-          "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+          "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
          },
-         "step_id": "pststep_412e620ea4b4428a81d6205d69e449c8"
+         "step_id": "pststep_feda2400edfe48be83a56f3966db0e6d"
         },
         {
          "attempt": 1,
@@ -1311,9 +1311,9 @@
           "generator_host": null,
           "generator_model": null,
           "lifecycle": "draft",
-          "update_id": "pupd_92f7099f909c4ed3a724a86b748d3452"
+          "update_id": "pupd_130a35e7ebc34a69b21c1a3985821986"
          },
-         "step_id": "pststep_0da1afabda8d4396a258b29a623020e9"
+         "step_id": "pststep_156d978eaf4e41bcb1afc7df1493689d"
         },
         {
          "attempt": 1,
@@ -1324,7 +1324,7 @@
           "reason": "no_eligible_items",
           "skipped": true
          },
-         "step_id": "pststep_a95c8664321c4c5d95de46939766f330"
+         "step_id": "pststep_61e1d2f3fa8a4887b896fdb95a7803dd"
         }
        ],
        "effects_skipped": [
@@ -1345,7 +1345,7 @@
       "compare": {
        "proposal_count": 0,
        "proposals": [],
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
       },
       "observe": {
        "coverage": {
@@ -1381,7 +1381,7 @@
       "propose": {
        "proposal_count": 0,
        "proposals": [],
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
       },
       "record": {
        "event_recorded": true
@@ -1426,7 +1426,7 @@
           "effect": "refresh_sources",
           "partial": false
          },
-         "step_id": "pststep_437272bb0fc54a2f825ce76f03e3a3e9"
+         "step_id": "pststep_ea1053c23e2f49349039635fa67eefa2"
         },
         {
          "attempt": 1,
@@ -1435,9 +1435,9 @@
          "result": {
           "effect": "create_proposals",
           "proposal_count": 0,
-          "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+          "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
          },
-         "step_id": "pststep_412e620ea4b4428a81d6205d69e449c8"
+         "step_id": "pststep_feda2400edfe48be83a56f3966db0e6d"
         },
         {
          "attempt": 1,
@@ -1449,9 +1449,9 @@
           "generator_host": null,
           "generator_model": null,
           "lifecycle": "draft",
-          "update_id": "pupd_92f7099f909c4ed3a724a86b748d3452"
+          "update_id": "pupd_130a35e7ebc34a69b21c1a3985821986"
          },
-         "step_id": "pststep_0da1afabda8d4396a258b29a623020e9"
+         "step_id": "pststep_156d978eaf4e41bcb1afc7df1493689d"
         },
         {
          "attempt": 1,
@@ -1462,7 +1462,7 @@
           "reason": "no_eligible_items",
           "skipped": true
          },
-         "step_id": "pststep_a95c8664321c4c5d95de46939766f330"
+         "step_id": "pststep_61e1d2f3fa8a4887b896fdb95a7803dd"
         }
        ],
        "effects_skipped": [
@@ -1481,7 +1481,7 @@
        ],
        "has_real_effects": true,
        "proposal_count": 0,
-       "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57",
+       "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
        "source_count": 5,
        "verified_effects": 3
       }
@@ -1495,7 +1495,7 @@
       "record"
      ]
     },
-    "updated_at": "2026-10-11T23:49:24+00:00",
+    "updated_at": "2026-10-12T18:03:53+00:00",
     "watermark": ""
    },
    "steps": [
@@ -1503,8 +1503,8 @@
      "effect_kind": "phase:observe",
      "error": null,
      "expected": {},
-     "id": "pststep_149fb3ee87224ab9aa907075c9fe0966",
-     "idempotency_key": "pstrun_09be8e93a69c5bc8b648f485823be487:observe",
+     "id": "pststep_25335f293a414df1a63c54622042c9a0",
+     "idempotency_key": "pstrun_0980b2359a655c02ae8383813684dc8c:observe",
      "observed": {
       "coverage": {
        "native:decisions": {
@@ -1545,12 +1545,12 @@
      "effect_kind": "phase:compare",
      "error": null,
      "expected": {},
-     "id": "pststep_ebed03b8490249b7abe8a75389c70e2a",
-     "idempotency_key": "pstrun_09be8e93a69c5bc8b648f485823be487:compare",
+     "id": "pststep_fdd22b291b554b0f8679ec8db16cdd3d",
+     "idempotency_key": "pstrun_0980b2359a655c02ae8383813684dc8c:compare",
      "observed": {
       "proposal_count": 0,
       "proposals": [],
-      "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+      "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
      },
      "phase": "compare",
      "receipt": {},
@@ -1561,12 +1561,12 @@
      "effect_kind": "phase:propose",
      "error": null,
      "expected": {},
-     "id": "pststep_e415a96f47f3406fbfc5193fa5e1b421",
-     "idempotency_key": "pstrun_09be8e93a69c5bc8b648f485823be487:propose",
+     "id": "pststep_6df49a2229484f62b6504089d7d9b672",
+     "idempotency_key": "pstrun_0980b2359a655c02ae8383813684dc8c:propose",
      "observed": {
       "proposal_count": 0,
       "proposals": [],
-      "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+      "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
      },
      "phase": "propose",
      "receipt": {},
@@ -1577,8 +1577,8 @@
      "effect_kind": "phase:act",
      "error": null,
      "expected": {},
-     "id": "pststep_c0803064bd6948ec877a167446603cbb",
-     "idempotency_key": "pstrun_09be8e93a69c5bc8b648f485823be487:act",
+     "id": "pststep_77d46cc814544f02b6ff1b306204c95a",
+     "idempotency_key": "pstrun_0980b2359a655c02ae8383813684dc8c:act",
      "observed": {
       "actions_taken": 3,
       "effect_receipts": [
@@ -1619,7 +1619,7 @@
          "effect": "refresh_sources",
          "partial": false
         },
-        "step_id": "pststep_437272bb0fc54a2f825ce76f03e3a3e9"
+        "step_id": "pststep_ea1053c23e2f49349039635fa67eefa2"
        },
        {
         "attempt": 1,
@@ -1628,9 +1628,9 @@
         "result": {
          "effect": "create_proposals",
          "proposal_count": 0,
-         "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+         "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
         },
-        "step_id": "pststep_412e620ea4b4428a81d6205d69e449c8"
+        "step_id": "pststep_feda2400edfe48be83a56f3966db0e6d"
        },
        {
         "attempt": 1,
@@ -1642,9 +1642,9 @@
          "generator_host": null,
          "generator_model": null,
          "lifecycle": "draft",
-         "update_id": "pupd_92f7099f909c4ed3a724a86b748d3452"
+         "update_id": "pupd_130a35e7ebc34a69b21c1a3985821986"
         },
-        "step_id": "pststep_0da1afabda8d4396a258b29a623020e9"
+        "step_id": "pststep_156d978eaf4e41bcb1afc7df1493689d"
        },
        {
         "attempt": 1,
@@ -1655,7 +1655,7 @@
          "reason": "no_eligible_items",
          "skipped": true
         },
-        "step_id": "pststep_a95c8664321c4c5d95de46939766f330"
+        "step_id": "pststep_61e1d2f3fa8a4887b896fdb95a7803dd"
        }
       ],
       "effects_skipped": [
@@ -1683,10 +1683,10 @@
      "error": null,
      "expected": {
       "effect": "refresh_sources",
-      "project_id": "proj-981f864bbd5a"
+      "project_id": "proj-3c14b973cea9"
      },
-     "id": "pststep_437272bb0fc54a2f825ce76f03e3a3e9",
-     "idempotency_key": "pstrun_09be8e93a69c5bc8b648f485823be487:refresh_sources",
+     "id": "pststep_ea1053c23e2f49349039635fa67eefa2",
+     "idempotency_key": "pstrun_0980b2359a655c02ae8383813684dc8c:refresh_sources",
      "observed": {
       "coverage": {
        "native:decisions": {
@@ -1734,15 +1734,15 @@
      "error": null,
      "expected": {
       "effect": "create_proposals",
-      "prior_review_id": "prev_2caed57fd3e74d5e9a02d51966382b57",
-      "project_id": "proj-981f864bbd5a"
+      "prior_review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
+      "project_id": "proj-3c14b973cea9"
      },
-     "id": "pststep_412e620ea4b4428a81d6205d69e449c8",
-     "idempotency_key": "pstrun_09be8e93a69c5bc8b648f485823be487:create_proposals",
+     "id": "pststep_feda2400edfe48be83a56f3966db0e6d",
+     "idempotency_key": "pstrun_0980b2359a655c02ae8383813684dc8c:create_proposals",
      "observed": {
       "effect": "create_proposals",
       "proposal_count": 0,
-      "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+      "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
      },
      "phase": "act",
      "receipt": {
@@ -1758,24 +1758,24 @@
      "error": null,
      "expected": {
       "effect": "draft_update",
-      "project_id": "proj-981f864bbd5a"
+      "project_id": "proj-3c14b973cea9"
      },
-     "id": "pststep_0da1afabda8d4396a258b29a623020e9",
-     "idempotency_key": "pstrun_09be8e93a69c5bc8b648f485823be487:draft_update",
+     "id": "pststep_156d978eaf4e41bcb1afc7df1493689d",
+     "idempotency_key": "pstrun_0980b2359a655c02ae8383813684dc8c:draft_update",
      "observed": {
       "effect": "draft_update",
       "generator": "deterministic",
       "generator_host": null,
       "generator_model": null,
       "lifecycle": "draft",
-      "update_id": "pupd_92f7099f909c4ed3a724a86b748d3452"
+      "update_id": "pupd_130a35e7ebc34a69b21c1a3985821986"
      },
      "phase": "act",
      "receipt": {
       "attempt": 1,
       "effect_kind": "draft_update",
       "outcome": "applied",
-      "ref": "update:pupd_92f7099f909c4ed3a724a86b748d3452"
+      "ref": "update:pupd_130a35e7ebc34a69b21c1a3985821986"
      },
      "seq": 6,
      "state": "completed"
@@ -1785,10 +1785,10 @@
      "error": null,
      "expected": {
       "effect": "create_door_item",
-      "project_id": "proj-981f864bbd5a"
+      "project_id": "proj-3c14b973cea9"
      },
-     "id": "pststep_a95c8664321c4c5d95de46939766f330",
-     "idempotency_key": "pstrun_09be8e93a69c5bc8b648f485823be487:create_door_item",
+     "id": "pststep_61e1d2f3fa8a4887b896fdb95a7803dd",
+     "idempotency_key": "pstrun_0980b2359a655c02ae8383813684dc8c:create_door_item",
      "observed": {
       "effect": "create_door_item",
       "reason": "no_eligible_items",
@@ -1807,8 +1807,8 @@
      "effect_kind": "phase:verify",
      "error": null,
      "expected": {},
-     "id": "pststep_a03c04b226504f1cb4c1bd6ac094058d",
-     "idempotency_key": "pstrun_09be8e93a69c5bc8b648f485823be487:verify",
+     "id": "pststep_c8134ffedc94451fb54fa577cb8b8ec6",
+     "idempotency_key": "pstrun_0980b2359a655c02ae8383813684dc8c:verify",
      "observed": {
       "actions_taken": 3,
       "effect_receipts": [
@@ -1849,7 +1849,7 @@
          "effect": "refresh_sources",
          "partial": false
         },
-        "step_id": "pststep_437272bb0fc54a2f825ce76f03e3a3e9"
+        "step_id": "pststep_ea1053c23e2f49349039635fa67eefa2"
        },
        {
         "attempt": 1,
@@ -1858,9 +1858,9 @@
         "result": {
          "effect": "create_proposals",
          "proposal_count": 0,
-         "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57"
+         "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c"
         },
-        "step_id": "pststep_412e620ea4b4428a81d6205d69e449c8"
+        "step_id": "pststep_feda2400edfe48be83a56f3966db0e6d"
        },
        {
         "attempt": 1,
@@ -1872,9 +1872,9 @@
          "generator_host": null,
          "generator_model": null,
          "lifecycle": "draft",
-         "update_id": "pupd_92f7099f909c4ed3a724a86b748d3452"
+         "update_id": "pupd_130a35e7ebc34a69b21c1a3985821986"
         },
-        "step_id": "pststep_0da1afabda8d4396a258b29a623020e9"
+        "step_id": "pststep_156d978eaf4e41bcb1afc7df1493689d"
        },
        {
         "attempt": 1,
@@ -1885,7 +1885,7 @@
          "reason": "no_eligible_items",
          "skipped": true
         },
-        "step_id": "pststep_a95c8664321c4c5d95de46939766f330"
+        "step_id": "pststep_61e1d2f3fa8a4887b896fdb95a7803dd"
        }
       ],
       "effects_skipped": [
@@ -1904,7 +1904,7 @@
       ],
       "has_real_effects": true,
       "proposal_count": 0,
-      "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57",
+      "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
       "source_count": 5,
       "verified_effects": 3
      },
@@ -1917,8 +1917,8 @@
      "effect_kind": "phase:record",
      "error": null,
      "expected": {},
-     "id": "pststep_49c32b3c0cab4a38bf15b3e3d74410c2",
-     "idempotency_key": "pstrun_09be8e93a69c5bc8b648f485823be487:record",
+     "id": "pststep_c424fb13c45342daa01205e810256677",
+     "idempotency_key": "pstrun_0980b2359a655c02ae8383813684dc8c:record",
      "observed": {
       "event_recorded": true
      },
@@ -1930,19 +1930,19 @@
    ]
   },
   "start": {
-   "operation_id": "op_f625b4ef6d7a46ecaf05d435e6185d2b",
+   "operation_id": "op_2643031522f34559b725b87616395b17",
    "receipt": null,
-   "run_id": "pstrun_09be8e93a69c5bc8b648f485823be487",
+   "run_id": "pstrun_0980b2359a655c02ae8383813684dc8c",
    "state": "claimed",
    "success": true
   }
  },
  "policy": {
-  "operation_id": "op_abf5ae537e994e7d8f8bb548f8c9f84a",
+  "operation_id": "op_44da79728ceb44f294bbab8d498c379a",
   "policy": {
    "bounds": {},
    "cooldown_seconds": 0,
-   "created_at": "2026-10-11T23:49:24+00:00",
+   "created_at": "2026-10-12T18:03:52+00:00",
    "eligible_effect_kinds": [
     "refresh_sources",
     "create_proposals",
@@ -1950,38 +1950,38 @@
     "create_door_item"
    ],
    "enabled": true,
-   "id": "pstpol_506f16b9b1b34ab29cdd57306a5122f7",
+   "id": "pstpol_033e35c693f14090bac859272a9e5f5f",
    "max_actions_per_run": 10,
    "max_retries": 3,
-   "project_id": "proj-981f864bbd5a",
+   "project_id": "proj-3c14b973cea9",
    "unattended_enabled": false,
-   "updated_at": "2026-10-11T23:49:24+00:00",
+   "updated_at": "2026-10-12T18:03:52+00:00",
    "yolo_flags": {}
   },
   "receipt": {
    "actor_identity": "owner-session",
    "actor_kind": "owner",
    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-   "created_at": 1791762564.6441789,
+   "created_at": 1791828232.934399,
    "delegator_identity": "",
    "delegator_kind": "",
-   "operation_id": "op_abf5ae537e994e7d8f8bb548f8c9f84a",
+   "operation_id": "op_44da79728ceb44f294bbab8d498c379a",
    "outcome": "succeeded",
-   "receipt_id": "rcpt_83b947b9778448db9a4c7aac6666c520",
-   "result_ref": "project:proj-981f864bbd5a",
+   "receipt_id": "rcpt_b5e2c6da86b943b5865d101bbe79f602",
+   "result_ref": "project:proj-3c14b973cea9",
    "state": "succeeded",
-   "target_ref": "project:proj-981f864bbd5a"
+   "target_ref": "project:proj-3c14b973cea9"
   },
   "success": true
  },
- "projectId": "proj-981f864bbd5a",
+ "projectId": "proj-3c14b973cea9",
  "recordedBy": "scripts/record_steward_fixture.py",
  "schema": "steward-recorded@1",
  "update": {
   "update": {
    "body_md": "## Progress\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Risk: Vendor contract lapses -- open, due 2026-01-15\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
-   "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"source_version\":\"project:proj-981f864bbd5a@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"source_version\":\"project:proj-981f864bbd5a@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"source_version\":\"project:proj-981f864bbd5a@r2\"},\"text\":\"Risk: Vendor contract lapses -- open, due 2026-01-15\"}]",
-   "created_at": "2026-10-11T23:49:24+00:00",
+   "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"source_version\":\"project:proj-3c14b973cea9@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"source_version\":\"project:proj-3c14b973cea9@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"source_version\":\"project:proj-3c14b973cea9@r2\"},\"text\":\"Risk: Vendor contract lapses -- open, due 2026-01-15\"}]",
+   "created_at": "2026-10-12T18:03:52+00:00",
    "deliveries": [],
    "draft_revision": 1,
    "fallback_reason": null,
@@ -1991,14 +1991,14 @@
    "generatorModel": null,
    "generator_host": null,
    "generator_model": null,
-   "id": "pupd_4f77a2ffef614b2ebc3024dccad08f39",
+   "id": "pupd_66b6d4bd58484107a1b4ce542b0a6714",
    "lifecycle": "superseded",
-   "project_id": "proj-981f864bbd5a",
+   "project_id": "proj-3c14b973cea9",
    "project_revision": 2,
    "published_at": null,
-   "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57",
-   "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_2caed57fd3e74d5e9a02d51966382b57\",\"week_source_refs\":[]}",
-   "updated_at": "2026-10-11T23:49:24+00:00"
+   "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
+   "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_2c2744a0d829487a85f8c270f0efc66c\",\"week_source_refs\":[]}",
+   "updated_at": "2026-10-12T18:03:53+00:00"
   }
  },
  "updates": {
@@ -2006,8 +2006,8 @@
   "updates": [
    {
     "body_md": "## Progress\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Risk: Vendor contract lapses -- open, due 2026-01-15\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
-    "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"source_version\":\"project:proj-981f864bbd5a@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"source_version\":\"project:proj-981f864bbd5a@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"source_version\":\"project:proj-981f864bbd5a@r2\"},\"text\":\"Risk: Vendor contract lapses -- open, due 2026-01-15\"}]",
-    "created_at": "2026-10-11T23:49:24+00:00",
+    "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"source_version\":\"project:proj-3c14b973cea9@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"source_version\":\"project:proj-3c14b973cea9@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"source_version\":\"project:proj-3c14b973cea9@r2\"},\"text\":\"Risk: Vendor contract lapses -- open, due 2026-01-15\"}]",
+    "created_at": "2026-10-12T18:03:53+00:00",
     "deliveries": [],
     "draft_revision": 2,
     "fallback_reason": null,
@@ -2017,19 +2017,19 @@
     "generatorModel": null,
     "generator_host": null,
     "generator_model": null,
-    "id": "pupd_92f7099f909c4ed3a724a86b748d3452",
+    "id": "pupd_130a35e7ebc34a69b21c1a3985821986",
     "lifecycle": "draft",
-    "project_id": "proj-981f864bbd5a",
+    "project_id": "proj-3c14b973cea9",
     "project_revision": 2,
     "published_at": null,
-    "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57",
-    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_2caed57fd3e74d5e9a02d51966382b57\",\"week_source_refs\":[]}",
-    "updated_at": "2026-10-11T23:49:24+00:00"
+    "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
+    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_2c2744a0d829487a85f8c270f0efc66c\",\"week_source_refs\":[]}",
+    "updated_at": "2026-10-12T18:03:53+00:00"
    },
    {
     "body_md": "## Progress\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Risk: Vendor contract lapses -- open, due 2026-01-15\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
-    "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"source_version\":\"project:proj-981f864bbd5a@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"source_version\":\"project:proj-981f864bbd5a@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a073e2261f19470ba7ddf9c5c00c8bbd\"],\"source_version\":\"project:proj-981f864bbd5a@r2\"},\"text\":\"Risk: Vendor contract lapses -- open, due 2026-01-15\"}]",
-    "created_at": "2026-10-11T23:49:24+00:00",
+    "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"source_version\":\"project:proj-3c14b973cea9@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"source_version\":\"project:proj-3c14b973cea9@r2\"},\"text\":\"Risk [high]: Vendor contract lapses -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_a258e8dfd43c447892406737c4605b1f\"],\"source_version\":\"project:proj-3c14b973cea9@r2\"},\"text\":\"Risk: Vendor contract lapses -- open, due 2026-01-15\"}]",
+    "created_at": "2026-10-12T18:03:52+00:00",
     "deliveries": [],
     "draft_revision": 1,
     "fallback_reason": null,
@@ -2039,14 +2039,14 @@
     "generatorModel": null,
     "generator_host": null,
     "generator_model": null,
-    "id": "pupd_4f77a2ffef614b2ebc3024dccad08f39",
+    "id": "pupd_66b6d4bd58484107a1b4ce542b0a6714",
     "lifecycle": "superseded",
-    "project_id": "proj-981f864bbd5a",
+    "project_id": "proj-3c14b973cea9",
     "project_revision": 2,
     "published_at": null,
-    "review_id": "prev_2caed57fd3e74d5e9a02d51966382b57",
-    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_2caed57fd3e74d5e9a02d51966382b57\",\"week_source_refs\":[]}",
-    "updated_at": "2026-10-11T23:49:24+00:00"
+    "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
+    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_2c2744a0d829487a85f8c270f0efc66c\",\"week_source_refs\":[]}",
+    "updated_at": "2026-10-12T18:03:53+00:00"
    }
   ]
  },
@@ -2058,7 +2058,7 @@
     "circuit_opened_at": null,
     "circuit_state": "closed",
     "connector_id": "gh",
-    "created_at": "2026-10-11 23:49:24",
+    "created_at": "2026-10-12 18:03:53",
     "enabled": true,
     "evaluation_cadence_minutes": 60,
     "id": "w-gh-record",
@@ -2070,7 +2070,7 @@
     "mode": "",
     "name": "gh pull_requests",
     "next_evaluation_at": null,
-    "project_id": "proj-981f864bbd5a",
+    "project_id": "proj-3c14b973cea9",
     "provider_connection_id": null,
     "query": {
      "repository": "acme/payments"
@@ -2085,7 +2085,7 @@
     "test_state": "",
     "trigger_json": "{}",
     "trigger_kind": "",
-    "updated_at": "2026-10-11 23:49:24"
+    "updated_at": "2026-10-12 18:03:53"
    }
   ]
  }
