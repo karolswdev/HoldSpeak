@@ -148,10 +148,12 @@ def start_intel_queue_conductor(
         return _conductor
 
 
-# A drain iteration can be inside a model call.  Counsel P1-1: the hub must
-# not hand the database owner lock back while a daemon thread is still writing
-# rows, so the join is long enough for an ordinary provider call to finish.
-STOP_JOIN_SECONDS = 60.0
+# A drain iteration can be inside a model call.  Counsel P1-1 asked for a join
+# long enough for a provider call to finish. PHILO-17 (owner: Ctrl-C has to
+# work): TERM and INT stop the hub within seconds. The join is short; a job
+# still in flight is named in the log and the executor lease takeover
+# recovers it on the next start (the path this stop already took after 60 s).
+STOP_JOIN_SECONDS = 3.0
 
 
 def stop_intel_queue_conductor(*, timeout: float = STOP_JOIN_SECONDS) -> None:
