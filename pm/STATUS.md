@@ -76,6 +76,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- flakes (bus) — test_live_bus boots on its own DB and HOME and a free port (it shared the shard HOME's default DB and a fixed 8917; both reproduced red); roomInFlight.f2 waits take 5 s (not reproduced in 240 repeats).
+- #1124 — flakes (still): late first reads say they are reading (speech row, destinations, People 1:1 caption); four held-read cases fence it; FirstWords and needsYou.app test races fixed.
 - flakes (still) — the desk sweep `still` flakes were late first reads: the speech row (Live 46 px, Speak 58 px), the destinations group (Settings 135-764 px) and the People 1:1 caption (Conductor drawer 24 px). Each now says it is reading (aria-busy) until its first read ends; four held-read cases fence it (red before, green after).
 - #1122 — flake: the Runs on Try it wait read `REACHED · qwen3.8 27B` exactly; the probe adds `· N MS` when it measures over 0 ms (under load only). The fake engine answers in 5 ms; the wait reads the ms token.
 - #1120 — flake: the person window kept Prep over his first tab press (the mount lens effect ran after the press); the mount run now only keeps the place.
