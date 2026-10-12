@@ -942,3 +942,34 @@
   font-weight: 500;
 }
 .desk-next .speak-phase[data-tone="warn"] { --lamp: var(--lamp-warn); color: var(--wb-warn-ink); }
+
+/* REFIT r2: the Journal and Learned rows in Today's type: the words 13
+   semibold, the time and the facts mono 12 with tabular numerals; a row
+   lifts under the pointer. */
+.desk-next .speak-journal .surface-ledger-primary,
+.desk-next .speak-learned .surface-ledger-primary {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .speak-journal .surface-ledger-time,
+.desk-next .speak-journal .surface-ledger-cell,
+.desk-next .speak-learned .surface-ledger-cell {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-muted);
+}
+.desk-next .speak-journal .surface-ledger-line,
+.desk-next .speak-learned .surface-ledger-line {
+  border-radius: 3px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.desk-next .speak-journal .surface-ledger-line:hover,
+.desk-next .speak-learned .surface-ledger-line:hover {
+  background: #ffffff;
+  box-shadow: var(--alive-lift);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .speak-journal .surface-ledger-line,
+  .desk-next .speak-learned .surface-ledger-line { transition: none; }
+}

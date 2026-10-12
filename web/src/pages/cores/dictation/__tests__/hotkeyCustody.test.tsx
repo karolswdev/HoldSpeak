@@ -186,7 +186,7 @@ describe("the HOTKEY block on the Speak face", () => {
     const row = await screen.findByTestId("speak-permission-input_monitoring");
     expect(within(row).getByText("INPUT MONITORING")).toBeTruthy();
     expect(within(row).getByText("HOTKEY")).toBeTruthy();
-    expect(within(row).getByText("DENIED")).toBeTruthy();
+    expect(within(row).getByText("Denied")).toBeTruthy();
     // The walk, as tokens rather than a sentence.
     expect(within(row).getByText("SYSTEM SETTINGS")).toBeTruthy();
     expect(within(row).getByText("PRIVACY & SECURITY")).toBeTruthy();
@@ -203,7 +203,7 @@ describe("the HOTKEY block on the Speak face", () => {
     });
     render(<SpeakFace />);
     const block = await screen.findByTestId("speak-hotkey");
-    expect(within(block).getByText("UNAVAILABLE")).toBeTruthy();
+    expect(within(block).getByText("Unavailable")).toBeTruthy();
     expect(within(block).getByTestId("speak-hotkey-reason").textContent).toBe(
       "PYNPUT MISSING",
     );
@@ -222,7 +222,7 @@ describe("the HOTKEY block on the Speak face", () => {
     });
     render(<SpeakFace />);
     const block = await screen.findByTestId("speak-hotkey");
-    expect(within(block).getAllByText("UNKNOWN")).toHaveLength(4); // the key + three grants
+    expect(within(block).getAllByText("Unknown")).toHaveLength(4); // the key + three grants
   });
 
   it("offers ONE verb, and it re-reads the grant the owner just gave", async () => {

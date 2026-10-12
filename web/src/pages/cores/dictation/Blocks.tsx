@@ -216,9 +216,6 @@ export function Blocks() {
           ) : (
             <SurfaceLibraryGhost
               label="New block"
-              hint={
-                rows.length ? undefined : "No routing blocks on this scope yet"
-              }
               onCreate={() => setDrafting(true)}
             />
           )}

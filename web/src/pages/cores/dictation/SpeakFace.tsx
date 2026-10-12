@@ -391,6 +391,12 @@ export function SpeakFace() {
   );
 }
 
+/** A state token in plain words: `NOT SET` reads "Not set" (Today's pills). */
+function plain(token: string): string {
+  const words = token.replace(/_/g, " ").trim().toLowerCase();
+  return words ? words[0].toUpperCase() + words.slice(1) : words;
+}
+
 /** The hotkey's display (`⌥R`) from readiness, also when the block is silent. */
 function hotkeyDisplay(readiness: unknown): string {
   const block = (readiness as Record<string, unknown> | null | undefined)?.hotkey as
@@ -741,7 +747,7 @@ function EngineRow({
       <div className="speak-engine" data-engine-state="not-set">
         <span className="speak-engine-caption">Engine</span>
         <span className="speak-engine-dot">{"·"}</span>
-        <StateChip state="warning" label="NOT SET" />
+        <StateChip state="warning" label="Not set" />
         <span className="speak-transport-spacer" />
         <Button variant="ghost" dense onClick={openConcierge}>
           Choose
@@ -763,7 +769,7 @@ function EngineRow({
           <EgressChip label={egress} />
         ) : null}
         <span className="speak-transport-spacer" />
-        <span className="speak-engine-checking">CHECKING...</span>
+        <span className="speak-engine-checking">Checking</span>
       </div>
     );
   }
@@ -777,7 +783,7 @@ function EngineRow({
         <span className="speak-engine-name">{engine}</span>
         {egress ? <EgressChip label={egress} /> : null}
         <span className="speak-transport-spacer" />
-        <StateChip state="warning" label="UNKNOWN" />
+        <StateChip state="warning" label="Unknown" />
         <Button variant="ghost" dense onClick={openConcierge}>
           Choose
         </Button>
@@ -830,7 +836,7 @@ function EngineRow({
       <span className="speak-engine-name">{engine}</span>
       <EgressChip label={egress} />
       <span className="speak-transport-spacer" />
-      <StateChip state={chipState} label={chipLabel} />
+      <StateChip state={chipState} label={plain(chipLabel)} />
       {showChoose ? (
         <Button variant="ghost" dense onClick={openConcierge}>
           Choose
@@ -875,7 +881,7 @@ function HotkeyRow({
           ) : null}
         </span>
         <span className="speak-hotkey-tail">
-          <StateChip state={custody.kind} label={custody.token} />
+          <StateChip state={custody.kind} label={plain(custody.token)} />
           <Button
             variant="ghost"
             dense
@@ -899,7 +905,7 @@ function HotkeyRow({
             ) : null}
           </span>
           <span className="speak-hotkey-tail">
-            <StateChip state={row.kind} label={row.token} />
+            <StateChip state={row.kind} label={plain(row.token)} />
           </span>
           <span className="speak-hotkey-path">
             {row.path.map((token, i) => (

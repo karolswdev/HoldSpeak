@@ -334,7 +334,7 @@ describe("the Speak window at rest, over the hub's cold answers", () => {
     await waitFor(() => expect(container.querySelector(".speak-engine .surface-state-chip")).toBeTruthy());
     const engine = container.querySelector(".speak-engine")!;
     expect(engine.getAttribute("data-engine-state")).not.toBe("ready");
-    expect(engine.querySelector(".surface-state-chip")!.textContent).not.toContain("READY");
+    expect(engine.querySelector(".surface-state-chip")!.textContent).not.toMatch(/ready/i);
   });
 });
 
@@ -529,9 +529,9 @@ describe("the HOTKEY custody block, from the hub's readiness answers", () => {
       const row = await screen.findByTestId(`speak-permission-${pid}`);
       expect(row.textContent).toContain("SYSTEM SETTINGS");
       expect(row.textContent).toContain("PRIVACY & SECURITY");
-      expect(row.textContent).toContain("DENIED");
+      expect(row.textContent).toContain("Denied");
     }
-    expect(block.textContent).toContain("UNAVAILABLE");
+    expect(block.textContent).toContain("Unavailable");
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
@@ -542,15 +542,15 @@ describe("the HOTKEY custody block, from the hub's readiness answers", () => {
     expect(screen.queryByTestId("speak-permission-microphone")).toBeNull();
     expect(screen.queryByTestId("speak-permission-accessibility")).toBeNull();
     const head = block.querySelector(".speak-hotkey-head")!;
-    expect(head.textContent).toContain("BLOCKED");
-    expect(head.textContent).not.toContain("ACTIVE");
+    expect(head.textContent).toContain("Blocked");
+    expect(head.textContent).not.toContain("Active");
   });
 
   it("never asked: NOT ASKED, with Accessibility read as DENIED beside it", async () => {
     replayCustody("never_asked");
     const block = await custodyBlock();
-    expect(block.textContent).toContain("NOT ASKED");
-    expect((await screen.findByTestId("speak-permission-accessibility")).textContent).toContain("DENIED");
+    expect(block.textContent).toContain("Not asked");
+    expect((await screen.findByTestId("speak-permission-accessibility")).textContent).toContain("Denied");
   });
 
   it("the listener failed with every grant held: the reason token, never the exception, and no permission rows", async () => {
