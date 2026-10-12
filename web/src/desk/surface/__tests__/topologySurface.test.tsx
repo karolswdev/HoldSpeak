@@ -421,5 +421,10 @@ describe("TopologySurface — fit to a narrow box (PHILO-17, owner: shrink it)",
     expect(narrow.nodeW).toBeGreaterThanOrEqual(128);
     const right = Math.max(...narrow.nodes.map((n) => n.x)) + narrow.nodeW - Math.min(...narrow.nodes.map((n) => n.x));
     expect(right).toBeLessThanOrEqual(363 - 48);
+    // Astra on #1113: two cards side by side would sit closer than a label
+    // needs, so the narrow map stacks, one card per row, never touching.
+    expect(narrow.mode).toBe("stack");
+    const ys = narrow.nodes.map((n) => n.y).sort((a, b) => a - b);
+    for (let i = 1; i < ys.length; i++) expect(ys[i] - ys[i - 1]).toBeGreaterThanOrEqual(80 + 40);
   });
 });

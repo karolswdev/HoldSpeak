@@ -95,6 +95,17 @@
   pointer-events: none;
   z-index: var(--z-base, 0);
 }
+/* PHILO-17 (Astra on #1113): a label placed in a gap (fitLayout) wraps to
+   the gap's width and is never under a card; a centred one centres on its
+   place, a stack one starts at its card's left edge. */
+.surface-topology-flow-label:not([data-centred]) {
+  transform: none;
+}
+.surface-topology-flow-label[data-wrap] {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
 
 /* ── Node cards (DOM elements over SVG) ── */
 
