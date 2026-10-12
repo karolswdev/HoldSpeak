@@ -3,31 +3,40 @@
 This file is loaded automatically by Claude Code when it opens this
 repo. It tells you (the agent) the rules of the road.
 
-## How we work now (owner ruling 2026-10-03)
+## How we work now: the fast cycle (owner ruling 2026-10-12)
 
-The owner, 2026-10-03: "I feel like we've been paying the price of
-working under delivery workbench that has been bogging us down
-BIG-FREAKIN'-TIME ... I want us to move fast. Super-fast."
+The owner, 2026-10-12: "I am still very unhappy with how rigidly we have been
+going forward with everything… it doesn't seem to be an aggressive, yet with
+checks and balances methodology… How can we make fast iterations here without
+waiting HOURS for something of yours to finally hit the tape?" He adopted the
+fast cycle the same day. It replaces the 2026-10-03 rules (one Astra round
+BEFORE merge; the full suite before merge).
 
-The commit gate is removed. The rules are:
-
-1. Branch from `main` in your own worktree. Commit plainly.
-2. Open a PR.
-3. Astra gives one final review round, when the work is finished (owner ruling
-   2026-10-03: "maybe we chill out about two brains? Only one final review
-   round? With a maximum of 2 iterations?"). At most 2 iterations: the
-   review, then one re-check of the fixes. After the second iteration the
-   author merges; anything still open goes to `pm/STATUS.md`. No reviews
-   of plans, briefs, canvases or work in progress.
-4. Merge. CI does not gate the merge.
-5. At merge, update `pm/STATUS.md` (open work, last merged).
+1. **Small changes.** One change = one app or one concern, a few files. Branch
+   from `main` in your own worktree. Commit plainly.
+2. **The quick check before merge, 2–4 minutes:** `scripts/quick_check.sh`
+   (the web build, `vitest related` on the changed web files, pytest on the
+   affected test files, the desk sweep at 1440 and 393, the canon guards; all
+   under the lock with an isolated HOME). Green = open the PR and merge it at
+   once. Red = fix first.
+3. **Main is the owner's desk.** Every merge to main redeploys his running
+   desk (the orchestrator's main watcher). There is no integration branch and
+   no batch to wait for.
+4. **The tape runs after the merge.** The watcher runs the WHOLE suite on each
+   new main head. A red is traced to the merge that caused it and fixed forward
+   at once; it does not block other merges.
+5. **Astra reviews after the merge.** She reviews each merged change within
+   minutes; her findings are fixed forward. Only a security or data-loss
+   finding reverts the merge (`git revert`, one command).
+6. **Kept:** tests never touch the owner's real HOME, DB or Keychain; every
+   merge is revertible; if main breaks his desk, the desk goes back to the last
+   green head. Update `pm/STATUS.md` at merge (open work, last merged).
 
 - No contracts, no evidence files, no per-story status flips.
-- A face (anything a user sees) gets a canvas before build; the owner
-  ratifies the canvas; build what was ratified (`docs/internal/UX-CANON.md`).
-- Run the tests that cover your change, with an isolated HOME (see
-  "Test commands"). Read the output.
-- Never delete; park instead. Never push `main` directly.
+- A face (anything a user sees): the owner judges it LIVE on his desk; a
+  mockup is only for picking a direction, and then in our own material
+  (`docs/internal/UX-CANON.md`; the delight ruling of 2026-10-11).
+- Never delete; park instead. Never push `main` directly (merge via PR).
 - The git hooks are parked in `.githooks/_parked/` (see its README).
   The `dw` CLI still runs, to read the old roadmap: `.githooks/dw next`,
   `.githooks/dw context`.
@@ -161,17 +170,14 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   A worker never runs FAST; a worker waits for the lock rather than running
   a smaller suite in parallel. Load above 60 means someone skipped the lock.
 
-- **THE TEST DOCTRINE (owner order 2026-10-08: "the Muad'Dib who takes over
-  is the one calling the system-level tests"; `docs/internal/HANDOVER-MUADDIB-XXXVI.md`
-  Part II).** System-level runs (FAST, the scoped glass set,
-  `check_web_baseline --run`, the ratchet over the tree, atlas, census) are the
-  ORCHESTRATOR's: serial, once per PR, on the final head after Astra's verdict.
-  A worker's test budget is written in its brief IN FILES (a backend change:
-  the two or three unit files beside it; a face change: its vitest file plus
-  ONE glass file at 1440 and 393; a copy change: one vitest file); a worker
+- **THE TEST DOCTRINE (owner order 2026-10-08, revised by the fast cycle
+  2026-10-12).** Before merge: `scripts/quick_check.sh` only. The system-level
+  runs (FAST, the whole browser suite, `check_web_baseline --run`) are the
+  orchestrator's main watcher's, on each new main head, after the merge. A
+  worker's own test budget is still written in its brief IN FILES; a worker
   that wants a wider run says so in its report. A new worktree is synced with
   `uv sync --extra dev` ONLY: `--all-extras` exhausts an xdist worker's file
-  descriptors seven minutes into FAST, and plain `uv sync` strips pytest.
+  descriptors, and plain `uv sync` strips pytest.
 
 - **THE TEST DIET (owner approval 2026-10-11: "each time we run a test suite it
   fucking takes hours … didn't we just build out a declarative compositor framework
