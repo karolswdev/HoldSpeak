@@ -920,20 +920,29 @@ HELD = 2500
     ("meeting", ["/api/decisions"]),
     ("needs", ["/api/desk/needs-you"]),
     ("surface-companion", ["/api/delivery/"]),
+    # PHILO-17 flakes: the speech row (useSpeechSetup) drew late and moved
+    # the Live deck 46 px; the destinations arrival scrolled the Settings
+    # body 764 px; the People drawer's 1:1 caption moved the Conductor 24 px.
+    ("surface-live", ["/api/setup/local-ai"]),
+    ("surface-dictation", ["/api/setup/local-ai"]),
+    ("surface-settings@integration:destinations", ["/api/channels/destinations"]),
+    ("desk", ["/api/people/readiness"]),
 ])
 def test_a_held_first_read_moves_nothing(desk: dict[str, Any], pw_browser: Any, case_id: str, held: list[str]) -> None:
     [(_, wid, scope)] = [c for c in CASES if c[0] == case_id]
     wid, scope = wid.format(**desk), (scope.format(**desk) if scope else None)
     base = desk["base"]
     clear_hub_windows_http(base, TOKEN)
-    _hub_open(base, wid, scope)
+    if wid:
+        _hub_open(base, wid, scope)
     ctx, page, _, _ = _page(pw_browser, 1440, base)
     try:
         page.add_init_script(_HOLD_JS % json.dumps([held, HELD]))
         page.goto(f"{base}/?token={TOKEN}", wait_until="load")
         _normal_chair(page)
-        page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
-        moved = [r for r in page.evaluate(RECORD_JS, [f'[id="{wid}"]', HELD + 2000]) if r["worst"] > TOLERANCE]
+        page.wait_for_function(SETTLED_JS, arg=wid or None, timeout=T)
+        sel = f'[id="{wid}"]' if wid else "[data-testid=desk-screen]"
+        moved = [r for r in page.evaluate(RECORD_JS, [sel, HELD + 2000]) if r["worst"] > TOLERANCE]
         assert not moved, f"{case_id} with {held} held {HELD} ms: {moved}"
     finally:
         ctx.close()

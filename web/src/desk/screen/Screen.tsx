@@ -26,7 +26,7 @@ import { useCompactViewport } from "../useCompactViewport";
 import { composeScreen, screenIsBare } from "./compose";
 import { layoutScreen } from "./layout";
 import { retryPeople, retryProject, useScreenMembers } from "./members";
-import { useNextOneOnOne } from "./nextOneOnOne";
+import { useNextOneOnOneRead } from "./nextOneOnOne";
 import { openTarget } from "./open";
 import { SCREEN_HOST, HandConfirmSlot, handOriginOfRef, handSourceProps, handTargetProps, useDropHand } from "../hand";
 import { useAtmospherePreference } from "../gl/atmospherePreference";
@@ -65,7 +65,7 @@ export function Screen() {
   );
   const members = useScreenMembers(projects);
   // PHILO-17 (doors): the next 1:1 moved from the Dock to the People drawer.
-  const nextOneOnOne = useNextOneOnOne();
+  const { label: nextOneOnOne, reading: peopleReading } = useNextOneOnOneRead();
 
   const objects = useMemo(() => {
     const needsRefs = new Set<string>();
@@ -163,6 +163,7 @@ export function Screen() {
             <div
               key={o.key}
               className={`desk-screen-cell${at ? " desk-screen-placed" : ""}`}
+              aria-busy={o.key === "drawer:people" && peopleReading ? true : undefined}
               style={at ? { left: at.x, top: at.y } : undefined}
               onContextMenu={(event) => {
                 if (openMenu(o.key, event.clientX, event.clientY)) event.preventDefault();
