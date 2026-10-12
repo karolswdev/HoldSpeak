@@ -82,13 +82,14 @@ describe("the roster (Agents) on the product seed", () => {
     const floor = [...new Set(recipes.wire.recipes.filter((r) => !r.deleted).map((r) => String(r.name)))].sort();
     expect(floor).toEqual(expect.arrayContaining(["Chase", "Desk", "Draft"]));
     await screen.findByText("Chase");
-    const crew = [...container.querySelectorAll(".surface-ledger-rows")].at(-1)!;
-    const shown = [...new Set([...crew.querySelectorAll(".surface-primary, .surface-ledger-primary")]
+    const list = container.querySelector("[data-testid='agents-list']")!;
+    const shown = [...new Set([...list.querySelectorAll(".ag-row-title")]
       .map((el) => (el.textContent ?? "").trim()).filter(Boolean))].sort();
     expect(shown).toEqual(floor);
-    // No repository work and no pull request receipts: the wing is withheld.
-    expect(screen.queryByRole("tab", { name: "Delivery" })).toBeNull();
-    expect(screen.getAllByRole("tab", { name: "Roster" })).toHaveLength(1);
+    // No repository work and no pull request receipts: the wing is withheld,
+    // and one wing is no choice (PHILO-17): no wing strip at all.
+    await waitFor(() => expect(screen.queryByRole("tab", { name: "Delivery" })).toBeNull());
+    expect(screen.queryAllByRole("tab")).toHaveLength(0);
   });
 });
 

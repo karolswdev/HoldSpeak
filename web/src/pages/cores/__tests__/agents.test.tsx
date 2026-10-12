@@ -66,12 +66,12 @@ beforeEach(() => {
 describe("Agents in the Conductor (HS-100-09, re-anchored by PHILO-14 C4)", () => {
   it("renders blocked sessions before running, with the Answer verb", async () => {
     render(<ConductorWindow />);
-    const blocked = await screen.findByRole("button", { name: /^Claude Code: holdspeak, CODER, ASKS/ });
-    const running = screen.getByRole("button", { name: /^Claude Code: holdspeak-mobile, CODER, WORKS/ });
+    // PHILO-17 THE REFIT: a row's name is the item (here the project) it works on.
+    const blocked = await screen.findByRole("button", { name: "holdspeak" });
+    const running = screen.getByRole("button", { name: "holdspeak-mobile" });
     // Blocked-first is the pinned ordering contract.
     expect(blocked.compareDocumentPosition(running) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // The blocked agent's verb is Answer: it opens the session's answer well.
-    fireEvent.click(blocked);
+    // The blocked agent's verb is Answer, on its plate: it opens the session's answer well.
     fireEvent.click(screen.getByRole("button", { name: "Answer" }));
     expect(openCoderSession).toHaveBeenCalledWith("claude:blocked-1", { answer: true });
     // The head counts honestly: one at work, one asks. Phase 16 (the
@@ -84,7 +84,7 @@ describe("Agents in the Conductor (HS-100-09, re-anchored by PHILO-14 C4)", () =
 
   it("never says Personas", async () => {
     const { container } = render(<ConductorWindow />);
-    await screen.findByRole("button", { name: /^Claude Code: holdspeak, CODER/ });
+    await screen.findByRole("button", { name: "holdspeak" });
     expect(container.textContent).not.toMatch(/personas?/i);
   });
 });

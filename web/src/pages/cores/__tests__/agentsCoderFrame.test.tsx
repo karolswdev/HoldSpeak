@@ -57,9 +57,11 @@ const coderCalls = () =>
 describe("Agents window follows the coder frame (Conductor K3)", () => {
   it("re-reads on a coder frame and not on another intel_status frame", async () => {
     render(<CompanionCore />);
-    await screen.findByText("holdspeak");
+    // PHILO-17 THE REFIT: a coder at work is a count on the head; one that
+    // asks is a row with its question and Answer.
+    await waitFor(() => expect(document.body.textContent).toContain("at work"));
     const before = coderCalls();
-    expect(screen.queryByText("Drop the old migration?", { selector: "pre" })).toBeNull();
+    expect(screen.queryByTestId("agents-ask")).toBeNull();
 
     act(() => emit({ type: "intel_status", data: { scope: "belt" } }));
     expect(coderCalls()).toBe(before);
@@ -67,6 +69,6 @@ describe("Agents window follows the coder frame (Conductor K3)", () => {
     blocked = true;
     act(() => emit({ type: "intel_status", data: { state: "ready", scope: "coder", capability: { kind: "coder", id: "claude:s1" } } }));
     await waitFor(() => expect(coderCalls()).toBe(before + 1));
-    expect(await screen.findByText("Drop the old migration?", { selector: "pre" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId("agents-ask").textContent).toContain("Drop the old migration?"));
   });
 });

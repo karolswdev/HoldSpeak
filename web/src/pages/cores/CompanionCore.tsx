@@ -2,47 +2,128 @@
  * live in the Conductor drawer now (`desk/conductor/`); the Dock's Agents
  * entry became Conductor. This file stays whole: its route `/companion`
  * still opens it, but no Dock, Go list, shortcut, mark or link reaches it.
- * Its other rows live elsewhere: Delivery and PR receipts on the desk list
- * view (DeskListView), saved agents (recipes) as desk objects. */
+ *
+ * PHILO-17 THE REFIT: the window reads like Today. Canon words: agents are
+ * the saved agents he authors; coders are the live coding sessions (they
+ * live in the Conductor). The window leads with a coder that asks (its
+ * question and Answer, one press), then the agents as quiet rows, and
+ * Delivery as its own wing in plain words. */
+import "./companion.css";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useEffect, useMemo, useState } from "react";
-import { countLabel } from "../../desk/surface";
 import { openCoderSession, openPersona } from "../../desk/shell";
 import type { CoreProps, RecipesResponse } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { asRows, rowId, useResource } from "../pageSupport";
-import {
-  SurfaceFacts,
-  SurfaceLedger,
-  SurfaceLedgerRow,
-  SurfaceState,
-} from "../../desk/surface/Surface";
-import { FoldGadget, LampGadget } from "../../desk/surface/gadgets";
-import { presentValue } from "../../desk/surface/format";
+import { SurfaceState } from "../../desk/surface/Surface";
+import { objectSprite } from "../../desk/surface/objects/kinds";
 import { AgentWords } from "../../desk/components/AgentWords";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { renderHeroSlot } from "./core-layout";
-import { DeliveryListSection } from "../../desk/components/DeliveryListSection";
 import { PrReceiptsSection } from "../../desk/components/PrReceiptsSection";
-import { deliveryListRows, useDelivery } from "../../desk/delivery";
+import { deliveryListRows, useDelivery, type DeliveryListRow } from "../../desk/delivery";
+import { useDeliveryDossier } from "../../desk/deliveryDossier";
+import { targetHandle, useDeliveryFactory } from "../../desk/deliveryFactory";
+import { useDeliveryTerminal } from "../../desk/deliveryTerminal";
 import { usePrReceipts } from "../../desk/prReceipts";
+import { useConductor } from "../../desk/conductor/store";
+import { AGENT_NAME, type AgentId } from "../../desk/firstrun/agentsStep";
+import { useDesk } from "../../desk/store";
 import {
   liveAgentSessions,
   useAgentFlights,
   useAgentFlightsLive,
+  type AgentFlight,
   type CoderSessionRow,
 } from "../../desk/agentFlights";
 
 const WINGS = [
-  { id: "roster", label: "Roster" },
+  { id: "agents", label: "Agents" },
   { id: "delivery", label: "Delivery" },
 ];
 
 /** The wings are drawn after this long even when a read is still out. */
 const WINGS_READS_CAP_MS = 8000; // the Room's cap (roomReads.ts ROOM_READS_CAP_MS)
 
+/** `working` → `Working`; a wire state in plain words. */
+function stateWord(state: string): string {
+  const word = state.replace(/[_-]+/g, " ").trim();
+  return word ? word.charAt(0).toUpperCase() + word.slice(1) : "";
+}
+
+/** The tone of a delivery state's pill. */
+function stateTone(state: string): "ok" | "warn" | "danger" | "info" | "idle" {
+  const s = state.toLowerCase();
+  if (/(done|merged|closed|complete)/.test(s)) return "ok";
+  if (/(fail|error|blocked)/.test(s)) return "danger";
+  if (/(wait|review|held|ask)/.test(s)) return "warn";
+  if (/(work|run|progress|start)/.test(s)) return "info";
+  return "idle";
+}
+
+/** A Delivery row in plain words: the item's title (the coder's launch
+ *  names it when the row only has an id), the state as a pill. */
+export function deliveryRowWords(row: DeliveryListRow, flights: readonly AgentFlight[]): { title: string; state: string; meta: string } {
+  if (row.ref.type === "story") {
+    return { title: row.detail || row.label, state: "", meta: row.label };
+  }
+  const id = row.label.replace(/^action-/, "");
+  const flight = flights.find((f) => f.originRef === `action:${id}` || f.id === id);
+  const state = row.detail.split(" · ")[0] ?? "";
+  return {
+    title: flight?.title || row.label,
+    state,
+    meta: flight ? AGENT_NAME[flight.agent as AgentId] ?? flight.agent : "Coder",
+  };
+}
+
+function DeliveryWork() {
+  const sources = useDelivery((s) => s.sources);
+  const attempts = useDelivery((s) => s.attempts);
+  const targets = useDeliveryFactory((s) => s.targets);
+  const flights = useAgentFlights((s) => s.flights);
+  const rows = deliveryListRows(sources, attempts);
+  if (!rows.length) return null;
+  const openRow = (row: DeliveryListRow) => {
+    const ref = row.ref;
+    if (ref.type === "story") {
+      void useDeliveryDossier.getState().openStory(ref.project, ref.storyId, ref.sourceId);
+      return;
+    }
+    const target = ref.targetId ? targets.find((t) => t.targetId === ref.targetId) : null;
+    if (target) useDeliveryTerminal.getState().open(targetHandle(target));
+  };
+  return (
+    <section className="ag-section" aria-label="Delivery work" data-testid="agents-delivery">
+      <h3 className="ag-cap">WORK</h3>
+      <ul className="ag-well">
+        {rows.map((row) => {
+          const words = deliveryRowWords(row, flights);
+          const openable = row.ref.type === "story" || Boolean(row.ref.targetId && targets.some((t) => t.targetId === (row.ref as { targetId?: string }).targetId));
+          return (
+            <li key={row.key} className="ag-row" data-testid="agents-delivery-row">
+              <div className="ag-row-text">
+                <span className="ag-row-name">{words.title}</span>
+                <span className="ag-row-meta">
+                  {words.state ? <span className="ag-pill" data-tone={stateTone(words.state)}>{stateWord(words.state)}</span> : null}
+                  <span>{words.meta}</span>
+                </span>
+              </div>
+              {openable ? (
+                <Button dense variant="ghost" onClick={() => openRow(row)}>
+                  Open
+                </Button>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export function CompanionCore({ hero }: CoreProps) {
-  const [chosenView, setView] = useState("roster");
+  const [chosenView, setView] = useState("agents");
   // The Delivery wing shows repository work and pull request receipts. With
   // neither, both sections draw nothing and the wing was a blank window
   // (inventory 2026-10-03). An empty wing is withheld.
@@ -55,13 +136,10 @@ export function CompanionCore({ hero }: CoreProps) {
   const hasDelivery =
     deliveryListRows(deliverySources, deliveryAttempts).length > 0 ||
     prSources.some((source) => source.prs !== null || source.status !== "unavailable");
-  const wings = hasDelivery ? WINGS : WINGS.filter((wing) => wing.id !== "delivery");
-  const view = hasDelivery ? chosenView : "roster";
-  const [doorOpen, setDoorOpen] = useState(false);
-  const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  const view = hasDelivery ? chosenView : "agents";
   // PHILO-17 (the desk sweep): the wings are drawn once the reads that
   // decide the Delivery wing have ended (or at the cap); a Delivery wing
-  // that arrived late moved Roster and the door 44 px (UX-CANON D).
+  // that arrived late moved the window's words 44 px (UX-CANON D).
   const prLoaded = usePrReceipts((s) => s.loaded);
   const deliveryRead = useDelivery((s) => s.updatedAt !== null || s.error !== "");
   // The wings wait on the delivery read, so this face starts it when nothing
@@ -76,166 +154,119 @@ export function CompanionCore({ hero }: CoreProps) {
     return () => window.clearTimeout(timer);
   }, []);
   const wingsKnown = wingsCapped || (prLoaded && deliveryRead);
+  // One wing is no choice: the strip shows only with Delivery.
   useWindowWings(
-    !wingsKnown ? null : <SurfaceWings
-      wings={wings}
-      active={view}
-      onChange={setView}
-      door="How it connects"
-      doorOpen={doorOpen}
-      onDoor={() => setDoorOpen((v) => !v)}
-    />,
-    [view, doorOpen, hasDelivery, wingsKnown],
+    !wingsKnown || !hasDelivery ? null : <SurfaceWings wings={WINGS} active={view} onChange={setView} />,
+    [view, hasDelivery, wingsKnown],
   );
   const recipes = useResource<RecipesResponse>("/api/recipes", {});
   // Conductor F2 (K4c): every live session, from `/api/coders/sessions`
-  // (the agents store). `/api/coders/status` lists only sessions that set
-  // `awaiting_response` in the last 30 minutes, so this roster read
-  // "No sessions" while agents worked. The store re-reads on the
-  // `scope:"coder"` frame (Conductor K3); the last read stays.
+  // (the agents store). The store re-reads on the `scope:"coder"` frame
+  // (Conductor K3); the last read stays.
   useAgentFlightsLive();
   const sessionRows = useAgentFlights((s) => s.sessions);
-  // Inventory 2026-10-03 (defect 9): the roster dropped every seeded agent
-  // (Chase, Desk, Draft, ...: kind='mode') while the Floor showed them as
-  // agents, so the roster read "New Agent" rows only. The roster reads the
-  // same set the Floor does (desk/api.ts: every recipe that is not deleted).
+  // Inventory 2026-10-03 (defect 9): the list reads the same set the Floor
+  // does (desk/api.ts: every recipe that is not deleted).
   const recipeRows = asRows(recipes.data, ["recipes"]).filter((row) => !row.deleted);
   const allSessions = useMemo(() => liveAgentSessions(sessionRows), [sessionRows]);
-  const isBlocked = (row: CoderSessionRow) => row.blocked;
   // Blocked-first is the ordering contract (pinned by test).
-  const blocked = useMemo(() => allSessions.filter(isBlocked), [allSessions]);
-  const running = useMemo(
-    () => allSessions.filter((row) => !isBlocked(row)),
-    [allSessions],
-  );
-  const sessionRow = (row: CoderSessionRow, index: number, tone: "blocked" | "run") => {
+  const blocked = useMemo(() => allSessions.filter((row) => row.blocked), [allSessions]);
+  const running = allSessions.length - blocked.length;
+  const openConductor = () => useConductor.getState().openWindow();
+  const newAgent = () => void useDesk.getState().createPrimitive("recipe");
+
+  const askRow = (row: CoderSessionRow, index: number) => {
     const session = (row.raw.session as Record<string, unknown> | undefined) ?? row.raw;
-    const key = row.key;
-    // A blocked row opens in place by default: its question IS the board.
-    const open = toggled[key] ?? tone === "blocked";
+    const question = session.question ?? session.summary;
     return (
-      <SurfaceLedgerRow
-        key={rowId(session, index)}
-        primary={row.name}
-        open={open}
-        onToggle={() => setToggled((t) => ({ ...t, [key]: !open }))}
-        cells={
-          <>
-            <span className="surface-ledger-cell">
-              {typeof (session.summary ?? session.question) === "string" ? (
-                <AgentWords compact text={String(session.summary ?? session.question)} />
-              ) : (
-                presentValue(session.summary ?? session.question)
-              )}
-            </span>
-            <span className="surface-ledger-cell">
-              <LampGadget
-                label={tone === "blocked" ? "BLOCKED" : "RUN"}
-                on
-                tone={tone === "blocked" ? "warn" : "ok"}
-              />
-            </span>
-          </>
-        }
-      >
-        {tone === "blocked" && session.question ? (
-          <FoldGadget title="RAW · QUESTION">
-            <pre className="desk-pullout-md desk-session-question">
-              {String(session.question)}
-            </pre>
-          </FoldGadget>
-        ) : null}
-        <div className="surface-row-verbs">
-          <Button
-            dense
-            variant={tone === "blocked" ? "primary" : "ghost"}
-            onClick={() => openCoderSession(key)}
-          >
-            {tone === "blocked" ? "Answer" : "Watch"}
-          </Button>
+      <li key={rowId(session, index)} className="ag-ask" data-testid="agents-ask">
+        <div className="ag-row-text">
+          <span className="ag-row-name">{row.name}</span>
+          <span className="ag-row-meta">
+            <span className="ag-pill" data-tone="warn" data-live="">Asks you</span>
+            <span>{AGENT_NAME[row.agent as AgentId] ?? row.agent}</span>
+          </span>
+          {typeof question === "string" && question.trim() ? <AgentWords compact text={question} className="ag-ask-q" /> : null}
         </div>
-      </SurfaceLedgerRow>
+        <Button dense variant={index === 0 ? "primary" : "secondary"} onClick={() => openCoderSession(row.key, { answer: true })}>
+          Answer
+        </Button>
+      </li>
     );
   };
-  const rosterFace = (
-    <>
-      {doorOpen ? (
-        <SurfaceFacts
-          value={{
-            probe: "health before controls",
-            token: "in memory, never in a payload",
-            relay: "no hosted relay",
-            autonomous_send: "never",
-          }}
-        />
-      ) : null}
-      <SurfaceLedger
-        cols="crew"
-        count={
-          // A count of zero is not said (UX-CANON A8): the head read
-          // "CREW · SESSIONS · BLOCKED" with no sessions.
-          [
-            recipeRows.length ? countLabel("CREW", recipeRows.length) : "",
-            allSessions.length ? countLabel("SESSIONS", allSessions.length) : "",
-            blocked.length ? countLabel("BLOCKED", blocked.length) : "",
-          ].filter(Boolean).join(" · ")
-        }
-      >
-        <h4 className="surface-ledger-band">Sessions</h4>
+
+  const agentsFace = (
+    <div className="ag" data-testid="agents-face">
+      <div className="ag-head">
+        <h2 className="ag-title" data-testid="agents-head">
+          {recipeRows.length ? `${recipeRows.length} ${recipeRows.length === 1 ? "agent" : "agents"}` : "Agents"}
+        </h2>
+        <span className="ag-strip">
+          {blocked.length ? <span><b>{blocked.length}</b> {blocked.length === 1 ? "coder asks" : "coders ask"}</span> : null}
+          {running ? <span><b>{running}</b> at work</span> : null}
+        </span>
+        <span className="ag-head-sp" />
         {allSessions.length ? (
-          <ul className="surface-ledger-rows">
-            {blocked.map((row, index) => sessionRow(row, index, "blocked"))}
-            {running.map((row, index) => sessionRow(row, index, "run"))}
-          </ul>
-        ) : (
-          <SurfaceState empty emptyLabel="No sessions" />
-        )}
-        <h4 className="surface-ledger-band">Crew</h4>
+          <Button dense variant="ghost" onClick={openConductor} data-testid="agents-open-conductor">
+            Conductor
+          </Button>
+        ) : null}
+        <Button dense variant={blocked.length ? "secondary" : "primary"} onClick={newAgent} data-testid="agents-new">
+          New agent
+        </Button>
+      </div>
+      {blocked.length ? (
+        <section className="ag-section" aria-label="Coders that ask">
+          <h3 className="ag-cap">NEEDS YOU</h3>
+          <ul className="ag-well ag-asks">{blocked.map(askRow)}</ul>
+        </section>
+      ) : null}
+      <section className="ag-section" aria-label="Agents">
         {recipes.error ? (
           <SurfaceState
             error={recipes.error}
             onRetry={() => void recipes.reload()}
           />
         ) : recipeRows.length ? (
-          <ul className="surface-ledger-rows">
-            {recipeRows.map((recipe, index) => (
-              <SurfaceLedgerRow
-                key={rowId(recipe, index)}
-                primary={String(recipe.name ?? "Agent")}
-                onToggle={() => openPersona(String(recipe.id))}
-                cells={
-                  <>
-                    <span className="surface-ledger-cell">
-                      {presentValue(recipe.role)}
-                    </span>
-                    <span className="surface-ledger-cell">
-                      <LampGadget label="OK" on tone="ok" />
-                    </span>
-                  </>
-                }
-              />
-            ))}
+          <ul className="ag-well" data-testid="agents-list">
+            {recipeRows.map((recipe, index) => {
+              const id = String(recipe.id ?? "");
+              const role = typeof recipe.role === "string" ? recipe.role : "";
+              return (
+                <li key={rowId(recipe, index)} className="ag-row" data-testid="agents-row">
+                  <span className="ag-row-sprite" aria-hidden="true">
+                    <img src={objectSprite("recipe", id, "rest", 32)} alt="" draggable={false} />
+                  </span>
+                  <div className="ag-row-text">
+                    <Button variant="chrome" className="ag-row-title" onClick={() => openPersona(id)}>
+                      {String(recipe.name ?? "Agent")}
+                    </Button>
+                    {role ? <span className="ag-row-meta">{role}</span> : null}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <SurfaceState
             loading={recipes.loading}
             empty={!recipes.loading}
-            emptyLabel="No agents"
+            emptyLabel="No agents yet"
           />
         )}
-      </SurfaceLedger>
-    </>
+      </section>
+    </div>
   );
   const deliveryFace = (
-    <>
-      <DeliveryListSection />
+    <div className="ag">
+      <DeliveryWork />
       <PrReceiptsSection />
-    </>
+    </div>
   );
   return (
     <>
       {renderHeroSlot(hero, null)}
-      {view === "delivery" ? deliveryFace : rosterFace}
+      {view === "delivery" ? deliveryFace : agentsFace}
       <SurfaceFooter />
     </>
   );

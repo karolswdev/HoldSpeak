@@ -21,3 +21,240 @@
 .desk-next .cw-receipt { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 /* PHILO-17 U32: what hooks do, as one token under the coders. */
 .desk-next .cw-hooks-line { display: inline-flex; margin-top: 8px; }
+
+/* ── PHILO-17 THE REFIT: the Conductor in Today's language ──────────────
+   Compact type (13/12, the head 19), a paper well for each list, a raised
+   plate with a Workbench title bar for each ask (the focus object), pixel
+   sprites, soft pills with a round lamp dot, mono with tabular numerals.
+   Colour and opacity move only after the first draw (the sweep's still). */
+.desk-next .cw { gap: 14px; }
+.desk-next .cw-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.desk-next .cw-head > .kit-apphead { flex: 1 1 auto; }
+.desk-next .cw-apphead > .kit-disp {
+  font: 650 19px / 1.2 var(--font-display);
+  letter-spacing: 0;
+}
+.desk-next .cw-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.desk-next .cw-cap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: 800 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-muted);
+}
+.desk-next .cw-cap-verb { margin-left: auto; }
+.desk-next .cw-mono {
+  font: 600 12px / 1.3 var(--font-mono);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The well: a sunken paper list. */
+.desk-next .cw-well {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--alive-paper, #f8f5ee);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+  min-width: 0;
+}
+
+/* A row: sprite, words, one verb. Hover lifts, press sinks. */
+.desk-next .cw-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: 3px;
+  transition: background-color var(--alive-dur, 120ms) ease, box-shadow var(--alive-dur, 120ms) ease;
+}
+.desk-next .cw-row:hover { background: #ffffff; box-shadow: var(--alive-lift); }
+.desk-next .cw-row[data-selected] {
+  background: color-mix(in srgb, var(--wb-sel) 14%, var(--alive-paper, #f8f5ee));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-sel) 55%, transparent);
+}
+.desk-next .cw-row:has(.btn:active, .cw-row-title:active) {
+  background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .cw-row > .btn { flex: none; }
+.desk-next .cw-row-sprite,
+.desk-next .cw-plate-sprite {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+.desk-next .cw-row-sprite > img { width: 24px; height: 24px; image-rendering: pixelated; }
+.desk-next .cw-row-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.desk-next .cw-row-title {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font: 600 13px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-text);
+}
+.desk-next .cw-row-title:hover { text-decoration: underline; text-underline-offset: 3px; }
+.desk-next .cw-row-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font: 500 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+
+/* The pill: a soft tint, a round lamp dot, the word in the state's ink. */
+.desk-next .cw-pill {
+  --tint: color-mix(in srgb, var(--wb-ink) 8%, transparent);
+  --dot: var(--wb-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--tint);
+  font: 600 12px / 1 var(--font-sans);
+  color: var(--wb-text);
+  white-space: nowrap;
+}
+.desk-next .cw-pill::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+.desk-next .cw-pill[data-tone="ok"] { --tint: color-mix(in srgb, var(--lamp-ok) 22%, transparent); --dot: var(--lamp-ok); color: var(--wb-ok-ink); }
+.desk-next .cw-pill[data-tone="warn"] { --tint: color-mix(in srgb, var(--lamp-warn) 26%, transparent); --dot: var(--lamp-warn); color: var(--wb-warn-ink); }
+.desk-next .cw-pill[data-tone="danger"] { --tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent); --dot: var(--lamp-fail); color: var(--wb-danger-ink); }
+.desk-next .cw-pill[data-tone="info"] { --tint: color-mix(in srgb, var(--lamp-info) 20%, transparent); --dot: var(--lamp-info); color: var(--wb-info-ink); }
+.desk-next .cw-pill[data-live]::before { animation: cw-breathe 1.6s ease-in-out infinite alternate; }
+@keyframes cw-breathe {
+  from { opacity: 1; }
+  to { opacity: 0.35; }
+}
+
+/* An ask: a raised plate with a Workbench title bar. */
+.desk-next .cw-ask {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 0 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent), 4px 10px 22px color-mix(in srgb, var(--wb-ink) 14%, transparent);
+  transition: box-shadow 160ms ease;
+}
+.desk-next .cw-ask:hover {
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent), 6px 14px 28px color-mix(in srgb, var(--wb-ink) 20%, transparent);
+}
+.desk-next .cw-ask:has(.btn:active) {
+  box-shadow: var(--wb-raised), 1px 2px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent);
+}
+.desk-next .cw-ask[data-selected] { outline: 2px solid var(--wb-sel); outline-offset: 1px; }
+.desk-next .cw-ask-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--wb-ink);
+  background: var(--wb-stipple-fine), var(--wb-blue);
+  color: var(--wb-ink);
+}
+.desk-next .cw-ask-label {
+  padding: 1px 6px;
+  border: 1px solid var(--wb-ink);
+  background: color-mix(in srgb, var(--lamp-warn) 45%, var(--wb-paper));
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.desk-next .cw-ask-age {
+  margin-left: auto;
+  font: 700 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-ink);
+}
+.desk-next .cw-ask-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 2px 12px 0;
+  min-width: 0;
+}
+.desk-next .cw-plate-sprite {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--lamp-warn) 30%, var(--wb-paper));
+  box-shadow: var(--wb-raised);
+}
+.desk-next .cw-plate-sprite > img { width: 28px; height: 28px; image-rendering: pixelated; }
+.desk-next .cw-ask-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.desk-next .cw-ask-text > .cw-row-title { font-size: 14px; white-space: normal; overflow-wrap: anywhere; }
+.desk-next .cw-ask-q {
+  margin-top: 4px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--wb-ink) 35%, transparent);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .cw-ask-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 0 12px;
+}
+
+.desk-next .cw-fold { display: flex; }
+.desk-next .cw-ended { min-width: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .cw-pill[data-live]::before { animation: none; }
+  .desk-next .cw-row,
+  .desk-next .cw-ask { transition: none; }
+}
