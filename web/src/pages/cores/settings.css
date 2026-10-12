@@ -226,3 +226,67 @@
   height: 24px;
   image-rendering: pixelated;
 }
+
+/* ── The Guide: what is ready and what is not, one row each ── */
+.desk-next .guide .settings-head {
+  align-items: center;
+}
+.desk-next .guide-head-sp {
+  flex: 1 1 8px;
+}
+.desk-next .guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  border: 1px solid var(--wb-ink);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .guide-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 3px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.desk-next .guide-row:hover {
+  background: #ffffff;
+  box-shadow: var(--alive-lift, none);
+}
+.desk-next .guide-row-text {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.desk-next .guide-row-name {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .guide-row-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .guide-row-verb {
+  display: inline-flex;
+  flex: none;
+}
+.desk-next .guide-row-fix {
+  flex: 1 0 100%;
+}
+.desk-next .guide .gadget-fold {
+  margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .guide-row { transition: none; }
+}

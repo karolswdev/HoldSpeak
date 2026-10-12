@@ -229,6 +229,12 @@ function GitHubCard({
   const state = tool.state;
   const showFold = foldOpen(state);
   const hint = tool.recovery_hint ?? "gh auth login";
+  const [shown, setShown] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copyHint = () => {
+    try { void navigator.clipboard.writeText(hint); } catch { /* noop */ }
+    setCopied(true);
+  };
 
   return (
     <div className="connections-tool-row" data-testid="connections-github" data-tier={toolTier(state)}>
@@ -247,26 +253,31 @@ function GitHubCard({
           />
         </span>
       </div>
+      {showFold ? (
+        <span className="connections-signin-word" data-testid="connections-github-signin">
+          {state === "unavailable" ? "Install gh" : "Sign in to GitHub"}
+        </span>
+      ) : null}
       <div className="connections-tool-actions">
-        {!showFold ? (
+        {showFold ? (
           <>
-            <Button dense variant="ghost" onClick={onRecheck} loading={busy}>
-              Recheck
+            {/* PHILO-17 REFIT: the sign-in is one compact row; the command
+                is copied by a verb and drawn only on demand. */}
+            <Button dense variant="ghost" onClick={copyHint} data-testid="connections-github-copy">
+              {copied ? "Copied" : "Copy command"}
             </Button>
-            <EgressChip label="GITHUB.COM" scope="cloud" />
+            <Button dense variant="ghost" aria-expanded={shown} onClick={() => setShown((value) => !value)} data-testid="connections-github-show">
+              {shown ? "Hide" : "Show"}
+            </Button>
           </>
         ) : null}
+        <Button dense variant={showFold && lead ? "primary" : showFold ? "secondary" : "ghost"} onClick={onRecheck} loading={busy}>
+          Recheck
+        </Button>
+        <EgressChip label="GITHUB.COM" scope="cloud" />
       </div>
-      {showFold ? (
-        <div className="connections-fold">
-          <CommandWell hint={hint} />
-          <div className="connections-fold-actions">
-            <Button dense variant={lead ? "primary" : "secondary"} onClick={onRecheck} loading={busy}>
-              Recheck
-            </Button>
-            <EgressChip label="GITHUB.COM" scope="cloud" />
-          </div>
-        </div>
+      {showFold && shown ? (
+        <code className="connections-signin-code" data-testid="connections-github-command">{hint}</code>
       ) : null}
     </div>
   );

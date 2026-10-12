@@ -337,9 +337,12 @@ class TestMeetingFacesGlass:
                 page.locator("[data-testid=dest-slack-label]").fill("#leads")
                 page.wait_for_timeout(200)
                 assert page.locator("[data-testid=dest-name]").input_value() == SLACK
-                boards.shoot(page, "D2a-webhook-saved", [f"{key_row} .gadget-chip"], seat=f"CENTER:{key_row}")
-                d1 = boards.shoot(page, "D1-slack-form", [key_row, "[data-testid=dest-slack-label]", "[data-testid=dest-name]",
-                                                          "[data-testid=dest-save]"], seat="CENTER:[data-testid=dest-slack-label]")
+                # PHILO-17 REFIT: with Credentials folded the whole form fits one
+                # view, so the saved-webhook board (D2a) and the form board (D1)
+                # were the same frame; D1 now names the SET chip too.
+                d1 = boards.shoot(page, "D1-slack-form", [key_row, f"{key_row} .gadget-chip", "[data-testid=dest-slack-label]",
+                                                          "[data-testid=dest-name]", "[data-testid=dest-save]"],
+                                  seat="CENTER:[data-testid=dest-slack-label]")
                 assert "HOOKS.SLACK.COM:cloud" in d1["egress_chips"], d1["egress_chips"]
 
                 page.locator("[data-testid=dest-save]").click()

@@ -213,10 +213,11 @@ describe("ConnectionsPane", () => {
       const card = await screen.findByTestId("connections-github");
       // PHILO-17 U29: the cause in plain words.
       expect(within(card).getByText("Not signed in")).toBeInTheDocument();
-      // Fold is open with the command
+      // PHILO-17 REFIT: one compact sign-in row; Show draws the command.
+      expect(within(card).getByText("Sign in to GitHub")).toBeInTheDocument();
+      expect(within(card).getByText("Copy command")).toBeInTheDocument();
+      fireEvent.click(within(card).getByTestId("connections-github-show"));
       expect(within(card).getByText("gh auth login")).toBeInTheDocument();
-      // Copy transport key
-      expect(within(card).getByText("Copy")).toBeInTheDocument();
       // Primary Recheck in the fold
       const recheckButtons = within(card).getAllByText("Recheck");
       expect(recheckButtons.length).toBeGreaterThanOrEqual(1);
@@ -231,8 +232,9 @@ describe("ConnectionsPane", () => {
       renderPane(response);
       const card = await screen.findByTestId("connections-github");
       expect(within(card).getByText("gh missing")).toBeInTheDocument();
+      expect(within(card).getByText("Install gh")).toBeInTheDocument();
+      fireEvent.click(within(card).getByTestId("connections-github-show"));
       expect(within(card).getByText("brew install gh")).toBeInTheDocument();
-      expect(within(card).getByText("Copy")).toBeInTheDocument();
     });
   });
 
@@ -555,9 +557,10 @@ describe("ConnectionsPane", () => {
       renderPane({ tools: [degraded, emptyJira(), connectedCalendar(), connectedModels()] });
       const card = await screen.findByTestId("connections-github");
       expect(within(card).getByText(/^Unreachable · Checked /)).toBeInTheDocument();
-      // Every row that is not ready shows its command and Copy.
+      // Every row that is not ready offers its command (Copy, and Show).
+      expect(within(card).getByText("Copy command")).toBeInTheDocument();
+      fireEvent.click(within(card).getByTestId("connections-github-show"));
       expect(within(card).getByText("gh auth login")).toBeInTheDocument();
-      expect(within(card).getByText("Copy")).toBeInTheDocument();
     });
 
     it("Jira Add posts the account and checks it at once", async () => {
