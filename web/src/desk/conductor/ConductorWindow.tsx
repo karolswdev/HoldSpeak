@@ -22,6 +22,9 @@ import {
 } from "../surface";
 import { FoldGadget } from "../surface/gadgets";
 import { AgentWords } from "../components/AgentWords";
+import { apiFetch } from "../../lib/api";
+import { useGate } from "../gate";
+import { gatedHead, type LaneGated } from "../lane/laneWire";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { useAgentFlights } from "../agentFlights";
 import { AGENT_HOST, AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId, type AgentRow } from "../firstrun/agentsStep";
@@ -347,7 +350,34 @@ function CoderRow({
   );
 }
 
-/** A coder that asks: a raised plate with the title bar, the question, Answer. */
+/** The call a launched coder holds at the gate (PHILO-17: approve in one
+ *  press). Read from the launch's lane (its gated calls are not paged); a
+ *  call the hub cannot show whole is never approved here (PHILO-14 A5). */
+export function useHeldCall(member: ConductorMember): LaneGated | null {
+  const [call, setCall] = useState<LaneGated | null>(null);
+  const launchId = member.launchId;
+  useEffect(() => {
+    if (!launchId) return;
+    let live = true;
+    apiFetch<{ gated?: LaneGated[] | unknown } | null>(`/api/agent/launches/${encodeURIComponent(launchId)}/lane?after=0&limit=1`)
+      .then((lane) => {
+        const gated = Array.isArray(lane?.gated) ? (lane!.gated as LaneGated[]) : [];
+        const held = [...gated].reverse().find((g) => (g.state === "held" || g.state === "pending") && g.was_held !== false);
+        if (live) setCall(held ?? null);
+      })
+      .catch(() => {
+        if (live) setCall(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [launchId, member.live, member.when]);
+  return call;
+}
+
+/** A coder that asks: a raised plate with the title bar, the question, and
+ *  ONE first verb. A held call that the hub shows whole is decided here
+ *  (Approve, Deny); anything else opens the ask well (Answer). */
 function AskPlate({
   member,
   question,
@@ -361,7 +391,19 @@ function AskPlate({
   selected: boolean;
   onSelect(): void;
 }) {
-  const held = member.live === "held";
+  const call = useHeldCall(member);
+  const [busy, setBusy] = useState(false);
+  const held = member.live === "held" || Boolean(call);
+  const decide = async (decision: "approved" | "denied") => {
+    if (!call) return;
+    setBusy(true);
+    try {
+      await useGate.getState().decide(call.id, decision);
+    } finally {
+      setBusy(false);
+      void useConductor.getState().readFlights();
+    }
+  };
   return (
     <article
       className="cw-ask"
@@ -384,13 +426,31 @@ function AskPlate({
             <span>{titleOfAgent(member)}</span>
             {member.facts.where ? <span className="cw-pill" data-tone="info">{String(member.facts.where)}</span> : null}
           </span>
-          {question ? <AgentWords compact lines={3} className="cw-ask-q" text={question} /> : null}
+          {call ? (
+            <code className="cw-ask-call" data-testid="conductor-held-call">
+              {call.hold_reason ? <span className="cw-ask-why">{call.hold_reason}</span> : null}
+              {gatedHead(call)}
+            </code>
+          ) : question ? (
+            <AgentWords compact lines={3} className="cw-ask-q" text={question} />
+          ) : null}
         </div>
       </div>
       <div className="cw-ask-verbs">
-        <Button dense variant={lead ? "primary" : "secondary"} onClick={() => answerMember(member)} data-testid="conductor-answer">
-          {held ? "Approve or deny" : "Answer"}
-        </Button>
+        {call && !call.args_cut ? (
+          <>
+            <Button dense variant="ghost" disabled={busy} onClick={() => void decide("denied")} data-testid="conductor-deny">
+              Deny
+            </Button>
+            <Button dense variant={lead ? "primary" : "secondary"} loading={busy} onClick={() => void decide("approved")} data-testid="conductor-approve">
+              Approve
+            </Button>
+          </>
+        ) : (
+          <Button dense variant={lead ? "primary" : "secondary"} onClick={() => answerMember(member)} data-testid="conductor-answer">
+            {held ? "See the call" : "Answer"}
+          </Button>
+        )}
       </div>
     </article>
   );

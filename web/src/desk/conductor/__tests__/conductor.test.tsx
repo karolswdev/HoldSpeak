@@ -511,6 +511,42 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
   });
 
+  it("a held call the hub shows whole is approved on the plate in one press", async () => {
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.startsWith("/api/agent/launches/l-runbook/lane"))
+        return { launch: { launch_id: "l-runbook" }, gated: [{ id: "toolu_psql", tool: "Bash", args_shown: "psql -h staging-ledger", args_cut: false, state: "held", hold_reason: "OUTSIDE THE WORKTREE" }] };
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    const call = await screen.findByTestId("conductor-held-call");
+    expect(call.textContent).toContain("psql -h staging-ledger");
+    const plate = screen.getByTestId("conductor-ask-row");
+    expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("WANTS APPROVAL");
+    expect(within(plate).getByRole("button", { name: "Approve" }).className).toContain("btn--primary");
+    expect(within(plate).getByRole("button", { name: "Deny" }).className).toContain("btn--ghost");
+    await act(async () => {
+      fireEvent.click(within(plate).getByRole("button", { name: "Approve" }));
+    });
+    expect(apiFetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
+      method: "POST", json: expect.objectContaining({ decision: "approved" }),
+    }));
+  });
+
+  it("a cut call is never approved on the plate: it opens the lane", async () => {
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.startsWith("/api/agent/launches/l-runbook/lane"))
+        return { launch: { launch_id: "l-runbook" }, gated: [{ id: "toolu_cut", tool: "Bash", args_shown: "rm -rf", args_cut: true, state: "held" }] };
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    await screen.findByTestId("conductor-held-call");
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "See the call" }));
+    expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
+  });
+
   it("the coders on this Mac fold while coders work; ended launches fold", async () => {
     render(<ConductorWindow />);
     await screen.findByTestId("conductor-coders-fold");

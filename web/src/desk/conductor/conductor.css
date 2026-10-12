@@ -258,3 +258,24 @@
   .desk-next .cw-row,
   .desk-next .cw-ask { transition: none; }
 }
+/* A held call: the command in mono on a sunken paper strip, the reason first. */
+.desk-next .cw-ask-call {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--wb-ink) 35%, transparent);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+  font: 600 12px / 1.4 var(--font-mono);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.desk-next .cw-ask-why {
+  font: 700 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wb-warn-ink);
+}
