@@ -24,6 +24,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import clear_hub_windows
+from .room_glass_helpers import open_room_folds
 from .glass_infra import _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
 
 pytest.importorskip("playwright.sync_api", reason="memory faces glass needs Playwright")
@@ -43,6 +44,7 @@ def _seed() -> None:
     from holdspeak.db import get_database
     from holdspeak.memory.pages import spec_for, write_page, write_pending
     from holdspeak.memory.retain import sweep
+    from tests.unit.test_memory_slice3_facts import _note
     from tests.unit.test_memory_slice4_observations import Rules, _filed_note, _learn, _meeting
     from tests.unit.test_memory_slice5_pages import Pages
 
@@ -54,8 +56,13 @@ def _seed() -> None:
     _learn(db)  # supersedes the 10-10 belief
     _meeting(db, "m-0929", "Cutover rollback owner is Priya.", day=29)
     _learn(db, Rules("contradicts"))
-    _filed_note(db, "n-desk-1", "Hiring loop reply is owed.", None)
-    _filed_note(db, "n-desk-2", "Billing contract is waiting.", None)
+    # PHILO-17: the desk notes carry no title. A chunk has its source title
+    # in front (memory/chunker.py), and this rig's scripted writer echoes a
+    # chunk word for word, so the unit fixture's title ("Note n-desk-1")
+    # drew an internal id on the Brief's page (a real engine writes the
+    # sentence; the chip names the source).
+    _note(db, "n-desk-1", "", "Hiring loop reply is owed.")
+    _note(db, "n-desk-2", "", "Billing contract is waiting.")
     _learn(db)
     write_pending(db, Pages())
     # One new Atlas source after the pages were built: every Atlas page is
@@ -261,6 +268,7 @@ def test_memory_on_the_desk(tmp_path, monkeypatch, width, height):
 
             # ── pages: the Atlas Room ──
             _stage(page, "open-project-memory", "project:atlas")
+            open_room_folds(page)  # PHILO-17 refit: Pages is a fold
             page.get_by_test_id("standing-pages").wait_for(timeout=T)
             titles = page.get_by_test_id("standing-page").evaluate_all("els => els.map(e => e.ariaLabel)")
             assert titles == ["What did we decide", "What is open and who owes it",
@@ -297,6 +305,7 @@ def test_memory_on_the_desk(tmp_path, monkeypatch, width, height):
             # ── a write elsewhere: the faces follow the bus (Astra P1) ──
             # The Room is open; the note its pages cite is deleted.
             _stage(page, "open-project-memory", "project:atlas")
+            open_room_folds(page)  # PHILO-17 refit: Pages is a fold
             pages = "[data-testid=standing-pages]"
             page.locator(pages).filter(has_text="Cutover date is 10-17.").wait_for(timeout=T)
             _api(page, "DELETE", "/api/notes/n-1001", None, token=TOKEN)

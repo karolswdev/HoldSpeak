@@ -106,7 +106,7 @@ class TestTheCardInCapture1440:
     @staticmethod
     def _open_chair(page: Any, name: str) -> None:
         page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
-        page.locator(".desk-verbbar-menu [role='menuitem']").filter(has_text="Chair").click()
+        page.locator(".desk-verbbar-menu [role='menuitem']").filter(has_text="Desk").click()
         page.locator(".desk-menu-list [role='menuitemcheckbox']").filter(has_text=name).click()
         page.locator(f".desk-window-shell.chair-window[aria-label='{name}']").wait_for()
         page.wait_for_timeout(400)

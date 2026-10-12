@@ -142,7 +142,7 @@ export function egressBadge(setup: SetupStatus | null): EgressBadge {
     const lan = onLan({ destination: name });
     return {
       scope: "mixed",
-      text: lan ? `→ LAN · ${bareHost(name)}` : `→ ${name}`,
+      text: lan ? "→ Your network" : `→ ${name}`,
       title: `Last receipted egress: ${t.last_egress.receipt}`,
     };
   }
@@ -164,7 +164,7 @@ export function egressBadge(setup: SetupStatus | null): EgressBadge {
       const hosts = [...new Set(lan.map((d) => bareHost(d.destination)))];
       return {
         scope: "mixed",
-        text: `→ LAN · ${hosts.join(" · ")}`,
+        text: "→ Your network",
         title: `Sent to a server on this network: ${names}.`,
       };
     }

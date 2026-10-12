@@ -5321,7 +5321,7 @@
         },
         {
           "path": "web/src/pages/cores/PeopleCore.tsx",
-          "symbol": "function PrepLens",
+          "symbol": "function PrepPane(",
           "claim": "The People Prep face reads the brief and renders its preparation lens."
         }
       ],

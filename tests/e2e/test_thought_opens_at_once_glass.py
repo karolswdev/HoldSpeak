@@ -148,8 +148,8 @@ class TestTheThoughtOpensAtOnce:
 
                 if width >= 720:
                     # ⌃T from a body window, then the words with no wait: every key lands.
-                    self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                    intel = page.locator(".desk-window[aria-label='Intelligence']")
+                    self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                    intel = page.locator(".desk-window[aria-label='Today']")
                     intel.wait_for()
                     page.wait_for_timeout(600)
                     intel.locator(".desk-window-title").first.click()

@@ -470,7 +470,7 @@ export function meetingRowState(row: Record<string, unknown>): MeetingRowState {
   // PHILO-13-04 A3-W: a stored summary. The rail drops the axis word on
   // every other state; `STORED` alone does not say what is stored.
   if (token.label === "STORED") {
-    return { label: "SUMMARY STORED", verb: "Open", verbVariant: "ghost" };
+    return { label: "SUMMARY STORED", tone: "success", verb: "Open", verbVariant: "ghost" };
   }
   // RAN (complete intel)
   if (token.label === "RAN") {

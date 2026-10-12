@@ -207,6 +207,11 @@ function JournalRow({
           <span className="surface-ledger-cell journal-landed">
             {landed ? `LANDED IN ${landed}` : ""}
           </span>
+          {badge ? (
+            <span className="surface-token journal-badge" data-chip>
+              {badge}
+            </span>
+          ) : null}
           <span className="surface-ledger-cell journal-ms">
             {took > 0 ? `${Math.round(took)} MS` : ""}
           </span>
@@ -234,12 +239,20 @@ function JournalRow({
           </span>
         </span>
       }
+      /* PHILO-17 refit r3: the row's ONE verb, shown on hover or focus. */
       trailing={
-        badge ? (
-          <span className="surface-token" data-chip>
-            {badge}
-          </span>
-        ) : null
+        <span className="journal-hover-verb">
+          <Button
+            dense
+            variant="ghost"
+            aria-label="Copy what you said"
+            onClick={() =>
+              void navigator.clipboard.writeText(String(row.transcript ?? ""))
+            }
+          >
+            Copy
+          </Button>
+        </span>
       }
     >
       <EditInPlace
@@ -304,6 +317,9 @@ export function Journal() {
   const { subscribe } = useRuntimeBus();
   const [source, setSource] = useState("");
   const [query, setQuery] = useState("");
+  /* PHILO-17 refit r3: search and the source filters fold until asked for;
+     an active search or filter keeps them open. */
+  const [findOpen, setFindOpen] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -505,37 +521,45 @@ export function Journal() {
      soon as the ledger holds a row (design D2(b).3). */
   const hasAny = total > 0 || rows.length > 0;
   /* Two empty states, two true tokens (A.3's one sanctioned exception). */
-  const emptyLabel = hasAny ? "NOTHING MATCHES" : "NOTHING SPOKEN";
+  const emptyLabel = hasAny ? "Nothing matches" : "Nothing said yet";
 
   return (
     <SurfaceSection className="speak-journal">
       <SurfaceLedger
         count={null}
         controls={
-          <>
-            <span className="journal-search-row">
-              <StringGadget
-                label="Search the journal"
-                placeholder="search"
-                value={query}
-                onChange={setQuery}
-              />
-              {hasAny ? (
-                <ConfirmVerb
-                  label="Clear"
-                  confirmLabel="Clear all?"
-                  onConfirm={() => void remove("all")}
+          findOpen || query || source ? (
+            <>
+              <span className="journal-search-row">
+                <StringGadget
+                  label="Search the journal"
+                  placeholder="search"
+                  value={query}
+                  onChange={setQuery}
                 />
-              ) : null}
+                {hasAny ? (
+                  <ConfirmVerb
+                    label="Clear"
+                    confirmLabel="Clear all?"
+                    onConfirm={() => void remove("all")}
+                  />
+                ) : null}
+              </span>
+              <FilterTokens
+                className="journal-filters"
+                label="Source filter"
+                options={SOURCE_FILTERS}
+                value={source}
+                onChange={setSource}
+              />
+            </>
+          ) : hasAny ? (
+            <span className="journal-find">
+              <Button dense variant="ghost" onClick={() => setFindOpen(true)}>
+                Search
+              </Button>
             </span>
-            <FilterTokens
-              className="journal-filters"
-              label="Source filter"
-              options={SOURCE_FILTERS}
-              value={source}
-              onChange={setSource}
-            />
-          </>
+          ) : null
         }
       >
         <SurfaceState

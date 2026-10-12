@@ -389,7 +389,7 @@ class TestTheChairAsWindows:
                     # C1-4d: Window ▸ Chair, a check on each open one
                     page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
                     page.locator(".desk-verbbar-menu").wait_for()
-                    page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')").hover()
+                    page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").hover()
                     page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')").wait_for()
                     # PHILO-16: the Window menu's verbs (Stage carries a check)
                     # sit above; the Chair's windows are their own list, the

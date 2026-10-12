@@ -57,8 +57,10 @@ log = get_logger("memory.pages")
 PAGE_CAPABILITY = "memory.page"
 PAGE_CONTRACT = "memory.page"
 PAGE_CONTRACT_REVISION = "1"
-#: Bump to write every page again (the old pages go to history).
-PAGE_WRITER_VERSION = 1
+#: Bump to write every page again (the old pages go to history): a page
+#: built by an older writer is due at once (``pending_pages``).
+#: 2 (PHILO-17): the pages speak to the owner as "you".
+PAGE_WRITER_VERSION = 2
 PAGE_DEADLINE_SECONDS = 180.0
 PAGE_MAX_TOKENS = 2048
 
@@ -145,6 +147,7 @@ You get one question, the observations (o1, o2, ...) and the sources (r1, r2, ..
 
 Rules:
 - Answer the question with short sentences. Each sentence is true alone. Use names, not "he", "she" or "they".
+- The reader is the desk owner. Write to the reader in the second person: "You will send the plan", "You owe Dana the review". Where an input says "the owner", write "you". Never write "the owner".
 - Each sentence: "text" is the sentence; "refs" lists the o and r labels it rests on. Use only labels from the input. Each sentence needs at least one label.
 - Say only what the inputs say. Do not guess. Do no arithmetic.
 - A disputed observation is a dispute: say so.
@@ -481,7 +484,28 @@ def attributed(text: str, cited: list[str]) -> bool:
     2026-10-01").  A sentence that joins two inputs is cut: a cut serves
     less, never a wrong claim."""
     tokens = content_tokens(text)
-    return any(tokens <= content_tokens(item) for item in cited)
+    return any(_held_by(tokens, content_tokens(item)) for item in cited)
+
+
+def _held_by(tokens: set[str], held: set[str]) -> bool:
+    """Every token of the sentence is in the input.  PHILO-17 (Astra r1 on
+    #1110): the page speaks to the owner as "you", so where the input says
+    "the owner" a verb may lose its third-person ending ("The owner owes
+    Dana" → "You owe Dana": owe/owes, plan/plans, fix/fixes, carry/carries;
+    is/are and has/have are stopwords).  Only a verb form changes, never a
+    word: "owe" is held by "owes", not by any other token."""
+    if tokens <= held:
+        return True
+    if "owner" not in held:
+        return False
+    def agrees(t: str) -> bool:
+        if t in held or f"{t}s" in held:
+            return True
+        if t.endswith(("s", "x", "z", "ch", "sh", "o")) and f"{t}es" in held:
+            return True
+        return len(t) > 1 and t.endswith("y") and t[-2] not in "aeiou" and f"{t[:-1]}ies" in held
+
+    return all(agrees(t) for t in tokens)
 
 
 def _token_key(token: str) -> str:
@@ -870,14 +894,20 @@ def write_page(
         return {"state": "empty", "calls": 0, "sentences": 0, "cut": 0}
     with db._connection() as conn:
         prior = conn.execute(
-            "SELECT built_at FROM memory_pages WHERE id=?", (page_id(scope, spec.slug),)
+            "SELECT built_at, answer_md FROM memory_pages WHERE id=?", (page_id(scope, spec.slug),)
         ).fetchone()
     built_at = str(prior[0]) if prior is not None else None
+    shown = prior is not None and bool(str(prior[1] or "").strip())
     labels = {f"o{i}": str(o["text"]) for i, o in enumerate(observations, start=1)}
     labels.update({f"r{i}": str(r["text"]) for i, r in enumerate(recall, start=1)})
     payload = build_payload(spec, observations, recall)
     budget.calls += 1
     kept, cut = validate_output(writer.write(payload), labels)
+    if not kept and cut and shown:
+        # PHILO-17 (Astra r1 on #1110): a rewrite whose every sentence was
+        # cut never blanks a page the owner can read. The page that is shown
+        # stays; the job backs off like any bad answer.
+        raise PageOutputError(f"every sentence was cut ({cut}); the page that is shown stays")
     sentences = [
         {"text": item["text"], "cites": [_cites(label, observations, recall) for label in item["refs"]]}
         for item in kept
@@ -918,8 +948,9 @@ def pending_pages(db: Any, *, now: Optional[datetime] = None) -> list[dict[str, 
     """The pages to write now, missing ones first, then the oldest.
 
     A scope is a candidate when it has an observation that still stands or
-    already has a page.  A page is due when it is missing, or stale and
-    built more than ``REWRITE_SECONDS`` ago.
+    already has a page.  A page is due when it is missing, built by an older
+    writer (``PAGE_WRITER_VERSION``), or stale and built more than
+    ``REWRITE_SECONDS`` ago.
     """
     moment = now or datetime.now(timezone.utc)
     cutoff = (moment - timedelta(seconds=REWRITE_SECONDS)).isoformat(timespec="seconds")
@@ -934,7 +965,7 @@ def pending_pages(db: Any, *, now: Optional[datetime] = None) -> list[dict[str, 
         pages = {
             (str(r["scope_kind"]), str(r["scope_id"]), str(r["slug"])): dict(r)
             for r in conn.execute(
-                "SELECT scope_kind,scope_id,slug,built_at,last_memory_seen_at,seen_keys_json FROM memory_pages"
+                "SELECT scope_kind,scope_id,slug,built_at,last_memory_seen_at,seen_keys_json,writer_version FROM memory_pages"
             )
         }
         scopes = ScopeReader(conn)
@@ -944,7 +975,7 @@ def pending_pages(db: Any, *, now: Optional[datetime] = None) -> list[dict[str, 
                 continue
             for spec in PAGE_SET.get(scope[0], ()):
                 row = pages.get((*scope, spec.slug))
-                if row is not None:
+                if row is not None and int(row["writer_version"] or 0) >= PAGE_WRITER_VERSION:
                     if str(row["built_at"]) > cutoff:
                         continue  # at most once an hour
                     if not is_stale(conn, scope, str(row["last_memory_seen_at"]), _keys(row), scopes):

@@ -203,3 +203,35 @@ def test_philo17_owed_route_records_what_they_owe_you(tmp_path: Path) -> None:
     done = client.post(f"/api/people/commitments/{owed.json()['commitment']['id']}/transition", json={"verb": "done"})
     assert done.status_code == 200
     assert client.post(f"/api/people/relationships/{rid}/owed", json={"body": ""}).status_code in {400, 422}
+
+
+def test_agenda_item_remove_route_takes_it_off_the_brief(tmp_path: Path) -> None:
+    """PHILO-17: the owner removes an agenda item through the web route; it
+    leaves the brief's open agenda (TO RAISE); a second remove is refused,
+    an unknown state is refused, and a non-owner cannot write."""
+    owner = Principal(PrincipalKind.OWNER, "route-owner")
+    service = PeopleService(
+        EncryptedPeopleStore(tmp_path / "people.sqlite3", MemoryKeyStore()),
+        setup_runner=lambda *, initialize, principal: initialize(),
+    )
+    client = _client(tmp_path, owner, service)
+    assert client.post("/api/people/setup").json()["state"] == "ready"
+    rid = client.post("/api/people/relationships", json={"display_name": "Agenda Sentinel"}).json()["relationship"]["id"]
+    session = client.post(f"/api/people/relationships/{rid}/one-on-ones", json={}).json()["one_on_one"]["id"]
+    keep = client.post(f"/api/people/one-on-ones/{session}/agenda", json={"body": "Keep this"}).json()["agenda_item"]
+    drop = client.post(f"/api/people/one-on-ones/{session}/agenda", json={"body": "Drop this"}).json()["agenda_item"]
+
+    assert client.post(f"/api/people/agenda/{drop['id']}/transition", json={"to": "archived"}).status_code == 400
+    removed = client.post(f"/api/people/agenda/{drop['id']}/transition", json={"to": "removed"})
+    assert removed.status_code == 200, removed.text
+    assert removed.json()["agenda_item"]["state"] == "removed"
+
+    brief = client.get(f"/api/people/relationships/{rid}/brief").json()["brief"]
+    assert [item["body"] for item in brief["agenda_items"]] == ["Keep this"]
+    assert client.post(f"/api/people/agenda/{drop['id']}/transition", json={"to": "removed"}).status_code == 400
+    assert client.post("/api/people/agenda/nope/transition", json={"to": "removed"}).status_code == 404
+    assert keep["state"] == "open"
+
+    agent = _client(tmp_path, Principal(PrincipalKind.AGENT, "route-agent"), service)
+    refused = agent.post(f"/api/people/agenda/{keep['id']}/transition", json={"to": "removed"})
+    assert refused.status_code == 403

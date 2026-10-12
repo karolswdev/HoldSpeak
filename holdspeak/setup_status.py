@@ -35,6 +35,15 @@ def _slug(name: str) -> str:
     return s.strip("-") or "check"
 
 
+def _face_words(check: Any) -> str:
+    from .commands.doctor import face_words
+
+    try:
+        return face_words(check)
+    except Exception:  # pragma: no cover - the words never block a page load
+        return str(getattr(check, "detail", "") or "")
+
+
 def _section_from_check(check: Any) -> dict[str, Any]:
     status = str(getattr(check, "status", "") or "").strip().lower()
     if status not in ("pass", "warn", "fail", "info"):
@@ -45,7 +54,10 @@ def _section_from_check(check: Any) -> dict[str, Any]:
         "status": status,
         # The Setup face shows home paths as ~ (STATUS: raw paths on faces);
         # `holdspeak doctor` in a terminal keeps its whole paths.
-        "detail": home_text(str(getattr(check, "detail", "") or "")),
+        # PHILO-17 REFIT: the face reads one plain sentence; the technical
+        # fact rides as `raw` (the Guide shows it under its fold).
+        "detail": home_text(_face_words(check)),
+        "raw": home_text(str(getattr(check, "detail", "") or "")),
         "fix": home_text(fix) if isinstance(fix := getattr(check, "fix", None), str) else fix,
     }
 

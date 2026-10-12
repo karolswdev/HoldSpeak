@@ -409,7 +409,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  border-radius: 2px;
+  border-radius: 0;
   background: var(--desk-window-well);
   box-shadow: var(--desk-window-etch);
 }
@@ -448,7 +448,7 @@
   min-width: 0;
   min-height: 0;
   flex: 1;
-  border-radius: 2px;
+  border-radius: 0;
   background: var(--desk-terminal-screen);
   box-shadow: var(--desk-window-etch);
   overflow: hidden;
@@ -707,7 +707,7 @@
   flex-direction: column;
   gap: 4px;
   padding: 9px 12px;
-  border-radius: 2px;
+  border-radius: 0;
   background: var(--surface-2);
   border: 1px solid var(--border);
   box-shadow: var(--desk-window-etch);
@@ -731,14 +731,14 @@
     transform: scale(1) translateY(0);
   }
 }
+/* PHILO-17 ALIVE: content fades in with opacity only (no movement after
+   the first draw; the sweep's still fence). */
 @keyframes surface-rise-in {
   from {
     opacity: 0;
-    transform: translateY(4px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 .surface-section {
@@ -806,7 +806,7 @@
   font-size: max(var(--font-size-xs), 0.92em);
   background: var(--wash-1);
   padding: 1px 5px;
-  border-radius: 2px;
+  border-radius: 0;
 }
 .surface-material a {
   color: var(--accent);
@@ -827,7 +827,7 @@
   border: 0;
   padding: 1px 4px;
   margin: -1px -4px;
-  border-radius: 2px;
+  border-radius: 0;
   max-width: 100%;
 }
 button.surface-edit-in-place {
@@ -1659,7 +1659,7 @@ button.surface-edit-in-place:hover {
   position: relative;
   display: flex;
   flex-direction: column;
-  border-radius: 2px;
+  border-radius: 0;
   overflow: hidden;
   background: var(--wash-1);
   box-shadow: inset 0 0 0 1px var(--border-subtle);
@@ -1818,7 +1818,7 @@ button.surface-edit-in-place:hover {
   font: inherit;
   font-size: var(--desk-surface-body-size);
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
 }
 .surface-tile-ghost-btn small {
   color: var(--text-faint);
@@ -1865,7 +1865,7 @@ button.surface-edit-in-place:hover {
   align-items: stretch;
   gap: 12px;
   padding: 13px 15px;
-  border-radius: 2px;
+  border-radius: 0;
   background: var(--wash-1);
   box-shadow: inset 0 0 0 1px var(--border-subtle);
   animation: surface-rise-in var(--duration-medium) var(--ease-quart) both;
@@ -2133,7 +2133,7 @@ button.surface-edit-in-place:hover {
   min-height: 110px;
   padding: 16px;
   border: 1.5px dashed var(--border);
-  border-radius: 2px;
+  border-radius: 0;
   color: var(--text-muted);
   cursor: pointer;
   text-align: center;
@@ -2184,7 +2184,7 @@ button.surface-edit-in-place:hover {
   padding: var(--space-2) var(--space-3);
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: 0;
   color: var(--text-muted);
 }
 .project-memory-since strong {
@@ -2209,7 +2209,7 @@ button.surface-edit-in-place:hover {
   padding: var(--space-3);
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: 0;
 }
 .project-memory-answer .material {
   max-width: 72ch;
@@ -2434,7 +2434,7 @@ button.surface-edit-in-place:hover {
   height: 88px;
   padding: 8px 4px;
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: 0;
   background: var(--surface-2);
   box-shadow:
     inset 1px 1px 0 var(--bevel-light),
@@ -2537,7 +2537,7 @@ button.surface-edit-in-place:hover {
   min-width: 0;
   padding: 6px;
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: 0;
   background: var(--surface-2);
   color: var(--text);
   text-align: left;
@@ -2753,7 +2753,7 @@ button.surface-edit-in-place:hover {
   gap: 6px;
   padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: 0;
   background: var(--surface-2);
   box-shadow: var(--desk-window-etch);
 }
@@ -3981,7 +3981,7 @@ button.surface-edit-in-place:hover {
 }
 .meetings-stream-row[data-selected] {
   background: var(--desk-window-etch);
-  border-radius: 2px;
+  border-radius: 0;
   padding-left: 6px;
   padding-right: 6px;
 }
@@ -4014,7 +4014,7 @@ button.surface-edit-in-place:hover {
 .meetings-stream-row-body:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 /* Title at primary type step. */
@@ -4476,4 +4476,650 @@ button.surface-edit-in-place:hover {
 }
 .bevel-flat {
   box-shadow: none;
+}
+
+/* ═══ PHILO-17 ALIVE — the inside of every window ══════════════════
+   Owner, 2026-10-11: "the in-window feeling … way too static. Way too
+   boring and monotone and also not very obvious to use". The material
+   stays (slate ground, paper wells, raised steel verbs, blue selection,
+   one light from the top left); this block makes it respond:
+   - one obvious first move: the filled primary verb; the other verbs a
+     quieter steel;
+   - tactile rows: the whole row lifts under the pointer (a soft shadow
+     cast down-right by the top-left light) and sinks under a press;
+   - colour for meaning: states are soft tinted pills;
+   - motion on hover and press only. Idle never moves.
+   Reduced motion: no transitions, no pulse (the end of this block). */
+.desk-next {
+  --alive-dur: 120ms;
+  --alive-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --alive-lift: 1px 2px 0 color-mix(in srgb, var(--wb-ink) 10%, transparent),
+    2px 5px 14px color-mix(in srgb, var(--wb-ink) 16%, transparent);
+  --alive-hover-bg: color-mix(in srgb, #ffffff 62%, var(--wb-well));
+}
+
+/* ── Verbs: every library Button answers the pointer ── */
+.desk-next .btn {
+  transition:
+    background-color var(--alive-dur) var(--alive-ease),
+    border-color var(--alive-dur) var(--alive-ease),
+    box-shadow var(--alive-dur) var(--alive-ease),
+    color var(--alive-dur) var(--alive-ease);
+}
+/* The primary: the ONE first move of a window. Blue plate, the bevel, and
+   a soft cast shadow so it sits above the steel verbs. */
+.desk-next .desk-window-shell .btn--primary:not(:disabled) {
+  box-shadow: var(--wb-raised), 1px 2px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent);
+  font-weight: 650;
+}
+.desk-next .desk-window-shell .btn--primary:not(:disabled):hover {
+  box-shadow: var(--wb-raised), 2px 4px 10px color-mix(in srgb, var(--wb-sel) 45%, transparent);
+}
+.desk-next .desk-window-shell .btn--primary:not(:disabled):is(:active, [aria-pressed="true"]) {
+  box-shadow: var(--wb-sunken);
+}
+/* Ghost inside a window: the same raised steel, quieter: a lighter plate
+   and a soft rule for its edge. It takes the full steel under the pointer. */
+.desk-next .desk-window-shell :is(.desk-pullout-body, .desk-surface-body) .btn--ghost:not(:disabled) {
+  border-color: var(--wb-rule);
+  background: color-mix(in srgb, var(--wb-steel) 38%, var(--wb-field-hi));
+  color: var(--wb-text);
+}
+.desk-next .desk-window-shell :is(.desk-pullout-body, .desk-surface-body) .btn--ghost:not(:disabled):hover {
+  border-color: var(--wb-ink);
+  background: var(--wb-steel-2);
+}
+
+/* ── States: soft tinted pills (the StateChip lives in state-chip.css) ── */
+.desk-next .surface-token[data-chip] {
+  --chip-tint: var(--pill-neutral);
+  min-height: 20px;
+  padding: 1px 9px;
+  border-radius: 0;
+  background: var(--chip-tint);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .surface-token[data-chip][data-tone="ok"],
+.desk-next .surface-token[data-chip][data-tone="success"] { --chip-tint: var(--pill-ok); }
+.desk-next .surface-token[data-chip][data-tone="warn"] { --chip-tint: var(--pill-warn); }
+.desk-next .surface-token[data-chip][data-tone="danger"] { --chip-tint: var(--pill-danger); }
+.desk-next .surface-token[data-chip][data-tone="accent"] { --chip-tint: var(--pill-accent); }
+.desk-next .surface-token[data-chip]:is([data-tone="warn"], [data-tone="danger"], [data-tone="ok"])::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-ink) 55%, transparent);
+}
+.desk-next .surface-token[data-chip][data-wrap] {
+  border-radius: 0;
+}
+
+/* ── The kit's words: sentence case, sans, muted ink ── */
+.desk-next .kit-strip {
+  font: 500 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .surface-section-head h3,
+.desk-next .desk-pullout-body .surface-section-head h3 {
+  margin: 0;
+  font: 650 13px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-text);
+}
+
+/* ── Rows: the kit Ledger answers the pointer ── */
+.desk-next .surface-ledger-line {
+  transition:
+    background-color var(--alive-dur) var(--alive-ease),
+    box-shadow var(--alive-dur) var(--alive-ease);
+}
+.desk-next .surface-ledger-line:not([data-inert]):hover {
+  background: var(--alive-hover-bg);
+  box-shadow: var(--alive-lift);
+  position: relative;
+  z-index: 1;
+}
+.desk-next .surface-ledger-line:not([data-inert]):active {
+  background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .surface-ledger-primary {
+  font-weight: 600;
+}
+
+/* ── People: initials avatars (kit.tsx Avatar / AvatarStack) ── */
+.kit-avatars {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+.kit-avatar {
+  --av-hue: 215;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: hsl(var(--av-hue) 45% 84%);
+  box-shadow: 0 0 0 2px var(--wb-well), inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 18%, transparent);
+  color: var(--wb-ink);
+  font: 700 12px / 1 var(--font-sans);
+  letter-spacing: 0;
+  user-select: none;
+}
+.kit-avatars > .kit-avatar + .kit-avatar {
+  margin-left: -4px;
+}
+.kit-avatar[data-size="md"] {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+.kit-avatar[data-more] {
+  background: var(--wb-field);
+  font-variant-numeric: tabular-nums;
+}
+.kit-avatar[data-hue="0"] { --av-hue: 215; }
+.kit-avatar[data-hue="1"] { --av-hue: 160; }
+.kit-avatar[data-hue="2"] { --av-hue: 28; }
+.kit-avatar[data-hue="3"] { --av-hue: 280; }
+.kit-avatar[data-hue="4"] { --av-hue: 350; }
+.kit-avatar[data-hue="5"] { --av-hue: 190; }
+.kit-avatar[data-hue="6"] { --av-hue: 48; }
+.kit-avatar[data-hue="7"] { --av-hue: 110; }
+
+/* ── Meetings: the exemplar ── */
+/* The headline and the first move on one line. */
+.desk-next .meetings-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 2px 0 6px;
+}
+.desk-next .meetings-top > .meetings-headline {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+}
+.desk-next .meetings-top > .meetings-head-verbs {
+  padding: 0;
+}
+.desk-next .meetings-headline .surface-display {
+  color: var(--wb-text);
+}
+.desk-next .meetings-headline[data-accent] .surface-display {
+  color: var(--accent);
+}
+/* The stream sits in a paper well. */
+.desk-next .meetings-stream-rows {
+  gap: 2px;
+  padding: 4px;
+  background: var(--wb-well);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .meetings-stream-row {
+  position: relative;
+  padding: 7px 10px;
+  border-top: 0;
+  border-radius: 0;
+  transition:
+    background-color var(--alive-dur) var(--alive-ease),
+    box-shadow var(--alive-dur) var(--alive-ease);
+}
+.desk-next .meetings-stream-row + .meetings-stream-row::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: var(--wb-rule-soft);
+  pointer-events: none;
+}
+.desk-next .meetings-stream-row:hover {
+  background: var(--alive-hover-bg);
+  box-shadow: var(--alive-lift);
+  z-index: 1;
+}
+.desk-next .meetings-stream-row:hover::before,
+.desk-next .meetings-stream-row:hover + .meetings-stream-row::before {
+  opacity: 0;
+}
+.desk-next .meetings-stream-row:has(.meetings-stream-row-body:active) {
+  background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .meetings-stream-row[data-selected] {
+  background: color-mix(in srgb, var(--wb-sel) 18%, var(--wb-well));
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.desk-next .meetings-stream-row-body {
+  gap: 3px;
+}
+.desk-next .meetings-stream-row-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+.desk-next .meetings-stream-title {
+  font: 600 14px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+  min-width: 0;
+}
+/* The meta line: sentence case, sans, muted ink (`Oct 11 · 30 min ·
+   7 words`); the state stays a pill. */
+.desk-next .meetings-stream-fact {
+  font: 500 12px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: lowercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-muted);
+}
+.desk-next .meetings-stream-fact[data-fact="date"] {
+  display: inline-block;
+}
+.desk-next .meetings-stream-fact[data-fact="date"]::first-letter {
+  text-transform: uppercase;
+}
+.desk-next .meetings-stream-dot {
+  margin: 0;
+  color: color-mix(in srgb, var(--wb-muted) 70%, transparent);
+}
+.desk-next .meetings-stream-tokens {
+  gap: 4px 8px;
+}
+/* A quiet Open shows under the pointer or the focus; on touch it stays. */
+@media (hover: hover) and (pointer: fine) {
+  .desk-next .meetings-stream-row-verb[data-quiet-open] > .btn {
+    opacity: 0;
+    transition: opacity var(--alive-dur) var(--alive-ease), background-color var(--alive-dur) var(--alive-ease);
+  }
+  .desk-next .meetings-stream-row:is(:hover, :focus-within) .meetings-stream-row-verb[data-quiet-open] > .btn {
+    opacity: 1;
+  }
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .meetings-stream-row-verb[data-quiet-open] > .btn {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .btn,
+  .desk-next .surface-ledger-line,
+  .desk-next .meetings-stream-row,
+  .desk-next .meetings-stream-row-verb > .btn,
+  .desk-next .surface-state-chip {
+    transition: none;
+  }
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .meetings-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .desk-next .meetings-top > .meetings-head-verbs {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .desk-next .meetings-top > .meetings-head-verbs > .btn--primary {
+    flex: 1 1 auto;
+  }
+}
+
+/* ── PHILO-17 ALIVE: the SurfaceRow answers the pointer too ── */
+.desk-next .desk-window-shell .surface-row {
+  position: relative;
+  border-radius: 0;
+  transition:
+    background-color var(--alive-dur) var(--alive-ease),
+    box-shadow var(--alive-dur) var(--alive-ease);
+}
+.desk-next .desk-window-shell .surface-row:has(> .surface-row-line > .surface-row-open):hover {
+  background: var(--alive-hover-bg);
+  box-shadow: var(--alive-lift);
+  z-index: 1;
+}
+.desk-next .desk-window-shell .surface-row:has(.surface-row-open:active) {
+  background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .desk-window-shell .surface-row[data-selected] {
+  background: color-mix(in srgb, var(--wb-sel) 18%, var(--wb-well));
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-window-shell .surface-row { transition: none; }
+}
+
+/* ── PHILO-17 ALIVE r2 (coordinator: "still monotone gray") ── */
+.desk-next {
+  /* A warm paper for the content wells (muted ink reads 7.6:1 on it). */
+  --alive-paper: #f8f5ee;
+  --alive-hover-bg: #ffffff;
+}
+.desk-next .meetings-stream-rows,
+.desk-next .people-surface .surface-rows,
+.desk-next .desk-window-shell .surface-ledger {
+  background: var(--alive-paper);
+}
+.desk-next .kit-avatar {
+  background: hsl(var(--av-hue) 72% 78%);
+}
+/* The state pill speaks sentence case in sans (the StateChip and the
+   meeting's state token); a tiny counter keeps its caps. */
+.desk-next .surface-state-chip,
+.desk-next .meetings-stream-tokens .surface-token[data-chip] {
+  font: 600 12px / 1 var(--font-sans);
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+/* Running and queued: blue, the lamp breathes (opacity only). */
+.desk-next .surface-token[data-chip][data-live] {
+  --chip-tint: var(--pill-info);
+  color: var(--wb-info-ink);
+}
+.desk-next .surface-token[data-chip][data-live]::before {
+  background: var(--lamp-info);
+  animation: alive-breathe 1.6s ease-in-out infinite alternate;
+}
+@keyframes alive-breathe {
+  from { opacity: 1; }
+  to { opacity: 0.25; }
+}
+/* The primary verb: a light sheen runs across it under the pointer. */
+@keyframes alive-sheen {
+  from { background-position: -120% 0; }
+  to { background-position: 220% 0; }
+}
+.desk-next .desk-window-shell .btn--primary:not(:disabled):hover {
+  background-image: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+  background-size: 60% 100%;
+  background-repeat: no-repeat;
+  animation: alive-sheen 900ms var(--alive-ease) 1;
+}
+/* The app's accent tile beside the headline. */
+.kit-apptile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  background: hsl(var(--app-hue, 210) 80% 84%);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.7),
+    inset -1px -1px 0 hsl(var(--app-hue, 210) 40% 55%),
+    0 0 0 1px color-mix(in srgb, var(--wb-ink) 35%, transparent),
+    1px 2px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.kit-apptile > img {
+  width: 20px;
+  height: 20px;
+  image-rendering: pixelated;
+}
+.desk-next .meetings-top {
+  flex-wrap: nowrap;
+  gap: 8px 12px;
+}
+.desk-next .meetings-headline .surface-display {
+  font: 650 19px / 1.2 var(--font-display);
+  letter-spacing: 0;
+}
+/* The week in tinted figures. */
+.kit-figures {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+.kit-figures-caption {
+  flex-basis: 100%;
+  font: 650 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.kit-figure {
+  --fig-hue: var(--wb-ink);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--fig-hue) 14%, var(--alive-paper, #f8f5ee));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fig-hue) 30%, transparent);
+  color: var(--wb-text);
+  font: 500 12px / 1.2 var(--font-sans);
+}
+.kit-figure > b {
+  font: 700 15px / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.kit-figure[data-tone="info"] { --fig-hue: var(--lamp-info); }
+.kit-figure[data-tone="ok"] { --fig-hue: var(--lamp-ok); }
+.kit-figure[data-tone="warn"] { --fig-hue: var(--lamp-warn); }
+.kit-figure[data-tone="accent"] { --fig-hue: var(--lamp-ask); }
+.kit-figure[data-tone="danger"] { --fig-hue: var(--lamp-fail); }
+.kit-figure[data-tone="info"] > b { color: var(--wb-info-ink); }
+.kit-figure[data-tone="ok"] > b { color: var(--wb-ok-ink); }
+.kit-figure[data-tone="warn"] > b { color: var(--wb-warn-ink); }
+.kit-figure[data-tone="accent"] > b { color: var(--wb-ember-ink); }
+.kit-figure[data-tone="danger"] > b { color: var(--wb-danger-ink); }
+@container surface (max-width: 559.9px) {
+  .desk-next .meetings-top {
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: center;
+  }
+  .desk-next .meetings-top > .meetings-headline {
+    flex: 1 1 0;
+  }
+  .desk-next .meetings-top > .meetings-head-verbs {
+    flex-basis: 100%;
+  }
+  .desk-next .meetings-headline .surface-display {
+    font-size: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .surface-token[data-chip][data-live]::before,
+  .desk-next .desk-window-shell .btn--primary:not(:disabled):hover {
+    animation: none;
+  }
+}
+.desk-next .surface-token[data-chip][data-plain] {
+  font: 600 12px / 1 var(--font-sans);
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+.desk-next .kit-avatar:not([data-size="md"]) {
+  width: 22px;
+  height: 22px;
+}
+
+/* PHILO-17 (the suite's contrast and hit reds): a token pill's word is the
+   tone's ink on its opaque tint (5.3:1 or more), on any ground. */
+.desk-next .surface-token[data-chip] { color: var(--wb-muted); }
+.desk-next .surface-token[data-chip]:is([data-tone="ok"], [data-tone="success"]) { color: var(--wb-ok-ink); }
+.desk-next .surface-token[data-chip][data-tone="warn"] { color: var(--wb-warn-ink); }
+.desk-next .surface-token[data-chip][data-tone="danger"] { color: var(--wb-danger-ink); }
+.desk-next .surface-token[data-chip][data-tone="accent"] { color: var(--wb-ember-ink); }
+.desk-next .surface-token[data-chip][data-live] { color: var(--wb-info-ink); }
+
+/* ── PHILO-17: the Record window's deck: a REC lamp and the four steps ── */
+.desk-next .live-deck {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--wb-ink);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .live-rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-ink);
+}
+.desk-next .live-rec-lamp {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--wb-ink);
+  background: color-mix(in srgb, var(--wb-rec) 35%, var(--wb-steel));
+}
+.desk-next .live-deck[data-active] .live-rec {
+  background: var(--wb-rec);
+  color: var(--wb-paper);
+}
+.desk-next .live-deck[data-active] .live-rec-lamp {
+  background: #ff5a4f;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #ff5a4f 35%, transparent), 0 0 10px 2px color-mix(in srgb, #ff5a4f 55%, transparent);
+  animation: live-rec-breathe 1.4s ease-in-out infinite alternate;
+}
+@keyframes live-rec-breathe {
+  from { opacity: 1; }
+  to { opacity: 0.45; }
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .live-deck {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .live-deck[data-active] .live-rec-lamp { animation: none; }
+}
+.desk-next .surface-token[data-chip] {
+  padding: 1px 6px;
+  max-width: 100%;
+}
+
+/* PHILO-17: a hub ledger row that asks to wrap (`wrap`) wraps its gadgets
+   under the name at a narrow width; the name keeps its whole word. */
+.surface-ledger[data-cols="hub"] .surface-ledger-row[data-wrap] > .surface-ledger-line {
+  flex-wrap: wrap;
+  row-gap: 6px;
+  padding-block: 6px;
+}
+.surface-ledger[data-cols="hub"] .surface-ledger-row[data-wrap] .surface-ledger-primary {
+  min-width: max-content;
+}
+
+/* PHILO-17 (owner: "comically large fonts"): a window's display fact is the
+   18–20 px headline, semibold, in every app (the type ruling). */
+.desk-next .desk-window-shell .surface-display {
+  font-size: 19px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+/* ═══ PHILO-17 Meetings r3: Import, Review, Artifacts ═══════════════ */
+.desk-next .meetings-quiet {
+  margin: 4px 0;
+  font: 500 12px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+/* Import: two plates side by side, record now or bring one in. */
+.desk-next .meetings-import-plates {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 10px;
+  align-items: stretch;
+}
+.desk-next .meetings-import-record {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-field-hi);
+  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.desk-next .meetings-import-words {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .meetings-import-plates .surface-dropwell {
+  margin: 0;
+  border: 1px dashed color-mix(in srgb, var(--wb-ink) 55%, transparent);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+  transition: background-color 120ms ease;
+}
+.desk-next .meetings-import-plates .surface-dropwell:hover {
+  background: #ffffff;
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .meetings-import-plates {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Review: the head's facts are pills in sentence case (the words stay in
+   the DOM as written; a pill reads them in sentence case), no dots. */
+.desk-next .meetings-review-dot {
+  display: none;
+}
+.desk-next .meetings-review-tokens {
+  gap: 4px;
+}
+.desk-next .meetings-review-tokens > .surface-token,
+.desk-next .meetings-review-coverage-facts > .surface-token {
+  display: inline-block;
+  padding: 3px 8px;
+  background: var(--pill-neutral);
+  color: var(--wb-muted);
+  font: 600 12px / 1.2 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+.desk-next .meetings-review-tokens > .surface-token[data-tone="warn"],
+.desk-next .meetings-review-coverage-facts > .surface-token[data-tone="warn"] {
+  background: var(--pill-warn);
+  color: var(--wb-warn-ink);
+}
+.desk-next .meetings-review-tokens > .surface-token::first-letter,
+.desk-next .meetings-review-coverage-facts > .surface-token::first-letter,
+.desk-next .meetings-review .surface-caption::first-letter {
+  text-transform: uppercase;
+}
+.desk-next .meetings-review .surface-caption {
+  font: 650 13px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: lowercase;
+  color: var(--wb-text);
+}
+.desk-next .meetings-review .meetings-review-caption-value {
+  color: var(--wb-muted);
+  font-weight: 500;
+}
+.desk-next .meetings-review-coverage {
+  padding: 4px 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .meetings-review-coverage > .surface-caption {
+  margin: 6px 0 2px;
 }

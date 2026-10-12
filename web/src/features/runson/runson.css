@@ -85,3 +85,77 @@
 .desk-next .desk-surface-foot:has(> .runson-foot > .surface-footer-egress:empty):has(> .runson-foot > .surface-footer-receipt:empty):has(> .runson-foot > .surface-footer-verbs:empty) {
   display: none;
 }
+
+/* ── PHILO-17 REFIT: Runs on in the language of Today ── */
+
+/* The one fact at the window headline size (18–20 px), never the 26 px
+   display. */
+.desk-next .runson-root .runson-fact {
+  font: 650 19px / 1.25 var(--font-display);
+  letter-spacing: 0;
+}
+.desk-next .runson-strip {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A job card: the job's name, and under it a soft pill with the engine it
+   runs on (green ready, amber limited or no engine, red broken, grey off). */
+.desk-next .runson-root .switchboard-job {
+  padding: 8px 26px 8px 10px;
+  background: var(--wb-paper);
+  transition: background-color 120ms ease, box-shadow 160ms ease;
+}
+.desk-next .runson-root .switchboard-job:hover {
+  background: #ffffff;
+}
+.desk-next .runson-root .switchboard-job.is-default {
+  background: var(--wb-field-hi);
+}
+.desk-next .runson-root .switchboard-job-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+  font: 600 13px / 1.3 var(--font-sans);
+}
+/* The phone list: a job tap is its name and its engine pill on one line. */
+.desk-next .runson-root .switchboard.is-list .switchboard-tap.switchboard-job {
+  align-items: center;
+  min-height: 44px;
+}
+.desk-next .runson-root .switchboard.is-list .switchboard-tap.switchboard-job > .switchboard-job-pill {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+}
+.desk-next .runson-root .switchboard-job-arrow {
+  display: none;
+}
+.desk-next .runson-root .switchboard-job-pill {
+  /* The kit pill (kit.css); the engine name may wrap inside the card. */
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+
+/* The captions: mono labels with intent. */
+.desk-next .runson-root .switchboard-cap {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* An engine plate: the steel lifts toward the light on hover. */
+.desk-next .runson-root .switchboard-engine {
+  transition: box-shadow 160ms ease, background-color 120ms ease;
+}
+.desk-next .runson-root .switchboard-engine:hover {
+  background: var(--wb-steel-2, var(--wb-steel));
+  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .runson-root .switchboard-job,
+  .desk-next .runson-root .switchboard-engine { transition: none; }
+}

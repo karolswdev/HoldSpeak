@@ -39,7 +39,7 @@ describe("DeskOS application manifest", () => {
     // PHILO-17 (doors): one primary door per application. The Conductor
     // and People are desk drawers; Settings is in the HoldSpeak menu.
     expect(DOCK_APPLICATIONS.map((application) => application.label)).toEqual([
-      "Intelligence",
+      "Today",
       "Speak",
       "Meetings",
     ]);
@@ -75,7 +75,7 @@ describe("DeskOS application manifest", () => {
 
   it("PHILO-17 (doors): Go is the application index, then Tools", () => {
     expect(GO_APPLICATIONS.map((application) => application.label)).toEqual([
-      "Speak", "Meetings", "Intelligence", "Ask AI", "People", "Conductor", "Memory",
+      "Speak", "Meetings", "Today", "Ask AI", "People", "Conductor", "Memory",
     ]);
     expect(GO_TOOL_APPLICATIONS.map((application) => application.label)).toEqual([
       "Workbenches", "Activity", "Processes", "Rhythm", "Commands", "Context",

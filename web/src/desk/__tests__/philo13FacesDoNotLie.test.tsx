@@ -149,13 +149,14 @@ describe("a People store failure keeps the window and the note", () => {
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Priya Nair", relationship_kind: "direct_report" }] }),
       "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Priya Nair", relationship_kind: "direct_report", notes: [] } }),
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      "/api/people/relationships/r1/brief": () => json({ brief: { open_commitments: [], agenda_items: [] } }),
       "/api/projects": () => json({ projects: [] }),
       "/api/door": () => json({ upcoming: [] }),
       "/api/people/relationships/r1/notes": () =>
         storeDown ? json({ detail: "people_store_unavailable" }, 503) : json({ note: { id: "n1" } }),
     };
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      const handler = routes[String(input)];
+      const handler = routes[String(input).replace("?counts=1", "")];
       if (!handler) throw new Error(`Unexpected request: ${String(input)}`);
       return handler();
     }));
@@ -201,11 +202,12 @@ describe("People Try again re-reads the person", () => {
           : json({ relationship: { id: "r1", display_name: "Priya Nair", relationship_kind: "direct_report", notes: [{ id: "n1", topic: "Growth", body: "Wants to lead the EU shard work.", visibility: "leader_private" }] } });
       },
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      "/api/people/relationships/r1/brief": () => json({ brief: { open_commitments: [], agenda_items: [] } }),
       "/api/projects": () => json({ projects: [] }),
       "/api/door": () => json({ upcoming: [] }),
     };
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      const key = String(input);
+      const key = String(input).replace("?counts=1", "");
       calls[key] = (calls[key] ?? 0) + 1;
       const handler = routes[key];
       if (!handler) throw new Error(`Unexpected request: ${key}`);

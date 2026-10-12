@@ -45,10 +45,10 @@ function token(id: string): string {
 describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
   it("says SUMMARY STORED, never OFF, when the run status is disabled", () => {
     rail([row("stored", "disabled", true), row("none", "disabled", false)]);
-    expect(token("stored")).toBe("SUMMARY STORED");
+    expect(token("stored")).toBe("Summary stored");
     // PHILO-15 10 (B14): OFF only when summaries ARE off (the row's route
     // says "summaries off"); otherwise the summary is not run yet.
-    expect(token("none")).toBe("NOT RUN");
+    expect(token("none")).toBe("Not run");
   });
 
   it("names the stored fact when no run is active", () => {
@@ -68,7 +68,7 @@ describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
     expect(stateToken(row("f", "error", true)).label).toBe("FAILED");
     rail([row("failed", "error", true)]);
     const el = document.querySelector('[data-testid="meeting-row-failed"]') as HTMLElement;
-    expect(within(el).getByTestId("state-token").textContent).toBe("FAILED");
+    expect(within(el).getByTestId("state-token").textContent).toBe("Failed");
     expect(meetingRowState(row("failed", "error", true)).verb).toBe("Retry");
   });
 
@@ -102,17 +102,17 @@ describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
       row("rdy", "ready", true, 1),
       row("non", "ready", true, 0),
     ]);
-    expect(token("err")).toBe("FAILED");
-    expect(token("run")).toBe("RUNNING");
-    expect(token("que")).toBe("QUEUED");
-    expect(token("dis")).toBe("1 TO REVIEW");
-    expect(token("rdy")).toBe("1 TO REVIEW");
-    expect(token("non")).toBe("SUMMARY STORED");
+    expect(token("err")).toBe("Failed");
+    expect(token("run")).toBe("Running");
+    expect(token("que")).toBe("Queued");
+    expect(token("dis")).toBe("1 to review");
+    expect(token("rdy")).toBe("1 to review");
+    expect(token("non")).toBe("Summary stored");
   });
 
   it("never lets a NEEDS YOU count cover a capture state", () => {
     const rec = { ...row("rec", "disabled", false, 2), capture_status: "capture_failed" };
     rail([rec]);
-    expect(token("rec")).toBe("CAPTURE FAILED");
+    expect(token("rec")).toBe("Capture failed");
   });
 });

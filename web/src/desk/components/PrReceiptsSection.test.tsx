@@ -23,10 +23,14 @@ describe("PR follow-through desk object", () => {
   it("keeps unavailable verbs visible with their named reason", () => {
     usePrReceipts.setState({ sources: [{ source_id: "src_1", label: "HoldSpeak", status: "live", detail: "", observed_at: row.observed_at, prs: [row] }], loaded: true });
     render(<PrReceiptsSection />);
-    const status = screen.getByRole("button", { name: "Post status" });
-    expect(status).toBeDisabled();
-    expect(status).toHaveAttribute("title", "gh credentials unavailable");
-    expect(screen.getByRole("button", { name: "Send agent" })).toBeEnabled();
+    // PHILO-17 THE REFIT: one verb per row (Open PR); the rest in the ⋯ menu.
+    expect(screen.getByRole("button", { name: "Open PR" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Send agent" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
+    const status = screen.getByRole("menuitem", { name: /^Post status/ });
+    expect(status).toHaveAttribute("aria-disabled", "true");
+    expect(status.textContent).toContain("gh credentials unavailable");
+    expect(screen.getByRole("menuitem", { name: "Send agent" })).not.toHaveAttribute("aria-disabled");
   });
 
   it("marks an ungated agent on the row and in Info", () => {
@@ -41,9 +45,11 @@ describe("PR follow-through desk object", () => {
     usePrReceipts.setState({ sources: [{ source_id: "src_1", label: "HoldSpeak", status: "live", detail: "", observed_at: row.observed_at, prs: [ungated] }], loaded: true });
     render(<PrReceiptsSection />);
     expect(screen.getByText("UNGATED")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Info" }));
+    fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Info" }));
     expect(screen.getByText("Agent").nextSibling).toHaveTextContent("UNGATED");
-    expect(screen.getByRole("button", { name: "Send agent" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
+    expect(screen.getByRole("menuitem", { name: /^Send agent/ })).toHaveAttribute("aria-disabled", "true");
   });
 
   it("shows the complete proposed comment before approval and offers deny", async () => {
@@ -53,7 +59,8 @@ describe("PR follow-through desk object", () => {
       propose: vi.fn(async () => ({ proposal_id: "proposal-1", preview: "Complete review\n\nFinding one.", state: "awaiting_decision" })),
     });
     render(<PrReceiptsSection />);
-    fireEvent.click(screen.getByRole("button", { name: "Post comment" }));
+    fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Post comment" }));
     fireEvent.change(screen.getByLabelText("Comment"), { target: { value: "Complete review\n\nFinding one." } });
     fireEvent.click(screen.getByRole("button", { name: "Propose" }));
     expect(await screen.findByText("PROPOSED")).toBeInTheDocument();

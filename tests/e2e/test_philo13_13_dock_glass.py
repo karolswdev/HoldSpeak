@@ -251,7 +251,7 @@ class TestLiveDock:
                     label = first.locator(".desk-dock-label")
                     lb, db = label.bounding_box(), dock.bounding_box()
                     assert lb and db and lb["x"] >= db["x"], (lb, db)
-                    assert label.inner_text() == "Intelligence"
+                    assert label.inner_text() == "Today"
                 else:
                     seats = page.evaluate("""() => {
                         const d = document.querySelector('.desk-dock');

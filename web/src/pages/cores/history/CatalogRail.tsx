@@ -30,6 +30,23 @@ import {
 } from "./helpers";
 import type { ReactNode } from "react";
 import { AudioOnlyVerb } from "./TranscribeVerb";
+import { AvatarStack } from "../../../desk/surface/kit";
+
+/** PHILO-17 ALIVE: the meeting's people, as names (the list row's
+ *  `attendees`: strings, or objects with a name or an email). */
+function attendeeNames(row: Record<string, unknown>): string[] {
+  const raw = Array.isArray(row.attendees) ? row.attendees : [];
+  return raw
+    .map((item) => {
+      if (typeof item === "string") return item;
+      if (item && typeof item === "object") {
+        const obj = item as Record<string, unknown>;
+        return String(obj.name ?? obj.display_name ?? obj.email ?? "");
+      }
+      return "";
+    })
+    .filter(Boolean);
+}
 
 /** HS-201-04 — true when this row would draw a verb that STARTS a summary
  *  run: the verb is a run verb AND a route resolves for it. The rail uses
@@ -43,7 +60,7 @@ function rowStartsRun(row: Record<string, unknown>): boolean {
 /** The row that may wear the filled primary: the SELECTED row when it can
  *  start a run, else the top-most row that can. Every other row's verb is
  *  the default species (UX-CANON: one filled primary per window). */
-function leadRunRowId(
+export function leadRunRowId(
   rows: Record<string, unknown>[],
   selected: Record<string, unknown> | null,
 ): string | null {
@@ -75,6 +92,13 @@ function TokenLine({ parts }: { parts: ReactNode[] }) {
     interleaved.push(<span key={`part-${i}`}>{part}</span>);
   });
   return <>{interleaved}</>;
+}
+
+/** PHILO-17 ALIVE: a state pill speaks in sentence case (`Summary
+ *  stored`, `2 to review`); the rail's labels are written in caps. */
+export function pillWord(label: string): string {
+  const lower = label.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
 /** HS-170-04 — the stream row: title at primary, tokens under, verb right. */
@@ -164,7 +188,7 @@ function MeetingStreamRow({
   // Assemble all parts for the token line
   const tokenParts: ReactNode[] = [];
   if (dateStr) tokenParts.push(
-    <span className="meetings-stream-fact">{dateStr}</span>
+    <span className="meetings-stream-fact" data-fact="date">{dateStr}</span>
   );
   if (dur) tokenParts.push(
     <span className="meetings-stream-fact">{dur}</span>
@@ -191,9 +215,10 @@ function MeetingStreamRow({
         className="surface-token"
         data-chip
         data-tone={displayTone}
+        data-live={displayLabel === "RUNNING" || displayLabel === "QUEUED" ? "" : undefined}
         data-testid="state-token"
       >
-        {displayLabel}
+        {pillWord(displayLabel)}
       </span>
     );
   }
@@ -266,6 +291,8 @@ function MeetingStreamRow({
           <span className="surface-primary meetings-stream-title">
             {String(row.title ?? "Meeting")}
           </span>
+          {/* PHILO-17 ALIVE: the people of the meeting, as avatars. */}
+          <AvatarStack names={attendeeNames(row)} data-testid="meeting-row-people" />
           {/* Compact fact line for narrowed mode */}
           <span className="meetings-stream-compact-facts">
             {compactParts.filter(Boolean).join(" · ")}
@@ -275,7 +302,7 @@ function MeetingStreamRow({
           <TokenLine parts={tokenParts} />
         </div>
       </Button>
-      <div className="meetings-stream-row-verb">
+      <div className="meetings-stream-row-verb" data-quiet-open={verb === "Open" ? "" : undefined}>
         {/* Article III — after the run: every destination contacted, in
             order. Before the click (and while it is in flight): the route
             the run WILL use.

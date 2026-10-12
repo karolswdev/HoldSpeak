@@ -165,7 +165,7 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     const title = screen.getByRole("button", { name: "Window" });
     fireEvent.click(title, { detail: 0 });
     const labels = screen.getAllByRole("menuitem").map((el) => el.textContent ?? "");
-    expect(labels.filter((t) => t.includes("Chair"))).toHaveLength(1);
+    expect(labels.filter((t) => /^Desk\b/.test(t))).toHaveLength(1);
     fireEvent.keyDown(document, { key: "Escape" });
 
     act(() => verbById("chair.window.brief")!.run({ selectedRef: null }));

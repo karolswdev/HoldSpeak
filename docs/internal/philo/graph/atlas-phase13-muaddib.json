@@ -4068,7 +4068,7 @@
         },
         {
           "path": "web/src/pages/cores/PeopleCore.tsx",
-          "symbol": "function NextOneOnOneSide(",
+          "symbol": "function PrepPane(",
           "claim": "The Now side reads the linked 1:1 with the header's formatter; a failed brief read is a named failure with Try again."
         },
         {
@@ -4078,7 +4078,7 @@
         },
         {
           "path": "web/src/pages/cores/PeopleCore.tsx",
-          "symbol": "data-testid=\"people-next-1on1\"",
+          "symbol": "nextAt ? \"people-next-1on1\"",
           "claim": "NEXT 1:1 reads the hub's linked event through one formatter."
         }
       ],

@@ -144,8 +144,8 @@ describe("the Meetings list over the HS-170 seed", () => {
     expect(within(vendor).getByTestId("no-transcript-token").textContent).toBe("NO TRANSCRIPT");
     expect(within(vendor).queryByTestId("run-intelligence-btn")).toBeNull();
     // The dead capture says INTERRUPTED; no row says REC.
-    expect(within(screen.getByTestId("meeting-row-m-dead-rec")).getByTestId("state-token").textContent).toBe("INTERRUPTED");
-    expect(stateTokens()).not.toContain("REC");
+    expect(within(screen.getByTestId("meeting-row-m-dead-rec")).getByTestId("state-token").textContent).toBe("Interrupted");
+    expect(stateTokens()).not.toContain("Rec");
     expect(document.body.textContent).not.toContain("0 SEG");
     // HS-170-04 restored doors: search with its mic, and the facet row
     // (the seed's one open action draws HAS OPEN ACTIONS).
@@ -223,7 +223,7 @@ describe("the meeting after a run (HS-172 seed)", () => {
     render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-ran");
     const token = within(row).getByTestId("state-token").textContent ?? "";
-    expect(token.includes("RAN") || token.includes("TO REVIEW")).toBe(true);
+    expect(token.includes("Ran") || token.includes("to review")).toBe(true);
     const body = document.body.textContent ?? "";
     expect(body).not.toContain("0 NEEDS");
     expect(body).not.toContain("LOCAL");
@@ -241,8 +241,8 @@ describe("the meeting after a run (HS-172 seed)", () => {
     expect(facts).toContain("41 S");
     expect(facts).toContain("192.168.1.43");
     const commitments = screen.getByTestId("meeting-commitments");
-    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
-    expect(commitments.querySelector("h3")?.textContent).toBe("Commitments · 2");
+    expect(decisions.querySelector("h3")?.textContent).toBe("Decided · 1");
+    expect(commitments.querySelector("h3")?.textContent).toBe("Who owes what · 2");
     expect(screen.getAllByTestId("proposal-confirm-btn")).toHaveLength(3);
     expect(screen.getAllByTestId("proposal-dismiss-btn")).toHaveLength(3);
     const ledgers = `${decisions.textContent}${commitments.textContent}`;
@@ -257,7 +257,7 @@ describe("the meeting after a run (HS-172 seed)", () => {
     hub(hs172 as Fixture);
     const list = render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-queued");
-    expect(within(row).getByTestId("state-token").textContent).toContain("QUEUED");
+    expect(within(row).getByTestId("state-token").textContent).toContain("Queued");
     list.unmount();
     render(<Shell><MeetingRecord meetingId="m-queued" onClose={() => undefined} /></Shell>);
     await waitFor(() => expect(document.querySelector(".meetings-detail-facts")?.textContent).toContain("QUEUED"));

@@ -44,7 +44,12 @@ RETRY_SECONDS = 30.0
 LOCAL_BATCH = 16
 LOCAL_PAUSE_SECONDS = 0.25
 REMOTE_BATCH = 64
-STOP_JOIN_SECONDS = 60.0
+#: PHILO-17 (owner: Ctrl-C has to work): a stop waits this long for a pass
+#: that is inside an engine call, then the hub goes on exiting. The thread is
+#: a daemon and every write is one transaction, so an exit mid-call writes
+#: nothing; the page is due again on the next run. (Was 60 s: a page rewrite
+#: held TERM and INT for over 30 s.)
+STOP_JOIN_SECONDS = 3.0
 #: Seconds the conductor waits after a wake before it runs.  A write that
 #: touches many objects (or many writes close together) is then one tick.
 WAKE_GAP_SECONDS = 2.0

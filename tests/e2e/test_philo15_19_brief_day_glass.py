@@ -143,7 +143,7 @@ def _menu_pick(page: Any, width: int, name: str) -> None:
         _press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
     else:
         _press(page, page.locator(".desk-verbbar-item[data-menu-id='window'] button"), width)
-        page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')").hover()
+        page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").hover()
     _press(page, page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"), width)
 
 
@@ -240,7 +240,7 @@ class TestTheBriefCarriesTheDay:
                 full.wait_for()
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"brief-full-{width}.png"))
-                intel = page.locator(".desk-window[aria-label='Intelligence']")
+                intel = page.locator(".desk-window[aria-label='Today']")
                 unread = intel.get_by_text("NOT READ · People", exact=False).first
                 unread.scroll_into_view_if_needed()
                 _settle(page)

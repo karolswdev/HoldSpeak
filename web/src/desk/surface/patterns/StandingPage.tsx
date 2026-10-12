@@ -13,6 +13,7 @@
  * with no window is plain text (A.11).  A ref that contradicts reads
  * `AGAINST · <token>` in the danger ink.
  */
+import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { countToken } from "../count";
 import { StateChip } from "./StateChip";
@@ -25,6 +26,19 @@ export interface MemoryRefToken {
   against?: boolean;
 }
 
+/** PHILO-17 (owner: "double references"): one chip per distinct source
+ *  object (the same ref, for or against, is one chip); past three, the
+ *  first two and `+N`, which opens the rest. */
+export function distinctRefs(refs: MemoryRefToken[]): MemoryRefToken[] {
+  const seen = new Set<string>();
+  return refs.filter((r) => {
+    const key = `${r.ref}:${r.against ? "against" : "for"}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export function RefTokens({
   refs,
   onOpen,
@@ -34,10 +48,14 @@ export function RefTokens({
   onOpen: (ref: string) => void;
   label?: string;
 }) {
-  if (!refs.length) return null;
+  const [all, setAll] = useState(false);
+  const distinct = distinctRefs(refs);
+  if (!distinct.length) return null;
+  const shown = all || distinct.length <= 3 ? distinct : distinct.slice(0, 2);
+  const rest = distinct.length - shown.length;
   return (
     <span className="memory-ref-tokens" role="group" aria-label={label}>
-      {refs.map((r) => {
+      {shown.map((r) => {
         const text = r.against ? `AGAINST · ${r.token}` : r.token;
         return r.opens ? (
           <Button
@@ -62,6 +80,17 @@ export function RefTokens({
           </span>
         );
       })}
+      {rest > 0 ? (
+        <Button
+          variant="chrome"
+          className="desk-chip quiet memory-ref-token memory-ref-more"
+          data-testid="memory-ref-more"
+          aria-label={`Show ${rest} more sources`}
+          onClick={() => setAll(true)}
+        >
+          +{rest}
+        </Button>
+      ) : null}
     </span>
   );
 }

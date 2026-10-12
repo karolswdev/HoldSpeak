@@ -19,10 +19,11 @@ describe("HS-128-01 Intelligence pullout", () => {
     expect(PULLOUT_CONTENT.intelligence).toBe(IntelligencePullout);
   });
 
-  it("opens on Brief and changes the active view", () => {
+  it("opens on Day (the day as a timeline) and changes the active view", () => {
     render(<IntelligencePullout object={object} onClose={() => {}} />);
 
-    expect(screen.getByRole("button", { name: "Brief" })).toHaveAttribute(
+    // PHILO-17 (owner pick, concept C): the Today window opens on the day.
+    expect(screen.getByRole("button", { name: "Day" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );

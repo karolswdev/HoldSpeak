@@ -173,7 +173,7 @@ class TestFinishFacePolish:
                 def open_brief() -> None:
                     page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
                     page.locator(".desk-verbbar-menu").wait_for()
-                    page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')").hover()
+                    page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").hover()
                     page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')").click()
                     shell.wait_for()
                     page.wait_for_timeout(600)
@@ -284,7 +284,9 @@ class TestFinishFacePolish:
                 page.get_by_text("READINESS CHECKS", exact=False).first.wait_for(timeout=20_000)
                 # The Config row is drawn (its path is ~/... when it is under the HOME;
                 # tests/unit/test_face_paths_short.py proves the ~ itself).
-                page.get_by_text("config version", exact=False).first.wait_for(timeout=20_000)
+                # PHILO-17 refit settings: the row says its fact in plain words
+                # (holdspeak/commands/doctor.py face_words); the version folds.
+                page.get_by_text(re.compile(r"Your settings are read|No settings file yet")).first.wait_for(timeout=20_000)
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"setup-{width}.png"))
                 body = page.inner_text("body")

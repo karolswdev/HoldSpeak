@@ -12,7 +12,7 @@
  * Brief / Decisions / Follow-through window); it is never the name of
  * what one meeting produced.
  */
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PrefsFace, type SettingsHubWire } from "../settingsPrefs";
 
@@ -29,7 +29,7 @@ const hub = (intelligence: boolean): SettingsHubWire => ({
 });
 
 function face(intelligence: boolean) {
-  return render(
+  const view = render(
     <PrefsFace
       onOpen={vi.fn()}
       hub={hub(intelligence)}
@@ -38,6 +38,9 @@ function face(intelligence: boolean) {
       precedence={[]}
     />,
   );
+  // PHILO-17 REFIT: the Meetings and Voice rows fold under More settings.
+  fireEvent.click(screen.getByTestId("settings-more"));
+  return view;
 }
 
 describe("the Settings hub's Meetings row (F06)", () => {
@@ -69,7 +72,7 @@ describe("the Settings hub's Meetings row (F06)", () => {
 // replaces (with settings.app.test.tsx): tests/e2e/test_honest_faces_glass.py::test_settings_names_the_missing_engine
 describe("the Settings hub names a missing engine", () => {
   function faceWith(patch: Partial<ReturnType<typeof hub>>) {
-    return render(
+    const view = render(
       <PrefsFace
         onOpen={vi.fn()}
         hub={{ ...hub(true), ...patch }}
@@ -78,6 +81,8 @@ describe("the Settings hub names a missing engine", () => {
         precedence={[]}
       />,
     );
+    fireEvent.click(screen.getByTestId("settings-more"));
+    return view;
   }
 
   it("Meetings: SUMMARY · NO ENGINE when the switch is on and no engine is set", () => {

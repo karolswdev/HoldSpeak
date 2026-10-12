@@ -378,7 +378,8 @@ def test_dictation_runtime_docs_route_serves_setup_page() -> None:
     assert 'action: "configure-settings"' in applications
     assert '{ key: "read-runtime-docs", scope: "guide" }' in applications
     assert "dictation-mlx" in source and "dictation-llama" in source
-    assert "OpenAI-compatible endpoint" in source
+    # PHILO-17 refit: the Guide names the third engine as a server row.
+    assert "OpenAI-compatible server" in source
 
 
 def test_readiness_includes_depth_telemetry_block(

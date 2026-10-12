@@ -302,8 +302,9 @@ describe("BriefView person sections", () => {
     await waitFor(() => {
       expect(screen.getByTestId("person-sections-unavailable")).toBeInTheDocument();
     });
-    // HS-175: now a StateChip token, not prose.
-    expect(screen.getByText(/PEOPLE.*UNAVAILABLE/)).toBeInTheDocument();
+    // PHILO-17: the words for why, and the one verb that fixes it.
+    expect(screen.getByText("People is not open, so the brief has no people")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open People" })).toBeInTheDocument();
   });
 });
 

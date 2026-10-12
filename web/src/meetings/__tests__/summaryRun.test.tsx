@@ -191,9 +191,11 @@ describe("HS-201-04 the disclosure beside the verb", () => {
     render(
       <RouteDisclosure route={readPlannedRoute({ planned_route: UNAVAILABLE_ROUTE })} />,
     );
+    // PHILO-17 ALIVE: plain words; the wire reason rides the title.
     expect(screen.getByTestId("summary-route-unavailable").textContent).toBe(
-      "NO SUMMARY ROUTE · NO ASSIGNMENT",
+      "No engine for summaries",
     );
+    expect(screen.getByTestId("summary-route-unavailable").getAttribute("title")).toBe("NO ASSIGNMENT");
     // Never the word the old face invented for an unresolved route.
     expect(screen.queryByText(/local/i)).toBeNull();
   });
@@ -326,9 +328,9 @@ describe("HS-201-04 the record's Retry", () => {
     render(<MeetingIntelRecovery meetingId="meeting-1" />);
     await screen.findByTestId("recovery-route-unavailable");
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
-    expect(screen.getByTestId("recovery-route-unavailable").textContent).toContain(
-      "NO ASSIGNMENT",
-    );
+    // PHILO-17 ALIVE: plain words on the face; the wire reason in the title.
+    expect(screen.getByTestId("recovery-route-unavailable").textContent).toBe("No engine for summaries");
+    expect(screen.getByTestId("recovery-route-unavailable").getAttribute("title")).toContain("NO ASSIGNMENT");
   });
 });
 
@@ -380,9 +382,9 @@ describe("HS-201-04 the ledger's Retry", () => {
   it("withholds the verb when no route resolves", () => {
     rail({ ...FAILED_ROW, planned_route: UNAVAILABLE_ROUTE });
     expect(screen.queryByTestId("retry-intelligence-btn")).toBeNull();
-    expect(screen.getByTestId("row-route-unavailable").textContent).toContain(
-      "NO ASSIGNMENT",
-    );
+    // PHILO-17 ALIVE: plain words on the face; the wire reason in the title.
+    expect(screen.getByTestId("row-route-unavailable").textContent).toBe("No engine for summaries");
+    expect(screen.getByTestId("row-route-unavailable").getAttribute("title")).toContain("NO ASSIGNMENT");
   });
 
   it("shows the destinations contacted after the run", () => {
@@ -421,9 +423,9 @@ describe("HS-201-04 the record's NEEDS YOU verbs", () => {
       />,
     );
     expect(screen.queryByTestId("detail-run-intelligence-btn")).toBeNull();
-    expect(screen.getByTestId("detail-route-unavailable").textContent).toContain(
-      "NO ASSIGNMENT",
-    );
+    // PHILO-17 ALIVE: plain words on the face; the wire reason in the title.
+    expect(screen.getByTestId("detail-route-unavailable").textContent).toBe("No engine for summaries");
+    expect(screen.getByTestId("detail-route-unavailable").getAttribute("title")).toContain("NO ASSIGNMENT");
   });
 });
 

@@ -73,3 +73,70 @@
 .standing-pages-section > .surface-section-head h3 {
   white-space: nowrap;
 }
+
+/* ── PHILO-17 (owner: "BRIEF is a fucking mess"): a compact plate per
+   page. The title 14 px semibold, BUILT small and muted, the items 13 px
+   with their source chips inline and small (12 px mono, the floor). The
+   engine credit sits small at the head's right, never against the title. */
+.desk-next .standing-page {
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-raised), 1px 2px 0 color-mix(in srgb, var(--wb-ink) 12%, transparent);
+}
+.desk-next .standing-page-title {
+  font: 600 14px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .standing-page-meta .surface-token {
+  font: 500 12px / 1 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--wb-muted);
+}
+.desk-next .standing-page-sentences {
+  gap: 5px;
+  padding-left: 18px;
+}
+.desk-next .standing-page-sentences li {
+  font-size: 13px;
+  line-height: 1.45;
+}
+.desk-next .standing-page-sentence {
+  margin-right: 6px;
+}
+.desk-next .memory-ref-tokens {
+  gap: 3px;
+}
+.desk-next .memory-ref-tokens .memory-ref-token.desk-chip {
+  height: auto;
+  min-height: 0;
+  box-shadow: none;
+  padding: 1px 5px;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--wb-ink) 5%, transparent);
+  font: 500 12px / 1.2 var(--font-mono);
+  letter-spacing: 0;
+  color: var(--wb-muted);
+}
+.desk-next .memory-ref-tokens button.memory-ref-token.desk-chip:hover {
+  color: var(--wb-text);
+  border-color: var(--wb-rule);
+  background: color-mix(in srgb, var(--wb-sel) 12%, transparent);
+}
+.desk-next .standing-pages-grid {
+  gap: 8px;
+  align-items: start;
+}
+.desk-next .standing-pages-model {
+  margin-left: auto;
+  order: 3;
+  font: 500 12px / 1 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--wb-muted);
+  white-space: nowrap;
+}
+.desk-next .standing-pages-section > .surface-section-head::after {
+  order: 2;
+}

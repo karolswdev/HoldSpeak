@@ -54,7 +54,7 @@ describe("the Parked drawer on the hub's recorded answers", () => {
     // (hub half: tests/integration/test_desk_parked.py::test_park_a_meeting_and_a_project_see_both_restore_one)
     vi.spyOn(useDesk.getState(), "refresh").mockResolvedValue(undefined as never);
     render(<ParkedDrawer origin={null} />);
-    const list = await screen.findByRole("grid", { name: "Parked" });
+    const list = await screen.findByRole("grid", { name: "Archive" });
     await screen.findByRole("button", { name: /^Architecture review: tracing, MEETING/ });
     const project = screen.getByRole("button", { name: /^Staff hiring loop, PROJECT/ });
     expect(within(list).getAllByRole("row")).toHaveLength(3); // the head + two rows
@@ -67,7 +67,7 @@ describe("the Parked drawer on the hub's recorded answers", () => {
     await waitFor(() => expect(screen.getByTestId("parked-receipt").textContent).toMatch(/^RESTORED/));
     await waitFor(() => expect(screen.queryByRole("button", { name: /^Staff hiring loop/ })).toBeNull());
     expect(screen.getByRole("button", { name: /^Architecture review: tracing, MEETING/ })).toBeTruthy();
-    expect(within(screen.getByRole("grid", { name: "Parked" })).getAllByRole("row")).toHaveLength(2);
+    expect(within(screen.getByRole("grid", { name: "Archive" })).getAllByRole("row")).toHaveLength(2);
     expect(misses).toEqual([]);
   });
 });

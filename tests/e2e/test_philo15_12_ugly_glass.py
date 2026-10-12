@@ -425,6 +425,9 @@ class TestPhilo15Lane12Ugly:
                     dock.locator("[data-app='intelligence:desk']").click()
                     win = page.locator(".desk-pullout:has(.intelligence-pullout)").first
                     win.wait_for(timeout=T)
+                    # PHILO-17 (concept C): the window opens on Day; its
+                    # first items here are the Brief's, one tab away.
+                    win.locator(".intelligence-segment", has_text="Brief").first.click()
                     first = win.locator(ITEM).first
                     first.wait_for(timeout=T)
                     page.wait_for_timeout(900)
@@ -477,8 +480,9 @@ class TestPhilo15Lane12Ugly:
                 chip = page.locator("[data-testid=room-health-word]")
                 self.facts["B25"] = {"head": room.inner_text(),
                                      "word": chip.first.inner_text() if chip.count() else None}
-                assert chip.count() and "NEW" in chip.first.inner_text(), self.facts["B25"]
-                assert "ON TRACK" not in room.inner_text(), self.facts["B25"]
+                # PHILO-17 refit: the pill says the word in plain case.
+                assert chip.count() and chip.first.inner_text().strip().upper() == "NEW", self.facts["B25"]
+                assert "ON TRACK" not in room.inner_text().upper(), self.facts["B25"]
                 body_text = page.locator("#surface-project-memory").inner_text()
                 assert "CREATE FROM SETUP" not in body_text, body_text[:400]
                 self._shot(page, "B25-project", width)

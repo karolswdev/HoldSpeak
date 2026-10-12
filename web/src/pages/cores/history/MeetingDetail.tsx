@@ -40,6 +40,10 @@ import { TranscriptWell } from "./TranscriptWell";
 import { AudioOnlyVerb } from "./TranscribeVerb";
 
 
+/** PHILO-17: the meeting window's foot asks its record to open the
+ *  transcript fold (`detail`: the meeting id). */
+export const MEETING_TRANSCRIPT_OPEN = "holdspeak:meeting-transcript-open";
+
 /** One row of the meeting's outcomes ledgers. */
 type OutcomeRow = {
   key: string;
@@ -203,8 +207,8 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
   const withVerbs = (rows: OutcomeRow[]) => rows.map((row) => ({ ...row, verbs: verbsFor(row) }));
   return (
     <>
-      <OutcomeLedger label="Decisions" rows={withVerbs(decisions)} testId="meeting-decisions" />
-      <OutcomeLedger label="Commitments" rows={withVerbs(commitments)} testId="meeting-commitments" />
+      <OutcomeLedger label="Decided" rows={withVerbs(decisions)} testId="meeting-decisions" />
+      <OutcomeLedger label="Who owes what" rows={withVerbs(commitments)} testId="meeting-commitments" />
     </>
   );
 }
@@ -273,6 +277,22 @@ export function MeetingDetail({
     if (ready && drawnFor !== id) setDrawnFor(id);
   }, [ready, drawnFor, id]);
   const shown = drawnFor === id || ready;
+  // PHILO-17 (quiet by default): with a summary on the record the
+  // transcript is folded; Open transcript (the foot) and a decision moment
+  // open it. With no summary it is the record's content, open.
+  const hasSummaryText = Boolean(readMeetingIntel(data.detail ?? meeting)?.summary?.trim());
+  const [transcriptAsked, setTranscriptOpen] = useState<boolean | null>(null);
+  const transcriptOpen = transcriptAsked ?? (!hasSummaryText || momentSegmentIndex != null);
+  useEffect(() => {
+    const onOpen = (event: Event) => {
+      if ((event as CustomEvent<string>).detail === id) setTranscriptOpen(true);
+    };
+    window.addEventListener(MEETING_TRANSCRIPT_OPEN, onOpen);
+    return () => window.removeEventListener(MEETING_TRANSCRIPT_OPEN, onOpen);
+  }, [id]);
+  useEffect(() => {
+    if (momentSegmentIndex != null) setTranscriptOpen(true);
+  }, [momentSegmentIndex]);
   const {
     detail,
     setDetail,
@@ -354,8 +374,10 @@ export function MeetingDetail({
         />
       ) : (
         <>
-          {/* Phase 16: Decisions · n, Commitments · n (the kit's Sections
-              over Ledgers), right under the head. */}
+          {/* PHILO-17 (the Today language): what was said first (the
+              summary), then what was decided and who owes what, then the
+              follow-up (Send), the transcript last. */}
+          <MeetingSummarySlab intel={summaryIntel} receipt={runReceipt} saidOnFace={saidOnFace} />
           <MeetingOutcomes data={data} meeting={meeting} />
           <NeedsYouTable
             needsRows={needsRows}
@@ -393,9 +415,6 @@ export function MeetingDetail({
                 : undefined
             }
           />
-          {/* HS-201-04: the summary is shown on the record, with its
-              meeting — the result first, the transcript under it. */}
-          <MeetingSummarySlab intel={summaryIntel} receipt={runReceipt} saidOnFace={saidOnFace} />
           {/* PHILO-11-05 (canvas C1, C4): SUMMARY, then SEND; no summary, no well.
               The old aftercare Slack rows are gone (R7): the digest and the
               follow-up are forms of this one well. */}
@@ -418,6 +437,8 @@ export function MeetingDetail({
               id={id}
               segments={segments}
               momentSegmentIndex={momentSegmentIndex}
+              open={transcriptOpen}
+              onOpenChange={setTranscriptOpen}
               emptyLabel={speechWasMissing(detail ?? meeting) ? NO_TRANSCRIPT_SPEECH : undefined}
             />
           </div>

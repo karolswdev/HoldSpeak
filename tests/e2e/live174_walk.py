@@ -435,6 +435,10 @@ def _step_settings_system(page: Any, out_dir: Path, w: int, token: str,
     page.wait_for_timeout(2000)
     _settle(page)
 
+    # PHILO-17 REFIT: the System row folds under More settings.
+    more = page.locator("[data-testid='settings-more'][aria-expanded='false']")
+    if more.count():
+        more.click()
     # Click the System row's Open button to enter the System module.
     system_open = page.locator(
         ".surface-ledger-row",

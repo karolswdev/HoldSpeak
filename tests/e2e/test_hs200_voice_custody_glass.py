@@ -236,8 +236,8 @@ def _walk(page: Any, machine: _Platform, width: int) -> None:
         assert row.count() == 1, f"{pid} row missing"
         text = row.inner_text()
         assert "SYSTEM SETTINGS" in text and "PRIVACY & SECURITY" in text, text
-        assert "DENIED" in text, text
-    assert "UNAVAILABLE" in block.inner_text()
+        assert "DENIED" in text.upper(), text
+    assert "UNAVAILABLE" in block.inner_text().upper()
     # never a modal, never a sentence
     assert page.locator('[role="dialog"]').count() == 0
     _no_overflow(block, width)
@@ -255,8 +255,8 @@ def _walk(page: Any, machine: _Platform, width: int) -> None:
     # The listener DID install, and the key still will not work. The head chip
     # must not claim ACTIVE over a DENIED row (the shots caught that green).
     head = block.locator(".speak-hotkey-head")
-    assert "BLOCKED" in head.inner_text(), head.inner_text()
-    assert "ACTIVE" not in head.inner_text(), head.inner_text()
+    assert "BLOCKED" in head.inner_text().upper(), head.inner_text()
+    assert "ACTIVE" not in head.inner_text().upper(), head.inner_text()
     _no_overflow(block, width)
     _one_grammar(block, width)
     _shot(page, "one-denied", width)
@@ -266,11 +266,11 @@ def _walk(page: Any, machine: _Platform, width: int) -> None:
     _stage_speak(page)
     block = page.locator('[data-testid="speak-hotkey"]')
     block.wait_for(timeout=15000)
-    assert "NOT ASKED" in block.inner_text(), block.inner_text()
+    assert "NOT ASKED" in block.inner_text().upper(), block.inner_text()
     # Accessibility has no not-determined answer; it reads DENIED beside them.
     assert "DENIED" in page.locator(
         '[data-testid="speak-permission-accessibility"]'
-    ).inner_text()
+    ).inner_text().upper()
     _no_overflow(block, width)
     _one_grammar(block, width)
     _shot(page, "not-asked", width)

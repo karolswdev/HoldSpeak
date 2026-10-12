@@ -58,7 +58,7 @@ READERS = r"""() => {
   }
   const head = document.querySelector('[data-testid=arrival-display]');
   const bell = document.querySelector('.desk-bell strong');
-  const intel = document.querySelector('.desk-dock [aria-label^="Intelligence"] .desk-dock-badge');
+  const intel = document.querySelector('.desk-dock [aria-label^="Today"] .desk-dock-badge');
   const memory = document.querySelector('.desk-dock [aria-label^="Missed"] .desk-dock-badge');
   return { said, head: head ? head.innerText : null, head_n: num(head), bell: num(bell),
            intel: num(intel), memory: memory ? num(memory) : null };
@@ -72,7 +72,7 @@ AGREE = r"""(target) => new Promise((resolve) => {
   const tick = () => {
     const head = read('[data-testid=arrival-display]');
     const bell = read('.desk-bell strong');
-    const intel = read('.desk-dock [aria-label^="Intelligence"] .desk-dock-badge');
+    const intel = read('.desk-dock [aria-label^="Today"] .desk-dock-badge');
     if (head === target && bell === target && intel === null) {
       resolve({ ms: Math.round(performance.now() - t0), head, bell, intel });
       return;

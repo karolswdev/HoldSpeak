@@ -482,7 +482,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               if (running && minimized) s.restorePanel(winId);
               else if (running) s.focusPanel(winId);
               else if (application.dock.launch === "intelligence")
-                openIntelligence({ view: "brief" });
+                openIntelligence({ view: "today" });
               else
                 void import("../../shell").then((m) =>
                   m.openSurfaceOr(application.action, application.href, undefined, {

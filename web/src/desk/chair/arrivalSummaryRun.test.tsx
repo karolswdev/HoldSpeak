@@ -136,9 +136,9 @@ describe("HS-201-04 the Chair's summary run", () => {
     render(<ChairHome />);
     await screen.findByTestId("arrival-route-unavailable");
     expect(screen.queryByTestId("arrival-run-intel")).toBeNull();
-    expect(screen.getByTestId("arrival-route-unavailable").textContent).toContain(
-      "NO ASSIGNMENT",
-    );
+    // PHILO-17 ALIVE: plain words on the face; the wire reason in the title.
+    expect(screen.getByTestId("arrival-route-unavailable").textContent).toBe("No engine for summaries");
+    expect(screen.getByTestId("arrival-route-unavailable").getAttribute("title")).toContain("NO ASSIGNMENT");
   });
 
   it("shows a 409 as ONE short refusal fact, the reason on its title", async () => {

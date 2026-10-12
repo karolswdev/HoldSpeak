@@ -5,10 +5,7 @@
 // against the hub's shape on every run by
 // tests/integration/test_desk_agents_wire.py. Only apiFetch is a double; the
 // window, its store and the members reducer are the real ones.
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hubWire } from "./wire/hubWire";
 
@@ -63,26 +60,29 @@ afterEach(() => {
 const member = (id: string) => document.querySelector<HTMLElement>(`[data-object-id='${id}']`);
 
 describe("the Conductor on the C4 seed", () => {
-  /** replaces: tests/e2e/test_philo14_c4_conductor_glass.py::test_the_conductor_drawer_at_1440_and_393 */
+  /** replaces: tests/e2e/test_philo14_c4_conductor_glass.py::test_the_conductor_drawer_at_1440_and_393
+   *  PHILO-17 refit (conductor): the drawer reads like Today. The ask is a
+   *  raised plate first; the coders at work are quiet rows; the coders on
+   *  this Mac follow. */
   it("lists the ready agents and the three launches with their lamps, asking first; the head says 2 at work, 1 ASK", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: /^Claude Code: rollback runbook/ });
-    for (const name of ["Claude Code: rollback runbook", "Codex: reconciliation job", "Claude Code: ledger freeze flag"]) {
-      expect(document.querySelector(`[title='${name}'], [aria-label^='${name}']`), name).toBeTruthy();
+    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    for (const name of ["Write the rollback runbook", "Shard the reconciliation job", "Add the ledger freeze flag"]) {
+      expect(screen.getByRole("button", { name }), name).toBeTruthy();
     }
     // The ready agents: whatever the hub's own detect read served.
-    await screen.findByRole("button", { name: /^Codex, CODER/ });
+    await screen.findByRole("button", { name: "Codex" });
     expect(document.querySelectorAll("[data-object-id='agent:claude']")).toHaveLength(1);
     expect(document.querySelectorAll("[data-object-id='agent:codex']")).toHaveLength(1);
     const lamps: Record<string, string> = {
-      "launch:launch_c4_runbook": "ASKS",
-      "launch:launch_c4_recon": "WORKS",
-      "launch:launch_c4_flag": "PR #412",
+      "launch:launch_c4_runbook": "ASKS YOU",
+      "launch:launch_c4_recon": "Working",
+      "launch:launch_c4_flag": "PR #412 open",
     };
     for (const [id, lamp] of Object.entries(lamps)) {
       const el = member(id);
       expect(el, id).toBeTruthy();
-      expect((el!.getAttribute("aria-label") ?? "") + (el!.textContent ?? "")).toContain(lamp);
+      expect(el!.textContent ?? "").toContain(lamp);
     }
     const head = screen.getByTestId("conductor-head");
     expect(head.querySelector(".kit-disp")?.textContent).toBe("2 at work");
@@ -91,41 +91,41 @@ describe("the Conductor on the C4 seed", () => {
     expect(head.textContent).not.toContain(" OF ");
     expect(head.textContent).not.toContain("NOT READ");
     expect((head.textContent ?? "").toUpperCase()).not.toContain("HARNESS");
-    // Asking first in every view.
+    // Asking first.
     expect(document.querySelector("[data-object-id]")?.getAttribute("data-object-id")).toBe("launch:launch_c4_runbook");
   });
 
-  /** replaces: tests/e2e/test_philo14_c4_conductor_glass.py::test_the_conductor_drawer_at_1440_and_393 (Open, Stop confirm) */
+  /** replaces: tests/e2e/test_philo14_c4_conductor_glass.py::test_the_conductor_drawer_at_1440_and_393 (Open, Stop confirm)
+   *  PHILO-17 refit: Answer stays on the ask plate, Open on the row; the foot
+   *  keeps the quiet verbs (Get Info, Stop). */
   it("the asking agent's verbs are Get Info, Stop, Answer, Open; Stop confirms in place; Open opens its lane", async () => {
     render(<ConductorWindow />);
-    fireEvent.click(await screen.findByRole("button", { name: /^Claude Code: rollback runbook/ }));
-    for (const verb of ["Get Info", "Answer", "Open"]) expect(screen.getByRole("button", { name: verb })).toBeTruthy();
+    fireEvent.click(await screen.findByRole("button", { name: "Write the rollback runbook" }));
+    const plate = member("launch:launch_c4_runbook")!;
+    expect(within(plate).getByRole("button", { name: "Answer" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Get Info" })).toBeTruthy();
     expect(screen.getByTestId("conductor-stop")).toBeTruthy();
     fireEvent.click(screen.getByTestId("conductor-stop"));
     expect(screen.getByTestId("conductor-stop-confirm")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Stop · sure? (ends the coder's session)" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Answer" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Get Info" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    fireEvent.click(screen.getByRole("button", { name: "Open" }));
-    expect(shell.lanes.at(-1)?.[0]).toBe("launch_c4_runbook");
+    expect(screen.getByRole("button", { name: "Get Info" })).toBeTruthy();
+    fireEvent.click(within(member("launch:launch_c4_recon")!).getByRole("button", { name: "Open" }));
+    expect(shell.lanes.at(-1)?.[0]).toBe("launch_c4_recon");
   });
 
-  /** replaces: tests/e2e/test_philo14_a0c_list_sprites_glass.py::test_the_list_species_wear_the_32px_set (the Conductor's list) */
-  it("in List view every row wears the 32 px sprite of ITS agent; the icon view keeps the 64", async () => {
+  /** replaces: tests/e2e/test_philo14_a0c_list_sprites_glass.py::test_the_list_species_wear_the_32px_set (the Conductor's list)
+   *  PHILO-17 refit: one row species (no Icons | List); each row wears the
+   *  sprite of ITS agent. */
+  it("every row wears the sprite of ITS agent", async () => {
     render(<ConductorWindow />);
-    const iconImg = (await screen.findByRole("button", { name: /^Codex: reconciliation job/ })).querySelector("img");
-    expect(iconImg?.getAttribute("src") ?? "").not.toContain("/desk/sprites/32/");
-    fireEvent.click(within(screen.getByRole("group", { name: "Conductor view" })).getByRole("button", { name: "List" }));
-    const row = (id: string) => document.querySelector<HTMLElement>(`.object-list-row[data-object-id='${id}']`)!;
-    await waitFor(() => expect(document.querySelector(".object-list-row")).toBeTruthy());
-    const sprites = [...document.querySelectorAll<HTMLImageElement>(".object-list-open img")].map((img) => img.getAttribute("src") ?? "");
-    expect(sprites.length).toBeGreaterThan(0);
-    for (const src of sprites) expect(src).toMatch(/\/desk\/sprites\/32\/[a-z-]+(_sel|_stale)?\.png$/);
-    expect(row("launch:launch_c4_recon").querySelector(".object-list-open img")?.getAttribute("src")).toMatch(/\/32\/agent-codex(_sel)?\.png$/);
-    expect(row("launch:launch_c4_runbook").querySelector(".object-list-open img")?.getAttribute("src")).toMatch(/\/32\/agent-claude-code(_sel)?\.png$/);
-    // Shown 1:1: the list cell draws the sprite at 32 (objects.css).
-    const css = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../surface/objects/objects.css"), "utf8");
-    expect(css).toMatch(/\.object-list-open img \{[^}]*width: 32px;[^}]*height: 32px;/);
+    await screen.findByRole("button", { name: "Shard the reconciliation job" });
+    const sprite = (id: string) => member(id)!.querySelector("img")?.getAttribute("src") ?? "";
+    expect(sprite("launch:launch_c4_recon")).toMatch(/\/desk\/sprites\/agent-codex(_sel)?\.png$/);
+    expect(sprite("launch:launch_c4_runbook")).toMatch(/\/desk\/sprites\/agent-claude-code(_sel)?\.png$/);
+    expect(sprite("launch:launch_c4_flag")).toMatch(/\/desk\/sprites\/agent-claude-code(_sel)?\.png$/);
+    expect(sprite("agent:codex")).toMatch(/\/desk\/sprites\/agent-codex(_sel)?\.png$/);
+    expect(screen.queryByRole("group", { name: "Conductor view" })).toBeNull();
   });
 });

@@ -110,8 +110,10 @@ export function readHotkeyCustody(readiness: unknown): HotkeyCustody {
         settingsUrl: String(row.settings_url ?? ""),
       };
     })
-    // A granted permission has nothing to say; only the missing ones draw.
-    .filter((row) => row.state !== "granted");
+    /* PHILO-17 refit r3 (coordinator: "Unknown · Re-check" at rest when
+       nothing is wrong): only a grant that is KNOWN to be missing draws,
+       denied or never asked. A grant we could not read says nothing. */
+    .filter((row) => row.state === "denied" || row.state === "not_determined");
 
   /* Off macOS there is no pane to walk to and no grant to read, so the three
      rows would be three honest UNKNOWNs with no next step — noise. There, the
@@ -132,9 +134,10 @@ export function readHotkeyCustody(readiness: unknown): HotkeyCustody {
       : available === false
         ? { token: "UNAVAILABLE", kind: "failure" as ChipKind }
         : { token: "UNKNOWN", kind: "warning" as ChipKind };
-  const show = supported
-    ? available !== true || permissionRows.length > 0
-    : available === false;
+  /* The block speaks only when the key is known to be stopped: the
+     listener failed, or a grant is denied or never asked. A listener we
+     could not ask (`available: null`) is not a fault on its own. */
+  const show = available === false || permissionRows.length > 0;
 
   return {
     show,

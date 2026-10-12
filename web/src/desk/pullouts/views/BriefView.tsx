@@ -387,7 +387,8 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
     </>
   ) : brief.is_empty ? (
     <>
-      <SurfaceState empty emptyLabel="No changes" />
+      {/* PHILO-17 (owner): one quiet line, never an empty well. */}
+      <p className="intelligence-brief-quiet" data-testid="brief-no-changes">No changes since the last brief</p>
       <StandingPagesSection pages={standingPages} />
     </>
   ) : (
@@ -479,12 +480,12 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
               const blocker = blockerKey(item.source_ref);
               if (blocker) {
                 return (
-                  <div key={item.id} className="intelligence-brief-sf-row" data-testid="brief-blocker-row">
-                    <div className="intelligence-brief-sf-body">
-                      <span className="intelligence-brief-sf-primary">{parsed.primary}</span>
-                    </div>
-                    <Button dense variant="ghost" onClick={() => openBlocker(blocker)} data-testid={`brief-blocker-verb-${blocker}`}>
-                      {parsed.detail || "Choose an engine"}
+                  <div key={item.id} className="intelligence-brief-sf-row intelligence-brief-blocker" data-testid="brief-blocker-row">
+                    {/* PHILO-17: one quiet row: the words, then a compact verb
+                        (the Meetings grammar). */}
+                    <span className="kit-pill" data-tone="warn">{parsed.primary}</span>
+                    <Button dense onClick={() => openBlocker(blocker)} data-testid={`brief-blocker-verb-${blocker}`}>
+                      {parsed.detail || "Choose engine"}
                     </Button>
                   </div>
                 );
@@ -560,14 +561,16 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
           </div>
         </div>
       ) : brief.person_sections_state === "unavailable" ? (
-        <div className="intelligence-brief-person-unavailable" data-testid="person-sections-unavailable">
-          <StateChip state="idle" label="PEOPLE · UNAVAILABLE" />
+        // PHILO-17: the words for why, and the one verb that fixes it.
+        <div className="intelligence-brief-person-unavailable intelligence-brief-blocker" data-testid="person-sections-unavailable">
+          <span className="intelligence-brief-quiet">People is not open, so the brief has no people</span>
+          <Button dense onClick={() => openSurfaceOr("open-people", "/", undefined)} data-testid="person-sections-open">Open People</Button>
         </div>
       ) : null}
 
       {/* PHILO-11-05a (canvas A2, A3, A6): the brief's SEND well, after
           PEOPLE. One pick and one press with the Chair's seat. */}
-      <BriefSendWells brief={brief} />
+      <BriefSendFold brief={brief} />
     </>
   );
 
@@ -627,5 +630,24 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
         }
       />
     </>
+  );
+}
+
+/** PHILO-17 (owner: the Send well was fully open under the brief): in the
+ *  Brief the well starts folded, one row; Send opens it (the destination,
+ *  the preview and the send itself), Hide folds it again. */
+function BriefSendFold({ brief }: { brief: Parameters<typeof BriefSendWells>[0]["brief"] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="intelligence-brief-send" data-testid="brief-send-fold">
+      <div className="intelligence-brief-blocker">
+        <span className="intelligence-brief-send-words">Send this brief</span>
+        <Button dense variant={open ? "ghost" : "secondary"} aria-expanded={open} data-testid="brief-send-toggle"
+          onClick={() => setOpen((value) => !value)}>
+          {open ? "Hide" : "Send"}
+        </Button>
+      </div>
+      {open ? <BriefSendWells brief={brief} /> : null}
+    </div>
   );
 }

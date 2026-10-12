@@ -272,6 +272,8 @@ class TestOneMeetingOneWindow:
                 _http(self.base, "POST", f"/api/projects/{PROJECT}/meetings/{ONE}", {})
                 self._palette("Payments ledger cutover")
                 self._press(page.locator("#desk-palette-listbox [role=option]", has_text="Payments ledger cutover"))
+                # PHILO-17 refit (room): Files is a fold in the Room; open it.
+                self._press(page.locator("#surface-project-memory [data-testid=room-fold-files] summary").first)
                 files = page.locator("#surface-project-memory [data-testid=room-files]")
                 files.wait_for(timeout=T)
                 self._press(files.get_by_text("Platform sync").first)
@@ -409,7 +411,8 @@ class TestOneMeetingOneWindow:
                 win = page.locator(f"[id='{wid}']")
                 win.locator("[data-testid=person-window]").wait_for(timeout=T)
                 assert "Avery Chen" in win.inner_text()
-                assert win.locator(".people-lenses [role=tab]").count() == 6
+                # PHILO-17 refit: Prep leads; Context, History and Info are the folded tabs.
+                assert win.locator(".people-lenses [role=tab]").count() == 4
                 # The person, not the People application (the roster).
                 assert page.locator("#surface-people").count() == 0
                 assert not re.search(r"\bBack\b", win.locator(".people-detail-head").inner_text())

@@ -62,6 +62,7 @@ import {
 } from "../../desk/surface/gadgets";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
+import { Steps } from "../../desk/surface/kit";
 import { countToken } from "../../desk/surface/count";
 import { intelEgressBadge } from "./liveEgress";
 import { burstTimer } from "../../desk/burstTimer";
@@ -685,6 +686,22 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
         configureFace
       ) : (
         <>
+          {/* PHILO-17 (the Today language): the meeting's place in its four
+              steps, and a REC lamp that is dark at rest and breathes red
+              while it records (colour only; nothing moves). */}
+          <div className="live-deck" data-active={active || undefined} data-testid="live-deck">
+            <span className="live-rec" aria-hidden="true"><span className="live-rec-lamp" />REC</span>
+            <Steps
+              label="Meeting steps"
+              data-testid="live-steps"
+              steps={[
+                { key: "record", label: "Record", state: "now" },
+                { key: "summary", label: "Summary", state: "later" },
+                { key: "decide", label: "Decide", state: "later" },
+                { key: "send", label: "Send follow-up", state: "later" },
+              ]}
+            />
+          </div>
           <SurfaceFacts value={factsLine} />
           {intelFace}
           <SurfaceSection

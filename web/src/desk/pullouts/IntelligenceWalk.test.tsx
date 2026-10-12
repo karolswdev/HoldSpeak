@@ -84,6 +84,8 @@ const receipt = {
 describe("HS-128-10 Desk Intelligence walk", () => {
   beforeEach(() => {
     localStorage.clear();
+    // PHILO-17: the window opens on Day; these cases read the Brief.
+    localStorage.setItem("hs.desk.intelligence-view", "brief");
     apiFetch.mockReset();
     apiFetch.mockImplementation((path: string) => {
       if (path === "/api/brief/latest") return Promise.resolve(brief);
@@ -176,21 +178,15 @@ describe("HS-128-10 Desk Intelligence walk", () => {
     expect(windowChromeCss).toContain("max-height: none;");
   });
 
-  it("HS-129-03 hides BACK until a cross-link drill and returns to Brief", async () => {
+  it("PHILO-17: no BACK above the tabs; a cross-link drill lands on its tab", async () => {
     render(<IntelligencePullout object={object} onClose={() => {}} />);
-
-    expect(screen.queryByRole("button", { name: "BACK" })).not.toBeInTheDocument();
     fireEvent(window, new CustomEvent(INTELLIGENCE_NAVIGATE, { detail: { view: "brief" } }));
-    expect(screen.queryByRole("button", { name: "BACK" })).not.toBeInTheDocument();
-    // HS-175: the period label replaces the headline; the lookback item's
-    // primary is "Desk Intelligence is ready." -- click it to drill.
     await screen.findByText(brief.period_label!);
     fireEvent.click(screen.getByText("Desk Intelligence is ready."));
-
     expect(await screen.findByText(board.now[0].text)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "BACK" }));
-
-    expect(await screen.findByText(brief.period_label!)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "BACK" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Follow-through" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Brief" }));
+    expect(await screen.findByText(brief.period_label!)).toBeInTheDocument();
   });
 });

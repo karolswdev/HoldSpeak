@@ -77,7 +77,7 @@ function rawButtons(root: HTMLElement): string[] {
   return Array.from(root.querySelectorAll("button"))
     .map((b) => b.outerHTML.match(/<button\b[^>]*>/)![0])
     .filter((tag) => !(tag.includes("class=") && (
-      tag.includes("btn ") || tag.includes('btn"') || tag.includes("signal-button")
+      tag.includes("btn ") || tag.includes('btn"') || tag.includes("btn--chrome") || tag.includes("signal-button")
       || tag.includes("gadget-chip") || tag.includes("surface-"))));
 }
 
@@ -105,26 +105,25 @@ describe("People: the Prep card (HS-172-05)", () => {
     expect(summary).not.toMatch(/\b0\s+(PRS?|ASSIGNMENTS?|COMMITMENTS?|ITEMS?)\b/);
   });
 
-  it("Open on PRS WAITING moves to Now; each PR has its own Open", async () => {
+  it("Show on PRS WAITING draws each PR with its own Open", async () => {
     stubHub();
     render(<PeopleCore scope="people:r1:prep" />);
     await screen.findByTestId("people-prep-lens");
     fireEvent.click(screen.getByTestId("prep-prs-open"));
-    await screen.findByTestId("people-now-concern");
-    const detail = screen.getByTestId("now-prs-detail");
+    const detail = await screen.findByTestId("now-prs-detail");
     expect(within(detail).getAllByRole("button", { name: "Open" })).toHaveLength(2);
-    expect(screen.getByRole("tab", { name: "Now" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tab", { name: "Prep" }).getAttribute("aria-selected")).toBe("true");
   });
 });
 
 describe("People: a person's own window (PHILO-17 2b)", () => {
-  it("draws THAT person on the RelationshipPane: six lenses, no Back, not the roster", async () => {
+  it("draws THAT person on the RelationshipPane: Prep and three folded tabs, no Back, not the roster", async () => {
     stubHub();
     render(<PersonWindowBody relationshipId="r1" />);
     const win = await screen.findByTestId("person-window");
     await within(win).findByRole("tablist");
     expect(win.textContent).toContain("Ania");
-    expect(within(win).getAllByRole("tab")).toHaveLength(6);
+    expect(within(win).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Prep", "Context", "History", "Info"]);
     const head = win.querySelector(".people-detail-head");
     expect(head).toBeTruthy();
     expect(head!.textContent).not.toMatch(/\bBack\b/);
@@ -167,7 +166,7 @@ describe("People: Add on They owe you shows the saved item", () => {
         saved = true;
         return json(recorded("owed-created"), 201);
       }
-      const read = reads[path];
+      const read = reads[path.replace("?counts=1", "")];
       if (!read || (opts?.method && opts.method !== "GET")) throw new Error(`no recorded hub answer for ${opts?.method ?? "GET"} ${path}`);
       return json(read());
     });
@@ -182,8 +181,55 @@ describe("People: Add on They owe you shows the saved item", () => {
     const posted = fetchSpy.mock.calls.filter(([url, o]) => String(url) === `/api/people/relationships/${id}/owed` && o?.method === "POST");
     expect(posted).toHaveLength(1);
     expect(JSON.parse(String(posted[0][1]?.body)).body).toBe(owedBody);
-    expect(within(screen.getByTestId("people-they-owe")).getByText(/They owe you · 1/)).toBeTruthy();
+    expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("THEY OWE YOU1");
     // It is what they owe, never a request asked of him.
     expect(fetchSpy.mock.calls.some(([url]) => String(url).endsWith("/requests"))).toBe(false);
+  });
+});
+
+/* ── Remove on a TO RAISE row (PHILO-17 refit) ─────────────────────────── */
+
+const AGENDA_WIRE = join(dirname(fileURLToPath(import.meta.url)), "fixtures", "people-agenda-wire");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const agendaWire = (name: string): any => JSON.parse(readFileSync(join(AGENDA_WIRE, `${name}.json`), "utf8"));
+
+describe("People: Remove on a TO RAISE row", () => {
+  /** The hub's own answers from ONE boot (tests/integration/test_desk_chair.py::
+   * test_agenda_remove_takes_the_item_off_to_raise, fenced against invented
+   * fields): the brief before, the remove answer, the brief after. */
+  it("Remove posts the transition and the hub's next brief drops the item", async () => {
+    const id: string = agendaWire("relationship").relationship.id;
+    const before = agendaWire("brief-before");
+    const removedBody = "Ask about the EU shard backup plan";
+    const drop = before.brief.agenda_items.find((item: { body: string }) => item.body === removedBody);
+    let removed = false;
+    const reads: Record<string, () => unknown> = {
+      "/api/people/readiness": () => agendaWire("readiness"),
+      "/api/people/relationships?counts=1": () => agendaWire("relationships"),
+      [`/api/people/relationships/${id}`]: () => agendaWire("relationship"),
+      [`/api/people/relationships/${id}/one-on-ones`]: () => agendaWire("one-on-ones"),
+      [`/api/people/relationships/${id}/brief`]: () => (removed ? agendaWire("brief-after") : before),
+    };
+    const fetchSpy = vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
+      const path = String(input);
+      if (opts?.method === "POST" && path === `/api/people/agenda/${drop.id}/transition`) {
+        removed = true;
+        return json(agendaWire("agenda-removed"));
+      }
+      const read = reads[path];
+      if (!read || (opts?.method && opts.method !== "GET")) throw new Error(`no recorded hub answer for ${opts?.method ?? "GET"} ${path}`);
+      return json(read());
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+    render(<PersonWindowBody relationshipId={id} />);
+    const rows = await screen.findAllByTestId("prep-agenda", {}, { timeout: 5000 });
+    expect(rows.map((row) => row.textContent)).toEqual(expect.arrayContaining([expect.stringContaining(removedBody)]));
+    const row = rows.find((r) => r.textContent?.includes(removedBody))!;
+    fireEvent.click(within(row).getByRole("button", { name: `Remove ${removedBody}` }));
+    await waitFor(() => expect(screen.getAllByTestId("prep-agenda").map((r) => r.textContent).join("|")).not.toContain(removedBody), { timeout: 5000 });
+    expect(screen.getAllByTestId("prep-agenda").map((r) => r.textContent).join("|")).toContain("Pick the cutover date");
+    const posted = fetchSpy.mock.calls.filter(([url, o]) => String(url).endsWith("/transition") && o?.method === "POST");
+    expect(posted).toHaveLength(1);
+    expect(JSON.parse(String(posted[0][1]?.body))).toEqual({ to: "removed" });
   });
 });

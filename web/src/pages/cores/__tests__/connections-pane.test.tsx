@@ -213,10 +213,11 @@ describe("ConnectionsPane", () => {
       const card = await screen.findByTestId("connections-github");
       // PHILO-17 U29: the cause in plain words.
       expect(within(card).getByText("Not signed in")).toBeInTheDocument();
-      // Fold is open with the command
+      // PHILO-17 REFIT: one compact sign-in row; Show draws the command.
+      expect(within(card).getByText("Sign in to GitHub")).toBeInTheDocument();
+      expect(within(card).getByText("Copy command")).toBeInTheDocument();
+      fireEvent.click(within(card).getByTestId("connections-github-show"));
       expect(within(card).getByText("gh auth login")).toBeInTheDocument();
-      // Copy transport key
-      expect(within(card).getByText("Copy")).toBeInTheDocument();
       // Primary Recheck in the fold
       const recheckButtons = within(card).getAllByText("Recheck");
       expect(recheckButtons.length).toBeGreaterThanOrEqual(1);
@@ -231,8 +232,9 @@ describe("ConnectionsPane", () => {
       renderPane(response);
       const card = await screen.findByTestId("connections-github");
       expect(within(card).getByText("gh missing")).toBeInTheDocument();
+      expect(within(card).getByText("Install gh")).toBeInTheDocument();
+      fireEvent.click(within(card).getByTestId("connections-github-show"));
       expect(within(card).getByText("brew install gh")).toBeInTheDocument();
-      expect(within(card).getByText("Copy")).toBeInTheDocument();
     });
   });
 
@@ -276,6 +278,8 @@ describe("ConnectionsPane", () => {
       // empty Jira is `never_checked` (the old typed `not_configured` row
       // read "Not set up", a state the hub never sends for it).
       expect(within(card).getByText("Never checked")).toBeInTheDocument();
+      // PHILO-17 REFIT: Add account unfolds the Site and Email inputs.
+      fireEvent.click(within(card).getByTestId("connections-add-open-jira"));
       // Ghost card has Site and Email inputs
       expect(within(card).getByLabelText("Site")).toBeInTheDocument();
       expect(within(card).getByLabelText("Email")).toBeInTheDocument();
@@ -348,16 +352,16 @@ describe("ConnectionsPane", () => {
     it("shows assigned summary and Open Models verb", async () => {
       renderPane();
       const card = await screen.findByTestId("connections-models");
-      expect(within(card).getByText("Models")).toBeInTheDocument();
+      expect(within(card).getByText("Runs on")).toBeInTheDocument();
       expect(within(card).getByText("5 of 7 assigned")).toBeInTheDocument();
-      expect(within(card).getByText("Open Models")).toBeInTheDocument();
+      expect(within(card).getByText("Choose engines")).toBeInTheDocument();
     });
 
     it("opens models module when Open Models is clicked", async () => {
       const onOpen = vi.fn();
       renderPane(fullResponse(), { onOpen });
       const card = await screen.findByTestId("connections-models");
-      fireEvent.click(within(card).getByText("Open Models"));
+      fireEvent.click(within(card).getByText("Choose engines"));
       expect(onOpen).toHaveBeenCalledWith("models");
     });
   });
@@ -553,9 +557,10 @@ describe("ConnectionsPane", () => {
       renderPane({ tools: [degraded, emptyJira(), connectedCalendar(), connectedModels()] });
       const card = await screen.findByTestId("connections-github");
       expect(within(card).getByText(/^Unreachable · Checked /)).toBeInTheDocument();
-      // Every row that is not ready shows its command and Copy.
+      // Every row that is not ready offers its command (Copy, and Show).
+      expect(within(card).getByText("Copy command")).toBeInTheDocument();
+      fireEvent.click(within(card).getByTestId("connections-github-show"));
       expect(within(card).getByText("gh auth login")).toBeInTheDocument();
-      expect(within(card).getByText("Copy")).toBeInTheDocument();
     });
 
     it("Jira Add posts the account and checks it at once", async () => {
@@ -563,6 +568,7 @@ describe("ConnectionsPane", () => {
       mockRecheckProvider.mockResolvedValue(null);
       renderPane({ tools: [connectedGithub(), emptyJira(), connectedCalendar(), connectedModels()] });
       const card = await screen.findByTestId("connections-jira");
+      fireEvent.click(within(card).getByTestId("connections-add-open-jira"));
       const inputs = card.querySelectorAll("input");
       fireEvent.change(inputs[0], { target: { value: "acme.atlassian.net" } });
       fireEvent.change(inputs[1], { target: { value: "me@acme.com" } });
@@ -577,6 +583,7 @@ describe("ConnectionsPane", () => {
       const conf: ConnectionTool = { provider_id: "confluence", state: "never_checked", account: {}, connections: [] };
       renderPane({ tools: [connectedGithub(), emptyJira(), conf, connectedCalendar(), connectedModels()] });
       const card = await screen.findByTestId("connections-confluence");
+      fireEvent.click(within(card).getByTestId("connections-add-open-confluence"));
       expect(within(card).getByText("Add")).toBeInTheDocument();
       expect(within(card).getByText(/acli confluence auth login/)).toBeInTheDocument();
     });

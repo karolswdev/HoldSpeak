@@ -18698,6 +18698,63 @@
         ]
       }
     },
+    "/api/people/agenda/{item_id}/transition": {
+      "post": {
+        "description": "PHILO-17: remove an agenda item from the 1:1 (`{\"to\": \"removed\"}`)\nor mark it raised (`{\"to\": \"done\"}`). Owner web only; not an MCP tool.",
+        "operationId": "transition_agenda_item_api_people_agenda__item_id__transition_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "default": {},
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Transition Agenda Item Api People Agenda  Item Id  Transition Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transition Agenda Item",
+        "tags": [
+          "people"
+        ]
+      }
+    },
     "/api/people/commitments/{commitment_id}/execution": {
       "get": {
         "operationId": "commitment_execution_api_people_commitments__commitment_id__execution_get",
@@ -19054,6 +19111,16 @@
             "schema": {
               "default": false,
               "title": "Include Archived",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "counts",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Counts",
               "type": "boolean"
             }
           }

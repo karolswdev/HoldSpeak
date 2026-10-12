@@ -81,7 +81,8 @@ MATERIAL_JS = r"""(root) => {
       return { name: c.getAttribute('aria-label'), state: c.dataset.state,
                word: (c.textContent || '').slice(glyph.length).trim(),
                border: s.borderTopWidth, bg: s.backgroundColor,
-               lampW: l ? l.width : null, lampShadow: l ? l.boxShadow : null };
+               lampW: l ? l.width : null, lampShadow: l ? l.boxShadow : null,
+               lampRadius: l ? l.borderTopLeftRadius : null };
     }),
     facts: facts.map((f) => { const s = getComputedStyle(f); const b = getComputedStyle(f, '::before');
       return { text: (f.textContent || '').slice(0, 30), tone: f.dataset.tone || null,
@@ -102,10 +103,10 @@ def _assert_material(page: Any, face: str, root: str | None = None) -> dict[str,
     for t in m["tokens"]:
         assert t["shadow"].startswith(m["softSunken"] if t["active"] else m["soft"]), (face, t)
     for c in m["chips"]:
+        # PHILO-17 ALIVE (owner 2026-10-11, "way too static … monotone"):
+        # a state is a soft tinted PILL with a round lamp dot; no border.
         assert c["border"] == "0px", (face, c)
-        assert c["bg"] in ("rgba(0, 0, 0, 0)", "transparent"), (face, c)
-        assert c["lampW"] == "10px", (face, c)
-        assert c["lampShadow"].startswith(raised), (face, c)
+        assert c["lampW"] == "8px" and c["lampRadius"] == "50%", (face, c)
         # Never colour alone: every lamp is named; a shown word IS its name;
         # a lit lamp with no word of its own is named by its state word.
         assert (c["name"] or "").strip(), (face, c)
@@ -116,9 +117,10 @@ def _assert_material(page: Any, face: str, root: str | None = None) -> dict[str,
     for f in m["facts"]:
         # The 1 px border stays, transparent, so no row moves.
         assert f["border"] == "rgba(0, 0, 0, 0)" and f["shadow"] == "none", (face, f)
-        assert f["bg"] in ("rgba(0, 0, 0, 0)", "transparent"), (face, f)
+        # PHILO-17 ALIVE: a fact is a tinted pill; a toned one leads with
+        # a round lamp dot.
         if f["tone"] in ("warn", "danger", "ok"):
-            assert f["lampW"] == "10px" and f["lampShadow"].startswith(raised), (face, f)
+            assert f["lampW"] == "8px", (face, f)
     for shadow in m["bodies"]:
         assert shadow.startswith(sunken), (face, shadow, sunken)
     return m
@@ -203,8 +205,9 @@ def test_the_material_on_six_faces(tmp_path: Path, monkeypatch: pytest.MonkeyPat
                 _shoot(page, "conductor", width)
                 _assert_material(page, f"conductor-{width}", ".conductor-window")
 
-                # 5. The asking agent's lane.
-                window.get_by_role("button", name="Open", exact=True).click()
+                # 5. The asking agent's lane (PHILO-17 refit: the ask plate's
+                # one verb, Answer, opens it).
+                asking.get_by_test_id("conductor-answer").click()
                 lane = page.locator(".is-lane")
                 lane.wait_for(timeout=T)
                 lane.locator("[data-testid='lane-rail']").wait_for(timeout=T)
@@ -266,6 +269,7 @@ def test_a_held_filter_strip_is_flat(tmp_path: Path, monkeypatch: pytest.MonkeyP
             assert wire["source"] == "env" and wire["effective"] == "read", wire
             page.goto(f"{url}/settings", wait_until="load")
             _normal_chair(page)
+            page.locator("[data-testid='settings-more']").click()  # PHILO-17 REFIT: People folds under More settings
             row = page.locator(".surface-ledger-row", has=page.locator(".surface-ledger-primary", has_text="People"))
             row.get_by_role("button", name="Open", exact=True).click()
             strip = page.get_by_role("group", name="People MCP access", exact=True)

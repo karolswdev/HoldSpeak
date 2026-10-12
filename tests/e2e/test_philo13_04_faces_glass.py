@@ -192,6 +192,11 @@ class TestFacesDoNotLie:
                 self._press(page, page.locator(".desk-mark"), width)
                 self._press(page, page.locator("[role^=menuitem]").filter(has=page.locator(".desk-menu-label", has_text=re.compile(r"^Settings$"))).last, width)
                 settings = page.locator(".desk-window[aria-label='Settings']")
+                # PHILO-17 refit settings: the hub rows fold under More settings.
+                more = settings.get_by_test_id("settings-more").first
+                more.wait_for()
+                if more.get_attribute("aria-expanded") != "true":
+                    self._press(page, more, width)
                 # 2026-10-03 (inventory A defect 10): with the switch on and no
                 # engine the row names the missing engine, not SET ON.
                 settings.get_by_text(re.compile(r"SUMMARY (SET (ON|OFF)|· NO ENGINE)")).first.wait_for()
@@ -238,8 +243,11 @@ class TestFacesDoNotLie:
                 # Intelligence BRIEF on a 500: plain words + Try again, never `detail`.
                 page.route("**/api/brief/latest*", lambda r: r.fulfill(
                     status=500, body='{"detail":"injected detail text"}', content_type="application/json"))
-                self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                intel = page.locator(".desk-window[aria-label='Intelligence']")
+                self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                intel = page.locator(".desk-window[aria-label='Today']")
+                # PHILO-17 (concept C): the window opens on Day; the Brief is
+                # its second segment.
+                self._press(page, intel.locator(".intelligence-segment", has_text="Brief").first, width)
                 intel.get_by_text("BRIEF DID NOT LOAD · HUB FAILED").wait_for()
                 assert intel.get_by_role("button", name="Try again").count() >= 1
                 assert "injected detail text" not in intel.inner_text()
@@ -681,21 +689,21 @@ class TestMeetingsRailNamesStored:
 
                 proposed = get_database().proposals.list_proposals(meeting_id=A3W_STORED, state="proposed")
                 assert proposed, "the stored summary proposed nothing"
-                assert stored.get_by_test_id("state-token").inner_text() == f"{len(proposed)} TO REVIEW"
+                assert stored.get_by_test_id("state-token").inner_text() == f"{len(proposed)} to review"
                 # Handled, the record says what it holds: SUMMARY STORED, never OFF.
                 for proposal in proposed:
                     _api(page, "POST", f"/api/proposals/{proposal.id}/dismiss", token=TOKEN)
                 page.wait_for_function(
                     f"() => document.querySelector('[data-testid=meeting-row-{A3W_STORED}] [data-testid=state-token]')"
-                    "?.textContent === 'SUMMARY STORED'", timeout=30_000)
+                    "?.textContent === 'Summary stored'", timeout=30_000)
                 stored.scroll_into_view_if_needed()
                 TestFacesDoNotLie._shot(page, "meetings-rail-stored", width)
-                assert stored.get_by_test_id("state-token").inner_text() == "SUMMARY STORED"
+                assert stored.get_by_test_id("state-token").inner_text() == "Summary stored"
                 assert not stored.get_by_text(re.compile(r"\bOFF\b")).count()
                 # PHILO-15 10 (#985, B14): a meeting with no summary reads OFF only
                 # when its route says summaries off; this desk never turned them
                 # off, so it reads NOT RUN (never OFF, never STORED).
-                assert none.get_by_test_id("state-token").inner_text() == "NOT RUN"
+                assert none.get_by_test_id("state-token").inner_text() == "Not run"
                 assert not none.get_by_text(re.compile(r"\bOFF\b")).count()
                 assert not none.get_by_text("STORED").count()
                 assert not errors, errors
@@ -741,11 +749,11 @@ class TestMeetingsRailNamesStored:
                     row.wait_for()
                     return row.get_by_test_id("state-token").inner_text()
 
-                assert token(A3W_FAILED) == "FAILED"
+                assert token(A3W_FAILED) == "Failed"
                 # This hub has no drainer, so the queued run says so (HS-200-42).
-                assert token(A3W_QUEUED) in {"QUEUED", "NOT DRAINING"}
+                assert token(A3W_QUEUED) in {"Queued", "Not draining"}
                 # PHILO-13-03: a meeting's proposals are TO REVIEW.
-                assert token(A3W_OUTCOMES) == "5 TO REVIEW"
+                assert token(A3W_OUTCOMES) == "5 to review"
                 # PHILO-15 08 (#983): the stored summary proposes too. No run
                 # is live on it, so its count shows (the count never covers a
                 # run, and a run never hides behind a stored summary).
@@ -754,7 +762,7 @@ class TestMeetingsRailNamesStored:
                 stored_review = len(get_database().proposals.list_proposals(meeting_id=A3W_STORED, state="proposed"))
                 assert stored_review > 0
                 assert rows[A3W_STORED]["intel_status"] not in {"running", "queued"}
-                assert token(A3W_STORED) == f"{stored_review} TO REVIEW"
+                assert token(A3W_STORED) == f"{stored_review} to review"
                 meetings.get_by_test_id(f"meeting-row-{A3W_FAILED}").scroll_into_view_if_needed()
                 TestFacesDoNotLie._shot(page, "meetings-rail-precedence", width)
                 assert not errors, errors
@@ -826,7 +834,7 @@ class TestMeetingsRailNamesStored:
                 row.scroll_into_view_if_needed()
                 assert entered.is_set() and not release.is_set()
                 TestFacesDoNotLie._shot(page, "meetings-rail-running", width)
-                assert row.get_by_test_id("state-token").inner_text() == "RUNNING"
+                assert row.get_by_test_id("state-token").inner_text() == "Running"
                 assert not row.get_by_text("TO REVIEW").count()
                 assert not errors, errors
             finally:

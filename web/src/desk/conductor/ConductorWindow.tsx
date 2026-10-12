@@ -10,31 +10,26 @@
  *  This window is where agents live: the Agents application and the
  *  Arrival's AGENTS section fold into it (PROPOSAL §3, Movement C).
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   AppHead,
-  DeskIcon,
   EgressChip,
-  FilterBar,
-  IconGrid,
-  ObjectList,
   StatusStrip,
   SurfaceFooter,
-  SurfaceLedger,
-  SurfaceLedgerRow,
-  SurfaceSection,
   SurfaceState,
   objectSprite,
-  type ObjectSort,
-  type ObjectSortKey,
 } from "../surface";
+import { FoldGadget } from "../surface/gadgets";
+import { AgentWords } from "../components/AgentWords";
+import { apiFetch } from "../../lib/api";
+import { useGate } from "../gate";
+import { gatedHead, type LaneGated } from "../lane/laneWire";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { useAgentFlights } from "../agentFlights";
 import { AGENT_HOST, AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId, type AgentRow } from "../firstrun/agentsStep";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useDesk } from "../store";
-import { useCompactViewport } from "../useCompactViewport";
 import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { canRun, conductorHead, conductorMembers, headWords, type ConductorMember } from "./members";
 import { answerMember, answers, openMember, stopMember, stops } from "./open";
@@ -42,8 +37,6 @@ import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
 import "../drawer/drawer.css";
 import "./conductor.css";
 
-export type ConductorView = "icons" | "list";
-const PREF_KEY = "conductor";
 
 /** The reads, live while the window is open. */
 function useConductorReads() {
@@ -106,7 +99,7 @@ export function HooksLine({ member }: { member: ConductorMember | null }) {
   const offered = member ? Boolean(member.detect && needsHooks(member.detect)) : (agents ?? []).some(needsHooks);
   if (!offered) return null;
   return (
-    <span className="surface-token cw-hooks-line" data-chip data-wrap data-testid="conductor-hooks-line">
+    <span className="kit-pill cw-hooks-line" data-tone="info" data-dot="" data-testid="conductor-hooks-line">
       {HOOKS_LINE}
     </span>
   );
@@ -139,7 +132,14 @@ export function InstallHooksVerbs({ agents }: { agents: AgentRow[] }) {
 /** The verbs of one selected member (every verb names what it does). The
  *  Stop confirmation REPLACES the verb row (it is the only question then),
  *  and it is bound to the member pressed, whatever is selected after. */
-export function MemberVerbs({ member, onInfo }: { member: ConductorMember | null; onInfo?: () => void }) {
+export function MemberVerbs({ member, onInfo, trim = false }: {
+  member: ConductorMember | null;
+  onInfo?: () => void;
+  /** PHILO-17: in the Conductor's foot, the row verbs (Answer, Open,
+   *  Install hooks, Copy install) stay on their rows; the foot keeps the
+   *  quiet ones (Get Info, Stop). The Get Info window passes nothing. */
+  trim?: boolean;
+}) {
   const installing = useConductor((s) => s.installing);
   const { copy, receipt } = useCopyReceipt();
   const [confirmFor, setConfirmFor] = useState<ConductorMember | null>(null);
@@ -181,12 +181,12 @@ export function MemberVerbs({ member, onInfo }: { member: ConductorMember | null
           Get Info
         </Button>
       ) : null}
-      {detect && !detect.installed ? (
+      {!trim && detect && !detect.installed ? (
         <Button dense variant="secondary" aria-label={`Copy install: ${member!.name}`} onClick={() => void copy(AGENT_INSTALL[detect.id])}>
           Copy install
         </Button>
       ) : null}
-      {detect && needsHooks(detect) ? (
+      {!trim && detect && needsHooks(detect) ? (
         <Button
           dense
           variant="primary"
@@ -201,12 +201,12 @@ export function MemberVerbs({ member, onInfo }: { member: ConductorMember | null
           Stop
         </Button>
       ) : null}
-      {member && answers(member) ? (
+      {!trim && member && answers(member) ? (
         <Button dense variant="primary" onClick={() => answerMember(member)}>
           Answer
         </Button>
       ) : null}
-      {member && member.role !== "ready" ? (
+      {!trim && member && member.role !== "ready" ? (
         <Button dense variant="secondary" onClick={() => openMember(member)}>
           Open
         </Button>
@@ -228,7 +228,7 @@ export function headFact(head: { atWork: number; ask: number }, members: readonl
 }
 
 /** PHILO-17 U32: what hooks do, in one line, where Install hooks is offered. */
-export const HOOKS_LINE = "HOOKS · SEE THE CODER'S WORK · HAND IT WORK";
+export const HOOKS_LINE = "Hooks: see the coder's work, hand it work";
 
 /** `ASKED 6 MIN AGO`, `ASKED 3 H AGO`, `ASKED OCT 5`; `ASKS` with no age. */
 export function askedWord(when: string | undefined): string {
@@ -244,15 +244,262 @@ export function agentPlate(agent: string): string {
   return agent.slice(0, 3).toUpperCase() || "AGT";
 }
 
+
+/* ── PHILO-17 THE REFIT: the Conductor reads like Today ─────────────────
+ * One question leads: which coder needs you. The asks are raised plates
+ * with a Workbench title bar (the focus object), the question in full and
+ * ONE verb (Answer). Then the coders at work as quiet rows (one verb:
+ * Open), the coders on this Mac (a row that lacks hooks carries the verb
+ * that fixes it), and the launches that ended today, folded. A press on a
+ * row's name selects it; the foot keeps the quiet verbs (Get Info, Stop). */
+
+/** The plain word of a member's state (never a wire code) and its tone. */
+export function memberPill(member: ConductorMember): { word: string; tone: "ok" | "warn" | "danger" | "info" | "idle"; live?: boolean } {
+  if (member.role === "ready") {
+    const row = member.detect;
+    if (!row?.installed) return { word: "Not installed", tone: "idle" };
+    // `not_read`: the hub could not read the hooks; a fact, not a fault.
+    if (row.hooks === "not_read") return { word: "Hooks not checked", tone: "idle" };
+    if (row.hooks !== "installed") {
+      const word = { missing: "No hooks", partial: "Some hooks missing", unreadable: "Hooks unreadable", broken: "Hooks broken" }[row.hooks] ?? "No hooks";
+      return { word, tone: "warn" };
+    }
+    if ((row.signed_in as string) === "no") return { word: "Signed out", tone: "warn" };
+    return { word: "Ready", tone: "ok" };
+  }
+  if (member.role === "stale") return { word: plainReceipt(member.receipt ?? "Ended"), tone: member.state?.tone === "ok" ? "ok" : "idle" };
+  switch (member.live) {
+    case "ask":
+      return { word: "Asks you", tone: "warn", live: true };
+    case "held":
+      return { word: "Wants approval", tone: "warn", live: true };
+    case "idle":
+      return { word: "Idle", tone: "idle" };
+    case "pr":
+      return { word: member.lamp?.label.startsWith("PR #") ? `${member.lamp.label} open` : "PR open", tone: "ok" };
+    case "done":
+      return { word: "Done", tone: "ok" };
+    default:
+      return { word: member.lamp?.label === "STARTS" ? "Starting" : "Working", tone: "info", live: true };
+  }
+}
+
+/** `PR #413 MERGED · ITEM CLOSED` → `PR #413 merged · item closed`. */
+export function plainReceipt(receipt: string): string {
+  const lower = receipt.toLowerCase().replace(/\bpr #/g, "PR #");
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+/** `6 MIN` → `6 min ago`; `OCT 5` → `Oct 5`. */
+export function agoWord(when: string | undefined): string {
+  if (!when) return "";
+  if (/^\d+ (MIN|H)$/.test(when)) return `${when.toLowerCase()} ago`;
+  return when.charAt(0) + when.slice(1).toLowerCase();
+}
+
+/** The row's title: the item the coder works on, else its name. */
+function rowTitle(member: ConductorMember): string {
+  return member.role === "ready" ? member.name : String(member.facts.from || member.name);
+}
+
+function Pill({ member }: { member: ConductorMember }) {
+  const pill = memberPill(member);
+  return (
+    <span className="kit-pill" data-tone={pill.tone === "idle" ? undefined : pill.tone} data-dot="" data-live={pill.live ? "" : undefined} data-testid="conductor-pill">
+      {pill.word}
+    </span>
+  );
+}
+
+function Sprite({ member, size = "row" }: { member: ConductorMember; size?: "row" | "plate" }) {
+  return (
+    <span className={size === "plate" ? "cw-plate-sprite" : "cw-row-sprite"} aria-hidden="true">
+      <img src={member.sprite} alt="" draggable={false} />
+    </span>
+  );
+}
+
+/** One quiet row: sprite, the name (a press selects), meta, at most one verb. */
+function CoderRow({
+  member,
+  selected,
+  onSelect,
+  verb,
+  meta,
+}: {
+  member: ConductorMember;
+  selected: boolean;
+  onSelect(): void;
+  verb?: ReactNode;
+  meta?: ReactNode;
+}) {
+  return (
+    <li className="cw-row" data-object-id={member.id} data-selected={selected ? "" : undefined} data-testid="conductor-row">
+      <Sprite member={member} />
+      <div className="cw-row-text">
+        <Button variant="chrome" className="cw-row-title" aria-pressed={selected} onClick={onSelect}>
+          {rowTitle(member)}
+        </Button>
+        <span className="cw-row-meta">
+          <Pill member={member} />
+          {meta}
+        </span>
+      </div>
+      {verb}
+    </li>
+  );
+}
+
+/** The call a launched coder holds at the gate (PHILO-17: approve in one
+ *  press). Read from the launch's lane (its gated calls are not paged); a
+ *  call the hub cannot show whole is never approved here (PHILO-14 A5). */
+export function useHeldCall(member: ConductorMember): { call: LaneGated | null; reread(): void } {
+  const [call, setCall] = useState<LaneGated | null>(null);
+  const [tick, setTick] = useState(0);
+  const launchId = member.launchId;
+  useEffect(() => {
+    if (!launchId) return;
+    let live = true;
+    apiFetch<{ gated?: LaneGated[] | unknown } | null>(`/api/agent/launches/${encodeURIComponent(launchId)}/lane?after=0&limit=1`)
+      .then((lane) => {
+        const gated = Array.isArray(lane?.gated) ? (lane!.gated as LaneGated[]) : [];
+        const held = [...gated].reverse().find((g) => (g.state === "held" || g.state === "pending") && g.was_held !== false);
+        if (live) setCall(held ?? null);
+      })
+      .catch(() => {
+        if (live) setCall(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [launchId, member.live, member.when, tick]);
+  return { call, reread: () => setTick((n) => n + 1) };
+}
+
+/** A coder that asks: a raised plate with the title bar, the question, and
+ *  ONE first verb. A held call that the hub shows whole is decided here
+ *  (Approve, Deny); anything else opens the ask well (Answer). */
+function AskPlate({
+  member,
+  question,
+  lead,
+  selected,
+  onSelect,
+}: {
+  member: ConductorMember;
+  question: string;
+  lead: boolean;
+  selected: boolean;
+  onSelect(): void;
+}) {
+  const { call, reread } = useHeldCall(member);
+  const [busy, setBusy] = useState(false);
+  const held = member.live === "held" || Boolean(call);
+  const decide = async (decision: "approved" | "denied") => {
+    if (!call) return;
+    setBusy(true);
+    try {
+      await useGate.getState().decide(call.id, decision);
+    } finally {
+      setBusy(false);
+      reread();
+      void useConductor.getState().readFlights();
+    }
+  };
+  return (
+    <article
+      className="cw-ask"
+      data-object-id={member.id}
+      data-selected={selected ? "" : undefined}
+      data-testid="conductor-ask-row"
+      aria-label={`${titleOfAgent(member)} asks`}
+    >
+      <header className="cw-ask-bar">
+        <span className="cw-ask-label">{held ? "WANTS APPROVAL" : "ASKS YOU"}</span>
+        <span className="cw-ask-age">{askedWord(member.when)}</span>
+      </header>
+      <div className="cw-ask-body">
+        <Sprite member={member} size="plate" />
+        <div className="cw-ask-text">
+          <Button variant="chrome" className="cw-row-title" aria-pressed={selected} onClick={onSelect}>
+            {rowTitle(member)}
+          </Button>
+          <span className="cw-row-meta">
+            <span>{titleOfAgent(member)}</span>
+            {member.facts.where ? <span className="kit-pill" data-tone="info">{String(member.facts.where)}</span> : null}
+          </span>
+          {call ? (
+            <code className="cw-ask-call" data-testid="conductor-held-call">
+              {call.hold_reason ? <span className="cw-ask-why">{call.hold_reason}</span> : null}
+              {gatedHead(call)}
+            </code>
+          ) : question ? (
+            <AgentWords compact lines={3} className="cw-ask-q" text={question} />
+          ) : null}
+        </div>
+      </div>
+      <div className="cw-ask-verbs">
+        {call && !call.args_cut ? (
+          <>
+            <Button dense variant="ghost" disabled={busy} onClick={() => void decide("denied")} data-testid="conductor-deny">
+              Deny
+            </Button>
+            <Button dense variant={lead ? "primary" : "secondary"} loading={busy} onClick={() => void decide("approved")} data-testid="conductor-approve">
+              Approve
+            </Button>
+          </>
+        ) : (
+          <Button dense variant={lead ? "primary" : "secondary"} onClick={() => answerMember(member)} data-testid="conductor-answer">
+            {held ? "See the call" : "Answer"}
+          </Button>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function titleOfAgent(member: ConductorMember): string {
+  return AGENT_NAME[member.agent as AgentId] ?? member.agent;
+}
+
+/** The verb of a coder on this Mac: the one that fixes it, or none. */
+function ReadyVerb({ member, lead }: { member: ConductorMember; lead: boolean }) {
+  const installing = useConductor((s) => s.installing);
+  const { copy, receipt } = useCopyReceipt();
+  const row = member.detect;
+  if (!row) return null;
+  if (!row.installed) {
+    return (
+      <>
+        {receipt}
+        <Button dense variant="ghost" aria-label={`Copy install: ${member.name}`} onClick={() => void copy(AGENT_INSTALL[row.id])}>
+          Copy install
+        </Button>
+      </>
+    );
+  }
+  if (!needsHooks(row)) return null;
+  return (
+    <Button
+      dense
+      variant={lead ? "primary" : "secondary"}
+      aria-label={`Install hooks · ${member.name}`}
+      data-testid="conductor-install-hooks"
+      loading={installing === row.id}
+      disabled={Boolean(installing) && installing !== row.id}
+      onClick={() => void useConductor.getState().installHooks(row.id)}
+    >
+      Install hooks
+    </Button>
+  );
+}
+
 export function ConductorWindow() {
   const reads = useConductorReads();
   const sessions = useAgentFlights((s) => s.sessions);
   const flights = useAgentFlights((s) => s.flights);
-  const compact = useCompactViewport();
-  const saved = useDesk((s) => s.zoneViewPrefs[PREF_KEY]?.view);
-  const view: ConductorView = saved ?? (compact ? "list" : "icons");
-  const [sort, setSort] = useState<ObjectSort>({ key: "name", dir: "asc" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [coldOpen, setColdOpen] = useState<boolean | null>(null);
 
   const flightsKnown = reads.flightsState === "ok";
   const members = useMemo(
@@ -286,19 +533,22 @@ export function ConductorWindow() {
   const info = (member: ConductorMember | null) => {
     if (member) useConductor.getState().openInfo(member);
   };
-  const onSort = (key: ObjectSortKey) =>
-    setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
   const words = headWords(head);
-  const byId = (id: string) => members.find((m) => m.id === id) ?? null;
-  // Phase 16: the coders this Mac has (installed), and The ask:
-  // each live agent that asks (or holds a call), with its question.
   const installed = (reads.detect?.agents ?? []).filter((a) => a.installed).length;
-  const asks = members
-    .filter((m) => m.role === "live" && (m.live === "ask" || m.live === "held"))
-    .map((member) => ({
-      member,
-      question: sessions.find((row) => row.key === member.sessionKey)?.question ?? "",
-    }));
+
+  const asks = members.filter((m) => m.role === "live" && (m.live === "ask" || m.live === "held"));
+  const atWork = members.filter((m) => m.role === "live" && !(m.live === "ask" || m.live === "held"));
+  const ready = members.filter((m) => m.role === "ready");
+  const ended = members.filter((m) => m.role === "stale");
+  const fixable = ready.filter((m) => m.detect && m.detect.installed && needsHooks(m.detect));
+  const question = (m: ConductorMember) => sessions.find((row) => row.key === m.sessionKey)?.question ?? "";
+  // ONE filled primary per window: the first ask's Answer, else the first
+  // coder that lacks hooks.
+  const leadAsk = asks[0]?.id ?? null;
+  const leadFix = leadAsk ? null : fixable[0]?.id ?? null;
+  // The coders on this Mac fold away while coders work and none needs a fix.
+  const coldFolded = coldOpen === null ? !(fixable.length > 0 || (!asks.length && !atWork.length)) : !coldOpen;
+  const select = (id: string) => setSelectedId((now) => (now === id ? null : id));
 
   return (
     <DeskWindowFrame
@@ -312,7 +562,7 @@ export function ConductorWindow() {
       minW={340}
       minH={280}
       defaultW={760}
-      defaultH={480}
+      defaultH={520}
       origin={reads.origin}
       open
       unmountOnMinimize
@@ -321,105 +571,135 @@ export function ConductorWindow() {
       onClose={() => useConductor.getState().closeWindow()}
     >
       <div className="desk-pullout-body drawer-body" data-testid="conductor-window">
-        <div className="drawer-scroll">
-          {/* Phase 16 (the interior kit; the canvas window "Conductor"):
-              AppHead → FilterBar → the IconGrid of agents → The ask. */}
-          <AppHead fact={headFact(head, members)} data-testid="conductor-head">
-            <StatusStrip
-              items={[
-                ...failed.map((f) => ({
-                  key: `fail-${f.part}`,
-                  lamp: "fail" as const,
-                  text: `${f.part} ·`,
-                  value: `NOT READ${f.token ? ` · ${f.token}` : ""}`,
-                  testId: "conductor-not-read",
-                })),
-                // `2 AT WORK` is the fact; the ask is a lamp (it needs him).
-                ...words.filter((w) => !w.endsWith(" AT WORK")).map((w) => ({
-                  key: w,
-                  lamp: w.endsWith(" ASK") ? ("ask" as const) : undefined,
-                  text: w,
-                })),
-                installed > 0 ? { key: "agents", text: `${installed} ${installed === 1 ? "CODER" : "CODERS"}` } : null,
-              ]}
-            />
-          </AppHead>
-          <FilterBar
-            label="Conductor view"
-            data-testid="conductor-filter"
-            value={view}
-            onChange={(next) => useDesk.getState().setZoneViewPref(PREF_KEY, { view: next as ConductorView })}
-            options={[
-              { value: "icons", label: "Icons" },
-              { value: "list", label: "List" },
-            ]}
-            trailing={failed.length ? (
+        <div className="drawer-scroll cw">
+          <div className="cw-head">
+            <AppHead fact={headFact(head, members)} className="cw-apphead" data-testid="conductor-head">
+              <StatusStrip
+                items={[
+                  ...failed.map((f) => ({
+                    key: `fail-${f.part}`,
+                    lamp: "fail" as const,
+                    text: `${f.part} ·`,
+                    value: `NOT READ${f.token ? ` · ${f.token}` : ""}`,
+                    testId: "conductor-not-read",
+                  })),
+                  // `2 AT WORK` is the fact; the ask is a lamp (it needs him).
+                  ...words.filter((w) => !w.endsWith(" AT WORK")).map((w) => ({
+                    key: w,
+                    lamp: w.endsWith(" ASK") ? ("ask" as const) : undefined,
+                    text: w,
+                  })),
+                  installed > 0 ? { key: "agents", text: `${installed} ${installed === 1 ? "CODER" : "CODERS"}` } : null,
+                ]}
+              />
+            </AppHead>
+            {failed.length ? (
               <Button dense variant="ghost" onClick={retry}>
                 Retry
               </Button>
             ) : null}
-          />
-          {loading ? (
-            <SurfaceState loading />
-          ) : !members.length && failed.length ? null : !members.length ? (
-            <SurfaceState empty emptyLabel="No coder found" />
-          ) : view === "icons" ? (
-            <IconGrid well label="Conductor" onClear={() => setSelectedId(null)}>
-              {members.map((m) => (
-                <DeskIcon
+          </div>
+
+          {loading ? <SurfaceState loading /> : null}
+          {!loading && !members.length && !failed.length ? <SurfaceState empty emptyLabel="No coder found" /> : null}
+
+          {asks.length ? (
+            <section className="cw-section" data-testid="conductor-asks" aria-label="Needs you">
+              <h3 className="cw-cap">NEEDS YOU</h3>
+              {asks.map((m) => (
+                <AskPlate
                   key={m.id}
-                  id={m.id}
-                  kind={m.kind}
-                  name={m.name}
-                  kindWord={m.kindWord}
-                  sprite={m.sprite}
-                  spriteSelected={m.spriteSelected}
+                  member={m}
+                  question={question(m)}
+                  lead={m.id === leadAsk}
                   selected={m.id === selectedId}
-                  lamp={m.lamp ? { tone: m.lamp.tone, label: m.lamp.label } : undefined}
-                  ariaExtra={m.receipt}
-                  onSelect={() => setSelectedId(m.id)}
-                  onOpen={() => openMember(m)}
+                  onSelect={() => select(m.id)}
                 />
               ))}
-            </IconGrid>
-          ) : (
-            <ObjectList
-              label="Conductor"
-              rows={members}
-              sort={sort}
-              onSort={onSort}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              onOpen={(id) => {
-                const m = byId(id);
-                if (m) openMember(m);
-              }}
-            />
-          )}
-          <HooksLine member={selected} />
-          {asks.length ? (
-            <SurfaceSection label="The ask" data-testid="conductor-asks">
-              <SurfaceLedger label="The ask" cols="kit">
-                <ul className="surface-ledger-rows">
-                  {asks.map(({ member, question }) => (
-                    <SurfaceLedgerRow
-                      key={member.id}
-                      data-testid="conductor-ask-row"
-                      kind={agentPlate(member.agent)}
-                      kindTitle={member.kindWord}
-                      primary={question || member.name}
-                      meta={askedWord(member.when)}
-                      metaTone="ask"
-                      wrap
-                      expands={false}
-                      selected={member.id === selectedId}
-                      lineLabel={`Select: ${member.name}`}
-                      onToggle={() => setSelectedId(member.id)}
+            </section>
+          ) : null}
+
+          {atWork.length ? (
+            <section className="cw-section" data-testid="conductor-work" aria-label="At work">
+              <h3 className="cw-cap">AT WORK</h3>
+              <ul className="cw-well">
+                {atWork.map((m) => (
+                  <CoderRow
+                    key={m.id}
+                    member={m}
+                    selected={m.id === selectedId}
+                    onSelect={() => select(m.id)}
+                    meta={
+                      <>
+                        <span>{titleOfAgent(m)}</span>
+                        {m.facts.where ? <span>{String(m.facts.where)}</span> : null}
+                        {m.when ? <span className="cw-mono">{agoWord(m.when)}</span> : null}
+                      </>
+                    }
+                    verb={
+                      <Button dense variant="ghost" onClick={() => openMember(m)} data-testid="conductor-open">
+                        Open
+                      </Button>
+                    }
+                  />
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {ready.length ? (
+            coldFolded ? (
+              <div className="cw-fold">
+                <Button dense variant="ghost" aria-expanded={false} onClick={() => setColdOpen(true)} data-testid="conductor-coders-fold">
+                  Coders on this Mac
+                </Button>
+              </div>
+            ) : (
+              <section className="cw-section" data-testid="conductor-coders" aria-label="Coders on this Mac">
+                <h3 className="cw-cap">
+                  ON THIS MAC
+                  {asks.length || atWork.length ? (
+                    <Button dense variant="ghost" aria-expanded onClick={() => setColdOpen(false)} className="cw-cap-verb">
+                      Hide
+                    </Button>
+                  ) : null}
+                </h3>
+                <ul className="cw-well">
+                  {ready.map((m) => (
+                    <CoderRow
+                      key={m.id}
+                      member={m}
+                      selected={m.id === selectedId}
+                      onSelect={() => select(m.id)}
+                      meta={m.detect?.version ? <span className="cw-mono">{m.detect.version}</span> : null}
+                      verb={<ReadyVerb member={m} lead={m.id === leadFix} />}
                     />
                   ))}
                 </ul>
-              </SurfaceLedger>
-            </SurfaceSection>
+                <HooksLine member={selected?.role === "ready" ? selected : null} />
+              </section>
+            )
+          ) : null}
+
+          {ended.length ? (
+            <FoldGadget title="Ended today" token={String(ended.length)} className="cw-ended">
+              <ul className="cw-well" data-testid="conductor-ended">
+                {ended.map((m) => (
+                  <CoderRow
+                    key={m.id}
+                    member={m}
+                    selected={m.id === selectedId}
+                    onSelect={() => select(m.id)}
+                    meta={m.when ? <span className="cw-mono">{agoWord(m.when)}</span> : null}
+                    verb={
+                      <Button dense variant="ghost" onClick={() => openMember(m)}>
+                        Open
+                      </Button>
+                    }
+                  />
+                ))}
+              </ul>
+            </FoldGadget>
           ) : null}
         </div>
       </div>
@@ -427,12 +707,7 @@ export function ConductorWindow() {
         egress={selected?.role === "live" ? <EgressChip label={AGENT_HOST[selected.agent as AgentId] ?? AGENT_HOST.claude} scope="cloud" /> : null}
         className="cw-footer"
         receipt={<MemberReceipt member={selected} />}
-        verbs={
-          <>
-            {selected ? null : <InstallHooksVerbs agents={reads.detect?.agents ?? []} />}
-            <MemberVerbs member={selected} onInfo={() => info(selected)} />
-          </>
-        }
+        verbs={selected ? <MemberVerbs member={selected} onInfo={() => info(selected)} trim /> : null}
       />
     </DeskWindowFrame>
   );

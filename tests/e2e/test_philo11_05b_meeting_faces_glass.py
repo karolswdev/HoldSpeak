@@ -337,9 +337,12 @@ class TestMeetingFacesGlass:
                 page.locator("[data-testid=dest-slack-label]").fill("#leads")
                 page.wait_for_timeout(200)
                 assert page.locator("[data-testid=dest-name]").input_value() == SLACK
-                boards.shoot(page, "D2a-webhook-saved", [f"{key_row} .gadget-chip"], seat=f"CENTER:{key_row}")
-                d1 = boards.shoot(page, "D1-slack-form", [key_row, "[data-testid=dest-slack-label]", "[data-testid=dest-name]",
-                                                          "[data-testid=dest-save]"], seat="CENTER:[data-testid=dest-slack-label]")
+                # PHILO-17 REFIT: with Credentials folded the whole form fits one
+                # view, so the saved-webhook board (D2a) and the form board (D1)
+                # were the same frame; D1 now names the SET chip too.
+                d1 = boards.shoot(page, "D1-slack-form", [key_row, f"{key_row} .gadget-chip", "[data-testid=dest-slack-label]",
+                                                          "[data-testid=dest-name]", "[data-testid=dest-save]"],
+                                  seat="CENTER:[data-testid=dest-slack-label]")
                 assert "HOOKS.SLACK.COM:cloud" in d1["egress_chips"], d1["egress_chips"]
 
                 page.locator("[data-testid=dest-save]").click()
@@ -405,7 +408,7 @@ class TestMeetingFacesGlass:
                 page.wait_for_timeout(600)
                 order = page.evaluate("""() => { const w = document.querySelector('.desk-window:has(.meetings-detail-head)');
                   const well = w.querySelector('[data-seat=meeting]'); const slab = w.querySelector('.meeting-summary-slab, [data-testid=meeting-summary-text], .summary-text');
-                  const tr = [...w.querySelectorAll('*')].find((e) => /^TRANSCRIPT/.test((e.innerText || '').trim()) && e.children.length < 3);
+                  const tr = [...w.querySelectorAll('*')].find((e) => /^TRANSCRIPT/i.test((e.innerText || '').trim()) && e.children.length < 3);
                   const before = (a, b) => !!a && !!b && !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
                   return {window_width: Math.round(w.getBoundingClientRect().width), summary_before_send: before(slab, well),
                           send_before_transcript: before(well, tr), wells: w.querySelectorAll('[data-testid=send-well]').length}; }""")

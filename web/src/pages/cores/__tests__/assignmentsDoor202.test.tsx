@@ -17,8 +17,8 @@ import { PREF_MODULES } from "../settingsPrefs";
 
 describe("every declared settings module has a ledger row (HS-202-02)", () => {
   const rendered = new Set(
-    Array.from(prefsSource.matchAll(/onToggle=\{\(\) => onOpen\("([a-z]+)"\)\}/g)).map(
-      (m) => m[1],
+    Array.from(prefsSource.matchAll(/onClick=\{\(\) => onOpen\("([a-z]+)"\)\}|onToggle=\{\(\) => onOpen\("([a-z]+)"\)\}/g)).map(
+      (m) => m[1] ?? m[2],
     ),
   );
 
@@ -26,7 +26,8 @@ describe("every declared settings module has a ledger row (HS-202-02)", () => {
   // `models`); the `assignments` id is an alias that opens the same window.
   it("renders the one Runs on row", () => {
     expect(rendered.has("models")).toBe(true);
-    expect(prefsSource).toContain('primary="Runs on"');
+    // PHILO-17 REFIT: Runs on leads on its own plate (Choose engines).
+    expect(prefsSource).toContain('data-testid="settings-lead-engines"');
   });
 
   it("leaves no declared module without a door", () => {

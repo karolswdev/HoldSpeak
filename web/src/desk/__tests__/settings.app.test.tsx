@@ -112,6 +112,8 @@ const ledgerRow = (name: string) =>
 async function openHub() {
   const view = render(<SettingsCore />);
   await screen.findByText("No engine yet");
+  // PHILO-17 REFIT: the rows past Runs on and Accounts fold under More settings.
+  fireEvent.click(screen.getByTestId("settings-more"));
   await waitFor(() => expect(ledgerRow("Rhythm")?.textContent).toContain("EVERY 15 MIN"));
   return view;
 }
@@ -122,10 +124,13 @@ describe("the Settings hub on a cold hub", () => {
     const { container } = await openHub();
     expect(container.querySelectorAll(".surface-display")).toHaveLength(1);
     const rows = Array.from(container.querySelectorAll(".surface-ledger-primary")).map((n) => n.textContent);
-    expect(rows).toEqual(expect.arrayContaining(["Runs on", "Rhythm", "System"]));
+    expect(rows).toEqual(expect.arrayContaining(["Rhythm", "System"]));
     expect(rows).not.toContain("Models");
     expect(rows).not.toContain("Assignments");
-    expect(ledgerRow("Runs on")!.querySelector(".surface-state-chip[data-state='warning']")).not.toBeNull();
+    // Runs on leads on its own plate, with the one primary (Choose engines).
+    const engines = screen.getByTestId("settings-lead-engines");
+    expect(within(engines).getByRole("button", { name: "Choose engines" }).className).toContain("btn--primary");
+    expect(container.querySelectorAll(".prefs-hub .btn--primary")).toHaveLength(1);
     const rhythm = ledgerRow("Rhythm")!.textContent ?? "";
     expect(rhythm).not.toMatch(/\b0 LOOP/);
     expect(container.querySelectorAll(".prefs-posture-label")).toHaveLength(1);
@@ -138,7 +143,7 @@ describe("the Settings hub on a cold hub", () => {
     // replaces: tests/e2e/test_hs170_settings_hub_glass.py::test_settings_hub_rows_update_after_seed
     hub.state.hub.connections.connected = 1;
     const { container } = await openHub();
-    await waitFor(() => expect(ledgerRow("Connections")?.textContent).toContain("1 CONNECTED"));
+    await waitFor(() => expect(screen.getByTestId("settings-lead-accounts").textContent).toContain("1 connected"));
     expect(container.querySelectorAll(".surface-display")).toHaveLength(1);
   });
 
@@ -149,6 +154,7 @@ describe("the Settings hub on a cold hub", () => {
     expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Voice");
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     await screen.findByText("No engine yet");
+    fireEvent.click(screen.getByTestId("settings-more"));
     fireEvent.click(within(ledgerRow("System")!).getByRole("button", { name: "Open" }));
     expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("System");
     await screen.findByTestId("system-display");

@@ -1,6 +1,6 @@
 import { useDesk } from "./store";
 
-export type IntelligenceView = "brief" | "follow-through" | "receipts";
+export type IntelligenceView = "today" | "brief" | "follow-through" | "receipts";
 
 export type IntelligenceNavigation = {
   view: IntelligenceView;

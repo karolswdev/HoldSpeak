@@ -648,3 +648,540 @@
   gap: var(--space-1);
   padding-bottom: var(--space-1);
 }
+
+/* ══ PHILO-17 THE REFIT: the Room in the Today language ══════════════════
+   Compact type (13/12, the headline 19), one filled verb (Draft update),
+   our material: a paper well for the plan with a dotted pixel rail and
+   square beads, a raised steel plate for the signals, a Workbench title
+   bar on the late milestone, soft tinted pills with a round lamp. The
+   secondary sections are folded. Idle never moves: colour and opacity only. */
+
+.room-body {
+  gap: 12px;
+  padding-top: 10px;
+}
+
+/* ── the head: the fact, the pill, the mono facts, the one verb ── */
+.room-head { gap: 4px; }
+.room-head-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  min-width: 0;
+}
+.room-head .room-headline {
+  font: 650 19px / 1.2 var(--font-display);
+  letter-spacing: 0;
+  color: var(--wb-text);
+}
+.room-head .room-headline[data-accent] { color: var(--wb-text); }
+.room-head .room-headline:not([data-accent]) { color: var(--wb-muted); }
+.room-head-strip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font: 600 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+.room-head-strip b { color: var(--wb-text); font-weight: 800; }
+.room-head-strip [data-tone="danger"] { color: var(--wb-danger-ink); }
+.room-head-strip [data-tone="danger"] b { color: var(--wb-danger-ink); }
+.room-head-strip [data-tone="warn"] { color: var(--wb-warn-ink); }
+.room-head .room-head-trailing { margin-left: auto; }
+.room-head .room-head-outcome {
+  margin: 0;
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+
+/* The pill is the kit's (kit.css `.kit-pill`). */
+
+/* ── the grid: the main column and the signals ── */
+.room-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 12px;
+  align-items: start;
+}
+.room-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.room-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+@container surface (max-width: 639.9px) {
+  .room-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── the signals plate: raised steel, lit from the top left ── */
+.room-plate {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-field-hi);
+  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.room-plate-cap {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  font: 800 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-muted);
+}
+.room-plate-when {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.room-signals {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.room-signal {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
+  grid-template-areas: "lamp name" ". facts";
+  align-items: center;
+  column-gap: 7px;
+  padding: 4px 4px;
+  border-radius: 3px;
+  transition: background-color 120ms ease;
+}
+.room-signal:hover { background: color-mix(in srgb, var(--wb-paper) 70%, transparent); }
+.room-signal-lamp {
+  grid-area: lamp;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--wb-ink) 40%, transparent);
+  background: var(--lamp-ok);
+}
+.room-signal[data-tone="warn"] .room-signal-lamp { background: var(--lamp-warn); }
+.room-signal[data-tone="danger"] .room-signal-lamp { background: var(--lamp-fail); }
+.room-signal-name {
+  grid-area: name;
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.room-signal-facts {
+  grid-area: facts;
+  font: 600 12px / 1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+.room-signal[data-tone="danger"] .room-signal-facts { color: var(--wb-danger-ink); }
+.room-signal[data-tone="warn"] .room-signal-facts { color: var(--wb-warn-ink); }
+
+/* ── the plan: a paper well, the dates in the gutter, a dotted rail ── */
+.room-plan {
+  --gutter: 52px;
+  --rail-x: calc(var(--gutter) + 9px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 10px 10px 10px 0;
+  list-style: none;
+  background: var(--alive-paper, #f8f5ee);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+  min-width: 0;
+}
+.room-plan::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: var(--rail-x);
+  width: 2px;
+  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--wb-ink) 45%, transparent) 0 2px, transparent 2px 4px);
+  pointer-events: none;
+}
+.room-plan-node,
+.room-plan-now {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--gutter) 20px minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+}
+.room-plan-node[data-kind="focus"] { align-items: start; }
+.room-plan-time {
+  padding-right: 6px;
+  text-align: right;
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.room-plan-node[data-kind="focus"] > .room-plan-time {
+  padding-top: 7px;
+  color: var(--wb-danger-ink);
+}
+.room-plan-bead {
+  justify-self: center;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  transition: background-color 120ms ease, box-shadow 160ms ease;
+}
+.room-plan-bead[data-tone="danger"] { background: var(--lamp-fail); }
+.room-plan-bead[data-tone="warn"] { background: var(--lamp-warn); }
+.room-plan-bead[data-tone="ok"] { background: var(--lamp-ok); }
+.room-plan-bead[data-tone="idle"] { background: var(--wb-field); }
+.room-plan-node[data-kind="focus"] > .room-plan-bead {
+  margin-top: 8px;
+  width: 12px;
+  height: 12px;
+}
+.room-plan-node:hover > .room-plan-bead {
+  box-shadow: var(--wb-raised), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
+}
+.room-plan-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 4px 8px;
+  border-radius: 3px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.room-plan-row:hover {
+  background: #ffffff;
+  box-shadow: var(--alive-lift);
+}
+.room-row-title {
+  min-width: 0;
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.room-row-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font: 500 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+.room-plan-node[data-kind="ok"] .room-row-title,
+.room-plan-node[data-kind="idle"] .room-row-title { color: var(--wb-muted); }
+
+/* TODAY: a blue line across the plan, a glowing bead. */
+.room-plan-now { height: 20px; }
+.room-plan-now > .room-plan-time { color: var(--wb-info-ink); }
+.room-plan-now-bead {
+  justify-self: center;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--lamp-info);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-info) 35%, transparent);
+  animation: room-breathe 1.8s ease-in-out infinite alternate;
+}
+.room-plan-now-line {
+  height: 2px;
+  background: linear-gradient(90deg, var(--lamp-info), color-mix(in srgb, var(--lamp-info) 0%, transparent));
+  animation: room-breathe 1.8s ease-in-out infinite alternate;
+}
+@keyframes room-breathe {
+  from { opacity: 1; }
+  to { opacity: 0.45; }
+}
+
+/* The late milestone: a raised plate with a Workbench title bar. */
+.room-focus {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 2px 0 4px;
+  padding: 0 0 8px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent), 4px 10px 22px color-mix(in srgb, var(--wb-ink) 14%, transparent);
+  transition: box-shadow 160ms ease;
+  min-width: 0;
+}
+.room-focus:hover {
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent), 6px 14px 28px color-mix(in srgb, var(--wb-ink) 20%, transparent);
+}
+.room-focus-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--wb-ink);
+  background: var(--wb-stipple-fine), var(--wb-blue);
+  color: var(--wb-ink);
+}
+.room-focus-label {
+  padding: 1px 6px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-danger-ink);
+}
+.room-focus-in {
+  margin-left: auto;
+  font: 700 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-ink);
+}
+.room-focus-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 2px 12px 0;
+  min-width: 0;
+}
+.room-focus-title {
+  font: 650 15px / 1.25 var(--font-display);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+
+/* ── the folds: secondary sections, one quiet steel tab each ── */
+.room-folds {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* A fold whose section draws nothing is not drawn. */
+.room-fold:not(:has(.surface-section, [data-testid="room-files"], .standing-pages)) { display: none; }
+.room-fold > .gadget-fold > summary {
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 3px 10px;
+  border: 1px solid color-mix(in srgb, var(--wb-ink) 55%, transparent);
+  border-radius: 0;
+  background: var(--wb-field-hi);
+  box-shadow: var(--wb-raised);
+  font: 700 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.room-fold > .gadget-fold > summary:hover {
+  background: var(--wb-paper);
+  color: var(--wb-text);
+}
+.room-fold > .gadget-fold > summary:active { box-shadow: var(--wb-sunken); }
+.room-fold > .gadget-fold[open] > summary { color: var(--wb-text); }
+.room-fold > .gadget-fold > summary .gadget-fold-token {
+  font: 700 12px / 1 var(--font-mono);
+  color: var(--wb-text);
+}
+.room-fold > .gadget-fold > .gadget-fold-body { padding: 6px 0 4px; }
+/* The fold names the section: the section's own caption is not said twice
+   (its verbs stay). */
+.room-fold .surface-section-head > h3 { display: none; }
+.room-fold .surface-section-head::after { display: none; }
+.room-fold .surface-section-head { justify-content: flex-end; flex-wrap: wrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .room-plan-now-bead,
+  .room-plan-now-line { animation: none; }
+  .room-plan-row,
+  .room-plan-bead,
+  .room-focus,
+  .room-signal,
+  .room-fold > .gadget-fold > summary { transition: none; }
+}
+@container surface (max-width: 559.9px) {
+  .room-plan { --gutter: 48px; }
+}
+
+/* The ask: in the flow (PHILO-17 refit), no sticky foot. */
+.room-body .room-ask-container {
+  position: static;
+  padding: 0;
+  background: none;
+}
+.room-body { padding-bottom: 16px; }
+.desk-next .desk-surface-body:has(.room-ask-container),
+.desk-next .desk-pullout-body:has(.room-ask-container) {
+  scroll-padding-bottom: 0;
+}
+.room-head .room-head-trailing .btn { width: auto; }
+.room-plate-cap { text-transform: uppercase; }
+.room-signal-facts {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.4em;
+}
+.room-signal-facts > span { white-space: nowrap; }
+
+/* ══ PHILO-17 refit, pass 2 ══ */
+
+/* OPEN HERE: the Today row: a sprite, the name 13 semibold, the why as a
+   tinted pill, one quiet verb. */
+.room-main .surface-ledger[data-cols="room"] .surface-primary {
+  font: 600 13px / 1.3 var(--font-sans);
+}
+.room-row-sprite {
+  display: inline-grid;
+  place-items: center;
+}
+.room-row-sprite > img {
+  width: 20px;
+  height: 20px;
+  image-rendering: pixelated;
+}
+.room-main .room-why-token {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--wb-ink) 8%, transparent);
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.room-main .room-why-token[data-tone="danger"] {
+  background: color-mix(in srgb, var(--lamp-fail) 16%, transparent);
+  color: var(--wb-danger-ink) !important;
+}
+.room-main .room-why-token[data-tone="warn"] {
+  background: color-mix(in srgb, var(--lamp-warn) 26%, transparent);
+  color: var(--wb-warn-ink) !important;
+}
+.room-main .surface-section-head > h3,
+.room-folds .gadget-fold-title,
+.room-body .surface-section-head > h3 {
+  font: 800 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+}
+
+/* HISTORY: the stream as the plan's rail: a paper well, the time in the
+   gutter, a dotted rail and a bead per change, the words in sans 13. */
+.room-history .surface-stream-head .surface-display {
+  font: 650 19px / 1.2 var(--font-display);
+}
+.room-history .surface-stream-day-label {
+  font: 800 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-muted);
+}
+.room-history .surface-stream-entries {
+  position: relative;
+  margin: 0;
+  padding: 8px 10px 8px 0;
+  list-style: none;
+  background: var(--alive-paper, #f8f5ee);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+.room-history .surface-stream-entries::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 61px;
+  width: 2px;
+  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--wb-ink) 45%, transparent) 0 2px, transparent 2px 4px);
+  pointer-events: none;
+}
+.room-history .surface-stream-entry {
+  position: relative;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 0 24px;
+  align-items: center;
+  padding: 4px 8px 4px 0;
+}
+.room-history .surface-stream-entry::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 57px;
+  width: 8px;
+  height: 8px;
+  margin-top: -5px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+}
+.room-history .surface-stream-entry:hover { background: #ffffff; box-shadow: var(--alive-lift); }
+.room-history .surface-stream-entry:hover::before {
+  box-shadow: var(--wb-raised), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
+}
+.room-history .surface-stream-when {
+  padding: 0 6px 0 0;
+  font: 700 12px / 1 var(--font-mono);
+  color: var(--wb-muted);
+}
+.room-history .surface-stream-entry[data-dense] .surface-stream-said {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.room-history-folds { margin-top: 8px; padding: 0 var(--desk-surface-row-pad-x, 14px); }
+/* The rail keeps its three columns at every width (the time, the words,
+   the verb), so the time never falls onto the words. */
+.room-history .surface-stream-when { grid-column: 1; grid-row: 1; text-align: right; }
+.room-history .surface-stream-said { grid-column: 2; grid-row: 1; min-width: 0; }
+.room-history .surface-stream-meta { grid-column: 3; grid-row: 1; }
+@container surface (max-width: 559.9px) {
+  .room-history .surface-stream-entries::before { left: 53px; }
+  .room-history .surface-stream-entry { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 0 22px; }
+  .room-history .surface-stream-entry::before { left: 49px; }
+}
+
+/* ══ PHILO-17 refit, pass 3 ══ */
+/* A proposal's title is its Edit press: the words, underlined on hover. */
+.room-proposal-title.btn {
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+}
+.room-proposal-title.btn:hover .room-proposal-text {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* The plan reads in one line per item at a wide window (the name, then its
+   pills and facts), so the whole plan fits above the fold more often. */
+@container surface (min-width: 640px) {
+  .room-plan-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 10px;
+    padding: 3px 8px;
+  }
+  .room-plan-row > .room-row-title { flex: 0 1 auto; }
+  .room-plan { gap: 0; padding-block: 8px; }
+}

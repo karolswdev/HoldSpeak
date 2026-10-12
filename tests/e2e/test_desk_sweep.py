@@ -108,6 +108,15 @@ TOLERANCE = 2
 PALETTE_QUERY = "ledger"  # a Project, meetings, a decision, a note of the seed
 
 
+def _overlap(o: list[Any]) -> str:
+    """One overlap observation: the two words, then WHERE each box is (the
+    data-testids of its nearest marked ancestors), so a known red can name
+    the element by its identity (PHILO-17, Astra r1 on #1111)."""
+    where = o[3] if len(o) > 3 else ["", ""]
+    text = f"overlap '{o[0]}' x '{o[1]}' @[{where[0]}] x [{where[1]}]"
+    return text + (f" {o[2]}" if os.environ.get("SWEEP_DEBUG") else "")
+
+
 class KnownRed(AssertionError):
     """A red listed in KNOWN_REDS (the only failure the xfail accepts)."""
 
@@ -184,6 +193,9 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         ("needs", "chair:needs", None),
         # ... and the ⌘K palette, open on a query that hits several sections.
         ("palette", "desk-tool-shelf", PALETTE_QUERY),
+        # PHILO-17 (concept C): the Today window, the day as a timeline. The
+        # hub does not hold it (NOT_ON_HUB), so the dock opens it.
+        ("today", "pullout:intelligence:desk", None),
     ]
     return cases, refused
 
@@ -249,6 +261,11 @@ _TOPOLOGY_393 = [
         "Components at 393: the topology demo is wider than the phone; its far nodes pan into view"),
 ]
 
+#: The Room's one ask-bar red: an item row's box (its where-path holds
+#: `item-row`) under an ask-bar box (its where-path holds `room-ask`).
+ROOM_ITEM_UNDER_ASK = (r"^overlap '[^']+' x '[^']+' @\[(?:[^\]<]*<)*item-row(?:<[^\]]*)?\]"
+                       r" x \[(?:[^\]<]*<)*room-ask[\w-]*(?:<[^\]]*)?\](?: \[\[.*)?$")
+
 KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
     ("surface-components", 393): _TOPOLOGY_393,
     ("desk", 1440): [
@@ -256,7 +273,7 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
             "Conductor icon by 5 px when its `1:1 HH:MM` caption is wide (depends on the clock)", maybe=True),
         Red("readable", r"^overlap 'People, DRAWER, 1:1 [\d:]+' x 'Conductor, DRAWER, ",
             "the same People x Conductor icon overlap", maybe=True),
-        Red("readable", r"^overlap '1' x 'People, DRAWER, 1:1 [\d:]+'$",
+        Red("readable", r"^overlap '1' x 'People, DRAWER, 1:1 [\d:]+'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
             "the People icon's count badge 1 overlaps its caption", maybe=True),
     ],
     ("surface-concierge", 1440): [
@@ -267,8 +284,11 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
             "Runs on: the switchboard job rows move 84 px after the window settles", maybe=True),
     ],
     ("room", 1440): [
-        Red("readable", r"^overlap '(Settlement latency under load|Compliance team sign-off|RISK|LIKELIHOOD HIGH|"
-            r"DUE SEP 15)' x '(Ask this project|Speak to ask this project|Result|Choose)'$",
+        # PHILO-17 (Astra r1 on #1111): an ITEM ROW (testid item-row) under
+        # the ask bar (testid room-ask-*); which rows sit there depends on the
+        # head's height. Named by identity: two ask-bar boxes, or any box that
+        # is not an item row, never match (test_room_red_is_item_rows_only).
+        Red("readable", ROOM_ITEM_UNDER_ASK,
             "Room: the risk rows read as overlapping the ask bar (the reader ignores z-order: the rows may be "
             "scrolled under an opaque bar); where they sit depends on the late read", maybe=True),
         # A late read (the sources row) lands after the window settles and moves the body
@@ -277,10 +297,10 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
         Red("still", r"^(room-add-source|steward-verb|source-scope|Pause|since-read-empty) "
             r"moved \d+ px$", "Room: a late read moves the body after the window settles (not reproduced "
             "on 2026-10-11 under held reads; kept until a run shows it)", maybe=True),
-        Red("readable", r"^overlap '(GH|org/repo|\d+ OPEN PRS|·|CI GREEN|CI RED)' x 'Ask this project'$",
+        Red("readable", r"^overlap '(GH|org/repo|\d+ OPEN PRS|·|CI GREEN|CI RED)' x 'Ask this project'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
             "Room: the sources row reads as overlapping the ask bar after the late read lands", maybe=True),
         Red("overlap", r"^Pause x Choose ", "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
-        Red("readable", r"^overlap '(Pause|Choose)' x '(Pause|Choose)'$",
+        Red("readable", r"^overlap '(Pause|Choose)' x '(Pause|Choose)'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
             "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
     ],
 }
@@ -337,6 +357,10 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             week = open13._seed(home, base)  # canvas week, 1:1 Priya, calendar, brief
             _seed_agents(home)  # the Conductor flight
             _save_meeting("m-sweep-failed", "Vendor sync", 3, "error")  # a Needs-you member
+            # PHILO-17 (Today): a decision to make, so the To decide plate draws.
+            get_database().proposals.create_proposal(
+                meeting_id="m-sweep-failed", project_id=None, kind="decision",
+                text="Freeze the ledger on Nov 12", source_plugin="summary")
             ctx = pw_browser.new_context()
             page = ctx.new_page()
             page.goto(f"{base}/?token={TOKEN}", wait_until="load")
@@ -624,19 +648,19 @@ def _material_faults(page: Any, face: str, root: str | None) -> list[str]:
         if not t["shadow"].startswith(m["softSunken"] if t["active"] else m["soft"]):
             out.append(f"token '{t['name']}' has the wrong soft bevel")
     for c in m["chips"]:
-        ok = (c["border"] == "0px" and c["bg"] in ("rgba(0, 0, 0, 0)", "transparent") and c["lampW"] == "10px"
-              and (c["lampShadow"] or "").startswith(raised) and (c["name"] or "").strip()
+        # PHILO-17 ALIVE (owner 2026-10-11): a state is a soft tinted pill
+        # with a round 8 px lamp dot.
+        ok = (c["border"] == "0px" and c["lampW"] == "8px"
+              and c.get("lampRadius") == "50%" and (c["name"] or "").strip()
               and (not c["word"] or c["name"] == c["word"])
               and (c["word"] or c["state"] not in LAMP_WORDS or c["name"] == LAMP_WORDS[c["state"]]))
         if not ok:
             out.append(f"state chip '{c['name']}' breaks the lamp grammar")
     for f in m["facts"]:
         ok = (f["border"] == "rgba(0, 0, 0, 0)" and f["shadow"] == "none"
-              and f["bg"] in ("rgba(0, 0, 0, 0)", "transparent")
-              and (f["tone"] not in ("warn", "danger", "ok")
-                   or (f["lampW"] == "10px" and (f["lampShadow"] or "").startswith(raised))))
+              and (f["tone"] not in ("warn", "danger", "ok") or f["lampW"] == "8px"))
         if not ok:
-            out.append(f"fact '{f['text']}' is not flat")
+            out.append(f"fact '{f['text']}' is not a pill")
     for shadow in m["bodies"]:
         if not shadow.startswith(sunken):
             out.append(f"a window body is not the well (box-shadow {shadow[:40]})")
@@ -699,7 +723,7 @@ class _Case:
         if not faults["scopes"]:
             fail("readable", f"no visible {scope}: nothing was read")
         fail("readable", ([f"clipped '{c['text']}' in {c['in']}" for c in faults["clipped"]]
-                          + [f"overlap '{o[0]}' x '{o[1]}'" for o in faults["overlaps"]]))
+                          + [_overlap(o) for o in faults["overlaps"]]))
         small, contrast = self.measure()
         fail("floor", sorted(small - self.baseline[0]))
         fail("contrast", sorted(contrast - self.baseline[1]))
@@ -847,7 +871,8 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
     baseline = _baseline(pw_browser, base, width) if wid else (set(), set())
     clear_hub_windows_http(base, TOKEN)
     palette = case_id == "palette"
-    if wid and not palette:
+    today = case_id == "today"
+    if wid and not palette and not today:
         # Opened on the hub before the page loads: the page seeds its windows
         # from the hub's rows (a view that is live follows the same rows by
         # its desk_changed frame; that follow is fenced in the PHILO-16 glass).
@@ -860,6 +885,12 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         sweep = _Case(page, base, wid, errors, requests)
         sweep.baseline = baseline
         sweep.shot = f"{case_id}-{width}"
+        if today:
+            page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
+            launch = page.locator(".desk-dock-launch[aria-label^='Today']").first
+            launch.click()
+            page.locator(f'[id="{wid}"] [data-testid=today-day]').wait_for(timeout=T)
+            page.mouse.move(2, 2)
         if palette:
             page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
             page.locator("[aria-controls=desk-tool-shelf]").first.click()
@@ -998,3 +1029,23 @@ def test_every_html_route_loads_clean(desk: dict[str, Any], pw_browser: Any, rou
         assert not problems, f"{route}: {problems}"
     finally:
         ctx.close()
+
+
+def test_room_red_is_item_rows_only() -> None:
+    """PHILO-17 (Astra r1 on #1111): the Room's ask-bar red excuses an item
+    row under the ask bar, and nothing else: two ask-bar boxes, or a box that
+    is not an item row, still fail."""
+    red = re.compile(ROOM_ITEM_UNDER_ASK)
+    assert red.search("overlap 'DUE SEP 1' x 'No engine for answers' @[item-row<items-section] x [room-ask-well]")
+    assert red.search("overlap 'Settlement latency' x 'Ask this project' @[item-row] x [room-ask-input-well<room-ask-well]")
+    # Two ask-bar boxes collide: never excused.
+    assert not red.search("overlap 'No engine for answers' x 'Ask this project' @[room-ask-well] x [room-ask-input-well<room-ask-well]")
+    # A box that is not an item row (a head chip, a source row): never excused.
+    assert not red.search("overlap 'AT RISK' x 'Ask this project' @[room-head] x [room-ask-well]")
+    assert not red.search("overlap 'x' x 'y' @[] x [room-ask-well]")
+    # The item row under something that is not the ask bar: never excused.
+    assert not red.search("overlap 'DUE SEP 1' x 'Pause' @[item-row] x [room-footer]")
+    # An item row's own token (item-token<item-row) is an item row.
+    assert red.search("overlap 'AT_RISK' x 'Choose' @[item-token<item-row<items-section] x [room-ask-input-well<room-ask-well]")
+    # The ask bar's own word against the ask field: two ask-bar boxes.
+    assert not red.search("overlap 'No engine for answers' x 'Ask this project' @[room-ask-no-engine<room-ask-input-well] x [room-ask-input-well<room-ask-well]")

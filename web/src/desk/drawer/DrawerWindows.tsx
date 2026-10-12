@@ -31,7 +31,7 @@ export function DrawerWindows() {
         </ApplicationBoundary>
       ))}
       {parked ? (
-        <ApplicationBoundary label="Parked">
+        <ApplicationBoundary label="Archive">
           <ParkedDrawer origin={parked.origin} />
         </ApplicationBoundary>
       ) : null}

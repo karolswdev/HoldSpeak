@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { openRef } from "./openObject";
-import { StandingPage, SurfaceSection, countLabel, wireDate, type MemoryRefToken } from "./surface";
+import { StandingPage, SurfaceSection, wireDate, type MemoryRefToken } from "./surface";
 import { useMemoryChanges } from "./memoryChanges";
 
 export interface StandingPageWire {
@@ -62,14 +62,17 @@ const BOUNDARY: Record<string, string> = {
   cloud: "CLOUD",
 };
 
-/** `PAGES BY QWEN3.8-27B · LAN`: which engine wrote the pages, and where. */
+/** `Written by qwen3.8-27b · LAN`: which engine wrote the pages, and where.
+ *  PHILO-17: no credit without an engine name (the word "PAGES" stood in
+ *  for a missing name). */
 export function modelToken(pages: StandingPageWire[]): string | null {
   const seen = [...new Set(pages.map((p) => {
-    const model = (p.model || "").toUpperCase();
+    const model = (p.model || "").trim();
+    if (!model) return "";
     const where = BOUNDARY[(p.boundary || "").toLowerCase()] ?? (p.boundary || "").toUpperCase();
     return [model, where].filter(Boolean).join(" · ");
   }).filter(Boolean))];
-  return seen.length ? `PAGES BY ${seen.join(" / ")}` : null;
+  return seen.length ? `Written by ${seen.join(" / ")}` : null;
 }
 
 /** The scope key the cached pages belong to: `project:atlas` / `desk`. */
@@ -149,9 +152,9 @@ export function StandingPagesSection({
   return (
     <div data-testid="standing-pages">
       <SurfaceSection
-        label={countLabel("STANDING PAGES", pages.length)}
+        label={`Standing pages · ${pages.length}`}
         className="standing-pages-section"
-        actions={by ? <span className="surface-token" data-testid="standing-pages-model">{by}</span> : undefined}
+        actions={by ? <span className="standing-pages-model" data-testid="standing-pages-model">{by}</span> : undefined}
       >
         <div className="standing-pages-grid">
           {pages.map((page) => (

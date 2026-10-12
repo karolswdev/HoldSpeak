@@ -25,7 +25,7 @@ import { writeFailureReason } from "../../../desk/hooks/useWriteReceipt";
 import { EgressChip } from "../../../desk/surface/gadgets";
 import { StateChip } from "../../../desk/surface/patterns/StateChip";
 import { egressFor } from "../../../desk/surface/egress";
-import { readPlannedRoute, routeOff, routeReady, routeReasonToken } from "../../../meetings/summaryRoute";
+import { readPlannedRoute, routeOff, routeReady } from "../../../meetings/summaryRoute";
 import { readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
 import { useRuntimeBus } from "../../../runtime/RuntimeBus";
 import { SPEECH_SETUP_EVENT } from "../../../desk/firstrun/SpeechSetup";
@@ -40,7 +40,7 @@ import {
   ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt, clockTime, download, intelStateOf,
   summaryIsOff, type DetailView,
 } from "./helpers";
-import { MeetingDetail } from "./MeetingDetail";
+import { MeetingDetail, MEETING_TRANSCRIPT_OPEN } from "./MeetingDetail";
 import { useSummaryRun } from "./useSummaryRun";
 
 /** The meeting window's faces (the Meetings window's detail wings). */
@@ -201,7 +201,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
       return (
         <StateChip
           state="warning"
-          label={routeOff(route) ? "SUMMARIES OFF" : `NO SUMMARY ROUTE · ${routeReasonToken(route)}`}
+          label={routeOff(route) ? "Summaries off" : "No engine for summaries"}
         />
       );
     }
@@ -323,7 +323,10 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
               {view === "outcomes" ? (
                 <>
                   <Button dense variant="ghost" data-testid="meeting-open-transcript"
-                    onClick={() => revealOnRecord(`meeting-${meetingId}-transcript`)}>
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent(MEETING_TRANSCRIPT_OPEN, { detail: meetingId }));
+                      window.requestAnimationFrame(() => revealOnRecord(`meeting-${meetingId}-transcript`));
+                    }}>
                     Open transcript
                   </Button>
                   {hasSummary ? (

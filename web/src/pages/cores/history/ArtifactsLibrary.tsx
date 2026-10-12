@@ -5,7 +5,6 @@ import {
   SurfaceCode,
   SurfaceLibrary,
   SurfaceLibraryTile,
-  SurfaceState,
   SurfaceWell,
 } from "../../../desk/surface/Surface";
 import { FoldGadget } from "../../../desk/surface/gadgets";
@@ -23,7 +22,8 @@ export function ArtifactsLibrary({
   meetingTitle: string;
 }) {
   if (!artifactRows.length) {
-    return <SurfaceState empty emptyLabel="No artifacts yet" emptyGlyph="◇" />;
+    // PHILO-17 (quiet by default): one line, not an empty well.
+    return <p className="meetings-quiet" data-testid="artifacts-empty">No artifacts yet</p>;
   }
   return (
     <SurfaceLibrary

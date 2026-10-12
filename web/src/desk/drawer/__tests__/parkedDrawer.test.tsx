@@ -95,7 +95,7 @@ describe("the Parked drawer", () => {
 
   it("lists every parked object across kinds in one list", async () => {
     render(<ParkedDrawer origin={null} />);
-    const list = await screen.findByRole("grid", { name: "Parked" });
+    const list = await screen.findByRole("grid", { name: "Archive" });
     expect(within(list).getAllByRole("row")).toHaveLength(4); // the head + three rows
     expect(rowOf(/^Vendor call, MEETING/)).toBeTruthy();
     expect(rowOf(/^Draft the runbook, WORKBENCH ITEM/)).toBeTruthy();

@@ -142,8 +142,8 @@ class TestCaptureFromAnywhere:
                     before = len(notes)
                     if width >= 720:
                         # A body window first: Intelligence from the Dock, focus on its body.
-                        self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                        intel = page.locator(".desk-window[aria-label='Intelligence']")
+                        self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                        intel = page.locator(".desk-window[aria-label='Today']")
                         intel.wait_for()
                         page.wait_for_timeout(600)
                         intel.locator(".desk-window-title").first.click()

@@ -70,7 +70,7 @@ class TestFreshArrival:
             self._press(page, page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"), width)
             return 2
         self._press(page, page.locator(".desk-verbbar-item[data-menu-id='window'] button"), width)
-        page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')").hover()
+        page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").hover()
         self._press(page, page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"), width)
         return 2
 

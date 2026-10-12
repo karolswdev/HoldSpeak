@@ -202,7 +202,7 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
     key: "drawer:parked",
     role: "parked",
     kind: "parked",
-    name: "Parked",
+    name: "Archive",
     ...sprites("parked", "parked"),
     target: { type: "parked" },
   });

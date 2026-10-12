@@ -629,6 +629,8 @@ def test_meetings_settings_calendar_glass_and_egress_fact(
             settings = page.locator("#surface-settings")
             settings.wait_for()
             # HS-170-04: the hub is now SurfaceLedgerRows; click the Meetings row.
+            # PHILO-17 REFIT: the Meetings row folds under More settings.
+            settings.locator("[data-testid='settings-more']").click()
             settings.locator(".surface-ledger-primary", has_text="Meetings").click()
             # TODO(HS-146-05): story 03 replaces the single textbox with a
             # GadgetTable list editor; assert the new editor glass here once

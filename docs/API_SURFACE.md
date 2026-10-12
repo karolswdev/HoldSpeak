@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 760 (plus static mounts). iOS-consumed: 89. Web-consumed: 594.
+Routes: 761 (plus static mounts). iOS-consumed: 89. Web-consumed: 593.
 
 ## device_audio_ws
 
@@ -681,6 +681,7 @@ Routes: 760 (plus static mounts). iOS-consumed: 89. Web-consumed: 594.
 
 | Method | Path | Consumers |
 |---|---|---|
+| POST | `/api/people/agenda/{item_id}/transition` | web |
 | GET | `/api/people/commitments/{commitment_id}/execution` | web |
 | POST | `/api/people/commitments/{commitment_id}/satisfy` | web |
 | POST | `/api/people/commitments/{commitment_id}/transition` | web |
@@ -699,12 +700,12 @@ Routes: 760 (plus static mounts). iOS-consumed: 89. Web-consumed: 594.
 | POST | `/api/people/relationships/{relationship_id}/notes` | web |
 | GET | `/api/people/relationships/{relationship_id}/one-on-ones` | web |
 | POST | `/api/people/relationships/{relationship_id}/one-on-ones` | web |
-| POST | `/api/people/relationships/{relationship_id}/owed` | web |
+| POST | `/api/people/relationships/{relationship_id}/owed` | server only |
 | DELETE | `/api/people/relationships/{relationship_id}/owner-aliases` | web |
 | POST | `/api/people/relationships/{relationship_id}/owner-aliases` | web |
 | DELETE | `/api/people/relationships/{relationship_id}/projects/{project_id}` | web |
 | POST | `/api/people/relationships/{relationship_id}/projects/{project_id}` | web |
-| POST | `/api/people/relationships/{relationship_id}/requests` | web |
+| POST | `/api/people/relationships/{relationship_id}/requests` | server only |
 | POST | `/api/people/requests/{request_id}/accept` | web |
 | POST | `/api/people/resolve` | web |
 | POST | `/api/people/setup` | web |

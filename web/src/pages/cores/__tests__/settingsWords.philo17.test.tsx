@@ -75,11 +75,13 @@ describe("the hub headline is a plain state of what he gets", () => {
 describe("the hub rows say who can do what", () => {
   it("System: Other devices: off (was MESH OFF · REMOTE OFF)", () => {
     render(<PrefsFace onOpen={vi.fn()} hub={hub()} posture="neutral" onPosture={vi.fn()} precedence={[]} />);
+    fireEvent.click(screen.getByTestId("settings-more")); // PHILO-17 REFIT: System folds under More settings
     expect(screen.getByText("Other devices: off")).toBeTruthy();
     expect(document.body.textContent ?? "").not.toMatch(/MESH|REMOTE OFF/);
   });
   it("System: Other devices: on when remote access is on", () => {
     render(<PrefsFace onOpen={vi.fn()} hub={hub({ system: { host: "THIS DEVICE", mesh: true, remote: true } })} posture="neutral" onPosture={vi.fn()} precedence={[]} />);
+    fireEvent.click(screen.getByTestId("settings-more"));
     expect(screen.getByRole("status", { name: "Other devices: on" })).toBeTruthy();
   });
 });

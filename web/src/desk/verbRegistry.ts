@@ -372,7 +372,7 @@ export const VERBS: Verb[] = [
     keywords: ["brief", "follow-through", "receipts"],
     app: "Intelligence",
     ghost: never,
-    run: () => openIntelligence({ view: "brief" }),
+    run: () => openIntelligence({ view: "today" }),
   },
   {
     id: "desk.open-people",
@@ -826,7 +826,7 @@ export const VERBS: Verb[] = [
     menu: "window",
     scope: "window",
     group: "chair",
-    submenu: "Chair",
+    submenu: "Desk",
     wide: !w.phone,
     palette: false,
     keywords: ["chair", "window"],

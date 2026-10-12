@@ -50,23 +50,29 @@ export function ImportSection({
       onDone();
     });
   };
+  // PHILO-17 (the Today language): two plates side by side: record now,
+  // or bring a recording in. ONE filled primary: Record meeting until a
+  // file is chosen, then Import.
   return (
     <SurfaceSection
+      label="Record or import"
       actions={
         <Button dense variant="ghost" onClick={onDone}>
           Close
         </Button>
       }
     >
-      <div className="surface-record-lead">
-        <Button
-          variant="primary"
-          onClick={() => openSurfaceOr("record-live", "/live", scope)}
-        >
-          Record meeting
-        </Button>
-        <span className="quiet">or drop a recording below</span>
-      </div>
+      <div className="meetings-import-plates">
+        <div className="meetings-import-record" data-testid="meetings-import-record">
+          <span className="live-rec" aria-hidden="true"><span className="live-rec-lamp" />REC</span>
+          <span className="meetings-import-words">Record a meeting now</span>
+          <Button
+            variant={file ? "secondary" : "primary"}
+            onClick={() => openSurfaceOr("record-live", "/live", scope)}
+          >
+            Record meeting
+          </Button>
+        </div>
       <label
         className={"surface-dropwell" + (file ? " has-file" : "")}
         onDragOver={(event) => event.preventDefault()}
@@ -87,7 +93,7 @@ export function ImportSection({
             <span className="surface-dropwell-name surface-primary">
               {file.name}
             </span>
-            <small>drop another file to replace it</small>
+            <small>Drop another file to replace it</small>
           </>
         ) : (
           <>
@@ -102,6 +108,7 @@ export function ImportSection({
           </>
         )}
       </label>
+      </div>
       {file ? (
         <GadgetGroup>
           <GadgetRow label="TITLE">
@@ -120,16 +127,17 @@ export function ImportSection({
         </GadgetGroup>
       ) : null}
       {action.message ? <SurfaceState error={action.message} /> : null}
-      <div className="surface-actions">
-        <Button
-          variant="primary"
-          loading={action.busy}
-          disabled={!file}
-          onClick={submit}
-        >
-          Import
-        </Button>
-      </div>
+      {file ? (
+        <div className="surface-actions">
+          <Button
+            variant="primary"
+            loading={action.busy}
+            onClick={submit}
+          >
+            Import
+          </Button>
+        </div>
+      ) : null}
     </SurfaceSection>
   );
 }

@@ -34,6 +34,7 @@ import {
   workBand,
   DOCK_HEIGHT_EVENT,
   placeWindow,
+  iconColumnLeft,
   iconColumnRight,
   clampIntoBand,
   snapForPointer,
@@ -452,7 +453,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       const chairSeat = id.startsWith("chair:");
       const placed = chairSeat
         ? clampIntoBand(seed, vw, vh, minW, minH)
-        : placeWindow(seed, others, vw, vh, minW, minH, iconColumnRight());
+        : placeWindow(seed, others, vw, vh, minW, minH, iconColumnRight(), iconColumnLeft());
       // PHILO-17 (U28c): the first seat is kept (saved, and sent to the hub
       // with the open), so a reload and every other view show the window
       // where it opened. Not for a content-sized card (its height stays the

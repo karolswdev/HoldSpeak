@@ -88,10 +88,10 @@ def test_mark_done_in_one_window_moves_the_other(tmp_path: Path, monkeypatch: py
                 _normal_chair(window_b)
                 # PHILO-17 (needsyou): the one number is on the bell, not on Intelligence.
                 expect(window_b.locator(".desk-bell strong")).to_have_text("1", timeout=12_000)
-                window_b.get_by_role("button", name="Intelligence", exact=True).click()
+                window_b.get_by_role("button", name="Today", exact=True).click()
                 window_b.get_by_role("button", name="Follow-through", exact=True).click()
                 board = window_b.locator(".desk-pullout").filter(
-                    has=window_b.get_by_role("button", name="Close Intelligence")).last
+                    has=window_b.get_by_role("button", name="Close Today")).last
                 card_in_b = board.get_by_text(TASK, exact=True)
                 expect(card_in_b).to_have_count(1, timeout=12_000)
                 row_in_b = window_b.get_by_role("button", name=f"Done: {TASK}", exact=True)

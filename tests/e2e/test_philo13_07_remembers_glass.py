@@ -9,13 +9,13 @@ Through the real hub on an isolated HOME, at 1440x900 (mouse) and 393x852
     decision window is only checked to be in the saved document);
   * the Room on `Payments ledger cutover`: Updates -> Draft -> typed words,
     NOT saved; at 1440 the Room window is moved first;
-  * People on Priya (her commitment row), the 1:1s tab, an agenda item
+  * People on Priya (her commitment row), the Prep tab, an agenda item
     typed and NOT added;
   * the Intelligence window, opened and CLOSED (close means gone).
 
 After the reload, the fence reads the glass: the Room is back in the editor
 with the typed words (no PUT was sent by restore), People is back on Priya
-on 1:1s with the typed item, the moved Room is where it was (1440), the
+on Prep with the typed item, the moved Room is where it was (1440), the
 iconified decision is still iconified (1440: on its Dock chip, not drawn),
 and Intelligence is not back. The red-on-main proof is the vitest fence
 (web/src/desk/__tests__/deskRemembers.philo1307.test.tsx); this glass was
@@ -148,24 +148,25 @@ class TestTheDeskRemembers(_Rig):
             page.on("request", lambda r: puts.append(f"{r.method} {r.url}")
                     if r.method in ("PUT", "POST") and ("/api/updates/" in r.url or "/agenda" in r.url) else None)
             try:
-                # 3. People on Priya, the 1:1s tab, an agenda item typed, not added
+                # 3. People on Priya, the Prep tab (PHILO-17: the 1:1s tab folded into
+                #    Prep), an agenda item typed, not added
                 self._chair_window(page, width, "Needs you")
                 # PHILO-14 A5: the Needs-you drawer row's body opens it (`needs-row`).
                 commitment = page.locator(".desk-window-shell[aria-label='Needs you'] [data-testid='needs-row']",
                                           has_text=COMMITMENT).first.locator(".needs-row-name")
                 self._press(page, commitment, width)
                 people = page.locator(PERSON).first
-                people.get_by_role("tab", name="1:1s").wait_for()
-                self._press(page, people.get_by_role("tab", name="1:1s"), width)
-                pad = people.get_by_role("textbox", name="Agenda item")
+                people.get_by_role("tab", name="Prep").wait_for()
+                self._press(page, people.get_by_role("tab", name="Prep"), width)
+                pad = people.get_by_role("textbox", name="Add to the agenda")
                 pad.wait_for()
                 self._press(page, pad, width)
                 page.keyboard.type(AGENDA)
                 page.wait_for_timeout(400)
 
                 # 4. Intelligence: opened, then closed (close means gone)
-                self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                close = page.locator(".desk-gadget-close[aria-label='Close Intelligence']")
+                self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                close = page.locator(".desk-gadget-close[aria-label='Close Today']")
                 close.wait_for()
                 page.wait_for_timeout(500)
                 self._press(page, close, width)
@@ -231,14 +232,14 @@ class TestTheDeskRemembers(_Rig):
                     self._press(page, page.get_by_test_id("desk-screen-switcher"), width)
                     self._press(page, page.locator(".desk-screen-switcher-menu [role=menuitemcheckbox]",
                                                    has_text="Priya Nair").first, width)
-                people.get_by_role("textbox", name="Agenda item").wait_for(timeout=20_000)
+                people.get_by_role("textbox", name="Add to the agenda").wait_for(timeout=20_000)
                 page.wait_for_timeout(1200)
                 _settle(page)
                 after_windows = self._windows(page)
                 page.screenshot(path=str(SHOTS / f"B2-02-after-reload-{width}.png"))
                 tab = people.locator(".people-lenses [role=tab][aria-selected=true]").inner_text().strip()
-                agenda = people.get_by_role("textbox", name="Agenda item").input_value()
-                person = people.locator(".people-detail-head strong").inner_text().strip()
+                agenda = people.get_by_role("textbox", name="Add to the agenda").input_value()
+                person = people.locator(".people-detail-head .people-name").inner_text().strip()
                 room_after = next((w["rect"] for w in after_windows if w["id"] == "surface-project-memory"), None)
                 titles = [w["title"] for w in after_windows]
                 decision_drawn = any(DECISION in t for t in titles)
@@ -252,11 +253,11 @@ class TestTheDeskRemembers(_Rig):
                 (SHOTS / f"B2-proof-{width}.json").write_text(json.dumps(proof, indent=1) + "\n")
 
                 assert person == "Priya Nair", proof
-                assert tab == "1:1s", proof
+                assert tab.lower() == "prep", proof
                 assert agenda == AGENDA, proof
                 assert not proof["writes_after_reload"], "restore sent a write"
                 assert not before["writes"], "nothing was saved or sent before the reload"
-                assert not any("Intelligence" in t for t in titles), "the closed Intelligence window came back"
+                assert not any("Today" in t for t in titles), "the closed Intelligence window came back"
                 if width >= 720:
                     # PHILO-14 A1 (#939, Astra's P2): saved positions are restored.
                     # The moved Room comes back exactly. PHILO-17 (U28c): a

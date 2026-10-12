@@ -17,6 +17,8 @@ export function TranscriptWell({
   defaultOpen,
   wordCount,
   emptyLabel = "No transcript",
+  open,
+  onOpenChange,
 }: {
   id: string;
   segments: Record<string, unknown>[];
@@ -28,6 +30,10 @@ export function TranscriptWell({
   /** PHILO-17 speech: the empty line names why ("No transcript: speech is
    *  not set up") when the record says so. */
   emptyLabel?: string;
+  /** PHILO-17: the fold, controlled (the meeting window opens it from its
+   *  foot's Open transcript and from a decision moment). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   useEffect(() => {
     if (momentSegmentIndex == null || !segments.length) return;
@@ -39,8 +45,10 @@ export function TranscriptWell({
     return () => window.cancelAnimationFrame(frame);
   }, [id, momentSegmentIndex, segments.length]);
 
+  // Inside the fold the fold's label is the head (said once).
+  const folded = defaultOpen !== undefined || open !== undefined;
   const well = (
-    <SurfaceWell head={countLabel("TRANSCRIPT", segments.length)}>
+    <SurfaceWell head={folded ? undefined : countLabel("TRANSCRIPT", segments.length)}>
       {segments.length ? (
         <ol className="transcript-list">
           {segments.map((row, index) => {
@@ -73,15 +81,17 @@ export function TranscriptWell({
       )}
     </SurfaceWell>
   );
-  if (defaultOpen === undefined) return well;
+  if (defaultOpen === undefined && open === undefined) return well;
   const words = typeof wordCount === "number" && wordCount > 0
     ? `${wordCount} WORDS`
     : undefined;
   return (
     <Disclosure
-      label="TRANSCRIPT"
+      label={segments.length ? `Transcript · ${segments.length}` : "Transcript"}
       token={words}
       defaultOpen={defaultOpen}
+      open={open}
+      onOpenChange={onOpenChange}
       variant="dense"
     >
       {well}

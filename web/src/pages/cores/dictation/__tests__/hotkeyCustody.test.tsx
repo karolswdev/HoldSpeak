@@ -125,7 +125,8 @@ describe("readHotkeyCustody", () => {
     expect(read.available).toBeNull();
     expect(read.token).toBe("UNKNOWN");
     expect(read.kind).toBe("warning");
-    expect(read.show).toBe(true);
+    // Not known to be stopped: the block stays silent (refit r3).
+    expect(read.show).toBe(false);
   });
 
   it("carries a wire with no hotkey block silently rather than guessing", () => {
@@ -137,7 +138,6 @@ describe("readHotkeyCustody", () => {
   it.each([
     ["denied", "DENIED", "failure"],
     ["not_determined", "NOT ASKED", "warning"],
-    ["unknown", "UNKNOWN", "warning"],
   ])("draws %s as %s", (state, token, kind) => {
     const read = readHotkeyCustody({
       hotkey: custodyWire({
@@ -186,7 +186,7 @@ describe("the HOTKEY block on the Speak face", () => {
     const row = await screen.findByTestId("speak-permission-input_monitoring");
     expect(within(row).getByText("INPUT MONITORING")).toBeTruthy();
     expect(within(row).getByText("HOTKEY")).toBeTruthy();
-    expect(within(row).getByText("DENIED")).toBeTruthy();
+    expect(within(row).getByText("Denied")).toBeTruthy();
     // The walk, as tokens rather than a sentence.
     expect(within(row).getByText("SYSTEM SETTINGS")).toBeTruthy();
     expect(within(row).getByText("PRIVACY & SECURITY")).toBeTruthy();
@@ -203,7 +203,7 @@ describe("the HOTKEY block on the Speak face", () => {
     });
     render(<SpeakFace />);
     const block = await screen.findByTestId("speak-hotkey");
-    expect(within(block).getByText("UNAVAILABLE")).toBeTruthy();
+    expect(within(block).getByText("Unavailable")).toBeTruthy();
     expect(within(block).getByTestId("speak-hotkey-reason").textContent).toBe(
       "PYNPUT MISSING",
     );
@@ -211,7 +211,7 @@ describe("the HOTKEY block on the Speak face", () => {
     expect(block.textContent).not.toContain("pynput is not available");
   });
 
-  it("says UNKNOWN rather than working when nothing could be read", async () => {
+  it("says nothing when no grant could be read and no fault is known", async () => {
     hotkey = custodyWire({
       available: null,
       permissions: [
@@ -221,8 +221,22 @@ describe("the HOTKEY block on the Speak face", () => {
       ],
     });
     render(<SpeakFace />);
-    const block = await screen.findByTestId("speak-hotkey");
-    expect(within(block).getAllByText("UNKNOWN")).toHaveLength(4); // the key + three grants
+    await screen.findByText("LANDS IN");
+    expect(screen.queryByTestId("speak-hotkey")).toBeNull();
+  });
+
+  it("an unread grant is silent while a denied one draws", () => {
+    const read = readHotkeyCustody({
+      hotkey: custodyWire({
+        permissions: [
+          perm("microphone", "MICROPHONE", "unknown", "CAPTURE", "Microphone"),
+          perm("input_monitoring", "INPUT MONITORING", "denied", "HOTKEY", "ListenEvent"),
+          GRANTED[2],
+        ],
+      }),
+    });
+    expect(read.show).toBe(true);
+    expect(read.rows.map((row) => row.id)).toEqual(["input_monitoring"]);
   });
 
   it("offers ONE verb, and it re-reads the grant the owner just gave", async () => {
