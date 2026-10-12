@@ -24,6 +24,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import clear_hub_windows
+from .room_glass_helpers import open_room_folds
 from .glass_infra import _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
 
 pytest.importorskip("playwright.sync_api", reason="memory faces glass needs Playwright")
@@ -267,6 +268,7 @@ def test_memory_on_the_desk(tmp_path, monkeypatch, width, height):
 
             # ── pages: the Atlas Room ──
             _stage(page, "open-project-memory", "project:atlas")
+            open_room_folds(page)  # PHILO-17 refit: Pages is a fold
             page.get_by_test_id("standing-pages").wait_for(timeout=T)
             titles = page.get_by_test_id("standing-page").evaluate_all("els => els.map(e => e.ariaLabel)")
             assert titles == ["What did we decide", "What is open and who owes it",
@@ -303,6 +305,7 @@ def test_memory_on_the_desk(tmp_path, monkeypatch, width, height):
             # ── a write elsewhere: the faces follow the bus (Astra P1) ──
             # The Room is open; the note its pages cite is deleted.
             _stage(page, "open-project-memory", "project:atlas")
+            open_room_folds(page)  # PHILO-17 refit: Pages is a fold
             pages = "[data-testid=standing-pages]"
             page.locator(pages).filter(has_text="Cutover date is 10-17.").wait_for(timeout=T)
             _api(page, "DELETE", "/api/notes/n-1001", None, token=TOKEN)

@@ -477,8 +477,9 @@ class TestPhilo15Lane12Ugly:
                 chip = page.locator("[data-testid=room-health-word]")
                 self.facts["B25"] = {"head": room.inner_text(),
                                      "word": chip.first.inner_text() if chip.count() else None}
-                assert chip.count() and "NEW" in chip.first.inner_text(), self.facts["B25"]
-                assert "ON TRACK" not in room.inner_text(), self.facts["B25"]
+                # PHILO-17 refit: the pill says the word in plain case.
+                assert chip.count() and chip.first.inner_text().strip().upper() == "NEW", self.facts["B25"]
+                assert "ON TRACK" not in room.inner_text().upper(), self.facts["B25"]
                 body_text = page.locator("#surface-project-memory").inner_text()
                 assert "CREATE FROM SETUP" not in body_text, body_text[:400]
                 self._shot(page, "B25-project", width)

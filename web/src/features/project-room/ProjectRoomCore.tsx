@@ -499,7 +499,7 @@ function HealthSection({ room, onRetry }: { room: RoomSnapshot; onRetry: () => v
             <span className="room-signal-facts">
               {row.tokens.map((tok, ti) => (
                 <span key={ti} data-testid={`health-token-${row.key}-${ti}`}>
-                  {ti > 0 ? " · " : ""}{tok}
+                  {tok}{ti < row.tokens.length - 1 ? " ·" : ""}
                 </span>
               ))}
             </span>
@@ -824,10 +824,15 @@ function ProposalRow({
       selected={selected}
       lead="MTG"
       primary={
-        <span className="surface-primary room-proposal-text" data-testid="proposal-primary">
-          <span className="room-proposal-prefix" data-proposal-kind={kind}>{prefix}</span>
-          {" "}{item.title}
-        </span>
+        /* PHILO-17 refit: the title press edits the proposal (one row,
+           Confirm and a quiet Dismiss). */
+        <Button variant="chrome" className="room-proposal-title" onClick={openEdit}
+          aria-label={`Edit: ${item.title}`} data-testid="proposal-edit">
+          <span className="surface-primary room-proposal-text" data-testid="proposal-primary">
+            <span className="room-proposal-prefix" data-proposal-kind={kind}>{prefix}</span>
+            {" "}{item.title}
+          </span>
+        </Button>
       }
       wrap
       cells={
@@ -849,9 +854,6 @@ function ProposalRow({
         <span className="room-proposal-verbs" data-testid="proposal-verbs">
           <Button dense variant="secondary" loading={ctrl.proposalBusy === proposalId} onClick={() => void ctrl.handleConfirmProposal(proposalId)} data-testid="proposal-confirm">
             Confirm
-          </Button>
-          <Button dense variant="ghost" onClick={openEdit} data-testid="proposal-edit">
-            Edit
           </Button>
           <Button dense variant="ghost" onClick={() => void ctrl.handleDismissProposal(proposalId)} data-testid="proposal-dismiss">
             Dismiss

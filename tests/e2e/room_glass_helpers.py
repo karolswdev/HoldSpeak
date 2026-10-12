@@ -230,3 +230,12 @@ def _patch_resolve_review_people(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(ps.ProjectService, "_resolve_review_people", _patched)
 
+
+
+def open_room_folds(page: Any) -> None:
+    """PHILO-17 refit: the Room folds its secondary sections (Sources,
+    Pages, Decisions and owed, Since you looked, Files, People, Briefs; in
+    History, Writes). A test that reads one opens the folds first, as the
+    owner presses them open."""
+    page.locator("[data-testid=room-body] .room-fold").first.wait_for(state="attached", timeout=20_000)
+    page.evaluate("() => document.querySelectorAll('.room-fold > details').forEach((d) => { d.open = true; })")

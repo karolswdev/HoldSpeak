@@ -293,7 +293,7 @@ def _run_room_rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             _settle(page)
 
             # First paint shows source counts (never blank)
-            page.get_by_role("heading", name="SOURCES").first.wait_for(timeout=5000)  # PHILO-17: "Watch sources" also says it
+            page.get_by_test_id("room-fold-sources").first.wait_for(timeout=5000)  # PHILO-17 refit: Sources is a fold
 
             # Exactly one display element
             displays = page.locator(".room-body .surface-display")
@@ -325,7 +325,8 @@ def _run_room_rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
                     return results;
                 }""")
                 for item in font_check:
-                    assert item["fontSize"] >= 14, f"Primary '{item['text']}' font-size {item['fontSize']} < 14"
+                    # PHILO-17 refit (compact type): row titles are 13-14 px.
+                    assert item["fontSize"] >= 13, f"Primary '{item['text']}' font-size {item['fontSize']} < 13"
                     assert item["fontWeight"] >= 600, f"Primary '{item['text']}' font-weight {item['fontWeight']} < 600"
 
             # Probe (condition 6): primary is the sans face (NOT the mono face).
@@ -539,7 +540,7 @@ def _run_room_rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             assert text_q == "Clear here", f"Quiet headline: {text_q}"
 
             # Source counts visible (never blank)
-            page.get_by_role("heading", name="SOURCES").first.wait_for(timeout=5000)  # PHILO-17: "Watch sources" also says it
+            page.get_by_test_id("room-fold-sources").first.wait_for(timeout=5000)  # PHILO-17 refit: Sources is a fold
 
             _shot(page, "room-quiet", width)
 

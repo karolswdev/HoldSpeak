@@ -728,7 +728,7 @@
 /* ── the grid: the main column and the signals ── */
 .room-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px;
+  grid-template-columns: minmax(0, 1fr) 240px;
   gap: 12px;
   align-items: start;
 }
@@ -1178,4 +1178,35 @@
   .room-history .surface-stream-entries::before { left: 53px; }
   .room-history .surface-stream-entry { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 0 22px; }
   .room-history .surface-stream-entry::before { left: 49px; }
+}
+
+/* ══ PHILO-17 refit, pass 3 ══ */
+/* A proposal's title is its Edit press: the words, underlined on hover. */
+.room-proposal-title.btn {
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+}
+.room-proposal-title.btn:hover .room-proposal-text {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* The plan reads in one line per item at a wide window (the name, then its
+   pills and facts), so the whole plan fits above the fold more often. */
+@container surface (min-width: 640px) {
+  .room-plan-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 10px;
+    padding: 3px 8px;
+  }
+  .room-plan-row > .room-row-title { flex: 0 1 auto; }
+  .room-plan { gap: 0; padding-block: 8px; }
 }

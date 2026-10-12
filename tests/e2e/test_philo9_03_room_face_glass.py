@@ -33,6 +33,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, pick_wing, _room_opened
+from .room_glass_helpers import open_room_folds
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the Room face glass needs Playwright")
@@ -71,13 +72,14 @@ FACTS = r"""() => {
     window: true,
     title: (win.querySelector('.desk-window-title, [data-testid=window-title]')?.innerText || '').trim(),
     headline: text('[data-testid=room-headline]')[0] ?? null,
-    head_chips: text('[data-testid=room-head-chips] .surface-state-chip, [data-testid=room-head-chips] .surface-token'),
+    head_chips: text('[data-testid=room-health-word], [data-testid=room-head-chips] > span'),
     needs_you: text('[data-testid=needs-you-row]'),
     items_head: head('[data-section=items]'),
     items_section_present: !!win.querySelector('[data-section=items] .surface-section, [data-section=items] section'),
     item_rows: text('[data-testid=item-row]'),
-    item_leads: [...win.querySelectorAll('[data-testid=item-row]')].map((r) => { const c = r.querySelector('.surface-state-chip'); return c ? {icon: c.innerText.trim(), state: c.getAttribute('data-state')} : null; }),
-    item_danger_tokens: text('[data-testid=item-row] [data-tone=danger]'),
+    item_titles: text('[data-testid=item-row] .room-row-title, [data-testid=item-row] .room-focus-title'),
+    item_beads: [...win.querySelectorAll('[data-testid=item-row] .room-plan-bead')].map((b) => b.getAttribute('data-tone')),
+    item_danger_tokens: text('[data-testid=item-row] [data-testid=item-token][data-tone=danger]'),
     controls_in_items: [...win.querySelectorAll('[data-testid=items-section] button, [data-testid=items-section] input')].length,
     update_list_head: text('.update-list .surface-ledger-count')[0] ?? null,
     update_rows: text('[data-testid=update-list-item]'),
@@ -244,6 +246,7 @@ class TestRoomFaceGlass:
         """PHILO-17 U31: the Room's receipts live under its History wing."""
         page.get_by_role("tab", name="History").first.click()
         page.locator("[data-testid=room-history]").wait_for(timeout=T)
+        open_room_folds(page)  # PHILO-17 refit: the writes are a fold under History
         page.wait_for_timeout(300)
 
     @staticmethod
@@ -471,18 +474,22 @@ class TestRoomFaceGlass:
                                               "first_view": first, "section": facts, "pointer": pointer})
                 _shot(page, "items-late-section", width)
                 # The ratified order and words.
+                # PHILO-17 refit: the plan is a timeline: the dated items by
+                # date (TODAY between the past and the future), the undated
+                # after; the most late milestone on the LATE plate; plain pills.
                 rows = facts["item_rows"]
-                assert facts["items_head"] == "ITEMS 5", facts["items_head"]
-                assert [r.split(" ")[1] for r in rows] == ["Cutover", "Old", "Ledger", "Parallel", "Vendor"], rows
-                assert "7 DAYS LATE" in rows[0] and "MILESTONE" in rows[0]
-                assert "RISK" in rows[1] and "LIKELIHOOD HIGH" in rows[1] and "IMPACT HIGH" in rows[1]
-                assert "MISSED" in rows[3] and "DROPPED" in rows[4]
-                assert [lead["icon"] for lead in facts["item_leads"]] == ["●", "⚠", "○", "✗", "—"], facts["item_leads"]
-                assert set(facts["item_danger_tokens"]) == {"7 DAYS LATE", "MISSED"}, facts["item_danger_tokens"]
+                assert facts["items_head"] == "PLAN · 5", facts["items_head"]
+                assert facts["item_titles"] == ["Parallel run", "Cutover rehearsal", "Vendor shadow run",
+                                                "Ledger go-live", "Old ledger freeze slips"], facts["item_titles"]
+                assert "7 days late" in rows[1] and "Milestone" in rows[1] and "LATE" in rows[1]
+                assert "Open risk" in rows[4] and "likelihood high" in rows[4] and "impact high" in rows[4]
+                assert "Missed" in rows[0] and "Dropped" in rows[2]
+                assert facts["item_beads"] == ["danger", "danger", "idle", "planned", "warn"], facts["item_beads"]
+                assert set(facts["item_danger_tokens"]) == {"7 days late", "Missed"}, facts["item_danger_tokens"]
                 assert facts["controls_in_items"] == 0
                 # Health and NEEDS YOU: the hub's, rendered (story 01's words).
                 assert room["health"]["assessment"] == "at_risk"
-                assert any("AT RISK" in c for c in first["head_chips"]), first["head_chips"]
+                assert "At risk" in first["head_chips"], first["head_chips"]
                 # Muad'Dib's ruling 3 (2026-09-28): the canvas words on the face,
                 # the hub's words unchanged (test_the_late_words_are_the_canvas_words).
                 assert "1 MILESTONE LATE" in first["head_chips"], first["head_chips"]
@@ -506,7 +513,7 @@ class TestRoomFaceGlass:
                 retry = self._pointer(page, width, ["[data-testid=items-retry]"])
                 _record("items-unavailable", width, {**failed, "pointer": retry})
                 _shot(page, "items-unavailable", width)
-                assert failed["items_head"] and failed["items_head"].startswith("ITEMS"), failed["items_head"]
+                assert failed["items_head"] and failed["items_head"].startswith("PLAN"), failed["items_head"]
                 assert all(not p["not_owned"] for p in retry), retry
                 page.unroute("**/api/projects/*/items?*")
                 page.locator("[data-testid=items-retry]").click()
@@ -537,7 +544,7 @@ class TestRoomFaceGlass:
                 room = _api(page, "GET", f"/api/projects/{pid}/room", token=TOKEN)
                 page.locator("[data-testid=needs-you-why]").first.wait_for(timeout=T)
                 # The head's tokens (the same locator on the base and the branch).
-                reason = [t.strip() for t in page.locator("[data-testid=room-head-chips] .surface-token").all_inner_texts()]
+                reason = [t.strip() for t in page.locator("[data-testid=room-head-chips] > span").all_inner_texts()]
                 why = [w.strip() for w in page.locator("[data-testid=needs-you-why]").all_inner_texts()]
                 _record("late-words", width, {"hub_reason": room["health"]["reason"],
                                               "hub_why": [i["why"] for i in room["needsYou"]["items"]],
