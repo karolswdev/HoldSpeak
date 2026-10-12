@@ -779,6 +779,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
     void run("owed", () => apiFetch(`${base}/owed`, { method: "POST", json: { body, visibility: "shared_intent" } }), forgetOwed);
   };
   const done = (id: string) => void run(`done:${id}`, () => apiFetch(`/api/people/commitments/${encodeURIComponent(id)}/transition`, { method: "POST", json: { verb: "done" } }));
+  const removeAgenda = (id: string) => void run(`remove:${id}`, () => apiFetch(`/api/people/agenda/${encodeURIComponent(id)}/transition`, { method: "POST", json: { to: "removed" } }));
   const accept = (id: string) => void run(`accept:${id}`, () => apiFetch(`/api/people/requests/${encodeURIComponent(id)}/accept`, { method: "POST", json: {} }));
 
   const prep = brief ? composePeoplePrep(brief) : null;
@@ -869,6 +870,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
               <span className="people-raise-n" aria-hidden="true">{index + 1}</span>
               <span className="people-raise-words">{item.body}</span>
               {item.rolled_from_id ? <span className="people-pill">Rolled</span> : null}
+              <Button dense variant="ghost" className="people-raise-remove" aria-label={`Remove ${item.body}`} loading={busy === `remove:${item.id}`} onClick={() => removeAgenda(item.id)}>Remove</Button>
             </li>)}
           </ol>
         </div> : null}

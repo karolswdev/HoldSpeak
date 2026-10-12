@@ -53,6 +53,8 @@ _RELATIONSHIP_KINDS = frozenset({"direct_report", "peer", "extended"})
 _ENTRY_KINDS = frozenset({"one_on_one"})
 _RECORD_KINDS = frozenset({"request", "commitment", "grounding_note"})
 _OPEN_COMMITMENT = "open"
+# PHILO-17: where an open agenda item may go (owner web route only).
+_AGENDA_END_STATES = frozenset({"removed", "done"})
 # PHILO-17 (U09): a commitment runs one of two ways. ``leader_owes`` is what
 # he owes the person (minted by accepting a request); ``report_owes`` is what
 # the person owes him (recorded directly). A record with no direction is his.
@@ -422,6 +424,24 @@ class PeopleService:
         else:
             item = self._create("agenda_item", item_payload)
         return self._agenda_view(item)
+
+    def transition_agenda_item(self, principal: Any, item_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """PHILO-17: take one open agenda item off the 1:1 (``removed``) or
+        mark it raised (``done``).  Owner only; the item leaves the brief's
+        TO RAISE list, which reads open items alone."""
+        self._require_ready_owner(principal)
+        to_state = str(payload.get("to") or "")
+        if to_state not in _AGENDA_END_STATES:
+            raise PeopleServiceError("people_agenda_state_unsupported")
+        item = self._get(item_id, "agenda_item")
+        if item is None:
+            raise PeopleServiceError("people_agenda_item_not_found")
+        self._require_relationship(principal, str(item.get("relationship_id") or ""))
+        if str(item.get("state") or "open") != "open":
+            raise PeopleServiceError("people_agenda_item_not_open")
+        value = dict(item)
+        value.update({"state": to_state, "updated_at": _now()})
+        return self._agenda_view(self._replace(str(item["id"]), value))
 
     # -- Brief (D5, D6) — read-time, NEVER persisted --------------------------------
 

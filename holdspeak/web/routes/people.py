@@ -180,6 +180,15 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
+    @router.post("/agenda/{item_id}/transition")
+    async def transition_agenda_item(request: Request, item_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+        """PHILO-17: remove an agenda item from the 1:1 (`{"to": "removed"}`)
+        or mark it raised (`{"to": "done"}`). Owner web only; not an MCP tool."""
+        try:
+            return {"agenda_item": service.transition_agenda_item(principal(request), item_id, body)}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
     @router.post("/relationships/{relationship_id}/requests", status_code=201)
     async def create_request(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
         try:

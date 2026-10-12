@@ -720,3 +720,20 @@
 @container surface (max-width: 559.9px) {
   .desk-next .people-next-row { flex-wrap: wrap; }
 }
+
+/* PHILO-17: Remove on a TO RAISE row is quiet: it shows on hover or focus
+   (always on a touch screen, which has no hover). Opacity only. */
+.desk-next .people-raise-row > .people-raise-remove {
+  flex: none;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.desk-next .people-raise-row:hover > .people-raise-remove,
+.desk-next .people-raise-row:focus-within > .people-raise-remove { opacity: 1; }
+@media (hover: none) {
+  .desk-next .people-raise-row > .people-raise-remove { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .people-raise-row > .people-raise-remove { transition: none; }
+}

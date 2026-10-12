@@ -139,7 +139,8 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     } });
     render(<PeopleCore scope="people:r1:prep" />);
     const raise = await screen.findAllByTestId("prep-agenda");
-    expect(raise.map((row) => row.textContent)).toEqual(["1Review the dry-run report", "2Pick the cutover date"]);
+    expect(raise.map((row) => `${row.querySelector(".people-raise-n")!.textContent}${row.querySelector(".people-raise-words")!.textContent}`))
+      .toEqual(["1Review the dry-run report", "2Pick the cutover date"]);
     const last = screen.getByTestId("prep-last");
     expect(within(last).getByText("Freeze the ledger on Nov 12")).toBeTruthy();
     expect(within(last).getByText("Share the rollback runbook")).toBeTruthy();
