@@ -359,16 +359,15 @@ describe("HS-200-41: the saved ask has a face and a way back", () => {
     await waitFor(() => expect(asks.discardAskTask).toHaveBeenCalledWith("asktask_1"));
   });
 
-  it("one row keeps the filled primary; more than one draws quiet verbs", async () => {
-    // The ratified board draws UNFINISHED 1 — one row, one filled primary.
-    // Five filled primaries is no lead at all. Flagged to the owner as a
-    // board question; this is the ruling in force meanwhile.
+  it("a saved ask resumes with a quiet verb (one row or many)", async () => {
+    // PHILO-17 refit: one filled primary per window, and the Room's is
+    // Draft update; a saved ask (one row or many) draws the quiet verb.
     asks.listUnfinishedAsks.mockResolvedValue({ items: [SAVED_TASK], nextCursor: null });
     const one = render(<WindowHarness scope="project:p1" />);
     let row = await screen.findByTestId("room-unfinished-asktask_1");
     expect(
       within(row).getByRole("button", { name: /^Resume: / }).className,
-    ).toContain("btn--primary");
+    ).not.toContain("btn--primary");
     one.unmount();
 
     asks.listUnfinishedAsks.mockResolvedValue({

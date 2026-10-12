@@ -89,7 +89,7 @@ import type {
   NudgeCardAction,
 } from "./model";
 import { lifecycleLabel, roomHealthWord, resolveHealthRows, nudgeCardReducer, initialNudgeCard, formatDays, healthReasonWords, needsYouWhyWords } from "./model";
-import { StringGadget, CycleGadget } from "../../desk/surface/gadgets";
+import { StringGadget, CycleGadget, FoldGadget } from "../../desk/surface/gadgets";
 import { egressFor, egressForEvent, receiptFace, receiptLabel, refusalWord } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
@@ -317,17 +317,23 @@ function RoomHeadline({
 
 /* ── the Room head ── */
 
+/** PHILO-17 refit: the health word in plain case (the pill says it). */
+const HEALTH_PLAIN: Record<string, string> = { "AT RISK": "At risk", "ON TRACK": "On track", NEW: "New" };
+
 function RoomHead({
   room,
   ctrl,
   updateCtrl,
   quiet = false,
+  lateItems = null,
 }: {
   room: RoomSnapshot;
   ctrl: ReturnType<typeof useProjectRoomController>;
   updateCtrl: ReturnType<typeof useUpdateController>;
   /** PHILO-17: another well holds the face's one primary (Add source's Add). */
   quiet?: boolean;
+  /** PHILO-17 refit: the late milestones (null while the items read is out). */
+  lateItems?: ItemRow[] | null;
 }) {
   const health = room.health.state === "ok" ? (room.health as RoomHealthData & { state: "ok" }) : null;
   const healthWord = roomHealthWord(room);
@@ -352,60 +358,49 @@ function RoomHead({
     return () => ro.disconnect();
   }, [room.project.name, room.project.outcomeText]);
 
+  const lateCount = lateItems?.length ?? 0;
+  const healthTone = healthWord ? (healthWord.tone === "fail" ? "danger" : healthWord.tone === "info" ? "info" : "ok") : null;
+  const targetWord = target?.targetAt
+    ? target.passed
+      ? (target.daysLeft ? `Overdue by ${pluralize(Math.abs(target.daysLeft), "day", "days")}` : "Overdue today")
+      : `Target ${formatTargetDate(target.targetAt)}${target.daysLeft ? ` · ${pluralize(target.daysLeft, "day", "days")} left` : " · today"}`
+    : null;
+
   return (
     <div className="room-head" data-testid="room-head">
       <span ref={nameRef} className="room-head-name-measure" aria-hidden="true">
         {room.project.name}
       </span>
-      <RoomHeadline
-        count={needsYouCount}
-        isAccent={needsYouCount > 0}
-        // PHILO-15 B69: a STALE source is not read: never "Clear here".
-        unread={room.health.state === "degraded" || room.needsYou.state === "degraded" || Boolean(sourceWord?.stale)}
-      />
-      {showOutcome ? (
-        <p className="room-head-outcome surface-primary" data-testid="room-head-outcome">
-          {room.project.outcomeText || room.project.name}
-        </p>
-      ) : null}
-      <div className="room-head-chips" data-testid="room-head-chips">
-        {healthWord ? (
+      {/* PHILO-17 refit: the head is the Today head: the one fact, its
+          state pill, the plain facts in mono, the one filled verb. */}
+      <div className="room-head-line">
+        <RoomHeadline
+          count={needsYouCount}
+          isAccent={needsYouCount > 0}
+          // PHILO-15 B69: a STALE source is not read: never "Clear here".
+          unread={room.health.state === "degraded" || room.needsYou.state === "degraded" || Boolean(sourceWord?.stale)}
+        />
+        {healthWord && healthTone ? (
           // PHILO-15 lane 12 (B25): an empty Project reads NEW (no health
           // claim with nothing to judge).
-          <StateChip
-            state={healthWord.tone === "fail" ? "failure" : healthWord.tone === "info" ? "idle" : "success"}
-            label={healthWord.word}
-            icon={healthWord.tone === "info" ? "○" : "●"}
-            data-testid="room-health-word"
-          />
-        ) : null}
-        {health?.reason ? (
-          <span className="surface-token room-chip-faint" data-testid="room-health-reason">{healthReasonWords(health)}</span>
-        ) : null}
-        {target?.targetAt ? (
-          <span
-            className="surface-token"
-            data-testid="room-target-chip"
-            data-tone={target.passed ? "danger" : undefined}
-          >
-            {/* HS-200-16: one day is a day.  Both branches count through the
-                tree's existing honest-pluralization helper (steward/model.ts),
-                the same rule `_count_unit` applies on the backend. */}
-            {target.passed
-              ? (target.daysLeft
-                  ? `OVERDUE BY ${pluralize(Math.abs(target.daysLeft), "DAY", "DAYS")}`
-                  : "OVERDUE TODAY")
-              : `TARGET ${formatTargetDate(target.targetAt)}${target.daysLeft ? ` · ${pluralize(target.daysLeft, "DAY", "DAYS")}` : " · TODAY"}`
-            }
+          <span className="room-pill" data-tone={healthTone} data-lamp="" data-testid="room-health-word">
+            {HEALTH_PLAIN[healthWord.word]}
           </span>
         ) : null}
-        {sourceWord ? (
-          <span className="surface-token room-chip-faint" data-testid="room-sources-word"
-            data-tone={sourceWord.stale ? "warn" : undefined}>{sourceWord.word}</span>
-        ) : null}
         {room.project.isArchived ? (
-          <StateChip state="failure" label="ARCHIVED" icon={"●"} />
+          <span className="room-pill" data-tone="danger" data-lamp="">ARCHIVED</span>
         ) : null}
+        <span className="room-head-strip" data-testid="room-head-chips">
+          {health?.reason ? (
+            <span data-tone={healthTone === "danger" ? "danger" : undefined} data-testid="room-health-reason">{healthReasonWords(health)}</span>
+          ) : lateCount ? <span data-tone="danger" data-testid="room-late-count"><b>{lateCount}</b> late</span> : null}
+          {targetWord ? (
+            <span data-testid="room-target-chip" data-tone={target?.passed ? "danger" : undefined}>{targetWord}</span>
+          ) : null}
+          {sourceWord ? (
+            <span data-testid="room-sources-word" data-tone={sourceWord.stale ? "warn" : undefined}>{sourceWord.word}</span>
+          ) : null}
+        </span>
         <span className="room-head-trailing">
           <Button
             dense
@@ -418,6 +413,11 @@ function RoomHead({
           </Button>
         </span>
       </div>
+      {showOutcome ? (
+        <p className="room-head-outcome" data-testid="room-head-outcome">
+          {room.project.outcomeText || room.project.name}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -456,39 +456,34 @@ function HealthSection({ room, onRetry }: { room: RoomSnapshot; onRetry: () => v
   const rows = resolveHealthRows(health.signals, health.mergeQueueDepth);
   if (rows.length === 0) return null;
 
-  // CHECKED N MIN AGO on the section caption (addendum P2-8: one token, not per row)
+  // CHECKED N MIN AGO on the plate's caption (addendum P2-8: one token, not per row)
   const checkedToken = health.checkedAt ? `CHECKED ${humanTime(health.checkedAt)}` : null;
+  const tone = (t: "green" | "amber" | "red") => (t === "red" ? "danger" : t === "amber" ? "warn" : "ok");
 
+  // PHILO-17 refit: the signals on a raised steel plate beside the plan:
+  // a lamp, the plain name, the facts in mono.
   return (
-    <SurfaceSection
-      label="HEALTH"
-      actions={checkedToken ? (
-        <span className="surface-token room-chip-faint" data-testid="health-checked">{checkedToken}</span>
-      ) : undefined}
-    >
-      <SurfaceLedger count="" cols="room">
-        <ul className="surface-ledger-rows room-health-rows">
-          {rows.map((row) => (
-            <SurfaceLedgerRow
-              key={row.key}
-              data-testid={`health-row-${row.key}`}
-              lead={<StateChip state={healthToneToState(row.tone)} label="" icon={"●"} />}
-              primary={<span className="surface-primary room-health-label">{row.label}</span>}
-              wrap
-              cells={
-                <>
-                  {row.tokens.map((tok, ti) => (
-                    <span key={ti} className="surface-token" data-testid={`health-token-${row.key}-${ti}`}>
-                      {ti > 0 ? " · " : ""}{tok}
-                    </span>
-                  ))}
-                </>
-              }
-            />
-          ))}
-        </ul>
-      </SurfaceLedger>
-    </SurfaceSection>
+    <section className="room-plate" data-testid="room-health">
+      <header className="room-plate-cap">
+        <span>SIGNALS</span>
+        {checkedToken ? <span className="room-plate-when" data-testid="health-checked">{checkedToken}</span> : null}
+      </header>
+      <ul className="room-signals">
+        {rows.map((row) => (
+          <li key={row.key} className="room-signal" data-tone={tone(row.tone)} data-testid={`health-row-${row.key}`}>
+            <span className="room-signal-lamp" data-state={healthToneToState(row.tone)} aria-hidden="true" />
+            <span className="room-signal-name">{plainWord(row.label)}</span>
+            <span className="room-signal-facts">
+              {row.tokens.map((tok, ti) => (
+                <span key={ti} data-testid={`health-token-${row.key}-${ti}`}>
+                  {ti > 0 ? " · " : ""}{tok}
+                </span>
+              ))}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -829,7 +824,7 @@ function ProposalRow({
       }
       trailing={
         <span className="room-proposal-verbs" data-testid="proposal-verbs">
-          <Button dense variant="primary" loading={ctrl.proposalBusy === proposalId} onClick={() => void ctrl.handleConfirmProposal(proposalId)} data-testid="proposal-confirm">
+          <Button dense variant="secondary" loading={ctrl.proposalBusy === proposalId} onClick={() => void ctrl.handleConfirmProposal(proposalId)} data-testid="proposal-confirm">
             Confirm
           </Button>
           <Button dense variant="ghost" onClick={openEdit} data-testid="proposal-edit">
@@ -1122,59 +1117,95 @@ function itemRank(item: ItemRow): [number, number] {
   return [2, item.due_at ? dayNumber(item.due_at) : Number.MAX_SAFE_INTEGER];
 }
 
-function ItemCells({ item }: { item: ItemRow }) {
+/** The item's kind and state as plain pills (soft tint, round lamp). */
+function ItemPills({ item }: { item: ItemRow }) {
   const late = daysLate(item);
   let details: Record<string, unknown> = {};
   try { details = item.details_json ? JSON.parse(item.details_json) : {}; } catch { details = {}; }
-  const tokens: { text: string; tone?: string }[] = [{ text: item.item_type.toUpperCase() }];
+  const pills: { text: string; tone?: string }[] = [];
+  if (late > 0) pills.push({ text: `${pluralize(late, "day", "days")} late`, tone: "danger" });
+  else if (item.lifecycle === "missed") pills.push({ text: "Missed", tone: "danger" });
+  else if (item.lifecycle === "dropped") pills.push({ text: "Dropped" });
+  else if (CLOSED.has(item.lifecycle)) pills.push({ text: plainWord(item.lifecycle), tone: "ok" });
+  else if (item.item_type === "risk") pills.push({ text: "Open risk", tone: "warn" });
+  const facts: string[] = [plainWord(item.item_type)];
   if (item.item_type === "risk") {
-    if (details.likelihood) tokens.push({ text: `LIKELIHOOD ${String(details.likelihood).toUpperCase()}` });
-    if (details.impact) tokens.push({ text: `IMPACT ${String(details.impact).toUpperCase()}` });
+    if (details.likelihood) facts.push(`likelihood ${String(details.likelihood).toLowerCase()}`);
+    if (details.impact) facts.push(`impact ${String(details.impact).toLowerCase()}`);
   }
-  if (item.due_at) tokens.push({ text: dueWord(item.due_at) });
-  if (late > 0) tokens.push({ text: `${pluralize(late, "DAY", "DAYS")} LATE`, tone: "danger" });
-  else if (item.lifecycle !== "planned" && item.lifecycle !== "open") tokens.push({ text: item.lifecycle.toUpperCase(), tone: item.lifecycle === "missed" ? "danger" : undefined });
   return (
-    <>
-      {tokens.map((t, i) => (
-        <span key={i} className="surface-token" data-chip data-tone={t.tone} data-testid="item-token">
+    <span className="room-row-meta">
+      {pills.map((t, i) => (
+        <span key={i} className="room-pill" data-tone={t.tone} data-lamp={t.tone ? "" : undefined} data-testid="item-token">
           {t.text}
         </span>
       ))}
-    </>
+      <span className="room-row-facts">{facts.join(" · ")}</span>
+    </span>
   );
 }
 
-function itemLead(item: ItemRow) {
-  if (daysLate(item) > 0) return <StateChip state="failure" label="" icon="●" wordless />;
-  // Missed is a failure, dropped is idle; only a reached or resolved item
-  // earns the success check (Codex Astra canvases r1 F7).
-  if (item.lifecycle === "missed") return <StateChip state="failure" label="" icon="✗" wordless />;
-  if (item.lifecycle === "dropped") return <StateChip state="idle" label="" icon="—" />;
-  if (CLOSED.has(item.lifecycle)) return <StateChip state="success" label="" icon="✓" wordless />;
-  if (item.item_type === "risk") return <StateChip state="warning" label="" icon="⚠" wordless />;
-  return <StateChip state="idle" label="" icon="○" />;
+function plainWord(word: string): string {
+  if (word.length <= 2) return word.toUpperCase();
+  const w = word.replace(/_/g, " ").toLowerCase();
+  return w.charAt(0).toUpperCase() + w.slice(1);
 }
 
-function ItemsSection({ projectId, revision }: { projectId: string; revision: number }) {
+/** The bead's tone on the plan rail. */
+function itemBead(item: ItemRow): string {
+  if (daysLate(item) > 0 || item.lifecycle === "missed") return "danger";
+  if (item.lifecycle === "dropped") return "idle";
+  if (CLOSED.has(item.lifecycle)) return "ok";
+  if (item.item_type === "risk") return "warn";
+  return "planned";
+}
+
+function railDate(ymd: string | null): string {
+  if (!ymd) return "";
+  const [, m, d] = ymd.slice(0, 10).split("-").map(Number);
+  if (!m || !d) return "";
+  return `${ITEM_MONTHS[m - 1]} ${d}`;
+}
+
+/** PHILO-17 refit: the project's items, read once for the head and the plan. */
+type ItemsRead = { items: ItemRow[] | null; failed: boolean; retry: () => void };
+
+function useRoomItems(projectId: string, revision: number): ItemsRead {
   const [items, setItems] = useState<ItemRow[] | null>(null);
   // A failed read is UNAVAILABLE, never empty (Codex Astra canvases r1 F7).
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
+    if (!projectId) return;
     let live = true;
     apiFetch<{ items: ItemRow[] }>(`/api/projects/${encodeURIComponent(projectId)}/items?limit=200`)
       .then((r) => { if (live) { setFailed(false); setItems(r.items ?? []); } })
       .catch(() => { if (live) { setFailed(true); setItems(null); } });
     return () => { live = false; };
   }, [projectId, revision, attempt]);
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  return { items, failed, retry };
+}
+
+/** The late milestones, most late first. */
+function lateOf(items: ItemRow[] | null): ItemRow[] | null {
+  if (!items) return null;
+  return items.filter((i) => daysLate(i) > 0).sort((a, b) => daysLate(b) - daysLate(a));
+}
+
+/** PHILO-17 refit: the PLAN, the project as a timeline (the Today spine):
+ *  a paper well, the dates in the gutter, a dotted rail with a bead per
+ *  item, NOW between the past and the future, and the most late milestone
+ *  as the focus plate (a Workbench title bar). No verbs: items enter by MCP. */
+function ItemsSection({ read }: { read: ItemsRead }) {
+  const { items, failed, retry } = read;
   useRoomRead("items", items !== null || failed);
   if (failed) {
     return (
       <SurfaceSection
-        label="ITEMS"
+        label="PLAN"
         actions={
-          <Button dense variant="ghost" onClick={() => setAttempt((n) => n + 1)} data-testid="items-retry">
+          <Button dense variant="ghost" onClick={retry} data-testid="items-retry">
             Retry
           </Button>
         }
@@ -1187,29 +1218,69 @@ function ItemsSection({ projectId, revision }: { projectId: string; revision: nu
   }
   if (items === null) return null;
   if (items.length === 0) return null;
-  const sorted = [...items].sort((a, b) => {
+  const focus = lateOf(items)?.[0] ?? null;
+  // Dated items by date; the undated after them (risks first, by severity).
+  const dated = items.filter((i) => i.due_at).sort((a, b) =>
+    dayNumber(a.due_at as string) - dayNumber(b.due_at as string) || a.title.localeCompare(b.title));
+  const undated = items.filter((i) => !i.due_at).sort((a, b) => {
     const [ra, sa] = itemRank(a);
     const [rb, sb] = itemRank(b);
     return ra - rb || sa - sb || a.title.localeCompare(b.title);
   });
+  const today = todayNumber();
+  const nowAt = dated.findIndex((i) => dayNumber(i.due_at as string) > today);
+  const nodes: React.ReactNode[] = [];
+  const nowNode = (
+    <li key="now" className="room-plan-now" data-testid="room-plan-now" aria-label="Today">
+      <span className="room-plan-time">TODAY</span>
+      <span className="room-plan-now-bead" aria-hidden="true" />
+      <span className="room-plan-now-line" aria-hidden="true" />
+    </li>
+  );
+  dated.forEach((item, index) => {
+    if (index === nowAt) nodes.push(nowNode);
+    nodes.push(<PlanNode key={item.id} item={item} focus={item === focus} />);
+  });
+  if (nowAt === -1 && dated.length) nodes.push(nowNode);
+  for (const item of undated) nodes.push(<PlanNode key={item.id} item={item} focus={item === focus} />);
   return (
-    <SurfaceSection label={countLabel("ITEMS", items.length)}>
-      <SurfaceLedger count="" cols="room">
-        <ul className="surface-ledger-rows" data-testid="items-section">
-          {sorted.map((item) => (
-            <SurfaceLedgerRow
-              key={item.id}
-              data-testid="item-row"
-              expands={false}
-              wrap
-              lead={itemLead(item)}
-              primary={<span className="surface-primary">{item.title}</span>}
-              cells={<ItemCells item={item} />}
-            />
-          ))}
-        </ul>
-      </SurfaceLedger>
+    <SurfaceSection label="PLAN" count={items.length || null}>
+      <ol className="room-plan" data-testid="items-section" aria-label="Plan">
+        {nodes}
+      </ol>
     </SurfaceSection>
+  );
+}
+
+function PlanNode({ item, focus }: { item: ItemRow; focus: boolean }) {
+  const late = daysLate(item);
+  if (focus) {
+    return (
+      <li className="room-plan-node" data-kind="focus" data-testid="item-row">
+        <span className="room-plan-time">{railDate(item.due_at)}</span>
+        <span className="room-plan-bead" data-tone="danger" aria-hidden="true" />
+        <article className="room-focus" aria-label={`Late: ${item.title}`} data-testid="room-late-plate">
+          <header className="room-focus-bar">
+            <span className="room-focus-label">LATE</span>
+            <span className="room-focus-in">{pluralize(late, "DAY", "DAYS")}</span>
+          </header>
+          <div className="room-focus-body">
+            <span className="room-focus-title">{item.title}</span>
+            <ItemPills item={item} />
+          </div>
+        </article>
+      </li>
+    );
+  }
+  return (
+    <li className="room-plan-node" data-kind={itemBead(item)} data-testid="item-row">
+      <span className="room-plan-time">{railDate(item.due_at)}</span>
+      <span className="room-plan-bead" data-tone={itemBead(item)} aria-hidden="true" />
+      <div className="room-plan-row">
+        <span className="room-row-title">{item.title}</span>
+        <ItemPills item={item} />
+      </div>
+    </li>
   );
 }
 
@@ -1353,7 +1424,7 @@ function SourcesSection({
               }
               trailing={
                 <span className="room-suggestion-verbs" data-testid="suggested-verbs">
-                  <Button dense variant="primary" loading={ctrl.suggestionBusy === sug.reference} onClick={() => void ctrl.handleAddSuggestion(sug.reference)} data-testid="suggested-add">
+                  <Button dense variant="secondary" loading={ctrl.suggestionBusy === sug.reference} onClick={() => void ctrl.handleAddSuggestion(sug.reference)} data-testid="suggested-add">
                     Add
                   </Button>
                   <Button dense variant="ghost" onClick={() => void ctrl.handleDismissSuggestion(sug.reference)} data-testid="suggested-dismiss">
@@ -2057,11 +2128,8 @@ export type RoomAsk = ReturnType<typeof useRoomAsk>;
 function RoomUnfinishedSection({ ask }: { ask: RoomAsk }) {
   const { unfinished, working } = ask;
   if (unfinished.length === 0) return null;
-  // The ratified board draws UNFINISHED 1 — ONE row, one filled primary. It
-  // never showed a list. Five filled primaries is no lead at all, so the
-  // filled verb survives only while the board's case holds; beyond it every
-  // row draws the quiet verb. Flagged to the owner as a board question.
-  const lead = unfinished.length === 1;
+  // PHILO-17 refit: the window's one filled verb is Draft update; a saved
+  // ask resumes with a quiet verb.
   return (
     <SurfaceSection label={countLabel("UNFINISHED", unfinished.length)}>
       <TaskResumeList data-testid="room-unfinished">
@@ -2077,7 +2145,7 @@ function RoomUnfinishedSection({ ask }: { ask: RoomAsk }) {
             stoppedReason={task.stoppedReason}
             stoppedCode={task.stoppedCode}
             custody={task.custody}
-            primary={lead}
+            primary={false}
             busy={working?.id === task.id && working.verb === "resume"}
             onVerb={() => void ask.resume(task)}
             onDiscard={() => void ask.discard(task)}
@@ -2392,6 +2460,26 @@ function computeHistoryCounts(changes: RoomChangeRow[]): { todayCount: number; w
   return { todayCount, weekCount };
 }
 
+/* ── PHILO-17 refit: a folded section ── */
+
+/** A secondary section, folded until asked for (the library FoldGadget).
+ *  A fold whose section draws nothing is not drawn (CSS :has). */
+function RoomFold({ title, token, open, testId, children }: {
+  title: string;
+  token?: number;
+  open?: boolean;
+  testId: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="room-fold" data-testid={testId}>
+      <FoldGadget title={title} token={token} open={open}>
+        {children}
+      </FoldGadget>
+    </div>
+  );
+}
+
 /* ── main core ── */
 
 /** PHILO-17 (phonepass): one Room section's place. The reads its section
@@ -2515,6 +2603,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   // HS-200-41 — one controller, two faces: UNFINISHED sits in the body as a
   // section, the well stays sticky at the foot (F5).
   const askCtrl = useRoomAsk(ctrl.projectId, ctrl.projectName);
+  const itemsRead = useRoomItems(ctrl.projectId ?? "", ctrl.room?.revision ?? 0);
   const { pages: standingPages, loaded: pagesLoaded } = useStandingPagesRead("project", ctrl.projectId);
 
   // HS-200-11 — the Prepare posture: one manual preparation path over the
@@ -2738,6 +2827,10 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
     );
   }
 
+  const sourceCount = ctrl.room?.sources.state === "ok"
+    ? ctrl.room.sources.items.filter((x) => !x.suggested).length : 0;
+  const decisionCount = (ctrl.room?.decisions.state === "ok" ? ctrl.room.decisions.items.length : 0)
+    + (ctrl.room?.commitments.state === "ok" ? ctrl.room.commitments.items.length : 0);
   const readReceipt = ctrl.readAt ? `READ ${formatTimeShort(ctrl.readAt)}` : "";
   const nextCheck = ctrl.room?.sources.state === "ok" ? ctrl.room.sources.nextCheckAt : null;
 
@@ -2785,69 +2878,88 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           {ctrl.view === "room" ? (
             <>
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>
-                <RoomHead room={ctrl.room} ctrl={ctrl} updateCtrl={updateCtrl} quiet={addingSources} />
+                <RoomHead room={ctrl.room} ctrl={ctrl} updateCtrl={updateCtrl} quiet={addingSources}
+                  lateItems={lateOf(itemsRead.items)} />
               </div>
-              {/* Memory on the Desk (canvas section 2, option B): the
-                  project's standing pages sit under the head, as ratified. */}
-              <RoomSlot id="pages" place={place("pages")} own={{ pages: pagesLoaded }}
-                empty={!standingPages.length} delay="10ms">
-                {standingPages.length ? <StandingPagesSection pages={standingPages} /> : null}
-              </RoomSlot>
-              <div className="room-section-rise" style={{ animationDelay: "20ms" }}>
-                <HealthSection room={ctrl.room} onRetry={handleRefresh} />
+              {/* PHILO-17 refit: the two things he reads here first (what is
+                  open, the plan with what is late) in the main column; the
+                  signals beside them; everything else folded below. */}
+              <div className="room-grid">
+                <div className="room-main">
+                  <RoomSlot id="needs" place={place("needs")} own={{ extras: extrasRead }} delay="40ms">
+                    <NeedsYouSection
+                      room={ctrl.room}
+                      ctrl={ctrl}
+                      reviewCtrl={reviewCtrl}
+                      selectedProposalId={selectedProposalId}
+                      pendingCount={pendingCount}
+                    />
+                  </RoomSlot>
+                  {/* HS-200-41 F5: unfinished work IS attention: it sits
+                      right after what is open. */}
+                  <RoomSlot id="unfinished" place={place("unfinished")} own={{ unfinished: askCtrl.unfinishedRead }} delay="50ms">
+                    <RoomUnfinishedSection ask={askCtrl} />
+                  </RoomSlot>
+                  {/* PHILO-9-03 (the Q3 ruling): the plan he reads after what needs him. */}
+                  <RoomSlot id="items" place={place("items")} delay="60ms" data-section="items">
+                    <ItemsSection read={itemsRead} />
+                  </RoomSlot>
+                </div>
+                <aside className="room-side" aria-label="Signals">
+                  <div className="room-section-rise" style={{ animationDelay: "20ms" }}>
+                    <HealthSection room={ctrl.room} onRetry={handleRefresh} />
+                  </div>
+                </aside>
               </div>
-              <RoomSlot id="needs" place={place("needs")} own={{ extras: extrasRead }} delay="40ms">
-                <NeedsYouSection
-                  room={ctrl.room}
-                  ctrl={ctrl}
-                  reviewCtrl={reviewCtrl}
-                  selectedProposalId={selectedProposalId}
-                  pendingCount={pendingCount}
-                />
-              </RoomSlot>
-              {/* PHILO-9-03 (the Q3 ruling, the ratified items canvas): ITEMS sits
-                  right after NEEDS YOU -- the plan he reads after what needs him. */}
-              <RoomSlot id="items" place={place("items")} delay="50ms" data-section="items">
-                <ItemsSection projectId={ctrl.projectId} revision={ctrl.room.revision} />
-              </RoomSlot>
-              {/* HS-200-41 F5: the saved work is a SECTION in the body, and it
-                  sits HERE — directly after NEEDS YOU. Unfinished work IS
-                  attention, so it belongs in the reading path next to the
-                  Room's first question; the design's posture-6 grammar makes
-                  resuming work a peer of repair, not a footnote under SINCE
-                  CREATED. Filed last it was also the section the sticky foot
-                  reached, so the one row he came back for opened underneath
-                  the composer with its verb hidden. */}
-              <RoomSlot id="unfinished" place={place("unfinished")} own={{ unfinished: askCtrl.unfinishedRead }} delay="60ms">
-                <RoomUnfinishedSection ask={askCtrl} />
-              </RoomSlot>
-              <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="80ms">
-                <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
-              </RoomSlot>
-              <RoomSlot id="files" place={place("files")} delay="90ms">
-                <RoomFilesSection ctrl={ctrl} />
-              </RoomSlot>
-              <RoomSlot id="people" place={place("people")} delay="100ms">
-                <RoomPeopleSection projectId={ctrl.projectId} />
-              </RoomSlot>
-              <div className="room-section-rise" style={{ animationDelay: "120ms" }}>
-                <SinceYouLookedSection room={ctrl.room} />
-              </div>
-              <div className="room-section-rise" style={{ animationDelay: "160ms" }}>
-                <DecisionsCommitmentsSection room={ctrl.room} />
-              </div>
-              <RoomSlot id="briefs" place={place("briefs")} own={{ briefs: prepareCtrl.keptRead }} delay="180ms">
-                <RoomBriefsSection prepare={prepareCtrl} />
-              </RoomSlot>
-              {/* Condition 7: ask well sticky at the foot of a wide window; in the
-                  flow at a narrow one (PHILO-9-03 F10, project-room.css). */}
-              <div className="room-section-rise room-ask-container" style={{ animationDelay: "200ms" }}>
+              {/* PHILO-17 refit: the ask is in the flow under what he reads
+                  first (no longer a sticky foot that rows scroll under). */}
+              <div className="room-section-rise room-ask-container" style={{ animationDelay: "70ms" }}>
                 <RoomAskWell
                   ask={askCtrl}
                   projectId={ctrl.projectId}
                   onOpenRef={ctrl.openProjectRef}
                   onPrepare={(purpose) => prepareCtrl.enterPrepare(purpose)}
                 />
+              </div>
+              <div className="room-folds" data-testid="room-folds">
+                <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="80ms">
+                  <RoomFold title="Sources" token={sourceCount || undefined} open={addingSources || undefined} testId="room-fold-sources">
+                    <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
+                  </RoomFold>
+                </RoomSlot>
+                <RoomSlot id="pages" place={place("pages")} own={{ pages: pagesLoaded }}
+                  empty={!standingPages.length} delay="85ms">
+                  {standingPages.length ? (
+                    <RoomFold title="Pages" token={standingPages.length || undefined} testId="room-fold-pages">
+                      <StandingPagesSection pages={standingPages} />
+                    </RoomFold>
+                  ) : null}
+                </RoomSlot>
+                <div className="room-section-rise" style={{ animationDelay: "90ms" }}>
+                  <RoomFold title="Decisions and owed" token={decisionCount || undefined} testId="room-fold-decisions">
+                    <DecisionsCommitmentsSection room={ctrl.room} />
+                  </RoomFold>
+                </div>
+                <div className="room-section-rise" style={{ animationDelay: "95ms" }}>
+                  <RoomFold title="Since you looked" testId="room-fold-since">
+                    <SinceYouLookedSection room={ctrl.room} />
+                  </RoomFold>
+                </div>
+                <RoomSlot id="files" place={place("files")} delay="100ms">
+                  <RoomFold title="Files" testId="room-fold-files">
+                    <RoomFilesSection ctrl={ctrl} />
+                  </RoomFold>
+                </RoomSlot>
+                <RoomSlot id="people" place={place("people")} delay="105ms">
+                  <RoomFold title="People" testId="room-fold-people">
+                    <RoomPeopleSection projectId={ctrl.projectId} />
+                  </RoomFold>
+                </RoomSlot>
+                <RoomSlot id="briefs" place={place("briefs")} own={{ briefs: prepareCtrl.keptRead }} delay="110ms">
+                  <RoomFold title="Briefs" token={prepareCtrl.kept.length || undefined} testId="room-fold-briefs">
+                    <RoomBriefsSection prepare={prepareCtrl} />
+                  </RoomFold>
+                </RoomSlot>
               </div>
             </>
           ) : (
