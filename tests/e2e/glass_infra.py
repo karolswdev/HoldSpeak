@@ -574,7 +574,13 @@ _RENDERED_TEXT_JS = """(args) => {
           && (glyph(x) || (x.el.matches(ctl) && y.el.matches('textarea, input')));
         if (inset(a, b) || inset(b, a)) { out.inset.push([a.what, b.what]); continue; }
       }
-      out.overlaps.push(onGlass ? [a.what, b.what, [a.r, b.r].map((q) => [q.left, q.top, q.right, q.bottom].map(Math.round))]
+      // On the glass each box says WHERE it is: the data-testids of its
+      // nearest three marked ancestors (a known red names the element by
+      // its identity, not by its words: PHILO-17, Astra r1 on #1111).
+      const where = (e) => { const ids = []; for (let x = e; x && ids.length < 3; x = x.parentElement) {
+        const t = x.getAttribute && x.getAttribute('data-testid'); if (t) ids.push(t); } return ids.join('<'); };
+      out.overlaps.push(onGlass ? [a.what, b.what, [a.r, b.r].map((q) => [q.left, q.top, q.right, q.bottom].map(Math.round)),
+        [where(a.el), where(b.el)]]
         : [a.what, b.what]);
     }
   }
