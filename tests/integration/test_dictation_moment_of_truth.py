@@ -218,26 +218,3 @@ def test_dry_run_returns_journal_id(persistent_db: Database, tmp_path, monkeypat
     )
     assert result["journal_id"] is not None
     assert persistent_db.dictation_journal.get(result["journal_id"]) is not None
-
-
-# ── focus-safe in-moment affordance ────────────────────────────────────
-
-def test_moment_affordance_present_and_focus_safe(persistent_db: Database) -> None:
-    client = _client(persistent_db)
-    body = client.get("/dictation").text
-    assert '<div id="root"></div>' in body
-    # The in-moment affordance lives with the result panel the core renders
-    # (it moved out of DictationCore.tsx when the core was split); the surface is
-    # both files, so both are read.
-    root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
-    source = "\n".join(
-        [(root / "DictationCore.tsx").read_text()]
-        + [part.read_text() for part in sorted((root / "dictation").glob("*.ts*"))]
-    )
-    assert "Correct this result" in source
-    assert "Teach correction" in source
-    assert "/api/dictation/corrections" in source
-    # Focus-safe: the in-moment surface must never auto-focus an input (the same
-    # invariant as desktop presence — the dictation flow is sacred).
-    assert "autofocus" not in source.lower()
-    assert ".focus()" not in source

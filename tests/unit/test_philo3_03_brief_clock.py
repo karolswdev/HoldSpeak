@@ -138,12 +138,21 @@ def test_the_route_reads_the_wired_clock_across_a_producer_day(tmp_path, monkeyp
     assert latest["title"] == "Brief · Thursday 24 Sep 2026"
 
 
-def test_the_web_server_carries_the_clock_to_the_context():
-    """The app factory's one wire: MeetingWebServer(brief_clock=) -> WebContext."""
-    import inspect
 
-    from holdspeak.web_server import MeetingWebServer
 
-    assert "brief_clock" in inspect.signature(MeetingWebServer.__init__).parameters
-    source = inspect.getsource(MeetingWebServer._create_app)
-    assert "brief_clock=self._brief_clock" in source
+def test_the_web_server_carries_the_clock_to_the_brief_route(tmp_path, monkeypatch, quiet_needs_you):
+    """The app factory's one wire: MeetingWebServer(brief_clock=) reaches the brief route."""
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    db = Database(tmp_path / "hub.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    monkeypatch.setattr(brief_routes, "get_database", lambda: db)
+    monkeypatch.setattr(brief_routes, "get_observer", lambda: None)
+    monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(tmp_path / "people.key"))
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(on_bookmark=lambda *a, **k: None, on_stop=lambda *a, **k: None, get_state=lambda: {}),
+        brief_clock=MovableClock(DAY_ONE),
+    )
+    made = TestClient(server.app).post("/api/brief/generate")
+    assert made.status_code == 200, made.text
+    assert made.json()["generated_label"] == "GENERATED SEP 23 09:30"

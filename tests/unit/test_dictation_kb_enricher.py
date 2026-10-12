@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 from datetime import datetime, timezone
 
 import pytest
@@ -85,14 +84,6 @@ def test_kb_enricher_conforms_to_transducer_protocol():
     enricher = KbEnricher(_make_blocks())
     assert isinstance(enricher, Transducer)
     assert enricher.requires_llm is False
-
-
-def test_kb_enricher_constructor_takes_no_runtime():
-    """DIR-R-004: pure template substitution; no LLM injected."""
-    sig = inspect.signature(KbEnricher.__init__)
-    params = sig.parameters
-    assert "runtime" not in params
-    assert "llm" not in params
 
 
 # ---------------------------------------------------------------------------

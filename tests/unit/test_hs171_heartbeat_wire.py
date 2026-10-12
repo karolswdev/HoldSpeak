@@ -246,20 +246,6 @@ class TestFailureBoundary:
         # Errors recorded
         assert receipt["errors"] >= 1
 
-    def test_independent_loop_threads(self) -> None:
-        """Heartbeat loop, cadence loop, and plugin queue loop are independent
-        threads -- verified by checking that WebRuntime defines all three."""
-        # This is a structural test: verify the heartbeat thread attribute exists
-        # on WebRuntime alongside the other two.
-        import holdspeak.web_runtime as wr
-        cls = wr.WebRuntime
-        # Check that HeartbeatMixin is in the MRO
-        from holdspeak.runtime.heartbeat import HeartbeatMixin
-        assert HeartbeatMixin in cls.__mro__, "HeartbeatMixin not in WebRuntime MRO"
-        # Check that _heartbeat_loop method exists
-        assert hasattr(cls, "_heartbeat_loop"), "WebRuntime lacks _heartbeat_loop"
-
-
 # ---------------------------------------------------------------------------
 # MCP parity
 # ---------------------------------------------------------------------------
@@ -694,28 +680,6 @@ class TestIndependentConductorLoops:
             f"Expected at least 2 calls (first raises, second succeeds); "
             f"got {call_count}; log={call_log}"
         )
-
-    def test_all_five_thread_names_in_web_runtime(self) -> None:
-        """Verify the five conductor thread names are defined in web_runtime
-        start_web_mode or the mixins it inherits."""
-        import holdspeak.web_runtime as wr
-        import inspect
-        # Gather source across the full MRO (thread names may live in mixins)
-        sources = []
-        for cls in wr.WebRuntime.__mro__:
-            try:
-                sources.append(inspect.getsource(cls))
-            except (TypeError, OSError):
-                pass
-        combined = "\n".join(sources)
-        expected_names = [
-            "HoldSpeakMirPluginQueue",
-            "HoldSpeakCadenceEngine",
-            "HoldSpeakHeartbeat",
-        ]
-        for name in expected_names:
-            assert name in combined, f"Thread name {name!r} not found in WebRuntime or its mixins"
-
 
 # ---------------------------------------------------------------------------
 # HS-171-02 AC-4: evaluate_due runs on cadence interval

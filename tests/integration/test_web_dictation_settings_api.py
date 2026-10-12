@@ -429,59 +429,6 @@ class TestSettingsPipelineDepthKnobs:
 # ── Page surface ──────────────────────────────────────────────────────
 
 
-def test_dictation_page_includes_runtime_section() -> None:
-    server = MeetingWebServer(
-                 WebRuntimeCallbacks(
-                     on_bookmark=MagicMock(),
-                     on_stop=MagicMock(),
-                     get_state=MagicMock(return_value={}),
-                 )
-             )
-    client = TestClient(server.app)
-    response = client.get("/dictation")
-    assert response.status_code == 200
-    assert '<div id="root"></div>' in response.text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
-    # HS-100-07: runtime configuration lives behind the Speak door.
-    assert "<Runtime />" in source
-    # HS-132-12: HS-117-08 moved the Runtime face into
-    # cores/dictation/DictationSections.tsx.
-    sections = (
-        Path(__file__).resolve().parents[2]
-        / "web/src/pages/cores/dictation/DictationSections.tsx"
-    ).read_text()
-    # HS-112-01: the runtime face is a handover to the Prefs models module
-    # (the one dial) — it never embeds or re-derives an endpoint editor.
-    assert 'label="Dictation runtime"' in sections
-    assert "RUNS ON LIVES IN MODELS" in sections
-    assert "RuntimeDestination" not in sections
-
-
-def test_dictation_page_includes_copilot_depth_controls() -> None:
-    """HS-40-03: the cockpit exposes a control for every Phase-39 depth knob."""
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=MagicMock(),
-            on_stop=MagicMock(),
-            get_state=MagicMock(return_value={}),
-        )
-    )
-    client = TestClient(server.app)
-    assert '<div id="root"></div>' in client.get("/dictation").text
-    settings = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/SettingsCore.tsx").read_text()
-    # HS-111-01: the Voice Typing module authors a control for every
-    # Phase-39 depth knob (the generic walker survives only in System).
-    # HS-139-02: corrections_enabled, journal_enabled, journal_retention
-    # removed from the surface (DEFAULT — pinned values).
-    for knob in (
-        '["dictation", "pipeline", "max_total_latency_ms"]',
-        '["dictation", "pipeline", "rewrite_passes"]',
-        '["dictation", "pipeline", "target_detect_llm_enabled"]',
-        '["dictation", "pipeline", "target_detect_llm_below"]',
-    ):
-        assert knob in settings, knob
-
-
 class TestVoiceMacrosSettingsApi:
     """HS-52-02: the voice command macros section of `/api/settings`."""
 

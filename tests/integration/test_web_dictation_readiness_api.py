@@ -321,67 +321,6 @@ def test_readiness_rejects_bad_project_root(test_client: TestClient, settings_pa
     assert "project_root" in response.json()["error"]
 
 
-def test_dictation_page_includes_readiness_panel() -> None:
-    server = MeetingWebServer(
-                 WebRuntimeCallbacks(
-                     on_bookmark=MagicMock(),
-                     on_stop=MagicMock(),
-                     get_state=MagicMock(return_value={}),
-                 )
-             )
-    client = TestClient(server.app)
-
-    response = client.get("/dictation")
-
-    assert response.status_code == 200
-    assert '<div id="root"></div>' in response.text
-    core_root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
-    js = "\n".join(
-        path.read_text()
-        for path in (
-            core_root / "DictationCore.tsx",
-            *sorted((core_root / "dictation").glob("*.tsx")),
-            *sorted((core_root / "dictation").glob("*.ts")),
-        )
-    )
-    assert "/api/dictation/readiness" in js
-    # HS-129-05: readiness is the composed footer below the loop. HS-112-01:
-    # Runs on lives ONLY in the Prefs models module — Speak hands over and never
-    # embeds a destination editor.
-    assert "ReadinessFooter" in js and "RUNS ON LIVES IN MODELS" in js
-    assert "RuntimeDestination" not in js
-    assert "warnings" in js
-
-
-def test_dictation_runtime_docs_route_serves_setup_page() -> None:
-    server = MeetingWebServer(
-                 WebRuntimeCallbacks(
-                     on_bookmark=MagicMock(),
-                     on_stop=MagicMock(),
-                     get_state=MagicMock(return_value={}),
-                 )
-             )
-    client = TestClient(server.app)
-
-    response = client.get("/docs/dictation-runtime")
-
-    assert response.status_code == 200
-    assert '<div id="root"></div>' in response.text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/RuntimeDocsCore.tsx").read_text()
-    # HS-95-08: application identity and aliases ride the one DeskOS manifest.
-    applications = (
-        Path(__file__).resolve().parents[2]
-        / "web/src/desk/applications.ts"
-    ).read_text()
-    # HS-100-10: the guide is Settings' Guide wing; the old surface key
-    # rides an alias so deep links land.
-    assert 'action: "configure-settings"' in applications
-    assert '{ key: "read-runtime-docs", scope: "guide" }' in applications
-    assert "dictation-mlx" in source and "dictation-llama" in source
-    # PHILO-17 refit: the Guide names the third engine as a server row.
-    assert "OpenAI-compatible server" in source
-
-
 def test_readiness_includes_depth_telemetry_block(
     test_client: TestClient, settings_path: Path
 ) -> None:

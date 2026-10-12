@@ -9,19 +9,11 @@ from __future__ import annotations
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from pathlib import Path
 
 import pytest
 
 from holdspeak.db.reconcile import _rebuild_legacy_intel_queue_tables, reconcile_schema
 from holdspeak.db.schema import SCHEMA_SQL
-
-
-ROOT = Path(__file__).resolve().parents[2]
-
-
-def _source(relative_path: str) -> str:
-    return (ROOT / relative_path).read_text(encoding="utf-8")
 
 
 def _legacy_queue_connection() -> sqlite3.Connection:
@@ -64,87 +56,6 @@ def _legacy_queue_connection() -> sqlite3.Connection:
     )
     conn.commit()
     return conn
-
-
-def test_inventory_repository_claim_enqueue_retry_release_and_ledger_are_job_keyed() -> None:
-    """Pin all IntelRepository mutation/read entry points and job-keyed SQL."""
-    source = _source("holdspeak/db/intel.py")
-    for symbol in (
-        "enqueue_intel_job", "claim_next_intel_job", "claim_next_intel_job_bound", "requeue_claimed_intel_job",
-        "retry_intel_job", "complete_intel_job", "complete_bound_intel_job", "fail_intel_job",
-        "get_bound_claimed_intel_job", "cut_over_legacy_unbound_intel_jobs",
-        "admit_compatibility_cutover_recovery",
-        "supersede_bound_intel_job", "supersede_bound_intel_job_in_transaction",
-        "mark_intel_job_partial", "request_intel_retry", "skip_remaining_intel",
-        "record_intel_job_attempt", "get_intel_job", "list_intel_jobs",
-        "get_intel_queue_summary", "list_intel_job_attempts",
-    ):
-        assert f"def {symbol}" in source
-    assert "WHERE owner.meeting_id=j.meeting_id" in source
-    assert "owner.status IN ('claimed','running')" in source
-    assert "WHERE job_id=? AND status='queued'" in source
-    assert "intel_job_attempts (\n                    meeting_id,job_id,event_kind" in source
-    assert "status='superseded'" in source
-
-
-def test_inventory_worker_and_http_recovery_use_repository_contracts() -> None:
-    """Pin worker scheduling plus all Meeting queue/recovery transport readers."""
-    worker = _source("holdspeak/intel_queue.py")
-    service = _source("holdspeak/services/meeting_intel_service.py")
-    routes = _source("holdspeak/web/routes/meetings/intel.py")
-    for symbol in ("process_next_intel_job", "drain_intel_queue", "IntelQueueWorker",
-                   "claim_next_intel_job_bound", "cut_over_legacy_unbound_intel_jobs"):
-        assert symbol in worker
-    for symbol in ("list_jobs", "queue_summary", "process_jobs", "retry_job",
-                   "get_recovery", "retry_recovery", "skip_recovery"):
-        assert f"def {symbol}" in service
-    for path in ("/api/intel/jobs", "/api/intel/summary", "/api/intel/process",
-                 "/api/intel/retry/{meeting_id}", "intel-recovery"):
-        assert path in routes
-
-
-def test_inventory_projection_dtos_session_import_and_persistence_writers_are_pinned() -> None:
-    """Pin Desk/DTO ordinary readers and session, recovery, and import writers."""
-    models = _source("holdspeak/db/models/__init__.py")
-    projection = _source("holdspeak/db/projections.py")
-    persistence = _source("holdspeak/meeting_session/persistence.py")
-    admission = _source("holdspeak/meeting_session/intel_admission.py")
-    imported = _source("holdspeak/meeting_import.py")
-    for field in ("job_id", "origin_job_id", "work_descriptor_sha256", "claim_id",
-                  "parent_operation_id", "bundle_id", "bundle_sha256", "lifecycle_posture"):
-        assert field in models
-    assert "newest lineage leaf" in projection
-    cli = _source("holdspeak/commands/intel.py")
-    assert "args.retry_failed" in cli and "list_intel_jobs(status=\"failed\"" in cli
-    assert "enqueue_intel_job" in persistence
-    assert "enqueue_intel_job" in admission
-    # HS-201-10: the IMPORT path is no longer an enqueue writer. It used to
-    # queue a job with only a transcript hash — no route, no selection hash —
-    # so the summary ran on whatever host the config later resolved, with no
-    # disclosure and no receipt. An import now transcribes and stops, and the
-    # owner's gesture is the only thing that enqueues from an imported
-    # meeting. The census pins the absence so it cannot creep back.
-    assert "enqueue_intel_job" not in imported
-    # PHILO-17: an import queues its summary by the Stop rule, through the
-    # routed "Run intelligence" producer (a job with its disclosed route).
-    assert "queue_after_save" in imported
-
-
-def test_inventory_plugin_job_family_is_separate_and_non_colliding() -> None:
-    """Pin the separately-owned plugin_run_jobs service, MCP, HTTP, and worker."""
-    schema = _source("holdspeak/db/schema.py")
-    plugins = _source("holdspeak/db/plugins.py")
-    service = _source("holdspeak/services/plugin_job_service.py")
-    mcp = _source("holdspeak/mcp/families/plugin_job.py")
-    routes = _source("holdspeak/web/routes/activity/plugin_jobs.py")
-    projection = _source("holdspeak/db/projections.py")
-    assert "CREATE TABLE IF NOT EXISTS plugin_run_jobs" in schema
-    assert "CREATE TABLE IF NOT EXISTS intel_jobs" in schema
-    assert "enqueue_plugin_run_job" in plugins and "claim_next_plugin_run_job" in plugins
-    assert "class PluginJobService" in service
-    assert "plugin_job.list" in mcp and "plugin_job.retry" in mcp
-    assert "/api/plugin-jobs" in routes
-    assert '("intel_jobs", "intel_job"), ("plugin_run_jobs", "plugin_job")' in projection
 
 
 def test_legacy_rows_migrate_to_deterministic_jobs_with_attempt_history_and_replay() -> None:

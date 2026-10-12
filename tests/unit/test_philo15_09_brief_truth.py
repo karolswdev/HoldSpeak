@@ -272,14 +272,26 @@ def test_a_locked_people_store_makes_the_same_brief(tmp_path, monkeypatch, who):
     assert locked.headline == open_store.headline
 
 
-def test_the_cadence_job_makes_the_brief_key_free():
-    """The scheduled job's own call (runtime/cadence.py) passes both flags."""
-    import inspect
+def test_the_cadence_job_makes_the_brief_key_free(tmp_path):
+    """The scheduled job (runtime/cadence.py) asks for no regeneration and no
+    People read: nobody is at the desk to answer a key request."""
+    from unittest.mock import MagicMock, patch
 
-    from holdspeak.runtime import cadence
+    from holdspeak.runtime.cadence import CadenceMixin
 
-    source = inspect.getsource(cadence)
-    assert "regenerate=False, people_reads=False" in source
+    db = Database(tmp_path / "hub.db")
+    mixin = MagicMock()
+    mixin._brief_due.return_value = True
+    calls: list[dict] = []
+    brief = MagicMock(item_count=0)
+    with patch("holdspeak.db.get_database", return_value=db), patch(
+        "holdspeak.services.monday_brief_service.MondayBriefService.generate",
+        side_effect=lambda *a, **kw: (calls.append(kw), brief)[1],
+    ):
+        CadenceMixin._maybe_regenerate_brief(mixin)
+    assert len(calls) == 1
+    assert calls[0]["regenerate"] is False
+    assert calls[0]["people_reads"] is False
 
 
 def test_no_people_store_means_nothing_skipped(tmp_path):

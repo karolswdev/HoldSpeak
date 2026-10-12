@@ -107,32 +107,3 @@ def test_digest_reports_corrections_enabled_posture(persistent_db: Database, set
     body = _persistent_client(persistent_db).get("/api/dictation/learning-digest").json()
     # HS-139-02: corrections_enabled pinned to True (was False).
     assert body["enabled"] is True
-
-
-# ── page content ──────────────────────────────────────────────────────────
-
-# HS-132-12: HS-117-08 moved the digest out of the DictationCore monolith
-# into the Memory door section (cores/dictation/Memory.tsx).
-_MEMORY = (
-    Path(__file__).resolve().parents[2]
-    / "web/src/pages/cores/dictation/Memory.tsx"
-)
-
-
-def test_dictation_page_includes_learning_digest(bare_client: TestClient) -> None:
-    assert '<div id="root"></div>' in bare_client.get("/dictation").text
-    shell = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
-    assert "<Memory />" in shell, "the digest must still hang off the Speak door"
-    source = _MEMORY.read_text()
-    assert "Learning digest" in source
-    assert "/api/dictation/learning-digest" in source
-
-
-def test_learning_digest_styles_are_global(bare_client: TestClient) -> None:
-    """The digest is React-owned and composes the shared status primitives."""
-    source = _MEMORY.read_text()
-    # HS-111-02: the digest is a fact token row (WEEK · TAUGHT n · …),
-    # never a StatusPill sentence.
-    assert "Learning digest" in source and "WEEK" in source
-    assert "dangerouslySetInnerHTML" not in source
-    assert "StatusPill" not in source

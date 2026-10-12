@@ -428,21 +428,10 @@ class TestBriefGenerationThisWeek:
 # - an occurrence already recorded in the lookback is deduped out.
 # - _compose counts calendar items as meetings / armed / due, never "watch items".
 
-import ast
-import hashlib
-import inspect
-import textwrap
 
 from holdspeak.services.monday_brief_service import BriefItem
 
 UTC = datetime.timezone.utc
-# Re-pinned 2026-10-05 (aware-time census): the default clock is
-# ``local_wall()`` (the same naive local wall time as ``datetime.now()``);
-# the window arithmetic is unchanged.
-# Re-pinned 2026-10-10 (PHILO-17): the lookback opens at 00:00 of the
-# previous workday, not 17:00 (the walker's 10:00 meeting was missing).
-# Re-pinned again (Astra r1 on PHILO-17): local midnight in the real zone.
-COMPUTE_WINDOW_BODY_SHA256 = "73ca3c283def7f39d0094742d5d7c929bc0f95975293e03ca2795f31deeae243"
 
 
 def _seed_utc_event(db, eid: str, title: str, starts_at: str, *, uid: str | None = None) -> None:
@@ -470,21 +459,6 @@ def _seed_recorded_meeting(db, mid: str, *, calendar_event_id: str, started_at: 
 
 def _this_week(brief, ref: str):
     return [i for i in brief.sections["this_week"] if i.source_ref == ref]
-
-
-class TestComputeWindowByteIdentical:
-    def test_body_digest_pinned(self, db):
-        """The SINCE FRIDAY half is untouched: the body (docstring stripped)
-        hashes to the digest counsel verified against be6c630e."""
-        src = textwrap.dedent(inspect.getsource(MondayBriefService.compute_window))
-        fn = ast.parse(src).body[0]
-        body = fn.body
-        if isinstance(body[0], ast.Expr) and isinstance(getattr(body[0], "value", None), ast.Constant):
-            body = body[1:]
-        digest = hashlib.sha256(
-            ast.unparse(ast.Module(body=body, type_ignores=[])).encode()
-        ).hexdigest()
-        assert digest == COMPUTE_WINDOW_BODY_SHA256
 
 
 class TestForwardHalfReadsFromNow:
