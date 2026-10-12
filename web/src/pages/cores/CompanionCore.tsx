@@ -64,6 +64,12 @@ export function CompanionCore({ hero }: CoreProps) {
   // that arrived late moved Roster and the door 44 px (UX-CANON D).
   const prLoaded = usePrReceipts((s) => s.loaded);
   const deliveryRead = useDelivery((s) => s.updatedAt !== null || s.error !== "");
+  // The wings wait on the delivery read, so this face starts it when nothing
+  // has read it yet (the desk's poller may not run here; single-flight).
+  useEffect(() => {
+    const st = useDelivery.getState();
+    if (st.updatedAt === null && st.error === "") void st.refresh();
+  }, []);
   const [wingsCapped, setWingsCapped] = useState(false);
   useEffect(() => {
     const timer = window.setTimeout(() => setWingsCapped(true), WINGS_READS_CAP_MS);

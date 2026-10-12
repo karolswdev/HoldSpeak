@@ -6,7 +6,7 @@
 // The existing cadence loop rows + their verbs (reply, snooze, mark done,
 // kill) are preserved BELOW the new heartbeat rows under a `NOW N` caption,
 // absent at zero.
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import type {
   CoreProps,
   CadenceLoopsResponse,
@@ -166,6 +166,10 @@ function fmtEpoch(epoch: number | null | undefined): string | null {
 
 /* ── The face ───────────────────────────────────────────────────── */
 
+/** Rhythm is drawn after this long even when a read is still out (the
+ *  Room's cap, roomReads.ts ROOM_READS_CAP_MS). */
+const RHYTHM_READS_CAP_MS = 8000;
+
 export function CadenceCore({ hero }: CoreProps) {
   // ── Heartbeat resources ──
   const heartbeat = useResource<HeartbeatSettings>("/api/settings/heartbeat", {
@@ -189,6 +193,21 @@ export function CadenceCore({ hero }: CoreProps) {
   const loopsResource = useResource<CadenceLoopsResponse>("/api/cadence/loops", {});
   const history = useResource<CadenceHistoryResponse>("/api/cadence/history?limit=20", {});
   const loops = asRows(loopsResource.data, ["loops"]);
+  // PHILO-17 (the desk sweep, sweepreds r2): Rhythm is drawn once its first
+  // reads have ended (each read or failed), or at the cap: under load a late
+  // read moved the notify row, the mute toggles and the project rows 18 px
+  // after the window settled (UX-CANON D; the Room's pattern). Once drawn it
+  // stays drawn: a later reload never hides it again.
+  const firstReads = [heartbeat, briefRes, doorRes, projectsRes, cadenceStatus, loopsResource, history];
+  const readsEnded = firstReads.every((r) => !r.loading);
+  const [capped, setCapped] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setCapped(true), RHYTHM_READS_CAP_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+  const [drawn, setDrawn] = useState(false);
+  useLayoutEffect(() => { if (!drawn && (readsEnded || capped)) setDrawn(true); }, [drawn, readsEnded, capped]);
+  const shown = drawn || readsEnded || capped;
   const [replies, setReplies] = useState<Record<string, string>>({});
   const [replyReceipt, setReplyReceipt] = useState("");
   const action = useAction();
@@ -307,6 +326,8 @@ export function CadenceCore({ hero }: CoreProps) {
   return (
     <>
       {renderHeroSlot(hero, null, null)}
+      <div className="cadence-body" data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
+      {shown ? null : <div className="cadence-settling-line"><SurfaceState loading /></div>}
 
       {/* Display headline: accent when the sweep runs, muted when not */}
       <span
@@ -643,6 +664,7 @@ export function CadenceCore({ hero }: CoreProps) {
         </SurfaceSection>
       ) : null}
 
+      </div>
       {/* ── Footer ─────────────────────────────────────────────── */}
       <SurfaceFooter
         egress={<EgressChip />}

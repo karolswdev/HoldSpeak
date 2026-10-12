@@ -295,6 +295,11 @@ _MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + HIT_PROBE_JS + FOLDED_WORD_JS 
 
     const fg = parse(cs.color);
     if (!fg) continue;
+    // PHILO-17 (the desk sweep, sweepreds r2): text that is not drawn (a
+    // zero-size glyph in a transparent ink: the StateChip lamp keeps its
+    // glyph in the DOM, state-chip.css) has no contrast to read; it read as
+    // 1:1 on the lit lamp. The floor rule above still reads it.
+    if (size === 0 || fg.a === 0) continue;
     let painted = false, bg = null;
     for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
       const bi = getComputedStyle(n).backgroundImage;

@@ -4130,13 +4130,16 @@ button.surface-edit-in-place:hover {
    its own (the section's gap stays). While its first reads are out it is
    mounted but not drawn (the Room's rule, project-room.css), and the
    loading glyph stands in its place. */
-.meetings-detail-body {
+.meetings-detail-body,
+.cadence-body {
   display: contents;
 }
-.meetings-detail-body[data-settling] {
+.meetings-detail-body[data-settling],
+.cadence-body[data-settling] {
   visibility: hidden;
 }
-.meetings-detail-settling-line {
+.meetings-detail-settling-line,
+.cadence-settling-line {
   visibility: visible;
 }
 .meetings-detail-facts [data-tone="success"] { color: var(--success); }

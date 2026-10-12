@@ -882,6 +882,44 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         ctx.close()
 
 
+# PHILO-17 sweepreds r2: the late-read faces hold still under a HELD read.
+# Each case opens its window with one first read held 2.5 s in the page (the
+# fetch waits; nothing else does), then watches every control for the hold
+# plus 2 s after the window settles: nothing moves. Without the first-read
+# gate each of these moved (Rhythm 18 px under load, the meeting 162 px, the
+# Needs-you drawer 260 px, the Agents wings 44 px).
+_HOLD_JS = """(([subs, ms]) => { const f = window.fetch.bind(window);
+  window.fetch = (input, init) => { const u = typeof input === 'string' ? input : (input && input.url) || '';
+    if (subs.some((s) => u.includes(s))) return new Promise((r) => setTimeout(r, ms)).then(() => f(input, init));
+    return f(input, init); }; })(%s)"""
+HELD = 2500
+
+
+@pytest.mark.timeout(240)
+@pytest.mark.parametrize(("case_id", "held"), [
+    ("surface-cadence", ["/api/cadence/loops", "/api/settings/heartbeat"]),
+    ("meeting", ["/api/decisions"]),
+    ("needs", ["/api/desk/needs-you"]),
+    ("surface-companion", ["/api/delivery/"]),
+])
+def test_a_held_first_read_moves_nothing(desk: dict[str, Any], pw_browser: Any, case_id: str, held: list[str]) -> None:
+    [(_, wid, scope)] = [c for c in CASES if c[0] == case_id]
+    wid, scope = wid.format(**desk), (scope.format(**desk) if scope else None)
+    base = desk["base"]
+    clear_hub_windows_http(base, TOKEN)
+    _hub_open(base, wid, scope)
+    ctx, page, _, _ = _page(pw_browser, 1440, base)
+    try:
+        page.add_init_script(_HOLD_JS % json.dumps([held, HELD]))
+        page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+        _normal_chair(page)
+        page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
+        moved = [r for r in page.evaluate(RECORD_JS, [f'[id="{wid}"]', HELD + 2000]) if r["worst"] > TOLERANCE]
+        assert not moved, f"{case_id} with {held} held {HELD} ms: {moved}"
+    finally:
+        ctx.close()
+
+
 # The Dock waiver is the ratified geometry only (Astra r1 on #1108): a planted
 # More overlap fails at 1440, and a planted overlap with a control that is not
 # a shelf AppIcon fails at 393. The waived pair passes at 393 only.

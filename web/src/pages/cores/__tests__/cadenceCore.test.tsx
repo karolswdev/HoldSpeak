@@ -150,3 +150,27 @@ describe("CadenceCore Runs on", () => {
     );
   });
 });
+
+describe("PHILO-17 desk sweep: Rhythm holds still while its first reads land", () => {
+  it("is drawn once every first read has ended, never row by row", async () => {
+    let releaseLoops: () => void = () => undefined;
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.startsWith("/api/cadence/loops")) {
+        await new Promise<void>((resolve) => { releaseLoops = resolve; });
+        return json({ loops: [LOOP] });
+      }
+      if (url.startsWith("/api/cadence/history")) return json({ nudges: [] });
+      if (url.startsWith("/api/projects")) return json({ projects: [] });
+      return json({});
+    }));
+    const { container } = render(<CadenceCore />);
+    // Mounted (its reads run) but not drawn while the loops read is held.
+    await waitFor(() => expect(container.querySelector(".cadence-body[aria-busy='true'][data-settling]")).toBeTruthy());
+    await new Promise((r) => setTimeout(r, 50));
+    expect(container.querySelector(".cadence-body[data-settling]")).toBeTruthy();
+    releaseLoops();
+    await waitFor(() => expect(container.querySelector(".cadence-body[data-settling]")).toBeNull());
+    expect(container.querySelector("[aria-busy='true']:not(button)")).toBeNull();
+  });
+});

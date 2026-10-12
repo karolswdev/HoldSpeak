@@ -90,3 +90,10 @@
   flex-wrap: wrap;
   gap: 4px 14px;
 }
+
+/* PHILO-17 (the desk sweep, sweepreds r2): while its first reads are out the
+   drawer is mounted but not drawn (the Room's rule, project-room.css); the
+   loading glyph stands in its place. */
+.needs-drawer[data-settling] > :not(.needs-drawer-settling) {
+  visibility: hidden;
+}
