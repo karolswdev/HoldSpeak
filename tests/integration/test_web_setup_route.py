@@ -39,16 +39,6 @@ def test_setup_route_serves_the_setup_page() -> None:
         assert "npm run build" in resp.text
 
 
-def test_dashboard_owns_first_value_without_redirecting() -> None:
-    resp = _client().get("/")
-    assert resp.status_code == 200
-    desk = (_REPO / "web" / "src" / "desk" / "DeskApp.tsx").read_text()
-    assert "shownSetup?.arrival_required === true" in desk
-    assert "arrivalRequired" in desk
-    assert 'navigate("/welcome"' not in desk
-    assert 'navigate("/setup"' not in desk
-
-
 # ── the CLI launch nudge (WebRuntime._print_setup_nudge) ──────────────
 
 

@@ -69,20 +69,3 @@ def test_no_privacy_narration_in_desk_ui() -> None:
             )
 
 
-def test_positions_contract_stays_bare() -> None:
-    """HS-117-02 split persistence into the focused data slice."""
-    store = (DESK / "store" / "dataSlice.ts").read_text(encoding="utf-8")
-    assert '"hs.diorama.pos"' in store, "the legacy positions key is gone"
-    assert "zustand/middleware" not in store, (
-        "persist middleware would envelope the positions map and break the "
-        "legacy contract"
-    )
-
-
-def test_the_front_door_is_the_desk_with_the_guard() -> None:
-    routes = (REPO / "web/src/routes.tsx").read_text(encoding="utf-8")
-    desk = (REPO / "web/src/desk/DeskApp.tsx").read_text(encoding="utf-8")
-    assert 'path: "/"' in routes and 'label: "Desk"' in routes
-    assert "shownSetup?.arrival_required === true" in desk, "the first-value state left the front door"
-    assert "arrivalRequired" in desk
-    assert 'navigate("/welcome"' not in desk

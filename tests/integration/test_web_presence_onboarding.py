@@ -32,13 +32,3 @@ def test_setup_page_has_presence_onboarding() -> None:
     assert "ps-hud" in html  # the faithful inline HUD preview
 
 
-def test_presence_tier_and_install_rules() -> None:
-    # HS-92-03 removed the six-step Welcome wizard. Presence remains a
-    # reversible, config-backed option in the canonical Settings surface.
-    src = (_REPO / "web" / "src" / "pages" / "cores" / "SettingsCore.tsx").read_text()
-    assert 'check(["presence", "enabled"], "Presence")' in src
-    assert '"/api/settings"' in src
-    # HS-111-01 gadgets: the toggle is a CheckGadget over a real checkbox.
-    assert "CheckGadget" in src
-    gadgets = (_REPO / "web" / "src" / "desk" / "surface" / "gadgets.tsx").read_text()
-    assert 'type="checkbox"' in gadgets

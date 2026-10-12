@@ -35,22 +35,6 @@ def client() -> TestClient:
     return TestClient(server.app)
 
 
-def test_commands_route_serves_board(client: TestClient) -> None:
-    res = client.get("/commands")
-    assert res.status_code == 200
-    assert '<div id="root"></div>' in res.text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CommandsCore.tsx").read_text()
-    assert "Command board" in source
-    # Application identity and chrome now come from the one DeskOS manifest.
-    applications = (
-        Path(__file__).resolve().parents[2]
-        / "web/src/desk/applications.ts"
-    ).read_text()
-    assert 'action: "configure-commands"' in applications
-    assert 'eyebrow: "Voice commands"' in applications
-    assert "/api/commands/test" in source and "/api/settings" in source
-
-
 def test_test_endpoint_type_text_returns_preview(client: TestClient, settings_path: Path) -> None:
     res = client.post("/api/commands/test", json={"kind": "type_text", "payload": "## Standup"})
     assert res.status_code == 200

@@ -1,0 +1,2618 @@
+"""Integration tests for HoldSpeak web server."""
+
+from __future__ import annotations
+
+from copy import deepcopy
+from datetime import datetime, timedelta
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import MagicMock, AsyncMock
+
+import pytest
+
+pytest.importorskip(
+    "fastapi.testclient",
+    reason="requires meeting/web dependencies (install with `.[meeting]`)",
+)
+from fastapi.testclient import TestClient
+
+pytestmark = [pytest.mark.requires_meeting]
+
+from holdspeak.web_server import (
+    WebRuntimeCallbacks,
+    MeetingWebServer,
+    WebSocketManager,
+    BroadcastMessage,
+    _format_duration,
+    _find_free_port,
+    _parse_iso_datetime,
+)
+from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+from tests.unit.test_hs201_route_contract import assign_summary, summary_profile
+
+
+# ============================================================
+# Utility Function Tests
+# ============================================================
+
+
+@pytest.mark.integration
+class TestFormatDuration:
+    """Tests for _format_duration helper function."""
+
+    def test_format_seconds_only(self):
+        """Seconds under 60 return MM:SS format."""
+        assert _format_duration(0) == "00:00"
+        assert _format_duration(1) == "00:01"
+        assert _format_duration(30) == "00:30"
+        assert _format_duration(59) == "00:59"
+
+    def test_format_minutes_and_seconds(self):
+        """Minutes + seconds return MM:SS format."""
+        assert _format_duration(60) == "01:00"
+        assert _format_duration(61) == "01:01"
+        assert _format_duration(90) == "01:30"
+        assert _format_duration(599) == "09:59"
+        assert _format_duration(3599) == "59:59"
+
+    def test_format_hours_minutes_seconds(self):
+        """Hours return HH:MM:SS format."""
+        assert _format_duration(3600) == "01:00:00"
+        assert _format_duration(3661) == "01:01:01"
+        assert _format_duration(7200) == "02:00:00"
+        assert _format_duration(36000) == "10:00:00"
+
+    def test_format_negative_treated_as_zero(self):
+        """Negative values treated as zero."""
+        assert _format_duration(-1) == "00:00"
+        assert _format_duration(-3600) == "00:00"
+
+    def test_format_float_truncated(self):
+        """Float values are truncated to int."""
+        assert _format_duration(1.9) == "00:01"
+        assert _format_duration(59.9) == "00:59"
+
+
+@pytest.mark.integration
+class TestFindFreePort:
+    """Tests for _find_free_port helper function."""
+
+    def test_returns_valid_port(self):
+        """Should return a port number in valid range."""
+        port = _find_free_port("127.0.0.1")
+        assert isinstance(port, int)
+        assert 1024 <= port <= 65535
+
+    def test_returns_different_ports(self):
+        """Should return different ports on consecutive calls."""
+        ports = {_find_free_port("127.0.0.1") for _ in range(5)}
+        # At least some should be different (not strictly all)
+        assert len(ports) >= 1
+
+    def test_port_is_bindable(self):
+        """Returned port should be usable."""
+        import socket
+
+        port = _find_free_port("127.0.0.1")
+        # Verify we can bind to it
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # This should not raise
+            sock.bind(("127.0.0.1", port))
+
+
+@pytest.mark.integration
+class TestParseIsoDatetime:
+    """Tests for _parse_iso_datetime helper function."""
+
+    def test_valid_iso_string(self):
+        """Valid ISO strings should be parsed."""
+        result = _parse_iso_datetime("2024-01-15T10:30:00")
+        assert result == datetime(2024, 1, 15, 10, 30, 0)
+
+    def test_iso_with_microseconds(self):
+        """ISO strings with microseconds should be parsed."""
+        result = _parse_iso_datetime("2024-01-15T10:30:00.123456")
+        assert result == datetime(2024, 1, 15, 10, 30, 0, 123456)
+
+    def test_iso_with_timezone(self):
+        """ISO strings with timezone should be parsed."""
+        result = _parse_iso_datetime("2024-01-15T10:30:00+00:00")
+        assert result is not None
+        assert result.hour == 10
+
+    def test_empty_string_returns_none(self):
+        """Empty string should return None."""
+        assert _parse_iso_datetime("") is None
+
+    def test_none_returns_none(self):
+        """None input should return None."""
+        assert _parse_iso_datetime(None) is None
+
+    def test_invalid_string_returns_none(self):
+        """Invalid string should return None."""
+        assert _parse_iso_datetime("not-a-date") is None
+        assert _parse_iso_datetime("2024/01/15") is None
+
+    def test_non_string_returns_none(self):
+        """Non-string types should return None."""
+        assert _parse_iso_datetime(12345) is None
+        assert _parse_iso_datetime({"date": "2024-01-15"}) is None
+        assert _parse_iso_datetime(["2024-01-15"]) is None
+
+
+# ============================================================
+# BroadcastMessage Tests
+# ============================================================
+
+
+@pytest.mark.integration
+class TestBroadcastMessage:
+    """Tests for BroadcastMessage dataclass."""
+
+    def test_to_dict(self):
+        """to_dict() should return proper dictionary."""
+        msg = BroadcastMessage(type="test", data={"key": "value"})
+        result = msg.to_dict()
+        assert result == {"type": "test", "data": {"key": "value"}}
+
+    def test_immutable(self):
+        """BroadcastMessage should be immutable (frozen)."""
+        msg = BroadcastMessage(type="test", data="data")
+        with pytest.raises(Exception):  # FrozenInstanceError
+            msg.type = "modified"
+
+
+# ============================================================
+# WebSocketManager Tests
+# ============================================================
+
+
+@pytest.mark.integration
+class TestWebSocketManager:
+    """Tests for WebSocketManager."""
+
+    @pytest.mark.asyncio
+    async def test_connect_and_disconnect(self):
+        """Should track connected clients."""
+        manager = WebSocketManager()
+        mock_ws = MagicMock()
+        mock_ws.accept = AsyncMock()
+
+        await manager.connect(mock_ws)
+        assert mock_ws in manager._clients
+
+        await manager.disconnect(mock_ws)
+        assert mock_ws not in manager._clients
+
+    @pytest.mark.asyncio
+    async def test_broadcast_to_clients(self):
+        """Should broadcast message to all connected clients."""
+        manager = WebSocketManager()
+
+        mock_ws1 = MagicMock()
+        mock_ws1.accept = AsyncMock()
+        mock_ws1.send_json = AsyncMock()
+
+        mock_ws2 = MagicMock()
+        mock_ws2.accept = AsyncMock()
+        mock_ws2.send_json = AsyncMock()
+
+        await manager.connect(mock_ws1)
+        await manager.connect(mock_ws2)
+
+        message = BroadcastMessage(type="update", data="test")
+        await manager.broadcast(message)
+
+        mock_ws1.send_json.assert_called_once_with({"type": "update", "data": "test"})
+        mock_ws2.send_json.assert_called_once_with({"type": "update", "data": "test"})
+
+    @pytest.mark.asyncio
+    async def test_close_all(self):
+        """close_all() should close all clients and clear the set."""
+        manager = WebSocketManager()
+
+        mock_ws = MagicMock()
+        mock_ws.accept = AsyncMock()
+        mock_ws.close = AsyncMock()
+
+        await manager.connect(mock_ws)
+        await manager.close_all()
+
+        mock_ws.close.assert_called_once()
+        assert len(manager._clients) == 0
+
+
+# ============================================================
+# MeetingWebServer HTTP Endpoint Tests
+# ============================================================
+
+
+@pytest.fixture
+def mock_callbacks():
+    """Create mock callback functions for web server."""
+    bookmark_result = {"timestamp": 10.5, "label": "test"}
+    stop_result = {"status": "stopped"}
+    state = {
+        "id": "test-123",
+        "started_at": "2024-01-15T10:30:00",
+        "duration": 120,
+        "bookmarks": [],
+    }
+
+    return {
+        "on_bookmark": MagicMock(return_value=bookmark_result),
+        "on_stop": MagicMock(return_value=stop_result),
+        "get_state": MagicMock(return_value=state),
+    }
+
+
+@pytest.fixture
+def isolated_db(tmp_path):
+    """HS-132-12: the REAL database the composed app consults.
+
+    `MeetingWebServer._create_app` composes every service against
+    `get_database()` at construction time (`web_server.py:631-648`), so a
+    `monkeypatch.setattr(holdspeak.db, "get_database", ...)` executed inside a
+    test body arrives far too late — the live routes keep answering from the
+    handle captured at composition. Route tests below therefore SEED this
+    database instead of faking one; the seam is the `get_database` singleton,
+    swapped to a per-test file before the server is built.
+    """
+    from holdspeak.db import get_database, reset_database
+
+    reset_database()
+    db = get_database(tmp_path / "holdspeak-web-server-test.db")
+    yield db
+    reset_database()
+
+
+@pytest.fixture
+def web_server(mock_callbacks, isolated_db):
+    """Create MeetingWebServer instance composed against `isolated_db`."""
+    _ = isolated_db  # must be resolved BEFORE the app composes its services
+    server = MeetingWebServer(
+                 WebRuntimeCallbacks(
+                     on_bookmark=mock_callbacks["on_bookmark"],
+                     on_stop=mock_callbacks["on_stop"],
+                     get_state=mock_callbacks["get_state"],
+                 ),
+                 host="127.0.0.1",
+             )
+    return server
+
+
+@pytest.fixture
+def test_client(web_server):
+    """Create FastAPI TestClient for web server."""
+    return TestClient(web_server.app)
+
+
+@pytest.mark.integration
+class TestDashboardEndpoint:
+    """Tests for GET /live dashboard endpoint (moved off `/` in HS-70-02)."""
+
+    def test_returns_html(self, test_client):
+        """Dashboard should return HTML response."""
+        response = test_client.get("/live")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+
+    def test_contains_holdspeak(self, test_client):
+        """Dashboard HTML should contain HoldSpeak."""
+        response = test_client.get("/live")
+        assert "HoldSpeak" in response.text or "holdspeak" in response.text.lower()
+
+    def _bundled_runtime_js(self, test_client) -> str:
+        del test_client
+        return (Path(__file__).resolve().parents[2] / "web/src/pages/cores/LiveCore.tsx").read_text()
+
+    def test_dashboard_references_runtime_control_endpoints(self, test_client):
+        """Dashboard JS should still call the runtime-level meeting
+        control endpoints. The endpoint strings live in the bundled
+        Astro chunk (HS-10-06: import factorySource from
+        scripts/dashboard-app.js?raw)."""
+        response = test_client.get("/live")
+        assert response.status_code == 200
+        js = self._bundled_runtime_js(test_client)
+        assert "Intent routing" in js and "Preview route" in js and "Deferred plugin jobs" in js
+        assert "/api/runtime/status" in js
+        assert "/api/meeting/start" in js
+        assert "/api/meeting/stop" in js
+        assert "/api/intents/control" in js
+        assert "/api/intents/profile" in js
+        assert "/api/intents/preview" in js
+        assert "/api/plugin-jobs/summary" in js
+        assert "/api/plugin-jobs/process" in js
+
+    def test_dashboard_includes_device_health_surface(self, test_client):
+        """HS-17-03: dashboard exposes the attached-device health panel.
+
+        React fills values in the browser, so this checks both the
+        server-rendered shell and typed route source that drive
+        battery/RSSI visibility and stale-state rendering.
+        """
+        response = test_client.get("/live")
+        assert response.status_code == 200
+        js = self._bundled_runtime_js(test_client)
+        assert "Devices" in js
+        assert "/api/devices/health" in js
+        assert "battery_pct" in js and "rssi_dbm" in js and "stale" in js
+
+    def test_dashboard_includes_egress_posture_badge(self, test_client):
+        """HS-25-08 / HS-69-01: dashboard shows the meeting-intel egress posture badge.
+
+        The badge is driven by `intel_egress` from /api/runtime/status; React
+        fills it in the browser, so we check the server-rendered shell + the
+        bundled helper that produces the glanceable label. HS-69-01 made the
+        badge a canonical STRUCTURED chip (`egress-badge` / `egressBadgeText()`),
+        replacing the prose `egressLabel()` in the rendered shell.
+        """
+        response = test_client.get("/live")
+        assert response.status_code == 200
+        js = self._bundled_runtime_js(test_client)
+        assert "intel_egress" in js
+        assert 'label="Summary"' in js
+
+    def test_dashboard_includes_idle_mode_guidance_markers(self, test_client):
+        """The rebuilt runtime renders copy that distinguishes idle vs.
+        live state. The exact wording was simplified in HS-10-06; what
+        matters is that idle and read-only-while-idle guidance is
+        present so users understand why controls are disabled."""
+        response = test_client.get("/live")
+        assert response.status_code == 200
+        source = self._bundled_runtime_js(test_client)
+        assert "Ready to record" in source
+        assert "Start a meeting to begin" in source
+        # HS-111-03: the preview description became the gadget row's
+        # fact token — same read-only-while-idle promise, token-cased.
+        assert "TESTS ROUTING · NEVER TOUCHES THE LIVE MEETING" in source
+
+    def test_dashboard_bootstrap_prefers_runtime_status_payload(self, test_client):
+        """The runtime-status payload is still preferred at bootstrap.
+        The factory function lives in the bundled chunk (HS-10-06).
+
+        HS-132-12: the two bootstrap resources are typed now — the untyped
+        `JsonRecord` placeholder became `RuntimeStatusResponse` /
+        `MeetingStateResponse`. Same two reads, same preference; the
+        assertion follows the typed call rather than the erased one.
+        """
+        js = self._bundled_runtime_js(test_client)
+        assert 'useResource<RuntimeStatusResponse>("/api/runtime/status"' in js
+        assert 'useResource<MeetingStateResponse>("/api/state"' in js
+
+
+@pytest.mark.integration
+class TestHealthEndpoint:
+    """Tests for GET /health endpoint."""
+
+    def test_returns_ok(self, test_client):
+        """Health check should return OK status."""
+        response = test_client.get("/health")
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok"}
+
+
+@pytest.mark.integration
+class TestDeviceHealthEndpoint:
+    """HS-17-01/03: browser-readable device-health snapshot."""
+
+    def test_devices_health_returns_current_registry_snapshot(self):
+        from holdspeak.device_audio import DeviceRegistry
+
+        registry = DeviceRegistry()
+        registry.register("aipi-1", "Karol")
+        registry.update_health("aipi-1", battery_pct=79, rssi_dbm=-62, at=1234)
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=registry,
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        response = client.get("/api/devices/health")
+
+        assert response.status_code == 200
+        [device] = response.json()["devices"]
+        assert device["id"] == "aipi-1"
+        assert device["label"] == "Karol"
+        assert device["battery_pct"] == 79
+        assert device["rssi_dbm"] == -62
+        assert device["last_health_at"] == 1234
+
+    def test_devices_health_hides_unknown_values_as_null(self):
+        from holdspeak.device_audio import DeviceRegistry
+
+        registry = DeviceRegistry()
+        registry.register("aipi-1", "Karol")
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=registry,
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        response = client.get("/api/devices/health")
+
+        assert response.status_code == 200
+        [device] = response.json()["devices"]
+        assert device["battery_pct"] is None
+        assert device["rssi_dbm"] is None
+        assert device["last_health_at"] is None
+
+
+@pytest.mark.integration
+class TestCompanionStatusEndpoint:
+    """HS-20-03: companion setup/debug snapshot."""
+
+    def test_companion_status_reports_ready_agent_reply_components(
+        self,
+        monkeypatch,
+        mock_callbacks,
+    ):
+        import holdspeak.agent_context as agent_context_module
+        from holdspeak.agent_context import AgentSession
+        from holdspeak.config import Config
+        from holdspeak.device_audio import DeviceRegistry
+
+        cfg = Config()
+        cfg.dictation.pipeline.enabled = True
+        cfg.dictation.pipeline.stages = ["project-rewriter"]
+        monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg))
+
+        session = AgentSession(
+            agent="codex",
+            session_id="codex-1",
+            cwd="/tmp/HoldSpeak",
+            repo_root="/tmp/HoldSpeak",
+            project_name="HoldSpeak",
+            updated_at="2026-05-24T12:00:00Z",
+            hook_event_name="Stop",
+            last_assistant_text="Should I run the focused tests now?",
+            awaiting_response=True,
+            capture_messages=True,
+        )
+        monkeypatch.setattr(
+            agent_context_module,
+            "get_recent_awaiting_agent_session",
+            lambda **_kwargs: session,
+        )
+        monkeypatch.setattr(
+            agent_context_module,
+            "list_recent_awaiting_agent_sessions",
+            lambda **_kwargs: [session],
+        )
+
+        registry = DeviceRegistry()
+        registry.register("aipi-1", "Karol")
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_get_status=MagicMock(
+                return_value={
+                    "voice_state": "idle",
+                    "text_injection_enabled": True,
+                    "text_injection_error": None,
+                }
+            ),
+                         device_registry=registry,
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        response = client.get("/api/coders/status")
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["ready_for_agent_reply"] is True
+        assert payload["blockers"] == []
+        assert payload["checks"] == {
+            "device_connected": True,
+            "agent_waiting": True,
+            "dictation_pipeline_enabled": True,
+            "text_injection_enabled": True,
+            "tmux_reply_available": False,
+            "target_confidence": "medium",
+        }
+        assert payload["devices"]["count"] == 1
+        assert payload["devices"]["query_names"] == [
+            "agent_next",
+            "agent_question",
+            "agent_status",
+        ]
+        assert payload["agent"]["session"]["agent"] == "codex"
+        assert payload["agent"]["identity"]["compact_label"] == (
+            "Codex | HoldSpeak | no tmux"
+        )
+        assert payload["agent"]["identity"]["target_transport"] == "text_injection"
+        assert payload["agent"]["sessions"]["count"] == 1
+        assert payload["agent"]["sessions"]["selected_index"] == 0
+        assert payload["agent"]["sessions"]["items"][0]["identity"]["compact_label"] == (
+            "Codex | HoldSpeak | no tmux"
+        )
+        assert payload["agent"]["sessions"]["items"][0]["selected"] is True
+        assert payload["dictation"]["stages"] == ["project-rewriter"]
+        assert payload["runtime"]["target_transport"] == "text_injection"
+        assert payload["runtime"]["voice_state"] == "idle"
+
+    def test_companion_status_accepts_tmux_reply_without_text_injection(
+        self,
+        monkeypatch,
+        mock_callbacks,
+    ):
+        import holdspeak.agent_context as agent_context_module
+        from holdspeak.agent_context import AgentSession
+        from holdspeak.config import Config
+        from holdspeak.device_audio import DeviceRegistry
+
+        cfg = Config()
+        cfg.dictation.pipeline.enabled = True
+        monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg))
+
+        session = AgentSession(
+            agent="claude",
+            session_id="claude-1",
+            cwd="/tmp/HoldSpeak",
+            updated_at="2026-05-24T12:00:00Z",
+            hook_event_name="Stop",
+            last_assistant_text="Proceed?",
+            awaiting_response=True,
+            capture_messages=True,
+            tmux_pane="%42",
+            tmux_session="work",
+            tmux_window="2",
+            tmux_pane_index="1",
+        )
+        monkeypatch.setattr(
+            agent_context_module,
+            "get_recent_awaiting_agent_session",
+            lambda **_kwargs: session,
+        )
+        monkeypatch.setattr(
+            agent_context_module,
+            "list_recent_awaiting_agent_sessions",
+            lambda **_kwargs: [session],
+        )
+
+        registry = DeviceRegistry()
+        registry.register("aipi-1", "Karol")
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_get_status=MagicMock(
+                return_value={
+                    "voice_state": "idle",
+                    "text_injection_enabled": False,
+                    "text_injection_error": "TextTyper unavailable",
+                }
+            ),
+                         device_registry=registry,
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        response = client.get("/api/coders/status")
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["ready_for_agent_reply"] is True
+        assert payload["blockers"] == []
+        assert payload["checks"]["tmux_reply_available"] is True
+        assert payload["checks"]["target_confidence"] == "high"
+        assert payload["agent"]["identity"]["compact_label"] == (
+            "Claude | HoldSpeak | work:2.1"
+        )
+        assert payload["agent"]["identity"]["target_transport"] == "tmux"
+        assert payload["agent"]["sessions"]["count"] == 1
+        assert payload["agent"]["sessions"]["items"][0]["identity"]["target_transport"] == (
+            "tmux"
+        )
+        assert payload["runtime"]["text_injection_enabled"] is False
+        assert payload["runtime"]["target_transport"] == "tmux"
+
+    def test_companion_status_reports_setup_blockers(self, monkeypatch, mock_callbacks):
+        import holdspeak.agent_context as agent_context_module
+        from holdspeak.config import Config
+
+        cfg = Config()
+        monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg))
+        monkeypatch.setattr(
+            agent_context_module,
+            "get_recent_awaiting_agent_session",
+            lambda **_kwargs: None,
+        )
+        monkeypatch.setattr(
+            agent_context_module,
+            "list_recent_awaiting_agent_sessions",
+            lambda **_kwargs: [],
+        )
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_get_status=MagicMock(
+                return_value={
+                    "voice_state": "idle",
+                    "text_injection_enabled": False,
+                    "text_injection_error": "backend unavailable",
+                }
+            ),
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        response = client.get("/api/coders/status")
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["ready_for_agent_reply"] is False
+        # HS-139-02: pipeline.enabled default flipped to True, so
+        # "dictation_pipeline_disabled" is no longer a default-config blocker.
+        assert set(payload["blockers"]) == {
+            "no_device_connected",
+            "no_agent_waiting",
+            "text_injection_unavailable",
+        }
+        assert payload["runtime"]["text_injection_enabled"] is False
+        assert payload["runtime"]["text_injection_error"] == "backend unavailable"
+        assert payload["checks"]["target_confidence"] is None
+        assert payload["agent"]["identity"] is None
+        assert payload["agent"]["sessions"]["count"] == 0
+
+
+@pytest.mark.integration
+class TestCompanionControlEndpoints:
+    """HS-24-02: select / dismiss / pin / clear-stale companion controls."""
+
+    @pytest.fixture
+    def companion(self, tmp_path, monkeypatch, test_client):
+        import json
+        from datetime import timezone
+
+        import holdspeak.agent_context as agent_context_module
+
+        state = tmp_path / "agent_sessions.json"
+        monkeypatch.setattr(agent_context_module, "AGENT_CONTEXT_FILE", state)
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+
+        def ingest(session_id, text, *, agent="codex", now=None):
+            transcript = tmp_path / f"{agent}-{session_id}.jsonl"
+            transcript.write_text(
+                json.dumps({"role": "assistant", "content": text}) + "\n",
+                encoding="utf-8",
+            )
+            agent_context_module.ingest_agent_hook_event(
+                agent=agent,
+                payload={
+                    "session_id": session_id,
+                    "hook_event_name": "Stop",
+                    "cwd": str(repo),
+                    "transcript_path": str(transcript),
+                },
+                state_path=state,
+                now=now,
+                capture_messages=True,
+            )
+
+        return SimpleNamespace(
+            client=test_client,
+            state=state,
+            ingest=ingest,
+            module=agent_context_module,
+            old=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        )
+
+    def _status_items(self, client):
+        payload = client.get("/api/coders/status").json()
+        return payload["agent"]["sessions"]["items"]
+
+    def test_select_sets_active_target(self, companion):
+        companion.ingest("older", "Older?")
+        companion.ingest("newer", "Newer?")
+
+        response = companion.client.post(
+            "/api/coders/select",
+            json={"agent": "codex", "session_id": "older"},
+        )
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+        assert response.json()["session"]["session_id"] == "older"
+
+        selected = [item for item in self._status_items(companion.client) if item["selected"]]
+        assert len(selected) == 1
+        assert selected[0]["session"]["session_id"] == "older"
+
+    def test_dismiss_removes_session_from_waiting(self, companion):
+        companion.ingest("abc", "Proceed?", agent="claude")
+        assert len(self._status_items(companion.client)) == 1
+
+        response = companion.client.post(
+            "/api/coders/dismiss",
+            json={"agent": "claude", "session_id": "abc"},
+        )
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+        assert self._status_items(companion.client) == []
+
+    def test_pin_marks_session_and_exempts_from_clear_stale(self, companion):
+        companion.ingest("stale", "Stale?")
+        companion.ingest("kept", "Kept?")
+
+        pin = companion.client.post(
+            "/api/coders/pin",
+            json={"agent": "codex", "session_id": "kept", "pinned": True},
+        )
+        assert pin.status_code == 200
+        assert pin.json()["session"]["pinned"] is True
+
+        kept = next(
+            item
+            for item in self._status_items(companion.client)
+            if item["session"]["session_id"] == "kept"
+        )
+        assert kept["pinned"] is True
+        assert kept["stale"] is False
+
+        # Force everything stale, then clear: only the unpinned session goes.
+        for session_id in ("stale", "kept"):
+            companion.ingest(session_id, "again?", now=companion.old)
+        companion.client.post(
+            "/api/coders/pin",
+            json={"agent": "codex", "session_id": "kept", "pinned": True},
+        )
+        clear = companion.client.post("/api/coders/clear-stale", json={})
+        assert clear.status_code == 200
+        assert clear.json() == {"success": True, "cleared": 1, "max_age_seconds": 120}
+
+        remaining = {
+            item.session_id
+            for item in companion.module.list_recent_awaiting_agent_sessions(
+                state_path=companion.state, max_age_seconds=10**9
+            )
+        }
+        assert remaining == {"kept"}
+
+    def test_unpin_via_pin_false(self, companion):
+        companion.ingest("abc", "Proceed?")
+        companion.client.post(
+            "/api/coders/pin", json={"agent": "codex", "session_id": "abc", "pinned": True}
+        )
+        response = companion.client.post(
+            "/api/coders/pin",
+            json={"agent": "codex", "session_id": "abc", "pinned": False},
+        )
+        assert response.status_code == 200
+        assert response.json()["session"]["pinned"] is False
+
+    def test_select_unknown_session_returns_404(self, companion):
+        response = companion.client.post(
+            "/api/coders/select",
+            json={"agent": "codex", "session_id": "ghost"},
+        )
+        assert response.status_code == 404
+        assert response.json()["error"] == "unknown_session"
+
+    def test_missing_fields_return_400(self, companion):
+        assert companion.client.post("/api/coders/select", json={}).status_code == 400
+        assert (
+            companion.client.post(
+                "/api/coders/pin", json={"agent": "codex"}
+            ).status_code
+            == 400
+        )
+        assert (
+            companion.client.post(
+                "/api/coders/clear-stale", json={"max_age_seconds": "soon"}
+            ).status_code
+            == 400
+        )
+
+    # ── HSM-17-02: the live set at GET /api/coders/sessions ─────────────
+
+    def _live_sessions(self, client, **params):
+        query = "&".join(f"{k}={v}" for k, v in params.items())
+        url = "/api/coders/sessions" + (f"?{query}" if query else "")
+        response = client.get(url)
+        assert response.status_code == 200
+        return response.json()
+
+    def test_sessions_lists_the_full_live_set_not_just_awaiting(self, companion):
+        # A working session (no captured question) is invisible on the status
+        # board but MUST appear in the live set.
+        companion.module.ingest_agent_hook_event(
+            agent="claude",
+            payload={
+                "session_id": "busy",
+                "hook_event_name": "UserPromptSubmit",
+                "cwd": str(companion.state.parent),
+            },
+            state_path=companion.state,
+        )
+        companion.ingest("asking", "Ship it?")
+
+        payload = self._live_sessions(companion.client)
+
+        assert payload["count"] == 2
+        by_id = {item["session"]["session_id"]: item for item in payload["sessions"]}
+        assert by_id["busy"]["session"]["state"] == "working"
+        assert by_id["asking"]["session"]["state"] == "waiting"
+        assert by_id["asking"]["session"]["question"] == "Ship it?"
+        assert by_id["busy"]["identity"] is not None
+
+    def test_sessions_agent_filter(self, companion):
+        companion.ingest("c1", "Claude?", agent="claude")
+        companion.ingest("x1", "Codex?", agent="codex")
+
+        payload = self._live_sessions(companion.client, agent="claude")
+
+        assert payload["count"] == 1
+        assert payload["sessions"][0]["session"]["agent"] == "claude"
+
+    def test_sessions_tombstones_are_included_then_filterable(self, companion):
+        companion.ingest("done", "Anything else?", agent="claude")
+        companion.module.ingest_agent_hook_event(
+            agent="claude",
+            payload={
+                "session_id": "done",
+                "hook_event_name": "SessionEnd",
+                "cwd": str(companion.state.parent),
+            },
+            state_path=companion.state,
+        )
+
+        with_ended = self._live_sessions(companion.client)
+        assert with_ended["count"] == 1
+        assert with_ended["sessions"][0]["session"]["state"] == "ended"
+
+        without = self._live_sessions(companion.client, include_ended="false")
+        assert without["count"] == 0
+
+    def test_sessions_dead_sessions_fall_out_of_the_live_set(self, companion):
+        companion.ingest("ancient", "Still there?", now=companion.old)
+
+        payload = self._live_sessions(companion.client)
+
+        assert payload["count"] == 0
+
+
+@pytest.mark.integration
+class TestApiStateEndpoint:
+    """Tests for GET /api/state endpoint."""
+
+    def test_returns_state(self, test_client, mock_callbacks):
+        """Should return current meeting state."""
+        response = test_client.get("/api/state")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["id"] == "test-123"
+        assert data["duration"] == 120
+
+        mock_callbacks["get_state"].assert_called_once()
+
+    def test_handles_empty_state(self, test_client, mock_callbacks):
+        """Should handle empty state gracefully."""
+        mock_callbacks["get_state"].return_value = {}
+        response = test_client.get("/api/state")
+        assert response.status_code == 200
+        assert response.json() == {}
+
+    def test_handles_exception(self, test_client, mock_callbacks):
+        """Should return empty dict on exception."""
+        mock_callbacks["get_state"].side_effect = Exception("test error")
+        response = test_client.get("/api/state")
+        assert response.status_code == 200
+        assert response.json() == {}
+
+
+@pytest.mark.integration
+class TestApiBookmarkEndpoint:
+    """Tests for POST /api/bookmark endpoint."""
+
+    def test_creates_bookmark(self, test_client, mock_callbacks):
+        """Should create bookmark via callback."""
+        response = test_client.post("/api/bookmark", json={"label": "Important"})
+        assert response.status_code == 200
+        assert response.json() == {"success": True}
+
+        mock_callbacks["on_bookmark"].assert_called_once_with("Important")
+
+    def test_creates_bookmark_empty_label(self, test_client, mock_callbacks):
+        """Should handle empty label."""
+        response = test_client.post("/api/bookmark", json={})
+        assert response.status_code == 200
+        mock_callbacks["on_bookmark"].assert_called_once_with("")
+
+    def test_creates_bookmark_no_body(self, test_client, mock_callbacks):
+        """Should handle no request body."""
+        response = test_client.post("/api/bookmark")
+        assert response.status_code == 200
+        mock_callbacks["on_bookmark"].assert_called_once_with("")
+
+    def test_handles_callback_exception(self, test_client, mock_callbacks):
+        """Should return error on callback failure."""
+        mock_callbacks["on_bookmark"].side_effect = Exception("bookmark error")
+        response = test_client.post("/api/bookmark", json={"label": "test"})
+        assert response.status_code == 500
+        data = response.json()
+        assert data["success"] is False
+        assert "error" in data
+
+
+@pytest.mark.integration
+class TestApiStopEndpoint:
+    """Tests for POST /api/stop endpoint."""
+
+    def test_calls_stop_callback(self, test_client, mock_callbacks):
+        """Should call on_stop callback."""
+        response = test_client.post("/api/stop")
+        assert response.status_code == 200
+        assert response.json() == {"success": True}
+
+        mock_callbacks["on_stop"].assert_called_once()
+
+    def test_handles_callback_exception(self, test_client, mock_callbacks):
+        """Should return error on callback failure."""
+        mock_callbacks["on_stop"].side_effect = Exception("stop error")
+        response = test_client.post("/api/stop")
+        assert response.status_code == 500
+        data = response.json()
+        assert data["success"] is False
+        assert "error" in data
+
+
+@pytest.mark.integration
+class TestRuntimeControlEndpoints:
+    """Tests for runtime-level meeting control routes."""
+
+    def test_runtime_status_falls_back_to_state(self, test_client):
+        response = test_client.get("/api/runtime/status")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["status"] == "ok"
+        assert payload["mode"] == "web"
+        assert payload["meeting_active"] is True
+        assert payload["meeting"]["id"] == "test-123"
+        assert payload["meeting_id"] == "test-123"
+        assert payload["state"]["id"] == "test-123"
+
+    def test_runtime_status_prefers_explicit_meeting_active_flag(self, mock_callbacks):
+        state = {
+            "id": "web-runtime",
+            "started_at": "2026-03-29T10:00:00",
+            "ended_at": None,
+            "meeting_active": False,
+        }
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=MagicMock(return_value=state),
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        response = client.get("/api/runtime/status")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["meeting_active"] is False
+        assert payload["meeting"] is None
+        assert payload["meeting_id"] is None
+
+    def test_runtime_status_normalizes_callback_payload(self, mock_callbacks):
+        state = {"id": "runtime", "meeting_active": False, "segments": [], "bookmarks": []}
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=MagicMock(return_value=state),
+                         on_get_status=MagicMock(return_value={"voice_state": "idle"}),
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        response = client.get("/api/runtime/status")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["status"] == "ok"
+        assert payload["mode"] == "web"
+        assert payload["meeting_active"] is False
+        assert payload["voice_state"] == "idle"
+        assert payload["state"]["id"] == "runtime"
+
+    def test_meeting_start_not_supported_without_callback(self, test_client):
+        response = test_client.post("/api/meeting/start")
+        assert response.status_code == 501
+        payload = response.json()
+        assert payload["success"] is False
+
+    def test_meeting_stop_uses_stop_callback_by_default(self, test_client, mock_callbacks):
+        response = test_client.post("/api/meeting/stop")
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+        mock_callbacks["on_stop"].assert_called_once()
+
+    def test_meeting_stop_prefers_on_meeting_stop_callback(self, mock_callbacks):
+        on_meeting_stop = MagicMock(return_value={"status": "meeting_stopped"})
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         on_meeting_stop=on_meeting_stop,
+                         get_state=mock_callbacks["get_state"],
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        response = client.post("/api/meeting/stop")
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+        on_meeting_stop.assert_called_once()
+        mock_callbacks["on_stop"].assert_not_called()
+
+
+@pytest.mark.integration
+class TestIntentRoutingControlEndpoints:
+    """Tests for MIR control-plane endpoints."""
+
+    def test_get_intent_controls_returns_safe_default_without_callback(self, test_client):
+        response = test_client.get("/api/intents/control")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["enabled"] is False
+        assert payload["profile"] == "balanced"
+        assert payload["available_profiles"] == []
+        assert payload["supported_intents"] == []
+
+    def test_intent_profile_and_override_require_callbacks(self, test_client):
+        profile_response = test_client.put("/api/intents/profile", json={"profile": "architect"})
+        assert profile_response.status_code == 501
+        override_response = test_client.put("/api/intents/override", json={"intents": ["architecture"]})
+        assert override_response.status_code == 501
+        preview_response = test_client.post("/api/intents/preview", json={"profile": "architect"})
+        assert preview_response.status_code == 501
+
+    def test_intent_controls_round_trip_with_callbacks(self, mock_callbacks):
+        controls = {
+            "enabled": True,
+            "profile": "balanced",
+            "available_profiles": ["balanced", "architect"],
+            "supported_intents": ["architecture", "delivery"],
+            "override_intents": [],
+            "threshold": 0.6,
+            "last_preview": None,
+        }
+
+        def _get_controls() -> dict[str, object]:
+            return deepcopy(controls)
+
+        def _set_profile(profile: str) -> dict[str, object]:
+            controls["profile"] = str(profile).strip().lower() or "balanced"
+            return _get_controls()
+
+        def _set_override(intents: list[str] | None) -> dict[str, object]:
+            controls["override_intents"] = [str(intent).strip().lower() for intent in (intents or []) if str(intent).strip()]
+            return _get_controls()
+
+        def _preview_route(**kwargs) -> dict[str, object]:
+            _ = kwargs
+            route = {
+                "profile": controls["profile"],
+                "active_intents": list(controls["override_intents"]) or ["architecture"],
+                "plugin_chain": ["requirements_extractor", "mermaid_architecture"],
+                "intent_scores": {"architecture": 0.84},
+                "threshold": 0.6,
+                "hysteresis_applied": False,
+                "override_intents": list(controls["override_intents"]),
+            }
+            controls["last_preview"] = route
+            return route
+
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_get_intent_controls=_get_controls,
+                         on_set_intent_profile=_set_profile,
+                         on_set_intent_override=_set_override,
+                         on_route_preview=_preview_route,
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        initial = client.get("/api/intents/control")
+        assert initial.status_code == 200
+        assert initial.json()["profile"] == "balanced"
+
+        profile_update = client.put("/api/intents/profile", json={"profile": "architect"})
+        assert profile_update.status_code == 200
+        assert profile_update.json()["controls"]["profile"] == "architect"
+
+        override_update = client.put("/api/intents/override", json={"intents": ["architecture", "delivery"]})
+        assert override_update.status_code == 200
+        assert override_update.json()["controls"]["override_intents"] == ["architecture", "delivery"]
+
+        preview = client.post("/api/intents/preview", json={"profile": "architect"})
+        assert preview.status_code == 200
+        route = preview.json()["route"]
+        assert route["profile"] == "architect"
+        assert route["active_intents"] == ["architecture", "delivery"]
+        assert "mermaid_architecture" in route["plugin_chain"]
+
+
+@pytest.mark.integration
+class TestMirHistoryApiEndpoints:
+    plugins = property(lambda self: self)
+    """Tests for persisted MIR timeline and plugin-run meeting APIs."""
+
+    def test_meeting_intent_timeline_endpoint(self, isolated_db, test_client):
+        now = datetime(2026, 3, 29, 18, 0, 0)
+        isolated_db.meetings.save_meeting(MeetingState(id="m-001", started_at=now))
+        isolated_db.plugins.record_intent_window(
+            meeting_id="m-001",
+            window_id="m-001:w0001",
+            start_seconds=0.0,
+            end_seconds=90.0,
+            transcript_hash="h-1",
+            transcript_excerpt="Architecture and scope planning",
+            profile="balanced",
+            threshold=0.6,
+            active_intents=["architecture", "delivery"],
+            intent_scores={"architecture": 0.81, "delivery": 0.72},
+            override_intents=[],
+            tags=["architecture"],
+            metadata={"source": "route_preview"},
+        )
+        isolated_db.plugins.record_intent_window(
+            meeting_id="m-001",
+            window_id="m-001:w0002",
+            start_seconds=30.0,
+            end_seconds=120.0,
+            transcript_hash="h-2",
+            transcript_excerpt="Incident mitigation and handoff",
+            profile="incident_response",
+            threshold=0.5,
+            active_intents=["incident"],
+            intent_scores={"incident": 0.93},
+            override_intents=["incident"],
+            tags=["incident"],
+            metadata={"source": "route_preview"},
+        )
+
+        response = test_client.get("/api/meetings/m-001/intent-timeline?limit=25")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["meeting_id"] == "m-001"
+        assert len(payload["windows"]) == 2
+        assert payload["windows"][0]["intent_scores"]["architecture"] == pytest.approx(0.81)
+        assert payload["windows"][1]["active_intents"] == ["incident"]
+        assert len(payload["transitions"]) == 2
+        assert payload["transitions"][1]["added"] == ["incident"]
+
+        missing = test_client.get("/api/meetings/missing/intent-timeline")
+        assert missing.status_code == 404
+
+    def test_meeting_plugin_runs_endpoint(self, isolated_db, test_client):
+        now = datetime(2026, 3, 29, 18, 0, 0)
+        isolated_db.meetings.save_meeting(MeetingState(id="m-001", started_at=now))
+        # Recorded oldest-first: `list_plugin_runs` answers newest-first
+        # (ORDER BY created_at DESC, id DESC).
+        isolated_db.plugins.record_plugin_run(
+            meeting_id="m-001",
+            window_id="m-001:w0001",
+            plugin_id="requirements_extractor",
+            plugin_version="1.0.0",
+            status="success",
+            idempotency_key="idem-1",
+            duration_ms=44.2,
+            output={"requirements": 4},
+        )
+        isolated_db.plugins.record_plugin_run(
+            meeting_id="m-001",
+            window_id="m-001:w0002",
+            plugin_id="incident_timeline",
+            plugin_version="preview",
+            status="planned",
+            idempotency_key="idem-2",
+            duration_ms=0.0,
+            output={"source": "route_preview"},
+        )
+
+        response = test_client.get("/api/meetings/m-001/plugin-runs?limit=50")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["meeting_id"] == "m-001"
+        assert len(payload["runs"]) == 2
+        assert payload["runs"][0]["plugin_id"] == "incident_timeline"
+        assert payload["runs"][1]["status"] == "success"
+
+        filtered = test_client.get("/api/meetings/m-001/plugin-runs?window_id=m-001:w0001")
+        assert filtered.status_code == 200
+        filtered_payload = filtered.json()
+        assert filtered_payload["window_id"] == "m-001:w0001"
+        assert len(filtered_payload["runs"]) == 1
+        assert filtered_payload["runs"][0]["plugin_id"] == "requirements_extractor"
+
+        missing = test_client.get("/api/meetings/missing/plugin-runs")
+        assert missing.status_code == 404
+
+    def test_meeting_artifacts_endpoint(self, isolated_db, test_client):
+        now = datetime(2026, 3, 29, 18, 0, 0)
+        isolated_db.meetings.save_meeting(MeetingState(id="m-001", started_at=now))
+        isolated_db.plugins.record_artifact(
+            artifact_id="art-001",
+            meeting_id="m-001",
+            artifact_type="requirements",
+            title="Requirements Extractor",
+            body_markdown="### Requirements\n\nDefine API acceptance criteria.",
+            structured_json={"plugin_run_ids": ["10"], "window_ids": ["m-001:w0001"]},
+            confidence=0.82,
+            status="draft",
+            plugin_id="requirements_extractor",
+            plugin_version="1.0.0",
+            sources=[
+                {"source_type": "intent_window", "source_ref": "m-001:w0001"},
+                {"source_type": "plugin_run", "source_ref": "10"},
+            ],
+        )
+
+        response = test_client.get("/api/meetings/m-001/artifacts?limit=25")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["meeting_id"] == "m-001"
+        assert len(payload["artifacts"]) == 1
+        artifact = payload["artifacts"][0]
+        assert artifact["artifact_type"] == "requirements"
+        assert artifact["origin"] == "meeting"  # explicit since HSM-18-07
+        assert artifact["confidence"] == pytest.approx(0.82)
+        refs = {(source["source_type"], source["source_ref"]) for source in artifact["sources"]}
+        assert ("intent_window", "m-001:w0001") in refs
+        assert ("plugin_run", "10") in refs
+
+        missing = test_client.get("/api/meetings/missing/artifacts")
+        assert missing.status_code == 404
+
+    def test_meeting_export_endpoint_renders_handoff_formats(self, isolated_db, test_client):
+        now = datetime(2026, 3, 29, 18, 0, 0)
+        meeting = MeetingState(
+            id="m-export",
+            started_at=now,
+            title="Export Handoff",
+            segments=[
+                TranscriptSegment(
+                    text="Define API acceptance criteria.",
+                    speaker="Me",
+                    start_time=0.0,
+                    end_time=4.0,
+                )
+            ],
+            intel=IntelSnapshot(
+                timestamp=10.0,
+                topics=["API"],
+                action_items=[
+                    {
+                        "id": "ai-1",
+                        "task": "Send requirements",
+                        "owner": "Me",
+                        "due": "Friday",
+                        "status": "pending",
+                        "review_state": "accepted",
+                        "source_timestamp": 125.5,
+                    }
+                ],
+                summary="Discussed export handoff.",
+            ),
+        )
+
+        isolated_db.meetings.save_meeting(meeting)
+        isolated_db.plugins.record_artifact(
+            artifact_id="art-001",
+            meeting_id="m-export",
+            artifact_type="requirements",
+            title="API Requirements",
+            body_markdown="### Requirements\n\nDefine API acceptance criteria.",
+            structured_json={"items": 1},
+            confidence=0.82,
+            status="needs_review",
+            plugin_id="requirements_extractor",
+            plugin_version="1.0.0",
+            sources=[{"source_type": "intent_window", "source_ref": "w-1"}],
+        )
+
+        markdown = test_client.get("/api/meetings/m-export/export?format=markdown")
+        assert markdown.status_code == 200
+        assert markdown.headers["content-type"].startswith("text/markdown")
+        assert 'filename="holdspeak-meeting-m-export.md"' in markdown.headers["content-disposition"]
+        assert "# Export Handoff" in markdown.text
+        assert "review accepted; source 02:05" in markdown.text
+        assert "## Artifacts" in markdown.text
+        assert "### API Requirements" in markdown.text
+
+        json_response = test_client.get("/api/meetings/m-export/export?format=json")
+        assert json_response.status_code == 200
+        assert json_response.headers["content-type"].startswith("application/json")
+        payload = json_response.json()
+        assert payload["id"] == "m-export"
+        assert payload["artifacts"][0]["title"] == "API Requirements"
+
+        invalid = test_client.get("/api/meetings/m-export/export?format=pdf")
+        assert invalid.status_code == 400
+
+        missing = test_client.get("/api/meetings/missing/export")
+        assert missing.status_code == 404
+
+    def test_legacy_meeting_without_mir_history_rows_remains_loadable(self, isolated_db, test_client):
+        # A pre-MIR meeting: the row exists, none of the history tables do.
+        isolated_db.meetings.save_meeting(
+            MeetingState(id="m-legacy", started_at=datetime(2026, 3, 29, 18, 0, 0))
+        )
+
+        timeline = test_client.get("/api/meetings/m-legacy/intent-timeline")
+        assert timeline.status_code == 200
+        timeline_payload = timeline.json()
+        assert timeline_payload["meeting_id"] == "m-legacy"
+        assert timeline_payload["windows"] == []
+        assert timeline_payload["transitions"] == []
+
+        runs = test_client.get("/api/meetings/m-legacy/plugin-runs")
+        assert runs.status_code == 200
+        runs_payload = runs.json()
+        assert runs_payload["meeting_id"] == "m-legacy"
+        assert runs_payload["runs"] == []
+
+        artifacts = test_client.get("/api/meetings/m-legacy/artifacts")
+        assert artifacts.status_code == 200
+        artifacts_payload = artifacts.json()
+        assert artifacts_payload["meeting_id"] == "m-legacy"
+        assert artifacts_payload["artifacts"] == []
+
+    def test_cli_reroute_persistence_is_visible_in_timeline_api(
+        self, monkeypatch, isolated_db, test_client
+    ):
+        # The CLI and the hub now share ONE database — the reroute writes the
+        # intent window that the timeline route reads back, with no seam faked
+        # between them.
+        now = datetime(2026, 3, 29, 19, 30, 0)
+        isolated_db.meetings.save_meeting(
+            MeetingState(
+                id="m-reroute",
+                started_at=now,
+                ended_at=datetime(2026, 3, 29, 19, 30, 18),
+                title="Reroute Demo",
+                tags=["incident"],
+                segments=[
+                    TranscriptSegment(
+                        text="We have an active incident bridge.",
+                        speaker="Me",
+                        start_time=0.0,
+                        end_time=9.0,
+                    ),
+                    TranscriptSegment(
+                        text="Draft stakeholder comms and runbook changes.",
+                        speaker="Remote",
+                        start_time=9.0,
+                        end_time=18.0,
+                    ),
+                ],
+            )
+        )
+
+        import holdspeak.commands.intel as intel_command
+
+        monkeypatch.setattr(
+            intel_command,
+            "Config",
+            SimpleNamespace(
+                load=lambda: SimpleNamespace(
+                    meeting=SimpleNamespace(routing_profile="balanced"),
+                )
+            ),
+        )
+
+        rc = intel_command.run_intel_command(
+            SimpleNamespace(
+                process=False,
+                retry=None,
+                retry_failed=False,
+                route_dry_run=None,
+                reroute="m-reroute",
+                profile="incident",
+                threshold=0.65,
+                override_intents="incident,comms",
+                status="all",
+                limit=20,
+                max_jobs=None,
+            )
+        )
+        assert rc == 0
+
+        response = test_client.get("/api/meetings/m-reroute/intent-timeline")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["meeting_id"] == "m-reroute"
+        assert len(payload["windows"]) == 1
+        window = payload["windows"][0]
+        assert window["window_id"] == "m-reroute:cli-reroute"
+        assert window["profile"] == "incident"
+        assert window["override_intents"] == ["incident", "comms"]
+        assert window["metadata"]["source"] == "cli_reroute"
+
+
+@pytest.mark.integration
+class TestMeetingMetadataEndpoints:
+    """Tests for runtime-level meeting metadata updates."""
+
+    def test_meeting_patch_uses_runtime_update_callback(self, mock_callbacks):
+        on_update_meeting = MagicMock(
+            return_value={
+                "id": "meeting-1",
+                "meeting_active": True,
+                "title": "Planning Sync",
+                "tags": ["ops", "planning"],
+            }
+        )
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         on_update_meeting=on_update_meeting,
+                         get_state=mock_callbacks["get_state"],
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        response = client.patch("/api/meeting", json={"title": "Planning Sync", "tags": ["ops", "planning"]})
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["success"] is True
+        assert payload["meeting"]["title"] == "Planning Sync"
+        assert payload["meeting"]["tags"] == ["ops", "planning"]
+        on_update_meeting.assert_called_once_with(title="Planning Sync", tags=["ops", "planning"])
+
+    def test_meeting_patch_falls_back_to_title_and_tags_callbacks(self, mock_callbacks):
+        on_set_title = MagicMock()
+        on_set_tags = MagicMock()
+        get_state = MagicMock(
+            return_value={
+                "id": "meeting-2",
+                "meeting_active": True,
+                "title": "Retro",
+                "tags": ["team"],
+            }
+        )
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=get_state,
+                         on_set_title=on_set_title,
+                         on_set_tags=on_set_tags,
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        response = client.patch("/api/meeting", json={"title": "Retro", "tags": ["team"]})
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["success"] is True
+        assert payload["meeting"]["title"] == "Retro"
+        assert payload["meeting"]["tags"] == ["team"]
+        on_set_title.assert_called_once_with("Retro")
+        on_set_tags.assert_called_once_with(["team"])
+
+
+@pytest.mark.integration
+class TestDashboardLifecycleStateTransitions:
+    """Integration coverage for dashboard lifecycle controls and WS updates."""
+
+    def test_start_stop_start_cycle_hydrates_state_and_emits_ws_events(self):
+        state_holder: dict[str, dict[str, object]] = {
+            "state": {
+                "id": "web-runtime",
+                "mode": "web",
+                "meeting_active": False,
+                "segments": [],
+                "bookmarks": [],
+                "intel": {"topics": [], "action_items": [], "summary": ""},
+                "intel_status": {
+                    "state": "idle",
+                    "detail": "No meeting active",
+                    "requested_at": None,
+                    "completed_at": None,
+                },
+            }
+        }
+        meeting_counter = {"value": 0}
+
+        def _active_meeting_state(index: int) -> dict[str, object]:
+            return {
+                "id": f"meeting-{index}",
+                "mode": "web",
+                "meeting_active": True,
+                "title": f"Sprint Sync {index}",
+                "tags": ["ops", f"cycle-{index}"],
+                "segments": [
+                    {
+                        "speaker": "Me",
+                        "start_time": 0.0,
+                        "end_time": 1.2,
+                        "text": f"cycle-{index} kickoff",
+                    }
+                ],
+                "bookmarks": [{"timestamp": 0.6, "label": f"bookmark-{index}"}],
+                "intel": {
+                    "topics": [f"topic-{index}"],
+                    "action_items": [
+                        {
+                            "id": f"ai-{index}",
+                            "task": f"Ship patch {index}",
+                            "owner": "Me",
+                            "due": "Friday",
+                            "status": "pending",
+                            "review_state": "pending",
+                        }
+                    ],
+                    "summary": f"summary-{index}",
+                },
+                "intel_status": {
+                    "state": "ready",
+                    "detail": f"intel-ready-{index}",
+                    "requested_at": None,
+                    "completed_at": None,
+                },
+            }
+
+        def _get_state() -> dict[str, object]:
+            return deepcopy(state_holder["state"])
+
+        def _on_start() -> dict[str, object]:
+            meeting_counter["value"] += 1
+            next_state = _active_meeting_state(meeting_counter["value"])
+            state_holder["state"] = deepcopy(next_state)
+            return deepcopy(next_state)
+
+        def _on_meeting_stop() -> dict[str, object]:
+            stopped_state = deepcopy(state_holder["state"])
+            stopped_state["meeting_active"] = False
+            stopped_state["ended_at"] = "2026-03-29T18:00:00"
+            state_holder["state"] = deepcopy(stopped_state)
+            return {"status": "stopped", "meeting": deepcopy(stopped_state)}
+
+        def _on_get_status() -> dict[str, object]:
+            state = deepcopy(state_holder["state"])
+            return {
+                "status": "ok",
+                "mode": "web",
+                "meeting_active": bool(state.get("meeting_active")),
+                "state": state,
+            }
+
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=MagicMock(return_value={"timestamp": 0.0, "label": "bookmark"}),
+                         on_stop=_on_meeting_stop,
+                         on_meeting_stop=_on_meeting_stop,
+                         on_start=_on_start,
+                         on_get_status=_on_get_status,
+                         get_state=_get_state,
+                     ),
+                     host="127.0.0.1",
+                 )
+        broadcast_events: list[tuple[str, object]] = []
+        server.broadcast = lambda message_type, data: broadcast_events.append(
+            (message_type, deepcopy(data))
+        )
+        client = TestClient(server.app)
+
+        initial_status = client.get("/api/runtime/status")
+        assert initial_status.status_code == 200
+        assert initial_status.json()["meeting_active"] is False
+        assert initial_status.json()["state"]["id"] == "web-runtime"
+
+        start_first = client.post("/api/meeting/start")
+        assert start_first.status_code == 200
+        assert start_first.json()["success"] is True
+        assert start_first.json()["meeting"]["id"] == "meeting-1"
+
+        status_after_first_start = client.get("/api/runtime/status")
+        assert status_after_first_start.status_code == 200
+        assert status_after_first_start.json()["meeting_active"] is True
+        assert status_after_first_start.json()["state"]["id"] == "meeting-1"
+        assert status_after_first_start.json()["state"]["intel"]["summary"] == "summary-1"
+
+        stop_first = client.post("/api/meeting/stop")
+        assert stop_first.status_code == 200
+        assert stop_first.json()["success"] is True
+
+        status_after_first_stop = client.get("/api/runtime/status")
+        assert status_after_first_stop.status_code == 200
+        assert status_after_first_stop.json()["meeting_active"] is False
+        assert status_after_first_stop.json()["state"]["id"] == "meeting-1"
+        assert status_after_first_stop.json()["state"]["ended_at"] == "2026-03-29T18:00:00"
+
+        start_second = client.post("/api/meeting/start")
+        assert start_second.status_code == 200
+        assert start_second.json()["success"] is True
+        assert start_second.json()["meeting"]["id"] == "meeting-2"
+
+        state_after_second_start = client.get("/api/state")
+        assert state_after_second_start.status_code == 200
+        assert state_after_second_start.json()["id"] == "meeting-2"
+        assert state_after_second_start.json()["segments"][0]["text"] == "cycle-2 kickoff"
+
+        final_status = client.get("/api/runtime/status")
+        assert final_status.status_code == 200
+        assert final_status.json()["meeting_active"] is True
+        assert final_status.json()["state"]["id"] == "meeting-2"
+        # Each write (start, stop, start) sends its lifecycle frame, then ONE
+        # ``desk_changed`` announcement when the request ends
+        # (holdspeak/web/announce.py). The four reads send nothing.
+        assert [event[0] for event in broadcast_events] == [
+            "meeting_started",
+            "desk_changed",
+            "stopped",
+            "desk_changed",
+            "meeting_started",
+            "desk_changed",
+        ]
+        assert broadcast_events[0][1]["id"] == "meeting-1"
+        assert broadcast_events[2][1]["meeting"]["id"] == "meeting-1"
+        assert broadcast_events[4][1]["id"] == "meeting-2"
+        # The route has no id in its path: the announcement takes the verb
+        # from the path and the meeting id from the answer (2026-10-05).
+        named = [
+            (broadcast_events[i][1]["kind"], broadcast_events[i][1]["id"], broadcast_events[i][1]["op"])
+            for i in (1, 3, 5)
+        ]
+        assert named == [
+            ("meeting", "meeting-1", "start"),
+            ("meeting", "", "stop"),  # this test's stop answer names no meeting
+            ("meeting", "meeting-2", "start"),
+        ]
+
+    def test_websocket_supports_ping_pong_keepalive(self):
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=MagicMock(return_value={"timestamp": 0.0, "label": "bookmark"}),
+                         on_stop=MagicMock(return_value={"status": "stopped"}),
+                         get_state=lambda: {},
+                     ),
+                     host="127.0.0.1",
+                 )
+        client = TestClient(server.app)
+
+        with client.websocket_connect("/ws") as websocket:
+            websocket.send_text("ping")
+            assert websocket.receive_text() == "pong"
+
+
+@pytest.mark.integration
+class TestHistoryUiSmoke:
+    """Smoke checks for the browser-facing history/settings UI."""
+
+    def test_history_page_contains_control_plane_tabs_and_handlers(self, test_client):
+        """HS-10-08: /history rebuilt on AppLayout. Visible labels +
+        DOM markers must remain in the served HTML; the JS handler
+        identifiers + API endpoint strings now live in the bundled
+        hoisted chunk referenced from the HTML.
+
+        HS-132-12: HS-117-09 decomposed the `HistoryCore.tsx` monolith into
+        `cores/history/*`. The control plane is unchanged — it is just spread
+        across the sub-modules, so the smoke check reads the whole surface.
+        """
+        response = test_client.get("/history")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+
+        assert '<div id="root"></div>' in response.text
+        history_root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
+        sources = [history_root / "HistoryCore.tsx", *sorted((history_root / "history").iterdir())]
+        js = "\n".join(
+            path.read_text() for path in sources if path.suffix in {".ts", ".tsx"}
+        )
+        for marker in ("meetings", "actions", "speakers", "projects", "queues", "MeetingDetail", "ImportSection"):
+            assert marker in js
+        for endpoint in (
+            "/api/speakers",
+            "/api/intel/jobs",
+            "/api/plugin-jobs",
+            "/api/all-action-items",
+        ):
+            assert endpoint in js, f"missing API endpoint in bundle: {endpoint}"
+        assert "/api/meetings/" in js
+        assert "/artifacts" in js
+        assert "/export?format=" in js
+        # HS-170-04: the empty needs-you section is ABSENT (UX-CANON A.8:
+        # no counters of zero). NeedsYouTable returns null at zero instead
+        # of the old "QUEUE 0" token.
+        assert "return null" in js  # NeedsYouTable: section-absent at zero
+        assert "needsRows.length === 0" in js  # the honest guard
+
+    def test_settings_route_serves_the_global_settings_page(self, test_client):
+        response = test_client.get("/settings")
+        assert response.status_code == 200
+        assert '<div id="root"></div>' in response.text
+        source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/SettingsCore.tsx").read_text()
+        # HS-111-01: the global settings program is the Prefs drawer over
+        # the authored module registry, wired to /api/settings.
+        assert "PREF_MODULES" in source and "PrefsFace" in source
+        assert '"/api/settings"' in source
+
+
+@pytest.mark.integration
+class TestCompanionUiSmoke:
+    """Smoke checks for the /companion surface.
+
+    Since HS-69-12, /companion is the **Agent Desk** — a live desk of the real
+    agents + the companion link (React over /api/agents +
+    /api/coders/status), not the old static docs portal. This smoke check
+    asserts the desk's stable structure + the preserved connection/credential
+    facts. HS-111-04: the surface is the crew board — blocked-first ledger
+    rows, and the "How it connects" facts moved behind the gear door as
+    tokens (probe / token / relay / autonomous send), never prose.
+    """
+
+    def test_companion_page_is_the_agent_desk(self, test_client):
+        response = test_client.get("/companion")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+
+        assert '<div id="root"></div>' in response.text
+        source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CompanionCore.tsx").read_text()
+        for marker in (
+            "openPersona",
+            "openCoderSession",
+            # PHILO-17 refit (conductor): a blocked coder reads "Asks you"
+            # in its own section; the old door and custody stamp went.
+            "Asks you",
+            "Coders that ask",
+        ):
+            assert marker in source
+
+
+@pytest.mark.integration
+class TestCadenceUiSmoke:
+    """CAD-2-04 — the /cadence coach page serves and drives /api/cadence/*."""
+
+    def test_cadence_page_serves_with_sections(self, test_client):
+        response = test_client.get("/cadence")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+        assert '<div id="root"></div>' in response.text
+        source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CadenceCore.tsx").read_text()
+        for marker in ("cadence", "snooze", "Run now"):
+            assert marker in source
+
+    def test_cadence_page_js_calls_the_api(self, test_client):
+        js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CadenceCore.tsx").read_text()
+        assert "/api/cadence" in js, "cadence page JS missing the API base path"
+        for segment in ("/status", "/loops", "/run-now"):
+            assert segment in js, f"cadence page JS missing API segment: {segment}"
+        assert 'act(id, "snooze")' in js
+
+
+@pytest.mark.integration
+class TestSettingsApiEndpoints:
+    """Tests for web settings API."""
+
+    def test_settings_get_and_put_apply_runtime_callback(self, tmp_path, monkeypatch, mock_callbacks):
+        import holdspeak.config as config_module
+        from holdspeak.config import Config
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        on_settings_applied = MagicMock()
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_settings_applied=on_settings_applied,
+                     )
+                 )
+        client = TestClient(server.app)
+
+        get_response = client.get("/api/settings")
+        assert get_response.status_code == 200
+        assert get_response.json()["meeting"]["intel_provider"] in {"local", "cloud", "auto"}
+
+        # Credentials are write-only and use their dedicated operations.
+        assert client.put(
+            "/api/settings/secrets/failure_webhook_url",
+            json={"value": "https://ops.example.com/hooks/holdspeak"},
+        ).status_code == 200
+        assert client.put(
+            "/api/settings/secrets/failure_webhook_credential",
+            json={"value": "Bearer test-token", "header_name": "Authorization"},
+        ).status_code == 200
+        on_settings_applied.reset_mock()
+
+        payload = {
+            # HS-139-02: model.name and warm_on_start are now defaulted
+            # (stripped by the service), so test with living fields.
+            "model": {
+                "language": "pl",
+            },
+            "meeting": {
+                "intel_provider": "cloud",
+                "intel_profile_id": "p-lan",
+                "similarity_threshold": 0.82,
+            }
+        }
+        put_response = client.put("/api/settings", json=payload)
+        assert put_response.status_code == 200
+        data = put_response.json()
+        assert data["success"] is True
+        assert data["settings"]["model"]["language"] == "pl"
+        # HS-139-02: model.name stays at pinned default.
+        assert data["settings"]["model"]["name"] == "base"
+        assert data["settings"]["meeting"]["intel_provider"] == "cloud"
+        # HS-112-01: endpoint identity is the pointer; the dead legacy
+        # fields never ride the settings wire.
+        assert data["settings"]["meeting"]["intel_profile_id"] == "p-lan"
+        assert "intel_cloud_base_url" not in data["settings"]["meeting"]
+        # HS-139-01: intel_queue_poll_seconds deleted (dead field).
+        assert "intel_queue_poll_seconds" not in data["settings"]["meeting"]
+        assert "intel_retry_failure_webhook_header_value" not in data["settings"]["meeting"]
+        assert data["settings"]["_secrets"]["failure_webhook_url"]["configured"] is True
+        assert data["settings"]["_secrets"]["failure_webhook_credential"]["configured"] is True
+        assert data["settings"]["meeting"]["similarity_threshold"] == pytest.approx(0.82)
+        on_settings_applied.assert_called_once()
+
+        persisted = Config.load(path=tmp_path / "config.json")
+        assert persisted.model.language == "pl"
+        assert persisted.model.name == "base"  # pinned
+        assert persisted.meeting.intel_provider == "cloud"
+        assert persisted.meeting.intel_profile_id == "p-lan"
+        # HS-139-01: intel_queue_poll_seconds deleted (dead).
+        assert not hasattr(persisted.meeting, "intel_queue_poll_seconds")
+        assert persisted.meeting.intel_retry_failure_webhook_header_name == "Authorization"
+        assert persisted.meeting.intel_retry_failure_webhook_header_value == "Bearer test-token"
+
+    def test_settings_put_ignores_defaulted_keys(self, tmp_path, monkeypatch, test_client):
+        """HS-139-02: settings.update silently strips defaulted keys —
+        they are no longer writable via the settings surface."""
+        import holdspeak.config as config_module
+        from holdspeak.config import Config
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        # Write a payload containing every defaulted key with a non-default value.
+        resp = test_client.put("/api/settings", json={
+            "model": {"name": "large", "warm_on_start": False},
+            "meeting": {
+                "mic_label": "Speaker",
+                "remote_label": "Audience",
+                "cross_meeting_recognition": False,
+                "web_auto_open": False,
+                "intel_enabled": False,
+                "intel_deferred_enabled": False,
+                "mir_enabled": False,
+            },
+            "dictation": {"pipeline": {
+                "enabled": False,
+                "corrections_enabled": False,
+                "journal_enabled": False,
+                "journal_retention": 50,
+            }},
+        })
+        assert resp.status_code == 200, resp.text
+        persisted = Config.load(tmp_path / "config.json")
+        # Every defaulted key keeps its pinned default — the write was stripped.
+        assert persisted.model.name == "base"  # pinned
+        assert persisted.model.warm_on_start is True  # pinned
+        assert persisted.meeting.mic_label == "Me"  # pinned
+        assert persisted.meeting.remote_label == "Remote"  # pinned
+        assert persisted.meeting.cross_meeting_recognition is True  # pinned
+        assert persisted.meeting.intel_enabled is True  # pinned
+        assert persisted.meeting.intel_deferred_enabled is True  # pinned
+        assert persisted.meeting.mir_enabled is True  # pinned
+        assert persisted.dictation.pipeline.enabled is True  # pinned
+        assert persisted.dictation.pipeline.corrections_enabled is True  # pinned
+        assert persisted.dictation.pipeline.journal_enabled is True  # pinned
+        assert persisted.dictation.pipeline.journal_retention == 500  # pinned
+        # web_auto_open is deleted entirely (no field on MeetingConfig).
+        assert not hasattr(persisted.meeting, "web_auto_open")
+
+    def test_settings_put_strips_legacy_cloud_base_url(self, tmp_path, monkeypatch, test_client):
+        # HS-112-01: the dead legacy endpoint fields are never API-writable —
+        # a PUT carrying one succeeds with the field silently stripped, and
+        # the stored value stays untouched (endpoint identity lives only in
+        # the profiles table).
+        import holdspeak.config as config_module
+        from holdspeak.config import Config
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        response = test_client.put(
+            "/api/settings",
+            json={"meeting": {"intel_cloud_base_url": "ftp://example.com/v1"}},
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["success"] is True
+        assert "intel_cloud_base_url" not in payload["settings"]["meeting"]
+        assert Config.load(tmp_path / "config.json").meeting.intel_cloud_base_url is None
+
+    def test_settings_put_rejects_invalid_retry_webhook_url(self, tmp_path, monkeypatch, test_client):
+        import holdspeak.config as config_module
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        response = test_client.put(
+            "/api/settings/secrets/failure_webhook_url",
+            json={"value": "ftp://example.com/hook"},
+        )
+        assert response.status_code == 400
+        payload = response.json()
+        assert payload["success"] is False
+        assert "webhook" in payload["error"].lower()
+
+    def test_settings_put_ignores_partial_retry_webhook_header(self, tmp_path, monkeypatch, test_client):
+        import holdspeak.config as config_module
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        response = test_client.put(
+            "/api/settings",
+            json={"meeting": {"intel_retry_failure_webhook_header_name": "Authorization"}},
+        )
+        assert response.status_code == 200
+        from holdspeak.config import Config
+
+        assert Config.load(tmp_path / "config.json").meeting.intel_retry_failure_webhook_header_name is None
+
+    def test_settings_put_rejects_invalid_retry_webhook_header_name(self, tmp_path, monkeypatch, test_client):
+        import holdspeak.config as config_module
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        response = test_client.put(
+            "/api/settings/secrets/failure_webhook_credential",
+            json={"header_name": "Authorization:", "value": "Bearer test-token"},
+        )
+        assert response.status_code == 400
+        payload = response.json()
+        assert payload["success"] is False
+        assert "header name" in payload["error"]
+
+
+@pytest.mark.integration
+class TestSpeakerApiEndpoints:
+    """Tests for speaker management endpoints."""
+
+    def test_speaker_endpoints(self, isolated_db, test_client):
+        import numpy as np
+
+        from holdspeak.speaker_intel import SpeakerEmbedding
+
+        def _embedding(seed: int):
+            return np.full(256, float(seed), dtype=np.float32)
+
+        isolated_db.meetings.save_speaker(
+            SpeakerEmbedding(id="spk-1", name="Alice", embedding=_embedding(1), sample_count=4, avatar="👩")
+        )
+        isolated_db.meetings.save_speaker(
+            SpeakerEmbedding(id="spk-2", name="Bob", embedding=_embedding(2), sample_count=2, avatar="🧑")
+        )
+        # spk-1 speaks in TWO meetings so `meeting_count` is a real aggregate;
+        # m-001 is the more recent, so it leads the grouped detail payload.
+        isolated_db.meetings.save_meeting(
+            MeetingState(
+                id="m-000",
+                started_at=datetime(2025, 1, 10, 9, 0, 0),
+                ended_at=datetime(2025, 1, 10, 9, 20, 0),
+                title="Kickoff",
+                segments=[
+                    TranscriptSegment(
+                        text="Kickoff notes", speaker="Alice", start_time=0.0, end_time=10.0, speaker_id="spk-1"
+                    )
+                ],
+            )
+        )
+        isolated_db.meetings.save_meeting(
+            MeetingState(
+                id="m-001",
+                started_at=datetime(2025, 1, 11, 10, 30, 0),
+                ended_at=datetime(2025, 1, 11, 10, 50, 0),
+                title="Weekly sync",
+                segments=[
+                    TranscriptSegment(
+                        text="Action item follow-up",
+                        speaker="Alice",
+                        start_time=42.0,
+                        end_time=48.0,
+                        speaker_id="spk-1",
+                    ),
+                    TranscriptSegment(
+                        text="Agreed", speaker="Bob", start_time=48.0, end_time=52.0, speaker_id="spk-2"
+                    ),
+                ],
+            )
+        )
+
+        list_response = test_client.get("/api/speakers")
+        assert list_response.status_code == 200
+        list_data = list_response.json()
+        assert list_data["total"] == 2
+        assert {speaker["id"] for speaker in list_data["speakers"]} == {"spk-1", "spk-2"}
+
+        detail_response = test_client.get("/api/speakers/spk-1")
+        assert detail_response.status_code == 200
+        detail_data = detail_response.json()
+        assert detail_data["speaker"]["name"] == "Alice"
+        assert detail_data["stats"]["meeting_count"] == 2
+        assert detail_data["meetings"][0]["meeting_id"] == "m-001"
+
+        update_response = test_client.patch(
+            "/api/speakers/spk-1",
+            json={"name": "Alicia", "avatar": "🧠"},
+        )
+        assert update_response.status_code == 200
+        update_data = update_response.json()
+        assert update_data["success"] is True
+        assert update_data["speaker"]["name"] == "Alicia"
+        assert update_data["speaker"]["avatar"] == "🧠"
+
+        invalid_response = test_client.patch(
+            "/api/speakers/spk-1",
+            json={"name": "   "},
+        )
+        assert invalid_response.status_code == 400
+        assert "cannot be empty" in invalid_response.json()["error"]
+
+
+@pytest.mark.integration
+class TestGlobalActionItemsApiEndpoints:
+    """Tests for global action-item list, status, review, and edit endpoints."""
+
+    def test_action_item_endpoints_include_review_and_edit(self, isolated_db, test_client):
+        now = datetime(2025, 1, 12, 9, 0, 0)
+        isolated_db.meetings.save_meeting(
+            MeetingState(
+                id="m-001",
+                started_at=now,
+                ended_at=datetime(2025, 1, 12, 9, 30, 0),
+                title="Weekly sync",
+                intel=IntelSnapshot(
+                    timestamp=10.0,
+                    topics=[],
+                    action_items=[
+                        {
+                            "id": "a-1",
+                            "task": "Initial task",
+                            "owner": "Me",
+                            "due": None,
+                            "status": "pending",
+                            "review_state": "pending",
+                            "source_timestamp": 125.5,
+                        }
+                    ],
+                    summary="Weekly sync",
+                ),
+            )
+        )
+
+        list_response = test_client.get("/api/all-action-items?include_completed=true")
+        assert list_response.status_code == 200
+        payload = list_response.json()["action_items"][0]
+        assert payload["review_state"] == "pending"
+        assert payload["reviewed_at"] is None
+        assert payload["source_timestamp"] == pytest.approx(125.5)
+
+        status_response = test_client.patch(
+            "/api/all-action-items/a-1",
+            json={"status": "done"},
+        )
+        assert status_response.status_code == 200
+        status_item = status_response.json()["action_item"]
+        assert status_item["status"] == "done"
+        assert status_item["source_timestamp"] == pytest.approx(125.5)
+
+        review_response = test_client.patch(
+            "/api/all-action-items/a-1/review",
+            json={"review_state": "accepted"},
+        )
+        assert review_response.status_code == 200
+        reviewed_item = review_response.json()["action_item"]
+        assert reviewed_item["review_state"] == "accepted"
+        assert reviewed_item["reviewed_at"] is not None
+        assert reviewed_item["source_timestamp"] == pytest.approx(125.5)
+
+        pending_review_response = test_client.patch(
+            "/api/all-action-items/a-1/review",
+            json={"review_state": "pending"},
+        )
+        assert pending_review_response.status_code == 200
+        pending_review_item = pending_review_response.json()["action_item"]
+        assert pending_review_item["review_state"] == "pending"
+        assert pending_review_item["reviewed_at"] is None
+        assert pending_review_item["source_timestamp"] == pytest.approx(125.5)
+
+        edit_response = test_client.patch(
+            "/api/all-action-items/a-1/edit",
+            json={"task": "Edited task", "owner": "", "due": "Friday"},
+        )
+        assert edit_response.status_code == 200
+        edited_item = edit_response.json()["action_item"]
+        assert edited_item["task"] == "Edited task"
+        assert edited_item["owner"] is None
+        assert edited_item["due"] == "Friday"
+        assert edited_item["review_state"] == "accepted"
+        assert edited_item["source_timestamp"] == pytest.approx(125.5)
+
+    def test_action_item_review_and_edit_validation(self, monkeypatch, test_client):
+        class FakeDb:
+            meetings = property(lambda self: self)
+            def update_action_item_review_state(self, item_id, review_state):
+                _ = item_id, review_state
+                return False
+
+            def edit_action_item(self, item_id, *, task, owner, due):
+                _ = item_id, task, owner, due
+                return False
+
+            def get_action_item(self, item_id):
+                _ = item_id
+                return None
+
+        import holdspeak.db as db_module
+        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+
+        invalid_review = test_client.patch(
+            "/api/all-action-items/a-1/review",
+            json={"review_state": "approved"},
+        )
+        assert invalid_review.status_code == 400
+
+        invalid_edit = test_client.patch(
+            "/api/all-action-items/a-1/edit",
+            json={"task": "   "},
+        )
+        assert invalid_edit.status_code == 400
+
+
+@pytest.mark.integration
+class TestIntelQueueApiEndpoints:
+    intel = property(lambda self: self)
+    """Tests for deferred intel queue endpoints."""
+
+    def test_intel_jobs_list_retry_and_process(self, monkeypatch, isolated_db, test_client):
+        # Three REAL queue rows: one due now, one scheduled into the future,
+        # one failed. The status filter, the aggregate summary and the retry
+        # verb are all answered by the queue the hub actually reads.
+        def _meeting(meeting_id: str, minute: int, title: str) -> None:
+            isolated_db.meetings.save_meeting(
+                MeetingState(
+                    id=meeting_id,
+                    started_at=datetime(2025, 1, 11, 10, minute, 0),
+                    ended_at=datetime(2025, 1, 11, 10, minute + 20, 0),
+                    title=title,
+                    segments=[
+                        TranscriptSegment(
+                            text=f"{title} transcript", speaker="Me", start_time=0.0, end_time=6.0
+                        )
+                    ],
+                )
+            )
+
+        _meeting("m-001", 0, "Weekly sync")
+        _meeting("m-002", 5, "Design review")
+        _meeting("m-003", 10, "Retro")
+        summary_profile(isolated_db, "web-server-summary")
+        assign_summary(isolated_db, ["web-server-summary"])
+
+        # C1 retries and failures mutate an owned immutable descriptor, then
+        # create a successor where appropriate. Arrange claims before their
+        # lifecycle transitions instead of using the retired queued-row verbs.
+        isolated_db.intel.enqueue_intel_job("m-002", transcript_hash="def456")
+        assert isolated_db.intel.claim_next_intel_job() is not None
+        isolated_db.intel.retry_intel_job(
+            "m-002",
+            "transient issue",
+            retry_at=datetime.now() + timedelta(hours=1),
+            attempt=1,
+            max_attempts=3,
+        )
+
+        isolated_db.intel.enqueue_intel_job("m-003", transcript_hash="ghi789")
+        assert isolated_db.intel.claim_next_intel_job() is not None
+        isolated_db.intel.fail_intel_job("m-003", "permanent failure")
+
+        isolated_db.intel.enqueue_intel_job("m-001", transcript_hash="abc123", reason="transient issue")
+        isolated_db.intel.record_intel_job_attempt(
+            "m-001",
+            attempt=2,
+            outcome="scheduled_retry",
+            error="transient issue",
+            retry_at=datetime(2025, 1, 11, 10, 35, 0),
+        )
+
+        # The drain seam is bound INTO the service at import
+        # (`meeting_intel_service.py:9`), so that is the name to replace —
+        # patching `holdspeak.intel_queue` never reached the caller.
+        import holdspeak.services.meeting_intel_service as intel_service_module
+
+        monkeypatch.setattr(intel_service_module, "drain_intel_queue", lambda *args, **kwargs: 3)
+
+        jobs_response = test_client.get("/api/intel/jobs?status=queued&limit=5")
+        assert jobs_response.status_code == 200
+        jobs_data = jobs_response.json()
+        # The status filter is real: the failed job never appears.
+        assert {job["meeting_id"] for job in jobs_data["jobs"]} == {"m-001", "m-002"}
+        assert all(job["status"] == "queued" for job in jobs_data["jobs"])
+        due = next(job for job in jobs_data["jobs"] if job["meeting_id"] == "m-001")
+        assert due["status"] == "queued"
+        assert due["retry_scheduled"] is False
+        assert "retries_remaining" in due
+        assert len(due["retry_history"]) == 1
+        assert due["retry_history"][0]["outcome"] == "scheduled_retry"
+        scheduled = next(job for job in jobs_data["jobs"] if job["meeting_id"] == "m-002")
+        assert scheduled["retry_scheduled"] is True
+        assert scheduled["next_retry_at"] is not None
+
+        summary_response = test_client.get("/api/intel/summary")
+        assert summary_response.status_code == 200
+        summary_data = summary_response.json()
+        assert summary_data["total_jobs"] == 3
+        assert summary_data["queued_jobs"] == 2
+        assert summary_data["failed_jobs"] == 1
+        assert summary_data["scheduled_retry_jobs"] == 1
+        assert summary_data["next_retry_at"] is not None
+
+        route_response = test_client.get("/api/meetings/m-001/intel-recovery")
+        assert route_response.status_code == 200
+        planned_route = route_response.json()["planned_route"]
+        assert planned_route["status"] == "ready"
+        assert planned_route["selection_hash"]
+        retry_response = test_client.post(
+            "/api/intel/retry/m-001",
+            json={"expected_selection_hash": planned_route["selection_hash"]},
+        )
+        assert retry_response.status_code == 200
+        assert retry_response.json()["success"] is True
+
+        retry_missing = test_client.post("/api/intel/retry/unknown")
+        assert retry_missing.status_code == 404
+        assert retry_missing.json()["success"] is False
+
+        process_response = test_client.post("/api/intel/process", json={"max_jobs": 2, "mode": "retry_now"})
+        assert process_response.status_code == 200
+        process_data = process_response.json()
+        assert process_data["success"] is True
+        assert process_data["processed"] == 3
+        assert process_data["mode"] == "retry_now"
+
+        process_invalid_mode = test_client.post("/api/intel/process", json={"mode": "invalid"})
+        assert process_invalid_mode.status_code == 400
+
+
+@pytest.mark.integration
+class TestPluginRunQueueApiEndpoints:
+    plugins = property(lambda self: self)
+    """Tests for deferred MIR plugin-run queue endpoints."""
+
+    def test_plugin_jobs_list_retry_and_cancel(self, monkeypatch, test_client):
+        now = datetime(2026, 3, 29, 20, 0, 0)
+
+        class FakeDb:
+            plugins = property(lambda self: self)
+            def __init__(self):
+                self.jobs = {
+                    1: SimpleNamespace(
+                        id=1,
+                        meeting_id="m-001",
+                        window_id="m-001:w0001",
+                        plugin_id="incident_timeline",
+                        plugin_version="1.0.0",
+                        transcript_hash="hash-1",
+                        idempotency_key="idem-1",
+                        context={},
+                        status="queued",
+                        requested_at=datetime(2027, 3, 29, 20, 5, 0),
+                        updated_at=now,
+                        attempts=1,
+                        last_error="Transient issue",
+                    ),
+                    2: SimpleNamespace(
+                        id=2,
+                        meeting_id="m-001",
+                        window_id="m-001:w0002",
+                        plugin_id="risk_heatmap",
+                        plugin_version="1.0.0",
+                        transcript_hash="hash-2",
+                        idempotency_key="idem-2",
+                        context={},
+                        status="failed",
+                        requested_at=datetime(2026, 3, 29, 19, 0, 0),
+                        updated_at=now,
+                        attempts=4,
+                        last_error="Timed out repeatedly",
+                    ),
+                    3: SimpleNamespace(
+                        id=3,
+                        meeting_id="m-002",
+                        window_id="m-002:w0001",
+                        plugin_id="stakeholder_update_drafter",
+                        plugin_version="1.0.0",
+                        transcript_hash="hash-3",
+                        idempotency_key="idem-3",
+                        context={},
+                        status="running",
+                        requested_at=datetime(2026, 3, 29, 19, 30, 0),
+                        updated_at=now,
+                        attempts=2,
+                        last_error=None,
+                    ),
+                }
+
+            def list_plugin_run_jobs(self, *, status="all", meeting_id=None, limit=200):
+                output = list(self.jobs.values())
+                if status != "all":
+                    output = [job for job in output if job.status == status]
+                if meeting_id:
+                    output = [job for job in output if job.meeting_id == meeting_id]
+                output.sort(key=lambda job: (job.requested_at, job.id))
+                return output[:limit]
+
+            def get_plugin_run_job(self, job_id):
+                return self.jobs.get(int(job_id))
+
+            def retry_plugin_run_job(self, job_id, *, error, retry_at):
+                job = self.jobs[int(job_id)]
+                job.status = "queued"
+                job.last_error = error
+                job.requested_at = retry_at
+                job.updated_at = retry_at
+
+            def complete_plugin_run_job(self, job_id):
+                self.jobs.pop(int(job_id), None)
+
+            def get_plugin_run_job_summary(self):
+                return SimpleNamespace(
+                    total_jobs=3,
+                    queued_jobs=1,
+                    running_jobs=1,
+                    failed_jobs=1,
+                    queued_due_jobs=0,
+                    scheduled_retry_jobs=1,
+                    next_retry_at=datetime(2027, 3, 29, 20, 5, 0),
+                )
+
+        fake_db = FakeDb()
+        import holdspeak.db as db_module
+
+        monkeypatch.setattr(db_module, "get_database", lambda: fake_db)
+        import holdspeak.web.routes.activity.plugin_jobs as pj_route
+        monkeypatch.setattr(pj_route, "get_database", lambda: fake_db)
+
+        jobs_response = test_client.get("/api/plugin-jobs?status=all&limit=10")
+        assert jobs_response.status_code == 200
+        jobs_data = jobs_response.json()
+        assert len(jobs_data["jobs"]) == 3
+        jobs_by_id = {job["id"]: job for job in jobs_data["jobs"]}
+        assert jobs_by_id[1]["status"] == "queued"
+        assert jobs_by_id[1]["retry_scheduled"] is True
+        assert jobs_by_id[1]["next_retry_at"] is not None
+        assert jobs_by_id[2]["status"] == "failed"
+        assert jobs_by_id[2]["retry_scheduled"] is False
+
+        queued_response = test_client.get("/api/plugin-jobs?status=queued&limit=10")
+        assert queued_response.status_code == 200
+        queued_jobs = queued_response.json()["jobs"]
+        assert len(queued_jobs) == 1
+        assert queued_jobs[0]["id"] == 1
+
+        summary_response = test_client.get("/api/plugin-jobs/summary")
+        assert summary_response.status_code == 200
+        summary_data = summary_response.json()
+        assert summary_data["total_jobs"] == 3
+        assert summary_data["queued_jobs"] == 1
+        assert summary_data["running_jobs"] == 1
+        assert summary_data["failed_jobs"] == 1
+        assert summary_data["queued_due_jobs"] == 0
+        assert summary_data["scheduled_retry_jobs"] == 1
+        assert summary_data["next_retry_at"] is not None
+
+        retry_response = test_client.post("/api/plugin-jobs/2/retry-now")
+        assert retry_response.status_code == 200
+        retry_data = retry_response.json()
+        assert retry_data["success"] is True
+        assert retry_data["job"]["id"] == 2
+        assert retry_data["job"]["status"] == "queued"
+
+        cancel_response = test_client.post("/api/plugin-jobs/1/cancel")
+        assert cancel_response.status_code == 200
+        assert cancel_response.json()["success"] is True
+        assert fake_db.plugins.get_plugin_run_job(1) is None
+
+        retry_running = test_client.post("/api/plugin-jobs/3/retry-now")
+        assert retry_running.status_code == 409
+        assert retry_running.json()["success"] is False
+
+        cancel_running = test_client.post("/api/plugin-jobs/3/cancel")
+        assert cancel_running.status_code == 409
+        assert cancel_running.json()["success"] is False
+
+        missing_retry = test_client.post("/api/plugin-jobs/999/retry-now")
+        assert missing_retry.status_code == 404
+        assert missing_retry.json()["success"] is False
+
+        missing_cancel = test_client.post("/api/plugin-jobs/999/cancel")
+        assert missing_cancel.status_code == 404
+        assert missing_cancel.json()["success"] is False
+
+    def test_plugin_jobs_process_requires_runtime_callback(self, test_client):
+        response = test_client.post("/api/plugin-jobs/process", json={"mode": "retry_now", "max_jobs": 3})
+        assert response.status_code == 501
+        payload = response.json()
+        assert payload["success"] is False
+        assert "not supported" in payload["error"].lower()
+
+    def test_plugin_jobs_process_uses_runtime_callback(self, mock_callbacks):
+        callback_calls: list[dict[str, object]] = []
+        broadcasts: list[tuple[str, object]] = []
+
+        def _on_process_plugin_jobs(*, max_jobs=None, include_scheduled=False):
+            callback_calls.append(
+                {
+                    "max_jobs": max_jobs,
+                    "include_scheduled": include_scheduled,
+                }
+            )
+            if not include_scheduled:
+                return {
+                    "processed": 0,
+                    "skipped_active_meeting": True,
+                    "deferred_queue_jobs": 0,
+                    "deferred_queue_error": None,
+                }
+            return {
+                "processed": 2,
+                "skipped_active_meeting": False,
+                "deferred_queue_jobs": 1,
+                "deferred_queue_error": None,
+            }
+
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_process_plugin_jobs=_on_process_plugin_jobs,
+                     ),
+                     host="127.0.0.1",
+                 )
+        server.broadcast = lambda message_type, data: broadcasts.append((message_type, deepcopy(data)))
+        client = TestClient(server.app)
+
+        response = client.post("/api/plugin-jobs/process", json={"mode": "retry_now", "max_jobs": 5})
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["success"] is True
+        assert payload["processed"] == 2
+        assert payload["mode"] == "retry_now"
+        assert callback_calls == [{"max_jobs": 5, "include_scheduled": True}]
+        # The route's own frame, then ONE ``desk_changed`` announcement when
+        # the request ends (holdspeak/web/announce.py). The route has no id in
+        # its path and its answer names no one job: the op is the path's verb.
+        announcement = {
+            "kind": "plugin_job", "id": "", "op": "process", "origin": "hub",
+            "changes": [{"kind": "plugin_job", "id": "", "op": "process"}],
+        }
+        assert [name for name, _ in broadcasts] == ["plugin_jobs_processed", "desk_changed"]
+        assert broadcasts[0][1]["processed"] == 2
+        assert broadcasts[1][1] == announcement
+
+        default_mode = client.post("/api/plugin-jobs/process", json={"max_jobs": 2})
+        assert default_mode.status_code == 200
+        default_payload = default_mode.json()
+        assert default_payload["success"] is True
+        assert default_payload["mode"] == "respect_backoff"
+        assert default_payload["processed"] == 0
+        assert default_payload["skipped_active_meeting"] is True
+        assert callback_calls[1] == {"max_jobs": 2, "include_scheduled": False}
+        assert [name for name, _ in broadcasts[2:]] == ["plugin_jobs_processed", "desk_changed"]
+        assert broadcasts[2][1]["mode"] == "respect_backoff"
+        assert broadcasts[3][1] == announcement
+
+        invalid_mode = client.post("/api/plugin-jobs/process", json={"mode": "invalid"})
+        assert invalid_mode.status_code == 400
+        assert invalid_mode.json()["success"] is False
+
+        invalid_max_jobs = client.post("/api/plugin-jobs/process", json={"max_jobs": 0})
+        assert invalid_max_jobs.status_code == 400
+        assert invalid_max_jobs.json()["success"] is False
+        # The two refused writes sent nothing.
+        assert len(broadcasts) == 4
+
+
+# ============================================================
+# MeetingWebServer Property Tests
+# ============================================================
+
+
+@pytest.mark.integration
+class TestMeetingWebServerProperties:
+    """Tests for MeetingWebServer properties."""
+
+    def test_url_before_start(self, web_server):
+        """URL should be None before server starts."""
+        assert web_server.url is None
+
+    def test_host_default(self, web_server):
+        """Default host should be localhost."""
+        assert web_server.host == "127.0.0.1"
+
+
+# ============================================================
+# MeetingWebServer Lifecycle Tests
+# ============================================================
+
+
+@pytest.mark.integration
+class TestMeetingWebServerLifecycle:
+    """Tests for server start/stop lifecycle."""
+
+    def test_start_returns_url(self, mock_callbacks):
+        """start() should return the server URL."""
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                     )
+                 )
+        try:
+            url = server.start()
+            assert url.startswith("http://127.0.0.1:")
+            assert server.port is not None
+        finally:
+            server.stop()
+
+    def test_stop_clears_state(self, mock_callbacks):
+        """stop() should clear server state."""
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                     )
+                 )
+        server.start()
+        server.stop()
+
+        assert server._server is None
+        assert server._thread is None
+
+    def test_double_stop_safe(self, mock_callbacks):
+        """Calling stop() multiple times should be safe."""
+        server = MeetingWebServer(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                     )
+                 )
+        server.start()
+        server.stop()
+        server.stop()  # Should not raise
