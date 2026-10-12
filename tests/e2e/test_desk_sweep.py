@@ -270,8 +270,10 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
             "Runs on: the switchboard job rows move 84 px after the window settles", maybe=True),
     ],
     ("room", 1440): [
-        Red("readable", r"^overlap '(Settlement latency under load|Compliance team sign-off|RISK|AT_RISK|LIKELIHOOD HIGH|"
-            r"DUE SEP 15)' x '(Ask this project|Speak to ask this project|Result|Choose)'$",
+        # PHILO-17: which item rows sit under the bar depends on the head's
+        # height (the type ruling made it shorter): any item word may.
+        Red("readable", r"^overlap '[^']+' x '(Ask this project|Speak to ask this project|Result|Choose|"
+            r"No engine for answers)'$",
             "Room: the risk rows read as overlapping the ask bar (the reader ignores z-order: the rows may be "
             "scrolled under an opaque bar); where they sit depends on the late read", maybe=True),
         # A late read (the sources row) lands after the window settles and moves the body

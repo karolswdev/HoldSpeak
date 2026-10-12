@@ -156,7 +156,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
     expect(screen.getAllByText("The team reviewed the budget.")).toHaveLength(1);
     expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("16 WORDS");
-    const transcriptFold = screen.getByRole("button", { name: /TRANSCRIPT.*16 WORDS/ });
+    const transcriptFold = screen.getByRole("button", { name: /Transcript.*16 WORDS/ });
     expect(transcriptFold).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(0);
     fireEvent.click(transcriptFold);
@@ -264,7 +264,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     render(<ChairHome />);
     seat(running);
 
-    await waitFor(() => expect(screen.getByRole("button", { name: /TRANSCRIPT.*16 WORDS/ })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: /Transcript.*16 WORDS/ })).toBeInTheDocument());
     resolveFirst(ready.detail);
     await waitFor(() => expect(screen.queryByText("The team reviewed the budget.")).toBeNull());
     expect(screen.queryByText("MEETING DETAIL IDENTITY CHANGED")).toBeNull();
@@ -301,7 +301,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent(
       "The team reviewed the budget.",
     );
-    const transcriptFold = screen.getByRole("button", { name: /TRANSCRIPT.*16 WORDS/ });
+    const transcriptFold = screen.getByRole("button", { name: /Transcript.*16 WORDS/ });
     fireEvent.click(transcriptFold);
     expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
 
@@ -315,7 +315,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       "The team reviewed the budget.",
     );
     expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /TRANSCRIPT.*16 WORDS/ }))
+    expect(screen.getByRole("button", { name: /Transcript.*16 WORDS/ }))
       .toHaveAttribute("aria-expanded", "true");
 
     resolveRefresh(refreshed.detail);

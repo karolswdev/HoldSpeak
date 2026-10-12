@@ -40,7 +40,7 @@ import {
   ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt, clockTime, download, intelStateOf,
   summaryIsOff, type DetailView,
 } from "./helpers";
-import { MeetingDetail } from "./MeetingDetail";
+import { MeetingDetail, MEETING_TRANSCRIPT_OPEN } from "./MeetingDetail";
 import { useSummaryRun } from "./useSummaryRun";
 
 /** The meeting window's faces (the Meetings window's detail wings). */
@@ -323,7 +323,10 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
               {view === "outcomes" ? (
                 <>
                   <Button dense variant="ghost" data-testid="meeting-open-transcript"
-                    onClick={() => revealOnRecord(`meeting-${meetingId}-transcript`)}>
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent(MEETING_TRANSCRIPT_OPEN, { detail: meetingId }));
+                      window.requestAnimationFrame(() => revealOnRecord(`meeting-${meetingId}-transcript`));
+                    }}>
                     Open transcript
                   </Button>
                   {hasSummary ? (

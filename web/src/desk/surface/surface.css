@@ -5024,3 +5024,11 @@ button.surface-edit-in-place:hover {
 .surface-ledger[data-cols="hub"] .surface-ledger-row[data-wrap] .surface-ledger-primary {
   min-width: max-content;
 }
+
+/* PHILO-17 (owner: "comically large fonts"): a window's display fact is the
+   18–20 px headline, semibold, in every app (the type ruling). */
+.desk-next .desk-window-shell .surface-display {
+  font-size: 19px;
+  font-weight: 650;
+  line-height: 1.2;
+}

@@ -405,7 +405,7 @@ class TestMeetingFacesGlass:
                 page.wait_for_timeout(600)
                 order = page.evaluate("""() => { const w = document.querySelector('.desk-window:has(.meetings-detail-head)');
                   const well = w.querySelector('[data-seat=meeting]'); const slab = w.querySelector('.meeting-summary-slab, [data-testid=meeting-summary-text], .summary-text');
-                  const tr = [...w.querySelectorAll('*')].find((e) => /^TRANSCRIPT/.test((e.innerText || '').trim()) && e.children.length < 3);
+                  const tr = [...w.querySelectorAll('*')].find((e) => /^TRANSCRIPT/i.test((e.innerText || '').trim()) && e.children.length < 3);
                   const before = (a, b) => !!a && !!b && !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
                   return {window_width: Math.round(w.getBoundingClientRect().width), summary_before_send: before(slab, well),
                           send_before_transcript: before(well, tr), wells: w.querySelectorAll('[data-testid=send-well]').length}; }""")
