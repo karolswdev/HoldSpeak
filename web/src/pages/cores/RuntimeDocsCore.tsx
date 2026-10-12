@@ -19,7 +19,7 @@ import { CommandWell } from "./connections/ConnectionsPane";
 import { sortChecks } from "./SetupCore";
 import "./settings.css";
 
-type Check = { id?: string; label?: string; status?: string; detail?: string; fix?: unknown };
+type Check = { id?: string; label?: string; status?: string; detail?: string; raw?: string; fix?: unknown };
 
 /** The checks whose fix is choosing an engine (Runs on). */
 const ENGINE_CHECKS = new Set([
@@ -62,6 +62,8 @@ function GuideRow({ check, lead, speech, onReady }: {
   onReady: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  // The technical fact (`raw`) unfolds under the row's name.
+  const [more, setMore] = useState(false);
   const status = String(check.status ?? "unknown");
   const pill = PILL[status] ?? PILL.unknown;
   const needs = status === "fail" || status === "warn";
@@ -89,13 +91,20 @@ function GuideRow({ check, lead, speech, onReady }: {
   return (
     <li className="guide-row" data-status={status} data-testid={`guide-check-${id}`}>
       <div className="guide-row-text">
-        <span className="guide-row-name">{check.label ?? id}</span>
+        {check.raw && check.raw !== check.detail ? (
+          <Button variant="chrome" className="guide-row-name guide-row-title" aria-expanded={more} onClick={() => setMore((value) => !value)} data-testid={`guide-raw-toggle-${id}`}>
+            {check.label ?? id}
+          </Button>
+        ) : (
+          <span className="guide-row-name">{check.label ?? id}</span>
+        )}
         {check.detail ? (
           <span className="guide-row-meta" title={fixWords ?? check.detail}>{check.detail}</span>
         ) : null}
       </div>
       <span className="settings-pill" data-tone={pill.tone}>{pill.word}</span>
       {verb ? <span className="guide-row-verb">{verb}</span> : null}
+      {more && check.raw ? <code className="guide-row-raw" data-testid={`guide-raw-${id}`}>{check.raw}</code> : null}
       {open && command ? <div className="guide-row-fix"><CommandWell hint={command} /></div> : null}
     </li>
   );

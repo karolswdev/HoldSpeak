@@ -9,6 +9,7 @@ from holdspeak.timestamps import local_wall
 from dataclasses import dataclass
 import os
 import platform
+import re
 import shutil
 import sys
 
@@ -32,6 +33,202 @@ class DoctorCheck:
     status: str  # PASS | WARN | FAIL | INFO (INFO counts as neither)
     detail: str
     fix: str | None = None
+
+
+# ── PHILO-17 REFIT: the face's words for a check ──────────────────────────
+# A check's `detail` is the technical fact (the CLI prints it; tests read
+# it). `face_words(check)` is the short ASD-STE100 sentence the Setup face and
+# the Guide show; `/api/setup/status` sends it as `detail` and the technical
+# fact as `raw` (shown under a fold). Names and statuses do not change.
+
+_OPTIONAL_OFF = "Off. Dictation clean-up is optional."
+_ENGINE_WORDS = {
+    "mlx": "MLX",
+    "llama_cpp": "llama.cpp",
+    "llama-cpp": "llama.cpp",
+    "faster_whisper": "faster-whisper",
+    "faster-whisper": "faster-whisper",
+    "openai_compatible": "an OpenAI-compatible server",
+    "whisper": "Whisper",
+}
+
+
+def _this_device() -> str:
+    return "this Mac" if sys.platform == "darwin" else "this device"
+
+
+def _engine(word: str) -> str:
+    key = str(word or "").strip().strip("`").lower()
+    return _ENGINE_WORDS.get(key, word.strip().strip("`"))
+
+
+def _is_plain(text: str) -> bool:
+    """Short words with no wire marks: the detail can stand as it is."""
+    return bool(text) and len(text) <= 70 and not re.search(r"[;=_(){}`<>\[\]|]|\.py\b|/", text)
+
+
+def _sentence(text: str) -> str:
+    text = text.strip()
+    return text[:1].upper() + text[1:] if text else text
+
+
+def face_words(check: DoctorCheck) -> str:  # noqa: C901 - one table, read top to bottom
+    """The plain sentence for one check (never the wire's words)."""
+    name, status, detail = check.name, str(check.status).upper(), str(check.detail or "")
+    low = detail.lower()
+    ok = status in ("PASS", "INFO")
+    if low.startswith("off (dictation clean-up is disabled"):
+        return _OPTIONAL_OFF
+    if name == "Runtime":
+        return "HoldSpeak runs on this computer"
+    if name == "Config":
+        if ok:
+            return "Your settings are read"
+        if "not found" in low:
+            return "No settings file yet. HoldSpeak uses the defaults"
+        return "The settings file is from a newer HoldSpeak"
+    if name == "Database":
+        if low.startswith("no database yet"):
+            return "The database is made at first use"
+        if ok:
+            return "The database is ready"
+        return "The database has no tables" if "no tables" in low else "The database file cannot be read"
+    if name == "Microphone":
+        match = re.match(r"default input: (.+?) \(index", detail, re.I)
+        if ok:
+            return f"Uses {match.group(1)}" if match else "The microphone works"
+        return "No microphone found" if "no input" in low else "The microphone cannot be read"
+    if name == "Transcription backend":
+        match = re.search(r"resolves to `?([\w-]+)`?", detail)
+        if ok:
+            return f"Speech to text uses {_engine(match.group(1))}" if match else "Speech to text is ready"
+        return "Speech to text cannot start"
+    if name == "Speech model":
+        if ok:
+            return f"The speech model is on {_this_device()}"
+        if status == "WARN":
+            return "The speech model cannot be checked"
+        if "cannot run here" in low:
+            return f"Speech cannot run on {_this_device()}"
+        return "No speech model yet"
+    if name == "Web runtime":
+        return "The web app can start" if ok else "Parts of the web app are missing"
+    if name == "Web runtime auth":
+        return "Only this computer can open the web app"
+    if name == "Endpoint health":
+        if ok:
+            return "No calls to AI servers yet" if "no endpoint calls" in low else "All AI servers answer"
+        return "An AI server does not answer. HoldSpeak tries again later"
+    if name == "Trust destinations":
+        if ok:
+            return "Nothing goes out of this device"
+        match = re.search(r"destinations: (.+?)\.?$", detail)
+        return f"Data can go to {match.group(1)}" if match else "Some data can go to other places"
+    if name == "Runtime profiles":
+        return "The AI settings are correct" if ok else "An AI setting needs a fix"
+    if name == "Where AI runs":
+        lines = [line for line in detail.split("; ") if line]
+        ready = sum(1 for line in lines if line.endswith("· ready"))
+        if ok:
+            return "1 place for AI is ready" if ready == 1 else f"{ready} places for AI are ready"
+        if ready:
+            return f"{ready} ready. Some places for AI are not set up or not available"
+        if "not set up yet" in low and "unavailable" not in low:
+            return "No AI engine is set up yet"
+        return "No place for AI is available"
+    if name == "Other devices":
+        live = low.count(": live")
+        offline = low.count(": offline")
+        if live or offline:
+            parts = [f"{live} live" if live else "", f"{offline} offline" if offline else ""]
+            return "Other devices: " + ", ".join(p for p in parts if p)
+        return "No other device runs AI for this desk"
+    if name == "Project context":
+        match = re.match(r"found (.+?) at ", detail)
+        if ok:
+            return f"Found the project {match.group(1)}" if match else "A project is found"
+        return "No project found here" if "no project root" in low else "Project detection failed"
+    if name == "Dictation AI model":
+        if ok and "runs on profile" in low:
+            node = re.search(r"mesh node '([^']+)'", detail)
+            model = re.search(r"model=(\S+)", detail)
+            place = f"the device {node.group(1)}" if node else "your server"
+            return f"Runs on {place}" + (f" with {model.group(1)}" if model else "")
+        if "openai_compatible" in low:
+            return "Runs on an OpenAI-compatible server" if ok else "The server for clean-up is not set"
+        engine = re.search(r"\((mlx|llama_cpp)[;)]", detail)
+        if "engine is not installed" in low:
+            match = re.search(r"the (\S+) engine", detail)
+            return f"The {_engine(match.group(1)) if match else 'clean-up'} engine is not installed"
+        if "is not on this device yet" in low:
+            return "The clean-up model is not on this device yet"
+        if engine:
+            words = f"Runs on {_this_device()} with {_engine(engine.group(1))}"
+            return words if ok else f"{words}. Pick the profile again"
+    if name == "Dictation AI use":
+        return "No clean-up errors" if ok else "Clean-up is off until you restart HoldSpeak"
+    if name == "Dictation blocks":
+        if low.startswith("no dictation blocks"):
+            return "No dictation blocks yet"
+        match = re.match(r"(\d+) block", detail)
+        if ok:
+            return f"{match.group(1)} blocks are correct" if match else "Your dictation blocks are correct"
+        return "Your dictation blocks have an error"
+    if name == "Meeting plugins":
+        if low.startswith("off"):
+            return "Off. This is optional"
+        return "Meeting plugins are on" if ok else "Meeting plugins have an error"
+    if name == "Meeting plugin counters":
+        return "Plugin counts are ready" if ok else "Plugin counts cannot be read"
+    if name == "Global hotkey":
+        match = re.search(r"`([^`]+)`", detail)
+        if ok:
+            return f"The hotkey {match.group(1)} works" if match else "The hotkey works"
+        return "The hotkey cannot start"
+    if name == "Text injection":
+        return "HoldSpeak can type into other apps" if ok else "HoldSpeak cannot type into other apps"
+    if name == "Clipboard backend":
+        return "Copy and paste work" if ok else "A copy tool is missing"
+    if name in ("ffmpeg", "pactl"):
+        if "not required" in low:
+            return "Not needed on this computer"
+        return f"{name} is installed" if ok else f"{name} is not installed"
+    if name == "System audio capture":
+        match = re.match(r"detected: (.+)$", detail, re.I)
+        if ok:
+            return f"Records system audio from {match.group(1)}" if match else "System audio recording works"
+        return "System audio recording is not set up" if "not configured" in low else "System audio cannot be checked"
+    if name == "Connector packs":
+        return "Connectors are ready" if ok else "Some connector packs have errors"
+    if name == "People keystore":
+        return "People keys are in the system keychain" if ok else "A test keystore is in use. Do not use it for real data"
+    if name == "People MCP access":
+        if status == "WARN":
+            return "The People access setting is not correct"
+        return "Agents cannot read People" if "agents: off" in low else "Agents can read People"
+    if name == "Agent capabilities":
+        return "All agent tools are declared" if ok else "Some agent tools are not declared"
+    if name == "Tool-call gate":
+        if low.startswith("off"):
+            return "Off. This is optional"
+        if low.startswith("armed"):
+            return "On. It holds agent calls"
+        if low.startswith("held for"):
+            match = re.match(r"held for (\d+)", detail)
+            return f"On for {match.group(1)} agent worktrees" if match else "On for some agent worktrees"
+        return "Only half set up. It does nothing"
+    if name == "Coding agents":
+        if status == "INFO":
+            return "No coding agent found"
+        if "hooks missing" in low or "cannot run" in low or "does not trust" in low:
+            return "Some agent hooks are not installed"
+        if "tmux not on path" in low:
+            return "tmux is not installed"
+        return "Agent hooks are installed"
+    # Any other check: its own words when they are plain, else its state.
+    if _is_plain(detail):
+        return _sentence(detail.rstrip("."))
+    return {"PASS": "Ready", "INFO": "For your information", "WARN": "Needs a check", "FAIL": "Does not work"}.get(status, "Not known")
 
 
 def _doctor_profile_key_present(slot: str) -> bool:

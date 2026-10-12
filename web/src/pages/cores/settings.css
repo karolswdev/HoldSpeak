@@ -290,3 +290,25 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .guide-row { transition: none; }
 }
+.desk-next .guide-row-title {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.desk-next .guide-row-title:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.desk-next .guide-row-raw {
+  flex: 1 0 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-well);
+  box-shadow: var(--wb-sunken);
+  font: 500 12px / 1.4 var(--font-mono);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}

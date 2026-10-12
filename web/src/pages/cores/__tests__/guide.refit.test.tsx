@@ -15,7 +15,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
           sections: [
             { id: "database", label: "Database", status: "pass", detail: "~/.local/share/holdspeak/holdspeak.db" },
             { id: "where-ai-runs", label: "Where AI runs", status: "warn", detail: "No engine for summaries", fix: null },
-            { id: "ffmpeg", label: "ffmpeg", status: "fail", detail: "Not found", fix: "brew install ffmpeg" },
+            { id: "ffmpeg", label: "ffmpeg", status: "fail", detail: "ffmpeg is not installed", raw: "Not found in PATH", fix: "brew install ffmpeg" },
           ],
         };
       }
@@ -43,6 +43,10 @@ describe("the Guide wing", () => {
     expect(container.querySelectorAll(".btn--primary")).toHaveLength(1);
     fireEvent.click(show);
     expect(within(ffmpeg).getByText("brew install ffmpeg")).toBeTruthy();
+    // The technical fact shows only on demand, under the name.
+    expect(within(ffmpeg).queryByText("Not found in PATH")).toBeNull();
+    fireEvent.click(within(ffmpeg).getByTestId("guide-raw-toggle-ffmpeg"));
+    expect(within(ffmpeg).getByTestId("guide-raw-ffmpeg").textContent).toBe("Not found in PATH");
     // An engine check opens Runs on.
     expect(within(screen.getByTestId("guide-check-where-ai-runs")).getByRole("button", { name: "Choose engines" })).toBeTruthy();
     // The ready check is inside the closed Ready fold.
