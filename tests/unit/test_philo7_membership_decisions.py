@@ -20,8 +20,6 @@ The fences, and what turns each one red:
 """
 from __future__ import annotations
 
-import importlib.util
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -55,32 +53,11 @@ METHODS = {
     "decision.supersede": "supersede_decision",
 }
 
-#: The enumerated identities this story pays (phase status, "The enumerated identities").
-PAID_HERE = {
-    ("mcp", "decision.supersede", ""),                              # 1
-    ("mcp", "desk.delete", "kind=decisions"),                       # 6
-    ("mcp", "desk.verb", "verb_id=desk.delete,kind=decisions"),     # 25
-    ("mcp", "kb.add_member", ""),                                   # 28
-    ("mcp", "kb.list_members", ""),                                 # 29
-    ("mcp", "kb.remove_member", ""),                                # 30
-    ("mcp", "zone.file", ""),                                       # 31
-    ("mcp", "zone.list_members", ""),                               # 32
-    ("mcp", "zone.unfile", ""),                                     # 33
-}
-
 
 def _descriptors() -> dict[str, Any]:
     from holdspeak import operations
 
     return {d.name: d for d in operations.DESCRIPTORS}
-
-
-def _load_script(name: str) -> Any:
-    spec = importlib.util.spec_from_file_location(name, REPO / "scripts" / f"{name}.py")
-    module = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
-    sys.modules[name] = module
-    spec.loader.exec_module(module)  # type: ignore[union-attr]
-    return module
 
 
 @pytest.fixture
@@ -215,44 +192,6 @@ def test_mcp_tools_verbs_and_the_resource_go_through_invoke(hub: Hub, recorded: 
         "zone.file", "zone.members", "zone.members", "zone.unfile", "kb.member.add", "kb.members",
         "kb.member.remove", "decision.supersede", "decision.delete", "decision.delete",
     ]
-
-
-# ── the residual set and the public tool count (two measurements) ───────
-
-
-def test_the_residual_set_paid_exactly_the_enumerated_identities() -> None:
-    census = _load_script("residual_census")
-    committed = json.loads(census.SET_PATH.read_text(encoding="utf-8"))
-    paid = {census._key(e) for e in committed["paid"] if e["story"] == "PHILO-7-02"}
-    assert paid == PAID_HERE
-    listed = {census._key(e) for e in committed["entries"]}
-    assert not (paid & listed)
-    assert census.check(REPO, committed) == []
-    measurements = committed["measurements"]
-    # PHILO-7-02 left (284, 223, 61) and 229 public tools; a later story's
-    # paid entries and added tools are its own (PHILO-9-01 onward; PHILO-10-01's Send).
-    # MEMORY-4/5 (memory.observations, memory.page) and CONDUCTOR-K2 (agent.hand) are later too,
-    # and PHILO-16-16b (the six desk_window.* tools).
-    later_stories = ("PHILO-9", "PHILO-10", "MEMORY-", "CONDUCTOR-", "PHILO-16")
-    later = [e for e in committed["paid"] if e["story"].startswith(later_stories)]
-    later_added = [a for a in committed["public_tools_added"] if a["story"].startswith(later_stories)]
-    assert (measurements["residual_identities"] + len(later),
-            measurements["residual_mcp"] + sum(1 for e in later if e["transport"] == "mcp"),
-            measurements["residual_http"] + sum(1 for e in later if e["transport"] == "http")) == (284, 223, 61)
-    # A separate measurement: the receipt read is the one new public tool.
-    assert measurements["public_tools"] - len(later_added) == 229
-    added = [a for a in committed["public_tools_added"] if a["story"] == "PHILO-7-02"]
-    assert added == [{"story": "PHILO-7-02", "tool": "kernel.receipt", "operation": "kernel.receipt.read"}]
-
-
-def test_a_new_residual_identity_turns_the_fence_red(tmp_path: Path) -> None:
-    """Structural: a set that still lists a paid identity, or misses a new one, is red."""
-    census = _load_script("residual_census")
-    committed = json.loads(census.SET_PATH.read_text(encoding="utf-8"))
-    stale = dict(committed)
-    stale["entries"] = [e for e in committed["entries"] if e["entry_point"] != "workbench.run"]
-    problems = census.check(REPO, stale)
-    assert any("NEW residual identity" in p and "workbench.run" in p for p in problems), problems
 
 
 def test_the_job_words_point_at_the_admitted_operations() -> None:

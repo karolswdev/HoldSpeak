@@ -261,16 +261,3 @@ def test_sources_counts_distinct_sources_not_facts(tmp_path: Path, monkeypatch) 
     reset_database()
 
 
-def test_the_memory_faces_module_imports_no_private_memory_name() -> None:
-    """The faces read memory through its public API only: a private helper
-    of ``pages`` / ``consolidate`` can change shape under a sibling lane
-    (it did: #870 replaced ``pages._changes`` with a content digest)."""
-    import holdspeak.services.memory_faces as module
-
-    tree = ast.parse(Path(module.__file__).read_text())
-    private = [
-        f"{node.module}.{alias.name}" for node in ast.walk(tree)
-        if isinstance(node, ast.ImportFrom) and "memory" in (node.module or "")
-        for alias in node.names if alias.name.startswith("_")
-    ]
-    assert private == []

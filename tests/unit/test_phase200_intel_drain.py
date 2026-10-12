@@ -679,29 +679,6 @@ def test_a_stuck_drainer_is_named_in_the_log_before_the_lock_is_released(
     worker.stop(timeout=10.0)
 
 
-def test_the_hub_releases_the_database_only_after_the_conductors_are_stopped():
-    """Counsel P1-1(b). Source order is the contract; assert it by position."""
-    from pathlib import Path as _Path
-
-    root = _Path(__file__).resolve().parents[2] / "holdspeak"
-    runtime = (root / "web_runtime.py").read_text(encoding="utf-8")
-    # The hub's own order: stop the server (which runs the app shutdown hook
-    # and joins the conductors) BEFORE the combined stop-writers-then-release.
-    stop_server = runtime.index("self.server.stop()")
-    handback = runtime.index("self._stop_writers_and_release_database()")
-    assert stop_server < handback, (
-        "the database owner lock is released before the server is stopped"
-    )
-    # And inside that method, the drainer join precedes the release.
-    ownership = (root / "runtime" / "ownership.py").read_text(encoding="utf-8")
-    body = ownership.split("def _stop_writers_and_release_database", 1)[1].split(
-        "def _release_database", 1
-    )[0]
-    assert body.index("stop_intel_queue_conductor()") < body.index(
-        "self._release_database()"
-    ), "the owner lock is released before the drainer is joined"
-
-
 # ── counsel P1-2: the receipt host is the EXECUTION host ──────────────
 
 

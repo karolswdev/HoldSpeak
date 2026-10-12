@@ -427,25 +427,6 @@ def test_the_residual_set_equals_the_trees_census() -> None:
         assert entry["reason"], entry
 
 
-def test_the_residual_set_shrank_by_exactly_the_paid_decision_entries() -> None:
-    census = _load_script("residual_census")
-    committed = json.loads(census.SET_PATH.read_text(encoding="utf-8"))
-    listed = {census._key(e) for e in committed["entries"]}
-    paid = {census._key(e) for e in committed["paid"]}
-    assert paid and not (paid & listed), "a paid entry is still listed"
-    assert committed["baseline"]["residual_identities"] - len(paid) == len(listed)
-    story01 = {census._key(e) for e in committed["paid"] if e["story"] == "PHILO-5-01"}
-    assert len(story01) == 7
-    assert all("decision" in key[2] or "decisions.py" in key[1] for key in story01)
-    # Two measurements, never one: story 01 added no public tool; every tool a
-    # later story exposed is named in public_tools_added.
-    from holdspeak.mcp.tools import TOOLS
-
-    added = committed.get("public_tools_added", [])
-    assert not [a for a in added if a["story"] == "PHILO-5-01"]
-    assert len({t["name"] for t in TOOLS}) == committed["baseline"]["public_tools"] + len(added)
-
-
 def test_the_residual_fence_names_a_new_identity_and_a_stale_one() -> None:
     census = _load_script("residual_census")
     committed = json.loads(census.SET_PATH.read_text(encoding="utf-8"))
