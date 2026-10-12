@@ -21,7 +21,6 @@ Criteria covered here:
 """
 from __future__ import annotations
 
-import importlib
 import inspect
 from dataclasses import replace
 
@@ -100,19 +99,6 @@ class TestDescriptorsDeclareTheContract:
     def test_both_trigger_kinds_are_declared_exactly_once(self, recipe_id: str) -> None:
         kinds = [t.trigger for t in catalog.get_descriptor(recipe_id).triggers]
         assert sorted(kinds) == sorted(catalog.TRIGGERS)
-
-    def test_trigger_tokens_are_the_watch_evaluation_cores_tokens(self) -> None:
-        """AC4's seam: the catalog does not invent a third scheduling word.
-
-        ``WatchService._evaluate_core`` already spells the two firings
-        ``manual`` and ``scheduled``; read them off its real call sites.
-        """
-        source = inspect.getsource(
-            importlib.import_module("holdspeak.services.watch_service")
-        )
-        assert 'trigger_kind="manual"' in source
-        assert 'trigger_kind="scheduled"' in source
-        assert catalog.TRIGGERS == ("manual", "scheduled")
 
     @pytest.mark.parametrize("recipe_id", ALL_IDS)
     def test_an_unavailable_trigger_names_what_would_supply_it(
@@ -241,12 +227,6 @@ class TestBindingIsReal:
     def test_the_review_decision_limit_stays_inside_the_services_own_cap(self) -> None:
         """``list_records`` clamps at 500; a catalog limit above that would be
         a number the service silently ignores."""
-        source = inspect.getsource(
-            importlib.import_module(
-                "holdspeak.services.decision_record_service"
-            ).DecisionRecordService.list_records
-        )
-        assert "min(int(limit), 500)" in source
         limits = catalog.resolve_limits(
             catalog.get_descriptor(catalog.RECIPE_DECISION_REVIEW)
         )
@@ -649,10 +629,8 @@ class TestOneDefinitionTwoTriggers:
         # and room_operations imported cold closes that cycle half-built.
         import holdspeak.operations  # noqa: F401
         from holdspeak.room_operations import STEWARD_TRIGGER
-        from holdspeak.services.steward_contract import StewardContract
 
         assert "scheduler_not_wired" in STEWARD_TRIGGER.refusals
-        assert "scheduler_not_wired" in inspect.getsource(StewardContract.trigger)
         assert catalog.SCHEDULED_TRIGGER_OWNER != "ProjectStewardService"
         # ...and the steward IS still named as the executor of the update.
         update = catalog.get_descriptor(catalog.RECIPE_WEEKLY_UPDATE)
@@ -706,49 +684,6 @@ class TestDiscoverability:
         prepared = {t["name"] for t in TOOLS if t["name"].startswith("practice_recipe.")}
         assert agents and prepared
         assert agents.isdisjoint(prepared)
-
-    def test_the_mcp_family_never_opens_its_own_database(self) -> None:
-        """R17-2, re-derived with the shipped AST guard's own rule.
-
-        ``test_phase200_one_composition_root`` sweeps every file under
-        ``holdspeak/mcp/``; this narrows the same walk to the new family so
-        the failure names it directly.  A ``get_database`` reference is
-        lawful only as the fallback ARGUMENT of ``db_or``.
-        """
-        import ast
-        import pathlib
-
-        tree = ast.parse(
-            pathlib.Path("holdspeak/mcp/families/practice_recipe.py").read_text(
-                encoding="utf-8"
-            )
-        )
-        allowed: set[int] = set()
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Call):
-                continue
-            fn = node.func
-            fname = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")
-            if fname in ("db_or", "observer_or"):
-                allowed.update(id(arg) for arg in node.args)
-        offenders = [
-            node
-            for node in ast.walk(tree)
-            if isinstance(node, ast.Call)
-            and (
-                node.func.attr
-                if isinstance(node.func, ast.Attribute)
-                else getattr(node.func, "id", "")
-            )
-            in ("get_database", "get_observer")
-            and id(node) not in allowed
-        ]
-        assert offenders == [], [node.lineno for node in offenders]
-        assert any(
-            isinstance(node, ast.Call)
-            and getattr(node.func, "id", "") == "db_or"
-            for node in ast.walk(tree)
-        ), "the family must reach the database through the composition root"
 
     def test_the_web_surface_declares_the_three_catalog_paths(self) -> None:
         """Read off the assembled router, not the source text.

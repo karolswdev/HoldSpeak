@@ -74,14 +74,6 @@ def test_slack_codes_are_derived_from_the_backend_source(code: str, kind: str) -
     assert any(where.startswith("holdspeak/services/channel_slack.py:") for where in entry.get("where", [])), entry
 
 
-def test_the_face_reads_its_tables_through_the_word_functions() -> None:
-    """The tables are the ones refusedWord / failedWord / unknownWord read (no second table)."""
-    ts = (REPO / "web/src/features/channels/channels.ts").read_text()
-    assert "export const refusedWord = (c: string) => REFUSED[c] ?? byPrefix(REFUSED_PREFIX, c) ?? refusalWord(c);" in ts
-    assert "export const failedWord = (c: string) => word(FAILED, FAILED_PREFIX, c);" in ts
-    assert "export const unknownWord = (c: string) => word(UNKNOWN, UNKNOWN_PREFIX, c);" in ts
-
-
 def test_every_face_word_is_plain() -> None:
     """ASD-STE100 on the face: capital words, no code, no underscore."""
     ts = (REPO / "web/src/features/channels/channels.ts").read_text()

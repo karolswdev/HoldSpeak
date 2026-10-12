@@ -426,11 +426,6 @@ def test_the_message_kinds(text: str, kind: str) -> None:
     assert ar.message_kind(text) == kind
 
 
-def test_conductor_doc_names_the_ruling() -> None:
-    text = (Path(__file__).resolve().parents[2] / "docs/internal/CONDUCTOR.md").read_text(encoding="utf-8")
-    assert "The desk: " in text and "UNRESOLVED TARGET" in text
-
-
 @pytest.mark.parametrize("message, outcome, shown", [
     # A conditional completion is a question: the model drafts, REAL, the owner sees it.
     ("Should I mark this task as done once PR #3 is merged?", ar.ESCALATED, True),

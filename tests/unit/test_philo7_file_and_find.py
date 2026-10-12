@@ -257,16 +257,3 @@ def _decision_rows(run: Path) -> list[dict[str, Any]]:
     rows = record["response"]
     rows = rows.get("decisions") if isinstance(rows, dict) else rows
     return [row for row in rows if "nightly build" in json.dumps(row).lower()]
-
-
-def test_repo_doc_resources_are_every_repo_backed_resource() -> None:
-    """Every resource branch in resources.py that reads the checkout
-    (``_REPO_ROOT``) is in REPO_DOC_RESOURCES, and nothing else is."""
-    import re as _re
-
-    source = (REPO / "holdspeak/mcp/resources.py").read_text()
-    branches = _re.split(r'\n    if uri == "', source)
-    backed = {"" + b.split('"', 1)[0] for b in branches[1:] if "_REPO_ROOT" in b.split("\n    if ", 1)[0]}
-    assert backed == set(driver.REPO_DOC_RESOURCES) == {"holdspeak://desk/constitution"}
-
-

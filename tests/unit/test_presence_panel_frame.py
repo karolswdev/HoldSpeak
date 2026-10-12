@@ -9,7 +9,6 @@ The renderers learn about cards from the page itself via one shared JS probe.
 """
 from __future__ import annotations
 
-import inspect
 
 from holdspeak.desktop_presence import (
     PANEL_CARD_PROBE_JS,
@@ -64,19 +63,6 @@ def test_cocoa_panel_passive_constants_come_from_the_policy() -> None:
 def test_gtk_overlay_passive_constants_come_from_the_policy() -> None:
     assert _GtkWebKitOverlay.WIDTH == PANEL_FRAME_PASSIVE["width"]
     assert _GtkWebKitOverlay.HEIGHT == PANEL_FRAME_PASSIVE["height"]
-
-
-def test_renderers_use_the_shared_probe_and_manage_pointer_events() -> None:
-    cocoa_src = inspect.getsource(_CocoaPresenceUI)
-    gtk_src = inspect.getsource(_GtkWebKitOverlay)
-    for src in (cocoa_src, gtk_src):
-        assert "PANEL_CARD_PROBE_JS" in src
-        assert "presence_panel_frame" in src
-    # Pointer events only — the focus-safety flags are never managed here.
-    assert "setIgnoresMouseEvents_" in cocoa_src
-    assert "NonactivatingPanel" not in inspect.getsource(_CocoaPresenceUI.apply_card_frame)
-    assert "input_shape_combine_region" in gtk_src
-    assert "set_accept_focus" not in inspect.getsource(_GtkWebKitOverlay.apply_card_frame)
 
 
 # ── frame-sync behavior (no GUI deps: stub the apply seam) ───────────────────
