@@ -51,7 +51,17 @@ pytest.importorskip("fastapi.testclient", reason="requires meeting/web dependenc
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 
-PORT = 8917
+def _free_port() -> int:
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
+
+
+# A free port, chosen once per module: the restart test reopens the same one.
+# (It was a fixed 8917, shared by every run on the machine.)
+PORT = _free_port()
 
 
 # HS-106-02 made every request derive a principal, including on loopback, so a
@@ -101,6 +111,43 @@ class _Uvicorn:
     def stop(self):
         self._server.should_exit = True
         self._thread.join(timeout=10)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _isolated_hub(tmp_path_factory):
+    """This module's hubs read their own database and HOME. They read the
+    default database before: on the tape (8 xdist workers, one HOME) every
+    worker shared that file, and the hub's boot failed with "no such table:
+    inference_model_acquisitions" while another worker was creating it (all
+    three tests red together, 2026-10-12). The same isolation as
+    glass_infra._boot; the singleton is reset on the way in and out."""
+    import holdspeak.config as config_module
+    import holdspeak.db.core as db_core
+    from holdspeak.db import reset_database
+
+    tmp = tmp_path_factory.mktemp("live-bus")
+    home = tmp / "home"
+    home.mkdir()
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setenv("HOME", str(home))
+        for key, value in {
+            "HOLDSPEAK_MACOS_CALENDAR": "0", "HOLDSPEAK_AGENT_STATE": "off", "GIT_CONFIG_NOSYSTEM": "1",
+            "HOLDSPEAK_TEST_NO_REAL_CLI": "1", "HOLDSPEAK_DESKTOP_NOTIFY": "0", "HOLDSPEAK_ACTIVE_TARGET": "off",
+            "GH_CONFIG_DIR": str(home / ".config" / "gh"), "XDG_CONFIG_HOME": str(home / ".config"),
+            "HOLDSPEAK_CHANNEL_KEYSTORE_FILE": str(home / "channel-keys.json"),
+            "HOLDSPEAK_PEOPLE_KEYSTORE_FILE": str(home / "people-key.json"),
+            "CLAUDE_CONFIG_DIR": str(home / ".claude"), "CODEX_HOME": str(home / ".codex"),
+            "PI_CODING_AGENT_DIR": str(home / ".pi" / "agent"),
+        }.items():
+            mp.setenv(key, value)
+        mp.delenv("ANTHROPIC_API_KEY", raising=False)
+        mp.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
+        mp.setattr(db_core, "DEFAULT_DB_PATH", tmp / "holdspeak.db")
+        reset_database()
+        mp.setattr(db_core, "_db", None, raising=False)
+        mp.setattr(db_core, "_observer", None, raising=False)
+        yield
+        reset_database()
 
 
 @pytest.fixture(scope="module")

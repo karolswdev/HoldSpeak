@@ -250,6 +250,11 @@ function wire(flights: unknown[], needsYou: unknown = OPEN_HERE) {
   });
 }
 
+// The Room draws after its sections' first reads (#1094), and the chips after
+// the flights read: under the full suite's load that chain ran past the 1 s
+// default wait (the tape flake on main 0765d9b0f), so the waits take 5 s (#1100).
+const DRAWN = { timeout: 5000 };
+
 describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
   beforeEach(() => useAgentFlights.setState({ sessions: [], flights: [], loaded: false }));
 
@@ -261,7 +266,7 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
         pr: { number: 412, url: "https://github.com/acme/ledger/pull/412", state: "open" } }),
     ]);
     render(<WindowHarness scope="project:p1" />);
-    await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(3));
+    await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(3), DRAWN);
     const rows = screen.getAllByTestId("needs-you-row");
     expect(within(rows[0]).getByTestId("flight-chip").textContent).toContain("CLAUDE CODE · WAITING");
     expect(within(rows[1]).getByTestId("flight-chip").textContent).toContain("CODEX · WORKING");
@@ -279,7 +284,7 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
   it("a row with no flight wears no chip and keeps Hand to coder (F1)", async () => {
     wire([]);
     render(<WindowHarness scope="project:p1" />);
-    const rows = await screen.findAllByTestId("needs-you-row");
+    const rows = await screen.findAllByTestId("needs-you-row", {}, DRAWN);
     expect(screen.queryByTestId("flight-chip")).toBeNull();
     expect(within(rows[0]).getByRole("button", { name: "Hand to coder: Write the rollback runbook" })).toBeTruthy();
   });
@@ -293,7 +298,7 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
         pr: { number: 412, url: "https://github.com/acme/ledger/pull/412", state: "open" } }),
     ]);
     render(<WindowHarness scope="project:p1" />);
-    await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(3));
+    await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(3), DRAWN);
     expect(screen.queryAllByRole("button", { name: /^Hand to coder/ })).toHaveLength(0);
     expect(screen.getAllByTestId("flight-chip")[0].textContent).toContain("CLAUDE CODE · STARTING");
   });
