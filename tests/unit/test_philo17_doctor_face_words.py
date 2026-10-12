@@ -57,3 +57,36 @@ def test_the_setup_section_carries_words_and_raw(monkeypatch: pytest.MonkeyPatch
     assert section["label"] == "ffmpeg" and section["status"] == "warn"
     assert section["detail"] == "ffmpeg is not installed"
     assert section["raw"] == "Not found in PATH"
+
+
+# Astra MUST on #1111: the face words never carry a filesystem path or a URL.
+@pytest.mark.parametrize(
+    ("model", "base_url", "node"),
+    [
+        ("/srv/models/q.gguf", "http://10.0.0.5:8080/v1", None),
+        ("http://models.example.net:9000/v1/qwen-27b", "https://api.example.net/v1", None),
+        ("/opt/weights/llama/model.bin", None, "studio"),
+    ],
+)
+def test_an_adopted_profile_never_puts_a_path_or_url_in_the_face_words(
+    monkeypatch: pytest.MonkeyPatch, model: str, base_url: str | None, node: str | None
+) -> None:
+    from types import SimpleNamespace
+
+    from holdspeak.commands.doctor import _check_dictation_runtime
+
+    effective = SimpleNamespace(
+        profile_id="p1", profile_name="lab", node=node, base_url=base_url, model=model, reason=None
+    )
+    monkeypatch.setattr("holdspeak.intel.providers.effective_dictation_llm", lambda _runtime: effective)
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = True
+    check = _check_dictation_runtime(cfg)
+    assert check.name == "Dictation AI model" and check.status == "PASS"
+    assert model in check.detail  # the CLI's technical fact keeps the whole path
+
+    monkeypatch.setattr("holdspeak.commands.doctor.collect_doctor_checks", lambda **_: [check])
+    section = setup_status.build_setup_status(config=Config())["sections"][0]
+    assert "/" not in section["detail"] and "://" not in section["detail"], section["detail"]
+    assert section["detail"].startswith("Runs on ")
+    assert model in section["raw"]
