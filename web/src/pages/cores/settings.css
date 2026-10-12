@@ -1,0 +1,288 @@
+/* PHILO-17 REFIT — Settings, in the language of Today: compact type, one
+   obvious first move, our material (slate ground, raised steel plates lit
+   from the top left, a Workbench title bar on the focus plate, pixel
+   sprites, mono with intent). The two things he does here lead: Runs on
+   and Accounts. Everything else folds under More settings. */
+
+/* ── The head: the one fact and its strip ── */
+.desk-next .settings-home {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 14px 16px;
+}
+.desk-next .settings-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  min-width: 0;
+}
+.desk-next .settings-home .settings-title {
+  margin: 0;
+  padding: 0;
+  font: 650 19px / 1.25 var(--font-display);
+  letter-spacing: 0;
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.desk-next .settings-home .settings-title[data-warning] {
+  color: var(--wb-warn-ink);
+}
+.desk-next .settings-strip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font: 600 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .settings-strip b {
+  color: var(--wb-text);
+  font-weight: 800;
+}
+
+/* ── The two lead plates ── */
+.desk-next .settings-leads {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@container surface (max-width: 639.9px) {
+  .desk-next .settings-leads {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.desk-next .settings-plate {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 0 10px;
+  min-width: 0;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-field-hi);
+  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+  transition: box-shadow 160ms ease, background-color 120ms ease;
+}
+.desk-next .settings-plate[data-focus] {
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent), 4px 10px 22px color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.desk-next .settings-plate:hover {
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent), 6px 14px 28px color-mix(in srgb, var(--wb-ink) 18%, transparent);
+}
+.desk-next .settings-plate:has(.btn:active) {
+  box-shadow: var(--wb-raised), 1px 2px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent);
+}
+/* The bar: steel on a plate at rest, the Workbench blue stipple on the
+   focus plate (the one that holds the window's primary). */
+.desk-next .settings-plate-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  color: var(--wb-ink);
+}
+.desk-next .settings-plate[data-focus] .settings-plate-bar {
+  background: var(--wb-stipple-fine), var(--wb-blue);
+}
+.desk-next .settings-plate-label {
+  padding: 1px 6px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.desk-next .settings-plate-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 12px 0;
+  min-width: 0;
+}
+.desk-next .settings-plate-sprite {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 6px;
+  background: hsl(214 70% 86%);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .settings-plate-sprite .prefs-tile-sprite {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+.desk-next .settings-plate-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.desk-next .settings-plate-title {
+  font: 600 14px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.desk-next .settings-plate-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: auto;
+  padding: 0 12px;
+}
+
+/* ── The pills: the kit pill (kit.css `.kit-pill`); only the row of them here ── */
+.desk-next .settings-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── More settings: the fold ── */
+.desk-next .settings-home .settings-more {
+  align-self: flex-start;
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.desk-next .settings-more-caret {
+  display: inline-block;
+  width: 1em;
+}
+.desk-next .settings-home > .surface-ledger {
+  border: 1px solid var(--wb-ink);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .settings-home .surface-ledger[data-cols="hub"] .surface-ledger-line {
+  min-height: 40px;
+}
+.desk-next .settings-home .surface-ledger-primary {
+  font: 600 13px / 1.3 var(--font-sans);
+}
+.desk-next .settings-home .prefs-rule {
+  display: none;
+}
+.desk-next .settings-home .prefs-posture {
+  padding: 0 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .settings-plate { transition: none; }
+}
+
+/* ── Inside a section: the section's name at the window headline size ── */
+.desk-next .prefs-module > .gadget-pane-title {
+  font: 650 19px / 1.25 var(--font-display);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* The folded rows carry their pixel sprite before the name. */
+.desk-next .settings-row-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.desk-next .settings-row-name .prefs-tile-sprite {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+
+/* ── The Guide: what is ready and what is not, one row each ── */
+.desk-next .guide .settings-head {
+  align-items: center;
+}
+.desk-next .guide-head-sp {
+  flex: 1 1 8px;
+}
+.desk-next .guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  border: 1px solid var(--wb-ink);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .guide-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 3px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.desk-next .guide-row:hover {
+  background: #ffffff;
+  box-shadow: var(--alive-lift, none);
+}
+.desk-next .guide-row-text {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.desk-next .guide-row-name {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .guide-row-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .guide-row-verb {
+  display: inline-flex;
+  flex: none;
+}
+.desk-next .guide-row-fix {
+  flex: 1 0 100%;
+}
+.desk-next .guide .gadget-fold {
+  margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .guide-row { transition: none; }
+}
+.desk-next .guide-row-title {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.desk-next .guide-row-title:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.desk-next .guide-row-raw {
+  flex: 1 0 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-well);
+  box-shadow: var(--wb-sunken);
+  font: 500 12px / 1.4 var(--font-mono);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}

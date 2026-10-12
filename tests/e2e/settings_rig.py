@@ -32,6 +32,10 @@ def _navigate_to_settings_hub(page: Any, url: str) -> None:
 
 
 def _open_system_module(page: Any) -> None:
+    # PHILO-17 REFIT: the rows past Runs on and Accounts fold under More settings.
+    more = page.locator("[data-testid='settings-more'][aria-expanded='false']")
+    if more.count():
+        more.click()
     system_row = page.locator(
         ".surface-ledger-row",
         has=page.locator(".surface-ledger-primary", has_text="System"),

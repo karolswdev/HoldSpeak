@@ -188,3 +188,20 @@
   width: 100%;
   padding: var(--space-1) 0;
 }
+
+/* PHILO-17 REFIT: GitHub sign-in as one compact row; the command on demand. */
+.connections-signin-word {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text, var(--text));
+}
+.connections-signin-code {
+  flex: 1 0 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--wb-ink, var(--border));
+  background: var(--wb-well, var(--desk-window-well));
+  box-shadow: var(--wb-sunken);
+  font: 500 12px / 1.4 var(--font-mono);
+  color: var(--wb-text, var(--text));
+  overflow-wrap: anywhere;
+  user-select: all;
+}

@@ -45,7 +45,8 @@ describe("HS-129-09 one state grammar", () => {
     expect(companion).not.toMatch(/<pre/);
     expect(coder).toMatch(/<FoldGadget title="RAW · SELECTED TEXT">\s*<SurfaceWell/s);
     expect(runtimeDocs).not.toContain("SurfaceCode");
-    expect(runtimeDocs).toMatch(/<SurfaceRow title="INSTALL"/);
-    expect(runtimeDocs).toContain('title="KEY ENV"');
+    // PHILO-17 REFIT: the Guide leads with readiness; install commands fold.
+    expect(runtimeDocs).toMatch(/<SurfaceRow title="Voice typing"/);
+    expect(runtimeDocs).toMatch(/<SurfaceState error=\{resource\.error\}/);
   });
 });

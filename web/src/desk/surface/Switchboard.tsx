@@ -223,6 +223,31 @@ function EnginePlate({
   );
 }
 
+/** PHILO-17 REFIT: the card's lead as the job's name and a soft pill with
+ *  the engine it runs on (`Answers and thoughts` · `Qwen 3.5 4B · on this
+ *  Mac`). The arrow stays in the text (the lead reads whole) but is not drawn. */
+const PILL_TONE: Record<SwitchState, string> = {
+  ready: "ok",
+  limited: "warn",
+  broken: "danger",
+  waiting: "",
+  off: "",
+};
+function JobLead({ job }: { job: SwitchJob }) {
+  const text = job.lead ?? job.name;
+  const at = text.indexOf(" → ");
+  if (at < 0) return <span className="switchboard-job-name">{text}</span>;
+  const engine = text.slice(at + 3);
+  const missing = engine === "no engine";
+  return (
+    <span className="switchboard-job-name">
+      <span className="switchboard-job-word">{text.slice(0, at)}</span>
+      <span className="switchboard-job-arrow" aria-hidden="true"> → </span>
+      <span className="kit-pill switchboard-job-pill" data-dot="" data-tone={missing ? "warn" : PILL_TONE[job.state] || undefined}>{engine}</span>
+    </span>
+  );
+}
+
 export function SurfaceSwitchboard({
   jobs,
   engines,
@@ -420,7 +445,7 @@ function SwitchboardBoard({
                 onSelect?.(selected === job.id ? null : job.id);
               }}
             >
-              <span className="switchboard-job-name">{job.lead ?? job.name}</span>
+              <JobLead job={job} />
               {job.verb ? <span className="switchboard-job-verb">{job.verb}</span> : null}
               {job.tasks ? <span className="switchboard-job-tasks">{job.tasks}</span> : null}
               {job.result ? (
@@ -574,6 +599,13 @@ function SwitchboardList({
           ) : null}
         </>
       ) : null}
+      {/* PHILO-17 REFIT: an engine with a verb (Download, Use it) sits
+          before the other jobs, so the first move is in view on a phone. */}
+      {engines
+        .filter((engine) => engine.id !== first?.id && (engine.progress != null || Boolean(engine.verb)))
+        .map((engine) => (
+          <EnginePlate key={`more-${engine.id}`} engine={engine} />
+        ))}
       <div className="switchboard-cap">{captions.others ?? "Other jobs"}</div>
       {jobs
         .filter((job) => job.id !== open?.id)
@@ -588,7 +620,9 @@ function SwitchboardList({
             onClick={() => onSelect?.(job.id)}
           >
             <span className="switchboard-job-name">{job.name}</span>
-            {job.runsOn ?? job.tasks ? <span className="switchboard-job-tasks">{job.runsOn ?? job.tasks}</span> : null}
+            {job.runsOn ? (
+              <span className="kit-pill switchboard-job-pill" data-dot="" data-tone={/^no engine$/i.test(job.runsOn) ? "warn" : PILL_TONE[job.state] || undefined}>{job.runsOn}</span>
+            ) : job.tasks ? <span className="switchboard-job-tasks">{job.tasks}</span> : null}
           </Button>
         ))}
       {found.length > 0 ? (
@@ -601,11 +635,6 @@ function SwitchboardList({
           ))}
         </>
       ) : null}
-      {engines
-        .filter((engine) => engine.id !== first?.id && (engine.progress != null || Boolean(engine.verb)))
-        .map((engine) => (
-          <EnginePlate key={`more-${engine.id}`} engine={engine} />
-        ))}
       {engineFoot}
     </div>
   );

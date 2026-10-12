@@ -726,6 +726,10 @@ def _step_settings_meetings(page: Any, out_dir: Path, w: int, token: str,
     _open_surface(page, token, "configure-settings")
     try:
         page.locator(".prefs-hub-headline").wait_for(timeout=10_000)
+        # PHILO-17 REFIT: the Meetings row folds under More settings.
+        more = page.locator("[data-testid='settings-more'][aria-expanded='false']")
+        if more.count():
+            more.click()
         meetings_row = page.locator(
             ".surface-ledger-row",
             has=page.locator(".surface-ledger-primary", has_text="Meetings"),

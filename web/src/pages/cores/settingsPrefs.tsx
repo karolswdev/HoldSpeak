@@ -24,6 +24,7 @@ import {
 } from "../../desk/surface";
 import { ConfirmVerb } from "../../desk/surface/Surface";
 import { useDesk } from "../../desk/store";
+import "./settings.css";
 import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
 import { resolveAtmosphere } from "../../desk/gl/atmosphereRegistry";
 
@@ -429,6 +430,26 @@ export function workHasEngine(hub: SettingsHubWire): boolean {
   return hub.meetings?.engineSet === true || hub.voice?.engineSet === true;
 }
 
+/** PHILO-17 REFIT: one pill per job on the Runs on plate: the job's word
+ *  and a lamp (green set, amber no engine, grey off). The engine names stay
+ *  in the headline; a job the hub does not report is left out. */
+export function jobPills(hub: SettingsHubWire): Array<{ key: string; word: string; tone: "ok" | "warn" | "idle"; title?: string }> {
+  const pills: Array<{ key: string; word: string; tone: "ok" | "warn" | "idle"; title?: string }> = [];
+  if (hub.voice?.engineSet === false) pills.push({ key: "voice", word: "Speech", tone: "warn", title: "No engine" });
+  else if (hub.voice?.engineSet === true) pills.push({ key: "voice", word: "Speech", tone: "ok" });
+  const meetings = hub.meetings;
+  if (meetings?.summariesOff) pills.push({ key: "summaries", word: "Summaries", tone: "idle", title: "Off" });
+  else if (meetings?.engineSet === false) pills.push({ key: "summaries", word: "Summaries", tone: "warn", title: "No engine" });
+  else if (meetings?.engineSet === true) pills.push({ key: "summaries", word: "Summaries", tone: "ok", title: meetings.engine ?? undefined });
+  if (hub.answers?.engineSet === false) pills.push({ key: "answers", word: "Answers", tone: "warn", title: "No engine" });
+  else if (hub.answers?.engineSet === true) pills.push({ key: "answers", word: "Answers", tone: "ok", title: hub.answers.engine ?? undefined });
+  // The default (Everything else): a quiet fact while some work has an
+  // engine of its own (PHILO-15 B33), amber when nothing has one.
+  if (hub.models.defaultSet) pills.push({ key: "default", word: "Everything else", tone: "ok" });
+  else pills.push({ key: "default", word: "Everything else", tone: workHasEngine(hub) ? "idle" : "warn", title: "No default" });
+  return pills;
+}
+
 /** Format writtenAt (epoch seconds) as HH:MM for the receipt. */
 function formatWrittenAt(epoch: number | null): string | null {
   if (epoch == null) return null;
@@ -463,6 +484,7 @@ export function PrefsFace({
 
   const [atmosphereId] = useAtmospherePreference();
   const headline = hubHeadline(hub);
+  const [more, setMore] = useState(false);
   const writtenAt = formatWrittenAt(hub.writtenAt);
 
   // Module rows — each opens the module face (the hub is the truth table).
@@ -470,57 +492,88 @@ export function PrefsFace({
     <Button variant="ghost" dense onClick={() => onOpen(moduleId)}>Open</Button>
   );
 
+  // PHILO-17 REFIT: the two things he does here lead the window, each on a
+  // raised plate: pick which engine does which job, and connect an account.
+  // Everything else folds under More settings. ONE filled primary: Choose
+  // engines while a job has no engine, else Connect an account while none is
+  // connected, else Choose engines.
+  const connected = hub.connections.connected;
+  const lead: "engines" | "accounts" = !headline.choose && connected === 0 ? "accounts" : "engines";
+  const jobs = jobPills(hub);
   return (
-    <div className="prefs-face prefs-hub">
-      <div className="prefs-hub-lead">
-        <span
-          className="surface-display prefs-hub-headline"
+    <div className="prefs-face prefs-hub settings-home">
+      <div className="settings-head">
+        <h2
+          className="surface-display prefs-hub-headline settings-title"
           data-warning={headline.warning || undefined}
         >
           {headline.text}
+        </h2>
+        <span className="settings-strip">
+          <span>{hub.system.host}</span>
+          {hub.models.engines > 0 ? <span><b>{hub.models.engines}</b> {hub.models.engines === 1 ? "engine" : "engines"}</span> : null}
+          {connected > 0 ? <span><b>{connected}</b> connected</span> : null}
         </span>
-        {headline.choose ? (
-          <Button dense onClick={() => onOpen("models")} data-testid="settings-hub-choose">
-            Choose
-          </Button>
-        ) : null}
       </div>
+      <div className="settings-leads">
+        <section className="settings-plate" data-focus={lead === "engines" || undefined} data-testid="settings-lead-engines" aria-label="Runs on">
+          <header className="settings-plate-bar">
+            <span className="settings-plate-label">RUNS ON</span>
+          </header>
+          <div className="settings-plate-body">
+            <span className="settings-plate-sprite" aria-hidden="true"><SettingSprite name="models" /></span>
+            <div className="settings-plate-text">
+              <span className="settings-plate-title">Which engine does each job</span>
+              <span className="settings-pills" data-testid="settings-job-pills">
+                {jobs.map((job) => (
+                  <span key={job.key} className="kit-pill" data-dot="" data-tone={job.tone === "idle" ? undefined : job.tone} title={job.title} data-testid={`settings-job-${job.key}`}>{job.word}</span>
+                ))}
+              </span>
+            </div>
+          </div>
+          <div className="settings-plate-verbs">
+            <Button dense variant={lead === "engines" ? "primary" : "secondary"} onClick={() => onOpen("models")} data-testid="settings-hub-choose">
+              Choose engines
+            </Button>
+          </div>
+        </section>
+        <section className="settings-plate" data-focus={lead === "accounts" || undefined} data-testid="settings-lead-accounts" aria-label="Accounts">
+          <header className="settings-plate-bar">
+            <span className="settings-plate-label">ACCOUNTS</span>
+          </header>
+          <div className="settings-plate-body">
+            <span className="settings-plate-sprite" aria-hidden="true"><SettingSprite name="integrations" /></span>
+            <div className="settings-plate-text">
+              <span className="settings-plate-title">GitHub, Jira, Confluence, calendar</span>
+              <span className="settings-pills">
+                {connected > 0
+                  ? <span className="kit-pill" data-dot="" data-tone="ok">{connected} connected</span>
+                  : <span className="kit-pill" data-dot="">None connected</span>}
+              </span>
+            </div>
+          </div>
+          <div className="settings-plate-verbs">
+            <Button dense variant={lead === "accounts" ? "primary" : "secondary"} onClick={() => onOpen("integrations")} data-testid="settings-hub-accounts">
+              {connected > 0 ? "Open accounts" : "Connect an account"}
+            </Button>
+          </div>
+        </section>
+      </div>
+      <Button
+        variant="ghost"
+        dense
+        className="settings-more"
+        aria-expanded={more}
+        onClick={() => setMore((open) => !open)}
+        data-testid="settings-more"
+      >
+        <span className="settings-more-caret" aria-hidden="true">{more ? "▾" : "▸"}</span> More settings
+      </Button>
+      {more ? (<>
       <SurfaceLedger count="" cols="hub">
-        {/* PHILO-16 (C): Runs on, ONE row (the Models and Assignments rows
-            both opened the same window). Its facts: the engines, and the
-            Default for AI work when none is set. */}
-        <SurfaceLedgerRow
-          primary="Runs on"
-          expands={false}
-          onToggle={() => onOpen("models")}
-          trailing={openVerb("models")}
-          cells={<>
-            {hub.models.engines > 0
-              ? <span className="surface-token" data-chip>{countToken(hub.models.engines, "ENGINE", "ENGINES")}</span>
-              : null}
-            {!hub.models.defaultSet
-              ? <StateChip state={workHasEngine(hub) ? "idle" : "warning"} label="NO DEFAULT" />
-              : null}
-            {hub.models.defaultSet && hub.models.groupsSet > 0
-              ? <span className="surface-token" data-chip>{countToken(hub.models.groupsSet, "GROUP SET", "GROUPS SET")}</span>
-              : null}
-          </>}
-        />
-        {/* Connections: N CONNECTED */}
-        <SurfaceLedgerRow
-          primary="Connections"
-          expands={false}
-          onToggle={() => onOpen("integrations")}
-          trailing={openVerb("integrations")}
-          cells={<>
-            {hub.connections.connected > 0
-              ? <span className="surface-token" data-chip>{countToken(hub.connections.connected, "CONNECTED", "CONNECTED")}</span>
-              : null}
-          </>}
-        />
         {/* Voice: LIVE green + target, or nothing */}
         <SurfaceLedgerRow
-          primary="Voice"
+          primary={<span className="settings-row-name"><SettingSprite name="voice" />Voice</span>}
           expands={false}
           onToggle={() => onOpen("voice")}
           trailing={openVerb("voice")}
@@ -543,7 +596,7 @@ export function PrefsFace({
             the hub row said the wire's word while the Meetings face two
             windows over said Summary on the same setting. */}
         <SurfaceLedgerRow
-          primary="Meetings"
+          primary={<span className="settings-row-name"><SettingSprite name="meetings" />Meetings</span>}
           expands={false}
           onToggle={() => onOpen("meetings")}
           trailing={openVerb("meetings")}
@@ -576,7 +629,7 @@ export function PrefsFace({
         />
         {/* Rhythm: EVERY N MIN · NEXT HH:MM when sweep runs; NO LOOPS only at zero + no sweep */}
         <SurfaceLedgerRow
-          primary="Rhythm"
+          primary={<span className="settings-row-name"><SettingSprite name="rhythm" />Rhythm</span>}
           expands={false}
           onToggle={() => onOpen("rhythm")}
           trailing={openVerb("rhythm")}
@@ -603,7 +656,7 @@ export function PrefsFace({
         />
         {/* Sounds & Presence: ON green or OFF */}
         <SurfaceLedgerRow
-          primary="Sounds & Presence"
+          primary={<span className="settings-row-name"><SettingSprite name="sounds" />Sounds & Presence</span>}
           expands={false}
           onToggle={() => onOpen("sounds")}
           trailing={openVerb("sounds")}
@@ -614,7 +667,7 @@ export function PrefsFace({
           </>}
         />
         <SurfaceLedgerRow
-          primary="Wallpaper"
+          primary={<span className="settings-row-name"><SettingSprite name="wallpaper" />Wallpaper</span>}
           expands={false}
           onToggle={() => onOpen("wallpaper")}
           trailing={openVerb("wallpaper")}
@@ -622,7 +675,7 @@ export function PrefsFace({
         />
         {/* People: Agents can read People | Agents: off (Conductor R7, K7a; PHILO-17 U35). */}
         <SurfaceLedgerRow
-          primary="People"
+          primary={<span className="settings-row-name"><SettingSprite name="system" />People</span>}
           expands={false}
           onToggle={() => onOpen("people")}
           trailing={openVerb("people")}
@@ -631,7 +684,7 @@ export function PrefsFace({
         {/* System: THIS DEVICE + Other devices: off|on (PHILO-17 U35: was
             MESH OFF · REMOTE OFF; the mesh name is a RAW fact now). */}
         <SurfaceLedgerRow
-          primary="System"
+          primary={<span className="settings-row-name"><SettingSprite name="system" />System</span>}
           expands={false}
           onToggle={() => onOpen("system")}
           trailing={openVerb("system")}
@@ -655,6 +708,7 @@ export function PrefsFace({
           onChange={onPosture}
         />
       </div>
+      </>) : null}
     </div>
   );
 }
