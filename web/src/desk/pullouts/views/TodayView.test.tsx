@@ -54,6 +54,7 @@ describe("PHILO-17 Today: the day as a timeline", () => {
       ] }),
       "/api/meetings?limit=40": () => json({ meetings: [] }),
       "/api/desk/needs-you": () => json({ items: [{ proposalId: "pr1", title: "Freeze the ledger on Nov 12", meetingTitle: "Ledger cutover sync" }] }),
+      "/api/people/readiness": () => json({ readiness: "ready" }),
       "/api/people/relationships": () => json({ relationships: [{ id: "r1" }] }),
       "/api/people/relationships/r1": () => json({ relationship: { commitments: [{ state: "open" }, { state: "done" }], owed_to_you: [{ state: "open" }] } }),
       "/api/proposals/pr1/confirm": () => json({ ok: true }),

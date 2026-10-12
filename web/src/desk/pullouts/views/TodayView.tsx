@@ -136,6 +136,10 @@ export function TodayView({ header }: { header: ReactNode }) {
     setMeetings(meetingRead?.meetings ?? []);
     setNeeds(needsRead?.items ?? []);
     try {
+      // The People store is read only when it is open (a closed store
+      // answers 503, and the window draws no Owed then).
+      const ready = await apiFetch<{ state?: string; readiness?: string }>("/api/people/readiness");
+      if ((ready.state ?? ready.readiness) !== "ready") { setOwed(null); return; }
       const list = await apiFetch<{ relationships?: Relationship[] }>("/api/people/relationships");
       const details = await Promise.all((list.relationships ?? []).map((row) =>
         apiFetch<{ relationship: RelationshipDetail }>(`/api/people/relationships/${encodeURIComponent(row.id)}`)

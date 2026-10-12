@@ -43,6 +43,7 @@ def _seed() -> None:
     from holdspeak.db import get_database
     from holdspeak.memory.pages import spec_for, write_page, write_pending
     from holdspeak.memory.retain import sweep
+    from tests.unit.test_memory_slice3_facts import _note
     from tests.unit.test_memory_slice4_observations import Rules, _filed_note, _learn, _meeting
     from tests.unit.test_memory_slice5_pages import Pages
 
@@ -54,8 +55,13 @@ def _seed() -> None:
     _learn(db)  # supersedes the 10-10 belief
     _meeting(db, "m-0929", "Cutover rollback owner is Priya.", day=29)
     _learn(db, Rules("contradicts"))
-    _filed_note(db, "n-desk-1", "Hiring loop reply is owed.", None)
-    _filed_note(db, "n-desk-2", "Billing contract is waiting.", None)
+    # PHILO-17: the desk notes carry no title. A chunk has its source title
+    # in front (memory/chunker.py), and this rig's scripted writer echoes a
+    # chunk word for word, so the unit fixture's title ("Note n-desk-1")
+    # drew an internal id on the Brief's page (a real engine writes the
+    # sentence; the chip names the source).
+    _note(db, "n-desk-1", "", "Hiring loop reply is owed.")
+    _note(db, "n-desk-2", "", "Billing contract is waiting.")
     _learn(db)
     write_pending(db, Pages())
     # One new Atlas source after the pages were built: every Atlas page is

@@ -85,7 +85,7 @@ describe("StandingPagesSection", () => {
   it("draws the scope's pages under Standing pages · N with the engine token", () => {
     render(<StandingPagesSection pages={[DECIDED, CHANGED]} now={NOW} onOpenRef={() => {}} />);
     expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("Standing pages · 2");
-    expect(screen.getByTestId("standing-pages-model").textContent).toBe("PAGES BY QWEN3.8-27B · LAN");
+    expect(screen.getByTestId("standing-pages-model").textContent).toBe("Written by qwen3.8-27b · LAN");
     expect(screen.getAllByTestId("standing-page").map((p) => p.getAttribute("aria-label"))).toEqual(
       ["What did we decide", "What changed this week"],
     );
@@ -105,7 +105,7 @@ describe("StandingPagesSection", () => {
     // Nothing draws the count: the only digits are the caption's page count,
     // the BUILT clock and the ref tokens.
     const drawn = (section.textContent ?? "")
-      .replace("Standing pages · 1", "").replace("QWEN3.8-27B", "").replace(/BUILT \d\d:\d\d/, "")
+      .replace("Standing pages · 1", "").replace("qwen3.8-27b", "").replace(/BUILT \d\d:\d\d/, "")
       .replace(/DEC 10-01|MTG 10-01 · 14:25|read-only for 14 days|17 October/g, "");
     expect(drawn).not.toMatch(/\d/);
     expect(section.querySelectorAll("li")).toHaveLength(2);
@@ -122,7 +122,9 @@ describe("StandingPagesSection", () => {
     expect(builtToken(iso(new Date(2026, 8, 28, 8, 2)), NOW)).toBe("BUILT 09-28");
     expect(pageTitle({ slug: "what-i-owe", question: "What do I owe?" })).toBe("What I owe");
     expect(pageTitle({ slug: "new-slug", question: "Anything new?" })).toBe("Anything new");
-    expect(modelToken([{ ...DECIDED, model: "pages", boundary: "local" }])).toBe("PAGES BY PAGES · THIS DEVICE");
+    expect(modelToken([{ ...DECIDED, model: "pages", boundary: "local" }])).toBe("Written by pages · THIS DEVICE");
+    // PHILO-17: no engine name, no credit.
+    expect(modelToken([{ ...DECIDED, model: "", boundary: "local" }])).toBeNull();
   });
 });
 

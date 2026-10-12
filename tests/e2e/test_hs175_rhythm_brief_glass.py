@@ -68,6 +68,12 @@ def _open_intelligence(page: Any) -> None:
     dock_btn = page.locator('button.desk-dock-app').first
     if dock_btn.count() > 0:
         dock_btn.click()
+        # PHILO-17: the window opens on Day; the Brief is a tab, and its Send
+        # well starts folded (one row; Send opens it).
+        page.locator(".intelligence-segment", has_text="Brief").first.click()
+        toggle = page.get_by_test_id("brief-send-toggle")
+        toggle.first.wait_for(timeout=15000)
+        toggle.first.click()
     page.wait_for_timeout(800)
     _settle(page)
 

@@ -62,14 +62,17 @@ const BOUNDARY: Record<string, string> = {
   cloud: "CLOUD",
 };
 
-/** `PAGES BY QWEN3.8-27B · LAN`: which engine wrote the pages, and where. */
+/** `Written by qwen3.8-27b · LAN`: which engine wrote the pages, and where.
+ *  PHILO-17: no credit without an engine name (the word "PAGES" stood in
+ *  for a missing name). */
 export function modelToken(pages: StandingPageWire[]): string | null {
   const seen = [...new Set(pages.map((p) => {
-    const model = (p.model || "").toUpperCase();
+    const model = (p.model || "").trim();
+    if (!model) return "";
     const where = BOUNDARY[(p.boundary || "").toLowerCase()] ?? (p.boundary || "").toUpperCase();
     return [model, where].filter(Boolean).join(" · ");
   }).filter(Boolean))];
-  return seen.length ? `PAGES BY ${seen.join(" / ")}` : null;
+  return seen.length ? `Written by ${seen.join(" / ")}` : null;
 }
 
 /** The scope key the cached pages belong to: `project:atlas` / `desk`. */
