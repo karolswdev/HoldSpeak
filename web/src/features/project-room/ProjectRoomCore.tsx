@@ -165,6 +165,29 @@ export function emblemFor(source: string): string {
   return PROVIDER_EMBLEM[key] || source.slice(0, 2).toUpperCase();
 }
 
+/** PHILO-17 refit: a row's object as its pixel sprite (the desk's own
+ *  icons); the short word stays for a source with no sprite. */
+const SPRITES = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/32/`;
+const SOURCE_SPRITE: Record<string, string> = {
+  github: "pull-request",
+  jira: "action-item",
+  confluence: "note",
+  meeting: "meeting",
+  proposal: "meeting",
+  item: "action-item",
+  decision: "decision",
+};
+
+function RowSprite({ source, kind }: { source: string; kind?: string }) {
+  const sprite = SOURCE_SPRITE[source.toLowerCase()] ?? (kind === "decision" ? "decision" : null);
+  if (!sprite) return <>{emblemFor(source)}</>;
+  return (
+    <span className="room-row-sprite" title={emblemFor(source)}>
+      <img src={`${SPRITES}${sprite}.png`} alt="" draggable={false} />
+    </span>
+  );
+}
+
 /* ── time formatting ── */
 
 function formatReadAt(iso: string | null): string {
@@ -1015,7 +1038,7 @@ function NeedsYouSection({
               <SurfaceLedgerRow
                 key={`${item.source}-${item.title}-${i}`}
                 data-testid="needs-you-row"
-                lead={emblemFor(item.source)}
+                lead={<RowSprite source={item.source} kind={item.kind} />}
                 primary={<span className="surface-primary">{item.title}</span>}
                 wrap
                 cells={
@@ -2965,8 +2988,13 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           ) : (
             <>
               <HistoryWing room={ctrl.room} todayCount={historyCounts.todayCount} weekCount={historyCounts.weekCount} />
-              {/* PHILO-17 U31: the receipts are what happened: History holds them. */}
-              <ReceiptsSection room={ctrl.room} />
+              {/* PHILO-17 U31: the writes are what happened: History holds
+                  them, folded under the stream (PHILO-17 refit). */}
+              <div className="room-folds room-history-folds">
+                <RoomFold title="Writes" token={ctrl.room.receipts.state === "ok" ? ctrl.room.receipts.items.length || undefined : undefined} testId="room-fold-writes">
+                  <ReceiptsSection room={ctrl.room} />
+                </RoomFold>
+              </div>
             </>
           )}
         </div>
