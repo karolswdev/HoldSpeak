@@ -48,6 +48,9 @@ export interface AskWellProps {
   /** The hand's gate beside Answer (Secure / Normal: `MODE · ARM FIRST`
    *  and the ARM key), drawn after the egress chip; wraps at 393. */
   arm?: ReactNode;
+  /** PHILO-17: `false` when the window's one filled primary is another
+   *  verb (a held call's Approve): Answer is then the quieter steel verb. */
+  primary?: boolean;
   /** Pass-through data-testid for the root `section`. */
   "data-testid"?: string;
 }
@@ -70,6 +73,7 @@ export function AskWell({
   draftScope,
   inputRef,
   arm,
+  primary = true,
   "data-testid": testId,
 }: AskWellProps) {
   const caption = [`${agent.toUpperCase()} ${word}`, age?.toUpperCase()].filter(Boolean).join(" · ");
@@ -106,7 +110,7 @@ export function AskWell({
             }
           }}
         />
-        <Button variant="primary" onClick={send} loading={busy} disabled={disabled}>
+        <Button variant={primary ? "primary" : "secondary"} onClick={send} loading={busy} disabled={disabled}>
           Answer
         </Button>
         {egress ? <EgressChip label={egress.label} scope={egress.scope} /> : null}

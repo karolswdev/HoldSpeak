@@ -532,6 +532,9 @@ export function CadenceCore({ hero }: CoreProps) {
         <SurfaceLedgerRow
           primary="Notify"
           expands={false}
+          // PHILO-17: in quiet hours the HELD pill joins two gadgets; at a
+          // phone width the row wraps (it squeezed "Notify" to 14 px).
+          wrap
           data-testid="rhythm-notify-row"
           cells={
             <>

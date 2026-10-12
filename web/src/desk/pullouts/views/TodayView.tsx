@@ -128,7 +128,7 @@ async function readOwed(): Promise<{ state: "ok"; owed: { you: number; them: num
 function ReadFailed({ what, onRetry, testId }: { what: string; onRetry: () => void; testId: string }) {
   return (
     <div className="today-failed" data-testid={testId} role="status">
-      <span className="today-pill" data-tone="danger">{`Could not read ${what}`}</span>
+      <span className="kit-pill" data-tone="danger">{`Could not read ${what}`}</span>
       <Button dense variant="ghost" onClick={onRetry}>Retry</Button>
     </div>
   );
@@ -240,7 +240,7 @@ export function TodayView({ header }: { header: ReactNode }) {
               {String(row.title ?? "Meeting")}
             </Button>
             <span className="today-row-meta">
-              <span className="today-pill" data-tone={failed ? "danger" : "warn"}>{failed ? "Summary failed" : "No summary yet"}</span>
+              <span className="kit-pill" data-tone={failed ? "danger" : "warn"}>{failed ? "Summary failed" : "No summary yet"}</span>
             </span>
           </div>
           {/* MUST 2 (Astra r1 on #1110): where the run goes, before the
@@ -286,9 +286,9 @@ export function TodayView({ header }: { header: ReactNode }) {
             <span className="today-next-title">{title(next)}</span>
             <span className="today-row-meta">
               {next.person_label ? <><Avatar name={next.person_label} /> {next.person_label}</> : null}
-              {next.project_name ? <span className="today-pill" data-tone="info">{next.project_name}</span> : null}
+              {next.project_name ? <span className="kit-pill" data-tone="info">{next.project_name}</span> : null}
               {armed ? (
-                <span className="today-pill" data-tone="danger" data-live="" data-testid="today-armed">
+                <span className="kit-pill" data-tone="danger" data-live="" data-testid="today-armed">
                   {armsAt ? `Armed for ${clock(armsAt)}` : "Armed"}
                 </span>
               ) : null}
@@ -306,7 +306,7 @@ export function TodayView({ header }: { header: ReactNode }) {
               Record when it starts
             </Button>
           ) : null}
-          {actError?.key === "arm" ? <span className="today-pill" data-tone="danger" role="status" data-testid="today-arm-failed">{actError.text}</span> : null}
+          {actError?.key === "arm" ? <span className="kit-pill" data-tone="danger" role="status" data-testid="today-arm-failed">{actError.text}</span> : null}
         </div>
       </article>
     </SpineNode>
@@ -323,8 +323,8 @@ export function TodayView({ header }: { header: ReactNode }) {
             <span className="today-row-name">{title(event)}</span>
             <span className="today-row-meta">
               {event.person_label ? <span>{event.person_label}</span> : null}
-              {event.project_name ? <span className="today-pill" data-tone="info">{event.project_name}</span> : null}
-              {event.armed ? <span className="today-pill" data-tone="danger">Armed</span> : null}
+              {event.project_name ? <span className="kit-pill" data-tone="info">{event.project_name}</span> : null}
+              {event.armed ? <span className="kit-pill" data-tone="danger">Armed</span> : null}
             </span>
           </div>
           {open ? <Button dense variant="ghost" onClick={open}>Prep</Button> : null}
@@ -408,7 +408,7 @@ export function TodayView({ header }: { header: ReactNode }) {
                 <h3 className="today-plate-cap">TO DECIDE</h3>
                 <span className="today-decide-title">{decide.title}</span>
                 {decide.meetingTitle ? <span className="today-row-meta">{decide.meetingTitle}</span> : null}
-                {actError?.key === "decide" ? <span className="today-pill" data-tone="danger" role="status" data-testid="today-decide-failed">{actError.text}</span> : null}
+                {actError?.key === "decide" ? <span className="kit-pill" data-tone="danger" role="status" data-testid="today-decide-failed">{actError.text}</span> : null}
                 <div className="today-plate-verbs">
                   <Button dense disabled={busy === "decide"} data-testid="today-confirm"
                     onClick={() => void act("decide", "Not confirmed. Try again", () => apiFetch(`/api/proposals/${encodeURIComponent(String(decide.proposalId))}/confirm`, { method: "POST" }))}>

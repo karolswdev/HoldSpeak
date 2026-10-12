@@ -143,17 +143,17 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
     }
     render(<Harness />);
     const decisions = await screen.findByTestId("meeting-decisions");
-    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 2");
-    expect(screen.getByTestId("meeting-commitments").querySelector("h3")?.textContent).toBe("Commitments · 1");
+    expect(decisions.querySelector("h3")?.textContent).toBe("Decided · 2");
+    expect(screen.getByTestId("meeting-commitments").querySelector("h3")?.textContent).toBe("Who owes what · 1");
     fireEvent.click(within(decisions).getByRole("button", { name: "Confirm: Freeze the old ledger on Nov 5" }));
     await waitFor(() => {
       const row = within(screen.getByTestId("meeting-decisions")).getByText("Freeze the old ledger on Nov 5").closest(".surface-ledger-line");
       expect(row?.querySelector(".surface-ledger-meta")?.textContent).toBe("JORDAN");
     });
-    expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decisions · 2");
+    expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decided · 2");
     proposals = proposals.map((p) => (p.id === "p1" ? { ...p, state: "confirmed" } : p));
     fireEvent.click(within(screen.getByTestId("meeting-decisions")).getByRole("button", { name: "Dismiss: Run reconciliation nightly" }));
-    await waitFor(() => expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decisions · 1"));
+    await waitFor(() => expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decided · 1"));
   });
 });
 
@@ -234,7 +234,7 @@ describe("the meeting's recorded decisions (PHILO-17)", () => {
     }
     const { container } = render(<Harness />);
     const decisions = await screen.findByTestId("meeting-decisions");
-    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
+    expect(decisions.querySelector("h3")?.textContent).toBe("Decided · 1");
     expect(decisions.textContent).toContain("Freeze the old ledger on Nov 5");
     const order = [...container.querySelectorAll("[data-testid=meeting-decisions], [data-testid=meeting-commitments]")]
       .map((el) => el.getAttribute("data-testid"));

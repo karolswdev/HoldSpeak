@@ -35,3 +35,16 @@ describe("AskWell (Phase 16 kit)", () => {
     expect(css).toMatch(/\.desk-next \.gadget-string \.desk-mic \{[^}]*align-self: stretch;[^}]*background: var\(--wb-steel\);[^}]*box-shadow: inset 1px 0 0 var\(--wb-ink\)/);
   });
 });
+
+describe("PHILO-17 AskWell primary={false}", () => {
+  it("draws Answer as the quieter steel verb; the default stays the filled primary", () => {
+    const props = { agent: "codex", question: "Ship it?", value: "", onChange: () => {}, onAnswer: () => {} };
+    const { unmount } = render(<AskWell {...props} />);
+    expect(screen.getByRole("button", { name: "Answer" }).className).toContain("btn--primary");
+    unmount();
+    render(<AskWell {...props} primary={false} />);
+    const answer = screen.getByRole("button", { name: "Answer" });
+    expect(answer.className).toContain("btn--secondary");
+    expect(answer.className).not.toContain("btn--primary");
+  });
+});
