@@ -19,7 +19,7 @@ defect 4).  Four fences:
 To prove the fence bites, point it at the pre-fix scanner::
 
     HS200_CANON_SCANNER=/path/to/old/ux_canon_scan.py \\
-        HOME=$(mktemp -d) uv run pytest -q tests/unit/test_phase200_canon_guard.py
+        HOME=$(mktemp -d) uv run pytest -q tests/unit/test_ux_canon_scan_shapes.py
 """
 from __future__ import annotations
 
