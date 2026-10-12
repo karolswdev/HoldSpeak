@@ -16,7 +16,7 @@ Planned suite: ``phase200_attention``.
 
 Run:
     HOME=$(mktemp -d) uv run pytest -q -p no:cacheprovider \\
-        tests/unit/test_phase200_attention.py
+        tests/unit/test_attention.py
 """
 from __future__ import annotations
 
