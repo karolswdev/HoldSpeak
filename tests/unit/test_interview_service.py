@@ -234,12 +234,3 @@ def test_setup_continuation_reuses_live_session_and_replaces_expired_session(rig
     assert svc.get(tid)["setup_session_id"] == replacement["id"]
 
 
-@pytest.mark.skip(reason="QUARANTINED #694: it drives project.setup.finalize through the thread's bound "
-                         "dispatch to assert the continuation refusal; finalize is CONFIG (the owner's press), "
-                         "no longer in the section, so the call is refused as unavailable before the "
-                         "continuation check. BACKLOG row 'Interview setup continuation after #694'.")
-def test_setup_continuation_refuses_a_foreign_session_at_finalize(rig):
-    dispatch = _setup_dispatch(rig, {"active": "active"})
-    dispatch("project.setup.start", {}, OWNER)
-    with pytest.raises(ServiceError, match="continuation"):
-        dispatch("project.setup.finalize", {"session_id": "someone-elses-session"}, OWNER)

@@ -391,6 +391,27 @@ def test_hook_reuses_one_idempotency_key_across_retries(tmp_path) -> None:
     assert posted_ids == ["toolu_1"]  # tool_use_id wins when present
 
 
+def test_the_hook_posts_the_redaction_never_the_tool_input(tmp_path) -> None:
+    """Threat-model item 8: the armed hook sends the digest and the bounded
+    head to the hub, never the agent's full ``tool_input``."""
+    posted: list[dict] = []
+
+    def post(url, body, timeout):
+        posted.append(body)
+        return 200, {"state": APPROVED}
+
+    run_hook(
+        _payload(cwd=str(tmp_path)),
+        config=_armed(str(tmp_path)),
+        http_post=post,
+        http_get=lambda url, timeout: (200, {}),
+    )
+    [body] = posted
+    sha256, head = redact_args({"command": "rm -rf build"})
+    assert body["args_sha256"] == sha256 and body["args_head"] == head
+    assert "tool_input" not in body and "args" not in body and "command" not in body
+
+
 # -- the hub routes --------------------------------------------------------
 
 

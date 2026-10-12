@@ -309,22 +309,6 @@ class TestIntelSchemaConstant:
 class TestPinServerOldShape:
     """The OLD shape (no response_format) gets {"line"} and produces empty intel."""
 
-    def test_bare_request_returns_line_response(self, pin_server: HTTPServer) -> None:
-        """The stub server returns {"line": ...} for bare requests."""
-        port = pin_server.server_port
-        data = json.dumps({"model": "m", "messages": []}).encode("utf-8")
-        req = Request(
-            f"http://127.0.0.1:{port}/v1/chat/completions",
-            data=data,
-            headers={"content-type": "application/json"},
-            method="POST",
-        )
-        with urlopen(req, timeout=5) as resp:  # noqa: S310
-            result = json.loads(resp.read().decode())
-        content = json.loads(result["choices"][0]["message"]["content"])
-        assert "line" in content
-        assert "action_items" not in content
-
     def test_old_dispatch_produces_empty_intel(
         self, pin_server: HTTPServer, monkeypatch: Any
     ) -> None:

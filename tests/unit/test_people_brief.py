@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -484,3 +485,211 @@ class TestMeetingObserverRedaction:
 
         _MeetingPersonRedactor(Sink()).on_event(FakeEvent())
         assert captured[0].result_summary == '{"id":"m1","title":"planning"}'
+
+# Moved from tests/unit/test_hs172_people_sources.py (fast diet, by service):
+# the 1:1 brief watch_summary and last_meeting.
+
+
+@pytest.fixture
+def plain_db(tmp_path: Path) -> Any:
+    """The real plain DB on the real schema (a hand-made table set went stale: it had no ``meetings.parked``)."""
+    from holdspeak.db.core import Database
+
+    return Database(tmp_path / "plain.sqlite3")
+
+
+def _seed_watch(
+    db: Any, project_id: str, project_name: str,
+    connector_id: str, query_kind: str, entities: list[dict],
+) -> None:
+    """Seed a project and a watch with a persisted snapshot."""
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO projects (id, name, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))",
+            (project_id, project_name),
+        )
+        snapshot = json.dumps({"schema": 1, "entities": {str(i): e for i, e in enumerate(entities)}})
+        conn.execute(
+            "INSERT INTO connector_watches (id, project_id, connector_id, query_kind, snapshot_json, query_json) "
+            "VALUES (?, ?, ?, ?, ?, '{}')",
+            (f"w_{project_id}_{connector_id}_{query_kind}", project_id, connector_id, query_kind, snapshot),
+        )
+
+
+# ==============================================================================
+# HS-172-05: The brief enrichment (watch_summary)
+# ==============================================================================
+
+
+class TestBriefEnrichment:
+    """one_on_one_brief gains watch_summary from persisted Watch snapshots."""
+
+    def test_watch_summary_prs_waiting(self, service: PeopleService, plain_db: Any) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "Ania"})
+        service.link_owner_alias(OWNER, rel["id"], "ania-k")
+        service.link_project(OWNER, rel["id"], "proj-1")
+
+        four_days_ago = (datetime.now() - timedelta(days=4)).isoformat()
+        _seed_watch(plain_db, "proj-1", "HoldSpeak", "gh", "pull_requests", [
+            {
+                "number": 612, "title": "Fix migration", "state": "OPEN",
+                "reviewRequests": ["ania-k"],
+                "url": "https://github.com/karolswdev/holdspeak/pull/612",
+                "updatedAt": four_days_ago,
+            },
+            {
+                "number": 613, "title": "Add tests", "state": "OPEN",
+                "reviewRequests": ["ania-k"],
+                "url": "https://github.com/karolswdev/holdspeak/pull/613",
+                "updatedAt": four_days_ago,
+            },
+            {
+                "number": 614, "title": "Other PR", "state": "OPEN",
+                "reviewRequests": ["other-reviewer"],
+                "url": "https://github.com/karolswdev/holdspeak/pull/614",
+                "updatedAt": four_days_ago,
+            },
+        ])
+
+        brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+        ws = brief["watch_summary"]
+        assert len(ws["prs_waiting"]) == 2
+        assert ws["oldest_waiting_days"] >= 3
+        # Every PR carries room_id and room_name.
+        for pr in ws["prs_waiting"]:
+            assert pr["room_id"] == "proj-1"
+            assert pr["room_name"] == "HoldSpeak"
+
+    def test_watch_summary_jira_overdue(self, service: PeopleService, plain_db: Any) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "Ania Kowalska"})
+        service.link_owner_alias(OWNER, rel["id"], "Ania Kowalska")
+        service.link_project(OWNER, rel["id"], "proj-2")
+
+        yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        _seed_watch(plain_db, "proj-2", "Governance", "jira", "issues", [
+            {
+                "key": "GOV-412", "summary": "PostgreSQL migration",
+                "status": "In Progress", "status_category": "indeterminate",
+                "assignee": "Ania Kowalska", "due_at": yesterday,
+                "url": "https://jira.example.com/GOV-412",
+            },
+            {
+                "key": "GOV-413", "summary": "Done task",
+                "status": "Done", "status_category": "done",
+                "assignee": "Ania Kowalska", "due_at": yesterday,
+                "url": "https://jira.example.com/GOV-413",
+            },
+        ])
+
+        brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+        ws = brief["watch_summary"]
+        # Only the non-done issue appears.
+        assert len(ws["open_assignments"]) == 1
+        assert ws["open_assignments"][0]["key"] == "GOV-412"
+        assert ws["open_assignments"][0]["overdue"] is True
+        assert ws["open_assignments"][0]["room_id"] == "proj-2"
+
+    def test_watch_summary_no_match_empty(self, service: PeopleService, plain_db: Any) -> None:
+        """When the People resolver finds no match, Watch sections are empty."""
+        rel = service.create_relationship(OWNER, {"display_name": "No Alias"})
+        service.link_project(OWNER, rel["id"], "proj-3")
+
+        _seed_watch(plain_db, "proj-3", "Test", "gh", "pull_requests", [
+            {"number": 1, "title": "PR", "state": "OPEN",
+             "reviewRequests": ["someone-else"], "url": "", "updatedAt": ""},
+        ])
+
+        brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+        ws = brief["watch_summary"]
+        assert ws["prs_waiting"] == []
+        assert ws["open_assignments"] == []
+
+    def test_watch_summary_no_db_graceful(self, service: PeopleService) -> None:
+        """When db is None, watch_summary degrades to empty."""
+        rel = service.create_relationship(OWNER, {"display_name": "No DB"})
+        brief = service.one_on_one_brief(OWNER, rel["id"])
+        assert brief["watch_summary"]["prs_waiting"] == []
+        assert brief["watch_summary"]["open_assignments"] == []
+
+    def test_watch_summary_no_writes(self, service: PeopleService, plain_db: Any) -> None:
+        """The 138 law: brief computation writes ZERO rows."""
+        rel = service.create_relationship(OWNER, {"display_name": "Spy"})
+        service.link_owner_alias(OWNER, rel["id"], "spy-login")
+        service.link_project(OWNER, rel["id"], "proj-spy")
+
+        _seed_watch(plain_db, "proj-spy", "Spy", "gh", "pull_requests", [
+            {"number": 1, "title": "PR", "state": "OPEN",
+             "reviewRequests": ["spy-login"], "url": "", "updatedAt": ""},
+        ])
+
+        def _counts() -> dict[str, int]:
+            with plain_db._connection() as conn:
+                return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
+        tables = ["connector_watches", "projects", "source_suggestions"]
+        before = _counts()
+        service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+        after = _counts()
+        assert after == before, "Brief wrote to the plain DB"
+
+    def test_last_meeting_present(self, service: PeopleService, plain_db: Any) -> None:
+        """last_meeting summarizes the most recent linked meeting."""
+        rel = service.create_relationship(OWNER, {"display_name": "Jan"})
+        service.link_calendar_series(OWNER, rel["id"], "uid-weekly", "cal-1", "Weekly")
+
+        with plain_db._connection() as conn:
+            conn.execute(
+                "INSERT INTO calendar_events (id, uid, title, starts_at, ends_at, last_seen_at, subscription_revision, source_id) "
+                "VALUES ('ev-1', 'uid-weekly', 'Weekly', '2026-08-01', '2026-08-01', 0.0, 'r1', 'cal-1')",
+            )
+            conn.execute(
+                "INSERT INTO meetings (id, started_at, ended_at, title, calendar_event_id) "
+                "VALUES ('m-1', '2026-08-01T10:00:00', '2026-08-01T11:00:00', 'Weekly', 'ev-1')",
+            )
+            conn.execute(
+                "INSERT INTO action_items (id, meeting_id, task, owner, status) VALUES "
+                "('ai-1', 'm-1', 'Ship it', 'Jan', 'pending'), "
+                "('ai-2', 'm-1', 'Done', 'Jan', 'completed')",
+            )
+
+        brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+        lm = brief["last_meeting"]
+        assert lm is not None
+        assert lm["meeting_id"] == "m-1"
+        assert lm["open_count"] == 1  # Only pending items.
+
+    def test_last_meeting_none_when_no_meetings(self, service: PeopleService) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "No Meetings"})
+        brief = service.one_on_one_brief(OWNER, rel["id"])
+        assert brief["last_meeting"] is None
+
+
+# ==============================================================================
+# Law: no pronoun inference in the wire
+# ==============================================================================
+
+
+class TestNoPronounInWire:
+    """The watch_summary and last_meeting carry no pronoun strings.
+
+    The face resolves display_name; the wire never infers her/him/his/she/he
+    from a name.
+    """
+
+    def test_watch_summary_no_pronouns(self, service: PeopleService, plain_db: Any) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "Ania Kowalska"})
+        service.link_owner_alias(OWNER, rel["id"], "ania-k")
+        service.link_project(OWNER, rel["id"], "proj-pronoun")
+
+        four_days_ago = (datetime.now() - timedelta(days=4)).isoformat()
+        _seed_watch(plain_db, "proj-pronoun", "Test", "gh", "pull_requests", [
+            {"number": 1, "title": "PR", "state": "OPEN",
+             "reviewRequests": ["ania-k"], "url": "", "updatedAt": four_days_ago},
+        ])
+
+        brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+        # Serialize the entire watch_summary and last_meeting to text.
+        wire_text = json.dumps(brief.get("watch_summary", {})) + json.dumps(brief.get("last_meeting"))
+        # No pronoun words should appear in the wire.
+        pronouns = {"her", "him", "his", "she", " he "}
+        for p in pronouns:
+            assert p not in wire_text.lower(), f"Pronoun '{p}' found in wire: {wire_text}"

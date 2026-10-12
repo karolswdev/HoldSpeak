@@ -2,7 +2,8 @@
 
 1. Write-count spy (monday_briefs/_items/_shelf gain ZERO person rows).
 2. pipeline_events content check (no person content in result_summary).
-3. MondayBrief dataclass shape pin (no person_sections key in asdict).
+3. (retired 2026-10-12: the dataclass shape pin; TestResourceShapePin and
+   tests/unit/test_brief_send_carries_no_people.py prove it through real code.)
 4. F6 pin (planted leader_private never in MCP response; access-off -> absent).
 5. L2 refusal (sidecar unavailable -> {"state":"unavailable"}).
 6. D2 hygiene pin (no "/" path fragments in persisted item details).
@@ -13,7 +14,6 @@ ZERO keyring/keychain calls.
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -24,7 +24,7 @@ from holdspeak.db.core import Database, reset_database
 from holdspeak.mcp import resources, tools
 from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.monday_brief_service import MondayBrief, MondayBriefService
+from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.person_overlay import compose_person_overlay
 from holdspeak.services.people_service import PeopleService, UnavailablePeopleStore
 
@@ -122,32 +122,6 @@ class TestPipelineEventsContentCheck:
             assert "leader_private" not in summary.lower() or "redacted" in summary.lower(), (
                 f"Leader-private content leaked: {summary}"
             )
-
-
-# -- Pin 3: MondayBrief dataclass shape pin -----------------------------------
-
-
-class TestDataclassShapePin:
-    """asdict(MondayBrief) NEVER has a person_sections key."""
-
-    def test_no_person_sections_in_asdict(self) -> None:
-        brief = MondayBrief(
-            id="test-brief",
-            period_start="2026-08-25T17:00:00",
-            period_end="2026-08-26T09:00:00",
-            headline="Nothing.",
-            sections={"this_week": [], "changed": [], "broke": [], "waiting": [], "decisions": []},
-            generated_at="2026-08-26T09:00:00",
-        )
-        d = asdict(brief)
-        assert "person_sections" not in d, (
-            f"person_sections appeared in asdict(MondayBrief): {list(d.keys())}"
-        )
-
-    def test_no_person_sections_field_on_class(self) -> None:
-        import dataclasses
-        field_names = {f.name for f in dataclasses.fields(MondayBrief)}
-        assert "person_sections" not in field_names
 
 
 # -- Pin 4: F6 pin (MCP gate) ------------------------------------------------

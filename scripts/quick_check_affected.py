@@ -54,8 +54,7 @@ def main() -> int:
     for path in changed:
         name = Path(path).name
         if path.startswith("tests/") and name.startswith("test_") and name.endswith(".py") and "/_parked/" not in path:
-            # A test file the change deleted or moved is not a test to run.
-            if (ROOT / path).exists():
+            if (ROOT / path).exists():  # a moved or parked test file is not a missing one
                 out.add(path)
     modules = {m for m in (module_of(p) for p in changed) if m}
     scripts = {Path(p).stem for p in changed if p.startswith("scripts/") and p.endswith(".py") and "/" not in p[len("scripts/"):]}
