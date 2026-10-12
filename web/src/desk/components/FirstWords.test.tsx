@@ -527,13 +527,15 @@ describe("FirstWords", () => {
     fireEvent.change(editor, { target: { value: "Edited copy value." } });
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("Edited copy value."));
-    expect(screen.getByRole("status")).toHaveTextContent("Copied to your clipboard.");
+    // The line is set after writeText resolves, not when it is called: wait
+    // for the line itself (read at once, it flaked under the full suite's load).
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Copied to your clipboard."));
 
     writeText.mockRejectedValueOnce(new Error("blocked"));
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
-    expect(await screen.findByRole("status")).toHaveTextContent(
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(
       "Clipboard access was blocked. Select your text and copy it manually.",
-    );
+    ));
   });
 
   it("finishes a transcript-backed Copy only after seed and the final Desk refresh", async () => {
