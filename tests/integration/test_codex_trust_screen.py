@@ -27,7 +27,12 @@ import pytest
 
 from holdspeak import coder_steering
 from holdspeak.delivery import first_message
-from tests.unit.test_agent_hand import OWNER, _rig, _wait_for, db  # noqa: F401  (db is a fixture)
+from tests.unit.test_agent_hand import (  # noqa: F401  (db is a fixture)
+    OWNER,
+    _rig,
+    _wait_for,
+    db,
+)
 
 CAPTURED = Path(__file__).resolve().parents[1] / "fixtures" / "codex" / "trust_screen_worktree_note_80x24.txt"
 CAPTURED_WORKTREE = "/private/tmp/hs14.G9nv/hs-project_item-pitem_7dead93a465b4032976f3dd82a6d9195"

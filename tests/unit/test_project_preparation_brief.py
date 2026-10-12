@@ -43,9 +43,9 @@ from holdspeak.services.preparation_brief_service import (
     ROUTE_KEY_MISSING,
     ROUTE_NOT_SET,
     ROUTE_READY,
+    ROUTE_STOPPED,
     ROUTE_TOKENS,
     ROUTE_UNREACHABLE,
-    ROUTE_STOPPED,
     SECTION_SUPERSEDED,
     STATE_AVAILABLE,
     STATE_FAILED,
@@ -62,7 +62,6 @@ from holdspeak.services.preparation_brief_service import (
 )
 from holdspeak.services.project_service import ProjectService
 from holdspeak.services.project_update_service import (
-    Claim,
     ACCEPTANCE_ACCEPTED,
     ACCEPTANCE_SUPERSEDED,
     ACCEPTANCE_UNREVIEWED,
@@ -71,8 +70,8 @@ from holdspeak.services.project_update_service import (
     SUPPORT_SOURCE_LINKED,
     SUPPORT_SUPPORTED,
     SUPPORT_UNKNOWN,
+    Claim,
 )
-
 from tests.unit.test_update_drafter import _MockBroker, _MockRunner, _seed_assignment
 
 OWNER = Principal(PrincipalKind.OWNER, "prep-brief-test")
@@ -550,9 +549,15 @@ def _define_real_endpoint(db: Database, home: Path, *, endpoint: str, requires_k
     hand-seeded ids), assigned to the brief capability.  Returns the profile
     id the route will name."""
     from holdspeak.config import Config
-    from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
-    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
-    from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
+    from holdspeak.services.inference_acquisition_service import (
+        InferenceAcquisitionApplicationService,
+    )
+    from holdspeak.services.inference_assignment_service import (
+        InferenceAssignmentService,
+    )
+    from holdspeak.services.inference_setup_service import (
+        InferenceSetupApplicationService,
+    )
     from holdspeak.services.model_library_service import ModelLibraryApplicationService
 
     profile_id = "hosted-brief-endpoint"

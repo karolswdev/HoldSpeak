@@ -28,7 +28,6 @@ from holdspeak.web.routes.concierge import build_concierge_router
 from tests.unit.test_meeting_deferred_admission import _queued_meeting
 from tests.unit.test_model_library_providers import OWNER, _draft, _library
 
-
 pytestmark = pytest.mark.timeout(90, method="signal")
 
 
