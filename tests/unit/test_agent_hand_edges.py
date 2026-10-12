@@ -575,7 +575,7 @@ def test_handing_again_resumes_the_same_launch(tmp_path, db, monkeypatch) -> Non
     gate["ready"] = True
     _wait_for(lambda: rig.launches.get(first["launch_id"]), "instruction_state", "transport_error")
     rig.tmux.ended = False
-    import tests.unit.test_agent_hand_round1 as me  # noqa: F401
+    import tests.unit.test_agent_hand_edges as me  # noqa: F401
 
     again = rig.hand.hand(OWNER, "action", "ai_1")
     assert again["resumed"] is True and again["launch_id"] == first["launch_id"]

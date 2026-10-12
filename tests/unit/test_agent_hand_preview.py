@@ -218,7 +218,7 @@ def test_preview_does_not_reconcile_an_existing_launch(tmp_path, db, monkeypatch
     and reconciles nothing (it was pending -> interrupted)."""
     from holdspeak.delivery.factory_launch import _DEFAULT_SERVICES
     from holdspeak.services.agent_hand_service import default_agent_hand_service
-    from tests.unit.test_agent_hand_round1 import _restart
+    from tests.unit.test_agent_hand_edges import _restart
 
     rig = _track(_rig(tmp_path, db, monkeypatch, register_when=lambda tmux: False))
     first = rig.hand.hand(OWNER, "action", "ai_1")
