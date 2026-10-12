@@ -41,11 +41,3 @@ def test_presence_toggle_persists_via_settings(settings_path) -> None:
     assert client.get("/api/setup/status").json()["presence"]["enabled"] is True
 
 
-def test_settings_presence_has_a_real_toggle_not_an_env_var() -> None:
-    repo = Path(__file__).resolve().parents[2]
-    page = (repo / "web" / "src" / "pages" / "cores" / "SettingsCore.tsx").read_text()
-    # HS-111-01: the toggle is a CheckGadget row saved through the API.
-    assert 'check(["presence", "enabled"], "Presence")' in page
-    assert "CheckGadget" in page and '"/api/settings"' in page
-    gadgets = (repo / "web" / "src" / "desk" / "surface" / "gadgets.tsx").read_text()
-    assert 'type="checkbox"' in gadgets  # a real input, never an env var

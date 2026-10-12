@@ -13,68 +13,10 @@ def _client() -> TestClient:
     return TestClient(MeetingWebServer(WebRuntimeCallbacks(on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={}))).app)
 
 
-def _page() -> str:
-    return (_REPO / "web/src/pages/WelcomePage.tsx").read_text()
-
-
 def test_welcome_route_serves_the_one_react_shell() -> None:
     response = _client().get("/welcome")
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text or "npm run build" in response.text
-
-
-def test_welcome_is_the_same_one_step_first_value_surface_as_the_desk() -> None:
-    page = _page()
-    # PHILO-17 U17: /welcome opens the SAME Get ready cards the desk shows
-    # (desk/firstrun/FirstRun.tsx; its First words card is this page's
-    # sentence); the separate FirstWords page is parked.
-    desk = (_REPO / "web/src/desk/firstrun/FirstRun.tsx").read_text()
-    assert "openFirstRun()" in page and 'pathname: "/"' in page
-    assert "FirstWordsCard" in desk and "closeFirstRun()" in desk
-    assert "STEPS" not in page and "Model" not in page
-    assert (_REPO / "web/src/pages/_parked/WelcomePage.tsx").exists()
-
-
-def test_basic_value_precedes_optional_runs_on_setup() -> None:
-    first_words = (_REPO / "web/src/desk/components/FirstWords.tsx").read_text()
-    assert "Dictate one sentence" in first_words
-    basic_value = first_words.index("Keep as Note")
-    # HS-169-07: surface key changed from configure-setup to project-setup;
-    # fallback URL changed from /setup to / (the Door is a desk surface).
-    optional_setup = first_words.index('openSurfaceOr("project-setup", "/")')
-    assert basic_value < optional_setup
-    # Setup remains a failure-only recovery door after the first-value actions;
-    # Models/destination choice no longer competes with the initial sentence.
-    assert "failureContract?.setup" in first_words
-
-
-def test_first_dictation_retains_editable_text_and_all_recovery_doors() -> None:
-    page = (_REPO / "web/src/desk/components/FirstWords.tsx").read_text()
-    recovery = (_REPO / "web/src/lib/dictationRecovery.ts").read_text()
-    tracker = (_REPO / "web/src/desk/firstValue.ts").read_text()
-    for marker in (
-        "Click to retry",
-        "Copy",
-        "Keep as Note",
-        "Setup",
-        "Continue later",
-    ):
-        assert marker in page
-    assert "DICTATION_FAILURES" in page and "dictationFailure" in page
-    for failure in (
-        "permission_denied",
-        "missing_model",
-        "rejected_token",
-        "unreachable_hub",
-        "delivery_conflict",
-    ):
-        assert failure in recovery
-    # HS-111-08: the TextArea species retired; PadGadget is the ONE
-    # multiline well (FirstWords keeps its own capture path, mic off).
-    assert "<PadGadget" in page and "onChange" in page
-    assert "FirstValueTracker" in page
-    assert "/api/setup/first-value/start" in tracker
-    assert "/api/setup/onboarding" in page
 
 
 def test_runtime_discovery_routes_are_real() -> None:

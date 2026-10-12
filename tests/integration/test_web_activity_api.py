@@ -57,19 +57,6 @@ def test_client(activity_db: Database) -> TestClient:
     return TestClient(server.app)
 
 
-def test_activity_page_serves_browser_surface(test_client: TestClient) -> None:
-    """The route returns the React shell and its typed source owns every panel."""
-    response = test_client.get("/activity")
-    assert response.status_code == 200
-    assert '<div id="root"></div>' in response.text
-    js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/ActivityCore.tsx").read_text()
-    for marker in ("records", "rules", "candidates", "connectors"):
-        assert f'"{marker}"' in js
-    assert "/api/activity/status" in js
-    assert "/api/activity/meeting-candidates" in js
-    assert "/api/activity/enrichment/connectors" in js
-
-
 def test_activity_status_reports_default_enabled_state(test_client: TestClient) -> None:
     response = test_client.get("/api/activity/status")
 

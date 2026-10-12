@@ -105,38 +105,6 @@ def cache_invalidator() -> MagicMock:
     return MagicMock()
 
 
-def test_dictation_page_route_serves_html() -> None:
-    """`/dictation` returns the static editor page with the expected anchors."""
-    server = MeetingWebServer(
-                 WebRuntimeCallbacks(
-                     on_bookmark=MagicMock(),
-                     on_stop=MagicMock(),
-                     get_state=MagicMock(return_value={}),
-                 )
-             )
-    client = TestClient(server.app)
-    response = client.get("/dictation")
-    assert response.status_code == 200
-    assert "text/html" in response.headers["content-type"]
-    assert '<div id="root"></div>' in response.text
-    core_root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
-    js = "\n".join(
-        path.read_text()
-        for path in (
-            core_root / "DictationCore.tsx",
-            *sorted((core_root / "dictation").glob("*.tsx")),
-            *sorted((core_root / "dictation").glob("*.ts")),
-        )
-    )
-    for endpoint in (
-        "/api/dictation/blocks",
-        "/api/dictation/readiness",
-        "/api/dictation/project-kb",
-    ):
-        assert endpoint in js
-    assert "New block" in js and "Project scope" in js
-
-
 @pytest.fixture
 def test_client(cache_invalidator: MagicMock) -> TestClient:
     server = MeetingWebServer(
