@@ -55,11 +55,17 @@ export function placeWindow(
   /** PHILO-17 (U28a): the left edge a new window keeps clear of (the
    * desk's icon column); a window too wide to clear it starts at MARGIN. */
   leftFloor: number = MARGIN,
+  /** PHILO-17 (Today): the right edge a new window keeps clear of (the
+   *  desk's right icon column: Needs you, Archive), when the window fits
+   *  between the two columns. */
+  rightCeiling: number = vw,
 ): PanelRect {
   const { top, bottom } = workBand();
   const w = Math.max(minW, Math.min(seed.w, vw - MARGIN * 2));
   const h = Math.max(minH, Math.min(seed.h, Math.max(minH, vh - top - bottom)));
-  const maxX = Math.max(MARGIN, vw - MARGIN - w);
+  const floorX = Math.max(MARGIN, leftFloor);
+  const ceiling = rightCeiling < vw && floorX + w <= rightCeiling ? rightCeiling : vw - MARGIN;
+  const maxX = Math.max(MARGIN, ceiling - w);
   const maxY = Math.max(top, vh - bottom - h);
   const left = Math.min(Math.max(MARGIN, leftFloor), maxX);
   const sx = Math.min(Math.max(seed.x, left), maxX);
@@ -145,6 +151,20 @@ export function iconColumnRight(gap = 12): number {
     edge = right + 24;
   }
   return right ? Math.round(right + gap) : MARGIN;
+}
+
+/** PHILO-17 (Today): the left edge of the desk's right icon column (the
+ *  icons the screen placed in its right quarter), less a gap; the viewport
+ *  width when there is none. */
+export function iconColumnLeft(gap = 12): number {
+  if (typeof document === "undefined" || typeof window === "undefined") return Number.POSITIVE_INFINITY;
+  const vw = window.innerWidth;
+  const lefts = Array.from(document.querySelectorAll<HTMLElement>(".desk-screen-placed .desk-icon"))
+    .filter((el) => !el.closest(".desk-window, .desk-dock"))
+    .map((el) => el.getBoundingClientRect())
+    .filter((r) => r.width > 0 && r.height > 0 && r.left >= vw * 0.75)
+    .map((r) => r.left);
+  return lefts.length ? Math.round(Math.min(...lefts) - gap) : vw;
 }
 
 /** HS-97-02 — clamp-on-open: a persisted rect (possibly from a larger

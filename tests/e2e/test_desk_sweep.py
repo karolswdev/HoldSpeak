@@ -340,6 +340,10 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             week = open13._seed(home, base)  # canvas week, 1:1 Priya, calendar, brief
             _seed_agents(home)  # the Conductor flight
             _save_meeting("m-sweep-failed", "Vendor sync", 3, "error")  # a Needs-you member
+            # PHILO-17 (Today): a decision to make, so the To decide plate draws.
+            get_database().proposals.create_proposal(
+                meeting_id="m-sweep-failed", project_id=None, kind="decision",
+                text="Freeze the ledger on Nov 12", source_plugin="summary")
             ctx = pw_browser.new_context()
             page = ctx.new_page()
             page.goto(f"{base}/?token={TOKEN}", wait_until="load")

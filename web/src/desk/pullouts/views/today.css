@@ -468,3 +468,51 @@
     --gutter: 44px;
   }
 }
+
+/* ── Hover: the bead of the row under the pointer lights; the stepper's
+   plates lift toward the light; the next plate's shadow deepens. Colour
+   and shadow only: nothing changes place. ── */
+.desk-next .today-bead,
+.desk-next .today-step-n,
+.desk-next .today-next {
+  transition: background-color 120ms ease, box-shadow 160ms ease, border-color 120ms ease;
+}
+.desk-next .today-node:hover > .today-bead {
+  background: var(--wb-steel-2);
+  box-shadow: var(--wb-raised), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
+}
+.desk-next .today-node[data-kind="finish"]:hover > .today-bead {
+  background: color-mix(in srgb, var(--lamp-warn) 80%, #ffffff);
+  box-shadow: var(--wb-raised), 0 0 0 3px color-mix(in srgb, var(--lamp-warn) 35%, transparent);
+}
+.desk-next .today-node[data-kind="next"]:hover > .today-bead {
+  background: color-mix(in srgb, var(--wb-sel) 80%, #ffffff);
+  box-shadow: var(--wb-raised), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 40%, transparent);
+}
+.desk-next .today-next:hover {
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent), 6px 14px 28px color-mix(in srgb, var(--wb-ink) 20%, transparent);
+}
+.desk-next .today-step:hover .today-step-n {
+  background: var(--wb-steel-2);
+  box-shadow: var(--wb-raised), 1px 2px 0 color-mix(in srgb, var(--wb-ink) 25%, transparent);
+}
+.desk-next .today-step[data-state="now"]:hover .today-step-n {
+  background: color-mix(in srgb, var(--wb-sel) 85%, #ffffff);
+  box-shadow: var(--wb-sunken), 0 0 0 4px color-mix(in srgb, var(--lamp-info) 40%, transparent);
+}
+.desk-next .today-step:hover .today-step-word {
+  color: var(--wb-text);
+}
+/* Press: a row's whole plate sinks while its verb or title is held. */
+.desk-next .today-row:has(.btn:active, .today-row-title:active) {
+  background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .today-next:has(.btn:active) {
+  box-shadow: var(--wb-raised), 1px 2px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .today-bead,
+  .desk-next .today-step-n,
+  .desk-next .today-next { transition: none; }
+}

@@ -169,7 +169,8 @@ export function TodayView({ header }: { header: ReactNode }) {
   const next = events[0] ?? null;
   const later = events.slice(1);
   const finish = useMemo(() => toFinish(meetings, now), [meetings, now]);
-  const decide = needs.find((item) => item.proposalId && !item.muted && !item.waiting) ?? null;
+  const decidable = needs.filter((item) => item.proposalId && !item.muted && !item.waiting);
+  const decide = decidable.find((item) => item.proposalKind === "decision") ?? decidable[0] ?? null;
   const calendar = door?.calendar_configured ?? false;
 
   // ONE filled primary per window (UX-CANON): the next meeting's record
