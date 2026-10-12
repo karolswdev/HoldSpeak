@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -31,6 +32,7 @@ from .glass_infra import _api, _assert_clean, _boot, _normal_chair, _settle
 SHOTS = evidence_dir("docs/internal/philo/phase-16/c-shots")
 TOKEN = "glass-test"
 LAN_BASE = "http://192.168.77.43:8080/v1"
+MODELS_LATENCY_S = 0.005
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(240, method="thread")]
 
 
@@ -49,6 +51,11 @@ class _FakeOpenAI(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802 - http.server contract
         if self.path.rstrip("/").endswith("/models"):
+            # A real engine answers in milliseconds, never in under one: the
+            # probe's measured latency (int ms) is then always > 0 and the
+            # Try it result always carries its "· N MS" token. Without this the
+            # token showed only under load (the tape flake, 2026-10-12).
+            time.sleep(MODELS_LATENCY_S)
             self._json({"object": "list", "data": [{"id": self.MODEL, "object": "model"}]})
             return
         self.send_response(404)
@@ -312,7 +319,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 confirm.click()
                 page.get_by_test_id("switchboard-result-meetings").wait_for()
                 page.wait_for_function(
-                    "() => /^REACHED · qwen3\\.8 27B$/i.test(document.querySelector('[data-testid=switchboard-result-meetings]')?.textContent || '')"
+                    "() => /^REACHED · qwen3\\.8 27B · \\d+ MS$/i.test(document.querySelector('[data-testid=switchboard-result-meetings]')?.textContent || '')"
                 )
                 # Thoughts & notes runs a real request through its route (the Ask probe).
                 page.get_by_test_id("runson-try-thoughts_notes").click()
