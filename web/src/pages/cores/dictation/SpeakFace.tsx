@@ -303,60 +303,127 @@ export function SpeakFace() {
   // PHILO-17 speech: the speech model is the first thing Talk needs.
   const speech = useSpeechSetup();
 
+  /* PHILO-17 REFIT: the head says the one fact (ready, or how many things
+     to fix); the Talk plate is the focus object; the checks sit on a dotted
+     rail below it, each broken one with the verb that fixes it. */
+  const engineReady = detectStatus === "ok" && resolved.engineState === "READY";
+  const enginePending = Boolean(resolved.name) && detectStatus === "pending";
+  const toFix =
+    (speech.notSetUp ? 1 : 0) +
+    (!engineReady && !enginePending ? 1 : 0) +
+    (custody.show ? 1 : 0);
+  const hotkey = custody.display || hotkeyDisplay(deck.readinessData);
+
   return (
     <div className="speak-face">
-      {/* 0. SPEECH (only when the speech model is not on this device) */}
-      <SpeechSetup setup={speech} onReady={deck.refreshReadiness} testId="speak-speech-setup" />
-
-      {/* 1. THE TRANSPORT ROW */}
-      <TransportRow
-        deck={deck}
-        announce={announce}
-      />
-
-      {/* 2. THE UTTERANCE WELL */}
-      <div className="speak-well">
-        {/* HS-176-05 (ruling R13) — the well carries NO mic. `Talk` above is
-            this face's ONE mic authority (Article IV.3); the built well's
-            default-true mic was a 170 drift that drew a third mic beside
-            `Talk` and `Open mic`, and the boards draw it mic-less. The
-            census allowlist entry keys on `label="Utterance"`
-            (scripts/ux_canon_scan.py:214). */}
-        <PadGadget
-          label="Utterance"
-          mic={false}
-          value={deck.utterance}
-          onChange={deck.setUtterance}
-          placeholder="Talk, or type here"
-          onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && deck.utterance.trim()) {
-              e.preventDefault();
-              if (deck.previewOnly) void deck.run();
-              else void deck.deliver(deck.utterance);
-            }
-          }}
-        />
+      <div className="speak-head">
+        <h2 className="speak-fact" data-testid="speak-fact">
+          {toFix ? `${toFix} to fix` : "Ready to talk"}
+        </h2>
+        {hotkey ? (
+          <span className="speak-strip">
+            <span>Hold <kbd className="speak-kbd">{hotkey}</kbd> anywhere</span>
+          </span>
+        ) : null}
       </div>
 
-      {/* 3. LANDS IN row */}
-      <LandsInRow deck={deck} />
+      {/* THE TALK PLATE: the focus object, with a Workbench title bar. */}
+      <article className="speak-plate" aria-label="Talk">
+        <header className="speak-plate-bar">
+          <span className="speak-plate-label">TALK</span>
+          <PhasePill deck={deck} toFix={toFix} />
+        </header>
+        <div className="speak-plate-body">
+          <TransportRow
+            deck={deck}
+            announce={announce}
+          />
+          <div className="speak-well">
+            {/* HS-176-05 (ruling R13) — the well carries NO mic. `Talk` above is
+                this face's ONE mic authority (Article IV.3). The census
+                allowlist entry keys on `label="Utterance"`
+                (scripts/ux_canon_scan.py:214). */}
+            <PadGadget
+              label="Utterance"
+              mic={false}
+              value={deck.utterance}
+              onChange={deck.setUtterance}
+              placeholder="Talk, or type here"
+              onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && deck.utterance.trim()) {
+                  e.preventDefault();
+                  if (deck.previewOnly) void deck.run();
+                  else void deck.deliver(deck.utterance);
+                }
+              }}
+            />
+          </div>
+          <LandsInRow deck={deck} />
+          {deck.result ? <ResultRow deck={deck} announce={announce} /> : null}
+        </div>
+      </article>
 
-      {/* 4. RESULT (when landed) */}
-      {deck.result ? <ResultRow deck={deck} announce={announce} /> : null}
+      {/* THE CHECKS: speech, engine, hotkey on one rail. A check that is
+          fine and has nothing to say does not draw (the hotkey, speech). */}
+      <ol className="speak-checks" aria-label="Checks">
+        {/* One element in one place, so SpeechSetup keeps its "was missing"
+            memory and calls onReady when the model lands. */}
+        <li className="speak-check" data-tone="warn" hidden={!speech.notSetUp}>
+          <span className="speak-check-bead" aria-hidden="true" />
+          <SpeechSetup setup={speech} onReady={deck.refreshReadiness} testId="speak-speech-setup" />
+        </li>
+        <li className="speak-check" data-tone={engineReady ? "ok" : enginePending ? "idle" : "warn"}>
+          <span className="speak-check-bead" aria-hidden="true" />
+          <EngineRow engine={resolved.name} egress={resolved.egressLabel} engineState={resolved.engineState} keySet={resolved.keySet} detectStatus={detectStatus} readiness={deck} />
+        </li>
+        {custody.show ? (
+          <li className="speak-check" data-tone={custody.kind === "failure" ? "danger" : "warn"}>
+            <span className="speak-check-bead" aria-hidden="true" />
+            <HotkeyRow custody={custody} onRecheck={deck.refreshReadiness} />
+          </li>
+        ) : null}
+      </ol>
 
-      {/* 5. ENGINE row */}
-      <EngineRow engine={resolved.name} egress={resolved.egressLabel} engineState={resolved.engineState} keySet={resolved.keySet} detectStatus={detectStatus} readiness={deck} />
-
-      {/* 5b. HOTKEY block (HS-200-05) — silent when the key is proven up. */}
-      {custody.show ? (
-        <HotkeyRow custody={custody} onRecheck={deck.refreshReadiness} />
-      ) : null}
-
-      {/* 6. Details (Disclosure, folded) */}
       <Disclosure label="Details" defaultOpen={false}>
         <DetailsContent deck={deck} />
       </Disclosure>
     </div>
+  );
+}
+
+/** The hotkey's display (`⌥R`) from readiness, also when the block is silent. */
+function hotkeyDisplay(readiness: unknown): string {
+  const block = (readiness as Record<string, unknown> | null | undefined)?.hotkey as
+    | Record<string, unknown>
+    | undefined;
+  return block && typeof block.display === "string" ? block.display : "";
+}
+
+/* The plate's state word: a pill with a lamp dot, plain words. */
+const PHASE_WORDS: Record<string, { word: string; tone: string }> = {
+  idle: { word: "Ready", tone: "idle" },
+  listening: { word: "Listening", tone: "live" },
+  busy: { word: "Working", tone: "info" },
+  landed: { word: "Landed", tone: "ok" },
+  refused: { word: "Not landed", tone: "danger" },
+};
+
+function PhasePill({ deck, toFix }: { deck: ReturnType<typeof useSpeakDeck>; toFix: number }) {
+  // At rest, the pill agrees with the head: not ready while a check is open.
+  const phase =
+    deck.activeState === "idle" && toFix
+      ? { word: "Not ready", tone: "warn" }
+      : (PHASE_WORDS[deck.activeState] ?? PHASE_WORDS.idle);
+  const tail =
+    deck.activeState === "refused" && deck.refusal
+      ? ` · ${refusalLabel(deck.refusal).toLowerCase()}`
+      : "";
+  return (
+    <span className="speak-phase" data-tone={phase.tone} data-testid="speak-phase" role="status">
+      <span className="speak-phase-lamp" aria-hidden="true" />
+      {phase.word}
+      {tail}
+    </span>
   );
 }
 
@@ -425,13 +492,17 @@ function TransportRow({
 
 function LandsInRow({ deck }: { deck: ReturnType<typeof useSpeakDeck> }) {
   const targetName =
-    presentValue((deck.readinessTarget as Record<string, unknown>).label) || "---";
+    presentValue((deck.readinessTarget as Record<string, unknown>).label) || "";
 
   return (
     <div className="speak-lands-in">
       <span className="speak-lands-in-caption">LANDS IN</span>
-      <span className="speak-lands-in-dot">{"·"}</span>
-      <span className="speak-lands-in-target">{targetName}</span>
+      {targetName ? (
+        <>
+          <span className="speak-lands-in-dot">{"·"}</span>
+          <span className="speak-lands-in-target">{targetName}</span>
+        </>
+      ) : null}
       {deck.landedMs !== null ? (
         <>
           <span className="speak-lands-in-dot">{"·"}</span>
@@ -668,7 +739,7 @@ function EngineRow({
   if (!engine) {
     return (
       <div className="speak-engine" data-engine-state="not-set">
-        <span className="speak-engine-caption">DICTATION</span>
+        <span className="speak-engine-caption">Engine</span>
         <span className="speak-engine-dot">{"·"}</span>
         <StateChip state="warning" label="NOT SET" />
         <span className="speak-transport-spacer" />
@@ -685,7 +756,7 @@ function EngineRow({
   if (detectStatus === "pending") {
     return (
       <div className="speak-engine" data-engine-state="pending">
-        <span className="speak-engine-caption">DICTATION</span>
+        <span className="speak-engine-caption">Engine</span>
         <span className="speak-engine-dot">{"·"}</span>
         <span className="speak-engine-name" data-muted="">{engine}</span>
         {egress !== "THIS DEVICE" && egress !== "CLOUD" && egress !== "LAN" ? (
@@ -701,7 +772,7 @@ function EngineRow({
   if (detectStatus === "failed" && !engineState) {
     return (
       <div className="speak-engine" data-engine-state="unknown">
-        <span className="speak-engine-caption">DICTATION</span>
+        <span className="speak-engine-caption">Engine</span>
         <span className="speak-engine-dot">{"·"}</span>
         <span className="speak-engine-name">{engine}</span>
         {egress ? <EgressChip label={egress} /> : null}
@@ -754,7 +825,7 @@ function EngineRow({
 
   return (
     <div className="speak-engine" data-engine-state={dataState}>
-      <span className="speak-engine-caption">DICTATION</span>
+      <span className="speak-engine-caption">Engine</span>
       <span className="speak-engine-dot">{"·"}</span>
       <span className="speak-engine-name">{engine}</span>
       <EgressChip label={egress} />
@@ -790,7 +861,7 @@ function HotkeyRow({
     >
       <div className="speak-hotkey-head">
         <span className="speak-hotkey-ident">
-          <span className="speak-engine-caption">HOTKEY</span>
+          <span className="speak-engine-caption">Hotkey</span>
           {custody.display ? (
             <>
               <span className="speak-engine-dot">{"\u00b7"}</span>
