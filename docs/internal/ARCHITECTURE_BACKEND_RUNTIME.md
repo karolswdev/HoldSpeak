@@ -137,7 +137,7 @@ package, so every existing import works)**:
    guarded `except ImportError` fallbacks then masked the mistake
    (intel silently became `None`). Check function-local imports too.
 5. **The guard fires → carve, don't bump**
-   (`tests/unit/test_backend_density_guard.py`: cores 650/850, modules
+   (`tests/unit/test_density_guard.py`: cores 650/850, modules
    ≤600). Raising a budget is a reviewed decision, not a reflex.
 
 ## Adding a concern (the walkthrough)

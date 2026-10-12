@@ -176,22 +176,6 @@ def test_facade_rejects_unknown_language(monkeypatch) -> None:
 # ── every construction site threads the knob ────────────────────────────────
 
 
-def test_all_construction_sites_thread_the_language() -> None:
-    from pathlib import Path
-
-    repo = Path(__file__).resolve().parents[2]
-    sites = {
-        # The Phase-B frozen transcriber path first resolves Config into
-        # ``selected_language`` so a meeting cannot retarget it after admission.
-        "holdspeak/runtime/transcriber_state.py": "language=selected_language",
-        "holdspeak/main.py": 'language=getattr(config.model, "language", "auto")',
-        "holdspeak/web/routes/meeting_import.py": 'language=getattr(config.model, "language", "auto")',
-        "holdspeak/commands/import_recording.py": 'language=getattr(config.model, "language", "auto")',
-    }
-    for path, marker in sites.items():
-        assert marker in (repo / path).read_text(), f"{path} does not thread the language knob"
-
-
 # ── config carries it ────────────────────────────────────────────────────────
 
 

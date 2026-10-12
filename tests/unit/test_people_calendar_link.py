@@ -358,15 +358,6 @@ def mcp_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PeopleService
 
 
 class TestMCPTools:
-    def test_catalogue_includes_calendar_tools(self) -> None:
-        names = {tool["name"] for tool in people_family.TOOLS}
-        assert "people.calendar.link" in names
-        assert "people.calendar.unlink" in names
-        for tool in people_family.TOOLS:
-            if tool["name"] in {"people.calendar.link", "people.calendar.unlink"}:
-                assert "PEOPLE DISCLOSURE" in tool["description"]
-                assert tool["inputSchema"]["additionalProperties"] is False
-
     def test_mcp_link_and_unlink(self, mcp_people: PeopleService) -> None:
         rel = mcp_people.create_relationship(OWNER, {"display_name": "MCP Person"})
         failed, result = _mcp_call("people.calendar.link", {

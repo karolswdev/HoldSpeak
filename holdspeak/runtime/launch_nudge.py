@@ -1,7 +1,7 @@
 """The launch nudge: what the runtime prints at the owner on startup.
 
 Carved out of ``web_runtime.py`` by HS-202-02. The core stays boot, run
-and config (``tests/unit/test_backend_density_guard.py``); what the
+and config (``tests/unit/test_density_guard.py``); what the
 runtime SAYS on launch is runtime behaviour and belongs in a mixin.
 """
 from __future__ import annotations
