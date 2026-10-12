@@ -28,6 +28,7 @@ import {
   SurfaceState,
 } from "../../desk/surface/Surface";
 import { countToken } from "../../desk/surface";
+import { Avatar } from "../../desk/surface/kit";
 import { renderHeroSlot } from "./core-layout";
 import { useWindowTitle } from "../../desk/surface/title";
 import "./people.css";
@@ -387,7 +388,7 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
       <Button dense disabled={!newName.trim() || busy} loading={busy} onClick={onCreate}>{duplicateOf ? "Add again" : "Add"}</Button>
     </div>
     {duplicateOf ? <span className="surface-token people-duplicate" role="status" data-testid="people-duplicate">{duplicateOf} · Already here</span> : null}
-    {!ordered.length ? <div className="people-empty-roster" data-testid="people-empty-roster">{projectFilter ? <span className="surface-token" data-testid="people-roster-none-linked">NO ONE LINKED YET</span> : <p className="people-empty-lead">Add a person to start</p>}</div> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} title={relationship.display_name} detail={`${relationshipLabel(relationship.relationship_kind)}${relationship.next_one_on_one ? ` · ${shortWhen(relationship.next_one_on_one)}` : ""}`} meta={relationship.manager_commitment_count ? `You owe ${relationship.manager_commitment_count}` : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
+    {!ordered.length ? <div className="people-empty-roster" data-testid="people-empty-roster">{projectFilter ? <span className="surface-token" data-testid="people-roster-none-linked">NO ONE LINKED YET</span> : <p className="people-empty-lead">Add a person to start</p>}</div> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} glyph={<Avatar name={relationship.display_name} size="md" />} title={relationship.display_name} detail={<><span className="people-role-chip" data-kind={relationship.relationship_kind ?? undefined}>{relationshipLabel(relationship.relationship_kind)}</span>{relationship.next_one_on_one ? ` · ${shortWhen(relationship.next_one_on_one)}` : ""}</>} meta={relationship.manager_commitment_count ? <span className="surface-token" data-chip data-tone="warn">{`You owe ${relationship.manager_commitment_count}`}</span> : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
   </SurfaceSection>;
 }
 

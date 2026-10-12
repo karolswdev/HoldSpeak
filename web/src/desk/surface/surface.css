@@ -4776,3 +4776,27 @@ button.surface-edit-in-place:hover {
     flex: 1 1 auto;
   }
 }
+
+/* ── PHILO-17 ALIVE: the SurfaceRow answers the pointer too ── */
+.desk-next .desk-window-shell .surface-row {
+  position: relative;
+  border-radius: 3px;
+  transition:
+    background-color var(--alive-dur) var(--alive-ease),
+    box-shadow var(--alive-dur) var(--alive-ease);
+}
+.desk-next .desk-window-shell .surface-row:has(> .surface-row-line > .surface-row-open):hover {
+  background: var(--alive-hover-bg);
+  box-shadow: var(--alive-lift);
+  z-index: 1;
+}
+.desk-next .desk-window-shell .surface-row:has(.surface-row-open:active) {
+  background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .desk-window-shell .surface-row[data-selected] {
+  background: color-mix(in srgb, var(--wb-sel) 18%, var(--wb-well));
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-window-shell .surface-row { transition: none; }
+}

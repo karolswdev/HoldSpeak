@@ -101,3 +101,55 @@
 
 /* PHILO-13-09 (B4-W): the Now side's Next 1:1 reads as the header does. */
 .people-next-side { font-family: var(--font-mono); font-size: var(--desk-surface-detail-size); letter-spacing: 0.04em; color: var(--text); }
+
+/* PHILO-17 ALIVE: the roster is a paper well of people: an initials
+   avatar, the name, the relationship as a soft chip; "You owe N" is an
+   amber pill. Rows lift under the pointer (surface.css, the ALIVE block). */
+.desk-next .people-surface .surface-rows {
+  gap: 2px;
+  padding: 4px;
+  background: var(--wb-well);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .people-surface .surface-row-line {
+  min-height: 52px;
+  padding: 6px 10px;
+}
+.desk-next .people-surface .surface-row-glyph {
+  width: 32px;
+}
+.desk-next .people-surface .surface-row-text strong {
+  font: 600 15px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .people-surface .surface-row-text small {
+  display: flex;
+  align-items: center;
+  gap: 0 4px;
+  margin-top: 3px;
+  color: var(--wb-muted);
+}
+.people-role-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--wb-sel) 14%, transparent);
+  color: var(--wb-info-ink);
+  font: 600 12px / 1 var(--font-sans);
+}
+.people-role-chip[data-kind="peer"] {
+  background: color-mix(in srgb, var(--lamp-ok) 16%, transparent);
+  color: var(--wb-ok-ink);
+}
+.people-role-chip[data-kind="extended"] {
+  background: color-mix(in srgb, var(--wb-ink) 8%, transparent);
+  color: var(--wb-muted);
+}
+.desk-next .people-surface .surface-row-meta > .surface-token[data-chip] {
+  font: 600 12px / 1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
