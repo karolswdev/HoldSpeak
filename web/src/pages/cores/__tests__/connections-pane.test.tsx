@@ -350,16 +350,16 @@ describe("ConnectionsPane", () => {
     it("shows assigned summary and Open Models verb", async () => {
       renderPane();
       const card = await screen.findByTestId("connections-models");
-      expect(within(card).getByText("Models")).toBeInTheDocument();
+      expect(within(card).getByText("Runs on")).toBeInTheDocument();
       expect(within(card).getByText("5 of 7 assigned")).toBeInTheDocument();
-      expect(within(card).getByText("Open Models")).toBeInTheDocument();
+      expect(within(card).getByText("Choose engines")).toBeInTheDocument();
     });
 
     it("opens models module when Open Models is clicked", async () => {
       const onOpen = vi.fn();
       renderPane(fullResponse(), { onOpen });
       const card = await screen.findByTestId("connections-models");
-      fireEvent.click(within(card).getByText("Open Models"));
+      fireEvent.click(within(card).getByText("Choose engines"));
       expect(onOpen).toHaveBeenCalledWith("models");
     });
   });

@@ -599,6 +599,13 @@ function SwitchboardList({
           ) : null}
         </>
       ) : null}
+      {/* PHILO-17 REFIT: an engine with a verb (Download, Use it) sits
+          before the other jobs, so the first move is in view on a phone. */}
+      {engines
+        .filter((engine) => engine.id !== first?.id && (engine.progress != null || Boolean(engine.verb)))
+        .map((engine) => (
+          <EnginePlate key={`more-${engine.id}`} engine={engine} />
+        ))}
       <div className="switchboard-cap">{captions.others ?? "Other jobs"}</div>
       {jobs
         .filter((job) => job.id !== open?.id)
@@ -613,7 +620,9 @@ function SwitchboardList({
             onClick={() => onSelect?.(job.id)}
           >
             <span className="switchboard-job-name">{job.name}</span>
-            {job.runsOn ?? job.tasks ? <span className="switchboard-job-tasks">{job.runsOn ?? job.tasks}</span> : null}
+            {job.runsOn ? (
+              <span className="switchboard-job-pill" data-tone={/^no engine$/i.test(job.runsOn) ? "warn" : PILL_TONE[job.state]}>{job.runsOn}</span>
+            ) : job.tasks ? <span className="switchboard-job-tasks">{job.tasks}</span> : null}
           </Button>
         ))}
       {found.length > 0 ? (
@@ -626,11 +635,6 @@ function SwitchboardList({
           ))}
         </>
       ) : null}
-      {engines
-        .filter((engine) => engine.id !== first?.id && (engine.progress != null || Boolean(engine.verb)))
-        .map((engine) => (
-          <EnginePlate key={`more-${engine.id}`} engine={engine} />
-        ))}
       {engineFoot}
     </div>
   );

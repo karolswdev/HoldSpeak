@@ -573,7 +573,7 @@ export function PrefsFace({
       <SurfaceLedger count="" cols="hub">
         {/* Voice: LIVE green + target, or nothing */}
         <SurfaceLedgerRow
-          primary="Voice"
+          primary={<span className="settings-row-name"><SettingSprite name="voice" />Voice</span>}
           expands={false}
           onToggle={() => onOpen("voice")}
           trailing={openVerb("voice")}
@@ -596,7 +596,7 @@ export function PrefsFace({
             the hub row said the wire's word while the Meetings face two
             windows over said Summary on the same setting. */}
         <SurfaceLedgerRow
-          primary="Meetings"
+          primary={<span className="settings-row-name"><SettingSprite name="meetings" />Meetings</span>}
           expands={false}
           onToggle={() => onOpen("meetings")}
           trailing={openVerb("meetings")}
@@ -629,7 +629,7 @@ export function PrefsFace({
         />
         {/* Rhythm: EVERY N MIN · NEXT HH:MM when sweep runs; NO LOOPS only at zero + no sweep */}
         <SurfaceLedgerRow
-          primary="Rhythm"
+          primary={<span className="settings-row-name"><SettingSprite name="rhythm" />Rhythm</span>}
           expands={false}
           onToggle={() => onOpen("rhythm")}
           trailing={openVerb("rhythm")}
@@ -656,7 +656,7 @@ export function PrefsFace({
         />
         {/* Sounds & Presence: ON green or OFF */}
         <SurfaceLedgerRow
-          primary="Sounds & Presence"
+          primary={<span className="settings-row-name"><SettingSprite name="sounds" />Sounds & Presence</span>}
           expands={false}
           onToggle={() => onOpen("sounds")}
           trailing={openVerb("sounds")}
@@ -667,7 +667,7 @@ export function PrefsFace({
           </>}
         />
         <SurfaceLedgerRow
-          primary="Wallpaper"
+          primary={<span className="settings-row-name"><SettingSprite name="wallpaper" />Wallpaper</span>}
           expands={false}
           onToggle={() => onOpen("wallpaper")}
           trailing={openVerb("wallpaper")}
@@ -675,7 +675,7 @@ export function PrefsFace({
         />
         {/* People: Agents can read People | Agents: off (Conductor R7, K7a; PHILO-17 U35). */}
         <SurfaceLedgerRow
-          primary="People"
+          primary={<span className="settings-row-name"><SettingSprite name="system" />People</span>}
           expands={false}
           onToggle={() => onOpen("people")}
           trailing={openVerb("people")}
@@ -684,7 +684,7 @@ export function PrefsFace({
         {/* System: THIS DEVICE + Other devices: off|on (PHILO-17 U35: was
             MESH OFF · REMOTE OFF; the mesh name is a RAW fact now). */}
         <SurfaceLedgerRow
-          primary="System"
+          primary={<span className="settings-row-name"><SettingSprite name="system" />System</span>}
           expands={false}
           onToggle={() => onOpen("system")}
           trailing={openVerb("system")}

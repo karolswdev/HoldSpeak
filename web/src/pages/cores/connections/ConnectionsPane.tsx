@@ -599,15 +599,16 @@ function ModelsCard({
     <div className="connections-tool-row" data-testid="connections-models">
       <span className="connections-tool-identity">
         <span className="connections-tool-emblem">M</span>
-        <span className="connections-tool-label">Models</span>
+        {/* PHILO-17 REFIT: one name for the engines window, Runs on. */}
+        <span className="connections-tool-label">Runs on</span>
       </span>
-      <span className="connections-tool-summary">{summary}</span>
+      {summary !== label ? <span className="connections-tool-summary">{summary}</span> : null}
       <div className="connections-tool-chips">
         <StateChip state={state} label={label} />
       </div>
       <div className="connections-tool-actions">
         <Button dense variant="ghost" onClick={onOpen}>
-          Open Models
+          Choose engines
         </Button>
       </div>
     </div>

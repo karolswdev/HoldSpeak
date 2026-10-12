@@ -214,3 +214,15 @@
   letter-spacing: 0;
   text-transform: none;
 }
+
+/* The folded rows carry their pixel sprite before the name. */
+.desk-next .settings-row-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.desk-next .settings-row-name .prefs-tile-sprite {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}

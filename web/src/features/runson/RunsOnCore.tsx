@@ -228,7 +228,9 @@ export function RunsOnCore({ scope }: CoreProps) {
           ? "CHECKING…"
           : lead === "unknown"
             ? "NOT KNOWN"
-            : word;
+            : lead === undefined
+              ? "no engine"
+              : word;
     const result = ctrl.results[job];
     const jobRepair = repairs.find((r) => r.groups.includes(job));
     const listening = job === SPEECH_JOB && ctrl.listening;

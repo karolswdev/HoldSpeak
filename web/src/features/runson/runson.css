@@ -114,10 +114,21 @@
 }
 .desk-next .runson-root .switchboard-job-name {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
   font: 600 13px / 1.3 var(--font-sans);
+}
+/* The phone list: a job tap is its name and its engine pill on one line. */
+.desk-next .runson-root .switchboard.is-list .switchboard-tap.switchboard-job {
+  align-items: center;
+  min-height: 44px;
+}
+.desk-next .runson-root .switchboard.is-list .switchboard-tap.switchboard-job > .switchboard-job-pill {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
 }
 .desk-next .runson-root .switchboard-job-arrow {
   display: none;
