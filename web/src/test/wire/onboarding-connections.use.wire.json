@@ -1,0 +1,25 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T23:47:03.451129Z",
+  "wire": {
+    "candidate": "github:github.com:karolswdev",
+    "egress_host": "github.com",
+    "entry": {
+      "account": {
+        "login": "karolswdev"
+      },
+      "checked_age_seconds": 0,
+      "egress_host": "github.com",
+      "error_detail": null,
+      "last_checked_at": "2026-10-11T23:47:03.450214+00:00",
+      "next_action": {
+        "kind": "recheck",
+        "label": "Recheck"
+      },
+      "provider_id": "github",
+      "recovery_hint": null,
+      "state": "connected"
+    },
+    "provider": "github"
+  }
+}

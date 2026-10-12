@@ -165,16 +165,43 @@ def test_an_unread_source_is_a_not_read_row_never_a_silent_zero(tmp_path: Path, 
     from holdspeak.principals import Principal, PrincipalKind
     from holdspeak.services.monday_brief_service import NOT_READ_REF, MondayBriefService
 
+    from holdspeak.people.store import production_people_store
+    from holdspeak.services.monday_brief_service import PEOPLE_NOT_READ_TEXT
+
     db = Database(tmp_path / "partial.db")
+    # The People store is pinned inside the test (test diet 2026-10-11): the
+    # brief finds it through the production store, which the old seed left
+    # to the machine (the keystore env or the default path). Lane A read 3
+    # NOT READ rows on a real hub's partial brief: that brief was the
+    # key-free one with a People store; both shapes are fenced below.
+    keyfile = tmp_path / "people.key"
+    keyfile.write_text("{}")
+    keyfile.chmod(0o600)
+    monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
+    when = datetime(2026, 10, 8, 6, 0).astimezone()
     # A principal the needs-you rule cannot read for (the r1 defect's shape).
-    brief = MondayBriefService(db).generate(
-        Principal(PrincipalKind.SERVICE, "heartbeat"), now=datetime(2026, 10, 8, 6, 0).astimezone(),
-    )
-    waiting = brief.sections.get("waiting") or []
-    unread = sorted(item.text for item in waiting if str(item.source_ref).startswith(NOT_READ_REF))
-    assert unread == ["NOT READ · AI models", "NOT READ · Decisions"], [i.text for i in waiting]
-    assert brief.headline != "No changes"
-    assert brief.headline.startswith("2 sources not read")
+    heartbeat = Principal(PrincipalKind.SERVICE, "heartbeat")
+
+    def unread_rows(people_reads: bool = True) -> tuple[list[str], str]:
+        brief = MondayBriefService(db).generate(heartbeat, now=when, regenerate=True, people_reads=people_reads)
+        waiting = brief.sections.get("waiting") or []
+        return sorted(i.text for i in waiting if str(i.source_ref).startswith(NOT_READ_REF)), brief.headline
+
+    # No People store: two sources not read.
+    unread, headline = unread_rows()
+    assert unread == ["NOT READ · AI models", "NOT READ · Decisions"], unread
+    assert headline != "No changes"
+    assert headline.startswith("2 sources not read")
+
+    # The People store changes nothing on this path (it reads People itself)...
+    production_people_store().initialize()
+    assert unread_rows() == (unread, headline)
+    # ...but the key-free brief (the scheduled one, `people_reads=False`) asks
+    # for no key, so a People store that exists is its third NOT READ row:
+    # the 3 rows lane A read on a real hub's partial brief.
+    unread, headline = unread_rows(people_reads=False)
+    assert unread == sorted(["NOT READ · AI models", "NOT READ · Decisions", PEOPLE_NOT_READ_TEXT]), unread
+    assert headline.startswith("3 sources not read"), headline
 
 
 def test_a_rule_that_cannot_be_read_at_all_is_a_not_read_row(tmp_path: Path, monkeypatch) -> None:

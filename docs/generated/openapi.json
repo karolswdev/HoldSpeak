@@ -28191,6 +28191,44 @@
       }
     },
     "/api/updates/{update_id}": {
+      "get": {
+        "description": "One update by id (a steward receipt's `update:<id>` opens it; the\nRoom's list is capped, so a lookup there could miss it).",
+        "operationId": "api_get_update_api_updates__update_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "update_id",
+            "required": true,
+            "schema": {
+              "title": "Update Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Get Update Api Updates  Update Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Get Update"
+      },
       "put": {
         "operationId": "api_save_update_api_updates__update_id__put",
         "parameters": [

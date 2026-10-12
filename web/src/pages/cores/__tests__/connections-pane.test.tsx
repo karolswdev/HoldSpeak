@@ -5,6 +5,16 @@ import { ConnectionsPane, type ConnectionsFoot } from "../connections";
 import type { ConnectionsResponse, ConnectionTool } from "../connections/api";
 import { decodeConnectionsResponse, decodeState } from "../connections/api";
 import { checkedAgo, stateWords } from "../connections/ConnectionsPane";
+// The hub's own /api/connections on a fresh HOME (scripts/record_needs_you_fixture.py,
+// the "grouped" boot): the test diet's SCAR LAW, no typed state.
+import RECORDED from "../../../desk/__tests__/fixtures/needsYou.recorded.json";
+
+const RECORDED_CONNECTIONS = RECORDED.grouped.gets["/api/connections"] as unknown as ConnectionsResponse;
+function recordedTool(id: string): ConnectionTool {
+  const tool = RECORDED_CONNECTIONS.tools.find((t) => t.provider_id === id);
+  if (!tool) throw new Error(`the recorded hub sent no ${id} row`);
+  return structuredClone(tool);
+}
 
 /* ── Mock the API module ── */
 vi.mock("../connections/api", async (importOriginal) => {
@@ -76,14 +86,11 @@ function degradedGithub(): ConnectionTool {
   };
 }
 
-function notConfiguredGithub(): ConnectionTool {
-  return {
-    provider_id: "github",
-    state: "not_configured",
-    account: {},
-    last_checked_at: undefined,
-    egress_host: undefined,
-  };
+/** GitHub before any check: the hub's own row on a fresh HOME. The hub sends
+ *  `not_configured` only when it has no GitHub service, which a real hub
+ *  always has (connections_service.py `_not_configured_entry`). */
+function neverCheckedGithub(): ConnectionTool {
+  return recordedTool("github");
 }
 
 function connectedJira(): ConnectionTool {
@@ -129,13 +136,10 @@ function twoJiraConnections(): ConnectionTool {
   };
 }
 
+/** Jira with no account: the hub sends `never_checked` (acli on PATH) or
+ *  `unavailable` (acli missing), never `not_configured`. */
 function emptyJira(): ConnectionTool {
-  return {
-    provider_id: "jira",
-    state: "not_configured",
-    account: {},
-    connections: [],
-  };
+  return recordedTool("jira");
 }
 
 function connectedCalendar(): ConnectionTool {
@@ -246,14 +250,14 @@ describe("ConnectionsPane", () => {
     });
   });
 
-  describe("GitHub not_configured", () => {
-    it("shows Off chip and Recheck verb", async () => {
+  describe("GitHub never checked", () => {
+    it("shows Never checked and the Recheck verb", async () => {
       const response: ConnectionsResponse = {
-        tools: [notConfiguredGithub(), emptyJira(), connectedCalendar(), connectedModels()],
+        tools: [neverCheckedGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
       const card = await screen.findByTestId("connections-github");
-      expect(within(card).getByText("Off")).toBeInTheDocument();
+      expect(within(card).getByText("Never checked")).toBeInTheDocument();
       expect(within(card).getByText("Recheck")).toBeInTheDocument();
     });
   });
@@ -261,14 +265,17 @@ describe("ConnectionsPane", () => {
   /* ── Jira ── */
 
   describe("Jira with 0 connections", () => {
-    it("shows Not set up with Add account ghost card", async () => {
+    it("shows the tool's own state with Add account ghost card", async () => {
       const response: ConnectionsResponse = {
         tools: [connectedGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
       const card = await screen.findByTestId("connections-jira");
       expect(within(card).getByText("Jira")).toBeInTheDocument();
-      expect(within(card).getByText("Not set up")).toBeInTheDocument();
+      // PHILO-9-02 B1: the empty card says the tool's own state; the hub's
+      // empty Jira is `never_checked` (the old typed `not_configured` row
+      // read "Not set up", a state the hub never sends for it).
+      expect(within(card).getByText("Never checked")).toBeInTheDocument();
       // Ghost card has Site and Email inputs
       expect(within(card).getByLabelText("Site")).toBeInTheDocument();
       expect(within(card).getByLabelText("Email")).toBeInTheDocument();
@@ -399,9 +406,7 @@ describe("ConnectionsPane", () => {
 
     it("reports undefined when nothing checked", async () => {
       const onFooter = vi.fn();
-      const response: ConnectionsResponse = {
-        tools: [notConfiguredGithub(), emptyJira(), { provider_id: "calendar", state: "not_configured", account: {} }, { provider_id: "models", state: "not_configured", account: {} }],
-      };
+      const response: ConnectionsResponse = structuredClone(RECORDED_CONNECTIONS);
       renderPane(response, { onFooter });
       await waitFor(() => {
         expect(onFooter).toHaveBeenCalled();

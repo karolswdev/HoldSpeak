@@ -218,6 +218,17 @@ def test_the_thread_read_carries_the_saved_status_line(hub) -> None:
     assert body["status_line"] == "Preparing your brief..."
 
 
+def test_the_thread_read_carries_its_parent_thread_id(hub) -> None:
+    """The thread read carries parent_thread_id (web/src/desk/threads.ts
+    getThread reads d.parent_thread_id): null for a thread with no parent,
+    the parent's id for one the row names (test diet 2026-10-11; before it
+    _thread_dict left the field out)."""
+    parent = hub.client.post("/api/threads", json={"title": "Parent"}).json()["id"]
+    assert hub.client.get(f"/api/threads/{parent}").json()["parent_thread_id"] is None
+    child = hub.db.threads.create_thread(title="Child", parent_thread_id=parent)
+    assert hub.client.get(f"/api/threads/{child.id}").json()["parent_thread_id"] == parent
+
+
 def test_a_desk_list_notes_turn_returns_note_rows_the_face_hydrates(hub) -> None:
     """replaces: tests/e2e/test_hs152_renderers_glass.py::test_desk_list_renders_result
 

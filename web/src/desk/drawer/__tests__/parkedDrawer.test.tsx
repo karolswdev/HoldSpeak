@@ -7,6 +7,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useDesk } from "../../store";
 import { ParkedDrawer, parkedRow, type ParkedItem } from "../ParkedDrawer";
 import { openParkedDrawer, useDrawers } from "../store";
+import { inventedFields, recorded } from "../../../test/wireShape";
+import PARKED_WIRE from "../../../test/wire/desk-parked.wire.json";
+import RESTORE_PROJECT from "../../../test/wire/restore.project.wire.json";
+import RESTORE_ITEM from "../../../test/wire/restore.workbench-item.wire.json";
+import RESTORE_MEETING from "../../../test/wire/restore.meeting.wire.json";
+
+/** Each kind's own restore answer, as the hub sends it
+ *  (tests/integration/test_face_wire_fences.py::test_parked_reads). */
+function restoreAnswer(path: string): unknown {
+  if (path.startsWith("/api/projects/")) return recorded(RESTORE_PROJECT);
+  if (path.startsWith("/api/workbenches/")) return recorded(RESTORE_ITEM);
+  return recorded(RESTORE_MEETING);
+}
 
 const apiFetch = vi.fn();
 vi.mock("../../../lib/api", async () => {
@@ -51,7 +64,7 @@ beforeEach(() => {
     if (init?.method === "POST") {
       posts.push(path);
       parked = parked.filter((i) => !path.includes(encodeURIComponent(i.id)));
-      return { meeting: { id: "m-1" }, item: { id: "i-1" }, success: true };
+      return restoreAnswer(path);
     }
     return {};
   });
@@ -60,6 +73,17 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 const rowOf = (name: RegExp) => screen.getByRole("button", { name });
+
+describe("the typed Parked bodies carry only the hub's fields (the SCAR LAW)", () => {
+  it("the rows and the envelope", () => {
+    const hub = recorded<{ items: unknown[] }>(PARKED_WIRE);
+    expect(Object.keys(hub).sort()).toEqual(["items", "not_read", "partial"]);
+    for (const row of ITEMS) {
+      const same = hub.items.find((h) => (h as { kind: string }).kind === row.kind);
+      expect(inventedFields(row, same)).toEqual([]);
+    }
+  });
+});
 
 describe("the Parked drawer", () => {
   it("the Parked icon's opener opens the drawer once", () => {

@@ -107,7 +107,7 @@ import { AddSourcesWell } from "./door/DoorCore";
 import "./project-room.css";
 import { RecallFace } from "./recall/RecallFace";
 import { DecisionRecordPreparedChip, DecisionRecordSendWells } from "../../desk/documentSendsLazy";
-import { fetchUpdates } from "./update/api";
+import { fetchUpdate, fetchUpdates } from "./update/api";
 import { Unreadable } from "../../desk/surface/send";
 import { retryRoomLink, useRoomSendLink } from "../../desk/windowSend";
 import { flightForItem, isInFlight, mergeReceipt, useAgentFlights, useAgentFlightsLive } from "../../desk/agentFlights";
@@ -2636,8 +2636,11 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   // the owner back to it.
   useEffect(() => {
     if (!proposalRequest.seq || revealedSeq.current === proposalRequest.seq) return;
+    // The selected row's line carries the testid and `aria-current`; the
+    // `data-selected` mark is on its `li` (desk/surface/Surface.tsx
+    // SurfaceLedgerRow), so the old `[data-testid][data-selected]` never matched.
     const row = roomBodyRef.current?.querySelector<HTMLElement>(
-      "[data-testid=proposal-row][data-selected]",
+      "[data-testid=proposal-row][aria-current=true]",
     );
     if (!row) return;
     revealedSeq.current = proposalRequest.seq;
@@ -2707,6 +2710,13 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           onOpenReview={(reviewId: string) => {
             stewardCtrl.exitSteward();
             void reviewCtrl.enterReview(reviewId);
+          }}
+          onOpenUpdate={async (updateId: string) => {
+            // Read the update first; the Steward posture stays on the
+            // receipt until the read lands (a failure is shown there).
+            const update = await fetchUpdate(updateId);
+            stewardCtrl.exitSteward();
+            openUpdate(update);
           }}
         />
       </>

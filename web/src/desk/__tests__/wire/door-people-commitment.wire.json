@@ -1,0 +1,44 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_chair.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T22:21:14.386822Z",
+  "wire": {
+    "created_at": null,
+    "decision_id": null,
+    "delegated_at": null,
+    "due": null,
+    "id": "people:c656cbd7-48d9-4562-9dbd-c113c2ca46c2",
+    "lane": "now",
+    "lawful_verbs": [
+      {
+        "arguments": {
+          "commitment_id": "c656cbd7-48d9-4562-9dbd-c113c2ca46c2",
+          "verb": "done"
+        },
+        "name": "people.commitment.transition"
+      },
+      {
+        "arguments": {
+          "commitment_id": "c656cbd7-48d9-4562-9dbd-c113c2ca46c2",
+          "verb": "dismiss"
+        },
+        "name": "people.commitment.transition"
+      }
+    ],
+    "meeting_id": null,
+    "owner": "you",
+    "provenance": {
+      "available": false,
+      "meeting_id": null,
+      "moment": null,
+      "segment_speaker": null,
+      "segment_start": null,
+      "segment_text": null,
+      "thread_id": null
+    },
+    "source": "people_commitment",
+    "stale_score": null,
+    "status": "open",
+    "target_ref": "people:22542ab0-a045-4ec9-8f5f-5c258a0119a0",
+    "text": "Review the rollout plan before Friday"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-11T23:47:03.440826Z",
+  "wire": {
+    "candidate": {
+      "account": "outlook.office365.com",
+      "calendar_kind": "subscription",
+      "egress_host": "outlook.office365.com",
+      "id": "https://outlook.office365.com/owa/calendar/a/calendar.ics",
+      "in_use": false,
+      "kind": "ics",
+      "label": "Work (Outlook)",
+      "lamp": "cloud",
+      "verb": "Use it"
+    },
+    "events_next_days": 0,
+    "horizon_days": 14,
+    "host": "outlook.office365.com",
+    "lamp": "cloud",
+    "ok": true,
+    "url": "https://outlook.office365.com/owa/calendar/a/calendar.ics"
+  }
+}

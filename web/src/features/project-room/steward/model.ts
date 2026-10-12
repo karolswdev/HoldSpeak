@@ -124,10 +124,9 @@ function decodeSummary(raw: unknown): RunSummary {
 }
 
 /** The applied-effects count lives in phase_results on the wire
- * (verify.actions_taken, else act.actions_taken); a top-level
- * effects_applied wins if a future wire version adds one. */
+ * (verify.actions_taken, else act.actions_taken). The hub sends no
+ * top-level effects_applied (the test diet: the face reads none). */
 function decodeEffectsApplied(s: Record<string, unknown>): number | undefined {
-  if (s.effects_applied != null) return Number(s.effects_applied);
   const pr = s.phase_results as Record<string, unknown> | undefined;
   for (const phase of ["verify", "act"]) {
     const body = pr?.[phase] as Record<string, unknown> | undefined;
