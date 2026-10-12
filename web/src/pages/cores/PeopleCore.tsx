@@ -597,7 +597,18 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
     keepPlace(lensPlace, next === "prep" ? "" : next);
   }, [lensPlace]);
   // PHILO-13-06 (B1): a row that opens this person on a lens moves the open window to it.
-  useEffect(() => { const next = paneLens(initialLens); if (next) setLens(next); }, [initialLens, setLens]);
+  // On mount the state's initializer already holds that lens: the first run only
+  // keeps it. A mount run that set it again could land after his first tab press
+  // and undo it (the -n 8 flake of peopleReopenLens, 2026-10-12).
+  const firstLensRun = useRef(true);
+  useEffect(() => {
+    const first = firstLensRun.current;
+    firstLensRun.current = false;
+    const next = paneLens(initialLens);
+    if (!next) return;
+    if (first) keepPlace(lensPlace, next === "prep" ? "" : next);
+    else setLens(next);
+  }, [initialLens, setLens, lensPlace]);
   useEffect(() => { if (lensRequest) setLens(paneLens(lensRequest.lens) ?? "prep"); }, [lensRequest, setLens]);
   // The calendar picker (Context) reads the Door's upcoming events.
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
