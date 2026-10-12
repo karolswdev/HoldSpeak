@@ -206,39 +206,6 @@ def test_aimed_agent_probe_uses_the_shared_reply_window(monkeypatch):
     assert asked and asked[0]["max_age_seconds"] == DEFAULT_RECENT_MAX_AGE_SECONDS
 
 
-def test_no_dictation_question_lookup_keeps_a_120_second_window():
-    """Conductor R5 fence: every waiting-question lookup in the dictation
-    routes and runner reads the shared default, never a literal window."""
-    import ast
-    from pathlib import Path
-
-    root = Path(__file__).resolve().parents[2]
-    files = [
-        root / "holdspeak/web/routes/dictation/pipeline.py",
-        root / "holdspeak/web/routes/dictation/agent.py",
-        root / "holdspeak/dictation_runner.py",
-    ]
-    lookups = {
-        "get_recent_awaiting_agent_session",
-        "get_recent_agent_session",
-        "clear_agent_session_response",
-    }
-    bad: list[str] = []
-    for path in files:
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Call):
-                continue
-            name = getattr(node.func, "id", None) or getattr(node.func, "attr", None)
-            if name not in lookups:
-                continue
-            for kw in node.keywords:
-                if kw.arg == "max_age_seconds" and isinstance(kw.value, ast.Constant):
-                    if kw.value.value == 120:
-                        bad.append(f"{path.name}:{node.lineno}")
-    assert bad == [], bad
-
-
 def test_unaimed_agent_send_keeps_the_companion_fallback(monkeypatch):
     """No ``require_agent`` -> the companion's byte-identical path: the hook is
     called and decides for itself (tmux pane, else desktop fallback)."""

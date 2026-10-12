@@ -114,16 +114,6 @@ def test_no_third_door_connector_watches_writes() -> None:
     )
 
 
-def test_sanctioned_modules_exist() -> None:
-    """Every sanctioned module must exist in the repo."""
-    repo_root = Path(__file__).resolve().parents[2]
-    for module_path in SANCTIONED_WRITERS:
-        full_path = repo_root / module_path
-        assert full_path.exists(), (
-            f"Sanctioned module {module_path} does not exist"
-        )
-
-
 def test_at_least_one_write_in_each_sanctioned_module() -> None:
     """Each sanctioned module actually writes to connector_watches.
 

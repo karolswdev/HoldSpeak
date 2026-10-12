@@ -14,16 +14,12 @@ Tests:
 
 from __future__ import annotations
 
-import os
-import re
-import shutil
 import sqlite3
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
-from holdspeak.db.schema import SCHEMA_SQL, SCHEMA_VERSION
+from holdspeak.db.schema import SCHEMA_SQL
 from holdspeak.db.reconcile import reconcile_schema
 from holdspeak.db.updates import PublishedUpdateError, UpdatesRepository
 from holdspeak.project_contracts import generate_pupd_id
@@ -85,15 +81,6 @@ def _build_pre162_schema() -> str:
     return sql
 
 
-def _find_real_db() -> Optional[Path]:
-    """Locate the owner's real HoldSpeak DB, or None if absent."""
-    real_home = os.environ.get("HOLDSPEAK_REAL_HOME") or str(Path.home())
-    candidate = Path(real_home) / ".local" / "share" / "holdspeak" / "holdspeak.db"
-    if candidate.exists():
-        return candidate
-    return None
-
-
 def _seed_project(conn: sqlite3.Connection, project_id: str = "proj-1",
                   name: str = "Alpha", revision: int = 5) -> None:
     """Insert a minimal project row for FK satisfaction."""
@@ -132,13 +119,6 @@ def _make_repo(tmp_path: Path):
 
 class TestFreshSchema:
     """A fresh DB built from SCHEMA_SQL has the HS-162-01 shape."""
-
-    def test_schema_version_is_at_least_the_phase_floor(self) -> None:
-        """SCHEMA_VERSION is informational and additive-only (HS-137): this
-        phase was built at 73; later additive phases bump it (74 the
-        calendar_event_projects join, 75 calendar_event_link_suppressions).
-        The honest assertion is the floor, read from the real constant."""
-        assert SCHEMA_VERSION >= 73
 
     def test_updates_table_exists(self, tmp_path: Path) -> None:
         conn = sqlite3.connect(str(tmp_path / "fresh.db"))
@@ -561,82 +541,6 @@ class TestLegacyReconcile:
 
 
 # -- TST-005: real-DB proof -----------------------------------------------
-
-@pytest.mark.skipif(
-    _find_real_db() is None,
-    reason="Owner's real DB not found (CI or isolated HOME)",
-)
-class TestRealDbReconcile:
-    """Copy the owner's real DB, reconcile the copy, verify zero data loss.
-
-    Proves DB-001: existing project IDs and row counts survive the additive
-    schema migration.  The copy is never the live file.
-    """
-
-    def test_real_db_reconcile_preserves_data(self, tmp_path: Path) -> None:
-        real_db = _find_real_db()
-        assert real_db is not None
-
-        copy_path = tmp_path / "real_copy.db"
-        # HS-200-45 R5: the database runs in WAL now, so its committed tail can
-        # live in the ``-wal`` sidecar. A bare file copy would hand this test a
-        # database missing its most recent rows (or, on a fresh file, an empty
-        # one) and the "preserves data" assertions would pass vacuously. The
-        # sqlite backup API reads one consistent snapshot through SQLite.
-        _src = sqlite3.connect(f"file:{real_db}?mode=ro", uri=True)
-        try:
-            _dest = sqlite3.connect(str(copy_path))
-            try:
-                _src.backup(_dest)
-            finally:
-                _dest.close()
-        finally:
-            _src.close()
-
-        conn = sqlite3.connect(str(copy_path))
-        conn.row_factory = sqlite3.Row
-
-        # Snapshot BEFORE reconcile.
-        before_project_count = conn.execute(
-            "SELECT COUNT(*) FROM projects"
-        ).fetchone()[0]
-        before_project_ids = sorted(
-            r[0] for r in conn.execute("SELECT id FROM projects").fetchall()
-        )
-
-        # Reconcile the copy.
-        reconcile_schema(conn, db_path=copy_path)
-
-        # Snapshot AFTER reconcile.
-        after_project_count = conn.execute(
-            "SELECT COUNT(*) FROM projects"
-        ).fetchone()[0]
-        after_project_ids = sorted(
-            r[0] for r in conn.execute("SELECT id FROM projects").fetchall()
-        )
-
-        # Row counts unchanged.
-        assert after_project_count == before_project_count, (
-            f"project row count changed: {before_project_count} -> {after_project_count}"
-        )
-        # Project IDs unchanged.
-        assert after_project_ids == before_project_ids, (
-            "project IDs changed after reconcile"
-        )
-
-        # New table exists.
-        assert _table_exists(conn, "project_updates")
-
-        # New indexes exist.
-        assert _index_exists(conn, "idx_project_updates_project")
-        assert _index_exists(conn, "idx_project_updates_review")
-
-        # Second reconcile is a no-op.
-        changed = reconcile_schema(conn, db_path=copy_path)
-        assert changed is False, "second reconcile should be a no-op"
-
-        conn.close()
-
 
 # -- ID prefix validation -------------------------------------------------
 

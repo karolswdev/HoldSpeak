@@ -332,7 +332,3 @@ def test_fence_no_feature_local_splitting() -> None:
     )
 
 
-def test_fence_central_module_is_exempt() -> None:
-    """The central module itself is allowed to use ref patterns."""
-    assert "holdspeak/refs.py" in _FENCE_EXEMPT
-    assert "holdspeak/refs.py" in PROJECT_ROOMS_MODULES

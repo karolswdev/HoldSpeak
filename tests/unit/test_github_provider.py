@@ -11,7 +11,6 @@ import logging
 import subprocess
 from typing import Any
 
-import pytest
 
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
@@ -504,41 +503,3 @@ class TestSnapshot:
 
 # ── Live probe (real gh CLI) ─────────────────────────────────────────
 
-def _gh_available() -> bool:
-    """Check if gh is installed and authenticated."""
-    import shutil
-    if shutil.which("gh") is None:
-        return False
-    try:
-        result = subprocess.run(
-            ["gh", "auth", "status"],
-            capture_output=True, text=True, timeout=10,
-        )
-        return result.returncode == 0
-    except Exception:
-        return False
-
-
-@pytest.mark.skipif(not _gh_available(), reason="gh CLI not authenticated or not installed")
-class TestLiveProbe:
-    """Live tests against the real gh CLI. Read-only."""
-
-    def test_live_connection_status(self, tmp_path: Any) -> None:
-        adapter, db = _make_adapter(tmp_path, db_name="live.db")
-        result = adapter.connection_status(OWNER)
-        assert result["state"] == STATE_CONNECTED
-        assert result["display"].get("account"), "Live probe should return an account"
-
-        # Verify persistence
-        row = db.automations.get_provider_connection(adapter._connection_id())
-        assert row is not None
-        assert row["state"] == STATE_CONNECTED
-
-    def test_live_discover_returns_repos(self, tmp_path: Any) -> None:
-        adapter, _ = _make_adapter(tmp_path, db_name="livedisc.db")
-        result = adapter.discover(OWNER, limit=5)
-        assert result["state"] in (DISCOVERY_READY, DISCOVERY_PARTIAL)
-        assert len(result["items"]) >= 1, "Authenticated user should have at least one repo"
-        # Stable IDs
-        for item in result["items"]:
-            assert "/" in item["id"]

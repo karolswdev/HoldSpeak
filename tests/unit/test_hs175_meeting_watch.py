@@ -603,41 +603,33 @@ class TestRetireIsATombstone:
         watches = _meeting_watches(db, project_id)
         assert [(w["id"], w["state"]) for w in watches] == [(created["id"], "retired")]
 
-    def test_backfill_query_skips_rooms_with_a_retired_watch(self, db):
-        """The heartbeat's backfill SQL treats ANY meeting Watch as present."""
+    def test_heartbeat_backfill_does_not_resurrect(self, db):
+        """The real sweep: a Room whose meeting Watch is retired gets no new
+        one; a linked Room with no Watch gets one, receipted as backfill."""
+        from datetime import datetime, timezone
+
+        from holdspeak.services.heartbeat_service import HeartbeatService
         from holdspeak.services.watch_service import ensure_meeting_watch
 
-        project_id = _seed_project(db)
-        mid = _seed_meeting(db)
-        _link_meeting_to_project(db, mid, project_id)
-        created = ensure_meeting_watch(db, project_id)
+        retired_room = _seed_project(db, name="Retired room")
+        _link_meeting_to_project(db, _seed_meeting(db), retired_room)
+        created = ensure_meeting_watch(db, retired_room)
         db.automations.update_watch_spec(created["id"], state="retired")
+        bare_room = _seed_project(db, name="Bare room")
+        _link_meeting_to_project(db, _seed_meeting(db), bare_room)
 
-        # The exact predicate heartbeat_service._run_sweep uses.
-        with db._connection() as conn:
-            rows = conn.execute(
-                """SELECT DISTINCT mp.project_id
-                   FROM meeting_projects mp
-                   WHERE NOT EXISTS (
-                       SELECT 1 FROM connector_watches cw
-                       WHERE cw.project_id = mp.project_id
-                         AND cw.connector_id = 'meeting'
-                   )""",
-            ).fetchall()
-        assert [r["project_id"] for r in rows] == []
+        HeartbeatService(
+            db, notifier=lambda *_a, **_k: True,
+            clock=lambda: datetime(2026, 9, 3, 12, 0, tzinfo=timezone.utc),
+            local_zone=timezone.utc,
+        ).run_sweep(OWNER, owner_hand=True)
 
-    def test_heartbeat_backfill_does_not_resurrect(self, db):
-        """The whole sweep backfill, source-checked: the predicate has no
-        ``state != 'retired'`` escape hatch."""
-        import inspect
-        from holdspeak.services import heartbeat_service
-
-        source = inspect.getsource(heartbeat_service.HeartbeatService._run_sweep)
-        block = source[source.index("backfill meeting Watches"):]
-        block = block[: block.index("meeting_watch_backfill = {")]
-        assert "cw.connector_id = 'meeting'" in block
-        assert "state != 'retired'" not in block
-        assert 'why="backfill"' in block
+        assert [(w["id"], w["state"]) for w in _meeting_watches(db, retired_room)] == [
+            (created["id"], "retired"),
+        ]
+        backfilled = _meeting_watches(db, bare_room)
+        assert len(backfilled) == 1
+        assert [r["why"] for r in _watch_created_receipts(db, backfilled[0]["id"])] == ["backfill"]
 
     def test_retired_watch_is_not_a_source_row(self, db):
         """A retired Watch does not fold into the Room's SOURCES."""
@@ -745,14 +737,16 @@ class TestCreationIsReceipted:
         assert [r["why"] for r in receipts] == ["backfill"]
 
     def test_default_why_is_the_link_path(self, db):
-        """routing_glue / project_service call with why='meeting linked'."""
-        import inspect
-        from holdspeak.runtime import routing_glue
-        from holdspeak.services import project_service
+        """ProjectService.associate_meeting creates the Watch, why='meeting linked'."""
+        from holdspeak.services.project_service import ProjectService
 
-        assert 'ensure_meeting_watch(db, pid, why="meeting linked")' in inspect.getsource(routing_glue)
-        assert 'ensure_meeting_watch(self._db, project_id, why="meeting linked")' in inspect.getsource(project_service)
+        project_id = _seed_project(db)
+        mid = _seed_meeting(db)
+        assert ProjectService(db).associate_meeting(OWNER, project_id, mid) is True
 
+        watches = _meeting_watches(db, project_id)
+        assert len(watches) == 1
+        assert [r["why"] for r in _watch_created_receipts(db, watches[0]["id"])] == ["meeting linked"]
 
 # ── HS-175 counsel C8 / C9(c): the Room row's clocks ─────────────
 

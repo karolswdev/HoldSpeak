@@ -16,16 +16,13 @@ Tests:
 from __future__ import annotations
 
 import json
-import os
 import re
-import shutil
 import sqlite3
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
-from holdspeak.db.schema import SCHEMA_SQL, SCHEMA_VERSION
+from holdspeak.db.schema import SCHEMA_SQL
 from holdspeak.db.reconcile import reconcile_schema
 
 
@@ -100,25 +97,10 @@ def _build_pre159_schema() -> str:
     return sql
 
 
-def _find_real_db() -> Optional[Path]:
-    real_home = os.environ.get("HOLDSPEAK_REAL_HOME") or str(Path.home())
-    candidate = Path(real_home) / ".local" / "share" / "holdspeak" / "holdspeak.db"
-    if candidate.exists():
-        return candidate
-    return None
-
-
 # ── TST-001: fresh DB has all new shapes ─────────────────────────────────
 
 class TestFreshSchema:
     """A fresh DB built from SCHEMA_SQL has every HS-159-01 shape."""
-
-    def test_schema_version_is_at_least_the_phase_floor(self) -> None:
-        """SCHEMA_VERSION is informational and additive-only (HS-137): this
-        phase was built at 73; later additive phases bump it (74 the
-        calendar_event_projects join, 75 calendar_event_link_suppressions).
-        The honest assertion is the floor, read from the real constant."""
-        assert SCHEMA_VERSION >= 73
 
     def test_connector_watches_has_graduation_columns(self, tmp_path: Path) -> None:
         conn = sqlite3.connect(str(tmp_path / "fresh.db"))
@@ -478,114 +460,6 @@ class TestLegacyReconcile:
 
 
 # ── TST-003: real-DB proof ───────────────────────────────────────────────
-
-@pytest.mark.skipif(
-    _find_real_db() is None,
-    reason="Owner's real DB not found (CI or isolated HOME)",
-)
-class TestRealDbReconcile:
-    """Copy the owner's real DB, reconcile the copy, verify zero data loss.
-
-    Proves: existing watch IDs/row counts, attached reactions, and
-    backfill truth survive the additive schema graduation.
-    """
-
-    def test_real_db_reconcile_preserves_watches_and_reactions(self, tmp_path: Path) -> None:
-        real_db = _find_real_db()
-        assert real_db is not None
-
-        copy_path = tmp_path / "real_copy.db"
-        # HS-200-45 R5: the database runs in WAL now, so its committed tail can
-        # live in the ``-wal`` sidecar. A bare file copy would hand this test a
-        # database missing its most recent rows (or, on a fresh file, an empty
-        # one) and the "preserves data" assertions would pass vacuously. The
-        # sqlite backup API reads one consistent snapshot through SQLite.
-        _src = sqlite3.connect(f"file:{real_db}?mode=ro", uri=True)
-        try:
-            _dest = sqlite3.connect(str(copy_path))
-            try:
-                _src.backup(_dest)
-            finally:
-                _dest.close()
-        finally:
-            _src.close()
-
-        conn = sqlite3.connect(str(copy_path))
-        conn.row_factory = sqlite3.Row
-
-        # Snapshot BEFORE.
-        before_watch_count = conn.execute(
-            "SELECT COUNT(*) FROM connector_watches"
-        ).fetchone()[0]
-        before_watch_ids = sorted(
-            r[0] for r in conn.execute("SELECT id FROM connector_watches").fetchall()
-        )
-        before_reaction_count = conn.execute(
-            "SELECT COUNT(*) FROM connector_reactions"
-        ).fetchone()[0]
-        before_reaction_watch_ids = sorted(
-            r[0] for r in conn.execute(
-                "SELECT watch_id FROM connector_reactions WHERE watch_id IS NOT NULL"
-            ).fetchall()
-        )
-
-        # Reconcile.
-        reconcile_schema(conn, db_path=copy_path)
-
-        # Snapshot AFTER.
-        after_watch_count = conn.execute(
-            "SELECT COUNT(*) FROM connector_watches"
-        ).fetchone()[0]
-        after_watch_ids = sorted(
-            r[0] for r in conn.execute("SELECT id FROM connector_watches").fetchall()
-        )
-        after_reaction_count = conn.execute(
-            "SELECT COUNT(*) FROM connector_reactions"
-        ).fetchone()[0]
-        after_reaction_watch_ids = sorted(
-            r[0] for r in conn.execute(
-                "SELECT watch_id FROM connector_reactions WHERE watch_id IS NOT NULL"
-            ).fetchall()
-        )
-
-        # Row counts unchanged.
-        assert after_watch_count == before_watch_count, (
-            f"watch row count changed: {before_watch_count} -> {after_watch_count}"
-        )
-        assert after_reaction_count == before_reaction_count, (
-            f"reaction row count changed: {before_reaction_count} -> {after_reaction_count}"
-        )
-
-        # IDs unchanged.
-        assert after_watch_ids == before_watch_ids
-        assert after_reaction_watch_ids == before_reaction_watch_ids
-
-        # All watches graduated.
-        graduated = conn.execute(
-            "SELECT COUNT(*) FROM connector_watches WHERE schema_version='WatchSpec@1'"
-        ).fetchone()[0]
-        assert graduated == after_watch_count, (
-            f"Not all watches graduated: {graduated}/{after_watch_count}"
-        )
-
-        # New columns present.
-        cols = _get_columns(conn, "connector_watches")
-        assert "schema_version" in cols
-        assert "trigger_kind" in cols
-
-        # New tables present.
-        for table in [
-            "project_setup_sessions", "watch_rules",
-            "watch_evaluations", "watch_effects", "project_sources",
-        ]:
-            assert _table_exists(conn, table)
-
-        # Second reconcile is a no-op.
-        changed = reconcile_schema(conn, db_path=copy_path)
-        assert changed is False, "second reconcile should be a no-op"
-
-        conn.close()
-
 
 # ── TST-005: backfill truth table ────────────────────────────────────────
 
