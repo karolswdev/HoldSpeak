@@ -125,6 +125,30 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     expect(within(owed).getByRole("button", { name: /Send the dry-run report/ })).toBeTruthy();
   });
 
+  it("PHILO-17 refit: TO RAISE is numbered; Last time carries the meeting's decisions and actions; On the desk opens its source", async () => {
+    stub({ linked: true, brief: { ...FULL,
+      agenda_items: [
+        { id: "a1", body: "Review the dry-run report", visibility: "shared_intent", state: "open" },
+        { id: "a2", body: "Pick the cutover date", visibility: "shared_intent", state: "open" },
+      ],
+      linked_meetings: [{ meeting_id: "m-last", title: "1:1 Priya / Karol", started_at: "2026-10-08T16:00:00Z",
+        open_action_items: [{ id: "ai1", task: "Share the rollback runbook", owner: "Priya", due: null }],
+        decisions: [{ id: "d1", decision_text: "Freeze the ledger on Nov 12", rationale: null, lifecycle: "active" }] }],
+      last_meeting: { meeting_id: "m-last", title: "1:1 Priya / Karol", item_count: 2, open_count: 1 },
+      memory: { excerpts: [{ ref: "decision:dr-1", kind: "decision", title: "Ledger freeze", text: "Freeze on Nov 12", project_id: "p-dry" }] },
+    } });
+    render(<PeopleCore scope="people:r1:prep" />);
+    const raise = await screen.findAllByTestId("prep-agenda");
+    expect(raise.map((row) => row.textContent)).toEqual(["1Review the dry-run report", "2Pick the cutover date"]);
+    const last = screen.getByTestId("prep-last");
+    expect(within(last).getByText("Freeze the ledger on Nov 12")).toBeTruthy();
+    expect(within(last).getByText("Share the rollback runbook")).toBeTruthy();
+    expect(within(last).getByTestId("prep-meeting-open").textContent).toBe("Open meeting");
+    const desk = screen.getByTestId("prep-memory");
+    expect(within(desk).getByText("Ledger freeze")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(ISO);
+  });
+
   it("withholds an empty section: no owed, no projects, no agenda heading", async () => {
     stub({ linked: true, brief: {} });
     render(<PeopleCore scope="people:r1:prep" />);
@@ -133,6 +157,8 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     expect(screen.queryByTestId("prep-projects")).toBeNull();
     expect(screen.queryByTestId("prep-agenda")).toBeNull();
     expect(screen.queryByTestId("prep-link-suggestion")).toBeNull();
+    expect(screen.queryByTestId("prep-last")).toBeNull();
+    expect(screen.queryByTestId("prep-memory")).toBeNull();
   });
 
   it("a suggestion links only on his press; then NEXT 1:1 shows", async () => {

@@ -156,7 +156,7 @@ describe("a People store failure keeps the window and the note", () => {
         storeDown ? json({ detail: "people_store_unavailable" }, 503) : json({ note: { id: "n1" } }),
     };
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      const handler = routes[String(input)];
+      const handler = routes[String(input).replace("?counts=1", "")];
       if (!handler) throw new Error(`Unexpected request: ${String(input)}`);
       return handler();
     }));
@@ -207,7 +207,7 @@ describe("People Try again re-reads the person", () => {
       "/api/door": () => json({ upcoming: [] }),
     };
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      const key = String(input);
+      const key = String(input).replace("?counts=1", "");
       calls[key] = (calls[key] ?? 0) + 1;
       const handler = routes[key];
       if (!handler) throw new Error(`Unexpected request: ${key}`);

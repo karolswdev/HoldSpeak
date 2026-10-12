@@ -166,7 +166,7 @@ describe("People: Add on They owe you shows the saved item", () => {
         saved = true;
         return json(recorded("owed-created"), 201);
       }
-      const read = reads[path];
+      const read = reads[path.replace("?counts=1", "")];
       if (!read || (opts?.method && opts.method !== "GET")) throw new Error(`no recorded hub answer for ${opts?.method ?? "GET"} ${path}`);
       return json(read());
     });

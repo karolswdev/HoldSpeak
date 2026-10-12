@@ -409,7 +409,8 @@ class TestOneMeetingOneWindow:
                 win = page.locator(f"[id='{wid}']")
                 win.locator("[data-testid=person-window]").wait_for(timeout=T)
                 assert "Avery Chen" in win.inner_text()
-                assert win.locator(".people-lenses [role=tab]").count() == 6
+                # PHILO-17 refit: Prep leads; Context, History and Info are the folded tabs.
+                assert win.locator(".people-lenses [role=tab]").count() == 4
                 # The person, not the People application (the roster).
                 assert page.locator("#surface-people").count() == 0
                 assert not re.search(r"\bBack\b", win.locator(".people-detail-head").inner_text())
