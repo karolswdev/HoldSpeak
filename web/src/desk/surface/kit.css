@@ -20,7 +20,8 @@
 }
 .kit-apphead > .kit-disp {
   margin: 0;
-  font: 650 26px / 1.1 var(--font-display);
+  /* PHILO-17 (owner: "comically large fonts"): 19 px, the window headline. */
+  font: 650 19px / 1.2 var(--font-display);
   letter-spacing: var(--letter-spacing-tight);
   color: var(--wb-text);
   min-width: 0;
@@ -159,4 +160,139 @@
    counter of zero in another form, UX-CANON A.8). */
 .surface-ledger:not(:has(> .surface-ledger-head)):has(> ul.surface-ledger-rows:empty) {
   display: none;
+}
+
+/* PHILO-17 — Steps: a sequence as raised square plates on a dotted pixel
+   wire (the Today language). */
+.kit-steps {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+.kit-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.kit-step + .kit-step::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  right: calc(50% + 12px);
+  left: calc(-50% + 12px);
+  height: 2px;
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--wb-ink) 45%, transparent) 0 2px, transparent 2px 4px);
+}
+.kit-step-n {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-ink);
+  transition: background-color 120ms ease, box-shadow 160ms ease;
+}
+.kit-step-word {
+  max-width: 100%;
+  text-align: center;
+  font: 600 12px / 1.2 var(--font-sans);
+  color: var(--wb-muted);
+}
+.kit-step[data-state="now"] .kit-step-n {
+  background: var(--wb-sel);
+  color: var(--wb-paper);
+  box-shadow: var(--wb-sunken), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 30%, transparent);
+}
+.kit-step[data-state="now"] .kit-step-word {
+  color: var(--wb-text);
+  font-weight: 750;
+}
+.kit-step[data-state="done"] .kit-step-n {
+  background: var(--pill-ok);
+}
+.kit-step[data-state="failed"] .kit-step-n {
+  background: var(--pill-danger);
+}
+.kit-step[data-state="failed"] .kit-step-word {
+  color: var(--wb-danger-ink);
+}
+.kit-step:hover .kit-step-n {
+  background-color: var(--wb-steel-2);
+}
+.kit-step[data-state="now"]:hover .kit-step-n {
+  background: color-mix(in srgb, var(--wb-sel) 85%, #ffffff);
+}
+@media (prefers-reduced-motion: reduce) {
+  .kit-step-n { transition: none; }
+}
+
+/* PHILO-17: the pill tints, solid (a measured background is a plain
+   colour: no color-mix on a pill). Each tone's ink reads 5.5:1 or more on
+   its tint (computed against --wb-paper #eef0f3). */
+:root {
+  --pill-neutral: #dcdee1;
+  --pill-ok: #cdebe3;
+  --pill-warn: #f1e3bd;
+  --pill-danger: #f0dcde;
+  --pill-info: #d1dcf2;
+  --pill-accent: #eaddd4;
+}
+
+/* ── PHILO-17: THE PILL (one shared species; the lanes' copies retire).
+   <span class="kit-pill" data-tone="ok|warn|danger|info|accent">Words</span>
+   - no data-tone: neutral (muted ink on a light steel tint);
+   - data-dot: a round lamp dot before the words, in the tone's lamp;
+   - data-live: the dot breathes (running); colour and opacity only.
+   The tint is opaque over paper and the word is the tone's ink, so it
+   reads 5.3:1 or more on any ground (the 4.5:1 floor, UX-CANON). Square
+   corners (a Workbench tag): the pill owns every point of its box. */
+.kit-pill {
+  --pill-tint: var(--pill-neutral);
+  --pill-lamp: var(--wb-steel);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 0;
+  background: var(--pill-tint);
+  font: 600 12px / 1 var(--font-sans);
+  color: var(--wb-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.kit-pill:is([data-tone="ok"], [data-tone="success"]) { --pill-tint: var(--pill-ok); --pill-lamp: var(--lamp-ok); color: var(--wb-ok-ink); }
+.kit-pill[data-tone="warn"] { --pill-tint: var(--pill-warn); --pill-lamp: var(--lamp-warn); color: var(--wb-warn-ink); }
+.kit-pill[data-tone="danger"] { --pill-tint: var(--pill-danger); --pill-lamp: var(--lamp-fail); color: var(--wb-danger-ink); }
+.kit-pill[data-tone="info"] { --pill-tint: var(--pill-info); --pill-lamp: var(--lamp-info); color: var(--wb-info-ink); }
+.kit-pill[data-tone="accent"] { --pill-tint: var(--pill-accent); --pill-lamp: var(--lamp-ask); color: var(--wb-ember-ink); }
+.kit-pill:is([data-dot], [data-live])::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pill-lamp);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-ink) 45%, transparent);
+}
+.kit-pill[data-live]::before {
+  animation: kit-pill-breathe 1.2s ease-in-out infinite alternate;
+}
+@keyframes kit-pill-breathe {
+  from { opacity: 1; }
+  to { opacity: 0.3; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kit-pill[data-live]::before { animation: none; }
 }

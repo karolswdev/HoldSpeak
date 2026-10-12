@@ -425,6 +425,9 @@ class TestPhilo15Lane12Ugly:
                     dock.locator("[data-app='intelligence:desk']").click()
                     win = page.locator(".desk-pullout:has(.intelligence-pullout)").first
                     win.wait_for(timeout=T)
+                    # PHILO-17 (concept C): the window opens on Day; its
+                    # first items here are the Brief's, one tab away.
+                    win.locator(".intelligence-segment", has_text="Brief").first.click()
                     first = win.locator(ITEM).first
                     first.wait_for(timeout=T)
                     page.wait_for_timeout(900)

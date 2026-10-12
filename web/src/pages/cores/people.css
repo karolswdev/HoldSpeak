@@ -135,17 +135,17 @@
   align-items: center;
   min-height: 20px;
   padding: 0 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--wb-sel) 14%, transparent);
+  border-radius: 0;
+  background: var(--pill-info);
   color: var(--wb-info-ink);
   font: 600 12px / 1 var(--font-sans);
 }
 .people-role-chip[data-kind="peer"] {
-  background: color-mix(in srgb, var(--lamp-ok) 16%, transparent);
+  background: var(--pill-ok);
   color: var(--wb-ok-ink);
 }
 .people-role-chip[data-kind="extended"] {
-  background: color-mix(in srgb, var(--wb-ink) 8%, transparent);
+  background: var(--pill-neutral);
   color: var(--wb-muted);
 }
 .desk-next .people-surface .surface-row-meta > .surface-token[data-chip] {

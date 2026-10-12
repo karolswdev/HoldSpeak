@@ -46,7 +46,9 @@ export function MeetingDecideWell(props: DecideWellProps) {
 }
 
 function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace }: DecideWellProps) {
-  const weight = runSummaryOnFace ? "ghost" : "primary";
+  // PHILO-17 (one filled primary per window): with a summary, the meeting's
+  // primary is Send (the foot); Decide is a quieter steel verb then.
+  const weight = runSummaryOnFace ? "ghost" : String(summary ?? "").trim() ? "secondary" : "primary";
   const decisions = useDesk((s) => s.items.decision);
   const made = decisionsFromMeeting(decisions, meetingId);
   // PHILO-13-07 (B2): the unfinished title is also kept in the workspace

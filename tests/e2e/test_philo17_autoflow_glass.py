@@ -162,7 +162,7 @@ def test_summary_after_every_meeting_reaches_the_open_record_by_itself(tmp_path:
                 # The list reads the same state as the record (the coordinator's
                 # catch: the row said IMPORTING while the record said RUNNING).
                 page.wait_for_function(
-                    """(id) => /RUNNING|QUEUED|NOT DRAINING/.test(document.querySelector(
+                    """(id) => /RUNNING|QUEUED|NOT DRAINING/i.test(document.querySelector(
                         `[data-testid=meeting-row-${id}] [data-testid=state-token]`)?.textContent || '')""",
                     arg=meeting_id, timeout=15_000,
                 )

@@ -241,8 +241,8 @@ describe("the meeting after a run (HS-172 seed)", () => {
     expect(facts).toContain("41 S");
     expect(facts).toContain("192.168.1.43");
     const commitments = screen.getByTestId("meeting-commitments");
-    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
-    expect(commitments.querySelector("h3")?.textContent).toBe("Commitments · 2");
+    expect(decisions.querySelector("h3")?.textContent).toBe("Decided · 1");
+    expect(commitments.querySelector("h3")?.textContent).toBe("Who owes what · 2");
     expect(screen.getAllByTestId("proposal-confirm-btn")).toHaveLength(3);
     expect(screen.getAllByTestId("proposal-dismiss-btn")).toHaveLength(3);
     const ledgers = `${decisions.textContent}${commitments.textContent}`;

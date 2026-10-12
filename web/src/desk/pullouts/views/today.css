@@ -227,31 +227,7 @@
   flex: none;
 }
 
-/* A pill: the state's tint, the word in the state's ink. */
-.desk-next .today-pill {
-  --tint: color-mix(in srgb, var(--wb-ink) 8%, transparent);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 20px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--tint);
-  font: 600 12px / 1 var(--font-sans);
-  color: var(--wb-text);
-  white-space: nowrap;
-}
-.desk-next .today-pill[data-tone="warn"] { --tint: color-mix(in srgb, var(--lamp-warn) 26%, transparent); color: var(--wb-warn-ink); }
-.desk-next .today-pill[data-tone="danger"] { --tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent); color: var(--wb-danger-ink); }
-.desk-next .today-pill[data-tone="info"] { --tint: color-mix(in srgb, var(--lamp-info) 20%, transparent); color: var(--wb-info-ink); }
-.desk-next .today-pill[data-live]::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--lamp-fail);
-  animation: today-breathe 1.2s ease-in-out infinite alternate;
-}
+/* The pills are the kit's (.kit-pill, kit.css). */
 
 /* ── The next meeting: a raised plate with a Workbench title bar ── */
 .desk-next .today-next {
@@ -332,7 +308,7 @@
 
 /* The stepper: four small plates on a dotted wire. The current step is
    lit (the selection blue, sunken like a held key); a done step is green. */
-.desk-next .today-stepper {
+.desk-next .today-next > .kit-steps {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
@@ -452,7 +428,7 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .today-now-bead,
   .desk-next .today-now-line,
-  .desk-next .today-pill[data-live]::before {
+  .desk-next .kit-pill[data-live]::before {
     animation: none;
   }
   .desk-next .today-row { transition: none; }
@@ -527,4 +503,31 @@
 }
 .desk-next .today-side {
   align-self: start;
+}
+
+/* PHILO-17 (Astra r1 on #1110): a source that could not be read, and the
+   route a summary run takes, before the press. */
+.desk-next .today-failed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+}
+.desk-next .today-row-route {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+.desk-next .today-node[data-kind="finish"] .today-row {
+  flex-wrap: wrap;
+}
+@container surface (max-width: 639.9px) {
+  .desk-next .today-row-route {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    order: 3;
+  }
 }
