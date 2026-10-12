@@ -8,7 +8,9 @@ function json(body: unknown, status = 200) {
 
 function stub(handlers: Record<string, (input: string, opts?: { method?: string; body?: string }) => Response | Promise<Response>>) {
   vi.stubGlobal("fetch", vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
-    const handler = handlers[String(input)];
+    // PHILO-17 REFIT: Prep leads, so a person's open reads the 1:1 brief;
+    // a test that does not name it gets an empty brief.
+    const handler = handlers[String(input)] ?? (String(input).endsWith("/brief") ? () => json({ brief: { open_commitments: [], agenda_items: [] } }) : undefined);
     if (!handler) throw new Error(`Unexpected request: ${String(input)}`);
     return handler(input, opts);
   }));
@@ -55,7 +57,7 @@ describe("PeopleCore encrypted local plane", () => {
     const lock = await screen.findByTestId("people-lock");
     expect(lock.textContent).toContain("Encrypted");
     expect(lock.getAttribute("title")).toBe("Encrypted · Local storage · Notes only");
-    await waitFor(() => expect(screen.getByRole("tab", { name: "1:1s" })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole("tab", { name: "Prep" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
     expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();
@@ -222,6 +224,8 @@ describe("PeopleCore HS-149-03 gesture", () => {
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Ewa", relationship_kind: "direct_report" }] }),
       "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Ewa", calendar_links: [{ uid: "uid-ewa", source_id: "cal-1", label: "1:1 w/ Ewa" }] } }),
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      // The hub's brief names the linked series' next event.
+      "/api/people/relationships/r1/brief": () => json({ brief: { open_commitments: [], agenda_items: [], next_one_on_one: { id: "e1", uid: "uid-ewa", title: "1:1 w/ Ewa", starts_at: "2099-09-01T10:00:00Z", ends_at: "2099-09-01T10:30:00Z", source_id: "cal-1", source_label: "Work" } } }),
       "/api/door": () => json({ upcoming: [
         { id: "e1", uid: "uid-ewa", source: "calendar_event", title: "1:1 w/ Ewa", starts_at: "2099-09-01T10:00:00Z", ends_at: "2099-09-01T10:30:00Z", source_id: "cal-1" },
       ] }),
@@ -240,7 +244,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       "/api/door": () => json({ upcoming: [] }),
     });
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Now" })).toBeTruthy());
+    await screen.findByTestId("people-next-plate");
     expect(screen.queryByTestId("people-next-1on1")).toBeNull();
   });
 
@@ -468,13 +472,13 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
   const posts = (fetchSpy: ReturnType<typeof spy>, path: string) =>
     fetchSpy.mock.calls.filter(([url, opts]) => String(url) === path && (opts as { method?: string } | undefined)?.method === "POST");
 
-  it("Now records what they owe you, marks it done, and names requests 'Asked of you'", async () => {
+  it("Prep records what they owe you, marks it done, and names requests 'Asked of you'", async () => {
     // The person's read carries the added item once the Add has saved it.
     const added: { id: string; body: string; state: string; direction: string }[] = [];
     const fetchSpy = spy({
       "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report" }] }),
-      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Maya Chen", commitments: [], requests: [], owed_to_you: [{ id: "o1", body: "Send the rollout plan", state: "open", direction: "report_owes" }, { id: "o2", body: "Old item", state: "done", direction: "report_owes" }, ...added] } }),
+      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Maya Chen", commitments: [], requests: [{ id: "q1", body: "Review my doc", state: "requested" }], owed_to_you: [{ id: "o1", body: "Send the rollout plan", state: "open", direction: "report_owes" }, { id: "o2", body: "Old item", state: "done", direction: "report_owes" }, ...added] } }),
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
       "/api/people/relationships/r1/brief": () => json({ brief: { relationship_id: "r1", open_commitments: [], agenda_items: [] } }),
       "/api/door": () => json({ upcoming: [] }),
@@ -486,7 +490,7 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     });
     render(<PeopleCore scope="people:r1" />);
     const owed = await screen.findByTestId("people-they-owe");
-    expect(within(owed).getByText("They owe you · 1")).toBeTruthy();
+    expect(within(owed).getByRole("heading").textContent).toBe("THEY OWE YOU1");
     expect(within(owed).getByText("Send the rollout plan")).toBeTruthy();
     expect(within(owed).queryByText("Old item")).toBeNull();
     expect(screen.getByText("Asked of you")).toBeTruthy();
@@ -501,7 +505,7 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     // lands. Wait for the read that carries the added item, then press Done.
     // A press in that gap found no Done: the -n 8 flake (test diet 2026-10-11).
     await within(owed).findByText("Send me the API migration estimate");
-    const rollout = within(owed).getByText("Send the rollout plan").closest(".surface-row") as HTMLElement;
+    const rollout = within(owed).getByText("Send the rollout plan").closest(".people-plate-row") as HTMLElement;
     fireEvent.click(within(rollout).getByRole("button", { name: "Done" }));
     await waitFor(() => expect(posts(fetchSpy, "/api/people/commitments/o1/transition")).toHaveLength(1));
     expect(JSON.parse(String(posts(fetchSpy, "/api/people/commitments/o1/transition")[0][1]?.body)).verb).toBe("done");

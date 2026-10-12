@@ -149,6 +149,7 @@ describe("a People store failure keeps the window and the note", () => {
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Priya Nair", relationship_kind: "direct_report" }] }),
       "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Priya Nair", relationship_kind: "direct_report", notes: [] } }),
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      "/api/people/relationships/r1/brief": () => json({ brief: { open_commitments: [], agenda_items: [] } }),
       "/api/projects": () => json({ projects: [] }),
       "/api/door": () => json({ upcoming: [] }),
       "/api/people/relationships/r1/notes": () =>
@@ -201,6 +202,7 @@ describe("People Try again re-reads the person", () => {
           : json({ relationship: { id: "r1", display_name: "Priya Nair", relationship_kind: "direct_report", notes: [{ id: "n1", topic: "Growth", body: "Wants to lead the EU shard work.", visibility: "leader_private" }] } });
       },
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      "/api/people/relationships/r1/brief": () => json({ brief: { open_commitments: [], agenda_items: [] } }),
       "/api/projects": () => json({ projects: [] }),
       "/api/door": () => json({ upcoming: [] }),
     };

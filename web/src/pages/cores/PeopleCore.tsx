@@ -1,7 +1,7 @@
 // HS-135-04: People is a single protected Desk application.  Its roster is
 // a relationship projection, never a field of person tiles or a scorecard.
 import { wireDate } from "../../desk/surface/format";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { CoreProps } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
@@ -18,7 +18,7 @@ import { CycleGadget, EgressChip, PadGadget, StringGadget } from "../../desk/sur
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import {
   ConfirmVerb,
-  SurfaceColumns,
+
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceRow,
@@ -252,24 +252,37 @@ export function PeopleCore({ hero, scope }: CoreProps) {
 
   // The row facts are the roster's: read while no person is open (a
   // person's own read is the window's; the two never share a request).
+  // Astra (PHILO-17 refit): ONE coalesced load: one in flight at a time,
+  // run again only when the list of people changes (a bounded hub read
+  // for these counts replaces this when the shared lane lands it).
   const personOpen = Boolean(selectedId || requestedRelationshipId);
-  useEffect(() => {
-    if (!relationships.length) { setRowFacts({}); return; }
-    if (personOpen) return;
-    let live = true;
-    void Promise.all(relationships.map(async (row) => {
+  const rosterKey = relationships.map((row) => row.id).join("|");
+  const factsRun = useRef<{ inFlight: boolean; doneKey: string | null; wantKey: string | null }>({ inFlight: false, doneKey: null, wantKey: null });
+  const loadFacts = useCallback((key: string) => {
+    const run = factsRun.current;
+    run.wantKey = key;
+    if (run.inFlight || run.doneKey === key) return;
+    if (!key) { run.doneKey = key; setRowFacts({}); return; }
+    run.inFlight = true;
+    const ids = key.split("|");
+    void Promise.all(ids.map(async (id) => {
       try {
-        const read = await apiFetch<{ relationship: RelationshipDetail }>(`/api/people/relationships/${encodeURIComponent(row.id)}`);
-        return [row.id, rowFactsOf(read.relationship)] as const;
+        const read = await apiFetch<{ relationship: RelationshipDetail }>(`/api/people/relationships/${encodeURIComponent(id)}`);
+        return [id, rowFactsOf(read.relationship)] as const;
       } catch {
         return null;
       }
     })).then((pairs) => {
-      if (!live) return;
+      run.inFlight = false;
+      run.doneKey = key;
       setRowFacts(Object.fromEntries(pairs.filter((pair): pair is readonly [string, RowFacts] => Boolean(pair))));
+      if (run.wantKey !== null && run.wantKey !== key) loadFacts(run.wantKey);
     });
-    return () => { live = false; };
-  }, [relationships, personOpen]);
+  }, []);
+  useEffect(() => {
+    if (personOpen) return;
+    loadFacts(rosterKey);
+  }, [rosterKey, personOpen, loadFacts]);
   const planOneOnOne = (id: string) => {
     setLensRequest((current) => ({ lens: "one-on-ones", seq: current ? current.seq + 1 : 1 }));
     void select(id);
@@ -389,11 +402,15 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       <span className="surface-display">
         {relationships.length === 1 ? "1 person" : `${relationships.length} people`}
       </span>
-      {owed ? <span className="surface-token" data-chip data-tone="warn" data-plain="">{`You owe ${owed}`}</span> : null}
+      {/* The owed counts live once, in the This week strip under the roster. */}
+      <span className="people-head-sp" />
+      {verbs}
     </div>
   );
   return <div className="people-surface">
-    {renderHeroSlot(hero, verbs, failureRow)}
+    {/* PHILO-17 REFIT: Add person sits in the roster's own head row (no
+        empty band above it); a person's page has no head verb. */}
+    {renderHeroSlot(hero, peopleHead ? null : verbs, failureRow)}
     {peopleHead}
     <SurfaceSplit
       detailOpen={Boolean(selected)}
@@ -528,60 +545,340 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   </div>;
 }
 
+/** PHILO-17 REFIT: the person's tabs. Prep is the lead (the next 1:1, what
+ *  to raise, owed both ways); Context, History and Info stay behind it.
+ *  The old lenses `now` and `one-on-ones` land on Prep. */
+type PaneLens = "prep" | "context" | "history" | "info";
+function paneLens(lens: Lens | string | null | undefined): PaneLens | null {
+  if (!lens) return null;
+  if (lens === "context" || lens === "history" || lens === "info") return lens;
+  return "prep";
+}
+const PANE_TABS: ReadonlyArray<readonly [PaneLens, string]> = [["prep", "Prep"], ["context", "Context"], ["history", "History"], ["info", "Info"]];
+const PERSON_SPRITE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/32/person.png`;
+
+function openCount(items?: Array<{ state?: string }> | null): number {
+  return (items ?? []).filter((item) => (item.state ?? "open") === "open").length;
+}
+
 /** PHILO-17 (2b): exported; a person's own window (`pullout:people:<id>`)
  *  hosts it. There the window's close is the way back, so no Back. */
 export function RelationshipPane({ relationship, initialLens, lensRequest = null, onRefresh, onProtectedFailure, onArchived, onBack }: { relationship: RelationshipDetail; initialLens?: Lens | null; lensRequest?: { lens: Lens; seq: number } | null; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack?(): void }) {
   // PHILO-13-07 (B2): the tab is part of the place, kept per person.
   const lensPlace = `people/lens/${relationship.id}`;
-  const [lens, setLensState] = useState<Lens>(() => initialLens || (keptPlace(lensPlace) as Lens) || "now");
-  const setLens = useCallback((next: Lens) => {
+  const [lens, setLensState] = useState<PaneLens>(() => paneLens(initialLens) ?? paneLens(keptPlace(lensPlace)) ?? "prep");
+  const setLens = useCallback((next: PaneLens) => {
     setLensState(next);
-    keepPlace(lensPlace, next === "now" ? "" : next);
+    keepPlace(lensPlace, next === "prep" ? "" : next);
   }, [lensPlace]);
-  // PHILO-13-06 (B1): a row that opens this person on a lens (a 1:1 → Prep)
-  // moves the open window to that lens.
-  useEffect(() => { if (initialLens) setLens(initialLens); }, [initialLens, setLens]);
-  useEffect(() => { if (lensRequest) setLens(lensRequest.lens); }, [lensRequest, setLens]);
+  // PHILO-13-06 (B1): a row that opens this person on a lens moves the open window to it.
+  useEffect(() => { const next = paneLens(initialLens); if (next) setLens(next); }, [initialLens, setLens]);
+  useEffect(() => { if (lensRequest) setLens(paneLens(lensRequest.lens) ?? "prep"); }, [lensRequest, setLens]);
+  // The calendar picker (Context) reads the Door's upcoming events.
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
-  const [nowConcern, setNowConcern] = useState<NowConcern>(null);
-  const [prepBrief, setPrepBrief] = useState<OneOnOneBrief | null>(null);
+  const wantsCalendar = lens === "context";
   useEffect(() => {
+    if (!wantsCalendar) return;
+    let live = true;
     void apiFetch<{ upcoming?: UpcomingEvent[] }>("/api/door")
       .then((door) => {
-        const events = (door.upcoming ?? []).filter(
+        if (!live) return;
+        setUpcomingEvents((door.upcoming ?? []).filter(
           (item: Record<string, unknown>) => item.source === "calendar_event" && item.uid,
-        ) as UpcomingEvent[];
-        setUpcomingEvents(events);
+        ) as UpcomingEvent[]);
       })
-      .catch(() => setUpcomingEvents([]));
-  }, [relationship.id]);
-  const links = relationship.calendar_links ?? [];
-  const linkedKeys = new Set(links.map((l) => `${l.uid}:${l.source_id}`));
-  const nextLabel = shortWhen(relationship.next_one_on_one ?? upcomingEvents.find((ev) => linkedKeys.has(`${ev.uid}:${ev.source_id}`))?.starts_at ?? "") || null; // PHILO-13-09: the hub's linked event first; one formatter
-  const openConcern = useCallback((concern: NowConcern, brief: OneOnOneBrief) => {
-    setPrepBrief(brief);
-    setNowConcern(concern);
-    setLens("now");
-  }, [setLens]);
-  const switchLens = useCallback((id: Lens) => {
-    setLens(id);
-    if (id !== "now") setNowConcern(null);
-  }, [setLens]);
-  return <div className="people-detail">
-    <div className="people-detail-head">{onBack ? <Button dense variant="ghost" onClick={onBack}>Back</Button> : null}<strong>{relationship.display_name}</strong></div>
-    {nextLabel ? <div className="people-next-header" data-testid="people-next-1on1">NEXT 1:1 &middot; {nextLabel}</div> : null}
+      .catch(() => { if (live) setUpcomingEvents([]); });
+    return () => { live = false; };
+  }, [relationship.id, wantsCalendar]);
+  const youOwe = openCount(relationship.commitments);
+  const owesYou = openCount(relationship.owed_to_you);
+  return <div className="people-detail person-page">
+    <header className="people-detail-head" data-testid="people-detail-head">
+      {onBack ? <Button dense variant="ghost" onClick={onBack}>Back</Button> : null}
+      <Avatar name={relationship.display_name} size="md" />
+      <span className="people-who">
+        <h2 className="people-name" data-testid="prep-display-name">{relationship.display_name}</h2>
+        <span className="people-who-meta">
+          <span className="people-role-chip" data-kind={relationship.relationship_kind ?? undefined}>{relationshipLabel(relationship.relationship_kind)}</span>
+          {relationship.role_context ? <span>{relationship.role_context}</span> : null}
+        </span>
+      </span>
+      <span className="people-head-sp" />
+      {youOwe || owesYou ? <span className="people-strip" data-testid="people-owed-strip">
+        {youOwe ? <span data-tone="warn"><b>{youOwe}</b> you owe</span> : null}
+        {owesYou ? <span data-tone="ok"><b>{owesYou}</b> owed to you</span> : null}
+      </span> : null}
+    </header>
     <div className="people-lenses" role="tablist" aria-label={`${relationship.display_name} lenses`}>
-      {([['now', 'Now'], ['prep', 'Prep'], ['one-on-ones', '1:1s'], ['context', 'Context'], ['history', 'History'], ['info', 'Info']] as const).map(([id, label]) => <Button key={id} dense variant="ghost" role="tab" aria-selected={lens === id} onClick={() => switchLens(id)}>{label}</Button>)}
+      {PANE_TABS.map(([id, label]) => <Button key={id} dense variant="ghost" role="tab" aria-selected={lens === id} onClick={() => setLens(id)}>{label}</Button>)}
     </div>
-    {lens === "now" ? <NowLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} concern={nowConcern} prepBrief={prepBrief} /> : null}
-    {lens === "prep" ? <PrepLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onOpenConcern={openConcern} /> : null}
-    {lens === "one-on-ones" ? <OneOnOnes relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
+    {lens === "prep" ? <PrepPane relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onPickCalendar={() => setLens("context")} /> : null}
     {lens === "context" ? <ContextLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} /> : null}
     {lens === "history" ? <HistoryLens relationship={relationship} /> : null}
     {lens === "info" ? <InfoLens relationship={relationship} onArchived={onArchived} onProtectedFailure={onProtectedFailure} /> : null}
   </div>;
 }
 
+/** `in 50 min`, `in 2 h 05 min`, `now`; empty past a day. */
+function untilWords(isoDate: string, now: number): string {
+  const at = wireDate(isoDate)?.getTime();
+  if (at === undefined || !Number.isFinite(at)) return "";
+  const minutes = Math.ceil((at - now) / 60_000);
+  if (minutes <= 0) return "now";
+  if (minutes < 60) return `in ${minutes} min`;
+  if (minutes < 24 * 60) return `in ${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, "0")} min`;
+  return "";
+}
+
+function isOverdue(due?: string | null): boolean {
+  if (!due) return false;
+  const at = wireDate(due);
+  if (!at) return false;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return at.getTime() < today.getTime();
+}
+
+/** PHILO-17 REFIT: one row of a plate: the words, one pill, one verb. */
+function PlateRow({ title, onTitle, meta, verb, testId }: { title: string; onTitle?: () => void; meta?: ReactNode; verb?: ReactNode; testId?: string }) {
+  return <li className="people-plate-row" data-testid={testId}>
+    <span className="people-plate-text">
+      {onTitle ? <Button variant="chrome" className="people-plate-title" onClick={onTitle}>{title}</Button> : <span className="people-plate-title">{title}</span>}
+      {meta ? <span className="people-plate-meta">{meta}</span> : null}
+    </span>
+    {verb}
+  </li>;
+}
+
+function DuePill({ due }: { due?: string | null }) {
+  if (!due) return null;
+  return isOverdue(due)
+    ? <span className="people-pill" data-tone="danger">Overdue · BY {shortDay(due)}</span>
+    : <span className="people-pill">BY {shortDay(due)}</span>;
+}
+
+/** HS-172-05: the rows behind a Prep concern (PRs, assignments, overdue). */
+function ConcernDetail({ concern, brief }: { concern: Exclude<NowConcern, null>; brief: OneOnOneBrief }) {
+  const ws = brief.watch_summary;
+  if (concern === "prs" && ws?.prs_waiting?.length) return <div data-testid="now-prs-detail" className="people-concern">
+    <SurfaceLedger count={`PRS WAITING ${ws.prs_waiting.length}`} cols="room">
+      {ws.prs_waiting.map((pr) => <SurfaceLedgerRow key={`pr-${pr.pr_number}`} wrap expands={false}
+        primary={<span className="surface-primary">{`#${pr.pr_number} · ${pr.title}`}</span>}
+        cells={<span className="people-now-caption"><span className={pr.days_waiting >= 3 ? "people-now-caption-warning" : ""}>{pr.days_waiting} {pr.days_waiting === 1 ? "DAY" : "DAYS"}</span>{pr.repo ? <> · <span>{pr.repo.toUpperCase()}</span></> : null}</span>}
+        trailing={pr.url ? <Button dense variant="ghost" onClick={() => window.open(pr.url, "_blank", "noopener")}>Open</Button> : undefined} />)}
+    </SurfaceLedger>
+  </div>;
+  if (concern === "assignments" && ws?.open_assignments?.length) return <div data-testid="now-assignments-detail" className="people-concern">
+    <SurfaceLedger count={`ASSIGNMENTS OPEN ${ws.open_assignments.length}`} cols="room">
+      {ws.open_assignments.map((a) => <SurfaceLedgerRow key={a.key} wrap expands={false}
+        primary={<span className="surface-primary">{`${a.key} · ${a.summary}`}</span>}
+        cells={<span className="people-now-caption"><span>{a.status.toUpperCase()}</span>{a.overdue ? <> · <span className="people-now-caption-warning">OVERDUE</span></> : null}</span>}
+        trailing={a.url ? <Button dense variant="ghost" onClick={() => window.open(a.url, "_blank", "noopener")}>Open</Button> : undefined} />)}
+    </SurfaceLedger>
+  </div>;
+  return null;
+}
+
+/** PHILO-17 REFIT — Prep, the lead: the next 1:1 as the focus plate (when,
+ *  what to raise, add to the agenda), then two plates: what he owes and
+ *  what is owed to him, each with its add row. Every fact is the person's
+ *  record or the hub's 1:1 brief (`/brief`, read-only). */
+function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; onPickCalendar(): void }) {
+  const [brief, setBrief] = useState<OneOnOneBrief | null>(null);
+  const [failure, setFailure] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const [concern, setConcern] = useState<NowConcern>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [selectedCommitment, setSelectedCommitment] = useState<Commitment | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [preparedAt] = useState(() => new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false }));
+  // The person's record is re-read after each write; the brief follows it.
+  useEffect(() => {
+    let live = true;
+    void apiFetch<{ brief: OneOnOneBrief }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/brief`)
+      .then((result) => { if (live) { setBrief(result.brief); setFailure(""); } })
+      .catch((cause) => {
+        if (!live) return;
+        if (isProtectedFailure(cause) && !isStoreOutage(cause)) { onProtectedFailure(cause); return; }
+        setFailure(plainFailure("PREP DID NOT LOAD", cause));
+      });
+    return () => { live = false; };
+  }, [relationship, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The countdown ticks; the words change in a fixed box.
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const [agendaDraft, setAgendaDraft, forgetAgenda] = useDeskDraft(`people/1on1/${relationship.id}`);
+  const [oweDraft, setOweDraft, forgetOwe] = useDeskDraft(`people/request/${relationship.id}`);
+  const [owedDraft, setOwedDraft, forgetOwed] = useDeskDraft(`people/owed/${relationship.id}`);
+
+  if (!brief && !failure) return <SurfaceState loading />;
+
+  const base = `/api/people/relationships/${encodeURIComponent(relationship.id)}`;
+  const run = async (key: string, work: () => Promise<unknown>, after?: () => void) => {
+    setBusy(key);
+    try { await work(); after?.(); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(null); }
+  };
+  const addAgenda = () => {
+    const body = agendaDraft.trim(); if (!body) return;
+    void run("agenda", async () => {
+      const session = relationship.sessions?.[0] ?? (await apiFetch<{ one_on_one: Session }>(`${base}/one-on-ones`, { method: "POST", json: { visibility: "shared_intent" } })).one_on_one;
+      await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(session.id)}/agenda`, { method: "POST", json: { body, visibility: "shared_intent", state: "open", source: { kind: "manual" } } });
+    }, forgetAgenda);
+  };
+  // What he owes: the hub's own path (a request he accepts becomes his commitment).
+  const addOwe = () => {
+    const body = oweDraft.trim(); if (!body) return;
+    void run("owe", async () => {
+      const made = await apiFetch<{ request: { id: string } }>(`${base}/requests`, { method: "POST", json: { body, visibility: "shared_intent", source: { kind: "manual" } } });
+      await apiFetch(`/api/people/requests/${encodeURIComponent(made.request.id)}/accept`, { method: "POST", json: {} });
+    }, forgetOwe);
+  };
+  const addOwed = () => {
+    const body = owedDraft.trim(); if (!body) return;
+    void run("owed", () => apiFetch(`${base}/owed`, { method: "POST", json: { body, visibility: "shared_intent" } }), forgetOwed);
+  };
+  const done = (id: string) => void run(`done:${id}`, () => apiFetch(`/api/people/commitments/${encodeURIComponent(id)}/transition`, { method: "POST", json: { verb: "done" } }));
+  const accept = (id: string) => void run(`accept:${id}`, () => apiFetch(`/api/people/requests/${encodeURIComponent(id)}/accept`, { method: "POST", json: {} }));
+
+  const prep = brief ? composePeoplePrep(brief) : null;
+  const nextEvent = prep?.nextOneOnOne ?? null;
+  const nextAt = relationship.next_one_on_one ?? nextEvent?.starts_at ?? null;
+  const suggestions = !nextAt && prep ? prep.calendarLinkSuggestions : [];
+  const lead: "link" | "agenda" = suggestions.length ? "link" : "agenda";
+  const nextTitle = nextEvent?.title || (relationship.calendar_links ?? [])[0]?.label || "1:1";
+  const until = nextAt ? untilWords(nextAt, now) : "";
+
+  const ws = brief?.watch_summary;
+  const prCount = ws?.prs_waiting?.length ?? 0;
+  const assignCount = ws?.open_assignments?.length ?? 0;
+  const youOweRows = (relationship.commitments ?? []).filter((item) => (item.state ?? "open") === "open");
+  // The brief's open commitments name what is overdue (the 1:1 brief's read).
+  const overdue = (brief?.open_commitments ?? []).filter((item) => isOverdue(item.due));
+  const lm = brief?.last_meeting;
+  const displayName = brief?.display_name ?? relationship.display_name;
+  const toggle = (next: Exclude<NowConcern, null>) => setConcern((current) => (current === next ? null : next));
+  const concernRows: ReactNode[] = [];
+  if (brief && prCount) concernRows.push(<li key="prs" className="people-raise-row" data-testid="prep-prs-row">
+    <span className="people-pill" data-tone={ws?.oldest_waiting_days && ws.oldest_waiting_days >= 3 ? "warn" : "info"} data-testid="prep-prs-label">{prsSummaryLabel(prCount, displayName)}</span>
+    <span className="people-raise-tokens">
+      {ws?.oldest_waiting_days ? <span className="people-prep-token" data-warning={ws.oldest_waiting_days >= 3 || undefined} data-testid="prep-prs-days">{ws.oldest_waiting_days}+ DAYS</span> : null}
+      <span className="people-prep-token" data-testid="prep-prs-numbers">{capTokens((ws?.prs_waiting ?? []).map((pr) => `#${pr.pr_number}`))}</span>
+    </span>
+    <Button dense variant="ghost" onClick={() => toggle("prs")} aria-expanded={concern === "prs"} data-testid="prep-prs-open">{concern === "prs" ? "Hide" : "Show"}</Button>
+  </li>);
+  if (brief && assignCount) concernRows.push(<li key="assign" className="people-raise-row" data-testid="prep-assignments-row">
+    <span className="people-pill" data-tone={(ws?.open_assignments ?? []).some((a) => a.overdue) ? "warn" : "info"} data-testid="prep-assignments-label">{assignCount} {assignCount === 1 ? "ASSIGNMENT" : "ASSIGNMENTS"} OPEN</span>
+    <span className="people-raise-tokens">
+      <span className="people-prep-token" data-testid="prep-assignments-keys">{capTokens((ws?.open_assignments ?? []).map((a) => a.key).filter(Boolean))}</span>
+      {(ws?.open_assignments ?? []).some((a) => a.overdue) ? <span className="people-prep-token" data-warning="true" data-testid="prep-assignments-overdue">OVERDUE</span> : null}
+    </span>
+    <Button dense variant="ghost" onClick={() => toggle("assignments")} aria-expanded={concern === "assignments"} data-testid="prep-assignments-open">{concern === "assignments" ? "Hide" : "Show"}</Button>
+  </li>);
+  if (overdue.length) concernRows.push(<li key="overdue" className="people-raise-row" data-testid="prep-commitments-row">
+    <span className="people-pill" data-tone="danger" data-testid="prep-commitments-label">{overdue.length} {overdue.length === 1 ? "COMMITMENT" : "COMMITMENTS"} OVERDUE</span>
+    <span className="people-raise-tokens"><span className="people-prep-token">{overdue[0].body.length > 30 ? overdue[0].body.slice(0, 30) : overdue[0].body}</span></span>
+  </li>);
+  if (lm && lm.item_count > 0) concernRows.push(<li key="last" className="people-raise-row" data-testid="prep-meeting-row">
+    <span className="people-pill">LAST MEETING</span>
+    <span className="people-raise-tokens">
+      <span className="people-prep-token" data-testid="prep-meeting-items">{lm.item_count} {lm.item_count === 1 ? "ITEM" : "ITEMS"}</span>
+      {lm.open_count > 0 ? <span className="people-prep-token" data-testid="prep-meeting-open-count">{lm.open_count} OPEN</span> : null}
+    </span>
+    <Button dense variant="ghost" onClick={() => openSourceRef(`meeting:${lm.meeting_id}`)} data-testid="prep-meeting-open">Open meeting</Button>
+  </li>);
+  const agenda = prep?.agenda ?? [];
+  const asked = (relationship.requests ?? []).filter((item) => item.state === "requested");
+  const owedRows = (relationship.owed_to_you ?? []).filter((item) => (item.state ?? "open") === "open");
+  const actions = prep?.openMeetingActions ?? [];
+
+  return <div data-testid="people-prep-lens" className="people-prep">
+    {failure ? <span className="people-failure" role="alert" data-testid="people-next-failure">
+      <span className="people-failure-label">{failure}</span>
+      <Button dense variant="ghost" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>
+    </span> : null}
+
+    <section className="people-next" aria-label="Next 1:1" data-testid="people-next-plate">
+      <header className="people-next-bar" data-testid={nextAt ? "people-next-1on1" : undefined}>
+        <span className="people-next-label">NEXT 1:1</span>
+        {nextAt ? <span className="people-next-sep" aria-hidden="true"> · </span> : null}
+        <span className="people-next-when">{nextAt ? [shortWhen(nextAt), until].filter(Boolean).join(" · ") : brief ? "NOT PLANNED" : ""}</span>
+      </header>
+      <div className="people-next-body">
+        {nextAt ? <div className="people-next-event">
+          <span className="people-next-sprite" aria-hidden="true"><img src={PERSON_SPRITE} alt="" draggable={false} /></span>
+          <span className="people-next-text">
+            <span className="people-next-title">{nextTitle}</span>
+            {nextEvent?.source_label ? <span className="people-plate-meta"><span>{nextEvent.source_label}</span></span> : null}
+          </span>
+        </div> : suggestions.length && prep ? <LinkSuggestions relationship={relationship} prep={prep} onLinked={onRefresh} onProtectedFailure={onProtectedFailure} testId="prep-link-suggestion" />
+          : brief ? <div className="people-next-none"><span>No 1:1 planned</span><Button dense variant="ghost" onClick={onPickCalendar}>Pick from calendar</Button></div> : null}
+        {prep?.projects.length ? <span className="people-plate-meta" data-testid="prep-projects">
+          {prep.projects.map((project) => <Button key={project.id} variant="chrome" className="people-pill people-pill-link" data-tone="info" onClick={refOpener(`project:${project.id}`) ?? undefined}>{project.name}</Button>)}
+        </span> : null}
+
+        {concernRows.length || agenda.length ? <div className="people-raise" data-testid="prep-summary-rows">
+          <span className="people-cap">TO RAISE</span>
+          <ul className="people-raise-list">
+            {concernRows}
+            {agenda.map((item) => <li key={item.id} className="people-raise-row" data-testid="prep-agenda">
+              <span className="people-raise-bead" aria-hidden="true" />
+              <span className="people-raise-words">{item.body}</span>
+              {item.rolled_from_id ? <span className="people-pill">Rolled</span> : null}
+            </li>)}
+          </ul>
+          {concern && brief ? <ConcernDetail concern={concern} brief={brief} /> : null}
+        </div> : null}
+
+        <div className="people-add people-agenda-add">
+          <StringGadget label="Add to the agenda" value={agendaDraft} onChange={setAgendaDraft} placeholder="What to raise" inputProps={{ id: `people-agenda-${relationship.id}` }} onKeyDown={(event) => { if (event.key === "Enter") addAgenda(); }} />
+          <Button dense variant={lead === "agenda" ? "primary" : "secondary"} disabled={busy === "agenda"} loading={busy === "agenda"} onClick={() => { if (agendaDraft.trim()) addAgenda(); else document.getElementById(`people-agenda-${relationship.id}`)?.focus(); }} data-testid="people-add-agenda">Add to agenda</Button>
+        </div>
+      </div>
+    </section>
+
+    <div className="people-owe-grid">
+      <section className="people-plate" data-testid="people-you-owe">
+        <h3 className="people-cap">YOU OWE{youOweRows.length ? <b>{youOweRows.length}</b> : null}</h3>
+        {youOweRows.length || asked.length ? <ul className="people-plate-rows" data-testid="prep-you-owe">
+          {asked.map((item) => <PlateRow key={item.id} testId="people-asked" title={item.body}
+            meta={<span className="people-pill" data-tone="info">Asked of you</span>}
+            verb={<Button dense variant="ghost" loading={busy === `accept:${item.id}`} onClick={() => accept(item.id)}>Accept</Button>} />)}
+          {youOweRows.map((item) => <PlateRow key={item.id} title={item.body}
+            onTitle={() => setSelectedCommitment(item)}
+            meta={item.due || item.execution_links?.length ? <>{item.due ? <DuePill due={item.due} /> : null}{item.execution_links?.length ? <span className="people-pill" data-tone="info">On a Workbench</span> : null}</> : undefined}
+            verb={<Button dense variant="ghost" loading={busy === `done:${item.id}`} onClick={() => done(item.id)}>Done</Button>} />)}
+        </ul> : null}
+        {selectedCommitment ? <CommitmentInspector commitment={selectedCommitment} onClose={() => setSelectedCommitment(null)} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
+        <div className="people-add">
+          <StringGadget label="You owe" value={oweDraft} onChange={setOweDraft} placeholder="What you owe" onKeyDown={(event) => { if (event.key === "Enter") addOwe(); }} />
+          <Button dense variant="ghost" disabled={!oweDraft.trim() || busy === "owe"} loading={busy === "owe"} onClick={addOwe}>Add</Button>
+        </div>
+      </section>
+
+      <section className="people-plate" data-testid="people-they-owe">
+        <h3 className="people-cap">THEY OWE YOU{owedRows.length + actions.length ? <b>{owedRows.length + actions.length}</b> : null}</h3>
+        {owedRows.length || actions.length ? <ul className="people-plate-rows" data-testid="prep-owed">
+          {owedRows.map((item) => <PlateRow key={item.id} title={item.body}
+            meta={item.due ? <DuePill due={item.due} /> : undefined}
+            verb={<Button dense variant="ghost" loading={busy === `done:${item.id}`} onClick={() => done(item.id)}>Done</Button>} />)}
+          {actions.map((action) => <PlateRow key={action.id} title={action.task}
+            onTitle={refOpener(`meeting:${action.meeting_id}`) ?? undefined}
+            meta={<>{action.meeting_title ? <span>{action.meeting_title}</span> : null}{action.due ? <DuePill due={action.due} /> : null}</>} />)}
+        </ul> : null}
+        <div className="people-add">
+          <StringGadget label="They owe you" value={owedDraft} onChange={setOwedDraft} placeholder="What they owe you" onKeyDown={(event) => { if (event.key === "Enter") addOwed(); }} />
+          <Button dense variant="ghost" disabled={!owedDraft.trim() || busy === "owed"} loading={busy === "owed"} onClick={addOwed}>Add</Button>
+        </div>
+      </section>
+    </div>
+
+    <SurfaceFooter
+      egress={<EgressChip label="THIS DEVICE" scope="local" />}
+      receipt={<span className="people-prep-receipt" data-testid="prep-receipt">PREPARED {preparedAt}</span>}
+    />
+  </div>;
+}
 /** PHILO-17 ALIVE: what one roster row says, from the person's record. */
 type RowFacts = { next: string | null; youOwe: number; owesYou: number };
 function rowFactsOf(detail: RelationshipDetail): RowFacts {
@@ -656,189 +953,6 @@ export function capTokens(items: string[], max: number = 3): string {
   return rest > 0 ? `${parts} +${rest}` : parts;
 }
 
-/** HS-149-04 / HS-172-05: the Prep lens -- the 1:1 brief enrichment.
- * Display step = the person's name. Summary rows (absent at zero).
- * AGENDA section. Footer THIS DEVICE + PREPARED hh:mm. */
-function PrepLens({ relationship, onRefresh, onProtectedFailure, onOpenConcern }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; onOpenConcern(concern: NowConcern, brief: OneOnOneBrief): void }) {
-  const [brief, setBrief] = useState<OneOnOneBrief | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [preparedAt] = useState(() => {
-    const now = new Date();
-    return now.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
-  });
-  const links = linkKey(relationship);
-  useEffect(() => {
-    setLoading(true); setError("");
-    void apiFetch<{ brief: OneOnOneBrief }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/brief`)
-      .then((result) => setBrief(result.brief))
-      .catch((cause) => {
-        setBrief(null);
-        if (typeof cause === "object" && cause !== null && "status" in cause && (cause as { status: number }).status === 503) {
-          setError("People store locked");
-        } else {
-          onProtectedFailure(cause);
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [relationship.id, links]);
-  if (loading) return <SurfaceState loading />;
-  if (error) return <SurfaceState error={error} data-testid="prep-locked" />;
-  if (!brief) return <SurfaceState empty emptyLabel="Brief unavailable" />;
-
-  const ws = brief.watch_summary;
-  const prCount = ws?.prs_waiting?.length ?? 0;
-  const assignCount = ws?.open_assignments?.length ?? 0;
-  const overdueCommitments = brief.open_commitments.filter((c) => {
-    if (!c.due) return false;
-    try { return new Date(c.due) < new Date(); } catch { return false; }
-  });
-  const overdueCount = overdueCommitments.length;
-  const lm = brief.last_meeting;
-  const displayName = brief.display_name ?? relationship.display_name;
-  // PHILO-13-09 (B4-W): the agenda, what the report owes, her projects and
-  // the calendar suggestion come through the one client contract.
-  const prep = composePeoplePrep(brief);
-  const agendaCount = prep.agenda.length;
-  // PHILO-17 (U33): Prep is the one prep view: agenda, you owe, they owe.
-  const owedToYou = brief.owed_to_you ?? [];
-  const youOwe = brief.open_commitments ?? [];
-  const theyOweCount = owedToYou.length + prep.openMeetingActions.length;
-
-  // PR reference tokens: cap at 3 then +N
-  const prNumbers = (ws?.prs_waiting ?? []).map((pr) => `#${pr.pr_number}`);
-  const prTokenStr = capTokens(prNumbers);
-
-  // Assignment keys
-  const assignKeys = (ws?.open_assignments ?? []).map((a) => a.key).filter(Boolean);
-  const assignTokenStr = capTokens(assignKeys);
-  const anyOverdueAssignment = (ws?.open_assignments ?? []).some((a) => a.overdue);
-
-  return <div data-testid="people-prep-lens" className="people-prep-enriched">
-    {/* Display step: person's name */}
-    <div className="people-prep-display" data-testid="prep-display-name">{displayName}</div>
-
-    {/* Summary rows (each absent at zero -- UX-CANON A.8) */}
-    <div className="people-prep-summary" data-testid="prep-summary-rows">
-      {prCount > 0 ? (
-        <div className="people-prep-row" data-testid="prep-prs-row">
-          <div className="people-prep-row-main">
-            <span className="people-prep-row-primary" data-testid="prep-prs-label">{prsSummaryLabel(prCount, displayName)}</span>
-            <span className="people-prep-row-tokens">
-              {ws?.oldest_waiting_days ? <span className="people-prep-token" data-warning={ws.oldest_waiting_days >= 3 || undefined} data-testid="prep-prs-days">{ws.oldest_waiting_days}+ DAYS</span> : null}
-              {prTokenStr ? <span className="people-prep-token people-prep-token-muted" data-testid="prep-prs-numbers">{prTokenStr}</span> : null}
-            </span>
-            <span className="people-prep-row-spacer" />
-            <Button dense variant="ghost" onClick={() => onOpenConcern("prs", brief)} data-testid="prep-prs-open">Open</Button>
-          </div>
-        </div>
-      ) : null}
-
-      {assignCount > 0 ? (
-        <div className="people-prep-row" data-testid="prep-assignments-row">
-          <div className="people-prep-row-main">
-            <span className="people-prep-row-primary" data-testid="prep-assignments-label">{assignCount} {assignCount === 1 ? "ASSIGNMENT" : "ASSIGNMENTS"} OPEN</span>
-            <span className="people-prep-row-tokens">
-              {assignTokenStr ? <span className="people-prep-token people-prep-token-muted" data-testid="prep-assignments-keys">{assignTokenStr}</span> : null}
-              {anyOverdueAssignment ? <span className="people-prep-token" data-warning="true" data-testid="prep-assignments-overdue">OVERDUE</span> : null}
-            </span>
-            <span className="people-prep-row-spacer" />
-            <Button dense variant="ghost" onClick={() => onOpenConcern("assignments", brief)} data-testid="prep-assignments-open">Open</Button>
-          </div>
-        </div>
-      ) : null}
-
-      {overdueCount > 0 ? (
-        <div className="people-prep-row" data-testid="prep-commitments-row">
-          <div className="people-prep-row-main">
-            <span className="people-prep-row-primary" data-testid="prep-commitments-label">{overdueCount} {overdueCount === 1 ? "COMMITMENT" : "COMMITMENTS"} OVERDUE</span>
-            <span className="people-prep-row-tokens">
-              {overdueCommitments[0] ? <span className="people-prep-token people-prep-token-muted">{overdueCommitments[0].body.length > 30 ? overdueCommitments[0].body.slice(0, 30) : overdueCommitments[0].body}</span> : null}
-              {overdueCommitments[0]?.due ? <span className="people-prep-token" data-warning="true">BY {shortDay(overdueCommitments[0].due)}</span> : null}
-            </span>
-            <span className="people-prep-row-spacer" />
-            <Button dense variant="ghost" onClick={() => onOpenConcern("commitments", brief)} data-testid="prep-commitments-open">Open</Button>
-          </div>
-        </div>
-      ) : null}
-
-      {lm && lm.item_count > 0 ? (
-        <div className="people-prep-row" data-testid="prep-meeting-row">
-          <div className="people-prep-row-main">
-            <span className="people-prep-row-primary">LAST MEETING</span>
-            <span className="people-prep-row-tokens">
-              <span className="people-prep-token people-prep-token-muted" data-testid="prep-meeting-items">{lm.item_count} {lm.item_count === 1 ? "ITEM" : "ITEMS"}</span>
-              {lm.open_count > 0 ? <span className="people-prep-token people-prep-token-muted" data-testid="prep-meeting-open-count">{lm.open_count} OPEN</span> : null}
-            </span>
-            <span className="people-prep-row-spacer" />
-            <Button dense variant="ghost" onClick={() => openSourceRef(`meeting:${lm.meeting_id}`)} data-testid="prep-meeting-open">Open</Button>
-          </div>
-        </div>
-      ) : null}
-    </div>
-
-    {!prep.nextOneOnOne ? <LinkSuggestions relationship={relationship} prep={prep} onLinked={onRefresh} onProtectedFailure={onProtectedFailure} testId="prep-link-suggestion" /> : null}
-
-    {/* AGENDA section (unchanged from existing) */}
-    {agendaCount > 0 ? (
-      <div data-testid="prep-agenda">
-        <SurfaceSection label="Agenda" count={agendaCount}>
-          <SurfaceRows>{prep.agenda.map((item) => <SurfaceRow key={item.id} title={item.body} />)}</SurfaceRows>
-        </SurfaceSection>
-      </div>
-    ) : null}
-
-    {youOwe.length ? (
-      <div data-testid="prep-you-owe">
-        <SurfaceSection label="You owe" count={youOwe.length}>
-          <SurfaceRows>{youOwe.map((item) => <SurfaceRow
-            key={item.id}
-            title={item.body}
-            detail={item.due ? `BY ${shortDay(item.due)}` : undefined}
-          />)}</SurfaceRows>
-        </SurfaceSection>
-      </div>
-    ) : null}
-
-    {/* PHILO-13-09 / PHILO-17: what the person owes him: the rows he recorded,
-        then the open actions from meetings (each opens its meeting). */}
-    {theyOweCount ? (
-      <div data-testid="prep-owed">
-        <SurfaceSection label="They owe you" count={theyOweCount}>
-          <SurfaceRows>{owedToYou.map((item) => <SurfaceRow
-            key={item.id}
-            title={item.body}
-            detail={item.due ? `BY ${shortDay(item.due)}` : undefined}
-          />)}{prep.openMeetingActions.map((action) => <SurfaceRow
-            key={action.id}
-            title={action.task}
-            detail={[action.meeting_title, action.due ? `BY ${shortDay(action.due)}` : null].filter(Boolean).join(" · ") || undefined}
-            onOpen={refOpener(`meeting:${action.meeting_id}`) ?? undefined}
-          />)}</SurfaceRows>
-        </SurfaceSection>
-      </div>
-    ) : null}
-
-    {prep.projects.length ? (
-      <div data-testid="prep-projects">
-        <SurfaceSection label="Projects">
-          <SurfaceRows>{prep.projects.map((project) => <SurfaceRow
-            key={project.id}
-            title={project.name}
-            onOpen={refOpener(`project:${project.id}`) ?? undefined}
-          />)}</SurfaceRows>
-        </SurfaceSection>
-      </div>
-    ) : null}
-
-    {/* Footer: THIS DEVICE + PREPARED hh:mm */}
-    <SurfaceFooter
-      egress={<EgressChip label="THIS DEVICE" scope="local" />}
-      receipt={<span className="people-prep-receipt" data-testid="prep-receipt">PREPARED {preparedAt}</span>}
-    />
-  </div>;
-}
-
 /** A due date as a short day (`FRI`); never the raw ISO string. A date-only
  * value (`YYYY-MM-DD`, the `Set a date` producer's calendar day) stays that
  * calendar day in the desk's zone; `new Date("2026-10-06")` would read it as
@@ -887,48 +1001,6 @@ function LinkSuggestions({ relationship, prep, onLinked, onProtectedFailure, tes
         verbs={<Button dense variant="primary" loading={busy} disabled={busy} onClick={() => void link(ev)}>Link this 1:1</Button>}
       />)}</SurfaceRows>
     </SurfaceSection>
-  </div>;
-}
-
-/** PHILO-13-09 (B4-W): the Now lens's side section. The linked 1:1 reads as
- * the header does (`shortWhen`); with none linked, the calendar suggestion;
- * only with neither, "No 1:1 planned". */
-function NextOneOnOneSide({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
-  const [prep, setPrep] = useState<PeoplePrepData | null>(null);
-  const [read, setRead] = useState(false);
-  // Astra's B4-W condition 1: a failed read is a named failure with Try
-  // again (the story-04 pattern), never "No 1:1 planned". A key or lock
-  // failure still goes to the window's custody path.
-  const [failure, setFailure] = useState("");
-  const [attempt, setAttempt] = useState(0);
-  const nextAt = relationship.next_one_on_one ?? null;
-  const links = linkKey(relationship);
-  useEffect(() => {
-    if (nextAt) return;
-    let live = true;
-    setRead(false);
-    void readPeoplePrep(relationship.id)
-      .then((next) => { if (live) { setPrep(next); setFailure(""); } })
-      .catch((cause) => {
-        if (!live) return;
-        setPrep(null);
-        if (isProtectedFailure(cause) && !isStoreOutage(cause)) { onProtectedFailure(cause); return; }
-        setFailure(plainFailure("NEXT 1:1 DID NOT LOAD", cause));
-      })
-      .finally(() => { if (live) setRead(true); });
-    return () => { live = false; };
-  }, [relationship.id, nextAt, links, attempt]);
-  const label = nextAt ? shortWhen(nextAt) : "";
-  const suggested = !nextAt && prep && prep.calendarLinkSuggestions.length > 0;
-  return <div data-testid="people-next-side">
-    {label ? <SurfaceSection label="Next 1:1"><span className="people-next-side">{label}</span></SurfaceSection>
-      : suggested ? <LinkSuggestions relationship={relationship} prep={prep} onLinked={onRefresh} onProtectedFailure={onProtectedFailure} testId="people-next-suggestion" />
-        : <SurfaceSection label="Next 1:1">{failure ? (
-          <span className="people-failure" role="alert" data-testid="people-next-failure">
-            <span className="people-failure-label">{failure}</span>
-            <Button dense variant="ghost" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>
-          </span>
-        ) : read || nextAt ? <SurfaceState empty emptyLabel="No 1:1 planned" /> : <SurfaceState loading />}</SurfaceSection>}
   </div>;
 }
 
@@ -1070,99 +1142,6 @@ function relationshipLabel(kind?: string): string {
   return "Relationship";
 }
 
-function NowLens({ relationship, onRefresh, onProtectedFailure, concern, prepBrief }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; concern?: NowConcern; prepBrief?: OneOnOneBrief | null }) {
-  // PHILO-13-07 (B2): the unsent request is kept per person; Add clears it.
-  const [request, setRequest, forgetRequest] = useDeskDraft(`people/request/${relationship.id}`); const [busy, setBusy] = useState(false); const [selectedCommitment, setSelectedCommitment] = useState<Commitment | null>(null);
-  const createRequest = async () => { if (!request.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/requests`, { method: "POST", json: { body: request.trim(), visibility: "shared_intent", source: { kind: "manual" } } }); forgetRequest(); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
-  const accept = async (id: string) => { try { await apiFetch(`/api/people/requests/${encodeURIComponent(id)}/accept`, { method: "POST", json: {} }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
-  // PHILO-17 (U09): what the person owes him, kept per person like the request draft.
-  const [owed, setOwed, forgetOwed] = useDeskDraft(`people/owed/${relationship.id}`);
-  const createOwed = async () => { if (!owed.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/owed`, { method: "POST", json: { body: owed.trim(), visibility: "shared_intent" } }); forgetOwed(); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
-  const owedDone = async (id: string) => { try { await apiFetch(`/api/people/commitments/${encodeURIComponent(id)}/transition`, { method: "POST", json: { verb: "done" } }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
-  const owedOpen = (relationship.owed_to_you ?? []).filter((item) => (item.state ?? "open") === "open");
-  const askedOpen = (relationship.requests ?? []).filter((item) => item.state === "requested");
-
-  // HS-172-05: when opened from a Prep summary row, show per-entity detail rows.
-  // SurfaceLedgerRow with wrap: titles wrap to two lines, repo token below.
-  if (concern && prepBrief) {
-    const ws = prepBrief.watch_summary;
-    const prTotal = ws?.prs_waiting?.length ?? 0;
-    const assignTotal = ws?.open_assignments?.length ?? 0;
-    const overdueList = prepBrief.open_commitments.filter((c) => { if (!c.due) return false; try { return new Date(c.due) < new Date(); } catch { return false; } });
-    const overdueTotal = overdueList.length;
-    return <div data-testid="people-now-concern">
-      {concern === "prs" && ws && prTotal > 0 ? (
-        <div data-testid="now-prs-detail">
-        <SurfaceLedger count={`PRS WAITING ${prTotal}`} cols="room">
-          {ws.prs_waiting.map((pr) => (
-            <SurfaceLedgerRow
-              key={`pr-${pr.pr_number}`}
-              primary={<span className="surface-primary">{`#${pr.pr_number} · ${pr.title}`}</span>}
-              wrap
-              cells={
-                <span className="people-now-caption">
-                  <span className={pr.days_waiting >= 3 ? "people-now-caption-warning" : ""}>{pr.days_waiting} {pr.days_waiting === 1 ? "DAY" : "DAYS"}</span>
-                  {pr.repo ? <> · <span>{pr.repo.toUpperCase()}</span></> : null}
-                </span>
-              }
-              trailing={pr.url ? <Button dense variant="ghost" onClick={() => window.open(pr.url, "_blank", "noopener")}>Open</Button> : undefined}
-              expands={false}
-            />
-          ))}
-        </SurfaceLedger>
-        </div>
-      ) : null}
-      {concern === "assignments" && ws && assignTotal > 0 ? (
-        <div data-testid="now-assignments-detail">
-        <SurfaceLedger count={`ASSIGNMENTS OPEN ${assignTotal}`} cols="room">
-          {ws.open_assignments.map((a) => (
-            <SurfaceLedgerRow
-              key={a.key}
-              primary={<span className="surface-primary">{`${a.key} · ${a.summary}`}</span>}
-              wrap
-              cells={
-                <span className="people-now-caption">
-                  <span>{a.status.toUpperCase()}</span>
-                  {a.overdue ? <> · <span className="people-now-caption-warning">OVERDUE</span></> : null}
-                </span>
-              }
-              trailing={a.url ? <Button dense variant="ghost" onClick={() => window.open(a.url, "_blank", "noopener")}>Open</Button> : undefined}
-              expands={false}
-            />
-          ))}
-        </SurfaceLedger>
-        </div>
-      ) : null}
-      {concern === "commitments" && overdueTotal > 0 ? (
-        <div data-testid="now-commitments-detail">
-        <SurfaceLedger count={`COMMITMENTS OVERDUE ${overdueTotal}`} cols="room">
-          {overdueList.map((c) => (
-            <SurfaceLedgerRow
-              key={c.id}
-              primary={<span className="surface-primary">{c.body}</span>}
-              wrap
-              cells={
-                <span className="people-now-caption">
-                  {c.due ? <span className="people-now-caption-warning">BY {shortDay(c.due)}</span> : null}
-                  {c.due ? " · " : ""}<span className="people-now-caption-warning">OVERDUE</span>
-                </span>
-              }
-              expands={false}
-            />
-          ))}
-        </SurfaceLedger>
-        </div>
-      ) : null}
-    </div>;
-  }
-
-  return <SurfaceColumns main={<>
-    <SurfaceSection label="You owe" data-testid="people-you-owe"><SurfaceRows>{(relationship.commitments ?? []).length ? (relationship.commitments ?? []).map((item) => <SurfaceRow key={item.id} selected={selectedCommitment?.id === item.id} title={item.body} detail={item.due ?? undefined} meta={item.execution_links?.length ? "Workbench linked" : "Open"} onOpen={() => setSelectedCommitment(item)} />) : <SurfaceState empty emptyLabel="No commitments" />}</SurfaceRows>{selectedCommitment ? <CommitmentInspector commitment={selectedCommitment} onClose={() => setSelectedCommitment(null)} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}</SurfaceSection>
-    <SurfaceSection label="They owe you" count={owedOpen.length} data-testid="people-they-owe"><div className="people-new"><StringGadget label="They owe you" value={owed} onChange={setOwed} placeholder="What they owe you" onKeyDown={(event) => { if (event.key === "Enter") void createOwed(); }} /><Button dense disabled={!owed.trim() || busy} onClick={() => void createOwed()}>Add</Button></div>{owedOpen.length ? <SurfaceRows>{owedOpen.map((item) => <SurfaceRow key={item.id} title={item.body} detail={item.due ? `BY ${shortDay(item.due)}` : undefined} verbs={<Button dense onClick={() => void owedDone(item.id)}>Done</Button>} />)}</SurfaceRows> : null}</SurfaceSection>
-    <SurfaceSection label="Asked of you" count={askedOpen.length} data-testid="people-asked"><div className="people-new"><StringGadget label="Asked of you" value={request} onChange={setRequest} placeholder="What they ask of you" onKeyDown={(event) => { if (event.key === "Enter") void createRequest(); }} /><Button dense disabled={!request.trim() || busy} onClick={() => void createRequest()}>Add</Button></div>{askedOpen.length ? <SurfaceRows>{askedOpen.map((item) => <SurfaceRow key={item.id} title={item.body} verbs={<Button dense onClick={() => void accept(item.id)}>Accept</Button>} />)}</SurfaceRows> : null}</SurfaceSection>
-  </>} side={<NextOneOnOneSide relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} />} />;
-}
-
 function CommitmentInspector({ commitment, onClose, onRefresh, onProtectedFailure }: { commitment: Commitment; onClose(): void; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
   const [workbenches, setWorkbenches] = useState<Workbench[]>([]); const [workbenchId, setWorkbenchId] = useState(""); const [items, setItems] = useState<ExecutionItem[]>([]); const [rationale, setRationale] = useState(""); const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
@@ -1195,15 +1174,6 @@ function HistoryLens({ relationship }: { relationship: RelationshipDetail }) {
     ["With evidence", countToken(evidence, "EVIDENCED")],
   ] as Array<[string, string | null | undefined]>).filter((fact): fact is [string, string] => Boolean(fact[1]));
   return <>{facts.length ? <SurfaceSection label="Follow-through"><dl className="people-history-facts" data-testid="people-history-facts">{facts.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></SurfaceSection> : null}<SurfaceSection label="Timeline">{events.length ? <SurfaceRows>{events.map((event, index) => <SurfaceRow key={`${event.at}-${index}`} title={event.commitment} detail={`${event.event}${event.rationale ? ` · ${event.rationale}` : ""}`} meta={event.at ? new Date(event.at).toLocaleDateString() : undefined} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No history" />}</SurfaceSection></>;
-}
-
-function OneOnOnes({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
-  // PHILO-13-07 (B2): the unsent agenda item is kept per person; Add clears it.
-  const [draft, setDraft, forgetDraft] = useDeskDraft(`people/1on1/${relationship.id}`); const [visibility, setVisibility] = useState<Visibility>("shared_intent"); const [busy, setBusy] = useState(false);
-  const session = relationship.sessions?.[0];
-  const add = async () => { if (!draft.trim()) return; setBusy(true); try { const active = session ?? (await apiFetch<{ one_on_one: Session }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/one-on-ones`, { method: "POST", json: { visibility } })).one_on_one; await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(active.id)}/agenda`, { method: "POST", json: { body: draft.trim(), visibility, state: "open", source: { kind: "manual" } } }); forgetDraft(); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
-  const roll = async (item: AgendaItem) => { if (!session) return; try { await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(session.id)}/agenda`, { method: "POST", json: { body: item.body, visibility: item.visibility, state: "open", rolled_from_id: item.id, source: { kind: "manual" } } }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
-  return <SurfaceSection label="1:1s"><div className="people-agenda-add"><PadGadget label="Agenda item" value={draft} onChange={setDraft} placeholder="Agenda item" rows={2} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "shared_intent", label: "Shared" }, { value: "leader_private", label: "Leader private" }]} /><Button dense disabled={!draft.trim() || busy} onClick={() => void add()}>Add</Button></div>{!session ? <SurfaceState empty emptyLabel="No 1:1s" /> : <SurfaceRows>{(session.agenda ?? []).map((item) => <SurfaceRow key={item.id} title={item.body} detail={item.visibility === "leader_private" ? "Leader private" : "Shared"} meta={item.state} verbs={<Button dense variant="ghost" onClick={() => void roll(item)}>Roll forward</Button>} />)}</SurfaceRows>}</SurfaceSection>;
 }
 
 function InfoLens({ relationship, onProtectedFailure, onArchived }: { relationship: RelationshipDetail; onProtectedFailure(cause: unknown): void; onArchived(): void }) {

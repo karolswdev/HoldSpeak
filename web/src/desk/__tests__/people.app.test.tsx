@@ -77,7 +77,7 @@ function rawButtons(root: HTMLElement): string[] {
   return Array.from(root.querySelectorAll("button"))
     .map((b) => b.outerHTML.match(/<button\b[^>]*>/)![0])
     .filter((tag) => !(tag.includes("class=") && (
-      tag.includes("btn ") || tag.includes('btn"') || tag.includes("signal-button")
+      tag.includes("btn ") || tag.includes('btn"') || tag.includes("btn--chrome") || tag.includes("signal-button")
       || tag.includes("gadget-chip") || tag.includes("surface-"))));
 }
 
@@ -105,26 +105,25 @@ describe("People: the Prep card (HS-172-05)", () => {
     expect(summary).not.toMatch(/\b0\s+(PRS?|ASSIGNMENTS?|COMMITMENTS?|ITEMS?)\b/);
   });
 
-  it("Open on PRS WAITING moves to Now; each PR has its own Open", async () => {
+  it("Show on PRS WAITING draws each PR with its own Open", async () => {
     stubHub();
     render(<PeopleCore scope="people:r1:prep" />);
     await screen.findByTestId("people-prep-lens");
     fireEvent.click(screen.getByTestId("prep-prs-open"));
-    await screen.findByTestId("people-now-concern");
-    const detail = screen.getByTestId("now-prs-detail");
+    const detail = await screen.findByTestId("now-prs-detail");
     expect(within(detail).getAllByRole("button", { name: "Open" })).toHaveLength(2);
-    expect(screen.getByRole("tab", { name: "Now" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tab", { name: "Prep" }).getAttribute("aria-selected")).toBe("true");
   });
 });
 
 describe("People: a person's own window (PHILO-17 2b)", () => {
-  it("draws THAT person on the RelationshipPane: six lenses, no Back, not the roster", async () => {
+  it("draws THAT person on the RelationshipPane: Prep and three folded tabs, no Back, not the roster", async () => {
     stubHub();
     render(<PersonWindowBody relationshipId="r1" />);
     const win = await screen.findByTestId("person-window");
     await within(win).findByRole("tablist");
     expect(win.textContent).toContain("Ania");
-    expect(within(win).getAllByRole("tab")).toHaveLength(6);
+    expect(within(win).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Prep", "Context", "History", "Info"]);
     const head = win.querySelector(".people-detail-head");
     expect(head).toBeTruthy();
     expect(head!.textContent).not.toMatch(/\bBack\b/);
@@ -182,7 +181,7 @@ describe("People: Add on They owe you shows the saved item", () => {
     const posted = fetchSpy.mock.calls.filter(([url, o]) => String(url) === `/api/people/relationships/${id}/owed` && o?.method === "POST");
     expect(posted).toHaveLength(1);
     expect(JSON.parse(String(posted[0][1]?.body)).body).toBe(owedBody);
-    expect(within(screen.getByTestId("people-they-owe")).getByText(/They owe you · 1/)).toBeTruthy();
+    expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("THEY OWE YOU1");
     // It is what they owe, never a request asked of him.
     expect(fetchSpy.mock.calls.some(([url]) => String(url).endsWith("/requests"))).toBe(false);
   });

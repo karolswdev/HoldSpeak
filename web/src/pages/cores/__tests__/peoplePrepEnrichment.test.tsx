@@ -140,7 +140,7 @@ describe("People Prep enrichment HS-172-05", () => {
     expect(within(prsRow).getByTestId("prep-prs-label")).toHaveTextContent("2 PRS WAITING ON ANIA");
     expect(within(prsRow).getByTestId("prep-prs-days")).toHaveTextContent("5+ DAYS");
     expect(within(prsRow).getByTestId("prep-prs-numbers")).toHaveTextContent("#612 · #618");
-    expect(within(prsRow).getByRole("button", { name: "Open" })).toBeTruthy();
+    expect(within(prsRow).getByRole("button", { name: "Show" })).toBeTruthy();
 
     // ASSIGNMENTS row.
     const assignRow = screen.getByTestId("prep-assignments-row");
@@ -230,43 +230,38 @@ describe("People Prep enrichment HS-172-05", () => {
     expect(daysToken.getAttribute("data-warning")).toBeNull();
   });
 
-  it("Open on PRS row switches to Now wing with per-entity PR rows", async () => {
+  it("Show on the PRS row draws the per-entity PR rows in place", async () => {
     stubWithBrief();
     render(<PeopleCore scope="people:r1:prep" />);
     await screen.findByTestId("people-prep-lens");
     // Click Open on the PRS row.
     fireEvent.click(screen.getByTestId("prep-prs-open"));
-    // Now wing should show with per-entity PR detail.
-    const nowConcern = await screen.findByTestId("people-now-concern");
-    expect(nowConcern).toBeTruthy();
-    const detail = screen.getByTestId("now-prs-detail");
+    // The per-entity PR detail opens under the row, on Prep.
+    const detail = await screen.findByTestId("now-prs-detail");
     expect(detail).toBeTruthy();
     // Each PR should be a row with its own Open.
-    expect(screen.getByText(/#612/)).toBeTruthy();
-    expect(screen.getByText(/#618/)).toBeTruthy();
-    // Now tab should be selected.
-    const nowTab = screen.getByRole("tab", { name: "Now" });
-    expect(nowTab.getAttribute("aria-selected")).toBe("true");
+    expect(within(detail).getByText(/#612/)).toBeTruthy();
+    expect(within(detail).getByText(/#618/)).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Prep" }).getAttribute("aria-selected")).toBe("true");
   });
 
-  it("Open on ASSIGNMENTS row switches to Now with assignment rows", async () => {
+  it("Show on the ASSIGNMENTS row draws the assignment rows", async () => {
     stubWithBrief();
     render(<PeopleCore scope="people:r1:prep" />);
     await screen.findByTestId("people-prep-lens");
     fireEvent.click(screen.getByTestId("prep-assignments-open"));
     const detail = await screen.findByTestId("now-assignments-detail");
     expect(detail).toBeTruthy();
-    expect(screen.getByText(/GOV-412/)).toBeTruthy();
+    expect(within(detail).getByText(/GOV-412/)).toBeTruthy();
   });
 
   it("AGENDA section shows items with count", async () => {
     stubWithBrief();
     render(<PeopleCore scope="people:r1:prep" />);
     await screen.findByTestId("people-prep-lens");
-    const agenda = screen.getByTestId("prep-agenda");
-    expect(agenda).toBeTruthy();
-    expect(agenda.textContent).toContain("Discuss API contract timeline");
-    expect(agenda.textContent).toContain("Review #612 priority");
+    const agenda = screen.getAllByTestId("prep-agenda").map((row) => row.textContent).join("|");
+    expect(agenda).toContain("Discuss API contract timeline");
+    expect(agenda).toContain("Review #612 priority");
   });
 
   it("AGENDA section absent when no items", async () => {
@@ -282,6 +277,6 @@ describe("People Prep enrichment HS-172-05", () => {
     await screen.findByTestId("people-prep-lens");
     const meetingOpen = screen.getByTestId("prep-meeting-open");
     expect(meetingOpen).toBeTruthy();
-    expect(meetingOpen.textContent).toBe("Open");
+    expect(meetingOpen.textContent).toBe("Open meeting");
   });
 });

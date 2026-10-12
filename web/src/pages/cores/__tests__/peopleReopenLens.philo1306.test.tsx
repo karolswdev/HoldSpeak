@@ -29,7 +29,7 @@ const selectedLens = () => screen.getAllByRole("tab").find((t) => t.getAttribute
 // The full desk suite runs in parallel; a slow render under that load must not
 // read as a failure, so the waits take 5 s, not the 1 s default (#1100).
 describe("PHILO-13-06: a repeat Prep open re-applies Prep", () => {
-  it("Prep → Now → the same open again lands on Prep", async () => {
+  it("Prep → History → the same open again lands on Prep", async () => {
     const handlers: Record<string, () => Response> = {
       "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted", sync: "local_only", capture: "notes_only" }),
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Priya Nair", relationship_kind: "peer" }] }),
@@ -43,8 +43,8 @@ describe("PHILO-13-06: a repeat Prep open re-applies Prep", () => {
     render(<PersonWindowBody relationshipId="r1" />);
     await waitFor(() => expect(selectedLens()).toBe("Prep"), { timeout: 5000 });
 
-    fireEvent.click(screen.getByRole("tab", { name: "Now" }));
-    expect(selectedLens()).toBe("Now");
+    fireEvent.click(screen.getByRole("tab", { name: "History" }));
+    expect(selectedLens()).toBe("History");
 
     // The 1:1 row again: the same scope, an explicit Prep open.
     await act(async () => { openPerson("r1", "prep"); });
