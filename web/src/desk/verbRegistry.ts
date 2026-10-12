@@ -372,7 +372,7 @@ export const VERBS: Verb[] = [
     keywords: ["brief", "follow-through", "receipts"],
     app: "Intelligence",
     ghost: never,
-    run: () => openIntelligence({ view: "brief" }),
+    run: () => openIntelligence({ view: "today" }),
   },
   {
     id: "desk.open-people",

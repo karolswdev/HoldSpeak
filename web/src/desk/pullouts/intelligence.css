@@ -9,7 +9,7 @@
 
 .intelligence-segments {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 2px;
   padding: 2px;
   border: 1px solid var(--border);
@@ -789,7 +789,7 @@
 }
 
 @container surface (max-width: 420px) {
-  .intelligence-segments { grid-template-columns: 1fr; }
+  .intelligence-segments { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .intelligence-segment { min-height: 28px; }
   .intelligence-brief-headline { font-size: 1.625rem; }
   .intelligence-brief-groups { gap: var(--space-1); }

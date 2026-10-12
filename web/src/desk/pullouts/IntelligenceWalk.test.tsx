@@ -84,6 +84,8 @@ const receipt = {
 describe("HS-128-10 Desk Intelligence walk", () => {
   beforeEach(() => {
     localStorage.clear();
+    // PHILO-17: the window opens on Day; these cases read the Brief.
+    localStorage.setItem("hs.desk.intelligence-view", "brief");
     apiFetch.mockReset();
     apiFetch.mockImplementation((path: string) => {
       if (path === "/api/brief/latest") return Promise.resolve(brief);

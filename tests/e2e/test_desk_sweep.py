@@ -184,6 +184,9 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         ("needs", "chair:needs", None),
         # ... and the ⌘K palette, open on a query that hits several sections.
         ("palette", "desk-tool-shelf", PALETTE_QUERY),
+        # PHILO-17 (concept C): the Today window, the day as a timeline. The
+        # hub does not hold it (NOT_ON_HUB), so the dock opens it.
+        ("today", "pullout:intelligence:desk", None),
     ]
     return cases, refused
 
@@ -847,7 +850,8 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
     baseline = _baseline(pw_browser, base, width) if wid else (set(), set())
     clear_hub_windows_http(base, TOKEN)
     palette = case_id == "palette"
-    if wid and not palette:
+    today = case_id == "today"
+    if wid and not palette and not today:
         # Opened on the hub before the page loads: the page seeds its windows
         # from the hub's rows (a view that is live follows the same rows by
         # its desk_changed frame; that follow is fenced in the PHILO-16 glass).
@@ -860,6 +864,12 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         sweep = _Case(page, base, wid, errors, requests)
         sweep.baseline = baseline
         sweep.shot = f"{case_id}-{width}"
+        if today:
+            page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
+            launch = page.locator(".desk-dock-launch[aria-label^='Today']").first
+            launch.click()
+            page.locator(f'[id="{wid}"] [data-testid=today-day]').wait_for(timeout=T)
+            page.mouse.move(2, 2)
         if palette:
             page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
             page.locator("[aria-controls=desk-tool-shelf]").first.click()

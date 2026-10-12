@@ -240,6 +240,9 @@ class TestFacesDoNotLie:
                     status=500, body='{"detail":"injected detail text"}', content_type="application/json"))
                 self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
                 intel = page.locator(".desk-window[aria-label='Today']")
+                # PHILO-17 (concept C): the window opens on Day; the Brief is
+                # its second segment.
+                self._press(page, intel.locator(".intelligence-segment", has_text="Brief").first, width)
                 intel.get_by_text("BRIEF DID NOT LOAD · HUB FAILED").wait_for()
                 assert intel.get_by_role("button", name="Try again").count() >= 1
                 assert "injected detail text" not in intel.inner_text()

@@ -5,23 +5,26 @@ import { INTELLIGENCE_NAVIGATE, type IntelligenceNavigation, type IntelligenceVi
 import { BriefView } from "./views/BriefView";
 import { FollowThroughView } from "./views/FollowThroughView";
 import { DecisionsView } from "./views/DecisionsView";
+import { TodayView } from "./views/TodayView";
 import type { PulloutContentProps } from "./types";
 import "./intelligence.css";
 
 const VIEW_STORAGE_KEY = "hs.desk.intelligence-view";
 
 const VIEWS: ReadonlyArray<{ id: IntelligenceView; label: string }> = [
+  // PHILO-17 (owner pick, concept C): the day as a timeline leads.
+  { id: "today", label: "Day" },
   { id: "brief", label: "Brief" },
   { id: "follow-through", label: "Follow-through" },
   { id: "receipts", label: "Decisions" },
 ];
 
 function initialView(): IntelligenceView {
-  if (typeof window === "undefined") return "brief";
+  if (typeof window === "undefined") return "today";
   const saved = window.localStorage.getItem(VIEW_STORAGE_KEY);
   return VIEWS.some((view) => view.id === saved)
     ? (saved as IntelligenceView)
-    : "brief";
+    : "today";
 }
 
 function IntelligenceHeader({
@@ -133,6 +136,8 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
       <FilterTokens navigation={navigation} clearOverdueOnly={clearOverdueOnly} />
     </div>
   );
+
+  if (activeView === "today") return <TodayView header={header} />;
 
   if (activeView === "brief") return <BriefView header={header} onOpenFollowThrough={(followThroughId) => {
     setHistory((current) => [...current, navigation]);

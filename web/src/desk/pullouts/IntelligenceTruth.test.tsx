@@ -105,6 +105,8 @@ function drillToOverdue() {
 describe("HS-132-08 the board never announces a false all clear", () => {
   beforeEach(() => {
     localStorage.clear();
+    // PHILO-17: the window opens on Day; these cases read the Brief.
+    localStorage.setItem("hs.desk.intelligence-view", "brief");
     apiFetch.mockReset();
     mockApi();
   });
@@ -175,6 +177,8 @@ describe("HS-132-08 the board never announces a false all clear", () => {
 describe("HS-132-08 brief triage is durable", () => {
   beforeEach(() => {
     localStorage.clear();
+    // PHILO-17: the window opens on Day; these cases read the Brief.
+    localStorage.setItem("hs.desk.intelligence-view", "brief");
     apiFetch.mockReset();
     mockApi();
   });

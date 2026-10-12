@@ -250,8 +250,12 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   // the verb the owner left -- and only then (the do-not-steal rule).
   useEffect(() => () => { if (taskFocusPending()) announceTaskReturn(); }, []);
 
+  // The row facts are the roster's: read while no person is open (a
+  // person's own read is the window's; the two never share a request).
+  const personOpen = Boolean(selectedId || requestedRelationshipId);
   useEffect(() => {
     if (!relationships.length) { setRowFacts({}); return; }
+    if (personOpen) return;
     let live = true;
     void Promise.all(relationships.map(async (row) => {
       try {
@@ -265,9 +269,9 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       setRowFacts(Object.fromEntries(pairs.filter((pair): pair is readonly [string, RowFacts] => Boolean(pair))));
     });
     return () => { live = false; };
-  }, [relationships]);
+  }, [relationships, personOpen]);
   const planOneOnOne = (id: string) => {
-    setLensRequest((current) => ({ lens: "one-on-ones", seq: (current?.seq ?? 0) + 1 }));
+    setLensRequest((current) => ({ lens: "one-on-ones", seq: current ? current.seq + 1 : 1 }));
     void select(id);
   };
 

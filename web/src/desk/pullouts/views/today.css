@@ -1,0 +1,470 @@
+/* PHILO-17 — TODAY, the day as a timeline (owner pick, concept C), in the
+   desk's own material: slate ground, a paper well for the spine, raised
+   steel plates lit from the top left, a Workbench title bar on the next
+   meeting, pixel sprites, mono tokens with tabular numerals. Idle never
+   moves: the NOW marker breathes in colour and opacity only. */
+
+.desk-next .today {
+  gap: 12px;
+}
+
+/* ── The head: the day, its two facts, Record now ── */
+.desk-next .today-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.desk-next .today-day {
+  margin: 0;
+  font: 750 30px / 1.05 var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--wb-text);
+}
+.desk-next .today-strip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font: 600 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .today-strip b {
+  color: var(--wb-text);
+  font-weight: 800;
+}
+.desk-next .today-head-sp {
+  flex: 1 1 8px;
+}
+.desk-next .today-head > .btn {
+  align-self: center;
+}
+
+/* ── The grid: the spine and the side column ── */
+.desk-next .today-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 12px;
+  align-items: start;
+}
+@container surface (max-width: 639.9px) {
+  .desk-next .today-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── The spine: a paper well; the gutter holds the time, the rail a
+   dotted ink line (2 on, 2 off: a pixel line), each node a bead. ── */
+.desk-next .today-spine {
+  --gutter: 52px;
+  --rail-x: calc(var(--gutter) + 9px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 12px 12px 14px 0;
+  list-style: none;
+  background: var(--alive-paper, #f8f5ee);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+  min-width: 0;
+}
+.desk-next .today-spine::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: var(--rail-x);
+  width: 2px;
+  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--wb-ink) 45%, transparent) 0 2px, transparent 2px 4px);
+  pointer-events: none;
+}
+.desk-next .today-node,
+.desk-next .today-now,
+.desk-next .today-section {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--gutter) 20px minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+}
+.desk-next .today-section {
+  padding: 0 0 2px;
+}
+.desk-next .today-section > span {
+  grid-column: 3;
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-muted);
+}
+.desk-next .today-time {
+  padding-right: 6px;
+  text-align: right;
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.desk-next .today-node[data-kind="next"] {
+  align-items: start;
+}
+.desk-next .today-node[data-kind="next"] > .today-time {
+  padding-top: 8px;
+  color: var(--wb-text);
+  font-size: 13px;
+}
+/* The bead: an 8 px square plate with the raised bevel, on the rail. */
+.desk-next .today-bead {
+  justify-self: center;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .today-node[data-kind="finish"] > .today-bead { background: var(--lamp-warn); }
+.desk-next .today-node[data-kind="next"] > .today-bead {
+  margin-top: 9px;
+  width: 12px;
+  height: 12px;
+  background: var(--wb-sel);
+}
+.desk-next .today-node[data-kind="empty"] > .today-bead { background: var(--wb-field); }
+.desk-next .today-node-body {
+  min-width: 0;
+}
+
+/* NOW: a blue line across the content, a glowing bead, the time. */
+.desk-next .today-now {
+  height: 22px;
+}
+.desk-next .today-now-time {
+  color: var(--wb-info-ink);
+}
+.desk-next .today-now-bead {
+  justify-self: center;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--wb-ink);
+  background: var(--lamp-info);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-info) 35%, transparent), 0 0 10px 2px color-mix(in srgb, var(--lamp-info) 55%, transparent);
+  animation: today-breathe 1.8s ease-in-out infinite alternate;
+}
+.desk-next .today-now-line {
+  height: 2px;
+  background: linear-gradient(90deg, var(--lamp-info), color-mix(in srgb, var(--lamp-info) 0%, transparent));
+  animation: today-breathe 1.8s ease-in-out infinite alternate;
+}
+@keyframes today-breathe {
+  from { opacity: 1; }
+  to { opacity: 0.45; }
+}
+
+/* ── A row (to finish, later, empty): sprite, words, one verb ── */
+.desk-next .today-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 3px;
+  transition: background-color var(--alive-dur, 120ms) ease, box-shadow var(--alive-dur, 120ms) ease;
+}
+.desk-next .today-row:hover {
+  background: #ffffff;
+  box-shadow: var(--alive-lift);
+}
+.desk-next .today-row-sprite,
+.desk-next .today-next-sprite {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+.desk-next .today-row-sprite > img {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+.desk-next .today-row-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.desk-next .today-row-name,
+.desk-next .today-row-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 15px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .today-row-title {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.desk-next .today-row-title:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.desk-next .today-row-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font: 500 13px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .today-row > .btn {
+  flex: none;
+}
+
+/* A pill: the state's tint, the word in the state's ink. */
+.desk-next .today-pill {
+  --tint: color-mix(in srgb, var(--wb-ink) 8%, transparent);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--tint);
+  font: 600 12px / 1 var(--font-sans);
+  color: var(--wb-text);
+  white-space: nowrap;
+}
+.desk-next .today-pill[data-tone="warn"] { --tint: color-mix(in srgb, var(--lamp-warn) 26%, transparent); color: var(--wb-warn-ink); }
+.desk-next .today-pill[data-tone="danger"] { --tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent); color: var(--wb-danger-ink); }
+.desk-next .today-pill[data-tone="info"] { --tint: color-mix(in srgb, var(--lamp-info) 20%, transparent); color: var(--wb-info-ink); }
+.desk-next .today-pill[data-live]::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lamp-fail);
+  animation: today-breathe 1.2s ease-in-out infinite alternate;
+}
+
+/* ── The next meeting: a raised plate with a Workbench title bar ── */
+.desk-next .today-next {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 2px 0 4px;
+  padding: 0 0 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent), 4px 10px 22px color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.desk-next .today-next-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--wb-ink);
+  background: var(--wb-stipple-fine), var(--wb-blue);
+  color: var(--wb-ink);
+}
+.desk-next .today-next-label {
+  padding: 1px 6px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.desk-next .today-next-in {
+  margin-left: auto;
+  min-width: 12ch;
+  text-align: right;
+  font: 800 13px / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-ink);
+}
+.desk-next .today-next-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 12px 0;
+  min-width: 0;
+}
+.desk-next .today-next-sprite {
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 6px;
+  background: hsl(214 70% 86%);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .today-next-sprite > img {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+.desk-next .today-next-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.desk-next .today-next-title {
+  font: 700 20px / 1.2 var(--font-display);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.desk-next .today-next-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 0 12px;
+}
+
+/* The stepper: four small plates on a dotted wire. The current step is
+   lit (the selection blue, sunken like a held key); a done step is green. */
+.desk-next .today-stepper {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin: 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.desk-next .today-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.desk-next .today-step + .today-step::before {
+  content: "";
+  position: absolute;
+  top: 11px;
+  right: calc(50% + 14px);
+  left: calc(-50% + 14px);
+  height: 2px;
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--wb-ink) 45%, transparent) 0 2px, transparent 2px 4px);
+}
+.desk-next .today-step-n {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-ink);
+}
+.desk-next .today-step-word {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 12px / 1.2 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .today-step[data-state="now"] .today-step-n {
+  background: var(--wb-sel);
+  color: var(--wb-paper);
+  box-shadow: var(--wb-sunken), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 30%, transparent);
+}
+.desk-next .today-step[data-state="now"] .today-step-word {
+  color: var(--wb-text);
+  font-weight: 750;
+}
+.desk-next .today-step[data-state="done"] .today-step-n {
+  background: color-mix(in srgb, var(--lamp-ok) 55%, var(--wb-paper));
+}
+
+/* ── The side column: steel plates ── */
+.desk-next .today-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.desk-next .today-plate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-field-hi);
+  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.desk-next .today-plate-cap {
+  margin: 0;
+  font: 800 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-muted);
+}
+.desk-next .today-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.desk-next .today-figure {
+  --fig: var(--wb-ink);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--fig) 45%, var(--wb-ink));
+  background: color-mix(in srgb, var(--fig) 16%, var(--wb-paper));
+  box-shadow: var(--wb-sunken);
+  font: 600 13px / 1.1 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .today-figure > b {
+  font: 800 22px / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .today-figure[data-tone="warn"] { --fig: var(--lamp-warn); }
+.desk-next .today-figure[data-tone="warn"] > b { color: var(--wb-warn-ink); }
+.desk-next .today-figure[data-tone="ok"] { --fig: var(--lamp-ok); }
+.desk-next .today-figure[data-tone="ok"] > b { color: var(--wb-ok-ink); }
+.desk-next .today-decide-title {
+  font: 650 15px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.desk-next .today-plate-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .today-now-bead,
+  .desk-next .today-now-line,
+  .desk-next .today-pill[data-live]::before {
+    animation: none;
+  }
+  .desk-next .today-row { transition: none; }
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .today-step-word {
+    white-space: normal;
+    text-align: center;
+    overflow: visible;
+  }
+  .desk-next .today-spine {
+    --gutter: 44px;
+  }
+}

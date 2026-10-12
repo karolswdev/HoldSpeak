@@ -282,7 +282,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const weekFigures: Figure[] = [
     { key: "meetings", value: thisWeek.length, label: thisWeek.length === 1 ? "meeting" : "meetings", tone: "info" },
     { key: "summaries", value: thisWeek.filter((row) => Boolean(row.has_summary)).length, label: "summaries", tone: "ok" },
-    { key: "review", value: thisWeek.reduce((sum, row) => sum + Number(row.needs_you_count ?? 0), 0), label: "to review", tone: "accent" },
+    { key: "review", value: thisWeek.reduce((sum, row) => sum + (Number(row.needs_you_count) || 0), 0), label: "to review", tone: "accent" },
     { key: "failed", value: thisWeek.filter(meetingFailed).length, label: "failed", tone: "danger" },
   ];
 

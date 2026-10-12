@@ -10,7 +10,7 @@
  * The width keeps the Intelligence tabs on one row: they stack when the
  * window body is 420 px or less (intelligence.css). */
 export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
-  intelligence: { w: 640, h: 620 },
+  intelligence: { w: 880, h: 700 },
   // PHILO-17: a meeting is a whole window (its record, its wings, its foot).
   meeting: { w: 720, h: 680 },
   // PHILO-17 (2b): a person is a whole window (the six lenses on one row).
