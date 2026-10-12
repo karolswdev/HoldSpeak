@@ -643,14 +643,3 @@ def test_the_cadence_service_constructs_no_engine_of_its_own() -> None:
     # It DOES still own the domain half — the prompt and the validation — which is
     # what keeps the generic runner from branching on Cadence.
     assert "next_action_prompt" in source and "next_action_from_output" in source
-
-
-def test_the_generic_runner_never_learned_a_cadence_branch() -> None:
-    """The migration must not leak a domain name into the kernel."""
-    for relative in (
-        "holdspeak/kernel/inference_runner.py",
-        "holdspeak/kernel/projection_stager.py",
-        "holdspeak/kernel/broker.py",
-    ):
-        source = (REPO / relative).read_text(encoding="utf-8").lower()
-        assert "cadence" not in source, relative

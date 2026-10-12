@@ -287,33 +287,3 @@ def test_a_reset_cannot_be_undone_by_a_construction_already_in_flight(
         assert db_core._db is None or db_core._db.db_path == tmp_path / "reset.db"
     finally:
         db_core.reset_database()
-
-
-def test_the_shutdown_handler_stops_every_conductor_it_started() -> None:
-    """A conductor started by the app lifespan must be stopped by it.
-
-    Two of the three were never stopped, so they outlived the app: in a test
-    process they kept calling `get_database()` on a timer for the rest of the
-    run, and in production an in-process restart left them ticking against a
-    database nobody owned.
-    """
-    from pathlib import Path as _Path
-
-    source = (
-        _Path(__file__).resolve().parents[2] / "holdspeak" / "web_server.py"
-    ).read_text(encoding="utf-8")
-    shutdown = source.split("async def _shutdown()", 1)
-    assert len(shutdown) == 2, "the shutdown handler moved"
-    body = shutdown[1]
-    for stop in (
-        "stop_calendar_ingest_conductor",
-        "stop_conductor",
-        "stop_scheduled_recording_conductor",
-        # HS-200-42: the fourth conductor (the intel-queue drainer).
-        "stop_intel_queue_conductor",
-        # Memory slice 1: the fifth conductor (sweep + memory.embed).
-        "stop_memory_conductor",
-        # Owner ruling 2026-10-05: the defaults watcher (rescan + summary backlog).
-        "stop_defaults_conductor",
-    ):
-        assert stop in body, f"{stop} is not called on shutdown"

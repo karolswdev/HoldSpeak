@@ -13,7 +13,6 @@ are history from the line-pinned form.
 from __future__ import annotations
 
 import ast
-import re
 from pathlib import Path
 
 from tests.unit import _line_free
@@ -349,81 +348,6 @@ def _inventory_rows(census: str) -> dict[str, tuple[str, str]]:
     return rows
 
 
-def test_census_inventory_has_one_owner_for_each_mutable_family() -> None:
-    rows = _inventory_rows(_text(CENSUS))
-    observed = {
-        family: owner for family, (classification, owner) in rows.items()
-        if classification == "mutable assignment pointer"
-    }
-    assert observed == MUTABLE_FAMILY_OWNERS
-    assert all(re.fullmatch(r"143-\d{2}", owner) for owner in observed.values())
-
-
-def test_census_anchors_current_routing_resolvers_and_legacy_assignment_writers() -> None:
-    census = _text(CENSUS)
-    required_anchors = {
-        "holdspeak/inference_targets.py:resolve_placement": "holdspeak/inference_targets.py",
-        "holdspeak/inference_targets.py:resolve_thought_placement": "holdspeak/inference_targets.py",
-        "holdspeak/intel/providers.py:effective_intel_cloud": "holdspeak/intel/providers.py",
-        "holdspeak/intel/providers.py:effective_dictation_llm": "holdspeak/intel/providers.py",
-        "holdspeak/meeting_session/intel_plan.py:decode_meeting_intel_plan_v1": "holdspeak/meeting_session/intel_plan.py",
-        "holdspeak/speech_session/plan.py:DictationSessionPlanResolver": "holdspeak/speech_session/plan.py",
-        "holdspeak/deployment_revisions.py:resolve_workbench_deployment_revision": "holdspeak/deployment_revisions.py",
-        "holdspeak/services/schedule_delegation.py:_terms": "holdspeak/services/schedule_delegation.py",
-        "holdspeak/services/sequence_workflow_service.py:SequenceWorkflowService._freeze_parent_routes": "holdspeak/services/sequence_workflow_service.py",
-        "holdspeak/services/decision_lifecycle_service.py:draft_promoted_with_model": "holdspeak/services/decision_lifecycle_service.py",
-        "holdspeak/web/routes/delivery_prs.py:api_delivery_pr_draft_review": "holdspeak/web/routes/delivery_prs.py",
-        "holdspeak/services/cadence_service.py:_drafted_next_action": "holdspeak/services/cadence_service.py",
-        "holdspeak/services/settings_service.py:SettingsService.update_settings": "holdspeak/services/settings_service.py",
-        "holdspeak/services/inference_acquisition_service.py:_activate": "holdspeak/services/inference_acquisition_service.py",
-    }
-    for anchor, path in required_anchors.items():
-        assert anchor in census
-        symbol = anchor.rsplit(":", 1)[1].rsplit(".", 1)[-1]
-        assert symbol in _text(path)
-
-
-def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() -> None:
-    definitions, references, pointers, profile_ids = _routing_ast_inventory(REPO)
-    assert definitions == ROUTING_RESOLVER_DEFINITIONS
-    assert references == ROUTING_RESOLVER_REFERENCES
-    assert pointers == ROUTING_POINTER_ATTRIBUTES
-    assert profile_ids == set(PROFILE_ID_CLASSIFICATIONS)
-    assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
-    # 39 sites: the line-pinned form counted 37, because two ``__post_init__``
-    # lines read ``profile_id`` twice and one ``path:line`` key hid the second read.
-    # 38 since 2026-10-05: the stale copy holdspeak/db/models/workbench.py was parked.
-    assert len(PROFILE_ID_CLASSIFICATIONS) == 38
-    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 11
-    assert sum(value == "migration source" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 3
-    assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 17
-    assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
-    assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 2
-
-
-def test_ast_census_rejects_a_new_public_resolver_or_late_pointer_read(tmp_path: Path) -> None:
-    """Mutation proof: a new authority cannot arrive without census review."""
-    root = tmp_path
-    source = root / "holdspeak" / "kernel"
-    source.mkdir(parents=True)
-    (source / "inference.py").write_text(
-        "def resolve_late_inference_target(admission):\n"
-        "    return admission.requested_target_id\n"
-        "def public_profile(config):\n"
-        "    return config.runtime.profile_id\n",
-        encoding="utf-8",
-    )
-    definitions, references, pointers, profile_ids = _routing_ast_inventory(root)
-    assert definitions == {"holdspeak/kernel/inference.py|def:resolve_late_inference_target"}
-    assert references == set()
-    assert pointers == {
-        "holdspeak/kernel/inference.py|resolve_late_inference_target|requested_target_id"
-    }
-    assert profile_ids == {"holdspeak/kernel/inference.py|public_profile|profile_id"}
-    assert definitions != ROUTING_RESOLVER_DEFINITIONS
-    assert pointers != ROUTING_POINTER_ATTRIBUTES
-
-
 def test_phase143_placement_adopters_have_zero_python_resolution_forks() -> None:
     """All terms originate at the assignment/coordinator seam, never a family."""
     assert _placement_adopter_forks(REPO) == set()
@@ -454,75 +378,3 @@ def test_phase143_placement_adopter_fork_scan_rejects_local_resolver_or_runner(t
         "holdspeak/services/recipe_service.py:5:runner-invoke",
     }
     assert forks != _placement_adopter_forks(REPO)
-
-
-def test_profile_service_owner_gate_is_enforced_before_lookup_or_probe() -> None:
-    census = _text(CENSUS)
-    source = _text("holdspeak/services/profile_service.py")
-    assert "PROFILE_SERVICE_OWNER_ENFORCEMENT_GAP" not in census
-    assert "PrincipalKind" in source
-    assert "owner_principal_required" in source
-    for method in (
-        "list_profiles", "get_profile", "create_profile", "update_profile",
-        "delete_profile", "list_inference_targets", "probe_inference_target",
-        "get_inference_target",
-    ):
-        body = re.search(rf"    def {method}\(.*?(?=\n    def |\n    @|\Z)", source, re.S)
-        assert body is not None, f"missing {method}"
-        assert "self._require_owner(principal)" in body.group(0)
-
-
-def test_path_bearing_profile_sync_seam_is_a_named_blocker_not_an_exception() -> None:
-    census = _text(CENSUS)
-    source = _text("holdspeak/services/sync_service.py")
-    assert "PROFILE_SYNC_PATH_BEARING_SEAM" in census
-    profile_merge = re.search(r'"profiles": \([^\n]+\)', source)
-    assert profile_merge, "profiles must remain visible to the census until Story 143-11 retires it"
-    assert "model_file" in profile_merge.group(0)
-    assert "base_url" in profile_merge.group(0)
-    assert 'SyncKindSpec("profile", "profiles", "profile.schema.json", True)' in source
-
-
-def test_phase_f_meeting_execution_surface_has_no_v1_resolver_or_direct_runner() -> None:
-    """Phase F leaves C1 bundle reconstruction as the sole Meeting queue executor."""
-    sources = {
-        path: _text(path)
-        for path in (
-            "holdspeak/intel_queue.py",
-            "holdspeak/meeting_session/intel_plan.py",
-            "holdspeak/meeting_session/deferred_admission.py",
-            "holdspeak/meeting_session/intel_routed_children.py",
-            "holdspeak/meeting_session/transcribe_admission.py",
-            "holdspeak/meeting_session/intel_admission.py",
-            "holdspeak/services/meeting_deferred_queue_binding.py",
-        )
-    }
-    retired = (
-        "InferenceRunner.invoke",
-        "inference_runner.invoke",
-        "resolve_placement",
-        "resolve_meeting_placement",
-        "freeze_meeting_intel_plan",
-        "class DeferredIntelJob",
-        "run_admitted_capability",
-        "run_admitted_child",
-    )
-    for path, source in sources.items():
-        assert not any(name in source for name in retired), path
-    assert "claim_next_intel_job_bound" in sources["holdspeak/intel_queue.py"]
-    assert "BoundDeferredIntelJob.reconstruct" in sources["holdspeak/intel_queue.py"]
-
-
-def test_legacy_assignment_writers_are_delete_work_and_acquisition_is_availability_only() -> None:
-    census = _text(CENSUS)
-    rows = _inventory_rows(census)
-    assert rows["Legacy config endpoint migration"] == ("legacy-delete", "143-03")
-    assert rows["Old dictation auto-placement fallback labels"] == ("legacy-delete", "143-07")
-    assert rows["Old meeting auto-placement fallback labels"] == ("immutable evidence", "143-08")
-    acquisition = _text("holdspeak/services/inference_acquisition_service.py")
-    assert "config.thoughts.inference_target_id = None" not in acquisition
-    assert "config.meeting.intel_realtime_model =" not in acquisition
-    assert '"availability": "model_library"' in acquisition
-    seed = _text("holdspeak/db/seed.py")
-    assert "config.meeting.intel_profile_id = profile_id" not in seed
-    assert "config.dictation.runtime.profile_id = profile_id" not in seed

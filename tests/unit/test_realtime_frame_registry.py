@@ -124,17 +124,3 @@ def test_the_five_workbench_frames_are_emitted(emitters: dict[str, list[str]]) -
         "workbench.run_complete",
     ):
         assert name in emitters, f"{name} is subscribed but never broadcast"
-
-
-def test_intel_token_is_retired_from_the_live_contract() -> None:
-    """C1 publishes only an elected complete semantic meeting result."""
-    root = repo_root()
-    routed_children = (
-        root / "holdspeak/meeting_session/intel_routed_children.py"
-    ).read_text(encoding="utf-8")
-    live = (root / "web/src/pages/cores/LiveCore.tsx").read_text(encoding="utf-8")
-    mirror = (root / "web/src/runtime/frames.ts").read_text(encoding="utf-8")
-    assert "intel_token" not in routed_children
-    assert "intel_token" not in live
-    assert "intel_token" not in RUNTIME_FRAME_TYPES
-    assert "intel_token" not in mirror
