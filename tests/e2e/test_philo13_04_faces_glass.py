@@ -238,8 +238,8 @@ class TestFacesDoNotLie:
                 # Intelligence BRIEF on a 500: plain words + Try again, never `detail`.
                 page.route("**/api/brief/latest*", lambda r: r.fulfill(
                     status=500, body='{"detail":"injected detail text"}', content_type="application/json"))
-                self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                intel = page.locator(".desk-window[aria-label='Intelligence']")
+                self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                intel = page.locator(".desk-window[aria-label='Today']")
                 intel.get_by_text("BRIEF DID NOT LOAD · HUB FAILED").wait_for()
                 assert intel.get_by_role("button", name="Try again").count() >= 1
                 assert "injected detail text" not in intel.inner_text()

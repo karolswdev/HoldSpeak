@@ -213,7 +213,7 @@ describe("the screen title bar (§4)", () => {
         <DeskChrome />
       </MemoryRouter>,
     );
-    expect(screen.getByTestId("desk-screen-title").textContent).toBe("Chair");
+    expect(screen.getByTestId("desk-screen-title").textContent).toBe("Desk");
     vi.unstubAllGlobals();
   });
 });

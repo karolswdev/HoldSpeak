@@ -103,7 +103,7 @@ describe("DeskWindowFrame (the one chrome)", () => {
       </>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Iconify Brief window" }));
-    const tile = screen.getByRole("button", { name: /^Intelligence.*, iconified$/ });
+    const tile = screen.getByRole("button", { name: /^Today.*, iconified$/ });
     expect(tile.querySelector(".desk-dock-seat")).toBeTruthy();
     expect(tile.classList.contains("is-seated")).toBe(true);
     // no second seat: the application tile is the seat
@@ -339,8 +339,8 @@ describe("HS-99-04: the dock chip owns a right-click menu", () => {
         <Dock />
       </>,
     );
-    fireEvent.contextMenu(screen.getByRole("button", { name: /^Intelligence/ }));
-    const menu = screen.getByRole("menu", { name: "Intelligence dock menu" });
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Today/ }));
+    const menu = screen.getByRole("menu", { name: "Today dock menu" });
     expect(menu).toBeInTheDocument();
     fireEvent.click(screen.getByRole("menuitem", { name: /Close/ }));
     expect(onClose).toHaveBeenCalled();
@@ -355,8 +355,8 @@ describe("HS-99-04: the dock chip owns a right-click menu", () => {
         <Dock />
       </>,
     );
-    fireEvent.contextMenu(screen.getByRole("button", { name: /^Intelligence/ }));
-    const menu = screen.getByRole("menu", { name: "Intelligence dock menu" });
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Today/ }));
+    const menu = screen.getByRole("menu", { name: "Today dock menu" });
     // Both items must carry an SVG glyph (the lane law).
     const items = menu.querySelectorAll("[role='menuitem']");
     expect(items.length).toBe(2);
@@ -374,8 +374,8 @@ describe("HS-99-04: the dock chip owns a right-click menu", () => {
         <Dock />
       </>,
     );
-    fireEvent.contextMenu(screen.getByRole("button", { name: /^Intelligence/ }));
-    const menu = screen.getByRole("menu", { name: "Intelligence dock menu" });
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Today/ }));
+    const menu = screen.getByRole("menu", { name: "Today dock menu" });
     // At least one keycap well should be present (window.minimize has key ⌘M).
     const wells = menu.querySelectorAll(".desk-menu-well");
     expect(wells.length).toBeGreaterThan(0);

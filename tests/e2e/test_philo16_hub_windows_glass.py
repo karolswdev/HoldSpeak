@@ -106,7 +106,7 @@ def _to_front(page: Any, name: str) -> None:
     """Window ▸ Chair ▸ name: picking an open Chair window brings it in front."""
     page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
     page.locator(".desk-verbbar-menu").wait_for()
-    sub = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')")
+    sub = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')")
     sub.scroll_into_view_if_needed()
     sub.click()
     page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')").click()

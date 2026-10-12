@@ -160,7 +160,7 @@ def test_room_shows_its_meeting_action_as_open(desk):
         assert opens.count() == 2
         target = rows.first.locator(".surface-primary").first.inner_text().strip()
         opens.first.evaluate("el => el.click()")
-        intel = page.locator(".desk-window[aria-label='Intelligence']")
+        intel = page.locator(".desk-window[aria-label='Today']")
         intel.wait_for(timeout=15000)
         intel.locator(".intelligence-segment.is-active", has_text=re.compile("follow-through", re.I)).wait_for(timeout=15000)
         intel.get_by_text(target).first.wait_for(timeout=15000)
@@ -247,8 +247,8 @@ def test_intelligence_lane_names_and_decision_rows(desk):
     for width, height in WIDTHS:
         page = open_page(width, height)
         # A DOM click: at 393 the Dock pages its seats.
-        page.locator(".desk-dock-launch[aria-label^='Intelligence']").first.evaluate("el => el.click()")
-        intel = page.locator(".desk-window[aria-label='Intelligence']")
+        page.locator(".desk-dock-launch[aria-label^='Today']").first.evaluate("el => el.click()")
+        intel = page.locator(".desk-window[aria-label='Today']")
         intel.wait_for(timeout=15000)
         intel.locator(".intelligence-segment", has_text=re.compile("follow-through", re.I)).first.click()
         page.get_by_text("2 TO REVIEW").first.wait_for(timeout=15000)
@@ -304,7 +304,7 @@ def test_a_decision_search_hit_opens_the_decision_and_adds_no_floor_icon(desk):
         hit = page.locator("[id^='desk-palette-option-memory:decision:']").first
         hit.wait_for(timeout=15000)
         hit.evaluate("el => el.click()")
-        intel = page.locator(".desk-window[aria-label='Intelligence']")
+        intel = page.locator(".desk-window[aria-label='Today']")
         intel.wait_for(timeout=15000)
         head = intel.locator(".receipt-detail h3").first
         head.wait_for(timeout=15000)

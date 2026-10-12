@@ -158,9 +158,9 @@ class TestCloseMeansGone:
                 self._close_and_prove(page, width, DECISION, "palette-decision")
 
                 # 2. the Dock: `intelligence:desk`.
-                self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                page.locator(".desk-gadget-close[aria-label='Close Intelligence']").wait_for()
-                self._close_and_prove(page, width, "Intelligence", "dock-intelligence")
+                self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                page.locator(".desk-gadget-close[aria-label='Close Today']").wait_for()
+                self._close_and_prove(page, width, "Today", "dock-intelligence")
 
                 # 3. Write a thought: `note:<id>` (newThought.ts) → the Thought window.
                 # PHILO-13-11 (slice two, R2): at 393 Capture opens from the Speak AppIcon.
@@ -220,10 +220,10 @@ class TestCloseMeansGone:
                     open_chair_window(page, "Brief")
                 retry = page.get_by_test_id("arrival-brief-retry")
                 retry.wait_for()
-                self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                page.locator(".desk-gadget-close[aria-label='Close Intelligence']").wait_for()
+                self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                page.locator(".desk-gadget-close[aria-label='Close Today']").wait_for()
                 page.unroute("**/api/brief/latest*")
-                proof = self._close_and_prove(page, width, "Intelligence", "j1-retry")
+                proof = self._close_and_prove(page, width, "Today", "j1-retry")
                 self._press(page, retry, width)
                 page.get_by_test_id("arrival-brief-retry").wait_for(state="detached", timeout=10_000)
                 _settle(page)

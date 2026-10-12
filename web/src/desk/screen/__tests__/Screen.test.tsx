@@ -167,7 +167,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     // Needs you: the desk's count; Parked: no lamp
     const needs = icon(/^Needs you, SMART DRAWER/);
     expect(within(needs).getByText("4", { selector: ".desk-icon-count" })).toBeTruthy();
-    expect(icon(/^Parked, DRAWER$/).querySelector(".desk-icon-lamp")).toBeNull();
+    expect(icon(/^Archive, DRAWER$/).querySelector(".desk-icon-lamp")).toBeNull();
     // loose: what no Project holds; the filed meeting, decision and person are not on the screen
     expect(keys()).toEqual(expect.arrayContaining([
       "meeting:m-vendor", "note:n-2", "decision:d-otel", "repository:repo-ledger", "thread:t-1", "people:p-avery",
@@ -197,7 +197,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(at(/^People/)).toEqual({ x: 20, y: 236 });
     expect(at(/^Conductor/)).toEqual({ x: 20, y: 348 });
     expect(at(/^Needs you/)).toEqual({ x: 1300, y: 12 });
-    expect(at(/^Parked/)).toEqual({ x: 1300, y: 660 });
+    expect(at(/^Archive/)).toEqual({ x: 1300, y: 660 });
     expect(at(/^Claude Code: rollback runbook/)).toEqual({ x: 1170, y: 12 });
     expect(at(/^Vendor call/).x).toBe(210);
   });
@@ -254,7 +254,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     fireEvent.keyDown(icon(/^People, DRAWER/), { key: "Enter" });
     expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-people", "/");
     // PHILO-15 04 (gap 14): Parked opens the Parked drawer, not Meetings.
-    fireEvent.keyDown(icon(/^Parked/), { key: "Enter" });
+    fireEvent.keyDown(icon(/^Archive/), { key: "Enter" });
     expect(useDrawers.getState().parked).not.toBeNull();
     expect(shell.openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history");
     fireEvent.doubleClick(icon(/^Vendor call/));
@@ -472,7 +472,7 @@ describe("PHILO-17 objverbs — the Chair has the desk's one selection", () => {
   it("a drawer with no desk object opens no menu", async () => {
     render(<Screen />);
     await waitFor(() => expect(keys()).toContain("note:n-2"));
-    fireEvent.contextMenu(icon(/^Parked, DRAWER$/));
+    fireEvent.contextMenu(icon(/^Archive, DRAWER$/));
     expect(screen.queryByRole("menu")).toBeNull();
   });
 });

@@ -49,7 +49,7 @@ describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
     expect(top(menu)).toEqual([
-      "Speak", "Meetings", "Intelligence", "Ask AI", "People", "Conductor", "Memory",
+      "Speak", "Meetings", "Today", "Ask AI", "People", "Conductor", "Memory",
       "Projects", "Tools",
     ]);
     expect(menu.textContent).not.toMatch(/Settings|Runs on|Connections|Setup|Desk memory|List view/);

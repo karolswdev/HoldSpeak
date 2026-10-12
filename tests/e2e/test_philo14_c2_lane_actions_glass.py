@@ -126,7 +126,7 @@ def test_lane_actions_keep_launch_target_after_pane_picker(lane) -> None:
     _tmux("new-session", "-d", "-s", other, "cat")
     try:
         _arm(page)
-        page.get_by_role("button", name="Panes", exact=True).click()
+        page.get_by_role("button", name="Terminals", exact=True).click()
         page.locator(".desk-panepicker-item").filter(has_text=other).click()
         # The plain pane gets its own window; lane A keeps its question.
         page.locator(".is-session").wait_for(timeout=10000)

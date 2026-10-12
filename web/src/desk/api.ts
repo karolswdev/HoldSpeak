@@ -153,7 +153,7 @@ export const EMPTY_ITEMS = {
   repository: [],
   workbench: [],
   intelligence: [
-    { kind: "intelligence", id: "desk", name: "Intelligence" } satisfies Intelligence,
+    { kind: "intelligence", id: "desk", name: "Today" } satisfies Intelligence,
   ],
   people: [
     { kind: "people", id: "people", name: "People" } satisfies PeopleDesk,

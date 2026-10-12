@@ -97,7 +97,7 @@ class TestParkedDrawer:
                 else:
                     parked.first.focus()
                     page.keyboard.press("Enter")
-                window = page.locator(".desk-window-shell[aria-label='Parked']")
+                window = page.locator(".desk-window-shell[aria-label='Archive']")
                 window.wait_for()
                 rows = window.locator(".object-list-row")
                 meeting = window.get_by_role("button", name="Architecture review: tracing, MEETING", exact=False)

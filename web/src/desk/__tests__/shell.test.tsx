@@ -62,14 +62,14 @@ describe("the dock", () => {
     // People are desk drawers, Settings is in the HoldSpeak menu.
     render(<Dock />);
     expect(screen.getByRole("toolbar", { name: "Dock" })).toBeTruthy();
-    for (const app of ["Intelligence", "Speak", "Meetings"]) {
+    for (const app of ["Today", "Speak", "Meetings"]) {
       expect(screen.getByRole("button", { name: app })).toBeTruthy();
     }
     for (const gone of ["Conductor", "Settings", "People"]) {
       expect(screen.queryByRole("button", { name: gone })).toBeNull();
     }
     expect(screen.queryByRole("button", { name: /Focus / })).toBeNull();
-    for (const app of ["Intelligence", "Speak", "Meetings"]) {
+    for (const app of ["Today", "Speak", "Meetings"]) {
       expect(
         screen.getByRole("button", { name: app }).className,
       ).not.toContain("is-run");

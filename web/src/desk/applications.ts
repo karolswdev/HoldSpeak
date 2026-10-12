@@ -72,7 +72,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-intelligence",
     windowId: "intelligence:desk",
-    label: "Intelligence",
+    label: "Today",
     description: "Briefs, follow-through, receipts, and reasons.",
     glyph: "◈",
     href: "/",

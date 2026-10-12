@@ -90,7 +90,7 @@ function MicLamp() {
 function ScreenTitle() {
   const front = useFrontWindowId();
   const open = useAllOpenWindows();
-  const name = (front ? open.find((w) => w.id === front)?.label : null) ?? "Chair";
+  const name = (front ? open.find((w) => w.id === front)?.label : null) ?? "Desk";
   // PHILO-13-17 (C7, Q2): at 393 the title is the window switcher.
   const compact = useCompactViewport();
   if (compact) return <ScreenSwitcher name={name} />;

@@ -70,8 +70,8 @@ describe("Chair app: the fresh arrival", () => {
       fireEvent.click(screen.getByRole("button", { name: "Window" }), { detail: 0 });
       const menu = screen.getByRole("menu", { name: "Window menu" });
       const chair = within(menu).getAllByRole("menuitem")
-        .find((h) => h.getAttribute("aria-haspopup") === "menu" && /Chair/.test(h.textContent ?? ""));
-      expect(chair, "Window holds the Chair submenu").toBeTruthy();
+        .find((h) => h.getAttribute("aria-haspopup") === "menu" && /^Desk/.test(h.textContent ?? ""));
+      expect(chair, "Window holds the Desk submenu").toBeTruthy();
       fireEvent.click(chair!);
       const rows = within(menu).getAllByRole("menuitemcheckbox")
         .map((h) => h.querySelector(".desk-menu-label")?.textContent?.trim());

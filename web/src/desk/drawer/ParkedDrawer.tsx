@@ -157,8 +157,8 @@ export function ParkedDrawer({ origin }: { origin: { x: number; y: number } | nu
   return (
     <DeskWindowFrame
       id={PARKED_WINDOW_ID}
-      title="Parked"
-      label="Parked"
+      title="Archive"
+      label="Archive"
       kindWord="Drawer"
       glyph="▤"
       icon={<img className="drawer-winicon" src={objectSprite("parked", "parked")} alt="" />}
@@ -197,7 +197,7 @@ export function ParkedDrawer({ origin }: { origin: { x: number; y: number } | nu
             <SurfaceState empty emptyLabel="Nothing parked" emptyImage={objectSprite("parked", "parked")} />
           ) : (
             <ObjectList
-              label="Parked"
+              label="Archive"
               rows={rows}
               sort={sort}
               onSort={onSort}

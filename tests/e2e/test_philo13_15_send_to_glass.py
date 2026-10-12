@@ -785,7 +785,7 @@ class TestSendToGlass:
         if not (brief_win.count() and brief_win.first.is_visible()):
             self._tap(page.locator(".desk-verbbar [data-menu-id=go] button" if self.phone else ".desk-verbbar [data-menu-id=window] button"), 700)
             if not self.phone:
-                page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Chair')").first.hover()
+                page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Desk')").first.hover()
                 self._wait(600)
             # PHILO-14 A1 (#939): at 393 the Chair's windows are Go's first rows.
             self._tap(page.locator("[role=menu] [role^=menuitem]:has-text('Brief')").last, 1200)

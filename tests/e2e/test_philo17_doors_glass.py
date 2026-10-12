@@ -44,7 +44,7 @@ SIZES = {1440: 900, 393: 852}
 T = 30_000
 PROJECTS = ["Ledger cutover", "Platform observability", "Hiring loop"]
 
-GO_ROWS = ["Speak", "Meetings", "Intelligence", "Ask AI", "People", "Conductor", "Memory", "Projects", "Tools"]
+GO_ROWS = ["Speak", "Meetings", "Today", "Ask AI", "People", "Conductor", "Memory", "Projects", "Tools"]
 TOOLS = ["Workbenches", "Activity", "Processes", "Rhythm", "Commands", "Context"]
 MARK_ROWS = ["Refresh from hub", "Settings", "Runs on", "Connections", "Setup"]
 PHONE_GO = ["Needs you", "Brief", "The week", "Capture", "Meetings", "Ask AI", "People", "Conductor", *sorted(PROJECTS), "New"]
@@ -239,7 +239,7 @@ class TestDoors:
             ("Speak (Dock)", dom_click(".desk-dock [data-app='surface-dictation']"),
              ".desk-window-shell[aria-label='Capture']" if phone else "#surface-dictation .speak-footer", None),
             ("Meetings (Dock)", dom_click(".desk-dock [data-app='surface-meetings']"), "#surface-meetings .meetings-head-verbs", None),
-            ("Intelligence (Dock)", dom_click(".desk-dock [data-app='intelligence:desk']"), ".intelligence-segment", None),
+            ("Today (Dock)", dom_click(".desk-dock [data-app='intelligence:desk']"), ".intelligence-segment", None),
             ("People (drawer)", drawer("drawer:people"), "#surface-people >> text=Avery Chen", None),
             ("People (Go)", go_row("People"), "#surface-people >> text=Avery Chen", None),
             ("Conductor (drawer)", drawer("drawer:conductor"), ".conductor-window", None),

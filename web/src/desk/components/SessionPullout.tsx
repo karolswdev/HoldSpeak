@@ -258,7 +258,7 @@ export function PanePicker() {
   useEffect(() => {
     announceLauncher({
       id: "panes",
-      label: "Panes",
+      label: "Terminals",
       glyph: "⧉",
       open,
       activate: () => {

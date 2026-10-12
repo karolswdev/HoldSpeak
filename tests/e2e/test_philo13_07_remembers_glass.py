@@ -164,8 +164,8 @@ class TestTheDeskRemembers(_Rig):
                 page.wait_for_timeout(400)
 
                 # 4. Intelligence: opened, then closed (close means gone)
-                self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                close = page.locator(".desk-gadget-close[aria-label='Close Intelligence']")
+                self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                close = page.locator(".desk-gadget-close[aria-label='Close Today']")
                 close.wait_for()
                 page.wait_for_timeout(500)
                 self._press(page, close, width)
@@ -256,7 +256,7 @@ class TestTheDeskRemembers(_Rig):
                 assert agenda == AGENDA, proof
                 assert not proof["writes_after_reload"], "restore sent a write"
                 assert not before["writes"], "nothing was saved or sent before the reload"
-                assert not any("Intelligence" in t for t in titles), "the closed Intelligence window came back"
+                assert not any("Today" in t for t in titles), "the closed Intelligence window came back"
                 if width >= 720:
                     # PHILO-14 A1 (#939, Astra's P2): saved positions are restored.
                     # The moved Room comes back exactly. PHILO-17 (U28c): a

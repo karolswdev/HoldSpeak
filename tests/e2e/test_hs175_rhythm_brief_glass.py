@@ -59,7 +59,7 @@ def _open_intelligence(page: Any) -> None:
     """Open the Intelligence pullout with the brief view.
 
     Reload first so the chair has fresh API data, then click the
-    Intelligence dock icon (the first dock app, label "Intelligence").
+    Intelligence dock icon (the first dock app, label "Today").
     """
     page.reload(wait_until="load")
     _normal_chair(page)

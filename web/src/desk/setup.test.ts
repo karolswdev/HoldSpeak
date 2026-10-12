@@ -79,7 +79,7 @@ describe("egressBadge agrees with the Trust window", () => {
           ],
         },
       }).text,
-    ).toBe("→ LAN · 192.168.1.43");
+    ).toBe("→ Your network");
   });
 
   // PHILO-17 (U16): a server on this Mac is this device, never "LAN · 127.0.0.1".
@@ -119,7 +119,7 @@ describe("egressBadge agrees with the Trust window", () => {
       egressBadge({
         trust: { last_egress: { id: "x", name: "192.168.1.43:8080", receipt: "r" } },
       }).text,
-    ).toBe("→ LAN · 192.168.1.43");
+    ).toBe("→ Your network");
   });
 });
 

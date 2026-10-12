@@ -173,7 +173,7 @@ class TestFinishFacePolish:
                 def open_brief() -> None:
                     page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
                     page.locator(".desk-verbbar-menu").wait_for()
-                    page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')").hover()
+                    page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").hover()
                     page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')").click()
                     shell.wait_for()
                     page.wait_for_timeout(600)

@@ -826,7 +826,7 @@ export const VERBS: Verb[] = [
     menu: "window",
     scope: "window",
     group: "chair",
-    submenu: "Chair",
+    submenu: "Desk",
     wide: !w.phone,
     palette: false,
     keywords: ["chair", "window"],

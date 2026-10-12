@@ -81,7 +81,7 @@ def _desk(page, base, *, capture=False):
     if capture:
         if page.viewport_size["width"] > 720:
             page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
-            page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')").click()
+            page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").click()
             page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Capture')").click()
         open_chair_window(page, "Capture")
         _loaded(page.get_by_test_id("arrival-capture-bar"))
