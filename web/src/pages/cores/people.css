@@ -153,3 +153,14 @@
   letter-spacing: 0;
   text-transform: none;
 }
+.desk-next .people-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 0 4px;
+}
+.desk-next .people-top > .surface-display {
+  font: 750 30px / 1.1 var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--wb-text);
+}

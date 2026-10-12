@@ -25,7 +25,7 @@ import { writeFailureReason } from "../../../desk/hooks/useWriteReceipt";
 import { EgressChip } from "../../../desk/surface/gadgets";
 import { StateChip } from "../../../desk/surface/patterns/StateChip";
 import { egressFor } from "../../../desk/surface/egress";
-import { readPlannedRoute, routeOff, routeReady, routeReasonToken } from "../../../meetings/summaryRoute";
+import { readPlannedRoute, routeOff, routeReady } from "../../../meetings/summaryRoute";
 import { readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
 import { useRuntimeBus } from "../../../runtime/RuntimeBus";
 import { SPEECH_SETUP_EVENT } from "../../../desk/firstrun/SpeechSetup";
@@ -201,7 +201,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
       return (
         <StateChip
           state="warning"
-          label={routeOff(route) ? "SUMMARIES OFF" : `NO SUMMARY ROUTE · ${routeReasonToken(route)}`}
+          label={routeOff(route) ? "Summaries off" : "No engine for summaries"}
         />
       );
     }

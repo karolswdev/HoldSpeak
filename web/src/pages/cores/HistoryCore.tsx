@@ -29,7 +29,6 @@ import {
   readPlannedRoute,
   routeOff,
   routeReady,
-  routeReasonToken,
 } from "../../meetings/summaryRoute";
 import { egressFor } from "../../desk/surface/egress";
 import { useCoreWings } from "./core-hooks";
@@ -40,10 +39,11 @@ import { renderHeroSlot } from "./core-layout";
 import {
   ledgerDate, meetingsHeadline, hasOpenMeetingActions, intelStateOf,
   ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt,
-  ImportSection, CatalogRail, DoorSection,
+  ImportSection, CatalogRail, DoorSection, meetingFailed,
 } from "./history";
 import { useSummaryRun } from "./history/useSummaryRun";
 import { leadRunRowId } from "./history/CatalogRail";
+import { AppTile, FigureStrip, type Figure } from "../../desk/surface/kit";
 
 /** PHILO-17: the list window's faces: the list, and Record (import). */
 const LIST_WINGS = [
@@ -247,7 +247,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       return (
         <StateChip
           state="warning"
-          label={routeOff(faceRoute) ? "SUMMARIES OFF" : `NO SUMMARY ROUTE · ${routeReasonToken(faceRoute)}`}
+          label={routeOff(faceRoute) ? "Summaries off" : "No engine for summaries"}
         />
       );
     }
@@ -271,11 +271,37 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // PHILO-17 ALIVE: one obvious first move. `Record meeting` wears the
   // filled primary unless a row's run verb already does (UX-CANON: one
   // filled primary per window).
-  const recordLeads = leadRunRowId(meetingRows, null) === null;
+  const engineMissing = Boolean(faceRoute) && !routeReady(faceRoute) && !routeOff(faceRoute);
+  const recordLeads = !engineMissing && leadRunRowId(meetingRows, null) === null;
+  // The week in figures (PHILO-17 ALIVE): what the list holds, at a glance.
+  const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+  const thisWeek = meetingRows.filter((row) => {
+    const at = new Date(String(row.started_at ?? row.created_at ?? "")).getTime();
+    return Number.isFinite(at) && at >= weekAgo;
+  });
+  const weekFigures: Figure[] = [
+    { key: "meetings", value: thisWeek.length, label: thisWeek.length === 1 ? "meeting" : "meetings", tone: "info" },
+    { key: "summaries", value: thisWeek.filter((row) => Boolean(row.has_summary)).length, label: "summaries", tone: "ok" },
+    { key: "review", value: thisWeek.reduce((sum, row) => sum + Number(row.needs_you_count ?? 0), 0), label: "to review", tone: "accent" },
+    { key: "failed", value: thisWeek.filter(meetingFailed).length, label: "failed", tone: "danger" },
+  ];
 
   // Verbs in the head
   const verbs = (
     <>
+      {/* PHILO-17 ALIVE: a warning has its verb. With no engine for
+          summaries, Choose engine is the first move (Runs on, on the
+          Meeting summaries job). */}
+      {engineMissing ? (
+        <Button
+          dense
+          variant="primary"
+          data-testid="meetings-choose-engine"
+          onClick={() => openSurfaceOr("open-concierge", "/models", "meetings")}
+        >
+          Choose engine
+        </Button>
+      ) : null}
       {/* HS-201-04 (Astra's counsel finding 5; UX-CANON: one filled primary
           per face). The run verb on a row keeps the primary; `Record
           meeting` is the default species. */}
@@ -361,6 +387,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       {/* HS-170-04: the headline (display step, ONE per face) and, on
           its line (PHILO-17 ALIVE), the first move. */}
       <div className="meetings-top">
+        <AppTile sprite="meeting" hue={24} />
         <div className="meetings-headline" data-accent={headline.accent || undefined}>
           <span className="surface-display" data-testid="meetings-headline">
             {headline.text}
@@ -406,6 +433,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
       {/* The stream: a row opens the meeting's own window. */}
       {parkedOn ? null : <div className="surface-split-railed">{rail}</div>}
+
+      {/* PHILO-17 ALIVE: the week in tinted figures. */}
+      {parkedOn ? null : <FigureStrip caption="This week" figures={weekFigures} data-testid="meetings-week" />}
     </>
   );
 

@@ -4800,3 +4800,148 @@ button.surface-edit-in-place:hover {
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-window-shell .surface-row { transition: none; }
 }
+
+/* ── PHILO-17 ALIVE r2 (coordinator: "still monotone gray") ── */
+.desk-next {
+  /* A warm paper for the content wells (muted ink reads 7.6:1 on it). */
+  --alive-paper: #f8f5ee;
+  --alive-hover-bg: #ffffff;
+}
+.desk-next .meetings-stream-rows,
+.desk-next .people-surface .surface-rows,
+.desk-next .desk-window-shell .surface-ledger {
+  background: var(--alive-paper);
+}
+.desk-next .kit-avatar {
+  background: hsl(var(--av-hue) 72% 78%);
+}
+/* The state pill speaks sentence case in sans (the StateChip and the
+   meeting's state token); a tiny counter keeps its caps. */
+.desk-next .surface-state-chip,
+.desk-next .meetings-stream-tokens .surface-token[data-chip] {
+  font: 600 12px / 1 var(--font-sans);
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+/* Running and queued: blue, the lamp breathes (opacity only). */
+.desk-next .surface-token[data-chip][data-live] {
+  --chip-tint: color-mix(in srgb, var(--lamp-info) 22%, transparent);
+  color: var(--wb-info-ink);
+}
+.desk-next .surface-token[data-chip][data-live]::before {
+  background: var(--lamp-info);
+  animation: alive-breathe 1.6s ease-in-out infinite alternate;
+}
+@keyframes alive-breathe {
+  from { opacity: 1; }
+  to { opacity: 0.25; }
+}
+/* The primary verb: a light sheen runs across it under the pointer. */
+@keyframes alive-sheen {
+  from { background-position: -120% 0; }
+  to { background-position: 220% 0; }
+}
+.desk-next .desk-window-shell .btn--primary:not(:disabled):hover {
+  background-image: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+  background-size: 60% 100%;
+  background-repeat: no-repeat;
+  animation: alive-sheen 900ms var(--alive-ease) 1;
+}
+/* The app's accent tile beside the headline. */
+.kit-apptile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: hsl(var(--app-hue, 210) 80% 84%);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.7),
+    inset -1px -1px 0 hsl(var(--app-hue, 210) 40% 55%),
+    0 0 0 1px color-mix(in srgb, var(--wb-ink) 35%, transparent),
+    1px 2px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.kit-apptile > img {
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+}
+.desk-next .meetings-top {
+  flex-wrap: nowrap;
+  gap: 8px 12px;
+}
+.desk-next .meetings-headline .surface-display {
+  font: 750 30px / 1.1 var(--font-display);
+  letter-spacing: -0.01em;
+}
+/* The week in tinted figures. */
+.kit-figures {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+.kit-figures-caption {
+  flex-basis: 100%;
+  font: 650 14px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.kit-figure {
+  --fig-hue: var(--wb-ink);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--fig-hue) 14%, var(--alive-paper, #f8f5ee));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fig-hue) 30%, transparent);
+  color: var(--wb-text);
+  font: 500 14px / 1.2 var(--font-sans);
+}
+.kit-figure > b {
+  font: 750 22px / 1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+.kit-figure[data-tone="info"] { --fig-hue: var(--lamp-info); }
+.kit-figure[data-tone="ok"] { --fig-hue: var(--lamp-ok); }
+.kit-figure[data-tone="warn"] { --fig-hue: var(--lamp-warn); }
+.kit-figure[data-tone="accent"] { --fig-hue: var(--lamp-ask); }
+.kit-figure[data-tone="danger"] { --fig-hue: var(--lamp-fail); }
+.kit-figure[data-tone="info"] > b { color: var(--wb-info-ink); }
+.kit-figure[data-tone="ok"] > b { color: var(--wb-ok-ink); }
+.kit-figure[data-tone="warn"] > b { color: var(--wb-warn-ink); }
+.kit-figure[data-tone="accent"] > b { color: var(--wb-ember-ink); }
+.kit-figure[data-tone="danger"] > b { color: var(--wb-danger-ink); }
+@container surface (max-width: 559.9px) {
+  .desk-next .meetings-top {
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: center;
+  }
+  .desk-next .meetings-top > .meetings-headline {
+    flex: 1 1 0;
+  }
+  .desk-next .meetings-top > .meetings-head-verbs {
+    flex-basis: 100%;
+  }
+  .desk-next .meetings-headline .surface-display {
+    font-size: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .surface-token[data-chip][data-live]::before,
+  .desk-next .desk-window-shell .btn--primary:not(:disabled):hover {
+    animation: none;
+  }
+}
+.desk-next .surface-token[data-chip][data-plain] {
+  font: 600 12px / 1 var(--font-sans);
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+.desk-next .kit-avatar:not([data-size="md"]) {
+  width: 22px;
+  height: 22px;
+}

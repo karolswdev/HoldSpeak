@@ -63,10 +63,13 @@ export function RouteDisclosure({
         className="surface-token"
         data-chip
         data-tone="warn"
+        data-plain=""
+        title={routeOff(route) ? undefined : routeReasonToken(route)}
         data-testid={`${testId}-unavailable`}
       >
-        {/* PHILO-15 01 ruling: OFF is the owner's choice, not a missing route. */}
-        {routeOff(route) ? "SUMMARIES OFF" : `NO SUMMARY ROUTE · ${routeReasonToken(route)}`}
+        {/* PHILO-15 01 ruling: OFF is the owner's choice, not a missing route.
+            PHILO-17 ALIVE: plain words; the wire reason rides the title. */}
+        {routeOff(route) ? "Summaries off" : "No engine for summaries"}
       </span>
     );
   }

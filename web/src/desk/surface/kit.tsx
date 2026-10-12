@@ -15,7 +15,7 @@
  *  `SurfaceFooter`, Verb is the library `Button` (contract.md, "The interior
  *  kit").
  */
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { ObjectTone } from "./objects/kinds";
 import { FilterTokens, type FilterTokenOption } from "./FilterTokens";
 // kit.css is imported by surface.css (the kit restyles live beside it).
@@ -206,5 +206,44 @@ export function AvatarStack({
       ))}
       {extra > 0 ? <span className="kit-avatar" data-more="" aria-hidden="true">+{extra}</span> : null}
     </span>
+  );
+}
+
+/** PHILO-17 ALIVE: the app's accent tile: its pixel sprite on a rounded
+ *  tile in the app's own hue (`--app-hue` on the window). Decorative. */
+export function AppTile({ sprite, hue }: { sprite: string; hue: number }) {
+  return (
+    <span className="kit-apptile" aria-hidden="true" style={{ "--app-hue": hue } as CSSProperties}>
+      <img src={`${import.meta.env.BASE_URL || "/_built/"}desk/sprites/32/${sprite}.png`} alt="" draggable={false} />
+    </span>
+  );
+}
+
+/** One figure of a FigureStrip: a number and its words, in a tone. */
+export type Figure = { key: string; value: number; label: string; tone?: "ok" | "warn" | "danger" | "info" | "accent" };
+
+/** PHILO-17 ALIVE: a strip of tinted figures (`5 meetings · 4 summaries ·
+ *  1 failed`) under a caption. A figure of zero is not drawn (no counters
+ *  of zero, UX-CANON A.8); a strip with no figure draws nothing. */
+export function FigureStrip({
+  caption,
+  figures,
+  "data-testid": testId,
+}: {
+  caption: string;
+  figures: ReadonlyArray<Figure>;
+  "data-testid"?: string;
+}) {
+  const shown = figures.filter((figure) => figure.value > 0);
+  if (!shown.length) return null;
+  return (
+    <div className="kit-figures" data-testid={testId}>
+      <span className="kit-figures-caption">{caption}</span>
+      {shown.map((figure) => (
+        <span key={figure.key} className="kit-figure" data-tone={figure.tone}>
+          <b>{figure.value}</b> {figure.label}
+        </span>
+      ))}
+    </div>
   );
 }

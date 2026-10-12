@@ -50,11 +50,6 @@
   background: var(--wash-2);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-ink) 55%, transparent);
 }
-.desk-next .surface-state-chip[data-state="active"] { --chip-tint: color-mix(in srgb, var(--lamp-ask) 22%, transparent); }
-.desk-next .surface-state-chip[data-state="working"] { --chip-tint: color-mix(in srgb, var(--lamp-info) 20%, transparent); }
-.desk-next .surface-state-chip[data-state="success"] { --chip-tint: color-mix(in srgb, var(--lamp-ok) 18%, transparent); }
-.desk-next .surface-state-chip[data-state="warning"] { --chip-tint: color-mix(in srgb, var(--lamp-warn) 24%, transparent); }
-.desk-next .surface-state-chip[data-state="failure"] { --chip-tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent); }
 
 /* PHILO-15 B31 (Astra r2): the wrap variant. The words break between
    tokens and stay inside the card; the lamp keeps the first line. */
@@ -87,18 +82,23 @@
    read on --accent-text; --accent drew the word at 4.26:1, under C1's 4.5:1. */
 .desk-next .surface-state-chip[data-state="active"] {
   color: var(--accent-text);
+  --chip-tint: color-mix(in srgb, var(--lamp-ask) 22%, transparent);
 }
 .desk-next .surface-state-chip[data-state="working"] {
   color: var(--info);
+  --chip-tint: color-mix(in srgb, var(--lamp-info) 20%, transparent);
 }
 .desk-next .surface-state-chip[data-state="success"] {
   color: var(--ok);
+  --chip-tint: color-mix(in srgb, var(--lamp-ok) 18%, transparent);
 }
 .desk-next .surface-state-chip[data-state="warning"] {
   color: var(--warn);
+  --chip-tint: color-mix(in srgb, var(--lamp-warn) 24%, transparent);
 }
 .desk-next .surface-state-chip[data-state="failure"] {
   color: var(--danger-signal);
+  --chip-tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent);
 }
 .desk-next .surface-state-chip[data-state="unreachable"] {
   color: var(--text-faint);

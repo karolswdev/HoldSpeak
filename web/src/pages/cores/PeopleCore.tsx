@@ -28,7 +28,7 @@ import {
   SurfaceState,
 } from "../../desk/surface/Surface";
 import { countToken } from "../../desk/surface";
-import { Avatar } from "../../desk/surface/kit";
+import { AppTile, Avatar } from "../../desk/surface/kit";
 import { renderHeroSlot } from "./core-layout";
 import { useWindowTitle } from "../../desk/surface/title";
 import "./people.css";
@@ -345,8 +345,20 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       <Button dense variant="ghost" onClick={() => void (selectedId ? select(selectedId) : load())}>Try again</Button>
     </span>
   ) : null;
+  // PHILO-17 ALIVE: the app tile and the one fact of the roster.
+  const owed = relationships.reduce((sum, row) => sum + Number(row.manager_commitment_count ?? 0), 0);
+  const peopleHead = selected || !relationships.length ? null : (
+    <div className="people-top" data-testid="people-headline">
+      <AppTile sprite="people-ledger" hue={268} />
+      <span className="surface-display">
+        {relationships.length === 1 ? "1 person" : `${relationships.length} people`}
+      </span>
+      {owed ? <span className="surface-token" data-chip data-tone="warn" data-plain="">{`You owe ${owed}`}</span> : null}
+    </div>
+  );
   return <div className="people-surface">
     {renderHeroSlot(hero, verbs, failureRow ?? facts())}
+    {peopleHead}
     <SurfaceSplit
       detailOpen={Boolean(selected)}
       main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} duplicateOf={duplicateShown?.display_name ?? null} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />}

@@ -132,7 +132,7 @@ def test_meetings_gives_no_all_clear_without_an_engine(desk):
     open_page, _ = desk
     for width, height in WIDTHS:
         page = open_page(width, height, "review-meetings")
-        page.get_by_text("NO SUMMARY ROUTE").first.wait_for(timeout=15000)
+        page.get_by_text("No engine for summaries").first.wait_for(timeout=15000)
         _shot(page, "meetings", width)
         window = page.locator(".desk-surface-window").first
         text = window.inner_text()

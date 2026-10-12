@@ -94,6 +94,13 @@ function TokenLine({ parts }: { parts: ReactNode[] }) {
   return <>{interleaved}</>;
 }
 
+/** PHILO-17 ALIVE: a state pill speaks in sentence case (`Summary
+ *  stored`, `2 to review`); the rail's labels are written in caps. */
+export function pillWord(label: string): string {
+  const lower = label.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
 /** HS-170-04 — the stream row: title at primary, tokens under, verb right. */
 function MeetingStreamRow({
   row,
@@ -208,9 +215,10 @@ function MeetingStreamRow({
         className="surface-token"
         data-chip
         data-tone={displayTone}
+        data-live={displayLabel === "RUNNING" || displayLabel === "QUEUED" ? "" : undefined}
         data-testid="state-token"
       >
-        {displayLabel}
+        {pillWord(displayLabel)}
       </span>
     );
   }
