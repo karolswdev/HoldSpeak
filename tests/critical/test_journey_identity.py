@@ -6,7 +6,7 @@ An installation that cannot name its own backend, bundle and database cannot
 carry release evidence, so this journey is a G0 gate.
 
 The behaviour itself is HS-200-02's; this file is the cold, runner-safe
-journey over it. `tests/integration/test_phase200_runtime_identity.py` holds
+journey over it. `tests/integration/test_runtime_identity.py` holds
 the field-by-field unit proof.
 """
 
