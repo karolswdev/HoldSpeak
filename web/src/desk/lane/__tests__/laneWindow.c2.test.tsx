@@ -488,6 +488,14 @@ describe("the agent's window", () => {
     expect(useLane.getState().raw).toBe(true);
   });
 
+  it("PHILO-17: an ask and a held call: Approve is the one filled primary; Answer is quieter", async () => {
+    await openLane(fixture());
+    expect(screen.getByTestId("lane-approve").className).toContain("btn--primary");
+    const answer = within(screen.getByTestId("lane-ask")).getByRole("button", { name: "Answer" });
+    expect(answer.className).not.toContain("btn--primary");
+    expect(document.querySelectorAll(".is-lane .btn--primary")).toHaveLength(1);
+  });
+
   it("DECIDING: one line, no field", async () => {
     await openLane(fixture({ wait: { question: QUESTION, kind: "DECIDING", started: null } }));
     expect(screen.getByTestId("lane-deciding").textContent).toContain(QUESTION);

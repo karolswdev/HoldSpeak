@@ -409,6 +409,9 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
   return (
     <AskWell
       data-testid="lane-ask"
+      // PHILO-17: one filled primary. When the held plate's Approve shows,
+      // it is the lane's first move and Answer is quieter.
+      primary={!approveShowing(lane)}
       agent={agent}
       word={turnWord(wait).word}
       age={waitAge(wait.started)}
@@ -538,6 +541,12 @@ function ReceiptTokens({ tokens, tone, testId, words }: { tokens: string[]; tone
 export function heldNow(lane: LaneWire): LaneGated | undefined {
   const gated = Array.isArray(lane.gated) ? lane.gated : [];
   return [...gated].reverse().find((g) => (g.state === "held" || g.state === "pending") && g.was_held !== false);
+}
+
+/** The held plate shows a filled Approve (a held call the hub shows whole). */
+export function approveShowing(lane: LaneWire): boolean {
+  const held = heldNow(lane);
+  return Boolean(held && !held.args_cut);
 }
 
 /** PHILO-17 THE REFIT: what the coder does now, as the lane's one headline. */

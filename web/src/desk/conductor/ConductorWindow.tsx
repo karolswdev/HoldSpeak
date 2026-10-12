@@ -99,7 +99,7 @@ export function HooksLine({ member }: { member: ConductorMember | null }) {
   const offered = member ? Boolean(member.detect && needsHooks(member.detect)) : (agents ?? []).some(needsHooks);
   if (!offered) return null;
   return (
-    <span className="cw-pill cw-hooks-line" data-tone="info" data-testid="conductor-hooks-line">
+    <span className="kit-pill cw-hooks-line" data-tone="info" data-dot="" data-testid="conductor-hooks-line">
       {HOOKS_LINE}
     </span>
   );
@@ -305,7 +305,7 @@ function rowTitle(member: ConductorMember): string {
 function Pill({ member }: { member: ConductorMember }) {
   const pill = memberPill(member);
   return (
-    <span className="cw-pill" data-tone={pill.tone} data-live={pill.live ? "" : undefined} data-testid="conductor-pill">
+    <span className="kit-pill" data-tone={pill.tone === "idle" ? undefined : pill.tone} data-dot="" data-live={pill.live ? "" : undefined} data-testid="conductor-pill">
       {pill.word}
     </span>
   );
@@ -426,7 +426,7 @@ function AskPlate({
           </Button>
           <span className="cw-row-meta">
             <span>{titleOfAgent(member)}</span>
-            {member.facts.where ? <span className="cw-pill" data-tone="info">{String(member.facts.where)}</span> : null}
+            {member.facts.where ? <span className="kit-pill" data-tone="info">{String(member.facts.where)}</span> : null}
           </span>
           {call ? (
             <code className="cw-ask-call" data-testid="conductor-held-call">

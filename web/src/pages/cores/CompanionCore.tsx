@@ -105,7 +105,7 @@ function DeliveryWork() {
               <div className="ag-row-text">
                 <span className="ag-row-name">{words.title}</span>
                 <span className="ag-row-meta">
-                  {words.state ? <span className="ag-pill" data-tone={stateTone(words.state)}>{stateWord(words.state)}</span> : null}
+                  {words.state ? <span className="kit-pill" data-tone={stateTone(words.state) === "idle" ? undefined : stateTone(words.state)} data-dot="">{stateWord(words.state)}</span> : null}
                   <span>{words.meta}</span>
                 </span>
               </div>
@@ -183,7 +183,7 @@ export function CompanionCore({ hero }: CoreProps) {
         <div className="ag-row-text">
           <span className="ag-row-name">{row.name}</span>
           <span className="ag-row-meta">
-            <span className="ag-pill" data-tone="warn" data-live="">Asks you</span>
+            <span className="kit-pill" data-tone="warn" data-dot="" data-live="">Asks you</span>
             <span>{AGENT_NAME[row.agent as AgentId] ?? row.agent}</span>
           </span>
           {typeof question === "string" && question.trim() ? <AgentWords compact text={question} className="ag-ask-q" /> : null}
