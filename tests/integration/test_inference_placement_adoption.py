@@ -406,7 +406,7 @@ def test_legacy_operation_refusal_has_no_route_or_provider_attempt(tmp_path: Pat
 # HS-143-10 Slice 3 — voice resolution uses the canonical controller route.
 
 
-VOICE_OWNER = Principal(PrincipalKind.VOICE_OWNER, "owner")
+VOICE_OWNER = Principal(PrincipalKind.OWNER, "owner")
 
 
 class _VoiceEngine:
