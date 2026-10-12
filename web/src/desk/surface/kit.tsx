@@ -158,3 +158,53 @@ export function KindPlate({ kind, title }: { kind: string; title?: string }) {
     </span>
   );
 }
+
+/** PHILO-17 ALIVE: the initials of a person's name or address (`Avery
+ *  Lin` → `AL`, `Avery` → `A`, `sam.ortiz@x.io` → `SO`). Two letters at most. */
+export function initialsOf(name: string): string {
+  const base = name.includes("@") ? name.split("@")[0] : name;
+  const parts = base.split(/[\s._-]+/).filter(Boolean);
+  if (!parts.length) return "?";
+  const letters = parts.length === 1 ? parts[0][0] : parts[0][0] + parts[parts.length - 1][0];
+  return letters.toUpperCase();
+}
+
+/** PHILO-17 ALIVE: one of eight soft hues, the same for the same name. */
+export function hueOf(name: string): number {
+  let hash = 0;
+  for (let index = 0; index < name.length; index += 1) hash = (hash * 31 + name.charCodeAt(index)) | 0;
+  return Math.abs(hash) % 8;
+}
+
+/** PHILO-17 ALIVE: a person's initials on a round tile in their own hue. */
+export function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) {
+  return (
+    <span className="kit-avatar" data-hue={hueOf(name)} data-size={size} title={name} aria-hidden="true">
+      {initialsOf(name)}
+    </span>
+  );
+}
+
+/** PHILO-17 ALIVE: the people of a row, as overlapped avatars (`max`
+ *  tiles, then `+N`). The group's accessible name lists every person. */
+export function AvatarStack({
+  names,
+  max = 4,
+  "data-testid": testId,
+}: {
+  names: ReadonlyArray<string>;
+  max?: number;
+  "data-testid"?: string;
+}) {
+  const shown = names.filter(Boolean);
+  if (!shown.length) return null;
+  const extra = shown.length - max;
+  return (
+    <span className="kit-avatars" role="img" aria-label={`With ${shown.join(", ")}`} data-testid={testId}>
+      {shown.slice(0, max).map((name) => (
+        <Avatar key={name} name={name} />
+      ))}
+      {extra > 0 ? <span className="kit-avatar" data-more="" aria-hidden="true">+{extra}</span> : null}
+    </span>
+  );
+}

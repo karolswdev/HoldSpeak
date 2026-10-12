@@ -74,6 +74,7 @@ export function StateChip({
       className={className ? `surface-state-chip ${className}` : "surface-state-chip"}
       data-state={state}
       data-wrap={wrap ? "" : undefined}
+      data-bare={shown ? undefined : ""}
       role="status"
       aria-label={name}
       data-testid={dataTestId}

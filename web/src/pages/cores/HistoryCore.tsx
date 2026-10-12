@@ -43,6 +43,7 @@ import {
   ImportSection, CatalogRail, DoorSection,
 } from "./history";
 import { useSummaryRun } from "./history/useSummaryRun";
+import { leadRunRowId } from "./history/CatalogRail";
 
 /** PHILO-17: the list window's faces: the list, and Record (import). */
 const LIST_WINGS = [
@@ -267,6 +268,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     routeOff(faceRoute),
   );
 
+  // PHILO-17 ALIVE: one obvious first move. `Record meeting` wears the
+  // filled primary unless a row's run verb already does (UX-CANON: one
+  // filled primary per window).
+  const recordLeads = leadRunRowId(meetingRows, null) === null;
+
   // Verbs in the head
   const verbs = (
     <>
@@ -275,6 +281,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           meeting` is the default species. */}
       <Button
         dense
+        variant={recordLeads ? "primary" : "secondary"}
         onClick={() => openSurfaceOr("record-live", "/live", scope)}
       >
         Record meeting
@@ -351,16 +358,17 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     />
   ) : (
     <>
-      {/* HS-170-04: the headline (display step, ONE per face) */}
-      <div className="meetings-headline" data-accent={headline.accent || undefined}>
-        <span className="surface-display" data-testid="meetings-headline">
-          {headline.text}
-        </span>
-      </div>
-
-      {/* Head verbs */}
-      <div className="meetings-head-verbs">
-        {verbs}
+      {/* HS-170-04: the headline (display step, ONE per face) and, on
+          its line (PHILO-17 ALIVE), the first move. */}
+      <div className="meetings-top">
+        <div className="meetings-headline" data-accent={headline.accent || undefined}>
+          <span className="surface-display" data-testid="meetings-headline">
+            {headline.text}
+          </span>
+        </div>
+        <div className="meetings-head-verbs">
+          {verbs}
+        </div>
       </div>
 
       {/* HS-170-04: search (StringGadget with mic in the list head) */}

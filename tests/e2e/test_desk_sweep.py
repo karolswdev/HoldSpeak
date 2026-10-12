@@ -624,19 +624,19 @@ def _material_faults(page: Any, face: str, root: str | None) -> list[str]:
         if not t["shadow"].startswith(m["softSunken"] if t["active"] else m["soft"]):
             out.append(f"token '{t['name']}' has the wrong soft bevel")
     for c in m["chips"]:
-        ok = (c["border"] == "0px" and c["bg"] in ("rgba(0, 0, 0, 0)", "transparent") and c["lampW"] == "10px"
-              and (c["lampShadow"] or "").startswith(raised) and (c["name"] or "").strip()
+        # PHILO-17 ALIVE (owner 2026-10-11): a state is a soft tinted pill
+        # with a round 8 px lamp dot.
+        ok = (c["border"] == "0px" and c["lampW"] == "8px"
+              and c.get("lampRadius") == "50%" and (c["name"] or "").strip()
               and (not c["word"] or c["name"] == c["word"])
               and (c["word"] or c["state"] not in LAMP_WORDS or c["name"] == LAMP_WORDS[c["state"]]))
         if not ok:
             out.append(f"state chip '{c['name']}' breaks the lamp grammar")
     for f in m["facts"]:
         ok = (f["border"] == "rgba(0, 0, 0, 0)" and f["shadow"] == "none"
-              and f["bg"] in ("rgba(0, 0, 0, 0)", "transparent")
-              and (f["tone"] not in ("warn", "danger", "ok")
-                   or (f["lampW"] == "10px" and (f["lampShadow"] or "").startswith(raised))))
+              and (f["tone"] not in ("warn", "danger", "ok") or f["lampW"] == "8px"))
         if not ok:
-            out.append(f"fact '{f['text']}' is not flat")
+            out.append(f"fact '{f['text']}' is not a pill")
     for shadow in m["bodies"]:
         if not shadow.startswith(sunken):
             out.append(f"a window body is not the well (box-shadow {shadow[:40]})")

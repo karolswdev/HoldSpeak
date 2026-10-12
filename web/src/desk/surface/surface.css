@@ -731,14 +731,14 @@
     transform: scale(1) translateY(0);
   }
 }
+/* PHILO-17 ALIVE: content fades in with opacity only (no movement after
+   the first draw; the sweep's still fence). */
 @keyframes surface-rise-in {
   from {
     opacity: 0;
-    transform: translateY(4px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 .surface-section {
@@ -4476,4 +4476,303 @@ button.surface-edit-in-place:hover {
 }
 .bevel-flat {
   box-shadow: none;
+}
+
+/* ═══ PHILO-17 ALIVE — the inside of every window ══════════════════
+   Owner, 2026-10-11: "the in-window feeling … way too static. Way too
+   boring and monotone and also not very obvious to use". The material
+   stays (slate ground, paper wells, raised steel verbs, blue selection,
+   one light from the top left); this block makes it respond:
+   - one obvious first move: the filled primary verb; the other verbs a
+     quieter steel;
+   - tactile rows: the whole row lifts under the pointer (a soft shadow
+     cast down-right by the top-left light) and sinks under a press;
+   - colour for meaning: states are soft tinted pills;
+   - motion on hover and press only. Idle never moves.
+   Reduced motion: no transitions, no pulse (the end of this block). */
+.desk-next {
+  --alive-dur: 120ms;
+  --alive-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --alive-lift: 1px 2px 0 color-mix(in srgb, var(--wb-ink) 10%, transparent),
+    2px 5px 14px color-mix(in srgb, var(--wb-ink) 16%, transparent);
+  --alive-hover-bg: color-mix(in srgb, #ffffff 62%, var(--wb-well));
+}
+
+/* ── Verbs: every library Button answers the pointer ── */
+.desk-next .btn {
+  transition:
+    background-color var(--alive-dur) var(--alive-ease),
+    border-color var(--alive-dur) var(--alive-ease),
+    box-shadow var(--alive-dur) var(--alive-ease),
+    color var(--alive-dur) var(--alive-ease);
+}
+/* The primary: the ONE first move of a window. Blue plate, the bevel, and
+   a soft cast shadow so it sits above the steel verbs. */
+.desk-next .desk-window-shell .btn--primary:not(:disabled) {
+  box-shadow: var(--wb-raised), 1px 2px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent);
+  font-weight: 650;
+}
+.desk-next .desk-window-shell .btn--primary:not(:disabled):hover {
+  box-shadow: var(--wb-raised), 2px 4px 10px color-mix(in srgb, var(--wb-sel) 45%, transparent);
+}
+.desk-next .desk-window-shell .btn--primary:not(:disabled):is(:active, [aria-pressed="true"]) {
+  box-shadow: var(--wb-sunken);
+}
+/* Ghost inside a window: the same raised steel, quieter: a lighter plate
+   and a soft rule for its edge. It takes the full steel under the pointer. */
+.desk-next .desk-window-shell :is(.desk-pullout-body, .desk-surface-body) .btn--ghost:not(:disabled) {
+  border-color: var(--wb-rule);
+  background: color-mix(in srgb, var(--wb-steel) 38%, var(--wb-field-hi));
+  color: var(--wb-text);
+}
+.desk-next .desk-window-shell :is(.desk-pullout-body, .desk-surface-body) .btn--ghost:not(:disabled):hover {
+  border-color: var(--wb-ink);
+  background: var(--wb-steel-2);
+}
+
+/* ── States: soft tinted pills (the StateChip lives in state-chip.css) ── */
+.desk-next .surface-token[data-chip] {
+  --chip-tint: color-mix(in srgb, var(--wb-ink) 7%, transparent);
+  min-height: 20px;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--chip-tint);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .surface-token[data-chip][data-tone="ok"],
+.desk-next .surface-token[data-chip][data-tone="success"] { --chip-tint: color-mix(in srgb, var(--lamp-ok) 18%, transparent); }
+.desk-next .surface-token[data-chip][data-tone="warn"] { --chip-tint: color-mix(in srgb, var(--lamp-warn) 24%, transparent); }
+.desk-next .surface-token[data-chip][data-tone="danger"] { --chip-tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent); }
+.desk-next .surface-token[data-chip][data-tone="accent"] { --chip-tint: color-mix(in srgb, var(--lamp-ask) 22%, transparent); }
+.desk-next .surface-token[data-chip]:is([data-tone="warn"], [data-tone="danger"], [data-tone="ok"])::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-ink) 55%, transparent);
+}
+.desk-next .surface-token[data-chip][data-wrap] {
+  border-radius: 10px;
+}
+
+/* ── The kit's words: sentence case, sans, muted ink ── */
+.desk-next .kit-strip {
+  font: 500 13px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .surface-section-head h3 {
+  font: 650 14px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-text);
+}
+
+/* ── Rows: the kit Ledger answers the pointer ── */
+.desk-next .surface-ledger-line {
+  transition:
+    background-color var(--alive-dur) var(--alive-ease),
+    box-shadow var(--alive-dur) var(--alive-ease);
+}
+.desk-next .surface-ledger-line:not([data-inert]):hover {
+  background: var(--alive-hover-bg);
+  box-shadow: var(--alive-lift);
+  position: relative;
+  z-index: 1;
+}
+.desk-next .surface-ledger-line:not([data-inert]):active {
+  background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .surface-ledger-primary {
+  font-weight: 600;
+}
+
+/* ── People: initials avatars (kit.tsx Avatar / AvatarStack) ── */
+.kit-avatars {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+.kit-avatar {
+  --av-hue: 215;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: hsl(var(--av-hue) 45% 84%);
+  box-shadow: 0 0 0 2px var(--wb-well), inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 18%, transparent);
+  color: var(--wb-ink);
+  font: 700 12px / 1 var(--font-sans);
+  letter-spacing: 0;
+  user-select: none;
+}
+.kit-avatars > .kit-avatar + .kit-avatar {
+  margin-left: -4px;
+}
+.kit-avatar[data-size="md"] {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+.kit-avatar[data-more] {
+  background: var(--wb-field);
+  font-variant-numeric: tabular-nums;
+}
+.kit-avatar[data-hue="0"] { --av-hue: 215; }
+.kit-avatar[data-hue="1"] { --av-hue: 160; }
+.kit-avatar[data-hue="2"] { --av-hue: 28; }
+.kit-avatar[data-hue="3"] { --av-hue: 280; }
+.kit-avatar[data-hue="4"] { --av-hue: 350; }
+.kit-avatar[data-hue="5"] { --av-hue: 190; }
+.kit-avatar[data-hue="6"] { --av-hue: 48; }
+.kit-avatar[data-hue="7"] { --av-hue: 110; }
+
+/* ── Meetings: the exemplar ── */
+/* The headline and the first move on one line. */
+.desk-next .meetings-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 2px 0 6px;
+}
+.desk-next .meetings-top > .meetings-headline {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+}
+.desk-next .meetings-top > .meetings-head-verbs {
+  padding: 0;
+}
+.desk-next .meetings-headline .surface-display {
+  color: var(--wb-text);
+}
+.desk-next .meetings-headline[data-accent] .surface-display {
+  color: var(--accent);
+}
+/* The stream sits in a paper well. */
+.desk-next .meetings-stream-rows {
+  gap: 2px;
+  padding: 4px;
+  background: var(--wb-well);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .meetings-stream-row {
+  position: relative;
+  padding: 10px 12px;
+  border-top: 0;
+  border-radius: 3px;
+  transition:
+    background-color var(--alive-dur) var(--alive-ease),
+    box-shadow var(--alive-dur) var(--alive-ease);
+}
+.desk-next .meetings-stream-row + .meetings-stream-row::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: var(--wb-rule-soft);
+  pointer-events: none;
+}
+.desk-next .meetings-stream-row:hover {
+  background: var(--alive-hover-bg);
+  box-shadow: var(--alive-lift);
+  z-index: 1;
+}
+.desk-next .meetings-stream-row:hover::before,
+.desk-next .meetings-stream-row:hover + .meetings-stream-row::before {
+  opacity: 0;
+}
+.desk-next .meetings-stream-row:has(.meetings-stream-row-body:active) {
+  background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .meetings-stream-row[data-selected] {
+  background: color-mix(in srgb, var(--wb-sel) 18%, var(--wb-well));
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.desk-next .meetings-stream-row-body {
+  gap: 5px;
+}
+.desk-next .meetings-stream-row-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+.desk-next .meetings-stream-title {
+  font: 600 16px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+  min-width: 0;
+}
+/* The meta line: sentence case, sans, muted ink (`Oct 11 · 30 min ·
+   7 words`); the state stays a pill. */
+.desk-next .meetings-stream-fact {
+  font: 500 13px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: lowercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-muted);
+}
+.desk-next .meetings-stream-fact[data-fact="date"] {
+  display: inline-block;
+}
+.desk-next .meetings-stream-fact[data-fact="date"]::first-letter {
+  text-transform: uppercase;
+}
+.desk-next .meetings-stream-dot {
+  margin: 0;
+  color: color-mix(in srgb, var(--wb-muted) 70%, transparent);
+}
+.desk-next .meetings-stream-tokens {
+  gap: 4px 8px;
+}
+/* A quiet Open shows under the pointer or the focus; on touch it stays. */
+@media (hover: hover) and (pointer: fine) {
+  .desk-next .meetings-stream-row-verb[data-quiet-open] > .btn {
+    opacity: 0;
+    transition: opacity var(--alive-dur) var(--alive-ease), background-color var(--alive-dur) var(--alive-ease);
+  }
+  .desk-next .meetings-stream-row:is(:hover, :focus-within) .meetings-stream-row-verb[data-quiet-open] > .btn {
+    opacity: 1;
+  }
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .meetings-stream-row-verb[data-quiet-open] > .btn {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .btn,
+  .desk-next .surface-ledger-line,
+  .desk-next .meetings-stream-row,
+  .desk-next .meetings-stream-row-verb > .btn,
+  .desk-next .surface-state-chip {
+    transition: none;
+  }
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .meetings-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .desk-next .meetings-top > .meetings-head-verbs {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .desk-next .meetings-top > .meetings-head-verbs > .btn--primary {
+    flex: 1 1 auto;
+  }
 }

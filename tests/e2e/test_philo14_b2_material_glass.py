@@ -81,7 +81,8 @@ MATERIAL_JS = r"""(root) => {
       return { name: c.getAttribute('aria-label'), state: c.dataset.state,
                word: (c.textContent || '').slice(glyph.length).trim(),
                border: s.borderTopWidth, bg: s.backgroundColor,
-               lampW: l ? l.width : null, lampShadow: l ? l.boxShadow : null };
+               lampW: l ? l.width : null, lampShadow: l ? l.boxShadow : null,
+               lampRadius: l ? l.borderTopLeftRadius : null };
     }),
     facts: facts.map((f) => { const s = getComputedStyle(f); const b = getComputedStyle(f, '::before');
       return { text: (f.textContent || '').slice(0, 30), tone: f.dataset.tone || null,
@@ -102,10 +103,10 @@ def _assert_material(page: Any, face: str, root: str | None = None) -> dict[str,
     for t in m["tokens"]:
         assert t["shadow"].startswith(m["softSunken"] if t["active"] else m["soft"]), (face, t)
     for c in m["chips"]:
+        # PHILO-17 ALIVE (owner 2026-10-11, "way too static … monotone"):
+        # a state is a soft tinted PILL with a round lamp dot; no border.
         assert c["border"] == "0px", (face, c)
-        assert c["bg"] in ("rgba(0, 0, 0, 0)", "transparent"), (face, c)
-        assert c["lampW"] == "10px", (face, c)
-        assert c["lampShadow"].startswith(raised), (face, c)
+        assert c["lampW"] == "8px" and c["lampRadius"] == "50%", (face, c)
         # Never colour alone: every lamp is named; a shown word IS its name;
         # a lit lamp with no word of its own is named by its state word.
         assert (c["name"] or "").strip(), (face, c)
@@ -116,9 +117,10 @@ def _assert_material(page: Any, face: str, root: str | None = None) -> dict[str,
     for f in m["facts"]:
         # The 1 px border stays, transparent, so no row moves.
         assert f["border"] == "rgba(0, 0, 0, 0)" and f["shadow"] == "none", (face, f)
-        assert f["bg"] in ("rgba(0, 0, 0, 0)", "transparent"), (face, f)
+        # PHILO-17 ALIVE: a fact is a tinted pill; a toned one leads with
+        # a round lamp dot.
         if f["tone"] in ("warn", "danger", "ok"):
-            assert f["lampW"] == "10px" and f["lampShadow"].startswith(raised), (face, f)
+            assert f["lampW"] == "8px", (face, f)
     for shadow in m["bodies"]:
         assert shadow.startswith(sunken), (face, shadow, sunken)
     return m
