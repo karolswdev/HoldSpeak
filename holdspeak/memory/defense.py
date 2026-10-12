@@ -44,8 +44,8 @@ _DB_URL = re.compile(
 #: the hex of an id (``op_b1be06986e<15 digits>adf01a4`` lost its middle to
 #: ``[redacted]`` in an MCP error answer: the -n 8 flake, test diet
 #: 2026-10-11). Any other neighbour is a boundary: space, line start,
-#: punctuation and Markdown marks (``_``, ``*``, `````, ``~``) (Astra r1 #1107).
-_CARD = re.compile(r"(?<![A-Za-z0-9-])\d(?:[ -]?\d){12,18}(?![A-Za-z0-9-])")
+#: punctuation, a hyphen and Markdown marks (``_``, ``*``, `````, ``~``) (Astra r1 #1107).
+_CARD = re.compile(r"(?<![A-Za-z0-9])\d(?:[ -]?\d){12,18}(?![A-Za-z0-9])")
 
 
 def _luhn(digits: str) -> bool:

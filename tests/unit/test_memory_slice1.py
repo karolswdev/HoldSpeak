@@ -332,6 +332,10 @@ _CARD_NUMBER = "4111 1111 1111 1111"
     "card 4111-1111-1111-1111 here",        # dashes inside
     "card 4111111111111111 here",           # no separators
     f"card:{_CARD_NUMBER}",
+    "visa-4111111111111111",                # after a hyphen
+    "id-4111111111111111-x",
+    "card -4111111111111111",
+    "card -4111 1111 1111 1111",
 ])
 def test_defense_redacts_a_card_at_every_boundary(text: str) -> None:
     """Astra r1 on #1107: the id fix must not let a card by a Markdown mark,
