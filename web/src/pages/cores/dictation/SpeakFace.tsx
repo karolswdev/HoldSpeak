@@ -51,6 +51,7 @@ import { DICTATION_FAILURES } from "../../../lib/dictationRecovery";
 import type { MicPhase } from "../../../lib/micSession";
 import { readHotkeyCustody, type HotkeyCustody } from "./hotkeyCustody";
 import { SpeechSetup, useSpeechSetup } from "../../../desk/firstrun/SpeechSetup";
+import { SYSTEM } from "../../../desk/systemSprites";
 
 /** Whether a hostname is on a local/LAN network (RFC1918, loopback,
  *  link-local, CGNAT/Tailscale, or named local suffixes). Mirrors
@@ -318,13 +319,25 @@ export function SpeakFace() {
     <div className="speak-face">
       <div className="speak-head">
         <h2 className="speak-fact" data-testid="speak-fact">
-          {toFix ? `${toFix} to fix` : "Ready to talk"}
+          {speech.notSetUp
+            ? "Set up speech to start"
+            : toFix
+              ? `${toFix} to fix`
+              : "Ready to talk"}
         </h2>
         {hotkey ? (
           <span className="speak-strip">
             <span>Hold <kbd className="speak-kbd">{hotkey}</kbd> anywhere</span>
           </span>
         ) : null}
+      </div>
+
+      {/* SETUP FIRST (refit r3): while the speech model is not on this
+          device, its setup leads, and `Set up speech` is the ONE primary.
+          One element in one place, so SpeechSetup keeps its "was missing"
+          memory and calls onReady when the model lands. */}
+      <div className="speak-setup" hidden={!speech.notSetUp} data-testid="speak-setup">
+        <SpeechSetup setup={speech} onReady={deck.refreshReadiness} testId="speak-speech-setup" />
       </div>
 
       {/* THE TALK PLATE: the focus object, with a Workbench title bar. */}
@@ -337,6 +350,7 @@ export function SpeakFace() {
           <TransportRow
             deck={deck}
             announce={announce}
+            waiting={speech.notSetUp}
           />
           <div className="speak-well">
             {/* HS-176-05 (ruling R13) — the well carries NO mic. `Talk` above is
@@ -363,15 +377,9 @@ export function SpeakFace() {
         </div>
       </article>
 
-      {/* THE CHECKS: speech, engine, hotkey on one rail. A check that is
-          fine and has nothing to say does not draw (the hotkey, speech). */}
+      {/* THE CHECKS: engine and hotkey on one rail. The hotkey draws only
+          when the key is known to be stopped. */}
       <ol className="speak-checks" aria-label="Checks">
-        {/* One element in one place, so SpeechSetup keeps its "was missing"
-            memory and calls onReady when the model lands. */}
-        <li className="speak-check" data-tone="warn" hidden={!speech.notSetUp}>
-          <span className="speak-check-bead" aria-hidden="true" />
-          <SpeechSetup setup={speech} onReady={deck.refreshReadiness} testId="speak-speech-setup" />
-        </li>
         <li className="speak-check" data-tone={engineReady ? "ok" : enginePending ? "idle" : "warn"}>
           <span className="speak-check-bead" aria-hidden="true" />
           <EngineRow engine={resolved.name} egress={resolved.egressLabel} engineState={resolved.engineState} keySet={resolved.keySet} detectStatus={detectStatus} readiness={deck} />
@@ -435,16 +443,38 @@ function PhasePill({ deck, toFix }: { deck: ReturnType<typeof useSpeakDeck>; toF
 
 /* ── Transport row ── */
 
+/** Talk while speech is not set up: the same key, dimmed, with its reason. */
+function TalkWaiting() {
+  return (
+    <Button
+      variant="chrome"
+      className="desk-mic gadget-transport-key is-unsupported speak-talk-waiting"
+      disabled
+      title="Set up speech first"
+      aria-label="Talk · Set up speech first"
+      data-testid="speak-talk-waiting"
+    >
+      <span className="gadget-transport-glyph" aria-hidden="true">
+        <img src={SYSTEM.micGlyph} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} />
+      </span>
+      <span className="gadget-transport-word">Talk</span>
+    </Button>
+  );
+}
+
 function TransportRow({
   deck,
   announce,
+  waiting = false,
 }: {
   deck: ReturnType<typeof useSpeakDeck>;
   announce: (text: string, tone?: "ok" | "warn") => void;
+  /** Speech is not set up: Talk and Open wait, dimmed, with the reason. */
+  waiting?: boolean;
 }) {
   return (
-    <div className="speak-transport" role="group" aria-label="Dictation transport">
-      <MicButton
+    <div className="speak-transport" role="group" aria-label="Dictation transport" data-waiting={waiting || undefined}>
+      {waiting ? <TalkWaiting /> : <MicButton
         variant="transport"
         draftScope="dictation-dry-run-voice"
         label="Talk"
@@ -478,14 +508,14 @@ function TransportRow({
           deck.setLandedMs(null);
           announce(DICTATION_FAILURES[category].message, "warn");
         }}
-      />
+      />}
       <TransportKey
         label="Open mic"
         word="Open"
         glyph={"◉"}
         active={deck.openMic}
-        disabled={!deck.captureSupported}
-        title={deck.captureReason ?? undefined}
+        disabled={waiting || !deck.captureSupported}
+        title={waiting ? "Set up speech first" : (deck.captureReason ?? undefined)}
         onClick={() => void deck.toggleOpenMic()}
       />
       <span className="speak-transport-spacer" />

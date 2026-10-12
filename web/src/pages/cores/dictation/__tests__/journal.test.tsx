@@ -13,6 +13,12 @@ import {
   sourceBadge,
 } from "../Journal";
 
+/** PHILO-17 refit r3: search and the source tokens fold until asked for. */
+function openFind(): void {
+  const find = screen.queryByRole("button", { name: "Search" });
+  if (find) fireEvent.click(find);
+}
+
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
   listeners: new Map<string, (frame: { type: string; data: unknown }) => void>(),
@@ -111,7 +117,7 @@ describe("the Journal row grammar", () => {
     // Human source badges — never the wire's `dry_run`/snake_case. Scoped to
     // the trailing slot: the filter strip carries the same words.
     const badges = Array.from(
-      container.querySelectorAll(".surface-ledger-trailing"),
+      container.querySelectorAll(".journal-badge"),
     ).map((n) => n.textContent);
     expect(badges).toEqual(["DICTATION", "HOTKEY"]);
 
@@ -190,6 +196,7 @@ describe("the Journal's filter tokens", () => {
 
     expect(journalUrls()[0]).toBe("/api/dictation/journal?limit=50");
 
+    openFind();
     fireEvent.click(screen.getByRole("button", { name: "BROWSER" }));
     await waitFor(() =>
       expect(journalUrls()).toContain("/api/dictation/journal?limit=50&source=browser"),
@@ -201,12 +208,22 @@ describe("the Journal's filter tokens", () => {
     );
   });
 
-  it("renders the tokens over an empty stream (no sparse rule)", async () => {
+  it("folds search and the tokens until asked for, and shows them on Search", async () => {
+    // PHILO-17 refit r3 (coordinator): search and the filters fold.
     wire(() => ({ count: 0, items: [] }));
+    const { unmount } = render(<Journal />);
+    await screen.findByText("Nothing said yet");
+    expect(screen.queryByRole("button", { name: "ALL" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
+    unmount();
+    wire(() => ({ count: 1, items: [row({ id: 9 })] }));
     render(<Journal />);
-    await screen.findByText("NOTHING SPOKEN");
+    await screen.findByText("Ship the Q4 platform in October");
+    expect(screen.queryByLabelText("Search the journal")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
     for (const label of ["ALL", "DICTATION", "BROWSER", "HOTKEY"])
       expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
+    expect(screen.getByLabelText("Search the journal")).toBeInTheDocument();
   });
 });
 
@@ -214,8 +231,8 @@ describe("the Journal's two empty states and Clear", () => {
   it("reads NOTHING SPOKEN with no Clear when nothing was ever spoken", async () => {
     wire(() => ({ count: 0, items: [] }));
     render(<Journal />);
-    await screen.findByText("NOTHING SPOKEN");
-    expect(screen.queryByText("NOTHING MATCHES")).toBeNull();
+    await screen.findByText("Nothing said yet");
+    expect(screen.queryByText("Nothing matches")).toBeNull();
     // A verb that does nothing is a lie (A.11).
     expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
   });
@@ -224,13 +241,14 @@ describe("the Journal's two empty states and Clear", () => {
     wire(() => ({ count: 1, items: [row({ id: 9 })] }));
     render(<Journal />);
     await screen.findByText("Ship the Q4 platform in October");
+    openFind();
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Search the journal"), {
       target: { value: "zzz nothing" },
     });
-    expect(await screen.findByText("NOTHING MATCHES")).toBeInTheDocument();
-    expect(screen.queryByText("NOTHING SPOKEN")).toBeNull();
+    expect(await screen.findByText("Nothing matches")).toBeInTheDocument();
+    expect(screen.queryByText("Nothing said yet")).toBeNull();
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
   });
 
@@ -241,11 +259,12 @@ describe("the Journal's two empty states and Clear", () => {
     }));
     render(<Journal />);
     await screen.findByText("postgress migration");
+    openFind();
     fireEvent.change(screen.getByLabelText("Search the journal"), {
       target: { value: "PostgreSQL" },
     });
     expect(screen.getByText("postgress migration")).toBeInTheDocument();
-    expect(screen.queryByText("NOTHING MATCHES")).toBeNull();
+    expect(screen.queryByText("Nothing matches")).toBeNull();
   });
 });
 
@@ -290,6 +309,7 @@ describe("the Journal's live frame obeys the wing's own claims", () => {
     render(<Journal />);
     await screen.findByText("browser only");
 
+    openFind();
     fireEvent.click(screen.getByRole("button", { name: "BROWSER" }));
     await waitFor(() =>
       expect(journalUrls()).toContain("/api/dictation/journal?limit=50&source=browser"),
@@ -323,6 +343,7 @@ describe("the Journal's live frame obeys the wing's own claims", () => {
     render(<Journal />);
     await screen.findByText("the platform review");
 
+    openFind();
     fireEvent.change(screen.getByLabelText("Search the journal"), {
       target: { value: "platform" },
     });
@@ -409,6 +430,7 @@ describe("the Journal's live frame obeys the wing's own claims", () => {
       container.querySelectorAll('.journal-cells[data-searching="true"]'),
     ).toHaveLength(0);
 
+    openFind();
     fireEvent.change(screen.getByLabelText("Search the journal"), {
       target: { value: "PostgreSQL" },
     });

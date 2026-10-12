@@ -973,3 +973,168 @@
   .desk-next .speak-journal .surface-ledger-line,
   .desk-next .speak-learned .surface-ledger-line { transition: none; }
 }
+
+/* REFIT r3: setup first. While speech is not on this device, the setup
+   plate leads (amber bead, the one primary verb) and Talk waits, dimmed. */
+.desk-next .speak-setup {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--wb-ink);
+  background: color-mix(in srgb, var(--lamp-warn) 14%, var(--wb-field-hi, var(--wb-paper)));
+  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.desk-next .speak-setup[hidden] {
+  display: none;
+}
+.desk-next .speak-setup::before {
+  content: "";
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--lamp-warn);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .speak-setup > .speech-setup {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.desk-next .speak-setup .speech-setup-line {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .speak-transport > .desk-mic.gadget-transport-key.speak-talk-waiting,
+.desk-next .speak-plate .speak-transport > .desk-mic.gadget-transport-key.speak-talk-waiting {
+  background: var(--wb-steel);
+  color: var(--wb-muted);
+  filter: saturate(0.4);
+  box-shadow: var(--wb-raised);
+  cursor: not-allowed;
+}
+
+/* REFIT r3: the Journal is a time spine (Today's grammar): mono times in a
+   gutter, a dotted pixel rail, one raised square bead per utterance, what
+   was said and where it landed, and ONE verb (Copy) shown on hover or
+   focus. Search and the source tokens fold behind `Search`. */
+.desk-next .speak-journal .surface-stream-entries {
+  position: relative;
+  margin: 0;
+  padding: 2px 0 6px;
+  list-style: none;
+}
+.desk-next .speak-journal .surface-stream-entries::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 66px;
+  width: 2px;
+  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--wb-ink) 45%, transparent) 0 2px, transparent 2px 4px);
+  pointer-events: none;
+}
+.desk-next .speak-journal .surface-stream-day-label {
+  margin: 6px 0 2px;
+  padding-left: 82px;
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-muted);
+}
+.desk-next .speak-journal .surface-ledger-line {
+  position: relative;
+  border-top: 0;
+  padding: 5px 6px;
+}
+.desk-next .speak-journal .surface-ledger-line::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 62px;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  transition: background-color 120ms ease, box-shadow 160ms ease;
+}
+.desk-next .speak-journal .surface-ledger-row:hover .surface-ledger-line::before {
+  background: var(--wb-sel);
+  box-shadow: var(--wb-raised), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
+}
+.desk-next .speak-journal .surface-ledger-time {
+  flex: 0 0 52px;
+  margin-right: 18px;
+  text-align: right;
+  font: 700 12px / 1.3 var(--font-mono);
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .speak-journal .journal-landed:not(:empty) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lamp-info) 18%, transparent);
+  font: 600 12px / 1 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--wb-info-ink);
+}
+.desk-next .speak-journal .journal-badge {
+  font-size: 12px;
+}
+.desk-next .speak-journal .journal-hover-verb {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.desk-next .speak-journal .surface-ledger-row:hover .journal-hover-verb,
+.desk-next .speak-journal .surface-ledger-row:focus-within .journal-hover-verb,
+.desk-next .speak-journal .surface-ledger-row[data-open] .journal-hover-verb {
+  opacity: 1;
+}
+.desk-next .speak-journal .journal-find {
+  display: flex;
+  justify-content: flex-end;
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .speak-journal .surface-stream-entries::before { left: 54px; }
+  .desk-next .speak-journal .surface-ledger-line::before { left: 50px; }
+  .desk-next .speak-journal .surface-ledger-time { flex-basis: 40px; }
+  .desk-next .speak-journal .surface-stream-day-label { padding-left: 70px; }
+  .desk-next .speak-journal .journal-cells { margin-left: 64px; }
+  /* No hover on a phone: the verb is always there. */
+  .desk-next .speak-journal .journal-hover-verb { opacity: 1; }
+}
+
+/* REFIT r3: Learned is a compact list, "heard → meant": the kind a small
+   steel tag, the arrow mono, the meaning in ink, Forget the one verb. */
+.desk-next .speak-learned .surface-ledger-line {
+  border-top: 0;
+}
+.desk-next .speak-learned .surface-ledger-row + .surface-ledger-row .surface-ledger-line {
+  border-top: 1px dashed color-mix(in srgb, var(--wb-ink) 18%, transparent);
+}
+.desk-next .speak-learned .learned-kind {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1.3 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--wb-ink);
+}
+.desk-next .speak-learned .learned-arrow {
+  font: 700 13px / 1 var(--font-mono);
+  color: var(--wb-muted);
+}
+.desk-next .speak-learned .learned-value {
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-ok-ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .speak-journal .journal-hover-verb,
+  .desk-next .speak-journal .surface-ledger-line::before { transition: none; }
+}

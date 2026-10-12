@@ -101,6 +101,7 @@ function wire(items: (url: string) => unknown[]) {
   });
 }
 
+openFind();
 function token(container: HTMLElement, label: string): HTMLElement {
   const found = Array.from(container.querySelectorAll<HTMLElement>(".surface-filter-token"))
     .find((t) => t.textContent?.trim() === label);
@@ -145,7 +146,7 @@ describe("Speak Journal: the stream board", () => {
     expect(body).toContain("38 MS");
     expect(body).not.toContain(" ms");
 
-    const badges = Array.from(container.querySelectorAll(".surface-ledger-trailing")).map((n) => n.textContent?.trim());
+    const badges = Array.from(container.querySelectorAll(".journal-badge")).map((n) => n.textContent?.trim());
     expect([...badges].sort()).toEqual(["BROWSER", "DICTATION", "DICTATION", "DRY RUN", "HOTKEY"]);
 
     expect(container.querySelectorAll(".journal-mark")).toHaveLength(5);
@@ -157,6 +158,7 @@ describe("Speak Journal: the stream board", () => {
     // No caption count on this wing (A.7).
     expect((container.querySelector(".surface-ledger-count")?.textContent ?? "").trim()).toBe("");
 
+    openFind();
     const tokens = Array.from(container.querySelectorAll(".surface-filter-token")).map((t) => t.textContent?.trim());
     expect(tokens).toEqual(["ALL", "DICTATION", "BROWSER", "HOTKEY"]);
     expect(token(container, "ALL")).toHaveAttribute("aria-pressed", "true");
@@ -181,6 +183,7 @@ describe("Speak Journal: the filtered board", () => {
     const { container } = render(<Journal />);
     await screen.findByText("Cut the Q4 scope to the payments path");
 
+    openFind();
     fireEvent.click(token(container, "DICTATION"));
     await waitFor(() => expect(container.querySelectorAll(".surface-ledger-row")).toHaveLength(2));
     expect(mocks.apiFetch.mock.calls.map((c) => String(c[0]))).toContain("/api/dictation/journal?limit=50&source=dictation");
@@ -188,7 +191,7 @@ describe("Speak Journal: the filtered board", () => {
     expect(token(container, "DICTATION")).toHaveAttribute("aria-pressed", "true");
     expect(token(container, "DICTATION")).toHaveAttribute("data-filter-active");
     expect(token(container, "ALL")).toHaveAttribute("aria-pressed", "false");
-    const badges = Array.from(container.querySelectorAll(".surface-ledger-trailing")).map((n) => n.textContent?.trim());
+    const badges = Array.from(container.querySelectorAll(".journal-badge")).map((n) => n.textContent?.trim());
     expect(badges).toEqual(["DICTATION", "DICTATION"]);
     expect(container.querySelectorAll(".surface-filter-token")).toHaveLength(4);
     expect(container.querySelector(".surface-ledger-head")?.textContent ?? "").not.toContain("/");
@@ -494,6 +497,12 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
 // tests/unit/test_desk_speak.py::test_the_readiness_route_carries_the_hotkey_custody.
 // Every other read the window makes answers from the loop's cold boot.
 import CUSTODY from "./fixtures/speak-hub/custody.json";
+
+/** PHILO-17 refit r3: search and the source tokens fold until asked for. */
+function openFind(): void {
+  const find = screen.queryByRole("button", { name: "Search" });
+  if (find) fireEvent.click(find);
+}
 
 const CUSTODY_READINESS = CUSTODY.readiness as unknown as Record<string, unknown>;
 let custodyState = "all_granted";
