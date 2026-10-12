@@ -4,7 +4,7 @@
 // `TUE 14:00 · 42 MIN` · the summary's state (a lamp + its word) · the
 // run's seconds and its egress chip · the transcript's gaps · `4 PEOPLE`.
 import type { ReactNode } from "react";
-import { AppHead, StatusStrip, type StatusStripItem } from "../../../desk/surface";
+import { AppHead, StatusStrip, Steps, type Step, type StatusStripItem } from "../../../desk/surface";
 import { ledgerDate, durationToken, stateToken, unclearLampLabel } from "./helpers";
 import { EgressChip } from "../../../desk/surface/gadgets";
 import { egressFor } from "../../../desk/surface/egress";
@@ -81,6 +81,31 @@ export function meetingStripItems(
   return items;
 }
 
+/** PHILO-17 (the Today language): where this meeting is, as four steps:
+ *  Record, Summary, Decide, Send follow-up. Read from the record: the
+ *  capture state, the summary's state and the proposals still to decide. */
+export function meetingSteps(
+  meeting: Record<string, unknown>,
+  data: Pick<MeetingData, "detail" | "ftProposals">,
+): Step[] {
+  const source = data.detail ?? meeting;
+  const token = stateToken(source);
+  const stored = Boolean(String(readMeetingIntel(source)?.summary ?? "").trim());
+  const recording = token.label === "REC";
+  const summarised = token.label === "RAN" || stored;
+  const summaryFailed = !summarised && (token.tone === "danger" || token.label === "FAILED");
+  const pending = (data.ftProposals ?? []).some((p) => p.state === "proposed");
+  const summary: Step["state"] = recording ? "later" : summarised ? "done" : summaryFailed ? "failed" : "now";
+  const decide: Step["state"] = !summarised ? "later" : pending ? "now" : "done";
+  const send: Step["state"] = summarised && !pending ? "now" : "later";
+  return [
+    { key: "record", label: "Record", state: recording ? "now" : "done" },
+    { key: "summary", label: "Summary", state: summary },
+    { key: "decide", label: "Decide", state: decide },
+    { key: "send", label: "Send follow-up", state: send },
+  ];
+}
+
 export function MeetingHeader({
   meeting,
   data,
@@ -106,8 +131,11 @@ export function MeetingHeader({
     );
   }
   return (
-    <AppHead className="meetings-detail-head" fact={title} as="div">
-      {strip}
-    </AppHead>
+    <>
+      <AppHead className="meetings-detail-head" fact={title} as="div">
+        {strip}
+      </AppHead>
+      <Steps steps={meetingSteps(meeting, data)} label="Meeting steps" data-testid="meeting-steps" />
+    </>
   );
 }

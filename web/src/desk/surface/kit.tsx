@@ -247,3 +247,23 @@ export function FigureStrip({
     </div>
   );
 }
+
+/** One step of a Steps rail. */
+export type Step = { key: string; label: string; state: "done" | "now" | "later" | "failed" };
+
+/** PHILO-17 (the Today language): a sequence as raised square plates on a
+ *  dotted pixel wire (Prep · Record · Summary · Send follow-up). The step
+ *  that is now is lit (the selection blue, sunken); a done step is green
+ *  with a check; a failed one is red. Words under each plate. */
+export function Steps({ steps, label, "data-testid": testId }: { steps: ReadonlyArray<Step>; label: string; "data-testid"?: string }) {
+  return (
+    <ol className="kit-steps" aria-label={label} data-testid={testId}>
+      {steps.map((step, index) => (
+        <li key={step.key} className="kit-step" data-state={step.state} aria-current={step.state === "now" ? "step" : undefined}>
+          <span className="kit-step-n" aria-hidden="true">{step.state === "done" ? "✓" : step.state === "failed" ? "!" : index + 1}</span>
+          <span className="kit-step-word">{step.label}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}

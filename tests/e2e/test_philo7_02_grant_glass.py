@@ -67,7 +67,8 @@ _OWNS_JS = """(el, target44) => {
     rect: {x: r.left, y: r.top, w: r.width, h: r.height},
     visible: style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity) > 0,
     inViewport: r.left >= 0 && r.top >= 0 && r.right <= vw && r.bottom <= vh && r.width > 0 && r.height > 0,
-    points: pts.map(([x, y]) => { const hit = document.elementFromPoint(x, y); return {x, y, owned: !!hit && (hit === el || el.contains(hit))}; }),
+    points: pts.map(([x, y]) => { const hit = document.elementFromPoint(x, y); return {x, y, owned: !!hit && (hit === el || el.contains(hit)),
+      hit: hit ? (String(hit.className || hit.tagName).split(' ')[0] + ':' + (hit.textContent || '').trim().slice(0, 24)) : null}; }),
     fontPx: parseFloat(style.fontSize),
   };
 }"""
@@ -83,7 +84,7 @@ def _readable(locator: Any, want: str) -> None:
     probe = locator.first.evaluate(_OWNS_JS, False)
     assert probe["visible"] and probe["inViewport"], f"{want!r}: not readable: {probe}"
     uncovered = [p for p in probe["points"] if not p["owned"]]
-    assert not uncovered, f"{want!r}: covered at {uncovered}"
+    assert not uncovered, f"{want!r}: covered at {uncovered} (rect {probe['rect']})"
 
 
 def _pointer_owned(page: Any, button: Any, label: str, *, scrolled: bool = False) -> None:

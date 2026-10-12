@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TodayView, countdown, currentStep, toFinish } from "./TodayView";
 
 function json(body: unknown, status = 200) {
@@ -19,7 +19,16 @@ function hub(routes: Record<string, (init?: RequestInit) => Response>) {
   return calls;
 }
 
-afterEach(() => vi.unstubAllGlobals());
+// The day is fixed at 09:00: "+120 min" is still today at any wall-clock
+// hour (the suite failed after 22:00).
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2026, 9, 12, 9, 0, 0));
+});
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 describe("PHILO-17 Today: the day as a timeline", () => {
   it("counts down in minutes, then hours, then now", () => {
@@ -55,14 +64,13 @@ describe("PHILO-17 Today: the day as a timeline", () => {
       "/api/meetings?limit=40": () => json({ meetings: [] }),
       "/api/desk/needs-you": () => json({ items: [{ proposalId: "pr1", title: "Freeze the ledger on Nov 12", meetingTitle: "Ledger cutover sync" }] }),
       "/api/people/readiness": () => json({ readiness: "ready" }),
-      "/api/people/relationships": () => json({ relationships: [{ id: "r1" }] }),
-      "/api/people/relationships/r1": () => json({ relationship: { commitments: [{ state: "open" }, { state: "done" }], owed_to_you: [{ state: "open" }] } }),
+      "/api/people/relationships?counts=1": () => json({ relationships: [{ id: "r1", you_owe_count: 1, owes_you_count: 1 }] }),
       "/api/proposals/pr1/confirm": () => json({ ok: true }),
     });
     render(<TodayView header={null} />);
     const next = await screen.findByTestId("today-next");
     expect(within(next).getByText("1:1 Priya")).toBeTruthy();
-    expect(within(next).getByTestId("today-countdown").textContent).toMatch(/^in (49|50|51) min$/);
+    expect(within(next).getByTestId("today-countdown").textContent).toBe("in 50 min");
     expect(within(next).getByText("Prep").closest("li")?.getAttribute("aria-current")).toBe("step");
     expect(within(next).getByRole("button", { name: "Open prep" })).toBeTruthy();
     expect(within(next).getByRole("button", { name: "Record when it starts" }).className).toContain("btn--primary");
@@ -91,5 +99,93 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     expect(within(empty).getByRole("button", { name: "Connect calendar" }).className).toContain("btn--primary");
     expect(screen.getByRole("button", { name: "Record now" }).className).not.toContain("btn--primary");
     expect(screen.queryByTestId("today-owed")).toBeNull();
+  });
+
+  it("MUST 4: the owed totals are ONE bounded read (the roster with counts), never one read per person", async () => {
+    const calls = hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
+      "/api/meetings?limit=40": () => json({ meetings: [] }),
+      "/api/desk/needs-you": () => json({ items: [] }),
+      "/api/people/readiness": () => json({ readiness: "ready" }),
+      "/api/people/relationships?counts=1": () => json({ relationships: [
+        { id: "r1", you_owe_count: 2, owes_you_count: 0 }, { id: "r2", you_owe_count: 1, owes_you_count: 3 },
+      ] }),
+    });
+    render(<TodayView header={null} />);
+    const owed = await screen.findByTestId("today-owed");
+    expect(owed.textContent).toContain("3you owe");
+    expect(owed.textContent).toContain("3owed to you");
+    expect(calls.filter(([url]) => url.startsWith("/api/people/relationships/"))).toHaveLength(0);
+  });
+
+  it("MUST 3: a failed read says so with Retry; it never reads as empty", async () => {
+    hub({
+      "/api/door": () => json({ detail: "down" }, 503),
+      "/api/meetings?limit=40": () => json({ detail: "down" }, 503),
+      "/api/desk/needs-you": () => json({ detail: "down" }, 503),
+      "/api/people/readiness": () => json({ readiness: "ready" }),
+      "/api/people/relationships?counts=1": () => json({ detail: "down" }, 503),
+    });
+    render(<TodayView header={null} />);
+    expect(await screen.findByTestId("today-door-failed")).toHaveTextContent("Could not read the calendar");
+    expect(screen.queryByText("No calendar yet")).toBeNull();
+    expect(screen.getByTestId("today-meetings-failed")).toHaveTextContent("Could not read the meetings");
+    expect(screen.getByTestId("today-needs-failed")).toHaveTextContent("Could not read what to decide");
+    expect(screen.getByTestId("today-people-failed")).toHaveTextContent("Could not read People");
+    expect(screen.queryByTestId("today-owed")).toBeNull();
+    expect(within(screen.getByTestId("today-door-failed")).getByRole("button", { name: "Retry" })).toBeTruthy();
+  });
+
+  it("MUST 3: a refused Confirm and a refused arm say so beside their verb", async () => {
+    hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [
+        { id: "ev1", source: "calendar_event", title: "1:1 Priya", starts_at: inMinutes(50), ends_at: inMinutes(80) },
+      ] }),
+      "/api/meetings?limit=40": () => json({ meetings: [] }),
+      "/api/desk/needs-you": () => json({ items: [{ proposalId: "pr1", title: "Freeze the ledger" }] }),
+      "/api/proposals/pr1/confirm": () => json({ detail: "proposal_not_open" }, 409),
+      "/api/scheduled-recordings": () => json({ detail: "calendar_event_not_found" }, 404),
+    });
+    render(<TodayView header={null} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Confirm" }));
+    expect(await screen.findByTestId("today-decide-failed")).toHaveTextContent("Not confirmed. Try again");
+    fireEvent.click(screen.getByRole("button", { name: "Record when it starts" }));
+    expect(await screen.findByTestId("today-arm-failed")).toHaveTextContent("Not armed. Try again");
+  });
+
+  it("an armed next meeting says when it arms", async () => {
+    const start = new Date(Date.now() + 50 * 60_000);
+    hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [
+        { id: "ev1", source: "calendar_event", title: "1:1 Priya", starts_at: start.toISOString(), ends_at: inMinutes(80),
+          armed: { recording_id: "s1", arms_at: start.toISOString() } },
+      ] }),
+      "/api/meetings?limit=40": () => json({ meetings: [] }),
+      "/api/desk/needs-you": () => json({ items: [] }),
+    });
+    render(<TodayView header={null} />);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    expect(await screen.findByTestId("today-armed")).toHaveTextContent(`Armed for ${pad(start.getHours())}:${pad(start.getMinutes())}`);
+  });
+
+  it("MUST 2: Make the summary shows where the run goes before the press", async () => {
+    hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
+      "/api/meetings?limit=40": () => json({ meetings: [{
+        id: "m1", title: "Vendor sync", started_at: inMinutes(-60), transcriptWords: 40, intel_status: "disabled",
+        planned_route: { status: "ready", reason_code: null, selection_hash: "sha256:abc", legs: [
+          { ordinal: 1, host: "192.168.1.43", boundary: "lan", profile_id: "p1", profile_revision: 1, deployment_revision_id: "d1" },
+          { ordinal: 2, host: "api.example.com", boundary: "cloud", profile_id: "p2", profile_revision: 1, deployment_revision_id: "d2" },
+        ] },
+      }] }),
+      "/api/desk/needs-you": () => json({ items: [] }),
+    });
+    render(<TodayView header={null} />);
+    const row = await screen.findByTestId("today-finish");
+    const route = within(row).getByTestId("today-route");
+    // The lead host and its fallback, said before the press.
+    expect(route.textContent).toMatch(/LAN|192\.168\.1\.43/i);
+    expect(route.textContent).toMatch(/api\.example\.com|CLOUD|FALLBACK|\+1/i);
+    expect(within(row).getByRole("button", { name: "Make the summary" })).toBeTruthy();
   });
 });

@@ -255,3 +255,20 @@ def test_philo17_they_owe_you_needs_a_body_and_the_owner(service: PeopleService)
         service.create_owed_to_you(OWNER, rid, {"body": "  "})
     with pytest.raises(PeopleServiceError):
         service.create_owed_to_you(AGENT, rid, {"body": "Not his to write"})
+
+
+def test_the_list_counts_owed_both_ways_in_one_read(service: PeopleService) -> None:
+    """PHILO-17 (Astra r1 on #1110, MUST 4): the roster answer carries what
+    each person is owed and owes (open commitments only), only when asked."""
+    maya = service.create_relationship(OWNER, {"display_name": "Maya"})
+    sam = service.create_relationship(OWNER, {"display_name": "Sam"})
+    request = service.create_request(OWNER, maya["id"], {"body": "Review the doc"})
+    service.accept_request(OWNER, request["id"])
+    service.create_owed_to_you(OWNER, maya["id"], {"body": "Send the plan"})
+
+    rows = {row["display_name"]: row for row in service.list_relationships(OWNER, with_counts=True)}
+    assert (rows["Maya"]["you_owe_count"], rows["Maya"]["owes_you_count"]) == (1, 1)
+    assert (rows["Sam"]["you_owe_count"], rows["Sam"]["owes_you_count"]) == (0, 0)
+    plain = service.list_relationships(OWNER)
+    assert all("you_owe_count" not in row for row in plain)
+    assert sam["id"] in {row["id"] for row in plain}

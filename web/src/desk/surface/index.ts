@@ -113,7 +113,7 @@ export { SPARSE_THRESHOLD } from "./sparse";
 
 export { FilterTokens, type FilterTokenOption } from "./FilterTokens";
 // Phase 16: the interior kit (COMPOSITOR.md §11; contract.md "The interior kit").
-export { AppHead, StatusStrip, FilterBar, KindPlate, Avatar, AvatarStack, AppTile, FigureStrip, initialsOf, hueOf, type StatusStripItem, type Figure } from "./kit";
+export { AppHead, StatusStrip, FilterBar, KindPlate, Avatar, AvatarStack, AppTile, FigureStrip, Steps, initialsOf, hueOf, type StatusStripItem, type Figure, type Step } from "./kit";
 
 export {
   LedgerFilterBar,
