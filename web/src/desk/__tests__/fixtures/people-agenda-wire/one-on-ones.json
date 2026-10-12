@@ -1,0 +1,37 @@
+{
+  "one_on_ones": [
+    {
+      "agenda": [
+        {
+          "body": "Pick the cutover date",
+          "created_at": "2026-10-12T04:54:22Z",
+          "id": "4a0aa18c-fc79-41e2-92ee-5e0b84ebc3d4",
+          "relationship_id": "155cfcd2-6fd6-4bbb-8710-cddf2b4d55b1",
+          "rolled_from_id": null,
+          "session_id": "fa1fb438-c198-4c1d-bbf2-0fc8e0cf91c7",
+          "state": "open",
+          "updated_at": "2026-10-12T04:54:22Z",
+          "visibility": "shared_intent"
+        },
+        {
+          "body": "Ask about the EU shard backup plan",
+          "created_at": "2026-10-12T04:54:22Z",
+          "id": "36d5a06e-bf56-43f8-9eb2-350fc61291d6",
+          "relationship_id": "155cfcd2-6fd6-4bbb-8710-cddf2b4d55b1",
+          "rolled_from_id": null,
+          "session_id": "fa1fb438-c198-4c1d-bbf2-0fc8e0cf91c7",
+          "state": "open",
+          "updated_at": "2026-10-12T04:54:22Z",
+          "visibility": "shared_intent"
+        }
+      ],
+      "created_at": "2026-10-12T04:54:22Z",
+      "id": "fa1fb438-c198-4c1d-bbf2-0fc8e0cf91c7",
+      "private_prep": "",
+      "relationship_id": "155cfcd2-6fd6-4bbb-8710-cddf2b4d55b1",
+      "state": "active",
+      "updated_at": "2026-10-12T04:54:22Z",
+      "visibility": "shared_intent"
+    }
+  ]
+}

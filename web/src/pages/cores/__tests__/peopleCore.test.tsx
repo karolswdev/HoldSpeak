@@ -8,7 +8,10 @@ function json(body: unknown, status = 200) {
 
 function stub(handlers: Record<string, (input: string, opts?: { method?: string; body?: string }) => Response | Promise<Response>>) {
   vi.stubGlobal("fetch", vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
-    const handler = handlers[String(input)];
+    // PHILO-17 REFIT: Prep leads, so a person's open reads the 1:1 brief;
+    // a test that does not name it gets an empty brief.
+    // The roster read carries `?counts=1` (PHILO-17); a stub names the path.
+    const handler = handlers[String(input).replace("?counts=1", "")] ?? (String(input).endsWith("/brief") ? () => json({ brief: { open_commitments: [], agenda_items: [] } }) : undefined);
     if (!handler) throw new Error(`Unexpected request: ${String(input)}`);
     return handler(input, opts);
   }));
@@ -55,7 +58,7 @@ describe("PeopleCore encrypted local plane", () => {
     const lock = await screen.findByTestId("people-lock");
     expect(lock.textContent).toContain("Encrypted");
     expect(lock.getAttribute("title")).toBe("Encrypted · Local storage · Notes only");
-    await waitFor(() => expect(screen.getByRole("tab", { name: "1:1s" })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole("tab", { name: "Prep" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
     expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();
@@ -133,7 +136,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
           { id: "e1", uid: "uid-ewa", source: "calendar_event", title: "1:1 w/ Ewa", starts_at: "2099-09-01T10:00:00Z", ends_at: "2099-09-01T10:30:00Z", source_id: "cal-1" },
         ] }),
       };
-      const handler = handlers[String(input)];
+      const handler = handlers[String(input).replace("?counts=1", "")];
       if (!handler) throw new Error(`Unexpected request: ${String(input)}`);
       return handler();
     });
@@ -162,7 +165,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       if (String(input).includes("calendar-links") && opts?.method === "POST") {
         return json({ relationship: { id: "r1", display_name: "Ewa", calendar_links: [{ uid: "uid-ewa", source_id: "cal-1", label: "1:1 w/ Ewa" }] } });
       }
-      const handler = handlers[String(input)];
+      const handler = handlers[String(input).replace("?counts=1", "")];
       if (!handler) throw new Error(`Unexpected request: ${String(input)}`);
       return handler();
     });
@@ -196,7 +199,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       if (String(input).includes("calendar-links") && opts?.method === "DELETE") {
         return json({ relationship: { id: "r1", display_name: "Ewa", calendar_links: [] } });
       }
-      const handler = handlers[String(input)];
+      const handler = handlers[String(input).replace("?counts=1", "")];
       if (!handler) throw new Error(`Unexpected request: ${String(input)}`);
       return handler();
     });
@@ -222,6 +225,8 @@ describe("PeopleCore HS-149-03 gesture", () => {
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Ewa", relationship_kind: "direct_report" }] }),
       "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Ewa", calendar_links: [{ uid: "uid-ewa", source_id: "cal-1", label: "1:1 w/ Ewa" }] } }),
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      // The hub's brief names the linked series' next event.
+      "/api/people/relationships/r1/brief": () => json({ brief: { open_commitments: [], agenda_items: [], next_one_on_one: { id: "e1", uid: "uid-ewa", title: "1:1 w/ Ewa", starts_at: "2099-09-01T10:00:00Z", ends_at: "2099-09-01T10:30:00Z", source_id: "cal-1", source_label: "Work" } } }),
       "/api/door": () => json({ upcoming: [
         { id: "e1", uid: "uid-ewa", source: "calendar_event", title: "1:1 w/ Ewa", starts_at: "2099-09-01T10:00:00Z", ends_at: "2099-09-01T10:30:00Z", source_id: "cal-1" },
       ] }),
@@ -240,7 +245,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       "/api/door": () => json({ upcoming: [] }),
     });
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Now" })).toBeTruthy());
+    await screen.findByTestId("people-next-plate");
     expect(screen.queryByTestId("people-next-1on1")).toBeNull();
   });
 
@@ -324,7 +329,7 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
       if (String(input).includes("owner-aliases") && opts?.method === "DELETE") {
         return json({ relationship: { id: "r1", display_name: "Ewa", owner_aliases: ["ES"] } });
       }
-      const handler = handlers[String(input)];
+      const handler = handlers[String(input).replace("?counts=1", "")];
       if (!handler) throw new Error(`Unexpected request: ${String(input)}`);
       return handler();
     });
@@ -457,8 +462,9 @@ describe("PeopleCore scoped to a Project (HS-200-14)", () => {
 describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
   function spy(handlers: Record<string, (opts?: { method?: string; body?: string }) => Response>) {
     const fetchSpy = vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
-      const key = `${opts?.method ?? "GET"} ${String(input)}`;
-      const handler = handlers[key] ?? handlers[String(input)];
+      const url = String(input).replace("?counts=1", "");
+      const key = `${opts?.method ?? "GET"} ${url}`;
+      const handler = handlers[key] ?? handlers[url];
       if (!handler) throw new Error(`Unexpected request: ${key}`);
       return handler(opts);
     });
@@ -468,13 +474,13 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
   const posts = (fetchSpy: ReturnType<typeof spy>, path: string) =>
     fetchSpy.mock.calls.filter(([url, opts]) => String(url) === path && (opts as { method?: string } | undefined)?.method === "POST");
 
-  it("Now records what they owe you, marks it done, and names requests 'Asked of you'", async () => {
+  it("Prep records what they owe you, marks it done, and names requests 'Asked of you'", async () => {
     // The person's read carries the added item once the Add has saved it.
     const added: { id: string; body: string; state: string; direction: string }[] = [];
     const fetchSpy = spy({
       "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report" }] }),
-      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Maya Chen", commitments: [], requests: [], owed_to_you: [{ id: "o1", body: "Send the rollout plan", state: "open", direction: "report_owes" }, { id: "o2", body: "Old item", state: "done", direction: "report_owes" }, ...added] } }),
+      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Maya Chen", commitments: [], requests: [{ id: "q1", body: "Review my doc", state: "requested" }], owed_to_you: [{ id: "o1", body: "Send the rollout plan", state: "open", direction: "report_owes" }, { id: "o2", body: "Old item", state: "done", direction: "report_owes" }, ...added] } }),
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
       "/api/people/relationships/r1/brief": () => json({ brief: { relationship_id: "r1", open_commitments: [], agenda_items: [] } }),
       "/api/door": () => json({ upcoming: [] }),
@@ -486,7 +492,7 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     });
     render(<PeopleCore scope="people:r1" />);
     const owed = await screen.findByTestId("people-they-owe");
-    expect(within(owed).getByText("They owe you · 1")).toBeTruthy();
+    expect(within(owed).getByRole("heading").textContent).toBe("THEY OWE YOU1");
     expect(within(owed).getByText("Send the rollout plan")).toBeTruthy();
     expect(within(owed).queryByText("Old item")).toBeNull();
     expect(screen.getByText("Asked of you")).toBeTruthy();
@@ -501,7 +507,7 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     // lands. Wait for the read that carries the added item, then press Done.
     // A press in that gap found no Done: the -n 8 flake (test diet 2026-10-11).
     await within(owed).findByText("Send me the API migration estimate");
-    const rollout = within(owed).getByText("Send the rollout plan").closest(".surface-row") as HTMLElement;
+    const rollout = within(owed).getByText("Send the rollout plan").closest(".people-plate-row") as HTMLElement;
     fireEvent.click(within(rollout).getByRole("button", { name: "Done" }));
     await waitFor(() => expect(posts(fetchSpy, "/api/people/commitments/o1/transition")).toHaveLength(1));
     expect(JSON.parse(String(posts(fetchSpy, "/api/people/commitments/o1/transition")[0][1]?.body)).verb).toBe("done");
@@ -562,16 +568,15 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
 
   it("PHILO-17 ALIVE: a roster row says the next 1:1, owed both ways, and Plan for a report with none", async () => {
     const soon = new Date(Date.now() + 2 * 86_400_000).toISOString();
-    spy({
+    // The counts ride the roster read (`?counts=1`); the next 1:1 is the
+    // Door's calendar row that carries the person. No per-person read.
+    const fetchSpy = spy({
       "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
       "/api/people/relationships": () => json({ relationships: [
-        { id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report" },
-        { id: "r2", display_name: "Sam Ortiz", relationship_kind: "direct_report" },
+        { id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report", you_owe_count: 1, owes_you_count: 1 },
+        { id: "r2", display_name: "Sam Ortiz", relationship_kind: "direct_report", you_owe_count: 0, owes_you_count: 0 },
       ] }),
-      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report", next_one_on_one: soon,
-        commitments: [{ id: "c1", body: "Review the doc", state: "open" }, { id: "c2", body: "Old", state: "done" }],
-        owed_to_you: [{ id: "o1", body: "Send the plan", visibility: "shared_intent", state: "open" }] } }),
-      "/api/people/relationships/r2": () => json({ relationship: { id: "r2", display_name: "Sam Ortiz", relationship_kind: "direct_report", next_one_on_one: null, commitments: [] } }),
+      "/api/door": () => json({ upcoming: [{ id: "e1", source: "calendar_event", title: "1:1 Maya / Karol", starts_at: soon, ends_at: soon, person_relationship_id: "r1", person_label: "Maya Chen" }] }),
     });
     render(<PeopleCore />);
     const maya = (await screen.findByRole("button", { name: /Maya Chen/ })).closest("li")!;
@@ -582,5 +587,8 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     await waitFor(() => expect(within(sam).getByTestId("people-row-next").textContent).toBe("No 1:1 planned"));
     expect(within(sam).getByRole("button", { name: "Plan" })).toBeTruthy();
     expect(within(sam).queryByText(/You owe/)).toBeNull();
+    expect(fetchSpy.mock.calls.some(([url]) => /\/api\/people\/relationships\/r\d$/.test(String(url)))).toBe(false);
+    // The soonest 1:1 this week is the roster's focus plate, with Open prep.
+    expect(within(screen.getByTestId("people-roster-next")).getByRole("button", { name: "Open prep" })).toBeTruthy();
   });
 });

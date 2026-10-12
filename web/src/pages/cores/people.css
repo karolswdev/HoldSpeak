@@ -203,3 +203,537 @@
   cursor: help;
   white-space: nowrap;
 }
+
+/* ── PHILO-17 REFIT: the person page, in the Today language. The head
+   (avatar, name, role, owed both ways), a quiet tab strip with Prep in
+   front, the next 1:1 as the focus plate (a Workbench title bar), then two
+   steel plates: what he owes and what is owed to him. Colour and shadow
+   move on hover; nothing changes place. ── */
+.desk-next .person-page {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.desk-next .people-detail-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 0;
+}
+.desk-next .people-detail-head .kit-avatar {
+  flex: none;
+}
+.desk-next .people-who {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.desk-next .people-name {
+  margin: 0;
+  font: 650 19px / 1.2 var(--font-display);
+  letter-spacing: 0;
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.desk-next .people-who-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font: 500 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .people-head-sp {
+  flex: 1 1 8px;
+}
+.desk-next .people-strip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font: 600 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .people-strip b {
+  font-weight: 800;
+  color: var(--wb-text);
+}
+.desk-next .people-strip [data-tone="warn"] b { color: var(--wb-warn-ink); }
+.desk-next .people-strip [data-tone="ok"] b { color: var(--wb-ok-ink); }
+
+/* The tab strip: a sunken steel well; the selected tab is a paper key. */
+.desk-next .person-page .people-lenses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid var(--wb-ink);
+  border-bottom: 1px solid var(--wb-ink);
+  background: var(--wb-well);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .person-page .people-lenses > .btn {
+  flex: 1 1 0;
+  min-width: 64px;
+  border: 1px solid color-mix(in srgb, var(--wb-ink) 55%, transparent);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  font: 700 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+}
+.desk-next .person-page .people-lenses > .btn:hover {
+  color: var(--wb-text);
+  background: var(--wb-steel-2);
+}
+.desk-next .person-page .people-lenses > .btn[aria-selected="true"] {
+  border-color: var(--wb-ink);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-raised), inset 0 -2px 0 var(--wb-sel);
+  color: var(--wb-text);
+}
+
+.desk-next .people-prep {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.desk-next .people-cap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font: 800 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--wb-muted);
+}
+.desk-next .people-cap > b {
+  font-weight: 800;
+  color: var(--wb-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The next 1:1: the focus object, a raised paper plate with a title bar. */
+.desk-next .people-next {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent), 4px 10px 22px color-mix(in srgb, var(--wb-ink) 14%, transparent);
+  transition: box-shadow 160ms ease;
+}
+.desk-next .people-next:hover {
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent), 6px 14px 28px color-mix(in srgb, var(--wb-ink) 20%, transparent);
+}
+.desk-next .people-next-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--wb-ink);
+  background: var(--wb-stipple-fine), var(--wb-blue);
+  color: var(--wb-ink);
+}
+.desk-next .people-next-label {
+  padding: 1px 6px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.desk-next .people-next-when {
+  margin-left: auto;
+  text-align: right;
+  font: 700 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-ink);
+}
+.desk-next .people-next-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 12px;
+  min-width: 0;
+}
+.desk-next .people-next-event {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.desk-next .people-next-sprite {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 6px;
+  background: hsl(268 60% 88%);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .people-next-sprite > img {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+.desk-next .people-next-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.desk-next .people-next-title {
+  font: 650 15px / 1.25 var(--font-display);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.desk-next .people-next-none {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font: 500 13px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .people-next .surface-section {
+  margin: 0;
+}
+
+/* To raise: a paper well of beads on a dotted rail. */
+.desk-next .people-raise {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.desk-next .people-raise-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 6px 8px 6px 22px;
+  list-style: none;
+  background: var(--alive-paper, #f8f5ee);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .people-raise-list::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 11px;
+  width: 2px;
+  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--wb-ink) 40%, transparent) 0 2px, transparent 2px 4px);
+}
+.desk-next .people-raise-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-height: 30px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.desk-next .people-raise-row::before {
+  content: "";
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .people-raise-row[data-testid="prep-commitments-row"]::before { background: var(--lamp-fail); }
+.desk-next .people-raise-row[data-testid="prep-prs-row"]::before,
+.desk-next .people-raise-row[data-testid="prep-assignments-row"]::before { background: var(--lamp-warn); }
+.desk-next .people-raise-row:hover {
+  background: #ffffff;
+  box-shadow: var(--alive-lift);
+}
+.desk-next .people-raise-bead { display: none; }
+.desk-next .people-raise-words {
+  flex: 1 1 12ch;
+  min-width: 0;
+  font: 500 13px / 1.35 var(--font-sans);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.desk-next .people-raise-tokens {
+  display: inline-flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.desk-next .people-raise-row > .btn { flex: none; margin-left: auto; }
+.desk-next .people-prep-token {
+  font: 600 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .people-prep-token[data-warning] { color: var(--wb-warn-ink); }
+.desk-next .people-concern { margin-top: 2px; }
+
+/* A pill: the state's tint, a round lamp, the word in the state's ink. */
+.desk-next .people-pill {
+  --tint: color-mix(in srgb, var(--wb-ink) 8%, transparent);
+  --lamp: color-mix(in srgb, var(--wb-ink) 35%, transparent);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 20px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tint);
+  font: 600 12px / 1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-text);
+  white-space: nowrap;
+}
+.desk-next .people-pill::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lamp);
+}
+.desk-next .people-pill[data-tone="warn"] { --tint: color-mix(in srgb, var(--lamp-warn) 26%, transparent); --lamp: var(--lamp-warn); color: var(--wb-warn-ink); }
+.desk-next .people-pill[data-tone="danger"] { --tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent); --lamp: var(--lamp-fail); color: var(--wb-danger-ink); }
+.desk-next .people-pill[data-tone="info"] { --tint: color-mix(in srgb, var(--lamp-info) 20%, transparent); --lamp: var(--lamp-info); color: var(--wb-info-ink); }
+.desk-next .people-pill[data-tone="ok"] { --tint: color-mix(in srgb, var(--lamp-ok) 20%, transparent); --lamp: var(--lamp-ok); color: var(--wb-ok-ink); }
+.desk-next .people-pill-link { cursor: pointer; }
+.desk-next .people-pill-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* The add rows: a field and one quiet verb. */
+.desk-next .person-page .people-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.desk-next .person-page .people-add .gadget-string { flex: 1 1 auto; min-width: 0; }
+.desk-next .person-page .people-add > .btn { flex: none; }
+
+/* Owed both ways: two steel plates side by side (one column when narrow). */
+.desk-next .people-owe-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .people-owe-grid { grid-template-columns: minmax(0, 1fr); }
+}
+.desk-next .people-plate {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-field-hi);
+  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+}
+.desk-next .people-plate-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 3px;
+  list-style: none;
+  background: var(--alive-paper, #f8f5ee);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .people-plate-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 6px;
+  border-radius: 3px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.desk-next .people-plate-row:hover {
+  background: #ffffff;
+  box-shadow: var(--alive-lift);
+}
+.desk-next .people-plate-row:has(.btn:active, .btn--chrome:active) {
+  background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .people-plate-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.desk-next .people-plate-title {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.desk-next .btn--chrome.people-plate-title { cursor: pointer; }
+.desk-next .btn--chrome.people-plate-title:hover { text-decoration: underline; text-underline-offset: 3px; }
+.desk-next .people-plate-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font: 500 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .people-plate-row > .btn { flex: none; }
+.desk-next .people-plate .people-commitment-inspector {
+  margin: 0;
+  background: var(--wb-paper);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .people-next,
+  .desk-next .people-raise-row,
+  .desk-next .people-plate-row { transition: none; }
+}
+.desk-next .people-next-sep { display: none; }
+
+/* ── PHILO-17 REFIT pass 2: TO RAISE numbered on the 1:1 plate; the
+   prep plates below (Last time, Open work, On the desk). ── */
+.desk-next .people-raise-list { padding-left: 34px; }
+.desk-next .people-raise-list::before { left: 17px; }
+.desk-next .people-raise-row::before { display: none; }
+.desk-next .people-raise-n {
+  position: absolute;
+  left: -27px;
+  top: 50%;
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-ink);
+}
+.desk-next .people-raise-row:first-child .people-raise-n {
+  background: var(--wb-sel);
+  color: var(--wb-paper);
+}
+.desk-next .people-cap > b { margin-left: 2px; }
+.desk-next .people-more-grid > .people-plate:only-child { grid-column: 1 / -1; }
+.desk-next .people-work-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+  padding: 4px 6px;
+  border-radius: 3px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.desk-next .people-work-row:hover { background: #ffffff; box-shadow: var(--alive-lift); }
+.desk-next .people-work-row > .btn { flex: none; margin-left: auto; }
+.desk-next .people-last-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.desk-next .people-last-head > .btn { flex: none; }
+.desk-next .people-mono {
+  font: 700 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-text);
+}
+.desk-next .people-excerpt {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .people-work-row { transition: none; }
+}
+
+/* ── PHILO-17 REFIT pass 2: the roster. The head carries the week in mono
+   (Today's strip); the soonest 1:1 is the focus plate with Open prep; rows
+   say the next 1:1 and owed both ways as lamp pills. ── */
+.desk-next .people-surface > .people-top {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.desk-next .people-roster-next { margin: 0 0 10px; }
+.desk-next .people-next-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+.desk-next .people-next-row > .btn { flex: none; }
+.desk-next .people-surface .surface-split-main .surface-section-head > h3 {
+  font: 800 12px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+}
+.desk-next .people-surface .surface-row-text small .people-pill { min-height: 20px; }
+.desk-next .people-row-fact.people-pill { color: var(--wb-info-ink); }
+.desk-next .people-row-fact[data-quiet] { font: 500 12px / 1.3 var(--font-sans); }
+@container surface (max-width: 559.9px) {
+  .desk-next .people-next-row { flex-wrap: wrap; }
+}
+
+/* PHILO-17: Remove on a TO RAISE row is quiet: it shows on hover or focus
+   (always on a touch screen, which has no hover). Opacity only. */
+.desk-next .people-raise-row > .people-raise-remove {
+  flex: none;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.desk-next .people-raise-row:hover > .people-raise-remove,
+.desk-next .people-raise-row:focus-within > .people-raise-remove { opacity: 1; }
+@media (hover: none) {
+  .desk-next .people-raise-row > .people-raise-remove { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .people-raise-row > .people-raise-remove { transition: none; }
+}

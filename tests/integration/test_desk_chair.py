@@ -171,3 +171,47 @@ def test_they_owe_you_add_saves_and_the_next_read_carries_the_item(hub: Any, tmp
     for name, body in wire.items():
         stored = json.loads((PEOPLE_WIRE / name).read_text())
         assert not _people_invented(stored, body), (name, _people_invented(stored, body))
+
+
+AGENDA_WIRE = Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "people-agenda-wire"
+
+
+def test_agenda_remove_takes_the_item_off_to_raise(hub: Any, tmp_path: Path) -> None:
+    """The hub half of web/src/desk/__tests__/people.app.test.tsx "Remove on a
+    TO RAISE row": two agenda items on Priya's 1:1, the brief before, the
+    remove answer, and the brief after (only the kept item stays), recorded
+    into fixtures/people-agenda-wire/ (HOLDSPEAK_WRITE_WIRE_FIXTURES=1) and
+    fenced here against invented fields on every run."""
+    import json
+    import os
+
+    base, ids = hub
+    rel = ids["priya"]
+    session = _http(base, "POST", f"/api/people/relationships/{rel}/one-on-ones", {"visibility": "shared_intent"})["one_on_one"]["id"]
+    for body in ("Pick the cutover date", "Ask about the EU shard backup plan"):
+        _http(base, "POST", f"/api/people/one-on-ones/{session}/agenda",
+              {"body": body, "visibility": "shared_intent", "state": "open", "source": {"kind": "manual"}})
+    wire: dict[str, Any] = {
+        "readiness.json": _http(base, "GET", "/api/people/readiness"),
+        "relationships.json": _http(base, "GET", "/api/people/relationships?counts=1"),
+        "relationship.json": _http(base, "GET", f"/api/people/relationships/{rel}"),
+        "one-on-ones.json": _http(base, "GET", f"/api/people/relationships/{rel}/one-on-ones"),
+        "brief-before.json": _http(base, "GET", f"/api/people/relationships/{rel}/brief"),
+    }
+    agenda = wire["brief-before.json"]["brief"]["agenda_items"]
+    drop = next(item for item in agenda if item["body"] == "Ask about the EU shard backup plan")
+    wire["agenda-removed.json"] = _http(base, "POST", f"/api/people/agenda/{drop['id']}/transition", {"to": "removed"})
+    assert wire["agenda-removed.json"]["agenda_item"]["state"] == "removed"
+    wire["brief-after.json"] = _http(base, "GET", f"/api/people/relationships/{rel}/brief")
+    after = [item["body"] for item in wire["brief-after.json"]["brief"]["agenda_items"]]
+    assert "Ask about the EU shard backup plan" not in after and "Pick the cutover date" in after, after
+
+    text = json.dumps(wire).replace(str(tmp_path), "/Users/owner")
+    wire = json.loads(text)
+    if os.environ.get("HOLDSPEAK_WRITE_WIRE_FIXTURES") == "1":
+        AGENDA_WIRE.mkdir(parents=True, exist_ok=True)
+        for name, body in wire.items():
+            (AGENDA_WIRE / name).write_text(json.dumps(body, indent=2, sort_keys=True) + "\n")
+    for name, body in wire.items():
+        stored = json.loads((AGENDA_WIRE / name).read_text())
+        assert not _people_invented(stored, body), (name, _people_invented(stored, body))
