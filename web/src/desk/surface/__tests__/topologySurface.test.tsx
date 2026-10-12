@@ -407,3 +407,19 @@ describe("TopologySurface — edge highlighting", () => {
     expect(activePaths.length).toBeGreaterThan(0);
   });
 });
+
+describe("TopologySurface — fit to a narrow box (PHILO-17, owner: shrink it)", () => {
+  it("keeps the layout when it fits, and brings the nodes closer and narrower when it does not", async () => {
+    const { fitLayout } = await import("../graph/TopologySurface");
+    const nodes = [
+      { id: "home", label: "This Mac", home: true, x: 40, y: 100 },
+      { id: "lan", label: "LAN Server", x: 360, y: 35 },
+    ];
+    expect(fitLayout(nodes, 640)).toMatchObject({ fitted: false, nodeW: 180 });
+    const narrow = fitLayout(nodes, 363);
+    expect(narrow.fitted).toBe(true);
+    expect(narrow.nodeW).toBeGreaterThanOrEqual(128);
+    const right = Math.max(...narrow.nodes.map((n) => n.x)) + narrow.nodeW - Math.min(...narrow.nodes.map((n) => n.x));
+    expect(right).toBeLessThanOrEqual(363 - 48);
+  });
+});
