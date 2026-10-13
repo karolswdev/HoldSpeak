@@ -34,6 +34,7 @@ import pytest
 from tests._evidence import evidence_dir
 
 from .glass_infra import _api, _assert_clean, _boot, _normal_chair, _settle
+from .fit_rig import BOX_JS, T, WIDTHS, FitRig
 
 SHOTS = evidence_dir("docs/internal/philo/phase-16/c-shots")
 TOKEN = "glass-test"
@@ -493,3 +494,76 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
         server.stop()
         for fake in fakes:
             fake.shutdown()
+
+
+# ═══ merged from the e2e-high-2 lane ═══
+# The Runs on app, AS RENDERED: what only a real browser proves of Runs on.
+#
+# Owner, 2026-10-12 (push 2 of the test diet): a browser test only for drag,
+# focus, keys, touch, hover or an exact geometry relation.
+#
+# * PHILO-15 lane 12, B27: the footer receipt of a patch never runs into Undo
+#   (its text boxes end left of Undo on any line they share), at 1440 and 393.
+pytest.importorskip("playwright.sync_api", reason="the Runs on glass needs Playwright")
+
+
+
+class TestTheRunsOnFooter(FitRig):
+    """replaces: tests/e2e/test_philo15_12_ugly_glass.py::TestPhilo15Lane12Ugly::test_the_runs_on_receipt_never_runs_into_undo (moved whole)."""
+
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_the_runs_on_receipt_never_runs_into_undo(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        from .glass_infra import _normal_chair, engine_profile
+        from .runs_on import patch, wait_board
+
+        # One engine on the Default for AI work, the product's way; the
+        # board then draws it and a patch writes the receipt beside Undo.
+        engine_profile()
+        from holdspeak.db import get_database
+        from holdspeak.principals import Principal, PrincipalKind
+        from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+        from tests.unit.test_phase143_inference_assignments import _profile
+
+        # A second engine, so the patch is a change at both widths (the
+        # phone list never offers the engine a job already runs on).
+        _profile(get_database(), "lane12-second-engine")
+        InferenceAssignmentService(get_database()).set_assignment(
+            Principal(PrincipalKind.OWNER, "lane12-owner"),
+            {"command_id": f"lane12-default-{width}", "expected_revision": 0, "scope": {"kind": "global"},
+             "entries": [{"profile_id": "hs201-meeting-engine", "profile_revision": 1},
+                         {"profile_id": "lane12-second-engine", "profile_revision": 1}]},
+        )
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                _normal_chair(page)
+                self._stage(page, "open-concierge")
+                wait_board(page)
+                patch(page, "default", "lane12-second-engine")
+                receipt = page.get_by_test_id("runson-receipt")
+                undo = page.get_by_test_id("runson-undo")
+                undo.wait_for(timeout=T)
+                page.wait_for_timeout(600)
+                _settle(page)
+                rb, cb = receipt.evaluate(BOX_JS), undo.evaluate(BOX_JS)
+                text = receipt.inner_text()
+                # The text's own box (the span may be wider than its glyphs when it wraps).
+                ink = receipt.evaluate("(e) => { const r = document.createRange(); r.selectNodeContents(e);"
+                                       " const rs = [...r.getClientRects()]; return rs.map((b) => ({x: b.left, r: b.right, y: b.top, btm: b.bottom})); }")
+                self.facts["B27"] = {"receipt": rb, "undo": cb, "text": text, "ink": ink}
+                same_row = lambda b: not (b["btm"] <= cb["y"] or b["y"] >= cb["btm"])  # noqa: E731
+                assert rb["r"] <= cb["x"] + 0.5 or not same_row(rb), self.facts["B27"]
+                for line in ink:
+                    if same_row(line):
+                        assert line["r"] <= cb["x"] + 0.5, self.facts["B27"]
+                assert text.upper().startswith("PATCHED "), text
+                footer = page.locator(".surface-footer-layout.runson-foot").first
+                self._shot(page, "B27-runson-footer", width, footer)
+                self._shot(page, "B27-runson", width)
+                self._write("runson", width)
+                assert not errors, errors
+            finally:
+                browser.close()

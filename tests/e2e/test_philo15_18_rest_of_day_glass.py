@@ -218,7 +218,7 @@ class TestInstallHooksForEveryAgent:
 class TestTheKnownSignInDefault:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        from .test_philo14_c3_drop_to_hand_glass import ACTION_ID, PROJECT, _seed
+        from .test_conductor_glass import ACTION_ID, PROJECT, _seed
 
         _ensure_build()
         _no_owner_credentials(monkeypatch)
