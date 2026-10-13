@@ -151,25 +151,72 @@ def test_the_trust_wire_fixtures_carry_no_invented_field(hub: Hub, home: Path, t
     _check_wire(wire, tmp_path)
 
 
-def test_the_open_to_network_wire(hub: Hub, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """menus.app.test.tsx (the chrome's OPEN TO NETWORK token): the status the
-    hub states for an off-loopback bind with no token.
+def _serve(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, host: str) -> dict[str, Any]:
+    """Start a real hub on ``host`` (a real socket) and read its trust block."""
+    import httpx
+
+    import holdspeak.db.core as db_core
+    from holdspeak.db import reset_database
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+    from unittest.mock import MagicMock
+
+    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "hub.db")
+    monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(tmp_path / "people.key"))
+    reset_database()
+    token = "trust-bind-token"
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(on_bookmark=MagicMock(), on_stop=MagicMock(),
+                            get_state=MagicMock(return_value={})),
+        host=host,
+        auth_token=token,
+    )
+    try:
+        server.start()
+        resp = httpx.get(
+            f"http://127.0.0.1:{server.port}/api/setup/status",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=30,
+        )
+        assert resp.status_code == 200, resp.text
+        return resp.json()["trust"]
+    finally:
+        server.stop()
+        reset_database()
+        composition.install(composition.bare(label="pytest"))
+
+
+def test_a_hub_bound_to_every_interface_says_so(tmp_path: Path, home: Path,
+                                                monkeypatch: pytest.MonkeyPatch) -> None:
+    """The status states the host the runtime REALLY binds, and its token.
+
+    The route used to read ``_trust_block`` with its loopback default, so a
+    hub on 0.0.0.0 read ``127.0.0.1`` and the Trust window said "no"."""
+    trust = _serve(tmp_path, monkeypatch, "0.0.0.0")
+    assert trust["web_bind"] == "0.0.0.0", trust
+    # start() refuses an off-loopback bind with no token, so a served
+    # off-loopback hub always has one, and the status says so.
+    assert trust["auth_token_set"] is True, trust
+
+
+def test_a_loopback_hub_says_loopback(tmp_path: Path, home: Path,
+                                      monkeypatch: pytest.MonkeyPatch) -> None:
+    trust = _serve(tmp_path, monkeypatch, "127.0.0.1")
+    assert trust["web_bind"] == "127.0.0.1", trust
+    assert trust["auth_token_set"] is True, trust
+
+
+def test_the_open_to_network_wire(tmp_path: Path, home: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """menus.app.test.tsx (the chrome over an open hub): the status a hub
+    served on 0.0.0.0 states, read over its real socket.
 
     replaces: tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_open_to_network_is_its_own_token
-    (the hub half). The route reads ``_trust_block`` with its loopback default
-    (setup_status.py ``get_setup_status``), so the bind is stated the way the
-    browser test stated it: the real block with ``web_bind`` off the loopback."""
-    import holdspeak.setup_status as setup_status
-
-    real_trust_block = setup_status._trust_block
-
-    def open_hub(config: Any, *, web_bind: str = "127.0.0.1", database: Any = None) -> dict[str, Any]:
-        return real_trust_block(config, web_bind="192.168.1.43", database=database)
-
-    monkeypatch.setattr(setup_status, "_trust_block", open_hub)
-    trust = _trust(hub)
-    assert trust["web_bind"] == "192.168.1.43", trust
-    assert trust["auth_token_set"] is False, trust
+    (the hub half). A served off-loopback hub always has a token: ``start()``
+    refuses the bind without one (``web_auth.nonloopback_bind_blocked``), and a
+    hub with no token answers 401 to every read. So the real answer is open
+    WITH a token, and the chrome's OPEN TO NETWORK token (open, no token)
+    stays dark over it."""
+    trust = _serve(tmp_path, monkeypatch, "0.0.0.0")
+    assert (trust["web_bind"], trust["auth_token_set"]) == ("0.0.0.0", True), trust
     assert not [d for d in trust["destinations"] if d["enabled"]], trust["destinations"]
     _check_wire({"status-open.json": {"trust": trust}}, tmp_path)
 

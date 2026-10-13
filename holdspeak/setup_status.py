@@ -127,7 +127,11 @@ def _last_kernel_egress(database: Any) -> dict[str, str] | None:
 
 
 def _trust_block(
-    config: Any, *, web_bind: str = "127.0.0.1", database: Any = None
+    config: Any,
+    *,
+    web_bind: str = "127.0.0.1",
+    auth_token_set: bool | None = None,
+    database: Any = None,
 ) -> dict[str, Any]:
     """What can leave the machine right now, from config (display only)."""
     meeting = config.meeting
@@ -204,7 +208,15 @@ def _trust_block(
 
     return {
         "web_bind": web_bind,
-        "auth_token_set": bool((getattr(config, "web_auth_token", "") or "").strip()),
+        # The runtime states its own token; a read without a runtime falls
+        # back to the configured token (it lives on ``config.meeting``).
+        "auth_token_set": (
+            bool(auth_token_set)
+            if auth_token_set is not None
+            else bool(
+                (getattr(getattr(config, "meeting", None), "web_auth_token", "") or "").strip()
+            )
+        ),
         "transcript_egress": transcript_egress,
         "egress_detail": egress_description,
         "configured_endpoints": endpoints,
@@ -258,6 +270,8 @@ def build_setup_status(
     config: Any = None,
     env: Optional[dict[str, str]] = None,
     skip_network: bool = True,
+    web_bind: str = "127.0.0.1",
+    auth_token_set: bool | None = None,
 ) -> dict[str, Any]:
     """Compose the first-run setup-state snapshot.
 
@@ -322,7 +336,9 @@ def build_setup_status(
         "onboarding": onboarding,
         "primary_action": _primary_action(sections, first_run=first_run, ready=ready),
         "sections": sections,
-        "trust": _trust_block(config, database=database),
+        "trust": _trust_block(
+            config, web_bind=web_bind, auth_token_set=auth_token_set, database=database
+        ),
         "presence": _presence_block(
             env, config_enabled=bool(getattr(getattr(config, "presence", None), "enabled", False))
         ),
