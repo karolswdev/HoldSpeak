@@ -109,3 +109,25 @@ successor says why.
 - `test_p16_kit_verb_glass.py`: moved whole to `tests/e2e/test_kit_glass.py`.
 - `test_philo304_thought_foot_reflow.py`: moved to `tests/e2e/test_thought_glass.py`
   (the 600 px window and 393; 700 px and the default width only relax the 600 px bound).
+
+# Parked by the test diet, push 2: lane e2e-low-1 (2026-10-12)
+
+Each check has a successor, or the PR that parked it says why it has none.
+
+- `test_hs154_call_glass.py`: `tests/unit/test_tts_route.py`, `tests/unit/test_desk_ask_ai.py`,
+  `web/src/desk/__tests__/askai.app.test.tsx`, `settings.app.test.tsx` (each names it in `replaces:`).
+- `test_hs174_rhythm_runs_on_glass.py`: `web/src/pages/cores/__tests__/rhythm.app.test.tsx`;
+  the 393 leg (a shot and the clean check) is the sweep's Rhythm case at 393.
+- `test_hs175_arrival_glass.py`: `web/src/desk/__tests__/chair.app.test.tsx`, `tests/unit/test_desk_chair.py`.
+- `test_hs175_rhythm_brief_glass.py`: `web/src/pages/cores/__tests__/rhythm.app.test.tsx`.
+- `test_hs175_settings_meetings_glass.py`: `web/src/desk/__tests__/settings.app.test.tsx`,
+  `web/src/pages/cores/__tests__/SettingsCalendar.test.tsx`.
+- `test_hs176_speak_glass.py`, `test_hs176_loop_glass.py`: `tests/unit/test_desk_speak.py`,
+  `web/src/desk/__tests__/speak.app.test.tsx`; the Learned row's geometry at 393 is kept in
+  `tests/e2e/test_speak_glass.py`.
+- `test_dictation_enrichment_e2e.py`, `test_dictation_journal_e2e.py`: opt-in proofs against a live
+  LLM that no suite ran. The same proof runs by hand: `scripts/dictation_enrichment_demo.py`,
+  `scripts/journal_e2e_demo.py`. The journal row is `tests/unit/test_db_dictation_journal.py`.
+- `test_dictation_learning_digest_spoken_e2e.py`: opt-in (macOS `say` and Whisper). The digest is
+  `tests/unit/test_dictation_learning_digest.py` and
+  `tests/integration/test_web_dictation_learning_digest.py`.
