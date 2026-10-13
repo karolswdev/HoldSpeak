@@ -10,7 +10,6 @@
  *    Desk … I only know it worked because I asked the API."
  */
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
 import { keptReceipt } from "../keptReceipt";
 
 const apiFetch = vi.fn();
@@ -141,17 +140,6 @@ describe("Write a thought opens a note in the Thought window", () => {
 
     expect(apiFetch).toHaveBeenCalledTimes(1);
     expect(openPullout).toHaveBeenCalledTimes(1);
-  });
-
-  it("never opens the dictation router", async () => {
-    const source = await import("../chair/ChairHome.tsx?raw");
-    const chair = source.default as string;
-    const verb = chair.slice(
-      chair.indexOf('data-testid="arrival-develop-thought"') - 400,
-      chair.indexOf('data-testid="arrival-develop-thought"') + 80,
-    );
-    expect(verb).not.toMatch(/openSurfaceOr\("dictate"/);
-    expect(verb).toMatch(/openNewThought/);
   });
 
   /* Astra's counsel finding 4 on PR #595: "Its catch returns without

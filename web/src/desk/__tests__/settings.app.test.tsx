@@ -6,6 +6,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsCore } from "../../pages/cores/SettingsCore";
+import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
 import authorityWire from "./fixtures/settings-wire/authority-policy.json";
 import calendarWire from "./fixtures/settings-wire/calendar-sources.json";
 import calendarOneWire from "./fixtures/settings-wire/calendar-sources-one.json";
@@ -158,6 +159,19 @@ describe("the Settings hub on a cold hub", () => {
     fireEvent.click(within(ledgerRow("System")!).getByRole("button", { name: "Open" }));
     expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("System");
     await screen.findByTestId("system-display");
+  });
+});
+
+describe("every declared settings module has a door", () => {
+  it("Runs on and Connections lead on their plates; every other module is a ledger row; Choose engines opens Runs on", async () => {
+    // replaces: web/src/pages/cores/__tests__/assignmentsDoor202.test.tsx (a source scan, parked)
+    const { container } = await openHub();
+    const plated = new Set(["models", "integrations"]);
+    for (const module of PREF_MODULES.filter((m) => !plated.has(m.id)))
+      expect(ledgerRow(module.label), module.id).toBeTruthy();
+    expect(screen.getByTestId("settings-hub-accounts")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("settings-hub-choose"));
+    await waitFor(() => expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Runs on"));
   });
 });
 

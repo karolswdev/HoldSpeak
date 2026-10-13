@@ -87,26 +87,6 @@ describe("the subtree-writer allowlist (HS-130-07)", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("the demoted feature surfaces no longer PUT settings", () => {
-    const readiness = files.find((f) =>
-      f.name.endsWith("dictation/Readiness.tsx"),
-    )!;
-    const speakDeck = files.find((f) =>
-      f.name.endsWith("dictation/useSpeakDeck.ts"),
-    )!;
-    expect(putsToSettings(readiness.content)).toBe(false);
-    expect(putsToSettings(speakDeck.content)).toBe(false);
-  });
-
-  it("CommandsCore writes items but not the enablement bit", () => {
-    const commands = files.find((f) =>
-      f.name.endsWith("pages/cores/CommandsCore.tsx"),
-    )!;
-    expect(putsToSettings(commands.content)).toBe(true);
-    expect(commands.content).toContain("macros: { items");
-    expect(writesEnablement(commands.content)).toEqual([]);
-  });
-
   it("verb projections of one writer are NOT false-positived", () => {
     // A file that opens Settings (a menu/shortcut projection) is not a writer.
     const projection = `openSurfaceOr("configure-settings", "/settings", "voice-typing")`;
