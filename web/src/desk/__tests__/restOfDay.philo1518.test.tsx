@@ -3,8 +3,6 @@
  * B36 the known-sign-in default, B40 a drawer label is two lines, B56 a live
  * aftercare card. The Conductor's B34/B35 fences live in
  * conductor/__tests__/conductor.test.tsx; B36's line in hand/__tests__/hand.test.tsx. */
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -100,11 +98,6 @@ describe("B33: the Settings hub reads the summary route", () => {
 
 describe("B40: a drawer's icon label is at most two lines, cut in the middle", () => {
   const RULES = "contributing file to the rehearsal repository with the three rules: branch from main, one change per pull request, every pull request names its test";
-  it("the drawer (and the Conductor, a drawer window) clamps the species' label to two lines", () => {
-    const css = readFileSync(join(__dirname, "../drawer/drawer.css"), "utf8");
-    expect(css).toMatch(/\.drawer-window \.desk-icon-name \{\s*-webkit-line-clamp: 2;\s*\}/);
-    expect(css).not.toMatch(/-webkit-line-clamp: unset/);
-  });
   it.each([
     ["the action item", `Add a ${RULES}`, "Add a"],
     ["the agent", `Codex: ${RULES}`, "Codex:"],

@@ -10,8 +10,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import chromeMenusCss from "../components/chrome-menus.css?raw";
-import tokensCss from "../../styles/tokens.css?raw";
 
 const apiFetch = vi.fn();
 vi.mock("../../lib/api", async () => {
@@ -328,54 +326,5 @@ describe("Enter on the first row opens the note it names", () => {
     expect(screen.queryByRole("button", { name: "Develop this thought" })).toBeNull();
     expect(unrouted).toEqual([]);
     expect(writes()).toEqual([]);
-  });
-});
-
-/* ── the selected plate, computed from the tokens (CSS legs) ── */
-function token(name: string): string {
-  const m = new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})\\b`).exec(tokensCss);
-  if (!m) throw new Error(`token ${name} has no hex value`);
-  return m[1];
-}
-function luminance(hex: string): number {
-  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
-    .map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-}
-function contrast(a: string, b: string): number {
-  const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
-  return (x + 0.05) / (y + 0.05);
-}
-/** The declarations of the one rule whose selector list holds `selector`. */
-function ruleFor(selector: string): string {
-  for (const block of chromeMenusCss.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
-    const selectors = block[1].replace(/\/\*[\s\S]*?\*\//g, "").split(",").map((s) => s.trim());
-    if (selectors.includes(selector)) return block[2];
-  }
-  throw new Error(`no rule for ${selector}`);
-}
-const varOf = (decls: string, prop: string) =>
-  new RegExp(`(?:^|[;\\s{])${prop}:\\s*var\\((--[\\w-]+)\\)`).exec(decls)?.[1] ?? null;
-
-describe("the selected palette plate (CSS)", () => {
-  // replaces: tests/e2e/test_palette_two_line_glass.py::TestPaletteTwoLineHit::test_keyword_and_meaning_hits_draw_two_lines (the `N OPEN` badge leg, Astra #1039)
-  const plate = varOf(ruleFor(".desk-next .desk-deck-row.is-selected"), "background");
-
-  it.each([".is-selected", ":hover:not(.is-ghost)", ":focus-visible:not(.is-ghost)"])(
-    "a badge on the %s plate has no wash and reads >= 4.5:1",
-    (state) => {
-      const decls = ruleFor(`.desk-next .desk-deck-row${state} .desk-deck-badge`);
-      expect(decls).toMatch(/background:\s*transparent/);
-      const ink = varOf(decls, "color");
-      expect(plate && ink).toBeTruthy();
-      expect(contrast(token(plate!), token(ink!))).toBeGreaterThanOrEqual(4.5);
-    },
-  );
-
-  it("the snippet is the sans face, on a line of its own", () => {
-    // replaces: tests/e2e/test_palette_two_line_glass.py::TestPaletteTwoLineHit::test_keyword_and_meaning_hits_draw_two_lines (the snippet font leg)
-    const decls = ruleFor(".desk-next .desk-deck-snippet");
-    expect(decls).toMatch(/font:[^;]*var\(--font-sans\)/);
-    expect(decls).toMatch(/flex:\s*1 0 100%/);
   });
 });

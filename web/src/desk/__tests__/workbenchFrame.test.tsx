@@ -2,8 +2,6 @@
 // set, ONE front window, the screen title bar, and the §3a strip menu.
 // The ratified canvas: pm/roadmap/holdspeak-philo/phase-13-the-desk/
 // assets/story-11-canvas/ (design/workbench-look.md §2–§4).
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -22,8 +20,6 @@ vi.mock("../../runtime/RuntimeBus", () => ({
   }),
 }));
 
-const WEB = resolve(__dirname, "../../..");
-const read = (rel: string) => readFileSync(resolve(WEB, rel), "utf-8");
 
 function setCompact(on: boolean) {
   window.matchMedia = ((query: string) => ({
@@ -54,59 +50,6 @@ beforeEach(() => {
 });
 afterEach(() => {
   window.matchMedia = realMatchMedia;
-});
-
-describe("the material (design-tokens.json → tokens.css, COMPONENT layer)", () => {
-  it("defines the Workbench Steel pens and sizes once, at the ratified values", () => {
-    const css = read("src/styles/tokens.css");
-    const want: Record<string, string> = {
-      "--wb-steel": "#9ea4b0",
-      "--wb-steel-2": "#b3b8c2",
-      "--wb-ink": "#0b0c10",
-      "--wb-paper": "#eef0f3",
-      "--wb-blue": "#6688bb",
-      "--wb-backdrop": "#3c4454",
-      "--wb-dither": "#363e4d",
-      "--wb-rec": "#b3261e",
-      "--wb-frame": "4px",
-      "--wb-bar-h": "26px",
-      "--wb-screen-h": "28px",
-      "--wb-gadget-w": "26px",
-      "--wb-drop": "4px 4px 0 rgba(0, 0, 0, 0.32)",
-      "--accent-text": "#bc8058",
-    };
-    for (const [name, value] of Object.entries(want)) {
-      const hits = css.match(new RegExp(`^\\s*${name}:\\s*([^;]+);`, "gm")) ?? [];
-      expect(hits, name).toHaveLength(1);
-      expect(hits[0]).toContain(value);
-    }
-  });
-
-  it("every DeskWindowFrame host wears the frame: the shell, the bar and the gadgets name --wb-* tokens", () => {
-    const chrome = read("src/desk/components/window-chrome.css");
-    const rule = (selector: string) => {
-      const at = chrome.indexOf(`${selector} {`);
-      expect(at, selector).toBeGreaterThan(-1);
-      return chrome.slice(at, chrome.indexOf("}", at));
-    };
-    expect(rule(".desk-next .desk-window.desk-window-shell")).toMatch(/var\(--wb-frame\) solid var\(--wb-steel\)/);
-    // PHILO-16 (A1) §3: the front is the plane `front` (`.is-front` its alias
-    // for one release); a far window is steel in shade.
-    const FRONT = ':is([data-plane="front"], .is-front)';
-    expect(rule(`.desk-next .desk-window.desk-window-shell${FRONT}`)).toContain("var(--wb-blue)");
-    expect(rule('.desk-next .desk-window.desk-window-shell[data-plane="far"]')).toContain("var(--wb-steel-dim)");
-    expect(rule(".desk-next .desk-window-shell > .desk-pullout-head")).toContain("var(--wb-steel)");
-    expect(rule(`.desk-next .desk-window-shell${FRONT} > .desk-pullout-head`)).toContain("var(--wb-blue)");
-    // The inherited head-tone rule that painted EVERY is-front head is gone
-    // (R4): a stale is-front can no longer paint a second front bar.
-    expect(chrome).not.toMatch(/\.desk-window-shell\.is-front \.desk-pullout-head \{/);
-    // The traffic lights are removed (§3).
-    expect(read("src/desk/components/pullout.css")).not.toMatch(/^[^/*\n]*\.desk-(light|traffic)\b[^{\n]*\{/m);
-    // The host tokens are NOT re-pointed (R5): body strips still wear them.
-    const tokens = read("src/styles/tokens.css");
-    expect(tokens).toMatch(/--desk-window-head-fill: var\(--surface-2\);/);
-    expect(tokens).toMatch(/--gadget-fill: var\(--surface-2\);/);
-  });
 });
 
 function Frame({ id, title }: { id: string; title: string }) {

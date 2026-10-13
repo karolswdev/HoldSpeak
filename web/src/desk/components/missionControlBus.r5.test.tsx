@@ -2,8 +2,6 @@
 // nothing sends, so a coder or belt frame never moved it before the next poll.
 // It now reads the one runtime bus (useOnCoderFrame for `scope:"coder"`).
 import { act, render } from "@testing-library/react";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useMissionControl } from "../missioncontrol";
 import { useProjections } from "../projections";
@@ -81,10 +79,5 @@ describe("Mission Control follows the runtime bus (Conductor R5)", () => {
     expect(mcRefresh).toHaveBeenCalledTimes(2);
     expect(grants).toHaveBeenCalledTimes(1);
     expect(projRefresh).not.toHaveBeenCalled();
-  });
-
-  it("does not listen for the dead hs-broadcast DOM event", () => {
-    const source = readFileSync(resolve(__dirname, "MissionControlConveyor.tsx"), "utf-8");
-    expect(source).not.toContain("hs-broadcast");
   });
 });

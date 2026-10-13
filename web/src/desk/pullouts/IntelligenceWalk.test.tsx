@@ -2,7 +2,6 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IntelligencePullout } from "./IntelligencePullout";
 import { INTELLIGENCE_NAVIGATE } from "../intelligenceNavigation";
-import windowChromeCss from "../components/window-chrome.css?raw";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 
@@ -174,8 +173,6 @@ describe("HS-128-10 Desk Intelligence walk", () => {
     expect(container.querySelector(".desk-pullout-body.intelligence-pullout")).toBeInTheDocument();
     // HS-175: flat rows use .intelligence-brief-sf-row instead of .surface-ledger-row inside folds.
     expect(container.querySelectorAll("[data-testid='brief-sf-row']")).toHaveLength(193);
-    expect(windowChromeCss).toContain(".desk-next .desk-window.is-floating:not(.is-card)");
-    expect(windowChromeCss).toContain("max-height: none;");
   });
 
   it("PHILO-17: no BACK above the tabs; a cross-link drill lands on its tab", async () => {

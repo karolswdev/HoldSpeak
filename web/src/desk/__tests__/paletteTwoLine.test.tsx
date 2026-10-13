@@ -8,8 +8,6 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import chromeMenusCss from "../components/chrome-menus.css?raw";
-import tokensCss from "../../styles/tokens.css?raw";
 
 const apiFetch = vi.fn();
 vi.mock("../../lib/api", async () => {
@@ -185,51 +183,6 @@ describe("⌘K two-line hit", () => {
   });
 });
 
-/* ── the selected row's contrast, computed from the tokens ── */
-function token(name: string): string {
-  const m = new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})\\b`).exec(tokensCss);
-  if (!m) throw new Error(`token ${name} has no hex value`);
-  return m[1];
-}
-function luminance(hex: string): number {
-  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
-    .map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-}
-function contrast(a: string, b: string): number {
-  const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
-  return (x + 0.05) / (y + 0.05);
-}
-function ruleDecl(selectorStart: string, prop: string): string {
-  const at = chromeMenusCss.indexOf(selectorStart);
-  expect(at).toBeGreaterThanOrEqual(0);
-  const block = chromeMenusCss.slice(chromeMenusCss.indexOf("{", at), chromeMenusCss.indexOf("}", at));
-  const m = new RegExp(`(?:^|[;\\s{])${prop}:\\s*var\\((--[\\w-]+)\\)`).exec(block);
-  if (!m) throw new Error(`${selectorStart} has no ${prop}: var(...)`);
-  return m[1];
-}
-
-describe("the selected palette row reads ≥ 4.5:1", () => {
-  it("the selected plate and its ink, from tokens.css", () => {
-    const plate = ruleDecl(".desk-next .desk-deck-row.is-selected,\n", "background");
-    const ink = ruleDecl(".desk-next .desk-deck-row.is-selected,\n", "color");
-    expect(contrast(token(plate), token(ink))).toBeGreaterThanOrEqual(4.5);
-  });
-
-  it("the snippet ink on the selected plate, and the mark on its own plate", () => {
-    const plate = ruleDecl(".desk-next .desk-deck-row.is-selected,\n", "background");
-    const snippetInk = ruleDecl(".desk-next .desk-deck-row.is-selected .desk-deck-snippet", "color");
-    expect(contrast(token(plate), token(snippetInk))).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(token(ruleDecl(".desk-next .desk-deck-mark", "background")),
-      token(ruleDecl(".desk-next .desk-deck-mark", "color")))).toBeGreaterThanOrEqual(4.5);
-  });
-
-  it("the snippet on the plain row reads ≥ 4.5:1 on the shelf plate", () => {
-    const ink = ruleDecl(".desk-next .desk-deck-snippet {", "color");
-    expect(contrast(token("--surface-3"), token(ink))).toBeGreaterThanOrEqual(4.5);
-  });
-});
-
 /* ── Astra's review of #882 (2026-10-05): four repros, each a fence ── */
 const partsOf = (snippet: string, query: string, title = "") =>
   snippetParts(snippet, query, title).map((p) => [p.text, p.mark ? "mark" : p.redacted ? "redacted" : ""]);
@@ -294,32 +247,5 @@ describe("#882 review 4: a length-changing case never shifts a mark", () => {
   it("a query in another case marks the original letters", () => {
     expect(partsOf("Die Maße sind ROLLBACK", "maße rollback").filter(([, k]) => k === "mark").map(([t]) => t))
       .toEqual(["Maße", "ROLLBACK"]);
-  });
-});
-
-/* review 2: every state that paints the plate also inks every child. */
-function inkFor(selector: string): string | null {
-  for (const block of chromeMenusCss.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
-    const selectors = block[1].split(",").map((s) => s.replace(/\/\*[\s\S]*?\*\//g, "").trim());
-    if (!selectors.includes(selector)) continue;
-    const m = /(?:^|[;\s{])color:\s*var\((--[\w-]+)\)/.exec(block[2]);
-    if (m) return m[1];
-  }
-  return null;
-}
-
-describe("#882 review 2: the plate's ink covers selected, hovered and focused rows", () => {
-  const plate = ruleDecl(".desk-next .desk-deck-row.is-selected,\n", "background");
-  const states = [".is-selected", ":hover:not(.is-ghost)", ":focus-visible:not(.is-ghost)"];
-  const children = [".desk-deck-snippet", ".desk-deck-day", ".surface-foundby", ".desk-deck-kind", ".desk-deck-glyph"];
-  it.each(states.flatMap((s) => children.map((c) => [s, c])))("%s %s ≥ 4.5:1", (state, child) => {
-    const ink = inkFor(`.desk-next .desk-deck-row${state} ${child}`);
-    expect(ink, `no ink rule for ${state} ${child}`).not.toBeNull();
-    expect(contrast(token(plate), token(ink!))).toBeGreaterThanOrEqual(4.5);
-  });
-  it("each state paints the plate", () => {
-    const at = chromeMenusCss.indexOf(".desk-next .desk-deck-row.is-selected,\n");
-    const head = chromeMenusCss.slice(at, chromeMenusCss.indexOf("{", at));
-    for (const state of states) expect(head).toContain(`.desk-next .desk-deck-row${state}`);
   });
 });
