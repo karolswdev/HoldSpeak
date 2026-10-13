@@ -15,6 +15,10 @@ script is kept, never deleted. Each parked script gets one mapping note below.
   `case.p7.decision_delete.gone`, `case.p8.delete_twice.both_gone`
   (ported to the Screen), `tests/e2e/test_philo7_delete_receipt_glass.py`.
   Zone rename has no face.
+- `verify_philo11_update_glass.py` (2026-10-12, push 2 of the test diet): no
+  caller. It re-ran `tests/e2e/test_philo10_04_send_face_glass.py` (now parked;
+  its checks are vitest and hub tests, `tests/e2e/_parked/README.md`) to keep
+  Phase 11 shots.
 
 Before 2026-10-10: none. On 2026-09-22 (PHILO-2-07, main `112561bd`) no walk script met the rule:
 
