@@ -56,3 +56,23 @@ def test_null_observer_does_not_raise() -> None:
 
 def test_null_observer_satisfies_pipeline_observer_protocol() -> None:
     assert isinstance(NullObserver(), PipelineObserver)
+
+
+def test_an_in_transaction_method_is_not_observed() -> None:
+    """It runs inside the caller's write transaction, so its event could only
+    wait out the busy timeout and be dropped (decide accept took 5 s)."""
+    from holdspeak.services.observer import observe_service
+    from holdspeak.services.project_service import ProjectService
+
+    @observe_service
+    class Probe:
+        def write(self) -> str:
+            return "w"
+
+        def write_in_transaction(self, conn: object) -> str:
+            return "t"
+
+    assert getattr(Probe.write, "__wrapped__", None) is not None
+    assert getattr(Probe.write_in_transaction, "__wrapped__", None) is None
+    assert getattr(ProjectService.create_item_in_transaction, "__wrapped__", None) is None
+    assert getattr(ProjectService.create_item, "__wrapped__", None) is not None

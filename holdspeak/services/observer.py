@@ -268,6 +268,13 @@ def observe_service(cls: type[Any]) -> type[Any]:
     for name, attribute in list(vars(cls).items()):
         if isinstance(attribute, (staticmethod, classmethod)):
             continue
+        # A ``*_in_transaction`` method runs inside its CALLER's write
+        # transaction. Its event would be written on another connection while
+        # that transaction holds the write lock: the insert waited out the
+        # 5 s busy timeout and was then dropped (an Accept of a risk proposal
+        # took 5 s). The caller's own call is the record.
+        if name.endswith("_in_transaction"):
+            continue
         if callable(attribute) and not name.startswith("_"):
             setattr(cls, name, observed(attribute))
     return cls
