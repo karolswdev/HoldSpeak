@@ -712,3 +712,25 @@ def test_every_kind_recall_asks_for_has_a_recent_source(client) -> None:
         if kind not in _RECENT_SPECS and kind not in _ECOSYSTEM_SPECS
     ]
     assert missing == [], missing
+
+
+# ── honest faces: a linked decision never says NO SOURCE ──────────────────
+
+
+def test_a_meeting_decision_on_the_desk_memory_is_linked_not_no_source(hub: Hub) -> None:
+    """replaces: tests/e2e/test_honest_faces_glass.py::test_desk_memory_does_not_say_no_source_beside_a_source (hub half)
+
+    The recent read (Desk memory opened with no query) carries the meeting's
+    decision with its source meeting, and its support axis is LINKED, never
+    NO SOURCE. The face half: memory.app.test.tsx (the axes and Open source)."""
+    from test_desk_needs_you import _seed_honest_faces
+
+    _seed_honest_faces(hub)
+    recall = _recall_read(hub, recent="1", filter="all")
+    cards = [c for c in recall["current"] if c["text"] == "Freeze the old ledger on Nov 5"]
+    assert len(cards) == 1, recall["current"]
+    card = cards[0]
+    assert card["axes"] == ["DECISION", "LINKED", "ACCEPTED"], card
+    assert "NO SOURCE" not in card["axes"] and card["support"] == "LINKED", card
+    assert (card["source"]["kind"], card["source"]["meeting_id"]) == ("meeting", "m-standup"), card
+    assert card["source"]["token"].startswith("MTG "), card

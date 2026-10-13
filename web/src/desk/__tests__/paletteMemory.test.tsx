@@ -28,6 +28,8 @@ import type { Meeting, Note } from "../../lib/primitives";
 import { useDesk } from "../store";
 import { usePalette } from "../chromeState";
 import { DeskToolShelf, MEMORY_DEBOUNCE_MS } from "../components/DeskToolShelf";
+import HONEST_SEARCH from "../../test/wire/memory-search.honest-faces.wire.json";
+import HONEST_DECISION from "../../test/wire/decision.honest-faces.wire.json";
 
 let searches: string[] = [];
 let hits: Array<Record<string, unknown>> = [];
@@ -188,5 +190,54 @@ describe("the palette finds a word inside a meeting", () => {
     hits = [];
     await type(input, "wombat", 20);
     expect(options().some((o) => o.includes("Cutover sync"))).toBe(false);
+  });
+});
+
+// PHILO-17 (the honest faces): ⌘K → a DECISION hit opens the decision itself
+// in Intelligence → Decisions, not its meeting, and holds nothing for the
+// Floor. The hub's own answers for the honest-faces seed: the search and the
+// decision read the opener makes (tests/integration/test_face_wire_fences.py).
+describe("the palette opens a meeting's decision on the recorded hub", () => {
+  it("pressing the decision hit opens Intelligence on that decision; pressing it again opens it again", async () => {
+    // replaces: tests/e2e/test_honest_faces_glass.py::test_a_decision_search_hit_opens_the_decision_and_adds_no_floor_icon
+    const decisionId = HONEST_DECISION.wire.decision.id;
+    const reads: string[] = [];
+    apiFetch.mockImplementation((path: string) => {
+      reads.push(path);
+      if (path.startsWith("/api/memory/search?")) return Promise.resolve(structuredClone(HONEST_SEARCH.wire));
+      if (path === `/api/decisions/${decisionId}`) return Promise.resolve(structuredClone(HONEST_DECISION.wire));
+      return Promise.resolve({});
+    });
+    const navigations: Array<Record<string, unknown>> = [];
+    const listen = (e: Event) => navigations.push((e as CustomEvent).detail);
+    window.addEventListener("holdspeak:intelligence-navigate", listen);
+    try {
+      const input = await deck();
+      await type(input, "Freeze the old ledger");
+      const hit = document.getElementById(`desk-palette-option-memory:decision:${decisionId}`);
+      expect(hit?.textContent).toContain("Freeze the old ledger on Nov 5");
+      fireEvent.click(hit!);
+      await vi.waitFor(() => expect(navigations).toHaveLength(1));
+      expect(navigations[0]).toMatchObject({ view: "receipts", decisionId });
+      expect(useDesk.getState().openPullout).toHaveBeenCalledWith("intelligence:desk");
+      // Not the meeting, and nothing held for the Floor (no refresh, no object window).
+      expect(useDesk.getState().openPullout).not.toHaveBeenCalledWith("meeting:m-standup");
+      expect(useDesk.getState().refresh).not.toHaveBeenCalled();
+      expect(opened.surfaces).toEqual([]);
+
+      // The same hit again opens it again (a new request number).
+      if (!screen.queryByRole("combobox", { name: "Search tools and Desk items" })) {
+        fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+        await settle();
+      }
+      await type(screen.getByRole("combobox", { name: "Search tools and Desk items" }), "");
+      await type(screen.getByRole("combobox", { name: "Search tools and Desk items" }), "Freeze the old ledger");
+      fireEvent.click(document.getElementById(`desk-palette-option-memory:decision:${decisionId}`)!);
+      await vi.waitFor(() => expect(navigations).toHaveLength(2));
+      expect(navigations[1]).toMatchObject({ view: "receipts", decisionId });
+      expect(navigations[1].nonce).not.toBe(navigations[0].nonce);
+    } finally {
+      window.removeEventListener("holdspeak:intelligence-navigate", listen);
+    }
   });
 });
