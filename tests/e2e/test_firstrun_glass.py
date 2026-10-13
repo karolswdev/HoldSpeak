@@ -1,4 +1,14 @@
-"""First run, option A "One screen" (owner ratified 2026-10-05) on the real hub.
+"""The first run in a real browser (the firstrun app's browser file).
+
+Renamed from test_firstrun_one_screen_glass.py (the test diet, push 2,
+2026-10-12). Both tests need a real browser: the dictation step records
+through the browser's microphone stream (getUserMedia, Chromium's fake
+device playing a WAV; jsdom has no media capture), and the second test
+reloads the page between two kept notes. The cards' faces are also
+web/src/desk/firstrun/__tests__/firstrun.app.test.tsx and FirstRun.test.tsx;
+the hub routes are tests/integration/test_desk_firstrun.py.
+
+First run, option A "One screen" (owner ratified 2026-10-05) on the real hub.
 
 Canvas YDTpkaJqFs3hyrZ4g581Mx §1, artboards onb-A-{cal,conn,ready}. Calendar
 and Connections are two more cards on the C1 first-run screen; when every
