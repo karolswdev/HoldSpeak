@@ -42,7 +42,16 @@ each, in place of one "this face renders cleanly" file per phase.
     overlap   no two interactive controls overlap (painted boxes)
     library   every verb is a library Button: no raw <button>
     material  the bevel grammar (material_rig._assert_material)
-    still     nothing interactive moves for 1.5 s after the window settles
+    still     nothing interactive moves for 1.5 s after the window settles;
+              and with reduced motion (every case emulates it) nothing in the
+              window runs a CSS animation, a CSS transition or a script
+              animation (Element.animate) longer than the --duration-micro
+              token, from page load on (MOTION_INIT_JS records each start)
+    target    at 393, every library Button and every pressable row (a menu
+              row, an option, a tab, any other button or link that is not
+              inline in prose) owns its 44 x 44 px area: the nine points of
+              the area answer elementFromPoint with the control itself (the
+              HS-202-05 hit reader, type_floor_rig.HIT_PROBE_JS)
     egress    every request goes to the hub's own origin (data:, blob: allowed)
   The bare desk (no window) is one more case, read over the whole screen.
 * Every HTML route the hub serves (tests/unit/test_route_preflight.PAGE_ROUTES, fenced
@@ -90,7 +99,7 @@ from .glass_infra import (  # noqa: E402
     _rendered_text_faults,
     clear_hub_windows_http,
 )
-from .type_floor_rig import _FAINT_JS, _MEASURE, GATED_CONTRAST  # noqa: E402
+from .type_floor_rig import _FAINT_JS, _MEASURE, GATED_CONTRAST, HIT_PROBE_JS, OWNERSHIP_JS  # noqa: E402
 from .material_rig import LAMP_WORDS, MATERIAL_JS  # noqa: E402
 from .conductor_rig import _seed as _seed_agents  # noqa: E402
 from .meetings_rig import _save_meeting  # noqa: E402
@@ -261,6 +270,25 @@ ROOM_ITEM_UNDER_ASK = (r"^overlap '[^']+' x '[^']+' @\[(?:[^\]<]*<)*item-row(?:<
                        r" x \[(?:[^\]<]*<)*room-ask[\w-]*(?:<[^\]]*)?\](?: \[\[.*)?$")
 
 KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
+    # PHILO-17 (the target fence, 2026-10-12): the menu bar is shorter than
+    # 44 px at 393, so its two menu titles lose their lower points to the bar.
+    ("desk", 393): [
+        Red("target", r"^'HoldSpeak' @\[\] loses \d/9 points .*\[miss:ancestor\]->desk-menubar",
+            "the menu bar's HoldSpeak menu title owns under 44 px at 393 (the bar is shorter)"),
+        Red("target", r"^'Go' @\[\] loses \d/9 points .*\[miss:ancestor\]->desk-menubar",
+            "the menu bar's Go menu title owns under 44 px at 393 (the bar is shorter)"),
+    ],
+    # The palette's in-well mic sits inside the search field: the field owns
+    # the mic's 44 px area at 393.
+    ("palette", 393): [
+        Red("target", r"^'Speak Search tools and Desk[^']*' @\[[^\]]*\] loses \d/9 points .*->INPUT\)$",
+            "the palette's in-well mic owns under 44 px at 393 (the search field takes its area)"),
+    ],
+    # A table cell's edit-in-place Button is narrower than 44 px at 393.
+    ("surface-dictation", 393): [
+        Red("target@Configure dictation", r"^'Edit stack value' @\[[^\]]*\] loses \d/9 points .*->gadget-table-row\)$",
+            "Dictation, Configure: the stack table's Edit value Button owns under 44 px at 393"),
+    ],
     ("desk", 1440): [
         Red("overlap", r"^People, DRAWER, 1:1 [\d:]+ x Conductor, DRAWER, ", "the People drawer icon overlaps the "
             "Conductor icon by 5 px when its `1:1 HH:MM` caption is wide (depends on the clock)", maybe=True),
@@ -605,6 +633,91 @@ WINGS_JS = r"""(id) => {
 }"""
 
 
+# still, reduced motion: the longest motion lawful under reduced motion is the
+# micro token (tokens.css `--duration-micro`, "immediate input feedback"),
+# read from the token file so the fence never drifts from it.
+_MICRO = re.search(r"--duration-micro:\s*(\d+)ms", (REPO / "web/src/styles/tokens.css").read_text(encoding="utf-8"))
+assert _MICRO, "tokens.css has no --duration-micro in ms: the motion fence's threshold is lost"
+MOTION_MAX_MS = int(_MICRO.group(1))
+
+# Recorded from the first script on: every CSS animation and transition that
+# starts, and every Element.animate call, longer than the threshold (or
+# endless), with the element it ran on. The fence reads the ones in its scope.
+MOTION_INIT_JS = r"""((thr) => {
+  const runs = []; window.__hsMotion = runs;
+  const ms = (v) => Math.max(0, ...String(v || '0s').split(',').map((x) => x.trim())
+    .map((x) => x.endsWith('ms') ? parseFloat(x) : parseFloat(x) * 1000).filter((x) => !Number.isNaN(x)));
+  const keep = (el, what, dur, endless) => { if (dur > thr || (endless && dur > 0)) runs.push({el, what, dur: Math.round(dur)}); };
+  const orig = Element.prototype.animate;
+  Element.prototype.animate = function (frames, options) {
+    const a = orig.call(this, frames, options);
+    try { const t = a.effect.getComputedTiming();
+      keep(this, 'Element.animate', Number(t.duration) || 0, t.iterations === Infinity); } catch (e) { /* unreadable */ }
+    return a;
+  };
+  document.addEventListener('animationstart', (e) => {
+    const cs = getComputedStyle(e.target, e.pseudoElement || null);
+    keep(e.target, 'animation ' + e.animationName + (e.pseudoElement || ''), ms(cs.animationDuration),
+      cs.animationIterationCount === 'infinite');
+  }, true);
+  document.addEventListener('transitionrun', (e) => {
+    const cs = getComputedStyle(e.target, e.pseudoElement || null);
+    keep(e.target, 'transition ' + e.propertyName + (e.pseudoElement || ''), ms(cs.transitionDuration), false);
+  }, true);
+})(%d)"""
+
+MOTION_JS = r"""(sel) => {
+  const scope = sel ? document.querySelector(sel) : null;
+  const name = (e) => (e.getAttribute && (e.getAttribute('data-testid') || e.id)) || (typeof e.className === 'string'
+    && e.className.trim() ? '.' + e.className.trim().split(/\s+/)[0] : (e.tagName || '?').toLowerCase());
+  return [...new Set((window.__hsMotion || []).filter((r) => !sel || (scope && scope.contains(r.el)))
+    .map((r) => `${name(r.el)} runs ${r.what} ${r.dur} ms under reduced motion`))];
+}"""
+
+# target: the HS-202-05 hit reader (type_floor_rig.HIT_PROBE_JS) over every
+# library Button and every pressable row in the scope, at the narrow desk
+# only (the 44 px rule is `@media (max-width: 420px)`, global.css). A link
+# inline in prose is not a target (WCAG 2.5.8, the inline exception). A
+# control a layer in front covers at its centre is not reachable here and is
+# not read (the probe's `occluded`).
+TARGET_JS = r"""(sel) => {""" + OWNERSHIP_JS + HIT_PROBE_JS + r"""
+  if (innerWidth > 420) return [];
+  const scope = sel ? document.querySelector(sel) : document.body;
+  if (!scope) return ['no scope ' + sel];
+  const hit = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--desk-button-hit-size')) || 44;
+  const PRESS = '.btn, button, [role=button], [role=menuitem], [role=menuitemcheckbox], [role=menuitemradio], '
+    + '[role=option], [role=tab], [role=switch], [role=checkbox], a[href]';
+  const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
+    return r.width > 1 && r.height > 1 && cs.visibility !== 'hidden' && cs.display !== 'none' && Number(cs.opacity) > 0.05
+      && (!e.checkVisibility || e.checkVisibility({contentVisibilityAuto: true})); };
+  const inline = (e) => e.matches('a[href]') && getComputedStyle(e).display === 'inline'
+    && [...(e.parentElement ? e.parentElement.childNodes : [])].some((n) => n.nodeType === 3 && n.textContent.trim());
+  const where = (e) => { const bits = [];
+    for (let n = e; n && n !== document.body && bits.length < 3; n = n.parentElement) {
+      const t = n.getAttribute('data-testid'); if (t) bits.push(t); }
+    return bits.join('<'); };
+  const out = [];
+  for (const el of scope.querySelectorAll(PRESS)) {
+    if (el.parentElement && el.parentElement.closest(PRESS)) continue;  // the outer control owns the press
+    if (!visible(el) || inline(el) || el.disabled) continue;
+    const r0 = el.getBoundingClientRect();
+    if (r0.bottom <= 0 || r0.top >= innerHeight || r0.right <= 0 || r0.left >= innerWidth) continue;
+    // The overlap fence's one ratified waiver: the Dock shelf's next page
+    // scrolls under its sticky More AppIcons gadget at the phone width.
+    if (el.matches('.desk-dock > .desk-dock-launch')) {
+      const under = document.elementFromPoint(r0.left + r0.width / 2, r0.top + r0.height / 2);
+      if (under && under.closest('.desk-dock > .desk-dock-more')) continue;
+    }
+    const p = hs202Probe(el, hit, where(el));
+    if (p.occluded) continue;
+    const label = ((el.getAttribute('aria-label') || el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 30))
+      || el.tagName.toLowerCase();
+    if (p.bad.length) out.push(`'${label}' @[${p.path}] loses ${p.bad.length}/9 points of its ${hit} px area (${p.bad[0]})`);
+  }
+  return out;
+}"""
+
+
 PALETTE_JS = r"""() => {
   const shelf = document.getElementById('desk-tool-shelf').getBoundingClientRect();
   const list = document.getElementById('desk-palette-listbox');
@@ -726,6 +839,8 @@ class _Case:
         fail("material", _material_faults(page, self.wid or "desk", sel))
         moved = [r for r in page.evaluate(RECORD_JS, [sel, STILL_MS]) if r["worst"] > TOLERANCE]
         fail("still", [f"{r['name']} moved {round(r['worst'])} px" for r in moved])
+        fail("still", page.evaluate(MOTION_JS, sel))
+        fail("target", page.evaluate(TARGET_JS, sel))
         # After the 1.5 s watch: an error a late read raises is counted too.
         fail("clean", [e for e in self.errors if "ResizeObserver" not in e])
         if not page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"):
@@ -785,6 +900,7 @@ def _page(browser: Any, width: int, base: str) -> tuple[Any, Any, list[str], lis
     ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1,
                               has_touch=width < 720, reduced_motion="reduce")
     page = ctx.new_page()
+    page.add_init_script(MOTION_INIT_JS % MOTION_MAX_MS)
     page.set_default_timeout(30_000)
     errors: list[str] = []
     requests: list[str] = []
@@ -1026,6 +1142,55 @@ def test_dock_pager_waiver_is_the_ratified_geometry(pw_browser: Any, width: int,
         found = page.evaluate(OVERLAP_JS, None)
         overlaps = [o.split(" (")[0] for o in found if "More AppIcons" in o]
         assert overlaps == expect, found
+    finally:
+        ctx.close()
+
+
+# The target fence can fail (a planted page at 393, no hub): a 28 px row of
+# buttons that share edges loses points, a 44 px button keeps all nine, a
+# link inline in prose is not read, and at 1440 nothing is read.
+_PLANTED_TARGETS = """<style>body{margin:0;padding:40px 16px;font:14px sans-serif}
+.row{display:flex} .row button{height:28px;width:60px;margin:0;border:1px solid #000}
+#big{height:48px;width:120px;margin-top:40px}</style>
+<div class="row"><button>One</button><button>Two</button></div>
+<button id="big">Big</button>
+<p>Read <a href="#x">the guide</a> first.</p>"""
+
+
+@pytest.mark.parametrize(("width", "expect"), [(393, ["One", "Two"]), (1440, [])])
+def test_target_fence_sees_a_small_target(pw_browser: Any, width: int, expect: list[str]) -> None:
+    ctx = pw_browser.new_context(viewport={"width": width, "height": SIZES[width]})
+    try:
+        page = ctx.new_page()
+        page.set_content(_PLANTED_TARGETS)
+        found = page.evaluate(TARGET_JS, None)
+        assert sorted(re.match(r"^'([^']*)'", f).group(1) for f in found) == expect, found
+    finally:
+        ctx.close()
+
+
+# The reduced-motion half of the still fence can fail: a planted transition
+# and a script animation longer than the micro token are recorded, with the
+# element they ran on; a shorter one is not; outside the scope is not read.
+def test_still_fence_sees_motion_under_reduced_motion(pw_browser: Any) -> None:
+    ctx = pw_browser.new_context(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
+    try:
+        page = ctx.new_page()
+        page.set_content("""<style>#slow{transition:opacity 400ms linear}</style>
+<div id="win"><div id="slow" data-testid="slow-fade">a</div><div id="anim" data-testid="script-move">b</div>
+<div id="quick" data-testid="quick-move">c</div></div><div id="out" data-testid="outside">d</div>""")
+        page.evaluate(MOTION_INIT_JS % MOTION_MAX_MS)
+        page.evaluate("""() => {
+          document.getElementById('anim').animate([{opacity: 1}, {opacity: 0.5}], {duration: 300});
+          document.getElementById('quick').animate([{opacity: 1}, {opacity: 0.5}], {duration: 10});
+          document.getElementById('out').animate([{opacity: 1}, {opacity: 0.5}], {duration: 300});
+          requestAnimationFrame(() => { document.getElementById('slow').style.opacity = '0.2'; });
+        }""")
+        page.wait_for_function("() => (window.__hsMotion || []).some((r) => r.what.startsWith('transition'))", timeout=T)
+        found = sorted(page.evaluate(MOTION_JS, "#win"))
+        assert found == ["script-move runs Element.animate 300 ms under reduced motion",
+                         "slow-fade runs transition opacity 400 ms under reduced motion"], found
+        assert any(f.startswith("outside ") for f in page.evaluate(MOTION_JS, None))
     finally:
         ctx.close()
 
