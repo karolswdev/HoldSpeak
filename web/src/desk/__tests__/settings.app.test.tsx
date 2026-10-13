@@ -521,6 +521,18 @@ describe("Settings › System › Remote access grants", () => {
     expect(within(row("desk-agent")).getByTestId("grant-verb").textContent).toBe(W.allow);
   });
 
+  it("remote OFF keeps the credential whose grant is LIVE, with Stop and Revoke; a credential with no grant is hidden", async () => {
+    // replaces: tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlassRoundTwo::test_remote_off_keeps_a_credential_with_a_live_grant
+    hub.state.remote = grant("remote-off-live");
+    expect(hub.state.remote.enabled).toBe(false);
+    render(<SettingsCore scope="system" />);
+    await waitFor(() => expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.live));
+    expect(within(row("desk-agent")).getByTestId("grant-verb").textContent).toBe(W.stop);
+    expect(within(row("desk-agent")).getByTestId("credential-revoke").textContent).toBe("Revoke credential");
+    expect(screen.queryByText("sweep-runner")).toBeNull();
+    expect(screen.queryByTestId("issue-credential-btn")).toBeNull();
+  });
+
   it("project grants: a PROJECT credential has Projects and no desk grant; Allow on one project, the other stays Allow", async () => {
     // replaces: tests/e2e/test_philo9_07_project_grant_glass.py::TestProjectGrantGlass::test_allow_stop_refused_and_two_projects_on_the_rendered_row
     const live = grant("remote-project-live");

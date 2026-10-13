@@ -334,6 +334,14 @@ def _grant_wire(hub: Any) -> dict[str, Any]:
     revoked = c.delete(f"/api/settings/remote/credentials/{desk.json()['id']}")
     assert revoked.status_code == 200, revoked.text
     wire["grant-revoke-credential.json"] = _answer(revoked)
+    # Remote OFF keeps a credential whose desk grant is LIVE (board 5d) and
+    # hides a credential with no grant (sweep-runner's project grant is gone).
+    again = c.post("/api/settings/remote/credentials", json={"identity": "desk-agent", "palette": "DESK"})
+    assert again.status_code == 200, again.text
+    assert c.put("/api/settings/remote/delegations/desk-agent", json={}).status_code == 200
+    assert c.put("/api/settings/remote", json={"enabled": False}).status_code == 200
+    wire["grant-remote-off-live.json"] = _get(hub, "/api/settings/remote")
+    assert c.put("/api/settings/remote", json={"enabled": True}).status_code == 200
     return wire
 
 

@@ -164,3 +164,31 @@ successor.
   `UpdatePosture.test.tsx` (draft, edit, save, publish, copy Markdown, no engine).
 - `test_hs169_room_glass.py`: `room169.test.tsx`; overlap, clip and fit are the
   sweep's; its pixel ratios pinned an old beauty round.
+# Parked by push 2 of the test diet: lane e2e-low-2, part 2 (2026-10-12)
+
+- `test_philo7_delete_receipt_glass.py`: moved to `tests/e2e/test_screen_glass.py`
+  (the Delete key, the receipt's box and its 6 s linger).
+- `test_philo8_one_delete_screen_glass.py` (was `tests/e2e/test_philo8_one_delete_glass.py`;
+  renamed because the Floor version is already parked under that name): the
+  long desk at 393 moved to `tests/e2e/test_screen_glass.py`; Undo keeps the
+  object is `web/src/desk/__tests__/deleteReceipt.test.tsx` ("undo keeps the
+  object"); the Workbench Park after a refusal is
+  `web/src/desk/components/__tests__/workbenchPark.test.tsx` ("a refused Park
+  frees the item ...").
+- `test_philo7_02_grant_glass.py`: four checks were already
+  `web/src/desk/__tests__/settings.app.test.tsx`; remote OFF with a LIVE grant
+  is now there too, on a recorded answer (`grant-remote-off-live.json`,
+  `tests/integration/test_desk_settings.py`); the minimally scrolled verb
+  moved to `tests/e2e/test_settings_glass.py`. The expired grant on a row with
+  no credential has no vitest of its own (the recorder holds no such state);
+  its hub half is `tests/unit/test_desk_grant_lifecycle.py` (F5).
+- `test_philo14_c2_lane_actions_glass.py` (8 tests, a real tmux):
+  `web/src/desk/lane/__tests__/laneWindow.c2.test.tsx` holds every face fact
+  (the lane's own session after Panes, the refused stale wait, ARM FIRST,
+  Stop, the stopped receipt, unread collections, the Re-brief receipt,
+  Approve); the hub halves are `tests/integration/test_desk_agents_wire.py`
+  (a cleared or unnamed wait is refused; an owner stop ends the launch and its
+  wait; the gate decides), `tests/unit/test_philo15_codex_launch_truth.py`,
+  `tests/unit/test_philo14_c0_launch_lane.py` (not_read, no secret) and
+  `tests/unit/test_web_routes_coders_steer.py` (unarmed 409, delivery). The
+  12 px at 393 check is `tests/unit/test_philo13_18_type_floor_static.py`.
