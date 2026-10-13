@@ -58,6 +58,12 @@ export function useRecallController(initialQuery = "") {
   const [status, setStatus] = useState<RecallStatus>("empty");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
+  /** The quiet recent read is out (the open read, a filter with no words).
+   *  It sets no SEARCHING, so the face says it with a hidden aria-busy mark:
+   *  when it lands the head grows (the display line), and the window must
+   *  not read as settled before that (the desk sweep's still fence: 30 px
+   *  under a held desk read). True from mount: the open effect runs it. */
+  const [reading, setReading] = useState(true);
   /** The last good result, restored by Escape. */
   const previous = useRef<RecallResult>(EMPTY_RESULT);
   const searchedOnce = useRef(false);
@@ -79,6 +85,7 @@ export function useRecallController(initialQuery = "") {
       // searching state, or the Search verb (which goes `loading` there)
       // is inert while the desk's own memory is arriving.
       if (trimmed) setStatus("searching");
+      setReading(!trimmed);
       setError("");
       try {
         const params = trimmed
@@ -92,6 +99,7 @@ export function useRecallController(initialQuery = "") {
         previous.current = decoded;
         setResult(decoded);
         setStatus("ready");
+        setReading(false);
         shown.current = { query: trimmed, filter: f, recent: !trimmed, live: true };
         searchedOnce.current = Boolean(trimmed);
         if (trimmed) writeResume(trimmed, f);
@@ -99,6 +107,7 @@ export function useRecallController(initialQuery = "") {
         if (mine !== generation.current) return;
         setError(readableError(reason));
         setStatus("failed");
+        setReading(false);
       }
     },
     [],
@@ -145,6 +154,7 @@ export function useRecallController(initialQuery = "") {
   /** Escape: clear the query and restore the previous results. */
   const clear = useCallback(() => {
     generation.current += 1;
+    setReading(false);
     setQuery("");
     setError("");
     if (searchedOnce.current) {
@@ -242,6 +252,7 @@ export function useRecallController(initialQuery = "") {
     setFilter,
     result,
     status,
+    reading,
     error,
     busy,
     search,

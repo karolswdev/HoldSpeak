@@ -233,7 +233,10 @@ export function SurfaceWindowHost({
           <TitleSlotContext.Provider value={setTitleOverride}>
             <WingSlotContext.Provider value={setWings}>
               <ApplicationBoundary label={row.title}>
-                <Suspense fallback={<p className="quiet">…</p>}>
+                {/* PHILO-17: the face's code is still loading: busy, so the
+                    window never reads as settled empty (the desk sweep's held
+                    read: Memory settled here, then its face moved 30 px). */}
+                <Suspense fallback={<p className="quiet" aria-busy="true">…</p>}>
                   <row.Core
                     scope={scope}
                     scopeLabel={
