@@ -27,7 +27,7 @@ import pytest
 pytest.importorskip("playwright.sync_api", reason="the reader fence needs Playwright")
 
 from .test_hs202_05_first_use_type_floor import _MEASURE  # noqa: E402
-from .test_philo13_11_frame_glass import FRAME_JS  # noqa: E402
+from .frame_rig import FRAME_JS  # noqa: E402
 
 PICTURE = (
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E"

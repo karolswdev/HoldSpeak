@@ -53,7 +53,7 @@ def test_the_send_preview_writes_nothing_and_his_press_saves_one_file(hub: Hub, 
     from holdspeak.principals import Principal, PrincipalKind
     from holdspeak.services.primitive_service import PrimitiveService
 
-    # The canvas week's decision, by the real producer (test_philo13_11_chair_glass._seed).
+    # The canvas week's decision, by the real producer (tests/e2e/chair_rig.py `_seed`).
     PrimitiveService(hub.db).create_decision(
         Principal(PrincipalKind.OWNER, "karol"), decision_id="d-freeze", title="Freeze the old ledger on Nov 5",
         status="accepted", decision_markdown="Freeze writes to the old ledger on Nov 5.")

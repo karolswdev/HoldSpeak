@@ -46,7 +46,7 @@ import pytest
 
 from .glass_infra import _boot, _ensure_build, _normal_chair, _room_opened, _settle
 from .open_rig import _http, _seed
-from .test_philo13_07_remembers_glass import SIZES, TOKEN, _Rig
+from .remembers_rig import SIZES, TOKEN, _Rig
 from tests._evidence import evidence_dir
 
 pytestmark = pytest.mark.chair_windows_open

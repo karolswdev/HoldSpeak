@@ -3,7 +3,7 @@
 // design/workbench-look.md §3). The static fence for the rule: stripes on the
 // FRONT bar only, inactive bars flat, the title on the bar (a cut-out in the
 // front bar's own blue, no contrasting plate), one gadget grid, every colour a
-// --wb-* token. The glass proof is tests/e2e/test_philo13_11_titlebar_glass.py.
+// --wb-* token. The glass proof is tests/e2e/test_frame_glass.py (TestTitleBarB).
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";

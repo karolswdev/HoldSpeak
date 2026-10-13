@@ -34,6 +34,27 @@ the four flat menus at 1440 in web/src/desk/components/window/phoneRing.test.tsx
 and web/src/desk/components/DeskMenuBar.test.tsx; the aftercare card's
 placement in web/src/desk/chair/__tests__/aftercarePhone.philo1317.test.tsx;
 clip, overlap and fit of every window in the desk sweep.
+
+Also here (lane e2e-high-1: close means gone; the desk remembers):
+
+Desk windows in a real browser: close means gone, and the desk remembers.
+
+Kept by the test diet (push 2, 2026-10-12), one file for the desk's windows.
+Each check needs a real browser:
+
+* close means gone (PHILO-13-05): every opener's window closes through its
+  own gadget, leaves the DOM, and `elementFromPoint` at its old centre hits
+  the Desk, so the next tap reaches what is under it (hit-testing), at 1440
+  and 393 (touch);
+* the desk remembers (PHILO-13-07): a moved window (a drag), an iconified
+  one and the unsent drafts return after a real page reload, at 1440 and 393.
+
+Was tests/e2e/test_philo13_05_close_glass.py and
+test_philo13_07_remembers_glass.py (parked whole). The remembers rig is
+tests/e2e/remembers_rig.py. The other remembers legs (a closed window stays
+gone; every family and draft returns; an emptied Room draft stays empty;
+the Thought's words return) are web/src/desk/__tests__/deskRemembers.philo1307.test.tsx
+and deskRemembers2.philo1307.test.tsx.
 """
 from __future__ import annotations
 
@@ -57,9 +78,17 @@ from .glass_infra import (
     _settle,
     open_project_drawer,
 )
-from .test_philo13_11_frame_glass import ROOM, _seed, _stage
-from .test_philo13_11_frame_glass import _seed as _frame_seed
+from .frame_rig import ROOM, _seed, _stage
+from .frame_rig import _seed as _frame_seed
 from tests._evidence import evidence_dir
+from .open_rig import COMMITMENT
+from .remembers_rig import AGENDA
+from .remembers_rig import DECISION
+from .remembers_rig import PERSON
+from .remembers_rig import ROOM_WORDS
+from .remembers_rig import SHOTS as _h1_SHOTS
+from .remembers_rig import SIZES as _h1_SIZES
+from .remembers_rig import _Rig
 
 pytestmark = [pytest.mark.e2e]
 
@@ -1558,5 +1587,425 @@ class TestWindowNamesOnGlass:
                     assert facts["clock"], facts
                     assert facts["shown"] == len(N_PROJECT), facts
                 assert errors == [], errors
+            finally:
+                browser.close()
+
+
+# ══ lane e2e-high-1: close means gone; the desk remembers ════════════════════════════════════════
+
+CLOSE_TOKEN = "philo13-05-close"
+
+CLOSE_SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-05-shots")
+
+CLOSE_SIZES = {1440: 900, 393: 852}
+
+def _on_the_desk(hit: dict[str, Any] | None) -> bool:
+    """The old centre lands on the Desk. PHILO-13-11 (slice two): the Chair
+    screen is now four windows (`chair:*`), so a hit on a Chair window is the
+    Desk under the closed window; any other window is not."""
+    return hit is not None and hit["desk"] and (
+        hit["window"] is None or str(hit["window"]).startswith("chair:"))
+
+CLOSE_DECISION = "Freeze the old ledger on Nov 5"
+
+NOTE = "Arch review prep"
+
+HIT_JS = """([x, y]) => {
+  const e = document.elementFromPoint(x, y);
+  if (!e) return null;
+  const w = e.closest('.desk-window, .desk-pullout');
+  const t = e.closest('[data-testid]');
+  return {tag: e.tagName.toLowerCase(), cls: String(e.className || '').slice(0, 80),
+          testid: t ? t.dataset.testid : null, window: w ? (w.id || String(w.className).slice(0, 60)) : null,
+          desk: Boolean(e.closest('.desk-next'))};
+}"""
+
+OPEN_WINDOWS_JS = """() => [...document.querySelectorAll('.desk-window, .desk-pullout')]
+  .filter(w => w.getBoundingClientRect().width > 0 && getComputedStyle(w).display !== 'none')
+  .map(w => { const r = w.getBoundingClientRect(); const cs = getComputedStyle(w);
+    return {id: w.id, label: w.getAttribute('aria-label'), op: cs.opacity, pe: cs.pointerEvents,
+            rect: [r.x, r.y, r.width, r.height]}; })"""
+
+@pytest.mark.chair_windows_open
+class TestCloseMeansGone:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        _ensure_build()
+        server, base = _boot(tmp_path, monkeypatch, token=CLOSE_TOKEN)
+        self.base = base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    # ── the rig ──────────────────────────────────────────────────────────
+
+    def _page(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
+        browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+        ctx = browser.new_context(viewport={"width": width, "height": CLOSE_SIZES[width]},
+                                  device_scale_factor=1, has_touch=width < 720)
+        page = ctx.new_page()
+        page.set_default_timeout(30_000)
+        errors: list[str] = []
+        page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+        page.goto(f"{self.base}/?token={CLOSE_TOKEN}", wait_until="load")
+        _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=CLOSE_TOKEN)
+        _api(page, "POST", "/api/decisions", {"title": CLOSE_DECISION, "status": "proposed",
+                                              "decision_markdown": "Freeze writes on Nov 5."}, token=CLOSE_TOKEN)
+        _api(page, "POST", "/api/notes", {"title": NOTE, "body_markdown": "- Ledger cutover risks\n"}, token=CLOSE_TOKEN)
+        _api(page, "POST", "/api/brief/generate", {}, token=CLOSE_TOKEN)
+        page.reload(wait_until="load")
+        _normal_chair(page)
+        page.wait_for_timeout(1200)
+        _settle(page)
+        return browser, page, errors
+
+    @staticmethod
+    def _press(page: Any, loc: Any, width: int) -> None:
+        """A click at 1440; a real touch tap at the element's centre at 393."""
+        loc.scroll_into_view_if_needed()
+        if width < 720:
+            box = loc.bounding_box()
+            assert box, "nothing to tap"
+            page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        else:
+            loc.click()
+
+    @staticmethod
+    def _open(page: Any) -> list[dict[str, Any]]:
+        return page.evaluate(OPEN_WINDOWS_JS)
+
+    def _close_and_prove(self, page: Any, width: int, label: str, name: str) -> dict[str, Any]:
+        """Close the one open window ``label`` by its Close gadget; prove it is gone."""
+        page.wait_for_timeout(600)
+        _settle(page)
+        wins = [w for w in self._open(page) if w["label"] == label]
+        assert len(wins) == 1, (label, self._open(page))
+        win = wins[0]
+        x, y, w, h = win["rect"]
+        cx, cy = x + w / 2, y + h / 2
+        assert page.evaluate(HIT_JS, [cx, cy])["window"] == win["id"], "the open window is not on top"
+        page.screenshot(path=str(CLOSE_SHOTS / f"{name}-before-{width}.png"))
+        self._press(page, page.locator(f"[id='{win['id']}'] [aria-label='Close {label}']"), width)
+        page.wait_for_timeout(900)
+        _settle(page)
+        hit = page.evaluate(HIT_JS, [cx, cy])
+        left = [o for o in self._open(page) if o["id"] == win["id"]]
+        page.screenshot(path=str(CLOSE_SHOTS / f"{name}-after-{width}.png"))
+        proof = {"window": win["id"], "centre": [round(cx), round(cy)], "hit": hit, "left_in_dom": left}
+        (CLOSE_SHOTS / f"{name}-{width}.txt").write_text(f"{proof}\n")
+        assert not left, f"the closed window stays in the DOM: {left}"
+        assert _on_the_desk(hit), f"the old centre hits {hit}"
+        return proof
+
+    # ── the fences ───────────────────────────────────────────────────────
+
+    @pytest.mark.parametrize("width", list(CLOSE_SIZES))
+    def test_every_opener_closes_to_the_desk(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                # 1. the palette: `decision:<id>` (DeskToolShelf → qualifiedRef).
+                self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
+                page.locator("[aria-controls=desk-palette-listbox]").fill("freeze")
+                option = page.locator("[id^='desk-palette-option-decision:']").first
+                option.wait_for()
+                self._press(page, option, width)
+                page.locator(f".desk-gadget-close[aria-label='Close {CLOSE_DECISION}']").wait_for()
+                self._close_and_prove(page, width, CLOSE_DECISION, "palette-decision")
+
+                # 2. the Dock: `intelligence:desk`.
+                self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                page.locator(".desk-gadget-close[aria-label='Close Today']").wait_for()
+                self._close_and_prove(page, width, "Today", "dock-intelligence")
+
+                # 3. Write a thought: `note:<id>` (newThought.ts) → the Thought window.
+                # PHILO-13-11 (slice two, R2): at 393 Capture opens from the Speak AppIcon.
+                if width <= 720:
+                    open_chair_window(page, "Capture")
+                self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
+                # A thought with no words is named `New thought` (windowName.ts).
+                page.locator(".desk-gadget-close[aria-label='Close New thought']").wait_for()
+                self._close_and_prove(page, width, "New thought", "write-a-thought")
+
+                # 4. the one desk (PHILO-17): a Screen icon, Enter -> `note:<id>` (qualified).
+                icon = page.locator(f"[data-testid=desk-screen] .desk-icon[aria-label^='{NOTE}']").first
+                icon.wait_for(state="attached")
+                # 393: one window fills the work area; close the Chair windows
+                # shown over the desk until its icons are on the glass.
+                for _ in range(6):
+                    if icon.is_visible():
+                        break
+                    shown = page.locator(".desk-window-shell.chair-window:visible .desk-gadget-close").first
+                    if not shown.count():
+                        break
+                    self._press(page, shown, width)
+                    page.wait_for_timeout(500)
+                icon.wait_for()
+                icon.focus()
+                page.keyboard.press("Enter")
+                page.locator(f".desk-gadget-close[aria-label='Close {NOTE}']").wait_for()
+                self._close_and_prove(page, width, NOTE, "screen-icon-note")
+                # 5. a bare id: the icon's menu -> Open (object.open -> openPullout(o.id)).
+                icon = page.locator(f"[data-testid=desk-screen] .desk-icon[aria-label^='{CLOSE_DECISION}']").first
+                icon.focus()
+                page.keyboard.press("Shift+F10")
+                item = page.get_by_role("menuitem", name="Open", exact=True)
+                item.wait_for()
+                self._press(page, item, width)
+                page.locator(f".desk-gadget-close[aria-label='Close {CLOSE_DECISION}']").wait_for()
+                self._close_and_prove(page, width, CLOSE_DECISION, "icon-menu-bare-decision")
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(CLOSE_SIZES))
+    def test_the_closed_intelligence_window_does_not_swallow_retry(self, width: int) -> None:
+        """J1's recovery leg: the brief read fails, Intelligence opens and closes,
+        and the Chair's Retry (under the old window at 393) works with no reload."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                page.route("**/api/brief/latest*", lambda r: r.fulfill(
+                    status=500, body='{"detail":"injected"}', content_type="application/json"))
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                # PHILO-13-11 (slice two, R2): at 393 the Brief is its own window.
+                if width <= 720:
+                    open_chair_window(page, "Brief")
+                retry = page.get_by_test_id("arrival-brief-retry")
+                retry.wait_for()
+                self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                page.locator(".desk-gadget-close[aria-label='Close Today']").wait_for()
+                page.unroute("**/api/brief/latest*")
+                proof = self._close_and_prove(page, width, "Today", "j1-retry")
+                self._press(page, retry, width)
+                page.get_by_test_id("arrival-brief-retry").wait_for(state="detached", timeout=10_000)
+                _settle(page)
+                page.screenshot(path=str(CLOSE_SHOTS / f"j1-retry-reached-{width}.png"))
+                (CLOSE_SHOTS / f"j1-retry-{width}.txt").write_text(
+                    f"{proof}\nafter Retry: {page.get_by_test_id('arrival-brief').first.inner_text()[:200]!r}\n")
+                assert not [e for e in errors if "injected" not in e], errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(CLOSE_SIZES))
+    def test_a_meeting_resolved_as_deleted_closes_its_card(self, width: int) -> None:
+        """Round three (Astra counsel r2): the meeting card's own close caller,
+        through the REAL producer. A tombstone conflict is recorded through the
+        meeting repository (as tests/integration/test_meeting_conflict_recovery.py
+        does); the card opens as `meeting:<id>`; the real MeetingConflictRecovery
+        resolves with Use incoming; the real route answers deleted:true; the card
+        leaves the DOM and its old centre hits the Desk."""
+        from playwright.sync_api import sync_playwright
+        from datetime import datetime, timedelta
+
+        from holdspeak.db import get_database
+        from holdspeak.meeting_session import MeetingState, TranscriptSegment
+
+        db = get_database()
+        started = datetime.now() - timedelta(hours=2)
+        title = "Tombstone sync review"
+        local = MeetingState(
+            id="p13-tombstone", started_at=started, ended_at=started + timedelta(minutes=12),
+            title=title, tags=["delivery"],
+            segments=[TranscriptSegment(text="Retained until the owner decides.", speaker="Karol",
+                                        start_time=4.0, end_time=9.0)],
+        )
+        db.meetings.save_meeting(local)
+        db.meetings.record_sync_conflict(local.id, local_value=local.to_dict(),
+                                         incoming_value={"deleted": True})
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
+                page.locator("[aria-controls=desk-palette-listbox]").fill("Tombstone")
+                option = page.locator("[id='desk-palette-option-meeting:p13-tombstone']")
+                option.wait_for()
+                self._press(page, option, width)
+                # PHILO-17: the meeting is its own window (the whole record).
+                card = page.locator(f".desk-object-window[aria-label='{title}']")
+                card.wait_for()
+                incoming = card.get_by_role("button", name="Use incoming")
+                incoming.wait_for()
+                page.wait_for_timeout(600)
+                _settle(page)
+                box = card.bounding_box()
+                assert box
+                cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+                win_id = card.get_attribute("id")
+                page.screenshot(path=str(CLOSE_SHOTS / f"meeting-tombstone-before-{width}.png"))
+                answers: list[dict] = []
+                page.on("response", lambda r: answers.append({"status": r.status, "url": r.url})
+                        if "/sync-conflicts/" in r.url and r.url.endswith("/resolve") else None)
+                self._press(page, incoming, width)
+                page.wait_for_timeout(1500)
+                _settle(page)
+                hit = page.evaluate(HIT_JS, [cx, cy])
+                left = [o for o in self._open(page) if o["id"] == win_id]
+                page.screenshot(path=str(CLOSE_SHOTS / f"meeting-tombstone-after-{width}.png"))
+                proof = {"window": win_id, "centre": [round(cx), round(cy)], "resolve": answers,
+                         "hit": hit, "left_in_dom": left}
+                (CLOSE_SHOTS / f"meeting-tombstone-{width}.txt").write_text(f"{proof}\n")
+                assert answers and answers[0]["status"] == 200, answers
+                assert db.meetings.get_meeting(local.id) is None
+                assert not left, f"the closed card stays in the DOM: {left}"
+                assert _on_the_desk(hit), f"the old centre hits {hit}"
+                assert not errors, errors
+            finally:
+                browser.close()
+
+@pytest.mark.chair_windows_open
+class TestTheDeskRemembers(_Rig):
+    @pytest.mark.parametrize("width", list(_h1_SIZES))
+    def test_windows_places_and_drafts_return_after_a_reload(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            puts: list[str] = []
+            page.on("request", lambda r: puts.append(f"{r.method} {r.url}")
+                    if r.method in ("PUT", "POST") and ("/api/updates/" in r.url or "/agenda" in r.url) else None)
+            try:
+                # 3. People on Priya, the Prep tab (PHILO-17: the 1:1s tab folded into
+                #    Prep), an agenda item typed, not added
+                self._chair_window(page, width, "Needs you")
+                # PHILO-14 A5: the Needs-you drawer row's body opens it (`needs-row`).
+                commitment = page.locator(".desk-window-shell[aria-label='Needs you'] [data-testid='needs-row']",
+                                          has_text=COMMITMENT).first.locator(".needs-row-name")
+                self._press(page, commitment, width)
+                people = page.locator(PERSON).first
+                people.get_by_role("tab", name="Prep").wait_for()
+                self._press(page, people.get_by_role("tab", name="Prep"), width)
+                pad = people.get_by_role("textbox", name="Add to the agenda")
+                pad.wait_for()
+                self._press(page, pad, width)
+                page.keyboard.type(AGENDA)
+                page.wait_for_timeout(400)
+
+                # 4. Intelligence: opened, then closed (close means gone)
+                self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                close = page.locator(".desk-gadget-close[aria-label='Close Today']")
+                close.wait_for()
+                page.wait_for_timeout(500)
+                self._press(page, close, width)
+                close.wait_for(state="detached")
+
+                # 1. the decision window
+                self._palette(page, "freeze", "decision:d-freeze", width)
+                page.locator(f".desk-pullout[aria-label='{DECISION}']").wait_for()
+                _settle(page)
+
+                # 2. the Room: Updates -> Draft -> typed words, not saved
+                self._palette(page, "Payments", "project.open.p-ledger", width)
+                _room_opened(page)
+                room = page.locator("#surface-project-memory")
+                # The Room's reads land after it opens and move its rows; a
+                # touch tap aimed before they land hits a meeting row (its own
+                # window then covers the Room at 393).
+                page.wait_for_timeout(900)
+                _settle(page)
+                self._press(page, room.get_by_test_id("updates-verb"), width)
+                self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)
+                editor = room.locator("[contenteditable=true]").first
+                editor.wait_for()
+                self._press(page, editor, width)
+                page.keyboard.press("Control+End")
+                page.keyboard.type(" " + ROOM_WORDS)
+                page.wait_for_timeout(400)
+                if width >= 720:
+                    head = room.locator(".desk-window-head, .desk-window-title").first
+                    box = head.bounding_box()
+                    assert box
+                    page.mouse.move(box["x"] + 40, box["y"] + box["height"] / 2)
+                    page.mouse.down()
+                    page.mouse.move(box["x"] + 160, box["y"] + box["height"] / 2 + 60, steps=8)
+                    page.mouse.up()
+                    page.wait_for_timeout(500)
+                room_rect = next(w["rect"] for w in self._windows(page) if w["id"] == "surface-project-memory")
+
+                # 5. at 1440 the decision is iconified (393 has no Iconify gadget)
+                if width >= 720:
+                    deck = page.locator(f".desk-pullout[aria-label='{DECISION}']")
+                    self._press(page, deck.locator(f"[aria-label='Iconify {DECISION}']"), width)
+                    page.wait_for_timeout(900)
+                _settle(page)
+                page.screenshot(path=str(_h1_SHOTS / f"B2-01-before-reload-{width}.png"))
+                before = {"windows": self._windows(page), "workspace": self._workspace(page),
+                          "room_rect": room_rect, "writes": list(puts)}
+
+                # ── the reload ──
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                room = page.locator("#surface-project-memory")
+                editor = room.locator("[contenteditable=true]").first
+                editor.wait_for(timeout=20_000)
+                page.wait_for_function(
+                    "(w) => [...document.querySelectorAll('#surface-project-memory [contenteditable=true]')].some(e => e.innerText.includes(w))",
+                    arg=ROOM_WORDS, timeout=15_000)
+                people = page.locator(PERSON).first
+                if width < 720:
+                    # 393 shows one window at a time: he brings Priya's window
+                    # forward from the screen switcher (PHILO-17: her own window).
+                    people.wait_for(state="attached", timeout=20_000)
+                    self._press(page, page.get_by_test_id("desk-screen-switcher"), width)
+                    self._press(page, page.locator(".desk-screen-switcher-menu [role=menuitemcheckbox]",
+                                                   has_text="Priya Nair").first, width)
+                people.get_by_role("textbox", name="Add to the agenda").wait_for(timeout=20_000)
+                page.wait_for_timeout(1200)
+                _settle(page)
+                after_windows = self._windows(page)
+                page.screenshot(path=str(_h1_SHOTS / f"B2-02-after-reload-{width}.png"))
+                tab = people.locator(".people-lenses [role=tab][aria-selected=true]").inner_text().strip()
+                agenda = people.get_by_role("textbox", name="Add to the agenda").input_value()
+                person = people.locator(".people-detail-head .people-name").inner_text().strip()
+                room_after = next((w["rect"] for w in after_windows if w["id"] == "surface-project-memory"), None)
+                titles = [w["title"] for w in after_windows]
+                decision_drawn = any(DECISION in t for t in titles)
+                # PHILO-16 (A1) §5: the window chips are parked; a seated window
+                # with no application tile (a decision pullout) has its own seat tile.
+                chips = page.evaluate("() => [...document.querySelectorAll('.desk-dock .desk-dock-seat-tile')].map(b => (b.getAttribute('aria-label') || b.textContent || '').trim())")
+                proof = {"width": width, "before": before, "after_windows": after_windows,
+                         "people": {"person": person, "tab": tab, "agenda": agenda},
+                         "room_rect_after": room_after, "dock_seats": chips,
+                         "writes_after_reload": [p for p in puts if p not in before["writes"]]}
+                (_h1_SHOTS / f"B2-proof-{width}.json").write_text(json.dumps(proof, indent=1) + "\n")
+
+                assert person == "Priya Nair", proof
+                assert tab.lower() == "prep", proof
+                assert agenda == AGENDA, proof
+                assert not proof["writes_after_reload"], "restore sent a write"
+                assert not before["writes"], "nothing was saved or sent before the reload"
+                assert not any("Today" in t for t in titles), "the closed Intelligence window came back"
+                if width >= 720:
+                    # PHILO-14 A1 (#939, Astra's P2): saved positions are restored.
+                    # The moved Room comes back exactly. PHILO-17 (U28c): a
+                    # window's first seat is saved too, so the untouched People
+                    # window comes back at the place it opened (before, it was
+                    # placed again and could land elsewhere); it is whole in the
+                    # band and hides no other window's title bar.
+                    assert room_after == room_rect, (room_rect, room_after)
+                    people_id = next(w["id"] for w in after_windows if w["title"] == "Priya Nair")
+                    people_before = next(w["rect"] for w in before["windows"] if w["id"] == people_id)
+                    pr = next(w["rect"] for w in after_windows if w["id"] == people_id)
+                    assert pr == people_before, (people_before, pr)
+                    assert pr[0] >= 0 and pr[1] >= 0 and pr[0] + pr[2] <= 1440 and pr[1] + pr[3] <= 900, pr
+                    for other in after_windows:
+                        if other["id"] == people_id:
+                            continue
+                        x, y, w, h = other["rect"]
+                        hides = pr[0] <= x and pr[0] + pr[2] >= x + w and pr[1] <= y and pr[1] + pr[3] >= y + 44
+                        assert not hides, (people_id, pr, other)
+                    assert not decision_drawn, "the iconified decision came back drawn"
+                    assert "pullout:decision:d-freeze" in self._workspace(page)["panel"]["min"]
+                    assert any(DECISION in c for c in chips), chips
+                else:
+                    assert "decision:d-freeze" in self._workspace(page)["windows"]["pullouts"]
+                assert not errors, errors
             finally:
                 browser.close()

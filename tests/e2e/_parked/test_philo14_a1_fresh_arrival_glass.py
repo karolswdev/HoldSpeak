@@ -23,7 +23,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _boot, _ensure_build, _images_loaded, _normal_chair, _settle
-from .test_philo13_11_chair_glass import _seed
+from .chair_rig import _seed
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the fresh arrival needs Playwright")

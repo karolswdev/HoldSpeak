@@ -49,7 +49,7 @@ from .glass_infra import (
     _settle,
 )
 from .type_floor_rig import _FAINT_JS, _MEASURE
-from .test_philo13_11_chair_glass import _seed as _canvas_seed
+from .chair_rig import _seed as _canvas_seed
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the type-floor glass needs Playwright")

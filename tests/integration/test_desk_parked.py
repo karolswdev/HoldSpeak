@@ -32,7 +32,7 @@ class _Recorder(_FirstRunRecorder):
 
 def test_park_a_meeting_and_a_project_see_both_restore_one(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """replaces: tests/e2e/test_philo15_04_small_gaps_glass.py::TestParkedDrawer::test_park_a_meeting_and_a_project_see_both_restore_one (hub half)"""
-    from tests.e2e.test_philo13_11_chair_glass import _seed
+    from tests.e2e.chair_rig import _seed
 
     keyfile = tmp_path / "people.key"
     keyfile.write_text("{}")

@@ -35,7 +35,7 @@ import pytest
 
 from .chair_windows import open_chair_window
 from .glass_infra import open_project_drawer, _api, _boot, _ensure_build, _normal_chair, _settle
-from .test_philo13_11_frame_glass import _seed
+from .frame_rig import _seed
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the hub windows glass needs Playwright")
