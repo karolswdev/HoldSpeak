@@ -1597,7 +1597,16 @@ def test_a_cancellation_racing_the_dialect_signal_never_admits_the_retry(tmp_pat
         def dispatch(self, engine: Any, payload: Any, cancellation: Any) -> Any:
             self.dispatches += 1
             dispatching.set()
-            assert proceed.wait(5), "the test never released the dispatch"
+            # The cancel of a DISPATCHING attempt is cooperative: it sets the
+            # cancellation and waits for this dispatch to return. The signal
+            # is raised once the cancel has landed (fast diet 2026-10-12: the
+            # fake waited only for ``proceed``, which the test sets after the
+            # cancel returns, so it timed out at 5 s and raised an
+            # AssertionError instead of the dialect signal).
+            deadline = time.monotonic() + 5
+            while not (proceed.is_set() or cancellation.is_set()):
+                assert time.monotonic() < deadline, "the test never released the dispatch"
+                proceed.wait(0.01)
             from holdspeak.kernel.provider_signals import ProviderCompatibilityRetry
 
             raise ProviderCompatibilityRetry("max_completion_tokens")

@@ -91,7 +91,14 @@ class _StreamingAdapter:
             if cancellation.is_set():
                 return
             if self._stall_event and yielded >= self._stall_after:
-                self._stall_event.wait(timeout=5.0)
+                # A stalled provider still observes the cancellation, as a
+                # real adapter does (fast diet 2026-10-12: the stall used to
+                # wait out its 5 s while the cancel waited for it).
+                deadline = time.monotonic() + 5.0
+                while not (self._stall_event.is_set() or cancellation.is_set()):
+                    if time.monotonic() >= deadline:
+                        break
+                    self._stall_event.wait(timeout=0.01)
                 if cancellation.is_set():
                     return
             if self._error_after_first and yielded > 0 and delta.kind == "error":

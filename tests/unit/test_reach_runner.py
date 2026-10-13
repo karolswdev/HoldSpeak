@@ -170,8 +170,11 @@ def _stub_server(behaviour: dict[str, Any] | None = None) -> Generator[tuple[str
         server.shutdown()
 
 
-def _run_runner(hub: str, token: str, rooms: str = "all", poll: int = 1, timeout: int = 10) -> tuple[int, str]:
-    """Import and run the runner, capturing stdout.  Returns (exit_code, stdout)."""
+def _run_runner(hub: str, token: str, rooms: str = "all", poll: float = 0.05, timeout: float = 10) -> tuple[int, str]:
+    """Import and run the runner, capturing stdout.  Returns (exit_code, stdout).
+
+    The stub hub answers at once, so the runner polls it every 0.05 s (fast
+    diet 2026-10-12: the 1 s poll was waited out once or more per test)."""
     # Import the runner module
     runner_path = Path(__file__).resolve().parents[2] / "scripts" / "reach_runner.py"
     assert runner_path.is_file(), f"Runner not found at {runner_path}"
@@ -303,7 +306,7 @@ class TestStewardTimeout:
     def test_steward_timeout(self):
         with _stub_server({"steward_status": "running"}) as (host, port):
             hub = f"http://{host}:{port}"
-            code, out = _run_runner(hub, token="token", timeout=2, poll=1)
+            code, out = _run_runner(hub, token="token", timeout=0.3, poll=0.05)
 
         assert code == 1
         assert "TIMEOUT" in out
