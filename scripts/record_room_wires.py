@@ -924,6 +924,34 @@ def sources17(hub: Any, _mp: pytest.MonkeyPatch) -> dict[str, Any]:
 COUNT_BODY: dict[str, Any] = {"provider": "github", "scope": "acme/app", "watches": ["open_prs", "ci"], "adjust": {"base": "main"}}
 
 
+# ── HS-174-04: the Room's writes, one remote and one local ──
+
+
+def receipts174(hub: Any, _mp: pytest.MonkeyPatch) -> dict[str, Any]:
+    """The seed of tests/e2e/_parked/test_hs174_receipts_glass.py::_room_receipts_leg:
+    the LOCAL write is minted by the real route (POST items -> create_item, observed
+    into pipeline_events); the REMOTE write is a seeded pipeline event (minting it for
+    real needs the remote listener and a non-loopback client)."""
+    import time as _time
+
+    pid = _project(hub, "Q4 Platform", "hs174-receipts-proj")
+    hub.ok("POST", f"/api/projects/{pid}/items", {
+        "item_type": "milestone", "title": "Write the cutover runbook", "command_id": "hs174-item"})
+    with hub.db._connection() as conn:
+        conn.execute(
+            """INSERT INTO pipeline_events
+               (event_id, timestamp, service, method,
+                principal_kind, principal_identity, args_summary,
+                result_summary, error, error_code, duration_ms,
+                correlation_id, is_async, origin, caller, caller_identity)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (f"ev-{uuid.uuid4().hex[:12]}", _time.time(), "ProjectService", "update_project",
+             "agent", "sweep-runner", json.dumps({"project_id": pid}), json.dumps({"id": pid}),
+             None, None, 42.0, str(uuid.uuid4()), 0, "remote", "192.168.1.43", "sweep-runner"),
+        )
+    return {"pid": pid, "gets": _gets(hub, pid, ROOM_GETS)}
+
+
 # ── PHILO-17 sources: Park from FILES; the row leaves on the hub's frame ──
 
 
@@ -979,6 +1007,7 @@ def main() -> int:
         (STEWARD_DIR, "policy173", policy173, {}),
         (DOOR_DIR, "door174", door174, {"acli_runner": _fake_acli_runner}),
         (ROOM_DIR, "sources17", sources17, {"gh_runner": rig._gh_signed_in}),
+        (ROOM_DIR, "receipts174", receipts174, {}),
     ]
     for name, folder, job in (("hs164_gate", STEWARD_DIR, hs164), ("hs164_circuit", STEWARD_DIR, hs164),
                               ("files17", ROOM_DIR, files17)):

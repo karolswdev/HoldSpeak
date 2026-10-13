@@ -326,3 +326,33 @@ def test_start_here_note(hub: Any, tmp_path: Path) -> None:
     note = _ok(hub.client.get("/api/notes/hs-seed-start-here"))
     _fence("note.start-here", note, tmp_path, hub)
     assert "(door:record-live)" in str(note)
+
+
+def test_shade_finished_remote_receipt(hub: Any, tmp_path: Path) -> None:
+    """bell.app.test.tsx: the shade's Finished rows read /api/desk/projections
+    (desk/projections.ts refresh). One remote pipeline event (a sweep a LAN agent
+    ran from 192.168.1.43) and one local one, seeded as
+    tests/e2e/_parked/test_hs174_receipts_glass.py::_seed_pipeline_event seeds them."""
+    import time as _time
+    import uuid as _uuid
+
+    with hub.db._connection() as conn:
+        for n, (service, method, origin, caller, summary) in enumerate((
+            ("HeartbeatService", "run_sweep", "remote", "192.168.1.43", '{"watches":4,"rooms":2,"held":false}'),
+            ("StewardService", "project_run_steward", "local", "", "{}"),
+        )):
+            conn.execute(
+                """INSERT INTO pipeline_events
+                   (event_id, timestamp, service, method,
+                    principal_kind, principal_identity, args_summary,
+                    result_summary, error, error_code, duration_ms,
+                    correlation_id, is_async, origin, caller, caller_identity)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (f"ev-shade-{n}", _time.time() - n, service, method, "agent", "sweep-runner", "{}",
+                 summary, None, None, 42.0, str(_uuid.uuid4()), 0, origin, caller,
+                 "sweep-runner" if origin == "remote" else ""),
+            )
+    answer = _ok(hub.client.get("/api/desk/projections?offset=0&limit=50"))
+    remote = [row for row in answer["projections"] if row.get("origin") == "remote"]
+    assert remote and remote[0]["caller"] == "192.168.1.43", answer["projections"]
+    _fence("desk-projections.remote-receipt", answer, tmp_path, hub)

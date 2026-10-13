@@ -18,9 +18,13 @@ vi.mock("../../lib/api", async () => {
   const actual = await vi.importActual<typeof import("../../lib/api")>("../../lib/api");
   return { ...actual, apiFetch: (...args: unknown[]) => apiFetch(...args) };
 });
+const openProjectRoom = vi.fn();
 vi.mock("../shell", async () => {
   const actual = await vi.importActual<typeof import("../shell")>("../shell");
-  return { ...actual, openSurface: () => true, openSurfaceOr: () => {} };
+  return {
+    ...actual, openSurface: () => true, openSurfaceOr: () => {},
+    openProjectRoom: (...args: unknown[]) => openProjectRoom(...args),
+  };
 });
 vi.mock("../setup", () => ({ loadSetup: vi.fn(() => Promise.resolve(null)) }));
 
@@ -80,6 +84,7 @@ beforeEach(() => {
   usePalette.setState({ open: false });
   routes = {};
   apiFetch.mockReset();
+  openProjectRoom.mockReset();
   apiFetch.mockImplementation((path: string) => {
     const hit = routes[path] ?? routes[path.split("?")[0]];
     return Promise.resolve(hit ? hit() : {});
@@ -177,6 +182,49 @@ describe("the palette finds the right row and opens it", () => {
     // The window draws the object's own words.
     expect(held?.segments?.map((s) => s.text)).toEqual(["The numbat migration waits for finance."]);
     expect(apiFetch.mock.calls.map(([p]) => p)).toContain("/api/meetings/m-old-00");
+  });
+});
+
+/* ── HS-171-07: the PROJECTS rows (the client's limit, filter and verb) ──
+ * The rows are the desk store's projects; the hub's needs-you read answers
+ * nothing here (no badge), so these legs are the palette's own logic
+ * (DeskToolShelf.tsx: the PROJECTS rows and the section limit of 10). The
+ * hub's badge and order are oneNumberFaces.test.tsx's (the real producers). */
+describe("the palette's PROJECTS rows", () => {
+  const ROOMS = Array.from({ length: 12 }, (_, i) => ({
+    id: `proj-${String(i).padStart(2, "0")}`,
+    name: `Room ${String(i).padStart(2, "0")}`,
+  }));
+  const projectRows = () => rows().filter((o) => o.id.startsWith("desk-palette-option-project.open."));
+
+  it("twelve Rooms draw ten rows", async () => {
+    // replaces: tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_cap_1440
+    useDesk.setState({ projects: ROOMS as never });
+    await deck();
+    expect(projectRows()).toHaveLength(10);
+  });
+
+  it("a Room's name filters the PROJECTS rows to that Room", async () => {
+    // replaces: tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_search_1440
+    useDesk.setState({ projects: [
+      { id: "p-q4", name: "Q4 Platform" }, { id: "p-gov", name: "Governance" }, { id: "p-data", name: "Data Platform" },
+    ] as never });
+    const input = await deck();
+    expect(projectRows()).toHaveLength(3);
+    await type(input, "Governance");
+    expect(projectRows().map((o) => o.textContent)).toEqual([expect.stringContaining("Open Governance")]);
+    await type(input, "");
+    expect(projectRows()).toHaveLength(3);
+  });
+
+  it("a press on a Room row opens that Room and closes the palette", async () => {
+    // replaces: tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_projects_1440 (the press leg; the 393 twin is the same DOM)
+    useDesk.setState({ projects: [{ id: "p-q4", name: "Q4 Platform" }] as never });
+    await deck();
+    fireEvent.click(screen.getByRole("option", { name: /Open Q4 Platform/ }));
+    expect(openProjectRoom).toHaveBeenCalledWith("p-q4");
+    expect(usePalette.getState().open).toBe(false);
+    expect(screen.queryByRole("combobox", { name: "Search tools and Desk items" })).toBeNull();
   });
 });
 

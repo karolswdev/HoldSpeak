@@ -29,6 +29,7 @@ import N10 from "./room-wires/nudge10.json";
 import H175 from "./room-wires/hs175.json";
 import S17 from "./room-wires/sources17.json";
 import F17 from "./room-wires/files17.json";
+import R174 from "./room-wires/receipts174.json";
 
 vi.mock("../../../desk/ask", async () => {
   const actual = await vi.importActual<typeof import("../../../desk/ask")>("../../../desk/ask");
@@ -1244,5 +1245,32 @@ describe("PHILO-17 sources: a parked meeting leaves FILES on the hub's own frame
     await waitFor(() => expect(row()).not.toBeNull(), { timeout: 3000 });
     expect(misses).toEqual([]);
     useDrawers.getState().setReceipt(pid, null);
+  });
+});
+
+describe("HS-174-04: the Room's writes under History carry egress where egress happened", () => {
+  // replaces: tests/e2e/test_hs174_receipts_glass.py::test_room_receipts_1440
+  // replaces: tests/e2e/test_hs174_receipts_glass.py::test_room_receipts_393 (the same DOM asserts at 393)
+  // (the hub half, ProjectService.room's receipts: tests/unit/test_reach_wire.py::TestRoomReceipts)
+  it("History ▸ Writes: the remote write wears REMOTE · <caller>; the local CREATE ITEM wears none", async () => {
+    const { pid, gets } = R174 as unknown as { pid: string; gets: Gets };
+    replay(gets);
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await screen.findByTestId("room-body");
+    fireEvent.click(within(screen.getByTestId("wing-slot")).getByRole("tab", { name: "History" }));
+    const fold = await screen.findByTestId("room-fold-writes");
+    const summary = fold.querySelector("summary");
+    if (summary) fireEvent.click(summary);
+    const rows = await within(fold).findAllByTestId("receipt-row");
+    const texts = rows.map((r) => (r.textContent ?? "").toUpperCase());
+    const remote = rows.filter((_, i) => texts[i].includes("UPDATE PROJECT"));
+    const local = rows.filter((_, i) => texts[i].includes("CREATE ITEM"));
+    expect(remote).toHaveLength(1);
+    expect(local.length).toBeGreaterThanOrEqual(1);
+    expect(within(remote[0]).getByTestId("receipt-egress").textContent?.trim()).toBe("REMOTE · 192.168.1.43");
+    for (const row of local) expect(within(row).queryByTestId("receipt-egress")).toBeNull();
+    // No machine tokens (UX-CANON): no "Service." on a row.
+    for (const row of rows) expect(row.textContent).not.toContain("Service.");
+    expect(misses).toEqual([]);
   });
 });
