@@ -213,9 +213,7 @@ describe("a remote write in the shade's Finished rows (HS-174-04)", () => {
       expect(node).not.toBeNull();
       return node!;
     });
-    // EgressChip does not pass `data-testid` on (SystemShade.tsx: `shade-finished-egress`
-    // never reaches the DOM), so the chip is read by its own class and scope.
-    const chips = Array.from(finished.querySelectorAll(".gadget-chip-egress"));
+    const chips = within(finished).getAllByTestId("shade-finished-egress").map((slot) => slot.querySelector(".gadget-chip-egress")!);
     expect(chips.map((c) => [c.textContent, c.getAttribute("data-scope")])).toEqual([[`REMOTE · ${remote.caller}`, "remote"]]);
     expect(finished.textContent).not.toContain("Service.");
   });
