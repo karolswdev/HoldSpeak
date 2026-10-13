@@ -259,11 +259,9 @@ jobs:
           npm ci --no-audit --no-fund
           npm run build
 
-      - name: Install Playwright Chromium and WebKit
-        # WebKit: the PHILO-8-02 delete fence runs one case on both engines
-        # because Astra reproduced that defect in WebKit
-        # (tests/e2e/test_philo8_one_delete_glass.py, the engine parametrize).
-        run: uv run --extra test playwright install chromium webkit
+      - name: Install Playwright Chromium
+        # No live browser test runs WebKit (the PHILO-8-02 engine case is parked).
+        run: uv run --extra test playwright install chromium
 
       - name: Pre-warm the mermaid renderer
         # HS-200-03 follow-through. Without this the mermaid guard fell back
