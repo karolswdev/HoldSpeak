@@ -1071,8 +1071,20 @@ J4_IMPORT = "case.j4.meetings_import.imported"
 
 
 def _atlas_case(case_id):
+    """The real atlas case, minus its `import_transcriber` boundary.
+
+    PHILO-16 R2 (7da169efa) gave the J4 case a boundary step that the REAL
+    hub installs at boot (a recorded transcript at
+    meeting_import._transcriber_factory). The calibration server is not that
+    hub: it answers the whole /api/meetings/import route itself, so there is
+    no transcriber seam to install. The step is dropped here, never faked as
+    installed; every other step of the case stays as the atlas declares it.
+    """
     atlas = json.loads(REAL_ATLAS.read_text())
-    return next(c for c in atlas["cases"] if c["id"] == case_id)
+    case = next(c for c in atlas["cases"] if c["id"] == case_id)
+    setup = [step for step in case["setup"]
+             if not (step.get("kind") == "boundary" and step.get("substitute") == "import_transcriber")]
+    return {**case, "setup": setup}
 
 
 @browser_case
