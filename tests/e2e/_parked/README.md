@@ -413,3 +413,19 @@ and measures other files import moved into rig modules (`chair_rig.py`,
   `tests/e2e/test_windows_glass.py`. Remembers' other legs (a closed window
   stays gone; every family and draft; an emptied Room draft; the Thought's
   words) are `deskRemembers.philo1307.test.tsx` and `deskRemembers2.philo1307.test.tsx`.
+# Parked by push 2 of the test diet: lane e2e-low-2, part 4 (2026-10-12)
+
+- `test_philo17_firstrun_glass.py`: F4 and F5 (the recovery doors open their
+  windows on glass over first run; a real fake-device microphone) moved to
+  `tests/e2e/test_firstrun_glass.py`. F1-F3 are vitest:
+  `surface/__tests__/materialDoors.test.tsx`, `pages/cores/__tests__/setupCoreInfo.test.tsx`,
+  `firstrun/__tests__/OneScreen.test.tsx`.
+- `test_philo17_today_glass.py`: the seat between the icon columns (geometry)
+  moved to `tests/e2e/test_today_glass.py`; Open prep, Choose engine and Confirm
+  are `web/src/desk/pullouts/views/TodayView.test.tsx` (the confirm route:
+  `tests/unit/test_desk_needs_you.py`).
+- `test_philo17_wayin_glass.py`: moved whole to `tests/e2e/test_signin_glass.py`
+  (tabs, fresh browsers, the token's storage, the /ws socket).
+- `test_philo17_phonepass_glass.py`: the rows-hold-still cases moved to
+  `tests/e2e/test_room_glass.py`; the People caption check is the desk sweep's
+  `overlap` fence on the bare desk, which names that defect in `KNOWN_REDS`.

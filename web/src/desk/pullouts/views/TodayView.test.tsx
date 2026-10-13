@@ -1,6 +1,13 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PERSON_OPEN_EVENT } from "../../objectWindows";
 import { TodayView, countdown, currentStep, toFinish } from "./TodayView";
+
+const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn() }));
+vi.mock("../../shell", async () => {
+  const actual = await vi.importActual<typeof import("../../shell")>("../../shell");
+  return { ...actual, openSurfaceOr: shell.openSurfaceOr };
+});
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -242,5 +249,50 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     expect(next.textContent).toContain("TUE");
     expect(within(next).getByTestId("today-countdown").textContent).toBe("in 50 min");
     expect(screen.queryByTestId("today-empty")).toBeNull();
+  });
+
+  it("Open prep opens the 1:1's person on the Prep lens; Choose engine opens Runs on", async () => {
+    // replaces: tests/e2e/test_philo17_today_glass.py::test_open_prep_and_make_the_summary_land_in_one_press
+    const opened: unknown[] = [];
+    const onPerson = (e: Event) => opened.push((e as CustomEvent).detail);
+    window.addEventListener(PERSON_OPEN_EVENT, onPerson);
+    hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [
+        { id: "ev1", source: "calendar_event", title: "1:1 Priya", starts_at: inMinutes(50), ends_at: inMinutes(80),
+          person_label: "Priya Nair", person_relationship_id: "r1" },
+      ] }),
+      "/api/meetings?limit=40": () => json({ meetings: [{
+        id: "m1", title: "Vendor sync", started_at: inMinutes(-60), transcriptWords: 40, intel_status: "disabled",
+        planned_route: { status: "unavailable", reason_code: "no_engine", selection_hash: null, legs: [] },
+      }] }),
+      "/api/desk/needs-you": () => json({ items: [] }),
+    });
+    try {
+      render(<TodayView header={null} />);
+      fireEvent.click(await screen.findByTestId("today-open-prep"));
+      expect(opened).toEqual([expect.objectContaining({ relationshipId: "r1", lens: "prep" })]);
+      fireEvent.click(await screen.findByRole("button", { name: "Choose engine" }));
+      expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-concierge", "/models", "meetings");
+    } finally {
+      window.removeEventListener(PERSON_OPEN_EVENT, onPerson);
+    }
+  });
+
+  it("Confirm records the decision: the hub's next read has none, and the plate leaves", async () => {
+    // replaces: tests/e2e/test_philo17_today_glass.py::test_confirm_records_the_decision (the face half;
+    // the confirm route is tests/unit/test_desk_needs_you.py)
+    let open = true;
+    const calls = hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
+      "/api/meetings?limit=40": () => json({ meetings: [] }),
+      "/api/desk/needs-you": () => json({ items: open ? [{ proposalId: "pr1", title: "Freeze the ledger on Nov 12" }] : [] }),
+      "/api/proposals/pr1/confirm": () => { open = false; return json({ ok: true }); },
+    });
+    render(<TodayView header={null} />);
+    const plate = await screen.findByTestId("today-decide");
+    expect(within(plate).getByText("Freeze the ledger on Nov 12")).toBeTruthy();
+    fireEvent.click(within(plate).getByRole("button", { name: "Confirm" }));
+    await waitFor(() => expect(screen.queryByTestId("today-decide")).toBeNull());
+    expect(calls.some(([url, init]) => url === "/api/proposals/pr1/confirm" && init?.method === "POST")).toBe(true);
   });
 });
