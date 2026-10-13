@@ -337,3 +337,18 @@ beside it.
   file -> `tests/e2e/test_askai_glass.py`. The rest: `tests/unit/test_frozen_review.py`,
   `roomPeople200.test.tsx`, `taskResume.test.tsx`, `room200TaskResume.test.tsx`,
   `tests/unit/test_phase200_task_resume.py`.
+- `test_philo16_compositor_glass.py`, `test_philo16_hub_windows_glass.py`, `test_philo17_windows_glass.py`,
+  `test_window_names_glass.py`: moved whole to `tests/e2e/test_windows_glass.py`.
+- `test_philo17_meeting_window_glass.py`: the five doors, Record -> Stop (1440), the hub migration (1440)
+  and the held preview are in `tests/e2e/test_meetings_glass.py`; `_save_meeting` is `tests/e2e/meetings_rig.py`;
+  the person icon in `people.app.test.tsx`; the summary in front in `aftercarePhone.philo1317.test.tsx:146`.
+- `test_philo17_objverbs_glass.py`, `test_philo3_01_receipt_hits.py`: moved whole to `tests/e2e/test_desk_glass.py`.
+- `test_philo9_04_desk_debts_rehomed_glass.py` (the re-homed PHILO-9-04, parked under this name beside the
+  Floor-era file): moved whole to `tests/e2e/test_desk_glass.py`.
+- `test_philo17_one_desk_glass.py`: the off-desk Delete and Undo in view are in `tests/e2e/test_desk_glass.py`;
+  the stored Floor in `deskRemembers.philo1307.test.tsx:137`; the zone window on the hub in
+  `tests/unit/test_desk_windows_routes.py:131`, `tests/unit/test_desk_window_service.py:448`.
+- `test_philo17_thought_send_glass.py`, `test_thought_opens_at_once_glass.py`: moved whole to
+  `tests/e2e/test_thought_glass.py`.
+- `test_philo9_07_project_grant_glass.py`: three cases in `tests/e2e/test_settings_glass.py`; the other three in
+  `settings.app.test.tsx:478-545`.

@@ -19,6 +19,16 @@ press):
   focus on the Button; the first Escape closes the menu and Speak stays in
   front; a second Escape still closes the window.
 
+* PHILO-16 the compositor core (moved whole): planes, Tile with its divider
+  drag, Stage (⌘⏎), Exposé (⌘⇧E), Gather (⌘G), keys quiet in a text field,
+  393 unchanged; Astra's two rounds of repros.
+* PHILO-16 16b the hub owns the windows (moved whole): several browser views
+  of ONE hub agree, live; the MCP arrange tiles both views.
+* PHILO-17 windows open well and come back as themselves (moved whole):
+  three views, drags, nothing bounces back.
+* A window's title is the name of the thing in it (moved whole): at 393 the
+  clock leaves the bar and the Room's name takes its width.
+
 Cheaper successors of the rest: the ring, the switcher rows, Go at 393 and
 the four flat menus at 1440 in web/src/desk/components/window/phoneRing.test.tsx
 and web/src/desk/components/DeskMenuBar.test.tsx; the aftercare card's
@@ -27,14 +37,27 @@ clip, overlap and fit of every window in the desk sweep.
 """
 from __future__ import annotations
 
+import base64
 import json
 import re
+import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle
+from .chair_windows import open_chair_window
+from .glass_infra import (
+    _api,
+    _boot,
+    _ensure_build,
+    _normal_chair,
+    _rendered_text_faults,
+    _room_opened,
+    _settle,
+    open_project_drawer,
+)
+from .test_philo13_11_frame_glass import ROOM, _seed, _stage
 from .test_philo13_11_frame_glass import _seed as _frame_seed
 from tests._evidence import evidence_dir
 
@@ -47,6 +70,7 @@ SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-
 SIZES = {1440: 900, 393: 852}
 MEETING = "Ledger cutover sync"
 FRAME_MAX, CONTENT_MIN = 142, 700
+T = 30_000
 
 # C1's ratified fence library and the C7 canvas CHROME_OWNS fence, ported
 # verbatim from assets/story-11-canvas/harness/shoot.py:127 (JS_LIB) and
@@ -421,3 +445,1118 @@ def test_escape_closes_the_strip_menu_not_the_window(tmp_path: Path, monkeypatch
     assert menu_open == 0, "the first Escape left the strip menu open"
     assert still_open and front == "Speak", f"the first Escape closed the window (front now {front!r})"
     assert closed_after_second, "a second Escape no longer closes the window"
+
+
+# ── PHILO-16 the compositor core (moved whole: Tile, Stage ⌘⏎, Exposé ⌘⇧E, Gather ⌘G, the divider drag, keys quiet in a field, 393 unchanged) ──
+C_TOKEN = "philo16-compositor"
+C_SHOTS = evidence_dir("docs/internal/philo/phase-16/a2-shots")
+
+C_WINS_JS = r"""() => {
+  const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
+    return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; };
+  return [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(visible).map((s) => {
+    const r = s.getBoundingClientRect(); const cs = getComputedStyle(s);
+    return {name: s.getAttribute('aria-label'), plane: s.dataset.plane || null, layer: s.dataset.layer || null,
+      front: s.classList.contains('is-front'), z: Number(cs.zIndex) || 0,
+      k: s.style.getPropertyValue('--plate-k') || null, scale: cs.scale,
+      layoutW: s.offsetWidth, layoutH: s.offsetHeight,
+      rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]}; });
+}"""
+
+C_BAND_JS = r"""() => {
+  const st = getComputedStyle(document.documentElement);
+  const top = parseFloat(st.getPropertyValue('--desk-work-top'));
+  const band = parseFloat(st.getPropertyValue('--desk-work-bottom'));
+  const dock = parseFloat(st.getPropertyValue('--desk-dock-h'));
+  const bottom = Number.isFinite(dock) ? Math.max(band, dock) : band;
+  return {x: 10, y: top, w: innerWidth - 20, h: innerHeight - top - bottom};
+}"""
+
+C_DIVIDERS_JS = r"""() => [...document.querySelectorAll('.desk-window-divider')].map((d) => {
+  const r = d.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]; })"""
+
+
+def _c_wins(page: Any) -> list[dict[str, Any]]:
+    page.wait_for_timeout(450)  # the longest moment is 360 ms
+    _settle(page)
+    return page.evaluate(C_WINS_JS)
+
+
+def _c_by(wins: list[dict[str, Any]], name: str) -> dict[str, Any]:
+    return next(w for w in wins if w["name"] == name)
+
+
+def _c_fronts(wins: list[dict[str, Any]]) -> list[str]:
+    return [w["name"] for w in wins if w["plane"] == "front"]
+
+
+def _c_inside(rect: list[int], band: dict[str, float], slack: int = 2) -> bool:
+    x, y, w, h = rect
+    return (x >= band["x"] - slack and y >= band["y"] - slack
+            and x + w <= band["x"] + band["w"] + slack and y + h <= band["y"] + band["h"] + slack)
+
+
+C_PANEL_JS = r"""() => { const d = JSON.parse(localStorage.getItem('hs.desk.workspace.v1') || 'null');
+  const p = (d && d.panel) || {}; return {rects: p.rects || {}, zoom: p.zoom || {}, max: p.max || []}; }"""
+
+# The motion moving the window itself (a lift, an arrange): script
+# animations on transform / scale. A1's plane change is CSS transitions of
+# colour and shadow (the ladder), which may run while the pointer is down.
+C_RUNNING_JS = r"""(name) => { const el = document.querySelector(`.desk-window-shell[aria-label='${name}']`);
+  if (!el) return -1;
+  return el.getAnimations({subtree: false}).filter((a) => a.playState === 'running' && !(a instanceof CSSTransition))
+    .filter((a) => (a.effect.getKeyframes() || []).some((k) => 'scale' in k || 'transform' in k)).length; }"""
+
+C_ALL_RUNNING_JS = r"""(name) => { const el = document.querySelector(`.desk-window-shell[aria-label='${name}']`);
+  return el ? el.getAnimations().filter((a) => a.playState === 'running')
+    .map((a) => a instanceof CSSTransition ? `transition:${a.transitionProperty}` : `${a.constructor.name}:${a.animationName || ''}`) : null; }"""
+
+
+def _c_drag(page: Any, selector: str, dx: float, dy: float, *, hold: Any = None) -> None:
+    box = page.locator(selector).first.bounding_box()
+    assert box, f"nothing to drag: {selector}"
+    x, y = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    page.mouse.move(x + dx / 2, y + dy / 2, steps=4)
+    page.mouse.move(x + dx, y + dy, steps=4)
+    if hold:
+        hold()
+    page.mouse.up()
+
+
+def _c_window_menu(page: Any, label: str) -> None:
+    page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
+    page.locator(".desk-verbbar-menu").wait_for()
+    page.locator(".desk-verbbar-menu [role^='menuitem']").filter(has_text=label).first.click()
+
+
+class TestCompositor:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        keyfile = tmp_path / "people.key"
+        keyfile.write_text("{}")
+        keyfile.chmod(0o600)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
+        _ensure_build()
+        server, base = _boot(tmp_path, monkeypatch, token=C_TOKEN)
+        _seed()
+        self.base = base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    def _page(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
+        browser = pw.chromium.launch(headless=True)
+        ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                  device_scale_factor=1, has_touch=width < 720)
+        page = ctx.new_page()
+        page.set_default_timeout(T)
+        errors: list[str] = []
+        page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+        page.goto(f"{self.base}/?token={C_TOKEN}", wait_until="load")
+        _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=C_TOKEN)
+        page.reload(wait_until="load")
+        _normal_chair(page)
+        page.wait_for_timeout(1200)
+        _settle(page)
+        return browser, page, errors
+
+    def test_compositor_1440(self) -> None:
+        """replaces: tests/e2e/test_philo16_compositor_glass.py::TestCompositor::test_compositor_1440 (moved whole)."""
+        from playwright.sync_api import sync_playwright
+
+        fails: dict[str, Any] = {}
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, 1440)
+            try:
+                band = page.evaluate(C_BAND_JS)
+                for name in ("Brief", "The week", "Needs you"):
+                    open_chair_window(page, name)
+                wins = _c_wins(page)
+                names = [w["name"] for w in wins]
+                if not {"Brief", "The week", "Needs you"} <= set(names):
+                    fails["C1 three windows open"] = names
+                planes = {w["name"]: w["plane"] for w in wins}
+                if sorted(planes.values()).count("front") != 1 or "near" not in planes.values() or "far" not in planes.values():
+                    fails["C1 front, near, far"] = planes
+                if any(w["layer"] != "window" for w in wins):
+                    fails["C1 data-layer=window"] = wins
+                if any(w["front"] != (w["plane"] == "front") for w in wins):
+                    fails["C1 is-front is the alias of data-plane=front"] = wins
+                order = sorted(wins, key=lambda w: w["z"])
+                if order[-1]["plane"] != "front" or order[-2]["plane"] != "near":
+                    fails["C1 z rises with the plane"] = [(w["name"], w["z"], w["plane"]) for w in order]
+                page.screenshot(path=str(C_SHOTS / "1440-1-planes.png"))
+
+                # A raise: the far window comes forward; the old front is NEAR.
+                old_front = _c_fronts(wins)[0]
+                far = next(w["name"] for w in wins if w["plane"] == "far")
+                page.locator(f".desk-window-shell[aria-label='{far}'] .desk-pullout-title").first.click()
+                wins = _c_wins(page)
+                if _c_fronts(wins) != [far] or _c_by(wins, old_front)["plane"] != "near":
+                    fails["C1 raise: far to front, old front to near"] = {w["name"]: w["plane"] for w in wins}
+
+                # The depths persist: a reload keeps the stacking. The Chair's
+                # own rule (PHILO-15-09 B16, ChairDesk.raiseNeedsAmongChair)
+                # raises Needs you on the Chair's mount; every other window
+                # keeps its place.
+                # PHILO-16 (16b): the hub owns the stacking; a reload keeps its
+                # order exactly (the Chair's mount no longer raises Needs you
+                # over the hub's rows).
+                stack = [w["name"] for w in sorted(_c_wins(page), key=lambda w: w["z"])]
+                want = stack
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1500)
+                after = [w["name"] for w in sorted(_c_wins(page), key=lambda w: w["z"])]
+                if after != want:
+                    fails["C1 a reload keeps the stacking"] = {"before": stack, "after": after, "want": want}
+
+                # C2 tile.
+                wins = _c_wins(page)
+                free = {w["name"]: w["rect"] for w in wins}
+                front = _c_fronts(wins)[0]
+                near = next(w["name"] for w in wins if w["plane"] == "near")
+                _c_window_menu(page, "Tile left")
+                wins = _c_wins(page)
+                fr, nr = _c_by(wins, front)["rect"], _c_by(wins, near)["rect"]
+                half = band["w"] / 2
+                if abs(fr[0] - band["x"]) > 2 or abs(fr[2] - half) > 2 or abs(nr[0] - (fr[0] + fr[2])) > 2:
+                    fails["C2 tile: front left half, near right half, touching"] = {"front": fr, "near": nr, "band": band}
+                if not (_c_inside(fr, band) and _c_inside(nr, band)):
+                    fails["C2 the band is sacred"] = {"front": fr, "near": nr, "band": band}
+                dividers = page.evaluate(C_DIVIDERS_JS)
+                if len(dividers) != 1:
+                    fails["C2 one steel divider on the seam"] = dividers
+                page.screenshot(path=str(C_SHOTS / "1440-2-tile.png"))
+                if dividers:
+                    d = dividers[0]
+                    cx, cy = d[0] + d[2] / 2, d[1] + d[3] / 2
+                    page.mouse.move(cx, cy)
+                    page.mouse.down()
+                    page.mouse.move(cx + 40, cy, steps=4)
+                    page.mouse.move(cx + 80, cy, steps=4)
+                    page.mouse.up()
+                    wins = _c_wins(page)
+                    fr2, nr2 = _c_by(wins, front)["rect"], _c_by(wins, near)["rect"]
+                    if abs(fr2[2] - (fr[2] + 80)) > 2 or abs(nr2[0] - (nr[0] + 80)) > 2:
+                        fails["C2 the divider moves the shared edge"] = {"front": fr2, "near": nr2}
+                    if fr2[0] != fr[0] or abs((nr2[0] + nr2[2]) - (nr[0] + nr[2])) > 1:
+                        fails["C2 the far edges stay"] = {"front": fr2, "near": nr2}
+                page.keyboard.press("Escape")
+                wins = _c_wins(page)
+                back = {w["name"]: w["rect"] for w in wins}
+                if back != free:
+                    fails["C2 Esc returns the remembered rects"] = {"free": free, "back": back}
+                if page.evaluate(C_DIVIDERS_JS):
+                    fails["C2 no divider after Esc (the windows no longer touch)"] = page.evaluate(C_DIVIDERS_JS)
+                if len(_c_fronts(wins)) != 1:
+                    fails["one front after tile"] = _c_fronts(wins)
+
+                # C3 stage, by its key; the focus on the front window's bar.
+                front = _c_fronts(wins)[0]
+                page.locator(f".desk-window-shell[aria-label='{front}'] .desk-pullout-title").first.click()
+                page.keyboard.press("Meta+Enter")
+                wins = _c_wins(page)
+                main = _c_by(wins, front)
+                if abs(main["rect"][2] - round(band["w"] * 0.76)) > 2 or main["k"]:
+                    fails["C3 the front takes 76 % of the band"] = {"main": main, "band": band}
+                plates = [w for w in wins if w["name"] != front]
+                for p in plates:
+                    if not p["k"] or p["rect"][2] > 302 or p["rect"][3] > 172 or not _c_inside(p["rect"], band):
+                        fails.setdefault("C3 shelf plates scaled, inside the band", []).append(p)
+                    if p["rect"][0] + p["rect"][2] > main["rect"][0] + 1:
+                        fails.setdefault("C3 the shelf is on the left", []).append(p)
+                page.screenshot(path=str(C_SHOTS / "1440-3-stage.png"))
+                swap = plates[0]["name"] if plates else None
+                if swap:
+                    box = page.locator(f".desk-window-shell[aria-label='{swap}']").bounding_box()
+                    page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+                    wins = _c_wins(page)
+                    if _c_fronts(wins) != [swap] or _c_by(wins, swap)["k"] or abs(_c_by(wins, swap)["rect"][2] - round(band["w"] * 0.76)) > 2:
+                        fails["C3 a press on a plate swaps it onto the stage"] = {w["name"]: (w["plane"], w["rect"], w["k"]) for w in wins}
+                page.keyboard.press("Escape")
+                wins = _c_wins(page)
+                back = {w["name"]: w["rect"] for w in wins}
+                if back != free:
+                    fails["C3 Esc returns the remembered rects"] = {"free": free, "back": back}
+
+                # C4 exposé.
+                page.keyboard.press("Meta+Shift+E")
+                page.locator(".desk-expose").wait_for()
+                wins = _c_wins(page)
+                for w in wins:
+                    natural = free.get(w["name"])
+                    scaled = w["k"] is not None and float(w["k"]) < 1
+                    if natural and scaled and abs(w["layoutW"] - natural[2]) > 2:
+                        fails.setdefault("C4 plates scale, never reflow", []).append(w)
+                    if not _c_inside(w["rect"], band):
+                        fails.setdefault("C4 plates inside the band", []).append(w)
+                cells = page.locator(".desk-expose-cell").count()
+                if cells != len(wins):
+                    fails["C4 one pick target per plate"] = {"cells": cells, "wins": len(wins)}
+                page.screenshot(path=str(C_SHOTS / "1440-4-expose.png"))
+                page.keyboard.press("Escape")
+                wins = _c_wins(page)
+                back = {w["name"]: w["rect"] for w in wins}
+                if back != free or page.locator(".desk-expose").count():
+                    fails["C4 Esc returns the remembered rects"] = {"free": free, "back": back}
+
+                # C5 gather: the project drawer and its Get Info share a Room.
+                open_project_drawer(page, self.base, 'p-ledger', C_TOKEN)  # PHILO-17 U30: the parked drawer, by its key
+                _normal_chair(page)
+                drawer = page.locator(".drawer-window")
+                drawer.wait_for(timeout=T)
+                drawer.get_by_role("button", name="Get Info", exact=True).click()
+                page.locator(".drawer-info-window").wait_for(timeout=T)
+                page.locator(".drawer-info-window .desk-pullout-title").first.click()
+                page.keyboard.press("Meta+g")
+                wins = _c_wins(page)
+                room = [w for w in wins if w["name"] and ("Payments ledger cutover" in w["name"])]
+                if len(room) != 2:
+                    fails["C5 two windows of the Room"] = [w["name"] for w in wins]
+                else:
+                    a, b = sorted((w["rect"] for w in room), key=lambda r: r[0])
+                    if abs(a[0] - band["x"]) > 2 or abs(b[0] - (a[0] + a[2]) - 8) > 2 or abs(a[2] - b[2]) > 2:
+                        fails["C5 equal columns, 8 px gutter"] = {"a": a, "b": b, "band": band}
+                    if not (_c_inside(a, band) and _c_inside(b, band)):
+                        fails["C5 the band is sacred"] = {"a": a, "b": b}
+                if len(_c_fronts(wins)) != 1:
+                    fails["one front after gather"] = _c_fronts(wins)
+                page.screenshot(path=str(C_SHOTS / "1440-5-gather.png"))
+
+                # C6 keys stay quiet inside a text field (a field in the front
+                # window: the keymap's typing guard).
+                page.evaluate("""() => { const w = document.querySelector('.desk-window-shell.is-front');
+                  const i = document.createElement('input'); i.type = 'text'; i.id = 'c6-field';
+                  w.appendChild(i); i.focus(); }""")
+                rects = {w["name"]: w["rect"] for w in _c_wins(page)}
+                for key in ("Meta+Enter", "Meta+Shift+E", "Meta+g", "Meta+Alt+ArrowLeft"):
+                    page.keyboard.press(key)
+                wins = _c_wins(page)
+                if any(w["k"] for w in wins) or page.locator(".desk-expose").count() or {w["name"]: w["rect"] for w in wins} != rects:
+                    fails["C6 the arrangement keys stay quiet in a field"] = wins
+                page.evaluate("() => document.getElementById('c6-field')?.remove()")
+                if errors:
+                    fails["page errors"] = errors
+            finally:
+                browser.close()
+        assert not fails, fails
+
+    def test_astra_round1_1440(self) -> None:
+        """replaces: tests/e2e/test_philo16_compositor_glass.py::TestCompositor::test_astra_round1_1440 (moved whole)."""
+        """Astra round 1 (5fe358d78), her repros: M1 Stage keeps the saved
+        arrangement (zoomed and not); M4 no lift under a resize; M2 the
+        divider stops at the frame's real minimum inside the band."""
+        from playwright.sync_api import sync_playwright
+
+        fails: dict[str, Any] = {}
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, 1440)
+            try:
+                band = page.evaluate(C_BAND_JS)
+                for name in ("Brief", "Needs you"):
+                    open_chair_window(page, name)
+                needs = ".desk-window-shell[aria-label='Needs you']"
+
+                # M1 (zoomed): Zoom -> Stage -> resize the staged front -> Esc.
+                page.get_by_role("button", name="Zoom Needs you").click()
+                rects = {w["name"]: w["rect"] for w in _c_wins(page)}
+                doc = page.evaluate(C_PANEL_JS)
+                page.locator(f"{needs} .desk-pullout-title").first.click()
+                page.keyboard.press("Meta+Enter")
+                _c_wins(page)
+                _c_drag(page, f"{needs} .desk-window-grip", -200, -100)
+                if page.evaluate(C_PANEL_JS) != doc:
+                    fails["M1 zoomed: a Stage resize leaves the saved arrangement"] = {"before": doc, "during": page.evaluate(C_PANEL_JS)}
+                page.keyboard.press("Escape")
+                back = {w["name"]: w["rect"] for w in _c_wins(page)}
+                if back != rects or page.evaluate(C_PANEL_JS) != doc:
+                    fails["M1 zoomed: Esc restores both rects and the zoom flag"] = {
+                        "before": rects, "after": back, "doc": doc, "doc_after": page.evaluate(C_PANEL_JS)}
+
+                # M1 (Zoom during Stage leaves Stage first).
+                page.keyboard.press("Meta+Enter")
+                _c_wins(page)
+                page.get_by_role("button", name="Zoom Needs you").click()  # unzoom
+                wins = _c_wins(page)
+                if any(w["k"] for w in wins):
+                    fails["M1 Zoom during Stage leaves Stage"] = wins
+
+                # M1 (not zoomed): Stage -> resize -> Esc.
+                rects = {w["name"]: w["rect"] for w in _c_wins(page)}
+                doc = page.evaluate(C_PANEL_JS)
+                page.locator(f"{needs} .desk-pullout-title").first.click()
+                page.keyboard.press("Meta+Enter")
+                _c_wins(page)
+                _c_drag(page, f"{needs} .desk-window-grip", -150, -80)
+                if page.evaluate(C_PANEL_JS) != doc:
+                    fails["M1 a Stage resize writes no free rect"] = {"before": doc, "during": page.evaluate(C_PANEL_JS)}
+                page.keyboard.press("Escape")
+                back = {w["name"]: w["rect"] for w in _c_wins(page)}
+                if back != rects:
+                    fails["M1 Esc restores the free rects"] = {"before": rects, "after": back}
+
+                # M4: resize Brief (behind Needs you) by its grip: no lift runs
+                # while the pointer is held.
+                page.locator(f"{needs} .desk-pullout-title").first.click()
+                _c_wins(page)
+                running: list[int] = []
+                _c_drag(page, ".desk-window-shell[aria-label='Brief'] .desk-window-grip", -40, -30,
+                      hold=lambda: (page.wait_for_timeout(60), running.append(page.evaluate(C_RUNNING_JS, "Brief"))))
+                if running != [0]:
+                    fails["M4 no lift during a resize"] = {"lifts": running, "all": page.evaluate(C_ALL_RUNNING_JS, "Brief")}
+
+                # M2: two surface windows (min-width 420) tiled; the divider
+                # dragged past both minimums.
+                _stage(page, "review-meetings")
+                _stage(page, "open-people")
+                wins = _c_wins(page)
+                front = _c_fronts(wins)[0]
+                near = next(w["name"] for w in wins if w["plane"] == "near")
+                _c_window_menu(page, "Tile left")
+                _c_wins(page)
+                for dx in (2000, -2000):
+                    d = page.evaluate(C_DIVIDERS_JS)
+                    if len(d) != 1:
+                        fails[f"M2 one divider ({dx})"] = d
+                        break
+                    _c_drag(page, ".desk-window-divider", dx, 0)
+                    wins = _c_wins(page)
+                    for name in (front, near):
+                        r = _c_by(wins, name)["rect"]
+                        if not _c_inside(r, band, slack=1) or r[2] < 419:
+                            fails.setdefault(f"M2 the band and the 420 minimum ({dx})", []).append({name: r, "band": band})
+                    # The two windows still meet at the divider: no overlap, no gap.
+                    left, right = sorted((_c_by(wins, front)["rect"], _c_by(wins, near)["rect"]), key=lambda r: r[0])
+                    seam = page.evaluate(C_DIVIDERS_JS)
+                    if abs(left[0] + left[2] - right[0]) > 1 or not seam or abs(seam[0][0] + 3 - right[0]) > 2:
+                        fails.setdefault(f"M2 the windows meet at the divider ({dx})", []).append(
+                            {"left": left, "right": right, "divider": seam})
+                page.screenshot(path=str(C_SHOTS / "1440-6-divider-minimum.png"))
+                page.keyboard.press("Escape")
+                if errors:
+                    fails["page errors"] = errors
+            finally:
+                browser.close()
+        assert not fails, fails
+
+    def test_astra_round2_1440(self) -> None:
+        """replaces: tests/e2e/test_philo16_compositor_glass.py::TestCompositor::test_astra_round2_1440 (moved whole)."""
+        """Astra round 2 (c67c80974): a fresh People window -> Stage -> Zoom ->
+        unzoom returns its pre-Stage rect, and no Stage rect lands in
+        panel.rects (Zoom never measures a box in flight). PHILO-17: the fresh
+        window's first seat is saved (it was unarranged before)."""
+        from playwright.sync_api import sync_playwright
+
+        fails: dict[str, Any] = {}
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, 1440)
+            try:
+                open_chair_window(page, "Brief")
+                _stage(page, "open-people")
+                people = ".desk-window-shell[aria-label='People']"
+                page.locator(people).wait_for()
+                wins = _c_wins(page)
+                if _c_fronts(wins) != ["People"]:
+                    fails["People is front"] = _c_fronts(wins)
+                before = _c_by(wins, "People")["rect"]
+                # PHILO-17 (U28c): a window's first seat is saved, so People
+                # starts ARRANGED at the rect it shows; Stage must not change it.
+                doc = page.evaluate(C_PANEL_JS)
+                first = doc["rects"].get("surface-people")
+                if first is not None and [first["x"], first["y"], first["w"], first["h"]] != before:
+                    fails["People's saved first seat is the rect it shows"] = {"saved": first, "shown": before}
+                page.locator(f"{people} .desk-pullout-title").first.click()
+                page.keyboard.press("Meta+Enter")
+                wins = _c_wins(page)
+                if not any(w["k"] for w in wins):
+                    fails["Stage is on"] = wins
+                page.locator(f"{people} .desk-gadget-zoom").click()  # zoom: leaves Stage
+                _c_wins(page)
+                page.locator(f"{people} .desk-gadget-zoom").click()  # unzoom
+                wins = _c_wins(page)
+                after = _c_by(wins, "People")["rect"]
+                if after != before:
+                    fails["unzoom returns the pre-Stage rect"] = {"before": before, "after": after}
+                saved = page.evaluate(C_PANEL_JS)["rects"].get("surface-people")
+                if saved is not None and [saved["x"], saved["y"], saved["w"], saved["h"]] != before:
+                    fails["no Stage rect in panel.rects"] = {"saved": saved, "before": before}
+                if errors:
+                    fails["page errors"] = errors
+            finally:
+                browser.close()
+        assert not fails, fails
+
+    def test_compositor_393(self) -> None:
+        """replaces: tests/e2e/test_philo16_compositor_glass.py::TestCompositor::test_compositor_393 (moved whole)."""
+        from playwright.sync_api import sync_playwright
+
+        fails: dict[str, Any] = {}
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, 393)
+            try:
+                open_chair_window(page, "Needs you")
+                page.wait_for_timeout(800)
+                wins = _c_wins(page)
+                if len(_c_fronts(wins)) != 1:
+                    fails["393 one front"] = wins
+                page.keyboard.press("Meta+Enter")
+                page.keyboard.press("Meta+Shift+E")
+                wins = _c_wins(page)
+                if any(w["k"] for w in wins) or page.locator(".desk-expose").count() or page.evaluate(C_DIVIDERS_JS):
+                    fails["C7 393: nothing is arranged"] = wins
+                page.screenshot(path=str(C_SHOTS / "393-sheet.png"))
+                if errors:
+                    fails["page errors"] = errors
+            finally:
+                browser.close()
+        assert not fails, fails
+
+
+# ── PHILO-16 16b the hub owns the windows (moved whole: several browser views of ONE hub, a drag, the MCP arrange) ──
+H_TOKEN = "philo16-hub-windows"
+H_SHOTS = evidence_dir("docs/internal/philo/phase-16/b-shots")
+H_THREE = ("Brief", "The week", "Needs you")
+H_IDS = {"Brief": "chair:brief", "The week": "chair:week", "Needs you": "chair:needs"}
+
+H_WINS_JS = r"""() => {
+  const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
+    return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; };
+  return [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(visible).map((s) => {
+    const r = s.getBoundingClientRect();
+    return {name: s.getAttribute('aria-label'), plane: s.dataset.plane || null,
+      rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]}; });
+}"""
+
+H_BAND_JS = r"""() => {
+  const st = getComputedStyle(document.documentElement);
+  const top = parseFloat(st.getPropertyValue('--desk-work-top'));
+  const band = parseFloat(st.getPropertyValue('--desk-work-bottom'));
+  const dock = parseFloat(st.getPropertyValue('--desk-dock-h'));
+  const bottom = Number.isFinite(dock) ? Math.max(band, dock) : band;
+  return {x: 10, y: top, w: innerWidth - 20, h: innerHeight - top - bottom};
+}"""
+
+H_CACHE_JS = r"""() => { const d = JSON.parse(localStorage.getItem('hs.desk.workspace.v1') || 'null') || {};
+  const p = d.panel || {}; return {min: p.min || [], depth: p.depth || {}, closed: (d.chair || {}).closed || []}; }"""
+
+
+def _h_wins(page: Any) -> dict[str, dict[str, Any]]:
+    _settle(page)
+    return {w["name"]: w for w in page.evaluate(H_WINS_JS)}
+
+
+def _h_until(probe: Callable[[], Any], ok: Callable[[Any], bool], seconds: float = 8.0) -> Any:
+    deadline = time.monotonic() + seconds
+    value = probe()
+    while not ok(value) and time.monotonic() < deadline:
+        time.sleep(0.25)
+        value = probe()
+    return value
+
+
+def _h_drag(page: Any, selector: str, dx: float, dy: float) -> None:
+    box = page.locator(selector).first.bounding_box()
+    assert box, f"nothing to drag: {selector}"
+    x, y = box["x"] + min(60, box["width"] / 3), box["y"] + box["height"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    page.mouse.move(x + dx / 2, y + dy / 2, steps=5)
+    page.mouse.move(x + dx, y + dy, steps=5)
+    page.mouse.up()
+
+
+def _h_window_menu(page: Any, label: str) -> None:
+    page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
+    page.locator(".desk-verbbar-menu").wait_for()
+    page.locator(".desk-verbbar-menu [role^='menuitem']").filter(has_text=label).first.click()
+
+
+def _h_to_front(page: Any, name: str) -> None:
+    """Window ▸ Chair ▸ name: picking an open Chair window brings it in front."""
+    page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
+    page.locator(".desk-verbbar-menu").wait_for()
+    sub = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')")
+    sub.scroll_into_view_if_needed()
+    sub.click()
+    page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')").click()
+    page.wait_for_timeout(300)
+
+
+def _h_side_by_side(pw_browser: Any, left: Path, right: Path, out: Path) -> None:
+    """One shot of two: the two contexts' shots drawn side by side."""
+    def uri(path: Path) -> str:
+        return "data:image/png;base64," + base64.b64encode(path.read_bytes()).decode()
+
+    page = pw_browser.new_page(viewport={"width": 2900, "height": 960}, device_scale_factor=0.5)
+    page.set_content(
+        "<body style='margin:0;background:#222;display:flex;gap:20px;padding:20px;font:14px sans-serif;color:#ddd'>"
+        f"<figure style='margin:0'><figcaption>context A</figcaption><img src='{uri(left)}' width=1440></figure>"
+        f"<figure style='margin:0'><figcaption>context B (fresh load)</figcaption><img src='{uri(right)}' width=1440></figure>"
+        "</body>")
+    page.wait_for_timeout(300)
+    page.screenshot(path=str(out), full_page=True)
+    page.close()
+
+
+class TestHubWindows:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        keyfile = tmp_path / "people.key"
+        keyfile.write_text("{}")
+        keyfile.chmod(0o600)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
+        _ensure_build()
+        server, base = _boot(tmp_path, monkeypatch, token=H_TOKEN)
+        _seed()
+        self.base = base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    def _page(self, browser: Any, width: int, *, onboard: bool = False) -> tuple[Any, Any, list[str]]:
+        ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                  device_scale_factor=1, has_touch=width < 720)
+        page = ctx.new_page()
+        page.set_default_timeout(T)
+        errors: list[str] = []
+        page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+        # Every window write this view sends to the hub, in order (evidence).
+        sent: list[str] = []
+        page.on("request", lambda r: sent.append(
+            f"{r.url.split('/api/desk/windows', 1)[1] or '/'} {r.post_data or ''}")
+            if "/api/desk/windows" in r.url and r.method == "POST" else None)
+        page.hub_writes = sent  # type: ignore[attr-defined]
+        page.goto(f"{self.base}/?token={H_TOKEN}", wait_until="load")
+        if onboard:
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=H_TOKEN)
+            page.reload(wait_until="load")
+        _normal_chair(page)
+        page.wait_for_timeout(1200)
+        _settle(page)
+        return ctx, page, errors
+
+    def _rows(self, page: Any) -> dict[str, dict[str, Any]]:
+        listed = _api(page, "GET", "/api/desk/windows", token=H_TOKEN)
+        return {w["id"]: w for w in listed["windows"]}
+
+    def test_one_desk_two_views(self) -> None:
+        """replaces: tests/e2e/test_philo16_hub_windows_glass.py::TestHubWindows::test_one_desk_two_views (moved whole)."""
+        from playwright.sync_api import sync_playwright
+
+        from holdspeak.mcp import tools as mcp_tools
+        from holdspeak.principals import Principal, PrincipalKind
+
+        fails: dict[str, Any] = {}
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            try:
+                # ── B1: context A opens three, drags one, seats one ─────────
+                ctx_a, a, errors_a = self._page(browser, 1440, onboard=True)
+                for name in H_THREE:
+                    open_chair_window(a, name)
+                a.wait_for_timeout(500)
+                _h_drag(a, ".desk-window-shell[aria-label='Brief'] .desk-pullout-title", -160, 70)
+                a.wait_for_timeout(400)
+                _h_to_front(a, "The week")
+                _h_window_menu(a, "Iconify")
+                rows = _h_until(lambda: self._rows(a), lambda r: (
+                    set(H_IDS.values()) <= set(r) and r["chair:week"]["minimized"] and r["chair:brief"]["arranged"]))
+                if not set(H_IDS.values()) <= set(rows):
+                    fails["B1 the hub holds the three windows"] = sorted(rows)
+                else:
+                    if not rows["chair:week"]["minimized"]:
+                        fails["B1 The week is seated on the hub"] = rows["chair:week"]
+                    brief = rows["chair:brief"]
+                    if not brief["arranged"] or not all(isinstance(brief[k], str) and "%" in brief[k] for k in "xywh"):
+                        fails["B1 Brief's rect is share+px on the hub"] = brief
+                (H_SHOTS / "hub-rows.json").write_text(json.dumps(
+                    _api(a, "GET", "/api/desk/windows", token=H_TOKEN), indent=2) + "\n")
+                wins_a = _h_wins(a)
+                a.screenshot(path=str(H_SHOTS / "1440-A.png"))
+
+                # ── B2: context B, a fresh load, shows the same desk ────────
+                ctx_b, b, errors_b = self._page(browser, 1440)
+                wins_b = _h_until(lambda: _h_wins(b), lambda w: {"Brief", "Needs you"} <= set(w))
+                if not {"Brief", "Needs you"} <= set(wins_b):
+                    fails["B2 B shows the open windows"] = sorted(wins_b)
+                if "The week" in wins_b:
+                    fails["B2 The week is seated in B (not on the glass)"] = wins_b["The week"]
+                if "Brief" in wins_a and "Brief" in wins_b and wins_a["Brief"]["rect"] != wins_b["Brief"]["rect"]:
+                    fails["B2 Brief at the same rect in A and B"] = {"A": wins_a["Brief"]["rect"], "B": wins_b["Brief"]["rect"]}
+                fronts = {label: [n for n, w in wins.items() if w["plane"] == "front"]
+                          for label, wins in (("A", wins_a), ("B", wins_b))}
+                if fronts["A"] != fronts["B"] or len(fronts["A"]) != 1:
+                    fails["B2 one front, the same in A and B"] = fronts
+                cache_b = b.evaluate(H_CACHE_JS)
+                if "chair:week" not in cache_b["min"] or any(H_IDS[n] in cache_b["closed"] for n in H_THREE):
+                    fails["B2 B's cache is the hub's rows"] = cache_b
+                b.screenshot(path=str(H_SHOTS / "1440-B.png"))
+                _h_side_by_side(browser, H_SHOTS / "1440-A.png", H_SHOTS / "1440-B.png", H_SHOTS / "1440-A-and-B.png")
+
+                # ── B3: B raises A's near window; A follows ─────────────────
+                planes_a = {n: w["plane"] for n, w in _h_wins(a).items()}
+                near = next((n for n, p in planes_a.items() if p == "near"), None)
+                if near is None:
+                    fails["B3 A has a near window"] = planes_a
+                else:
+                    _h_to_front(b, near)
+                    followed = _h_until(lambda: _h_wins(a), lambda w: w.get(near, {}).get("plane") == "front")
+                    if followed.get(near, {}).get("plane") != "front":
+                        fails["B3 A follows B's raise without a reload"] = {
+                            n: w["plane"] for n, w in followed.items()}
+                    a.screenshot(path=str(H_SHOTS / "1440-A-follows-B.png"))
+
+                # ── B4: an agent tiles two through MCP; both views follow ───
+                owner = Principal(PrincipalKind.OWNER, "philo16-owner")
+                a_before, b_before = len(a.hub_writes), len(b.hub_writes)
+                mcp_tools.dispatch("desk_window.arrange", {"rects": {
+                    "chair:brief": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"},
+                    "chair:needs": {"x": "0%", "y": "-1/2", "w": "1/2", "h": "100%"},
+                }}, owner)
+                band = a.evaluate(H_BAND_JS)
+                half = band["w"] / 2
+
+                def tiled(w: dict[str, Any]) -> bool:
+                    if "Brief" not in w or "Needs you" not in w:
+                        return False
+                    bx, _, bw, _ = w["Brief"]["rect"]
+                    nx, _, nw, _ = w["Needs you"]["rect"]
+                    return abs(bx - band["x"]) <= 2 and abs(bw - half) <= 3 and abs(nx - (band["x"] + half)) <= 3
+
+                for label, page in (("A", a), ("B", b)):
+                    seen = _h_until(lambda: _h_wins(page), tiled)
+                    if not tiled(seen):
+                        fails[f"B4 {label} shows the agent's tile"] = {
+                            n: w["rect"] for n, w in seen.items()} | {"band": band}
+                a.wait_for_timeout(800)  # a follow settles (SETTLE_MS) and must send nothing
+                echoes = a.hub_writes[a_before:] + b.hub_writes[b_before:]
+                if echoes:
+                    fails["B4 following the agent's tile writes nothing back"] = echoes
+                a.screenshot(path=str(H_SHOTS / "1440-A-tile.png"))
+                b.screenshot(path=str(H_SHOTS / "1440-B-tile.png"))
+                _h_side_by_side(browser, H_SHOTS / "1440-A-tile.png", H_SHOTS / "1440-B-tile.png",
+                              H_SHOTS / "1440-A-and-B-tile.png")
+
+                # ── B5: 393, a fresh load: the same set, the same seat ──────
+                ctx_c, c, errors_c = self._page(browser, 393)
+                cache_c = _h_until(lambda: c.evaluate(H_CACHE_JS), lambda v: "chair:week" in v["min"])
+                if "chair:week" not in cache_c["min"] or any(H_IDS[n] in cache_c["closed"] for n in H_THREE):
+                    fails["B5 393 holds the hub's set and seat"] = cache_c
+                c.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                c.locator(".desk-verbbar-menu").wait_for()
+                checked = {}
+                for name in H_THREE:
+                    row = c.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')").first
+                    checked[name] = row.get_attribute("aria-checked") if row.count() else None
+                if any(checked.get(n) != "true" for n in H_THREE):
+                    fails["B5 393 Go lists the open Chair windows"] = checked
+                c.screenshot(path=str(H_SHOTS / "393-C-go-chair.png"))
+                c.keyboard.press("Escape")
+
+                # ── B6 (Astra r1 M4): a Project drawer follows into a fresh view ──
+                open_project_drawer(a, self.base, 'p-ledger', H_TOKEN)  # PHILO-17 U30: the parked drawer, by its key
+                _normal_chair(a)
+                a.locator(".drawer-window").first.wait_for(timeout=T)
+                drawer_row = _h_until(lambda: self._rows(a), lambda r: "drawer:project:p-ledger" in r)
+                if drawer_row.get("drawer:project:p-ledger", {}).get("object_ref") != "project:p-ledger":
+                    fails["B6 the hub holds A's Project drawer"] = sorted(drawer_row)
+                ctx_d, d, errors_d = self._page(browser, 1440)
+                try:
+                    d.locator(".drawer-window").first.wait_for(timeout=10_000)
+                except Exception:
+                    fails["B6 a fresh view shows A's Project drawer"] = sorted(_h_wins(d))
+                d.wait_for_timeout(800)
+                if d.hub_writes:
+                    fails["B6 a fresh load writes nothing to the hub"] = d.hub_writes
+                d.screenshot(path=str(H_SHOTS / "1440-D-drawer.png"))
+                if errors_d:
+                    fails["page errors D"] = errors_d
+                ctx_d.close()
+
+                # ── B7 (Astra r2 M3): the agent lane follows on its launch ──
+                # The lane is opened on the hub (as an agent or another view
+                # would): A, live, follows the frame; a fresh view E shows it.
+                # The owner's own open sending launch:<id> is fenced in vitest.
+                _api(a, "POST", "/api/desk/windows/lane/open", {"object_ref": "launch:L-glass"}, token=H_TOKEN)
+                lane_sel = ".desk-window-shell.is-lane"
+                try:
+                    a.locator(lane_sel).first.wait_for(timeout=10_000)
+                except Exception:
+                    fails["B7 A follows the lane opened on the hub"] = sorted(_h_wins(a))
+                lane_row = self._rows(a).get("lane", {})
+                if lane_row.get("object_ref") != "launch:L-glass":
+                    fails["B7 the lane's row names its launch"] = lane_row
+                ctx_e, e, errors_e = self._page(browser, 1440)
+                try:
+                    e.locator(lane_sel).first.wait_for(timeout=10_000)
+                except Exception:
+                    fails["B7 a fresh view shows the lane"] = sorted(_h_wins(e))
+                e.screenshot(path=str(H_SHOTS / "1440-E-lane.png"))
+                e.wait_for_timeout(800)
+                lane_writes_e = list(e.hub_writes)
+                if lane_writes_e:
+                    fails["B7 a fresh load writes nothing to the hub"] = lane_writes_e
+                ctx_e.close()
+
+                (H_SHOTS / "hub-writes.json").write_text(json.dumps(
+                    {"A": a.hub_writes, "B": b.hub_writes, "C": c.hub_writes, "E": lane_writes_e}, indent=2) + "\n")
+                if c.hub_writes:
+                    fails["B5 a 393 load writes nothing to the hub"] = c.hub_writes
+                rows_end = self._rows(a)
+                (H_SHOTS / "hub-rows-end.json").write_text(json.dumps(rows_end, indent=2) + "\n")
+                for label, errors in (("A", errors_a), ("B", errors_b), ("C", errors_c)):
+                    if errors:
+                        fails[f"page errors {label}"] = errors
+                for ctx in (ctx_a, ctx_b, ctx_c):
+                    ctx.close()
+            finally:
+                browser.close()
+        assert not fails, json.dumps(fails, indent=2, default=str)
+
+
+# ── PHILO-17 windows open well and come back as themselves (moved whole: three views, drags, no bounce) ──
+W_TOKEN = "philo17-windows"
+W_SHOTS = evidence_dir("docs/internal/philo/phase-17/windows-shots")
+
+# Every window shell (shown or not: at 393 only the front sheet shows).
+W_ALL_JS = r"""() => [...document.querySelectorAll('.desk-window-shell:not([data-departing])')]
+  .map((s) => s.getAttribute('aria-label'))"""
+
+W_WINS_JS = r"""() => {
+  const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
+    return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; };
+  return [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(visible).map((s) => {
+    const r = s.getBoundingClientRect();
+    return {name: s.getAttribute('aria-label'),
+      rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]}; });
+}"""
+
+# The right edge of the desk's left icon columns (icons outside windows and
+# the Dock), or 0 when the desk shows none: the icons at the left edge, then
+# each placed icon that starts right beside them (a second drawer column).
+W_ICONS_JS = r"""() => {
+  const icons = [...document.querySelectorAll('.desk-icon')]
+    .filter((e) => !e.closest('.desk-window, .desk-dock'))
+    .map((e) => ({r: e.getBoundingClientRect(), placed: !!e.closest('.desk-screen-placed')}))
+    .filter(({r}) => r.width > 0);
+  let right = 0, edge = 60;
+  for (let col = 0; ; col++) {
+    const next = Math.max(right, ...icons.filter(({r, placed}) => r.left <= edge && (col === 0 || placed)).map(({r}) => r.right));
+    if (next <= right) return right;
+    right = next; edge = right + 24;
+  }
+}"""
+
+# A point on the title bar of window `name` that hits the bar itself (not a
+# tab, a gadget or the title): the empty part of the bar.
+W_EMPTY_BAR_JS = r"""(name) => {
+  const shell = [...document.querySelectorAll('.desk-window-shell')].find((s) => s.getAttribute('aria-label') === name);
+  const head = shell && shell.querySelector('.desk-window-handle');
+  if (!head) return null;
+  // The middle of the longest stretch of bare bar (not the gap beside a gadget).
+  const b = head.getBoundingClientRect();
+  const y = b.top + b.height / 2;
+  let best = null, run = null;
+  for (let x = b.left + 2; x < b.right - 2; x += 2) {
+    if (document.elementFromPoint(x, y) === head) {
+      run = run || {from: x, to: x}; run.to = x;
+      if (!best || run.to - run.from > best.to - best.from) best = {...run};
+    } else run = null;
+  }
+  if (!best || best.to - best.from < 12) return null;
+  return {x: (best.from + best.to) / 2, y, width: best.to - best.from, tabs: head.querySelectorAll('[role=tab]').length};
+}"""
+
+
+def _w_until(probe: Callable[[], Any], ok: Callable[[Any], bool], seconds: float = 8.0) -> Any:
+    deadline = time.monotonic() + seconds
+    value = probe()
+    while not ok(value) and time.monotonic() < deadline:
+        time.sleep(0.25)
+        value = probe()
+    return value
+
+
+def _w_wins(page: Any) -> dict[str, list[int]]:
+    _settle(page)
+    return {w["name"]: w["rect"] for w in page.evaluate(W_WINS_JS)}
+
+
+def _w_near(a: list[int], b: list[int], px: int = 2) -> bool:
+    return all(abs(x - y) <= px for x, y in zip(a, b))
+
+
+class TestWindowsOpenWell:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        keyfile = tmp_path / "people.key"
+        keyfile.write_text("{}")
+        keyfile.chmod(0o600)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
+        _ensure_build()
+        server, base = _boot(tmp_path, monkeypatch, token=W_TOKEN)
+        _seed()
+        self.base = base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    def _page(self, browser: Any, width: int, *, onboard: bool = False) -> tuple[Any, Any, list[str]]:
+        ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                  device_scale_factor=1, has_touch=width < 720)
+        page = ctx.new_page()
+        page.set_default_timeout(T)
+        errors: list[str] = []
+        page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+        # Every window write this view sends to the hub (a follower sends none).
+        sent: list[str] = []
+        page.on("request", lambda r: sent.append(r.url.split("/api/desk/windows", 1)[1])
+                if "/api/desk/windows" in r.url and r.method == "POST" else None)
+        page.hub_writes = sent  # type: ignore[attr-defined]
+        page.goto(f"{self.base}/?token={W_TOKEN}", wait_until="load")
+        if onboard:
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=W_TOKEN)
+            page.reload(wait_until="load")
+        _normal_chair(page)
+        page.wait_for_timeout(1200)
+        _settle(page)
+        return ctx, page, errors
+
+    def test_windows_open_clear_and_come_back(self) -> None:
+        """replaces: tests/e2e/test_philo17_windows_glass.py::TestWindowsOpenWell::test_windows_open_clear_and_come_back (moved whole)."""
+        from playwright.sync_api import sync_playwright
+
+        fails: dict[str, Any] = {}
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            try:
+                # ── W1: two apps from their doors ───────────────────────────
+                # PHILO-17 (doors): Meetings from the Dock, People from its
+                # desk drawer.
+                ctx_a, a, errors_a = self._page(browser, 1440, onboard=True)
+                a.locator(".desk-dock button").filter(has_text="Meetings").first.click()
+                a.wait_for_timeout(900)
+                a.locator(".desk-screen [data-object-id='drawer:people']").dblclick()
+                a.wait_for_timeout(900)
+                wins = _w_until(lambda: _w_wins(a), lambda w: {"Meetings", "People"} <= set(w))
+                icons = a.evaluate(W_ICONS_JS)
+                if not {"Meetings", "People"} <= set(wins):
+                    fails["W1 Meetings and People open"] = sorted(wins)
+                else:
+                    meetings, people = wins["Meetings"], wins["People"]
+                    if meetings[:2] == people[:2]:
+                        fails["W1 the two do not sit on each other"] = wins
+                    for name in ("Meetings", "People"):
+                        if icons and wins[name][0] < icons:
+                            fails[f"W1 {name} clear of the icon column"] = {"rect": wins[name], "icons_right": icons}
+                    if meetings[2] < 900:
+                        fails["W1 Meetings opens wide enough (U24)"] = meetings
+                a.screenshot(path=str(W_SHOTS / "1440-two-apps.png"))
+
+                # ── W2: drag a tabbed app by the empty part of its bar ─────
+                # Meetings is brought to the front first (a press on its
+                # title). A drag that starts on a window BEHIND another moved
+                # nothing in 2 of 5 runs here: reported, not fenced yet.
+                a.locator(".desk-window-shell[aria-label='Meetings'] .desk-pullout-title").first.click()
+                a.wait_for_timeout(400)
+                spot = a.evaluate(W_EMPTY_BAR_JS, "Meetings")
+                if not spot:
+                    fails["W2 Meetings' bar has an empty part"] = None
+                else:
+                    before = _w_wins(a).get("Meetings")
+                    a.mouse.move(spot["x"], spot["y"])
+                    a.mouse.down()
+                    a.mouse.move(spot["x"] + 30, spot["y"] + 40, steps=8)
+                    a.mouse.up()
+                    a.wait_for_timeout(500)
+                    after = _w_wins(a).get("Meetings")
+                    if not before or not after or after[:2] == before[:2]:
+                        fails["W2 the empty bar drags (U28b)"] = {"before": before, "after": after, "tabs": spot["tabs"],
+                                                                  "spot": spot, "wins": _w_wins(a)}
+
+                # ── W3: the Room of one project ────────────────────────────
+                # PHILO-17 U30 (#1068): opening a Project opens its Room.
+                a.get_by_role("button", name=f"{ROOM}, PROJECT").first.dblclick()
+                _room_opened(a)
+                wins_a = _w_until(lambda: _w_wins(a), lambda w: ROOM in w)
+                if ROOM not in wins_a or "Desk memory" in wins_a:
+                    fails["W3 the Room is named by its project"] = sorted(wins_a)
+                a.wait_for_timeout(1200)  # the writes reach the hub (keepalive)
+                wins_a = _w_wins(a)
+                a.screenshot(path=str(W_SHOTS / "1440-A.png"))
+
+                # ── W4: a reload keeps the windows and their places ─────────
+                a.reload(wait_until="load")
+                _normal_chair(a)
+                reloaded = _w_until(lambda: _w_wins(a), lambda w: set(w) == set(wins_a))
+                if set(reloaded) != set(wins_a):
+                    fails["W4 the same windows after a reload"] = {"before": sorted(wins_a), "after": sorted(reloaded)}
+                moved = {n: [wins_a[n], r] for n, r in reloaded.items() if n in wins_a and not _w_near(wins_a[n], r)}
+                if moved:
+                    fails["W4 the same places after a reload"] = moved
+                a.screenshot(path=str(W_SHOTS / "1440-A-reloaded.png"))
+
+                # ── W5: another view, a fresh load ──────────────────────────
+                ctx_b, b, errors_b = self._page(browser, 1440)
+                wins_b = _w_until(lambda: _w_wins(b), lambda w: set(w) == set(wins_a))
+                if set(wins_b) != set(wins_a) or "Desk memory" in wins_b:
+                    fails["W5 B shows the same windows (the Room as the Room)"] = {"A": sorted(wins_a), "B": sorted(wins_b)}
+                moved = {n: [wins_a[n], r] for n, r in wins_b.items() if n in wins_a and not _w_near(wins_a[n], r)}
+                if moved:
+                    fails["W5 B shows them at the same places"] = moved
+                b.screenshot(path=str(W_SHOTS / "1440-B-fresh.png"))
+
+                # ── W5b: both views open; A moves the Room, B follows live ──
+                # (Astra r1 on #1070): no reload; B writes nothing; nothing
+                # bounces back in either view. The Room is A's front window.
+                b_writes = len(b.hub_writes)
+                start = _w_wins(a).get(ROOM)
+                spot = a.evaluate(W_EMPTY_BAR_JS, ROOM)
+                if not start or not spot:
+                    fails["W5b the Room's bar is on A's glass"] = {"wins": sorted(_w_wins(a)), "spot": spot}
+                else:
+                    a.mouse.move(spot["x"], spot["y"])
+                    a.mouse.down()
+                    a.mouse.move(spot["x"] + 60, spot["y"] + 50, steps=10)
+                    a.mouse.up()
+                    moved_a = _w_until(lambda: _w_wins(a).get(ROOM), lambda r: bool(r) and r[:2] != start[:2])
+                    seen_b = _w_until(lambda: _w_wins(b).get(ROOM), lambda r: bool(r) and bool(moved_a) and _w_near(r, moved_a))
+                    if not moved_a or moved_a[:2] == start[:2]:
+                        fails["W5b A moved the Room"] = {"start": start, "after": moved_a}
+                    elif not seen_b or not _w_near(seen_b, moved_a):
+                        fails["W5b B shows the Room where A put it"] = {"A": moved_a, "B": seen_b}
+                    a.wait_for_timeout(1500)
+                    later_a, later_b = _w_wins(a).get(ROOM), _w_wins(b).get(ROOM)
+                    if moved_a and (not later_a or not _w_near(later_a, moved_a) or not later_b or not _w_near(later_b, moved_a)):
+                        fails["W5b nothing bounces back"] = {"moved": moved_a, "A later": later_a, "B later": later_b}
+                    if len(b.hub_writes) != b_writes:
+                        fails["W5b B (a follower) writes nothing"] = b.hub_writes[b_writes:]
+                b.screenshot(path=str(W_SHOTS / "1440-B-follows-A.png"))
+
+                # ── W6: the phone, a fresh load ─────────────────────────────
+                ctx_c, c, errors_c = self._page(browser, 393)
+                names_c = _w_until(lambda: set(c.evaluate(W_ALL_JS)), lambda n: set(wins_a) <= n)
+                if not set(wins_a) <= names_c or "Desk memory" in names_c:
+                    fails["W6 the phone holds the same windows"] = {"A": sorted(wins_a), "C": sorted(names_c)}
+                c.screenshot(path=str(W_SHOTS / "393-C-fresh.png"))
+
+                errors = errors_a + errors_b + errors_c
+                if errors:
+                    fails["no page errors"] = errors[:5]
+                for ctx in (ctx_a, ctx_b, ctx_c):
+                    ctx.close()
+            finally:
+                browser.close()
+        assert not fails, fails
+
+
+# ── A window's title is the name of the thing in it (moved whole: at 393 the name takes the clock's width) ──
+N_TOKEN = "window-names-glass"
+N_SHOTS = evidence_dir("tests/e2e/shots/window-names")
+N_PROJECT = "Payments ledger cutover"
+
+# How much of the name the screen title paints: the characters that fit its
+# box in its own font (the rest is the ellipsis).
+N_NAME_FACTS = """() => {
+  const e = document.querySelector('.desk-screen-name'); if (!e) return null;
+  const cs = getComputedStyle(e); const text = e.textContent.trim();
+  const c = document.createElement('canvas').getContext('2d'); c.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const box = e.clientWidth; let shown = text.length;
+  if (c.measureText(text).width > box + 0.5) { shown = 0;
+    for (let n = text.length - 1; n > 0; n--) if (c.measureText(text.slice(0, n) + '…').width <= box + 0.5) { shown = n; break; } }
+  const clock = document.querySelector('.desk-clock');
+  const mark = document.querySelector('.desk-screen-switcher-mark');
+  const bar = document.querySelector('.desk-menubar').getBoundingClientRect();
+  const r = e.getBoundingClientRect(); const m = mark ? mark.getBoundingClientRect() : null;
+  return { text, box, shown, one_line: r.height < parseFloat(cs.fontSize) * 1.8, ellipsis: cs.textOverflow,
+    clock: !!clock && clock.getBoundingClientRect().width > 0,
+    mark_whole: m ? (m.width >= 5 && m.right <= bar.right + 0.5) : null,
+    bar_overflow: document.documentElement.scrollWidth > innerWidth,
+    front: [...document.querySelectorAll('.desk-window-shell.is-front')].map((w) => w.getAttribute('aria-label')) };
+}"""
+
+
+class TestWindowNamesOnGlass:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        _ensure_build()
+        server, base = _boot(tmp_path, monkeypatch, token=N_TOKEN)
+        self.base = base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    @staticmethod
+    def _press(page: Any, loc: Any, width: int) -> None:
+        loc.scroll_into_view_if_needed()
+        if width < 720:
+            box = loc.bounding_box()
+            assert box, "nothing to tap"
+            page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        else:
+            loc.click()
+
+    @pytest.mark.parametrize("width", [393, 1440])
+    def test_the_project_room_is_named_by_its_project_and_393_shows_the_name(self, width: int) -> None:
+        """replaces: tests/e2e/test_window_names_glass.py::TestWindowNamesOnGlass::test_the_project_room_is_named_by_its_project_and_393_shows_the_name (moved whole)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                      device_scale_factor=1, has_touch=width < 720)
+            page = ctx.new_page()
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={N_TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=N_TOKEN)
+                _api(page, "POST", "/api/projects", {"name": N_PROJECT}, token=N_TOKEN)
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(2500)
+                _settle(page)
+
+                # The Room, from the palette: `Open <project>`.
+                self._press(page, page.locator("button[aria-controls=desk-tool-shelf]"), width)
+                page.locator("input[aria-controls=desk-palette-listbox]").fill("Payments")
+                row = page.get_by_role("option", name=f"Open {N_PROJECT}").first
+                row.wait_for()
+                self._press(page, row, width)
+                _room_opened(page)
+                room = page.locator("[id='surface-project-memory']")
+                room.wait_for()
+                page.wait_for_timeout(1200)
+                _settle(page)
+
+                # One name: the frame, and the screen title.
+                assert room.get_attribute("aria-label") == N_PROJECT, room.get_attribute("aria-label")
+                facts = page.evaluate(N_NAME_FACTS)
+                N_SHOTS.mkdir(parents=True, exist_ok=True)
+                page.screenshot(path=str(N_SHOTS / f"project-room-{width}.png"))
+                (N_SHOTS / f"project-room-{width}.txt").write_text(f"{facts}\n")
+                assert facts["text"] == N_PROJECT, facts
+                assert N_PROJECT in facts["front"], facts
+                assert facts["one_line"] and facts["ellipsis"] == "ellipsis", facts
+                assert not facts["bar_overflow"], facts
+                if width < 720:
+                    # The ruling: the clock is gone while a window is in front,
+                    # and the name shows more than `Pay…` (it showed 3 letters).
+                    assert not facts["clock"], facts
+                    assert facts["shown"] >= 10, facts
+                    assert facts["box"] >= 100, facts
+                    assert facts["mark_whole"], facts   # the ▾ never truncates
+                else:
+                    assert facts["clock"], facts
+                    assert facts["shown"] == len(N_PROJECT), facts
+                assert errors == [], errors
+            finally:
+                browser.close()

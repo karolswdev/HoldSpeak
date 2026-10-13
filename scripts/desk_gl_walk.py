@@ -158,7 +158,7 @@ def smoke() -> None:
     """Interaction smoke through the canvas: tap opens a pull-out, a drag
     moves an object and persists its park, a lasso ropes a selection."""
     raise SystemExit("PARKED (PHILO-17): the GL Floor's drag, park and zone tray are parked; "
-                     "the one desk is fenced by tests/e2e/test_philo17_one_desk_glass.py")
+                     "the one desk is fenced by tests/e2e/test_desk_glass.py")
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
