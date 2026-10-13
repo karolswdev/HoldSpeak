@@ -498,6 +498,9 @@ class WebRuntime(
             print(f"Failed to start HoldSpeak web mode: {exc}", file=sys.stderr)
             print("Install optional web dependencies with: uv pip install -e '.[meeting]'", file=sys.stderr)
             log.error(f"Failed to start web mode: {exc}", exc_info=True)
+            # A failed start hands the database back: the claim was taken
+            # above, and nothing of ours serves or writes yet.
+            self._release_database()
             raise SystemExit(1) from exc
 
         self._note_serving_port()

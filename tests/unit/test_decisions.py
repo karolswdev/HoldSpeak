@@ -536,7 +536,7 @@ def test_generate_and_reload_sorts_decisions_by_record_created_at(tmp_path, monk
     ]
 
 
-def test_generate_carries_created_at_from_meeting_decision_projection(tmp_path):
+def test_generate_carries_created_at_from_meeting_decision_projection(tmp_path, quiet_needs_you):
     db = Database(tmp_path / "brief.db")
     db.meetings.save_meeting(
         MeetingState(

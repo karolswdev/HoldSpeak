@@ -896,6 +896,52 @@ def _bare_composition_root():
 
 
 @pytest.fixture(autouse=True)
+def _no_leaked_database_or_owner_claim():
+    """A test gives back the process-wide database state it took, ALWAYS.
+
+    xdist runs many files in one worker process. Main went red on all three
+    of these leaks, 2026-10-12:
+
+    * the DB singleton (`holdspeak.db.core._db`) left on a test's tmp file:
+      a later test reads a database without its tables ("no such table");
+    * the needs-you last-known store (`needs_you_aggregate._LAST_KNOWN`)
+      bound once to a test's tmp database: a later hub adopts the store and
+      writes its rows to that foreign file;
+    * the owner claim (`runtime_lock._LOCK`) left held: a later test's claim
+      fails ("this process already owns a database").
+
+    Only what THIS test took is given back: state that a wider fixture made
+    before the test starts stays. A leaked singleton or store binding is
+    reset quietly (cheap; more than 100 tests leave a singleton). A leaked
+    claim is released and the test fails, so the leaker is named at its
+    source.
+    """
+    from holdspeak import runtime_lock
+    from holdspeak.db import core as db_core
+    from holdspeak.services import needs_you_aggregate
+
+    store = needs_you_aggregate._LAST_KNOWN
+    db_before = db_core._db
+    store_bound_before = store._db_factory
+    lock_before = runtime_lock._LOCK
+    yield
+    if db_core._db is not None and db_before is None:
+        db_core.reset_database()
+    if store._db_factory is not None and store_bound_before is None:
+        with store._lock:
+            store._db_factory = None
+            store._by_source.clear()
+    lock = runtime_lock._LOCK
+    if lock is not None and lock is not lock_before:
+        held_path = lock.db_path
+        runtime_lock.release_database()
+        pytest.fail(
+            f"the test left the database owner claim held on {held_path}; "
+            "release it (runtime_lock.release_database) before the test ends"
+        )
+
+
+@pytest.fixture(autouse=True)
 def _isolate_agent_session_registry(tmp_path_factory, monkeypatch):
     """Point the coder-session registry at a per-test temp file, ALWAYS.
 
