@@ -397,3 +397,5 @@ runners, `_open_door`) and `tests/e2e/concierge_rig.py` (`_quiet_concierge`).
   the open-hub status), `menus.app.test.tsx` (OPEN TO NETWORK),
   `tests/integration/test_web_built_mount.py` and `sfx.test.ts` (the six
   sounds), `arrivalOneThing.test.tsx`, `historyHeadline.test.ts`.
+- `test_philo9_03_room_face_glass.py`: 11 cases moved whole to `tests/e2e/test_room_glass.py` (T2 owed for the
+  word cases); the three F1 cases are `projectRoomKey.test.ts` and `openGrammar.philo1306.test.tsx:248`.
