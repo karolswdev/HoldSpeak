@@ -968,14 +968,17 @@ def _add_missing_columns(conn: sqlite3.Connection, *, existing_only: bool = Fals
     """
     reference = _build_reference_schema()
     executed: list[str] = []
+    # Every live table's columns in ONE query (it was two queries for each of
+    # about 290 tables, on every open: 18 ms of a new database's 78 ms).
+    live: dict[str, set[str]] = {}
+    for table_name, column_name in conn.execute(
+        "SELECT m.name, p.name FROM sqlite_master AS m, pragma_table_info(m.name) AS p"
+        " WHERE m.type = 'table'"
+    ):
+        live.setdefault(table_name, set()).add(column_name)
 
     for table, ref_cols in reference.items():
-        # Check if the table exists in the live DB.
-        exists = conn.execute(
-            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
-            (table,),
-        ).fetchone()
-        if not exists:
+        if table not in live:
             if existing_only:
                 continue
             # Table does not exist -- step 1 should have created it.  If it
@@ -984,10 +987,7 @@ def _add_missing_columns(conn: sqlite3.Connection, *, existing_only: bool = Fals
             log.warning("Table %s missing after SCHEMA_SQL; skipping column reconcile", table)
             continue
 
-        live_cols = {
-            row[1]
-            for row in conn.execute(f'PRAGMA table_info("{table}")')
-        }
+        live_cols = live[table]
 
         for col in ref_cols:
             if col["name"] not in live_cols:
